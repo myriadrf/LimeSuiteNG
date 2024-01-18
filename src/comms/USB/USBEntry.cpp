@@ -103,7 +103,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
 }
 
 #ifdef __unix__
-std::string USBEntry::GetUSBDeviceSpeedString(libusb_device* device)
+std::string_view USBEntry::GetUSBDeviceSpeedString(libusb_device* device)
 {
     int speed = libusb_get_device_speed(device);
 

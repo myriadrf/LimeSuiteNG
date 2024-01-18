@@ -8,9 +8,9 @@ using namespace lime;
 /*******************************************************************
  * String parsing helpers
  ******************************************************************/
-static std::string trim(const std::string& s)
+static std::string_view trim(const std::string_view& s)
 {
-    std::string out = s;
+    std::string_view out = s;
     while (not out.empty() and std::isspace(out[0]))
         out = out.substr(1);
     while (not out.empty() and std::isspace(out[out.size() - 1]))
@@ -18,7 +18,7 @@ static std::string trim(const std::string& s)
     return out;
 }
 
-static std::map<std::string, std::string> argsToMap(const std::string& args)
+static std::map<std::string, std::string> argsToMap(const std::string_view& args)
 {
     std::map<std::string, std::string> kwmap;
 
@@ -67,7 +67,7 @@ DeviceHandle::DeviceHandle()
 
 DeviceHandle::DeviceHandle(const std::string& args)
 {
-    auto kwmap = argsToMap("name=" + args); //append name= since it was stripped in serialize
+    auto kwmap = argsToMap("name=" + args); // Append name= since it was stripped in serialize
     if (kwmap.count("media") != 0)
         media = kwmap.at("media");
     if (kwmap.count("name") != 0)

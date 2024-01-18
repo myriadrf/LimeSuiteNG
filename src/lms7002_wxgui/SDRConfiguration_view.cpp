@@ -163,14 +163,14 @@ void SOCConfig_view::Setup(SDRDevice* device, int index)
     for (const auto& gain : descriptor.gains.at(TRXDir::Rx))
     {
         gui.rxSelectionToValue[rxGains.size()] = gain;
-        rxGains.Add(GAIN_TYPES_TEXT.at(gain));
+        rxGains.Add(std::string{ GAIN_TYPES_TEXT.at(gain) });
     }
 
     wxArrayString txGains;
     for (const auto& gain : descriptor.gains.at(TRXDir::Tx))
     {
         gui.txSelectionToValue[txGains.size()] = gain;
-        txGains.Add(GAIN_TYPES_TEXT.at(gain));
+        txGains.Add(std::string{ GAIN_TYPES_TEXT.at(gain) });
     }
 
     for (int i = 0; i < descriptor.channelCount; ++i)

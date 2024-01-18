@@ -142,7 +142,7 @@ pnlBoardControls::pnlBoardControls(
 
     for (const auto& board : board_list)
     {
-        cmbBoardSelection->AppendString(GetDeviceName(board));
+        cmbBoardSelection->AppendString(std::string{ GetDeviceName(board) });
     }
 
     fgSizer247->Add(fgSizer248, 1, wxEXPAND, 5);
@@ -188,7 +188,7 @@ pnlBoardControls::pnlBoardControls(
 
     wxArrayString unitChoices;
     for (int i = 0; i < ADC_UNITS_COUNT; ++i) //add all defined units
-        unitChoices.push_back(wxString(adcUnits2string(i)));
+        unitChoices.push_back(std::string{ adcUnits2string(i) });
     for (int i = ADC_UNITS_COUNT; i < ADC_UNITS_COUNT + 4; ++i) //add some options to use undefined units
         unitChoices.push_back(std::to_string(i));
     cmbCustomUnitsWr = new wxChoice(pnlCustomControls, wxNewId(), wxDefaultPosition, wxDefaultSize, unitChoices, 0);
@@ -397,7 +397,7 @@ void pnlBoardControls::Update()
     }
 }
 
-std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(const string& boardID)
+std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(std::string_view boardID)
 {
     std::vector<ADC_DAC> paramList;
     if (!mDevice)
@@ -406,8 +406,8 @@ std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(const st
     const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
 
     for (const auto& param : desc.customParameters)
-        paramList.push_back(
-            ADC_DAC{ param.name, !param.readOnly, 0, param.id, adcUnits2string(RAW), 0, param.minValue, param.maxValue });
+        paramList.push_back(ADC_DAC{
+            param.name, !param.readOnly, 0, param.id, std::string{ adcUnits2string(RAW) }, 0, param.minValue, param.maxValue });
     return paramList;
 }
 
@@ -448,7 +448,7 @@ void pnlBoardControls::OnDACWrite(wxCommandEvent& event)
     OnReadAll(event);
 }
 
-void pnlBoardControls::SetupControls(const std::string& boardID)
+void pnlBoardControls::SetupControls(const std::string_view& boardID)
 {
 
     if (additionalControls)
@@ -555,7 +555,8 @@ void pnlBoardControls::SetupControls(const std::string& boardID)
             for (const auto& region : regions)
             {
                 MemoryParamGUI* gui = new MemoryParamGUI();
-                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, lime::MEMORY_REGIONS_TEXT.at(region.first));
+                gui->title =
+                    new wxStaticText(pnlEEPROMControls, wxID_ANY, std::string{ lime::MEMORY_REGIONS_TEXT.at(region.first) });
                 gui->txtValue = new wxTextCtrl(pnlEEPROMControls, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize);
                 gui->btnRead = new wxButton(pnlEEPROMControls, wxNewId(), _("Read"), wxDefaultPosition, wxDefaultSize);
                 gui->btnWrite = new wxButton(pnlEEPROMControls, wxNewId(), _("Write"), wxDefaultPosition, wxDefaultSize);
@@ -698,7 +699,8 @@ void pnlBoardControls::OnCustomWrite(wxCommandEvent& event)
 
     double value = spinCustomValueWr->GetValue() * pow(10, powerOf10);
 
-    OpStatus status = WriteCustomBoardParam(mDevice, { { id, value, adcUnits2string(cmbCustomUnitsWr->GetSelection()) } });
+    OpStatus status =
+        WriteCustomBoardParam(mDevice, { { id, value, std::string{ adcUnits2string(cmbCustomUnitsWr->GetSelection()) } } });
     if (status != OpStatus::SUCCESS)
     {
         wxMessageBox(_("Failed to write value"), _("Warning"));

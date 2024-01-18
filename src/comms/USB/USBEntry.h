@@ -56,7 +56,7 @@ class USBEntry : public DeviceRegistryEntry
   private:
     std::set<VidPid> mDeviceIds;
 #ifdef __unix__
-    std::string GetUSBDeviceSpeedString(libusb_device* device);
+    std::string_view GetUSBDeviceSpeedString(libusb_device* device);
     DeviceHandle GetDeviceHandle(libusb_device_handle* tempHandle, libusb_device* device, const libusb_device_descriptor& desc);
 #endif
 };

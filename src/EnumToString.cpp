@@ -40,7 +40,8 @@ const std::unordered_map<eMemoryDevice, const std::string> lime::MEMORY_DEVICES_
     { eMemoryDevice::FPGA_FLASH, "FPGA FLASH" },
     { eMemoryDevice::EEPROM, "EEPROM" },
 };
-const std::unordered_map<std::string, eMemoryDevice> lime::STRING_TO_MEMORY_DEVICES = SwapKeysAndValues(MEMORY_DEVICES_TEXT);
+
+const std::unordered_map<std::string, eMemoryDevice> lime::STRING_TO_MEMORY_DEVICES =  SwapKeysAndValues(MEMORY_DEVICES_TEXT);
 
 const std::unordered_map<eMemoryRegion, const std::string> lime::MEMORY_REGIONS_TEXT{
     { eMemoryRegion::VCTCXO_DAC, "VCTCXO DAC (non-volatile)" },

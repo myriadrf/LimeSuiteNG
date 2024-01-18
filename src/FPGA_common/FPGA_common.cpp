@@ -1196,7 +1196,7 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
 /// @param[out] desc The descriptor to output the information to.
 void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDevice::Descriptor& desc)
 {
-    desc.gatewareTargetBoard = GetDeviceName(eLMS_DEV(gw.boardID));
+    desc.gatewareTargetBoard = GetDeviceName(static_cast<eLMS_DEV>(gw.boardID));
     desc.gatewareVersion = std::to_string(gw.version);
     desc.gatewareRevision = std::to_string(gw.revision);
     desc.hardwareVersion = std::to_string(gw.hardwareVersion);

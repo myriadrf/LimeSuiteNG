@@ -89,13 +89,13 @@ constexpr size_t LMS64CPacketMemoryWriteView::GetMaxDataSize()
 
 namespace LMS64CProtocol {
 
-static const std::array<const std::string, eCMD_STATUS::STATUS_COUNT> COMMAND_STATUS_TEXT = {
+static constexpr std::array<const std::string_view, eCMD_STATUS::STATUS_COUNT> COMMAND_STATUS_TEXT = {
     "Undefined/Failure", "Completed", "Unknown command", "Busy", "Too many blocks", "Error", "Wrong order", "Resource denied"
 };
 
-static const std::string UNKNOWN{ "Unknown status" };
+static constexpr std::string_view UNKNOWN{ "Unknown status" };
 
-static constexpr const std::string& status2string(const int status)
+static constexpr const std::string_view& status2string(const int status)
 {
     if (status >= 0 && status < eCMD_STATUS::STATUS_COUNT)
     {
@@ -493,7 +493,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
         {
-            sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).c_str());
+            sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).data());
             if (callback)
                 callback(bytesSent, length, progressMsg);
             return ReportError(OpStatus::ERROR, progressMsg);
