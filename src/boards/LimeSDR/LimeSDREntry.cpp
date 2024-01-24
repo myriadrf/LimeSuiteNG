@@ -23,6 +23,8 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 void __loadLimeSDR(void) //TODO fixme replace with LoadLibrary/dlopen
 {
@@ -33,7 +35,7 @@ void __loadLimeSDR(void) //TODO fixme replace with LoadLibrary/dlopen
 static const std::set<VidPid> ids{ { 1204, 241 }, { 1204, 243 }, { 7504, 24840 } };
 
 LimeSDREntry::LimeSDREntry()
-    : USBEntry("LimeSDR", ids)
+    : USBEntry("LimeSDR"s, ids)
 {
 }
 
@@ -41,7 +43,7 @@ LimeSDREntry::LimeSDREntry()
 std::vector<DeviceHandle> LimeSDREntry::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
-    if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
+    if (!hint.media.empty() && hint.media.find("USB"sv) == std::string::npos)
     {
         return handles;
     }
@@ -56,11 +58,11 @@ std::vector<DeviceHandle> LimeSDREntry::enumerate(const DeviceHandle& hint)
             device.Open(i);
             DeviceHandle handle;
             if (device.bSuperSpeed == true)
-                handle.media = "USB 3.0";
+                handle.media = "USB 3.0"s;
             else if (device.bHighSpeed == true)
-                handle.media = "USB 2.0";
+                handle.media = "USB 2.0"s;
             else
-                handle.media = "USB";
+                handle.media = "USB"s;
             handle.name = device.DeviceName;
             std::wstring ws(device.SerialNumber);
             handle.serial = std::string(ws.begin(), ws.end());
@@ -75,7 +77,7 @@ std::vector<DeviceHandle> LimeSDREntry::enumerate(const DeviceHandle& hint)
 
 SDRDevice* LimeSDREntry::make(const DeviceHandle& handle)
 {
-    const auto splitPos = handle.addr.find(":");
+    const auto splitPos = handle.addr.find(':');
     uint16_t vid = 0;
     uint16_t pid = 0;
 

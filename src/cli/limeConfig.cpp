@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 static std::vector<int> ParseIntArray(const std::string& str)
 {
@@ -258,14 +259,16 @@ int main(int argc, char** argv)
         {
             std::string configFilepath;
             config.skipDefaults = true;
-            std::string cwd(argv[0]);
-            const size_t slash0Pos = cwd.find_last_of("/\\");
-            if (slash0Pos != std::string::npos)
-                cwd.resize(slash0Pos);
+            std::string_view cwd{ argv[0] };
+            const size_t slash0Pos = cwd.find_last_of("/\\"sv);
+            if (slash0Pos != std::string_view::npos)
+            {
+                cwd.substr(0, slash0Pos - 1);
+            }
 
             if (iniFilename[0] != '/') // is not global path
             {
-                configFilepath = cwd + "/" + iniFilename;
+                configFilepath = std::string{ cwd } + "/" + iniFilename;
             }
             else
             {

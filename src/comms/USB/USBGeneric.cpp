@@ -200,7 +200,7 @@ int32_t USBGeneric::BulkTransfer(uint8_t endPointAddr, uint8_t* data, int length
     long len = 0;
     if (!IsConnected())
     {
-        throw std::runtime_error("BulkTransfer: USB device is not connected");
+        throw std::runtime_error("BulkTransfer: USB device is not connected"s);
     }
 
     assert(data);
@@ -228,7 +228,7 @@ int32_t USBGeneric::ControlTransfer(
     long len = length;
     if (!IsConnected())
     {
-        throw std::runtime_error("ControlTransfer: USB device is not connected");
+        throw std::runtime_error("ControlTransfer: USB device is not connected"s);
     }
 
     assert(data);

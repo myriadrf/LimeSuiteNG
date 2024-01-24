@@ -2,6 +2,7 @@
 #include "Logger.h"
 
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 #ifdef __unix__
 libusb_context* USBEntry::ctx{ nullptr };
@@ -49,7 +50,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
 
-    if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
+    if (!hint.media.empty() && hint.media.find("USB"sv) == std::string::npos)
         return handles;
 
 #ifdef __unix__
@@ -110,11 +111,11 @@ std::string_view USBEntry::GetUSBDeviceSpeedString(libusb_device* device)
     switch (speed)
     {
     case LIBUSB_SPEED_HIGH:
-        return "USB 2.0";
+        return "USB 2.0"sv;
     case LIBUSB_SPEED_SUPER:
-        return "USB 3.0";
+        return "USB 3.0"sv;
     default:
-        return "USB";
+        return "USB"sv;
     }
 }
 

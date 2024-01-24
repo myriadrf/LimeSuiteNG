@@ -19,6 +19,7 @@
 #include <vector>
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 namespace {
 
@@ -103,7 +104,7 @@ struct StreamHandle {
         : parent(parent)
         , isStreamStartedFromAPI(false)
         , isStreamActuallyStarted(false)
-        , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool")
+        , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool"s)
     {
     }
 };
@@ -2009,7 +2010,7 @@ namespace {
 
 static int VCTCXOReadFallbackPath(LMS_APIDevice* apiDevice, uint16_t* val)
 {
-    std::vector<lime::CustomParameterIO> parameters{ { BOARD_PARAM_DAC, 0, "" } };
+    std::vector<lime::CustomParameterIO> parameters{ { BOARD_PARAM_DAC, 0, ""s } };
 
     OpStatus status = apiDevice->device->CustomParameterRead(parameters);
     if (status != OpStatus::SUCCESS)

@@ -7,6 +7,7 @@
 #include <sstream>
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 SOCConfig_view::SOCConfig_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxPanel(parent, id, pos, size, style)
@@ -23,7 +24,7 @@ SOCConfig_view::SOCConfig_view(wxWindow* parent, wxWindowID id, const wxPoint& p
 
     wxFlexGridSizer* rxGrid = new wxFlexGridSizer(6, 4, 4);
     {
-        const std::vector<std::string> titles = { "Enable", "RxAntenna", "RxGain", "RxGain (dB)", "RxLPF (MHz)", "RxNCO (MHz)" };
+        const std::vector<std::string> titles{ "Enable"s, "RxAntenna"s, "RxGain"s, "RxGain (dB)"s, "RxLPF (MHz)"s, "RxNCO (MHz)"s };
         for (const auto& name : titles)
             rxGrid->Add(new wxStaticText(base, wxID_ANY, name), titleFlags);
 
@@ -96,7 +97,7 @@ SOCConfig_view::SOCConfig_view(wxWindow* parent, wxWindowID id, const wxPoint& p
 
     wxFlexGridSizer* txGrid = new wxFlexGridSizer(6, 4, 4);
     {
-        const std::vector<std::string> titles = { "TxNCO (MHz)", "TxLPF (MHz)", "TxGain (dB)", "TxGain", "TxAntenna", "Enable" };
+        const std::vector<std::string> titles{ "TxNCO (MHz)"s, "TxLPF (MHz)"s, "TxGain (dB)"s, "TxGain"s, "TxAntenna"s, "Enable"s };
         for (auto name : titles)
             txGrid->Add(new wxStaticText(base, wxID_ANY, name), titleFlags);
 
@@ -314,11 +315,11 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
         sdrDevice->Configure(config, socIndex);
     } catch (std::logic_error& e) // settings problem
     {
-        wxMessageBox("Configure failed: " + std::string(e.what()), _("Warning"));
+        wxMessageBox("Configure failed: "s + e.what(), _("Warning"));
         return;
     } catch (std::runtime_error& e) // communications problem
     {
-        wxMessageBox("Configure failed: " + std::string(e.what()), _("Warning"));
+        wxMessageBox("Configure failed: "s + e.what(), _("Warning"));
         return;
     }
 }

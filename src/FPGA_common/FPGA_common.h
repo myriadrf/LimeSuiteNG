@@ -17,6 +17,8 @@
 #include "TRXLooper.h"
 #include "limesuite/complex.h"
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 class ISPI;
 
@@ -82,7 +84,7 @@ class FPGA
 
   protected:
     OpStatus SelectModule(uint8_t chipIndex);
-    OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = "");
+    OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = ""s);
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
     OpStatus SetDirectClocking(int clockIndex);
     std::shared_ptr<ISPI> fpgaPort;

@@ -3,6 +3,8 @@
 #include "DeviceExceptions.h"
 #include "USBTransferContext_FT601.h"
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
@@ -136,7 +138,7 @@ int32_t FT601::BulkTransfer(uint8_t endPointAddr, uint8_t* data, int length, int
 
 int32_t FT601::ControlTransfer(int requestType, int request, int value, int index, uint8_t* data, uint32_t length, int32_t timeout)
 {
-    throw(OperationNotSupported("ControlTransfer not supported on FT601 connections."));
+    throw(OperationNotSupported("ControlTransfer not supported on FT601 connections."s));
 }
 
 #ifndef __unix__

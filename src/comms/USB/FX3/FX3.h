@@ -13,6 +13,8 @@
     #include "CyAPI.h"
 #endif // !__unix__
 
+using namespace std::literals::string_view_literals;
+
 namespace lime {
 
 /** @brief A class for communicating with devices using the Cypress USB 3.0 CYUSB3014-BZXC USB controller. */
@@ -26,7 +28,7 @@ class FX3 : public USBGeneric
     FX3(void* usbContext = nullptr);
     virtual ~FX3();
 
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view& serial = "") override;
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view& serial = ""sv) override;
     virtual void Disconnect() override;
 
     virtual bool IsConnected() override;

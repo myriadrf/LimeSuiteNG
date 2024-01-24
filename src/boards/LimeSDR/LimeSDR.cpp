@@ -33,13 +33,14 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 static const uint8_t SPI_ADF4002 = 2;
 
-static const SDRDevice::CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
-static const SDRDevice::CustomParameter CP_TEMPERATURE = { "Board Temperature", 1, 0, 65535, true };
+static const SDRDevice::CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static const SDRDevice::CustomParameter CP_TEMPERATURE = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = { //
     { 0x0022, 0x0FFF },
@@ -93,7 +94,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 static inline void ValidateChannel(uint8_t channel)
 {
     if (channel > 1)
-        throw std::logic_error("invalid channel index");
+        throw std::logic_error("invalid channel index"s);
 }
 
 /// @brief Constructs a new LimeSDR object
@@ -128,34 +129,34 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.customParameters.push_back(CP_VCTCXO_DAC);
     descriptor.customParameters.push_back(CP_TEMPERATURE);
 
-    descriptor.spiSlaveIds = { { "LMS7002M", SPI_LMS7002M }, { "FPGA", SPI_FPGA } };
+    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     RFSOCDescriptor soc;
     soc.name = "LMS";
     soc.channelCount = 2;
-    soc.pathNames[TRXDir::Rx] = { "None", "LNAH", "LNAL", "LNAW", "LB1", "LB2" };
-    soc.pathNames[TRXDir::Tx] = { "None", "Band1", "Band2" };
+    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "LNAL"s, "LNAW"s, "LB1"s, "LB2"s };
+    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s, "Band2"s };
     soc.samplingRateRange = { 100e3, 61.44e6, 0 };
     soc.frequencyRange = { 100e3, 3.8e9, 0 };
 
     soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
     soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
 
-    soc.antennaRange[TRXDir::Rx]["LNAH"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAL"] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Rx]["LNAW"] = { 700e6, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LB1"] = soc.antennaRange[TRXDir::Rx]["LNAL"];
-    soc.antennaRange[TRXDir::Rx]["LB2"] = soc.antennaRange[TRXDir::Rx]["LNAW"];
-    soc.antennaRange[TRXDir::Tx]["Band1"] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 700e6, 900e6 };
+    soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
+    soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
 
     SetGainInformationInDescriptor(soc);
 
     descriptor.rfSOC.push_back(soc);
 
-    auto fpgaNode = std::make_shared<DeviceNode>("FPGA", eDeviceNodeClass::FPGA, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS", eDeviceNodeClass::LMS7002M, mLMSChips[0]));
-    descriptor.socTree = std::make_shared<DeviceNode>("SDR-USB", eDeviceNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceNode>("FPGA"s, eDeviceNodeClass::FPGA, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS"s, eDeviceNodeClass::LMS7002M, mLMSChips[0]));
+    descriptor.socTree = std::make_shared<DeviceNode>("SDR-USB"s, eDeviceNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
@@ -516,7 +517,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                     pkt.cmd = LMS64CProtocol::CMD_ADF4002_WR;
                     break;
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
                 int payloadOffset = pkt.blockCount * 4;
                 pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 24;
@@ -551,7 +552,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         //printPacket(pkt, 4, "Wr:");
         int sent = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
@@ -569,7 +570,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         }
         else
         {
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
         }
     }
 
@@ -593,11 +594,11 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         remainingBytes -= pkt.blockCount;
         int sent = comms->BulkTransfer(CONTROL_BULK_OUT_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("I2C write failed");
+            throw std::runtime_error("I2C write failed"s);
         int recv = comms->BulkTransfer(CONTROL_BULK_IN_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
 
         if (recv < pkt.headerSize || pkt.status != LMS64CProtocol::STATUS_COMPLETED_CMD)
-            throw std::runtime_error("I2C write failed");
+            throw std::runtime_error("I2C write failed"s);
     }
     return 0;
 }*/
@@ -617,7 +618,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 
         int sent = comms->BulkTransfer(CONTROL_BULK_OUT_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("I2C read failed");
+            throw std::runtime_error("I2C read failed"s);
         int recv = comms->BulkTransfer(CONTROL_BULK_IN_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
 
         memcpy(dest, pkt.payload, pkt.blockCount);
@@ -625,7 +626,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         remainingBytes -= pkt.blockCount;
 
         if (recv <= pkt.headerSize || pkt.status != LMS64CProtocol::STATUS_COMPLETED_CMD)
-            throw std::runtime_error("I2C read failed");
+            throw std::runtime_error("I2C read failed"s);
     }
     return 0;
 }*/
@@ -643,13 +644,13 @@ void LimeSDR::ResetUSBFIFO()
     int sentBytes = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (sentBytes != sizeof(pkt))
     {
-        throw std::runtime_error("LimeSDR::ResetUSBFIFO write failed");
+        throw std::runtime_error("LimeSDR::ResetUSBFIFO write failed"s);
     }
 
     int gotBytes = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (gotBytes != sizeof(pkt))
     {
-        throw std::runtime_error("LimeSDR::ResetUSBFIFO read failed");
+        throw std::runtime_error("LimeSDR::ResetUSBFIFO read failed"s);
     }
 }
 
@@ -674,7 +675,7 @@ void LimeSDR::StreamStart(uint8_t moduleIndex)
         mStreamers[0]->Start();
     }
     else
-        throw std::runtime_error("Stream not setup");
+        throw std::runtime_error("Stream not setup"s);
 }
 
 void LimeSDR::StreamStop(uint8_t moduleIndex)

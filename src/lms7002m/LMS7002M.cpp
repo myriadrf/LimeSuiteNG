@@ -37,6 +37,8 @@
 #include "MCU_BD.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 constexpr std::array<std::array<float_type, 2>, 3> LMS7002M::gVCO_frequency_table{
     { { 3800e6, 5222e6 }, { 4961e6, 6754e6 }, { 6306e6, 7714e6 } }
@@ -482,21 +484,21 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     OpStatus status;
     typedef INI<std::string, std::string, std::string> ini_t;
     ini_t parser(filename, true);
-    if (parser.select("FILE INFO") == false)
+    if (parser.select("FILE INFO"s) == false)
         return ReportError(
             OpStatus::INVALID_VALUE, "LoadConfigLegacyFile(%s) - invalid format, missing FILE INFO section", filename.c_str());
 
-    std::string type = "";
-    type = parser.get("type", "undefined");
+    std::string type{};
+    type = parser.get("type"s, "undefined"s);
 
-    if (type.find("LMS7002 configuration") == std::string::npos)
+    if (type.find("LMS7002 configuration"sv) == std::string::npos)
     {
         return ReportError(
             OpStatus::INVALID_VALUE, "LoadConfigLegacyFile(%s) - invalid format, missing LMS7002 configuration", filename.c_str());
     }
 
     int fileVersion = 0;
-    fileVersion = parser.get("version", 0);
+    fileVersion = parser.get("version"sv, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -504,15 +506,15 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     {
         ChannelScope scope(this);
 
-        if (parser.select("Reference clocks"))
+        if (parser.select("Reference clocks"s))
         {
-            this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz", 30.72) * 1e6);
-            this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz", 30.72) * 1e6);
+            this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
+            this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
         }
 
-        if (parser.select("LMS7002 registers ch.A") == true)
+        if (parser.select("LMS7002 registers ch.A"s) == true)
         {
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A");
+            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
 
             uint16_t x0020_value = 0;
             this->SetActiveChannel(Channel::ChA); //select A channel
@@ -533,7 +535,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 return status;
 
             //parse FCW or PHO
-            if (parser.select("NCO Rx ch.A") == true)
+            if (parser.select("NCO Rx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
@@ -554,7 +556,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                     }
                 }
             }
-            if (parser.select("NCO Tx ch.A") == true)
+            if (parser.select("NCO Tx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
@@ -582,11 +584,11 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
 
         this->SetActiveChannel(Channel::ChB);
 
-        if (parser.select("LMS7002 registers ch.B") == true)
+        if (parser.select("LMS7002 registers ch.B"s) == true)
         {
             addrToWrite.clear();
             dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B");
+            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B"s);
             for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -600,7 +602,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 return status;
 
             //parse FCW or PHO
-            if (parser.select("NCO Rx ch.B") == true)
+            if (parser.select("NCO Rx ch.B"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
@@ -621,7 +623,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                     }
                 }
             }
-            if (parser.select("NCO Tx ch.A") == true)
+            if (parser.select("NCO Tx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
@@ -664,24 +666,24 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     OpStatus status;
     typedef INI<std::string, std::string, std::string> ini_t;
     ini_t parser(filename, true);
-    if (parser.select("file_info") == false)
+    if (parser.select("file_info"s) == false)
     {
         //try loading as legacy format
         status = LoadConfigLegacyFile(filename);
         this->SetActiveChannel(Channel::ChA);
         return status;
     }
-    std::string type = "";
-    type = parser.get("type", "undefined");
+    std::string type{};
+    type = parser.get("type"s, "undefined"s);
 
-    if (type.find("lms7002m_minimal_config") == std::string::npos)
+    if (type.find("lms7002m_minimal_config"sv) == std::string::npos)
     {
         return ReportError(
             OpStatus::INVALID_VALUE, "LoadConfig(%s) - invalid format, missing lms7002m_minimal_config", filename.c_str());
     }
 
     int fileVersion = 0;
-    fileVersion = parser.get("version", 0);
+    fileVersion = parser.get("version"sv, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -689,9 +691,9 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     if (fileVersion == 1)
     {
         ChannelScope scope(this);
-        if (parser.select("lms7002_registers_a") == true)
+        if (parser.select("lms7002_registers_a"s) == true)
         {
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a");
+            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a"s);
 
             uint16_t x0020_value = 0;
             this->SetActiveChannel(Channel::ChA); //select A channel
@@ -730,11 +732,11 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 return status;
         }
 
-        if (parser.select("lms7002_registers_b") == true)
+        if (parser.select("lms7002_registers_b"s) == true)
         {
             addrToWrite.clear();
             dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_b");
+            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_b"s);
             for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -748,9 +750,9 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 return status;
         }
 
-        parser.select("reference_clocks");
-        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz", 30.72) * 1e6);
-        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz", 30.72) * 1e6);
+        parser.select("reference_clocks"s);
+        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz"sv, 30.72) * 1e6);
+        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz"sv, 30.72) * 1e6);
     }
 
     ResetLogicRegisters();
@@ -1347,7 +1349,7 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
 {
     if (freq_Hz > CGEN_MAX_FREQ)
-        throw std::logic_error("requested CGEN frequency too high");
+        throw std::logic_error("requested CGEN frequency too high"s);
     float_type dFvco;
     float_type dFrac;
 
@@ -2408,34 +2410,35 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         MemorySection::LimeLight,
         MemorySection::LDO,
     };
-    const std::string moduleNames[] = {
-        "AFE",
-        "BIAS",
-        "XBUF",
-        "CGEN",
-        "BIST",
-        "CDS",
-        "TRF",
-        "TBB",
-        "RFE",
-        "RBB",
-        "SX",
-        "TxTSP",
-        "TxNCO",
-        "TxGFIR1",
-        "TxGFIR2",
-        "TxGFIR3a",
-        "TxGFIR3b",
-        "TxGFIR3c",
-        "RxTSP",
-        "RxNCO",
-        "RxGFIR1",
-        "RxGFIR2",
-        "RxGFIR3a",
-        "RxGFIR3b",
-        "RxGFIR3c",
-        "LimeLight",
-        "LDO",
+
+    const std::array<std::string_view, 27> moduleNames = {
+        "AFE"sv,
+        "BIAS"sv,
+        "XBUF"sv,
+        "CGEN"sv,
+        "BIST"sv,
+        "CDS"sv,
+        "TRF"sv,
+        "TBB"sv,
+        "RFE"sv,
+        "RBB"sv,
+        "SX"sv,
+        "TxTSP"sv,
+        "TxNCO"sv,
+        "TxGFIR1"sv,
+        "TxGFIR2"sv,
+        "TxGFIR3a"sv,
+        "TxGFIR3b"sv,
+        "TxGFIR3c"sv,
+        "RxTSP"sv,
+        "RxNCO"sv,
+        "RxGFIR1"sv,
+        "RxGFIR2"sv,
+        "RxGFIR3a"sv,
+        "RxGFIR3b"sv,
+        "RxGFIR3c"sv,
+        "LimeLight"sv,
+        "LDO"sv,
     };
 
     const uint16_t patterns[] = { 0xAAAA, 0x5555 };

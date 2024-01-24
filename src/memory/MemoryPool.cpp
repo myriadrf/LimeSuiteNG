@@ -7,6 +7,8 @@
 
 #include "Logger.h"
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 /// @brief Constructs the Memory Pool and allocates the memory of the pool.
@@ -29,7 +31,7 @@ MemoryPool::MemoryPool(int blockCount, int blockSize, int alignment, const std::
 #endif
         if (!ptr)
         {
-            throw std::runtime_error("Failed to allocate memory");
+            throw std::runtime_error("Failed to allocate memory"s);
         }
 
         std::memset(ptr, 0, blockSize);
@@ -41,7 +43,7 @@ MemoryPool::MemoryPool(int blockCount, int blockSize, int alignment, const std::
 MemoryPool::~MemoryPool()
 {
     // if(mFreeBlocks.size() != ownedAddresses.size())
-    //     throw std::runtime_error("Not all memory was freed");
+    //     throw std::runtime_error("Not all memory was freed"s);
     std::lock_guard<std::mutex> lock(mLock);
     while (!mFreeBlocks.empty())
     {

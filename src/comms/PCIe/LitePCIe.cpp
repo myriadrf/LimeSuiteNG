@@ -50,7 +50,7 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 }
 
 LitePCIe::LitePCIe()
-    : mFilePath("")
+    : mFilePath()
     , mFileDescriptor(-1)
     , isConnected(false)
 {
@@ -187,14 +187,14 @@ int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 
     //if ((status & 0xFF00) == 0)
-    //throw std::runtime_error("LitePCIe read status timeout");
+    //throw std::runtime_error("LitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
 }
 
 int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened");
+        throw std::runtime_error("LitePCIe port not opened"s);
     auto t1 = chrono::high_resolution_clock::now();
     int bytesRemaining = length;
     while (bytesRemaining > 0 &&
@@ -251,7 +251,7 @@ int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
 int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened");
+        throw std::runtime_error("LitePCIe port not opened"s);
 
     int bytesRemaining = length;
     uint8_t* dest = buffer;
@@ -364,7 +364,7 @@ LitePCIe::DMAState LitePCIe::GetRxDMAState()
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &dma);
     if (ret)
-        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters");
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters"s);
     DMAState state;
     state.enabled = dma.enable;
     state.hwIndex = dma.hw_count;
@@ -379,7 +379,7 @@ LitePCIe::DMAState LitePCIe::GetTxDMAState()
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &dma);
     if (ret)
-        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters");
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters"s);
     DMAState state;
     state.enabled = dma.enable;
     state.hwIndex = dma.hw_count;
@@ -458,7 +458,7 @@ int LitePCIe::SetRxDMAState(DMAState s)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
     if (ret < 0)
     {
-        throw std::runtime_error("DMA writer failed update");
+        throw std::runtime_error("DMA writer failed update"s);
     }
     return ret;
 }
@@ -473,7 +473,7 @@ int LitePCIe::SetTxDMAState(DMAState s)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
     // if (ret < 0)
     // {
-    //     std::string msg = "DMA reader failed update";
+    //     std::string msg = "DMA reader failed update"s;
     // }
     return ret;
 }
@@ -488,7 +488,7 @@ void LitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_CACHE_FLUSH, &sub);
     if (ret < 0)
     {
-        std::string msg = "DMA reader failed update";
+        std::string msg = "DMA reader failed update"s;
     }
 }
 

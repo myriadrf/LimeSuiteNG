@@ -15,6 +15,8 @@
 #include <cmath>
 #include <complex>
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 #ifdef NEW_GAIN_BEHAVIOUR
@@ -769,7 +771,7 @@ void LMS7002M_SDRDevice::EnableCache(bool enable)
 void* LMS7002M_SDRDevice::GetInternalChip(uint32_t index)
 {
     if (index >= mLMSChips.size())
-        throw std::logic_error("Invalid chip index");
+        throw std::logic_error("Invalid chip index"s);
     return mLMSChips[index];
 }
 

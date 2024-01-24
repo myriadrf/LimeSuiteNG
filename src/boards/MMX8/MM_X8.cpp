@@ -18,7 +18,9 @@
 
 namespace lime {
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+using namespace std::literals::string_literals;
+
+static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
 
 /// @brief Constructs the LimeSDR_MMX8 object.
@@ -51,15 +53,15 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     // FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     // FPGA::GatewareToDescriptor(gw, desc);
 
-    desc.socTree = std::make_shared<DeviceNode>("X8", eDeviceNodeClass::SDRDevice, this);
+    desc.socTree = std::make_shared<DeviceNode>("X8"s, eDeviceNodeClass::SDRDevice, this);
 
     mADF = new ADF4002();
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceNode>("ADF4002", eDeviceNodeClass::ADF4002, mADF));
+    desc.socTree->children.push_back(std::make_shared<DeviceNode>("ADF4002"s, eDeviceNodeClass::ADF4002, mADF));
 
     mSubDevices.resize(8);
-    desc.spiSlaveIds["FPGA"] = 0;
+    desc.spiSlaveIds["FPGA"s] = 0;
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
 
@@ -90,8 +92,8 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            std::string indexName = subdeviceDescriptor.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                    Descriptor::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            const std::string indexName = subdeviceDescriptor.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL +
+                                          std::to_string(i + 1) + Descriptor::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
@@ -688,7 +690,7 @@ OpStatus LimeSDR_MMX8::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     SDRDevice* dev = chipSelectToDevice.at(chipSelect);
     if (!dev)
     {
-        throw std::logic_error("invalid SPI chip select");
+        throw std::logic_error("invalid SPI chip select"s);
     }
 
     uint32_t subSelect = chipSelect & 0xFF;

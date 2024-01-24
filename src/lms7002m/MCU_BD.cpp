@@ -20,11 +20,10 @@ using namespace std;
 #include <functional>
 
 using namespace lime;
-using namespace std::literals::string_literals;
 
 MCU_BD::MCU_BD()
 {
-    mLoadedProgramFilename = "";
+    mLoadedProgramFilename = ""s;
     m_bLoadedDebug = 0;
     m_bLoadedProd = 0;
     stepsTotal = 0;
@@ -685,7 +684,7 @@ int MCU_BD::RunProductionTest_MCU()
         Wait_CLK_Cycles(256 * 5);
         retval = mSPI_read(1); //REG1 read
         if (retval != 0x55)
-            temps = "Ext. interrupt 3 test failed.";
+            temps = "Ext. interrupt 3 test failed."s;
         else
         {
             tempi = 0x00AA;
@@ -699,7 +698,7 @@ int MCU_BD::RunProductionTest_MCU()
             Wait_CLK_Cycles(256 * 5);
             retval = mSPI_read(1); //REG1 read
             if (retval != 0xAA)
-                temps = "Ext. interrupt 4 test failed.";
+                temps = "Ext. interrupt 4 test failed."s;
             else
             {
                 tempi = 0x0055;
@@ -714,12 +713,12 @@ int MCU_BD::RunProductionTest_MCU()
                 retval = mSPI_read(1); //REG1 read
                 if (retval != 0x55)
                 {
-                    temps = "Ext. interrupt 5 test failed.";
+                    temps = "Ext. interrupt 5 test failed."s;
                     return -1;
                 }
                 else
                 {
-                    temps = "Production test finished. MCU is OK.";
+                    temps = "Production test finished. MCU is OK."s;
                     return 0;
                 }
             }
@@ -736,14 +735,14 @@ int MCU_BD::RunProductionTest_MCU()
             }
             else
             {
-                temps = "Test failed";
+                temps = "Test failed"s;
                 return -1;
             }
         }
         else
         {
             // test too long. Failure.
-            temps = "Test failed.";
+            temps = "Test failed."s;
             return -1;
         }
     }
@@ -1120,28 +1119,29 @@ uint8_t MCU_BD::ReadMCUProgramID()
     return statusMcu & 0x7F;
 }
 
-static const char* MCU_ErrorMessages[] = { "No error",
-    "Generic error",
-    "CGEN tune failed",
-    "SXR tune failed",
-    "SXT tune failed",
-    "Loopback signal weak: not connected/insufficient gain?",
-    "Invalid Rx path",
-    "Invalid Tx band",
-    "Rx LPF bandwidth out of range",
-    "Rx invalid TIA gain",
-    "Tx LPF bandwidth out of range",
-    "Procedure is disabled",
-    "Rx R_CTL_LPF range limit reached",
-    "Rx CFB_TIA_RFE range limit reached",
-    "Tx RCAL_LPF range limit reached," };
+static constexpr std::array<std::string_view, MCU_BD::MCU_ERROR_CODES::MCU_ERROR_CODES_COUNT> MCU_ErrorMessages = {
+    "No error"sv,
+    "Generic error"sv,
+    "CGEN tune failed"sv,
+    "SXR tune failed"sv,
+    "SXT tune failed"sv,
+    "Loopback signal weak: not connected/insufficient gain?"sv,
+    "Invalid Rx path"sv,
+    "Invalid Tx band"sv,
+    "Rx LPF bandwidth out of range"sv,
+    "Rx invalid TIA gain"sv,
+    "Tx LPF bandwidth out of range"sv,
+    "Procedure is disabled"sv,
+    "Rx R_CTL_LPF range limit reached"sv,
+    "Rx CFB_TIA_RFE range limit reached"sv,
+    "Tx RCAL_LPF range limit reached"sv,
+};
 
 const char* MCU_BD::MCUStatusMessage(const uint8_t code)
 {
-    static_assert(MCU_ERROR_CODES_COUNT == sizeof(MCU_ErrorMessages) / sizeof(char*), "MCU errors enum/string count mismatch");
     if (code == 255)
         return "MCU not programmed/procedure still in progress";
     if (code >= MCU_ERROR_CODES_COUNT)
         return "Error code undefined";
-    return MCU_ErrorMessages[code];
+    return MCU_ErrorMessages[code].data();
 }

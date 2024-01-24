@@ -20,7 +20,7 @@ static int32_t FindChipSelectByName(SDRDevice* device, const std::string& chipNa
         return -1;
     }
 
-    auto iter = chipMap.find(std::string(chipName));
+    auto iter = chipMap.find(chipName);
     if (iter == chipMap.end())
     {
         cerr << "Device does not contain target chip (" << chipName << "). Available list:" << endl;

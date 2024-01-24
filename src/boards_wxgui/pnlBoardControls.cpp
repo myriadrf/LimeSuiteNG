@@ -25,6 +25,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
 
 // wrapper class for assigning user data to wxWidgets event handling
 struct UserDataContainer : public wxObject {
@@ -281,7 +282,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
     {
         ids.push_back(param.channel);
         values.push_back(0);
-        units.push_back("");
+        units.push_back(""s);
     }
 
     std::vector<CustomParameterIO> params;
@@ -289,7 +290,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
 
     for (size_t i = 0; i < mParameters.size(); ++i)
     {
-        params.push_back({ mParameters[i].channel, 0, "" });
+        params.push_back({ mParameters[i].channel, 0, ""s });
     }
 
     OpStatus status = ReadCustomBoardParam(mDevice, params);
@@ -342,7 +343,7 @@ void pnlBoardControls::OnWriteAll(wxCommandEvent& event)
         if (!mParameters[i].writable)
             continue;
 
-        params.push_back({ mParameters[i].channel, mParameters[i].value, "" });
+        params.push_back({ mParameters[i].channel, mParameters[i].value, ""s });
     }
 
     OpStatus status = WriteCustomBoardParam(mDevice, params);
@@ -555,8 +556,7 @@ void pnlBoardControls::SetupControls(const std::string_view& boardID)
             for (const auto& region : regions)
             {
                 MemoryParamGUI* gui = new MemoryParamGUI();
-                gui->title =
-                    new wxStaticText(pnlEEPROMControls, wxID_ANY, std::string{ lime::MEMORY_REGIONS_TEXT.at(region.first) });
+                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, MEMORY_REGIONS_TEXT.at(region.first));
                 gui->txtValue = new wxTextCtrl(pnlEEPROMControls, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize);
                 gui->btnRead = new wxButton(pnlEEPROMControls, wxNewId(), _("Read"), wxDefaultPosition, wxDefaultSize);
                 gui->btnWrite = new wxButton(pnlEEPROMControls, wxNewId(), _("Write"), wxDefaultPosition, wxDefaultSize);
@@ -626,7 +626,7 @@ void pnlBoardControls::SetupControls(const std::string_view& boardID)
         wxFlexGridSizer* submodulesSizer = new wxFlexGridSizer(4, 0, 0, 0);
         for (int i = 0; i < 8; ++i)
         {
-            std::string spiSlaveName = "FPGA@" + std::to_string(i + 1);
+            std::string spiSlaveName = "FPGA@"s + std::to_string(i + 1);
 
             pnlXTRX* pnl = new pnlXTRX(owner, wxNewId(), wxDefaultPosition, wxDefaultSize, 0, spiSlaveName);
             submodulesSizer->Add(pnl);
@@ -663,7 +663,7 @@ void pnlBoardControls::OnSetDACvalues(wxSpinEvent& event)
             if (mDevice == nullptr)
                 return;
 
-            OpStatus status = WriteCustomBoardParam(mDevice, { { mParameters[i].channel, mParameters[i].value, "" } });
+            OpStatus status = WriteCustomBoardParam(mDevice, { { mParameters[i].channel, mParameters[i].value, ""s } });
             if (status != OpStatus::SUCCESS)
                 wxMessageBox(_("Failed to set value"), _("Warning"));
             return;
@@ -679,7 +679,7 @@ void pnlBoardControls::OnUserChangedBoardType(wxCommandEvent& event)
 void pnlBoardControls::OnCustomRead(wxCommandEvent& event)
 {
     uint8_t id = spinCustomChannelRd->GetValue();
-    std::vector<CustomParameterIO> param{ { id, 0, "" } };
+    std::vector<CustomParameterIO> param{ { id, 0, ""s } };
 
     OpStatus status = ReadCustomBoardParam(mDevice, param);
     if (status != OpStatus::SUCCESS)

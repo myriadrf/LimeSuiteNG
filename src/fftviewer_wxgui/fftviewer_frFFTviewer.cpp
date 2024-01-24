@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
 
 void fftviewer_frFFTviewer::Update()
 {
@@ -99,12 +100,12 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mFFTpanel->settings.gridXlines = 15;
     mFFTpanel->SetInitialDisplayArea(-16000000, 16000000, -115, 0);
 
-    mFFTpanel->settings.title = "FFT";
-    mFFTpanel->settings.titleXaxis = "Frequency(MHz)";
-    mFFTpanel->settings.titleYaxis = "Amplitude(dBFS)";
-    mFFTpanel->settings.xUnits = "";
+    mFFTpanel->settings.title = "FFT"s;
+    mFFTpanel->settings.titleXaxis = "Frequency(MHz)"s;
+    mFFTpanel->settings.titleYaxis = "Amplitude(dBFS)"s;
+    mFFTpanel->settings.xUnits = ""s;
     mFFTpanel->settings.gridXprec = 3;
-    //mFFTpanel->settings.yUnits = "dB";
+    //mFFTpanel->settings.yUnits = "dB"s;
     mFFTpanel->settings.markersEnabled = true;
 
     mFFTpanel->settings.marginLeft = 40;
@@ -116,7 +117,7 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mTimeDomainPanel->AddSerie(new cDataSerie());
     mTimeDomainPanel->AddSerie(new cDataSerie());
     mTimeDomainPanel->SetInitialDisplayArea(0, 1024, -1, 1);
-    mTimeDomainPanel->settings.title = "IQ samples";
+    mTimeDomainPanel->settings.title = "IQ samples"s;
     mTimeDomainPanel->series[0]->color = 0xFF0000FF;
     mTimeDomainPanel->series[1]->color = 0x0000FFFF;
     mTimeDomainPanel->series[2]->color = 0xFF00FFFF;
@@ -129,9 +130,9 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mConstelationPanel->series[1]->color = 0x0000FFFF;
     mConstelationPanel->SetInitialDisplayArea(-1, 1, -1, 1);
     mConstelationPanel->SetDrawingMode(GLG_POINTS);
-    mConstelationPanel->settings.title = "I versus Q";
-    mConstelationPanel->settings.titleXaxis = "I";
-    mConstelationPanel->settings.titleYaxis = "Q";
+    mConstelationPanel->settings.title = "I versus Q"s;
+    mConstelationPanel->settings.titleXaxis = "I"s;
+    mConstelationPanel->settings.titleYaxis = "Q"s;
     mConstelationPanel->settings.gridXlines = 8;
     mConstelationPanel->settings.gridYlines = 8;
     mConstelationPanel->settings.marginLeft = 48;

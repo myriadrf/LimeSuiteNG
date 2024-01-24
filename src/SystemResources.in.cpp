@@ -31,6 +31,8 @@
     #include <unistd.h>
 #endif
 
+using namespace std::literals::string_literals;
+
 std::string lime::getLimeSuiteRoot(void)
 {
     //first check the environment variable
@@ -60,7 +62,7 @@ std::string lime::getLimeSuiteRoot(void)
     }
 #endif //_MSC_VER && LIME_DLL
 
-    return "@LIME_SUITE_ROOT@";
+    return "@LIME_SUITE_ROOT@"s;
 }
 
 std::string lime::getHomeDirectory(void)
@@ -77,7 +79,7 @@ std::string lime::getHomeDirectory(void)
         return pwDir;
 #endif
 
-    return "";
+    return ""s;
 }
 
 /*!
@@ -107,19 +109,19 @@ static std::string getBareAppDataDirectory(void)
 #endif
 
     //xdg freedesktop standard location for data in home directory
-    return lime::getHomeDirectory() + "/.local/share";
+    return lime::getHomeDirectory() + "/.local/share"s;
 }
 
 std::string lime::getAppDataDirectory(void)
 {
-    return getBareAppDataDirectory() + "/LimeSuite";
+    return getBareAppDataDirectory() + "/LimeSuite"s;
 }
 
 std::string lime::getConfigDirectory(void)
 {
     //xdg standard is XDG_CONFIG_HOME or $HOME/.config
     //but historically we have used $HOME/.limesuite
-    return lime::getHomeDirectory() + "/.limesuite";
+    return lime::getHomeDirectory() + "/.limesuite"s;
 }
 
 std::vector<std::string> lime::listImageSearchPaths(void)
@@ -148,10 +150,10 @@ std::vector<std::string> lime::listImageSearchPaths(void)
     }
 
     //search directories in the user's home directory
-    imageSearchPaths.push_back(lime::getAppDataDirectory() + "/images");
+    imageSearchPaths.push_back(lime::getAppDataDirectory() + "/images"s);
 
     //search global installation directories
-    imageSearchPaths.push_back(lime::getLimeSuiteRoot() + "/share/LimeSuite/images");
+    imageSearchPaths.push_back(lime::getLimeSuiteRoot() + "/share/LimeSuite/images"s);
 
     return imageSearchPaths;
 }
@@ -160,7 +162,7 @@ std::string lime::locateImageResource(const std::string& name)
 {
     for (const auto& searchPath : lime::listImageSearchPaths())
     {
-        const std::string fullPath(searchPath + "/@VERSION_MAJOR@.@VERSION_MINOR@/" + name);
+        const std::string fullPath(searchPath + "/@VERSION_MAJOR@.@VERSION_MINOR@/"s + name);
         if (access(fullPath.c_str(), R_OK) == 0)
             return fullPath;
     }
@@ -169,9 +171,9 @@ std::string lime::locateImageResource(const std::string& name)
 
 int lime::downloadImageResource(const std::string& name)
 {
-    const std::string destDir(lime::getAppDataDirectory() + "/images/@VERSION_MAJOR@.@VERSION_MINOR@");
-    const std::string destFile(destDir + "/" + name);
-    const std::string sourceUrl("https://downloads.myriadrf.org/project/limesuite/@VERSION_MAJOR@.@VERSION_MINOR@/" + name);
+    const std::string destDir(lime::getAppDataDirectory() + "/images/@VERSION_MAJOR@.@VERSION_MINOR@"s);
+    const std::string destFile(destDir + "/"s + name);
+    const std::string sourceUrl("https://downloads.myriadrf.org/project/limesuite/@VERSION_MAJOR@.@VERSION_MINOR@/"s + name);
 
     if (std::filesystem::exists(destDir))
     {

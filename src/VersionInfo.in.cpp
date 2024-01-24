@@ -10,14 +10,16 @@
 #define QUOTE_(x) #x
 #define QUOTE(x) QUOTE_(x)
 
+using namespace std::literals::string_literals;
+
 std::string lime::GetLibraryVersion(void)
 {
-    return "@LIME_SUITE_VERSION@";
+    return "@LIME_SUITE_VERSION@"s;
 }
 
 std::string lime::GetBuildTimestamp(void)
 {
-    return "@BUILD_TIMESTAMP@";
+    return "@BUILD_TIMESTAMP@"s;
 }
 
 std::string lime::GetAPIVersion(void)
@@ -30,5 +32,5 @@ std::string lime::GetAPIVersion(void)
 
 std::string lime::GetABIVersion(void)
 {
-    return "@LIME_SUITE_SOVER@";
+    return "@LIME_SUITE_SOVER@"s;
 }

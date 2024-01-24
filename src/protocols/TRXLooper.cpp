@@ -9,7 +9,6 @@
 
 #include "TRXLooper.h"
 
-using namespace std;
 using namespace std::literals::string_literals;
 
 namespace lime {

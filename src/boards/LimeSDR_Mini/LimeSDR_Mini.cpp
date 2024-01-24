@@ -25,6 +25,7 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
 static const int STREAM_BULK_READ_ADDRESS = 0x83;
@@ -35,8 +36,8 @@ static const int CONTROL_BULK_READ_ADDRESS = 0x82;
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static const SDRDevice::CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)", 0, 0, 255, false };
-static const SDRDevice::CustomParameter CP_TEMPERATURE = { "Board Temperature", 1, 0, 65535, true };
+static const SDRDevice::CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)"s, 0, 0, 255, false };
+static const SDRDevice::CustomParameter CP_TEMPERATURE = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v0 = { //
     { 0x0022, 0x0FFF },
@@ -177,31 +178,31 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         descriptor.customParameters.push_back(CP_TEMPERATURE);
     }
 
-    descriptor.spiSlaveIds = { { "LMS7002M", SPI_LMS7002M }, { "FPGA", SPI_FPGA } };
+    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     RFSOCDescriptor soc;
     soc.name = "LMS";
     soc.channelCount = 1;
-    soc.pathNames[TRXDir::Rx] = { "NONE", "LNAH", "LNAL_NC", "LNAW", "Auto" };
-    soc.pathNames[TRXDir::Tx] = { "NONE", "Band1", "Band2", "Auto" };
+    soc.pathNames[TRXDir::Rx] = { "NONE"s, "LNAH"s, "LNAL_NC"s, "LNAW"s, "Auto"s };
+    soc.pathNames[TRXDir::Tx] = { "NONE"s, "Band1"s, "Band2"s, "Auto"s };
     soc.samplingRateRange = { 100e3, 30.72e6, 0 };
     soc.frequencyRange = { 10e6, 3.5e9, 0 };
 
     soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
     soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
 
-    soc.antennaRange[TRXDir::Rx]["LNAH"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAW"] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Tx]["Band1"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"] = { 30e6, 1.9e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 900e6 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
     SetGainInformationInDescriptor(soc);
 
     descriptor.rfSOC.push_back(soc);
 
-    auto fpgaNode = std::make_shared<DeviceNode>("FPGA", eDeviceNodeClass::FPGA_MINI, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS", eDeviceNodeClass::LMS7002M, mLMSChips[0]));
-    descriptor.socTree = std::make_shared<DeviceNode>("SDR Mini", eDeviceNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceNode>("FPGA"s, eDeviceNodeClass::FPGA_MINI, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS"s, eDeviceNodeClass::LMS7002M, mLMSChips[0]));
+    descriptor.socTree = std::make_shared<DeviceNode>("SDR Mini"s, eDeviceNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
     mDeviceDescriptor = descriptor;
@@ -425,7 +426,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                     pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
                     break;
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
 
                 int payloadOffset = pkt.blockCount * 4;
@@ -445,7 +446,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                     pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
                     break;
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
 
                 int payloadOffset = pkt.blockCount * 2;
@@ -462,7 +463,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         int sent = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
         {
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
         }
 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
@@ -481,7 +482,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         }
         else
         {
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
         }
     }
 
@@ -636,7 +637,7 @@ void LimeSDR_Mini::StreamStart(uint8_t moduleIndex)
     }
     else
     {
-        throw std::runtime_error("Stream not setup");
+        throw std::runtime_error("Stream not setup"s);
     }
 }
 

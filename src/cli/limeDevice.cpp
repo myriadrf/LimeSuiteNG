@@ -3,6 +3,8 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 static int printHelp(void)
 {
@@ -12,18 +14,18 @@ static int printHelp(void)
     return EXIT_SUCCESS;
 }
 
-static std::string GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
+static const std::string_view GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
 {
     switch (status)
     {
     case SDRDevice::GPS_Lock::LockStatus::NotAvailable:
-        return std::string("Not available");
+        return "Not available"sv;
     case SDRDevice::GPS_Lock::LockStatus::Has2D:
-        return std::string("2D");
+        return "2D"sv;
     case SDRDevice::GPS_Lock::LockStatus::Has3D:
-        return std::string("3D");
+        return "3D"sv;
     default:
-        return std::string("Undefined");
+        return "Undefined"sv;
     }
 }
 
