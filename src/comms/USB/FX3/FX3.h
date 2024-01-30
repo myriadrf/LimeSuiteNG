@@ -28,7 +28,7 @@ class FX3 : public USBGeneric
     FX3(void* usbContext = nullptr);
     virtual ~FX3();
 
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view& serial = ""sv) override;
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv) override;
     virtual void Disconnect() override;
 
     virtual bool IsConnected() override;

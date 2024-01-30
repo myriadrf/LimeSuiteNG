@@ -79,7 +79,7 @@ constexpr std::array<const std::string_view, LMS_DEV_COUNT> LMS_DEV_NAMES = {
     "LimeSDR MMX8"sv,
 };
 
-static constexpr const std::string_view& GetDeviceName(const eLMS_DEV device)
+static constexpr const std::string_view GetDeviceName(const eLMS_DEV device)
 {
     if (LMS_DEV_UNKNOWN < device && device < LMS_DEV_COUNT)
     {
@@ -117,7 +117,7 @@ constexpr std::array<const std::string_view, EXP_BOARD_COUNT> EXP_BOARD_NAMES = 
     "Myriad7 Novena"sv,
 };
 
-static constexpr const std::string_view& GetExpansionBoardName(const eEXP_BOARD board)
+static constexpr const std::string_view GetExpansionBoardName(const eEXP_BOARD board)
 {
     if (EXP_BOARD_UNKNOWN < board && board < EXP_BOARD_COUNT)
     {

@@ -105,7 +105,7 @@ class pnlBoardControls : public IModuleFrame
     bool Initialize(lime::SDRDevice* device) override;
     void Update() override;
 
-    void SetupControls(const std::string_view& boardID);
+    void SetupControls(const std::string_view boardID);
     void OnSetDACvalues(wxSpinEvent& event);
     void OnSetDACvaluesENTER(wxCommandEvent& event);
     void OnDACWrite(wxCommandEvent& event);

@@ -9,7 +9,7 @@ using namespace std::literals::string_literals;
 /*******************************************************************
  * String parsing helpers
  ******************************************************************/
-static std::string_view trim(const std::string_view& s)
+static std::string_view trim(const std::string_view s)
 {
     std::string_view out = s;
     while (not out.empty() and std::isspace(out[0]))
@@ -19,7 +19,7 @@ static std::string_view trim(const std::string_view& s)
     return out;
 }
 
-static std::map<std::string, std::string> argsToMap(const std::string_view& args)
+static std::map<std::string, std::string> argsToMap(const std::string_view args)
 {
     std::map<std::string, std::string> kwmap;
 

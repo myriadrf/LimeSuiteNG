@@ -449,7 +449,7 @@ void pnlBoardControls::OnDACWrite(wxCommandEvent& event)
     OnReadAll(event);
 }
 
-void pnlBoardControls::SetupControls(const std::string_view& boardID)
+void pnlBoardControls::SetupControls(const std::string_view boardID)
 {
 
     if (additionalControls)

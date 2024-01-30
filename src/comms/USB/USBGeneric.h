@@ -44,7 +44,7 @@ class USBGeneric
       @param serial The serial number of the device.
       @return The status of the operation (true on success).
      */
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view& serial = ""sv);
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv);
 
     /**
       @brief Returns whether this instance is connected to a device.

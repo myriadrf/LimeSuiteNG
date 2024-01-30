@@ -37,7 +37,7 @@ FX3::~FX3()
     Disconnect();
 }
 
-bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string_view& serial)
+bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
 {
     Disconnect();
 #ifndef __unix__

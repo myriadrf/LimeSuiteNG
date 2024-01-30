@@ -70,7 +70,7 @@ USBGeneric::~USBGeneric()
 #endif
 }
 
-bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view& serial)
+bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
 {
 #ifdef __unix__
     libusb_device** devs; // Pointer to pointer of device, used to retrieve a list of devices

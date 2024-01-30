@@ -28,7 +28,7 @@ FT601::~FT601()
     Disconnect();
 }
 
-bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string_view& serial)
+bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
 {
     Disconnect();
 #ifndef __unix__

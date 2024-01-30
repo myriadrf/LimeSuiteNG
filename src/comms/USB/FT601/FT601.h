@@ -23,7 +23,7 @@ class FT601 : public USBGeneric
     FT601(void* usbContext = nullptr);
     virtual ~FT601();
 
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view& serial = ""sv) override;
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv) override;
     virtual void Disconnect() override;
 
 #ifndef __unix__
