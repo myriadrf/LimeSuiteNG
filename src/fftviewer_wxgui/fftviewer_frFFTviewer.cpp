@@ -208,7 +208,7 @@ void fftviewer_frFFTviewer::StartStreaming()
         if (dlg.ShowModal() == wxID_CANCEL)
             captureSamples.store(false);
         else
-            captureFilename = dlg.GetPath().To8BitData();
+            captureFilename = dlg.GetPath().ToStdString();
     }
     else
         captureSamples.store(false);

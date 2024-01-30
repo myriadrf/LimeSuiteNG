@@ -266,7 +266,7 @@ int main(int argc, char** argv)
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
             {
-                cwd.substr(0, slash0Pos - 1);
+                cwd = cwd.substr(0, slash0Pos - 1);
             }
 
             if (iniFilename[0] != '/') // is not global path

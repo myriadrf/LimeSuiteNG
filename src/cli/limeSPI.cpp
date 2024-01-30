@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
+#include <filesystem>
 
 using namespace std;
 using namespace lime;
@@ -212,7 +213,7 @@ int main(int argc, char** argv)
     if (hexInputIsFilename)
     {
         //read file
-        const std::string filename(hexInput);
+        const std::filesystem::path filename(hexInput);
         std::ifstream inputFile(filename);
         if (!inputFile.is_open())
         {
