@@ -277,21 +277,23 @@ class ConstellationPlotter
 };
 #endif
 
-static std::vector<int> ParseIntArray(const std::string& str)
+static std::vector<int> ParseIntArray(std::string_view str)
 {
     std::vector<int> numbers;
-    size_t parsed = 0;
-    while (parsed < str.length())
+    while (str.length() > 0)
     {
         try
         {
-            int nr = stoi(&str[parsed]);
+            std::size_t index = str.find_first_of(',');
+            int nr = std::stoi(std::string{ str.substr(0, index) });
             numbers.push_back(nr);
-            size_t next = str.find_first_of(',', parsed);
-            if (next == string::npos)
+
+            if (index == std::string_view::npos)
+            {
                 return numbers;
-            else
-                parsed = next + 1;
+            }
+
+            str = str.substr(index + 1);
         } catch (...)
         {
             return numbers;
