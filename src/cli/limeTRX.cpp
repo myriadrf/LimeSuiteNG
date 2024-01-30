@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <getopt.h>
+#include <filesystem>
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -30,17 +31,17 @@ void intHandler(int dummy)
 }
 
 static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::ERROR;
-static SDRDevice::LogLevel strToLogLevel(const char* str)
+static SDRDevice::LogLevel strToLogLevel(const std::string_view str)
 {
-    if (strstr("debug", str))
+    if ("debug"sv == str)
         return SDRDevice::LogLevel::DEBUG;
-    else if (strstr("verbose", str))
+    else if ("verbose"sv == str)
         return SDRDevice::LogLevel::VERBOSE;
-    else if (strstr("error", str))
+    else if ("error"sv == str)
         return SDRDevice::LogLevel::ERROR;
-    else if (strstr("warning", str))
+    else if ("warning"sv == str)
         return SDRDevice::LogLevel::WARNING;
-    else if (strstr("info", str))
+    else if ("info"sv == str)
         return SDRDevice::LogLevel::INFO;
     return SDRDevice::LogLevel::ERROR;
 }
@@ -302,9 +303,9 @@ static std::vector<int> ParseIntArray(const std::string& str)
 int main(int argc, char** argv)
 {
     StreamComposite* composite = nullptr;
-    char* devName = nullptr;
-    char* rxFilename = nullptr;
-    char* txFilename = nullptr;
+    std::string_view devName{ ""sv };
+    std::filesystem::path rxFilename{ ""sv };
+    std::filesystem::path txFilename{ ""sv };
     bool rx = true;
     bool tx = false;
     bool showFFT = false;
@@ -465,7 +466,7 @@ int main(int argc, char** argv)
     }
 
     SDRDevice* device;
-    if (devName)
+    if (!devName.empty())
         device = ConnectUsingNameHint(devName);
     else
     {
@@ -551,7 +552,7 @@ int main(int argc, char** argv)
 
     std::vector<complex16_t> txData;
     int64_t txSent = 0;
-    if (tx && txFilename)
+    if (tx && !txFilename.empty())
     {
         std::ifstream inputFile;
         inputFile.open(txFilename, std::ifstream::in | std::ifstream::binary);
@@ -578,7 +579,7 @@ int main(int argc, char** argv)
     fftBins[0] = 0;
 
     std::ofstream rxFile;
-    if (rxFilename)
+    if (!rxFilename.empty())
     {
         std::cout << "Rx data to file: " << rxFilename << std::endl;
         rxFile.open(rxFilename, std::ofstream::out | std::ofstream::binary);
@@ -669,7 +670,7 @@ int main(int argc, char** argv)
 
         // process samples
         totalSamplesReceived += samplesRead;
-        if (rxFilename)
+        if (!rxFilename.empty())
         {
             rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
         }

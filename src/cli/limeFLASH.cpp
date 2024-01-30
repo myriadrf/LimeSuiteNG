@@ -1,5 +1,6 @@
 #include "cli/common.h"
 #include <getopt.h>
+#include <filesystem>
 
 using namespace std;
 using namespace lime;
@@ -25,7 +26,7 @@ static void PrintMemoryDevices(SDRDevice::Descriptor descriptor)
     }
 }
 
-static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string& targetName)
+static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string_view targetName)
 {
     if (!device)
     {
@@ -50,7 +51,7 @@ static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRD
 
     try
     {
-        return memoryDevices.at(targetName);
+        return memoryDevices.at(std::string{ targetName });
     } catch (const std::out_of_range& e)
     {
         std::cerr << e.what() << '\n';
@@ -118,9 +119,9 @@ static int printHelp(void)
 
 int main(int argc, char** argv)
 {
-    char* filePath = nullptr;
-    char* devName = nullptr;
-    char* targetName = nullptr;
+    std::filesystem::path filePath{ ""sv };
+    std::string_view devName{ ""sv };
+    std::string_view targetName{ ""sv };
     signal(SIGINT, inthandler);
 
     static struct option long_options[] = { { "help", no_argument, 0, 'h' },
@@ -168,7 +169,7 @@ int main(int argc, char** argv)
     }
 
     SDRDevice* device;
-    if (devName)
+    if (!devName.empty())
         device = ConnectUsingNameHint(devName);
     else
     {

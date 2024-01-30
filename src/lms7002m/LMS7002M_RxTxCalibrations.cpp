@@ -291,31 +291,27 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     uint8_t lna = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE));
     double rxFreq = GetFrequencySX(TRXDir::Rx);
 
-    const char* lnaName;
-    switch (lna)
-    {
-    case 0:
-        lnaName = "none";
-        break;
-    case 1:
-        lnaName = "LNAH";
-        break;
-    case 2:
-        lnaName = "LNAL";
-        break;
-    case 3:
-        lnaName = "LNAW";
-        break;
-    default:
-        lnaName = "none";
-        break;
-    }
+    const std::string_view lnaName = [lna]() {
+        switch (lna)
+        {
+        case 0:
+            return "none"sv;
+        case 1:
+            return "LNAH"sv;
+        case 2:
+            return "LNAL"sv;
+        case 3:
+            return "LNAW"sv;
+        default:
+            return "none"sv;
+        }
+    }();
     lime::debug("Rx calibration using %s loopback", (useExtLoopback ? "EXTERNAL" : "INTERNAL"));
     lime::debug("Rx ch.%s @ %4g MHz, BW: %g MHz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         ch == static_cast<uint8_t>(Channel::ChA) ? "A" : "B",
         rxFreq / 1e6,
         bandwidth_Hz / 1e6,
-        lnaName,
+        lnaName.data(),
         Get_SPI_Reg_bits(LMS7_G_PGA_RBB),
         Get_SPI_Reg_bits(LMS7_G_LNA_RFE),
         Get_SPI_Reg_bits(LMS7_G_TIA_RFE));

@@ -159,10 +159,11 @@ inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
     return streamHandles.size() - 1;
 }
 
-inline void CopyString(const std::string& source, char* destination, std::size_t destinationLength)
+inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
 {
-    std::strncpy(destination, source.c_str(), destinationLength - 1);
-    destination[destinationLength - 1] = 0;
+    std::size_t charsToCopy = std::min(destinationLength - 1, source.size());
+    std::strncpy(destination, source.data(), charsToCopy);
+    destination[charsToCopy] = 0;
 }
 
 inline lms_range_t RangeToLMS_Range(const lime::Range& range)

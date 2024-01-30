@@ -2,9 +2,9 @@
 
 using namespace lime;
 
-SDRDevice* ConnectUsingNameHint(const std::string& hintArguments)
+SDRDevice* ConnectUsingNameHint(const std::string_view hintArguments)
 {
-    DeviceHandle handle(hintArguments);
+    DeviceHandle handle(std::string{ hintArguments });
     auto handles = DeviceRegistry::enumerate(handle);
     if (handles.size() > 1)
     {

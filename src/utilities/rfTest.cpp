@@ -9,6 +9,7 @@
 #include <thread>
 #include <signal.h>
 #include <atomic>
+#include <string_view>
 #undef USE_GNU_PLOT
 
 #ifdef USE_GNU_PLOT
@@ -17,12 +18,13 @@
 
 using namespace lime;
 using namespace std;
+using namespace std::literals::string_literals;
 
 SDRDevice* device = nullptr;
 
 static const double frequencyLO = 2e9;
 static uint8_t chipIndex = 0; // device might have several RF chips
-char* iniArg = nullptr;
+std::string_view iniArg {""sv};
 
 std::atomic<bool> runForever;
 void intHandler(int dummy)

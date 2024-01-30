@@ -7,7 +7,7 @@
 using namespace std;
 using namespace lime;
 
-static int32_t FindChipSelectByName(SDRDevice* device, const std::string& chipName)
+static int32_t FindChipSelectByName(SDRDevice* device, const std::string_view chipName)
 {
     if (!device)
         return -1;
@@ -20,7 +20,7 @@ static int32_t FindChipSelectByName(SDRDevice* device, const std::string& chipNa
         return -1;
     }
 
-    auto iter = chipMap.find(chipName);
+    auto iter = chipMap.find(std::string{ chipName });
     if (iter == chipMap.end())
     {
         cerr << "Device does not contain target chip (" << chipName << "). Available list:" << endl;
@@ -38,55 +38,66 @@ static void PrintMISO(std::ostream& stream, const std::vector<uint32_t>& miso)
         stream << std::setw(8) << value << std::endl;
 }
 
-static uint32_t hex2int(const char* hexstr)
+static uint32_t hex2int(const std::string_view hexstr)
 {
-    assert(hexstr);
     uint32_t value = 0;
-    sscanf(hexstr, "%X", &value);
+    sscanf(hexstr.data(), "%X", &value);
     return value;
 }
 
-static int parseWriteInput(char* hexstr, std::vector<uint32_t>& mosi)
+static int parseWriteInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
 {
-    static const char* delimiters = " \n,";
+    static const std::string_view delimiters = " \n,"sv;
     mosi.clear();
-    char* token = std::strtok(hexstr, delimiters);
+
     const uint32_t spiWriteBit = 1 << 31;
     int tokenCount = 0;
-    while (token)
+
+    std::size_t position = 0;
+    while (position != std::string_view::npos)
     {
-        int tokenLength = strlen(token);
+        position = hexstr.find_first_of(delimiters);
+        std::string_view token = hexstr.substr(0, position);
+        int tokenLength = token.size();
         if (tokenLength <= 8 && tokenLength > 4) // write instruction
         {
             uint32_t value = hex2int(token);
             mosi.push_back(spiWriteBit | value);
         }
-        else
+        else if (tokenLength != 0)
+        {
             std::cerr << "Invalid input value: " << token << std::endl;
+        }
         ++tokenCount;
-        token = std::strtok(nullptr, delimiters);
+        hexstr = hexstr.substr(position + 1);
     }
     return tokenCount;
 }
 
-static int parseReadInput(char* hexstr, std::vector<uint32_t>& mosi)
+static int parseReadInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
 {
-    static const char* delimiters = " \n,";
+    static const std::string_view delimiters = " \n,"sv;
     mosi.clear();
-    char* token = std::strtok(hexstr, delimiters);
+
     int tokenCount = 0;
-    while (token)
+
+    std::size_t position = 0;
+    while (position != std::string_view::npos)
     {
-        int tokenLength = strlen(token);
+        position = hexstr.find_first_of(delimiters);
+        std::string_view token = hexstr.substr(0, position);
+        int tokenLength = token.size();
         if (tokenLength <= 4 && tokenLength > 0) // read instruction
         {
             uint32_t value = hex2int(token);
             mosi.push_back(value);
         }
-        else
+        else if (tokenLength != 0)
+        {
             std::cerr << "Invalid input value: " << token << std::endl;
+        }
         ++tokenCount;
-        token = std::strtok(nullptr, delimiters);
+        hexstr = hexstr.substr(position + 1);
     }
     return tokenCount;
 }
@@ -106,9 +117,9 @@ static int printHelp(void)
 
 int main(int argc, char** argv)
 {
-    char* devName = nullptr;
-    char* chipName = nullptr;
-    char* hexInput = nullptr;
+    std::string_view devName{ ""sv };
+    std::string_view chipName{ ""sv };
+    std::string_view hexInput{ ""sv };
     bool hexInputIsFilename = false;
     bool isWrite = false;
     bool isRead = false;
@@ -171,7 +182,7 @@ int main(int argc, char** argv)
     }
 
     SDRDevice* device;
-    if (devName)
+    if (!devName.empty())
         device = ConnectUsingNameHint(devName);
     else
     {
@@ -218,7 +229,7 @@ int main(int argc, char** argv)
         hexInput = buffer.data();
     }
 
-    if (!hexInput)
+    if (hexInput.empty())
     {
         DeviceRegistry::freeDevice(device);
         cerr << "No input provided" << endl;

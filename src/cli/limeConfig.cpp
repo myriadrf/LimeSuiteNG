@@ -4,9 +4,11 @@
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
+#include <string_view>
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
 static std::vector<int> ParseIntArray(const std::string& str)
@@ -33,20 +35,21 @@ static std::vector<int> ParseIntArray(const std::string& str)
 }
 
 static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::ERROR;
-static SDRDevice::LogLevel strToLogLevel(const char* str)
+static SDRDevice::LogLevel strToLogLevel(const std::string_view str)
 {
-    if (strstr("debug", str))
+    if ("debug"sv == str)
         return SDRDevice::LogLevel::DEBUG;
-    else if (strstr("verbose", str))
+    else if ("verbose"sv == str)
         return SDRDevice::LogLevel::VERBOSE;
-    else if (strstr("error", str))
+    else if ("error"sv == str)
         return SDRDevice::LogLevel::ERROR;
-    else if (strstr("warning", str))
+    else if ("warning"sv == str)
         return SDRDevice::LogLevel::WARNING;
-    else if (strstr("info", str))
+    else if ("info"sv == str)
         return SDRDevice::LogLevel::INFO;
     return SDRDevice::LogLevel::ERROR;
 }
+
 static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
@@ -110,9 +113,9 @@ enum Args {
 
 int main(int argc, char** argv)
 {
-    char* devName = nullptr;
+    std::string_view devName{ ""sv };
     bool initializeBoard = false;
-    char* iniFilename = nullptr;
+    std::string_view iniFilename{ ""sv };
     std::vector<int> chipIndexes;
 
     SDRDevice::SDRConfig config;
@@ -231,7 +234,7 @@ int main(int argc, char** argv)
     }
 
     SDRDevice* device;
-    if (devName)
+    if (!devName.empty())
         device = ConnectUsingNameHint(devName);
     else
     {
@@ -255,9 +258,9 @@ int main(int argc, char** argv)
     {
         if (initializeBoard)
             device->Init();
-        if (iniFilename)
+        if (!iniFilename.empty())
         {
-            std::string configFilepath;
+            std::string configFilepath = ""s;
             config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
@@ -268,12 +271,10 @@ int main(int argc, char** argv)
 
             if (iniFilename[0] != '/') // is not global path
             {
-                configFilepath = std::string{ cwd } + "/" + iniFilename;
+                configFilepath = std::string{ cwd } + '/';
             }
-            else
-            {
-                configFilepath = iniFilename;
-            }
+
+            configFilepath += std::string{ iniFilename };
 
             for (int moduleId : chipIndexes)
             {
