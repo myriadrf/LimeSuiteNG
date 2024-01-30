@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <thread>
+#include <filesystem>
 #include "Logger.h"
 
 #ifdef __unix__
@@ -61,7 +62,7 @@ LitePCIe::~LitePCIe()
     Close();
 }
 
-OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
+OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
     // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
@@ -91,7 +92,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
             ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
             if (ret != 0 || lockInfo.dma_writer_status == 0)
             {
-                const std::string msg = mFilePath + ": DMA writer request denied";
+                const std::string msg = mFilePath.string() + ": DMA writer request denied";
                 throw std::runtime_error(msg);
             }
             uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
@@ -102,7 +103,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
                 info.dma_rx_buf_offset));
             if (buf == MAP_FAILED || buf == nullptr)
             {
-                const std::string msg = mFilePath + ": failed to MMAP Rx DMA buffer";
+                const std::string msg = mFilePath.string() + ": failed to MMAP Rx DMA buffer";
                 throw std::runtime_error(msg);
             }
             mDMA.rxMemory = buf;
@@ -115,7 +116,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
             ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
             if (ret != 0 || lockInfo.dma_reader_status == 0)
             {
-                const std::string msg = mFilePath + ": DMA reader request denied";
+                const std::string msg = mFilePath.string() + ": DMA reader request denied";
                 throw std::runtime_error(msg);
             }
             uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
@@ -126,7 +127,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
                 info.dma_tx_buf_offset));
             if (buf == MAP_FAILED || buf == nullptr)
             {
-                const std::string msg = mFilePath + ": failed to MMAP Tx DMA buffer";
+                const std::string msg = mFilePath.string() + ": failed to MMAP Tx DMA buffer";
                 throw std::runtime_error(msg);
             }
             mDMA.txMemory = buf;

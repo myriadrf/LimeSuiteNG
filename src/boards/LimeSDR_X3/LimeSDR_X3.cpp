@@ -897,7 +897,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
             dirFlag = O_WRONLY;
         if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::SUCCESS)
         {
-            const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
+            const std::string reason = "Failed to open device in stream start: "s + trxPort->GetPathName().string();
             return ReportError(OpStatus::ERROR, reason.c_str());
         }
     }

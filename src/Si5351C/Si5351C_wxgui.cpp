@@ -417,7 +417,7 @@ void Si5351C_wxgui::OnbtnResetToDefaultsClick(wxCommandEvent& event)
     clockGenerator.UploadConfiguration();
 }
 
-void Si5351C_wxgui::ModifyClocksGUI(const std::string& board)
+void Si5351C_wxgui::ModifyClocksGUI(const std::string_view board)
 {
     for (int i = 0; i < 8; ++i)
         ClockEnable(i, true);

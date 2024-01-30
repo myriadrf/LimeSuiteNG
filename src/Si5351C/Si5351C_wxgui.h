@@ -32,7 +32,7 @@ class Si5351C_wxgui : public wxFrame
         wxString idname = "");
     void Initialize(lime::SDRDevice* pModule);
     virtual ~Si5351C_wxgui();
-    void ModifyClocksGUI(const std::string& board);
+    void ModifyClocksGUI(const std::string_view board);
 
     //(*Declarations(Si5351C_wxgui)
     wxCheckBox* chkEN_CLK5;

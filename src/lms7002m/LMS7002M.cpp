@@ -1715,13 +1715,13 @@ const LMS7Parameter& LMS7002M::GetParam(const std::string& name)
 {
     for (const LMS7Parameter& parameter : LMS7parameterList)
     {
-        if (std::string(parameter.name) == name)
+        if (std::string_view{ parameter.name } == name)
         {
             return parameter;
         }
     }
 
-    throw std::logic_error("Parameter " + name + " not found");
+    throw std::logic_error("Parameter "s + name + " not found"s);
 }
 
 OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output)
