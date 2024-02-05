@@ -19,7 +19,7 @@ class LimeSDR_Mini_Fixture : public ::testing::Test
             GTEST_SKIP() << "LimeSDR-Mini not connected, skipping"s;
         }
 
-        device = DeviceRegistry::makeDevice(DeviceHandle{ deviceHandleHint });
+        device = DeviceRegistry::makeDevice(devices.at(0));
 
         ASSERT_NE(device, nullptr);
     }

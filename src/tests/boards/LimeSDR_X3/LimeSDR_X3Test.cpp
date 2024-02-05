@@ -41,7 +41,7 @@ class LimeSDR_X3_Fixture : public ::testing::Test
             GTEST_SKIP() << "LimeSDR-X3 not connected, skipping"s;
         }
 
-        device = DeviceRegistry::makeDevice(DeviceHandle{ deviceHandleHint });
+        device = DeviceRegistry::makeDevice(devices.at(0));
 
         ASSERT_NE(device, nullptr);
 
@@ -87,6 +87,8 @@ TEST_F(LimeSDR_X3_Fixture, ConfigureTestPatternAndReceiveIt)
     device->StreamStart(0);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
+    sampleBuffer.fill({ 0, 0 });
+
     complex16_t* const data = sampleBuffer.data();
     device->StreamRx(0, &data, samplesToReceive, nullptr);
 
