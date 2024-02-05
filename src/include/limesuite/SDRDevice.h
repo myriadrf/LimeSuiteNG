@@ -1,6 +1,7 @@
 #ifndef LIME_SDRDevice_H
 #define LIME_SDRDevice_H
 
+#include <array>
 #include <cstring>
 #include <map>
 #include <memory>
@@ -340,7 +341,7 @@ class LIME_API SDRDevice
             : referenceClockFreq(0)
             , skipDefaults(false){};
         double referenceClockFreq; ///< The reference clock frequency of the device.
-        ChannelConfig channel[MAX_CHANNEL_COUNT]; ///< The configuration settings for each of the channels.
+        std::array<ChannelConfig, MAX_CHANNEL_COUNT> channel; ///< The configuration settings for each of the channels.
         // Loopback setup?
         bool skipDefaults; ///< Skip default values initialization and write on top of current config.
     };

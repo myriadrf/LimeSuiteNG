@@ -269,6 +269,9 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             LMS7002ChannelCalibration(chip, ch, i);
             // TODO: should report calibration failure, but configuration can
             // still work after failed calibration.
+
+            SetTestSignal(0, TRXDir::Rx, i, ch.rx.testSignal);
+            SetTestSignal(0, TRXDir::Tx, i, ch.tx.testSignal);
         }
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 

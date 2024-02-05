@@ -713,6 +713,8 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
                 strFormat("%s ch%i filter calibration failed: %s", dirName, ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
+
+    SetTestSignal(socIndex, dir, ch, cfg.channel.at(ch).GetDirection(dir).testSignal);
 }
 
 void LimeSDR_X3::SetLMSPath(const TRXDir dir, const SDRDevice::ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex)

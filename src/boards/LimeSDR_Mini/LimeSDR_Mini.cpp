@@ -287,6 +287,9 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
                 SetGain(0, TRXDir::Tx, i, gain.first, gain.second);
             }
 
+            SetTestSignal(0, TRXDir::Rx, i, ch.rx.testSignal);
+            SetTestSignal(0, TRXDir::Tx, i, ch.tx.testSignal);
+
             // TODO: set filters...
         }
 
