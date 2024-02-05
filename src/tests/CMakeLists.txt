@@ -16,14 +16,9 @@ set(LIME_TEST_SUITE_SOURCES
     protocols/BufferInterleavingTest.cpp
 )
 
-if (ENABLE_LIMESDR_X3)
-    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
-        boards/LimeSDR_X3/SlaveSelectShimTest.cpp
-    )
-endif()
-
 if (ENABLE_LITE_PCIE)
     set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
+        boards/LimeSDR_X3/SlaveSelectShimTest.cpp
         comms/PCIe/PCIE_CSR_PipeTest.cpp
     )
 endif()
