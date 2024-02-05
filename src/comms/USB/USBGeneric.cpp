@@ -148,7 +148,8 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     int returnCode = libusb_claim_interface(dev_handle, 0); // Claim interface 0 (the first) of device
     if (returnCode != LIBUSB_SUCCESS)
     {
-        return ReportError(returnCode, "Cannot claim interface - %s", libusb_strerror(libusb_error(returnCode)));
+        ReportError(returnCode, "Cannot claim interface - %s", libusb_strerror(libusb_error(returnCode)));
+        return false;
     }
 #endif
     isConnected = true;
