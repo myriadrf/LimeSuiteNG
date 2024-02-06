@@ -44,13 +44,10 @@ USBGeneric::USBGeneric(void* usbContext)
 
     if (activeUSBconnections == 0)
     {
-        ++activeUSBconnections;
         gUSBProcessingThread = std::thread(&USBGeneric::HandleLibusbEvents, this);
     }
-    else
-    {
-        ++activeUSBconnections;
-    }
+
+    ++activeUSBconnections;
 #endif
 }
 
@@ -58,6 +55,11 @@ USBGeneric::~USBGeneric()
 {
     Disconnect();
 #ifdef __unix__
+    if (ctx == nullptr)
+    {
+        return;
+    }
+
     --activeUSBconnections;
 
     if (activeUSBconnections == 0)
