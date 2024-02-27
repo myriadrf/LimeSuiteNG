@@ -193,9 +193,9 @@ if(ENABLE_TESTING)
     enable_testing()
 endif()
 
-########################################################################
-# rpath setup - http://www.cmake.org/Wiki/CMake_RPATH_handling
-########################################################################
+###########################################################################################
+# rpath setup - https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+###########################################################################################
 # use, i.e. don't skip the full RPATH for the build tree
 option(CMAKE_SKIP_BUILD_RPATH "skip rpath build" FALSE)
 

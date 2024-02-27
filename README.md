@@ -18,7 +18,7 @@ following components:
 
 Find build and install instructions for Lime Suite on the wiki:
 
-* http://wiki.myriadrf.org/Lime_Suite
+* https://wiki.myriadrf.org/Lime_Suite
 
 Information about LimeSDR boards:
 
