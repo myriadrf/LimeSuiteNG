@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <string>
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 static constexpr int BUFFER_SIZE = 256;
@@ -24,9 +26,9 @@ std::string ToString(TRXDir dir)
     switch (dir)
     {
     case TRXDir::Rx:
-        return "Rx";
+        return "Rx"s;
     case TRXDir::Tx:
-        return "Tx";
+        return "Tx"s;
     }
 }
 
