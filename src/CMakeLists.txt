@@ -15,6 +15,11 @@ if (ENABLE_HEADERS)
         FILES ${LIMESUITENG_PUBLIC_HEADERS}
         DESTINATION include/limesuiteng
     )
+    install(
+        FILES lime/LimeSuite.h;Logger.h
+        DESTINATION include/lime
+    )
+
 endif()
 
 ########################################################################
