@@ -1,5 +1,7 @@
 FROM gcc:13 AS build-stage
 
+WORKDIR /LimeSuiteNG/source
+
 COPY install_dependencies.sh install_dependencies.sh
 
 RUN apt update && \
@@ -20,4 +22,4 @@ RUN cmake . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF
 RUN make -C build --no-print-directory -j$(nproc) limesuiteng-test_coverage
 
 FROM scratch AS export-stage
-COPY --from=build-stage build/limesuiteng-test_coverage/ /
+COPY --from=build-stage /LimeSuiteNG/source/build/limesuiteng-test_coverage/ /
