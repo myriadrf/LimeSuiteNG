@@ -51,6 +51,21 @@ For ease of convenience, there is also a ``generate_docs.sh`` script located in 
 After a successful generation the resulting documentation pages will be located in
 ``docs/_build/html`` directory.
 
+Link checking
+-------------
+
+To check whether all URLs in the documentation are valid, there exists a ``make`` target to automatically check the links:
+
+.. code-block:: bash
+
+    make checklinks
+
+.. note::
+    Run this in the ``docs`` directory while in the venv.
+
+This will check whether all the URLs in the documentation are still valid and open a working webpage.
+Any broken links will be shown in red and also listed in the ``_build/linkcheck/output.txt`` file.
+
 Docker
 ------
 
