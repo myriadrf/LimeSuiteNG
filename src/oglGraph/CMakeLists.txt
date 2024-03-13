@@ -1,12 +1,12 @@
 set(oglGraph_src_files dlgMarkers.cpp GLFont.cpp OpenGLGraph.cpp ${PROJECT_SOURCE_DIR}/external/glew/glew.c)
 
-#ignore warnings about narrowing: static font header
-if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wno-narrowing -Wno-address)
-endif()
-
-add_definitions(-DGLEW_STATIC)
 add_library(oglGraph STATIC ${oglGraph_src_files})
+target_compile_definitions(oglGraph PRIVATE -DGLEW_STATIC)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    # Ignore warnings about narrowing: static font header
+    target_compile_options(oglGraph PRIVATE -Wno-narrowing -Wno-address)
+endif()
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
@@ -19,7 +19,10 @@ endif(NOT TARGET OpenGL::GLU)
 message(STATUS "OPENGL_INCLUDE_DIR: ${OPENGL_INCLUDE_DIR}")
 message(STATUS "OPENGL_LIBRARIES: ${OPENGL_LIBRARIES}")
 
-target_include_directories(oglGraph PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${OPENGL_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/external/glew)
+target_include_directories(
+    oglGraph
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/glew
+    PRIVATE ${OPENGL_INCLUDE_DIR})
 
 if(APPLE)
     set(GL_LIBS "-framework OpenGL" "-framework GLUT")

@@ -22,11 +22,9 @@ endif()
 ########################################################################
 ## Build support module
 ########################################################################
-if(CMAKE_COMPILER_IS_GNUCXX)
-
-    #disable warnings for unused parameters
-    add_definitions(-Wno-unused-parameter)
-
-endif(CMAKE_COMPILER_IS_GNUCXX)
-
 soapy_sdr_module_util(TARGET LMS7Support SOURCES Registration.cpp Settings.cpp Streaming.cpp LIBRARIES limesuiteng)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    # Disable warnings for unused parameters
+    target_compile_options(LMS7Support PRIVATE -Wno-unused-parameter)
+endif(CMAKE_COMPILER_IS_GNUCXX)

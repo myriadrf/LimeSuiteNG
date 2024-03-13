@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_CONFIGURATION_TYPES
     "Debug;Release;RelWithDebInfo"
     CACHE STRING INTERNAL FORCE)
-project("LimeSuiteNG")
+project("LimeSuiteNG" LANGUAGES C CXX)
 
 ### Require out-of-source builds
 file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
@@ -20,7 +20,7 @@ option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 
 #include modules for finding CyAPI
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 list(FIND CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" index)
 if(${index} EQUAL -1)
@@ -95,11 +95,10 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-Wall -Wpedantic)
 
     #symbols are only exported from libraries/modules explicitly
-    add_compile_options(-fvisibility=hidden)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
+    add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
 
     # enable C-style cast warnings in C++
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wold-style-cast")
+    add_compile_options(-Wold-style-cast)
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
@@ -127,22 +126,22 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set_property(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none native SSE3 SSE4.2 AVX AVX2)
 
     if(${ENABLE_SIMD_FLAGS} MATCHES "native")
-        add_definitions(-march=native)
+        add_compile_options(-march=native)
         if(X86)
-            add_definitions(-mfpmath=both)
+            add_compile_options(-mfpmath=both)
         endif()
         message(STATUS "Enabling native optimizations")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX2")
-        add_definitions(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfma -mavx2 -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfma -mavx2 -mfpmath=both)
         message(STATUS "Enabling AVX2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX")
-        add_definitions(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=both)
         message(STATUS "Enabling AVX instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE4.2")
-        add_definitions(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mfpmath=both)
         message(STATUS "Enabling SSE4.2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE3")
-        add_definitions(-mmmx -msse -msse2 -msse3 -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mfpmath=both)
         message(STATUS "Enabling SSE3 instructions")
     endif()
 
@@ -150,9 +149,8 @@ endif()
 
 if(MSVC)
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX)
-    set(MSVC_MULTITHREAD_COMPILE_FLAGS "/MP")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MSVC_MULTITHREAD_COMPILE_FLAGS} /Zc:__cplusplus")
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
+    add_compile_options("/MP /Zc:__cplusplus")
 
     set(ENABLE_SIMD_FLAGS
         "SSE2"
@@ -160,24 +158,24 @@ if(MSVC)
     set_property(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2)
 
     if(${ENABLE_SIMD_FLAGS} MATCHES "AVX2")
-        add_definitions(/arch:AVX2)
+        add_compile_options(/arch:AVX2)
         message(STATUS "Enabling AVX2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX")
-        add_definitions(/arch:AVX)
+        add_compile_options(/arch:AVX)
         message(STATUS "Enabling AVX instructions")
         # MSVC default mode already uses SSE2
         # elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE2")
-        #     add_definitions(/arch:SSE2)
+        #     add_compile_options(/arch:SSE2)
         #     message(STATUS "Enabling SSE2 instructions")
     endif()
 endif(MSVC)
 
 if(APPLE)
-    add_definitions(-D__unix__=1) #we use this for unix detection, but clang does not define it
+    add_compile_definitions(__unix__=1) #we use this for unix detection, but clang does not define it
 endif(APPLE)
 
 if(ENABLE_NEW_GAIN_BEHAVIOUR)
-    add_definitions(-DNEW_GAIN_BEHAVIOUR)
+    add_compile_definitions(NEW_GAIN_BEHAVIOUR)
 endif()
 
 ########################################################################

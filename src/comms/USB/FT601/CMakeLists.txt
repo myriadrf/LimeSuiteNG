@@ -15,10 +15,9 @@ if(WIN32)
     #when using static libs specify FTD3XX_STATIC
     if(FTD3XX_STATIC)
         set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static/FTD3XX.lib SetupAPI)
-        add_definitions(-DFTD3XX_STATIC)
-
-        #when using dynamic libs install the dll to bin/
+        add_compile_definitions(FTD3XX_STATIC)
     else()
+        #when using dynamic libs install the dll to bin/
         set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/FTD3XX.lib SetupAPI)
         install(FILES ${FTD3XX_LIB_DIR}/FTD3XX.dll DESTINATION bin)
     endif()

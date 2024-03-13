@@ -10,7 +10,7 @@ if(UNIX)
     find_package(Gnuplot)
     set_package_properties(Gnuplot PROPERTIES TYPE OPTIONAL)
     if(GNUPLOT_FOUND)
-        add_definitions(-DUSE_GNU_PLOT)
+        add_compile_definitions(USE_GNU_PLOT)
     endif()
 endif()
 
@@ -18,11 +18,11 @@ set(examplesOutputDir "${CMAKE_BINARY_DIR}/bin/examples")
 
 add_executable(basicRX basicRX.cpp ${PROJECT_SOURCE_DIR}/external/kissFFT/kiss_fft.c)
 set_target_properties(basicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
-target_link_libraries(basicRX ${MAIN_LIBRARY_NAME})
+target_link_libraries(basicRX PUBLIC ${MAIN_LIBRARY_NAME})
 
 add_executable(dualRXTX dualRXTX.cpp)
 set_target_properties(dualRXTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
-target_link_libraries(dualRXTX ${MAIN_LIBRARY_NAME})
+target_link_libraries(dualRXTX PUBLIC ${MAIN_LIBRARY_NAME})
 
 add_executable(basicTX basicTX.cpp)
 set_target_properties(basicTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
