@@ -40,7 +40,6 @@ set(LIME_SUITE_SOURCES
     protocols/TRXLooper.cpp
     protocols/BufferInterleaving.cpp
     Si5351C/Si5351C.cpp
-    ${PROJECT_SOURCE_DIR}/external/kissFFT/kiss_fft.c
     FPGA_common/FPGA_common.cpp
     FPGA_common/WriteRegistersBatch.cpp
     windowFunction.cpp
@@ -105,7 +104,10 @@ option(ENABLE_LIBRARY "Enable build library" ON)
 add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
 if(ENABLE_LIBRARY)
     add_library(${MAIN_LIBRARY_NAME} ${LIME_SUITE_SOURCES})
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIME_SUITE_LIBRARIES})
+    target_link_libraries(
+        ${MAIN_LIBRARY_NAME}
+        PUBLIC ${LIME_SUITE_LIBRARIES}
+        PRIVATE kissFFT)
     set_property(TARGET ${MAIN_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES VERSION ${LIME_SUITE_LIBVER})
@@ -231,7 +233,6 @@ set(LMS7SUITE_GUI_SOURCES
     # boards_wxgui/pnlBuffers.cpp
     # boards_wxgui/pnlCoreSDR.cpp
     # boards_wxgui/pnlLimeNetMicro.cpp
-    ${PROJECT_SOURCE_DIR}/external/kissFFT/kiss_fft.c
     windowFunction.cpp
     boards_wxgui/pnlLimeSDR.cpp
     boards_wxgui/pnlGPIO.cpp
@@ -266,7 +267,10 @@ if(ENABLE_GUI)
     target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
     target_include_directories(${GUI_EXECUTABLE_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
 
-    target_link_libraries(${GUI_EXECUTABLE_NAME} ${MAIN_LIBRARY_NAME} oglGraph ${wxWidgets_LIBRARIES})
+    target_link_libraries(
+        ${GUI_EXECUTABLE_NAME}
+        PUBLIC ${MAIN_LIBRARY_NAME} oglGraph ${wxWidgets_LIBRARIES}
+        PRIVATE kissFFT)
 
     if(MSVC)
         set_property(

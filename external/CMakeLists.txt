@@ -13,3 +13,10 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(GLEW PRIVATE -Wno-address)
 endif()
 
+#########################################################################
+# kissFFT
+#########################################################################
+set(kissFFT_PATH "${PROJECT_SOURCE_DIR}/external/kissFFT")
+
+add_library(kissFFT STATIC ${kissFFT_PATH}/kiss_fft.c)
+target_include_directories(kissFFT PUBLIC ${kissFFT_PATH})
