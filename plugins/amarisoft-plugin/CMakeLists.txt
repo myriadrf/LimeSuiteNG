@@ -1,5 +1,5 @@
 project("limesuiteng-amarisoft-plugin")
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 set(CMAKE_CONFIGURATION_TYPES
     "Debug;Release;RelWithDebInfo"
     CACHE STRING INTERNAL FORCE)

@@ -90,6 +90,17 @@ else()
     set(RV64 FALSE)
 endif()
 
+if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+    # Optional IPO. Do not use IPO if it's not supported by compiler.
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT result OUTPUT output)
+    if(result)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(WARNING "IPO is not supported: ${output}")
+    endif()
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX)
     #enable warnings in Debug configurations
     add_compile_options(-Wall -Wpedantic)
