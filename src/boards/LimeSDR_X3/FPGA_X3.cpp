@@ -6,8 +6,6 @@
 #include <math.h>
 #include <iostream>
 
-#include "Register.h"
-
 using namespace std::literals::string_literals;
 
 namespace lime {
