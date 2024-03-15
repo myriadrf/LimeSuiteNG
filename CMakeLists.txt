@@ -1,7 +1,7 @@
 ########################################################################
 ## Create LimeSuiteNG project
 ########################################################################
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CONFIGURATION_TYPES
     "Debug;Release;RelWithDebInfo"
     CACHE STRING INTERNAL FORCE)
@@ -106,10 +106,11 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-Wall -Wpedantic)
 
     #symbols are only exported from libraries/modules explicitly
-    add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+    add_compile_options(-fvisibility=hidden)
+    add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fvisibility-inlines-hidden>)
 
     # enable C-style cast warnings in C++
-    add_compile_options(-Wold-style-cast)
+    add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wold-style-cast>)
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
