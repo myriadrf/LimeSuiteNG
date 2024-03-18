@@ -411,8 +411,9 @@ class LIME_API SDRDevice
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
     /// @param index The index of the NCO to read from.
+    /// @param phaseOffset [out] The phase offset of the NCO (in degrees)
     /// @return The current frequency of the NCO (in Hz)
-    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index) = 0;
+    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) = 0;
 
     /// @brief Sets the frequency and the phase angle of the NCO.
     /// @param moduleIndex The device index to configure.
