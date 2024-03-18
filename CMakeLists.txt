@@ -16,6 +16,9 @@ if(EXISTS "${LOC_PATH}")
     )
 endif()
 
+# Help IDEs with code completion
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 
