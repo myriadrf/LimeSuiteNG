@@ -432,6 +432,22 @@ class LIME_API SDRDevice
     /// @return The delta between the current device frequency and the current device NCO frequency (in Hz).
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
+    /// @brief Gets the current index of the NCO.
+    /// @param moduleIndex The device index to read from.
+    /// @param trx The direction to read from.
+    /// @param channel The channel to read from.
+    /// @return The current index of the NCO [0-15]
+    virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
+
+    /// @brief Sets the index of the NCO.
+    /// @param moduleIndex The device index to configure.
+    /// @param trx The direction to configure.
+    /// @param channel The channel to configure.
+    /// @param index The index of the NCO to use.
+    /// @param downconv The spectrum control of the CMIX (true = downconvert, false = upconvert)
+    /// @return The status of the operation.
+    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) = 0;
+
     /// @brief Gets the current sample rate of the device.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
