@@ -6,7 +6,7 @@
 #include <vector>
 using namespace std;
 
-static constexpr bool IsGlew1_5()
+static bool IsGlew1_5()
 {
 #ifdef __GNUC__
     #pragma GCC diagnostic push
