@@ -6,7 +6,7 @@
 
 #include "Si5351C.h"
 #include "Logger.h"
-#include <math.h>
+#include <cmath>
 #include <iomanip>
 #include <fstream>
 #include <set>
