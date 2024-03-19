@@ -1,4 +1,4 @@
-project("LimeSuite-amarisoft-plugin")
+project("limesuiteng-amarisoft-plugin")
 cmake_minimum_required(VERSION 3.00)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING INTERNAL FORCE)
 set(BUILD_SHARED_LIBS "Build the shared library" ON)
@@ -60,7 +60,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 add_library(trx_limesuite trx_limesuite.cpp common.cpp)
-target_link_libraries(trx_limesuite LimeSuite2)
+target_link_libraries(trx_limesuite limesuiteng)
 
 #remove lib prefix, Amarisoft searches for trx_*.so
 set_target_properties(trx_limesuite PROPERTIES PREFIX "")

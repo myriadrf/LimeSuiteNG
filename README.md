@@ -1,6 +1,6 @@
-# Lime Suite
+# Lime Suite NG
 
-Lime Suite is a collection of software supporting several hardware platforms 
+Lime Suite NG is a collection of software supporting several hardware platforms
 based on the LMS7002M transceiver RFIC, such as LimeSDR family. It contains the
 following components:
 * **LimeSuite library** that provides C-style API;
@@ -12,7 +12,7 @@ following components:
 * **Octave plugin** (provides some basic functionality only);
 
 ## Build Status
-- GitHub: ![Cross platform build status](https://github.com/myriadrf/LimeSuite/actions/workflows/cmake.yml/badge.svg)
+- GitHub: ![Cross platform build status](https://github.com/myriadrf/LimeSuiteNG/actions/workflows/cmake.yml/badge.svg)
 
 ## Documentation
 

@@ -1,9 +1,9 @@
 ########################################################################
-## Create lime-suite project
+## Create LimeSuiteNG project
 ########################################################################
 cmake_minimum_required(VERSION 3.14)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING INTERNAL FORCE)
-project("LimeSuite2")
+project("LimeSuiteNG")
 
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
@@ -220,9 +220,6 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
 
-########################################################################
-## lime suite build
-########################################################################
 add_subdirectory(src)
 
 ########################################################################

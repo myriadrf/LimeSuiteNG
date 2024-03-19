@@ -17,7 +17,7 @@ COPY CMakeLists.txt CMakeLists.txt
 COPY src/ src/
 
 RUN cmake . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF
-RUN make -C build --no-print-directory -j$(nproc) LimeSuite2Test_coverage
+RUN make -C build --no-print-directory -j$(nproc) limesuiteng-test_coverage
 
 FROM scratch AS export-stage
-COPY --from=build-stage build/LimeSuite2Test_coverage/ /
+COPY --from=build-stage build/limesuiteng-test_coverage/ /

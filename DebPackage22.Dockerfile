@@ -1,7 +1,7 @@
 # Build .deb file for Debian 11, Ubuntu 20.04, Ubuntu 22.04
 FROM ubuntu:20.04 AS build-stage
 
-WORKDIR /LimeSuite2/source
+WORKDIR /LimeSuiteNG/source
 
 COPY install_dependencies.sh install_dependencies.sh
 
@@ -30,4 +30,4 @@ COPY src/ src/
 RUN dpkg-buildpackage --build=binary --no-sign -d
 
 FROM scratch AS export-stage
-COPY --from=build-stage /LimeSuite2/*.* /
+COPY --from=build-stage /LimeSuiteNG/*.* /
