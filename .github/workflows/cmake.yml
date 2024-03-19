@@ -2,7 +2,7 @@ name: CMake
 
 on:
   push:
-    branches: [master, litepcie-update]
+    branches: [develop]
   pull_request:
 
 env:
@@ -59,9 +59,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DwxWidgets_ROOT_DIR=${{github.workspace}}/deps/wxWidgets -DFX3_SDK_PATH=${{github.workspace}}/deps/FX3SDK
 
-      - name: Configure CMake (linux)
+      - name: Configure CMake (linux, gcc)
         if: matrix.os != 'windows-latest'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+
+      - name: Configure CMake (linux, clang)
+        if: matrix.os != 'windows-latest'
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} 
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
