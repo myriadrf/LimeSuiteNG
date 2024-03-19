@@ -2,7 +2,7 @@ name: GTest tests
 
 on:
   push:
-    branches: [master, litepcie-update]
+    branches: [develop]
   pull_request:
 
 env:
