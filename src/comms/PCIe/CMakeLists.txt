@@ -17,7 +17,7 @@ set(COMMS_LITE_PCIE_SOURCES
 ########################################################################
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_LITE_PCIE "Enable Lite PCIe" ON "UNIX;ENABLE_LIBRARY" OFF)
+cmake_dependent_option(ENABLE_LITE_PCIE "Enable Lite PCIe" ON "UNIX;ENABLE_LIBRARY; NOT APPLE" OFF)
 add_feature_info(LITE_PCIE ENABLE_LITE_PCIE "PCIe support")
 if (NOT ENABLE_LITE_PCIE)
     return()
