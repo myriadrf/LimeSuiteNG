@@ -13,7 +13,7 @@ static const int CONTROL_BULK_READ_ADDRESS = 0x82;
 
 FT601::FT601(void* usbContext)
     : USBGeneric(usbContext)
-#ifdef __unix
+#ifdef __unix__
     , mUsbCounter(0)
 #else
     , mFTHandle(nullptr)
