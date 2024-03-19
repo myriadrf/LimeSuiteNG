@@ -734,7 +734,7 @@ uint16_t LMS7002M_SDRDevice::GetParameter(uint8_t moduleIndex, uint8_t channel, 
     } catch (...)
     {
         // TODO: fix return
-        throw std::runtime_error("failure setting parameter: " + address);
+        throw std::runtime_error("failure setting parameter: " + std::to_string(address));
     }
 }
 
