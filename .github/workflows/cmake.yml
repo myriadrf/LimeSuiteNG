@@ -17,9 +17,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          [ubuntu-latest, windows-latest]
-          # os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - compiler: gcc
+            os: ubuntu-latest
+          - compiler: clang
+            os: ubuntu-latest
+          - compiler: msvc
+            os: windows-latest
+          - compiler: clang
+            os: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -56,15 +62,15 @@ jobs:
           cmake --build . --target install
 
       - name: Configure CMake (windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.compiler == 'msvc'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DwxWidgets_ROOT_DIR=${{github.workspace}}/deps/wxWidgets -DFX3_SDK_PATH=${{github.workspace}}/deps/FX3SDK
 
-      - name: Configure CMake (linux, gcc)
-        if: matrix.os != 'windows-latest'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+      - name: Configure CMake (gcc)
+        if: matrix.compiler == 'gcc'
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
 
-      - name: Configure CMake (linux, clang)
-        if: matrix.os != 'windows-latest'
+      - name: Configure CMake (clang)
+        if: matrix.compiler == 'clang'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} 
 
       - name: Build
