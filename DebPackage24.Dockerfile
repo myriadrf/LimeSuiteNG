@@ -1,7 +1,7 @@
 # Build .deb file for Debian 12, Ubuntu 23.10, Ubuntu 24.04
 FROM debian:bookworm AS build-stage
 
-WORKDIR /LimeSuite2/source
+WORKDIR /LimeSuiteNG/source
 
 COPY install_dependencies.sh install_dependencies.sh
 
@@ -28,4 +28,4 @@ COPY src/ src/
 RUN dpkg-buildpackage --build=binary --no-sign
 
 FROM scratch AS export-stage
-COPY --from=build-stage /LimeSuite2/*.* /
+COPY --from=build-stage /LimeSuiteNG/*.* /

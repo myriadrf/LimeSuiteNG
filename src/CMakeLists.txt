@@ -1,19 +1,19 @@
-set(MAIN_LIBRARY_NAME LimeSuite2)
+set(MAIN_LIBRARY_NAME limesuiteng)
 set(GUI_EXECUTABLE_NAME LimeSuiteGUI2)
 
 ########################################################################
 ## public headers
 ########################################################################
-FILE(GLOB LIME_SUITE_PUBLIC_HEADERS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuite/*.h")
+FILE(GLOB LIMESUITENG_PUBLIC_HEADERS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h")
 
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)
-add_feature_info(HEADERS ENABLE_HEADERS "The lime suite headers")
+add_feature_info(HEADERS ENABLE_HEADERS "The limesuiteng headers")
 if (ENABLE_HEADERS)
     install(
-        FILES ${LIME_SUITE_PUBLIC_HEADERS}
-        DESTINATION include/limesuite
+        FILES ${LIMESUITENG_PUBLIC_HEADERS}
+        DESTINATION include/limesuiteng
     )
 endif()
 
@@ -112,7 +112,7 @@ include(CMakeDependentOption)
 add_subdirectory(vectorization)
 
 option(ENABLE_LIBRARY "Enable build library" ON)
-add_feature_info(LIBRARY ENABLE_LIBRARY "The lime suite library")
+add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
 if (ENABLE_LIBRARY)
     add_library(${MAIN_LIBRARY_NAME} ${LIME_SUITE_SOURCES})
     target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIME_SUITE_LIBRARIES} samplesConversion)

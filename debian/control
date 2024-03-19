@@ -9,8 +9,8 @@ Build-Depends:
     libwxgtk3.0-dev | libwxgtk3.0-gtk3-dev | libwxgtk3.2-dev,
 Standards-Version: 4.1.1
 Homepage: https://myriadrf.org/projects/lime-suite/
-Vcs-Git: https://github.com/myriadrf/LimeSuite.git
-Vcs-Browser: https://github.com/myriadrf/LimeSuite.git
+Vcs-Git: https://github.com/myriadrf/LimeSuiteNG.git
+Vcs-Browser: https://github.com/myriadrf/LimeSuiteNG.git
 
 Package: liblimesuite24.0-1
 Section: libs
