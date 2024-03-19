@@ -647,7 +647,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
 {
-    std::string dirName = dir == TRXDir::Rx ? "Rx" : "Tx";
+    const char* dirName = dir == TRXDir::Rx ? "Rx" : "Tx";
     SDRDevice::ChannelConfig::Direction trx = cfg.channel[ch].GetDirection(dir);
 
     if (socIndex == 1) // LMS2 uses external ADC/DAC
