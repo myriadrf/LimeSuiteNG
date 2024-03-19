@@ -263,13 +263,13 @@ endif()
 ########################################################################
 if (ENABLE_HEADERS AND ENABLE_LIBRARY)
     configure_file(
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/LimeSuiteConfigVersion.in.cmake
-        ${PROJECT_BINARY_DIR}/LimeSuiteConfigVersion.cmake
+        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfigVersion.in.cmake
+        ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
     @ONLY)
 
     install(FILES
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/LimeSuiteConfig.cmake
-        ${PROJECT_BINARY_DIR}/LimeSuiteConfigVersion.cmake
+        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfig.cmake
+        ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
 
