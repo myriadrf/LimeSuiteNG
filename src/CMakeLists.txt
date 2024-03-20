@@ -1,5 +1,5 @@
 set(MAIN_LIBRARY_NAME limesuiteng)
-set(GUI_EXECUTABLE_NAME LimeSuiteGUI2)
+set(GUI_EXECUTABLE_NAME limeGUI)
 
 ########################################################################
 ## public headers
