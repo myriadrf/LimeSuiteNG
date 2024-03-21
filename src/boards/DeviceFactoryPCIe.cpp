@@ -11,6 +11,7 @@
 #include "LMS64C_FPGA_Over_PCIe_MMX8.h"
 #include "LMS64C_LMS7002M_Over_PCIe_MMX8.h"
 
+#include "boards/LimeSDR_Nano/LimeSDR_Nano.h"
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "boards/LimeSDR_X3/LimeSDR_X3.h"
 #include "boards/MMX8/MM_X8.h"
