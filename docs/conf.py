@@ -18,7 +18,7 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = 'LimeSuiteGUI2'
+project = 'LimeSuiteNG'
 copyright = '2021, 2023 MyriadRF Contributors'
 author = 'Lime Microsystems'
 
@@ -61,7 +61,7 @@ html_last_updated_fmt = '%b %d, %Y'
 html_context = {
     'display_github': False,
     'github_user': 'myriadrf',
-    'github_repo': 'LimeSuite_5G',
+    'github_repo': 'LimeSuiteNG',
     'github_version': 'main/' 
 }
 
@@ -110,10 +110,10 @@ root_doc = 'index'
 html_static_path = ['_static']
 
 breathe_projects = {
-    "LimeSuiteGUI2" : ( "../build/xml" )
+    "LimeSuiteNG" : ( "../build/xml" )
 }
 
-breathe_default_project = "LimeSuiteGUI2"
+breathe_default_project = "LimeSuiteNG"
 
 mermaid_version = "10.6.1"
 mermaid_d3_zoom = True
