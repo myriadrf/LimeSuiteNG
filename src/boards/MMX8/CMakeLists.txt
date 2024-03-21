@@ -9,19 +9,7 @@ set(MM_X8_SOURCES
     ${THIS_SOURCE_DIR}/LMS64C_FPGA_Over_PCIe_MMX8.cpp
     ${THIS_SOURCE_DIR}/LMS64C_LMS7002M_Over_PCIe_MMX8.cpp
     ${THIS_SOURCE_DIR}/MM_X8.cpp
-    ${THIS_SOURCE_DIR}/MM_X8Entry.cpp
 )
-
-########################################################################
-## Feature registration
-########################################################################
-include(FeatureSummary)
-include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_LIMESDR_MMX8 "Enable LimeMM-X8 board support" ON "ENABLE_LIBRARY;ENABLE_LITE_PCIE" OFF)
-add_feature_info(LIMESDR_MMX8 ENABLE_LIMESDR_MMX8 "LimeSDR MM-X8 board support")
-if (NOT ENABLE_LIMESDR_MMX8)
-    return()
-endif()
 
 ########################################################################
 ## Add to library

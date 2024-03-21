@@ -1,5 +1,5 @@
-#ifndef LIME_LIMESDR_5G_H
-#define LIME_LIMESDR_5G_H
+#ifndef LIME_LIMESDR_MMX8_H
+#define LIME_LIMESDR_MMX8_H
 
 #include "ADF4002/ADF4002.h"
 #include "CDCM6208/CDCM6208_Dev.h"
@@ -160,4 +160,4 @@ class LimeSDR_MMX8 : public SDRDevice
 
 } // namespace lime
 
-#endif // LIME_LIMESDR_5G_H
+#endif // LIME_LIMESDR_MMX8_H

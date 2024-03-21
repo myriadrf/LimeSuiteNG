@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "limesuite/config.h"
+#include "limesuite/OpStatus.h"
 
 #ifdef __unix__
     #include "software/kernel/litepcie.h"
@@ -17,10 +18,11 @@ class LIME_API LitePCIe
 {
   public:
     static std::vector<std::string> GetDevicesWithPattern(const std::string& regex);
+    static std::vector<std::string> GetPCIeDeviceList();
     LitePCIe();
     ~LitePCIe();
 
-    int Open(const std::string& deviceFilename, uint32_t flags);
+    OpStatus Open(const std::string& deviceFilename, uint32_t flags);
     void Close();
     bool IsOpen();
 

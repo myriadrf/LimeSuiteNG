@@ -70,4 +70,4 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
 } // namespace lime
 
-#endif // LIME_LIMESDR_5G_H
+#endif // LIME_LIMESDR_XTRX_H

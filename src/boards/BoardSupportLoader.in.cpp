@@ -5,11 +5,11 @@
 #cmakedefine ENABLE_LIMESDR_MMX8
 #cmakedefine ENABLE_LIMESDR_MINI
 
+#cmakedefine ENABLE_LITE_PCIE
+
 void __loadLimeSDR();
-void __loadLimeSDR_X3();
-void __loadLimeSDR_XTRX();
-void __loadLimeSDR_MMX8();
 void __loadLimeSDR_Mini();
+void __loadDeviceFactoryPCIe();
 
 void __loadBoardSupport()
 {
@@ -17,19 +17,11 @@ void __loadBoardSupport()
     __loadLimeSDR();
 #endif
 
-#ifdef ENABLE_LIMESDR_X3
-    __loadLimeSDR_X3();
-#endif
-
-#ifdef ENABLE_LIMESDR_XTRX
-    __loadLimeSDR_XTRX();
-#endif
-
-#ifdef ENABLE_LIMESDR_MMX8
-    __loadLimeSDR_MMX8();
-#endif
-
 #ifdef ENABLE_LIMESDR_MINI
     __loadLimeSDR_Mini();
+#endif
+
+#ifdef ENABLE_LITE_PCIE
+    __loadDeviceFactoryPCIe();
 #endif
 }

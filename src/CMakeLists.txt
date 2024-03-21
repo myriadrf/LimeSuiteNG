@@ -23,9 +23,6 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    boards/DeviceRegistry.cpp
-    boards/DeviceHandle.cpp
-    boards/LMS7002M_SDRDevice.cpp
     Logger.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
@@ -151,12 +148,7 @@ endif()
 ########################################################################
 include(comms/USB/CMakeLists.txt)
 include(comms/PCIe/CMakeLists.txt)
-
-include(boards/LimeSDR/CMakeLists.txt)
-include(boards/LimeSDR_X3/CMakeLists.txt)
-include(boards/LimeSDR_XTRX/CMakeLists.txt)
-include(boards/MMX8/CMakeLists.txt)
-include(boards/LimeSDR_Mini/CMakeLists.txt)
+include(boards/CMakeLists.txt)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp

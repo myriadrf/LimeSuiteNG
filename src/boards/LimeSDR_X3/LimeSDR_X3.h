@@ -1,5 +1,5 @@
-#ifndef LIME_LIMESDR_5G_H
-#define LIME_LIMESDR_5G_H
+#ifndef LIME_LIMESDR_X3_H
+#define LIME_LIMESDR_X3_H
 
 #include "CDCM6208/CDCM6208_Dev.h"
 #include "LMS7002M_SDRDevice.h"
@@ -92,4 +92,4 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
 } // namespace lime
 
-#endif // LIME_LIMESDR_5G_H
+#endif // LIME_LIMESDR_X3_H

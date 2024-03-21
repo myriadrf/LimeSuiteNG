@@ -390,7 +390,7 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 dirFlag = O_RDONLY;
             else if (config.channels.at(lime::TRXDir::Tx).size() > 0)
                 dirFlag = O_WRONLY;
-            if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != 0)
+            if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::SUCCESS)
             {
                 const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
                 return ReportError(OpStatus::IO_FAILURE, reason.c_str());

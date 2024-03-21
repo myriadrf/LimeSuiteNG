@@ -35,6 +35,20 @@ std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& rege
     return devices;
 }
 
+std::vector<std::string> LitePCIe::GetPCIeDeviceList()
+{
+    std::vector<std::string> devices;
+    FILE* lsPipe;
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd) - 1, "ls /sys/class/litepcie -1");
+    lsPipe = popen(cmd, "r");
+    char tempBuffer[512];
+    while (fscanf(lsPipe, "%s", tempBuffer) == 1)
+        devices.push_back(tempBuffer);
+    pclose(lsPipe);
+    return devices;
+}
+
 LitePCIe::LitePCIe()
     : mFilePath("")
     , mFileDescriptor(-1)
@@ -47,7 +61,7 @@ LitePCIe::~LitePCIe()
     Close();
 }
 
-int LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
+OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
     // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
@@ -58,7 +72,8 @@ int LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
     {
         isConnected = false;
         lime::error("LitePCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
-        return -1;
+        // TODO: convert errno to OpStatus
+        return OpStatus::FILE_NOT_FOUND;
     }
 
     litepcie_ioctl_mmap_dma_info info;
@@ -119,7 +134,7 @@ int LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
     }
 
     isConnected = true;
-    return 0;
+    return OpStatus::SUCCESS;
 }
 
 bool LitePCIe::IsOpen()
