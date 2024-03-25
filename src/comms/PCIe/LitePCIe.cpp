@@ -12,7 +12,7 @@
     #include <poll.h>
     #include <sys/mman.h>
     #include <sys/ioctl.h>
-    #include "software/kernel/litepcie.h"
+    #include "linux-kernel-module/litepcie.h"
 #endif
 
 using namespace std;

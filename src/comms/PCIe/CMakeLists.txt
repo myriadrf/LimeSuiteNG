@@ -27,4 +27,15 @@ endif()
 ## Add to library
 ########################################################################
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_LITE_PCIE_SOURCES})
-target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${THIS_SOURCE_DIR} ${THIS_SOURCE_DIR}/software/user/liblitepcie ${THIS_SOURCE_DIR}/software/kernel)
+target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${THIS_SOURCE_DIR})
+
+# build kernel module only on Linux
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/linux-kernel-module)
+
+    cmake_dependent_option(LITEPCIE_KERNEL_MODULE "Build LitePCIe Linux kernel module" ON "UNIX; NOT APPLE" OFF)
+    add_feature_info(LITEPCIE_KERNEL_MODULE LITEPCIE_KERNEL_MODULE "Build linux litepcie kernel module")
+    if (LITEPCIE_KERNEL_MODULE)
+        add_subdirectory(${THIS_SOURCE_DIR}/linux-kernel-module)
+    endif()
+endif()

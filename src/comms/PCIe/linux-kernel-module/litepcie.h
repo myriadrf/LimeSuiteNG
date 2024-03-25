@@ -38,7 +38,7 @@ struct litepcie_ioctl_dma_writer {
     uint8_t enable;
     int64_t hw_count;
     int64_t sw_count;
-    int32_t write_size;
+    uint32_t write_size;
     uint8_t irqFreq;
 };
 

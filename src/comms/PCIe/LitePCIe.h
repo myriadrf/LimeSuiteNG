@@ -7,10 +7,6 @@
 #include "limesuite/config.h"
 #include "limesuite/OpStatus.h"
 
-#ifdef __unix__
-    #include "software/kernel/litepcie.h"
-#endif // __unix__
-
 namespace lime {
 
 /** @brief Class for communicating with a PCIe device. */
