@@ -98,6 +98,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     }
 
     std::vector<std::string> streamEndpoints = GetDevicesWithRegex(handle.name + "_trx*");
+    std::sort(streamEndpoints.begin(), streamEndpoints.end());
     for (const std::string& endpointPath : streamEndpoints)
     {
         streamPorts.push_back(std::make_shared<LitePCIe>());
