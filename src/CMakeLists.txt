@@ -15,11 +15,6 @@ if (ENABLE_HEADERS)
         FILES ${LIMESUITENG_PUBLIC_HEADERS}
         DESTINATION include/limesuiteng
     )
-    install(
-        FILES lime/LimeSuite.h;Logger.h
-        DESTINATION include/limesuiteng
-    )
-
 endif()
 
 ########################################################################
@@ -28,7 +23,7 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    Logger.cpp
+    include/limesuite/Logger.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp

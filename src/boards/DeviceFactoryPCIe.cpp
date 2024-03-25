@@ -2,7 +2,7 @@
 
 #include <fcntl.h>
 
-#include "Logger.h"
+#include "limesuite/Logger.h"
 #include "LitePCIe.h"
 #include "LMSBoards.h"
 #include "LMS64C_FPGA_Over_PCIe.h"
