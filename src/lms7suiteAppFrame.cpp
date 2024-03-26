@@ -35,9 +35,9 @@
 #include "GUI/events.h"
 #include "GUI/ISOCPanel.h"
 #include "SDRConfiguration_view.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/DeviceNode.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/DeviceNode.h"
 //#include "LimeSDR.h"
 
 #include "Logger.h"

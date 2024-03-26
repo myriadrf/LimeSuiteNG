@@ -1,7 +1,7 @@
 #ifndef LIME_MEMORYDEVICES_H
 #define LIME_MEMORYDEVICES_H
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 
 #include <cstdint>
 #include <string>

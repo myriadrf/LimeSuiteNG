@@ -2,7 +2,7 @@
 
 #include "DeviceExceptions.h"
 #include "FPGA_common.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "lms7002m/MCU_BD.h"

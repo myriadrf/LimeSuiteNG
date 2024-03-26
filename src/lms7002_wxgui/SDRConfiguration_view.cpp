@@ -1,6 +1,6 @@
 #include "SDRConfiguration_view.h"
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>

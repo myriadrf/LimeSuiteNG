@@ -9,14 +9,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "limesuite/config.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/complex.h"
-#include "limesuite/OpStatus.h"
-#include "limesuite/GainTypes.h"
-#include "limesuite/IComms.h"
-#include "limesuite/MemoryDevices.h"
-#include "limesuite/MemoryRegions.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/complex.h"
+#include "limesuiteng/OpStatus.h"
+#include "limesuiteng/GainTypes.h"
+#include "limesuiteng/IComms.h"
+#include "limesuiteng/MemoryDevices.h"
+#include "limesuiteng/MemoryRegions.h"
 
 namespace lime {
 

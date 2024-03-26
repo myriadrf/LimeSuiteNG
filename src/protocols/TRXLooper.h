@@ -4,8 +4,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
-#include "limesuite/SDRDevice.h"
-#include "limesuite/complex.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/complex.h"
 #include "PacketsFIFO.h"
 #include "MemoryPool.h"
 #include "SamplesPacket.h"

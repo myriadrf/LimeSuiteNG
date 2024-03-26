@@ -2,7 +2,7 @@
 #define LIME_LIMESDR_MINI_ENTRY_H
 
 #include "USBEntry.h"
-#include "limesuite/DeviceHandle.h"
+#include "limesuiteng/DeviceHandle.h"
 
 namespace lime {
 

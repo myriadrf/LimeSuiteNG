@@ -26,8 +26,8 @@
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"
 
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/LMS7002M.h"
 #include "Logger.h"
 
 using namespace std;

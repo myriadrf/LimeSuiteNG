@@ -1,7 +1,7 @@
 #include "Equalizer.h"
 
 #include "Register.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>

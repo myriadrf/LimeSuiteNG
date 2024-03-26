@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/LMS7002M.h"
 
 namespace lime {
 

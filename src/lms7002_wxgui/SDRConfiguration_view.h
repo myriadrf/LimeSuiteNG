@@ -13,8 +13,8 @@
 #include <map>
 
 #include "GUI/ISOCPanel.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/SDRDevice.h"
 
 constexpr int MAX_GUI_CHANNELS_COUNT = 2;
 

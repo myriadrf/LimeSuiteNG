@@ -28,7 +28,7 @@ namespace lime {
 class SDRDevice;
 }
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 class pnlBoardControls : public IModuleFrame
 {

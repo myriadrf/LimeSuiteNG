@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 
 namespace lime {
 /**

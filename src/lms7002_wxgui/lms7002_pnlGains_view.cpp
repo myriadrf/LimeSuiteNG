@@ -2,7 +2,7 @@
 #include "numericSlider.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "Logger.h"
 
 using namespace lime;

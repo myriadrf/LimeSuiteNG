@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <memory>
-#include "limesuite/config.h"
-#include "limesuite/complex.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/complex.h"
+#include "limesuiteng/SDRDevice.h"
 
 namespace lime {
 

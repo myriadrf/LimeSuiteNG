@@ -2,7 +2,7 @@
 
 #include "lms7002_gui_utilities.h"
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "Logger.h"
 
 using namespace lime;

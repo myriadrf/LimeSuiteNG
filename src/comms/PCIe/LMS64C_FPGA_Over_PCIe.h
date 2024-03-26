@@ -1,7 +1,7 @@
 #ifndef LIME_LMS64C_FPGA_OVER_PCIE_H
 #define LIME_LMS64C_FPGA_OVER_PCIE_H
 
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include "LitePCIe.h"
 #include "PCIE_CSR_Pipe.h"
 

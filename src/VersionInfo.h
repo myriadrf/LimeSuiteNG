@@ -7,7 +7,7 @@
 #ifndef LIMESUITE_VERSION_INFO_H
 #define LIMESUITE_VERSION_INFO_H
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 #include <string>
 
 /*!

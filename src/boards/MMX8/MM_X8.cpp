@@ -5,14 +5,14 @@
 
 #include "Logger.h"
 #include "LitePCIe.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "FPGA_common.h"
 #include "DSP/Equalizer.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
-#include "limesuite/DeviceNode.h"
-#include "limesuite/MemoryRegions.h"
+#include "limesuiteng/DeviceNode.h"
+#include "limesuiteng/MemoryRegions.h"
 
 #include "math.h"
 

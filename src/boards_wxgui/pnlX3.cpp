@@ -8,7 +8,7 @@
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 #include <ciso646>
 

@@ -1,7 +1,7 @@
-#include "limesuite/SDRDevice.h"
-//#include "limesuite/LMS7002M.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/complex.h"
+#include "limesuiteng/SDRDevice.h"
+//#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/complex.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>
