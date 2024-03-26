@@ -127,6 +127,10 @@ if (ENABLE_LIBRARY)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND ENABLE_CODE_COVERAGE AND (NOT MSVC))
         include(CodeCoverage)
         append_coverage_compiler_flags_to_target(${MAIN_LIBRARY_NAME})
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            target_link_options(${MAIN_LIBRARY_NAME} PUBLIC --coverage)
+        endif()
     endif()
 
     install(TARGETS ${MAIN_LIBRARY_NAME}
