@@ -1,4 +1,9 @@
 if(WIN32)
+    # TODO: find better solution
+    set(FX3_POTENTIAL_PATH ${PROJECT_SOURCE_DIR}/${FX3_SDK_RELATIVE_PATH})
+    if(EXISTS "${FX3_POTENTIAL_PATH}")
+        set(FX3_SDK_PATH ${FX3_POTENTIAL_PATH})
+    endif()
     find_package(CyAPI)
     set_package_properties(CyAPI PROPERTIES
         TYPE RECOMMENDED
@@ -13,6 +18,12 @@ if(WIN32)
     else()
         message(WARNING "CYAPI SDK not found. Omitting Cypress FX3 USB support")
     endif()
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${FX3_LIBRARIES})
+
+    target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC
+        $<BUILD_INTERFACE:${FX3_INCLUDE_DIRS}>
+        $<INSTALL_INTERFACE:include>
+    )
 elseif(UNIX)
     find_package(libusb-1.0)
     set_package_properties(libusb-1.0 PROPERTIES
@@ -23,8 +34,12 @@ elseif(UNIX)
     if (NOT ${FX3_FOUND})
         message(WARNING "libusb-1.0 libraries not found. Omitting Cypress FX3 USB support")
     endif()
-    set(FX3_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIRS})
-    set(FX3_LIBRARIES ${LIBUSB_1_LIBRARIES})
+
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC usb-1.0)
+    target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC
+        $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}>
+        $<INSTALL_INTERFACE:include>
+    )
 endif()
 
 include(FeatureSummary)
@@ -40,6 +55,5 @@ set(CONNECTION_FX3_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/USBTransferContext_FX3.cpp
 )
 
-target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${FX3_INCLUDE_DIRS} ${THIS_SOURCE_DIR})
+target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CONNECTION_FX3_SOURCES})
-target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${FX3_LIBRARIES})

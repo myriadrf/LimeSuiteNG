@@ -267,8 +267,11 @@ if (ENABLE_HEADERS AND ENABLE_LIBRARY)
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
     @ONLY)
 
+    install(EXPORT limesuiteng FILE
+        limesuitengConfig.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
+
     install(FILES
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfig.cmake
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
