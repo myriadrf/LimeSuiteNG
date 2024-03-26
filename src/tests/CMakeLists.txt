@@ -18,7 +18,9 @@ set(LIME_TEST_SUITE_SOURCES
 
 if (ENABLE_LITE_PCIE)
     set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
+        boards/LimeSDR_X3/LimeSDR_X3Test.cpp
         boards/LimeSDR_X3/SlaveSelectShimTest.cpp
+        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp
         comms/PCIe/PCIE_CSR_PipeTest.cpp
     )
 endif()
