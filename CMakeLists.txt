@@ -2,7 +2,9 @@
 ## Create LimeSuiteNG project
 ########################################################################
 cmake_minimum_required(VERSION 3.14)
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING INTERNAL FORCE)
+set(CMAKE_CONFIGURATION_TYPES
+    "Debug;Release;RelWithDebInfo"
+    CACHE STRING INTERNAL FORCE)
 project("LimeSuiteNG")
 
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
@@ -12,8 +14,8 @@ option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 list(FIND CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" index)
-if (${index} EQUAL -1)
-   set(CMAKE_BUILD_TYPE "Release")
+if(${index} EQUAL -1)
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 ########################################################################
@@ -35,15 +37,15 @@ set(VERSION_PATCH "${CMAKE_MATCH_3}")
 set(LIME_SUITE_SOVER "${VERSION_MAJOR}.${VERSION_MINOR}-1")
 
 # packagers may specify -DLIME_SUITE_EXTVER="foo" to replace the git hash
-if (NOT LIME_SUITE_EXTVER)
+if(NOT LIME_SUITE_EXTVER)
     include(${PROJECT_SOURCE_DIR}/cmake/GetGitRevisionDescription.cmake)
     get_git_head_revision(GITREFSPEC GITHASH)
-    if (GITHASH)
+    if(GITHASH)
         string(SUBSTRING "${GITHASH}" 0 8 GITHASH)
         set(LIME_SUITE_EXTVER "g${GITHASH}")
-    else (GITHASH)
+    else(GITHASH)
         set(LIME_SUITE_EXTVER "unknown")
-    endif (GITHASH)
+    endif(GITHASH)
 endif()
 
 set(LIME_SUITE_LIBVER "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
@@ -53,8 +55,9 @@ string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d")
 #LIME_SUITE_ROOT is compiled into the library to locate the install base.
 #By default, the LIME_SUITE_ROOT is set to the CMAKE_INSTALL_PREFIX.
 #However users may overload this by specifying -DLIME_SUITE_ROOT=<path>.
-set(LIME_SUITE_ROOT "${CMAKE_INSTALL_PREFIX}" CACHE PATH
-    "Installation root for lime::getLimeSuiteRoot()")
+set(LIME_SUITE_ROOT
+    "${CMAKE_INSTALL_PREFIX}"
+    CACHE PATH "Installation root for lime::getLimeSuiteRoot()")
 file(TO_CMAKE_PATH "${LIME_SUITE_ROOT}" LIME_SUITE_ROOT)
 
 ########################################################################
@@ -73,11 +76,10 @@ else()
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64")
-        set(RV64 TRUE)
+    set(RV64 TRUE)
 else()
-        set(RV64 FALSE)
+    set(RV64 FALSE)
 endif()
-
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     #enable warnings in Debug configurations
@@ -93,8 +95,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
     if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR
-            CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
             add_compile_options(-fno-caller-saves)
         endif()
     endif()
@@ -104,15 +105,17 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     if(NOT DEFAULT_SIMD_FLAGS)
         set(DEFAULT_SIMD_FLAGS "native")
     endif()
-    if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND X86)
+    if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND X86)
         set(DEFAULT_SIMD_FLAGS "SSE3")
     endif()
     if(RV64)
         set(DEFAULT_SIMD_FLAGS "rv64")
     endif()
 
-    SET(ENABLE_SIMD_FLAGS "${DEFAULT_SIMD_FLAGS}" CACHE STRING "Set compiler SIMD flags")
-    SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none native SSE3 SSE4.2 AVX AVX2)
+    set(ENABLE_SIMD_FLAGS
+        "${DEFAULT_SIMD_FLAGS}"
+        CACHE STRING "Set compiler SIMD flags")
+    set_property(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none native SSE3 SSE4.2 AVX AVX2)
 
     if(${ENABLE_SIMD_FLAGS} MATCHES "native")
         add_definitions(-march=native)
@@ -136,14 +139,16 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 
 endif()
 
-if (MSVC)
+if(MSVC)
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX)
     set(MSVC_MULTITHREAD_COMPILE_FLAGS "/MP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MSVC_MULTITHREAD_COMPILE_FLAGS} /Zc:__cplusplus")
 
-    SET(ENABLE_SIMD_FLAGS "SSE2" CACHE STRING "Set compiler SIMD flags")
-    SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2)
+    set(ENABLE_SIMD_FLAGS
+        "SSE2"
+        CACHE STRING "Set compiler SIMD flags")
+    set_property(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2)
 
     if(${ENABLE_SIMD_FLAGS} MATCHES "AVX2")
         add_definitions(/arch:AVX2)
@@ -151,18 +156,18 @@ if (MSVC)
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX")
         add_definitions(/arch:AVX)
         message(STATUS "Enabling AVX instructions")
-    # MSVC default mode already uses SSE2
-    # elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE2")
-    #     add_definitions(/arch:SSE2)
-    #     message(STATUS "Enabling SSE2 instructions")
+        # MSVC default mode already uses SSE2
+        # elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE2")
+        #     add_definitions(/arch:SSE2)
+        #     message(STATUS "Enabling SSE2 instructions")
     endif()
 endif(MSVC)
 
-if (APPLE)
-   add_definitions(-D__unix__=1) #we use this for unix detection, but clang does not define it
+if(APPLE)
+    add_definitions(-D__unix__=1) #we use this for unix detection, but clang does not define it
 endif(APPLE)
 
-if (ENABLE_NEW_GAIN_BEHAVIOUR)
+if(ENABLE_NEW_GAIN_BEHAVIOUR)
     add_definitions(-DNEW_GAIN_BEHAVIOUR)
 endif()
 
@@ -176,20 +181,22 @@ cmake_dependent_option(ENABLE_CODE_COVERAGE "Use gcov/lcov to generate a code co
 if(ENABLE_TESTING)
     include(CTest)
     include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG        dddb219c3eb96d7f9200f09b0a381f016e6b4562 # latest main at the time of writing this
+    fetchcontent_declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG dddb219c3eb96d7f9200f09b0a381f016e6b4562 # latest main at the time of writing this
     )
 
     set(INSTALL_GMOCK OFF) # Don't install the GMock headers
     set(INSTALL_GTEST OFF) # Don't install the GTest headers
 
-    if (MSVC)
-        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    if(MSVC)
+        set(gtest_force_shared_crt
+            ON
+            CACHE BOOL "" FORCE)
     endif()
 
-    FetchContent_MakeAvailable(googletest)
+    fetchcontent_makeavailable(googletest)
     enable_testing()
 endif()
 
@@ -206,10 +213,10 @@ option(CMAKE_BUILD_WITH_INSTALL_RPATH "build with install rpath" FALSE)
 # the RPATH to be used when installing, but only if it's not a system directory
 option(CMAKE_AUTOSET_INSTALL_RPATH TRUE)
 if(CMAKE_AUTOSET_INSTALL_RPATH)
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}")
-ENDIF("${isSystemDir}" STREQUAL "-1")
+    list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" isSystemDir)
+    if("${isSystemDir}" STREQUAL "-1")
+        set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}")
+    endif("${isSystemDir}" STREQUAL "-1")
 endif(CMAKE_AUTOSET_INSTALL_RPATH)
 
 # add the automatically determined parts of the RPATH
@@ -240,41 +247,42 @@ include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_API_DOXYGEN "Enable LMS API Doxygen documentation" ON "DOXYGEN_FOUND" OFF)
 add_feature_info(API_DOXYGEN ENABLE_API_DOXYGEN "LMS API Doxygen documentation")
-if (ENABLE_API_DOXYGEN)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/DoxyfileAPI.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-  add_custom_target(docAPI ALL
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generating LMS API documentation with Doxygen" VERBATIM
-    )
+if(ENABLE_API_DOXYGEN)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/DoxyfileAPI.in ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+    add_custom_target(
+        docAPI ALL
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating LMS API documentation with Doxygen"
+        VERBATIM)
 endif()
 
 if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  add_custom_target(doc
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generating documentation with Doxygen" VERBATIM
-    )
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(
+        doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating documentation with Doxygen"
+        VERBATIM)
 endif()
 
 ########################################################################
 # CMake Project config files
 ########################################################################
-if (ENABLE_HEADERS AND ENABLE_LIBRARY)
+if(ENABLE_HEADERS AND ENABLE_LIBRARY)
     configure_file(
         ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfigVersion.in.cmake
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-    @ONLY)
+        @ONLY)
 
-    install(EXPORT limesuiteng FILE
-        limesuitengConfig.cmake
+    install(
+        EXPORT limesuiteng
+        FILE limesuitengConfig.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 
-    install(FILES
-        ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-        DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
-endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
+    install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
+endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
 #########################################################################
 # summary
@@ -282,24 +290,16 @@ endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
 include(FeatureSummary)
 message(STATUS "")
 message(STATUS "######################################################")
-feature_summary(WHAT PACKAGES_FOUND
-    DESCRIPTION "Packages found:"
-)
+feature_summary(WHAT PACKAGES_FOUND DESCRIPTION "Packages found:")
 
 message(STATUS "######################################################")
-feature_summary(WHAT REQUIRED_PACKAGES_NOT_FOUND
-    DESCRIPTION "Missing required packages:"
-)
+feature_summary(WHAT REQUIRED_PACKAGES_NOT_FOUND DESCRIPTION "Missing required packages:")
 
 message(STATUS "######################################################")
-feature_summary(WHAT RECOMMENDED_PACKAGES_NOT_FOUND
-    DESCRIPTION "Missing recommended packages:"
-)
+feature_summary(WHAT RECOMMENDED_PACKAGES_NOT_FOUND DESCRIPTION "Missing recommended packages:")
 
 message(STATUS "######################################################")
-feature_summary(WHAT OPTIONAL_PACKAGES_NOT_FOUND
-    DESCRIPTION "Missing optional packages:"
-)
+feature_summary(WHAT OPTIONAL_PACKAGES_NOT_FOUND DESCRIPTION "Missing optional packages:")
 
 message(STATUS "######################################################")
 message(STATUS "## ${PROJECT_NAME} enabled features")
@@ -321,10 +321,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadImages.cmake)
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-    IMMEDIATE @ONLY)
+    IMMEDIATE
+    @ONLY)
 
 #only add uninstall target if this is the top project
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
-add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+    add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()

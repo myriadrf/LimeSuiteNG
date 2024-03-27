@@ -2,7 +2,7 @@ include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_CLI "Enable command line programs" ON "ENABLE_LIBRARY" ON)
 add_feature_info(CLI ENABLE_CLI "LimeSuite command line interface tools")
-if (NOT ENABLE_CLI)
+if(NOT ENABLE_CLI)
     return()
 endif()
 
@@ -36,11 +36,4 @@ set_target_properties(limeTRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_include_directories(limeTRX PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeTRX PRIVATE cli-shared)
 
-install(TARGETS
-    limeDevice
-    limeSPI
-    limeFLASH
-    limeTRX
-    limeConfig
-    DESTINATION bin
-)
+install(TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig DESTINATION bin)

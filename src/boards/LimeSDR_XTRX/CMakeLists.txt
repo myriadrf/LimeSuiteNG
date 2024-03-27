@@ -4,10 +4,7 @@
 
 set(THIS_SOURCE_DIR boards/LimeSDR_XTRX)
 
-set(LIMESDR_XTRX_SOURCES
-    ${THIS_SOURCE_DIR}/LimeSDR_XTRX.cpp
-    ${THIS_SOURCE_DIR}/FPGA_XTRX.cpp
-)
+set(LIMESDR_XTRX_SOURCES ${THIS_SOURCE_DIR}/LimeSDR_XTRX.cpp ${THIS_SOURCE_DIR}/FPGA_XTRX.cpp)
 
 ########################################################################
 ## Add to library

@@ -3,7 +3,7 @@ include(CMakeDependentOption)
 
 cmake_dependent_option(ENABLE_UTILITIES "Enable utility programs" ON "ENABLE_LIBRARY" OFF)
 
-if (NOT ENABLE_UTILITIES)
+if(NOT ENABLE_UTILITIES)
     return()
 endif()
 
@@ -15,8 +15,3 @@ add_executable(rfTest rfTest.cpp)
 set_target_properties(rfTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(rfTest PUBLIC ${LIME_SUITE_INCLUDES})
 target_link_libraries(rfTest PUBLIC ${MAIN_LIBRARY_NAME})
-
-
-
-
-

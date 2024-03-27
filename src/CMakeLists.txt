@@ -4,17 +4,17 @@ set(GUI_EXECUTABLE_NAME limeGUI)
 ########################################################################
 ## public headers
 ########################################################################
-FILE(GLOB LIMESUITENG_PUBLIC_HEADERS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h")
+file(
+    GLOB LIMESUITENG_PUBLIC_HEADERS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h")
 
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)
 add_feature_info(HEADERS ENABLE_HEADERS "The limesuiteng headers")
-if (ENABLE_HEADERS)
-    install(
-        FILES ${LIMESUITENG_PUBLIC_HEADERS}
-        DESTINATION include/limesuiteng
-    )
+if(ENABLE_HEADERS)
+    install(FILES ${LIMESUITENG_PUBLIC_HEADERS} DESTINATION include/limesuiteng)
 endif()
 
 ########################################################################
@@ -48,25 +48,20 @@ set(LIME_SUITE_SOURCES
     CDCM6208/CDCM6208_Dev.cpp
     gnuPlotPipe.h
     parsers/CoefficientFileParser.cpp
-
     EnumToString.cpp
-
     DSP/Equalizer.cpp
     DSP/FFT.cpp
     memory/MemoryPool.cpp
-
     mcu_program/spi.cpp
     mcu_program/common_src/lms7002m_calibrations.c
     mcu_program/common_src/lms7002m_controls.c
     mcu_program/common_src/lms7002m_filters.c
-
     API/LMS_APIWrapper.cpp
     include/limesuiteng/commonTypes.cpp
     include/limesuiteng/OpStatus.cpp
-    include/limesuiteng/SDRDevice.cpp
-)
+    include/limesuiteng/SDRDevice.cpp)
 
-SET_SOURCE_FILES_PROPERTIES(
+set_source_files_properties(
     mcu_program/common_src/lms7002m_calibrations.c
     mcu_program/common_src/lms7002m_controls.c
     mcu_program/common_src/lms7002m_filters.c
@@ -82,15 +77,15 @@ set(LIME_SUITE_INCLUDES
     ${PROJECT_SOURCE_DIR}/external
     ${CMAKE_CURRENT_SOURCE_DIR}/threadHelper
     ${CMAKE_CURRENT_SOURCE_DIR}/memory
-    ${CMAKE_CURRENT_SOURCE_DIR}/vectorization
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/vectorization)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp @ONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp
+    @ONLY)
 list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
 list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -108,7 +103,7 @@ include(CMakeDependentOption)
 
 option(ENABLE_LIBRARY "Enable build library" ON)
 add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
-if (ENABLE_LIBRARY)
+if(ENABLE_LIBRARY)
     add_library(${MAIN_LIBRARY_NAME} ${LIME_SUITE_SOURCES})
     target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIME_SUITE_LIBRARIES})
     set_property(TARGET ${MAIN_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
@@ -116,12 +111,12 @@ if (ENABLE_LIBRARY)
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES VERSION ${LIME_SUITE_LIBVER})
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "LIME_DLL_EXPORTS")
     target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
-    target_include_directories(${MAIN_LIBRARY_NAME} INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
-        $<INSTALL_INTERFACE:include>
-    )
+    target_include_directories(
+        ${MAIN_LIBRARY_NAME}
+        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
+                  $<INSTALL_INTERFACE:include>)
 
     add_subdirectory(vectorization)
 
@@ -129,20 +124,24 @@ if (ENABLE_LIBRARY)
         target_compile_definitions(${MAIN_LIBRARY_NAME} PUBLIC "LIME_DLL")
     endif()
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND ENABLE_CODE_COVERAGE AND (NOT MSVC))
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+       AND ENABLE_CODE_COVERAGE
+       AND (NOT MSVC))
         include(CodeCoverage)
         append_coverage_compiler_flags_to_target(${MAIN_LIBRARY_NAME})
     endif()
 
-    install(TARGETS ${MAIN_LIBRARY_NAME} EXPORT limesuiteng
+    install(
+        TARGETS ${MAIN_LIBRARY_NAME}
+        EXPORT limesuiteng
         LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
         ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-        RUNTIME DESTINATION bin              # .dll file
+        RUNTIME DESTINATION bin # .dll file
     )
 
-	if (MSVC)
-		set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-	endif(MSVC)
+    if(MSVC)
+        set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    endif(MSVC)
 
     add_subdirectory(GFIR)
     set(LIME_SUITE_LIBS LimeSuite)
@@ -155,10 +154,7 @@ include(comms/USB/CMakeLists.txt)
 include(comms/PCIe/CMakeLists.txt)
 include(boards/CMakeLists.txt)
 
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp
-)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
@@ -241,14 +237,13 @@ set(LMS7SUITE_GUI_SOURCES
     boards_wxgui/pnlGPIO.cpp
     GUI/CommsToDevice.cpp
     GUI/DeviceConnectionPanel.cpp
-    GUI/events.cpp
-)
+    GUI/events.cpp)
 
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_GUI "Enable build GUI" ON "ENABLE_LIBRARY;wxWidgets_FOUND" OFF)
 add_feature_info(GUI ENABLE_GUI "GUI Application for LimeSuite")
-if (ENABLE_GUI)
+if(ENABLE_GUI)
 
     include_directories(lms7002_wxgui)
     include_directories(utilities_gui)
@@ -267,15 +262,17 @@ if (ENABLE_GUI)
     set(BINARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin")
 
     add_executable(${GUI_EXECUTABLE_NAME} ${LMS7SUITE_GUI_SOURCES} resources/resource.rc)
-    set_target_properties(${GUI_EXECUTABLE_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
+    set_target_properties(${GUI_EXECUTABLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
     target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
     target_include_directories(${GUI_EXECUTABLE_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
 
     target_link_libraries(${GUI_EXECUTABLE_NAME} ${MAIN_LIBRARY_NAME} oglGraph ${wxWidgets_LIBRARIES})
 
-    if (MSVC)
-        set_property(TARGET ${GUI_EXECUTABLE_NAME} APPEND PROPERTY LINK_FLAGS /SUBSYSTEM:WINDOWS)
+    if(MSVC)
+        set_property(
+            TARGET ${GUI_EXECUTABLE_NAME}
+            APPEND
+            PROPERTY LINK_FLAGS /SUBSYSTEM:WINDOWS)
     endif(MSVC)
 
     install(TARGETS ${GUI_EXECUTABLE_NAME} DESTINATION bin)
@@ -285,17 +282,11 @@ endif()
 ########################################################################
 # Build pkg config file
 ########################################################################
-if (ENABLE_HEADERS AND ENABLE_LIBRARY)
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuite.pc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc
-@ONLY)
+if(ENABLE_HEADERS AND ENABLE_LIBRARY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LimeSuite.pc.in ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc @ONLY)
 
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc
-    DESTINATION lib${LIB_SUFFIX}/pkgconfig
-)
-endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
 #########################################################################
 # utilities

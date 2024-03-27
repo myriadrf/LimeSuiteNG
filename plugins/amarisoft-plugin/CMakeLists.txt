@@ -1,6 +1,8 @@
 project("limesuiteng-amarisoft-plugin")
 cmake_minimum_required(VERSION 3.00)
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING INTERNAL FORCE)
+set(CMAKE_CONFIGURATION_TYPES
+    "Debug;Release;RelWithDebInfo"
+    CACHE STRING INTERNAL FORCE)
 set(BUILD_SHARED_LIBS "Build the shared library" ON)
 set(CMAKE_BUILD_TYPE "Release")
 
@@ -9,7 +11,7 @@ include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_AMARISOFT_PLUGIN "Build LimeSuite integration to Amarisoft" ON "UNIX;ENABLE_LIBRARY" OFF)
 add_feature_info(AMARISOFT_PLUGIN ENABLE_AMARISOFT_PLUGIN "LimeSuite Amarisoft integration plugin")
 
-if (NOT ENABLE_AMARISOFT_PLUGIN)
+if(NOT ENABLE_AMARISOFT_PLUGIN)
     return()
 endif()
 
@@ -23,7 +25,6 @@ else()
     set(X86 FALSE)
 endif()
 
-
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-Wall -Wpedantic)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden -Wl,-z,defs")
@@ -31,12 +32,14 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     if(NOT DEFAULT_SIMD_FLAGS)
         set(DEFAULT_SIMD_FLAGS "native")
     endif()
-    if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND X86)
+    if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND X86)
         set(DEFAULT_SIMD_FLAGS "SSE3")
     endif()
 
-    SET(ENABLE_SIMD_FLAGS "${DEFAULT_SIMD_FLAGS}" CACHE STRING "Set compiler SIMD flags")
-    SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none native SSE3 SSE4.2 AVX AVX2) 
+    set(ENABLE_SIMD_FLAGS
+        "${DEFAULT_SIMD_FLAGS}"
+        CACHE STRING "Set compiler SIMD flags")
+    set_property(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none native SSE3 SSE4.2 AVX AVX2)
 
     if(${ENABLE_SIMD_FLAGS} MATCHES "native")
         add_definitions(-march=native)
