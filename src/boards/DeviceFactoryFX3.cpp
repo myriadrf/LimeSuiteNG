@@ -111,6 +111,6 @@ SDRDevice* DeviceFactoryFX3::make(const DeviceHandle& handle)
     if (ids.find({ vid, pid }) != ids.end())
         return make_LimeSDR(handle, vid, pid);
 
-    lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%s)", handle.addr);
+    lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%s)", handle.addr.c_str());
     return nullptr;
 }
