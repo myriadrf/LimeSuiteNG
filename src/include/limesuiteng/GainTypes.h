@@ -1,7 +1,7 @@
 #ifndef LIME_GAINTYPES_H
 #define LIME_GAINTYPES_H
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 
 #include <cstdint>
 #include <string>

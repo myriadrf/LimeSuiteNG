@@ -7,8 +7,8 @@
 #ifndef LIMESUITE_LOGGER_H
 #define LIMESUITE_LOGGER_H
 
-#include "limesuite/config.h"
-#include "limesuite/OpStatus.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/OpStatus.h"
 #include <string>
 #include <cstdarg>
 #include <cerrno>

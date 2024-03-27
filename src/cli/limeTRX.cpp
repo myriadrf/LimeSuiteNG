@@ -1,7 +1,7 @@
 #include "cli/common.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/StreamComposite.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamComposite.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>

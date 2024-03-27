@@ -16,7 +16,7 @@ class wxChoice;
 #include <thread>
 #include <atomic>
 #include <vector>
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "IModuleFrame.h"
 
 class LMS_Programing_wxgui : public IModuleFrame

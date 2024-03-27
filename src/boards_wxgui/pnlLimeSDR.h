@@ -1,7 +1,7 @@
 #ifndef PNL_LIMESDR_H
 #define PNL_LIMESDR_H
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/panel.h>
 
 class wxFlexGridSizer;

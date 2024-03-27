@@ -8,8 +8,8 @@
 #include <mutex>
 #include <sstream>
 
-#include <limesuite/LMS7002M.h>
-#include <limesuite/DeviceRegistry.h>
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 using namespace lime;
 using namespace std;

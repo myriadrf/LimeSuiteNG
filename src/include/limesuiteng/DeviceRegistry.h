@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "limesuite/config.h"
-#include "limesuite/DeviceHandle.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/DeviceHandle.h"
 
 namespace lime {
 

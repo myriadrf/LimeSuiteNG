@@ -2,9 +2,9 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "limesuite/GainTypes.h"
-#include "limesuite/MemoryDevices.h"
-#include "limesuite/MemoryRegions.h"
+#include "limesuiteng/GainTypes.h"
+#include "limesuiteng/MemoryDevices.h"
+#include "limesuiteng/MemoryRegions.h"
 
 using namespace lime;
 

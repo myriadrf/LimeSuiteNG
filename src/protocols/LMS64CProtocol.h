@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "LMSBoards.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "ISerialPort.h"
 
 namespace lime {

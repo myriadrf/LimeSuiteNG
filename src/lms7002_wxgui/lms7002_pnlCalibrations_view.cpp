@@ -5,7 +5,7 @@
 #include "lms7suiteEvents.h"
 #include <wx/busyinfo.h>
 #include "lms7suiteAppFrame.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "Logger.h"
 
 using namespace lime;

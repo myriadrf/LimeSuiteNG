@@ -1,4 +1,4 @@
-set(LIME_TEST_SUITE_NAME LimeSuite2Test)
+set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
     parsers/CoefficientFileParserTest.cpp

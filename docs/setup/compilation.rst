@@ -1,12 +1,12 @@
 Compilation guide
 =================
 
-This page describes how to compile LimeSuiteGUI2 on Linux.
+This page describes how to compile limeGUI on Linux.
 
 Prerequisites
 -------------
 
-Components needed to compile LimeSuiteGUI2:
+Components needed to compile limeGUI:
 
 - `GCC`_
 - `CMake`_
@@ -44,8 +44,8 @@ To run these tests, in the root folder of the repository run these commands:
 
     cd build # Change working directory to the build folder
     cmake .. -DBUILD_SHARED_LIBS=OFF # Generate make file with static libraries
-    make LimeSuite2Test # Build the tests binary
-    bin/LimeSuite2Test # Run the tests binary
+    make limesuiteng-test # Build the tests binary
+    bin/limesuiteng-test # Run the tests binary
 
 After the tests are ran, you should see the information about which tests were ran,
 and whether they were successful or not.
@@ -59,9 +59,9 @@ To generate a web-based testing code coverage report, in the root folder of the 
 
     cd build # Change working directory to the build folder
     cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF # Generate make file with static libraries and without optimizations
-    make LimeSuite2Test_coverage # Generate the coverage report with lcov
+    make limesuiteng-test_coverage # Generate the coverage report with lcov
 
-After generating the report it can be found in the `build/LimeSuite2Test_coverage`
+After generating the report it can be found in the `build/limesuiteng-test_coverage`
 directory and opening the `index.html` file with a browser.
 
 Docker

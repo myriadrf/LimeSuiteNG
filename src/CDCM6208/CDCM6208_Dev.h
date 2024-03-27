@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 #include "FPGA_common.h"
 
 #include <vector>

@@ -13,10 +13,10 @@ using namespace std;
 #include <assert.h>
 #include <thread>
 #include <list>
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "Logger.h"
 
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include <functional>
 
 using namespace lime;

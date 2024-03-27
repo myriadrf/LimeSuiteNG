@@ -2,16 +2,16 @@
 
 #include "USBGeneric.h"
 #include "LMSBoards.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "Logger.h"
 #include "FPGA_common.h"
 #include "TRXLooper_USB.h"
-#include "limesuite/LMS7002M_parameters.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "protocols/LMS64CProtocol.h"
-#include "limesuite/DeviceNode.h"
+#include "limesuiteng/DeviceNode.h"
 #include "FX3/FX3.h"
 
 #include <array>

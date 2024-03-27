@@ -14,7 +14,7 @@
 #include <wx/button.h>
 #include <wx/radiobox.h>
 #include <string>
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 namespace lime {
 class SDRDevice;

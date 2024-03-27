@@ -6,7 +6,7 @@
 
 #include "Si5351C_wxgui.h"
 #include "Si5351C.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "GUI/CommsToDevice.h"
 #include <LMSBoards.h>
 

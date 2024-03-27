@@ -1,7 +1,7 @@
 #pragma once
 
 #include "USBEntry.h"
-#include "limesuite/DeviceHandle.h"
+#include "limesuiteng/DeviceHandle.h"
 
 namespace lime {
 

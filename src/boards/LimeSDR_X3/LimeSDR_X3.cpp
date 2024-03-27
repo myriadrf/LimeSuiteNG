@@ -5,14 +5,14 @@
 
 #include "Logger.h"
 #include "LitePCIe.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
-#include "limesuite/DeviceNode.h"
+#include "limesuiteng/DeviceNode.h"
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
 

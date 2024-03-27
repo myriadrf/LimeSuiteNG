@@ -1,6 +1,6 @@
 #pragma once
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/panel.h>
 #include <wx/choice.h>
 #include <wx/spinctrl.h>
