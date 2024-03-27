@@ -84,7 +84,7 @@ std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
 SDRDevice* DeviceFactoryFTDI::make_LimeSDR_Mini(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid)
 {
     auto usbComms = std::make_shared<FT601>(
-#ifndef __unix__
+#ifdef __unix__
         ctx
 #endif
     );
