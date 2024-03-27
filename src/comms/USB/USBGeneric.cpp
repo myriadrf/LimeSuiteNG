@@ -42,12 +42,12 @@ USBGeneric::USBGeneric(void* usbContext)
         return;
     }
 
-    if (activeUSBconnections == 0)
+    ++activeUSBconnections;
+
+    if (activeUSBconnections == 1)
     {
         gUSBProcessingThread = std::thread(&USBGeneric::HandleLibusbEvents, this);
     }
-
-    ++activeUSBconnections;
 #endif
 }
 
