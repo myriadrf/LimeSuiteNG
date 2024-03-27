@@ -2,7 +2,6 @@
 #define LIME_USBENTRY_H
 
 #include "limesuite/DeviceRegistry.h"
-#include "USBEntry.h"
 #include <cstdint>
 #include <set>
 

@@ -1,4 +1,4 @@
-#include "LimeSDR_MiniEntry.h"
+#include "DeviceFactoryFTDI.h"
 #include "LimeSDR_Mini.h"
 #include "DeviceExceptions.h"
 #include "limesuite/DeviceRegistry.h"
@@ -29,21 +29,21 @@
 
 using namespace lime;
 
-void __loadLimeSDR_Mini(void) // TODO: fixme replace with LoadLibrary/dlopen
+void __loadFTDI(void) // TODO: fixme replace with LoadLibrary/dlopen
 {
-    static LimeSDR_MiniEntry limesdr_miniSupport; // Self register on initialization
+    static DeviceFactoryFTDI FTDISupport; // Self register on initialization
 }
 
 // Device identifier vendor ID and product ID pairs.
 static const std::set<VidPid> ids{ { 1027, 24607 } };
 
-LimeSDR_MiniEntry::LimeSDR_MiniEntry()
-    : USBEntry("LimeSDR_Mini", ids)
+DeviceFactoryFTDI::DeviceFactoryFTDI()
+    : USBEntry("FTDI", ids)
 {
 }
 
 #ifndef __unix__
-std::vector<DeviceHandle> LimeSDR_MiniEntry::enumerate(const DeviceHandle& hint)
+std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
 
@@ -81,21 +81,10 @@ std::vector<DeviceHandle> LimeSDR_MiniEntry::enumerate(const DeviceHandle& hint)
 }
 #endif
 
-SDRDevice* LimeSDR_MiniEntry::make(const DeviceHandle& handle)
+SDRDevice* make_LimeSDR_Mini(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid)
 {
-    const auto splitPos = handle.addr.find(":");
-
-    uint16_t vid = 0;
-    uint16_t pid = 0;
-
-    if (splitPos != std::string::npos)
-    {
-        vid = std::stoi(handle.addr.substr(0, splitPos), nullptr, 16);
-        pid = std::stoi(handle.addr.substr(splitPos + 1), nullptr, 16);
-    }
-
     auto usbComms = std::make_shared<FT601>(
-#ifdef __unix__
+#ifndef __unix__
         ctx
 #endif
     );
@@ -112,4 +101,24 @@ SDRDevice* LimeSDR_MiniEntry::make(const DeviceHandle& handle)
     auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
 
     return new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
+}
+
+SDRDevice* DeviceFactoryFTDI::make(const DeviceHandle& handle)
+{
+    const auto splitPos = handle.addr.find(":");
+
+    uint16_t vid = 0;
+    uint16_t pid = 0;
+
+    if (splitPos != std::string::npos)
+    {
+        vid = std::stoi(handle.addr.substr(0, splitPos), nullptr, 16);
+        pid = std::stoi(handle.addr.substr(splitPos + 1), nullptr, 16);
+    }
+
+    if (ids.find({ vid, pid }) != ids.end())
+        return make_LimeSDR_Mini(handle, vid, pid);
+
+    lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%s)", handle.addr);
+    return nullptr;
 }
