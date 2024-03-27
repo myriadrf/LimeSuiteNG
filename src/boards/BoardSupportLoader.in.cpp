@@ -1,24 +1,24 @@
 
-#cmakedefine ENABLE_LIMESDR_USB
+#cmakedefine ENABLE_USB_FX3
 #cmakedefine ENABLE_LIMESDR_X3
 #cmakedefine ENABLE_LIMESDR_XTRX
 #cmakedefine ENABLE_LIMESDR_MMX8
-#cmakedefine ENABLE_LIMESDR_MINI
+#cmakedefine ENABLE_USB_FTDI
 
 #cmakedefine ENABLE_LITE_PCIE
 
-void __loadLimeSDR();
-void __loadLimeSDR_Mini();
+void __loadFX3();
+void __loadFTDI();
 void __loadDeviceFactoryPCIe();
 
 void __loadBoardSupport()
 {
-#ifdef ENABLE_LIMESDR_USB
-    __loadLimeSDR();
+#ifdef ENABLE_USB_FX3
+    __loadFX3();
 #endif
 
-#ifdef ENABLE_LIMESDR_MINI
-    __loadLimeSDR_Mini();
+#ifdef ENABLE_USB_FTDI
+    __loadFTDI();
 #endif
 
 #ifdef ENABLE_LITE_PCIE

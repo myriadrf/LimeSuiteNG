@@ -1,9 +1,10 @@
-#include "LimeSDREntry.h"
+#include "DeviceFactoryFX3.h"
 #include "LimeSDR.h"
 #include "FX3/FX3.h"
 #include "USB_CSR_Pipe_SDR.h"
 #include "LMS64C_LMS7002M_Over_USB.h"
 #include "LMS64C_FPGA_Over_USB.h"
+#include "Logger.h"
 
 #include <memory>
 #include <stdexcept>
@@ -24,21 +25,21 @@
 
 using namespace lime;
 
-void __loadLimeSDR(void) //TODO fixme replace with LoadLibrary/dlopen
+void __loadFX3(void) //TODO fixme replace with LoadLibrary/dlopen
 {
-    static LimeSDREntry limesdrSupport; // self register on initialization
+    static DeviceFactoryFX3 FX3Support; // self register on initialization
 }
 
 // Device identifier vendor ID and product ID pairs.
 static const std::set<VidPid> ids{ { 1204, 241 }, { 1204, 243 }, { 7504, 24840 } };
 
-LimeSDREntry::LimeSDREntry()
-    : USBEntry("LimeSDR", ids)
+DeviceFactoryFX3::DeviceFactoryFX3()
+    : USBEntry("FX3", ids)
 {
 }
 
 #ifndef __unix__
-std::vector<DeviceHandle> LimeSDREntry::enumerate(const DeviceHandle& hint)
+std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
     if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
@@ -73,18 +74,8 @@ std::vector<DeviceHandle> LimeSDREntry::enumerate(const DeviceHandle& hint)
 }
 #endif
 
-SDRDevice* LimeSDREntry::make(const DeviceHandle& handle)
+SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid)
 {
-    const auto splitPos = handle.addr.find(":");
-    uint16_t vid = 0;
-    uint16_t pid = 0;
-
-    if (splitPos != std::string::npos)
-    {
-        vid = std::stoi(handle.addr.substr(0, splitPos), nullptr, 16);
-        pid = std::stoi(handle.addr.substr(splitPos + 1), nullptr, 16);
-    }
-
     auto usbComms = std::make_shared<FX3>(
 #ifdef __unix__
         ctx
@@ -103,4 +94,23 @@ SDRDevice* LimeSDREntry::make(const DeviceHandle& handle)
     auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
 
     return new LimeSDR(route_lms7002m, route_fpga, usbComms, usbPipe);
+}
+
+SDRDevice* DeviceFactoryFX3::make(const DeviceHandle& handle)
+{
+    const auto splitPos = handle.addr.find(":");
+    uint16_t vid = 0;
+    uint16_t pid = 0;
+
+    if (splitPos != std::string::npos)
+    {
+        vid = std::stoi(handle.addr.substr(0, splitPos), nullptr, 16);
+        pid = std::stoi(handle.addr.substr(splitPos + 1), nullptr, 16);
+    }
+
+    if (ids.find({ vid, pid }) != ids.end())
+        return make_LimeSDR(handle, vid, pid);
+
+    lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%s)", handle.addr.c_str());
+    return nullptr;
 }
