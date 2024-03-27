@@ -74,7 +74,7 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
 }
 #endif
 
-SDRDevice* make_LimeSDR(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid)
+SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid)
 {
     auto usbComms = std::make_shared<FX3>(
 #ifndef __unix__

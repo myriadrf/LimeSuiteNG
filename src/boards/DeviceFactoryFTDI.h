@@ -16,6 +16,9 @@ class DeviceFactoryFTDI : public USBEntry
 #endif
 
     virtual SDRDevice* make(const DeviceHandle& handle) override;
+
+  private:
+    SDRDevice* make_LimeSDR_Mini(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid);
 };
 
 } // namespace lime
