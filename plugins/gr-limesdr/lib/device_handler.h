@@ -21,10 +21,10 @@
 #ifndef DEVICE_HANDLER_H
 #define DEVICE_HANDLER_H
 
-#include <limesuite/DeviceHandle.h>
-#include <limesuite/SDRDevice.h>
+#include <limesuiteng/DeviceHandle.h>
+#include <limesuiteng/SDRDevice.h>
 #ifdef ENABLE_RFE
-#include <limesuite/limeRFE.h>
+#include <limesuiteng/limeRFE.h>
 #endif
 #include <gnuradio/logger.h>
 #include <cstdint>

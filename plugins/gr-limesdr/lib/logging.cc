@@ -20,7 +20,7 @@
 
 #include "logging.h"
 
-#include <limesuite/Logger.h>
+#include <limesuiteng/Logger.h>
 
 #include <gnuradio/logger.h>
 
