@@ -12,13 +12,13 @@
 #include "DSP/Equalizer.h"
 #include "CommonFunctions.h"
 
-#include "limesuite/DeviceNode.h"
+#include "limesuiteng/DeviceNode.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "MCU_BD.h"
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 
 namespace lime {
 

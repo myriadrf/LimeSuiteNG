@@ -4,14 +4,14 @@
 #include <map>
 
 #include "lms7002_gui_utilities.h"
-#include "limesuite/LMS7002M_parameters.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 
 #include "wx/combobox.h"
 #include "wx/checkbox.h"
 #include "wx/spinctrl.h"
 #include "numericSlider.h"
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 
 class ILMS7002MTab : public wxPanel
 {

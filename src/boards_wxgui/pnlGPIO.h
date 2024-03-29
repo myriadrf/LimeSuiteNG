@@ -1,7 +1,7 @@
 #ifndef PNL_GPIO_H
 #define PNL_GPIO_H
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/panel.h>
 
 class wxStaticText;

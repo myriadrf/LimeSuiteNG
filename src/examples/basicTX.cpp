@@ -4,8 +4,8 @@
     @brief  minimal TX example
  */
 
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>

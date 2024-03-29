@@ -2,8 +2,8 @@
 
 #include "lms7002_gui_utilities.h"
 
-#include "limesuite/LMS7002M.h"
-#include "limesuite/Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

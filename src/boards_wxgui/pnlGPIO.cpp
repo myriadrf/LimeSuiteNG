@@ -7,7 +7,7 @@
 #include <wx/checkbox.h>
 #include <wx/statbox.h>
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 using namespace lime;
 using namespace std;

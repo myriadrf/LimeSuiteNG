@@ -2,8 +2,8 @@
 #include "numericSlider.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace LMS7002_WXGUI;

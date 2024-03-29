@@ -2,7 +2,7 @@
 
 #include "DeviceExceptions.h"
 #include "FPGA_common.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "lms7002m/MCU_BD.h"
@@ -433,11 +433,11 @@ uint8_t LMS7002M_SDRDevice::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t 
 
     if (trx == TRXDir::Tx)
     {
-        return static_cast<std::size_t>(lms->GetBandTRF());
+        return lms->GetBandTRF();
     }
     else
     {
-        return static_cast<std::size_t>(lms->GetPathRFE());
+        return static_cast<uint8_t>(lms->GetPathRFE());
     }
 }
 

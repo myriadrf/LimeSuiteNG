@@ -13,7 +13,7 @@
 #include <memory>
 
 #include "mcu_programs.h"
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 
 namespace lime {
 

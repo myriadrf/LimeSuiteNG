@@ -15,7 +15,7 @@
 #include "SamplesPacket.h"
 #include "DataPacket.h"
 #include "TRXLooper.h"
-#include "limesuite/complex.h"
+#include "limesuiteng/complex.h"
 
 namespace lime {
 class ISPI;

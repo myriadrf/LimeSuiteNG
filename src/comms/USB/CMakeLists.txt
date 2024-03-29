@@ -6,7 +6,7 @@ set(THIS_SOURCE_DIR comms/USB)
 include(${THIS_SOURCE_DIR}/FT601/CMakeLists.txt)
 include(${THIS_SOURCE_DIR}/FX3/CMakeLists.txt)
 
-if(NOT(ENABLE_USB_FTDI OR ENABLE_USB_FX3))
+if (NOT ENABLE_USB_FX3 AND NOT ENABLE_USB_FTDI)
     return()
 endif()
 

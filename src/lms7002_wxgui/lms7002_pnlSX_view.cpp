@@ -10,9 +10,9 @@
 #include "lms7suiteEvents.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include <string>
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
-#include "limesuite/Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
 using namespace std;
 using namespace lime;
 

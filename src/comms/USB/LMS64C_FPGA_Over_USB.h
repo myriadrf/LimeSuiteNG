@@ -1,7 +1,7 @@
 #ifndef LIME_LMS64C_FPGA_OVER_USB_H
 #define LIME_LMS64C_FPGA_OVER_USB_H
 
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include "USB_CSR_Pipe.h"
 #include <memory>
 

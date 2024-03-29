@@ -8,8 +8,8 @@
 #include <mutex>
 #include <sstream>
 
-#include <limesuite/LMS7002M.h>
-#include <limesuite/DeviceRegistry.h>
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 using namespace lime;
 using namespace std;
@@ -241,8 +241,8 @@ static OpStatus MapChannelsToDevices(
     }
     return OpStatus::SUCCESS;
 }
-/*
-static void ParseAndWriteDeviceFPGARegisters(LimePluginContext* context, int devIndex)
+
+static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
 {
     std::vector<uint32_t> writeRegisters;
     char varname[256];
@@ -258,19 +258,11 @@ static void ParseAndWriteDeviceFPGARegisters(LimePluginContext* context, int dev
         {
             uint32_t spiVal = 0;
             sscanf(token, "%X", &spiVal);
-            writeRegisters.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
+            context->rfdev[devIndex].fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
             token = strtok(NULL, ";");
         }
     }
-
-    SDRDevice* device = context->rfdev[devIndex].device;
-    if (writeRegisters.size() > 0)
-    {
-        const auto slaves = device->GetDescriptor().spiSlaveIds;
-        device->SPI(slaves.at("FPGA"), writeRegisters.data(), nullptr, writeRegisters.size());
-    }
 }
-*/
 
 int LimePlugin_Stop(LimePluginContext* context)
 {
@@ -442,6 +434,8 @@ static void GatherDeviceNodeSettings(LimePluginContext* context, LimeSettingsPro
         GatherDeviceDirectionalSettings(settings, &dev.rxSettings, dirPrefix);
         sprintf(dirPrefix, "%s_tx", devPrefix);
         GatherDeviceDirectionalSettings(settings, &dev.txSettings, dirPrefix);
+
+        ParseFPGARegistersWrites(context, i);
     }
 }
 
@@ -828,7 +822,12 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             {
                 return -1;
             }
-            //ParseAndWriteDeviceFPGARegisters(s1, i);
+
+            if (node.fpgaRegisterWrites.size() > 0)
+            {
+                const auto slaves = node.device->GetDescriptor().spiSlaveIds;
+                node.device->SPI(slaves.at("FPGA"), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
+            }
         }
 
         // override gains after device Configure

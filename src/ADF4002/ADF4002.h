@@ -7,8 +7,8 @@
 #ifndef ADF_MODULE_H
 #define ADF_MODULE_H
 
-#include "limesuite/config.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/IComms.h"
 
 #include <memory>
 

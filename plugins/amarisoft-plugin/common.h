@@ -1,7 +1,7 @@
 #pragma once
 
-#include <limesuite/SDRDevice.h>
-#include <limesuite/StreamComposite.h>
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamComposite.h"
 
 #include <map>
 #include <vector>
@@ -46,6 +46,7 @@ struct DevNode {
     bool double_freq_conversion_to_lower_side;
     DirectionalSettings rxSettings;
     DirectionalSettings txSettings;
+    std::vector<uint32_t> fpgaRegisterWrites;
 
     lime::SDRDevice* device; // chip owner
     lime::SDRDevice::SDRConfig config;

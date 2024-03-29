@@ -1,5 +1,5 @@
 #include "FPGA_common.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include "LMSBoards.h"
 #include "limesuite/Logger.h"
 #include "WriteRegistersBatch.h"

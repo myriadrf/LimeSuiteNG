@@ -6,8 +6,8 @@
 
 #include <SoapySDR/Device.hpp>
 
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
 
 #include <array>
 #include <chrono>

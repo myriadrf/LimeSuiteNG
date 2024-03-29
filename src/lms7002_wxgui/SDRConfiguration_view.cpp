@@ -1,6 +1,6 @@
 #include "SDRConfiguration_view.h"
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>
@@ -260,7 +260,8 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
         return value;
     };
 
-    for (int i = 0; i < MAX_GUI_CHANNELS_COUNT; ++i)
+    auto channelCount = sdrDevice->GetDescriptor().rfSOC.at(socIndex).channelCount;
+    for (int i = 0; i < channelCount; ++i)
     {
         const double multiplier = 1e6; // convert from GUI MHz to Hz
         SDRDevice::ChannelConfig& ch = config.channel[i];

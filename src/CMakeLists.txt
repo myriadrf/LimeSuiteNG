@@ -23,7 +23,7 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    include/limesuite/Logger.cpp
+    include/limesuiteng/Logger.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp
@@ -61,9 +61,9 @@ set(LIME_SUITE_SOURCES
     mcu_program/common_src/lms7002m_filters.c
 
     API/LMS_APIWrapper.cpp
-    include/limesuite/commonTypes.cpp
-    include/limesuite/OpStatus.cpp
-    include/limesuite/SDRDevice.cpp
+    include/limesuiteng/commonTypes.cpp
+    include/limesuiteng/OpStatus.cpp
+    include/limesuiteng/SDRDevice.cpp
 )
 
 SET_SOURCE_FILES_PROPERTIES(
@@ -85,9 +85,9 @@ set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/vectorization
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/limesuite/VersionInfo.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuite/VersionInfo.cpp @ONLY)
-list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/include/limesuite/VersionInfo.cpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp @ONLY)
+list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)

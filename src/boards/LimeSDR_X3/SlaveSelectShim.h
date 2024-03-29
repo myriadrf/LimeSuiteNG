@@ -1,8 +1,8 @@
 #ifndef LIME_SLAVESELECTSHIM_H
 #define LIME_SLAVESELECTSHIM_H
 
-#include "limesuite/config.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/IComms.h"
 #include <memory>
 
 namespace lime {

@@ -15,7 +15,7 @@
 #include <cassert>
 #include <ciso646> // alternative operators for visual c++: not, and, or...
 #include <vector>
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 
 using namespace std;
 using namespace lime;

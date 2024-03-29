@@ -1,6 +1,6 @@
 #include "cli/common.h"
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include <cassert>
 #include <cstring>
 #include <getopt.h>

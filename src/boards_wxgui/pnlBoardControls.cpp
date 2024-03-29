@@ -20,8 +20,8 @@
 #include <cassert>
 #include <vector>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/MemoryRegions.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/MemoryRegions.h"
 
 using namespace std;
 using namespace lime;

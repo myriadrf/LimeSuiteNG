@@ -4,12 +4,8 @@
 #include <atomic>
 #include <vector>
 
-#include "limesuite/config.h"
-#include "limesuite/OpStatus.h"
-
-#ifdef __unix__
-    #include "software/kernel/litepcie.h"
-#endif // __unix__
+#include "limesuiteng/config.h"
+#include "limesuiteng/OpStatus.h"
 
 namespace lime {
 

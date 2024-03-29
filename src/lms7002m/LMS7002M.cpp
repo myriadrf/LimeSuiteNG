@@ -4,7 +4,7 @@
 @brief Implementation of LMS7002M transceiver configuring
 */
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 
 #define _USE_MATH_DEFINES
 
@@ -29,8 +29,8 @@
 #endif
 
 #include "lms_gfir.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/IComms.h"
 #include "LMS7002M_RegistersMap.h"
 #include "limesuite/Logger.h"
 #include "mcu_programs.h"
