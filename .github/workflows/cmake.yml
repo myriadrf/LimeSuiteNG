@@ -28,17 +28,17 @@ jobs:
             compiler: clang
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
+          sudo apt-get install -qq gnuradio-dev libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
 
       - name: Install osx dependencies
         if: matrix.os == 'macos-latest'
-        run: brew install libusb wxmac
+        run: brew install gnuradio pybind11 wxwidgets
 
       - name: Download windows dependencies
         if: matrix.os == 'windows-latest'
@@ -71,7 +71,18 @@ jobs:
 
       - name: Configure CMake (clang)
         if: matrix.compiler == 'clang'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} 
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+
+      - name: Configure GNU Radio in-tree CMake (mac)
+        if: matrix.os == 'macos-latest'
+        run: cmake -B ${{github.workspace}}/build -DENABLE_GNURADIO=1
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Build GNU Radio plug-in by itself (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install
+          cmake -B ${{github.workspace}}/plugins/gr-limesdr/build -S ${{github.workspace}}/plugins/gr-limesdr
+          cmake --build ${{github.workspace}}/plugins/gr-limesdr/build --config ${{env.BUILD_TYPE}}
