@@ -5,7 +5,7 @@
 #include "dlgViewIRAM.h"
 #include "dlgViewSFR.h"
 #include "MCU_File.h"
-#include "limesuite/Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std::literals::string_literals;
 

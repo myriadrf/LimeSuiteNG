@@ -8,7 +8,7 @@
 #include <SoapySDR/Registry.hpp>
 #include <SoapySDR/Logger.hpp>
 
-#include "limesuite/Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 

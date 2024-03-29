@@ -1,6 +1,6 @@
 #include "limesuiteng/SDRDevice.h"
 
-#include "limesuite/Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 

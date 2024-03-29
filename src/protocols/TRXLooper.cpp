@@ -2,7 +2,7 @@
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include <ciso646>
-#include "limesuite/Logger.h"
+#include "limesuiteng/Logger.h"
 #include <complex>
 #include "LMSBoards.h"
 #include "threadHelper.h"

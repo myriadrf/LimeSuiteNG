@@ -26,7 +26,7 @@
 #include <wx/filename.h>
 #include <iostream>
 #include "WFM_wcdma.h"
-#include "limesuite/Logger.h"
+#include "limesuiteng/Logger.h"
 
 using lime::complex16_t;
 using std::vector;
