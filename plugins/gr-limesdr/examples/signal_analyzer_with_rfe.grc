@@ -1,0 +1,318 @@
+options:
+  parameters:
+    author: Lime Microsystems
+    catch_exceptions: 'True'
+    category: Custom
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: top_block
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Signal analyzer
+    window_size: (2000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: analog_filter_bandwidth_rx
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    gui_hint: 2,0,1,1
+    label: RX analog filter bandwidth [MHz]
+    type: real
+    value: '10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 4]
+    rotation: 0
+    state: enabled
+- name: baseband_rx
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    gui_hint: 0,1,1,1
+    label: RX baseband [MHz]
+    type: real
+    value: '600'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [176, 4]
+    rotation: 0
+    state: enabled
+- name: digital_filter_bandwidth_rx
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    gui_hint: 2,1,1,1
+    label: RX digital filter bandwidth [MHz]
+    type: real
+    value: sample_rate/2e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 84]
+    rotation: 0
+    state: enabled
+- name: gain_rx
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: 1,0,1,1
+    label: RX gain
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: int
+    start: '0'
+    step: '1'
+    stop: '70'
+    value: '0'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 196]
+    rotation: 0
+    state: enabled
+- name: nco_freq_rx
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    gui_hint: 1,1,1,1
+    label: RX NCO [MHz]
+    type: real
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [176, 84]
+    rotation: 0
+    state: enabled
+- name: rfe_attenuation
+  id: variable_qtgui_chooser
+  parameters:
+    comment: ''
+    gui_hint: 3,1,1,1
+    label: RFE Attenuation [dB]
+    label0: ''
+    label1: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    labels: '[''0'', ''2'', ''4'', ''6'', ''8'', ''10'', ''12'', ''14'']'
+    num_opts: '0'
+    option0: '0'
+    option1: '1'
+    option2: '2'
+    option3: '3'
+    option4: '4'
+    options: '[0, 1, 2, 3, 4, 5 ,6 , 7]'
+    orient: Qt.QVBoxLayout
+    type: int
+    value: '0'
+    widget: combo_box
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [648, 4]
+    rotation: 0
+    state: enabled
+- name: rfe_mode
+  id: variable_qtgui_chooser
+  parameters:
+    comment: ''
+    gui_hint: 3,0,1,1
+    label: LimeRFE Mode
+    label0: RX
+    label1: NONE
+    label2: TXRX
+    label3: ''
+    label4: ''
+    labels: '[]'
+    num_opts: '3'
+    option0: '0'
+    option1: '2'
+    option2: '3'
+    option3: '3'
+    option4: '4'
+    options: '[0, 1, 2]'
+    orient: Qt.QVBoxLayout
+    type: int
+    value: '0'
+    widget: combo_box
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [512, 8]
+    rotation: 0
+    state: enabled
+- name: rfe_notch
+  id: variable_qtgui_chooser
+  parameters:
+    comment: ''
+    gui_hint: 4,0,1,1
+    label: AM/FM Notch Filter
+    label0: Enabled
+    label1: Disabled
+    label2: ''
+    label3: ''
+    label4: ''
+    labels: '[]'
+    num_opts: '2'
+    option0: '1'
+    option1: '0'
+    option2: '2'
+    option3: '3'
+    option4: '4'
+    options: '[0, 1, 2]'
+    orient: Qt.QVBoxLayout
+    type: int
+    value: '1'
+    widget: combo_box
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [808, 4]
+    rotation: 0
+    state: enabled
+- name: sample_rate
+  id: variable_qtgui_label
+  parameters:
+    comment: ''
+    formatter: None
+    gui_hint: 0,0,1,1
+    label: Sample rate [S/s]
+    type: raw
+    value: 5e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 108]
+    rotation: 0
+    state: enabled
+- name: limesdr_rfe_0
+  id: limesdr_rfe
+  parameters:
+    alias: ''
+    atten: rfe_attenuation
+    com_port: ''
+    comm_type: '1'
+    comment: ''
+    fan: '0'
+    filename: ''
+    mode: rfe_mode
+    notch: rfe_notch
+    rx_channel: '-2'
+    rx_port: '1'
+    sdr_serial: ''
+    tx_channel: '-2'
+    tx_port: '2'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 380.0]
+    rotation: 0
+    state: enabled
+- name: limesdr_source_0
+  id: limesdr_source
+  parameters:
+    affinity: ''
+    alias: ''
+    allow_tcxo_dac: '0'
+    analog_bandw_ch0: analog_filter_bandwidth_rx*1e6
+    analog_bandw_ch1: '0'
+    calibr_bandw_ch0: sample_rate
+    calibr_bandw_ch1: '0'
+    ch_align: 'False'
+    channel_mode: '0'
+    comment: ''
+    dacVal: '125'
+    digital_bandw_ch0: digital_filter_bandwidth_rx*1e6
+    digital_bandw_ch1: '0'
+    filename: ''
+    gain_dB_ch0: gain_rx
+    gain_dB_ch1: '0'
+    lna_path_ch0: '255'
+    lna_path_ch1: '2'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nco_freq_ch0: nco_freq_rx*1e6
+    nco_freq_ch1: '0'
+    oversample: '0'
+    rf_freq: baseband_rx*1e6
+    samp_rate: sample_rate
+    serial: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 184]
+    rotation: 0
+    state: enabled
+- name: qtgui_sink_x_0
+  id: qtgui_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    bw: sample_rate
+    comment: ''
+    fc: baseband_rx*1e6
+    fftsize: '4096'
+    gui_hint: 5,0,1,2
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: ''
+    plotconst: 'True'
+    plotfreq: 'True'
+    plottime: 'True'
+    plotwaterfall: 'True'
+    rate: '10'
+    showports: 'True'
+    showrf: 'True'
+    type: complex
+    wintype: window.WIN_BLACKMAN_hARRIS
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 236]
+    rotation: 0
+    state: enabled
+
+connections:
+- [limesdr_source_0, '0', qtgui_sink_x_0, '0']
+
+metadata:
+  file_format: 1
+  grc_version: 3.9.8.0
