@@ -67,11 +67,11 @@ jobs:
 
       - name: Configure CMake (gcc)
         if: matrix.compiler == 'gcc'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DINSTALL_KERNEL_MODULE=0
 
       - name: Configure CMake (clang)
         if: matrix.compiler == 'clang'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DINSTALL_KERNEL_MODULE=0
 
       - name: Configure GNU Radio in-tree CMake (mac)
         if: matrix.os == 'macos-latest'
