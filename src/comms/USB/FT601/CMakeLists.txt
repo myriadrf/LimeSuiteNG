@@ -39,7 +39,7 @@ elseif(UNIX)
         message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
     endif()
 
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC usb-1.0)
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIBUSB_1_LIBRARIES})
 
     if(LIBUSB_1_INCLUDE_DIR)
         target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC
