@@ -227,6 +227,7 @@ set(LMS7SUITE_GUI_SOURCES
     lms7suiteEvents/lms7suiteEvents.cpp
     boards_wxgui/pnlBoardControls.cpp
     boards_wxgui/pnlX3.cpp
+    boards_wxgui/pnlX8.cpp
     boards_wxgui/pnlXTRX.cpp
     # boards_wxgui/pnlQSpark.cpp
     boards_wxgui/pnluLimeSDR.cpp
