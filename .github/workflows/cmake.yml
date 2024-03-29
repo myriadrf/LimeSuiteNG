@@ -57,7 +57,7 @@ jobs:
           cd SoapySDR
           git checkout ${{env.SOAPY_SDR_BRANCH}}
           mkdir build && cd build
-          cmake ../ -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON=OFF -DENABLE_PYTHON3=OFF
+          cmake ../ -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON3=OFF
           cmake --build .
           cmake --build . --target install
 
@@ -84,5 +84,5 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install
-          cmake -B ${{github.workspace}}/plugins/gr-limesdr/build -S ${{github.workspace}}/plugins/gr-limesdr
+          cmake -B ${{github.workspace}}/plugins/gr-limesdr/build -S ${{github.workspace}}/plugins/gr-limesdr -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
           cmake --build ${{github.workspace}}/plugins/gr-limesdr/build --config ${{env.BUILD_TYPE}}
