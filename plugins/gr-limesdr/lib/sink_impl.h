@@ -23,6 +23,7 @@
 
 #include "device_handler.h"
 #include <limesdr/sink.h>
+#include <array>
 
 
 static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("tx_time");
