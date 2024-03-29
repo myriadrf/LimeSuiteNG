@@ -25,8 +25,8 @@ COPY CMakeLists.txt CMakeLists.txt
 COPY README.md README.md
 COPY src/ src/
 
-RUN patch debian/control < debian/control.patch
-RUN patch debian/rules < debian/rules.patch
+RUN patch debian/control < debian/control.gnuradio.patch
+RUN patch debian/rules < debian/rules.gnuradio.patch
 RUN dpkg-buildpackage --build=binary --no-sign
 
 FROM scratch AS export-stage
