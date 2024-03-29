@@ -257,7 +257,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
 
     mRegistersMap->InitializeDefaultValues(LMS7parameterList);
     mcuControl = new MCU_BD();
-    mcuControl->Initialize(nullptr);
+    mcuControl->Initialize(controlPort);
 }
 
 LMS7002M::~LMS7002M()
