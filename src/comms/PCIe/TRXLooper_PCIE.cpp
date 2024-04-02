@@ -20,7 +20,7 @@
 #include "limesuiteng/complex.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "MemoryPool.h"
 #include "TxBufferManager.h"
 

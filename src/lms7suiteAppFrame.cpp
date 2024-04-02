@@ -40,7 +40,7 @@
 #include "limesuiteng/DeviceNode.h"
 //#include "LimeSDR.h"
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;

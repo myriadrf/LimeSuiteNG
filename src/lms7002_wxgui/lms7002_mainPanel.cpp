@@ -28,7 +28,7 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;

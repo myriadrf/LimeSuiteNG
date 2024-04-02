@@ -3,7 +3,7 @@
 #include "lms7002_gui_utilities.h"
 
 #include "limesuiteng/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

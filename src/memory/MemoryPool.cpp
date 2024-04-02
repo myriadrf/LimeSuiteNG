@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 namespace lime {
 

@@ -5,14 +5,13 @@
 */
 
 #include "limesuiteng/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "LMS7002M_RegistersMap.h"
 #include <cmath>
 #include <iostream>
 #include <assert.h>
 #include "MCU_BD.h"
 #include "mcu_programs.h"
-#include "Logger.h"
 
 #ifdef _MSC_VER
     #include <ciso646>

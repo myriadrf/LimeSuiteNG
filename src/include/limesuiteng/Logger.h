@@ -1,5 +1,5 @@
 /**
-@file Logger.h
+@file limesuiteng/Logger.h
 @author Lime Microsystems
 @brief API for logging library status messages.
 */

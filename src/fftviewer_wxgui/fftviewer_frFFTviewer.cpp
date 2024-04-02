@@ -10,7 +10,7 @@
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/complex.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include <array>
 
 using namespace std;

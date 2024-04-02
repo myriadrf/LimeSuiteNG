@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <sstream>
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
@@ -179,14 +179,14 @@ OpStatus LimeSDR_MMX8::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     return mSubDevices[moduleIndex]->SetFrequency(0, trx, channel, frequency);
 }
 
-double LimeSDR_MMX8::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index)
+double LimeSDR_MMX8::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset)
 {
     if (moduleIndex >= 8)
     {
         moduleIndex = 0;
     }
 
-    return mSubDevices[moduleIndex]->GetNCOFrequency(0, trx, channel, index);
+    return mSubDevices[moduleIndex]->GetNCOFrequency(0, trx, channel, index, phaseOffset);
 }
 
 OpStatus LimeSDR_MMX8::SetNCOFrequency(
@@ -198,6 +198,26 @@ OpStatus LimeSDR_MMX8::SetNCOFrequency(
     }
 
     return mSubDevices[moduleIndex]->SetNCOFrequency(0, trx, channel, index, frequency, phaseOffset);
+}
+
+int LimeSDR_MMX8::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    if (moduleIndex >= 8)
+    {
+        moduleIndex = 0;
+    }
+
+    return mSubDevices[moduleIndex]->GetNCOIndex(0, trx, channel);
+}
+
+OpStatus LimeSDR_MMX8::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
+{
+    if (moduleIndex >= 8)
+    {
+        moduleIndex = 0;
+    }
+
+    return mSubDevices[moduleIndex]->SetNCOIndex(0, trx, channel, index, downconv);
 }
 
 double LimeSDR_MMX8::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)

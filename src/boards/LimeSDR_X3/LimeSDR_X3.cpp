@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <sstream>
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"

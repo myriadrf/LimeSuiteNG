@@ -8,7 +8,7 @@
 #include <fstream>
 #include <chrono>
 #include "FPGA_common.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;

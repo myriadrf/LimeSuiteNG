@@ -7,7 +7,7 @@
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "lms7002m/MCU_BD.h"
 #include "LMSBoards.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "TRXLooper.h"
 
 #include <algorithm>
@@ -175,8 +175,9 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
     auto channelAFrequency = GetFrequency(moduleIndex, trx, chA);
     auto channelBFrequency = GetFrequency(moduleIndex, trx, chB);
 
-    auto channelANCOFrequency = GetNCOFrequency(moduleIndex, trx, chA, 0);
-    auto channelBNCOFrequency = GetNCOFrequency(moduleIndex, trx, chB, 0);
+    double phaseOffset = 0.0;
+    auto channelANCOFrequency = GetNCOFrequency(moduleIndex, trx, chA, 0, phaseOffset);
+    auto channelBNCOFrequency = GetNCOFrequency(moduleIndex, trx, chB, 0, phaseOffset);
 
     auto channelANCOOffset = channelAFrequency - channelANCOFrequency;
     auto channelBNCOOffset = channelBFrequency - channelBNCOFrequency;
@@ -261,10 +262,11 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
 
 double LMS7002M_SDRDevice::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    return GetFrequency(moduleIndex, trx, channel) - GetNCOFrequency(moduleIndex, trx, channel, 0);
+    double phaseOffset = 0.0;
+    return GetFrequency(moduleIndex, trx, channel) - GetNCOFrequency(moduleIndex, trx, channel, 0, phaseOffset);
 }
 
-double LMS7002M_SDRDevice::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index)
+double LMS7002M_SDRDevice::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
@@ -276,6 +278,10 @@ double LMS7002M_SDRDevice::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint
     {
         down = !down;
     }
+
+    uint16_t value = lms->SPI_read(trx == TRXDir::Tx ? 0x0241 : 0x0441);
+    phaseOffset = 360.0 * value / 65536.0;
+
     return down ? -freq : freq;
 }
 
@@ -320,6 +326,54 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
 
     if (phaseOffset != -1.0)
         return lms->SetNCOPhaseOffsetForMode0(trx, phaseOffset);
+    return OpStatus::SUCCESS;
+}
+
+int LMS7002M_SDRDevice::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    auto& cmixParameter = trx == TRXDir::Tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP;
+    auto& selParameter = trx == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX;
+
+    if (GetParameter(moduleIndex, channel, cmixParameter.address, cmixParameter.msb, cmixParameter.lsb) != 0)
+    {
+        return ReportError(-1, "NCO is disabled");
+    }
+
+    return GetParameter(moduleIndex, channel, selParameter.address, selParameter.msb, selParameter.lsb);
+}
+
+OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
+{
+    auto& cmixBypassParameter = trx == TRXDir::Tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP;
+    auto& cmixGainParameter = trx == TRXDir::Tx ? LMS7_CMIX_GAIN_TXTSP : LMS7_CMIX_GAIN_RXTSP;
+    auto& selectionParameter = trx == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX;
+    auto& cmixSelectionParameter = trx == TRXDir::Tx ? LMS7_CMIX_SC_TXTSP : LMS7_CMIX_SC_RXTSP;
+
+    if (OpStatus status = SetParameter(
+            moduleIndex, channel, cmixBypassParameter.address, cmixBypassParameter.msb, cmixBypassParameter.lsb, index < 0 ? 1 : 0);
+        status != OpStatus::SUCCESS)
+        return status;
+    if (OpStatus status = SetParameter(
+            moduleIndex, channel, cmixGainParameter.address, cmixGainParameter.msb, cmixGainParameter.lsb, index < 0 ? 0 : 1);
+        status != OpStatus::SUCCESS)
+        return status;
+
+    if (index >= NCOValueCount)
+    {
+        lime::error("Invalid NCO index value.");
+        return OpStatus::OUT_OF_RANGE;
+    }
+
+    if (OpStatus status =
+            SetParameter(moduleIndex, channel, selectionParameter.address, selectionParameter.msb, selectionParameter.lsb, index);
+        status != OpStatus::SUCCESS)
+        return status;
+
+    if (OpStatus status = SetParameter(
+            moduleIndex, channel, cmixSelectionParameter.address, cmixSelectionParameter.msb, cmixSelectionParameter.lsb, downconv);
+        status != OpStatus::SUCCESS)
+        return status;
+
     return OpStatus::SUCCESS;
 }
 

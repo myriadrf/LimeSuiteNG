@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include "math.h"
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
@@ -178,6 +178,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     LMS7002M* chip = new LMS7002M(spiRFsoc);
     chip->ModifyRegistersDefaults(lms7002defaultsOverrides);
     chip->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
+    chip->SetConnection(spiRFsoc);
     mLMSChips.push_back(chip);
     for (auto iter : mLMSChips)
     {
@@ -422,6 +423,19 @@ void LimeSDR_XTRX::StreamStop(uint8_t moduleIndex)
 
 OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
 {
+    if (rxDecimation == 0)
+    {
+        rxDecimation = 2;
+    }
+
+    if (txInterpolation == 0)
+    {
+        txInterpolation = 2;
+    }
+
+    assert(rxDecimation > 0);
+    assert(txInterpolation > 0);
+
     if (rxDecimation != 0 && txInterpolation / rxDecimation > 4)
         throw std::logic_error(
             strFormat("TxInterpolation(%i)/RxDecimation(%i) should not be more than 4", txInterpolation, rxDecimation));

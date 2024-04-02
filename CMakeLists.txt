@@ -223,9 +223,9 @@ endif()
 add_subdirectory(src)
 
 ########################################################################
-## SoapySDR bindings for LMS7 RFIC driver
+## plugins for external programs
 ########################################################################
-add_subdirectory(SoapyLMS7)
+add_subdirectory(plugins)
 
 ########################################################################
 ## udev rules for linux usb
@@ -267,21 +267,14 @@ if (ENABLE_HEADERS AND ENABLE_LIBRARY)
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
     @ONLY)
 
+    install(EXPORT limesuiteng FILE
+        limesuitengConfig.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
+
     install(FILES
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfig.cmake
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
-
-########################################################################
-## freedesktop environment integration
-########################################################################
-add_subdirectory(Desktop)
-
-########################################################################
-## Octave plugin integration
-########################################################################
-add_subdirectory(amarisoft-plugin)
 
 #########################################################################
 # summary

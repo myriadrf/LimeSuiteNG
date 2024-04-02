@@ -4,7 +4,7 @@
 @brief API for querying version and build information.
 */
 
-#include "VersionInfo.h"
+#include "limesuiteng/VersionInfo.h"
 #include <sstream>
 
 #define QUOTE_(x) #x

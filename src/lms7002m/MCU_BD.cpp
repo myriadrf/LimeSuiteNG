@@ -14,8 +14,7 @@ using namespace std;
 #include <thread>
 #include <list>
 #include "limesuiteng/LMS7002M.h"
-#include "Logger.h"
-
+#include "limesuiteng/Logger.h"
 #include "limesuiteng/IComms.h"
 #include <functional>
 
