@@ -11,7 +11,7 @@ if (ENABLE_LITE_PCIE)
 	include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR_X3/CMakeLists.txt)
 	include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR_XTRX/CMakeLists.txt)
 	include(${CMAKE_CURRENT_LIST_DIR}/MMX8/CMakeLists.txt)
-	include(${CMAKE_CURRENT_LIST_DIR}/external/AmberSDR/CMakeLists.txt)
+	include(${CMAKE_CURRENT_LIST_DIR}/external/XSDR/CMakeLists.txt)
 endif()
 
 if (ENABLE_USB_FX3)

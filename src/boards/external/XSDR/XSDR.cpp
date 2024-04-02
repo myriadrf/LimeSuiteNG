@@ -1,17 +1,17 @@
-#include "AmberSDR.h"
+#include "XSDR.h"
 
 #include "LMSBoards.h"
 
 namespace lime {
 
-/// @brief Constructs a new AmberSDR object
+/// @brief Constructs a new XSDR object
 ///
 /// @param spiRFsoc The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param sampleStream The communications port to send and receive sample data.
 /// @param control The serial port communication of the device.
 /// @param refClk The reference clock of the device.
-AmberSDR::AmberSDR(std::shared_ptr<IComms> spiRFsoc,
+XSDR::XSDR(std::shared_ptr<IComms> spiRFsoc,
     std::shared_ptr<IComms> spiFPGA,
     std::shared_ptr<LitePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
@@ -19,10 +19,10 @@ AmberSDR::AmberSDR(std::shared_ptr<IComms> spiRFsoc,
     : LimeSDR_XTRX(spiRFsoc, spiFPGA, sampleStream, control, refClk)
 {
     SDRDevice::Descriptor& desc = mDeviceDescriptor;
-    desc.name = GetDeviceName(LMS_DEV_EXTERNAL_AMBERSDR);
+    desc.name = GetDeviceName(LMS_DEV_EXTERNAL_XSDR);
 }
 
-AmberSDR::~AmberSDR()
+XSDR::~XSDR()
 {
 }
 
