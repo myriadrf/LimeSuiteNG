@@ -8,7 +8,7 @@
 #include "USB_CSR_Pipe_Mini.h"
 #include "LMS64C_LMS7002M_Over_USB.h"
 #include "LMS64C_FPGA_Over_USB.h"
-
+#include "CommonFunctions.h"
 #include "FT601/FT601.h"
 
 #ifndef __unix__
@@ -28,6 +28,8 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 void __loadFTDI(void) // TODO: fixme replace with LoadLibrary/dlopen
 {
@@ -38,7 +40,7 @@ void __loadFTDI(void) // TODO: fixme replace with LoadLibrary/dlopen
 static const std::set<VidPid> ids{ { 1027, 24607 } };
 
 DeviceFactoryFTDI::DeviceFactoryFTDI()
-    : USBEntry("FTDI", ids)
+    : USBEntry("FTDI"s, ids)
 {
 }
 
@@ -47,7 +49,7 @@ std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
 
-    if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
+    if (!hint.media.empty() && hint.media.find("USB"sv) == std::string::npos)
     {
         return handles;
     }
@@ -64,13 +66,17 @@ std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
         char Description[32] = { 0 };
         for (DWORD i = 0; i < numDevs; i++)
         {
-            ftStatus = FT_GetDeviceInfoDetail(i, &Flags, nullptr, nullptr, nullptr, SerialNumber, Description, nullptr);
+            DWORD deviceId = 0;
+            ftStatus = FT_GetDeviceInfoDetail(i, &Flags, nullptr, &deviceId, nullptr, SerialNumber, Description, nullptr);
             if (!FT_FAILED(ftStatus))
             {
+                WORD vendorId = (deviceId >> 16);
+                WORD productId = static_cast<WORD>(deviceId);
                 DeviceHandle handle;
-                handle.media = Flags & FT_FLAGS_SUPERSPEED ? "USB 3" : Flags & FT_FLAGS_HISPEED ? "USB 2" : "USB";
+                handle.media = Flags & FT_FLAGS_SUPERSPEED ? "USB 3"s : Flags & FT_FLAGS_HISPEED ? "USB 2"s : "USB"s;
                 handle.name = Description;
                 handle.serial = SerialNumber;
+                handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
                 // Add handle conditionally, filter by serial number
                 if (hint.serial.empty() || handle.serial.find(hint.serial) != std::string::npos)
                     handles.push_back(handle);
@@ -90,7 +96,7 @@ SDRDevice* DeviceFactoryFTDI::make_LimeSDR_Mini(const DeviceHandle& handle, cons
     );
     if (!usbComms->Connect(vid, pid, handle.serial))
     {
-        const std::string reason = "Unable to connect to device using handle (" + handle.Serialize() + ")";
+        const std::string reason = "Unable to connect to device using handle ("s + handle.Serialize() + ")"s;
         throw std::runtime_error(reason);
     }
 

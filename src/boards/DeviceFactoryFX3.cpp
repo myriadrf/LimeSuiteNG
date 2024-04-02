@@ -5,6 +5,7 @@
 #include "LMS64C_LMS7002M_Over_USB.h"
 #include "LMS64C_FPGA_Over_USB.h"
 #include "limesuiteng/Logger.h"
+#include "CommonFunctions.h"
 
 #include <memory>
 #include <stdexcept>
@@ -24,6 +25,8 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 void __loadFX3(void) //TODO fixme replace with LoadLibrary/dlopen
 {
@@ -34,7 +37,7 @@ void __loadFX3(void) //TODO fixme replace with LoadLibrary/dlopen
 static const std::set<VidPid> ids{ { 1204, 241 }, { 1204, 243 }, { 7504, 24840 } };
 
 DeviceFactoryFX3::DeviceFactoryFX3()
-    : USBEntry("FX3", ids)
+    : USBEntry("FX3"s, ids)
 {
 }
 
@@ -42,7 +45,7 @@ DeviceFactoryFX3::DeviceFactoryFX3()
 std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
-    if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
+    if (!hint.media.empty() && hint.media.find("USB"sv) == std::string::npos)
     {
         return handles;
     }
@@ -57,14 +60,19 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
             device.Open(i);
             DeviceHandle handle;
             if (device.bSuperSpeed == true)
-                handle.media = "USB 3.0";
+                handle.media = "USB 3.0"s;
             else if (device.bHighSpeed == true)
-                handle.media = "USB 2.0";
+                handle.media = "USB 2.0"s;
             else
-                handle.media = "USB";
+                handle.media = "USB"s;
+
+            uint16_t vendorId = device.VendorID;
+            uint16_t productId = device.ProductID;
             handle.name = device.DeviceName;
             std::wstring ws(device.SerialNumber);
             handle.serial = std::string(ws.begin(), ws.end());
+            handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
+
             if (hint.serial.empty() or handle.serial.find(hint.serial) != std::string::npos)
                 handles.push_back(handle); //filter on serial
             device.Close();
@@ -83,7 +91,7 @@ SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, const uint
     );
     if (!usbComms->Connect(vid, pid, handle.serial))
     {
-        const std::string reason = "Unable to connect to device using handle (" + handle.Serialize() + ")";
+        const std::string reason = "Unable to connect to device using handle ("s + handle.Serialize() + ")"s;
         throw std::runtime_error(reason);
     }
 
@@ -98,7 +106,7 @@ SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, const uint
 
 SDRDevice* DeviceFactoryFX3::make(const DeviceHandle& handle)
 {
-    const auto splitPos = handle.addr.find(":");
+    const auto splitPos = handle.addr.find(':');
     uint16_t vid = 0;
     uint16_t pid = 0;
 
