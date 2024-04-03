@@ -106,7 +106,7 @@ static int printHelp(void)
 
 int main(int argc, char** argv)
 {
-    char* devName = nullptr;
+    std::string devName;
     char* chipName = nullptr;
     char* hexInput = nullptr;
     bool hexInputIsFilename = false;
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
             return printHelp();
         case 'd':
             if (optarg != NULL)
-                devName = optarg;
+                devName = std::string(optarg);
             break;
         case 'c':
             if (optarg != NULL)
@@ -170,25 +170,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDRDevice* device;
-    if (devName)
-        device = ConnectUsingNameHint(devName);
-    else
-    {
-        if (handles.size() > 1)
-        {
-            cerr << "Multiple devices detected, specify which one to use with -d, --device" << endl;
-            return EXIT_FAILURE;
-        }
-        // device not specified, use the only one available
-        device = DeviceRegistry::makeDevice(handles.at(0));
-    }
-
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
-    {
-        cerr << "Device connection failed" << endl;
         return EXIT_FAILURE;
-    }
 
     int32_t chipSelect = FindChipSelectByName(device, chipName);
     if (chipSelect < 0)

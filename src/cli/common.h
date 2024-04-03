@@ -15,4 +15,4 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
 
-lime::SDRDevice* ConnectUsingNameHint(const std::string& name);
+lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string& argument);

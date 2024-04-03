@@ -64,7 +64,8 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
         LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);
 
         handle.serial = std::to_string(fw.boardSerialNumber); // TODO: to hex
-        handles.push_back(handle);
+        if (handle.IsEqualIgnoringEmpty(hint))
+            handles.push_back(handle);
     }
     return handles;
 }

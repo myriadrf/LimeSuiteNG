@@ -109,7 +109,7 @@ enum Args {
 
 int main(int argc, char** argv)
 {
-    char* devName = nullptr;
+    std::string devName;
     bool initializeBoard = false;
     char* iniFilename = nullptr;
     std::vector<int> chipIndexes;
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
             return printHelp();
         case Args::DEVICE:
             if (optarg != NULL)
-                devName = optarg;
+                devName = std::string(optarg);
             break;
         case Args::CHIP:
             if (optarg != NULL)
@@ -229,25 +229,13 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDRDevice* device;
-    if (devName)
-        device = ConnectUsingNameHint(devName);
-    else
-    {
-        if (handles.size() > 1)
-        {
-            cerr << "Multiple devices detected, specify which one to use with -d, --device" << endl;
-            return EXIT_FAILURE;
-        }
-        // device not specified, use the only one available
-        device = DeviceRegistry::makeDevice(handles.at(0));
-    }
-
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
-    {
-        cerr << "Device connection failed" << endl;
         return EXIT_FAILURE;
-    }
+
+    // if chip index is not specified and device has only one, use it by default
+    if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
+        chipIndexes.push_back(0);
 
     device->SetMessageLogCallback(LogCallback);
     try
