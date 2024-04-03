@@ -33,9 +33,18 @@ list(APPEND limesdr_python_files
     source_python.cc
     python_bindings.cc)
 
+execute_process(COMMAND gr_modtool bind source
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
+
+execute_process(COMMAND gr_modtool bind sink
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
+
 if(ENABLE_RFE)
     list(APPEND limesdr_python_files rfe_python.cc)
     add_compile_definitions(ENABLE_RFE)
+
+    execute_process(COMMAND gr_modtool bind rfe
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
 endif()
 
 GR_PYBIND_MAKE_OOT(limesdr
