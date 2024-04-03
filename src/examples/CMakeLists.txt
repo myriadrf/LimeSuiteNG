@@ -18,9 +18,9 @@ endif()
 
 set(examplesOutputDir "${CMAKE_BINARY_DIR}/bin/examples")
 
-add_executable(basicRX basicRX.cpp ${PROJECT_SOURCE_DIR}/external/kissFFT/kiss_fft.c)
+add_executable(basicRX basicRX.cpp)
 set_target_properties(basicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
-target_link_libraries(basicRX ${MAIN_LIBRARY_NAME})
+target_link_libraries(basicRX ${MAIN_LIBRARY_NAME} kissfft)
 
 add_executable(dualRXTX dualRXTX.cpp)
 set_target_properties(dualRXTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})

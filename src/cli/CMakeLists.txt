@@ -31,10 +31,10 @@ set_target_properties(limeFLASH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIN
 target_include_directories(limeFLASH PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeFLASH PRIVATE cli-shared)
 
-add_executable(limeTRX limeTRX.cpp common.cpp ${PROJECT_SOURCE_DIR}/external/kissFFT/kiss_fft.c)
+add_executable(limeTRX limeTRX.cpp common.cpp)
 set_target_properties(limeTRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(limeTRX PRIVATE ${LIME_SUITE_INCLUDES})
-target_link_libraries(limeTRX PRIVATE cli-shared)
+target_link_libraries(limeTRX PRIVATE cli-shared kissfft)
 
 install(TARGETS
     limeDevice
