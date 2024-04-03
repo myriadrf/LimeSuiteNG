@@ -115,7 +115,7 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
     bool match = false;
     for (size_t j = 0; j < antennaNames.size(); ++j)
     {
-        if (strcasecmp(antennaNames[j].c_str(), name.c_str()) == 0)
+        if (antennaNames[j] == name)
             return j;
     }
     std::cerr << "Antenna (" << name.c_str() << " not found. Available:" << std::endl;
