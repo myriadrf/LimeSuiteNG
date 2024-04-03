@@ -17,10 +17,10 @@ namespace py = pybind11;
 // Please do not delete
 /**************************************/
 // BINDING_FUNCTION_PROTOTYPES(
-    void bind_sink(py::module& m);
-    void bind_source(py::module& m);
+void bind_sink(py::module& m);
+void bind_source(py::module& m);
 #ifdef ENABLE_RFE
-    void bind_rfe(py::module& m);
+void bind_rfe(py::module& m);
 #endif
 // ) END BINDING_FUNCTION_PROTOTYPES
 
@@ -50,10 +50,10 @@ PYBIND11_MODULE(limesdr_python, m)
     // Please do not delete
     /**************************************/
     // BINDING_FUNCTION_CALLS(
-        bind_sink(m);
-        bind_source(m);
+    bind_sink(m);
+    bind_source(m);
 #ifdef ENABLE_RFE
-        bind_rfe(m);
+    bind_rfe(m);
 #endif
     // ) END BINDING_FUNCTION_CALLS
 }

@@ -159,10 +159,8 @@ public:
      *
      * @param   antenna_tx Array reference to antenna information
      */
-    void settings_from_file(
-        int device_number,
-        const std::string& filename,
-        int* antenna_tx);
+    void
+    settings_from_file(int device_number, const std::string& filename, int* antenna_tx);
 
     /**
      * Set used channels

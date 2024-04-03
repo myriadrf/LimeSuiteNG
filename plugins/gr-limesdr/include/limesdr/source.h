@@ -186,7 +186,8 @@ public:
      *
      * Set GPIO direction by calling LMS_GPIODirWrite()
      *
-     * @param   dir        Direction bitmap (eight bits, one for each pin, 1 = output, 0 = input)
+     * @param   dir        Direction bitmap (eight bits, one for each pin, 1 = output, 0 =
+     * input)
      */
     virtual void set_gpio_dir(uint8_t dir) = 0;
 
