@@ -220,7 +220,6 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
 
-add_subdirectory(external)
 add_subdirectory(src)
 
 ########################################################################
