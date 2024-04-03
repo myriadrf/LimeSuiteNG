@@ -622,7 +622,7 @@ void device_handler::set_nco(int device_number,
                                 s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
                                 channel));
     } else {
-        int cmix_mode;
+        int cmix_mode = 0;
 
         if (nco_freq > 0)
             cmix_mode = 0;

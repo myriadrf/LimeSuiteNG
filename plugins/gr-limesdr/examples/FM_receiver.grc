@@ -40,7 +40,7 @@ blocks:
     gui_hint: 0,0,1,1
     label: RX Baseband [MHz]
     type: real
-    value: '100'
+    value: '100.0'
   states:
     bus_sink: false
     bus_source: false
@@ -96,22 +96,18 @@ blocks:
     comment: ''
     gui_hint: 0,1,1,1
     label: LNA Path
-    label0: Auto
-    label1: H
-    label2: L
-    label3: W
-    label4: ''
+    label0: H
+    label1: L
+    label2: W
     labels: '[]'
-    num_opts: '4'
-    option0: '0'
-    option1: '1'
-    option2: '2'
-    option3: '3'
-    option4: '4'
+    num_opts: '3'
+    option0: '1'
+    option1: '2'
+    option2: '3'
     options: '[0, 1, 2]'
     orient: Qt.QVBoxLayout
     type: int
-    value: '0'
+    value: '1'
     widget: combo_box
   states:
     bus_sink: false
@@ -245,7 +241,7 @@ blocks:
     filename: ''
     gain_dB_ch0: gain
     gain_dB_ch1: '1'
-    lna_path_ch0: '255'
+    lna_path_ch0: lna_path
     lna_path_ch1: '2'
     maxoutbuf: '0'
     minoutbuf: '0'

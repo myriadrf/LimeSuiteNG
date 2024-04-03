@@ -70,9 +70,9 @@ parameters:
 - id: lna_path_ch0
   label: LNA path
   dtype: int
-  options:       ['1', '2', '3', '255']
-  option_labels: ['H', 'L', 'W', 'Auto']
-  default: '255'
+  options:       ['1', '2', '3']
+  option_labels: ['H', 'L', 'W']
+  default: '1'
   hide: part
   category: Channel A
 
