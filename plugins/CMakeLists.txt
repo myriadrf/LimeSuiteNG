@@ -27,3 +27,8 @@ add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
 if (ENABLE_GNURADIO)
     add_subdirectory(gr-limesdr)
 endif()
+
+########################################################################
+## HDSDR plugin
+########################################################################
+add_subdirectory(HDSDR)
