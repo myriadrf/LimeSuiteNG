@@ -44,19 +44,19 @@ device_handler::~device_handler() {}
 void device_handler::error(int device_number)
 {
     GR_LOG_WARN(d_logger, lime::GetLastErrorMessage());
-    ;
+
     if (device_vector[device_number].address != nullptr)
         close_all_devices();
 }
 
 lime::SDRDevice* device_handler::get_device(int device_number)
 {
-    return device_vector[device_number].address;
+    return device_vector.at(device_number).address;
 }
 
 lime::SDRDevice::StreamConfig& device_handler::get_stream_config(int device_number)
 {
-    return device_vector[device_number].stream_config;
+    return device_vector.at(device_number).stream_config;
 }
 
 int device_handler::open_device(std::string& serial)
@@ -248,7 +248,6 @@ void device_handler::check_blocks(int device_number,
         // Chip_mode must match in blocks with the same serial
         if (device_vector[device_number].source_channel_mode !=
             device_vector[device_number].sink_channel_mode) {
-
             close_all_devices();
             throw std::invalid_argument(fmt::format(
                 "device_handler::check_blocks(): channel mismatch in LimeSuite "
@@ -276,44 +275,33 @@ void device_handler::settings_from_file(int device_number,
                                         const std::string& filename,
                                         int* pAntenna_tx)
 {
-    auto status =
-        device_handler::getInstance().get_device(device_number)->LoadConfig(0, filename);
+    auto& instance = device_handler::getInstance();
+    const auto& device = instance.get_device(device_number);
+    auto status = device->LoadConfig(0, filename);
+
     if (status != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+        instance.error(device_number);
 
     // Set LimeSDR-Mini switches based on .ini file
     std::array<int, 2> antenna_rx = { 0, 0 };
     std::array<int, 2> antenna_tx = { 0, 0 };
-    antenna_tx[0] = device_handler::getInstance()
-                        .get_device(device_number)
-                        ->GetAntenna(0, lime::TRXDir::Tx, 0);
+    antenna_tx[0] = device->GetAntenna(0, lime::TRXDir::Tx, 0);
     /* Don't print error message for the mini board */
     suppress_limesuite_logging();
-    antenna_tx[1] = device_handler::getInstance()
-                        .get_device(device_number)
-                        ->GetAntenna(0, lime::TRXDir::Tx, 1);
-    antenna_rx[1] = device_handler::getInstance()
-                        .get_device(device_number)
-                        ->GetAntenna(0, lime::TRXDir::Rx, 1);
+    antenna_tx[1] = device->GetAntenna(0, lime::TRXDir::Tx, 1);
+    antenna_rx[1] = device->GetAntenna(0, lime::TRXDir::Rx, 1);
 
     // Restore our logging
     set_limesuite_logger();
-    antenna_rx[0] = device_handler::getInstance()
-                        .get_device(device_number)
-                        ->GetAntenna(0, lime::TRXDir::Rx, 0);
+    antenna_rx[0] = device->GetAntenna(0, lime::TRXDir::Rx, 0);
 
     if (pAntenna_tx != nullptr) {
         pAntenna_tx[0] = antenna_tx[0];
         pAntenna_tx[1] = antenna_tx[1];
     }
 
-    device_handler::getInstance()
-        .get_device(device_number)
-        ->SetAntenna(0, lime::TRXDir::Tx, 0, antenna_tx[0]);
-
-    device_handler::getInstance()
-        .get_device(device_number)
-        ->SetAntenna(0, lime::TRXDir::Rx, 0, antenna_rx[0]);
+    device->SetAntenna(0, lime::TRXDir::Tx, 0, antenna_tx[0]);
+    device->SetAntenna(0, lime::TRXDir::Rx, 0, antenna_rx[0]);
 }
 
 void device_handler::enable_channels(int device_number,
@@ -321,13 +309,14 @@ void device_handler::enable_channels(int device_number,
                                      lime::TRXDir direction)
 {
     GR_LOG_DEBUG(d_debug_logger, "device_handler::enable_channels(): ");
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     if (channel_mode < 2) {
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->EnableChannel(0, direction, channel_mode, true) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->EnableChannel(0, direction, channel_mode, true) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
         GR_LOG_INFO(d_logger,
                     fmt::format("SISO CH{:d} set for device number {:d}.",
                                 channel_mode,
@@ -344,14 +333,10 @@ void device_handler::enable_channels(int device_number,
         }
 #endif
     } else if (channel_mode == 2) {
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->EnableChannel(0, direction, 0, true) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->EnableChannel(0, direction, 1, true) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->EnableChannel(0, direction, 0, true) != lime::OpStatus::SUCCESS)
+            instance.error(device_number);
+        if (device->EnableChannel(0, direction, 1, true) != lime::OpStatus::SUCCESS)
+            instance.error(device_number);
 
         GR_LOG_INFO(d_logger,
                     fmt::format("MIMO mode set for device number {:d}.", device_number));
@@ -361,15 +346,13 @@ void device_handler::enable_channels(int device_number,
 void device_handler::set_samp_rate(int device_number, double& rate)
 {
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_samp_rate(): ");
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->SetSampleRate(0, lime::TRXDir::Rx, 1, rate, 0) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    if (device->SetSampleRate(0, lime::TRXDir::Rx, 1, rate, 0) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 
-    double host_value = device_handler::getInstance()
-                            .get_device(device_number)
-                            ->GetSampleRate(0, lime::TRXDir::Rx, 1);
+    double host_value = device->GetSampleRate(0, lime::TRXDir::Rx, 1);
 
     GR_LOG_INFO(d_logger,
                 fmt::format("Set sampling rate: {:f} MS/s.", (host_value / 1e6)));
@@ -378,6 +361,9 @@ void device_handler::set_samp_rate(int device_number, double& rate)
 
 void device_handler::set_oversampling(int device_number, int oversample)
 {
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
     switch (oversample) {
     case 0:
     case 1:
@@ -387,15 +373,12 @@ void device_handler::set_oversampling(int device_number, int oversample)
     case 16:
     case 32: {
         GR_LOG_DEBUG(d_debug_logger, "device_handler::set_oversampling(): ");
-        double host_value = device_handler::getInstance()
-                                .get_device(device_number)
-                                ->GetSampleRate(0, lime::TRXDir::Rx, 1);
+        double host_value = device->GetSampleRate(0, lime::TRXDir::Rx, 1);
 
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetSampleRate(0, lime::TRXDir::Rx, 1, host_value, oversample) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetSampleRate(0, lime::TRXDir::Rx, 1, host_value, oversample) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         GR_LOG_INFO(d_logger, fmt::format("Set oversampling: {:d}.", oversample));
     } break;
@@ -413,6 +396,8 @@ double device_handler::set_rf_freq(int device_number,
                                    float rf_freq)
 {
     double value = 0;
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     if (rf_freq <= 0) {
         close_all_devices();
@@ -420,14 +405,12 @@ double device_handler::set_rf_freq(int device_number,
             "device_handler::set_rf_freq(): rf_freq must be more than 0 Hz.");
     } else {
         GR_LOG_DEBUG(d_debug_logger, "device_handler::set_rf_freq(): ");
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetFrequency(0, direction, channel, rf_freq) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetFrequency(0, direction, channel, rf_freq) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
-        value = device_handler::getInstance()
-                    .get_device(device_number)
-                    ->GetFrequency(0, direction, channel);
+        value = device->GetFrequency(0, direction, channel);
 
         const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
         GR_LOG_INFO(d_logger,
@@ -445,29 +428,11 @@ void device_handler::calibrate(int device_number,
                                double bandwidth)
 {
     GR_LOG_DEBUG(d_debug_logger, "device_handler::calibrate(): ");
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
-    double rf_freq = device_handler::getInstance()
-                         .get_device(device_number)
-                         ->GetFrequency(0, direction, channel);
-    if (rf_freq > 31e6) // Normal calibration
-        device_handler::getInstance()
-            .get_device(device_number)
-            ->Calibrate(0, direction, channel, bandwidth);
-    else { // Workaround
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetFrequency(0, direction, channel, 50e6) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
-
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->Calibrate(0, direction, channel, rf_freq) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
-
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetFrequency(0, direction, channel, rf_freq) != lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+    if (device->Calibrate(0, direction, channel, bandwidth) != lime::OpStatus::SUCCESS) {
+        instance.error(device_number);
     }
 }
 
@@ -477,27 +442,21 @@ void device_handler::set_antenna(int device_number,
                                  int antenna)
 {
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_antenna(): ");
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->SetAntenna(0, direction, channel, antenna) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    if (device->SetAntenna(0, direction, channel, antenna) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 
-    int antenna_value = device_handler::getInstance()
-                            .get_device(device_number)
-                            ->GetAntenna(0, direction, channel);
+    int antenna_value = device->GetAntenna(0, direction, channel);
 
-    const std::array<std::array<std::string, 4>, 2> s_antenna = {
-        { { "Auto(NONE)"s, "LNAH"s, "LNAL"s, "LNAW"s },
-          { "Auto(NONE)"s, "BAND1"s, "BAND2"s, "NONE"s } }
-    };
+    const auto s_antenna = device->GetDescriptor().rfSOC.at(0).pathNames;
     const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
-    GR_LOG_INFO(
-        d_logger,
-        fmt::format("CH{:d} antenna set [{:s}]: {:s}.",
-                    channel,
-                    s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
-                    s_antenna[direction == lime::TRXDir::Tx ? 1 : 0][antenna_value]));
+    GR_LOG_INFO(d_logger,
+                fmt::format("CH{:d} antenna set [{:s}]: {:s}.",
+                            channel,
+                            s_dir.at(direction == lime::TRXDir::Tx ? 1 : 0),
+                            s_antenna.at(direction).at(antenna_value)));
 }
 
 double device_handler::set_analog_filter(int device_number,
@@ -506,18 +465,17 @@ double device_handler::set_analog_filter(int device_number,
                                          double analog_bandw)
 {
     double analog_value = 0;
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     if (channel == 0 || channel == 1) {
         GR_LOG_DEBUG(d_debug_logger, "device_handler::set_analog_filter(): ");
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetLowPassFilter(0, direction, channel, analog_bandw) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetLowPassFilter(0, direction, channel, analog_bandw) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
-        analog_value = device_handler::getInstance()
-                           .get_device(device_number)
-                           ->GetLowPassFilter(0, direction, channel);
+        analog_value = device->GetLowPassFilter(0, direction, channel);
     } else {
         close_all_devices();
         throw std::invalid_argument(
@@ -532,14 +490,16 @@ double device_handler::set_digital_filter(int device_number,
                                           int channel,
                                           double digital_bandw)
 {
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
     if (channel == 0 || channel == 1) {
         bool enable = (digital_bandw > 0) ? true : false;
         GR_LOG_DEBUG(d_debug_logger, "device_handler::set_digital_filter(): ");
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->ConfigureGFIR(0, direction, channel, { enable, digital_bandw }) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->ConfigureGFIR(0, direction, channel, { enable, digital_bandw }) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
         const std::string msg_start =
@@ -568,25 +528,25 @@ unsigned device_handler::set_gain(int device_number,
                                   unsigned gain_dB)
 {
     unsigned gain_value = 0;
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     if (gain_dB >= 0 && gain_dB <= 73) {
         GR_LOG_DEBUG(d_debug_logger, "device_handler::set_gain(): ");
 
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetGain(0, direction, channel, lime::eGainTypes::UNKNOWN, gain_dB) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetGain(0, direction, channel, lime::eGainTypes::UNKNOWN, gain_dB) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
 
         double gain_double = 0.0;
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->GetGain(
-                    0, direction, channel, lime::eGainTypes::UNKNOWN, gain_double) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->GetGain(
+                0, direction, channel, lime::eGainTypes::UNKNOWN, gain_double) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         gain_value = std::lround(gain_double) + 12;
         GR_LOG_INFO(d_logger,
@@ -608,14 +568,15 @@ void device_handler::set_nco(int device_number,
                              float nco_freq)
 {
     const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_nco(): ");
     if (nco_freq == 0) {
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetNCOIndex(0, direction, channel, -1, false) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetNCOIndex(0, direction, channel, -1, false) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         GR_LOG_INFO(d_logger,
                     fmt::format("NCO [{:s}] CH{:d} gain disabled.",
@@ -630,18 +591,16 @@ void device_handler::set_nco(int device_number,
             cmix_mode = 1;
 
         for (int i = 0; i < 16; ++i) {
-            if (device_handler::getInstance()
-                    .get_device(device_number)
-                    ->SetNCOFrequency(0, direction, channel, i, nco_freq) !=
-                lime::OpStatus::SUCCESS)
-                device_handler::getInstance().error(device_number);
+            if (device->SetNCOFrequency(0, direction, channel, i, nco_freq) !=
+                lime::OpStatus::SUCCESS) {
+                instance.error(device_number);
+            }
         }
 
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetNCOIndex(0, direction, channel, 0, cmix_mode) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetNCOIndex(0, direction, channel, 0, cmix_mode) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
         const std::array<std::string, 2> s_cmix = { "UPCONVERT"s, "DOWNCONVERT"s };
 
@@ -650,9 +609,7 @@ void device_handler::set_nco(int device_number,
 
         for (int i = 0; i < 16; ++i) {
             freq_value_out[i] =
-                device_handler::getInstance()
-                    .get_device(device_number)
-                    ->GetNCOFrequency(0, direction, channel, i, pho_value_out);
+                device->GetNCOFrequency(0, direction, channel, i, pho_value_out);
         }
 
         GR_LOG_INFO(d_logger,
@@ -667,31 +624,30 @@ void device_handler::set_nco(int device_number,
 
 void device_handler::disable_DC_corrections(int device_number)
 {
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->SetParameter(0, 0, "DC_BYP_RXTSP", 1) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->SetParameter(0, 0, "DCLOOP_STOP", 1) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
+    if (device->SetParameter(0, 0, "DC_BYP_RXTSP", 1) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
+
+    if (device->SetParameter(0, 0, "DCLOOP_STOP", 1) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 }
 
 void device_handler::set_tcxo_dac(int device_number, uint16_t dacVal)
 {
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_txco_dac(): ");
     double dac_value = dacVal;
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
 
     std::vector<lime::CustomParameterIO> parameter{ { 0, dac_value, ""s } };
 
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->CustomParameterWrite(parameter) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->CustomParameterRead(parameter) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    if (device->CustomParameterWrite(parameter) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
+
+    if (device->CustomParameterRead(parameter) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 
     GR_LOG_INFO(d_logger,
                 fmt::format("VCTCXO DAC value set: {:d}", parameter.at(0).value));
@@ -721,33 +677,39 @@ void device_handler::update_rfe_channels()
 
 void device_handler::write_lms_reg(int device_number, uint32_t address, uint16_t val)
 {
-    if (device_handler::getInstance()
-            .get_device(device_number)
-            ->WriteRegister(0, address, val) != lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
+    if (device->WriteRegister(0, address, val) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 }
 
 void device_handler::set_gpio_dir(int device_number, uint8_t dir)
 {
-    if (device_handler::getInstance().get_device(device_number)->GPIODirWrite(&dir, 1) !=
-        lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
+    if (device->GPIODirWrite(&dir, 1) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 }
 
 void device_handler::write_gpio(int device_number, uint8_t out)
 {
-    if (device_handler::getInstance().get_device(device_number)->GPIOWrite(&out, 1) !=
-        lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
+    if (device->GPIOWrite(&out, 1) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 }
 
 uint8_t device_handler::read_gpio(int device_number)
 {
-    uint8_t res;
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+    uint8_t res = 0;
 
-    if (device_handler::getInstance().get_device(device_number)->GPIORead(&res, 1) !=
-        lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    if (device->GPIORead(&res, 1) != lime::OpStatus::SUCCESS)
+        instance.error(device_number);
 
     return res;
 }
