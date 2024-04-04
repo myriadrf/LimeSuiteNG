@@ -1,7 +1,7 @@
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.12)
 
 # Only compile on Windows
 if(NOT MSVC)
@@ -14,8 +14,8 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 # Check if using correct Visual Studio version
-if(MSVC_TOOLSET_VERSION LESS 140)
-	message(FATAL_ERROR "MSVC version should be atleast v140(Visual Studio 2015")
+if(MSVC_TOOLSET_VERSION LESS 141)
+	message(FATAL_ERROR "MSVC version should be atleast v141(Visual Studio 2017")
 endif()
 
 project (ExtIO_LimeSDR)
@@ -91,7 +91,7 @@ target_link_libraries(ExtIO_LimeSDR PUBLIC ${LIMESUITE_LIB})
 target_include_directories(ExtIO_LimeSDR PUBLIC ${LIMESUITE_INCLUDE_DIR} ${LIMESUITENG_INCLUDE_DIR})
 
 target_compile_definitions(ExtIO_LimeSDR PRIVATE NOMINMAX)
-target_compile_options(ExtIO_LimeSDR PRIVATE /Wall)
+target_compile_options(ExtIO_LimeSDR PRIVATE /Wall /permissive-)
 ########################################################################
 # Check if linking the dll statically and find required libraries
 ########################################################################

@@ -137,6 +137,11 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 if (MSVC)
+    # Check if using correct Visual Studio version
+    if(MSVC_TOOLSET_VERSION LESS 141)
+	    message(FATAL_ERROR "MSVC version should be atleast v141(Visual Studio 2017")
+    endif()
+
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX)
     set(MSVC_MULTITHREAD_COMPILE_FLAGS "/MP")

@@ -45,10 +45,10 @@ THE SOFTWARE
 #include <limesuiteng/VersionInfo.h>
 //---------------------------------------------------------------------------
 #include <array>
-#include <charconv>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <string_view>
 #include <vector>
 //---------------------------------------------------------------------------
 
@@ -353,30 +353,12 @@ static int UpdateDialog()
 
     /* Update LPF bandwidth */
     std::array<char, 7> bandwidth { 0, 0, 0, 0, 0, 0, 0 };
-    {
-        auto [ptr, ec] = std::to_chars(
-            bandwidth.data(), bandwidth.data() + bandwidth.size(), LPFBandwidth / 1e6, std::chars_format::fixed, 2);
-
-        if (ec != std::errc::value_too_large && ptr < bandwidth.data() + bandwidth.size()) {
-            *ptr = 0;
-            SetDlgItemText(dialogWindowHandle, IDC_ALPF_BW, bandwidth.data());
-        } else {
-            SetDlgItemText(dialogWindowHandle, IDC_ALPF_BW, "ErrorVTL");
-        }
-    }
+    sprintf(bandwidth.data(), "%3.2f", LPFBandwidth / 1e6);
+    SetDlgItemText(dialogWindowHandle, IDC_ALPF_BW, bandwidth.data());
 
     /* Update calibration bandwidth */
-    {
-        auto [ptr, ec] = std::to_chars(
-            bandwidth.data(), bandwidth.data() + bandwidth.size(), calibrationBandwidth / 1e6, std::chars_format::fixed, 2);
-
-        if (ec != std::errc::value_too_large && ptr < bandwidth.data() + bandwidth.size()) {
-            *ptr = 0;
-            SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, bandwidth.data());
-        } else {
-            SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, "ErrorVTL");
-        }
-    }
+    sprintf(bandwidth.data(), "%3.2f", calibrationBandwidth / 1e6);
+    SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, bandwidth.data());
 
     /* Update calibration text */
     if (isCalibrated == Calibrated) {
@@ -393,7 +375,7 @@ static int UpdateDialog()
 static int InitializeDialog(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* Add device choices */
-    for (int i = 0; i < numberOfDevices; i++) {
+    for (std::size_t i = 0; i < numberOfDevices; i++) {
         std::string info = std::to_string(i + 1) + ". "s + deviceList[i].Serialize();
         ComboBox_AddString(GetDlgItem(hwndDlg, IDC_COMBO_DEVICE), info.c_str());
     }
@@ -503,6 +485,8 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return TRUE;
         }
     }
+
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnAntennaChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -531,6 +515,7 @@ static int OnAntennaChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 
         return TRUE;
     }
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -605,6 +590,7 @@ static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return TRUE;
         }
     }
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnChannelChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -658,6 +644,8 @@ static int OnChannelChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
             return TRUE;
         }
     }
+
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnCalibrate(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -686,6 +674,8 @@ static int OnCalibrate(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         delete[] textBuffer;
         return TRUE;
     }
+
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnSet(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -704,6 +694,7 @@ static int OnSet(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         delete[] textBuffer;
         return TRUE;
     }
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int OnLPF(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -758,6 +749,7 @@ static int OnReset(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         return TRUE;
     }
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int CommandMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -784,6 +776,8 @@ static int CommandMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     /* Pressed Reset button */
     case IDC_BUTTON_DEFAULT: return OnReset(hwndDlg, uMsg, wParam, lParam);
     }
+
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static int StaticTextColorMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -802,6 +796,8 @@ static int StaticTextColorMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
         SetBkColor(reinterpret_cast<HDC>(wParam), COLORREF(GetSysColor(COLOR_3DFACE)));
         return reinterpret_cast<INT_PTR>(GetSysColorBrush(COLOR_3DFACE));
     }
+
+    return FALSE;
 }
 //---------------------------------------------------------------------------
 static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1110,7 +1106,7 @@ extern "C" int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value
         return 0;
     case 1:
         snprintf(description, 1024, "%s", "Channel");
-        snprintf(value, 1024, "%d", channel);
+        snprintf(value, 1024, "%zd", channel);
         return 0;
     case 2:
         snprintf(description, 1024, "%s", "Antenna");
@@ -1142,7 +1138,7 @@ extern "C" int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value
         return 0;
     case 9:
         snprintf(description, 1024, "%s", "Current Device index");
-        snprintf(value, 1024, "%d", currentDeviceIndex);
+        snprintf(value, 1024, "%zd", currentDeviceIndex);
         return 0;
     case 10:
         snprintf(description, 1024, "%s", "Calibration bandwidth");
@@ -1154,7 +1150,6 @@ extern "C" int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value
         return 0;
     default: return -1; // ERROR
     }
-    return -1; // ERROR
 }
 //---------------------------------------------------------------------------
 extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char* value)
