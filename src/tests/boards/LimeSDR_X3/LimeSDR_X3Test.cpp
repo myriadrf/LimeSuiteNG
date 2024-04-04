@@ -61,19 +61,17 @@ class LimeSDR_X3_Fixture : public ::testing::Test
 
     void TearDown() override { DeviceRegistry::freeDevice(device); }
 
+    void SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale scale,
+        SDRDevice::ChannelConfig::Direction::TestSignal::Divide divide);
+
     inline static const std::string deviceHandleHint{ "LimeX30"s };
 
     SDRDevice* device = nullptr;
 };
 
-TEST_F(LimeSDR_X3_Fixture, ConnectToDevice)
+void LimeSDR_X3_Fixture::SetUpDeviceForTestPattern(
+    SDRDevice::ChannelConfig::Direction::TestSignal::Scale scale, SDRDevice::ChannelConfig::Direction::TestSignal::Divide divide)
 {
-}
-
-TEST_F(LimeSDR_X3_Fixture, Configure4HalfTestPatternAndReceiveIt)
-{
-    constexpr int samplesToReceive = 8;
-
     SDRDevice::SDRConfig deviceConfiguration;
     SDRDevice::ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
     directionConfiguration.enabled = true;
@@ -84,8 +82,8 @@ TEST_F(LimeSDR_X3_Fixture, Configure4HalfTestPatternAndReceiveIt)
     directionConfiguration.lpf = 0;
     directionConfiguration.testSignal.enabled = true;
     directionConfiguration.testSignal.dcMode = false;
-    directionConfiguration.testSignal.scale = SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half;
-    directionConfiguration.testSignal.divide = SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
+    directionConfiguration.testSignal.scale = scale;
+    directionConfiguration.testSignal.divide = divide;
 
     device->Configure(deviceConfiguration, 0);
 
@@ -96,6 +94,18 @@ TEST_F(LimeSDR_X3_Fixture, Configure4HalfTestPatternAndReceiveIt)
     device->StreamSetup(streamConfiguration, 0);
 
     device->StreamStart(0);
+}
+
+TEST_F(LimeSDR_X3_Fixture, ConnectToDevice)
+{
+}
+
+TEST_F(LimeSDR_X3_Fixture, Configure4HalfTestPatternAndReceiveIt)
+{
+    constexpr int samplesToReceive = 8;
+
+    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half,
+        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -120,28 +130,8 @@ TEST_F(LimeSDR_X3_Fixture, Configure4FullTestPatternAndReceiveIt)
 {
     constexpr int samplesToReceive = 8;
 
-    SDRDevice::SDRConfig deviceConfiguration;
-    SDRDevice::ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
-    directionConfiguration.enabled = true;
-    directionConfiguration.centerFrequency = 1.4e9;
-    directionConfiguration.sampleRate = 10e6;
-    directionConfiguration.oversample = 0;
-    directionConfiguration.path = 2;
-    directionConfiguration.lpf = 0;
-    directionConfiguration.testSignal.enabled = true;
-    directionConfiguration.testSignal.dcMode = false;
-    directionConfiguration.testSignal.scale = SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full;
-    directionConfiguration.testSignal.divide = SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
-
-    device->Configure(deviceConfiguration, 0);
-
-    SDRDevice::StreamConfig streamConfiguration;
-    streamConfiguration.channels[TRXDir::Rx] = { 0 };
-    streamConfiguration.format = SDRDevice::StreamConfig::DataFormat::I16;
-
-    device->StreamSetup(streamConfiguration, 0);
-
-    device->StreamStart(0);
+    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full,
+        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -166,29 +156,8 @@ TEST_F(LimeSDR_X3_Fixture, Configure8HalfTestPatternAndReceiveIt)
 {
     const int samplesToReceive = 16;
 
-    SDRDevice::SDRConfig deviceConfiguration;
-    SDRDevice::ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
-    directionConfiguration.enabled = true;
-    directionConfiguration.centerFrequency = 1.4e9;
-    directionConfiguration.sampleRate = 10e6;
-    directionConfiguration.oversample = 0;
-    directionConfiguration.path = 2;
-    directionConfiguration.lpf = 0;
-    directionConfiguration.testSignal.enabled = true;
-    directionConfiguration.testSignal.dcMode = false;
-    directionConfiguration.testSignal.scale = SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half;
-    directionConfiguration.testSignal.divide = SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8;
-
-    device->Configure(deviceConfiguration, 0);
-
-    SDRDevice::StreamConfig streamConfiguration;
-    streamConfiguration.channels[TRXDir::Rx] = { 0 };
-    streamConfiguration.format = SDRDevice::StreamConfig::DataFormat::I16;
-    streamConfiguration.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
-
-    device->StreamSetup(streamConfiguration, 0);
-
-    device->StreamStart(0);
+    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half,
+        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     complex16_t* const data = sampleBuffer.data();
@@ -216,29 +185,8 @@ TEST_F(LimeSDR_X3_Fixture, Configure8FullTestPatternAndReceiveIt)
 {
     const int samplesToReceive = 16;
 
-    SDRDevice::SDRConfig deviceConfiguration;
-    SDRDevice::ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
-    directionConfiguration.enabled = true;
-    directionConfiguration.centerFrequency = 1.4e9;
-    directionConfiguration.sampleRate = 10e6;
-    directionConfiguration.oversample = 0;
-    directionConfiguration.path = 2;
-    directionConfiguration.lpf = 0;
-    directionConfiguration.testSignal.enabled = true;
-    directionConfiguration.testSignal.dcMode = false;
-    directionConfiguration.testSignal.scale = SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full;
-    directionConfiguration.testSignal.divide = SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8;
-
-    device->Configure(deviceConfiguration, 0);
-
-    SDRDevice::StreamConfig streamConfiguration;
-    streamConfiguration.channels[TRXDir::Rx] = { 0 };
-    streamConfiguration.format = SDRDevice::StreamConfig::DataFormat::I16;
-    streamConfiguration.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
-
-    device->StreamSetup(streamConfiguration, 0);
-
-    device->StreamStart(0);
+    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full,
+        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     complex16_t* const data = sampleBuffer.data();
