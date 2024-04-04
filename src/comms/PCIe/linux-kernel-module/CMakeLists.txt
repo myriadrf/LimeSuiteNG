@@ -81,7 +81,7 @@ add_custom_target(litepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
 
 # If module is already loaded, unload it
 install(CODE "exec_program(${CMAKE_CURRENT_LIST_DIR}/unload.sh ARGS ${MODULE_NAME})")
-set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNELRELEASE}/extra)
+set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
 install(
     FILES ${MODULE_OBJECT}
     DESTINATION ${KERNEL_MODULE_DESTINATION}
