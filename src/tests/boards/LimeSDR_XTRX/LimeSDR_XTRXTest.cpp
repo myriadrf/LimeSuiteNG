@@ -4,29 +4,40 @@
 #include "LimeSDR_XTRX.h"
 #include "limesuite/DeviceRegistry.h"
 
+#include <limits>
+
 using namespace lime;
 using namespace std::literals::string_literals;
 
 MATCHER_P2(AreSamplesCorrect, samples, maxSampleCount, "Checks if the test pattern gave the correct samples"s)
 {
     // Samples can begin at any point in the sequence, so we're finding a common start point first.
+    std::size_t startPoint = std::numeric_limits<std::size_t>::max();
+
     for (std::size_t i = 0; i < maxSampleCount - samples.size(); ++i)
     {
-        if (arg[i].i == samples.at(0).i && arg[i].q == samples.at(0).q)
+        if (arg.at(i).i == samples.at(0).i && arg.at(i).q == samples.at(0).q)
         {
-            for (std::size_t j = 1; j < samples.size(); ++j)
-            {
-                if (arg[i + j].i != samples.at(j).i && arg[i + j].q != samples.at(j).q)
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            startPoint = i;
+            break;
         }
     }
 
-    return false;
+    if (startPoint == std::numeric_limits<std::size_t>::max())
+    {
+        return false;
+    }
+
+    // Starting from 1 because the 0th sample is already checked above.
+    for (std::size_t i = 1; i < samples.size(); ++i)
+    {
+        if (arg.at(startPoint + i).i != samples.at(i).i || arg.at(startPoint + i).q != samples.at(i).q)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 class LimeSDR_XTRX_Fixture : public ::testing::Test
