@@ -2,7 +2,7 @@
 #define LIME_LIMESDR_XTRX_H
 
 #include "LMS7002M_SDRDevice.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 
 #include <vector>
 #include <mutex>

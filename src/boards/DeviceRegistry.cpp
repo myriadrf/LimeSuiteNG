@@ -1,6 +1,6 @@
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 #include <mutex>
 #include <map>
 #include <memory>

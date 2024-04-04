@@ -1,7 +1,7 @@
 #ifndef TRXLooper_USB_H
 #define TRXLooper_USB_H
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "TRXLooper.h"
 
 namespace lime {

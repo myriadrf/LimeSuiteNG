@@ -1,7 +1,7 @@
 #ifndef PCIE_CSR_PIPE_H
 #define PCIE_CSR_PIPE_H
 
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include "LMS64CProtocol.h"
 #include "LitePCIe.h"
 

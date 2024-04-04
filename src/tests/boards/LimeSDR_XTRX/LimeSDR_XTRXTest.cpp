@@ -1,8 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "LimeSDR_XTRX.h"
-#include "limesuite/DeviceRegistry.h"
+#include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 #include <limits>
 

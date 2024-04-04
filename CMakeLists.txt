@@ -139,8 +139,8 @@ endif()
 if (MSVC)
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX)
-    set( MSVC_MULTITHREAD_COMPILE_FLAGS "/MP")
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${MSVC_MULTITHREAD_COMPILE_FLAGS}" )
+    set(MSVC_MULTITHREAD_COMPILE_FLAGS "/MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MSVC_MULTITHREAD_COMPILE_FLAGS} /Zc:__cplusplus")
 
     SET(ENABLE_SIMD_FLAGS "SSE2" CACHE STRING "Set compiler SIMD flags")
     SET_PROPERTY(CACHE ENABLE_SIMD_FLAGS PROPERTY STRINGS none SSE2 AVX AVX2)
@@ -223,9 +223,9 @@ endif()
 add_subdirectory(src)
 
 ########################################################################
-## SoapySDR bindings for LMS7 RFIC driver
+## plugins for external programs
 ########################################################################
-add_subdirectory(SoapyLMS7)
+add_subdirectory(plugins)
 
 ########################################################################
 ## udev rules for linux usb
@@ -267,21 +267,14 @@ if (ENABLE_HEADERS AND ENABLE_LIBRARY)
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
     @ONLY)
 
+    install(EXPORT limesuiteng FILE
+        limesuitengConfig.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
+
     install(FILES
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfig.cmake
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif (ENABLE_HEADERS AND ENABLE_LIBRARY)
-
-########################################################################
-## freedesktop environment integration
-########################################################################
-add_subdirectory(Desktop)
-
-########################################################################
-## Octave plugin integration
-########################################################################
-add_subdirectory(amarisoft-plugin)
 
 #########################################################################
 # summary

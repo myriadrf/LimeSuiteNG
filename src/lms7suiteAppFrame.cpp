@@ -35,12 +35,12 @@
 #include "GUI/events.h"
 #include "GUI/ISOCPanel.h"
 #include "SDRConfiguration_view.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/DeviceNode.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/DeviceNode.h"
 //#include "LimeSDR.h"
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;
@@ -81,7 +81,7 @@ struct DeviceTreeItemData : public wxTreeItemData {
 };
 
 LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
-    : wxFrame(parent, wxNewId(), _("LimeSuite"))
+    : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
     , lmsControl(nullptr)
 {
     obj_ptr = this;

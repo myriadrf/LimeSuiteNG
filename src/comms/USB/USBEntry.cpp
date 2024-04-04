@@ -1,5 +1,6 @@
 #include "USBEntry.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
+#include "CommonFunctions.h"
 
 using namespace lime;
 
@@ -135,11 +136,7 @@ DeviceHandle USBEntry::GetDeviceHandle(
         handle.name = std::string(characterBuffer, size_t(descriptorStringLength));
     }
 
-    int addressLength = std::sprintf(characterBuffer, "%.4x:%.4x", desc.idVendor, desc.idProduct);
-    if (addressLength > 0)
-    {
-        handle.addr = std::string(characterBuffer, size_t(addressLength));
-    }
+    handle.addr = intToHex(desc.idVendor) + ':' + intToHex(desc.idProduct);
 
     if (desc.iSerialNumber > 0)
     {

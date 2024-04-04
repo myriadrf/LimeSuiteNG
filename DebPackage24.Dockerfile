@@ -7,24 +7,26 @@ COPY install_dependencies.sh install_dependencies.sh
 
 RUN apt update && \
     apt-get install -y --no-install-recommends \
-        dpkg-dev \
         debhelper \
+        dh-python \
+        dpkg-dev \
+        gnuradio-dev \
     && \
     ./install_dependencies.sh -y && \
     rm -rf /var/lib/apt/lists/*
 
-COPY amarisoft-plugin/ amarisoft-plugin/
 COPY cmake/ cmake/
 COPY debian/ debian/
-COPY Desktop/ Desktop/
 COPY external/ external/
 COPY udev-rules/ udev-rules/
-COPY SoapyLMS7/ SoapyLMS7/
+COPY plugins/ plugins/
 COPY Changelog.txt Changelog.txt
 COPY CMakeLists.txt CMakeLists.txt
 COPY README.md README.md
 COPY src/ src/
 
+RUN patch debian/control < debian/control.gnuradio.patch
+RUN patch debian/rules < debian/rules.gnuradio.patch
 RUN dpkg-buildpackage --build=binary --no-sign
 
 FROM scratch AS export-stage

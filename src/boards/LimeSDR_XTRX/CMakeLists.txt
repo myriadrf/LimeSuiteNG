@@ -2,7 +2,7 @@
 ## Support for LimeSDR_XTRX board
 ########################################################################
 
-set(THIS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boards/LimeSDR_XTRX)
+set(THIS_SOURCE_DIR boards/LimeSDR_XTRX)
 
 set(LIMESDR_XTRX_SOURCES
     ${THIS_SOURCE_DIR}/LimeSDR_XTRX.cpp
@@ -12,5 +12,5 @@ set(LIMESDR_XTRX_SOURCES
 ########################################################################
 ## Add to library
 ########################################################################
-target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${THIS_SOURCE_DIR})
+target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LIMESDR_XTRX_SOURCES})

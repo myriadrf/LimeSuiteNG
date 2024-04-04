@@ -1,6 +1,6 @@
 #include "cli/common.h"
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
@@ -107,11 +107,30 @@ enum Args {
     INIFILE
 };
 
+static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name)
+{
+    if (name.empty())
+        return -1;
+
+    bool match = false;
+    for (size_t j = 0; j < antennaNames.size(); ++j)
+    {
+        if (antennaNames[j] == name)
+            return j;
+    }
+    std::cerr << "Antenna (" << name.c_str() << " not found. Available:" << std::endl;
+    for (const auto& iter : antennaNames)
+        std::cerr << "\t\"" << iter.c_str() << "\"" << std::endl;
+    return -1;
+}
+
 int main(int argc, char** argv)
 {
-    char* devName = nullptr;
+    std::string devName;
     bool initializeBoard = false;
-    char* iniFilename = nullptr;
+    std::string iniFilename;
+    std::string rxAntennaName;
+    std::string txAntennaName;
     std::vector<int> chipIndexes;
 
     SDRDevice::SDRConfig config;
@@ -150,7 +169,7 @@ int main(int argc, char** argv)
             return printHelp();
         case Args::DEVICE:
             if (optarg != NULL)
-                devName = optarg;
+                devName = std::string(optarg);
             break;
         case Args::CHIP:
             if (optarg != NULL)
@@ -187,7 +206,8 @@ int main(int argc, char** argv)
             config.channel[0].rx.centerFrequency = stof(optarg);
             break;
         case RXPATH:
-            config.channel[0].rx.path = stoi(optarg);
+            if (optarg != NULL)
+                rxAntennaName = std::string(optarg);
             break;
         case RXLPF:
             config.channel[0].rx.lpf = stof(optarg);
@@ -205,7 +225,8 @@ int main(int argc, char** argv)
             config.channel[0].tx.centerFrequency = stof(optarg);
             break;
         case TXPATH:
-            config.channel[0].tx.path = stoi(optarg);
+            if (optarg != NULL)
+                txAntennaName = std::string(optarg);
             break;
         case TXLPF:
             config.channel[0].tx.lpf = stof(optarg);
@@ -217,7 +238,8 @@ int main(int argc, char** argv)
             config.channel[0].tx.testSignal.enabled = stoi(optarg) != 0;
             break;
         case INIFILE:
-            iniFilename = optarg;
+            if (optarg != NULL)
+                iniFilename = std::string(optarg);
             break;
         }
     }
@@ -229,34 +251,24 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDRDevice* device;
-    if (devName)
-        device = ConnectUsingNameHint(devName);
-    else
-    {
-        if (handles.size() > 1)
-        {
-            cerr << "Multiple devices detected, specify which one to use with -d, --device" << endl;
-            return EXIT_FAILURE;
-        }
-        // device not specified, use the only one available
-        device = DeviceRegistry::makeDevice(handles.at(0));
-    }
-
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
-    {
-        cerr << "Device connection failed" << endl;
         return EXIT_FAILURE;
-    }
+
+    // if chip index is not specified and device has only one, use it by default
+    if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
+        chipIndexes.push_back(0);
 
     device->SetMessageLogCallback(LogCallback);
+
     try
     {
         if (initializeBoard)
             device->Init();
-        if (iniFilename)
+
+        std::string configFilepath;
+        if (!iniFilename.empty())
         {
-            std::string configFilepath;
             config.skipDefaults = true;
             std::string cwd(argv[0]);
             const size_t slash0Pos = cwd.find_last_of("/\\");
@@ -264,36 +276,47 @@ int main(int argc, char** argv)
                 cwd.resize(slash0Pos);
 
             if (iniFilename[0] != '/') // is not global path
-            {
                 configFilepath = cwd + "/" + iniFilename;
-            }
             else
-            {
                 configFilepath = iniFilename;
-            }
-
-            for (int moduleId : chipIndexes)
-            {
-                LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(moduleId));
-                if (!chip)
-                {
-                    DeviceRegistry::freeDevice(device);
-                    cerr << "Failed to get internal chip: " << moduleId << endl;
-                    return EXIT_FAILURE;
-                }
-                if (chip->LoadConfig(configFilepath) != OpStatus::SUCCESS)
-                {
-                    cerr << "Error loading file: " << configFilepath << endl;
-                    return EXIT_FAILURE;
-                }
-
-                // set all channels to identical configuration
-                for (int i = 0; i < device->GetDescriptor().rfSOC[moduleId].channelCount; ++i)
-                    config.channel[i] = config.channel[0];
-            }
         }
+
         for (int moduleId : chipIndexes)
         {
+            LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(moduleId));
+            if (!chip)
+            {
+                DeviceRegistry::freeDevice(device);
+                cerr << "Failed to get internal chip: " << moduleId << endl;
+                return EXIT_FAILURE;
+            }
+            if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::SUCCESS)
+            {
+                cerr << "Error loading file: " << configFilepath << endl;
+                return EXIT_FAILURE;
+            }
+
+            const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
+
+            if (!rxAntennaName.empty())
+            {
+                int rxPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
+                if (rxPathIndex < 0)
+                    return EXIT_FAILURE;
+                config.channel[0].rx.path = rxPathIndex;
+            }
+            if (!txAntennaName.empty())
+            {
+                int txPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
+                if (txPathIndex < 0)
+                    return EXIT_FAILURE;
+                config.channel[0].tx.path = txPathIndex;
+            }
+
+            // set all channels to identical configuration
+            for (int i = 0; i < chipDescriptor.channelCount; ++i)
+                config.channel[i] = config.channel[0];
+
             if (device->Configure(config, moduleId) != OpStatus::SUCCESS)
             {
                 cerr << "Failed to configure device (chip" << moduleId << ")" << std::endl;

@@ -1,8 +1,10 @@
 #ifndef LIME_SAMPLES_CONVERSION_H
 #define LIME_SAMPLES_CONVERSION_H
 
-#include <stdint.h>
-#include "limesuite/complex.h"
+#include <cstdint>
+#include <type_traits>
+
+#include "limesuiteng/complex.h"
 
 namespace lime {
 

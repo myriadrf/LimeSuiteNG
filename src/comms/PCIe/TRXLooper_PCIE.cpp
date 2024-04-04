@@ -16,11 +16,11 @@
 #include "DataPacket.h"
 #include "FPGA_common.h"
 #include "LitePCIe.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/complex.h"
-#include "limesuite/LMS7002M.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/complex.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 #include "MemoryPool.h"
 #include "TxBufferManager.h"
 
@@ -636,7 +636,9 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
         dma = mRxArgs.port->GetRxDMAState();
         if (dma.hwIndex != lastHwIndex)
         {
-            const int bytesTransferred = (dma.hwIndex - lastHwIndex) * readSize;
+            const uint8_t buffersTransferred = dma.hwIndex - static_cast<uint8_t>(lastHwIndex);
+            const int bytesTransferred = buffersTransferred * readSize;
+            assert(bytesTransferred > 0);
             Bps += bytesTransferred;
             stats.bytesTransferred += bytesTransferred;
             lastHwIndex = dma.hwIndex;

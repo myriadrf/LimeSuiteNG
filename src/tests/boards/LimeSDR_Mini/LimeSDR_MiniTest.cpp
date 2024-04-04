@@ -1,10 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "LimeSDR_Mini.h"
-#include "limesuite/DeviceRegistry.h"
-
-#include <limits>
+#include "boards/LimeSDR_Mini/LimeSDR_Mini.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

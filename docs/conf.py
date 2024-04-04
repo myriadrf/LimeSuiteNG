@@ -18,8 +18,8 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = 'LimeSuiteNG'
-copyright = '2021, 2023 MyriadRF Contributors'
+project = 'Lime Suite NG'
+copyright = '2021, 2024 MyriadRF Contributors'
 author = 'Lime Microsystems'
 
 # The full version, including alpha/beta/rc tags
@@ -62,7 +62,7 @@ html_context = {
     'display_github': False,
     'github_user': 'myriadrf',
     'github_repo': 'LimeSuiteNG',
-    'github_version': 'main/' 
+    'github_version': 'main/'
 }
 
 # This is where we place substitutions, such as for Unicode characters.
@@ -110,10 +110,10 @@ root_doc = 'index'
 html_static_path = ['_static']
 
 breathe_projects = {
-    "LimeSuiteNG" : ( "../build/xml" )
+    "Lime Suite NG" : ( "../build/xml" )
 }
 
-breathe_default_project = "LimeSuiteNG"
+breathe_default_project = "Lime Suite NG"
 
 mermaid_version = "10.6.1"
 mermaid_d3_zoom = True

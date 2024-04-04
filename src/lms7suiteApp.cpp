@@ -27,7 +27,7 @@ IMPLEMENT_APP_CONSOLE(lms7suiteApp)
 IMPLEMENT_APP(lms7suiteApp)
 #endif
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "resources/splash.h"
 #include "resources/LMS_ICO.xpm"
 

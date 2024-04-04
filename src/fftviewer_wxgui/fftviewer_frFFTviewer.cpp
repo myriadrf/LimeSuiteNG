@@ -4,13 +4,13 @@
 #include "OpenGLGraph.h"
 #include <LMSBoards.h>
 #include "kissFFT/kiss_fft.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "windowFunction.h"
 #include <fstream>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/complex.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/complex.h"
+#include "limesuiteng/Logger.h"
 #include <array>
 
 using namespace std;

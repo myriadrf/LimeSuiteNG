@@ -1,13 +1,13 @@
 #include "CommonFunctions.h"
 #include "lime/LimeSuite.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/DeviceHandle.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/GainTypes.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/GainTypes.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/Logger.h"
 #include "MemoryPool.h"
-#include "VersionInfo.h"
 
 #include <algorithm>
 #include <array>
@@ -1642,16 +1642,17 @@ API_EXPORT int CALL_CONV LMS_GetNCOFrequency(lms_device_t* device, bool dir_tx, 
     }
 
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    double phaseOffset = 0.0;
+
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
     {
         // TODO: check status
-        freq[i] = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i);
+        freq[i] = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i, phaseOffset);
     }
 
     if (pho != nullptr)
     {
-        uint16_t value = apiDevice->device->ReadRegister(apiDevice->moduleIndex, dir_tx ? 0x0241 : 0x0441);
-        *pho = 360.0 * value / 65536.0;
+        *pho = phaseOffset;
     }
 
     return 0;
@@ -1711,7 +1712,8 @@ API_EXPORT int CALL_CONV LMS_GetNCOPhase(lms_device_t* device, bool dir_tx, size
 
     if (fcw != nullptr)
     {
-        *fcw = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0);
+        double phaseOffset = 0.0;
+        *fcw = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, phaseOffset);
     }
 
     return 0;
@@ -1725,35 +1727,11 @@ API_EXPORT int CALL_CONV LMS_SetNCOIndex(lms_device_t* device, bool dir_tx, size
         return -1;
     }
 
-    auto& cmixBypassParameter = dir_tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP;
-    auto& cmixGainParameter = dir_tx ? LMS7_CMIX_GAIN_TXTSP : LMS7_CMIX_GAIN_RXTSP;
-    auto& selectionParameter = dir_tx ? LMS7_SEL_TX : LMS7_SEL_RX;
-    auto& cmixSelectionParameter = dir_tx ? LMS7_CMIX_SC_TXTSP : LMS7_CMIX_SC_RXTSP;
+    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    apiDevice->device->SetParameter(apiDevice->moduleIndex,
-        chan,
-        cmixBypassParameter.address,
-        cmixBypassParameter.msb,
-        cmixBypassParameter.lsb,
-        ind < 0 ? 1 : 0);
-    apiDevice->device->SetParameter(
-        apiDevice->moduleIndex, chan, cmixGainParameter.address, cmixGainParameter.msb, cmixGainParameter.lsb, ind < 0 ? 0 : 1);
-
-    if (ind < LMS_NCO_VAL_COUNT)
+    OpStatus returnValue = apiDevice->device->SetNCOIndex(apiDevice->moduleIndex, direction, chan, ind, down);
+    if (returnValue != OpStatus::SUCCESS)
     {
-        apiDevice->device->SetParameter(
-            apiDevice->moduleIndex, chan, selectionParameter.address, selectionParameter.msb, selectionParameter.lsb, ind);
-
-        apiDevice->device->SetParameter(apiDevice->moduleIndex,
-            chan,
-            cmixSelectionParameter.address,
-            cmixSelectionParameter.msb,
-            cmixSelectionParameter.lsb,
-            down);
-    }
-    else
-    {
-        lime::error("Invalid NCO index value.");
         return -1;
     }
 
@@ -1767,18 +1745,9 @@ API_EXPORT int CALL_CONV LMS_GetNCOIndex(lms_device_t* device, bool dir_tx, size
     {
         return -1;
     }
+    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    auto& cmixParameter = dir_tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP;
-    auto& selParameter = dir_tx ? LMS7_SEL_TX : LMS7_SEL_RX;
-
-    if (apiDevice->device->GetParameter(
-            apiDevice->moduleIndex, chan, cmixParameter.address, cmixParameter.msb, cmixParameter.lsb) != 0)
-    {
-        lime::error("NCO is disabled.");
-        return -1;
-    }
-
-    return apiDevice->device->GetParameter(apiDevice->moduleIndex, chan, selParameter.address, selParameter.msb, selParameter.lsb);
+    return apiDevice->device->GetNCOIndex(apiDevice->moduleIndex, direction, chan);
 }
 
 API_EXPORT int CALL_CONV LMS_WriteLMSReg(lms_device_t* device, uint32_t address, uint16_t val)

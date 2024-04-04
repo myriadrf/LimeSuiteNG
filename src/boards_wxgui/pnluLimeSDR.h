@@ -1,7 +1,7 @@
 #ifndef PNL_ULIMESDR_H
 #define PNL_ULIMESDR_H
 
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include <wx/panel.h>
 
 class wxChoice;

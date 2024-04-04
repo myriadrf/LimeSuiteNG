@@ -5,7 +5,7 @@
 
 #include "TRXLooper.h"
 #include "MemoryPool.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 namespace lime {
 

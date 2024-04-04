@@ -2,8 +2,8 @@
 #define __lms7002_dlgGFIR_Coefficients__
 
 #include "lms7002_wxgui.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/LMS7002M.h"
 
 #include <cstdint>
 #include <vector>

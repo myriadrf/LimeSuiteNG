@@ -3,8 +3,8 @@
 
 #include "ADF4002/ADF4002.h"
 #include "CDCM6208/CDCM6208_Dev.h"
-#include "limesuite/IComms.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/IComms.h"
+#include "limesuiteng/SDRDevice.h"
 #include "PacketsFIFO.h"
 #include "protocols/LMS64CProtocol.h"
 
@@ -42,9 +42,12 @@ class LimeSDR_MMX8 : public SDRDevice
     virtual double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     virtual OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) override;
 
-    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index) override;
+    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) override;
     virtual OpStatus SetNCOFrequency(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset = -1.0) override;
+
+    virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) override;
 
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 

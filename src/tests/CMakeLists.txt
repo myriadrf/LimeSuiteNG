@@ -1,4 +1,4 @@
-set(LIME_TEST_SUITE_NAME LimeSuite2Test)
+set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
     parsers/CoefficientFileParserTest.cpp
@@ -17,7 +17,7 @@ set(LIME_TEST_SUITE_SOURCES
 )
 
 if (ENABLE_LITE_PCIE)
-    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
+    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}
         boards/LimeSDR_X3/LimeSDR_X3Test.cpp
         boards/LimeSDR_X3/SlaveSelectShimTest.cpp
         boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp
@@ -26,14 +26,14 @@ if (ENABLE_LITE_PCIE)
 endif()
 
 if (ENABLE_LIMESDR_USB)
-    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
+    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}
         boards/LimeSDR/LimeSDRTest.cpp
         boards/LimeSDR/USB_CSR_Pipe_SDRTest.cpp
     )
 endif()
 
 if (ENABLE_LIMESDR_MINI)
-    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}     
+    set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}
         boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp
         boards/LimeSDR_Mini/USB_CSR_Pipe_MiniTest.cpp
     )
@@ -41,7 +41,7 @@ endif()
 
 add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
 
-target_include_directories(${LIME_TEST_SUITE_NAME} PUBLIC ${LIME_SUITE_INCLUDES} tests)
+target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
 target_link_libraries(
     ${LIME_TEST_SUITE_NAME}
     PUBLIC

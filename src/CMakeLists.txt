@@ -23,7 +23,7 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    Logger.cpp
+    include/limesuiteng/Logger.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp
@@ -61,9 +61,9 @@ set(LIME_SUITE_SOURCES
     mcu_program/common_src/lms7002m_filters.c
 
     API/LMS_APIWrapper.cpp
-    include/limesuite/commonTypes.cpp
-    include/limesuite/OpStatus.cpp
-    include/limesuite/SDRDevice.cpp
+    include/limesuiteng/commonTypes.cpp
+    include/limesuiteng/OpStatus.cpp
+    include/limesuiteng/SDRDevice.cpp
 )
 
 SET_SOURCE_FILES_PROPERTIES(
@@ -85,9 +85,9 @@ set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/vectorization
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VersionInfo.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/VersionInfo.cpp @ONLY)
-list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/VersionInfo.cpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp @ONLY)
+list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
@@ -106,19 +106,24 @@ endif()
 include(FeatureSummary)
 include(CMakeDependentOption)
 
-add_subdirectory(vectorization)
-
 option(ENABLE_LIBRARY "Enable build library" ON)
 add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
 if (ENABLE_LIBRARY)
     add_library(${MAIN_LIBRARY_NAME} ${LIME_SUITE_SOURCES})
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIME_SUITE_LIBRARIES} samplesConversion)
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIME_SUITE_LIBRARIES})
     set_property(TARGET ${MAIN_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES VERSION ${LIME_SUITE_LIBVER})
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "LIME_DLL_EXPORTS")
     target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
-    target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(${MAIN_LIBRARY_NAME} INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
+        $<INSTALL_INTERFACE:include>
+    )
+
+    add_subdirectory(vectorization)
 
     if(BUILD_SHARED_LIBS)
         target_compile_definitions(${MAIN_LIBRARY_NAME} PUBLIC "LIME_DLL")
@@ -133,7 +138,7 @@ if (ENABLE_LIBRARY)
         endif()
     endif()
 
-    install(TARGETS ${MAIN_LIBRARY_NAME}
+    install(TARGETS ${MAIN_LIBRARY_NAME} EXPORT limesuiteng
         LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
         ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
         RUNTIME DESTINATION bin              # .dll file
@@ -226,6 +231,7 @@ set(LMS7SUITE_GUI_SOURCES
     lms7suiteEvents/lms7suiteEvents.cpp
     boards_wxgui/pnlBoardControls.cpp
     boards_wxgui/pnlX3.cpp
+    boards_wxgui/pnlX8.cpp
     boards_wxgui/pnlXTRX.cpp
     # boards_wxgui/pnlQSpark.cpp
     boards_wxgui/pnluLimeSDR.cpp

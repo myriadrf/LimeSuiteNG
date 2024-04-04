@@ -1,7 +1,7 @@
 #include "FPGA_common.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/IComms.h"
 #include "LMSBoards.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "WriteRegistersBatch.h"
 
 #include <algorithm>

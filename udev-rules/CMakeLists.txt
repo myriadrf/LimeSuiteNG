@@ -2,7 +2,7 @@ if (NOT UNIX)
     return()
 endif()
 
-set(ENABLE_UDEV_RULES ON CACHE BOOL "Install linux udev rules of Lime SDR devices")
+set(ENABLE_UDEV_RULES ON CACHE BOOL "Install Linux udev rules of Lime SDR devices")
 
 include(FeatureSummary)
 add_feature_info(UDEV_RULES ENABLE_UDEV_RULES "Install Linux udev rules")

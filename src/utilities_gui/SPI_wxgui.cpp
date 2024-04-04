@@ -1,8 +1,8 @@
 #include "SPI_wxgui.h"
 #include <vector>
 
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

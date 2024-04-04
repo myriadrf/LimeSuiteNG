@@ -1,6 +1,6 @@
 #pragma once
 
-#include "limesuite/DeviceRegistry.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 namespace lime {
 

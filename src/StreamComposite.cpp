@@ -1,4 +1,4 @@
-#include "limesuite/StreamComposite.h"
+#include "limesuiteng/StreamComposite.h"
 #include <assert.h>
 namespace lime {
 

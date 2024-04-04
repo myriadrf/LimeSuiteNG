@@ -11,8 +11,8 @@
 #include <algorithm>
 #include <signal.h>
 
-#include "limesuite/DeviceHandle.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/SDRDevice.h"
 
-lime::SDRDevice* ConnectUsingNameHint(const std::string& name);
+lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string& argument);

@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <thread>
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 #ifdef __unix__
     #include <unistd.h>

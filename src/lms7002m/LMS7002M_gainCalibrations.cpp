@@ -1,5 +1,6 @@
-#include "limesuite/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
+
 using namespace lime;
 
 OpStatus LMS7002M::CalibrateTxGainSetup()

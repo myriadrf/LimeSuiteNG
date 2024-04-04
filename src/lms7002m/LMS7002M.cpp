@@ -4,7 +4,7 @@
 @brief Implementation of LMS7002M transceiver configuring
 */
 
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 
 #define _USE_MATH_DEFINES
 
@@ -29,10 +29,10 @@
 #endif
 
 #include "lms_gfir.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/IComms.h"
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/IComms.h"
 #include "LMS7002M_RegistersMap.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
 #include "MCU_BD.h"
 
@@ -257,7 +257,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
 
     mRegistersMap->InitializeDefaultValues(LMS7parameterList);
     mcuControl = new MCU_BD();
-    mcuControl->Initialize(nullptr);
+    mcuControl->Initialize(controlPort);
 }
 
 LMS7002M::~LMS7002M()
