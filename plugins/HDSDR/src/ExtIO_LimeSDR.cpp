@@ -71,7 +71,7 @@ using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
 //---------------------------------------------------------------------------
-std::array<double, 8> sampleRates = {
+constexpr std::array<double, 8> sampleRates = {
     2000000,
     4000000,
     8000000,
@@ -82,9 +82,15 @@ std::array<double, 8> sampleRates = {
     30000000,
 };
 
-enum CalibrationStatus { Calibrated = 1, NotCalibrated = 0, CalibrationErr = -1 };
+constexpr double minimumLPFBandwidth = 1.4e6;
+constexpr double maximumLPFBandwidth = 130e6;
 
-int isCalibrated = NotCalibrated;
+constexpr double minimumCalibrationBandwidth = 2.5e6;
+constexpr double maximumCalibrationBandwidth = 120e6;
+
+enum class CalibrationStatus : uint8_t { NotCalibrated, Calibrated, CalibrationErr };
+
+CalibrationStatus isCalibrated = CalibrationStatus::NotCalibrated;
 bool isRunning = false;
 bool isLPFEnabled = false;
 bool isErrorLoggingEnabled = true;
@@ -101,16 +107,16 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 HWND dialogWindowHandle = nullptr;
 HWND errorDialogWindowHandle = nullptr;
 
-std::size_t currentDeviceIndex = 0;
-std::size_t numberOfDevices = 0;
-int numberOfChannels = 0;
-std::size_t channel = 0;
-std::size_t oversample = 2;
-uint8_t sampleRateIndex = 1;
-uint8_t antennaSelect = 1;
+std::size_t currentDeviceIndex = 0U;
+std::size_t numberOfDevices = 0U;
+uint8_t numberOfChannels = 0U;
+std::size_t channel = 0U;
+std::size_t oversample = 2U;
+uint8_t sampleRateIndex = 1U;
+uint8_t antennaSelect = 1U;
 int64_t currentLOFreq = 28.5e6; // default HDSDR LO freq
-double LPFBandwidth = sampleRates[sampleRateIndex];
-double calibrationBandwidth = sampleRates[sampleRateIndex];
+double LPFBandwidth = sampleRates.at(sampleRateIndex);
+double calibrationBandwidth = sampleRates.at(sampleRateIndex);
 
 /* 53 dB gain */
 uint16_t LNA = 10;
@@ -176,10 +182,10 @@ static void PerformCalibration(bool enableErrorLogging)
     }
     isErrorLoggingEnabled = enableErrorLogging;
 
-    isCalibrated = Calibrated;
+    isCalibrated = CalibrationStatus::Calibrated;
 
     if (device->Calibrate(0, lime::TRXDir::Rx, channel, calibrationBandwidth) != lime::OpStatus::SUCCESS) {
-        isCalibrated = CalibrationErr;
+        isCalibrated = CalibrationStatus::CalibrationErr;
     }
 
     isErrorLoggingEnabled = true;
@@ -221,7 +227,7 @@ static bool DisableLPF()
 //---------------------------------------------------------------------------
 static bool EnableLPF()
 {
-    if (LPFBandwidth > 1.4e6 && LPFBandwidth <= 130e6) {
+    if (LPFBandwidth > minimumLPFBandwidth && LPFBandwidth <= maximumLPFBandwidth) {
         int64_t freq = -1;
 
         if (isRunning) {
@@ -242,10 +248,10 @@ static bool EnableLPF()
         }
         isLPFEnabled = true;
 
-        if (LPFBandwidth > 2.5e6) {
+        if (LPFBandwidth > minimumCalibrationBandwidth) {
             calibrationBandwidth = LPFBandwidth;
         } else {
-            calibrationBandwidth = 2.5e6;
+            calibrationBandwidth = minimumCalibrationBandwidth;
         }
 
         if (freq != -1) {
@@ -269,7 +275,7 @@ static bool InitializeLMS()
     const lime::SDRDevice::Descriptor& descriptor = device->GetDescriptor();
 
     numberOfChannels = descriptor.rfSOC[0].channelCount;
-    if (numberOfChannels == -1) {
+    if (numberOfChannels <= 0) {
         return false;
     }
 
@@ -361,11 +367,11 @@ static int UpdateDialog()
     SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, bandwidth.data());
 
     /* Update calibration text */
-    if (isCalibrated == Calibrated) {
+    if (isCalibrated == CalibrationStatus::Calibrated) {
         Static_SetText(GetDlgItem(dialogWindowHandle, IDC_TEXT_CALIBRATED), "Calibrated");
-    } else if (isCalibrated == NotCalibrated) {
+    } else if (isCalibrated == CalibrationStatus::NotCalibrated) {
         Static_SetText(GetDlgItem(dialogWindowHandle, IDC_TEXT_CALIBRATED), "Not calibrated");
-    } else if (isCalibrated == CalibrationErr) {
+    } else if (isCalibrated == CalibrationStatus::CalibrationErr) {
         Static_SetText(GetDlgItem(dialogWindowHandle, IDC_TEXT_CALIBRATED), "Calibration failed");
     }
 
@@ -391,7 +397,7 @@ static int InitializeDialog(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
     }
 
     /* Add channel choices */
-    for (int i = 0; i < numberOfChannels; i++) {
+    for (uint8_t i = 0; i < numberOfChannels; i++) {
         std::string channels = "RX"s + std::to_string(i + 1);
         ComboBox_AddString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), channels.c_str());
     }
@@ -441,7 +447,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
-            isCalibrated = NotCalibrated;
+            isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
         }
@@ -459,7 +465,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
-            isCalibrated = NotCalibrated;
+            isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
         }
@@ -480,7 +486,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
-            isCalibrated = NotCalibrated;
+            isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
         }
@@ -557,7 +563,7 @@ static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             /* Add channel selections */
-            for (int i = 0; i < numberOfChannels; i++) {
+            for (uint8_t i = 0; i < numberOfChannels; i++) {
                 std::string channels = "RX"s + std::to_string(i + 1);
                 ComboBox_AddString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), channels.c_str());
             }
@@ -658,15 +664,15 @@ static int OnCalibrate(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GetDlgItemText(hwndDlg, IDC_CAL_BW, textBuffer, buffSize + 1);
 
         calibrationBandwidth = std::atof(textBuffer) * 1e6;
-        if (calibrationBandwidth >= 2.5e6 && calibrationBandwidth <= 120e6) {
+        if (calibrationBandwidth >= minimumCalibrationBandwidth && calibrationBandwidth <= maximumCalibrationBandwidth) {
             PerformCalibration(true);
 
             UpdateDialog();
         } else {
             DbgPrintf("Frequency out of range, available range from 2.5 to 120 MHz");
             calibrationBandwidth = sampleRates.at(sampleRateIndex);
-            if (calibrationBandwidth < 2.5e6) {
-                calibrationBandwidth = 2.5e6;
+            if (calibrationBandwidth < minimumCalibrationBandwidth) {
+                calibrationBandwidth = minimumCalibrationBandwidth;
             }
             UpdateDialog();
         }
@@ -785,11 +791,11 @@ static int StaticTextColorMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
     /* Calibrated text color */
     if (GetDlgCtrlID(reinterpret_cast<HWND>(lParam)) == IDC_TEXT_CALIBRATED) {
         HDC hdcStatic = reinterpret_cast<HDC>(wParam);
-        if (isCalibrated == Calibrated) {
+        if (isCalibrated == CalibrationStatus::Calibrated) {
             SetTextColor(hdcStatic, RGB(24, 135, 0));
-        } else if (isCalibrated == NotCalibrated) {
+        } else if (isCalibrated == CalibrationStatus::NotCalibrated) {
             SetTextColor(hdcStatic, RGB(0, 0, 0));
-        } else if (isCalibrated == CalibrationErr) {
+        } else if (isCalibrated == CalibrationStatus::CalibrationErr) {
             SetTextColor(hdcStatic, RGB(255, 0, 0));
         }
 
@@ -964,7 +970,7 @@ extern "C" int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
         StartHW64(freq);
     } else {
         if (currentLOFreq != LOfreq) {
-            isCalibrated = NotCalibrated;
+            isCalibrated = CalibrationStatus::NotCalibrated;
             device->SetFrequency(0, lime::TRXDir::Rx, channel, freq);
 
             UpdateDialog();
@@ -1040,7 +1046,7 @@ extern "C" int EXTIO_API SetAttenuator(int atten_idx)
         if (device->SetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, atten_idx) != lime::OpStatus::SUCCESS) {
             return -1; // ERROR
         }
-        isCalibrated = NotCalibrated;
+        isCalibrated = CalibrationStatus::NotCalibrated;
         UpdateDialog();
     }
     return 0;
@@ -1049,7 +1055,7 @@ extern "C" int EXTIO_API SetAttenuator(int atten_idx)
 extern "C" int EXTIO_API ExtIoGetSrates(int srate_idx, double* samplerate)
 {
     if (srate_idx < sampleRates.size()) {
-        *samplerate = sampleRates[srate_idx];
+        *samplerate = sampleRates.at(srate_idx);
         return 0;
     } else {
         return -1; // Finished
@@ -1072,9 +1078,9 @@ extern "C" int EXTIO_API ExtIoSetSrate(int srate_idx)
             return -1;
         }
 
-        calibrationBandwidth = LPFBandwidth = sampleRates[srate_idx];
-        if (calibrationBandwidth < 2.5e6) {
-            calibrationBandwidth = 2.5e6;
+        calibrationBandwidth = LPFBandwidth = sampleRates.at(srate_idx);
+        if (calibrationBandwidth < minimumCalibrationBandwidth) {
+            calibrationBandwidth = minimumCalibrationBandwidth;
         }
 
         if (isLPFEnabled) {
@@ -1177,7 +1183,7 @@ extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char* value)
     case 3:
         tempFloat = std::atof(value);
 
-        if (tempFloat > 1.4e6 && tempFloat <= 130e6) {
+        if (tempFloat > minimumLPFBandwidth && tempFloat <= maximumLPFBandwidth) {
             LPFBandwidth = tempFloat;
         }
         return;
@@ -1220,7 +1226,7 @@ extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char* value)
     case 10:
         tempFloat = std::atof(value);
 
-        if (tempFloat >= 2.5e6 && tempFloat <= 120e6) {
+        if (tempFloat >= minimumCalibrationBandwidth && tempFloat <= maximumCalibrationBandwidth) {
             calibrationBandwidth = tempFloat;
         }
         return;
