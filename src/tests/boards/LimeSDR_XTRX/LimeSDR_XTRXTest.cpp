@@ -75,7 +75,7 @@ void LimeSDR_XTRX_Fixture::SetUpDeviceForTestPattern(
     directionConfiguration.enabled = true;
     directionConfiguration.centerFrequency = 1.4e9;
     directionConfiguration.sampleRate = 10e6;
-    directionConfiguration.oversample = 6;
+    directionConfiguration.oversample = 2;
     directionConfiguration.path = 2;
     directionConfiguration.lpf = 0;
     directionConfiguration.testSignal.enabled = true;
@@ -114,10 +114,10 @@ TEST_F(LimeSDR_XTRX_Fixture, Configure4HalfTestPatternAndReceiveIt)
     device->StreamStop(0);
 
     constexpr std::array<complex16_t, 4> expectedSamples{ {
-        { 6960, -13040 },
-        { 13024, 6960 },
-        { -6976, 13024 },
-        { -13040, -6976 },
+        { 5792, -14000 },
+        { 13968, 5792 },
+        { -5808, 13968 },
+        { -14000, -5808 },
     } };
 
     static_assert(expectedSamples.size() * 2 == samplesToReceive);
@@ -140,10 +140,10 @@ TEST_F(LimeSDR_XTRX_Fixture, Configure4FullTestPatternAndReceiveIt)
     device->StreamStop(0);
 
     constexpr std::array<complex16_t, 4> expectedSamples{ {
-        { 13584, -25296 },
-        { 25280, 13584 },
-        { -13600, 25280 },
-        { -25296, -13600 },
+        { 11584, -27984 },
+        { 27968, 11584 },
+        { -11600, 27968 },
+        { -27984, -11600 },
     } };
 
     static_assert(expectedSamples.size() * 2 == samplesToReceive);
@@ -165,14 +165,14 @@ TEST_F(LimeSDR_XTRX_Fixture, Configure8HalfTestPatternAndReceiveIt)
     device->StreamStop(0);
 
     std::array<complex16_t, 8> expectedSamples{ {
-        { 3872, -15504 },
-        { 13696, -8224 },
-        { 15488, 3872 },
-        { 8208, 13696 },
-        { -3888, 15488 },
-        { -13712, 8208 },
-        { -15504, -3888 },
-        { -8224, -13712 },
+        { 3120, -15776 },
+        { 13360, -8928 },
+        { 15744, 3120 },
+        { 8912, 13360 },
+        { -3136, 15744 },
+        { -13376, 8912 },
+        { -15776, -3136 },
+        { -8928, -13376 },
     } };
 
     static_assert(expectedSamples.size() * 2 == samplesToReceive);
@@ -194,14 +194,14 @@ TEST_F(LimeSDR_XTRX_Fixture, Configure8FullTestPatternAndReceiveIt)
     device->StreamStop(0);
 
     std::array<complex16_t, 8> expectedSamples{ {
-        { 7792, -30784 },
-        { 27296, -16464 },
-        { 30768, 7792 },
-        { 16448, 27296 },
-        { -7808, 30768 },
-        { -27312, 16448 },
-        { -30784, -7808 },
-        { -16464, -27312 },
+        { 6256, -31520 },
+        { 26720, -17856 },
+        { 31504, 6256 },
+        { 17840, 26720 },
+        { -6272, 31504 },
+        { -26736, 17840 },
+        { -31520, -6272 },
+        { -17856, -26736 },
     } };
 
     static_assert(expectedSamples.size() * 2 == samplesToReceive);
