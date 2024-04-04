@@ -69,8 +69,9 @@ int device_handler::open_device(std::string& serial)
     // Print device and library information only once
     if (list_read == false) {
         GR_LOG_INFO(d_logger, "##################");
-        GR_LOG_INFO(d_logger,
-                    fmt::format("LimeSuite version: {:s}", lime::GetLibraryVersion()));
+        GR_LOG_INFO(
+            d_logger,
+            fmt::format("Lime Suite NG version: {:s}", lime::GetLibraryVersion()));
         GR_LOG_INFO(d_logger, fmt::format("gr-limesdr version: {:s}", GR_LIMESDR_VER));
         GR_LOG_INFO(d_logger, "##################");
 
@@ -94,9 +95,8 @@ int device_handler::open_device(std::string& serial)
         GR_LOG_INFO(d_logger,
                     "device_handler::open_device(): no serial number. Using first device "
                     "in the list.");
-        GR_LOG_INFO(
-            d_logger,
-            "Use \"LimeUtil --find\" in terminal to find preferred device serial.");
+        GR_LOG_INFO(d_logger,
+                    "Use \"limeDevice\" in terminal to find preferred device serial.");
 
         device_number = 0;
         serial = found_devices[0].serial;

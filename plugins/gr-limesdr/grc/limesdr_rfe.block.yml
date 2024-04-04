@@ -116,7 +116,7 @@ documentation: |-
 
     SDR Device serial number obtained by running
 
-    LimeUtil --find
+    limeDevice
 
     If left blank, the first device in the list will be used to configure LimeRFE board
     -------------------------------------------------------------------------------------------------------------------

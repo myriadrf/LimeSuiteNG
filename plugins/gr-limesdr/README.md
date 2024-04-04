@@ -13,7 +13,7 @@ Package includes GNU Radio blocks for various LimeSDR boards.
 * GNU Radio (versions 3.9, 3.10 or 3.11)
 * libfmt
 * pybind11
-* LimeSuite
+* Lime Suite NG
 
 ## Installation process
 

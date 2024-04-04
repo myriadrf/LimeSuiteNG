@@ -67,7 +67,7 @@ void set_limesuite_logger(void)
 {
     std::lock_guard<std::mutex> lock(log_handler_mutex);
     if (!logger)
-        gr::configure_default_loggers(logger, debug_logger, "LimeSuite");
+        gr::configure_default_loggers(logger, debug_logger, "Lime Suite NG");
 
     lime::registerLogHandler(gr_loghandler);
 }
