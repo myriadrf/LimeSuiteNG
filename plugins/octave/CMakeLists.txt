@@ -36,7 +36,7 @@ add_custom_command(
         ${OCTAVE_MKOCTFILE_EXECUTABLE} ARGS -I${PROJECT_SOURCE_DIR}/include/limesuiteng ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuiteNG.cc
         -L$<TARGET_FILE_DIR:LimeSuiteNG> -llimesuiteng
     COMMENT "Building LimeSuite Octave plugin"
-    DEPENDS LimeSuite)
+    DEPENDS limesuiteng)
 add_custom_target(LimeSuiteNGOctave ALL DEPENDS LimeSuiteNG.oct)
 
 #install script for preloading Limesuite.oct functions
