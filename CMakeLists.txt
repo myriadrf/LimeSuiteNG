@@ -139,7 +139,7 @@ endif()
 if (MSVC)
     # Check if using correct Visual Studio version
     if(MSVC_TOOLSET_VERSION LESS 141)
-	    message(FATAL_ERROR "MSVC version should be atleast v141(Visual Studio 2017")
+	    message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
     endif()
 
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
