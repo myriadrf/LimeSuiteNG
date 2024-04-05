@@ -1,10 +1,9 @@
-project("limesuiteng-amarisoft-plugin")
 cmake_minimum_required(VERSION 3.9)
+project("limesuiteng-amarisoft-plugin")
+
 set(CMAKE_CONFIGURATION_TYPES
     "Debug;Release;RelWithDebInfo"
     CACHE STRING INTERNAL FORCE)
-set(BUILD_SHARED_LIBS "Build the shared library" ON)
-set(CMAKE_BUILD_TYPE "Release")
 
 include(FeatureSummary)
 include(CMakeDependentOption)
