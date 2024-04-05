@@ -573,7 +573,7 @@ void device_handler::set_nco(int device_number,
 
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_nco(): ");
     if (nco_freq == 0) {
-        if (device->SetNCOIndex(0, direction, channel, -1, false) !=
+        if (device->SetNCOIndex(0, direction, channel, 0, false) !=
             lime::OpStatus::SUCCESS) {
             instance.error(device_number);
         }
