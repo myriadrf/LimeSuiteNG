@@ -283,39 +283,80 @@ int LimePlugin_Destroy(LimePluginContext* context)
     return 0;
 }
 
+static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string& text)
+{
+    if (text.empty())
+        return true;
+
+    if (!handle.name.empty() && handle.name.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.addr.empty() && handle.addr.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.serial.empty() && handle.serial.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.media.empty() && handle.media.find(text) != std::string::npos)
+        return true;
+
+    return false;
+}
+
+static int FilterHandles(const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
+{
+    if (handles.empty())
+	return 0;
+
+    DeviceHandle deserializedHandle(text);
+    filteredHandles.clear();
+    for (const DeviceHandle& h : handles)
+    {
+        // compare hint as if it was in serialized handle form.
+        // if it's not, compare using basic text search among handle fields
+        if (h.IsEqualIgnoringEmpty(deserializedHandle) || FuzzyHandleMatch(h, text))
+            filteredHandles.push_back(h);
+    }
+
+    return filteredHandles.size();
+}
+
 static OpStatus ConnectInitializeDevices(LimePluginContext* context)
 {
     // Collect and connect specified unique nodes
+    std::vector<DeviceHandle> fullHandles = DeviceRegistry::enumerate();
     for (int i = 0; i < LIME_MAX_UNIQUE_DEVICES; ++i)
     {
         DevNode& node = context->rfdev.at(i);
         if (node.handleString.empty())
             continue;
 
-        std::vector<DeviceHandle> fullHandles = DeviceRegistry::enumerate(DeviceHandle(node.handleString));
-        if (fullHandles.size() > 1)
+        std::vector<DeviceHandle> filteredHandles;
+        FilterHandles(node.handleString, fullHandles, filteredHandles);
+
+        if (filteredHandles.size() > 1)
         {
             Log(LogLevel::ERROR, "%s : ambiguous handle, matches multiple devices.", node.handleString.c_str());
             return OpStatus::INVALID_VALUE;
         }
-        if (fullHandles.empty())
+        if (filteredHandles.empty())
         {
             Log(LogLevel::ERROR, "No device found to match handle: %s.", node.handleString.c_str());
             return OpStatus::INVALID_VALUE;
         }
-        auto iter = context->uniqueDevices.find(fullHandles.at(0).Serialize().c_str());
+        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize().c_str());
         if (iter != context->uniqueDevices.end())
         {
             node.device = iter->second;
             continue; // skip if the device already exists
         }
 
-        SDRDevice* device = DeviceRegistry::makeDevice(fullHandles.at(0));
+        SDRDevice* device = DeviceRegistry::makeDevice(filteredHandles.at(0));
         if (device != nullptr)
-            Log(LogLevel::INFO, "Connected: %s", fullHandles.at(0).Serialize().c_str());
+            Log(LogLevel::INFO, "Connected: %s", filteredHandles.at(0).Serialize().c_str());
         else
         {
-            Log(LogLevel::ERROR, "Failed to connect: %s", fullHandles.at(0).Serialize().c_str());
+            Log(LogLevel::ERROR, "Failed to connect: %s", filteredHandles.at(0).Serialize().c_str());
             return OpStatus::ERROR;
         }
 
@@ -323,7 +364,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
-        context->uniqueDevices[fullHandles.at(0).Serialize().c_str()] = device;
+        context->uniqueDevices[filteredHandles.at(0).Serialize().c_str()] = device;
         node.device = device;
     }
     return OpStatus::SUCCESS;
@@ -425,15 +466,17 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     GetSetting(settings, &param->maxChannelsToUse, "%s_max_channels_to_use", prefix);
     GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_double_freq_conversion_to_lower_side", prefix);
     std::string linkFormatStr;
-    GetSetting(settings, &linkFormatStr, "%s_linkFormat", prefix);
-    if (linkFormatStr == "I16"s)
-        param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
-    else if (linkFormatStr == "I12"s)
-        param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
-    else
+    if (GetSetting(settings, &linkFormatStr, "%s_linkFormat", prefix))
     {
-        Log(LogLevel::WARNING, "Invalid link format (%s): falling back to I12", linkFormatStr.c_str());
-        param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        if (linkFormatStr == "I16"s)
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        else if (linkFormatStr == "I12"s)
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        else
+        {
+            Log(LogLevel::WARNING, "Invalid link format (%s): falling back to I12", linkFormatStr.c_str());
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        }
     }
     GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_syncPPS", prefix);
 
