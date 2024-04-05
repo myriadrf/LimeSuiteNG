@@ -45,7 +45,6 @@ set(LIME_SUITE_SOURCES
     windowFunction.cpp
     threadHelper/threadHelper.cpp
     CDCM6208/CDCM6208_Dev.cpp
-    gnuPlotPipe.h
     parsers/CoefficientFileParser.cpp
     EnumToString.cpp
     DSP/Equalizer.cpp
@@ -198,7 +197,6 @@ set(LMS7SUITE_GUI_SOURCES
     lms7002_wxgui/lms7002_pnlGains_view.cpp
     lms7002_wxgui/lms7002_pnlRxTSP_view.cpp
     lms7002_wxgui/lms7002_mainPanel.cpp
-    # lms7002_wxgui/dlgViewSFR.cpp
     lms7002_wxgui/lms7002_pnlCLKGEN_view.cpp
     lms7002_wxgui/lms7002_pnlMCU_BD_view.cpp
     lms7002_wxgui/lms7002_pnlBIAS_view.cpp
@@ -207,17 +205,13 @@ set(LMS7SUITE_GUI_SOURCES
     lms7002_wxgui/lms7002_pnlR3.cpp
     LMS_Programing/LMS_Programing_wxgui.cpp
     utilities_gui/pnlMiniLog.cpp
-    # utilities_gui/pnlAPI.cpp
     utilities_gui/SPI_wxgui.cpp
     utilities_gui/dlgFullMessageLog.cpp
-    # utilities_gui/dlgDeviceInfo.cpp
     utilities_gui/utilities_gui.cpp
     lms7suiteAppFrame.cpp
-    #boards_wxgui/RFSpark_wxgui.cpp
     Si5351C/Si5351C_wxgui.cpp
     dlgAbout_view.cpp
     lms7suiteApp.cpp
-    #FPGAcontrols_wxgui/FPGAcontrols_wxgui.cpp
     dlgAbout.cpp
     numericSlider/numericSlider.cpp
     fftviewer_wxgui/fftviewer_wxgui.cpp
@@ -227,35 +221,30 @@ set(LMS7SUITE_GUI_SOURCES
     boards_wxgui/pnlX3.cpp
     boards_wxgui/pnlX8.cpp
     boards_wxgui/pnlXTRX.cpp
-    # boards_wxgui/pnlQSpark.cpp
     boards_wxgui/pnluLimeSDR.cpp
-    # boards_wxgui/pnlUltimateEVB.cpp
-    # boards_wxgui/pnlBuffers.cpp
-    # boards_wxgui/pnlCoreSDR.cpp
-    # boards_wxgui/pnlLimeNetMicro.cpp
     windowFunction.cpp
     boards_wxgui/pnlLimeSDR.cpp
     boards_wxgui/pnlGPIO.cpp
     GUI/CommsToDevice.cpp
     GUI/DeviceConnectionPanel.cpp
-    GUI/events.cpp)
+    GUI/events.cpp
+    # utilities_gui/pnlAPI.cpp
+    # lms7002_wxgui/dlgViewSFR.cpp
+    # utilities_gui/dlgDeviceInfo.cpp
+    # FPGAcontrols_wxgui/FPGAcontrols_wxgui.cpp
+    # boards_wxgui/RFSpark_wxgui.cpp
+    # boards_wxgui/pnlQSpark.cpp
+    # boards_wxgui/pnlUltimateEVB.cpp
+    # boards_wxgui/pnlBuffers.cpp
+    # boards_wxgui/pnlCoreSDR.cpp
+    # boards_wxgui/pnlLimeNetMicro.cpp
+)
 
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_GUI "Enable build GUI" ON "ENABLE_LIBRARY;wxWidgets_FOUND" OFF)
 add_feature_info(GUI ENABLE_GUI "GUI Application for LimeSuite")
 if(ENABLE_GUI)
-
-    include_directories(lms7002_wxgui)
-    include_directories(utilities_gui)
-    # include_directories(RFSpark)
-    include_directories(FPGAcontrols_wxgui)
-    include_directories(numericSlider)
-    include_directories(fftviewer_wxgui)
-    include_directories(lms7suiteEvents)
-    include_directories(boards_wxgui)
-    #include_directories(limeRFE)
-    include_directories(GUI)
 
     include(${wxWidgets_USE_FILE})
     add_subdirectory(oglGraph)
@@ -265,7 +254,17 @@ if(ENABLE_GUI)
     add_executable(${GUI_EXECUTABLE_NAME} ${LMS7SUITE_GUI_SOURCES} resources/resource.rc)
     set_target_properties(${GUI_EXECUTABLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
     target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
-    target_include_directories(${GUI_EXECUTABLE_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
+    target_include_directories(
+        ${GUI_EXECUTABLE_NAME}
+        PRIVATE ${LIME_SUITE_INCLUDES}
+                lms7002_wxgui
+                utilities_gui
+                FPGAcontrols_wxgui
+                numericSlider
+                fftviewer_wxgui
+                lms7suiteEvents
+                boards_wxgui
+                GUI)
 
     target_link_libraries(
         ${GUI_EXECUTABLE_NAME}
