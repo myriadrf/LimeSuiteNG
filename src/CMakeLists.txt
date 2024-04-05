@@ -97,6 +97,8 @@ if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
     list(APPEND LIME_SUITE_LIBRARIES atomic)
 endif()
 
+add_subdirectory(vectorization)
+
 include(FeatureSummary)
 include(CMakeDependentOption)
 
@@ -107,7 +109,7 @@ if(ENABLE_LIBRARY)
     target_link_libraries(
         ${MAIN_LIBRARY_NAME}
         PUBLIC ${LIME_SUITE_LIBRARIES}
-        PRIVATE kissFFT)
+        PRIVATE $<BUILD_INTERFACE:kissFFT> $<BUILD_INTERFACE:samplesConversion>)
     set_property(TARGET ${MAIN_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
     set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES VERSION ${LIME_SUITE_LIBVER})
@@ -119,8 +121,6 @@ if(ENABLE_LIBRARY)
                   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
                   $<INSTALL_INTERFACE:include>)
-
-    add_subdirectory(vectorization)
 
     if(BUILD_SHARED_LIBS)
         target_compile_definitions(${MAIN_LIBRARY_NAME} PUBLIC "LIME_DLL")
