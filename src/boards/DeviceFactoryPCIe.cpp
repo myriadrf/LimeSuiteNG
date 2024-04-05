@@ -14,7 +14,7 @@
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "boards/LimeSDR_X3/LimeSDR_X3.h"
 #include "boards/MMX8/MM_X8.h"
-#include "boards/external/AmberSDR/AmberSDR.h"
+#include "boards/external/XSDR/XSDR.h"
 
 using namespace lime;
 
@@ -64,7 +64,8 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
         LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);
 
         handle.serial = std::to_string(fw.boardSerialNumber); // TODO: to hex
-        handles.push_back(handle);
+        if (handle.IsEqualIgnoringEmpty(hint))
+            handles.push_back(handle);
     }
     return handles;
 }
@@ -134,8 +135,8 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
 
         return new LimeSDR_MMX8(controls, fpga, std::move(streamPorts), controlPipe, adfComms);
     }
-    case LMS_DEV_EXTERNAL_AMBERSDR:
-        return new AmberSDR(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
+    case LMS_DEV_EXTERNAL_XSDR:
+        return new XSDR(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
     default:
         lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%i)", fw.deviceId);
         return nullptr;

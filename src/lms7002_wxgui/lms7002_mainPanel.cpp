@@ -171,11 +171,11 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
 
     lms7002_pnlMCU_BD_view* mTabMCU = new lms7002_pnlMCU_BD_view(tabsNotebook, ID_TAB_MCU);
     tabsNotebook->AddPage(mTabMCU, _("MCU"));
-    mTabs[ID_TAB_MCU] = tab;
+    mTabs[ID_TAB_MCU] = mTabMCU;
 
     lms7002_pnlR3_view* mTabR3 = new lms7002_pnlR3_view(tabsNotebook, ID_TAB_R3);
     tabsNotebook->AddPage(mTabR3, _("R3 Controls"));
-    mTabs[ID_TAB_R3] = tab;
+    mTabs[ID_TAB_R3] = mTabR3;
 #undef CreatePage
 
     mainSizer->Add(tabsNotebook, 0, wxEXPAND, 5);

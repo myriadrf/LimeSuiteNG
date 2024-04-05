@@ -31,6 +31,8 @@ enum eLMS_DEV {
     LMS_DEV_LIMESDR_X3 = 26, // 3xLMS
     LMS_DEV_LIMESDR_XTRX = 27, // XTRX
     LMS_DEV_LIME_MM_X8 = 28, // X8
+    LMS_DEV_LIMESDR_MICRO = 29,
+    LMS_DEV_EXTERNAL_XSDR = 30,
 
     LMS_DEV_COUNT
 };
@@ -65,6 +67,8 @@ const char LMS_DEV_NAMES[][80] = {
     "LimeX3",
     "LimeXTRX",
     "LimeMM-X8",
+    "LimeMicro",
+    "XSDR",
 };
 
 static inline const char *GetDeviceName(enum eLMS_DEV device)

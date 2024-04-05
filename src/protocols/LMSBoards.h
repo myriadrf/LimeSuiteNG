@@ -40,7 +40,8 @@ enum eLMS_DEV {
     LMS_DEV_LIMESDR_X3 = 26, // 3xLMS
     LMS_DEV_LIMESDR_XTRX = 27, // XTRX
     LMS_DEV_LIMESDR_MMX8 = 28,
-    LMS_DEV_EXTERNAL_AMBERSDR = 29,
+    LMS_DEV_LIMESDR_MICRO = 29,
+    LMS_DEV_EXTERNAL_XSDR = 30,
 
     LMS_DEV_COUNT
 };
@@ -75,7 +76,8 @@ const std::array<const std::string, LMS_DEV_COUNT> LMS_DEV_NAMES = {
     "LimeSDR X3",
     "LimeSDR XTRX",
     "LimeSDR MMX8",
-    "AmberSDR",
+    "LimeSDR Micro",
+    "XSDR",
 };
 
 static constexpr const std::string& GetDeviceName(const eLMS_DEV device)
