@@ -22,32 +22,45 @@ class LimeSettingsProvider
     virtual bool GetDouble(double& dest, const char* varname) = 0;
 };
 
+// Tx/Rx settings from configuration file
+struct DirectionalSettings {
+    std::string antenna;
+    std::string calibration;
+    double lo_override;
+    double gfir_bandwidth;
+    int oversample;
+    int power_dBm;
+    bool powerAvailable;
+    bool gfir_enable;
+};
+
+struct ConfigSettings
+{
+    ConfigSettings()
+        : maxChannelsToUse(2)
+        , linkFormat(lime::SDRDevice::StreamConfig::DataFormat::I12)
+        , double_freq_conversion_to_lower_side(false)
+        , syncPPS(false)
+    {
+    }
+    DirectionalSettings rx;
+    DirectionalSettings tx;
+    std::string iniFilename;
+    int maxChannelsToUse; // how many channels can be used from this chip
+    lime::SDRDevice::StreamConfig::DataFormat linkFormat;
+    bool double_freq_conversion_to_lower_side;
+    bool syncPPS;
+};
+
 // Individual RF SOC device configuration
 struct DevNode {
   public:
     DevNode();
-
-    struct DirectionalSettings {
-        std::string antenna;
-        std::string calibration;
-        double lo_override;
-        int oversample;
-        int power_dBm;
-        bool powerAvailable;
-        bool gfir_enable;
-        double gfir_bandwidth;
-    };
-
+    ConfigSettings configInputs;
     // settings from file
     std::string handleString;
-    std::string iniFilename;
-    int maxChannelsToUse; // how many channels can be used from this chip
     uint8_t chipIndex;
-    bool double_freq_conversion_to_lower_side;
-    DirectionalSettings rxSettings;
-    DirectionalSettings txSettings;
     std::vector<uint32_t> fpgaRegisterWrites;
-
     lime::SDRDevice* device; // chip owner
     lime::SDRDevice::SDRConfig config;
     int portIndex;
@@ -67,6 +80,7 @@ struct PortData {
 
     std::vector<DevNode*> nodes;
     lime::StreamComposite* composite;
+    ConfigSettings configInputs;
 };
 
 struct LimePluginContext {
