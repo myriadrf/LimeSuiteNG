@@ -27,6 +27,7 @@ add_library(${AMARISOFT_PLUGIN_TARGET_NAME} trx_limesuite.cpp common.cpp)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -Wall -Wpedantic)
     target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+    target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE "-z,defs")
 
     if(NOT DEFAULT_SIMD_FLAGS)
         set(DEFAULT_SIMD_FLAGS "native")
@@ -67,7 +68,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 target_link_libraries(${AMARISOFT_PLUGIN_TARGET_NAME} limesuiteng)
-target_link_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE "LINKER:-z,defs")
 
 #remove lib prefix, Amarisoft searches for trx_*.so
 set_target_properties(${AMARISOFT_PLUGIN_TARGET_NAME} PROPERTIES PREFIX "")
