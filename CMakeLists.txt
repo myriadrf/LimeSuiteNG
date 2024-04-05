@@ -166,7 +166,7 @@ endif()
 if(MSVC)
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
-    add_compile_options("/MP /Zc:__cplusplus")
+    add_compile_options("/MP" "/Zc:__cplusplus")
 
     set(ENABLE_SIMD_FLAGS
         "SSE2"

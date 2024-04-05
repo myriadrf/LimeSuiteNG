@@ -5,6 +5,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 add_library(samplesConversion STATIC samplesConversion.cpp)
+target_include_directories(samplesConversion PUBLIC ${LIME_SUITE_INCLUDES})
 
 add_executable(samplesConversionPerfTest main.cpp)
 target_link_libraries(samplesConversionPerfTest samplesConversion)
