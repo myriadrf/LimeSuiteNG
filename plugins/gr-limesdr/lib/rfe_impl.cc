@@ -59,13 +59,14 @@ rfe::rfe(int comm_type,
     boardState.notchOnOff = Notch;
     boardState.attValue = Atten;
 
+    auto& instance = device_handler::getInstance();
+
     if (comm_type) // SDR GPIO communication
     {
-        sdr_device_num = device_handler::getInstance().open_device(device);
+        sdr_device_num = instance.open_device(device);
 
         GR_LOG_INFO(d_logger, "Opening through GPIO communication.");
-        rfe_dev =
-            RFE_Open(nullptr, device_handler::getInstance().get_device(sdr_device_num));
+        rfe_dev = RFE_Open(nullptr, instance.get_device(sdr_device_num));
         if (!rfe_dev) {
             throw std::runtime_error("LimeRFE: failed to open device");
         }
@@ -73,10 +74,10 @@ rfe::rfe(int comm_type,
         // No need to set up this if it isn't automatic
         if (boardState.channelIDRX == RFE_CID_AUTO ||
             boardState.channelIDTX == RFE_CID_AUTO) {
-            device_handler::getInstance().set_rfe_device(rfe_dev);
+            instance.set_rfe_device(rfe_dev);
 
             // Update the channels since the SDR could already be set up and working
-            device_handler::getInstance().update_rfe_channels();
+            instance.update_rfe_channels();
         }
     } else // Direct USB
     {

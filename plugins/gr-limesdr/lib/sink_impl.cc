@@ -60,21 +60,21 @@ sink_impl::sink_impl(std::string serial,
             "sink_impl::sink_impl(): Channel must be A(0), B(1), or (A+B) MIMO(2)");
     }
 
+    auto& instance = device_handler::getInstance();
+
     // 2. Open device if not opened
-    stored.device_number = device_handler::getInstance().open_device(stored.serial);
+    stored.device_number = instance.open_device(stored.serial);
     // 3. Check where to load settings from (file or block)
     if (!filename.empty()) {
-        device_handler::getInstance().settings_from_file(
-            stored.device_number, filename, pa_path.data());
-        device_handler::getInstance().check_blocks(
+        instance.settings_from_file(stored.device_number, filename, pa_path.data());
+        instance.check_blocks(
             stored.device_number, sink_block, stored.channel_mode, filename);
     } else {
         // 4. Check how many blocks were used and check values between blocks
-        device_handler::getInstance().check_blocks(
-            stored.device_number, sink_block, stored.channel_mode, "");
+        instance.check_blocks(stored.device_number, sink_block, stored.channel_mode, "");
 
         // 5. Enable required channels
-        device_handler::getInstance().enable_channels(
+        instance.enable_channels(
             stored.device_number, stored.channel_mode, lime::TRXDir::Tx);
 
         // 6. Disable PA path
@@ -84,14 +84,17 @@ sink_impl::sink_impl(std::string serial,
 
 sink_impl::~sink_impl()
 {
-    device_handler::getInstance().get_device(stored.device_number)->StreamStop(0);
-    device_handler::getInstance().close_device(stored.device_number, sink_block);
+    auto& instance = device_handler::getInstance();
+
+    instance.get_device(stored.device_number)->StreamStop(0);
+    instance.close_device(stored.device_number, sink_block);
 }
 
 bool sink_impl::start(void)
 {
-    std::unique_lock<std::recursive_mutex> lock(
-        device_handler::getInstance().block_mutex);
+    auto& instance = device_handler::getInstance();
+
+    std::unique_lock<std::recursive_mutex> lock(instance.block_mutex);
     // Init timestamp
     tx_meta.timestamp = 0;
 
@@ -112,24 +115,23 @@ bool sink_impl::start(void)
         init_stream(stored.device_number, 1);
     }
 
-    device_handler::getInstance().get_device(stored.device_number)->StreamStart(0);
+    instance.get_device(stored.device_number)->StreamStart(0);
 
-    std::unique_lock<std::recursive_mutex> unlock(
-        device_handler::getInstance().block_mutex);
+    std::unique_lock<std::recursive_mutex> unlock(instance.block_mutex);
     return true;
 }
 
 bool sink_impl::stop(void)
 {
-    std::unique_lock<std::recursive_mutex> lock(
-        device_handler::getInstance().block_mutex);
+    auto& instance = device_handler::getInstance();
 
-    device_handler::getInstance().get_device(stored.device_number)->StreamStop(0);
+    std::unique_lock<std::recursive_mutex> lock(instance.block_mutex);
+
+    instance.get_device(stored.device_number)->StreamStop(0);
 
     // Disable PA path
     toggle_pa_path(stored.device_number, false);
-    std::unique_lock<std::recursive_mutex> unlock(
-        device_handler::getInstance().block_mutex);
+    std::unique_lock<std::recursive_mutex> unlock(instance.block_mutex);
     return true;
 }
 
@@ -160,34 +162,30 @@ int sink_impl::work(int noutput_items,
         print_stream_stats(0);
     }
 
-    switch (
-        device_handler::getInstance().get_stream_config(stored.device_number).format) {
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(stored.device_number);
+
+    switch (instance.get_stream_config(stored.device_number).format) {
     case lime::SDRDevice::StreamConfig::DataFormat::F32:
-        ret = device_handler::getInstance()
-                  .get_device(stored.device_number)
-                  ->StreamTx(0,
-                             reinterpret_cast<const lime::complex32f_t* const*>(
-                                 input_items.data()),
-                             nitems_send,
-                             &tx_meta);
+        ret = device->StreamTx(
+            0,
+            reinterpret_cast<const lime::complex32f_t* const*>(input_items.data()),
+            nitems_send,
+            &tx_meta);
         break;
     case lime::SDRDevice::StreamConfig::DataFormat::I16:
-        ret = device_handler::getInstance()
-                  .get_device(stored.device_number)
-                  ->StreamTx(0,
-                             reinterpret_cast<const lime::complex16_t* const*>(
-                                 input_items.data()),
-                             nitems_send,
-                             &tx_meta);
+        ret = device->StreamTx(
+            0,
+            reinterpret_cast<const lime::complex16_t* const*>(input_items.data()),
+            nitems_send,
+            &tx_meta);
         break;
     case lime::SDRDevice::StreamConfig::DataFormat::I12:
-        ret = device_handler::getInstance()
-                  .get_device(stored.device_number)
-                  ->StreamTx(0,
-                             reinterpret_cast<const lime::complex12_t* const*>(
-                                 input_items.data()),
-                             nitems_send,
-                             &tx_meta);
+        ret = device->StreamTx(
+            0,
+            reinterpret_cast<const lime::complex12_t* const*>(input_items.data()),
+            nitems_send,
+            &tx_meta);
         break;
 
     default:
@@ -278,16 +276,19 @@ void sink_impl::print_stream_stats(int channel)
 // Setup stream
 void sink_impl::init_stream(int device_number, int channel)
 {
-    auto& config = device_handler::getInstance().get_stream_config(device_number);
+    auto& instance = device_handler::getInstance();
+
+    auto& config = instance.get_stream_config(device_number);
     config.channels.at(lime::TRXDir::Tx).push_back(channel);
     config.bufferSize = (stored.FIFO_size == 0) ? static_cast<int>(stored.samp_rate) / 10
                                                 : stored.FIFO_size;
     config.format = lime::SDRDevice::StreamConfig::DataFormat::F32;
     config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
 
-    if (device_handler::getInstance().get_device(device_number)->StreamSetup(config, 0) !=
-        lime::OpStatus::SUCCESS)
-        device_handler::getInstance().error(device_number);
+    if (instance.get_device(device_number)->StreamSetup(config, 0) !=
+        lime::OpStatus::SUCCESS) {
+        instance.error(device_number);
+    }
 
     GR_LOG_INFO(
         d_logger,
@@ -325,28 +326,28 @@ void sink_impl::set_antenna(int antenna, int channel)
 
 void sink_impl::toggle_pa_path(int device_number, bool enable)
 {
+    auto& instance = device_handler::getInstance();
+    auto device = instance.get_device(device_number);
+
     suppress_limesuite_logging();
     if (stored.channel_mode < 2) {
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetAntenna(0,
-                             lime::TRXDir::Tx,
-                             stored.channel_mode,
-                             enable ? pa_path[stored.channel_mode] : 0) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetAntenna(0,
+                               lime::TRXDir::Tx,
+                               stored.channel_mode,
+                               enable ? pa_path[stored.channel_mode] : 0) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
     } else {
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetAntenna(0, lime::TRXDir::Tx, 0, enable ? pa_path[0] : 0) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetAntenna(0, lime::TRXDir::Tx, 0, enable ? pa_path[0] : 0) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
 
-        if (device_handler::getInstance()
-                .get_device(device_number)
-                ->SetAntenna(0, lime::TRXDir::Tx, 1, enable ? pa_path[1] : 0) !=
-            lime::OpStatus::SUCCESS)
-            device_handler::getInstance().error(device_number);
+        if (device->SetAntenna(0, lime::TRXDir::Tx, 1, enable ? pa_path[1] : 0) !=
+            lime::OpStatus::SUCCESS) {
+            instance.error(device_number);
+        }
     }
     set_limesuite_logger(); // Restore our logging
 }
