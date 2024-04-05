@@ -105,7 +105,7 @@ if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
     endif()
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #enable warnings in Debug configurations
     add_compile_options(-Wall -Wpedantic)
 

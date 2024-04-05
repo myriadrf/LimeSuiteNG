@@ -20,7 +20,7 @@ target_include_directories(
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${OPENGL_INCLUDE_DIR})
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # Ignore warnings about narrowing: static font header
     target_compile_options(oglGraph PRIVATE -Wno-narrowing -Wno-address)
 endif()

@@ -25,7 +25,7 @@ endif()
 set(AMARISOFT_PLUGIN_TARGET_NAME trx_limesuite)
 add_library(${AMARISOFT_PLUGIN_TARGET_NAME} trx_limesuite.cpp common.cpp)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -Wall -Wpedantic)
     target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
 
