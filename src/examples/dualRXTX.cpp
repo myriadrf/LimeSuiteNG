@@ -5,6 +5,7 @@
  */
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -26,8 +27,8 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::VERBOSE;
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static LogLevel logVerbosity = LogLevel::VERBOSE;
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

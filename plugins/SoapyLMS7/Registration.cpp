@@ -26,6 +26,7 @@ static void limeSuiteLogHandler(const LogLevel level, const char* message)
         SoapySDR::log(SOAPY_SDR_WARNING, message);
         return;
     case LogLevel::INFO:
+    case LogLevel::VERBOSE:
         SoapySDR::log(SOAPY_SDR_INFO, message);
         return;
     case LogLevel::DEBUG:

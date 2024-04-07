@@ -1,6 +1,7 @@
 #include "cli/common.h"
 
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
@@ -31,22 +32,22 @@ static std::vector<int> ParseIntArray(const std::string& str)
     return numbers;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::ERROR;
-static SDRDevice::LogLevel strToLogLevel(const char* str)
+static LogLevel logVerbosity = LogLevel::ERROR;
+static LogLevel strToLogLevel(const char* str)
 {
     if (strstr("debug", str))
-        return SDRDevice::LogLevel::DEBUG;
+        return LogLevel::DEBUG;
     else if (strstr("verbose", str))
-        return SDRDevice::LogLevel::VERBOSE;
+        return LogLevel::VERBOSE;
     else if (strstr("error", str))
-        return SDRDevice::LogLevel::ERROR;
+        return LogLevel::ERROR;
     else if (strstr("warning", str))
-        return SDRDevice::LogLevel::WARNING;
+        return LogLevel::WARNING;
     else if (strstr("info", str))
-        return SDRDevice::LogLevel::INFO;
-    return SDRDevice::LogLevel::ERROR;
+        return LogLevel::INFO;
+    return LogLevel::ERROR;
 }
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

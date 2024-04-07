@@ -113,6 +113,8 @@ const char* lime::logLevelToName(const LogLevel level)
         return "WARNING";
     case lime::LogLevel::INFO:
         return "INFO";
+    case lime::LogLevel::VERBOSE:
+        return "VERBOSE";
     case lime::LogLevel::DEBUG:
         return "DEBUG";
     }

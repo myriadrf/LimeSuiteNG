@@ -6,7 +6,7 @@
 
 #include <stdarg.h>
 
-typedef lime::SDRDevice::LogLevel LogLevel;
+typedef lime::LogLevel LogLevel;
 
 extern "C" {
 #include "trx_driver.h"
@@ -58,8 +58,8 @@ class AmarisoftParamProvider : public LimeSettingsProvider
     bool blockAccess;
 };
 
-static lime::SDRDevice::LogLevel logVerbosity = lime::SDRDevice::LogLevel::DEBUG;
-static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
+static lime::LogLevel logVerbosity = lime::LogLevel::DEBUG;
+static void Log(LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
         return;
@@ -70,7 +70,7 @@ static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
     printf("\n");
 }
 
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

@@ -2,6 +2,7 @@
 //#include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/complex.h"
+#include "limesuiteng/Logger.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -31,8 +32,8 @@ void intHandler(int dummy)
     runForever.store(false);
 }
 
-static lime::SDRDevice::LogLevel logVerbosity = lime::SDRDevice::LogLevel::DEBUG;
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static lime::LogLevel logVerbosity = lime::LogLevel::DEBUG;
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

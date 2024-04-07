@@ -24,6 +24,7 @@ enum class LogLevel : uint8_t {
     ERROR, //!< An error. An operation did not complete successfully, but the application as a whole is not affected.
     WARNING, //!< A warning. An operation completed with an unexpected result.
     INFO, //!< An informational message, usually denoting the successful completion of an operation.
+    VERBOSE, //!< An informational message, detailing intermediate step results.
     DEBUG, //!< A debugging message, only shown in Debug configuration.
 };
 

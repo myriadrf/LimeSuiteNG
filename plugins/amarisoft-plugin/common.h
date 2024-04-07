@@ -2,12 +2,13 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamComposite.h"
+#include "limesuiteng/Logger.h"
 
 #include <map>
 #include <vector>
 #include <deque>
 
-typedef void (*HostLogCallbackType)(lime::SDRDevice::LogLevel, const char*);
+typedef void (*HostLogCallbackType)(lime::LogLevel, const char*);
 
 /// Interface for providing parameters from configuration file
 class LimeSettingsProvider

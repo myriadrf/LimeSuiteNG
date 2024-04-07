@@ -17,7 +17,7 @@ using namespace std;
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
 static constexpr int LIME_TRX_MAX_RF_PORT = 16;
 
-typedef lime::SDRDevice::LogLevel LogLevel;
+typedef lime::LogLevel LogLevel;
 
 struct StreamStatus {
     lime::SDRDevice::StreamStats rx;
@@ -85,9 +85,9 @@ template<class T> static bool GetParam(LimePluginContext* context, T& pval, cons
     return true;
 }
 
-static lime::SDRDevice::LogLevel logVerbosity = lime::SDRDevice::LogLevel::DEBUG;
+static lime::LogLevel logVerbosity = lime::LogLevel::DEBUG;
 
-static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
+static void Log(LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
         return;
@@ -100,7 +100,7 @@ static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
         hostCallback(lvl, msg);
 }
 
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

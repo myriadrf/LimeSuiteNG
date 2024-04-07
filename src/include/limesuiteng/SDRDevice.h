@@ -23,6 +23,8 @@ namespace lime {
 struct DeviceNode;
 class OEMTestReporter;
 
+enum class LogLevel : uint8_t;
+
 /// @brief Class for holding information about an SDR (Software Defined Radio) device.
 /// SDRDevice can have multiple modules (RF chips), that can operate independently.
 class LIME_API SDRDevice
@@ -30,9 +32,6 @@ class LIME_API SDRDevice
   public:
     static constexpr uint8_t MAX_CHANNEL_COUNT = 16; ///< Maximum amount of channels an SDR Device can hold
     static constexpr uint8_t MAX_RFSOC_COUNT = 16; ///< Maximum amount of Radio-Frequency System-on-Chips
-
-    /// @brief Enumerator to define the log level of a log message.
-    enum class LogLevel : uint8_t { CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG };
 
     /// @brief Information about possible gain values.
     struct GainValue {
