@@ -65,7 +65,7 @@ OpStatus TRXLooper::SetHardwareTimestamp(const uint64_t now)
 /// @brief Sets up the stream of this looper.
 /// @param cfg The configuration settings to set up the stream with.
 /// @return The status of the operation.
-OpStatus TRXLooper::Setup(const SDRDevice::StreamConfig& cfg)
+OpStatus TRXLooper::Setup(const StreamConfig& cfg)
 {
     if (mRx.thread.joinable() || mTx.thread.joinable())
         return ReportError(OpStatus::BUSY, "Samples streaming already running");
@@ -99,8 +99,7 @@ OpStatus TRXLooper::Setup(const SDRDevice::StreamConfig& cfg)
         }
     }
 
-    if ((cfg.linkFormat != SDRDevice::StreamConfig::DataFormat::I12) &&
-        (cfg.linkFormat != SDRDevice::StreamConfig::DataFormat::I16))
+    if ((cfg.linkFormat != DataFormat::I12) && (cfg.linkFormat != DataFormat::I16))
     {
         return ReportError(OpStatus::INVALID_VALUE, "Unsupported stream link format");
     }
@@ -122,7 +121,7 @@ OpStatus TRXLooper::Setup(const SDRDevice::StreamConfig& cfg)
     // const uint16_t DDR_EN = lms->Get_SPI_Reg_bits(LMS7param(LML1_SISODDR)) << 6; // 0-SDR, 1-DDR
     // const uint16_t MODE = 0 << 5; // 0-TRXIQ, 1-JESD207 (not impelemented)
     // const uint16_t smpl_width =
-    //     cfg.linkFormat == SDRDevice::StreamConfig::DataFormat::I12 ? 2 : 0;
+    //     cfg.linkFormat == DataFormat::I12 ? 2 : 0;
     // printf("TRIQ:%i, DDR_EN:%i, MIMO_EN:%i\n", TRIQ_PULSE, DDR_EN, MIMO_EN);
     // const uint16_t reg8 = MIMO_EN | TRIQ_PULSE | DDR_EN | MODE | smpl_width;
 
@@ -132,7 +131,7 @@ OpStatus TRXLooper::Setup(const SDRDevice::StreamConfig& cfg)
     else if (lms->Get_SPI_Reg_bits(LMS7param(LML1_TRXIQPULSE)))
         mode = 0x0180;
 
-    const uint16_t smpl_width = cfg.linkFormat == SDRDevice::StreamConfig::DataFormat::I12 ? 2 : 0;
+    const uint16_t smpl_width = cfg.linkFormat == DataFormat::I12 ? 2 : 0;
     fpga->WriteRegister(0x0008, mode | smpl_width);
     fpga->WriteRegister(0x0007, channelEnables);
     fpga->ResetTimestamp();
@@ -254,7 +253,7 @@ void TRXLooper::Stop()
     mStreamEnabled = false;
 }
 
-template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, SDRDevice::StreamMeta* meta)
+template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta)
 {
     bool timestampSet = false;
     uint32_t samplesProduced = 0;
@@ -308,24 +307,24 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 /// @param count The amount of samples to reveive.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples received.
-uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta)
 {
     return StreamRxTemplate<complex32f_t>(samples, count, meta);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, StreamMeta* meta)
 {
     return StreamRxTemplate<complex16_t>(samples, count, meta);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta)
 {
     return StreamRxTemplate<complex12_t>(samples, count, meta);
 }
 
-template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta)
+template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta)
 {
     const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;
     const bool useTimestamp = meta ? meta->waitForTimestamp : false;
@@ -390,19 +389,19 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
 /// @param count The amount of samples to transmit.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples transmitted.
-uint32_t TRXLooper::StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
     return StreamTxTemplate(samples, count, meta);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex16_t* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
     return StreamTxTemplate(samples, count, meta);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex12_t* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
     return StreamTxTemplate(samples, count, meta);
 }
@@ -410,9 +409,9 @@ uint32_t TRXLooper::StreamTx(const lime::complex12_t* const* samples, uint32_t c
 /// @brief Gets statistics from a specified transfer direction.
 /// @param dir The direction of which to get the statistics.
 /// @return The statistics of the transfers.
-SDRDevice::StreamStats TRXLooper::GetStats(TRXDir dir) const
+StreamStats TRXLooper::GetStats(TRXDir dir) const
 {
-    SDRDevice::StreamStats stats;
+    StreamStats stats;
 
     if (dir == TRXDir::Tx)
     {

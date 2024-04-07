@@ -3,10 +3,9 @@
  * Copyright (C) 2015-2018 Amarisoft/LimeMicroSystems
  */
 #include "common.h"
+#include "limesuiteng/StreamConfig.h"
 
 #include <stdarg.h>
-
-typedef lime::LogLevel LogLevel;
 
 extern "C" {
 #include "trx_driver.h"
@@ -102,8 +101,8 @@ static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
         SDRDevice* dev = lime->device[p];
         StreamStatus& stats = portStreamStates[p];
 
-        SDRDevice::StreamStats rx;
-        SDRDevice::StreamStats tx;
+        StreamStats rx;
+        StreamStats tx;
         dev->StreamStatus(lime->chipIndex[p], &rx, &tx);
         stats.rx.dataRate_Bps = rx.dataRate_Bps;
         stats.tx.dataRate_Bps = tx.dataRate_Bps;
@@ -112,7 +111,7 @@ static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
            << " rate: " << stats.rx.dataRate_Bps / 1e6 << " MB/s]"
            << "[Tx| Late: " << stats.tx.late << " underrun: " << stats.tx.underrun << " rate: " << stats.tx.dataRate_Bps / 1e6
            << " MB/s]"
-           << " linkFormat: " << (lime->linkFormat[p] == SDRDevice::StreamConfig::DataFormat::I16 ? "I16" : "I12") << std::endl;
+           << " linkFormat: " << (lime->linkFormat[p] == DataFormat::I16 ? "I16" : "I12") << std::endl;
         // TODO: read FIFO usage
     }*/
     // const int len = ss.str().length();
@@ -129,7 +128,7 @@ static void trx_lms7002m_write(
     if (!samples) // Nothing to transmit
         return;
 
-    SDRDevice::StreamMeta meta;
+    StreamMeta meta;
     meta.timestamp = timestamp;
     meta.waitForTimestamp = true;
     meta.flushPartialPacket = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
@@ -145,7 +144,7 @@ static void trx_lms7002m_write(
 // return number of samples produced
 static int trx_lms7002m_read(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
 {
-    SDRDevice::StreamMeta meta;
+    StreamMeta meta;
     meta.waitForTimestamp = false;
     meta.flushPartialPacket = false;
     md->flags = 0;
@@ -356,7 +355,7 @@ int __attribute__((visibility("default"))) trx_driver_init(TRXState* hostState)
 
     LimePluginContext* lime = new LimePluginContext();
     lime->currentWorkingDirectory = std::string(hostState->path);
-    lime->samplesFormat = SDRDevice::StreamConfig::DataFormat::F32;
+    lime->samplesFormat = DataFormat::F32;
     configProvider.Init(hostState);
 
     if (LimePlugin_Init(lime, LogCallback, &configProvider) != 0)

@@ -693,7 +693,7 @@ uint32_t LimeSDR_MMX8::StreamTx(
     return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta);
 }
 
-void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx)
+void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
     mSubDevices[moduleIndex]->StreamStatus(0, rx, tx);
 }

@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_SDRCONFIG_H
 #define LIMESUITENG_SDRCONFIG_H
 
+#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/complex.h"
+#include "limesuiteng/GainTypes.h"
+
+#include <unordered_map>
+
 namespace lime {
 
 /// @brief Configuration of a single channel.

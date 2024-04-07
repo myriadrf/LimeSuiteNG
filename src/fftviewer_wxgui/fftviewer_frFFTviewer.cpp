@@ -9,6 +9,7 @@
 #include <fstream>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/Logger.h"
 #include <array>
@@ -255,8 +256,8 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
     if (mStreamRunning.load() == false)
         return;
 
-    SDRDevice::StreamStats rxStats;
-    SDRDevice::StreamStats txStats;
+    StreamStats rxStats;
+    StreamStats txStats;
     const uint8_t chipIndex = this->lmsIndex;
     device->StreamStatus(chipIndex, &rxStats, &txStats);
 
@@ -405,12 +406,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
             samplesCaptured = 0;
         }
 
-    auto fmt =
-        pthis->cmbFmt->GetSelection() == 1 ? SDRDevice::StreamConfig::DataFormat::I16 : SDRDevice::StreamConfig::DataFormat::I12;
+    auto fmt = pthis->cmbFmt->GetSelection() == 1 ? DataFormat::I16 : DataFormat::I12;
 
-    SDRDevice::StreamConfig config;
+    StreamConfig config;
 
-    config.format = SDRDevice::StreamConfig::DataFormat::F32;
+    config.format = DataFormat::F32;
     config.linkFormat = fmt;
     for (int i = 0; i < channelsCount; ++i)
     {
@@ -472,12 +472,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     // }
 
     pthis->mStreamRunning.store(true);
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta txMeta;
     txMeta.waitForTimestamp = syncTx;
     txMeta.flushPartialPacket = true;
     int fftCounter = 0;
 
-    SDRDevice::StreamMeta rxMeta;
+    StreamMeta rxMeta;
 
     while (pthis->stopProcessing.load() == false)
     {

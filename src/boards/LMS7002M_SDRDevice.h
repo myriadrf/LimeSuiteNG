@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/LMS7002M.h"
 
 namespace lime {
@@ -111,7 +112,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
         uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
     virtual uint32_t StreamTx(
         uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    virtual void StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx) override;
+    virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     virtual void SetDataLogCallback(DataCallbackType callback) override;
     virtual void SetMessageLogCallback(LogCallbackType callback) override;

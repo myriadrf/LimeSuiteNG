@@ -8,6 +8,7 @@
 
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
 
 #include <array>
 #include <chrono>
@@ -267,7 +268,7 @@ class SoapyLMS7 : public SoapySDR::Device
     lime::SDRDevice* sdrDevice;
     std::set<SoapySDR::Stream*> activeStreams;
 
-    lime::SDRDevice::StreamConfig streamConfig;
+    lime::StreamConfig streamConfig;
 
     mutable std::recursive_mutex _accessMutex;
 

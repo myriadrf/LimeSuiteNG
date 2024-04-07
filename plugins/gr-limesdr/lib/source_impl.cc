@@ -151,28 +151,28 @@ int source_impl::work(int noutput_items,
     int ret = 0;
 
     // Receive stream for channel 0 (if channel_mode is SISO)
-    lime::SDRDevice::StreamStats status;
-    lime::SDRDevice::StreamMeta rx_metadata;
+    lime::StreamStats status;
+    lime::StreamMeta rx_metadata;
 
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(stored.device_number);
 
     switch (instance.get_stream_config(stored.device_number).format) {
-    case lime::SDRDevice::StreamConfig::DataFormat::F32:
+    case lime::DataFormat::F32:
         ret = device->StreamRx(
             0,
             reinterpret_cast<lime::complex32f_t* const*>(output_items.data()),
             noutput_items,
             &rx_metadata);
         break;
-    case lime::SDRDevice::StreamConfig::DataFormat::I16:
+    case lime::DataFormat::I16:
         ret = device->StreamRx(
             0,
             reinterpret_cast<lime::complex16_t* const*>(output_items.data()),
             noutput_items,
             &rx_metadata);
         break;
-    case lime::SDRDevice::StreamConfig::DataFormat::I12:
+    case lime::DataFormat::I12:
         ret = device->StreamRx(
             0,
             reinterpret_cast<lime::complex12_t* const*>(output_items.data()),
@@ -222,8 +222,8 @@ void source_impl::init_stream(int device_number, int channel)
     config.channels.at(lime::TRXDir::Rx).push_back(channel);
     config.bufferSize = (stored.FIFO_size == 0) ? static_cast<int>(stored.samp_rate) / 10
                                                 : stored.FIFO_size;
-    config.format = lime::SDRDevice::StreamConfig::DataFormat::F32;
-    config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+    config.format = lime::DataFormat::F32;
+    config.linkFormat = lime::DataFormat::I16;
 
     if (instance.get_device(device_number)->StreamSetup(config, 0) !=
         lime::OpStatus::SUCCESS) {
@@ -239,7 +239,7 @@ void source_impl::init_stream(int device_number, int channel)
 }
 
 // Print stream status
-void source_impl::print_stream_stats(lime::SDRDevice::StreamStats status)
+void source_impl::print_stream_stats(lime::StreamStats status)
 {
     t2 = std::chrono::high_resolution_clock::now();
     auto timePeriod =
@@ -260,7 +260,7 @@ void source_impl::print_stream_stats(lime::SDRDevice::StreamStats status)
 }
 
 // Add rx_time tag to stream
-void source_impl::add_time_tag(int channel, lime::SDRDevice::StreamMeta meta)
+void source_impl::add_time_tag(int channel, lime::StreamMeta meta)
 {
 
     uint64_t u_rate = static_cast<uint64_t>(stored.samp_rate);

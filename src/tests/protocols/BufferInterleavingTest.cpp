@@ -11,8 +11,8 @@ TEST(BufferInterleaving, SISO_I12_to_I12)
     std::array<uint8_t, 6> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I12;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I12;
+    cfg.destFormat = DataFormat::I12;
+    cfg.srcFormat = DataFormat::I12;
     cfg.channelCount = 1;
 
     void* src = inputSamples.data();
@@ -30,8 +30,8 @@ TEST(BufferInterleaving, SISO_I16_to_I16)
     std::array<uint8_t, 8> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 1;
 
     void* src = inputSamples.data();
@@ -49,8 +49,8 @@ TEST(BufferInterleaving, SISO_I16_to_I12)
     std::array<uint8_t, 6> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I12;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I12;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 1;
 
     void* src = inputSamples.data();
@@ -69,8 +69,8 @@ TEST(BufferInterleaving, MIMO_I16_to_I16)
     std::array<uint8_t, 16> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 2;
 
     void* src[2] = { inputSamplesA.data(), inputSamplesB.data() };
@@ -91,8 +91,8 @@ TEST(BufferInterleaving, MIMO_I16_to_I12)
     std::array<uint8_t, 12> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I12;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I12;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 2;
 
     void* src[2] = { inputSamplesA.data(), inputSamplesB.data() };
@@ -110,8 +110,8 @@ TEST(BufferInterleaving, SISO_F32_to_I16)
     std::array<uint8_t, 8> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::F32;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::F32;
     cfg.channelCount = 1;
 
     void* src = inputSamples.data();
@@ -129,8 +129,8 @@ TEST(BufferDeinterleaving, SISO_I12_to_I12)
     std::array<uint16_t, 4> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I12;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I12;
+    cfg.destFormat = DataFormat::I12;
+    cfg.srcFormat = DataFormat::I12;
     cfg.channelCount = 1;
 
     void* dest = output.data();
@@ -147,8 +147,8 @@ TEST(BufferDeinterleaving, SISO_I16_to_I16)
     std::array<uint16_t, 4> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 1;
 
     void* dest = output.data();
@@ -165,8 +165,8 @@ TEST(BufferDeinterleaving, SISO_I12_to_I16)
     std::array<uint16_t, 4> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I12;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::I12;
     cfg.channelCount = 1;
 
     void* dest = output.data();
@@ -183,8 +183,8 @@ TEST(BufferDeinterleaving, SISO_I16_to_F32)
     std::array<float, 4> output;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::F32;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::F32;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 1;
 
     void* dest = output.data();
@@ -205,8 +205,8 @@ TEST(BufferDeinterleaving, MIMO_I16_to_I16)
     std::array<uint16_t, 4> outputB;
 
     DataConversion cfg;
-    cfg.destFormat = SDRDevice::StreamConfig::DataFormat::I16;
-    cfg.srcFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    cfg.destFormat = DataFormat::I16;
+    cfg.srcFormat = DataFormat::I16;
     cfg.channelCount = 2;
 
     void* dest[2] = { outputA.data(), outputB.data() };

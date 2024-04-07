@@ -1,23 +1,24 @@
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
 
 #include "limesuiteng/Logger.h"
 
 using namespace lime;
 
-SDRDevice::StreamConfig::Extras::Extras()
+StreamConfig::Extras::Extras()
     : usePoll{ true }
     , negateQ{ false }
     , waitPPS{ false }
 {
 }
 
-SDRDevice::StreamConfig::Extras::PacketTransmission::PacketTransmission()
+StreamConfig::Extras::PacketTransmission::PacketTransmission()
     : samplesInPacket{ 0 }
     , packetsInBatch{ 0 }
 {
 }
 
-SDRDevice::StreamConfig::StreamConfig()
+StreamConfig::StreamConfig()
     : format{ DataFormat::I16 }
     , linkFormat{ DataFormat::I16 }
     , bufferSize{ 0 }

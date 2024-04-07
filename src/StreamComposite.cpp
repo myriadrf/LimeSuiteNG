@@ -1,5 +1,6 @@
 #include "limesuiteng/StreamComposite.h"
 #include <algorithm>
+#include "limesuiteng/StreamConfig.h"
 #include <assert.h>
 namespace lime {
 
@@ -8,10 +9,10 @@ StreamComposite::StreamComposite(const std::vector<StreamAggregate>& aggregate)
     mAggregate = aggregate;
 }
 
-OpStatus StreamComposite::StreamSetup(const SDRDevice::StreamConfig& config)
+OpStatus StreamComposite::StreamSetup(const StreamConfig& config)
 {
     mActiveAggregates.clear();
-    SDRDevice::StreamConfig subConfig = config;
+    StreamConfig subConfig = config;
 
     std::size_t rxNeed = config.channels.at(TRXDir::Rx).size();
     std::size_t txNeed = config.channels.at(TRXDir::Tx).size();
@@ -76,7 +77,7 @@ void StreamComposite::StreamStop()
         g.first->StreamStop(g.second);
 }
 
-template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count, SDRDevice::StreamMeta* meta)
+template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count, StreamMeta* meta)
 {
     T** dest = samples;
     for (auto& a : mActiveAggregates)
@@ -92,7 +93,7 @@ template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count
     return count;
 }
 
-template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta)
+template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta)
 {
     const T* const* src = samples;
     for (auto& a : mActiveAggregates)
@@ -110,12 +111,12 @@ template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, ui
 
 // force instantiate functions with these types
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex16_t>(
-    lime::complex16_t** samples, uint32_t count, SDRDevice::StreamMeta* meta);
+    lime::complex16_t** samples, uint32_t count, StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex32f_t>(
-    lime::complex32f_t** samples, uint32_t count, SDRDevice::StreamMeta* meta);
+    lime::complex32f_t** samples, uint32_t count, StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex16_t>(
-    const lime::complex16_t* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta);
+    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex32f_t>(
-    const lime::complex32f_t* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta);
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
 
 } // namespace lime

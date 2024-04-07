@@ -5,6 +5,7 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/GainTypes.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/VersionInfo.h"
 #include "limesuiteng/Logger.h"
 #include "MemoryPool.h"
@@ -47,7 +48,7 @@ struct StreamBuffer {
 
 struct LMS_APIDevice {
     lime::SDRDevice* device;
-    lime::SDRDevice::StreamConfig lastSavedStreamConfig;
+    lime::StreamConfig lastSavedStreamConfig;
     std::array<std::array<float_type, 2>, lime::SDRConfig::MAX_CHANNEL_COUNT> lastSavedLPFValue;
     StatsDeltas statsDeltas;
 
@@ -748,7 +749,7 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         return -1;
     }
 
-    lime::SDRDevice::StreamConfig config = apiDevice->lastSavedStreamConfig;
+    lime::StreamConfig config = apiDevice->lastSavedStreamConfig;
     config.bufferSize = stream->fifoSize;
 
     auto channel = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
@@ -760,13 +761,13 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::F32;
+        config.format = lime::DataFormat::F32;
         break;
     case lms_stream_t::LMS_FMT_I16:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        config.format = lime::DataFormat::I16;
         break;
     case lms_stream_t::LMS_FMT_I12:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        config.format = lime::DataFormat::I12;
         break;
     default:
         return lime::error("Setup stream failed: invalid data format.");
@@ -775,12 +776,12 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     switch (stream->linkFmt)
     {
     case lms_stream_t::LMS_LINK_FMT_I16:
-        config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        config.linkFormat = lime::DataFormat::I16;
         break;
     case lms_stream_t::LMS_LINK_FMT_I12:
     case lms_stream_t::LMS_LINK_FMT_DEFAULT:
     default:
-        config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        config.linkFormat = lime::DataFormat::I12;
         break;
     }
 
@@ -949,7 +950,7 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         }
     }
 
-    lime::SDRDevice::StreamMeta metadata{ 0, false, false };
+    lime::StreamMeta metadata{ 0, false, false };
     int samplesProduced =
         handle->parent->device->StreamRx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
 
@@ -1057,7 +1058,7 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
         return sample_count;
     }
 
-    lime::SDRDevice::StreamMeta metadata{ 0, false, false };
+    lime::StreamMeta metadata{ 0, false, false };
 
     if (meta != nullptr)
     {
@@ -1130,7 +1131,7 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         return -1;
     }
 
-    lime::SDRDevice::StreamStats stats;
+    lime::StreamStats stats;
     lime::TRXDir direction = stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
     switch (direction)
@@ -1838,20 +1839,20 @@ API_EXPORT int CALL_CONV LMS_UploadWFM(lms_device_t* device, const void** sample
 
     auto config = apiDevice->lastSavedStreamConfig;
 
-    lime::SDRDevice::StreamConfig::DataFormat dataFormat;
+    lime::DataFormat dataFormat;
     switch (format)
     {
     case 0:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        dataFormat = lime::DataFormat::I12;
         break;
     case 1:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        dataFormat = lime::DataFormat::I16;
         break;
     case 2:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::F32;
+        dataFormat = lime::DataFormat::F32;
         break;
     default:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        dataFormat = lime::DataFormat::I12;
         break;
     }
 

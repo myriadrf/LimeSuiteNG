@@ -166,21 +166,21 @@ int sink_impl::work(int noutput_items,
     auto device = instance.get_device(stored.device_number);
 
     switch (instance.get_stream_config(stored.device_number).format) {
-    case lime::SDRDevice::StreamConfig::DataFormat::F32:
+    case lime::DataFormat::F32:
         ret = device->StreamTx(
             0,
             reinterpret_cast<const lime::complex32f_t* const*>(input_items.data()),
             nitems_send,
             &tx_meta);
         break;
-    case lime::SDRDevice::StreamConfig::DataFormat::I16:
+    case lime::DataFormat::I16:
         ret = device->StreamTx(
             0,
             reinterpret_cast<const lime::complex16_t* const*>(input_items.data()),
             nitems_send,
             &tx_meta);
         break;
-    case lime::SDRDevice::StreamConfig::DataFormat::I12:
+    case lime::DataFormat::I12:
         ret = device->StreamTx(
             0,
             reinterpret_cast<const lime::complex12_t* const*>(input_items.data()),
@@ -256,7 +256,7 @@ void sink_impl::print_stream_stats(int channel)
     auto timePeriod =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     if (timePeriod >= 1000) {
-        lime::SDRDevice::StreamStats status;
+        lime::StreamStats status;
         device_handler::getInstance()
             .get_device(stored.device_number)
             ->StreamStatus(0, nullptr, &status);
@@ -282,8 +282,8 @@ void sink_impl::init_stream(int device_number, int channel)
     config.channels.at(lime::TRXDir::Tx).push_back(channel);
     config.bufferSize = (stored.FIFO_size == 0) ? static_cast<int>(stored.samp_rate) / 10
                                                 : stored.FIFO_size;
-    config.format = lime::SDRDevice::StreamConfig::DataFormat::F32;
-    config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+    config.format = lime::DataFormat::F32;
+    config.linkFormat = lime::DataFormat::I16;
 
     if (instance.get_device(device_number)->StreamSetup(config, 0) !=
         lime::OpStatus::SUCCESS) {

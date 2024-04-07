@@ -3,6 +3,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamComposite.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/DataFormat.h"
 
 #include <map>
 #include <vector>
@@ -39,7 +40,7 @@ struct ConfigSettings
 {
     ConfigSettings()
         : maxChannelsToUse(2)
-        , linkFormat(lime::SDRDevice::StreamConfig::DataFormat::I12)
+        , linkFormat(lime::DataFormat::I12)
         , double_freq_conversion_to_lower_side(false)
         , syncPPS(false)
     {
@@ -48,7 +49,7 @@ struct ConfigSettings
     DirectionalSettings tx;
     std::string iniFilename;
     int maxChannelsToUse; // how many channels can be used from this chip
-    lime::SDRDevice::StreamConfig::DataFormat linkFormat;
+    lime::DataFormat linkFormat;
     bool double_freq_conversion_to_lower_side;
     bool syncPPS;
 };
@@ -92,7 +93,7 @@ struct LimePluginContext {
     std::vector<DevNode> rfdev;
     std::map<std::string, lime::SDRDevice*> uniqueDevices;
     LimeSettingsProvider* config;
-    lime::SDRDevice::StreamConfig::DataFormat samplesFormat;
+    lime::DataFormat samplesFormat;
 
     /* Path of the config file, not terminating by / */
     std::string currentWorkingDirectory;
@@ -128,17 +129,14 @@ int LimePlugin_Start(LimePluginContext* context);
 int LimePlugin_Stop(LimePluginContext* context);
 int LimePlugin_Destroy(LimePluginContext* context);
 
-int LimePlugin_Write_complex32f(LimePluginContext* context,
-    const lime::complex32f_t* const* samples,
-    int nsamples,
-    int port,
-    lime::SDRDevice::StreamMeta& meta);
+int LimePlugin_Write_complex32f(
+    LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Write_complex16(
-    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Read_complex16(
-    LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::StreamMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
 {

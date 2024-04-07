@@ -34,7 +34,7 @@ struct IConnectionStream {
     long long timeNs;
     size_t numElems;
 
-    SDRDevice::StreamConfig streamConfig;
+    StreamConfig streamConfig;
 };
 
 /*******************************************************************
@@ -132,7 +132,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
     stream->hasCmd = false;
     stream->skipCal = args.count("skipCal") != 0 and args.at("skipCal") == "true";
 
-    SDRDevice::StreamConfig& config = streamConfig;
+    StreamConfig& config = streamConfig;
     config.alignPhase = args.count("alignPhase") != 0 and args.at("alignPhase") == "true";
     // config.performanceLatency = 0.5;
     config.bufferSize = 0; // Auto
@@ -145,23 +145,22 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
 
     if (format == SOAPY_SDR_CF32)
     {
-        config.format = SDRDevice::StreamConfig::DataFormat::F32;
+        config.format = DataFormat::F32;
     }
     else if (format == SOAPY_SDR_CS16)
     {
-        config.format = SDRDevice::StreamConfig::DataFormat::I16;
+        config.format = DataFormat::I16;
     }
     else if (format == SOAPY_SDR_CS12)
     {
-        config.format = SDRDevice::StreamConfig::DataFormat::I12;
+        config.format = DataFormat::I12;
     }
     else
     {
         throw std::runtime_error("SoapyLMS7::setupStream(format=" + format + ") unsupported stream format");
     }
 
-    config.linkFormat =
-        config.format == SDRDevice::StreamConfig::DataFormat::F32 ? SDRDevice::StreamConfig::DataFormat::I16 : config.format;
+    config.linkFormat = config.format == DataFormat::F32 ? DataFormat::I16 : config.format;
 
     // Optional link format
     if (args.count("linkFormat"))
@@ -169,11 +168,11 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
         auto linkFormat = args.at("linkFormat");
         if (linkFormat == SOAPY_SDR_CS16)
         {
-            config.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+            config.linkFormat = DataFormat::I16;
         }
         else if (linkFormat == SOAPY_SDR_CS12)
         {
-            config.linkFormat = SDRDevice::StreamConfig::DataFormat::I12;
+            config.linkFormat = DataFormat::I12;
         }
         else
         {
@@ -221,7 +220,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
         throw std::runtime_error("SoapyLMS7::setupStream() failed: " + std::string(GetLastErrorMessage()));
     }
 
-    auto samplesPerPacket = config.linkFormat == SDRDevice::StreamConfig::DataFormat::I16 ? 1020 : 1360;
+    auto samplesPerPacket = config.linkFormat == DataFormat::I16 ? 1020 : 1360;
     // TODO: figure out a way to actually get the correct packet per batch count
     stream->elemMTU = 8 / config.channels.at(dir).size() * samplesPerPacket;
 
@@ -337,18 +336,18 @@ int SoapyLMS7::readStream(
         numElems = std::min(numElems, icstream->elemMTU);
     }
 
-    SDRDevice::StreamMeta metadata;
+    StreamMeta metadata;
     const uint64_t cmdTicks =
         ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0) ? SoapySDR::timeNsToTicks(icstream->timeNs, sampleRate[SOAPY_SDR_RX]) : 0;
 
     int status = 0;
     switch (icstream->streamConfig.format)
     {
-    case SDRDevice::StreamConfig::DataFormat::I16:
-    case SDRDevice::StreamConfig::DataFormat::I12:
+    case DataFormat::I16:
+    case DataFormat::I12:
         status = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata);
         break;
-    case SDRDevice::StreamConfig::DataFormat::F32:
+    case DataFormat::F32:
         status = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
@@ -445,7 +444,7 @@ int SoapyLMS7::writeStream(SoapySDR::Stream* stream,
     const auto& ownerDevice = icstream->ownerDevice;
 
     // Input metadata
-    SDRDevice::StreamMeta metadata;
+    StreamMeta metadata;
     metadata.timestamp = SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX]);
     metadata.waitForTimestamp = (flags & SOAPY_SDR_HAS_TIME);
     metadata.flushPartialPacket = (flags & SOAPY_SDR_END_BURST);
@@ -453,11 +452,11 @@ int SoapyLMS7::writeStream(SoapySDR::Stream* stream,
     int status = 0;
     switch (icstream->streamConfig.format)
     {
-    case SDRDevice::StreamConfig::DataFormat::I16:
-    case SDRDevice::StreamConfig::DataFormat::I12:
+    case DataFormat::I16:
+    case DataFormat::I12:
         status = ownerDevice->StreamTx(0, reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata);
         break;
-    case SDRDevice::StreamConfig::DataFormat::F32:
+    case DataFormat::F32:
         status = ownerDevice->StreamTx(0, reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
@@ -482,7 +481,7 @@ int SoapyLMS7::readStreamStatus(SoapySDR::Stream* stream, size_t& chanMask, int&
 
     int ret = 0;
     flags = 0;
-    SDRDevice::StreamStats metadata;
+    StreamStats metadata;
     auto start = std::chrono::high_resolution_clock::now();
     while (1)
     {

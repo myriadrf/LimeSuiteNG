@@ -54,7 +54,7 @@ lime::SDRDevice* device_handler::get_device(int device_number)
     return device_vector.at(device_number).address;
 }
 
-lime::SDRDevice::StreamConfig& device_handler::get_stream_config(int device_number)
+lime::StreamConfig& device_handler::get_stream_config(int device_number)
 {
     return device_vector.at(device_number).stream_config;
 }

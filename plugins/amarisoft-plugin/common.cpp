@@ -10,6 +10,7 @@
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/StreamConfig.h"
 
 using namespace lime;
 using namespace std;
@@ -17,11 +18,9 @@ using namespace std;
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
 static constexpr int LIME_TRX_MAX_RF_PORT = 16;
 
-typedef lime::LogLevel LogLevel;
-
 struct StreamStatus {
-    lime::SDRDevice::StreamStats rx;
-    lime::SDRDevice::StreamStats tx;
+    lime::StreamStats rx;
+    lime::StreamStats tx;
 };
 
 static std::mutex gainsMutex;
@@ -37,7 +36,7 @@ DevNode::DevNode()
 LimePluginContext::LimePluginContext()
     : rfdev(LIME_MAX_UNIQUE_DEVICES)
     , config(nullptr)
-    , samplesFormat(SDRDevice::StreamConfig::DataFormat::F32)
+    , samplesFormat(DataFormat::F32)
 {
     ports.reserve(LIME_TRX_MAX_RF_PORT);
 }
@@ -109,10 +108,10 @@ static void LogCallback(LogLevel lvl, const char* msg)
 }
 
 static auto lastStreamUpdate = std::chrono::steady_clock::now();
-bool OnStreamStatusChange(bool isTx, const SDRDevice::StreamStats* s, void* userData)
+bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
 {
     StreamStatus& status = *static_cast<StreamStatus*>(userData);
-    SDRDevice::StreamStats& dest = isTx ? status.tx : status.rx;
+    StreamStats& dest = isTx ? status.tx : status.rx;
 
     dest.FIFO = s->FIFO;
     dest.dataRate_Bps = s->dataRate_Bps;
@@ -469,13 +468,13 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     if (GetSetting(settings, &linkFormatStr, "%s_linkFormat", prefix))
     {
         if (linkFormatStr == "I16"s)
-            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+            param->linkFormat = lime::DataFormat::I16;
         else if (linkFormatStr == "I12"s)
-            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+            param->linkFormat = lime::DataFormat::I12;
         else
         {
             Log(LogLevel::WARNING, "Invalid link format (%s): falling back to I12", linkFormatStr.c_str());
-            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+            param->linkFormat = lime::DataFormat::I12;
         }
     }
     GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_syncPPS", prefix);
@@ -686,7 +685,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
                 }
             }
 
-            SDRDevice::StreamConfig::Extras* extra = new SDRDevice::StreamConfig::Extras();
+            StreamConfig::Extras* extra = new StreamConfig::Extras();
 
             sprintf(varname, "port%i_syncPPS", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
@@ -726,7 +725,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
             }
         }
 
-        s->samplesFormat = lime::SDRDevice::StreamConfig::F32;
+        s->samplesFormat = lime::StreamConfig::F32;
 */
     } catch (std::logic_error& e)
     {
@@ -786,7 +785,7 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         if (port.nodes.empty())
             continue;
 
-        SDRDevice::StreamConfig stream;
+        StreamConfig stream;
         stream.channels[TRXDir::Rx].resize(params->rf_ports[p].rx_channel_count);
         stream.channels[TRXDir::Tx].resize(params->rf_ports[p].tx_channel_count);
         stream.linkFormat = port.configInputs.linkFormat;
@@ -824,8 +823,8 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         Log(LogLevel::DEBUG,
             "Port[%i] Stream samples format: %s , link: %s",
             p,
-            stream.format == SDRDevice::StreamConfig::DataFormat::F32 ? "F32" : "I16",
-            stream.linkFormat == SDRDevice::StreamConfig::DataFormat::I12 ? "I12" : "I16");
+            stream.format == DataFormat::F32 ? "F32" : "I16",
+            stream.linkFormat == DataFormat::I12 ? "I12" : "I16");
 
         port.composite = new StreamComposite(aggregates);
         if (port.composite->StreamSetup(stream) != OpStatus::SUCCESS)
@@ -910,7 +909,7 @@ int LimePlugin_Start(LimePluginContext* context)
 }
 
 template<class T>
-static int LimePlugin_Write(LimePluginContext* context, const T* const* samples, int count, int port, SDRDevice::StreamMeta& meta)
+static int LimePlugin_Write(LimePluginContext* context, const T* const* samples, int count, int port, StreamMeta& meta)
 {
     if (!samples) // Nothing to transmit
         return 0;
@@ -930,19 +929,18 @@ static int LimePlugin_Write(LimePluginContext* context, const T* const* samples,
 }
 
 int LimePlugin_Write_complex32f(
-    LimePluginContext* context, const lime::complex32f_t* const* samples, int count, int port, SDRDevice::StreamMeta& meta)
+    LimePluginContext* context, const lime::complex32f_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
 int LimePlugin_Write_complex16(
-    LimePluginContext* context, const lime::complex16_t* const* samples, int count, int port, SDRDevice::StreamMeta& meta)
+    LimePluginContext* context, const lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
-template<class T>
-static int LimePlugin_Read(LimePluginContext* context, T** samples, int count, int port, SDRDevice::StreamMeta& meta)
+template<class T> static int LimePlugin_Read(LimePluginContext* context, T** samples, int count, int port, StreamMeta& meta)
 {
     meta.waitForTimestamp = false;
     meta.flushPartialPacket = false;
@@ -963,14 +961,12 @@ static int LimePlugin_Read(LimePluginContext* context, T** samples, int count, i
     return samplesGot;
 }
 
-int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t** samples, int count, int port, SDRDevice::StreamMeta& meta)
+int LimePlugin_Read_complex32f(LimePluginContext* context, lime::complex32f_t** samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
 
-int LimePlugin_Read_complex16(
-    LimePluginContext* context, lime::complex16_t** samples, int count, int port, SDRDevice::StreamMeta& meta)
+int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t** samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }

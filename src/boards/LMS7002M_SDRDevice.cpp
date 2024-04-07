@@ -1023,7 +1023,7 @@ uint32_t LMS7002M_SDRDevice::StreamTx(
     return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
 }
 
-void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx)
+void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
     TRXLooper* trx = mStreamers.at(moduleIndex);
     if (rx != nullptr)

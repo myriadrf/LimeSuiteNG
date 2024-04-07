@@ -4,9 +4,7 @@
     @brief  minimal TX example
  */
 
-#include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/Logger.h"
+#include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -80,12 +78,12 @@ int main(int argc, char** argv)
         std::cout << "SDR configured in " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
 
         // Samples data streaming configuration
-        SDRDevice::StreamConfig stream;
+        StreamConfig stream;
 
         stream.channels[TRXDir::Tx] = { 0 };
 
-        stream.format = SDRDevice::StreamConfig::DataFormat::F32;
-        stream.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+        stream.format = DataFormat::F32;
+        stream.linkFormat = DataFormat::I16;
 
         device->StreamSetup(stream, chipIndex);
         device->StreamStart(chipIndex);
@@ -127,7 +125,7 @@ int main(int argc, char** argv)
     auto t1 = startTime;
     auto t2 = t1;
 
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta txMeta;
     txMeta.timestamp = 0;
     txMeta.waitForTimestamp = true;
     txMeta.flushPartialPacket = true;
