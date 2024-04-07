@@ -265,7 +265,7 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 
         for (int i = 0; i < 2; ++i)
         {
-            const SDRDevice::ChannelConfig& ch = cfg.channel[i];
+            const ChannelConfig& ch = cfg.channel[i];
             LMS7002ChannelCalibration(chip, ch, i);
             // TODO: should report calibration failure, but configuration can
             // still work after failed calibration.

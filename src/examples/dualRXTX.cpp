@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     device->Init();
 
     // RF parameters
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     for (int c = 0; c < 2; ++c) // MIMO
     {
         config.channel[c].rx.enabled = true;

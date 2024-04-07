@@ -586,7 +586,7 @@ OpStatus LimeSDR_MMX8::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t 
 OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     TRXDir direction,
     uint8_t channel,
-    SDRDevice::ChannelConfig::Direction::TestSignal signalConfiguration,
+    ChannelConfig::Direction::TestSignal signalConfiguration,
     int16_t dc_i,
     int16_t dc_q)
 {
@@ -598,7 +598,7 @@ OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     return mSubDevices[moduleIndex]->SetTestSignal(0, direction, channel, signalConfiguration, dc_i, dc_q);
 }
 
-SDRDevice::ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
+ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
     if (moduleIndex >= 8)
     {

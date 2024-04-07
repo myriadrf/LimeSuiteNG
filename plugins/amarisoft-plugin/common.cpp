@@ -529,7 +529,7 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
 }
 
 static OpStatus TransferDeviceDirectionalSettings(
-    DevNode& node, const DirectionalSettings& settings, SDRDevice::ChannelConfig::Direction& trx, TRXDir dir)
+    DevNode& node, const DirectionalSettings& settings, ChannelConfig::Direction& trx, TRXDir dir)
 {
     trx.enabled = false;
     trx.oversample = settings.oversample;
@@ -747,7 +747,7 @@ static void TransferRuntimeParametersToConfig(
     const LimeRuntimeParameters::ChannelParams& params = isTx ? runtimeParams.tx : runtimeParams.rx;
     for (size_t i = 0; i < params.freq.size(); ++i)
     {
-        SDRDevice::ChannelConfig::Direction& trxConfig = dir == TRXDir::Tx
+        ChannelConfig::Direction& trxConfig = dir == TRXDir::Tx
                                                              ? channelMap[i].parent->config.channel[channelMap[i].chipChannel].tx
                                                              : channelMap[i].parent->config.channel[channelMap[i].chipChannel].rx;
         trxConfig.enabled = true;

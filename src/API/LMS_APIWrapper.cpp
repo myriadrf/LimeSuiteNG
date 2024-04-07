@@ -48,7 +48,7 @@ struct StreamBuffer {
 struct LMS_APIDevice {
     lime::SDRDevice* device;
     lime::SDRDevice::StreamConfig lastSavedStreamConfig;
-    std::array<std::array<float_type, 2>, lime::SDRDevice::MAX_CHANNEL_COUNT> lastSavedLPFValue;
+    std::array<std::array<float_type, 2>, lime::SDRConfig::MAX_CHANNEL_COUNT> lastSavedLPFValue;
     StatsDeltas statsDeltas;
 
     uint8_t moduleIndex;
@@ -691,7 +691,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
 
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    auto enumToTestStruct = [](lms_testsig_t signal) -> lime::SDRDevice::ChannelConfig::Direction::TestSignal {
+    auto enumToTestStruct = [](lms_testsig_t signal) -> lime::ChannelConfig::Direction::TestSignal {
         switch (signal)
         {
         case LMS_TESTSIG_NONE:
@@ -701,23 +701,23 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
         case LMS_TESTSIG_NCODIV8:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div8,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Half };
         case LMS_TESTSIG_NCODIV4:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div4,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Half };
         case LMS_TESTSIG_NCODIV8F:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div8,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Full };
         case LMS_TESTSIG_NCODIV4F:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div4,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Full };
         default:
             throw std::logic_error("Unexpected enumerator lms_testsig_t value");
         }
@@ -1443,29 +1443,29 @@ API_EXPORT int CALL_CONV LMS_GetTestSignal(lms_device_t* device, bool dir_tx, si
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Half)
     {
         *sig = LMS_TESTSIG_NCODIV4;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Half)
     {
         *sig = LMS_TESTSIG_NCODIV8;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full)
     {
         *sig = LMS_TESTSIG_NCODIV4F;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full)
     {
         *sig = LMS_TESTSIG_NCODIV8F;
         return 0;

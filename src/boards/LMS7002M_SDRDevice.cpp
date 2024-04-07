@@ -842,13 +842,13 @@ OpStatus LMS7002M_SDRDevice::SetHardwareTimestamp(uint8_t moduleIndex, const uin
 OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     TRXDir direction,
     uint8_t channel,
-    SDRDevice::ChannelConfig::Direction::TestSignal signalConfiguration,
+    ChannelConfig::Direction::TestSignal signalConfiguration,
     int16_t dc_i,
     int16_t dc_q)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
-    bool div4 = signalConfiguration.divide == SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
+    bool div4 = signalConfiguration.divide == ChannelConfig::Direction::TestSignal::Divide::Div4;
     switch (direction)
     {
     case TRXDir::Rx:
@@ -875,7 +875,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     return OpStatus::SUCCESS;
 }
 
-SDRDevice::ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(
+ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(
     uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
@@ -1145,13 +1145,13 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
 #endif
 }
 
-OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRDevice::SDRConfig& cfg)
+OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig& cfg)
 {
     bool rxUsed = false;
     bool txUsed = false;
     for (int i = 0; i < 2; ++i)
     {
-        const SDRDevice::ChannelConfig& ch = cfg.channel[i];
+        const ChannelConfig& ch = cfg.channel[i];
         rxUsed |= ch.rx.enabled;
         txUsed |= ch.tx.enabled;
     }
@@ -1182,9 +1182,9 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRDevice:
     return status;
 }
 
-OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex)
+OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
 {
-    const SDRDevice::ChannelConfig& ch = config;
+    const ChannelConfig& ch = config;
     chip->SetActiveChannel((channelIndex & 1) ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA);
 
     chip->EnableChannel(TRXDir::Rx, channelIndex, ch.rx.enabled);
@@ -1215,12 +1215,12 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const SDRDe
     return OpStatus::SUCCESS;
 }
 
-OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex)
+OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
 {
     int i = channelIndex;
     auto enumChannel = i == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB;
     chip->SetActiveChannel(enumChannel);
-    const SDRDevice::ChannelConfig& ch = config;
+    const ChannelConfig& ch = config;
 
     // TODO: Don't configure GFIR when external ADC/DAC is used
     if (ch.rx.enabled &&
@@ -1262,15 +1262,15 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const SDR
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(
-    LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex)
+    LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
 {
-    const SDRDevice::ChannelConfig& ch = config;
+    const ChannelConfig& ch = config;
     chip->Modify_SPI_Reg_bits(LMS7_INSEL_RXTSP, ch.rx.testSignal.enabled ? 1 : 0);
     if (ch.rx.testSignal.enabled)
     {
-        const SDRDevice::ChannelConfig::Direction::TestSignal& signal = ch.rx.testSignal;
-        bool fullscale = signal.scale == SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full;
-        bool div4 = signal.divide == SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
+        const ChannelConfig::Direction::TestSignal& signal = ch.rx.testSignal;
+        bool fullscale = signal.scale == ChannelConfig::Direction::TestSignal::Scale::Full;
+        bool div4 = signal.divide == ChannelConfig::Direction::TestSignal::Divide::Div4;
         chip->Modify_SPI_Reg_bits(LMS7_TSGFC_RXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(LMS7_TSGFCW_RXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(LMS7_TSGMODE_RXTSP, signal.dcMode ? 1 : 0);
@@ -1282,9 +1282,9 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(
     chip->Modify_SPI_Reg_bits(LMS7_INSEL_TXTSP, ch.tx.testSignal.enabled ? 1 : 0);
     if (ch.tx.testSignal.enabled)
     {
-        const SDRDevice::ChannelConfig::Direction::TestSignal& signal = ch.tx.testSignal;
-        bool fullscale = signal.scale == SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full;
-        bool div4 = signal.divide == SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
+        const ChannelConfig::Direction::TestSignal& signal = ch.tx.testSignal;
+        bool fullscale = signal.scale == ChannelConfig::Direction::TestSignal::Scale::Full;
+        bool div4 = signal.divide == ChannelConfig::Direction::TestSignal::Divide::Div4;
         chip->Modify_SPI_Reg_bits(LMS7_TSGFC_TXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(LMS7_TSGFCW_TXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(LMS7_TSGMODE_TXTSP, signal.dcMode ? 1 : 0);

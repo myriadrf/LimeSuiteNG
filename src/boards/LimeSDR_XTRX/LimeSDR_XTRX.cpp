@@ -286,7 +286,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         for (int i = 0; i < 2; ++i)
         {
-            const SDRDevice::ChannelConfig& ch = cfg.channel[i];
+            const ChannelConfig& ch = cfg.channel[i];
             LMS1SetPath(false, i, ch.rx.path);
             LMS1SetPath(true, i, ch.tx.path);
             LMS7002ChannelCalibration(chip, ch, i);

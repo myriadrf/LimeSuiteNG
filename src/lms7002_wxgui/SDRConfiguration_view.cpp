@@ -250,7 +250,7 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
     if (!sdrDevice)
         return;
 
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
 
     config.referenceClockFreq = 30.72e6;
 
@@ -264,7 +264,7 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
     for (int i = 0; i < channelCount; ++i)
     {
         const double multiplier = 1e6; // convert from GUI MHz to Hz
-        SDRDevice::ChannelConfig& ch = config.channel[i];
+        ChannelConfig& ch = config.channel[i];
 
         ch.rx.centerFrequency = parseGuiValue(gui.rxLO->GetValue()) * multiplier;
         ch.tx.centerFrequency = parseGuiValue(gui.txLO->GetValue()) * multiplier;

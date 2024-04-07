@@ -134,7 +134,7 @@ int main(int argc, char** argv)
     std::string txAntennaName;
     std::vector<int> chipIndexes;
 
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.channel[0].rx.oversample = 2;
     config.channel[0].tx.oversample = 2;
 

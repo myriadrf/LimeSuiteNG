@@ -40,11 +40,11 @@ static void LogCallback(LogLevel lvl, const char* msg)
     printf("%s\n", msg);
 }
 
-typedef std::pair<SDRDevice::SDRConfig, SDRDevice::StreamConfig> TestConfigType;
+typedef std::pair<SDRConfig, SDRDevice::StreamConfig> TestConfigType;
 
 TestConfigType generateTestConfig(bool mimo, float sampleRate)
 {
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.skipDefaults = true; // defaults are already initialized once at the startup
     const uint8_t channelCount = mimo ? 2 : 1;
     for (int i = 0; i < channelCount; ++i)
@@ -97,7 +97,7 @@ bool OnStreamStatusChange(bool isTx, const SDRDevice::StreamStats* s, void* user
     return false;
 }
 
-int TrySDRConfigure(SDRDevice::SDRConfig& config)
+int TrySDRConfigure(SDRConfig& config)
 {
     try
     {

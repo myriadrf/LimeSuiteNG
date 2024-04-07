@@ -63,7 +63,7 @@ struct DevNode {
     uint8_t chipIndex;
     std::vector<uint32_t> fpgaRegisterWrites;
     lime::SDRDevice* device; // chip owner
-    lime::SDRDevice::SDRConfig config;
+    lime::SDRConfig config;
     int portIndex;
     int devIndex;
     bool assignedToPort;

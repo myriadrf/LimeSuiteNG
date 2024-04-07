@@ -1032,8 +1032,8 @@ void SoapyLMS7::writeSetting(const int direction, const size_t channel, const st
                 channel,
                 { true,
                     false,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full });
+                    ChannelConfig::Direction::TestSignal::Divide::Div4,
+                    ChannelConfig::Direction::TestSignal::Scale::Full });
         }
         else if (select == 8)
         {
@@ -1042,8 +1042,8 @@ void SoapyLMS7::writeSetting(const int direction, const size_t channel, const st
                 channel,
                 { true,
                     false,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full });
+                    ChannelConfig::Direction::TestSignal::Divide::Div8,
+                    ChannelConfig::Direction::TestSignal::Scale::Full });
         }
         else
         {
@@ -1087,14 +1087,14 @@ std::string SoapyLMS7::readSetting(const int direction, const size_t channel, co
 
         switch (testConfig.scale)
         {
-        case SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half:
+        case ChannelConfig::Direction::TestSignal::Scale::Half:
             return "-1";
-        case SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full:
+        case ChannelConfig::Direction::TestSignal::Scale::Full:
             switch (testConfig.divide)
             {
-            case SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4:
+            case ChannelConfig::Direction::TestSignal::Divide::Div4:
                 return "4";
-            case SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8:
+            case ChannelConfig::Direction::TestSignal::Divide::Div8:
                 return "8";
             }
         }

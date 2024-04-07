@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     device->Init();
 
     // RF parameters
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.channel[0].tx.enabled = true;
     config.channel[0].rx.enabled = false;
     config.channel[0].rx.centerFrequency = frequencyLO;
