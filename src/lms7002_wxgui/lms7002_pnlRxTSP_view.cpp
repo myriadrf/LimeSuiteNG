@@ -1651,7 +1651,7 @@ void lms7002_pnlRXTSP_view::onbtnGFIR3Coef(wxCommandEvent& event)
     UpdateGUI();
 }
 
-void lms7002_pnlRXTSP_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlRXTSP_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
 

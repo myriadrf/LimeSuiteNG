@@ -12,7 +12,9 @@
 #include "lms7002m/LMS7002M_validation.h"
 #include "protocols/LMS64CProtocol.h"
 #include "limesuiteng/DeviceNode.h"
+#include "limesuiteng/IComms.h"
 #include "FX3/FX3.h"
+#include "ISerialPort.h"
 
 #include <array>
 #include <cassert>

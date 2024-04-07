@@ -1,5 +1,6 @@
 #include "FPGA_Mini.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/IComms.h"
 #include <ciso646>
 #include <vector>
 #include <map>

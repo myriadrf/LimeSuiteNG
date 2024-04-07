@@ -2,25 +2,19 @@
 #define LIME_SDRDevice_H
 
 #include <cstring>
-#include <map>
 #include <memory>
-#include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/commonTypes.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/OpStatus.h"
-#include "limesuiteng/GainTypes.h"
-#include "limesuiteng/IComms.h"
 #include "limesuiteng/SDRConfig.h"
-#include "limesuiteng/MemoryDevices.h"
-#include "limesuiteng/MemoryRegions.h"
 
 namespace lime {
 
+struct MemoryDevice;
+struct Region;
 struct SDRDescriptor;
 struct StreamConfig;
 struct StreamMeta;
@@ -28,9 +22,13 @@ struct StreamStats;
 struct DeviceNode;
 struct DataStorage;
 struct Region;
+struct CustomParameterIO;
 class OEMTestReporter;
 
+enum class eMemoryDevice : uint8_t;
+enum class eGainTypes : uint8_t;
 enum class LogLevel : uint8_t;
+enum class TRXDir : bool;
 
 /// @brief Class for holding information about an SDR (Software Defined Radio) device.
 /// SDRDevice can have multiple modules (RF chips), that can operate independently.

@@ -2,7 +2,6 @@
 #define LIMESUITENG_CLI_COMMON_H
 
 #include <chrono>
-#include <string>
 #include <vector>
 #include <stdint.h>
 #include <iostream>
@@ -16,6 +15,7 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/Logger.h"
 
 lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string& argument);
 

@@ -15,6 +15,7 @@ class LitePCIe;
 class Equalizer;
 class SlaveSelectShim;
 class ISerialPort;
+class IComms;
 
 /** @brief Class for managing the LimeSDR X3 device. */
 class LimeSDR_X3 : public LMS7002M_SDRDevice

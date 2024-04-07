@@ -2,6 +2,9 @@
 #include "DataPacket.h"
 #include "DeviceExceptions.h"
 #include "USBTransferContext_FT601.h"
+#include "limesuiteng/Logger.h"
+
+using namespace std::literals::string_literals;
 
 namespace lime {
 

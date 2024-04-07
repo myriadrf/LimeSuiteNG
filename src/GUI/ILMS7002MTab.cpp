@@ -15,7 +15,7 @@ ILMS7002MTab::ILMS7002MTab(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
 {
 }
 
-void ILMS7002MTab::Initialize(ControllerType* pControl)
+void ILMS7002MTab::Initialize(LMS7002M* pControl)
 {
     lmsControl = pControl;
 }
@@ -68,17 +68,17 @@ int ILMS7002MTab::ReadParam(const LMS7Parameter& param)
     return lmsControl->Get_SPI_Reg_bits(param);
 }
 
-int ILMS7002MTab::LMS_ReadLMSReg(ControllerType* lms, uint16_t address, uint16_t* value)
+int ILMS7002MTab::LMS_ReadLMSReg(LMS7002M* lms, uint16_t address, uint16_t* value)
 {
     *value = lms->SPI_read(address);
     return 0;
 }
-int ILMS7002MTab::LMS_WriteLMSReg(ControllerType* lms, uint16_t address, uint16_t value)
+int ILMS7002MTab::LMS_WriteLMSReg(LMS7002M* lms, uint16_t address, uint16_t value)
 {
     return lms->SPI_write(address, value) == OpStatus::SUCCESS ? 0 : -1;
 }
 
-int ILMS7002MTab::LMS_ReadParam(ControllerType* lmsControl, const LMS7Parameter& param, uint16_t* value)
+int ILMS7002MTab::LMS_ReadParam(LMS7002M* lmsControl, const LMS7Parameter& param, uint16_t* value)
 {
     *value = ReadParam(param);
     return 0;

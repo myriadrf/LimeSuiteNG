@@ -12,7 +12,7 @@
 namespace lime {
 
 class SDRDevice;
-class DeviceNode;
+struct DeviceNode;
 
 /// @brief Structure for the information of a custom parameter.
 struct CustomParameter {

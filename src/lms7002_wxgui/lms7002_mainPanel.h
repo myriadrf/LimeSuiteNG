@@ -44,7 +44,7 @@ class lms7002_mainPanel : public ISOCPanel
         long style = wxTAB_TRAVERSAL);
     virtual ~lms7002_mainPanel();
     void UpdateVisiblePanel();
-    void UpdateGUI();
+    void UpdateGUI() override;
     void Initialize(lime::LMS7002M* socPtr);
 
     std::unordered_map<wxWindowID, ILMS7002MTab*> mTabs;

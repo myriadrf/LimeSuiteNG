@@ -762,7 +762,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlCLKGEN_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlCLKGEN_view::Initialize(LMS7002M* pControl)
 {
     lmsControl = pControl;
     if (lmsControl == nullptr)

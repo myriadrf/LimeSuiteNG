@@ -403,7 +403,7 @@ lms7002_pnlMCU_BD_view::lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id)
     obj_ptr = this;
 }
 
-void lms7002_pnlMCU_BD_view::Initialize(ControllerType* pControl)
+void lms7002_pnlMCU_BD_view::Initialize(lime::LMS7002M* pControl)
 {
     lmsControl = pControl;
 

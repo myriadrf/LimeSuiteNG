@@ -40,7 +40,7 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
   public:
     lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id);
     ~lms7002_pnlMCU_BD_view();
-    void Initialize(ControllerType* pControl) override;
+    void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
     lime::MCU_BD* mcu;

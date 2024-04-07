@@ -10,6 +10,7 @@
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/IComms.h"
 
 #include <ciso646>
 

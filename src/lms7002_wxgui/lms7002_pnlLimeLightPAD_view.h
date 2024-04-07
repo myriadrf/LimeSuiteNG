@@ -18,7 +18,7 @@ class lms7002_pnlLimeLightPAD_view : public ILMS7002MTab
     virtual void UpdateGUI() override;
 
   protected:
-    void SpinParameterChangeHandler(wxSpinEvent& event);
+    virtual void SpinParameterChangeHandler(wxSpinEvent& event) override;
     void onbtnReadVerRevMask(wxCommandEvent& event);
 
     enum {

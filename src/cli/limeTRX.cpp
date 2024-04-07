@@ -1,7 +1,4 @@
 #include "cli/common.h"
-#include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/StreamComposite.h"
 #include <iostream>

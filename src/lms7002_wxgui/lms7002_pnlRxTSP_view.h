@@ -12,7 +12,7 @@ class lms7002_pnlRXTSP_view : public ILMS7002MTab
   protected:
     // Handlers for pnlRxTSP_view events.
     void ParameterChangeHandler(wxSpinEvent& event);
-    void ParameterChangeHandler(wxCommandEvent& event);
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnNCOSelectionChange(wxCommandEvent& event);
     void OnbtnReadBISTSignature(wxCommandEvent& event);
     void OnbtnLoadDCIClick(wxCommandEvent& event);
@@ -30,7 +30,7 @@ class lms7002_pnlRXTSP_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(ILMS7002MTab::ControllerType* pControl) override;
+    virtual void Initialize(lime::LMS7002M* pControl) override;
     virtual void UpdateGUI() override;
     void UpdateNCOinputs();
 

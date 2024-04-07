@@ -41,7 +41,7 @@ class lms7002_pnlR3_view : public ILMS7002MTab
 
     // Virtual event handlers, overide them in your derived class
     void ParameterChangeHandler(wxSpinEvent& event);
-    void ParameterChangeHandler(wxCommandEvent& event);
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnRSSICMPCFGChanged(wxCommandEvent& event);
     void OnDCCMPCFGChanged(wxCommandEvent& event);
     void OnReadRSSICMP(wxCommandEvent& event);
@@ -65,7 +65,7 @@ class lms7002_pnlR3_view : public ILMS7002MTab
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
     ~lms7002_pnlR3_view();
-    virtual void Initialize(ILMS7002MTab::ControllerType* pControl) override;
+    virtual void Initialize(lime::LMS7002M* pControl) override;
     virtual void UpdateGUI() override;
 };
 

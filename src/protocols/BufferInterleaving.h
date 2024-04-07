@@ -1,7 +1,6 @@
 #ifndef LIME_BUFFER_INTERLEAVING_H
 #define LIME_BUFFER_INTERLEAVING_H
 
-#include "TRXLooper.h"
 #include "limesuiteng/DataFormat.h"
 
 namespace lime {

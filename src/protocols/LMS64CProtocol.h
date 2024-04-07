@@ -8,11 +8,14 @@
 #include <mutex>
 #include <thread>
 
+#include "limesuiteng/OpStatus.h"
 #include "LMSBoards.h"
-#include "limesuiteng/SDRDevice.h"
-#include "ISerialPort.h"
 
 namespace lime {
+
+class ISerialPort;
+class SDRDescriptor;
+class CustomParameterIO;
 
 struct LMS64CPacket {
     static constexpr int size = 64;

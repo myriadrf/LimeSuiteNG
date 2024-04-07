@@ -1,6 +1,8 @@
 #ifndef LIMESUITENG_DATAFORMAT_H
 #define LIMESUITENG_DATAFORMAT_H
 
+#include <cstdint>
+
 namespace lime {
 
 /// @brief Enumerator describing the data formats.

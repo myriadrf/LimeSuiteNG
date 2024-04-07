@@ -1460,7 +1460,7 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlTXTSP_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlTXTSP_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
     if (pControl == nullptr)

@@ -140,7 +140,7 @@ class LimeSDR_MMX8 : public SDRDevice
     virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
-    virtual void SetDataLogCallback(DataCallbackType callback){};
+    virtual void SetDataLogCallback(DataCallbackType callback) override{};
     virtual void SetMessageLogCallback(LogCallbackType callback) override;
 
     virtual void* GetInternalChip(uint32_t index) override;
