@@ -20,11 +20,6 @@ enum class OpStatus {
     ABORTED = -10,
 };
 
-/// @brief Converts a given OpStatus value into a human readable C-string.
-/// @param value The value to convert.
-/// @return The C-string representing the status.
-const char* ToCString(OpStatus value);
-
 } // namespace lime
 
 #endif

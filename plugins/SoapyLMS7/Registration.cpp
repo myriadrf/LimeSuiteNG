@@ -9,6 +9,7 @@
 #include <SoapySDR/Logger.hpp>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/DeviceHandle.h"
 
 using namespace lime;
 

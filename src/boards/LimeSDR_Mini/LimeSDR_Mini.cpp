@@ -11,7 +11,7 @@
 #include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "protocols/LMS64CProtocol.h"
-#include "limesuiteng/DeviceNode.h"
+#include "DeviceTreeNode.h"
 #include "comms/IComms.h"
 #include "ISerialPort.h"
 #include "FT601/FT601.h"
@@ -201,9 +201,9 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
 
     descriptor.rfSOC.push_back(soc);
 
-    auto fpgaNode = std::make_shared<DeviceNode>("FPGA", eDeviceNodeClass::FPGA_MINI, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS", eDeviceNodeClass::LMS7002M, mLMSChips[0]));
-    descriptor.socTree = std::make_shared<DeviceNode>("SDR Mini", eDeviceNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_MINI, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS", eDeviceTreeNodeClass::LMS7002M, mLMSChips[0]));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>("SDR Mini", eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
     mDeviceDescriptor = descriptor;

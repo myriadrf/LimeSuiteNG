@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -427,14 +428,14 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
 
             int devIndex = 0;
             sscanf(token + 3, "%i", &devIndex);
-            DevNode* assignedDeviceNode = &context->rfdev.at(devIndex);
-            port.nodes.push_back(assignedDeviceNode);
-            assignedDeviceNode->portIndex = p;
-            assignedDeviceNode->assignedToPort = true;
+            DevNode* assignedDeviceTreeNode = &context->rfdev.at(devIndex);
+            port.nodes.push_back(assignedDeviceTreeNode);
+            assignedDeviceTreeNode->portIndex = p;
+            assignedDeviceTreeNode->assignedToPort = true;
 
             // copy port's config parameters to each assinged device to form base
             // which will later be modified by individual device parameter overrides
-            assignedDeviceNode->configInputs = port.configInputs;
+            assignedDeviceTreeNode->configInputs = port.configInputs;
             token = strtok(NULL, ",");
         }
     }
@@ -487,7 +488,7 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     GatherDirectionalSettings(settings, &param->tx, dirPrefix);
 }
 
-static void GatherDeviceNodeSettings(LimePluginContext* context, LimeSettingsProvider* settings)
+static void GatherDeviceTreeNodeSettings(LimePluginContext* context, LimeSettingsProvider* settings)
 {
     for (uint32_t i = 0; i < context->rfdev.size(); ++i)
     {
@@ -641,7 +642,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
         return -1;
 
     // gather each device settings and override values set by port
-    GatherDeviceNodeSettings(context, configProvider);
+    GatherDeviceTreeNodeSettings(context, configProvider);
 
     try
     {

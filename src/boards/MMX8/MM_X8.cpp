@@ -11,7 +11,7 @@
 #include "DSP/Equalizer.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
-#include "limesuiteng/DeviceNode.h"
+#include "DeviceTreeNode.h"
 #include "limesuiteng/MemoryRegions.h"
 
 #include "math.h"
@@ -54,12 +54,12 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     // FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     // FPGA::GatewareToDescriptor(gw, desc);
 
-    desc.socTree = std::make_shared<DeviceNode>("X8", eDeviceNodeClass::SDRDevice, this);
+    desc.socTree = std::make_shared<DeviceTreeNode>("X8", eDeviceTreeNodeClass::SDRDevice, this);
 
     mADF = new ADF4002();
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceNode>("ADF4002", eDeviceNodeClass::ADF4002, mADF));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF));
 
     mSubDevices.resize(8);
     desc.spiSlaveIds["FPGA"] = 0;

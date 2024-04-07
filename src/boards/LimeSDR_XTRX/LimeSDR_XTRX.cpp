@@ -12,7 +12,7 @@
 #include "DSP/Equalizer.h"
 #include "CommonFunctions.h"
 
-#include "limesuiteng/DeviceNode.h"
+#include "DeviceTreeNode.h"
 #include "comms/IComms.h"
 #include "limesuiteng/MemoryRegions.h"
 #include "lms7002m/LMS7002M_validation.h"
@@ -191,9 +191,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     const int chipCount = mLMSChips.size();
     mStreamers.resize(chipCount, nullptr);
 
-    auto fpgaNode = std::make_shared<DeviceNode>("FPGA", eDeviceNodeClass::FPGA_XTRX, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS7002M", eDeviceNodeClass::LMS7002M, chip));
-    desc.socTree = std::make_shared<DeviceNode>("XTRX", eDeviceNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_XTRX, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS7002M", eDeviceTreeNodeClass::LMS7002M, chip));
+    desc.socTree = std::make_shared<DeviceTreeNode>("XTRX", eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 }
 

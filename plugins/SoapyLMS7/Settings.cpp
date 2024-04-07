@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
 

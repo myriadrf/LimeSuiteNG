@@ -12,7 +12,7 @@
 namespace lime {
 
 class SDRDevice;
-struct DeviceNode;
+struct DeviceTreeNode;
 
 /// @brief Structure for the information of a custom parameter.
 struct CustomParameter {
@@ -63,7 +63,7 @@ struct SDRDescriptor {
     std::vector<CustomParameter> customParameters; ///< Descriptions of all custom parameters of this device
     /** Descriptions of all memory storage devices on this device */
     std::map<std::string, std::shared_ptr<DataStorage>> memoryDevices;
-    std::shared_ptr<DeviceNode> socTree; ///< The device's subdevices tree view representation
+    std::shared_ptr<DeviceTreeNode> socTree; ///< The device's subdevices tree view representation
 };
 
 } // namespace lime

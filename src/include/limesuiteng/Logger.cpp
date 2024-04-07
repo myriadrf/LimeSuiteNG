@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <cstring> //strerror
 
+#include "utilities/toString.h"
+
 #ifdef _MSC_VER
     #define thread_local __declspec(thread)
     #include <Windows.h>

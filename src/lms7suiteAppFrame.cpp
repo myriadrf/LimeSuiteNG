@@ -35,10 +35,11 @@
 #include "GUI/events.h"
 #include "GUI/ISOCPanel.h"
 #include "SDRConfiguration_view.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "limesuiteng/DeviceNode.h"
+#include "DeviceTreeNode.h"
 //#include "LimeSDR.h"
 
 #include "limesuiteng/Logger.h"
@@ -65,7 +66,7 @@ void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char*
 }
 
 struct DeviceTreeItemData : public wxTreeItemData {
-    DeviceTreeItemData(const std::shared_ptr<DeviceNode> soc)
+    DeviceTreeItemData(const std::shared_ptr<DeviceTreeNode> soc)
         : wxTreeItemData()
         , gui(nullptr)
         , soc(soc)
@@ -78,7 +79,7 @@ struct DeviceTreeItemData : public wxTreeItemData {
             gui->Destroy();
     }
     ISOCPanel* gui;
-    const std::shared_ptr<DeviceNode> soc;
+    const std::shared_ptr<DeviceTreeNode> soc;
 };
 
 LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
@@ -242,7 +243,7 @@ void LMS7SuiteAppFrame::OnDeviceDisconnect()
     mContent = nullptr;
 }
 
-void CreateBranch(wxTreeCtrl* treeRoot, wxTreeItemId parentId, const std::shared_ptr<DeviceNode> node)
+void CreateBranch(wxTreeCtrl* treeRoot, wxTreeItemId parentId, const std::shared_ptr<DeviceTreeNode> node)
 {
     wxTreeItemId branchId = treeRoot->AppendItem(parentId, node->name, 0, 0, new DeviceTreeItemData(node));
     if (node->children.size() == 0)
@@ -261,7 +262,7 @@ void FillDeviceTree(wxTreeCtrl* root, lime::SDRDevice* device, wxWindow* parentW
     sdrUI->Setup(device);
     sdrUI->Hide();
 
-    std::shared_ptr<DeviceNode> node = device->GetDescriptor().socTree;
+    std::shared_ptr<DeviceTreeNode> node = device->GetDescriptor().socTree;
     DeviceTreeItemData* treeRootData = new DeviceTreeItemData(node);
     treeRootData->gui = sdrUI;
     wxTreeItemId rootId = root->AddRoot(node->name, 0, 0, treeRootData);
@@ -403,33 +404,33 @@ void LMS7SuiteAppFrame::OnShowModule(wxCommandEvent& event)
     }
 }
 
-ISOCPanel* CreateGUI(wxWindow* parent, eDeviceNodeClass deviceNodeClass, void* socPtr)
+ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass, void* socPtr)
 {
-    switch (deviceNodeClass)
+    switch (DeviceTreeNodeClass)
     {
-    case eDeviceNodeClass::ADF4002: {
+    case eDeviceTreeNodeClass::ADF4002: {
         ADF4002_wxgui* adfPanel = new ADF4002_wxgui(parent, wxNewId());
         adfPanel->Initialize(reinterpret_cast<lime::ADF4002*>(socPtr));
         return adfPanel;
     }
-    case eDeviceNodeClass::CDCM6208: {
+    case eDeviceTreeNodeClass::CDCM6208: {
         CDCM6208_panelgui* cdcmPanel = new CDCM6208_panelgui(parent, wxNewId());
         cdcmPanel->Initialize(reinterpret_cast<CDCM_Dev*>(socPtr));
         return cdcmPanel;
     }
-    case eDeviceNodeClass::LMS7002M: {
+    case eDeviceTreeNodeClass::LMS7002M: {
         lms7002_mainPanel* lmsPanel = new lms7002_mainPanel(parent, wxNewId());
         lmsPanel->Initialize(reinterpret_cast<LMS7002M*>(socPtr));
         return lmsPanel;
     }
-    case eDeviceNodeClass::SDRDevice: {
+    case eDeviceTreeNodeClass::SDRDevice: {
         SDRConfiguration_view* sdrPanel = new SDRConfiguration_view(parent, wxNewId());
         sdrPanel->Setup(reinterpret_cast<SDRDevice*>(socPtr));
         sdrPanel->Hide();
         return sdrPanel;
     }
     default:
-        lime::warning("Unrecognized device class(%u)", static_cast<uint8_t>(deviceNodeClass));
+        lime::warning("Unrecognized device class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));
         return nullptr;
     }
 }
@@ -443,7 +444,7 @@ void LMS7SuiteAppFrame::DeviceTreeSelectionChanged(wxTreeEvent& event)
     }
 
     if (item->gui == nullptr)
-        item->gui = CreateGUI(m_scrolledWindow1, item->soc->deviceNodeClass, item->soc->ptr);
+        item->gui = CreateGUI(m_scrolledWindow1, item->soc->DeviceTreeNodeClass, item->soc->ptr);
 
     if (mContent && mContent != item->gui)
     {

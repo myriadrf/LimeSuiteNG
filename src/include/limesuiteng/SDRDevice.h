@@ -19,7 +19,6 @@ struct SDRDescriptor;
 struct StreamConfig;
 struct StreamMeta;
 struct StreamStats;
-struct DeviceNode;
 struct DataStorage;
 struct Region;
 struct CustomParameterIO;

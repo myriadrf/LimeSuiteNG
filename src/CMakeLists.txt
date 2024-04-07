@@ -61,7 +61,6 @@ set(LIME_SUITE_SOURCES
     mcu_program/common_src/lms7002m_filters.c
 
     API/LMS_APIWrapper.cpp
-    include/limesuiteng/OpStatus.cpp
     include/limesuiteng/SDRDevice.cpp
 
     utilities/toString.cpp

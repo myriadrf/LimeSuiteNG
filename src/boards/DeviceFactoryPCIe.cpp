@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "LMSBoards.h"

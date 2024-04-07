@@ -1,6 +1,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/Logger.h"
 #include <iostream>
