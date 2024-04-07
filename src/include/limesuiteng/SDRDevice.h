@@ -21,10 +21,13 @@
 
 namespace lime {
 
+struct SDRDescriptor;
 struct StreamConfig;
 struct StreamMeta;
 struct StreamStats;
 struct DeviceNode;
+struct DataStorage;
+struct Region;
 class OEMTestReporter;
 
 enum class LogLevel : uint8_t;
@@ -35,90 +38,6 @@ class LIME_API SDRDevice
 {
   public:
     static constexpr uint8_t MAX_RFSOC_COUNT = 16; ///< Maximum amount of Radio-Frequency System-on-Chips
-
-    /// @brief Information about possible gain values.
-    struct GainValue {
-        uint16_t hardwareRegisterValue; ///< The value that is written to the hardware
-        float actualGainValue; ///< The actual meaning of the value (in dB)
-    };
-
-    /// @brief General information about the Radio-Frequency System-on-Chip (RFSoC).
-    struct RFSOCDescriptor {
-        std::string name; ///< The name of the system
-        uint8_t channelCount; ///< The available channel count of the system
-        std::unordered_map<TRXDir, std::vector<std::string>> pathNames; ///< The available antenna names
-
-        Range frequencyRange; ///< Deliverable frequency capabilities of the device
-        Range samplingRateRange; ///< Sampling rate capabilities of the device
-
-        std::unordered_map<TRXDir, std::unordered_map<std::string, Range>> antennaRange; ///< Antenna recommended bandwidths
-        std::unordered_map<TRXDir, Range> lowPassFilterRange; ///< The ranges of the low pass filter
-
-        std::unordered_map<TRXDir, std::set<eGainTypes>> gains; ///< The types of gains available
-        std::unordered_map<TRXDir, std::unordered_map<eGainTypes, Range>> gainRange; ///< The available ranges of each gain
-        std::unordered_map<TRXDir, std::unordered_map<eGainTypes, std::vector<GainValue>>> gainValues; ///< The possible gain values
-    };
-
-    /// @brief Structure for the information of a custom parameter.
-    struct CustomParameter {
-        std::string name; ///< The name of the custom parameter
-        int32_t id; ///< The identifier of the custom parameter
-        int32_t minValue; ///< The minimum possible value of the custom parameter
-        int32_t maxValue; ///< The maximum possible value of the custom parameter
-        bool readOnly; ///< Denotes whether this value is read only or not
-    };
-
-    /// @brief Structure for storing the information of a memory region.
-    struct Region {
-        int32_t address; ///< Starting address of the memory region
-        int32_t size; ///< The size of the memory region
-    };
-
-    /// @brief Describes a data storage of a certain type a device holds.
-    struct DataStorage {
-        SDRDevice* ownerDevice; ///< Pointer to the device that actually owns the data storage
-        eMemoryDevice memoryDeviceType; ///< The type of memory being described
-        std::unordered_map<eMemoryRegion, Region> regions; ///< The documented memory regions of the data storage
-
-        /// @brief Constructs a new Data Storage object
-        /// @param device The device this storage belongs to.
-        /// @param type The type of memory being described in this object.
-        /// @param regions The memory regions this memory contains.
-        DataStorage(SDRDevice* device = nullptr,
-            eMemoryDevice type = eMemoryDevice::COUNT,
-            std::unordered_map<eMemoryRegion, Region> regions = {})
-            : ownerDevice(device)
-            , memoryDeviceType(type)
-            , regions(regions)
-        {
-        }
-    };
-
-    /// @brief General information about device internals, static capabilities.
-    struct Descriptor {
-        std::string name; ///< The displayable name for the device
-        /*! The displayable name for the expansion card
-        * Ex: if the RFIC is on a daughter-card.
-        */
-        std::string expansionName;
-        std::string firmwareVersion; ///< The firmware version as a string
-        std::string gatewareVersion; ///< Gateware version as a string
-        std::string gatewareRevision; ///< Gateware revision as a string
-        std::string gatewareTargetBoard; ///< Which board should use this gateware
-        std::string hardwareVersion; ///< The hardware version as a string
-        std::string protocolVersion; ///< The protocol version as a string
-        uint64_t serialNumber{ 0 }; ///< A unique board serial number
-
-        std::map<std::string, uint32_t> spiSlaveIds; ///< Names and SPI bus numbers of internal chips
-        std::vector<RFSOCDescriptor> rfSOC; ///< Descriptors of all RFSoC devices within this device
-        std::vector<CustomParameter> customParameters; ///< Descriptions of all custom parameters of this device
-        /** Descriptions of all memory storage devices on this device */
-        std::map<std::string, std::shared_ptr<DataStorage>> memoryDevices;
-        std::shared_ptr<DeviceNode> socTree; ///< The device's subdevices tree view representation
-
-        static const char DEVICE_NUMBER_SEPARATOR_SYMBOL; ///< The symbol used to separate the device's name from its number
-        static const char PATH_SEPARATOR_SYMBOL; ///< The symbol that separates the device's name from its parent's name
-    };
 
     /// @brief Describes the status of a global positioning system.
     struct GPS_Lock {
@@ -141,7 +60,7 @@ class LIME_API SDRDevice
 
     /// @brief Gets the Descriptor of the SDR Device.
     /// @return The Descriptor of the device.
-    virtual const Descriptor& GetDescriptor() const = 0;
+    virtual const SDRDescriptor& GetDescriptor() const = 0;
 
     /// @brief Initializes the device with initial settings.
     /// @return The success status of the initialization.

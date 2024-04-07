@@ -22,6 +22,7 @@
 #include <vector>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/MemoryRegions.h"
 
 using namespace std;
@@ -368,7 +369,7 @@ bool pnlBoardControls::Initialize(lime::SDRDevice* device)
     if (mDevice == nullptr)
         return false;
 
-    const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+    const SDRDescriptor& desc = mDevice->GetDescriptor();
 
     SetupControls(desc.name);
     wxCommandEvent evt;
@@ -404,7 +405,7 @@ std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(const st
     if (!mDevice)
         return paramList;
 
-    const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+    const SDRDescriptor& desc = mDevice->GetDescriptor();
 
     for (const auto& param : desc.customParameters)
         paramList.push_back(
@@ -549,7 +550,7 @@ void pnlBoardControls::SetupControls(const std::string& boardID)
 
     if (mDevice)
     {
-        lime::SDRDevice::Descriptor desc = mDevice->GetDescriptor();
+        lime::SDRDescriptor desc = mDevice->GetDescriptor();
         for (const auto& mem : desc.memoryDevices)
         {
             const auto& regions = mem.second->regions;

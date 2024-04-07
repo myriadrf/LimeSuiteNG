@@ -35,8 +35,8 @@ static const int CONTROL_BULK_READ_ADDRESS = 0x82;
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static const SDRDevice::CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)", 0, 0, 255, false };
-static const SDRDevice::CustomParameter CP_TEMPERATURE = { "Board Temperature", 1, 0, 65535, true };
+static const CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)", 0, 0, 255, false };
+static const CustomParameter CP_TEMPERATURE = { "Board Temperature", 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v0 = { //
     { 0x0022, 0x0FFF },
@@ -149,7 +149,7 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
 {
-    SDRDevice::Descriptor descriptor = GetDeviceInfo();
+    SDRDescriptor descriptor = GetDeviceInfo();
 
     LMS7002M* chip = new LMS7002M(mlms7002mPort);
     chip->SetConnection(mlms7002mPort);
@@ -581,10 +581,10 @@ OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
     }
 }
 
-SDRDevice::Descriptor LimeSDR_Mini::GetDeviceInfo(void)
+SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
 {
     assert(mStreamPort);
-    SDRDevice::Descriptor deviceDescriptor;
+    SDRDescriptor deviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo info;
     OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);

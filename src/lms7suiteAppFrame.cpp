@@ -37,6 +37,7 @@
 #include "SDRConfiguration_view.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/DeviceNode.h"
 //#include "LimeSDR.h"
 
@@ -225,7 +226,7 @@ void LMS7SuiteAppFrame::OnDeviceDisconnect()
         fftviewer->StopStreaming();
     if (lmsControl)
     {
-        const SDRDevice::Descriptor& info = lmsControl->GetDescriptor();
+        const SDRDescriptor& info = lmsControl->GetDescriptor();
         statusBar->SetStatusText(_("Control port: Not Connected"), controlColumn);
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
@@ -290,7 +291,7 @@ void LMS7SuiteAppFrame::OnDeviceHandleChange(wxCommandEvent& event)
         }
 
         //bind callback for spi data logging
-        const SDRDevice::Descriptor& info = lmsControl->GetDescriptor();
+        const SDRDescriptor& info = lmsControl->GetDescriptor();
         lmsControl->SetDataLogCallback(&LMS7SuiteAppFrame::OnLogDataTransfer);
         wxString controlDev = _("Device: ");
         controlDev.Append(handle.ToString());

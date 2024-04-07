@@ -17,6 +17,7 @@
 #include <wx/wfstream.h>
 
 #include "LMSBoards.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 const long LMS_Programing_wxgui::ID_PROGRAMING_FINISHED_EVENT = wxNewId();
 const long LMS_Programing_wxgui::ID_PROGRAMING_STATUS_EVENT = wxNewId();
@@ -114,7 +115,7 @@ bool LMS_Programing_wxgui::Initialize(lime::SDRDevice* device)
     if (mDevice)
     {
         cmbDevice->Clear();
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
 
         for (const auto& memoryDevice : desc.memoryDevices)
         {
@@ -140,7 +141,7 @@ void LMS_Programing_wxgui::OnbtnOpenClick(wxCommandEvent& event)
     wxString deviceSelection = cmbDevice->GetStringSelection();
     if (mDevice)
     {
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
 
         if (desc.name.find(lime::GetDeviceName(lime::LMS_DEV_LIMESDR)) != std::string::npos)
         {

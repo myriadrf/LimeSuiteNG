@@ -9,6 +9,7 @@
 #include <wx/msgdlg.h>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 #include <ciso646>
 
@@ -364,7 +365,7 @@ void pnlX3::Initialize(lime::SDRDevice* pControl)
     if (device == nullptr)
         return;
 
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
     const std::string targetSPI = "FPGA";
     for (const auto& nameIds : desc.spiSlaveIds)
     {

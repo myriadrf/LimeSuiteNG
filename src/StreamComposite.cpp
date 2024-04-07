@@ -1,6 +1,8 @@
 #include "limesuiteng/StreamComposite.h"
 #include <algorithm>
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/RFSOCDescriptor.h"
 #include <assert.h>
 namespace lime {
 
@@ -22,7 +24,7 @@ OpStatus StreamComposite::StreamSetup(const StreamConfig& config)
         subConfig.channels.at(TRXDir::Rx).clear();
         subConfig.channels.at(TRXDir::Tx).clear();
         assert(aggregate.device);
-        const SDRDevice::Descriptor& desc = aggregate.device->GetDescriptor();
+        const SDRDescriptor& desc = aggregate.device->GetDescriptor();
         std::size_t aggregateChannelCount = aggregate.channels.size();
 
         std::size_t channelCount = std::min(aggregateChannelCount, rxNeed);

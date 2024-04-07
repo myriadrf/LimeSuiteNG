@@ -120,7 +120,7 @@ struct FirmwareInfo {
     uint64_t boardSerialNumber;
 };
 OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice = 0);
-void FirmwareToDescriptor(const FirmwareInfo& info, SDRDevice::Descriptor& descriptor);
+void FirmwareToDescriptor(const FirmwareInfo& info, SDRDescriptor& descriptor);
 
 OpStatus LMS7002M_SPI(
     ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);

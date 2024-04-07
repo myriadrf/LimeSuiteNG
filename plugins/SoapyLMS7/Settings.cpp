@@ -17,6 +17,7 @@
 #include <string>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 using namespace lime;
 

@@ -1,5 +1,6 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/MemoryRegions.h"
 
 #include "limesuiteng/Logger.h"
 
@@ -31,9 +32,6 @@ StreamConfig::StreamConfig()
     channels[TRXDir::Rx] = {};
     channels[TRXDir::Tx] = {};
 }
-
-const char SDRDevice::Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
-const char SDRDevice::Descriptor::PATH_SEPARATOR_SYMBOL = '/';
 
 OpStatus SDRDevice::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {

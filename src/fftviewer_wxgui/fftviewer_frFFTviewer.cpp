@@ -9,6 +9,7 @@
 #include <fstream>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/Logger.h"
@@ -35,7 +36,7 @@ bool fftviewer_frFFTviewer::Initialize(SDRDevice* pDataPort)
 
     lmsIndex = 0;
     cmbRFSOC->Clear();
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
 
     for (size_t i = 0; i < desc.rfSOC.size(); ++i)
     {

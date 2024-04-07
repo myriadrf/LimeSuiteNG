@@ -11,6 +11,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 using namespace lime;
 using namespace std;

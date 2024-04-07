@@ -1,13 +1,6 @@
 #include "CommonFunctions.h"
 #include "lime/LimeSuite.h"
-#include "limesuiteng/commonTypes.h"
-#include "limesuiteng/DeviceHandle.h"
-#include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/GainTypes.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/VersionInfo.h"
-#include "limesuiteng/Logger.h"
+#include "limesuiteng/limesuiteng.hpp"
 #include "MemoryPool.h"
 
 #include <algorithm>
@@ -84,7 +77,7 @@ struct LMS_APIDevice {
         }
     }
 
-    const lime::SDRDevice::RFSOCDescriptor& GetRFSOCDescriptor() const
+    const lime::RFSOCDescriptor& GetRFSOCDescriptor() const
     {
         assert(device);
         return device->GetDescriptor().rfSOC.at(moduleIndex);

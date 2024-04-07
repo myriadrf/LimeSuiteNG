@@ -5,6 +5,7 @@
 #include "CDCM6208/CDCM6208_Dev.h"
 #include "limesuiteng/IComms.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "PacketsFIFO.h"
 #include "protocols/LMS64CProtocol.h"
 
@@ -31,7 +32,7 @@ class LimeSDR_MMX8 : public SDRDevice
     virtual ~LimeSDR_MMX8();
 
     virtual OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
-    virtual const Descriptor& GetDescriptor() const override;
+    virtual const SDRDescriptor& GetDescriptor() const override;
 
     virtual OpStatus Init() override;
     virtual OpStatus Reset() override;
@@ -153,7 +154,7 @@ class LimeSDR_MMX8 : public SDRDevice
 
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;
-    Descriptor mDeviceDescriptor;
+    SDRDescriptor mDeviceDescriptor;
     std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
     std::vector<LimeSDR_XTRX*> mSubDevices;
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;

@@ -78,7 +78,7 @@ class FPGA
         int hardwareVersion;
     };
     GatewareInfo GetGatewareInfo();
-    static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDevice::Descriptor& desc);
+    static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc);
 
   protected:
     OpStatus SelectModule(uint8_t chipIndex);

@@ -9,6 +9,7 @@
 #include "lms7suiteEvents.h"
 #include "pnlGPIO.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 using namespace std;
 

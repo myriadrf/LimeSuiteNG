@@ -5,6 +5,7 @@
 */
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "LMS64CProtocol.h"
 #include <chrono>
 #include <cassert>
@@ -222,7 +223,7 @@ OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevi
     return OpStatus::SUCCESS;
 }
 
-void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDevice::Descriptor& descriptor)
+void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
 {
     if (fw.deviceId >= eLMS_DEV::LMS_DEV_COUNT)
     {

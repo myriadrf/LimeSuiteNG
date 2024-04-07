@@ -13,6 +13,7 @@
 #include "CommonFunctions.h"
 
 #include "limesuiteng/DeviceNode.h"
+#include "limesuiteng/MemoryRegions.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
@@ -26,7 +27,7 @@ namespace lime {
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
     { 0x0022, 0x0FFF },
@@ -124,7 +125,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 {
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes.
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_XTRX);
 
     LMS64CProtocol::FirmwareInfo fw;
@@ -145,7 +146,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
-    SDRDevice::Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
+    Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
     if (MemoryRead(desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
         OpStatus::SUCCESS)
         desc.serialNumber = 0;

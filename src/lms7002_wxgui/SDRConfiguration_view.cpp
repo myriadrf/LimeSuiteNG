@@ -1,6 +1,7 @@
 #include "SDRConfiguration_view.h"
 
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>
@@ -143,7 +144,7 @@ void SOCConfig_view::Setup(SDRDevice* device, int index)
         return;
     }
 
-    const SDRDevice::RFSOCDescriptor& descriptor = device->GetDescriptor().rfSOC.at(index);
+    const RFSOCDescriptor& descriptor = device->GetDescriptor().rfSOC.at(index);
     socIndex = index;
     gui.titledBox->SetLabel(descriptor.name);
 
@@ -352,7 +353,7 @@ void SDRConfiguration_view::Setup(lime::SDRDevice* device)
         return;
     }
 
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
 
     wxSizerFlags ctrlFlags(0);
     ctrlFlags = ctrlFlags.Left().Top();

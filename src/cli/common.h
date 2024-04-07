@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LIMESUITENG_CLI_COMMON_H
+#define LIMESUITENG_CLI_COMMON_H
 
 #include <chrono>
 #include <string>
@@ -14,5 +15,8 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string& argument);
+
+#endif

@@ -13,6 +13,7 @@
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
 #include "limesuiteng/DeviceNode.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
 
@@ -30,11 +31,11 @@ static const uint8_t SPI_LMS7002M_2 = 1;
 static const uint8_t SPI_LMS7002M_3 = 2;
 static const uint8_t SPI_FPGA = 3;
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
-static SDRDevice::CustomParameter cp_temperature = { "Board Temperature", 1, 0, 65535, true };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static CustomParameter cp_temperature = { "Board Temperature", 1, 0, 65535, true };
 
-static SDRDevice::CustomParameter cp_lms1_tx1dac = { "LMS1 TX1DAC", 2, 0, 65535, false };
-static SDRDevice::CustomParameter cp_lms1_tx2dac = { "LMS1 TX2DAC", 3, 0, 65535, false };
+static CustomParameter cp_lms1_tx1dac = { "LMS1 TX1DAC", 2, 0, 65535, false };
+static CustomParameter cp_lms1_tx2dac = { "LMS1 TX2DAC", 3, 0, 65535, false };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = { //
     { 0x0022, 0x0FFF },
@@ -171,7 +172,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
 {
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw;
     LMS64CProtocol::GetFirmwareInfo(*control, fw);

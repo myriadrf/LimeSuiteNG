@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
 
 using namespace lime;
@@ -115,7 +116,7 @@ bool SPI_wxgui::Initialize(SDRDevice* pCtrPort)
     }
 
     wxArrayString spiSlavesList;
-    const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+    const SDRDescriptor& desc = mDevice->GetDescriptor();
 
     for (const auto& nameIds : desc.spiSlaveIds)
         spiSlavesList.Add(nameIds.first);
@@ -163,7 +164,7 @@ void SPI_wxgui::onSPIwrite(wxCommandEvent& event)
         if (listSelection < 0)
             return;
         const wxString strDevAddr = fields.devSelection->GetString(listSelection);
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
         auto iter = desc.spiSlaveIds.find(std::string(strDevAddr.mb_str()));
         if (iter == desc.spiSlaveIds.end())
         {
@@ -212,7 +213,7 @@ void SPI_wxgui::onSPIread(wxCommandEvent& event)
         if (listSelection < 0)
             return;
         const wxString strDevAddr = fields.devSelection->GetString(listSelection);
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
         auto iter = desc.spiSlaveIds.find(std::string(strDevAddr.mb_str()));
         if (iter == desc.spiSlaveIds.end())
         {

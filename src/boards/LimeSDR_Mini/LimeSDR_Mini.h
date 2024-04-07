@@ -52,7 +52,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
   protected:
-    SDRDevice::Descriptor GetDeviceInfo();
+    SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
 
   private:

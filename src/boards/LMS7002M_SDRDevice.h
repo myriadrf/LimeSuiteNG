@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/LMS7002M.h"
 
@@ -12,6 +13,7 @@ namespace lime {
 
 class TRXLooper;
 class FPGA;
+class RFSOCDescriptor;
 
 /** @brief Base class for device with multiple LMS7002M chips and FPGA */
 class LIME_API LMS7002M_SDRDevice : public SDRDevice
@@ -20,7 +22,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     LMS7002M_SDRDevice();
     virtual ~LMS7002M_SDRDevice();
 
-    virtual const Descriptor& GetDescriptor() const override;
+    virtual const SDRDescriptor& GetDescriptor() const override;
 
     virtual OpStatus Reset() override;
     virtual OpStatus GetGPSLock(GPS_Lock* status) override;
@@ -143,7 +145,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     std::vector<LMS7002M*> mLMSChips;
     std::vector<TRXLooper*> mStreamers;
 
-    Descriptor mDeviceDescriptor;
+    SDRDescriptor mDeviceDescriptor;
     StreamConfig mStreamConfig;
     FPGA* mFPGA;
 

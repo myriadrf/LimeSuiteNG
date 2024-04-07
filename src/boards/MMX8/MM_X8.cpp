@@ -18,7 +18,10 @@
 
 namespace lime {
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static const char DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
+static const char PATH_SEPARATOR_SYMBOL = '/';
+
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
 
 /// @brief Constructs the LimeSDR_MMX8 object.
@@ -39,7 +42,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     /// could read back it's state for debugging purposes
 
     mMainFPGAcomms = spiFPGA[8];
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MMX8);
 
     // LMS64CProtocol::FirmwareInfo fw;
@@ -72,35 +75,35 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     for (size_t i = 0; i < mSubDevices.size(); ++i)
     {
         mSubDevices[i] = new LimeSDR_XTRX(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
-        const SDRDevice::Descriptor& subdeviceDescriptor = mSubDevices[i]->GetDescriptor();
+        const SDRDescriptor& subdeviceDescriptor = mSubDevices[i]->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
         {
             RFSOCDescriptor temp = soc;
-            temp.name = soc.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            temp.name = soc.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.rfSOC.push_back(temp);
         }
 
         for (const auto& slaveId : subdeviceDescriptor.spiSlaveIds)
         {
-            const std::string slaveName = slaveId.first + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            const std::string slaveName = slaveId.first + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.spiSlaveIds[slaveName] = (i + 1) << 8 | slaveId.second;
             chipSelectToDevice[desc.spiSlaveIds[slaveName]] = mSubDevices[i];
         }
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            std::string indexName = subdeviceDescriptor.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                    Descriptor::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
+                                    PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
 
         for (const auto& customParameter : subdeviceDescriptor.customParameters)
         {
-            SDRDevice::CustomParameter parameter = customParameter;
+            CustomParameter parameter = customParameter;
             parameter.id |= (i + 1) << 8;
-            parameter.name = customParameter.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            parameter.name = customParameter.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.customParameters.push_back(parameter);
             customParameterToDevice[parameter.id] = mSubDevices[i];
         }
@@ -117,7 +120,7 @@ LimeSDR_MMX8::~LimeSDR_MMX8()
         delete mSubDevices[i];
 }
 
-const SDRDevice::Descriptor& LimeSDR_MMX8::GetDescriptor() const
+const SDRDescriptor& LimeSDR_MMX8::GetDescriptor() const
 {
     return mDeviceDescriptor;
 }

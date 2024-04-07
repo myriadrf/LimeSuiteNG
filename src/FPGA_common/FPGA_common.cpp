@@ -2,6 +2,7 @@
 #include "limesuiteng/IComms.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "WriteRegistersBatch.h"
 
 #include <algorithm>
@@ -1194,7 +1195,7 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
 /// @brief Converts the Gateware information descriptor into an SDR Device descriptor.
 /// @param gw The gateware information to convert.
 /// @param[out] desc The descriptor to output the information to.
-void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDevice::Descriptor& desc)
+void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc)
 {
     desc.gatewareTargetBoard = GetDeviceName(eLMS_DEV(gw.boardID));
     desc.gatewareVersion = std::to_string(gw.version);
