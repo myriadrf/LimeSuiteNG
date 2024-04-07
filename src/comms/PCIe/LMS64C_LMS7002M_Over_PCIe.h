@@ -1,7 +1,7 @@
 #ifndef LIME_LMS64C_LMS7002M_OVER_PCIE_H
 #define LIME_LMS64C_LMS7002M_OVER_PCIE_H
 
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 #include "LitePCIe.h"
 #include "PCIE_CSR_Pipe.h"
 

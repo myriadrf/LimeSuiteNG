@@ -24,7 +24,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/MemoryRegions.h"
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 
 using namespace std;
 using namespace lime;

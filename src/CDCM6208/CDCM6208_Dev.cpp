@@ -4,7 +4,7 @@
 #include <chrono>
 #include <math.h>
 #include <thread>
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 
 using namespace lime;
 

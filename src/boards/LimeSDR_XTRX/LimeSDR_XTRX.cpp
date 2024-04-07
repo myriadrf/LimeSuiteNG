@@ -13,7 +13,7 @@
 #include "CommonFunctions.h"
 
 #include "limesuiteng/DeviceNode.h"
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 #include "limesuiteng/MemoryRegions.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"

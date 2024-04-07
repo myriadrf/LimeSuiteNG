@@ -23,6 +23,7 @@
 #include "limesuiteng/Logger.h"
 #include "MemoryPool.h"
 #include "TxBufferManager.h"
+#include "utilities/DeltaVariable.h"
 
 static bool showStats = false;
 static const int statsPeriod_ms = 1000; // at 122.88 MHz MIMO, fpga tx pkt counter overflows every 272ms

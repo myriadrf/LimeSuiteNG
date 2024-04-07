@@ -1,7 +1,9 @@
 #include "CommonFunctions.h"
+#include "comms/IComms.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
 #include "MemoryPool.h"
+#include "utilities/DeltaVariable.h"
 
 #include <algorithm>
 #include <array>

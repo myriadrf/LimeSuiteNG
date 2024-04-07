@@ -2,7 +2,6 @@
 #define LIMESUITENG_HPP
 
 #include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/IComms.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/SDRConfig.h"

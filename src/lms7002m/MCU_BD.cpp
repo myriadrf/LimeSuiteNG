@@ -15,7 +15,7 @@ using namespace std;
 #include <list>
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 #include <functional>
 
 using namespace lime;

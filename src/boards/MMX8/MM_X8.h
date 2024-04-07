@@ -3,7 +3,7 @@
 
 #include "ADF4002/ADF4002.h"
 #include "CDCM6208/CDCM6208_Dev.h"
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "PacketsFIFO.h"
