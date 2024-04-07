@@ -1,5 +1,11 @@
 #pragma once
 
+#if __cplusplus < 201402L
+    #define CPP14constexpr
+#else
+    #define CPP14constexpr constexpr
+#endif
+
 namespace lime {
 
 /**

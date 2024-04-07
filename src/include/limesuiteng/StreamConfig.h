@@ -2,7 +2,7 @@
 #define LIMESUITENG_SDRSTREAMCONFIG_H
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/DataFormat.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 

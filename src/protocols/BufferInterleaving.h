@@ -1,7 +1,7 @@
 #ifndef LIME_BUFFER_INTERLEAVING_H
 #define LIME_BUFFER_INTERLEAVING_H
 
-#include "limesuiteng/DataFormat.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 

@@ -9,6 +9,7 @@
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "TRXLooper.h"
+#include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>

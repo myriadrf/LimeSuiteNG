@@ -28,7 +28,7 @@
 #endif
 
 #include "lms_gfir.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 #include "comms/IComms.h"
 #include "LMS7002M_RegistersMap.h"
 #include "limesuiteng/Logger.h"

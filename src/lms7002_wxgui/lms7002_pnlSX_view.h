@@ -3,7 +3,7 @@
 
 #include <map>
 #include "ILMS7002MTab.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 
 class lms7002_pnlSX_view : public ILMS7002MTab
 {

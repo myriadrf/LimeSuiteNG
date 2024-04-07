@@ -1,6 +1,6 @@
 #include "limesuiteng/StreamComposite.h"
 #include <algorithm>
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/RFSOCDescriptor.h"

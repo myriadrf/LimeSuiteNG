@@ -2,7 +2,7 @@
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include "parsers/CoefficientFileParser.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 #include "limesuiteng/LMS7002M.h"
 
 using namespace lime;

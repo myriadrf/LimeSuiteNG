@@ -16,7 +16,7 @@
 #include "DataPacket.h"
 #include "FPGA_common.h"
 #include "LitePCIe.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/SDRDevice.h"

@@ -3,7 +3,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamComposite.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/DataFormat.h"
+#include "limesuiteng/types.h"
 
 #include <map>
 #include <vector>

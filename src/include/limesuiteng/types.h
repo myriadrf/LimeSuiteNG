@@ -1,17 +1,20 @@
-#pragma once
+#ifndef LIMESUITENG_TYPES_H
+#define LIMESUITENG_TYPES_H
 
-#if __cplusplus < 201402L
-    #define CPP14constexpr
-#else
-    #define CPP14constexpr constexpr
-#endif
+#include "limesuiteng/config.h"
+#include <cstdint>
 
 namespace lime {
 
 /// @brief The direction of the transmission
 enum class TRXDir : bool { Rx, Tx };
 
-const char* ToCString(TRXDir dir);
+/// @brief Enumerator describing the data formats.
+enum class DataFormat : uint8_t {
+    I16, ///< 16-bit integers.
+    I12, ///< 12-bit integers. Stored as int16_t, but the expected range is [-2048;2047]
+    F32, ///< 32-bit floating-point.
+};
 
 /// @brief Structure describing the range possible.
 struct Range {
@@ -29,3 +32,5 @@ struct Range {
 };
 
 } // namespace lime
+
+#endif

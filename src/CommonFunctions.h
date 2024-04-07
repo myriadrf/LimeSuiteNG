@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 
