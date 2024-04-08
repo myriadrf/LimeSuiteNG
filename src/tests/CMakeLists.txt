@@ -1,6 +1,7 @@
 set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
+    boards/LMS7002M_SDRDevice_Fixture.cpp
     parsers/CoefficientFileParserTest.cpp
     protocols/LMS64CProtocol/CustomParameterReadTest.cpp
     protocols/LMS64CProtocol/CustomParameterWriteTest.cpp
