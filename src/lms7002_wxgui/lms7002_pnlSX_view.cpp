@@ -1447,7 +1447,7 @@ void lms7002_pnlSX_view::OnbtnCalculateClick(wxCommandEvent& event)
     {
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
-        evt.SetInt(static_cast<int>(lime::LogLevel::INFO));
+        evt.SetInt(static_cast<int>(lime::LogLevel::Info));
         wxString msg = direction == TRXDir::Rx ? _("SXR") : _("SXT");
         msg += wxString::Format(_(" frequency set to %f MHz"), freqMHz);
         evt.SetString(msg);

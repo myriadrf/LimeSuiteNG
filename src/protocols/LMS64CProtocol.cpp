@@ -520,12 +520,12 @@ OpStatus ProgramWrite(ISerialPort& port,
 #ifndef NDEBUG
     auto t2 = std::chrono::high_resolution_clock::now();
     if ((device == ProgramWriteTarget::FPGA && prog_mode == 2) == false)
-        lime::log(LogLevel::INFO,
+        lime::log(LogLevel::Info,
             "Programming finished, %li bytes sent! %li ms",
             length,
             std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
     else
-        lime::log(LogLevel::INFO, "FPGA configuring initiated"s);
+        lime::log(LogLevel::Info, "FPGA configuring initiated"s);
 #endif
     return OpStatus::Success;
 }

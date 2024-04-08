@@ -231,7 +231,7 @@ void LMS7SuiteAppFrame::OnDeviceDisconnect()
         statusBar->SetStatusText(_("Control port: Not Connected"), controlColumn);
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
-        evt.SetInt(static_cast<int>(lime::LogLevel::INFO));
+        evt.SetInt(static_cast<int>(lime::LogLevel::Info));
         evt.SetString("Disconnected: " + info.name);
         wxPostEvent(this, evt);
         UpdateConnections(nullptr);
@@ -313,7 +313,7 @@ void LMS7SuiteAppFrame::OnDeviceHandleChange(wxCommandEvent& event)
 
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
-        evt.SetInt(static_cast<int>(lime::LogLevel::INFO));
+        evt.SetInt(static_cast<int>(lime::LogLevel::Info));
         evt.SetString(_("Connected ") + controlDev);
         wxPostEvent(this, evt);
         UpdateConnections(lmsControl);
@@ -359,7 +359,7 @@ void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const ui
     evt->SetString(ss.str());
     evt->SetEventObject(obj_ptr);
     evt->SetEventType(LOG_MESSAGE);
-    evt->SetInt(static_cast<int>(lime::LogLevel::INFO));
+    evt->SetInt(static_cast<int>(lime::LogLevel::Info));
     wxQueueEvent(obj_ptr, evt);
 }
 

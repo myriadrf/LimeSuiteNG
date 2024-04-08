@@ -173,7 +173,7 @@ int TRXLooper_PCIE::TxSetup()
             samplesInPkt,
             mTx.packetsToBatch,
             bufferTimeDuration * 1e6);
-        mCallback_logMessage(LogLevel::DEBUG, msg);
+        mCallback_logMessage(LogLevel::Debug, msg);
     }
 
     const std::string name = "MemPool_Tx" + std::to_string(chipId);
@@ -451,7 +451,7 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
                 if (mCallback_logMessage)
                 {
                     bool showAsWarning = underrun.delta() || loss.delta();
-                    LogLevel level = showAsWarning ? LogLevel::WARNING : LogLevel::DEBUG;
+                    LogLevel level = showAsWarning ? LogLevel::Warning : LogLevel::Debug;
                     mCallback_logMessage(level, msg);
                 }
             }
@@ -487,7 +487,7 @@ void TRXLooper_PCIE::TxTeardown()
             fpgaTxPktIngressCount,
             (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
             fpgaTxPktDropCounter);
-        mCallback_logMessage(LogLevel::DEBUG, msg);
+        mCallback_logMessage(LogLevel::Debug, msg);
     }
 }
 
@@ -552,7 +552,7 @@ int TRXLooper_PCIE::RxSetup()
             mRx.packetsToBatch,
             mRx.packetsToBatch * packetSize,
             bufferTimeDuration * 1e6);
-        mCallback_logMessage(LogLevel::DEBUG, msg);
+        mCallback_logMessage(LogLevel::Debug, msg);
     }
 
     // float expectedDataRateBps = 0;
@@ -675,7 +675,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
             if (mCallback_logMessage)
             {
                 bool showAsWarning = overrun.delta() || loss.delta();
-                LogLevel level = showAsWarning ? LogLevel::WARNING : LogLevel::DEBUG;
+                LogLevel level = showAsWarning ? LogLevel::Warning : LogLevel::Debug;
                 mCallback_logMessage(level, msg);
             }
             overrun.checkpoint();
@@ -785,7 +785,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     {
         char msg[256];
         sprintf(msg, "Rx%i: packetsIn: %li", chipId, stats.packets);
-        mCallback_logMessage(LogLevel::DEBUG, msg);
+        mCallback_logMessage(LogLevel::Debug, msg);
     }
 }
 

@@ -7,7 +7,6 @@
     #include <wx/wx.h>
 #endif //WX_PRECOMP
 #include <wx/spinctrl.h>
-#undef ERROR
 
 #include "lime/LimeSuite.h"
 #include "pnluLimeSDR.h"

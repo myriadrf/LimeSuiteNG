@@ -14,7 +14,6 @@
 #ifndef __unix__
     #include "windows.h"
     #include "FTD3XXLibrary/FTD3XX.h"
-    #undef ERROR
 #else
     #ifdef __GNUC__
         #pragma GCC diagnostic push

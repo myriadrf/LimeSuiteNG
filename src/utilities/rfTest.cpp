@@ -33,7 +33,7 @@ void intHandler(int dummy)
     runForever.store(false);
 }
 
-static lime::LogLevel logVerbosity = lime::LogLevel::DEBUG;
+static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
 static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)

@@ -1,8 +1,6 @@
 #include "pnlMiniLog.h"
 #include "dlgFullMessageLog.h"
 
-#undef ERROR
-
 using namespace lime;
 
 static wxTextAttr mDefaultStyle;
@@ -72,17 +70,17 @@ static const char* logLevelToName(const LogLevel level)
 {
     switch (level)
     {
-    case LogLevel::CRITICAL:
+    case LogLevel::Critical:
         return "CRITICAL";
-    case LogLevel::ERROR:
+    case LogLevel::Error:
         return "ERROR";
-    case LogLevel::WARNING:
+    case LogLevel::Warning:
         return "WARNING";
-    case LogLevel::INFO:
+    case LogLevel::Info:
         return "INFO";
-    case LogLevel::VERBOSE:
+    case LogLevel::Verbose:
         return "VERBOSE";
-    case LogLevel::DEBUG:
+    case LogLevel::Debug:
         return "DEBUG";
     }
     return "";
@@ -111,11 +109,11 @@ void pnlMiniLog::HandleMessage(wxCommandEvent& event)
     wxTextAttr style = mDefaultStyle;
     switch (level)
     {
-    case lime::LogLevel::CRITICAL:
-    case lime::LogLevel::ERROR:
+    case lime::LogLevel::Critical:
+    case lime::LogLevel::Error:
         style.SetTextColour(*wxRED);
         break;
-    case lime::LogLevel::WARNING:
+    case lime::LogLevel::Warning:
         style.SetBackgroundColour(*wxYELLOW);
         style.SetTextColour(*wxBLACK);
         break;

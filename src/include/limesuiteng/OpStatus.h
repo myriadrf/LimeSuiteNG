@@ -1,8 +1,6 @@
 #ifndef LIME_OPSTATUS_H
 #define LIME_OPSTATUS_H
 
-#undef ERROR
-
 namespace lime {
 
 /// @brief The possible status codes from operations.

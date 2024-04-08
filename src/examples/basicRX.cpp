@@ -26,7 +26,7 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static LogLevel logVerbosity = LogLevel::DEBUG;
+static LogLevel logVerbosity = LogLevel::Debug;
 static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)

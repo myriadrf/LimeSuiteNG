@@ -32,20 +32,20 @@ static std::vector<int> ParseIntArray(const std::string& str)
     return numbers;
 }
 
-static LogLevel logVerbosity = LogLevel::ERROR;
+static LogLevel logVerbosity = LogLevel::Error;
 static LogLevel strToLogLevel(const char* str)
 {
     if (strstr("debug", str))
-        return LogLevel::DEBUG;
+        return LogLevel::Debug;
     else if (strstr("verbose", str))
-        return LogLevel::VERBOSE;
+        return LogLevel::Verbose;
     else if (strstr("error", str))
-        return LogLevel::ERROR;
+        return LogLevel::Error;
     else if (strstr("warning", str))
-        return LogLevel::WARNING;
+        return LogLevel::Warning;
     else if (strstr("info", str))
-        return LogLevel::INFO;
-    return LogLevel::ERROR;
+        return LogLevel::Info;
+    return LogLevel::Error;
 }
 static void LogCallback(LogLevel lvl, const char* msg)
 {

@@ -57,7 +57,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
     bool blockAccess;
 };
 
-static lime::LogLevel logVerbosity = lime::LogLevel::DEBUG;
+static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
 static void Log(LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
@@ -197,7 +197,7 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
     //printf ("Required bandwidth:[%u], current sample_rate [%u]", bandwidth, s->sample_rate);
     if (rate <= 0) // sample rate not specified, align on 1.92Mhz
     {
-        Log(LogLevel::VERBOSE,
+        Log(LogLevel::Verbose,
             "Port[%i] Trying sample rates which are bandwidth(%u) * 1.536 = %f",
             p,
             bandwidth,
@@ -207,42 +207,42 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
             int n = multipliers[i];
             if (n * 1920000 > 122.88e6)
                 break;
-            Log(LogLevel::DEBUG, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
+            Log(LogLevel::Debug, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
             if (desiredSamplingRate <= n * 1920000)
             {
                 *psample_rate_num = n;
                 psample_rate->num = n * 1920000;
                 psample_rate->den = 1;
                 rate = psample_rate->num;
-                Log(LogLevel::INFO, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
+                Log(LogLevel::Info, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
                 return 0;
             }
         }
-        Log(LogLevel::VERBOSE, "Port[%i] Trying sample rates which are close to bandwidth(%u)", p, bandwidth);
+        Log(LogLevel::Verbose, "Port[%i] Trying sample rates which are close to bandwidth(%u)", p, bandwidth);
         for (uint32_t i = 0; i < sizeof(multipliers) / sizeof(uint8_t); ++i)
         {
             int n = multipliers[i];
-            Log(LogLevel::DEBUG, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
+            Log(LogLevel::Debug, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
             if (bandwidth <= n * 1920000)
             {
                 *psample_rate_num = n;
                 psample_rate->num = n * 1920000;
                 psample_rate->den = 1;
                 rate = psample_rate->num;
-                Log(LogLevel::INFO, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
+                Log(LogLevel::Info, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
                 return 0;
             }
         }
-        Log(LogLevel::ERROR, "Port[%i] Could not find suitable sampling rate for %i bandwidth", p, bandwidth);
+        Log(LogLevel::Error, "Port[%i] Could not find suitable sampling rate for %i bandwidth", p, bandwidth);
     }
     else
     {
         if (rate < bandwidth)
         {
-            Log(LogLevel::ERROR, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
+            Log(LogLevel::Error, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
             return -1;
         }
-        Log(LogLevel::INFO, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
+        Log(LogLevel::Info, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
         psample_rate->num = rate;
         psample_rate->den = 1;
         *psample_rate_num = rate / 1920000;
@@ -261,7 +261,7 @@ static int trx_lms7002m_get_tx_samples_per_packet_func(TRXState* s1)
     // {
     //     txExpectedSamples = lime->streamExtras[0]->tx.samplesInPacket;
     // }
-    // Log(LogLevel::DEBUG, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
+    // Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
     return txExpectedSamples;
 }
 

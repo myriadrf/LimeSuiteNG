@@ -6,7 +6,6 @@
 #ifndef __unix__
     #include "windows.h"
     #include "CyAPI.h"
-    #undef ERROR
 #endif
 
 namespace lime {

@@ -843,7 +843,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
     wxCommandEvent cmd;
     cmd.SetString(_("CGEN frequency set to ") + lblRealOutFrequency->GetLabel() + _(" MHz"));
     cmd.SetEventType(LOG_MESSAGE);
-    cmd.SetInt(static_cast<int>(lime::LogLevel::INFO));
+    cmd.SetInt(static_cast<int>(lime::LogLevel::Info));
     wxPostEvent(this, cmd);
 }
 
@@ -874,7 +874,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
     wxCommandEvent cmd;
     cmd.SetString(_("CGEN frequency set to ") + lblRealOutFrequency->GetLabel() + _(" MHz"));
     cmd.SetEventType(LOG_MESSAGE);
-    cmd.SetInt(static_cast<int>(lime::LogLevel::INFO));
+    cmd.SetInt(static_cast<int>(lime::LogLevel::Info));
     wxPostEvent(this, cmd);
 }
 

@@ -38,23 +38,23 @@ static void gr_loghandler(const lime::LogLevel level, const char* message)
     assert(message);
 
     switch (level) {
-    case lime::LogLevel::CRITICAL:
+    case lime::LogLevel::Critical:
         GR_LOG_CRIT(logger, message);
         break;
 
-    case lime::LogLevel::ERROR:
+    case lime::LogLevel::Error:
         GR_LOG_ERROR(logger, message);
         break;
 
-    case lime::LogLevel::WARNING:
+    case lime::LogLevel::Warning:
         GR_LOG_WARN(logger, message);
         break;
 
-    case lime::LogLevel::INFO:
+    case lime::LogLevel::Info:
         GR_LOG_INFO(logger, message);
         break;
 
-    case lime::LogLevel::DEBUG:
+    case lime::LogLevel::Debug:
         GR_LOG_DEBUG(debug_logger, message);
         break;
 

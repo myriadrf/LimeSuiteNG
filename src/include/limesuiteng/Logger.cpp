@@ -38,20 +38,20 @@ int ReportError(const int errnum, const char* format, va_list argList)
 {
     _reportedErrorCode = errnum;
     vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
-    log(LogLevel::ERROR, _reportedErrorMessage);
+    log(LogLevel::Error, _reportedErrorMessage);
     return errnum;
 }
 
 OpStatus ReportError(const OpStatus errnum, const char* format, va_list argList)
 {
     vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
-    log(LogLevel::ERROR, _reportedErrorMessage);
+    log(LogLevel::Error, _reportedErrorMessage);
     return errnum;
 }
 
 static void defaultLogHandler(const LogLevel level, const char* message)
 {
-    if (level > LogLevel::ERROR)
+    if (level > LogLevel::Error)
         return;
     fprintf(stderr, "%s\n", message);
 }
@@ -83,27 +83,27 @@ void critical(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    log(LogLevel::CRITICAL, format, args);
+    log(LogLevel::Critical, format, args);
     va_end(args);
 }
 
 void critical(const std::string& text)
 {
-    log(LogLevel::CRITICAL, text);
+    log(LogLevel::Critical, text);
 }
 
 int error(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    log(LogLevel::ERROR, format, args);
+    log(LogLevel::Error, format, args);
     va_end(args);
     return -1;
 }
 
 int error(const std::string& text)
 {
-    log(LogLevel::ERROR, text);
+    log(LogLevel::Error, text);
     return -1;
 }
 
@@ -111,20 +111,20 @@ void warning(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    log(LogLevel::WARNING, format, args);
+    log(LogLevel::Warning, format, args);
     va_end(args);
 }
 
 void warning(const std::string& text)
 {
-    log(LogLevel::WARNING, text);
+    log(LogLevel::Warning, text);
 }
 
 void info(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    log(LogLevel::INFO, format, args);
+    log(LogLevel::Info, format, args);
     va_end(args);
 }
 
@@ -132,18 +132,18 @@ void debug(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    log(LogLevel::DEBUG, format, args);
+    log(LogLevel::Debug, format, args);
     va_end(args);
 }
 
 void debug(const std::string& text)
 {
-    log(LogLevel::DEBUG, text);
+    log(LogLevel::Debug, text);
 }
 
 void info(const std::string& text)
 {
-    log(LogLevel::INFO, text);
+    log(LogLevel::Info, text);
 }
 
 //! Log a message with formatting and specified logging level

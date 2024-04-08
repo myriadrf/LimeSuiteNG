@@ -18,12 +18,12 @@
 namespace lime {
 
 enum class LogLevel : uint8_t {
-    CRITICAL, //!< A critical error. The application might not be able to continue running successfully.
-    ERROR, //!< An error. An operation did not complete successfully, but the application as a whole is not affected.
-    WARNING, //!< A warning. An operation completed with an unexpected result.
-    INFO, //!< An informational message, usually denoting the successful completion of an operation.
-    VERBOSE, //!< An informational message, detailing intermediate step results.
-    DEBUG, //!< A debugging message, only shown in Debug configuration.
+    Critical, //!< A critical error. The application might not be able to continue running successfully.
+    Error, //!< An error. An operation did not complete successfully, but the application as a whole is not affected.
+    Warning, //!< A warning. An operation completed with an unexpected result.
+    Info, //!< An informational message, usually denoting the successful completion of an operation.
+    Verbose, //!< An informational message, detailing intermediate step results.
+    Debug, //!< A debugging message, only shown in Debug configuration.
 };
 
 //! Typedef for the registered log handler function.
