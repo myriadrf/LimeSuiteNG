@@ -25,14 +25,14 @@ if (ENABLE_LITE_PCIE)
     )
 endif()
 
-if (ENABLE_LIMESDR_USB)
+if (ENABLE_USB_FX3)
     set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}
         boards/LimeSDR/LimeSDRTest.cpp
         boards/LimeSDR/USB_CSR_Pipe_SDRTest.cpp
     )
 endif()
 
-if (ENABLE_LIMESDR_MINI)
+if (ENABLE_USB_FTDI)
     set(LIME_TEST_SUITE_SOURCES ${LIME_TEST_SUITE_SOURCES}
         boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp
         boards/LimeSDR_Mini/USB_CSR_Pipe_MiniTest.cpp
