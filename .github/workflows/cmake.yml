@@ -66,11 +66,10 @@ jobs:
           7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
 
       - name: Install SoapySDR from source
-        if: matrix.os != 'macos-latest' # Temporarily disable Mac OS build until issues upstream are fixed
+        if: matrix.os != 'macos-latest' # Not needed on Mac OS because it is installed as a GNU Radio dependency
         run: |
-          git clone https://github.com/pothosware/SoapySDR.git
+          git clone -b ${{env.SOAPY_SDR_BRANCH}} --depth 1 https://github.com/pothosware/SoapySDR.git
           cd SoapySDR
-          git checkout ${{env.SOAPY_SDR_BRANCH}}
           mkdir build && cd build
           cmake ../ -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON=OFF -DENABLE_PYTHON3=OFF
           cmake --build .
