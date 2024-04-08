@@ -1,0 +1,39 @@
+LIBRARY     ExtIO_LimeSDR.DLL
+
+EXPORTS
+    InitHW                        = _InitHW@12
+    OpenHW                        = _OpenHW@0
+    StartHW                       = _StartHW@4
+	StartHW64					  = _StartHW64@8
+    StopHW                        = _StopHW@0
+    CloseHW                       = _CloseHW@0
+    SetHWLO                       = _SetHWLO@4
+    GetStatus                     = _GetStatus@0
+    SetCallback                   = _SetCallback@4
+
+    GetHWLO                       = _GetHWLO@0
+    GetHWSR                       = _GetHWSR@0
+
+    ShowGUI                       = _ShowGUI@0
+    HideGUI                       = _HideGUI@0
+
+    VersionInfo                    = _VersionInfo@12
+
+    GetAttenuators                 = _GetAttenuators@8
+    GetActualAttIdx                = _GetActualAttIdx@0
+    SetAttenuator                  = _SetAttenuator@4
+
+; 64 Bit:
+
+    SetHWLO64                     = _SetHWLO64@8
+    GetHWLO64                     = _GetHWLO64@0
+
+; Samplerate / Bandwidth:
+    ExtIoGetSrates                 = _ExtIoGetSrates@8
+    ExtIoGetActualSrateIdx         = _ExtIoGetActualSrateIdx@0
+    ExtIoSetSrate                  = _ExtIoSetSrate@4
+
+; Settings
+    ExtIoGetSetting                = _ExtIoGetSetting@12
+    ExtIoSetSetting                = _ExtIoSetSetting@8
+

@@ -4,9 +4,8 @@
 @brief Implementation of LMS7002M transceiver configuring
 */
 
-#include "limesuiteng/LMS7002M.h"
-
 #define _USE_MATH_DEFINES
+#include "limesuiteng/LMS7002M.h"
 
 #include <algorithm>
 #include <cassert>
