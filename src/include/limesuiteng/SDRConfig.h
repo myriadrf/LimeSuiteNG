@@ -3,7 +3,6 @@
 
 #include "limesuiteng/types.h"
 #include "limesuiteng/complex.h"
-#include "limesuiteng/GainTypes.h"
 
 #include <unordered_map>
 

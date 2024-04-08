@@ -2,6 +2,7 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "utilities/toString.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>
@@ -164,14 +165,14 @@ void SOCConfig_view::Setup(SDRDevice* device, int index)
     for (const auto& gain : descriptor.gains.at(TRXDir::Rx))
     {
         gui.rxSelectionToValue[rxGains.size()] = gain;
-        rxGains.Add(GAIN_TYPES_TEXT.at(gain));
+        rxGains.Add(ToString(gain));
     }
 
     wxArrayString txGains;
     for (const auto& gain : descriptor.gains.at(TRXDir::Tx))
     {
         gui.txSelectionToValue[txGains.size()] = gain;
-        txGains.Add(GAIN_TYPES_TEXT.at(gain));
+        txGains.Add(ToString(gain));
     }
 
     for (int i = 0; i < descriptor.channelCount; ++i)

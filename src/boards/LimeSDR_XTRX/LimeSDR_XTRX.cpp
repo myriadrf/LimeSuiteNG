@@ -11,10 +11,10 @@
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
 #include "CommonFunctions.h"
+#include "utilities/toString.h"
 
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
-#include "limesuiteng/MemoryRegions.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
@@ -138,8 +138,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     // desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_RAM)] =
     //     std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
     const std::unordered_map<eMemoryRegion, Region> flashMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
-    desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
 
@@ -148,7 +147,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareToDescriptor(gw, desc);
 
     Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
-    if (MemoryRead(desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
+    if (MemoryRead(desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
         OpStatus::SUCCESS)
         desc.serialNumber = 0;
 

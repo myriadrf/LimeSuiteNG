@@ -15,6 +15,7 @@
 #include "comms/IComms.h"
 #include "FX3/FX3.h"
 #include "ISerialPort.h"
+#include "utilities/toString.h"
 
 #include <array>
 #include <cassert>
@@ -161,9 +162,8 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.socTree->children.push_back(fpgaNode);
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
-    descriptor.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
-    descriptor.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::EEPROM)] =
+    descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    descriptor.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
     mDeviceDescriptor = descriptor;

@@ -23,8 +23,8 @@
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "limesuiteng/MemoryRegions.h"
 #include "comms/IComms.h"
+#include "utilities/toString.h"
 
 using namespace std;
 using namespace lime;
@@ -558,7 +558,7 @@ void pnlBoardControls::SetupControls(const std::string& boardID)
             for (const auto& region : regions)
             {
                 MemoryParamGUI* gui = new MemoryParamGUI();
-                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, lime::MEMORY_REGIONS_TEXT.at(region.first));
+                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, ToString(region.first));
                 gui->txtValue = new wxTextCtrl(pnlEEPROMControls, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize);
                 gui->btnRead = new wxButton(pnlEEPROMControls, wxNewId(), _("Read"), wxDefaultPosition, wxDefaultSize);
                 gui->btnWrite = new wxButton(pnlEEPROMControls, wxNewId(), _("Write"), wxDefaultPosition, wxDefaultSize);

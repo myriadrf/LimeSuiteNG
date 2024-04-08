@@ -6,8 +6,6 @@
 #include <memory>
 
 #include "limesuiteng/RFSOCDescriptor.h"
-#include "limesuiteng/MemoryDevices.h"
-#include "limesuiteng/MemoryRegions.h"
 
 namespace lime {
 

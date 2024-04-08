@@ -29,7 +29,6 @@ class SDRDevice;
 }
 
 #include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/MemoryRegions.h"
 
 class pnlBoardControls : public IModuleFrame
 {

@@ -16,6 +16,19 @@ enum class DataFormat : uint8_t {
     F32, ///< 32-bit floating-point.
 };
 
+/// @brief Available gain types on the devices.
+enum class eGainTypes : uint8_t {
+    LNA, ///< Low Noise Amplifier
+    LoopbackLNA,
+    PGA, ///< Programmable Gain Amplifier
+    TIA, ///< Trans Impedance Amplifier
+    PAD,
+    LoopbackPAD,
+    IAMP,
+    PA, ///< On-board Power Amplifier
+    UNKNOWN
+};
+
 /// @brief Structure describing the range possible.
 struct Range {
     /// @brief Constructs the range structure,
@@ -30,6 +43,16 @@ struct Range {
     double max; ///< The maximum value of the range
     double step; ///< The step of the range (or 0.0 for any step)
 };
+
+enum class eMemoryRegion : uint8_t { VCTCXO_DAC, COUNT };
+
+/// @brief Structure for storing the information of a memory region.
+struct Region {
+    int32_t address; ///< Starting address of the memory region
+    int32_t size; ///< The size of the memory region
+};
+
+enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, COUNT };
 
 } // namespace lime
 

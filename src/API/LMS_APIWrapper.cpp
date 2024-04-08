@@ -4,6 +4,7 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
+#include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>
@@ -1946,7 +1947,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
     auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
-        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(lime::MEMORY_DEVICES_TEXT.at(memoryDevice));
+        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
             const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);
@@ -1997,7 +1998,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXORead(lms_device_t* device, uint16_t* val)
     auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
-        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(lime::MEMORY_DEVICES_TEXT.at(memoryDevice));
+        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
             const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);

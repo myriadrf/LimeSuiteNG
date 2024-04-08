@@ -7,7 +7,6 @@
 #include <unordered_map>
 
 #include "limesuiteng/types.h"
-#include "limesuiteng/GainTypes.h"
 
 namespace lime {
 

@@ -1,6 +1,5 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/MemoryRegions.h"
 
 #include "limesuiteng/Logger.h"
 

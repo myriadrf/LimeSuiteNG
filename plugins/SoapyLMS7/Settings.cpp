@@ -19,6 +19,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "utilities/toString.h"
 
 using namespace lime;
 
@@ -274,7 +275,7 @@ std::vector<std::string> SoapyLMS7::listGains(const int direction, const size_t 
 
     for (const auto& gain : gainEnums)
     {
-        gains.push_back(GAIN_TYPES_TEXT.at(gain));
+        gains.push_back(ToString(gain));
     }
 
     return gains;
@@ -313,7 +314,7 @@ void SoapyLMS7::setGain(const int direction, const size_t channel, const std::st
     SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %s, %g dB)", dirName, channel, name.c_str(), value);
 
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     sdrDevice->SetGain(0, dir, channel, gainType, value);
 
@@ -326,7 +327,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel, const std::
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
 
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     double gain = 0;
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, gainType, gain);
@@ -351,7 +352,7 @@ SoapySDR::Range SoapyLMS7::getGainRange(const int direction, const size_t channe
 SoapySDR::Range SoapyLMS7::getGainRange(const int direction, const size_t channel, const std::string& name) const
 {
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     auto range = sdrDevice->GetDescriptor().rfSOC.at(0).gainRange.at(dir).at(gainType);
 

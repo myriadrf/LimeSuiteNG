@@ -9,7 +9,6 @@
 namespace lime {
 
 const std::string strFormat(const char* format, ...);
-std::string ToString(TRXDir dir);
 
 template<typename T> std::string intToHex(T i)
 {
