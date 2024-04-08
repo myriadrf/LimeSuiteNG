@@ -837,7 +837,8 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
     }
 }
 //---------------------------------------------------------------------------
-extern "C" bool __declspec(dllexport) __stdcall InitHW(char* name, char* model, int& type)
+extern "C" {
+bool __declspec(dllexport) __stdcall InitHW(char* name, char* model, int& type)
 {
     /* Create debug console window */
 #ifdef _MYDEBUG
@@ -883,7 +884,7 @@ extern "C" bool __declspec(dllexport) __stdcall InitHW(char* name, char* model, 
     return true;
 }
 //---------------------------------------------------------------------------
-extern "C" bool EXTIO_API OpenHW(void)
+bool EXTIO_API OpenHW(void)
 {
     if (!InitializeLMS()) {
         return false;
@@ -897,13 +898,13 @@ extern "C" bool EXTIO_API OpenHW(void)
 }
 
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API StartHW(long LOfreq)
+int EXTIO_API StartHW(long LOfreq)
 {
     int ret = StartHW64(static_cast<int64_t>(LOfreq));
     return ret;
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API StartHW64(int64_t LOfreq)
+int EXTIO_API StartHW64(int64_t LOfreq)
 {
     SetHWLO64(LOfreq);
 
@@ -927,7 +928,7 @@ extern "C" int EXTIO_API StartHW64(int64_t LOfreq)
     return EXT_BLOCKLEN;
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API StopHW(void)
+void EXTIO_API StopHW(void)
 {
     if (isRunning) {
         isRunning = false;
@@ -939,19 +940,19 @@ extern "C" void EXTIO_API StopHW(void)
     }
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API CloseHW(void)
+void EXTIO_API CloseHW(void)
 {
     lime::DeviceRegistry::freeDevice(device);
     DestroyWindow(dialogWindowHandle);
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API SetHWLO(long LOfreq)
+int EXTIO_API SetHWLO(long LOfreq)
 {
     int64_t ret = SetHWLO64(static_cast<int64_t>(LOfreq));
     return (ret & 0xFFFFFFFF);
 }
 //---------------------------------------------------------------------------
-extern "C" int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
+int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 {
     int64_t ret = 0;
     double freq = static_cast<double>(LOfreq);
@@ -981,23 +982,23 @@ extern "C" int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
     return ret;
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API GetStatus(void) { return 0; }
+int EXTIO_API GetStatus(void) { return 0; }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API SetCallback(pfnExtIOCallback funcptr)
+void EXTIO_API SetCallback(pfnExtIOCallback funcptr)
 {
     ExtIOCallback = funcptr;
     return;
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API VersionInfo(const char* progname, int ver_major, int ver_minor) { return; }
+void EXTIO_API VersionInfo(const char* progname, int ver_major, int ver_minor) { return; }
 //---------------------------------------------------------------------------
-extern "C" long EXTIO_API GetHWLO(void)
+long EXTIO_API GetHWLO(void)
 {
     int64_t glLOfreq = GetHWLO64();
     return static_cast<long>(glLOfreq & 0xFFFFFFFF);
 }
 //---------------------------------------------------------------------------
-extern "C" int64_t EXTIO_API GetHWLO64(void)
+int64_t EXTIO_API GetHWLO64(void)
 {
     double freq = device->GetFrequency(0, lime::TRXDir::Rx, channel);
 
@@ -1006,7 +1007,7 @@ extern "C" int64_t EXTIO_API GetHWLO64(void)
     return currentLOFreq;
 }
 //---------------------------------------------------------------------------
-extern "C" long EXTIO_API GetHWSR(void)
+long EXTIO_API GetHWSR(void)
 {
     long sampleRate = 0;
 
@@ -1018,7 +1019,7 @@ extern "C" long EXTIO_API GetHWSR(void)
     return sampleRate;
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
+int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
 {
     if (atten_idx < 74) {
         *attenuation = atten_idx;
@@ -1027,7 +1028,7 @@ extern "C" int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
     return -1; // Finished
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API GetActualAttIdx(void)
+int EXTIO_API GetActualAttIdx(void)
 {
     double _gain = 0;
 
@@ -1040,7 +1041,7 @@ extern "C" int EXTIO_API GetActualAttIdx(void)
     return static_cast<int>(_gain);
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API SetAttenuator(int atten_idx)
+int EXTIO_API SetAttenuator(int atten_idx)
 {
     if (device != nullptr) {
         if (device->SetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, atten_idx) != lime::OpStatus::SUCCESS) {
@@ -1052,7 +1053,7 @@ extern "C" int EXTIO_API SetAttenuator(int atten_idx)
     return 0;
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API ExtIoGetSrates(int srate_idx, double* samplerate)
+int EXTIO_API ExtIoGetSrates(int srate_idx, double* samplerate)
 {
     if (srate_idx < sampleRates.size()) {
         *samplerate = sampleRates.at(srate_idx);
@@ -1062,9 +1063,9 @@ extern "C" int EXTIO_API ExtIoGetSrates(int srate_idx, double* samplerate)
     }
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API ExtIoGetActualSrateIdx(void) { return sampleRateIndex; }
+int EXTIO_API ExtIoGetActualSrateIdx(void) { return sampleRateIndex; }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API ExtIoSetSrate(int srate_idx)
+int EXTIO_API ExtIoSetSrate(int srate_idx)
 {
     if (srate_idx >= 0 && srate_idx < sampleRates.size()) {
         int64_t freq = 0;
@@ -1103,7 +1104,7 @@ extern "C" int EXTIO_API ExtIoSetSrate(int srate_idx)
     return -1; // ERROR
 }
 //---------------------------------------------------------------------------
-extern "C" int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value)
+int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value)
 {
     switch (idx) {
     case 0:
@@ -1158,7 +1159,7 @@ extern "C" int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value
     }
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char* value)
+void EXTIO_API ExtIoSetSetting(int idx, const char* value)
 {
     int tempInt = 0;
     int64_t temp64Int = 0;
@@ -1241,19 +1242,19 @@ extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char* value)
     }
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API ShowGUI()
+void EXTIO_API ShowGUI()
 {
     ShowWindow(dialogWindowHandle, SW_SHOW);
     return;
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API HideGUI()
+void EXTIO_API HideGUI()
 {
     ShowWindow(dialogWindowHandle, SW_HIDE);
     return;
 }
 //---------------------------------------------------------------------------
-extern "C" void EXTIO_API SwitchGUI()
+void EXTIO_API SwitchGUI()
 {
     if (IsWindowVisible(dialogWindowHandle)) {
         ShowWindow(dialogWindowHandle, SW_HIDE);
@@ -1263,3 +1264,4 @@ extern "C" void EXTIO_API SwitchGUI()
     return;
 }
 //---------------------------------------------------------------------------
+} // extern "C"
