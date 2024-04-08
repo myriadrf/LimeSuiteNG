@@ -138,6 +138,7 @@ endif()
 
 if (MSVC)
     # Check if using correct Visual Studio version
+    # VS2015 does not support some of the used C++17 features (<string_view>, <filesystem>, ...)
     if(MSVC_TOOLSET_VERSION LESS 141)
 	    message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
     endif()
