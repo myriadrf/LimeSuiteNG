@@ -66,6 +66,7 @@ jobs:
           7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
 
       - name: Install SoapySDR from source
+        if: matrix.os != 'macos-latest' # Temporarily disable Mac OS build until issues upstream are fixed
         run: |
           git clone https://github.com/pothosware/SoapySDR.git
           cd SoapySDR
