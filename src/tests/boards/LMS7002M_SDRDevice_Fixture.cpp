@@ -9,6 +9,7 @@
 #include <complex>
 #include <iostream>
 
+using namespace lime;
 using namespace lime::testing;
 using namespace std::literals::string_literals;
 
