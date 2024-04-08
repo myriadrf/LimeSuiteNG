@@ -38,10 +38,13 @@ THE SOFTWARE
 #include <process.h>
 //---------------------------------------------------------------------------
 #include <limesuiteng/complex.h>
+#include <limesuiteng/types.h>
 #include <limesuiteng/DeviceHandle.h>
 #include <limesuiteng/DeviceRegistry.h>
 #include <limesuiteng/Logger.h>
 #include <limesuiteng/SDRDevice.h>
+#include <limesuiteng/SDRDescriptor.h>
+#include <limesuiteng/StreamConfig.h>
 #include <limesuiteng/VersionInfo.h>
 //---------------------------------------------------------------------------
 #include <array>
@@ -154,19 +157,19 @@ static bool SetGain()
 {
     int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From datasheet
 
-    if (device->SetParameter(0, 0, "G_LNA_RFE"s, LNA) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "G_LNA_RFE"s, LNA) != lime::OpStatus::Success) {
         return false;
     }
 
-    if (device->SetParameter(0, 0, "G_PGA_RBB"s, PGA) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "G_PGA_RBB"s, PGA) != lime::OpStatus::Success) {
         return false;
     }
 
-    if (device->SetParameter(0, 0, "RCC_CTL_PGA_RBB"s, rcc_ctl_pga_rbb) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "RCC_CTL_PGA_RBB"s, rcc_ctl_pga_rbb) != lime::OpStatus::Success) {
         return false;
     }
 
-    if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -184,7 +187,7 @@ static void PerformCalibration(bool enableErrorLogging)
 
     isCalibrated = CalibrationStatus::Calibrated;
 
-    if (device->Calibrate(0, lime::TRXDir::Rx, channel, calibrationBandwidth) != lime::OpStatus::SUCCESS) {
+    if (device->Calibrate(0, lime::TRXDir::Rx, channel, calibrationBandwidth) != lime::OpStatus::Success) {
         isCalibrated = CalibrationStatus::CalibrationErr;
     }
 
@@ -203,18 +206,18 @@ static bool DisableLPF()
     }
 
     /* Making sure that tia isn't -12dB */
-    if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
         return false;
     }
 
     /* If the bandwidth is higher than 110e6, LPF is bypassed */
-    if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, 130e6) != lime::OpStatus::SUCCESS) {
+    if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, 130e6) != lime::OpStatus::Success) {
         return false;
     }
 
     isLPFEnabled = false;
 
-    if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::SUCCESS) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -235,15 +238,15 @@ static bool EnableLPF()
             StopHW();
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::SUCCESS) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
             return false;
         }
 
-        if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, LPFBandwidth) != lime::OpStatus::SUCCESS) {
+        if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, LPFBandwidth) != lime::OpStatus::Success) {
             return false;
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::SUCCESS) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
             return false;
         }
         isLPFEnabled = true;
@@ -272,14 +275,14 @@ static bool InitializeLMS()
         return false;
     }
 
-    const lime::SDRDevice::Descriptor& descriptor = device->GetDescriptor();
+    const lime::SDRDescriptor& descriptor = device->GetDescriptor();
 
     numberOfChannels = descriptor.rfSOC.at(0).channelCount;
     if (numberOfChannels <= 0) {
         return false;
     }
 
-    lime::SDRDevice::SDRConfig configuration;
+    lime::SDRConfig configuration;
     auto& channelConfiguration = configuration.channel[channel].rx;
 
     channelConfiguration.enabled = true;
@@ -295,7 +298,7 @@ static bool InitializeLMS()
 
     isCalibrated = CalibrationStatus::Calibrated;
 
-    if (device->Configure(configuration, 0) != lime::OpStatus::SUCCESS) {
+    if (device->Configure(configuration, 0) != lime::OpStatus::Success) {
         isCalibrated = CalibrationStatus::CalibrationErr;
 
         return false;
@@ -369,7 +372,7 @@ static int InitializeDialog(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
     }
     ComboBox_SetCurSel(GetDlgItem(hwndDlg, IDC_COMBO_DEVICE), currentDeviceIndex);
 
-    const lime::SDRDevice::Descriptor& descriptor = device->GetDescriptor();
+    const lime::SDRDescriptor& descriptor = device->GetDescriptor();
 
     /* Add antenna choices */
     for (std::size_t i = 0; i < descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).size(); ++i) {
@@ -489,7 +492,7 @@ static int OnAntennaChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
             StopHW();
         }
 
-        if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::SUCCESS) {
+        if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
             return FALSE;
         }
 
@@ -554,7 +557,7 @@ static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 ComboBox_DeleteString(GetDlgItem(hwndDlg, IDC_COMBO_ANT), 0);
             }
 
-            const lime::SDRDevice::Descriptor& descriptor = device->GetDescriptor();
+            const lime::SDRDescriptor& descriptor = device->GetDescriptor();
 
             /* Add antenna choices */
             for (std::size_t i = 0; i < descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).size(); ++i) {
@@ -591,23 +594,23 @@ static int OnChannelChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
                 StopHW();
             }
 
-            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, false) != lime::OpStatus::SUCCESS) {
+            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, false) != lime::OpStatus::Success) {
                 return FALSE;
             }
-            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, false) != lime::OpStatus::SUCCESS) {
+            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, false) != lime::OpStatus::Success) {
                 return FALSE;
             }
 
             channel = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
 
-            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, true) != lime::OpStatus::SUCCESS) {
+            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, true) != lime::OpStatus::Success) {
                 return FALSE;
             }
-            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, true) != lime::OpStatus::SUCCESS) {
+            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, true) != lime::OpStatus::Success) {
                 return FALSE;
             }
 
-            if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::SUCCESS) {
+            if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
                 return FALSE;
             }
 
@@ -890,13 +893,13 @@ int EXTIO_API StartHW64(int64_t LOfreq)
 {
     SetHWLO64(LOfreq);
 
-    lime::SDRDevice::StreamConfig config;
+    lime::StreamConfig config;
 
     config.channels.at(lime::TRXDir::Rx) = { 0 };
     config.bufferSize = 1024 * 128;
-    config.format = lime::SDRDevice::StreamConfig::DataFormat::I16;
+    config.format = lime::DataFormat::I16;
 
-    if (device->StreamSetup(config, 0) != lime::OpStatus::SUCCESS) {
+    if (device->StreamSetup(config, 0) != lime::OpStatus::Success) {
         return -1;
     }
 
@@ -1015,7 +1018,7 @@ int EXTIO_API GetActualAttIdx(void)
     double _gain = 0;
 
     if (device != nullptr) {
-        if (device->GetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, _gain) != lime::OpStatus::SUCCESS) {
+        if (device->GetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, _gain) != lime::OpStatus::Success) {
             return -1; // ERROR
         }
     }
@@ -1026,7 +1029,7 @@ int EXTIO_API GetActualAttIdx(void)
 int EXTIO_API SetAttenuator(int atten_idx)
 {
     if (device != nullptr) {
-        if (device->SetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, atten_idx) != lime::OpStatus::SUCCESS) {
+        if (device->SetGain(0, lime::TRXDir::Rx, channel, lime::eGainTypes::UNKNOWN, atten_idx) != lime::OpStatus::Success) {
             return -1; // ERROR
         }
         isCalibrated = CalibrationStatus::NotCalibrated;
@@ -1057,7 +1060,7 @@ int EXTIO_API ExtIoSetSrate(int srate_idx)
             StopHW();
         }
 
-        if (device->SetSampleRate(0, lime::TRXDir::Rx, 0, sampleRates.at(srate_idx), oversample) != lime::OpStatus::SUCCESS) {
+        if (device->SetSampleRate(0, lime::TRXDir::Rx, 0, sampleRates.at(srate_idx), oversample) != lime::OpStatus::Success) {
             return -1;
         }
 
