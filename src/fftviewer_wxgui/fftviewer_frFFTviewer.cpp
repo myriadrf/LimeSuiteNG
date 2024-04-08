@@ -1,6 +1,9 @@
 #include "fftviewer_frFFTviewer.h"
 #include <wx/timer.h>
+#include <wx/msgdlg.h>
+#include <wx/filedlg.h>
 #include <vector>
+#include "limesuiteng/Logger.h"
 #include "OpenGLGraph.h"
 #include <LMSBoards.h>
 #include "kissFFT/kiss_fft.h"
@@ -12,7 +15,6 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
-#include "limesuiteng/Logger.h"
 #include <array>
 
 using namespace std;

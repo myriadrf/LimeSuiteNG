@@ -7,6 +7,10 @@
 #include <wx/checkbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
+#include <wx/textctrl.h>
+#include <wx/radiobut.h>
+#include <wx/statbox.h>
+#include <wx/stattext.h>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"

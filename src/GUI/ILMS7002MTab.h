@@ -1,17 +1,14 @@
 #pragma once
 
-#include "wx/panel.h"
+#include <wx/panel.h>
 #include <map>
 
-#include "lms7002_gui_utilities.h"
-#include "limesuiteng/LMS7002M_parameters.h"
+#include "commonWxForwardDeclarations.h"
 
-#include "wx/combobox.h"
-#include "wx/checkbox.h"
-#include "wx/spinctrl.h"
-#include "numericSlider.h"
-
-#include "limesuiteng/LMS7002M.h"
+class LMS7Parameter;
+namespace lime {
+class LMS7002M;
+}
 
 class ILMS7002MTab : public wxPanel
 {

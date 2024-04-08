@@ -1,12 +1,15 @@
 #include "lms7002_pnlCLKGEN_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include <wx/msgdlg.h>
+#include <wx/spinctrl.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7suiteEvents.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include "FPGA_common.h"
 #include "limesuiteng/Logger.h"
 

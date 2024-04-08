@@ -1,11 +1,17 @@
-#include <fstream>
 #include "lms7002_pnlMCU_BD_view.h"
+#include "commonWxHeaders.h"
+#include <fstream>
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
 #include "dlgViewIRAM.h"
 #include "dlgViewSFR.h"
 #include "MCU_File.h"
+#include "MCU_BD.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M.h"
+
+#include <wx/gauge.h>
+#include <wx/timer.h>
 
 using namespace std::literals::string_literals;
 

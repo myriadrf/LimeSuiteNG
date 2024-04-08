@@ -3,10 +3,13 @@
 
 #include "lms7002_wxgui.h"
 #include "limesuiteng/types.h"
-#include "limesuiteng/LMS7002M.h"
 
 #include <cstdint>
 #include <vector>
+
+namespace lime {
+class LMS7002M;
+}
 
 class lms7002_dlgGFIR_Coefficients : public wxDialog
 {

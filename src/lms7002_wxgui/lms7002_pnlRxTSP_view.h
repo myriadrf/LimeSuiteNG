@@ -1,9 +1,6 @@
 #ifndef __lms7002_pnlRxTSP_view__
 #define __lms7002_pnlRxTSP_view__
 
-#include "lms7002_wxgui.h"
-
-#include <map>
 #include <vector>
 #include "ILMS7002MTab.h"
 

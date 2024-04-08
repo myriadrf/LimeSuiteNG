@@ -1,18 +1,9 @@
 #ifndef __lms7002_R3__
 #define __lms7002_R3__
 
-#include <wx/panel.h>
-#include <wx/checkbox.h>
-#include <wx/spinctrl.h>
-#include <wx/combobox.h>
 #include "numericSlider.h"
-
-#include <map>
 #include <vector>
 #include "ILMS7002MTab.h"
-namespace lime {
-
-}
 
 class lms7002_pnlR3_view : public ILMS7002MTab
 {

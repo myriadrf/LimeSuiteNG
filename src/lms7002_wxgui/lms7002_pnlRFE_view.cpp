@@ -1,4 +1,5 @@
 #include "lms7002_pnlRFE_view.h"
+#include "commonWxHeaders.h"
 #include <wx/msgdlg.h>
 #include <map>
 #include <vector>

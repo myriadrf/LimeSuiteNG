@@ -1,9 +1,13 @@
 #include "lms7002_pnlGains_view.h"
+#include "commonWxHeaders.h"
 #include "numericSlider.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M_parameters.h"
+
+#include <wx/spinctrl.h>
 
 using namespace lime;
 using namespace LMS7002_WXGUI;

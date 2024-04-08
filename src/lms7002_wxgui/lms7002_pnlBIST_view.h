@@ -1,7 +1,6 @@
 #ifndef __lms7002_pnlBIST_view__
 #define __lms7002_pnlBIST_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
 
 class lms7002_pnlBIST_view : public ILMS7002MTab

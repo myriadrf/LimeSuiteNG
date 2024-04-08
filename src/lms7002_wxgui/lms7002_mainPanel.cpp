@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "commonWxHeaders.h"
 #include "lms7002_mainPanel.h"
 #include "lms7002_pnlAFE_view.h"
 #include "lms7002_pnlBIAS_view.h"
@@ -22,6 +23,8 @@
 #include <wx/msgdlg.h>
 #include <iostream>
 #include <wx/filedlg.h>
+#include <wx/notebook.h>
+#include <wx/bookctrl.h>
 #include "lms7suiteEvents.h"
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"

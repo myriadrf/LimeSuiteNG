@@ -1,12 +1,15 @@
 #ifndef __lms7002_pnlMCU_BD_view__
 #define __lms7002_pnlMCU_BD_view__
 
-#include "lms7002_wxgui.h"
-
-#include <wx/timer.h>
 #include <thread>
 #include "ILMS7002MTab.h"
-#include "MCU_BD.h"
+
+class wxTimer;
+class wxGauge;
+
+namespace lime {
+class MCU_BD;
+}
 
 class lms7002_pnlMCU_BD_view : public ILMS7002MTab
 {

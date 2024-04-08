@@ -220,7 +220,7 @@ LimeSDR_Mini::~LimeSDR_Mini()
 
 OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     std::vector<std::string> errors;
     bool isValidConfig = LMS7002M_Validate(cfg, errors, 1);
 
@@ -233,7 +233,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             ss << err << std::endl;
         }
 
-        return lime::ReportError(OpStatus::ERROR, "LimeSDR-Mini: %s.", ss.str().c_str());
+        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: %s.", ss.str().c_str());
     }
 
     bool rxUsed = false;
@@ -255,18 +255,18 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             const bool skipTune = true;
             // TODO: skip tune
             status = Init();
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
 
         status = LMS7002LOConfigure(chip, cfg);
-        if (status != OpStatus::SUCCESS)
-            return lime::ReportError(OpStatus::ERROR, "LimeSDR_Mini: LO configuration failed.");
+        if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed.");
         for (int i = 0; i < 2; ++i)
         {
             status = LMS7002ChannelConfigure(chip, cfg.channel[i], i);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR_Mini: channel%i configuration failed.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.");
             LMS7002TestSignalConfigure(chip, cfg.channel[i], i);
         }
 
@@ -283,13 +283,13 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         if (sampleRate > 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR_Mini: failed to set sampling rate.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate.");
         }
 
         for (int i = 0; i < 2; ++i)
         {
-            const SDRDevice::ChannelConfig& ch = cfg.channel[i];
+            const ChannelConfig& ch = cfg.channel[i];
             LMS7002ChannelCalibration(chip, ch, i);
             // TODO: should report calibration failure, but configuration can
             // still work after failed calibration.
@@ -300,8 +300,8 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         if (sampleRate > 0)
         {
             status = UpdateFPGAInterface(this);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR_Mini: failed to update FPGA interface frequency.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency.");
         }
     } //try
     catch (std::logic_error& e)

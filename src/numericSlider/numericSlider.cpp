@@ -7,6 +7,10 @@
 #include "numericSlider.h"
 #include <wx/event.h>
 #include <wx/spinctrl.h>
+#include <wx/stattext.h>
+#include <wx/sizer.h>
+#include <wx/scrolbar.h>
+#include <wx/textctrl.h>
 
 IMPLEMENT_DYNAMIC_CLASS(NumericSlider, wxPanel)
 

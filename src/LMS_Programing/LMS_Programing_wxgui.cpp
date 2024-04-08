@@ -11,6 +11,7 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/gauge.h>
+#include <wx/settings.h>
 
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>

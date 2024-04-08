@@ -5,6 +5,7 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/checkbox.h>
+#include <wx/statbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
 #include "lms7suiteEvents.h"
@@ -14,6 +15,7 @@
 #include <ciso646>
 
 using namespace std;
+using namespace lime;
 using namespace lime;
 
 BEGIN_EVENT_TABLE(pnlXTRX, wxPanel)

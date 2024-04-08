@@ -8,6 +8,9 @@
 
 namespace lime {
 
+/// @brief The structure for writing and reading custom parameters
+struct CustomParameterIO;
+
 /** @brief An interface for Serial Peripheral Interface communications */
 class LIME_API ISPI
 {
@@ -61,13 +64,6 @@ class LIME_API II2C
       @return The operation status.
      */
     virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length) = 0;
-};
-
-/// @brief The structure for writing and reading custom parameters
-struct CustomParameterIO {
-    int32_t id; ///< The ID of the parameter
-    double value; ///< The value of the parameter.
-    std::string units; ///< The units of the parameter.
 };
 
 /** @brief An interface for general device communications */

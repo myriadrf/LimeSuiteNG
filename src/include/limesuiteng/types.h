@@ -3,6 +3,7 @@
 
 #include "limesuiteng/config.h"
 #include <cstdint>
+#include <string>
 
 namespace lime {
 
@@ -53,6 +54,13 @@ struct Region {
 };
 
 enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, COUNT };
+
+/// @brief The structure for writing and reading custom parameters
+struct CustomParameterIO {
+    int32_t id; ///< The ID of the parameter
+    double value; ///< The value of the parameter.
+    std::string units; ///< The units of the parameter.
+};
 
 } // namespace lime
 

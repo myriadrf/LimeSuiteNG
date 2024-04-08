@@ -1,7 +1,6 @@
 #include "lms7002_pnlR3.h"
-
-#include <wx/wx.h>
-#include <wx/stattext.h>
+#include "commonWxHeaders.h"
+#include <wx/spinctrl.h>
 #include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002_gui_utilities.h"
 #include <chrono>

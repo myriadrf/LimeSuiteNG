@@ -1,4 +1,5 @@
 #include "lms7002_pnlCalibrations_view.h"
+#include "commonWxHeaders.h"
 #include "lms7002_gui_utilities.h"
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
@@ -6,6 +7,7 @@
 #include <wx/busyinfo.h>
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include "limesuiteng/Logger.h"
 
 using namespace lime;

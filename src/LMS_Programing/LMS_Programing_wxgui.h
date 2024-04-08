@@ -5,8 +5,6 @@
 #ifndef LMS_Programing_wxgui_H
 #define LMS_Programing_wxgui_H
 
-#include <wx/frame.h>
-#include <wx/wx.h>
 class wxGauge;
 class wxStaticText;
 class wxFlexGridSizer;
@@ -18,6 +16,7 @@ class wxChoice;
 #include <vector>
 #include "limesuiteng/SDRDevice.h"
 #include "IModuleFrame.h"
+#include <wx/dialog.h>
 
 class LMS_Programing_wxgui : public IModuleFrame
 {

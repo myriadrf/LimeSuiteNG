@@ -5,8 +5,7 @@
 #ifndef RF_SPARK_WXGUI_H
 #define RF_SPARK_WXGUI_H
 
-#include <wx/wx.h>
-#include "lime/LimeSuite.h"
+#include <wx/panel.h>
 class wxStaticText;
 class wxFlexGridSizer;
 class wxButton;

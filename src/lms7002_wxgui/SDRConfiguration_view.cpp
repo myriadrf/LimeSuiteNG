@@ -1,4 +1,5 @@
 #include "SDRConfiguration_view.h"
+#include "commonWxHeaders.h"
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"

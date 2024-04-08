@@ -21,12 +21,12 @@
 #include "device_handler.h"
 #include "logging.h"
 
-#include <limesuiteng/LMS7002M_parameters.h>
+#include "limesuiteng/LMS7002M_parameters.h"
 
 #include <gnuradio/logger.h>
 
-#include <limesuiteng/DeviceRegistry.h>
-#include <limesuiteng/VersionInfo.h>
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/VersionInfo.h"
 
 #include <array>
 #include <stdexcept>

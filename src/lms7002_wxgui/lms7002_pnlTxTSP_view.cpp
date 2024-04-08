@@ -1,10 +1,13 @@
 #include "lms7002_pnlTxTSP_view.h"
+#include "commonWxHeaders.h"
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7002_dlgGFIR_Coefficients.h"
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+
+#include <wx/msgdlg.h>
 
 using namespace lime;
 using namespace LMS7002_WXGUI;

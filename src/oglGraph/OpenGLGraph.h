@@ -13,13 +13,14 @@
 #else
     #include <GL/gl.h>
 #endif
-#include <wx/wx.h>
 #include <wx/glcanvas.h>
-#include <wx/timer.h>
+#include <wx/menu.h>
+
+class wxTimer;
+class wxTimerEvent;
 
 #include <string>
 #include <vector>
-#include "string.h"
 
 enum eOGLGMouseButton { OGLG_LEFT, OGLG_RIGHT, OGLG_MIDDLE };
 

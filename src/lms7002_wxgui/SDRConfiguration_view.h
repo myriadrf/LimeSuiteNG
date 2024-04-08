@@ -2,14 +2,7 @@
 #define LIME_SDR_CONFIGURATION_VIEW
 
 #include <wx/panel.h>
-#include <wx/checkbox.h>
-#include <wx/sizer.h>
-#include <wx/statbox.h>
-#include <wx/choice.h>
-#include <wx/textctrl.h>
-#include <wx/stattext.h>
-#include <wx/button.h>
-
+#include "commonWxForwardDeclarations.h"
 #include <map>
 
 #include "GUI/ISOCPanel.h"

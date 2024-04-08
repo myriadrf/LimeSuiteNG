@@ -10,6 +10,7 @@
 #include <wx/sizer.h>
 #include <wx/button.h>
 #include <wx/string.h>
+#include <wx/panel.h>
 //*)
 
 //(*IdInit(dlgMarkers)

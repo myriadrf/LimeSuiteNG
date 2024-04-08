@@ -1,11 +1,9 @@
 #ifndef __lms7002_mainPanel__
 #define __lms7002_mainPanel__
 
-#include "lime/LimeSuite.h"
-#include "lms7002_wxgui.h"
 #include <unordered_map>
 #include "ILMS7002MTab.h"
-
+#include <wx/notebook.h>
 #include "GUI/ISOCPanel.h"
 
 namespace lime {
@@ -15,6 +13,8 @@ class SDRDevice;
 class lms7002_pnlMCU_BD_view;
 class lms7002_pnlR3_view;
 class SDRConfiguration_view;
+
+class wxRadioButton;
 
 class lms7002_mainPanel : public ISOCPanel
 {

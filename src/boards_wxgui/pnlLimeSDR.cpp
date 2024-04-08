@@ -6,6 +6,10 @@
 #include "pnlGPIO.h"
 
 #include <wx/sizer.h>
+#include <wx/checkbox.h>
+#include <wx/statbox.h>
+#include <wx/choice.h>
+#include <wx/msgdlg.h>
 
 using namespace lime;
 using namespace std;

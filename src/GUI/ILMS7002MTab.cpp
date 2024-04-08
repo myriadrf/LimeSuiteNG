@@ -5,6 +5,8 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 
+#include <wx/spinctrl.h>
+
 using namespace lime;
 using namespace std::literals::string_literals;
 

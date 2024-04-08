@@ -6,6 +6,8 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 
+#include <wx/msgdlg.h>
+
 using namespace lime;
 using namespace LMS7002_WXGUI;
 using namespace std::literals::string_literals;

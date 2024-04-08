@@ -1,8 +1,10 @@
 #include "lms7002_pnlSX_view.h"
+#include "commonWxHeaders.h"
 
 #include <wx/textdlg.h>
 #include <wx/valnum.h>
 #include <wx/msgdlg.h>
+#include <wx/spinctrl.h>
 #include <map>
 #include <assert.h>
 #include "numericSlider.h"
@@ -12,6 +14,7 @@
 #include <string>
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include "limesuiteng/Logger.h"
 using namespace std;
 using namespace lime;

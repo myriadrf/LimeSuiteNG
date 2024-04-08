@@ -3,10 +3,9 @@
 #ifdef __BORLANDC__
     #pragma hdrstop
 #endif //__BORLANDC__
-#ifndef WX_PRECOMP
-    #include <wx/wx.h>
-#endif //WX_PRECOMP
+
 #include <wx/spinctrl.h>
+#include <wx/msgdlg.h>
 
 #include "lime/LimeSuite.h"
 #include "pnluLimeSDR.h"

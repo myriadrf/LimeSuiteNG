@@ -1,10 +1,9 @@
 #ifndef __lms7002_pnlLDO_view__
 #define __lms7002_pnlLDO_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
 
-#include "wx/notebook.h"
+class wxNotebook;
 
 class lms7002_pnlLDO_view : public ILMS7002MTab
 {

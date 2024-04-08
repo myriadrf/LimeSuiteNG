@@ -7,7 +7,6 @@
 #ifndef NUMERIC_SLIDER_H
 #define NUMERIC_SLIDER_H
 
-#include <wx/wx.h>
 #include <wx/panel.h>
 
 class wxSpinCtrl;
