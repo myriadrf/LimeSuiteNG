@@ -34,28 +34,38 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install linux dependencies
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
 
-      - name: Install osx dependencies
+      - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
         run: brew install libusb wxmac
 
-      - name: Download windows dependencies
-        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+      - name: Download Windows dependencies
+        if: matrix.os == 'windows-latest'
         run: |
           mkdir ${{github.workspace}}/deps
           curl -o ${{github.workspace}}/deps/FX3SDK.zip -L https://downloads.myriadrf.org/project/limesuite/appveyor/FX3SDK.zip
           7z x ${{github.workspace}}/deps/FX3SDK.zip -o${{github.workspace}}/deps/FX3SDK
           curl -o ${{github.workspace}}/deps/wxWidgets-headers.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
           7z x ${{github.workspace}}/deps/wxWidgets-headers.7z -o${{github.workspace}}/deps/wxWidgets
+
+      - name: Download Windows dependencies (64-bit wxWidgets)
+        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
+        run: |
           curl -o ${{github.workspace}}/deps/wxWidgets.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
           7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
 
-      - name: install SoapySDR from source
+      - name: Download Windows dependencies (32-bit wxWidgets)
+        if: matrix.os == 'windows-latest' && matrix.arch == 'Win32'
+        run: |
+          curl -o ${{github.workspace}}/deps/wxWidgets.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
+          7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
+
+      - name: Install SoapySDR from source
         run: |
           git clone https://github.com/pothosware/SoapySDR.git
           cd SoapySDR
@@ -65,15 +75,15 @@ jobs:
           cmake --build .
           cmake --build . --target install
 
-      - name: Configure CMake (windows)
+      - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest' && matrix.compiler == 'msvc'
         run: cmake -B ${{github.workspace}}/build -A${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DwxWidgets_ROOT_DIR=${{github.workspace}}/deps/wxWidgets -DFX3_SDK_RELATIVE_PATH=deps/FX3SDK
 
-      - name: Configure CMake (gcc)
+      - name: Configure CMake (GCC)
         if: matrix.compiler == 'gcc'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
 
-      - name: Configure CMake (clang)
+      - name: Configure CMake (Clang)
         if: matrix.compiler == 'clang'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} 
 
