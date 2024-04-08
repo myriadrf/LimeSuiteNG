@@ -185,7 +185,7 @@ lime::OpStatus downloadImageResource(const std::string& name)
     {
         if (!std::filesystem::is_directory(destDir))
         {
-            return lime::ReportError(OpStatus::INVALID_VALUE, "Not a directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::InvalidValue, "Not a directory: %s", destDir.c_str());
         }
     }
     else
@@ -193,13 +193,13 @@ lime::OpStatus downloadImageResource(const std::string& name)
         bool result = std::filesystem::create_directories(destDir);
         if (!result)
         {
-            return lime::ReportError(OpStatus::ERROR, "Failed to create directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::Error, "Failed to create directory: %s", destDir.c_str());
         }
     }
 
     //check for write access
     if (access(destDir.c_str(), W_OK) != 0)
-        lime::ReportError(OpStatus::PERMISSION_DENIED, "Cannot write: %s", destDir.c_str());
+        lime::ReportError(OpStatus::PermissionDenied, "Cannot write: %s", destDir.c_str());
 
 //download the file
 #ifdef __unix__
@@ -210,9 +210,9 @@ lime::OpStatus downloadImageResource(const std::string& name)
 #endif
     int result = std::system(dnloadCmd.c_str());
     if (result != 0)
-        return lime::ReportError(OpStatus::ERROR, "Failed: %s", dnloadCmd.c_str());
+        return lime::ReportError(OpStatus::Error, "Failed: %s", dnloadCmd.c_str());
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 } // namespace lime

@@ -29,31 +29,31 @@ const char* ToCString(OpStatus value)
 {
     switch (value)
     {
-    case OpStatus::SUCCESS:
+    case OpStatus::Success:
         return "success";
-    case OpStatus::ERROR:
+    case OpStatus::Error:
         return "error";
-    case OpStatus::NOT_IMPLEMENTED:
+    case OpStatus::NotImplemented:
         return "not implemented";
-    case OpStatus::IO_FAILURE:
+    case OpStatus::IOFailure:
         return "input/output failure";
-    case OpStatus::INVALID_VALUE:
+    case OpStatus::InvalidValue:
         return "invalid value";
-    case OpStatus::FILE_NOT_FOUND:
+    case OpStatus::FileNotFound:
         return "file not found";
-    case OpStatus::OUT_OF_RANGE:
+    case OpStatus::OutOfRange:
         return "value out of range";
-    case OpStatus::NOT_SUPPORTED:
+    case OpStatus::NotSupported:
         return "not supported";
-    case OpStatus::TIMEOUT:
+    case OpStatus::Timeout:
         return "timeout";
-    case OpStatus::BUSY:
+    case OpStatus::Busy:
         return "busy";
-    case OpStatus::ABORTED:
+    case OpStatus::Aborted:
         return "aborted";
-    case OpStatus::PERMISSION_DENIED:
+    case OpStatus::PermissionDenied:
         return "permission denied";
-    case OpStatus::NOT_CONNECTED:
+    case OpStatus::NotConnected:
         return "not connected";
     }
     return "";

@@ -34,63 +34,63 @@ StreamConfig::StreamConfig()
 
 OpStatus SDRDevice::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "TransactSPI not implemented");
+    return ReportError(OpStatus::NotImplemented, "TransactSPI not implemented");
 }
 
 OpStatus SDRDevice::I2CWrite(int address, const uint8_t* data, uint32_t length)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "WriteI2C not implemented");
+    return ReportError(OpStatus::NotImplemented, "WriteI2C not implemented");
 }
 
 OpStatus SDRDevice::I2CRead(int addr, uint8_t* dest, uint32_t length)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "ReadI2C not implemented");
+    return ReportError(OpStatus::NotImplemented, "ReadI2C not implemented");
 }
 
 OpStatus SDRDevice::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "GPIOWrite not implemented");
+    return ReportError(OpStatus::NotImplemented, "GPIOWrite not implemented");
 }
 
 OpStatus SDRDevice::GPIORead(uint8_t* buffer, const size_t bufLength)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "GPIORead not implemented");
+    return ReportError(OpStatus::NotImplemented, "GPIORead not implemented");
 }
 
 OpStatus SDRDevice::GPIODirWrite(const uint8_t* buffer, const size_t bufLength)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "GPIODirWrite not implemented");
+    return ReportError(OpStatus::NotImplemented, "GPIODirWrite not implemented");
 }
 
 OpStatus SDRDevice::GPIODirRead(uint8_t* buffer, const size_t bufLength)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "GPIODirRead not implemented");
+    return ReportError(OpStatus::NotImplemented, "GPIODirRead not implemented");
 }
 
 OpStatus SDRDevice::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "CustomParameterWrite not implemented");
+    return ReportError(OpStatus::NotImplemented, "CustomParameterWrite not implemented");
 }
 
 OpStatus SDRDevice::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return ReportError(OpStatus::NOT_IMPLEMENTED, "CustomParameterRead not implemented");
+    return ReportError(OpStatus::NotImplemented, "CustomParameterRead not implemented");
 }
 
 OpStatus SDRDevice::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 OpStatus SDRDevice::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 OpStatus SDRDevice::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 void SDRDevice::StreamStart(const std::vector<uint8_t> moduleIndexes)

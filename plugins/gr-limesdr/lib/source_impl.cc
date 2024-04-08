@@ -226,7 +226,7 @@ void source_impl::init_stream(int device_number, int channel)
     config.linkFormat = lime::DataFormat::I16;
 
     if (instance.get_device(device_number)->StreamSetup(config, 0) !=
-        lime::OpStatus::SUCCESS) {
+        lime::OpStatus::Success) {
         instance.error(device_number);
     }
 

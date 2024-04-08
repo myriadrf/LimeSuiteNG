@@ -50,7 +50,7 @@ TEST(LMS64CProtocol, GPIODirReadTestOneBlock)
     uint8_t actual = 0U;
     OpStatus returnValue = LMS64CProtocol::GPIODirRead(mockPort, &actual, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(actual, value);
 }
 
@@ -77,7 +77,7 @@ TEST(LMS64CProtocol, GPIODirReadTestTwoBlocks)
     std::array<uint8_t, 2> actual{ 0, 0 };
     OpStatus returnValue = LMS64CProtocol::GPIODirRead(mockPort, actual.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(actual[0], value1);
     EXPECT_EQ(actual[1], value2);
 }

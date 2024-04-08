@@ -7,19 +7,19 @@ namespace lime {
 
 /// @brief The possible status codes from operations.
 enum class OpStatus {
-    SUCCESS = 0,
-    ERROR = -1,
-    NOT_IMPLEMENTED = -2,
-    IO_FAILURE = -3,
-    INVALID_VALUE = -4,
-    FILE_NOT_FOUND = -5,
-    OUT_OF_RANGE = -6,
-    NOT_SUPPORTED = -7,
-    TIMEOUT = -8,
-    BUSY = -9,
-    ABORTED = -10,
-    PERMISSION_DENIED = -11,
-    NOT_CONNECTED = -12,
+    Success = 0,
+    Error = -1,
+    NotImplemented = -2,
+    IOFailure = -3,
+    InvalidValue = -4,
+    FileNotFound = -5,
+    OutOfRange = -6,
+    NotSupported = -7,
+    Timeout = -8,
+    Busy = -9,
+    Aborted = -10,
+    PermissionDenied = -11,
+    NotConnected = -12,
 };
 
 } // namespace lime

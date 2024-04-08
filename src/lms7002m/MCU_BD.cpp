@@ -496,13 +496,13 @@ int MCU_BD::Program_MCU(int m_iMode1, int m_iMode0)
         break;
     }
     OpStatus status = Program_MCU(byte_array, mode);
-    return status == OpStatus::SUCCESS ? 0 : -1;
+    return status == OpStatus::Success ? 0 : -1;
 }
 
 OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
 {
     if (!m_serPort)
-        return ReportError(OpStatus::NOT_CONNECTED, "Device not connected");
+        return ReportError(OpStatus::NotConnected, "Device not connected");
 
 #ifndef NDEBUG
     auto timeStart = std::chrono::high_resolution_clock::now();
@@ -543,7 +543,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             } while ((!fifoEmpty) && (t2 - t1) < timeout);
 
             if (!fifoEmpty)
-                return ReportError(OpStatus::TIMEOUT, "MCU FIFO full");
+                return ReportError(OpStatus::Timeout, "MCU FIFO full");
 
             //write 32 bytes into FIFO
             for (uint8_t j = 0; j < fifoLen; ++j)
@@ -557,7 +557,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
 #endif
         };
         if (abort)
-            return ReportError(OpStatus::ABORTED, "operation aborted by user");
+            return ReportError(OpStatus::Aborted, "operation aborted by user");
 
         //wait until programmed flag
         wrdata[0] = statusReg;
@@ -577,14 +577,14 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
 #endif
         if (!programmed)
-            return ReportError(OpStatus::TIMEOUT, "MCU not programmed");
-        return OpStatus::SUCCESS;
+            return ReportError(OpStatus::Timeout, "MCU not programmed");
+        return OpStatus::Success;
     } catch (std::runtime_error& e)
     {
 #ifndef NDEBUG
         lime::error("MCU programming failed : %s", e.what());
 #endif
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
 }
 

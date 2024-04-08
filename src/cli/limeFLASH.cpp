@@ -196,7 +196,7 @@ int main(int argc, char** argv)
     inputFile.close();
 
     if (memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack) !=
-        OpStatus::SUCCESS)
+        OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);
         cout << "Device programming failed." << endl;

@@ -32,7 +32,7 @@ OpStatus StreamComposite::StreamSetup(const StreamConfig& config)
         for (std::size_t j = 0; j < channelCount; ++j)
         {
             if (aggregate.channels[j] >= desc.rfSOC[aggregate.streamIndex].channelCount)
-                return OpStatus::OUT_OF_RANGE;
+                return OpStatus::OutOfRange;
 
             subConfig.channels.at(TRXDir::Rx).push_back(aggregate.channels[j]);
         }
@@ -42,14 +42,14 @@ OpStatus StreamComposite::StreamSetup(const StreamConfig& config)
         for (std::size_t j = 0; j < channelCount; ++j)
         {
             if (aggregate.channels[j] >= desc.rfSOC[aggregate.streamIndex].channelCount)
-                return OpStatus::OUT_OF_RANGE;
+                return OpStatus::OutOfRange;
 
             subConfig.channels.at(TRXDir::Tx).push_back(aggregate.channels[j]);
         }
         txNeed -= channelCount;
 
         OpStatus status = aggregate.device->StreamSetup(subConfig, aggregate.streamIndex);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
 
         mActiveAggregates.push_back(aggregate);
@@ -59,7 +59,7 @@ OpStatus StreamComposite::StreamSetup(const StreamConfig& config)
             break;
         }
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void StreamComposite::StreamStart()

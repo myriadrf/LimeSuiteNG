@@ -58,7 +58,7 @@ TEST(LMS64CProtocol, CustomParameterReadTestEmptyDoesNothing)
     std::vector<CustomParameterIO> parameters;
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterReadTestOneParameter)
@@ -89,7 +89,7 @@ TEST(LMS64CProtocol, CustomParameterReadTestOneParameter)
     std::vector<CustomParameterIO> parameters{ { 16, 0, "" } };
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(parameters[0].value, static_cast<uint16_t>(value));
     EXPECT_EQ(parameters[0].units, "");
 }
@@ -132,7 +132,7 @@ TEST(LMS64CProtocol, CustomParameterReadTestSixteenParameters)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterReadCorrectPrefix)
@@ -163,7 +163,7 @@ TEST(LMS64CProtocol, CustomParameterReadCorrectPrefix)
     std::vector<CustomParameterIO> parameters{ { 16, 0, "" } };
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(parameters[0].value, value);
     EXPECT_EQ(parameters[0].units, "kA");
 }
@@ -196,7 +196,7 @@ TEST(LMS64CProtocol, CustomParameterReadTemperatureCorrection)
     std::vector<CustomParameterIO> parameters{ { 16, 0, "" } };
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(parameters[0].value, value / 10);
     EXPECT_EQ(parameters[0].units, "mC");
 }
@@ -229,7 +229,7 @@ TEST(LMS64CProtocol, CustomParameterReadUnknownUnits)
     std::vector<CustomParameterIO> parameters{ { 16, 0, "" } };
     OpStatus returnValue = LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
     EXPECT_EQ(parameters[0].value, value);
     EXPECT_EQ(parameters[0].units, "u unknown");
 }

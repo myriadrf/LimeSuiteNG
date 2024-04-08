@@ -109,7 +109,7 @@ static std::vector<StreamHandle*> streamHandles;
 
 static inline int OpStatusToReturnCode(OpStatus value)
 {
-    return value == OpStatus::SUCCESS ? 0 : -1;
+    return value == OpStatus::Success ? 0 : -1;
 }
 
 inline LMS_APIDevice* CheckDevice(lms_device_t* device)
@@ -786,14 +786,14 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
 
     auto returnValue = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
 
-    if (returnValue == OpStatus::SUCCESS)
+    if (returnValue == OpStatus::Success)
     {
         apiDevice->lastSavedStreamConfig = config;
     }
 
     stream->handle = GetStreamHandle(apiDevice);
 
-    return returnValue == OpStatus::SUCCESS ? 0 : -1;
+    return returnValue == OpStatus::Success ? 0 : -1;
 }
 
 API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* stream)
@@ -1224,7 +1224,7 @@ API_EXPORT int CALL_CONV LMS_ReadCustomBoardParam(lms_device_t* device, uint8_t 
     std::vector<lime::CustomParameterIO> parameter{ { param_id, *val, units } };
     OpStatus returnValue = apiDevice->device->CustomParameterRead(parameter);
 
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         return -1;
     }
@@ -1727,7 +1727,7 @@ API_EXPORT int CALL_CONV LMS_SetNCOIndex(lms_device_t* device, bool dir_tx, size
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
     OpStatus returnValue = apiDevice->device->SetNCOIndex(apiDevice->moduleIndex, direction, chan, ind, down);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         return -1;
     }
@@ -1977,7 +1977,7 @@ static int VCTCXOReadFallbackPath(LMS_APIDevice* apiDevice, uint16_t* val)
     std::vector<lime::CustomParameterIO> parameters{ { BOARD_PARAM_DAC, 0, "" } };
 
     OpStatus status = apiDevice->device->CustomParameterRead(parameters);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return OpStatusToReturnCode(status);
 
     if (val)

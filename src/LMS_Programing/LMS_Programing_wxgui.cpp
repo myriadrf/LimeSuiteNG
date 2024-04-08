@@ -294,7 +294,7 @@ void LMS_Programing_wxgui::DoProgramming()
     evt.SetEventObject(this);
     evt.SetId(ID_PROGRAMING_FINISHED_EVENT);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
-    evt.SetString(status == OpStatus::SUCCESS ? _("Programming Completed!") : _("Programming failed!"));
+    evt.SetString(status == OpStatus::Success ? _("Programming Completed!") : _("Programming failed!"));
 
     wxPostEvent(this, evt);
     mProgrammingInProgress.store(false);

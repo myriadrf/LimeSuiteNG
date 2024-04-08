@@ -299,7 +299,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel) const
 
     double gain = 0;
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, eGainTypes::UNKNOWN, gain);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         throw std::runtime_error(
             "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
@@ -331,7 +331,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel, const std::
 
     double gain = 0;
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, gainType, gain);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         throw std::runtime_error(
             "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
@@ -1132,7 +1132,7 @@ std::vector<std::string> SoapyLMS7::listGPIOBanks(void) const
 void SoapyLMS7::writeGPIO(const std::string&, const unsigned value)
 {
     OpStatus r = sdrDevice->GPIOWrite(reinterpret_cast<const uint8_t*>(&value), sizeof(value));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::writeGPIO() " + std::string(GetLastErrorMessage()));
     }
@@ -1142,7 +1142,7 @@ unsigned SoapyLMS7::readGPIO(const std::string&) const
 {
     unsigned buffer(0);
     OpStatus r = sdrDevice->GPIORead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::readGPIO() " + std::string(GetLastErrorMessage()));
     }
@@ -1152,7 +1152,7 @@ unsigned SoapyLMS7::readGPIO(const std::string&) const
 void SoapyLMS7::writeGPIODir(const std::string&, const unsigned dir)
 {
     OpStatus r = sdrDevice->GPIODirWrite(reinterpret_cast<const uint8_t*>(&dir), sizeof(dir));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::writeGPIODir() " + std::string(GetLastErrorMessage()));
     }
@@ -1162,7 +1162,7 @@ unsigned SoapyLMS7::readGPIODir(const std::string&) const
 {
     unsigned buffer(0);
     OpStatus r = sdrDevice->GPIODirRead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::readGPIODir() " + std::string(GetLastErrorMessage()));
     }

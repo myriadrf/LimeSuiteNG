@@ -11,10 +11,10 @@ using namespace lime;
 OpStatus LMS7002M::CalibrateInternalADC(int clkDiv)
 {
     if (Get_SPI_Reg_bits(LMS7_MASK) == 0)
-        return ReportError(OpStatus::NOT_SUPPORTED, "Operation not supported");
+        return ReportError(OpStatus::NotSupported, "Operation not supported");
 
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "Device not connected");
+        return ReportError(OpStatus::IOFailure, "Device not connected");
 
     const uint16_t biasMux = Get_SPI_Reg_bits(LMS7_MUX_BIAS_OUT);
     Modify_SPI_Reg_bits(LMS7_MUX_BIAS_OUT, 1);
@@ -33,7 +33,7 @@ OpStatus LMS7002M::CalibrateInternalADC(int clkDiv)
     while (((regValue >> 5) & 0x1) != 1)
     {
         if (bias > 31)
-            return ReportError(OpStatus::ERROR, "Temperature internal ADC calibration failed");
+            return ReportError(OpStatus::Error, "Temperature internal ADC calibration failed");
         ++bias;
         Modify_SPI_Reg_bits(LMS7_RSSI_BIAS, bias);
         regValue = SPI_read(0x0601, true);
@@ -41,16 +41,16 @@ OpStatus LMS7002M::CalibrateInternalADC(int clkDiv)
     Modify_SPI_Reg_bits(LMS7_RSSI_PD, 0);
     Modify_SPI_Reg_bits(LMS7_MUX_BIAS_OUT, biasMux);
     Modify_SPI_Reg_bits(LMS7_RSSI_RSSIMODE, 0);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::CalibrateRP_BIAS()
 {
     if (Get_SPI_Reg_bits(LMS7_MASK) == 0)
-        return ReportError(OpStatus::NOT_SUPPORTED, "Operation not supported");
+        return ReportError(OpStatus::NotSupported, "Operation not supported");
 
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "Device not connected");
+        return ReportError(OpStatus::IOFailure, "Device not connected");
 
     CalibrateInternalADC(32);
     Modify_SPI_Reg_bits(LMS7_RSSI_PD, 0);
@@ -88,5 +88,5 @@ OpStatus LMS7002M::CalibrateRP_BIAS()
         }
     }
     Modify_SPI_Reg_bits(LMS7_MUX_BIAS_OUT, biasMux);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }

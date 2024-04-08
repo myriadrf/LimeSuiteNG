@@ -121,10 +121,10 @@ OpStatus LMS7002M_SDRDevice::Reset()
     for (auto iter : mLMSChips)
     {
         status = iter->ResetChip();
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
@@ -135,14 +135,14 @@ OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
     status->beidou = static_cast<GPS_Lock::LockStatus>((regValue >> 8) & 0x3);
     status->galileo = static_cast<GPS_Lock::LockStatus>((regValue >> 12) & 0x3);
     // TODO: not all boards have GPS
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
     if (moduleIndex >= mLMSChips.size())
     {
-        ReportError(OpStatus::OUT_OF_RANGE, "GetSample rate invalid module index (%i)", moduleIndex);
+        ReportError(OpStatus::OutOfRange, "GetSample rate invalid module index (%i)", moduleIndex);
         return 0;
     }
     return mLMSChips[moduleIndex]->GetSampleRate(trx, LMS7002M::Channel::ChA);
@@ -195,7 +195,7 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
 
         if (trx == TRXDir::Tx || (!tdd))
         {
-            if (lms->SetFrequencySX(trx, center) != OpStatus::SUCCESS)
+            if (lms->SetFrequencySX(trx, center) != OpStatus::Success)
             {
                 throw std::runtime_error("Setting TDD failed (failed SetFrequencySX)");
             }
@@ -258,7 +258,7 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
     }
 
     setTDD(frequency);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 double LMS7002M_SDRDevice::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -290,7 +290,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset)
 {
     if (index > 15)
-        return ReportError(OpStatus::OUT_OF_RANGE, "%s NCO%i index invalid", ToCString(trx), index);
+        return ReportError(OpStatus::OutOfRange, "%s NCO%i index invalid", ToCString(trx), index);
 
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
@@ -299,14 +299,14 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
     bool enable = frequency != 0;
     bool tx = trx == TRXDir::Tx;
 
-    if ((lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP, !enable) != OpStatus::SUCCESS) ||
-        (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_GAIN_TXTSP : LMS7_CMIX_GAIN_RXTSP, enable) != OpStatus::SUCCESS))
+    if ((lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP, !enable) != OpStatus::Success) ||
+        (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_GAIN_TXTSP : LMS7_CMIX_GAIN_RXTSP, enable) != OpStatus::Success))
     {
-        return ReportError(OpStatus::ERROR, "Failed to set %s NCO%i frequency", ToCString(trx), index);
+        return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToCString(trx), index);
     }
 
     OpStatus status = lms->SetNCOFrequency(trx, index, std::fabs(frequency));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     if (enable)
@@ -317,17 +317,17 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
             down = !down;
         }
 
-        if ((lms->Modify_SPI_Reg_bits(tx ? LMS7_SEL_TX : LMS7_SEL_RX, index) != OpStatus::SUCCESS) ||
-            (lms->Modify_SPI_Reg_bits(tx ? LMS7_MODE_TX : LMS7_MODE_RX, 0) != OpStatus::SUCCESS) ||
-            (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_SC_TXTSP : LMS7_CMIX_SC_RXTSP, down) != OpStatus::SUCCESS))
+        if ((lms->Modify_SPI_Reg_bits(tx ? LMS7_SEL_TX : LMS7_SEL_RX, index) != OpStatus::Success) ||
+            (lms->Modify_SPI_Reg_bits(tx ? LMS7_MODE_TX : LMS7_MODE_RX, 0) != OpStatus::Success) ||
+            (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_SC_TXTSP : LMS7_CMIX_SC_RXTSP, down) != OpStatus::Success))
         {
-            return ReportError(OpStatus::ERROR, "Failed to set %s NCO%i frequency", ToCString(trx), index);
+            return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToCString(trx), index);
         }
     }
 
     if (phaseOffset != -1.0)
         return lms->SetNCOPhaseOffsetForMode0(trx, phaseOffset);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 int LMS7002M_SDRDevice::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -345,30 +345,30 @@ OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_
 
     if (OpStatus status = SetParameter(
             moduleIndex, channel, cmixBypassParameter.address, cmixBypassParameter.msb, cmixBypassParameter.lsb, index < 0 ? 1 : 0);
-        status != OpStatus::SUCCESS)
+        status != OpStatus::Success)
         return status;
     if (OpStatus status = SetParameter(
             moduleIndex, channel, cmixGainParameter.address, cmixGainParameter.msb, cmixGainParameter.lsb, index < 0 ? 0 : 1);
-        status != OpStatus::SUCCESS)
+        status != OpStatus::Success)
         return status;
 
     if (index >= NCOValueCount)
     {
         lime::error("Invalid NCO index value.");
-        return OpStatus::OUT_OF_RANGE;
+        return OpStatus::OutOfRange;
     }
 
     if (OpStatus status =
             SetParameter(moduleIndex, channel, selectionParameter.address, selectionParameter.msb, selectionParameter.lsb, index);
-        status != OpStatus::SUCCESS)
+        status != OpStatus::Success)
         return status;
 
     if (OpStatus status = SetParameter(
             moduleIndex, channel, cmixSelectionParameter.address, cmixSelectionParameter.msb, cmixSelectionParameter.lsb, downconv);
-        status != OpStatus::SUCCESS)
+        status != OpStatus::Success)
         return status;
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 double LMS7002M_SDRDevice::GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -402,7 +402,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     lpf = newLPF;
     lowPassFilterCache[trx][channel] = lpf;
 
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     if (tx)
     {
         int gain = lms->GetTBBIAMP_dB(ch);
@@ -414,11 +414,11 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
         status = lms->TuneRxFilter(lpf);
     }
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     lime::info("%s LPF configured", ToCString(trx));
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 uint8_t LMS7002M_SDRDevice::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -498,7 +498,7 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
         return device->SetTRFLoopbackPAD_dB(value, enumChannel);
     case eGainTypes::PA:
         // TODO: implement
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     case eGainTypes::UNKNOWN:
     default:
         if (TRXDir::Tx == direction)
@@ -512,8 +512,8 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
 
 OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M* device, LMS7002M::Channel channel, double value)
 {
-    if (device->SetTRFPAD_dB(value, channel) != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (device->SetTRFPAD_dB(value, channel) != OpStatus::Success)
+        return OpStatus::Error;
 
 #ifdef NEW_GAIN_BEHAVIOUR
     if (value <= 0)
@@ -527,12 +527,12 @@ OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M* device, LMS7002M::
     }
 #else
     value -= device->GetTRFPAD_dB(channel);
-    if (device->SetTBBIAMP_dB(value, channel) != OpStatus::SUCCESS)
+    if (device->SetTBBIAMP_dB(value, channel) != OpStatus::Success)
     {
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
 #endif
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::Channel channel, double value)
@@ -561,15 +561,15 @@ OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::
 #endif
     int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From datasheet
 
-    if ((device->Modify_SPI_Reg_bits(LMS7param(G_LNA_RFE), lna + 1) != OpStatus::SUCCESS) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(G_TIA_RFE), tia + 1) != OpStatus::SUCCESS) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(G_PGA_RBB), pga) != OpStatus::SUCCESS) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(RCC_CTL_PGA_RBB), rcc_ctl_pga_rbb) != OpStatus::SUCCESS))
+    if ((device->Modify_SPI_Reg_bits(LMS7param(G_LNA_RFE), lna + 1) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7param(G_TIA_RFE), tia + 1) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7param(G_PGA_RBB), pga) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7param(RCC_CTL_PGA_RBB), rcc_ctl_pga_rbb) != OpStatus::Success))
     {
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
@@ -581,28 +581,28 @@ OpStatus LMS7002M_SDRDevice::GetGain(uint8_t moduleIndex, TRXDir direction, uint
     {
     case eGainTypes::LNA:
         value = device->GetRFELNA_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::LoopbackLNA:
         value = device->GetRFELoopbackLNA_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::PGA:
         value = device->GetRBBPGA_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::TIA:
         value = device->GetRFETIA_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::PAD:
         value = device->GetTRFPAD_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::IAMP:
         value = device->GetTBBIAMP_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::LoopbackPAD:
         value = device->GetTRFLoopbackPAD_dB(enumChannel);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     case eGainTypes::PA:
         // TODO: implement
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     case eGainTypes::UNKNOWN:
     default:
 #ifdef NEW_GAIN_BEHAVIOUR
@@ -624,7 +624,7 @@ OpStatus LMS7002M_SDRDevice::GetGain(uint8_t moduleIndex, TRXDir direction, uint
             value = device->GetRFELNA_dB(enumChannel) + device->GetRFETIA_dB(enumChannel) + device->GetRBBPGA_dB(enumChannel);
         }
 #endif
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     }
 }
 
@@ -642,7 +642,7 @@ bool LMS7002M_SDRDevice::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_
 OpStatus LMS7002M_SDRDevice::SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic)
 {
     if (trx == TRXDir::Tx)
-        return OpStatus::NOT_SUPPORTED;
+        return OpStatus::NotSupported;
 
     auto lms = mLMSChips.at(moduleIndex);
     return lms->Modify_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), isAutomatic == 0, channel);
@@ -796,11 +796,11 @@ OpStatus LMS7002M_SDRDevice::SetParameter(
 
 OpStatus LMS7002M_SDRDevice::Synchronize(bool toChip)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     for (auto iter : mLMSChips)
     {
         status = toChip ? iter->UploadAll() : iter->DownloadAll();
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -830,7 +830,7 @@ OpStatus LMS7002M_SDRDevice::SetHardwareTimestamp(uint8_t moduleIndex, const uin
 {
     // TODO: return status
     mStreamers.at(moduleIndex)->SetHardwareTimestamp(now);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
@@ -846,16 +846,16 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     switch (direction)
     {
     case TRXDir::Rx:
-        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_RXTSP), signalConfiguration.enabled, true) != OpStatus::SUCCESS)
-            return ReportError(OpStatus::IO_FAILURE, "Failed to set Rx test signal.");
+        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_RXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
+            return ReportError(OpStatus::IOFailure, "Failed to set Rx test signal.");
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_RXTSP), div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_RXTSP), static_cast<uint8_t>(signalConfiguration.scale));
         lms->Modify_SPI_Reg_bits(LMS7param(TSGMODE_RXTSP), signalConfiguration.dcMode);
         break;
     case TRXDir::Tx:
-        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_TXTSP), signalConfiguration.enabled, true) != OpStatus::SUCCESS)
-            return ReportError(OpStatus::IO_FAILURE, "Failed to set Tx test signal.");
+        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_TXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
+            return ReportError(OpStatus::IOFailure, "Failed to set Tx test signal.");
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_TXTSP), div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_TXTSP), static_cast<uint8_t>(signalConfiguration.scale));
@@ -866,7 +866,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     if (signalConfiguration.dcMode)
         return lms->LoadDC_REG_IQ(direction, dc_i, dc_q);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(
@@ -944,7 +944,7 @@ OpStatus LMS7002M_SDRDevice::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t ch
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
     if (gfirID > 2)
-        return ReportError(OpStatus::OUT_OF_RANGE, "Failed to set GFIR filter, invalid filter index %i.", gfirID);
+        return ReportError(OpStatus::OutOfRange, "Failed to set GFIR filter, invalid filter index %i.", gfirID);
 
     std::vector<std::reference_wrapper<const LMS7Parameter>> txGfirBypasses = {
         LMS7_GFIR1_BYP_TXTSP, LMS7_GFIR2_BYP_TXTSP, LMS7_GFIR3_BYP_TXTSP
@@ -1034,7 +1034,7 @@ void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, Stre
 OpStatus LMS7002M_SDRDevice::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 OpStatus LMS7002M_SDRDevice::UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex)
@@ -1055,10 +1055,10 @@ OpStatus LMS7002M_SDRDevice::UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& f
     }
 
     OpStatus status = fpga.SetInterfaceFreq(fpgaTxPLL, fpgaRxPLL, chipIndex);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     soc.ResetLogicRegisters();
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 int LMS7002M_SDRDevice::ReadFPGARegister(uint32_t address)
@@ -1150,11 +1150,11 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
         txUsed |= ch.tx.enabled;
     }
 
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     if (cfg.referenceClockFreq != 0)
     {
         status = chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, cfg.referenceClockFreq);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
 
@@ -1164,13 +1164,13 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
     if (!tddMode && rxUsed && cfg.channel[0].rx.centerFrequency > 0)
     {
         status = chip->SetFrequencySX(TRXDir::Rx, cfg.channel[0].rx.centerFrequency);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     if (txUsed && cfg.channel[0].tx.centerFrequency > 0)
     {
         status = chip->SetFrequencySX(TRXDir::Tx, cfg.channel[0].tx.centerFrequency);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -1206,7 +1206,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const Chann
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
     // TODO: set GFIR filters...
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
@@ -1218,41 +1218,41 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
 
     // TODO: Don't configure GFIR when external ADC/DAC is used
     if (ch.rx.enabled &&
-        chip->SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth) != OpStatus::SUCCESS)
-        return lime::ReportError(OpStatus::ERROR, "Rx ch%i GFIR config failed", i);
+        chip->SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth) != OpStatus::Success)
+        return lime::ReportError(OpStatus::Error, "Rx ch%i GFIR config failed", i);
     if (ch.tx.enabled &&
-        chip->SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::SUCCESS)
-        return lime::ReportError(OpStatus::ERROR, "Tx ch%i GFIR config failed", i);
+        chip->SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::Success)
+        return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
 
     if (ch.rx.calibrate && ch.rx.enabled)
     {
         SetupCalibrations(chip, ch.rx.sampleRate);
         int status = CalibrateRx(false, false);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::ERROR, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
     }
     if (ch.tx.calibrate && ch.tx.enabled)
     {
         SetupCalibrations(chip, ch.tx.sampleRate);
         int status = CalibrateTx(false);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::ERROR, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
     }
     if (ch.rx.lpf > 0 && ch.rx.enabled)
     {
         SetupCalibrations(chip, ch.rx.sampleRate);
         int status = TuneRxFilter(ch.rx.lpf);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::ERROR, "Rx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(OpStatus::Error, "Rx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
     }
     if (ch.tx.lpf > 0 && ch.tx.enabled)
     {
         SetupCalibrations(chip, ch.tx.sampleRate);
         int status = TuneTxFilter(ch.tx.lpf);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::ERROR, "Tx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(OpStatus::Error, "Tx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(
@@ -1286,7 +1286,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(
         // LMS7_TSGMODE_TXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 } // namespace lime

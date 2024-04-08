@@ -57,7 +57,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestEmptyDoesNothing)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterWrite(mockPort, {}, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteTestOneParameter)
@@ -81,7 +81,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestOneParameter)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C" } }, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteTestSixteenParameters)
@@ -122,7 +122,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestSixteenParameters)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterWrite(mockPort, parameters, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteTestLowValue)
@@ -149,7 +149,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestLowValue)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterWrite(mockPort, { { 9, 0.00127, "W" } }, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteTestHighValue)
@@ -176,7 +176,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestHighValue)
 
     OpStatus returnValue = LMS64CProtocol::CustomParameterWrite(mockPort, { { 4, 131268, "A" } }, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteNotFullyWritten)

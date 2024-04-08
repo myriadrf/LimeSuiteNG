@@ -831,7 +831,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
     int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
     int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
-    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::SUCCESS)
+    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
         return;
@@ -856,7 +856,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
     int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
     int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
-    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::SUCCESS)
+    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
         auto freq = lms->GetFrequencyCGEN();
@@ -882,7 +882,7 @@ void lms7002_pnlCLKGEN_view::onbtnTuneClick(wxCommandEvent& event)
 {
     LMS7002M* lms = lmsControl;
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
-    if (lms->TuneVCO(lime::LMS7002M::VCO_Module::VCO_CGEN) != OpStatus::SUCCESS)
+    if (lms->TuneVCO(lime::LMS7002M::VCO_Module::VCO_CGEN) != OpStatus::Success)
     {
         wxMessageBox(wxString(_("CLKGEN VCO Tune failed")));
         return;

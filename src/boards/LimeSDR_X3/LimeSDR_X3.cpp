@@ -151,7 +151,7 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
     LimeSDR_X3* pthis = static_cast<LimeSDR_X3*>(userData);
     // don't care about cgen changes while doing Config(), to avoid unnecessary fpga updates
     if (pthis->mConfigInProgress)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     LMS7002M* soc = pthis->mLMSChips[chipIndex];
     return UpdateFPGAInterfaceFrequency(*soc, *pthis->mFPGA, chipIndex);
 }
@@ -294,7 +294,7 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     OpStatus status;
     LMS7002M* lms = mLMSChips[0];
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
@@ -310,19 +310,19 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     // EnableChannel(true, 2*i+1, false);
 
     if (skipTune)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     status = lms->SetFrequencySX(TRXDir::Tx, lms->GetFrequencySX(TRXDir::Tx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     status = lms->SetFrequencySX(TRXDir::Rx, lms->GetFrequencySX(TRXDir::Rx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     // if (SetRate(10e6,2)!=0)
     //     return -1;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static void EnableChannelLMS2(LMS7002M* chip, TRXDir dir, const uint8_t channel, const bool enable)
@@ -448,7 +448,7 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
     OpStatus status;
     LMS7002M* lms = mLMSChips[1];
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
@@ -458,19 +458,19 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
     // EnableChannel(true, 2*i+1, false);
 
     if (skipTune)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     status = lms->SetFrequencySX(TRXDir::Tx, lms->GetFrequencySX(TRXDir::Tx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     status = lms->SetFrequencySX(TRXDir::Rx, lms->GetFrequencySX(TRXDir::Rx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     // if (SetRate(10e6,2)!=0)
     //     return -1;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 // TODO: Setup default register values specifically for onboard LMS3 chip
@@ -479,21 +479,21 @@ OpStatus LimeSDR_X3::InitLMS3(bool skipTune)
     LMS7002M* lms = mLMSChips[2];
     OpStatus status;
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     if (skipTune)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     status = lms->SetFrequencySX(TRXDir::Tx, lms->GetFrequencySX(TRXDir::Tx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     status = lms->SetFrequencySX(TRXDir::Rx, lms->GetFrequencySX(TRXDir::Rx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void LimeSDR_X3::PreConfigure(const SDRConfig& cfg, uint8_t socIndex)
@@ -540,7 +540,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return ReportError(OpStatus::ERROR, ss.str().c_str());
+        return ReportError(OpStatus::Error, ss.str().c_str());
     }
 
     bool rxUsed = false;
@@ -637,12 +637,12 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::ERROR, "LimeSDR_X3 config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_X3 config: %s", e.what());
     } catch (std::runtime_error& e)
     {
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
@@ -666,7 +666,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (trx.enabled && chip->SetGFIRFilter(dir,
                                ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB,
                                trx.gfir.enabled,
-                               trx.gfir.bandwidth) != OpStatus::SUCCESS)
+                               trx.gfir.bandwidth) != OpStatus::Success)
         {
             throw std::logic_error(strFormat("%s ch%i GFIR config failed", dirName, ch));
         }
@@ -764,16 +764,16 @@ OpStatus LimeSDR_X3::Init()
     InitLMS1(skipTune);
     InitLMS2(skipTune);
     InitLMS3(skipTune);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LimeSDR_X3::Reset()
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     for (uint32_t i = 0; i < mLMSChips.size(); ++i)
     {
         status = mLMS7002Mcomms[i]->ResetDevice();
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -834,7 +834,7 @@ OpStatus LimeSDR_X3::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t chan
     {
         LMS3_SetSampleRate_ExternalDAC(sampleRate, sampleRate);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 double LimeSDR_X3::GetClockFreq(uint8_t clk_id, uint8_t channel)
@@ -890,15 +890,15 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
             dirFlag = O_RDONLY;
         else if (config.channels.at(lime::TRXDir::Tx).size() > 0)
             dirFlag = O_WRONLY;
-        if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::SUCCESS)
+        if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
         {
             const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
-            return ReportError(OpStatus::ERROR, reason.c_str());
+            return ReportError(OpStatus::Error, reason.c_str());
         }
     }
     mStreamers[moduleIndex]->Setup(config);
     mStreamConfig = config;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void LimeSDR_X3::StreamStop(uint8_t moduleIndex)
@@ -1253,7 +1253,7 @@ OpStatus LimeSDR_X3::UploadMemory(
         progMode = 1;
         break;
     default:
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     return mfpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
@@ -1263,7 +1263,7 @@ OpStatus LimeSDR_X3::MemoryWrite(std::shared_ptr<DataStorage> storage, Region re
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
     {
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
 
     return mfpgaPort->MemoryWrite(region.address, data, region.size);
@@ -1273,7 +1273,7 @@ OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region reg
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
     {
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
 
     return mfpgaPort->MemoryRead(region.address, data, region.size);

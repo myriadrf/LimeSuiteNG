@@ -44,7 +44,7 @@ TEST(LMS64CProtocol, FPGASPIEmptyTest)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, nullptr, nullptr, 0);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPIOneCountTestValueRead)
@@ -65,7 +65,7 @@ TEST(LMS64CProtocol, FPGASPIOneCountTestValueRead)
     uint32_t miso = 2U;
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPIOneCountTestValueWrite)
@@ -86,7 +86,7 @@ TEST(LMS64CProtocol, FPGASPIOneCountTestValueWrite)
     SetWriteBit(mosi);
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, &mosi, nullptr, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPIWriteReadReadWrite)
@@ -120,7 +120,7 @@ TEST(LMS64CProtocol, FPGASPIWriteReadReadWrite)
     std::vector<uint32_t> miso{ 1U, 2U, 3U, 4U };
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosi.data(), miso.data(), 4);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPIReadWriteReadReadWrite)
@@ -157,7 +157,7 @@ TEST(LMS64CProtocol, FPGASPIReadWriteReadReadWrite)
     std::vector<uint32_t> miso{ 1U, 2U, 3U, 4U, 5U };
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosi.data(), miso.data(), 5);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPISixteenWrites)
@@ -190,7 +190,7 @@ TEST(LMS64CProtocol, FPGASPISixteenWrites)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosis.data(), misos.data(), 16);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPISixteenReads)
@@ -222,7 +222,7 @@ TEST(LMS64CProtocol, FPGASPISixteenReads)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosis.data(), misos.data(), 16);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, FPGASPINotFullyWritten)
@@ -239,7 +239,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyWritten)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, FPGASPINotFullyRead)
@@ -262,7 +262,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyRead)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, FPGASPIWrongStatus)
@@ -285,7 +285,7 @@ TEST(LMS64CProtocol, FPGASPIWrongStatus)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, FPGASPINotFullyWrittenOnSecondCall)
@@ -308,7 +308,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyWrittenOnSecondCall)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosi.data(), miso.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, FPGASPINotFullyReadOnSecondCall)
@@ -331,5 +331,5 @@ TEST(LMS64CProtocol, FPGASPINotFullyReadOnSecondCall)
 
     OpStatus returnValue = LMS64CProtocol::FPGA_SPI(mockPort, mosi.data(), miso.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }

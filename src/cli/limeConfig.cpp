@@ -291,7 +291,7 @@ int main(int argc, char** argv)
                 cerr << "Failed to get internal chip: " << moduleId << endl;
                 return EXIT_FAILURE;
             }
-            if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::SUCCESS)
+            if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
             {
                 cerr << "Error loading file: " << configFilepath << endl;
                 return EXIT_FAILURE;
@@ -318,7 +318,7 @@ int main(int argc, char** argv)
             for (int i = 0; i < chipDescriptor.channelCount; ++i)
                 config.channel[i] = config.channel[0];
 
-            if (device->Configure(config, moduleId) != OpStatus::SUCCESS)
+            if (device->Configure(config, moduleId) != OpStatus::Success)
             {
                 cerr << "Failed to configure device (chip" << moduleId << ")" << std::endl;
                 return EXIT_FAILURE;

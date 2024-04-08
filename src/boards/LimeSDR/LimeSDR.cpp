@@ -203,7 +203,7 @@ LimeSDR::~LimeSDR()
 
 OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     std::vector<std::string> errors;
     bool isValidConfig = LMS7002M_Validate(cfg, errors);
 
@@ -212,7 +212,7 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return lime::ReportError(OpStatus::ERROR, "LimeSDR: %s.", ss.str().c_str());
+        return lime::ReportError(OpStatus::Error, "LimeSDR: %s.", ss.str().c_str());
     }
 
     bool rxUsed = false;
@@ -233,18 +233,18 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             const bool skipTune = true;
             // TODO: skip tune
             status = Init();
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
 
         status = LMS7002LOConfigure(chip, cfg);
-        if (status != OpStatus::SUCCESS)
-            return lime::ReportError(OpStatus::ERROR, "LimeSDR: LO configuration failed.");
+        if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "LimeSDR: LO configuration failed.");
         for (int i = 0; i < 2; ++i)
         {
             status = LMS7002ChannelConfigure(chip, cfg.channel[i], i);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR: channel%i configuration failed.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR: channel%i configuration failed.");
             LMS7002TestSignalConfigure(chip, cfg.channel[i], i);
         }
 
@@ -261,8 +261,8 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         if (sampleRate > 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR: failed to set sampling rate.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR: failed to set sampling rate.");
         }
 
         for (int i = 0; i < 2; ++i)
@@ -283,20 +283,20 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         if (sampleRate > 0)
         {
             status = UpdateFPGAInterface(this);
-            if (status != OpStatus::SUCCESS)
-                return lime::ReportError(OpStatus::ERROR, "LimeSDR: failed to update FPGA interface frequency.");
+            if (status != OpStatus::Success)
+                return lime::ReportError(OpStatus::Error, "LimeSDR: failed to update FPGA interface frequency.");
         }
     } //try
     catch (std::logic_error& e)
     {
         lime::error("LimeSDR_USB config: %s\n", e.what());
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     } catch (std::runtime_error& e)
     {
         lime::error("LimeSDR_USB config: %s\n", e.what());
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
@@ -307,7 +307,7 @@ OpStatus LimeSDR::UpdateFPGAInterface(void* userData)
     LimeSDR* pthis = static_cast<LimeSDR*>(userData);
     // don't care about cgen changes while doing Config(), to avoid unnecessary fpga updates
     if (pthis->mConfigInProgress)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     LMS7002M* soc = pthis->mLMSChips[chipIndex];
     return UpdateFPGAInterfaceFrequency(*soc, *pthis->mFPGA, chipIndex);
 }
@@ -374,20 +374,20 @@ OpStatus LimeSDR::Init()
     lime::LMS7002M* lms = mLMSChips[0];
     // TODO: write GPIO to hard reset the chip
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
     // TODO:
-    // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::SUCCESS)
+    // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
     //     return -1;
 
     EnableChannel(TRXDir::Rx, 0, false);
     EnableChannel(TRXDir::Tx, 0, false);
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
 
-    // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::SUCCESS)
+    // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
     //     return -1;
 
     EnableChannel(TRXDir::Rx, 1, false);
@@ -395,9 +395,9 @@ OpStatus LimeSDR::Init()
 
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
-    // if(lms->SetFrequency(SDRDevice::Dir::Tx, 0, lms->GetFrequency(SDRDevice::Dir::Tx, 0)) != OpStatus::SUCCESS)
+    // if(lms->SetFrequency(SDRDevice::Dir::Tx, 0, lms->GetFrequency(SDRDevice::Dir::Tx, 0)) != OpStatus::Success)
     //     return -1;
-    // if(lms->SetFrequency(SDRDevice::Dir::Rx, 0, lms->GetFrequency(SDRDevice::Dir::Rx, 0)) != OpStatus::SUCCESS)
+    // if(lms->SetFrequency(SDRDevice::Dir::Rx, 0, lms->GetFrequency(SDRDevice::Dir::Rx, 0)) != OpStatus::Success)
     //     return -1;
 
     // if (SetRate(10e6,2)!=0)
@@ -413,7 +413,7 @@ SDRDescriptor LimeSDR::GetDeviceInfo(void)
     LMS64CProtocol::FirmwareInfo info;
     OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);
 
-    if (returnCode != OpStatus::SUCCESS)
+    if (returnCode != OpStatus::Success)
     {
         deviceDescriptor.name = GetDeviceName(LMS_DEV_UNKNOWN);
         deviceDescriptor.expansionName = GetExpansionBoardName(EXP_BOARD_UNKNOWN);
@@ -575,7 +575,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         }
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 /*int LimeSDR::I2CWrite(int address, const uint8_t *data, uint32_t length)
@@ -741,7 +741,7 @@ OpStatus LimeSDR::UploadMemory(
         progMode = 1;
         break;
     default:
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     return mfpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
@@ -750,13 +750,13 @@ OpStatus LimeSDR::UploadMemory(
 OpStatus LimeSDR::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     return mfpgaPort->MemoryWrite(region.address, data, region.size);
 }
 
 OpStatus LimeSDR::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     return mfpgaPort->MemoryRead(region.address, data, region.size);
 }

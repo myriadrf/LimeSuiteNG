@@ -424,7 +424,7 @@ void lms7002_pnlCalibrations_view::OnbtnCalibrateAll(wxCommandEvent& event)
 
     OpStatus status = lmsControl->CalibrateTx(bandwidth_MHz * 1e6, useExtLoopback);
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         // wxMessageBox(wxString::Format(_("Tx Calibration Failed: %s"), LMS_GetLastErrorMessage()), _("Info"), wxOK, this);
         UpdateGUI();

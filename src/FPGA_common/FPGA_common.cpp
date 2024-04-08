@@ -117,7 +117,7 @@ OpStatus FPGA::WriteRegister(uint32_t address, uint32_t value)
 int FPGA::ReadRegister(uint32_t address)
 {
     uint32_t val;
-    return ReadRegisters(&address, &val, 1) != OpStatus::SUCCESS ? -1 : val;
+    return ReadRegisters(&address, &val, 1) != OpStatus::Success ? -1 : val;
 }
 
 /// @brief Writes the given registers into the FPGA's memory.
@@ -196,7 +196,7 @@ OpStatus FPGA::WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsig
         spiBuffer.push_back((1 << 31) | (addrs[i]) << 16 | data[i]);
     if (spiBuffer.size())
         return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 /// @brief Writes the given data blocks into LMS7002M chip.
@@ -298,7 +298,7 @@ OpStatus FPGA::ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt
         }
         for (unsigned i = 0; i < cnt; i++)
             data[i] = regsCache[addrs[i]];
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     }
     for (unsigned i = 0; i < cnt; i++)
         spiBuffer.push_back(addrs[i]);
@@ -316,7 +316,7 @@ OpStatus FPGA::StartStreaming()
     lime::debug("%s", __func__);
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     ASSERT_WARNING((interface_ctrl_000A & RX_EN) == 0, "FPGA stream is already started");
     interface_ctrl_000A &= ~(TX_PTRN_EN | RX_PTRN_EN); // disable test patterns
     return WriteRegister(0x000A, interface_ctrl_000A | RX_EN);
@@ -329,7 +329,7 @@ OpStatus FPGA::StopStreaming()
     lime::debug("%s", __func__);
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     const uint16_t flags = ~(RX_EN | TX_EN);
     return WriteRegister(0x000A, interface_ctrl_000A & flags);
 }
@@ -342,15 +342,15 @@ OpStatus FPGA::ResetTimestamp()
 #ifndef NDEBUG
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     if (interface_ctrl_000A & RX_EN)
-        return ReportError(OpStatus::BUSY, "FPGA samples streaming must be stopped to reset timestamp");
+        return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp");
 #endif // NDEBUG
     //reset hardware timestamp to 0
     int interface_ctrl_0009 = ReadRegister(0x0009);
     if (interface_ctrl_0009 < 0)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     const uint32_t flags = (TXPCT_LOSS_CLR | SMPL_NR_CLR);
     uint32_t addrs[] = { 0x0009, 0x0009, 0x0009 };
     uint32_t values[] = { interface_ctrl_0009 & (~flags), interface_ctrl_0009 | flags, interface_ctrl_0009 & (~flags) };
@@ -375,7 +375,7 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
         if (error != 0)
         {
             lime::warning("%s error, reg:0x%04X=0x%04X, errorBits:0x%04X", title.c_str(), pollAddr, state, error);
-            //return OpStatus::BUSY;
+            //return OpStatus::Busy;
         }
 
         if (!done)
@@ -383,7 +383,7 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
             if ((std::chrono::high_resolution_clock::now() - t1) > timeout)
             {
                 lime::warning("%s timeout", title.c_str());
-                return OpStatus::TIMEOUT;
+                return OpStatus::Timeout;
             }
             else
                 std::this_thread::sleep_for(busyPollPeriod);
@@ -393,7 +393,7 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
     {
         lime::debug(title + " done"s);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val)
@@ -424,7 +424,7 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
     batch.WriteRegister(0x0024, abs(nSteps)); //CNT_PHASE
     batch.Flush();
     // TODO: could possibly write this in the same batch?
-    if (WriteRegister(0x0023, reg23val | PHCFG_START) != OpStatus::SUCCESS)
+    if (WriteRegister(0x0023, reg23val | PHCFG_START) != OpStatus::Success)
         lime::error("FPGA SetPllFrequency: find phase, failed to write registers");
 
     const uint16_t doneMask = doPhaseSearch ? 0x4 : 0x1;
@@ -434,15 +434,15 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
     {
         const std::string title = "PLL Clock[" + std::to_string(clockIndex) + "] PHCFG_START";
         OpStatus status = WaitTillDone(busyAddr, doneMask, errorMask, title);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     else
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    if (WriteRegister(0x0023, reg23val & ~PHCFG_START) != OpStatus::SUCCESS) // redundant clear
-        ReportError(OpStatus::IO_FAILURE, "FPGA SetPllClock: failed to write registers");
-    return OpStatus::SUCCESS;
+    if (WriteRegister(0x0023, reg23val & ~PHCFG_START) != OpStatus::Success) // redundant clear
+        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers");
+    return OpStatus::Success;
 }
 
 /** @brief Configures board FPGA clocks.
@@ -458,21 +458,19 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     WriteRegistersBatch batch(this);
     const auto timeout = std::chrono::seconds(3);
     if (!fpgaPort)
-        return ReportError(OpStatus::IO_FAILURE, "ConfigureFPGA_PLL: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL");
 
     const bool waitForDone = HasWaitForDone(ReadRegister(0)); // read targetDevice
     bool willDoPhaseSearch = false;
 
     if (pllIndex > 15)
-        ReportError(OpStatus::OUT_OF_RANGE, "FPGA SetPllFrequency: PLL index(%i) out of range [0-15]", pllIndex);
+        ReportError(OpStatus::OutOfRange, "FPGA SetPllFrequency: PLL index(%i) out of range [0-15]", pllIndex);
 
     //check if all clocks are above 5MHz
     const double PLLlowerLimit = 5e6;
     if (inputFreq < PLLlowerLimit)
-        return ReportError(OpStatus::OUT_OF_RANGE,
-            "FPGA SetPllFrequency: PLL[%i] input frequency must be >=%g MHz",
-            pllIndex,
-            PLLlowerLimit / 1e6);
+        return ReportError(
+            OpStatus::OutOfRange, "FPGA SetPllFrequency: PLL[%i] input frequency must be >=%g MHz", pllIndex, PLLlowerLimit / 1e6);
     for (int i = 0; i < clockCount; ++i)
     {
         lime::debug("CLK[%i] Fout:%.3f MHz bypass:%i phase:%g findPhase: %i",
@@ -483,7 +481,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
             clocks[i].findPhase);
         willDoPhaseSearch |= clocks[i].findPhase;
         if (clocks[i].outFrequency < PLLlowerLimit && !clocks[i].bypass)
-            return ReportError(OpStatus::OUT_OF_RANGE,
+            return ReportError(OpStatus::OutOfRange,
                 "FPGA SetPllFrequency: PLL[%i], clock[%i] must be >=%g MHz",
                 pllIndex,
                 i,
@@ -512,7 +510,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
             const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLRST_START";
 
             OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
         else
@@ -543,7 +541,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         }
     }
     if (desiredVCO.size() == 0)
-        return ReportError(OpStatus::INVALID_VALUE, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks");
+        return ReportError(OpStatus::InvalidValue, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks");
 
     // Find VCO that satisfies most outputs with integer dividers
     uint64_t bestFreqVCO = std::max_element(
@@ -565,7 +563,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     const double Fvco = inputFreq * M / N; //actual VCO freq
     lime::debug("FPGA PLL[%i] M=%i, N=%i, Fvco=%.3f MHz (Requested %.3f MHz)", pllIndex, M, N, Fvco / 1e6, bestFreqVCO / 1e6);
     if (Fvco < vcoLimits_Hz[0] || Fvco > vcoLimits_Hz[1])
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "FPGA SetPllFrequency: PLL[%i], VCO(%g MHz) out of range [%g:%g] MHz",
             pllIndex,
             Fvco / 1e6,
@@ -629,7 +627,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLCFG_START";
 
         OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     else
@@ -649,22 +647,22 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         else
             nSteps = (360.0 / Fstep_deg) - 0.5;
         status = SetPllClock(clocks[i].index, nSteps, waitForDone, clocks[i].findPhase, reg23val);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus FPGA::SetDirectClocking(int clockIndex)
 {
     if (!fpgaPort)
-        return ReportError(OpStatus::IO_FAILURE, "SetDirectClocking: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL");
 
     uint16_t drct_clk_ctrl_0005 = ReadRegister(0x0005);
     //enable direct clocking
-    if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::SUCCESS)
-        return ReportError(OpStatus::IO_FAILURE, "SetDirectClocking: failed to write registers");
-    return OpStatus::SUCCESS;
+    if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers");
+    return OpStatus::Success;
 }
 
 /** @brief Parses FPGA packet payload into samples.
@@ -854,7 +852,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
         rxPhase,
         chipIndex);
     SelectModule(chipIndex);
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
 
     const uint32_t addr = 0x002A;
     uint32_t val = (1 << 31) | (0x0020u << 16) | 0xFFFD; // msbit 1=SPI write
@@ -877,7 +875,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
     else
         status = SetDirectClocking(1);
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     if (txRate_Hz >= 5e6)
@@ -909,7 +907,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     const int pll_ind = (chipIndex == 1) ? 2 : 0;
     const int txPLLindex = pll_ind;
     const int rxPLLindex = txPLLindex + 1;
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     uint32_t reg20;
     bool bypassTx = false;
     bool bypassRx = false;
@@ -1001,7 +999,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     const int pllConfigRetryCount = 2;
     for (int i = 0; i < pllConfigRetryCount; i++) // attempt phase search multiple times
     {
-        if (SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) == OpStatus::SUCCESS)
+        if (SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) == OpStatus::Success)
         {
             phaseSearchSuccess = true;
             break;
@@ -1016,13 +1014,13 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     if (!phaseSearchSuccess)
     {
         lime::error("LML RX phase search FAIL");
-        status = OpStatus::ERROR;
+        status = OpStatus::Error;
         rxClocks[0].index = 0;
         rxClocks[0].phaseShift_deg = 0;
         rxClocks[0].findPhase = false;
         rxClocks[1].findPhase = false;
         OpStatus status = SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
 
@@ -1057,7 +1055,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     for (int i = 0; i < pllConfigRetryCount; i++)
     {
-        if (SetPllFrequency(txPLLindex, txRate_Hz, txClocks) == OpStatus::SUCCESS)
+        if (SetPllFrequency(txPLLindex, txRate_Hz, txClocks) == OpStatus::Success)
         {
             phaseSearchSuccess = true;
             break;
@@ -1072,13 +1070,13 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     if (!phaseSearchSuccess)
     {
         lime::error("LML TX phase search FAIL");
-        status = OpStatus::ERROR;
+        status = OpStatus::Error;
         txClocks[0].phaseShift_deg = 0;
         txClocks[0].findPhase = false;
         txClocks[1].phaseShift_deg = 0;
         txClocks[1].findPhase = false;
         OpStatus status = SetPllFrequency(txPLLindex, txRate_Hz, txClocks);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
 
@@ -1126,11 +1124,11 @@ double FPGA::DetectRefClk(double fx3Clk)
     const std::array<double, 5> clkTbl = { 10e6, 30.72e6, 38.4e6, 40e6, 52e6 };
     const uint32_t addr[] = { 0x61, 0x63 };
     const uint32_t vals[] = { 0x0, 0x0 };
-    if (WriteRegisters(addr, vals, 2) != OpStatus::SUCCESS)
+    if (WriteRegisters(addr, vals, 2) != OpStatus::Success)
         return -1;
 
     auto start = std::chrono::steady_clock::now();
-    if (WriteRegister(0x61, 0x4) != OpStatus::SUCCESS)
+    if (WriteRegister(0x61, 0x4) != OpStatus::Success)
         return -1;
 
     while (1) //wait for test to finish
@@ -1149,7 +1147,7 @@ double FPGA::DetectRefClk(double fx3Clk)
 
     const uint32_t addr2[] = { 0x72, 0x73 };
     uint32_t vals2[2];
-    if (ReadRegisters(addr2, vals2, 2) != OpStatus::SUCCESS)
+    if (ReadRegisters(addr2, vals2, 2) != OpStatus::Success)
         return -1;
 
     double count = (vals2[0] | (vals2[1] << 16)); //cock counter
@@ -1182,7 +1180,7 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
 
     const uint32_t addrs[4] = { 0x0000, 0x0001, 0x0002, 0x0003 };
     uint32_t data[4];
-    if (ReadRegisters(addrs, data, 4) != OpStatus::SUCCESS)
+    if (ReadRegisters(addrs, data, 4) != OpStatus::Success)
         return info;
 
     info.boardID = data[0];

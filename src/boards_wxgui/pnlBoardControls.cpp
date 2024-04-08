@@ -83,14 +83,14 @@ static wxString power2unitsString(int powerx3)
 static OpStatus ReadCustomBoardParam(SDRDevice* device, std::vector<CustomParameterIO>& parameters)
 {
     if (device == nullptr)
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     return device->CustomParameterRead(parameters);
 }
 
 static OpStatus WriteCustomBoardParam(SDRDevice* device, const std::vector<CustomParameterIO>& parameters)
 {
     if (device == nullptr)
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
 
     return device->CustomParameterWrite(parameters);
 }
@@ -296,7 +296,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
     }
 
     OpStatus status = ReadCustomBoardParam(mDevice, params);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Error reading board parameters"), _("Warning"));
         return;
@@ -321,7 +321,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
         {
             OpStatus status = ReadMemory(row);
 
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
             {
                 wxMessageBox(_("Memory read failed"), _("Error"));
                 break;
@@ -349,7 +349,7 @@ void pnlBoardControls::OnWriteAll(wxCommandEvent& event)
     }
 
     OpStatus status = WriteCustomBoardParam(mDevice, params);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Failed to write values"), _("Warning"));
         return;
@@ -422,7 +422,7 @@ void pnlBoardControls::OnMemoryWrite(wxCommandEvent& event)
     gui->txtValue->GetValue().ToLong(&val);
     assert(size_t(gui->memoryRegion.size) <= sizeof(val));
     OpStatus rez = mDevice->MemoryWrite(gui->dataStorage, gui->memoryRegion, &val);
-    if (rez != OpStatus::SUCCESS)
+    if (rez != OpStatus::Success)
         wxMessageBox(_("Memory write failed"), _("Error"));
 }
 
@@ -431,7 +431,7 @@ OpStatus pnlBoardControls::ReadMemory(MemoryParamGUI* gui)
     long val = 0;
     assert(sizeof(val) >= size_t(gui->memoryRegion.size));
     OpStatus rez = mDevice->MemoryRead(gui->dataStorage, gui->memoryRegion, &val);
-    if (rez != OpStatus::SUCCESS)
+    if (rez != OpStatus::Success)
         gui->txtValue->SetValue(std::to_string(val));
     return rez;
 }
@@ -657,7 +657,7 @@ void pnlBoardControls::OnSetDACvalues(wxSpinEvent& event)
                 return;
 
             OpStatus status = WriteCustomBoardParam(mDevice, { { mParameters[i].channel, mParameters[i].value, "" } });
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 wxMessageBox(_("Failed to set value"), _("Warning"));
             return;
         }
@@ -675,7 +675,7 @@ void pnlBoardControls::OnCustomRead(wxCommandEvent& event)
     std::vector<CustomParameterIO> param{ { id, 0, "" } };
 
     OpStatus status = ReadCustomBoardParam(mDevice, param);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Failed to read value"), _("Warning"));
         return;
@@ -693,7 +693,7 @@ void pnlBoardControls::OnCustomWrite(wxCommandEvent& event)
     double value = spinCustomValueWr->GetValue() * pow(10, powerOf10);
 
     OpStatus status = WriteCustomBoardParam(mDevice, { { id, value, adcUnits2string(cmbCustomUnitsWr->GetSelection()) } });
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Failed to write value"), _("Warning"));
         return;

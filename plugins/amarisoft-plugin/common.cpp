@@ -219,7 +219,7 @@ static OpStatus MapChannelsToDevices(
                 if (assignedDevices.empty())
                 {
                     Log(LogLevel::ERROR, "port%i requires more channels than assigned devices have.", p);
-                    return OpStatus::ERROR;
+                    return OpStatus::Error;
                 }
                 remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
                 chipRelativeChannelIndex = 0;
@@ -240,7 +240,7 @@ static OpStatus MapChannelsToDevices(
             channels.push_back(lane);
         }
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
@@ -338,12 +338,12 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         if (filteredHandles.size() > 1)
         {
             Log(LogLevel::ERROR, "%s : ambiguous handle, matches multiple devices.", node.handleString.c_str());
-            return OpStatus::INVALID_VALUE;
+            return OpStatus::InvalidValue;
         }
         if (filteredHandles.empty())
         {
             Log(LogLevel::ERROR, "No device found to match handle: %s.", node.handleString.c_str());
-            return OpStatus::INVALID_VALUE;
+            return OpStatus::InvalidValue;
         }
         auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize().c_str());
         if (iter != context->uniqueDevices.end())
@@ -358,7 +358,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         else
         {
             Log(LogLevel::ERROR, "Failed to connect: %s", filteredHandles.at(0).Serialize().c_str());
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
 
         // Initialize device to default settings
@@ -368,7 +368,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         context->uniqueDevices[filteredHandles.at(0).Serialize().c_str()] = device;
         node.device = device;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
@@ -383,7 +383,7 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         if (node.chipIndex >= desc.rfSOC.size())
         {
             Log(LogLevel::ERROR, "Invalid chipIndex (%i). dev%i has only %i chips.", node.chipIndex, i, desc.rfSOC.size());
-            return OpStatus::OUT_OF_RANGE;
+            return OpStatus::OutOfRange;
         }
 
         if (node.configInputs.iniFilename.empty())
@@ -397,16 +397,16 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         else
             sprintf(configFilepath, "%s", node.configInputs.iniFilename.c_str());
 
-        if (chip->LoadConfig(configFilepath, false) != OpStatus::SUCCESS)
+        if (chip->LoadConfig(configFilepath, false) != OpStatus::Success)
         {
             Log(LogLevel::ERROR, "dev%s chip%i Error loading file: %s", i, node.chipIndex, configFilepath);
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
 
         node.config.skipDefaults = true;
         Log(LogLevel::INFO, "dev%i chip%i loaded with: %s", i, node.chipIndex, configFilepath);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static OpStatus AssignDevicesToPorts(LimePluginContext* context)
@@ -423,7 +423,7 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             {
                 // invalid device name
                 Log(LogLevel::ERROR, "Port%i assigned invalid (%s) device.", p, token);
-                return OpStatus::INVALID_VALUE;
+                return OpStatus::InvalidValue;
             }
 
             int devIndex = 0;
@@ -439,7 +439,7 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             token = strtok(NULL, ",");
         }
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static void GatherEnvironmentSettings(LimePluginContext* context, LimeSettingsProvider* configProvider)
@@ -516,7 +516,7 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
         {
             ++specifiedPortsCount;
             OpStatus status = AssignDevicesToPorts(context);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
     }
@@ -524,9 +524,9 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
     if (specifiedPortsCount == 0)
     {
         Log(LogLevel::ERROR, "No ports have been specified.");
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static OpStatus TransferDeviceDirectionalSettings(
@@ -558,7 +558,7 @@ static OpStatus TransferDeviceDirectionalSettings(
             Log(LogLevel::ERROR, "%s path not found. Available: ", settings.antenna.c_str());
             for (const auto& iter : paths)
                 Log(LogLevel::ERROR, "\"%s\" ", iter.c_str());
-            return OpStatus::INVALID_VALUE;
+            return OpStatus::InvalidValue;
         }
     }
 
@@ -601,7 +601,7 @@ static OpStatus TransferDeviceDirectionalSettings(
         else
             node.config.channel[i].rx = trx;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes)
@@ -617,14 +617,14 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes)
         for (int ch = 0; ch < node.configInputs.maxChannelsToUse; ++ch)
         {
             OpStatus status = TransferDeviceDirectionalSettings(node, node.configInputs.rx, node.config.channel[ch].rx, TRXDir::Rx);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
             status = TransferDeviceDirectionalSettings(node, node.configInputs.tx, node.config.channel[ch].tx, TRXDir::Tx);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, LimeSettingsProvider* configProvider)
@@ -638,7 +638,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
     GatherEnvironmentSettings(context, configProvider);
 
     // first gather port settings, they will be base for each device
-    if (GatherPortSettings(context, configProvider) != OpStatus::SUCCESS)
+    if (GatherPortSettings(context, configProvider) != OpStatus::Success)
         return -1;
 
     // gather each device settings and override values set by port
@@ -661,11 +661,11 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
         }
 
         // Collect and initialize specified unique devices
-        if (ConnectInitializeDevices(context) != OpStatus::SUCCESS)
+        if (ConnectInitializeDevices(context) != OpStatus::Success)
             return -1;
 
         // Load configuration files for each chip if specified
-        if (LoadDevicesConfigurationFile(context) != OpStatus::SUCCESS)
+        if (LoadDevicesConfigurationFile(context) != OpStatus::Success)
             return -1;
 
         TransferSettingsToDevicesConfig(context->rfdev);
@@ -829,22 +829,22 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             stream.linkFormat == DataFormat::I12 ? "I12" : "I16");
 
         port.composite = new StreamComposite(aggregates);
-        if (port.composite->StreamSetup(stream) != OpStatus::SUCCESS)
+        if (port.composite->StreamSetup(stream) != OpStatus::Success)
         {
             Log(LogLevel::ERROR, "Port%i stream setup failed.", p);
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params)
 {
     OpStatus status = MapChannelsToDevices(context->rxChannels, context->ports, *params, TRXDir::Rx);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return -1;
     status = MapChannelsToDevices(context->txChannels, context->ports, *params, TRXDir::Tx);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return -1;
 
     TransferRuntimeParametersToConfig(*params, context->rxChannels, TRXDir::Rx);
@@ -867,7 +867,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             {
                 Log(LogLevel::DEBUG, "dev%i configure.", i);
                 OpStatus status = node.device->Configure(node.config, node.chipIndex);
-                if (status != OpStatus::SUCCESS)
+                if (status != OpStatus::Success)
                     return -1;
             } catch (...)
             {
@@ -884,7 +884,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
         // override gains after device Configure
         ConfigGains(context, params, context->rxChannels, false);
         ConfigGains(context, params, context->txChannels, true);
-        if (ConfigureStreaming(context, params) != OpStatus::SUCCESS)
+        if (ConfigureStreaming(context, params) != OpStatus::Success)
             return -1;
     } // try
     catch (std::logic_error& e)

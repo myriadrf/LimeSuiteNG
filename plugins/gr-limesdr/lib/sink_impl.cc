@@ -286,7 +286,7 @@ void sink_impl::init_stream(int device_number, int channel)
     config.linkFormat = lime::DataFormat::I16;
 
     if (instance.get_device(device_number)->StreamSetup(config, 0) !=
-        lime::OpStatus::SUCCESS) {
+        lime::OpStatus::Success) {
         instance.error(device_number);
     }
 
@@ -335,17 +335,17 @@ void sink_impl::toggle_pa_path(int device_number, bool enable)
                                lime::TRXDir::Tx,
                                stored.channel_mode,
                                enable ? pa_path[stored.channel_mode] : 0) !=
-            lime::OpStatus::SUCCESS) {
+            lime::OpStatus::Success) {
             instance.error(device_number);
         }
     } else {
         if (device->SetAntenna(0, lime::TRXDir::Tx, 0, enable ? pa_path[0] : 0) !=
-            lime::OpStatus::SUCCESS) {
+            lime::OpStatus::Success) {
             instance.error(device_number);
         }
 
         if (device->SetAntenna(0, lime::TRXDir::Tx, 1, enable ? pa_path[1] : 0) !=
-            lime::OpStatus::SUCCESS) {
+            lime::OpStatus::Success) {
             instance.error(device_number);
         }
     }

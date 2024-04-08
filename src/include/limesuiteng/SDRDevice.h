@@ -487,7 +487,7 @@ class LIME_API SDRDevice
     /// @return Operation status.
     virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
     {
-        return OpStatus::NOT_IMPLEMENTED;
+        return OpStatus::NotImplemented;
     }
 
     /// @copydoc ISPI::SPI()

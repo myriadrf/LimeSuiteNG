@@ -1416,7 +1416,7 @@ void lms7002_pnlSX_view::OnbtnChangeRefClkClick(wxCommandEvent& event)
             txtFrequency->GetValue().ToDouble(&currentFreq_MHz);
             lmsControl->SetReferenceClk_SX(direction, refClkMHz * 1e6);
             OpStatus status = lmsControl->SetFrequencySX(direction, currentFreq_MHz * 1e6);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 wxMessageBox(_("Set SX frequency failed"));
             UpdateGUI();
         }
@@ -1441,7 +1441,7 @@ void lms7002_pnlSX_view::OnbtnCalculateClick(wxCommandEvent& event)
     else
         status = lmsControl->SetFrequencySX(direction, freqMHz * 1e6);
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         wxMessageBox(_("Set SX frequency failed"));
     else
     {
@@ -1460,7 +1460,7 @@ void lms7002_pnlSX_view::OnbtnTuneClick(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
     OpStatus status = lmsControl->TuneVCO(direction == TRXDir::Tx ? LMS7002M::VCO_Module::VCO_SXT : LMS7002M::VCO_Module::VCO_SXR);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         wxMessageBox(_("SX VCO Tune Failed"));
     UpdateGUI();
 }

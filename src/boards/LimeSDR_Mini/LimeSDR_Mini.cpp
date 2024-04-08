@@ -306,14 +306,12 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
     } //try
     catch (std::logic_error& e)
     {
-        lime::error("LimeSDR_Mini config: %s", e.what());
-        return OpStatus::ERROR;
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
     } catch (std::runtime_error& e)
     {
-        lime::error("LimeSDR_Mini config: %s", e.what());
-        return OpStatus::ERROR;
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Mini::Init()
@@ -321,13 +319,13 @@ OpStatus LimeSDR_Mini::Init()
     lime::LMS7002M* lms = mLMSChips[0];
     OpStatus status;
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
-    if (lms->CalibrateTxGain() != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (lms->CalibrateTxGain() != OpStatus::Success)
+        return OpStatus::Error;
 
     lms->EnableChannel(TRXDir::Tx, 0, false);
 
@@ -362,7 +360,7 @@ OpStatus LimeSDR_Mini::Init()
         return -1;
     }*/
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Mini::Reset()
@@ -385,7 +383,7 @@ OpStatus LimeSDR_Mini::Synchronize(bool toChip)
     if (toChip)
     {
         OpStatus status = mLMSChips[0]->UploadAll();
-        if (status == OpStatus::SUCCESS)
+        if (status == OpStatus::Success)
         {
             //ret = SetFPGAInterfaceFreq(-1, -1, -1000, -1000); // TODO: implement
         }
@@ -494,7 +492,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         }
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
@@ -591,7 +589,7 @@ SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
     LMS64CProtocol::FirmwareInfo info;
     OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);
 
-    if (returnCode != OpStatus::SUCCESS)
+    if (returnCode != OpStatus::Success)
     {
         deviceDescriptor.name = GetDeviceName(LMS_DEV_UNKNOWN);
         deviceDescriptor.expansionName = GetExpansionBoardName(EXP_BOARD_UNKNOWN);
@@ -666,7 +664,7 @@ OpStatus LimeSDR_Mini::GPIODirRead(uint8_t* buffer, const size_t bufLength)
 {
     if (!buffer || bufLength == 0)
     {
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     const uint32_t addr = 0xC4;
@@ -687,7 +685,7 @@ OpStatus LimeSDR_Mini::GPIORead(uint8_t* buffer, const size_t bufLength)
 {
     if (!buffer || bufLength == 0)
     {
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     const uint32_t addr = 0xC2;
@@ -708,7 +706,7 @@ OpStatus LimeSDR_Mini::GPIODirWrite(const uint8_t* buffer, const size_t bufLengt
 {
     if (!buffer || bufLength == 0)
     {
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     const uint32_t addr = 0xC4;
@@ -721,7 +719,7 @@ OpStatus LimeSDR_Mini::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 {
     if (!buffer || bufLength == 0)
     {
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     const uint32_t addr = 0xC6;

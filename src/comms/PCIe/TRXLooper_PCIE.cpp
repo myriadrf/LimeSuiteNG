@@ -81,9 +81,9 @@ TRXLooper_PCIE::~TRXLooper_PCIE()
 OpStatus TRXLooper_PCIE::Setup(const StreamConfig& config)
 {
     if (config.channels.at(lime::TRXDir::Rx).size() > 0 && !mRxArgs.port->IsOpen())
-        return ReportError(OpStatus::IO_FAILURE, "Rx data port not open");
+        return ReportError(OpStatus::IOFailure, "Rx data port not open");
     if (config.channels.at(lime::TRXDir::Tx).size() > 0 && !mTxArgs.port->IsOpen())
-        return ReportError(OpStatus::IO_FAILURE, "Tx data port not open");
+        return ReportError(OpStatus::IOFailure, "Tx data port not open");
 
     float combinedSampleRate =
         std::max(config.channels.at(lime::TRXDir::Tx).size(), config.channels.at(lime::TRXDir::Rx).size()) * config.hintSampleRate;
@@ -875,7 +875,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
             if (errno == EINVAL)
             {
                 port->TxDMAEnable(false);
-                return ReportError(OpStatus::IO_FAILURE, "Failed to submit dma write (%i) %s", errno, strerror(errno));
+                return ReportError(OpStatus::IOFailure, "Failed to submit dma write (%i) %s", errno, strerror(errno));
             }
         }
         else
@@ -891,9 +891,9 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
 
     fpga->WriteRegister(0x000D, 0); // WFM_LOAD off
     if (samplesRemaining == 0)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     else
-        return ReportError(OpStatus::ERROR, "Failed to upload waveform");
+        return ReportError(OpStatus::Error, "Failed to upload waveform");
 }
 
 } // namespace lime

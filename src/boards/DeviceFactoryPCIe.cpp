@@ -55,7 +55,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
         handle.addr = std::string("/dev/") + nodeName;
 
         std::shared_ptr<LitePCIe> pcidev = std::make_shared<LitePCIe>();
-        if (pcidev->Open(handle.addr, O_RDWR) != OpStatus::SUCCESS)
+        if (pcidev->Open(handle.addr, O_RDWR) != OpStatus::Success)
             continue;
 
         // use GET_INFO command to recognize the device
@@ -93,7 +93,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
 
     std::string controlFile(handle.addr);
     OpStatus connectionStatus = controlPort->Open(controlFile, O_RDWR);
-    if (connectionStatus != OpStatus::SUCCESS)
+    if (connectionStatus != OpStatus::Success)
     {
         lime::ReportError(connectionStatus, "Unable to connect to device using handle (%s)", handle.Serialize().c_str());
         return nullptr;
@@ -139,7 +139,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     case LMS_DEV_EXTERNAL_XSDR:
         return new XSDR(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
     default:
-        lime::ReportError(OpStatus::INVALID_VALUE, "Unrecognized device ID (%i)", fw.deviceId);
+        lime::ReportError(OpStatus::InvalidValue, "Unrecognized device ID (%i)", fw.deviceId);
         return nullptr;
     }
 }
