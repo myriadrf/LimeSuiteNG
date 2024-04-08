@@ -1,0 +1,35 @@
+gr-limesdr (4.0.0-0) unstable; urgency=low
+
+  * Using new Lime Suite NG API.
+
+ -- Lime Microsystems <info@limemicro.com>  Thu, 21 Mar 2024 14:00:00 +0200
+
+gr-limesdr (2.1.7-1) unstable; urgency=low
+
+  * Moved .ini file loading to advanced tab in GRC block description
+
+ -- Lime Microsystems <info@limemicro.com>  Thu, 29 Oct 2020 14:00:00 +0300
+gr-limesdr (2.1.6-1) unstable; urgency=low
+
+  * Improve block labeling and documentation
+  * Added LimeRFE board support
+  * Fixed gain values to match LimeSuite 
+  * Updated required LimeSuite libraries to the newest version
+  * Changed debian/rules to compile with LimeRFE support
+
+ -- Lime Microsystems <info@limemicro.com>  Wed, 29 Jul 2020 12:10:00 +0300
+gr-limesdr (2.1.4-2) unstable; urgency=low
+
+  * Fix cmake for old versions
+
+ -- Lime Microsystems <info@limemicro.com>  Tue, 10 Dec 2019 11:47:20 +0300
+gr-limesdr (2.1.4-1) unstable; urgency=low
+
+  * Allow change of parameters after the config file is loaded
+
+ -- Lime Microsystems <info@limemicro.com>  Tue, 10 Dec 2019 10:36:59 +0300
+gr-limesdr (2.1.3-1) unstable; urgency=low
+
+  * debian packaging work for gr-limesdr
+
+ -- Lime Microsystems <info@limemicro.com>  Mon, 17 Jun 2019 13:46:48 +0300

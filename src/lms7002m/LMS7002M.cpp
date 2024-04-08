@@ -4,9 +4,8 @@
 @brief Implementation of LMS7002M transceiver configuring
 */
 
-#include "limesuiteng/LMS7002M.h"
-
 #define _USE_MATH_DEFINES
+#include "limesuiteng/LMS7002M.h"
 
 #include <algorithm>
 #include <cassert>
@@ -3251,7 +3250,7 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
         return status;
     if ((status = SetGFIRCoefficients(dir, 1, coef2, L * 5)) != OpStatus::SUCCESS)
         return status;
-    if ((status = SetGFIRCoefficients(dir, 2, coef2, L * 15)) != OpStatus::SUCCESS)
+    if ((status = SetGFIRCoefficients(dir, 2, coef, L * 15)) != OpStatus::SUCCESS)
         return status;
 
     std::stringstream ss;

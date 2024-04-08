@@ -269,9 +269,9 @@ static int trx_lms7002m_get_tx_samples_per_packet_func(TRXState* s1)
 static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    if (lime->rxChannels[channel_num].parent->rxSettings.powerAvailable)
+    if (lime->rxChannels[channel_num].parent->configInputs.rx.powerAvailable)
     {
-        *presult = lime->rxChannels[channel_num].parent->rxSettings.power_dBm;
+        *presult = lime->rxChannels[channel_num].parent->configInputs.rx.power_dBm;
         return 0;
     }
     else
@@ -281,9 +281,9 @@ static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int 
 static int trx_lms7002m_get_abs_tx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    if (lime->txChannels[channel_num].parent->txSettings.powerAvailable)
+    if (lime->txChannels[channel_num].parent->configInputs.tx.powerAvailable)
     {
-        *presult = lime->txChannels[channel_num].parent->txSettings.power_dBm;
+        *presult = lime->txChannels[channel_num].parent->configInputs.tx.power_dBm;
         return 0;
     }
     else

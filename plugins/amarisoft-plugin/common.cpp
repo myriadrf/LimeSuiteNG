@@ -207,7 +207,7 @@ static OpStatus MapChannelsToDevices(
         std::deque<DevNode*> assignedDevices;
         copy(ports[p].nodes.begin(), ports[p].nodes.end(), assignedDevices.begin());
 
-        int remainingChannels = assignedDevices.front()->maxChannelsToUse;
+        int remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
         int chipRelativeChannelIndex = 0;
 
         for (int i = 0; i < port_channel_count; ++i)
@@ -220,7 +220,7 @@ static OpStatus MapChannelsToDevices(
                     Log(LogLevel::ERROR, "port%i requires more channels than assigned devices have.", p);
                     return OpStatus::ERROR;
                 }
-                remainingChannels = assignedDevices.front()->maxChannelsToUse;
+                remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
                 chipRelativeChannelIndex = 0;
             }
             ChannelData lane;
@@ -283,39 +283,80 @@ int LimePlugin_Destroy(LimePluginContext* context)
     return 0;
 }
 
+static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string& text)
+{
+    if (text.empty())
+        return true;
+
+    if (!handle.name.empty() && handle.name.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.addr.empty() && handle.addr.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.serial.empty() && handle.serial.find(text) != std::string::npos)
+        return true;
+
+    if (!handle.media.empty() && handle.media.find(text) != std::string::npos)
+        return true;
+
+    return false;
+}
+
+static int FilterHandles(const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
+{
+    if (handles.empty())
+	return 0;
+
+    DeviceHandle deserializedHandle(text);
+    filteredHandles.clear();
+    for (const DeviceHandle& h : handles)
+    {
+        // compare hint as if it was in serialized handle form.
+        // if it's not, compare using basic text search among handle fields
+        if (h.IsEqualIgnoringEmpty(deserializedHandle) || FuzzyHandleMatch(h, text))
+            filteredHandles.push_back(h);
+    }
+
+    return filteredHandles.size();
+}
+
 static OpStatus ConnectInitializeDevices(LimePluginContext* context)
 {
     // Collect and connect specified unique nodes
+    std::vector<DeviceHandle> fullHandles = DeviceRegistry::enumerate();
     for (int i = 0; i < LIME_MAX_UNIQUE_DEVICES; ++i)
     {
         DevNode& node = context->rfdev.at(i);
         if (node.handleString.empty())
             continue;
 
-        std::vector<DeviceHandle> fullHandles = DeviceRegistry::enumerate(DeviceHandle(node.handleString));
-        if (fullHandles.size() > 1)
+        std::vector<DeviceHandle> filteredHandles;
+        FilterHandles(node.handleString, fullHandles, filteredHandles);
+
+        if (filteredHandles.size() > 1)
         {
             Log(LogLevel::ERROR, "%s : ambiguous handle, matches multiple devices.", node.handleString.c_str());
             return OpStatus::INVALID_VALUE;
         }
-        if (fullHandles.empty())
+        if (filteredHandles.empty())
         {
             Log(LogLevel::ERROR, "No device found to match handle: %s.", node.handleString.c_str());
             return OpStatus::INVALID_VALUE;
         }
-        auto iter = context->uniqueDevices.find(fullHandles.at(0).Serialize().c_str());
+        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize().c_str());
         if (iter != context->uniqueDevices.end())
         {
             node.device = iter->second;
             continue; // skip if the device already exists
         }
 
-        SDRDevice* device = DeviceRegistry::makeDevice(fullHandles.at(0));
+        SDRDevice* device = DeviceRegistry::makeDevice(filteredHandles.at(0));
         if (device != nullptr)
-            Log(LogLevel::INFO, "Connected: %s", fullHandles.at(0).Serialize().c_str());
+            Log(LogLevel::INFO, "Connected: %s", filteredHandles.at(0).Serialize().c_str());
         else
         {
-            Log(LogLevel::ERROR, "Failed to connect: %s", fullHandles.at(0).Serialize().c_str());
+            Log(LogLevel::ERROR, "Failed to connect: %s", filteredHandles.at(0).Serialize().c_str());
             return OpStatus::ERROR;
         }
 
@@ -323,7 +364,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
-        context->uniqueDevices[fullHandles.at(0).Serialize().c_str()] = device;
+        context->uniqueDevices[filteredHandles.at(0).Serialize().c_str()] = device;
         node.device = device;
     }
     return OpStatus::SUCCESS;
@@ -344,16 +385,16 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
             return OpStatus::OUT_OF_RANGE;
         }
 
-        if (node.iniFilename.empty())
+        if (node.configInputs.iniFilename.empty())
             continue;
 
         LMS7002M* chip = static_cast<LMS7002M*>(node.device->GetInternalChip(node.chipIndex));
 
         char configFilepath[512];
-        if (node.iniFilename[0] != '/') // is not global path
-            sprintf(configFilepath, "%s/%s", context->currentWorkingDirectory.c_str(), node.iniFilename.c_str());
+        if (node.configInputs.iniFilename[0] != '/') // is not global path
+            sprintf(configFilepath, "%s/%s", context->currentWorkingDirectory.c_str(), node.configInputs.iniFilename.c_str());
         else
-            sprintf(configFilepath, "%s", node.iniFilename.c_str());
+            sprintf(configFilepath, "%s", node.configInputs.iniFilename.c_str());
 
         if (chip->LoadConfig(configFilepath, false) != OpStatus::SUCCESS)
         {
@@ -390,6 +431,10 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             port.nodes.push_back(assignedDeviceNode);
             assignedDeviceNode->portIndex = p;
             assignedDeviceNode->assignedToPort = true;
+
+            // copy port's config parameters to each assinged device to form base
+            // which will later be modified by individual device parameter overrides
+            assignedDeviceNode->configInputs = port.configInputs;
             token = strtok(NULL, ",");
         }
     }
@@ -403,8 +448,8 @@ static void GatherEnvironmentSettings(LimePluginContext* context, LimeSettingsPr
         logVerbosity = std::min(static_cast<LogLevel>(val), LogLevel::DEBUG);
 }
 
-static void GatherDeviceDirectionalSettings(
-    LimeSettingsProvider* settings, DevNode::DirectionalSettings* dir, const char* varPrefix)
+static void GatherDirectionalSettings(
+    LimeSettingsProvider* settings, DirectionalSettings* dir, const char* varPrefix)
 {
     GetSetting(settings, &dir->antenna, "%s_path", varPrefix);
     GetSetting(settings, &dir->lo_override, "%s_lo_override", varPrefix);
@@ -415,9 +460,35 @@ static void GatherDeviceDirectionalSettings(
     GetSetting(settings, &dir->oversample, "%s_oversample", varPrefix);
 }
 
+static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* settings, const char* prefix)
+{
+    GetSetting(settings, &param->iniFilename, "%s_ini", prefix);
+    GetSetting(settings, &param->maxChannelsToUse, "%s_max_channels_to_use", prefix);
+    GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_double_freq_conversion_to_lower_side", prefix);
+    std::string linkFormatStr;
+    if (GetSetting(settings, &linkFormatStr, "%s_linkFormat", prefix))
+    {
+        if (linkFormatStr == "I16"s)
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        else if (linkFormatStr == "I12"s)
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        else
+        {
+            Log(LogLevel::WARNING, "Invalid link format (%s): falling back to I12", linkFormatStr.c_str());
+            param->linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        }
+    }
+    GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_syncPPS", prefix);
+
+    char dirPrefix[32];
+    sprintf(dirPrefix, "%s_rx", prefix);
+    GatherDirectionalSettings(settings, &param->rx, dirPrefix);
+    sprintf(dirPrefix, "%s_tx", prefix);
+    GatherDirectionalSettings(settings, &param->tx, dirPrefix);
+}
+
 static void GatherDeviceNodeSettings(LimePluginContext* context, LimeSettingsProvider* settings)
 {
-    context->rfdev.resize(LIME_MAX_UNIQUE_DEVICES);
     for (uint32_t i = 0; i < context->rfdev.size(); ++i)
     {
         DevNode& dev = context->rfdev.at(i);
@@ -425,31 +496,28 @@ static void GatherDeviceNodeSettings(LimePluginContext* context, LimeSettingsPro
         sprintf(devPrefix, "dev%i", i);
         GetSetting(settings, &dev.handleString, devPrefix);
         GetSetting(settings, &dev.chipIndex, "%s_chip_index", devPrefix);
-        GetSetting(settings, &dev.iniFilename, "%s_ini", devPrefix);
-        GetSetting(settings, &dev.maxChannelsToUse, "%s_max_channels_to_use", devPrefix);
-        GetSetting(settings, &dev.double_freq_conversion_to_lower_side, "%s_double_freq_conversion_to_lower_side", devPrefix);
 
-        char dirPrefix[32];
-        sprintf(dirPrefix, "%s_rx", devPrefix);
-        GatherDeviceDirectionalSettings(settings, &dev.rxSettings, dirPrefix);
-        sprintf(dirPrefix, "%s_tx", devPrefix);
-        GatherDeviceDirectionalSettings(settings, &dev.txSettings, dirPrefix);
-
+        GatherConfigSettings(&dev.configInputs, settings, devPrefix);
         ParseFPGARegistersWrites(context, i);
     }
 }
 
 static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvider* settings)
 {
-    context->ports.resize(LIME_TRX_MAX_RF_PORT);
     int specifiedPortsCount = 0;
     for (uint32_t i = 0; i < context->ports.size(); ++i)
     {
         PortData& port = context->ports.at(i);
         char portPrefix[16];
         sprintf(portPrefix, "port%i", i);
+        GatherConfigSettings(&port.configInputs, settings, portPrefix);
         if (GetSetting(settings, &port.deviceNames, portPrefix))
+        {
             ++specifiedPortsCount;
+            OpStatus status = AssignDevicesToPorts(context);
+            if (status != OpStatus::SUCCESS)
+                return status;
+        }
     }
 
     if (specifiedPortsCount == 0)
@@ -461,7 +529,7 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
 }
 
 static OpStatus TransferDeviceDirectionalSettings(
-    DevNode& node, const DevNode::DirectionalSettings& settings, SDRDevice::ChannelConfig::Direction& trx, TRXDir dir)
+    DevNode& node, const DirectionalSettings& settings, SDRDevice::ChannelConfig::Direction& trx, TRXDir dir)
 {
     trx.enabled = false;
     trx.oversample = settings.oversample;
@@ -545,12 +613,12 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes)
         node.devIndex = i;
         node.assignedToPort = false;
 
-        for (int ch = 0; ch < node.maxChannelsToUse; ++ch)
+        for (int ch = 0; ch < node.configInputs.maxChannelsToUse; ++ch)
         {
-            OpStatus status = TransferDeviceDirectionalSettings(node, node.rxSettings, node.config.channel[ch].rx, TRXDir::Rx);
+            OpStatus status = TransferDeviceDirectionalSettings(node, node.configInputs.rx, node.config.channel[ch].rx, TRXDir::Rx);
             if (status != OpStatus::SUCCESS)
                 return status;
-            status = TransferDeviceDirectionalSettings(node, node.txSettings, node.config.channel[ch].tx, TRXDir::Tx);
+            status = TransferDeviceDirectionalSettings(node, node.configInputs.tx, node.config.channel[ch].tx, TRXDir::Tx);
             if (status != OpStatus::SUCCESS)
                 return status;
         }
@@ -563,11 +631,17 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
     context->hostLog = logFptr;
     hostCallback = logFptr;
     context->config = configProvider;
+    context->ports.resize(LIME_TRX_MAX_RF_PORT);
+    context->rfdev.resize(LIME_MAX_UNIQUE_DEVICES);
 
     GatherEnvironmentSettings(context, configProvider);
-    GatherDeviceNodeSettings(context, configProvider);
+
+    // first gather port settings, they will be base for each device
     if (GatherPortSettings(context, configProvider) != OpStatus::SUCCESS)
         return -1;
+
+    // gather each device settings and override values set by port
+    GatherDeviceNodeSettings(context, configProvider);
 
     try
     {
@@ -592,32 +666,12 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
         // Load configuration files for each chip if specified
         if (LoadDevicesConfigurationFile(context) != OpStatus::SUCCESS)
             return -1;
-        if (AssignDevicesToPorts(context) != OpStatus::SUCCESS)
-            return -1;
 
         TransferSettingsToDevicesConfig(context->rfdev);
 
         // load power settings
         /*    for (int p = 0; p < TRX_MAX_RF_PORT; ++p)
         {
-            sprintf(varname, "port%i_linkFormat", p);
-            char* linkFormat = trx_get_param_string(hostState, varname);
-            if (linkFormat)
-            {
-                if (strcasecmp(linkFormat, "I16") == 0)
-                    s->linkFormat[p] = lime::SDRDevice::StreamConfig::DataFormat::I16;
-                else if (strcasecmp(linkFormat, "I12") == 0)
-                    s->linkFormat[p] = lime::SDRDevice::StreamConfig::DataFormat::I12;
-                else
-                {
-                    Log(LogLevel::WARNING, "Port[%i} Invalid link format (%s): falling back to I12", p, linkFormat);
-                    s->linkFormat[p] = lime::SDRDevice::StreamConfig::DataFormat::I12;
-                }
-                free(linkFormat);
-            }
-            else
-                s->linkFormat[p] = lime::SDRDevice::StreamConfig::DataFormat::I12;
-
             // absolute gain info
             for (int ch = 0; ch < TRX_MAX_CHANNELS; ++ch)
             {
@@ -638,12 +692,6 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->waitPPS = val != 0;
-                s->streamExtras[p] = extra;
-            }
-            sprintf(varname, "port%i_usePoll", p);
-            if (trx_get_param_double(hostState, &val, varname) == 0)
-            {
-                extra->usePoll = val != 0;
                 s->streamExtras[p] = extra;
             }
             sprintf(varname, "port%i_rxSamplesInPacket", p);
@@ -741,8 +789,10 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         SDRDevice::StreamConfig stream;
         stream.channels[TRXDir::Rx].resize(params->rf_ports[p].rx_channel_count);
         stream.channels[TRXDir::Tx].resize(params->rf_ports[p].tx_channel_count);
-        stream.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+        stream.linkFormat = port.configInputs.linkFormat;
         stream.format = context->samplesFormat;
+        stream.extraConfig.negateQ = port.configInputs.double_freq_conversion_to_lower_side;
+        stream.extraConfig.waitPPS = port.configInputs.syncPPS;
         stream.extraConfig.rx.samplesInPacket = 256;
         stream.extraConfig.rx.packetsInBatch = 4;
         stream.extraConfig.tx.packetsInBatch = 8;
@@ -764,7 +814,7 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             if (!dev->assignedToPort)
                 continue;
             std::vector<int> channels;
-            for (int i = 0; i < dev->maxChannelsToUse; ++i)
+            for (int i = 0; i < dev->configInputs.maxChannelsToUse; ++i)
                 channels.push_back(i);
             aggregates.push_back({ dev->device, channels, dev->chipIndex });
         }

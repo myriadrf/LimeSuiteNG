@@ -8,6 +8,7 @@
 #include "CommonFunctions.h"
 
 #include <memory>
+#include <string_view>
 #include <stdexcept>
 
 #ifndef __unix__

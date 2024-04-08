@@ -26,6 +26,7 @@
     #endif
     #include <mutex>
 #endif
+#include <string_view>
 
 using namespace lime;
 using namespace std::literals::string_literals;

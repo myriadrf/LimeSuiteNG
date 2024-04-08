@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(litepcie-kernel VERSION 0.1.0 LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -79,15 +79,20 @@ add_custom_command(OUTPUT ${MODULE_OBJECT}
 
 add_custom_target(litepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
 
+cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LITEPCIE_KERNEL_MODULE" OFF)
+if (NOT INSTALL_KERNEL_MODULE)
+    return()
+endif()
+
 # If module is already loaded, unload it
-install(CODE "exec_program(${CMAKE_CURRENT_LIST_DIR}/unload.sh ARGS ${MODULE_NAME})")
-set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNELRELEASE}/extra)
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/unload.sh ${MODULE_NAME})")
+set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
 install(
     FILES ${MODULE_OBJECT}
     DESTINATION ${KERNEL_MODULE_DESTINATION}
 )
 # load installed module
-install(CODE "exec_program(${CMAKE_CURRENT_LIST_DIR}/install.sh ARGS ${MODULE_NAME})")
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh ${MODULE_NAME})")
 
 add_custom_target(uninstall-kernel-module
     COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall.sh ${MODULE_NAME}

@@ -253,7 +253,7 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
 
     if (channelOffset != 0)
     {
-        SetNCOFrequency(moduleIndex, trx, channel, -1, 0.0);
+        SetNCOFrequency(moduleIndex, trx, channel, 0, 0.0);
     }
 
     setTDD(frequency);

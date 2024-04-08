@@ -1,4 +1,5 @@
 #include "limesuiteng/StreamComposite.h"
+#include <algorithm>
 #include <assert.h>
 namespace lime {
 

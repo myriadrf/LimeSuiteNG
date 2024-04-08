@@ -1,0 +1,13 @@
+# Format Style Options - Created with Clang Power Tools
+---
+BasedOnStyle: WebKit
+AllowShortCaseLabelsOnASingleLine: true
+ColumnLimit: 130
+CompactNamespaces: true
+FixNamespaceComments: true
+PointerAlignment: Left
+ReflowComments: false
+SortIncludes: false
+SpacesInCStyleCastParentheses: true
+TabWidth: 4
+...
