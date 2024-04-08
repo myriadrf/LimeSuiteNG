@@ -267,57 +267,39 @@ static bool EnableLPF()
 //---------------------------------------------------------------------------
 static bool InitializeLMS()
 {
-    device = lime::DeviceRegistry::makeDevice(deviceList[currentDeviceIndex]);
+    device = lime::DeviceRegistry::makeDevice(deviceList.at(currentDeviceIndex));
     if (device == nullptr) {
         return false;
     }
 
     const lime::SDRDevice::Descriptor& descriptor = device->GetDescriptor();
 
-    numberOfChannels = descriptor.rfSOC[0].channelCount;
+    numberOfChannels = descriptor.rfSOC.at(0).channelCount;
     if (numberOfChannels <= 0) {
         return false;
     }
 
-    if (device->Init() != lime::OpStatus::SUCCESS) {
+    lime::SDRDevice::SDRConfig configuration;
+    auto& channelConfiguration = configuration.channel[channel].rx;
+
+    channelConfiguration.enabled = true;
+    channelConfiguration.sampleRate = sampleRates.at(sampleRateIndex);
+    channelConfiguration.oversample = oversample;
+    channelConfiguration.centerFrequency = currentLOFreq;
+    channelConfiguration.path = antennaSelect;
+    channelConfiguration.calibrate = true;
+    channelConfiguration.gain[lime::eGainTypes::LNA] = LNA;
+    channelConfiguration.gain[lime::eGainTypes::PGA] = PGA;
+    channelConfiguration.gain[lime::eGainTypes::TIA] = TIA;
+    channelConfiguration.lpf = isLPFEnabled ? LPFBandwidth : 130e6;
+
+    isCalibrated = CalibrationStatus::Calibrated;
+
+    if (device->Configure(configuration, 0) != lime::OpStatus::SUCCESS) {
+        isCalibrated = CalibrationStatus::CalibrationErr;
+
         return false;
     }
-
-    if (device->SetSampleRate(0, lime::TRXDir::Rx, 0, sampleRates.at(sampleRateIndex), oversample) != lime::OpStatus::SUCCESS) {
-        return false;
-    }
-
-    if (device->EnableChannel(0, lime::TRXDir::Rx, channel, true) != lime::OpStatus::SUCCESS) {
-        return false;
-    }
-
-    /* TX channel needs to be enabled for LPF and calibration */
-    if (device->EnableChannel(0, lime::TRXDir::Tx, channel, true) != lime::OpStatus::SUCCESS) {
-        return false;
-    }
-
-    if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::SUCCESS) {
-        return false;
-    }
-
-    if (isLPFEnabled) {
-        if (!EnableLPF()) {
-            return false;
-        }
-    } else {
-        if (!DisableLPF()) {
-            return false;
-        }
-    }
-
-    if (!SetGain()) {
-        return false;
-    }
-
-    if (device->SetFrequency(0, lime::TRXDir::Rx, channel, static_cast<double>(currentLOFreq)) != lime::OpStatus::SUCCESS) {
-        return false;
-    }
-    PerformCalibration(false);
 
     return true;
 }
