@@ -5,12 +5,12 @@ cmake_minimum_required (VERSION 3.12)
 
 # Only compile on Windows
 if(NOT MSVC)
-	return()
+	message(FATAL_ERROR "HDSDR build is available on Microsoft Visual Studio")
 endif()
 
 # Only compile if 32-bit
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	return()
+if(NOT(CMAKE_SIZEOF_VOID_P EQUAL 4))
+	message(FATAL_ERROR "HDSDR build is only supported for 32-bit builds")
 endif()
 
 # Check if using correct Visual Studio version
@@ -66,13 +66,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	)
 else()
 	set(LIMESUITE_LIB limesuiteng)
-	
-	cmake_dependent_option(ENABLE_HDSDR "Enable HDSDR plugin" ON "ENABLE_LIBRARY" OFF)
-	add_feature_info(HDSDR ENABLE_HDSDR "HDSDR plugin for limesuiteng")
-
-	if (NOT ENABLE_HDSDR)
-		return()
-	endif()
 endif()
 
 ########################################################################
