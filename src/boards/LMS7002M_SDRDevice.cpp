@@ -332,14 +332,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
 
 int LMS7002M_SDRDevice::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    auto& cmixParameter = trx == TRXDir::Tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP;
-    auto& selParameter = trx == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX;
-
-    if (GetParameter(moduleIndex, channel, cmixParameter.address, cmixParameter.msb, cmixParameter.lsb) != 0)
-    {
-        return ReportError(-1, "NCO is disabled");
-    }
-
+    const auto& selParameter = trx == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX;
     return GetParameter(moduleIndex, channel, selParameter.address, selParameter.msb, selParameter.lsb);
 }
 

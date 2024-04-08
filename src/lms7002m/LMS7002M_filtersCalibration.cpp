@@ -92,8 +92,9 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        if ((status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM)))
-            return ReportError(OpStatus::ERROR, "Tune Rx Filter: failed to program MCU");
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::SUCCESS)
+            return ReportError(status, "Tune Rx Filter: failed to program MCU");
     }
 
     //set reference clock parameter inside MCU
@@ -150,8 +151,9 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        if ((status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM)))
-            return ReportError(OpStatus::ERROR, "Tune Tx Filter: failed to program MCU");
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::SUCCESS)
+            return ReportError(status, "Tune Tx Filter: failed to program MCU");
     }
 
     int ind = this->GetActiveChannelIndex() % 2;

@@ -495,13 +495,14 @@ int MCU_BD::Program_MCU(int m_iMode1, int m_iMode0)
         mode = MCU_BD::MCU_PROG_MODE::RESET;
         break;
     }
-    return Program_MCU(byte_array, mode);
+    OpStatus status = Program_MCU(byte_array, mode);
+    return status == OpStatus::SUCCESS ? 0 : -1;
 }
 
-int MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
+OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
 {
     if (!m_serPort)
-        return ReportError(ENOLINK, "Device not connected");
+        return ReportError(OpStatus::NOT_CONNECTED, "Device not connected");
 
 #ifndef NDEBUG
     auto timeStart = std::chrono::high_resolution_clock::now();
@@ -542,7 +543,7 @@ int MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
             } while ((!fifoEmpty) && (t2 - t1) < timeout);
 
             if (!fifoEmpty)
-                return ReportError(ETIMEDOUT, "MCU FIFO full");
+                return ReportError(OpStatus::TIMEOUT, "MCU FIFO full");
 
             //write 32 bytes into FIFO
             for (uint8_t j = 0; j < fifoLen; ++j)
@@ -556,7 +557,7 @@ int MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
 #endif
         };
         if (abort)
-            return ReportError(-1, "operation aborted by user");
+            return ReportError(OpStatus::ABORTED, "operation aborted by user");
 
         //wait until programmed flag
         wrdata[0] = statusReg;
@@ -576,14 +577,14 @@ int MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
             std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
 #endif
         if (!programmed)
-            return ReportError(ETIMEDOUT, "MCU not programmed");
-        return 0;
+            return ReportError(OpStatus::TIMEOUT, "MCU not programmed");
+        return OpStatus::SUCCESS;
     } catch (std::runtime_error& e)
     {
 #ifndef NDEBUG
         lime::error("MCU programming failed : %s", e.what());
 #endif
-        return -1;
+        return OpStatus::ERROR;
     }
 }
 

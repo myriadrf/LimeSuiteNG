@@ -1994,7 +1994,10 @@ OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz
 float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 {
     if (index > 15)
-        return ReportError(ERANGE, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
+    {
+        ReportError(OpStatus::INVALID_VALUE, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
+        return 0;
+    }
     float_type refClk_Hz = GetReferenceClk_TSP(dir);
     uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
     uint32_t fcw = 0;
@@ -2049,7 +2052,10 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
 float_type LMS7002M::GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index)
 {
     if (index > 15)
-        return ReportError(ERANGE, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
+    {
+        ReportError(OpStatus::INVALID_VALUE, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
+        return 0;
+    }
     uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
     uint16_t pho = SPI_read(addr + index);
     float_type angle = 360 * pho / 65536.0;
@@ -3104,7 +3110,7 @@ double LMS7002M::GetClockFreq(ClockID clk_id)
     case ClockID::CLK_TXTSP:
         return GetReferenceClk_TSP(TRXDir::Tx);
     default:
-        lime::ReportError(EINVAL, "Invalid clock ID.");
+        lime::ReportError(OpStatus::INVALID_VALUE, "Invalid clock ID.");
         return 0;
     }
 }

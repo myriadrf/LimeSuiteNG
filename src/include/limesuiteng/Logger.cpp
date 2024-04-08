@@ -20,77 +20,47 @@
     #define thread_local __thread
 #endif
 
+namespace lime {
+
 #define MAX_MSG_LEN 1024
 thread_local int _reportedErrorCode;
 thread_local char _reportedErrorMessage[MAX_MSG_LEN];
 
-static const char* errToStr(const int errnum)
-{
-    thread_local static char buff[MAX_MSG_LEN];
-#ifdef _MSC_VER
-    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        errnum,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&buff,
-        sizeof(buff),
-        NULL);
-    return buff;
-#else
-    #ifndef __unix__
-    strerror_s(buff, sizeof(buff), errnum);
-    #elif !(defined(__GLIBC__) && defined(__GNU_SOURCE))
-    //http://linux.die.net/man/3/strerror_r
-    auto result = strerror_r(errnum, buff, sizeof(buff));
-    (void)result;
-    #else
-    //this version may decide to use its own internal string
-    return strerror_r(errnum, buff, sizeof(buff));
-    #endif
-    return buff;
-#endif
-}
-
-const char* lime::GetLastErrorMessage(void)
+const char* GetLastErrorMessage(void)
 {
     return _reportedErrorMessage;
 }
 
-int lime::ReportError(const int errnum)
+OpStatus ReportError(const OpStatus errnum)
 {
-    return lime::ReportError(errnum, errToStr(errnum));
+    return ReportError(errnum, ToCString(errnum));
 }
 
-lime::OpStatus lime::ReportError(const lime::OpStatus errnum)
-{
-    return lime::ReportError(errnum, ToCString(errnum));
-}
-
-int lime::ReportError(const int errnum, const char* format, va_list argList)
+int ReportError(const int errnum, const char* format, va_list argList)
 {
     _reportedErrorCode = errnum;
     vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
-    lime::log(LogLevel::ERROR, _reportedErrorMessage);
+    log(LogLevel::ERROR, _reportedErrorMessage);
     return errnum;
 }
 
-lime::OpStatus lime::ReportError(const lime::OpStatus errnum, const char* format, va_list argList)
+OpStatus ReportError(const OpStatus errnum, const char* format, va_list argList)
 {
     vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
-    lime::log(LogLevel::ERROR, _reportedErrorMessage);
+    log(LogLevel::ERROR, _reportedErrorMessage);
     return errnum;
 }
 
-static void defaultLogHandler(const lime::LogLevel level, const char* message)
+static void defaultLogHandler(const LogLevel level, const char* message)
 {
-    if (level > lime::LogLevel::ERROR)
+    if (level > LogLevel::ERROR)
         return;
     fprintf(stderr, "%s\n", message);
 }
 
-static lime::LogHandler logHandler(&defaultLogHandler);
+static LogHandler logHandler(&defaultLogHandler);
 
-void lime::log(const LogLevel level, const char* format, va_list argList)
+void log(const LogLevel level, const char* format, va_list argList)
 {
     char buff[4096];
     int ret = vsnprintf(buff, sizeof(buff), format, argList);
@@ -98,27 +68,99 @@ void lime::log(const LogLevel level, const char* format, va_list argList)
         logHandler(level, buff);
 }
 
-void lime::registerLogHandler(const LogHandler handler)
+void registerLogHandler(const LogHandler handler)
 {
     logHandler = handler ? handler : defaultLogHandler;
 }
 
-const char* lime::logLevelToName(const LogLevel level)
+void log(const LogLevel level, const char* format, ...)
 {
-    switch (level)
-    {
-    case lime::LogLevel::CRITICAL:
-        return "CRITICAL";
-    case lime::LogLevel::ERROR:
-        return "ERROR";
-    case lime::LogLevel::WARNING:
-        return "WARNING";
-    case lime::LogLevel::INFO:
-        return "INFO";
-    case lime::LogLevel::VERBOSE:
-        return "VERBOSE";
-    case lime::LogLevel::DEBUG:
-        return "DEBUG";
-    }
-    return "";
+    va_list args;
+    va_start(args, format);
+    log(level, format, args);
+    va_end(args);
 }
+
+void critical(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::CRITICAL, format, args);
+    va_end(args);
+}
+
+void critical(const std::string& text)
+{
+    log(LogLevel::CRITICAL, text);
+}
+
+int error(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::ERROR, format, args);
+    va_end(args);
+    return -1;
+}
+
+int error(const std::string& text)
+{
+    log(LogLevel::ERROR, text);
+    return -1;
+}
+
+void warning(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::WARNING, format, args);
+    va_end(args);
+}
+
+void warning(const std::string& text)
+{
+    log(LogLevel::WARNING, text);
+}
+
+void info(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::INFO, format, args);
+    va_end(args);
+}
+
+void debug(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::DEBUG, format, args);
+    va_end(args);
+}
+
+void debug(const std::string& text)
+{
+    log(LogLevel::DEBUG, text);
+}
+
+void info(const std::string& text)
+{
+    log(LogLevel::INFO, text);
+}
+
+//! Log a message with formatting and specified logging level
+void log(const LogLevel level, const std::string& text)
+{
+    log(level, "%s", text.c_str());
+}
+
+OpStatus ReportError(const OpStatus errnum, const char* format, ...)
+{
+    va_list argList;
+    va_start(argList, format);
+    OpStatus status = ReportError(errnum, format, argList);
+    va_end(argList);
+    return status;
+}
+
+} // namespace lime

@@ -211,9 +211,9 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         lime::debug("Uploading DC/IQ calibration firmware"s);
-        status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        if (status != 0)
-            return OpStatus::ERROR;
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::SUCCESS)
+            return status;
     }
 
     //set reference clock parameter inside MCU
@@ -328,9 +328,9 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         lime::debug("Uploading DC/IQ calibration firmware");
-        int status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        if (status != 0)
-            return OpStatus::ERROR;
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::SUCCESS)
+            return status;
     }
 
     //set reference clock parameter inside MCU

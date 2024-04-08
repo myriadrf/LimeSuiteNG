@@ -3,6 +3,8 @@
 
 #undef ERROR
 
+using namespace lime;
+
 static wxTextAttr mDefaultStyle;
 
 pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -66,6 +68,26 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     wxUpdateUIEvent::SetUpdateInterval(100);
 }
 
+static const char* logLevelToName(const LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::CRITICAL:
+        return "CRITICAL";
+    case LogLevel::ERROR:
+        return "ERROR";
+    case LogLevel::WARNING:
+        return "WARNING";
+    case LogLevel::INFO:
+        return "INFO";
+    case LogLevel::VERBOSE:
+        return "VERBOSE";
+    case LogLevel::DEBUG:
+        return "DEBUG";
+    }
+    return "";
+}
+
 void pnlMiniLog::HandleMessage(wxCommandEvent& event)
 {
     auto level = lime::LogLevel(event.GetInt());
@@ -78,7 +100,7 @@ void pnlMiniLog::HandleMessage(wxCommandEvent& event)
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     strftime(buffer, 80, "%H:%M:%S", timeinfo);
-    wxString line(wxString::Format("[%s] %s: %s", buffer, lime::logLevelToName(level), event.GetString()));
+    wxString line(wxString::Format("[%s] %s: %s", buffer, logLevelToName(level), event.GetString()));
 
     mAllMessages.push_back(line);
     const int allMessageLimit = 3000;

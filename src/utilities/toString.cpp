@@ -51,6 +51,10 @@ const char* ToCString(OpStatus value)
         return "busy";
     case OpStatus::ABORTED:
         return "aborted";
+    case OpStatus::PERMISSION_DENIED:
+        return "permission denied";
+    case OpStatus::NOT_CONNECTED:
+        return "not connected";
     }
     return "";
 }

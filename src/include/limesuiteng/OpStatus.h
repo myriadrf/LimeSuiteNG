@@ -18,6 +18,8 @@ enum class OpStatus {
     TIMEOUT = -8,
     BUSY = -9,
     ABORTED = -10,
+    PERMISSION_DENIED = -11,
+    NOT_CONNECTED = -12,
 };
 
 } // namespace lime

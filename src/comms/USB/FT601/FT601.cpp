@@ -41,7 +41,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 
     if (FT_FAILED(ftStatus))
     {
-        ReportError(ENODEV, "Failed to list USB Devices");
+        ReportError(OpStatus::ERROR, "Failed to list USB Devices");
         return false;
     }
 
