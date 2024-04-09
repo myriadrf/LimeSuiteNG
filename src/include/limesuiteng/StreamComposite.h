@@ -8,6 +8,9 @@
 
 namespace lime {
 
+struct StreamConfig;
+struct StreamMeta;
+
 /** @brief Structure for holding information about the aggregate stream. */
 struct LIME_API StreamAggregate {
     SDRDevice* device; ///< The device the stream is coming from.
@@ -28,7 +31,7 @@ class LIME_API StreamComposite
     /// @brief Sets up the streams with the given configuration.
     /// @param config The configuration to set up the streams with.
     /// @return The status of the operation.
-    OpStatus StreamSetup(const SDRDevice::StreamConfig& config);
+    OpStatus StreamSetup(const StreamConfig& config);
 
     /// @brief Starts all of the aggregated streams.
     void StreamStart();
@@ -38,14 +41,14 @@ class LIME_API StreamComposite
 
     /// @copydoc TRXLooper::StreamRx()
     /// @tparam T The type of streams to send.
-    template<class T> uint32_t StreamRx(T** samples, uint32_t count, SDRDevice::StreamMeta* meta);
+    template<class T> uint32_t StreamRx(T** samples, uint32_t count, StreamMeta* meta);
 
     /// @copydoc TRXLooper::StreamTx()
     /// @tparam T The type of streams to receive.
-    template<class T> uint32_t StreamTx(const T* const* samples, uint32_t count, const SDRDevice::StreamMeta* meta);
+    template<class T> uint32_t StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta);
 
   private:
-    std::vector<SDRDevice::StreamConfig> SplitAggregateStreamSetup(const SDRDevice::StreamConfig& cfg);
+    std::vector<StreamConfig> SplitAggregateStreamSetup(const StreamConfig& cfg);
     std::vector<StreamAggregate> mAggregate;
     std::vector<StreamAggregate> mActiveAggregates;
 };

@@ -89,12 +89,13 @@ if(bananapi-r2)
   )
 endif(bananapi-r2)  
 
-  set(LIBUSB_1_INCLUDE_DIRS
-    ${LIBUSB_1_INCLUDE_DIR}
-  )
-  set(LIBUSB_1_LIBRARIES
-    ${LIBUSB_1_LIBRARY}
-)
+  if (LIBUSB_1_INCLUDE_DIR)
+    set(LIBUSB_1_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIR})
+  endif()
+
+  if (LIBUSB_1_LIBRARY)
+    set(LIBUSB_1_LIBRARIES ${LIBUSB_1_LIBRARY})
+  endif()
 
   if (LIBUSB_1_INCLUDE_DIRS AND LIBUSB_1_LIBRARIES)
      set(LIBUSB_1_FOUND TRUE)
@@ -106,15 +107,14 @@ endif(bananapi-r2)
 	    message(STATUS " - LIBUSB_1_INCLUDE_DIRS: ${LIBUSB_1_INCLUDE_DIRS}")
 	    message(STATUS " - LIBUSB_1_LIBRARIES: ${LIBUSB_1_LIBRARIES}")
     endif (NOT libusb-1.0_FIND_QUIETLY)
+    # show the LIBUSB_1_INCLUDE_DIRS and LIBUSB_1_LIBRARIES variables only in the advanced view
+    mark_as_advanced(LIBUSB_1_INCLUDE_DIRS LIBUSB_1_LIBRARIES)
+    mark_as_advanced(LIBUSB_1_INCLUDE_DIR LIBUSB_1_LIBRARY)
   else (LIBUSB_1_FOUND)
     if (libusb-1.0_FIND_REQUIRED)
       message(FATAL_ERROR "Could not find libusb")
     endif (libusb-1.0_FIND_REQUIRED)
   endif (LIBUSB_1_FOUND)
-
-  # show the LIBUSB_1_INCLUDE_DIRS and LIBUSB_1_LIBRARIES variables only in the advanced view
-  mark_as_advanced(LIBUSB_1_INCLUDE_DIRS LIBUSB_1_LIBRARIES)
-  mark_as_advanced(LIBUSB_1_INCLUDE_DIR LIBUSB_1_LIBRARY)
 
 endif (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 

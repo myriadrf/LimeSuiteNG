@@ -9,6 +9,7 @@
 #include <SoapySDR/Logger.hpp>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/DeviceHandle.h"
 
 using namespace lime;
 
@@ -16,19 +17,20 @@ static void limeSuiteLogHandler(const LogLevel level, const char* message)
 {
     switch (level)
     {
-    case LogLevel::CRITICAL:
+    case LogLevel::Critical:
         SoapySDR::log(SOAPY_SDR_CRITICAL, message);
         return;
-    case LogLevel::ERROR:
+    case LogLevel::Error:
         SoapySDR::log(SOAPY_SDR_ERROR, message);
         return;
-    case LogLevel::WARNING:
+    case LogLevel::Warning:
         SoapySDR::log(SOAPY_SDR_WARNING, message);
         return;
-    case LogLevel::INFO:
+    case LogLevel::Info:
+    case LogLevel::Verbose:
         SoapySDR::log(SOAPY_SDR_INFO, message);
         return;
-    case LogLevel::DEBUG:
+    case LogLevel::Debug:
         SoapySDR::log(SOAPY_SDR_DEBUG, message);
         return;
     }

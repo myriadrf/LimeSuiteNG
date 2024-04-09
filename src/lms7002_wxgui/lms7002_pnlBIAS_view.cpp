@@ -1,4 +1,5 @@
 #include "lms7002_pnlBIAS_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
 #include "limesuiteng/SDRDevice.h"

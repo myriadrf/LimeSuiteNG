@@ -4,8 +4,8 @@
 @brief APIs for locating system resources.
 */
 
-#ifndef LIMESUITE_SYSTEM_RESOURCES_H
-#define LIMESUITE_SYSTEM_RESOURCES_H
+#ifndef LIMESUITENG_SYSTEM_RESOURCES_H
+#define LIMESUITENG_SYSTEM_RESOURCES_H
 
 #include "limesuiteng/config.h"
 #include <string>
@@ -53,14 +53,6 @@ LIME_API std::vector<std::string> listImageSearchPaths(void);
  * @return the full filesystem path to the resource if it exists or empty
  */
 LIME_API std::string locateImageResource(const std::string& name);
-
-/*!
- * Download an image resource given only the file name.
- * The resource will be downloaded in the user's application data directory.
- * @param name a unique name for the resource file including file extension
- * @return 0 for success or error code upon error
- */
-LIME_API int downloadImageResource(const std::string& name);
 
 } // namespace lime
 

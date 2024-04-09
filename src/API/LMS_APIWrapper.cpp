@@ -1,13 +1,10 @@
 #include "CommonFunctions.h"
+#include "comms/IComms.h"
 #include "lime/LimeSuite.h"
-#include "limesuiteng/commonTypes.h"
-#include "limesuiteng/DeviceHandle.h"
-#include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/GainTypes.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/VersionInfo.h"
-#include "limesuiteng/Logger.h"
+#include "limesuiteng/limesuiteng.hpp"
 #include "MemoryPool.h"
+#include "utilities/DeltaVariable.h"
+#include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>
@@ -47,8 +44,8 @@ struct StreamBuffer {
 
 struct LMS_APIDevice {
     lime::SDRDevice* device;
-    lime::SDRDevice::StreamConfig lastSavedStreamConfig;
-    std::array<std::array<float_type, 2>, lime::SDRDevice::MAX_CHANNEL_COUNT> lastSavedLPFValue;
+    lime::StreamConfig lastSavedStreamConfig;
+    std::array<std::array<float_type, 2>, lime::SDRConfig::MAX_CHANNEL_COUNT> lastSavedLPFValue;
     StatsDeltas statsDeltas;
 
     uint8_t moduleIndex;
@@ -83,7 +80,7 @@ struct LMS_APIDevice {
         }
     }
 
-    const lime::SDRDevice::RFSOCDescriptor& GetRFSOCDescriptor() const
+    const lime::RFSOCDescriptor& GetRFSOCDescriptor() const
     {
         assert(device);
         return device->GetDescriptor().rfSOC.at(moduleIndex);
@@ -112,7 +109,7 @@ static std::vector<StreamHandle*> streamHandles;
 
 static inline int OpStatusToReturnCode(OpStatus value)
 {
-    return value == OpStatus::SUCCESS ? 0 : -1;
+    return value == OpStatus::Success ? 0 : -1;
 }
 
 inline LMS_APIDevice* CheckDevice(lms_device_t* device)
@@ -691,7 +688,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
 
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    auto enumToTestStruct = [](lms_testsig_t signal) -> lime::SDRDevice::ChannelConfig::Direction::TestSignal {
+    auto enumToTestStruct = [](lms_testsig_t signal) -> lime::ChannelConfig::Direction::TestSignal {
         switch (signal)
         {
         case LMS_TESTSIG_NONE:
@@ -701,23 +698,23 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
         case LMS_TESTSIG_NCODIV8:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div8,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Half };
         case LMS_TESTSIG_NCODIV4:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div4,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Half };
         case LMS_TESTSIG_NCODIV8F:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div8,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Full };
         case LMS_TESTSIG_NCODIV4F:
             return { true,
                 false,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full };
+                lime::ChannelConfig::Direction::TestSignal::Divide::Div4,
+                lime::ChannelConfig::Direction::TestSignal::Scale::Full };
         default:
             throw std::logic_error("Unexpected enumerator lms_testsig_t value");
         }
@@ -748,7 +745,7 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         return -1;
     }
 
-    lime::SDRDevice::StreamConfig config = apiDevice->lastSavedStreamConfig;
+    lime::StreamConfig config = apiDevice->lastSavedStreamConfig;
     config.bufferSize = stream->fifoSize;
 
     auto channel = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
@@ -760,13 +757,13 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::F32;
+        config.format = lime::DataFormat::F32;
         break;
     case lms_stream_t::LMS_FMT_I16:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        config.format = lime::DataFormat::I16;
         break;
     case lms_stream_t::LMS_FMT_I12:
-        config.format = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        config.format = lime::DataFormat::I12;
         break;
     default:
         return lime::error("Setup stream failed: invalid data format.");
@@ -775,12 +772,12 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     switch (stream->linkFmt)
     {
     case lms_stream_t::LMS_LINK_FMT_I16:
-        config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        config.linkFormat = lime::DataFormat::I16;
         break;
     case lms_stream_t::LMS_LINK_FMT_I12:
     case lms_stream_t::LMS_LINK_FMT_DEFAULT:
     default:
-        config.linkFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        config.linkFormat = lime::DataFormat::I12;
         break;
     }
 
@@ -789,14 +786,14 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
 
     auto returnValue = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
 
-    if (returnValue == OpStatus::SUCCESS)
+    if (returnValue == OpStatus::Success)
     {
         apiDevice->lastSavedStreamConfig = config;
     }
 
     stream->handle = GetStreamHandle(apiDevice);
 
-    return returnValue == OpStatus::SUCCESS ? 0 : -1;
+    return returnValue == OpStatus::Success ? 0 : -1;
 }
 
 API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* stream)
@@ -949,7 +946,7 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         }
     }
 
-    lime::SDRDevice::StreamMeta metadata{ 0, false, false };
+    lime::StreamMeta metadata{ 0, false, false };
     int samplesProduced =
         handle->parent->device->StreamRx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
 
@@ -1057,7 +1054,7 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
         return sample_count;
     }
 
-    lime::SDRDevice::StreamMeta metadata{ 0, false, false };
+    lime::StreamMeta metadata{ 0, false, false };
 
     if (meta != nullptr)
     {
@@ -1130,7 +1127,7 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         return -1;
     }
 
-    lime::SDRDevice::StreamStats stats;
+    lime::StreamStats stats;
     lime::TRXDir direction = stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
     switch (direction)
@@ -1227,7 +1224,7 @@ API_EXPORT int CALL_CONV LMS_ReadCustomBoardParam(lms_device_t* device, uint8_t 
     std::vector<lime::CustomParameterIO> parameter{ { param_id, *val, units } };
     OpStatus returnValue = apiDevice->device->CustomParameterRead(parameter);
 
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         return -1;
     }
@@ -1443,29 +1440,29 @@ API_EXPORT int CALL_CONV LMS_GetTestSignal(lms_device_t* device, bool dir_tx, si
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Half)
     {
         *sig = LMS_TESTSIG_NCODIV4;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Half)
     {
         *sig = LMS_TESTSIG_NCODIV8;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full)
     {
         *sig = LMS_TESTSIG_NCODIV4F;
         return 0;
     }
 
-    if (testSignal.divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
-        testSignal.scale == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full)
+    if (testSignal.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 &&
+        testSignal.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full)
     {
         *sig = LMS_TESTSIG_NCODIV8F;
         return 0;
@@ -1730,7 +1727,7 @@ API_EXPORT int CALL_CONV LMS_SetNCOIndex(lms_device_t* device, bool dir_tx, size
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
     OpStatus returnValue = apiDevice->device->SetNCOIndex(apiDevice->moduleIndex, direction, chan, ind, down);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         return -1;
     }
@@ -1838,20 +1835,20 @@ API_EXPORT int CALL_CONV LMS_UploadWFM(lms_device_t* device, const void** sample
 
     auto config = apiDevice->lastSavedStreamConfig;
 
-    lime::SDRDevice::StreamConfig::DataFormat dataFormat;
+    lime::DataFormat dataFormat;
     switch (format)
     {
     case 0:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        dataFormat = lime::DataFormat::I12;
         break;
     case 1:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I16;
+        dataFormat = lime::DataFormat::I16;
         break;
     case 2:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::F32;
+        dataFormat = lime::DataFormat::F32;
         break;
     default:
-        dataFormat = lime::SDRDevice::StreamConfig::DataFormat::I12;
+        dataFormat = lime::DataFormat::I12;
         break;
     }
 
@@ -1950,7 +1947,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
     auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
-        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(lime::MEMORY_DEVICES_TEXT.at(memoryDevice));
+        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
             const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);
@@ -1980,7 +1977,7 @@ static int VCTCXOReadFallbackPath(LMS_APIDevice* apiDevice, uint16_t* val)
     std::vector<lime::CustomParameterIO> parameters{ { BOARD_PARAM_DAC, 0, "" } };
 
     OpStatus status = apiDevice->device->CustomParameterRead(parameters);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return OpStatusToReturnCode(status);
 
     if (val)
@@ -2001,7 +1998,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXORead(lms_device_t* device, uint16_t* val)
     auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
-        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(lime::MEMORY_DEVICES_TEXT.at(memoryDevice));
+        const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
             const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);

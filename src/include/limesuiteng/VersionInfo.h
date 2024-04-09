@@ -4,8 +4,8 @@
 @brief API for querying version and build information.
 */
 
-#ifndef LIMESUITE_VERSION_INFO_H
-#define LIMESUITE_VERSION_INFO_H
+#ifndef LIMESUITENG_VERSION_INFO_H
+#define LIMESUITENG_VERSION_INFO_H
 
 #include "limesuiteng/config.h"
 #include <string>
@@ -13,18 +13,18 @@
 /*!
  * API version number which can be used as a preprocessor check.
  * The format of the version number is encoded as follows:
- * <b>(major << 16) | (minor << 8) | (8 bit increment)</b>.
+ * <b>(major << 24) | (minor << 16) | (16 bit increment)</b>.
  * Where the increment can be used to indicate implementation
  * changes, fixes, or API additions within a minor release series.
  *
  * The macro is typically used in an application as follows:
  * \code
- * #if defined(LIME_SUITE_API_VERSION) && (LIME_SUITE_API_VERSION >= 0x20161200)
+ * #if defined(LIMESUITENG_API_VERSION) && (LIMESUITENG_API_VERSION >= 0x01020003)
  * // Use a newer feature from the LimeSuite library API
  * #endif
  * \endcode
  */
-#define LIME_SUITE_API_VERSION 0x00000100
+#define LIMESUITENG_API_VERSION 0x00010000
 
 namespace lime {
 /*!
@@ -41,7 +41,7 @@ LIME_API std::string GetBuildTimestamp(void);
 /*!
      * Get the LimeSuite library API version as a string.
      * The format of the version string is <b>major.minor.increment</b>,
-     * where the digits are taken directly from <b>LIME_SUITE_API_VERSION</b>.
+     * where the digits are taken directly from <b>LIMESUITENG_API_VERSION</b>.
      */
 LIME_API std::string GetAPIVersion(void);
 
@@ -52,4 +52,4 @@ LIME_API std::string GetABIVersion(void);
 
 } // namespace lime
 
-#endif //LIMESUITE_VERSION_INFO_H
+#endif //LIMESUITENG_VERSION_INFO_H

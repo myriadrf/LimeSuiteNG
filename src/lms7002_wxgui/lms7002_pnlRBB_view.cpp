@@ -1,4 +1,5 @@
 #include "lms7002_pnlRBB_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
@@ -6,6 +7,7 @@
 #include "lms7suiteEvents.h"
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

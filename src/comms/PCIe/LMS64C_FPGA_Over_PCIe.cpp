@@ -1,5 +1,5 @@
-
 #include "LMS64C_FPGA_Over_PCIe.h"
+#include "protocols/LMS64CProtocol.h"
 
 using namespace lime;
 

@@ -16,17 +16,17 @@ set_target_properties(limeDevice PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BI
 target_include_directories(limeDevice PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeDevice PRIVATE cli-shared)
 
-add_executable(limeSPI limeSPI.cpp common.cpp)
+add_executable(limeSPI limeSPI.cpp)
 set_target_properties(limeSPI PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(limeSPI PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeSPI PRIVATE cli-shared)
 
-add_executable(limeConfig limeConfig.cpp common.cpp)
+add_executable(limeConfig limeConfig.cpp)
 set_target_properties(limeConfig PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(limeConfig PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeConfig PRIVATE cli-shared)
 
-add_executable(limeFLASH limeFLASH.cpp common.cpp)
+add_executable(limeFLASH limeFLASH.cpp)
 set_target_properties(limeFLASH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(limeFLASH PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeFLASH PRIVATE cli-shared)

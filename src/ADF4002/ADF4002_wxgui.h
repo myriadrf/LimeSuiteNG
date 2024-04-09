@@ -7,9 +7,6 @@
 #ifndef ADF4002_wxgui_H
 #define ADF4002_wxgui_H
 
-//(*Headers(ADF4002_wxgui)
-#include <wx/frame.h>
-#include <wx/wx.h>
 class wxSpinEvent;
 class wxTextCtrl;
 class wxComboBox;
@@ -19,7 +16,6 @@ class wxFlexGridSizer;
 class wxSpinCtrl;
 class wxButton;
 class wxStaticBoxSizer;
-//*)
 
 namespace lime {
 class ADF4002;

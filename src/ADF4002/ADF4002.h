@@ -8,11 +8,12 @@
 #define ADF_MODULE_H
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/IComms.h"
 
 #include <memory>
 
 namespace lime {
+
+class ISPI;
 
 /** @brief The class for controlling the ADF4002 frequency synthesizer.
  * 

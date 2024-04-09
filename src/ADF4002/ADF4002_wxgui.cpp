@@ -19,6 +19,7 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/combobox.h>
+#include <wx/settings.h>
 
 using namespace std;
 using namespace lime;

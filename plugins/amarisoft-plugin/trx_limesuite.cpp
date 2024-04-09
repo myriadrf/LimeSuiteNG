@@ -3,10 +3,9 @@
  * Copyright (C) 2015-2018 Amarisoft/LimeMicroSystems
  */
 #include "common.h"
+#include "limesuiteng/StreamConfig.h"
 
 #include <stdarg.h>
-
-typedef lime::SDRDevice::LogLevel LogLevel;
 
 extern "C" {
 #include "trx_driver.h"
@@ -58,8 +57,8 @@ class AmarisoftParamProvider : public LimeSettingsProvider
     bool blockAccess;
 };
 
-static lime::SDRDevice::LogLevel logVerbosity = lime::SDRDevice::LogLevel::DEBUG;
-static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
+static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
+static void Log(LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
         return;
@@ -70,7 +69,7 @@ static void Log(SDRDevice::LogLevel lvl, const char* format, ...)
     printf("\n");
 }
 
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -102,8 +101,8 @@ static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
         SDRDevice* dev = lime->device[p];
         StreamStatus& stats = portStreamStates[p];
 
-        SDRDevice::StreamStats rx;
-        SDRDevice::StreamStats tx;
+        StreamStats rx;
+        StreamStats tx;
         dev->StreamStatus(lime->chipIndex[p], &rx, &tx);
         stats.rx.dataRate_Bps = rx.dataRate_Bps;
         stats.tx.dataRate_Bps = tx.dataRate_Bps;
@@ -112,7 +111,7 @@ static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
            << " rate: " << stats.rx.dataRate_Bps / 1e6 << " MB/s]"
            << "[Tx| Late: " << stats.tx.late << " underrun: " << stats.tx.underrun << " rate: " << stats.tx.dataRate_Bps / 1e6
            << " MB/s]"
-           << " linkFormat: " << (lime->linkFormat[p] == SDRDevice::StreamConfig::DataFormat::I16 ? "I16" : "I12") << std::endl;
+           << " linkFormat: " << (lime->linkFormat[p] == DataFormat::I16 ? "I16" : "I12") << std::endl;
         // TODO: read FIFO usage
     }*/
     // const int len = ss.str().length();
@@ -129,7 +128,7 @@ static void trx_lms7002m_write(
     if (!samples) // Nothing to transmit
         return;
 
-    SDRDevice::StreamMeta meta;
+    StreamMeta meta;
     meta.timestamp = timestamp;
     meta.waitForTimestamp = true;
     meta.flushPartialPacket = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
@@ -145,7 +144,7 @@ static void trx_lms7002m_write(
 // return number of samples produced
 static int trx_lms7002m_read(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
 {
-    SDRDevice::StreamMeta meta;
+    StreamMeta meta;
     meta.waitForTimestamp = false;
     meta.flushPartialPacket = false;
     md->flags = 0;
@@ -198,7 +197,7 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
     //printf ("Required bandwidth:[%u], current sample_rate [%u]", bandwidth, s->sample_rate);
     if (rate <= 0) // sample rate not specified, align on 1.92Mhz
     {
-        Log(LogLevel::VERBOSE,
+        Log(LogLevel::Verbose,
             "Port[%i] Trying sample rates which are bandwidth(%u) * 1.536 = %f",
             p,
             bandwidth,
@@ -208,42 +207,42 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
             int n = multipliers[i];
             if (n * 1920000 > 122.88e6)
                 break;
-            Log(LogLevel::DEBUG, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
+            Log(LogLevel::Debug, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
             if (desiredSamplingRate <= n * 1920000)
             {
                 *psample_rate_num = n;
                 psample_rate->num = n * 1920000;
                 psample_rate->den = 1;
                 rate = psample_rate->num;
-                Log(LogLevel::INFO, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
+                Log(LogLevel::Info, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
                 return 0;
             }
         }
-        Log(LogLevel::VERBOSE, "Port[%i] Trying sample rates which are close to bandwidth(%u)", p, bandwidth);
+        Log(LogLevel::Verbose, "Port[%i] Trying sample rates which are close to bandwidth(%u)", p, bandwidth);
         for (uint32_t i = 0; i < sizeof(multipliers) / sizeof(uint8_t); ++i)
         {
             int n = multipliers[i];
-            Log(LogLevel::DEBUG, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
+            Log(LogLevel::Debug, "\tPort[%i] Trying sample rate : bandwidth(%u) sample_rate(%u)", p, bandwidth, n * 1920000);
             if (bandwidth <= n * 1920000)
             {
                 *psample_rate_num = n;
                 psample_rate->num = n * 1920000;
                 psample_rate->den = 1;
                 rate = psample_rate->num;
-                Log(LogLevel::INFO, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
+                Log(LogLevel::Info, "Port[%i] Automatic sample rate: %g MSps, n = [%u] * 1.92e6", p, rate / 1e6, n);
                 return 0;
             }
         }
-        Log(LogLevel::ERROR, "Port[%i] Could not find suitable sampling rate for %i bandwidth", p, bandwidth);
+        Log(LogLevel::Error, "Port[%i] Could not find suitable sampling rate for %i bandwidth", p, bandwidth);
     }
     else
     {
         if (rate < bandwidth)
         {
-            Log(LogLevel::ERROR, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
+            Log(LogLevel::Error, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
             return -1;
         }
-        Log(LogLevel::INFO, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
+        Log(LogLevel::Info, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
         psample_rate->num = rate;
         psample_rate->den = 1;
         *psample_rate_num = rate / 1920000;
@@ -262,16 +261,16 @@ static int trx_lms7002m_get_tx_samples_per_packet_func(TRXState* s1)
     // {
     //     txExpectedSamples = lime->streamExtras[0]->tx.samplesInPacket;
     // }
-    // Log(LogLevel::DEBUG, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
+    // Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
     return txExpectedSamples;
 }
 
 static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    if (lime->rxChannels[channel_num].parent->rxSettings.powerAvailable)
+    if (lime->rxChannels[channel_num].parent->configInputs.rx.powerAvailable)
     {
-        *presult = lime->rxChannels[channel_num].parent->rxSettings.power_dBm;
+        *presult = lime->rxChannels[channel_num].parent->configInputs.rx.power_dBm;
         return 0;
     }
     else
@@ -281,9 +280,9 @@ static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int 
 static int trx_lms7002m_get_abs_tx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    if (lime->txChannels[channel_num].parent->txSettings.powerAvailable)
+    if (lime->txChannels[channel_num].parent->configInputs.tx.powerAvailable)
     {
-        *presult = lime->txChannels[channel_num].parent->txSettings.power_dBm;
+        *presult = lime->txChannels[channel_num].parent->configInputs.tx.power_dBm;
         return 0;
     }
     else
@@ -356,7 +355,7 @@ int __attribute__((visibility("default"))) trx_driver_init(TRXState* hostState)
 
     LimePluginContext* lime = new LimePluginContext();
     lime->currentWorkingDirectory = std::string(hostState->path);
-    lime->samplesFormat = SDRDevice::StreamConfig::DataFormat::F32;
+    lime->samplesFormat = DataFormat::F32;
     configProvider.Init(hostState);
 
     if (LimePlugin_Init(lime, LogCallback, &configProvider) != 0)

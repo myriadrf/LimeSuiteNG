@@ -6,8 +6,6 @@
 #define FPGA_CONTROLS_WXGUI_H
 
 #include <wx/frame.h>
-#include <wx/timer.h>
-#include <wx/wx.h>
 class wxStaticText;
 class wxBitmapButton;
 class wxButton;

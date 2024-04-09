@@ -1,12 +1,15 @@
 #ifndef __lms7002_pnlMCU_BD_view__
 #define __lms7002_pnlMCU_BD_view__
 
-#include "lms7002_wxgui.h"
-
-#include <wx/timer.h>
 #include <thread>
 #include "ILMS7002MTab.h"
-#include "MCU_BD.h"
+
+class wxTimer;
+class wxGauge;
+
+namespace lime {
+class MCU_BD;
+}
 
 class lms7002_pnlMCU_BD_view : public ILMS7002MTab
 {
@@ -40,7 +43,7 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
   public:
     lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id);
     ~lms7002_pnlMCU_BD_view();
-    void Initialize(ControllerType* pControl) override;
+    void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
     lime::MCU_BD* mcu;

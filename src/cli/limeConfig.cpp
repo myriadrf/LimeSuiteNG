@@ -1,6 +1,7 @@
 #include "cli/common.h"
 
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
@@ -31,22 +32,22 @@ static std::vector<int> ParseIntArray(const std::string& str)
     return numbers;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::ERROR;
-static SDRDevice::LogLevel strToLogLevel(const char* str)
+static LogLevel logVerbosity = LogLevel::Error;
+static LogLevel strToLogLevel(const char* str)
 {
     if (strstr("debug", str))
-        return SDRDevice::LogLevel::DEBUG;
+        return LogLevel::Debug;
     else if (strstr("verbose", str))
-        return SDRDevice::LogLevel::VERBOSE;
+        return LogLevel::Verbose;
     else if (strstr("error", str))
-        return SDRDevice::LogLevel::ERROR;
+        return LogLevel::Error;
     else if (strstr("warning", str))
-        return SDRDevice::LogLevel::WARNING;
+        return LogLevel::Warning;
     else if (strstr("info", str))
-        return SDRDevice::LogLevel::INFO;
-    return SDRDevice::LogLevel::ERROR;
+        return LogLevel::Info;
+    return LogLevel::Error;
 }
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -133,7 +134,7 @@ int main(int argc, char** argv)
     std::string txAntennaName;
     std::vector<int> chipIndexes;
 
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.channel[0].rx.oversample = 2;
     config.channel[0].tx.oversample = 2;
 
@@ -290,7 +291,7 @@ int main(int argc, char** argv)
                 cerr << "Failed to get internal chip: " << moduleId << endl;
                 return EXIT_FAILURE;
             }
-            if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::SUCCESS)
+            if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
             {
                 cerr << "Error loading file: " << configFilepath << endl;
                 return EXIT_FAILURE;
@@ -317,7 +318,7 @@ int main(int argc, char** argv)
             for (int i = 0; i < chipDescriptor.channelCount; ++i)
                 config.channel[i] = config.channel[0];
 
-            if (device->Configure(config, moduleId) != OpStatus::SUCCESS)
+            if (device->Configure(config, moduleId) != OpStatus::Success)
             {
                 cerr << "Failed to configure device (chip" << moduleId << ")" << std::endl;
                 return EXIT_FAILURE;

@@ -2,145 +2,39 @@
 #define LIME_SDRDevice_H
 
 #include <cstring>
-#include <map>
 #include <memory>
-#include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/commonTypes.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/OpStatus.h"
-#include "limesuiteng/GainTypes.h"
-#include "limesuiteng/IComms.h"
-#include "limesuiteng/MemoryDevices.h"
-#include "limesuiteng/MemoryRegions.h"
+#include "limesuiteng/SDRConfig.h"
 
 namespace lime {
 
-struct DeviceNode;
+struct MemoryDevice;
+struct Region;
+struct SDRDescriptor;
+struct StreamConfig;
+struct StreamMeta;
+struct StreamStats;
+struct DataStorage;
+struct Region;
+struct CustomParameterIO;
 class OEMTestReporter;
+
+enum class eMemoryDevice : uint8_t;
+enum class eGainTypes : uint8_t;
+enum class LogLevel : uint8_t;
+enum class TRXDir : bool;
 
 /// @brief Class for holding information about an SDR (Software Defined Radio) device.
 /// SDRDevice can have multiple modules (RF chips), that can operate independently.
 class LIME_API SDRDevice
 {
   public:
-    static constexpr uint8_t MAX_CHANNEL_COUNT = 16; ///< Maximum amount of channels an SDR Device can hold
     static constexpr uint8_t MAX_RFSOC_COUNT = 16; ///< Maximum amount of Radio-Frequency System-on-Chips
-
-    /// @brief Enumerator to define the log level of a log message.
-    enum class LogLevel : uint8_t { CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG };
-
-    /// @brief Information about possible gain values.
-    struct GainValue {
-        uint16_t hardwareRegisterValue; ///< The value that is written to the hardware
-        float actualGainValue; ///< The actual meaning of the value (in dB)
-    };
-
-    /// @brief General information about the Radio-Frequency System-on-Chip (RFSoC).
-    struct RFSOCDescriptor {
-        std::string name; ///< The name of the system
-        uint8_t channelCount; ///< The available channel count of the system
-        std::unordered_map<TRXDir, std::vector<std::string>> pathNames; ///< The available antenna names
-
-        Range frequencyRange; ///< Deliverable frequency capabilities of the device
-        Range samplingRateRange; ///< Sampling rate capabilities of the device
-
-        std::unordered_map<TRXDir, std::unordered_map<std::string, Range>> antennaRange; ///< Antenna recommended bandwidths
-        std::unordered_map<TRXDir, Range> lowPassFilterRange; ///< The ranges of the low pass filter
-
-        std::unordered_map<TRXDir, std::set<eGainTypes>> gains; ///< The types of gains available
-        std::unordered_map<TRXDir, std::unordered_map<eGainTypes, Range>> gainRange; ///< The available ranges of each gain
-        std::unordered_map<TRXDir, std::unordered_map<eGainTypes, std::vector<GainValue>>> gainValues; ///< The possible gain values
-    };
-
-    /// @brief Structure for the information of a custom parameter.
-    struct CustomParameter {
-        std::string name; ///< The name of the custom parameter
-        int32_t id; ///< The identifier of the custom parameter
-        int32_t minValue; ///< The minimum possible value of the custom parameter
-        int32_t maxValue; ///< The maximum possible value of the custom parameter
-        bool readOnly; ///< Denotes whether this value is read only or not
-    };
-
-    /// @brief Structure for storing the information of a memory region.
-    struct Region {
-        int32_t address; ///< Starting address of the memory region
-        int32_t size; ///< The size of the memory region
-    };
-
-    /// @brief Describes a data storage of a certain type a device holds.
-    struct DataStorage {
-        SDRDevice* ownerDevice; ///< Pointer to the device that actually owns the data storage
-        eMemoryDevice memoryDeviceType; ///< The type of memory being described
-        std::unordered_map<eMemoryRegion, Region> regions; ///< The documented memory regions of the data storage
-
-        /// @brief Constructs a new Data Storage object
-        /// @param device The device this storage belongs to.
-        /// @param type The type of memory being described in this object.
-        /// @param regions The memory regions this memory contains.
-        DataStorage(SDRDevice* device = nullptr,
-            eMemoryDevice type = eMemoryDevice::COUNT,
-            std::unordered_map<eMemoryRegion, Region> regions = {})
-            : ownerDevice(device)
-            , memoryDeviceType(type)
-            , regions(regions)
-        {
-        }
-    };
-
-    /// @brief General information about device internals, static capabilities.
-    struct Descriptor {
-        std::string name; ///< The displayable name for the device
-        /*! The displayable name for the expansion card
-        * Ex: if the RFIC is on a daughter-card.
-        */
-        std::string expansionName;
-        std::string firmwareVersion; ///< The firmware version as a string
-        std::string gatewareVersion; ///< Gateware version as a string
-        std::string gatewareRevision; ///< Gateware revision as a string
-        std::string gatewareTargetBoard; ///< Which board should use this gateware
-        std::string hardwareVersion; ///< The hardware version as a string
-        std::string protocolVersion; ///< The protocol version as a string
-        uint64_t serialNumber{ 0 }; ///< A unique board serial number
-
-        std::map<std::string, uint32_t> spiSlaveIds; ///< Names and SPI bus numbers of internal chips
-        std::vector<RFSOCDescriptor> rfSOC; ///< Descriptors of all RFSoC devices within this device
-        std::vector<CustomParameter> customParameters; ///< Descriptions of all custom parameters of this device
-        /** Descriptions of all memory storage devices on this device */
-        std::map<std::string, std::shared_ptr<DataStorage>> memoryDevices;
-        std::shared_ptr<DeviceNode> socTree; ///< The device's subdevices tree view representation
-
-        static const char DEVICE_NUMBER_SEPARATOR_SYMBOL; ///< The symbol used to separate the device's name from its number
-        static const char PATH_SEPARATOR_SYMBOL; ///< The symbol that separates the device's name from its parent's name
-    };
-
-    /// @brief Structure for holding the statistics of a stream
-    struct StreamStats {
-        /// @brief Structure for storing the first in first out queue statistics
-        struct FIFOStats {
-            std::size_t totalCount; ///< The total amount of samples that can be in the FIFO queue.
-            std::size_t usedCount; ///< The amount of samples that is currently in the FIFO queue.
-
-            /// @brief Gets the ratio of the amount of FIFO filled up.
-            /// @return The amount of FIFO filled up (0 - completely empty, 1 - completely full).
-            constexpr float ratio() const { return static_cast<float>(usedCount) / totalCount; }
-        };
-
-        StreamStats() { std::memset(this, 0, sizeof(StreamStats)); }
-        uint64_t timestamp; ///< The current timestamp of the stream.
-        int64_t bytesTransferred; ///< The total amount of bytes transferred.
-        int64_t packets; ///< The total amount of packets transferred.
-        FIFOStats FIFO; ///< The status of the FIFO queue.
-        float dataRate_Bps; ///< The current data transmission rate.
-        uint32_t overrun; ///< The amount of packets overrun.
-        uint32_t underrun; ///< The amount of packets underrun.
-        uint32_t loss; ///< The amount of packets that are lost.
-        uint32_t late; ///< The amount of packets that arrived late for transmitting and were dropped.
-    };
 
     /// @brief Describes the status of a global positioning system.
     struct GPS_Lock {
@@ -153,198 +47,6 @@ class LIME_API SDRDevice
         LockStatus gps; ///< Status for the GPS system (American system).
     };
 
-    /// @brief Configuration settings for a stream.
-    struct LIME_API StreamConfig {
-        /// @brief Extra configuration settings for a stream.
-        struct Extras {
-            /// @brief The settings structure for a packet transmission.
-            struct PacketTransmission {
-                PacketTransmission();
-
-                uint16_t samplesInPacket; ///< The amount of samples to transfer in a single packet.
-                uint32_t packetsInBatch; ///< The amount of packets to send in a single transfer.
-            };
-
-            Extras();
-            bool usePoll; ///< Whether to use a polling strategy for PCIe devices.
-
-            PacketTransmission rx; ///< Configuration of the receive transfer direction.
-            PacketTransmission tx; ///< Configuration of the transmit transfer direction.
-
-            bool negateQ; ///< Whether to negate the Q element before sending the data or not.
-            bool waitPPS; ///< Start sampling from next following PPS.
-        };
-
-        /// @brief The definition of the function that gets called whenever a stream status changes.
-        typedef bool (*StatusCallbackFunc)(bool isTx, const StreamStats* stats, void* userData);
-
-        /// @brief Enumerator describing the data format.
-        enum class DataFormat : uint8_t {
-            I16, ///< Data is in a form of two 16-bit integers.
-            I12, ///< Data is in a form of two 12-bit integers.
-            F32, ///< Data is in a form of two 32-bit floating-point values.
-        };
-
-        StreamConfig();
-
-        std::unordered_map<TRXDir, std::vector<uint8_t>> channels; ///< The channels to set up for the stream.
-
-        DataFormat format; ///< Samples format used for Read/Write functions
-        DataFormat linkFormat; ///< Samples format used in transport layer Host<->FPGA
-
-        /// @brief Memory size to allocate for each channel buffering.
-        /// Default: 0 - allow to decide internally.
-        uint32_t bufferSize;
-
-        /// Optional: expected sampling rate for data transfer optimizations (in Hz).
-        /// Default: 0 - decide internally.
-        float hintSampleRate;
-        bool alignPhase; ///< Attempt to do phases alignment between paired channels
-
-        StatusCallbackFunc statusCallback; ///< Function to call on a status change.
-        void* userData; ///<  Data that will be supplied to statusCallback
-        // TODO: callback for drops and errors
-
-        Extras extraConfig; ///< Extra stream configuration settings.
-    };
-
-    /// @brief The metadata of a stream packet.
-    struct StreamMeta {
-        /**
-         * Timestamp is a value of HW counter with a tick based on sample rate.
-         * In RX: time when the first sample in the returned buffer was received.
-         * In TX: time when the first sample in the submitted buffer should be send.
-         */
-        uint64_t timestamp;
-
-        /**
-         * In RX: not used/ignored.
-         * In TX: wait for the specified HW timestamp before broadcasting data over the air.
-         */
-        bool waitForTimestamp;
-
-        /**
-         * In RX: not used/ignored.
-         * In TX: send samples to HW even if packet is not completely filled (end TX burst).
-         */
-        bool flushPartialPacket;
-    };
-
-    /// @brief Configuration of a single channel.
-    struct ChannelConfig {
-        ChannelConfig()
-            : rx()
-            , tx()
-        {
-        }
-
-        /// @brief Configuration for a direction in a channel.
-        struct Direction {
-            Direction()
-                : centerFrequency(0)
-                , NCOoffset(0)
-                , sampleRate(0)
-                , lpf(0)
-                , path(0)
-                , oversample(0)
-                , gfir()
-                , enabled(false)
-                , calibrate(false)
-                , testSignal{ false, false, TestSignal::Divide::Div8, TestSignal::Scale::Half }
-            {
-            }
-
-            /// @brief Configuration of a general finite impulse response (FIR) filter.
-            struct GFIRFilter {
-                bool enabled; ///< Whether the filter is enabled or not.
-                double bandwidth; ///< The bandwidth of the filter (in Hz).
-            };
-
-            /// @brief The structure holding the status of the test signal the device can produce.
-            struct TestSignal {
-                /// @brief The enumeration describing the divide mode of the test signal.
-                enum class Divide : uint8_t { Div8, Div4 };
-
-                /// @brief The enumeration describing the scale of the test signal.
-                enum class Scale : uint8_t { Full, Half };
-
-                complex16_t dcValue; ///< The value to use when in DC mode.
-                Divide divide; ///< The current divide of the test signal.
-                Scale scale; ///< The current scale of the test signal.
-                bool enabled; ///< Denotes whether test mode is enabled or not.
-                bool dcMode; ///< The DC mode of the test mode.
-
-                /// @brief The constructor for the Test Signal storage class.
-                /// @param enabled Whether the test signal is enabled or not.
-                /// @param dcMode Whether the DC mode is enabled or not.
-                /// @param divide The divide mode of the test signal.
-                /// @param scale The scale of the dest signal.
-                TestSignal(bool enabled = false, bool dcMode = false, Divide divide = Divide::Div8, Scale scale = Scale::Half)
-                    : dcValue(0, 0)
-                    , divide(divide)
-                    , scale(scale)
-                    , enabled(enabled)
-                    , dcMode(dcMode)
-                {
-                }
-            };
-
-            double centerFrequency; ///< The center frequency of the direction of this channel (in Hz).
-            double NCOoffset; ///< The offset from the channel's numerically controlled oscillator (NCO) (in Hz).
-            double sampleRate; ///< The sample rate of this direction of a channel (in Hz).
-            std::unordered_map<eGainTypes, double> gain; ///< The gains and their current values for this direction.
-            double lpf; ///< The bandwidth of the Low Pass Filter (LPF) (in Hz).
-            uint8_t path; ///< The antenna being used for this direction.
-            uint8_t oversample; ///< The oversample ratio of this direction.
-            GFIRFilter gfir; ///< The general finite impulse response (FIR) filter settings of this direction.
-            bool enabled; ///< Denotes whether this direction of a channel is enabled or not.
-            bool calibrate; ///< Denotes whether the device will be calibrated or not.
-            TestSignal testSignal; ///< Denotes whether the signal being sent is a test signal or not.
-        };
-
-        /// @brief Gets the reference to the direction settings.
-        /// @param direction The direction to get it for.
-        /// @return The reference to the direction.
-        Direction& GetDirection(TRXDir direction)
-        {
-            switch (direction)
-            {
-            case TRXDir::Rx:
-                return rx;
-            case TRXDir::Tx:
-                return tx;
-            }
-        }
-
-        /// @brief Gets the const reference to the direction settings.
-        /// @param direction The direction to get it for.
-        /// @return The const reference to the direction.
-        const Direction& GetDirection(TRXDir direction) const
-        {
-            switch (direction)
-            {
-            case TRXDir::Rx:
-                return rx;
-            case TRXDir::Tx:
-                return tx;
-            }
-        }
-
-        Direction rx; ///< Configuration settings for the Receive channel.
-        Direction tx; ///< Configuration settings for the Transmit channel.
-    };
-
-    /// @brief Configuration of an SDR device.
-    struct SDRConfig {
-        SDRConfig()
-            : referenceClockFreq(0)
-            , skipDefaults(false){};
-        double referenceClockFreq; ///< The reference clock frequency of the device.
-        ChannelConfig channel[MAX_CHANNEL_COUNT]; ///< The configuration settings for each of the channels.
-        // Loopback setup?
-        bool skipDefaults; ///< Skip default values initialization and write on top of current config.
-    };
-
     virtual ~SDRDevice(){};
 
     /// @brief Configures the device using the given configuration.
@@ -355,7 +57,7 @@ class LIME_API SDRDevice
 
     /// @brief Gets the Descriptor of the SDR Device.
     /// @return The Descriptor of the device.
-    virtual const Descriptor& GetDescriptor() const = 0;
+    virtual const SDRDescriptor& GetDescriptor() const = 0;
 
     /// @brief Initializes the device with initial settings.
     /// @return The success status of the initialization.
@@ -775,7 +477,7 @@ class LIME_API SDRDevice
     /// @param moduleIndex The index of the device to retrieve the status from.
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
-    virtual void StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx) = 0;
+    virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
 
     /// @brief Uploads waveform to on board memory for later use.
     /// @param config The configuration of the stream.
@@ -785,7 +487,7 @@ class LIME_API SDRDevice
     /// @return Operation status.
     virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
     {
-        return OpStatus::NOT_IMPLEMENTED;
+        return OpStatus::NotImplemented;
     }
 
     /// @copydoc ISPI::SPI()

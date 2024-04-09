@@ -1,5 +1,5 @@
 #include "LMS64C_ADF4002_Over_USB.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 
 using namespace lime;
 

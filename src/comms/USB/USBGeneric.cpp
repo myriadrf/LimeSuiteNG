@@ -42,14 +42,11 @@ USBGeneric::USBGeneric(void* usbContext)
         return;
     }
 
-    if (activeUSBconnections == 0)
+    ++activeUSBconnections;
+
+    if (activeUSBconnections == 1)
     {
-        ++activeUSBconnections;
         gUSBProcessingThread = std::thread(&USBGeneric::HandleLibusbEvents, this);
-    }
-    else
-    {
-        ++activeUSBconnections;
     }
 #endif
 }
@@ -58,6 +55,11 @@ USBGeneric::~USBGeneric()
 {
     Disconnect();
 #ifdef __unix__
+    if (ctx == nullptr)
+    {
+        return;
+    }
+
     --activeUSBconnections;
 
     if (activeUSBconnections == 0)
@@ -78,7 +80,8 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 
     if (usbDeviceCount < 0)
     {
-        return ReportError(-1, "libusb_get_device_list failed: %s", libusb_strerror(static_cast<libusb_error>(usbDeviceCount)));
+        lime::error("libusb_get_device_list failed: %s", libusb_strerror(static_cast<libusb_error>(usbDeviceCount)));
+        return false;
     }
 
     for (int i = 0; i < usbDeviceCount; ++i)
@@ -132,7 +135,8 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 
     if (dev_handle == nullptr)
     {
-        return ReportError(-1, "libusb_open failed");
+        lime::error("libusb_open failed");
+        return false;
     }
 
     if (libusb_kernel_driver_active(dev_handle, 0) == 1) // Find out if kernel driver is attached
@@ -148,7 +152,8 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     int returnCode = libusb_claim_interface(dev_handle, 0); // Claim interface 0 (the first) of device
     if (returnCode != LIBUSB_SUCCESS)
     {
-        return ReportError(returnCode, "Cannot claim interface - %s", libusb_strerror(libusb_error(returnCode)));
+        lime::error("Cannot claim USB interface: %s", libusb_strerror(libusb_error(returnCode)));
+        return false;
     }
 #endif
     isConnected = true;

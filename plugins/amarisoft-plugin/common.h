@@ -2,12 +2,14 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamComposite.h"
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/types.h"
 
 #include <map>
 #include <vector>
 #include <deque>
 
-typedef void (*HostLogCallbackType)(lime::SDRDevice::LogLevel, const char*);
+typedef void (*HostLogCallbackType)(lime::LogLevel, const char*);
 
 /// Interface for providing parameters from configuration file
 class LimeSettingsProvider
@@ -22,34 +24,47 @@ class LimeSettingsProvider
     virtual bool GetDouble(double& dest, const char* varname) = 0;
 };
 
+// Tx/Rx settings from configuration file
+struct DirectionalSettings {
+    std::string antenna;
+    std::string calibration;
+    double lo_override;
+    double gfir_bandwidth;
+    int oversample;
+    int power_dBm;
+    bool powerAvailable;
+    bool gfir_enable;
+};
+
+struct ConfigSettings
+{
+    ConfigSettings()
+        : maxChannelsToUse(2)
+        , linkFormat(lime::DataFormat::I12)
+        , double_freq_conversion_to_lower_side(false)
+        , syncPPS(false)
+    {
+    }
+    DirectionalSettings rx;
+    DirectionalSettings tx;
+    std::string iniFilename;
+    int maxChannelsToUse; // how many channels can be used from this chip
+    lime::DataFormat linkFormat;
+    bool double_freq_conversion_to_lower_side;
+    bool syncPPS;
+};
+
 // Individual RF SOC device configuration
 struct DevNode {
   public:
     DevNode();
-
-    struct DirectionalSettings {
-        std::string antenna;
-        std::string calibration;
-        double lo_override;
-        int oversample;
-        int power_dBm;
-        bool powerAvailable;
-        bool gfir_enable;
-        double gfir_bandwidth;
-    };
-
+    ConfigSettings configInputs;
     // settings from file
     std::string handleString;
-    std::string iniFilename;
-    int maxChannelsToUse; // how many channels can be used from this chip
     uint8_t chipIndex;
-    bool double_freq_conversion_to_lower_side;
-    DirectionalSettings rxSettings;
-    DirectionalSettings txSettings;
     std::vector<uint32_t> fpgaRegisterWrites;
-
     lime::SDRDevice* device; // chip owner
-    lime::SDRDevice::SDRConfig config;
+    lime::SDRConfig config;
     int portIndex;
     int devIndex;
     bool assignedToPort;
@@ -67,6 +82,7 @@ struct PortData {
 
     std::vector<DevNode*> nodes;
     lime::StreamComposite* composite;
+    ConfigSettings configInputs;
 };
 
 struct LimePluginContext {
@@ -77,7 +93,7 @@ struct LimePluginContext {
     std::vector<DevNode> rfdev;
     std::map<std::string, lime::SDRDevice*> uniqueDevices;
     LimeSettingsProvider* config;
-    lime::SDRDevice::StreamConfig::DataFormat samplesFormat;
+    lime::DataFormat samplesFormat;
 
     /* Path of the config file, not terminating by / */
     std::string currentWorkingDirectory;
@@ -113,17 +129,14 @@ int LimePlugin_Start(LimePluginContext* context);
 int LimePlugin_Stop(LimePluginContext* context);
 int LimePlugin_Destroy(LimePluginContext* context);
 
-int LimePlugin_Write_complex32f(LimePluginContext* context,
-    const lime::complex32f_t* const* samples,
-    int nsamples,
-    int port,
-    lime::SDRDevice::StreamMeta& meta);
+int LimePlugin_Write_complex32f(
+    LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Write_complex16(
-    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::StreamMeta& meta);
 int LimePlugin_Read_complex16(
-    LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::SDRDevice::StreamMeta& meta);
+    LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::StreamMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
 {

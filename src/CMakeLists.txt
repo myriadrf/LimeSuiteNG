@@ -7,8 +7,10 @@ set(GUI_EXECUTABLE_NAME limeGUI)
 file(
     GLOB LIMESUITENG_PUBLIC_HEADERS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h")
-
+   
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.hpp"
+)
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)
@@ -55,9 +57,9 @@ set(LIME_SUITE_SOURCES
     mcu_program/common_src/lms7002m_controls.c
     mcu_program/common_src/lms7002m_filters.c
     API/LMS_APIWrapper.cpp
-    include/limesuiteng/commonTypes.cpp
-    include/limesuiteng/OpStatus.cpp
-    include/limesuiteng/SDRDevice.cpp)
+    include/limesuiteng/SDRDevice.cpp
+    utilities/toString.cpp
+)
 
 set_source_files_properties(
     mcu_program/common_src/lms7002m_calibrations.c
@@ -130,6 +132,10 @@ if(ENABLE_LIBRARY)
        AND (NOT MSVC))
         include(CodeCoverage)
         append_coverage_compiler_flags_to_target(${MAIN_LIBRARY_NAME})
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            target_link_options(${MAIN_LIBRARY_NAME} PUBLIC --coverage)
+        endif()
     endif()
 
     install(

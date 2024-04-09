@@ -1,6 +1,8 @@
 #include "lms7002_pnlBIST_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 using namespace lime;
 
 lms7002_pnlBIST_view::lms7002_pnlBIST_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)

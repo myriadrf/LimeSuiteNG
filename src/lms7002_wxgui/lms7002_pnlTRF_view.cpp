@@ -1,3 +1,4 @@
+#include "commonWxHeaders.h"
 #include "lms7002_pnlTRF_view.h"
 #include <map>
 #include <vector>
@@ -5,6 +6,8 @@
 #include "wx/msgdlg.h"
 #include "lms7suiteEvents.h"
 #include "limesuiteng/Logger.h"
+
+#include "limesuiteng/LMS7002M_parameters.h"
 
 using namespace lime;
 using namespace LMS7002_WXGUI;

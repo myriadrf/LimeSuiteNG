@@ -23,7 +23,7 @@ static int DeinterleaveMIMO(DestT* const* dest, const uint8_t* buffer, uint32_t 
 template<class DestT>
 static int DeinterleaveCompressionType(DestT* const* dest, const uint8_t* buffer, uint32_t length, const DataConversion& fmt)
 {
-    const bool compressed = fmt.srcFormat == SDRDevice::StreamConfig::DataFormat::I12;
+    const bool compressed = fmt.srcFormat == DataFormat::I12;
     if (!compressed)
         return DeinterleaveMIMO<complex16_t>(dest, buffer, length, fmt);
     else
@@ -36,15 +36,15 @@ int Deinterleave(void* const* dest, const uint8_t* buffer, uint32_t length, cons
     switch (fmt.destFormat)
     {
     default:
-    case SDRDevice::StreamConfig::DataFormat::I16:
+    case DataFormat::I16:
         samplesProduced =
             DeinterleaveCompressionType<complex16_t>(reinterpret_cast<complex16_t* const*>(dest), buffer, length, fmt);
         break;
-    case SDRDevice::StreamConfig::DataFormat::F32:
+    case DataFormat::F32:
         samplesProduced =
             DeinterleaveCompressionType<complex32f_t>(reinterpret_cast<complex32f_t* const*>(dest), buffer, length, fmt);
         break;
-    case SDRDevice::StreamConfig::DataFormat::I12:
+    case DataFormat::I12:
         samplesProduced =
             DeinterleaveCompressionType<complex12_t>(reinterpret_cast<complex12_t* const*>(dest), buffer, length, fmt);
         break;
@@ -71,7 +71,7 @@ static int InterleaveMIMO(uint8_t* buffer, const SrcT* const* input, uint32_t co
 template<class SrcT>
 static int InterleaveCompressionType(uint8_t* dest, const SrcT* const* src, uint32_t count, const DataConversion& fmt)
 {
-    const bool compressed = fmt.destFormat == SDRDevice::StreamConfig::DataFormat::I12;
+    const bool compressed = fmt.destFormat == DataFormat::I12;
     if (!compressed)
         return InterleaveMIMO<complex16_t>(dest, src, count, fmt);
     else
@@ -84,14 +84,14 @@ int Interleave(uint8_t* dest, const void* const* src, uint32_t count, const Data
     switch (fmt.srcFormat)
     {
     default:
-    case SDRDevice::StreamConfig::DataFormat::I16:
+    case DataFormat::I16:
         bytesProduced = InterleaveCompressionType<complex16_t>(dest, reinterpret_cast<const complex16_t* const*>(src), count, fmt);
         break;
-    case SDRDevice::StreamConfig::DataFormat::F32:
+    case DataFormat::F32:
         bytesProduced =
             InterleaveCompressionType<complex32f_t>(dest, reinterpret_cast<const complex32f_t* const*>(src), count, fmt);
         break;
-    case SDRDevice::StreamConfig::DataFormat::I12:
+    case DataFormat::I12:
         bytesProduced = InterleaveCompressionType<complex12_t>(dest, reinterpret_cast<const complex12_t* const*>(src), count, fmt);
         break;
     }

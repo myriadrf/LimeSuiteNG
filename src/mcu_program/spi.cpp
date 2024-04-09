@@ -1,7 +1,7 @@
 #include <ciso646>
 #include <stdint.h>
 #include "limesuiteng/LMS7002M.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 
 static lime::LMS7002M* serPort;
 

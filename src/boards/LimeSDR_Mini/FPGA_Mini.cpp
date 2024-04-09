@@ -1,5 +1,6 @@
 #include "FPGA_Mini.h"
 #include "limesuiteng/Logger.h"
+#include "comms/IComms.h"
 #include <ciso646>
 #include <vector>
 #include <map>
@@ -15,7 +16,7 @@ FPGA_Mini::FPGA_Mini(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms700
 
 OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPhase, double rxPhase, int chipIndex)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
 
     std::vector<FPGA_PLL_clock> clocks(4);
     if ((txRate_Hz >= 5e6) && (rxRate_Hz >= 5e6))
@@ -46,7 +47,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     }
 
     status = SetDirectClocking(0);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         return status;
     }
@@ -119,7 +120,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
         clocks[1] = clocks[0];
         clocks[2] = clocks[0];
         clocks[3] = clocks[0];
-        if (SetPllFrequency(0, rxRate_Hz, clocks) == OpStatus::SUCCESS)
+        if (SetPllFrequency(0, rxRate_Hz, clocks) == OpStatus::Success)
         {
             rxPhaseSearchSuccess = true;
             break;
@@ -150,7 +151,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
             clocks[2] = clocks[0];
             clocks[3] = clocks[0];
             WriteRegister(0x000A, 0x0200);
-            if (SetPllFrequency(0, txRate_Hz, clocks) == OpStatus::SUCCESS)
+            if (SetPllFrequency(0, txRate_Hz, clocks) == OpStatus::Success)
             {
                 txPhaseSearchSuccess = true;
                 break;
@@ -182,7 +183,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
 
     if (!rxPhaseSearchSuccess || !txPhaseSearchSuccess)
         return SetInterfaceFreq(txRate_Hz, rxRate_Hz, txPhC1 + txPhC2 * txRate_Hz, rxPhC1 + rxPhC2 * rxRate_Hz);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 } //namespace lime

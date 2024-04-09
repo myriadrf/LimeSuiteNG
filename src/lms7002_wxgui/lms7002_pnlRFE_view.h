@@ -1,9 +1,9 @@
 #ifndef lms7002_pnlRFE_view_h
 #define lms7002_pnlRFE_view_h
 
-#include <map>
-#include "lime/LimeSuite.h"
 #include "ILMS7002MTab.h"
+
+class NumericSlider;
 
 class lms7002_pnlRFE_view : public ILMS7002MTab
 {

@@ -1,8 +1,9 @@
 #ifndef __lms7002_pnlTBB_view__
 #define __lms7002_pnlTBB_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
+
+class NumericSlider;
 
 class lms7002_pnlTBB_view : public ILMS7002MTab
 {

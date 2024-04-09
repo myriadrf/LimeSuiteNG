@@ -32,7 +32,7 @@ endif()
 
 ########################################################################
 # Gather version information from the changelog
-# LIME_SUITE_API_VERSION in VersionInfo.h reflects the major/minor
+# LIMESUITENG_API_VERSION in VersionInfo.h reflects the major/minor
 ########################################################################
 file(READ "${PROJECT_SOURCE_DIR}/Changelog.txt" changelog_txt)
 string(REGEX MATCH "Release ([0-9]+)\\.([0-9]+)\\.([0-9]+) \\(" CHANGELOG_MATCH "${changelog_txt}")
@@ -42,6 +42,23 @@ endif(NOT CHANGELOG_MATCH)
 set(VERSION_MAJOR "${CMAKE_MATCH_1}")
 set(VERSION_MINOR "${CMAKE_MATCH_2}")
 set(VERSION_PATCH "${CMAKE_MATCH_3}")
+
+# verify that VersionInfo.h LIMESUITENG_API_VERSION define matches changelog
+file(READ "${PROJECT_SOURCE_DIR}/src/include/limesuiteng/VersionInfo.h" version_info_header_txt)
+string(REGEX MATCH "LIMESUITENG_API_VERSION 0x([A-Fa-f0-9]*)" VERSION_DEFINE_MATCH "${version_info_header_txt}")
+if (NOT VERSION_DEFINE_MATCH)
+    message(FATAL_ERROR "Failed to extract API version from VersionInfo.h")
+endif()
+math(EXPR VERSION_MAJOR_IN_HEADER "(0x${CMAKE_MATCH_1} >> 24) & 0xFF" OUTPUT_FORMAT DECIMAL)
+math(EXPR VERSION_MINOR_IN_HEADER "(0x${CMAKE_MATCH_1} >> 16) & 0xFF" OUTPUT_FORMAT DECIMAL)
+math(EXPR VERSION_PATCH_IN_HEADER "(0x${CMAKE_MATCH_1}) & 0xFFFF" OUTPUT_FORMAT DECIMAL)
+if (NOT ${VERSION_MAJOR} EQUAL ${VERSION_MAJOR_IN_HEADER}
+    OR NOT ${VERSION_MINOR} EQUAL ${VERSION_MINOR_IN_HEADER}
+    OR NOT ${VERSION_PATCH} EQUAL ${VERSION_PATCH_IN_HEADER}
+    )
+    message(FATAL_ERROR "Changelog release version (${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})"
+        " don't match header API version (${VERSION_MAJOR_IN_HEADER}.${VERSION_MINOR_IN_HEADER}.${VERSION_PATCH_IN_HEADER})")
+endif()
 
 # the ABI compatibility number should be incremented when the ABI changes
 # the format is to use the same major and minor, but to have an incrementing
@@ -164,6 +181,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(MSVC)
+    # Check if using correct Visual Studio version
+    # VS2015 does not support some of the used C++17 features (<string_view>, <filesystem>, ...)
+    if(MSVC_TOOLSET_VERSION LESS 141)
+	    message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
+    endif()
+
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
     add_compile_options("/MP" "/Zc:__cplusplus")
@@ -198,7 +221,9 @@ endif()
 # GTest
 ########################################################################
 include(CMakeDependentOption)
+include(FeatureSummary)
 cmake_dependent_option(ENABLE_TESTING "Use GoogleTest to test the library" ON "NOT BUILD_SHARED_LIBS" OFF)
+add_feature_info(TESTING ENABLE_TESTING "Build GoogleTest tests to test the library")
 cmake_dependent_option(ENABLE_CODE_COVERAGE "Use gcov/lcov to generate a code coverage report" ON "ENABLE_TESTING" OFF)
 
 if(ENABLE_TESTING)
@@ -207,7 +232,7 @@ if(ENABLE_TESTING)
     fetchcontent_declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG dddb219c3eb96d7f9200f09b0a381f016e6b4562 # latest main at the time of writing this
+        GIT_TAG eff443c6ef5eb6ab598bfaae27f9427fdb4f6af7 # latest main at the time of writing this
     )
 
     set(INSTALL_GMOCK OFF) # Don't install the GMock headers

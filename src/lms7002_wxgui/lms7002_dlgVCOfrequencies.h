@@ -1,8 +1,15 @@
 #ifndef __lms7002_dlgVCOfrequencies__
 #define __lms7002_dlgVCOfrequencies__
 
-#include "lime/LimeSuite.h"
-#include "lms7002_wxgui.h"
+#include <wx/dialog.h>
+
+class wxStaticText;
+class wxTextCtrl;
+class wxButton;
+
+namespace lime {
+class LMS7002M;
+}
 
 class lms7002_dlgVCOfrequencies : public wxDialog
 {
@@ -15,10 +22,10 @@ class lms7002_dlgVCOfrequencies : public wxDialog
 
   public:
     /** Constructor */
-    lms7002_dlgVCOfrequencies(wxWindow* parent, lms_device_t* plmsControl);
+    lms7002_dlgVCOfrequencies(wxWindow* parent, lime::LMS7002M* plmsControl);
     //// end generated class members
   protected:
-    lms_device_t* lmsControl;
+    lime::LMS7002M* lmsControl;
     wxStaticText* m_staticText341;
     wxTextCtrl* txtVCOH_low;
     wxStaticText* m_staticText342;

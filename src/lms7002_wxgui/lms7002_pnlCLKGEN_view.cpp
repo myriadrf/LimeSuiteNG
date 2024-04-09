@@ -1,12 +1,15 @@
 #include "lms7002_pnlCLKGEN_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include <wx/msgdlg.h>
+#include <wx/spinctrl.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7suiteEvents.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include "FPGA_common.h"
 #include "limesuiteng/Logger.h"
 
@@ -762,7 +765,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlCLKGEN_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlCLKGEN_view::Initialize(LMS7002M* pControl)
 {
     lmsControl = pControl;
     if (lmsControl == nullptr)
@@ -831,7 +834,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
     int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
     int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
-    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::SUCCESS)
+    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
         return;
@@ -843,7 +846,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
     wxCommandEvent cmd;
     cmd.SetString(_("CGEN frequency set to ") + lblRealOutFrequency->GetLabel() + _(" MHz"));
     cmd.SetEventType(LOG_MESSAGE);
-    cmd.SetInt(static_cast<int>(lime::LogLevel::INFO));
+    cmd.SetInt(static_cast<int>(lime::LogLevel::Info));
     wxPostEvent(this, cmd);
 }
 
@@ -856,7 +859,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
     int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
     int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
-    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::SUCCESS)
+    if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
         auto freq = lms->GetFrequencyCGEN();
@@ -874,7 +877,7 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
     wxCommandEvent cmd;
     cmd.SetString(_("CGEN frequency set to ") + lblRealOutFrequency->GetLabel() + _(" MHz"));
     cmd.SetEventType(LOG_MESSAGE);
-    cmd.SetInt(static_cast<int>(lime::LogLevel::INFO));
+    cmd.SetInt(static_cast<int>(lime::LogLevel::Info));
     wxPostEvent(this, cmd);
 }
 
@@ -882,7 +885,7 @@ void lms7002_pnlCLKGEN_view::onbtnTuneClick(wxCommandEvent& event)
 {
     LMS7002M* lms = lmsControl;
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
-    if (lms->TuneVCO(lime::LMS7002M::VCO_Module::VCO_CGEN) != OpStatus::SUCCESS)
+    if (lms->TuneVCO(lime::LMS7002M::VCO_Module::VCO_CGEN) != OpStatus::Success)
     {
         wxMessageBox(wxString(_("CLKGEN VCO Tune failed")));
         return;

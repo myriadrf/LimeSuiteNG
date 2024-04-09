@@ -11,7 +11,7 @@ class wxTextCtrl;
 class wxCheckBox;
 class wxTextAttr;
 
-#include "wx/panel.h"
+#include <wx/panel.h>
 
 class pnlMiniLog : public wxPanel
 {

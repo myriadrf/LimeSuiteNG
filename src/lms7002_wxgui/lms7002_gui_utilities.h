@@ -5,12 +5,12 @@
 */
 #include <map>
 #include <vector>
-
-#include "limesuiteng/LMS7002M_parameters.h"
+#include <cstdint>
 
 class wxPanel;
 class wxWindow;
 
+class LMS7Parameter;
 namespace lime {
 class LMS7002M;
 }

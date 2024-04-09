@@ -11,8 +11,10 @@
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
 #include "CommonFunctions.h"
+#include "utilities/toString.h"
 
-#include "limesuiteng/DeviceNode.h"
+#include "DeviceTreeNode.h"
+#include "comms/IComms.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "mcu_program/common_src/lms7002m_filters.h"
@@ -26,7 +28,7 @@ namespace lime {
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
     { 0x0022, 0x0FFF },
@@ -98,7 +100,7 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
     LimeSDR_XTRX* pthis = static_cast<LimeSDR_XTRX*>(userData);
     // don't care about cgen changes while doing Config(), to avoid unnecessary fpga updates
     if (pthis->mConfigInProgress)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     LMS7002M* soc = pthis->mLMSChips[chipIndex];
     return UpdateFPGAInterfaceFrequency(*soc, *pthis->mFPGA, chipIndex);
 }
@@ -124,7 +126,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 {
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes.
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_XTRX);
 
     LMS64CProtocol::FirmwareInfo fw;
@@ -136,8 +138,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     // desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_RAM)] =
     //     std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
     const std::unordered_map<eMemoryRegion, Region> flashMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
-    desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
 
@@ -145,9 +146,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
-    SDRDevice::Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
-    if (MemoryRead(desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
-        OpStatus::SUCCESS)
+    Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
+    if (MemoryRead(desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
+        OpStatus::Success)
         desc.serialNumber = 0;
 
     RFSOCDescriptor soc;
@@ -189,9 +190,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     const int chipCount = mLMSChips.size();
     mStreamers.resize(chipCount, nullptr);
 
-    auto fpgaNode = std::make_shared<DeviceNode>("FPGA", eDeviceNodeClass::FPGA_XTRX, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceNode>("LMS7002M", eDeviceNodeClass::LMS7002M, chip));
-    desc.socTree = std::make_shared<DeviceNode>("XTRX", eDeviceNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_XTRX, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS7002M", eDeviceTreeNodeClass::LMS7002M, chip));
+    desc.socTree = std::make_shared<DeviceTreeNode>("XTRX", eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 }
 
@@ -203,7 +204,7 @@ static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
 {
     OpStatus status;
     status = lms->ResetChip();
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
@@ -220,19 +221,19 @@ static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
     if (skipTune)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     status = lms->SetFrequencySX(TRXDir::Tx, lms->GetFrequencySX(TRXDir::Tx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     status = lms->SetFrequencySX(TRXDir::Rx, lms->GetFrequencySX(TRXDir::Rx));
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     // if (SetRate(10e6,2)!=0)
     //     return -1;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
@@ -245,7 +246,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return ReportError(OpStatus::ERROR, "LimeSDR_XTRX config: %s", ss.str().c_str());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", ss.str().c_str());
     }
 
     bool rxUsed = false;
@@ -286,7 +287,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         for (int i = 0; i < 2; ++i)
         {
-            const SDRDevice::ChannelConfig& ch = cfg.channel[i];
+            const ChannelConfig& ch = cfg.channel[i];
             LMS1SetPath(false, i, ch.rx.path);
             LMS1SetPath(true, i, ch.tx.path);
             LMS7002ChannelCalibration(chip, ch, i);
@@ -304,12 +305,12 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::ERROR, "LimeSDR_XTRX config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", e.what());
     } catch (std::runtime_error& e)
     {
-        return ReportError(OpStatus::ERROR, "LimeSDR_XTRX config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", e.what());
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LimeSDR_XTRX::Init()
@@ -391,14 +392,14 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 dirFlag = O_RDONLY;
             else if (config.channels.at(lime::TRXDir::Tx).size() > 0)
                 dirFlag = O_WRONLY;
-            if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::SUCCESS)
+            if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
             {
                 const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
-                return ReportError(OpStatus::IO_FAILURE, reason.c_str());
+                return ReportError(OpStatus::IOFailure, reason.c_str());
             }
         }
         OpStatus status = mStreamers[moduleIndex]->Setup(config);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
         mStreamConfig = config;
         return status;
@@ -475,7 +476,7 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
         }
         else
             return lime::ReportError(
-                OpStatus::NOT_SUPPORTED, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
+                OpStatus::NotSupported, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
     }
     lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
         f_Hz / 1e6,
@@ -604,7 +605,7 @@ OpStatus LimeSDR_XTRX::UploadMemory(
         progMode = 1;
         break;
     default:
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     }
 
     return fpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
@@ -613,14 +614,14 @@ OpStatus LimeSDR_XTRX::UploadMemory(
 OpStatus LimeSDR_XTRX::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     return fpgaPort->MemoryWrite(region.address, data, region.size);
 }
 
 OpStatus LimeSDR_XTRX::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
     return fpgaPort->MemoryRead(region.address, data, region.size);
 }
 

@@ -1,14 +1,17 @@
 #include "pnluLimeSDR.h"
 
+#include "limesuiteng/Logger.h"
+
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/checkbox.h>
 #include <wx/msgdlg.h>
+#include <wx/choice.h>
 #include "lms7suiteEvents.h"
 #include "pnlGPIO.h"
-#include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 using namespace std;
 

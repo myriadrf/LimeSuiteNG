@@ -11,10 +11,6 @@
     #pragma hdrstop
 #endif //__BORLANDC__
 
-#ifndef WX_PRECOMP
-    #include <wx/wx.h>
-#endif //WX_PRECOMP
-
 #include "dlgAbout_view.h"
 
 dlgAbout_view::dlgAbout_view(
