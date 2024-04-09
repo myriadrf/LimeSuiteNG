@@ -23,4 +23,4 @@ LIME_API const std::string& ToString(eGainTypes value);
 LIME_API const std::string& ToString(eMemoryDevice value);
 
 template<class T> T ToEnumClass(const std::string& str);
-}
+} // namespace lime

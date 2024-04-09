@@ -266,7 +266,8 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.socTree = std::make_shared<DeviceTreeNode>("X3", eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("CDCM6208", eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM));
+    desc.socTree->children.push_back(
+        std::make_shared<DeviceTreeNode>("CDCM6208", eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM));
 }
 
 LimeSDR_X3::~LimeSDR_X3()

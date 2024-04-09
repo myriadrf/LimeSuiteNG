@@ -2,6 +2,8 @@
 
 #include "BufferInterleaving.h"
 
+#include <array>
+
 using namespace lime;
 
 TEST(BufferInterleaving, SISO_I12_to_I12)

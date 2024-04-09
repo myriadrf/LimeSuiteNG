@@ -3,6 +3,7 @@
 
 #include "tests/protocols/SerialPortMock.h"
 #include "LMS64CProtocol.h"
+#include "limesuiteng/SDRDevice.h"
 
 using namespace lime;
 using namespace lime::testing;

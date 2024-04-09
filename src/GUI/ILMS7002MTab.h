@@ -2,7 +2,7 @@
 
 #include <wx/panel.h>
 #include <map>
-
+#include <cstdint>
 #include "commonWxForwardDeclarations.h"
 
 class LMS7Parameter;

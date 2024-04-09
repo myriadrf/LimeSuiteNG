@@ -14,8 +14,8 @@
 namespace lime {
 
 class ISerialPort;
-class SDRDescriptor;
-class CustomParameterIO;
+struct SDRDescriptor;
+struct CustomParameterIO;
 
 struct LMS64CPacket {
     static constexpr int size = 64;

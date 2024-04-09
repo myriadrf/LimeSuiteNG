@@ -144,8 +144,8 @@ static void error(lime::LogLevel lvl, const char* msg)
     DbgPrintf(msg);
     DbgPrintf("\n");
 #else
-    if (isErrorLoggingEnabled && lvl < lime::LogLevel::WARNING) {
-        if (lvl == lime::LogLevel::CRITICAL) {
+    if (isErrorLoggingEnabled && lvl < lime::LogLevel::Warning) {
+        if (lvl == lime::LogLevel::Critical) {
             ExtIOCallback(-1, extHw_Stop, 0, NULL);
         }
         DbgPrintf(msg);

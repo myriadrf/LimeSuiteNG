@@ -749,8 +749,8 @@ static void TransferRuntimeParametersToConfig(
     for (size_t i = 0; i < params.freq.size(); ++i)
     {
         ChannelConfig::Direction& trxConfig = dir == TRXDir::Tx
-                                                             ? channelMap[i].parent->config.channel[channelMap[i].chipChannel].tx
-                                                             : channelMap[i].parent->config.channel[channelMap[i].chipChannel].rx;
+                                                  ? channelMap[i].parent->config.channel[channelMap[i].chipChannel].tx
+                                                  : channelMap[i].parent->config.channel[channelMap[i].chipChannel].rx;
         trxConfig.enabled = true;
         const int portIndex = channelMap[i].parent->portIndex;
         trxConfig.sampleRate = runtimeParams.rf_ports[portIndex].sample_rate;

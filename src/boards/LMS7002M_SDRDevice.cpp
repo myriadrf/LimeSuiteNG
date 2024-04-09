@@ -869,8 +869,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     return OpStatus::Success;
 }
 
-ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(
-    uint8_t moduleIndex, TRXDir direction, uint8_t channel)
+ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
     ChannelConfig::Direction::TestSignal signalConfiguration;
@@ -1255,8 +1254,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
     return OpStatus::Success;
 }
 
-OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(
-    LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
+OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
 {
     const ChannelConfig& ch = config;
     chip->Modify_SPI_Reg_bits(LMS7_INSEL_RXTSP, ch.rx.testSignal.enabled ? 1 : 0);

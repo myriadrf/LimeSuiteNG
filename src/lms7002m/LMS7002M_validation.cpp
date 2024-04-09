@@ -73,10 +73,10 @@ bool LMS7002M_Validate(const SDRConfig& cfg, std::vector<std::string>& errors, c
         if (ch.tx.enabled && !InRange(ch.tx.path, 0, 2))
             errors.push_back(strFormat("Tx ch%i invalid path(%i)", i, ch.tx.path));
 
-        if (abs(ch.rx.NCOoffset) > ch.rx.sampleRate / 2)
+        if (std::abs(ch.rx.NCOoffset) > ch.rx.sampleRate / 2)
             errors.push_back(strFormat(
                 "Rx ch%i NCO offset (%g) must be less than half of sample rate(%g)", i, ch.rx.NCOoffset, ch.rx.sampleRate));
-        if (abs(ch.tx.NCOoffset) > ch.tx.sampleRate / 2)
+        if (std::abs(ch.tx.NCOoffset) > ch.tx.sampleRate / 2)
             errors.push_back(strFormat(
                 "Tx ch%i NCO offset (%g) must be less than half of sample rate(%g)", i, ch.tx.NCOoffset, ch.tx.sampleRate));
     }
