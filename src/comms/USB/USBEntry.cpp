@@ -1,5 +1,6 @@
 #include "USBEntry.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "CommonFunctions.h"
 
 using namespace lime;

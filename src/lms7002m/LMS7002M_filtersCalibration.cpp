@@ -78,7 +78,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
 {
     int status;
     if (RxLPF_RF_LimitLow > rx_lpf_freq_RF || rx_lpf_freq_RF > RxLPF_RF_LimitHigh)
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "RxLPF frequency out of range, available range from %g to %g MHz",
             RxLPF_RF_LimitLow / 1e6,
             RxLPF_RF_LimitHigh / 1e6);
@@ -92,8 +92,9 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        if ((status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM)))
-            return ReportError(OpStatus::ERROR, "Tune Rx Filter: failed to program MCU");
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::Success)
+            return ReportError(status, "Tune Rx Filter: failed to program MCU");
     }
 
     //set reference clock parameter inside MCU
@@ -108,14 +109,14 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     if (status != MCU_BD::MCU_NO_ERROR)
     {
         lime::error("Tune Rx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
     //sync registers to cache
     std::vector<uint16_t> regsToSync = { 0x0112, 0x0117, 0x011A, 0x0116, 0x0118, 0x0114, 0x0019, 0x0115 };
     for (const auto addr : regsToSync)
         this->SPI_read(addr, true);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
@@ -123,7 +124,7 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     int status;
 
     if (tx_lpf_freq_RF < TxLPF_RF_LimitLow || tx_lpf_freq_RF > TxLPF_RF_LimitHigh)
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz",
             tx_lpf_freq_RF / 1e6,
             TxLPF_RF_LimitLow / 1e6,
@@ -146,12 +147,13 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     }
 
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "Tune Tx Filter: No device connected");
+        return ReportError(OpStatus::IOFailure, "Tune Tx Filter: No device connected");
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        if ((status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM)))
-            return ReportError(OpStatus::ERROR, "Tune Tx Filter: failed to program MCU");
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::Success)
+            return ReportError(status, "Tune Tx Filter: failed to program MCU");
     }
 
     int ind = this->GetActiveChannelIndex() % 2;
@@ -169,7 +171,7 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     if (status != MCU_BD::MCU_NO_ERROR)
     {
         lime::error("Tune Tx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
-        return OpStatus::ERROR;
+        return OpStatus::Error;
     }
     //sync registers to cache
     std::vector<uint16_t> regsToSync = { 0x0105, 0x0106, 0x0109, 0x010A, 0x010B };
@@ -183,5 +185,5 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
             tx_lpf_IF / 1e6 * 2);
     else
         Log(LogType::LOG_INFO, "Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }

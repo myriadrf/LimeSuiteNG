@@ -1,12 +1,7 @@
 #ifndef __lms7002_pnlCDS_view__
 #define __lms7002_pnlCDS_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
-
-namespace lime {
-
-}
 
 class lms7002_pnlCDS_view : public ILMS7002MTab
 {

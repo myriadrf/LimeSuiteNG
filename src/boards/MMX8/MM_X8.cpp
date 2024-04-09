@@ -11,14 +11,17 @@
 #include "DSP/Equalizer.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
-#include "limesuiteng/DeviceNode.h"
-#include "limesuiteng/MemoryRegions.h"
+#include "DeviceTreeNode.h"
+#include "utilities/toString.h"
 
 #include "math.h"
 
 namespace lime {
 
-static SDRDevice::CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static const char DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
+static const char PATH_SEPARATOR_SYMBOL = '/';
+
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
 
 /// @brief Constructs the LimeSDR_MMX8 object.
@@ -39,7 +42,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     /// could read back it's state for debugging purposes
 
     mMainFPGAcomms = spiFPGA[8];
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MMX8);
 
     // LMS64CProtocol::FirmwareInfo fw;
@@ -51,56 +54,54 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     // FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     // FPGA::GatewareToDescriptor(gw, desc);
 
-    desc.socTree = std::make_shared<DeviceNode>("X8", eDeviceNodeClass::SDRDevice, this);
+    desc.socTree = std::make_shared<DeviceTreeNode>("X8", eDeviceTreeNodeClass::SDRDevice, this);
 
     mADF = new ADF4002();
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceNode>("ADF4002", eDeviceNodeClass::ADF4002, mADF));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF));
 
     mSubDevices.resize(8);
     desc.spiSlaveIds["FPGA"] = 0;
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
 
-    desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_FLASH)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
-    desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::EEPROM)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
     for (size_t i = 0; i < mSubDevices.size(); ++i)
     {
         mSubDevices[i] = new LimeSDR_XTRX(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
-        const SDRDevice::Descriptor& subdeviceDescriptor = mSubDevices[i]->GetDescriptor();
+        const SDRDescriptor& subdeviceDescriptor = mSubDevices[i]->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
         {
             RFSOCDescriptor temp = soc;
-            temp.name = soc.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            temp.name = soc.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.rfSOC.push_back(temp);
         }
 
         for (const auto& slaveId : subdeviceDescriptor.spiSlaveIds)
         {
-            const std::string slaveName = slaveId.first + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            const std::string slaveName = slaveId.first + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.spiSlaveIds[slaveName] = (i + 1) << 8 | slaveId.second;
             chipSelectToDevice[desc.spiSlaveIds[slaveName]] = mSubDevices[i];
         }
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            std::string indexName = subdeviceDescriptor.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                    Descriptor::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
+                                    PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
 
         for (const auto& customParameter : subdeviceDescriptor.customParameters)
         {
-            SDRDevice::CustomParameter parameter = customParameter;
+            CustomParameter parameter = customParameter;
             parameter.id |= (i + 1) << 8;
-            parameter.name = customParameter.name + Descriptor::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            parameter.name = customParameter.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.customParameters.push_back(parameter);
             customParameterToDevice[parameter.id] = mSubDevices[i];
         }
@@ -117,7 +118,7 @@ LimeSDR_MMX8::~LimeSDR_MMX8()
         delete mSubDevices[i];
 }
 
-const SDRDevice::Descriptor& LimeSDR_MMX8::GetDescriptor() const
+const SDRDescriptor& LimeSDR_MMX8::GetDescriptor() const
 {
     return mDeviceDescriptor;
 }
@@ -129,12 +130,12 @@ OpStatus LimeSDR_MMX8::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 OpStatus LimeSDR_MMX8::Init()
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     for (size_t i = 0; i < mSubDevices.size(); ++i)
     {
         // TODO: check if the XTRX board slot is populated
         status = mSubDevices[i]->Init();
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -142,11 +143,11 @@ OpStatus LimeSDR_MMX8::Init()
 
 OpStatus LimeSDR_MMX8::Reset()
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     for (uint32_t i = 0; i < mSubDevices.size(); ++i)
     {
         status = mSubDevices[i]->Reset();
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -155,7 +156,7 @@ OpStatus LimeSDR_MMX8::Reset()
 OpStatus LimeSDR_MMX8::GetGPSLock(GPS_Lock* status)
 {
     // TODO: implement
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 // TODO: clean up all the functions to use the exact same device selection code (maybe even extract it out into a function)
@@ -485,11 +486,11 @@ OpStatus LimeSDR_MMX8::SetParameter(
 
 OpStatus LimeSDR_MMX8::Synchronize(bool toChip)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     for (auto& d : mSubDevices)
     {
         status = d->Synchronize(toChip);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -586,7 +587,7 @@ OpStatus LimeSDR_MMX8::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t 
 OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     TRXDir direction,
     uint8_t channel,
-    SDRDevice::ChannelConfig::Direction::TestSignal signalConfiguration,
+    ChannelConfig::Direction::TestSignal signalConfiguration,
     int16_t dc_i,
     int16_t dc_q)
 {
@@ -598,7 +599,7 @@ OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     return mSubDevices[moduleIndex]->SetTestSignal(0, direction, channel, signalConfiguration, dc_i, dc_q);
 }
 
-SDRDevice::ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
+ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
     if (moduleIndex >= 8)
     {
@@ -611,7 +612,7 @@ SDRDevice::ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint
 OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
     OpStatus ret = mSubDevices[moduleIndex]->StreamSetup(config, 0);
-    if (ret != OpStatus::SUCCESS)
+    if (ret != OpStatus::Success)
         return ret;
     // X8 board has two stage stream start.
     // start stream for expected subdevices, they will wait for secondary enable from main fpga register
@@ -693,7 +694,7 @@ uint32_t LimeSDR_MMX8::StreamTx(
     return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta);
 }
 
-void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx)
+void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
     mSubDevices[moduleIndex]->StreamStatus(0, rx, tx);
 }
@@ -728,7 +729,7 @@ void* LimeSDR_MMX8::GetInternalChip(uint32_t index)
 
 OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
 
     for (const CustomParameterIO& param : parameters)
     {
@@ -742,7 +743,7 @@ OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>
         else
             status = mMainFPGAcomms->CustomParameterWrite(parameter);
 
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -750,7 +751,7 @@ OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>
 
 OpStatus LimeSDR_MMX8::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
 
     for (CustomParameterIO& param : parameters)
     {
@@ -764,7 +765,7 @@ OpStatus LimeSDR_MMX8::CustomParameterRead(std::vector<CustomParameterIO>& param
         else
             status = mMainFPGAcomms->CustomParameterRead(parameter);
 
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
 
         param.value = parameter[0].value;
@@ -787,7 +788,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 
     SDRDevice* dev = mSubDevices.at(moduleIndex);
     if (!dev)
-        return ReportError(OpStatus::INVALID_VALUE, "Invalid id select");
+        return ReportError(OpStatus::InvalidValue, "Invalid id select");
 
     return dev->UploadMemory(device, 0, data, length, callback);
 }
@@ -795,14 +796,14 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::INVALID_VALUE, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "invalid storage");
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryWrite(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::INVALID_VALUE, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "storage has no owner");
 
     return dev->MemoryWrite(storage, region, data);
 }
@@ -810,14 +811,14 @@ OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region 
 OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::INVALID_VALUE, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "invalid storage");
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryRead(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::INVALID_VALUE, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "storage has no owner");
 
     return dev->MemoryRead(storage, region, data);
 }

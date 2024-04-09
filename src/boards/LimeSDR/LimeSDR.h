@@ -10,6 +10,7 @@
 namespace lime {
 
 class USBGeneric;
+class IComms;
 
 /** @brief Class for managing the LimeSDR-USB device. */
 class LimeSDR : public LMS7002M_SDRDevice
@@ -56,7 +57,7 @@ class LimeSDR : public LMS7002M_SDRDevice
 
   protected:
     OpStatus EnableChannel(TRXDir dir, uint8_t channel, bool enabled);
-    SDRDevice::Descriptor GetDeviceInfo();
+    SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
     static OpStatus UpdateFPGAInterface(void* userData);
 

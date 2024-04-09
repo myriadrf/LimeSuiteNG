@@ -73,7 +73,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
         isConnected = false;
         lime::error("LitePCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
         // TODO: convert errno to OpStatus
-        return OpStatus::FILE_NOT_FOUND;
+        return OpStatus::FileNotFound;
     }
 
     litepcie_ioctl_mmap_dma_info info;
@@ -134,7 +134,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
     }
 
     isConnected = true;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 bool LitePCIe::IsOpen()

@@ -4,12 +4,11 @@
 #include <sstream>
 #include <iomanip>
 
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 
 const std::string strFormat(const char* format, ...);
-std::string ToString(TRXDir dir);
 
 template<typename T> std::string intToHex(T i)
 {

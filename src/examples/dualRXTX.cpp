@@ -3,8 +3,7 @@
     @author Lime Microsystems (www.limemicro.com)
     @brief  minimal RX loopback to Tx example
  */
-#include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -26,8 +25,8 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::VERBOSE;
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static LogLevel logVerbosity = LogLevel::Verbose;
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -58,7 +57,7 @@ int main(int argc, char** argv)
     device->Init();
 
     // RF parameters
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     for (int c = 0; c < 2; ++c) // MIMO
     {
         config.channel[c].rx.enabled = true;
@@ -78,13 +77,13 @@ int main(int argc, char** argv)
     }
 
     // Samples data streaming configuration
-    SDRDevice::StreamConfig stream;
+    StreamConfig stream;
 
     stream.channels[TRXDir::Rx] = { 0, 1 };
     stream.channels[TRXDir::Tx] = { 0, 1 };
 
-    stream.format = SDRDevice::StreamConfig::DataFormat::F32;
-    stream.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    stream.format = DataFormat::F32;
+    stream.linkFormat = DataFormat::I16;
 
     signal(SIGINT, intHandler);
 
@@ -128,7 +127,7 @@ int main(int argc, char** argv)
     uint32_t totalSamplesSent = 0;
     float maxSignalAmplitude = 0;
 
-    SDRDevice::StreamMeta rxMeta;
+    StreamMeta rxMeta;
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
         uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, samplesInBuffer, &rxMeta);
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
                 maxSignalAmplitude = amplitude;
         }
 
-        SDRDevice::StreamMeta txMeta;
+        StreamMeta txMeta;
         txMeta.timestamp = rxMeta.timestamp + samplesInBuffer * 64;
         txMeta.waitForTimestamp = true;
         txMeta.flushPartialPacket = false;

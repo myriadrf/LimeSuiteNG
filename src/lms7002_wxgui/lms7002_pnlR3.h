@@ -1,18 +1,9 @@
 #ifndef __lms7002_R3__
 #define __lms7002_R3__
 
-#include <wx/panel.h>
-#include <wx/checkbox.h>
-#include <wx/spinctrl.h>
-#include <wx/combobox.h>
 #include "numericSlider.h"
-
-#include <map>
 #include <vector>
 #include "ILMS7002MTab.h"
-namespace lime {
-
-}
 
 class lms7002_pnlR3_view : public ILMS7002MTab
 {
@@ -41,7 +32,7 @@ class lms7002_pnlR3_view : public ILMS7002MTab
 
     // Virtual event handlers, overide them in your derived class
     void ParameterChangeHandler(wxSpinEvent& event);
-    void ParameterChangeHandler(wxCommandEvent& event);
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnRSSICMPCFGChanged(wxCommandEvent& event);
     void OnDCCMPCFGChanged(wxCommandEvent& event);
     void OnReadRSSICMP(wxCommandEvent& event);
@@ -65,7 +56,7 @@ class lms7002_pnlR3_view : public ILMS7002MTab
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
     ~lms7002_pnlR3_view();
-    virtual void Initialize(ILMS7002MTab::ControllerType* pControl) override;
+    virtual void Initialize(lime::LMS7002M* pControl) override;
     virtual void UpdateGUI() override;
 };
 

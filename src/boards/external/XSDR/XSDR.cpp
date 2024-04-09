@@ -18,7 +18,7 @@ XSDR::XSDR(std::shared_ptr<IComms> spiRFsoc,
     double refClk)
     : LimeSDR_XTRX(spiRFsoc, spiFPGA, sampleStream, control, refClk)
 {
-    SDRDevice::Descriptor& desc = mDeviceDescriptor;
+    SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_EXTERNAL_XSDR);
 }
 

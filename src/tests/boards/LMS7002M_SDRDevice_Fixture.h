@@ -20,7 +20,7 @@ constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, int16_t allowedEx
 MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples"s)
 {
     auto nextExpectedSample = arg.at(0);
-    const int divideBy = divide == lime::SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4 ? 4 : 8;
+    const int divideBy = divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 ? 4 : 8;
 
     for (const auto& sample : arg)
     {
@@ -56,8 +56,8 @@ class LMS7002M_SDRDevice_Fixture : public ::testing::Test
 
     void TearDown() override;
 
-    void SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale scale,
-        SDRDevice::ChannelConfig::Direction::TestSignal::Divide divide);
+    void SetUpDeviceForTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide);
 
     void Configure4HalfTestPatternAndReceiveIt();
     void Configure4FullTestPatternAndReceiveIt();

@@ -16,7 +16,10 @@
 #include <stdexcept>
 #include <string>
 
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "utilities/toString.h"
 
 using namespace lime;
 
@@ -272,7 +275,7 @@ std::vector<std::string> SoapyLMS7::listGains(const int direction, const size_t 
 
     for (const auto& gain : gainEnums)
     {
-        gains.push_back(GAIN_TYPES_TEXT.at(gain));
+        gains.push_back(ToString(gain));
     }
 
     return gains;
@@ -296,7 +299,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel) const
 
     double gain = 0;
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, eGainTypes::UNKNOWN, gain);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         throw std::runtime_error(
             "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
@@ -311,7 +314,7 @@ void SoapyLMS7::setGain(const int direction, const size_t channel, const std::st
     SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %s, %g dB)", dirName, channel, name.c_str(), value);
 
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     sdrDevice->SetGain(0, dir, channel, gainType, value);
 
@@ -324,11 +327,11 @@ double SoapyLMS7::getGain(const int direction, const size_t channel, const std::
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
 
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     double gain = 0;
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, gainType, gain);
-    if (returnValue != OpStatus::SUCCESS)
+    if (returnValue != OpStatus::Success)
     {
         throw std::runtime_error(
             "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
@@ -349,7 +352,7 @@ SoapySDR::Range SoapyLMS7::getGainRange(const int direction, const size_t channe
 SoapySDR::Range SoapyLMS7::getGainRange(const int direction, const size_t channel, const std::string& name) const
 {
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
-    eGainTypes gainType = STRING_TO_GAIN_TYPES.at(name);
+    eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     auto range = sdrDevice->GetDescriptor().rfSOC.at(0).gainRange.at(dir).at(gainType);
 
@@ -1032,8 +1035,8 @@ void SoapyLMS7::writeSetting(const int direction, const size_t channel, const st
                 channel,
                 { true,
                     false,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full });
+                    ChannelConfig::Direction::TestSignal::Divide::Div4,
+                    ChannelConfig::Direction::TestSignal::Scale::Full });
         }
         else if (select == 8)
         {
@@ -1042,8 +1045,8 @@ void SoapyLMS7::writeSetting(const int direction, const size_t channel, const st
                 channel,
                 { true,
                     false,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8,
-                    SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full });
+                    ChannelConfig::Direction::TestSignal::Divide::Div8,
+                    ChannelConfig::Direction::TestSignal::Scale::Full });
         }
         else
         {
@@ -1087,14 +1090,14 @@ std::string SoapyLMS7::readSetting(const int direction, const size_t channel, co
 
         switch (testConfig.scale)
         {
-        case SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half:
+        case ChannelConfig::Direction::TestSignal::Scale::Half:
             return "-1";
-        case SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full:
+        case ChannelConfig::Direction::TestSignal::Scale::Full:
             switch (testConfig.divide)
             {
-            case SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4:
+            case ChannelConfig::Direction::TestSignal::Divide::Div4:
                 return "4";
-            case SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8:
+            case ChannelConfig::Direction::TestSignal::Divide::Div8:
                 return "8";
             }
         }
@@ -1129,7 +1132,7 @@ std::vector<std::string> SoapyLMS7::listGPIOBanks(void) const
 void SoapyLMS7::writeGPIO(const std::string&, const unsigned value)
 {
     OpStatus r = sdrDevice->GPIOWrite(reinterpret_cast<const uint8_t*>(&value), sizeof(value));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::writeGPIO() " + std::string(GetLastErrorMessage()));
     }
@@ -1139,7 +1142,7 @@ unsigned SoapyLMS7::readGPIO(const std::string&) const
 {
     unsigned buffer(0);
     OpStatus r = sdrDevice->GPIORead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::readGPIO() " + std::string(GetLastErrorMessage()));
     }
@@ -1149,7 +1152,7 @@ unsigned SoapyLMS7::readGPIO(const std::string&) const
 void SoapyLMS7::writeGPIODir(const std::string&, const unsigned dir)
 {
     OpStatus r = sdrDevice->GPIODirWrite(reinterpret_cast<const uint8_t*>(&dir), sizeof(dir));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::writeGPIODir() " + std::string(GetLastErrorMessage()));
     }
@@ -1159,7 +1162,7 @@ unsigned SoapyLMS7::readGPIODir(const std::string&) const
 {
     unsigned buffer(0);
     OpStatus r = sdrDevice->GPIODirRead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
-    if (r != OpStatus::SUCCESS)
+    if (r != OpStatus::Success)
     {
         throw std::runtime_error("SoapyLMS7::readGPIODir() " + std::string(GetLastErrorMessage()));
     }

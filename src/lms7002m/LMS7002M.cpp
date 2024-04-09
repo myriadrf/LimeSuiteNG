@@ -28,8 +28,8 @@
 #endif
 
 #include "lms_gfir.h"
-#include "limesuiteng/commonTypes.h"
-#include "limesuiteng/IComms.h"
+#include "limesuiteng/types.h"
+#include "comms/IComms.h"
 #include "LMS7002M_RegistersMap.h"
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
@@ -420,7 +420,7 @@ OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool e
     }
     this->SetActiveChannel(ch);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::ResetChip()
@@ -463,7 +463,7 @@ OpStatus LMS7002M::SoftReset()
     this->SPI_write(0x0020, 0x0);
     this->SPI_write(0x0020, reg_0x0020);
     this->SPI_write(0x002E, reg_0x002E); //must write, enables/disabled MIMO channel B
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
@@ -472,7 +472,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     if (f.good() == false) //file not found
     {
         f.close();
-        return ReportError(OpStatus::FILE_NOT_FOUND, "LoadConfigLegacyFile(%s) - file not found", filename.c_str());
+        return ReportError(OpStatus::FileNotFound, "LoadConfigLegacyFile(%s) - file not found", filename.c_str());
     }
     f.close();
 
@@ -483,7 +483,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     ini_t parser(filename, true);
     if (parser.select("FILE INFO") == false)
         return ReportError(
-            OpStatus::INVALID_VALUE, "LoadConfigLegacyFile(%s) - invalid format, missing FILE INFO section", filename.c_str());
+            OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing FILE INFO section", filename.c_str());
 
     std::string type = "";
     type = parser.get("type", "undefined");
@@ -491,7 +491,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     if (type.find("LMS7002 configuration") == std::string::npos)
     {
         return ReportError(
-            OpStatus::INVALID_VALUE, "LoadConfigLegacyFile(%s) - invalid format, missing LMS7002 configuration", filename.c_str());
+            OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing LMS7002 configuration", filename.c_str());
     }
 
     int fileVersion = 0;
@@ -528,7 +528,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 dataToWrite.push_back(value);
             }
             status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
 
             //parse FCW or PHO
@@ -575,7 +575,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 }
             }
             status = SPI_write(0x0020, x0020_value);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
         }
 
@@ -595,7 +595,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             }
             this->SetActiveChannel(Channel::ChB); //select B channel
             status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
 
             //parse FCW or PHO
@@ -642,9 +642,9 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 }
             }
         }
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     }
-    return ReportError(OpStatus::INVALID_VALUE, "LoadConfigLegacyFile(%s) - invalid format", filename.c_str());
+    return ReportError(OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format", filename.c_str());
 }
 
 OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValues)
@@ -653,7 +653,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     if (f.good() == false) //file not found
     {
         f.close();
-        return ReportError(OpStatus::FILE_NOT_FOUND, "LoadConfig(%s) - file not found", filename.c_str());
+        return ReportError(OpStatus::FileNotFound, "LoadConfig(%s) - file not found", filename.c_str());
     }
     f.close();
 
@@ -676,7 +676,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     if (type.find("lms7002m_minimal_config") == std::string::npos)
     {
         return ReportError(
-            OpStatus::INVALID_VALUE, "LoadConfig(%s) - invalid format, missing lms7002m_minimal_config", filename.c_str());
+            OpStatus::InvalidValue, "LoadConfig(%s) - invalid format, missing lms7002m_minimal_config", filename.c_str());
     }
 
     int fileVersion = 0;
@@ -719,13 +719,13 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             }
 
             status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
             status = SPI_write(0x0020, x0020_value);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
             this->SetActiveChannel(Channel::ChB);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
         }
 
@@ -743,7 +743,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             }
             this->SetActiveChannel(Channel::ChB); //select B channel
             status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::SUCCESS && controlPort != nullptr)
+            if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
         }
 
@@ -770,7 +770,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
         }
     }
     this->SetActiveChannel(Channel::ChA);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::ResetLogicRegisters()
@@ -854,7 +854,7 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     fout << "sxt_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
     fout << "sxr_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
     fout.close();
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
@@ -1172,10 +1172,10 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     if (opt_gain_tbb[ind] <= 0)
     {
         status = CalibrateTxGain();
-        if (status != OpStatus::SUCCESS) //set optimal BB gain
+        if (status != OpStatus::Success) //set optimal BB gain
             return status;
         if (std::fabs(gain) < 0.2) // optimal gain = ~0dB
-            return OpStatus::SUCCESS;
+            return OpStatus::Success;
     }
 
     int g_iamp = static_cast<float_type>(opt_gain_tbb[ind]) * pow(10.0, gain / 20.0) + 0.4;
@@ -1193,7 +1193,7 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 
     if (opt_gain_tbb[ind] <= 0)
     {
-        if (CalibrateTxGain() != OpStatus::SUCCESS)
+        if (CalibrateTxGain() != OpStatus::Success)
             return 0.0;
         Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), g_current, true); //restore
     }
@@ -1241,7 +1241,7 @@ OpStatus LMS7002M::SetPathRFE(PathRFE path)
     const bool loopback = (path == PathRFE::LB1) or (path == PathRFE::LB2);
     Modify_SPI_Reg_bits(LMS7param(EN_LOOPB_TXPAD_TRF), loopback ? 1 : 0);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
@@ -1265,7 +1265,7 @@ OpStatus LMS7002M::SetBandTRF(const int band)
     this->Modify_SPI_Reg_bits(LMS7param(SEL_BAND1_TRF), (band == 1) ? 1 : 0);
     this->Modify_SPI_Reg_bits(LMS7param(SEL_BAND2_TRF), (band == 2) ? 1 : 0);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 int LMS7002M::GetBandTRF(void)
@@ -1292,7 +1292,7 @@ OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 OpStatus LMS7002M::SetReferenceClk_SX(TRXDir dir, float_type freq_Hz)
 {
     _cachedRefClockRate = freq_Hz;
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
@@ -1305,7 +1305,7 @@ OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint
     for (uint8_t i = 0; i < 16 && i < count; i++)
     {
         OpStatus status = SetNCOFrequency(dir, i, freq_Hz[i]);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return SetNCOPhaseOffsetForMode0(dir, phaseOffset);
@@ -1376,7 +1376,7 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
     iHdiv = iHdiv > 255 ? 255 : iHdiv;
     dFvco = 2 * (iHdiv + 1) * freq_Hz;
     if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
-        return ReportError(OpStatus::ERROR, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
+        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
     //Integer division
     uint16_t gINT = static_cast<uint16_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx) - 1);
 
@@ -1413,21 +1413,21 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
             SetNCOFrequency(TRXDir::Tx, i, txNCO[ch][i]);
     }
     this->SetActiveChannel(chBck);
-    if (TuneVCO(VCO_Module::VCO_CGEN) != OpStatus::SUCCESS)
+    if (TuneVCO(VCO_Module::VCO_CGEN) != OpStatus::Success)
     {
         if (output)
         {
             output->success = false;
             output->csw = Get_SPI_Reg_bits(LMS7param(CSW_VCO_CGEN));
         }
-        return ReportError(OpStatus::ERROR, "SetFrequencyCGEN(%g MHz) failed", freq_Hz / 1e6);
+        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) failed", freq_Hz / 1e6);
     }
     if (output)
         output->csw = Get_SPI_Reg_bits(LMS7param(CSW_VCO_CGEN));
 
     if (mCallback_onCGENChange)
         return mCallback_onCGENChange(mCallback_onCGENChange_userData);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 bool LMS7002M::GetCGENLocked(void)
@@ -1448,7 +1448,7 @@ OpStatus LMS7002M::TuneCGENVCO()
 #endif
     // Initialization activate VCO and comparator
     OpStatus status = Modify_SPI_Reg_bits(LMS7_PD_VCO_CGEN.address, 2, 1, 0);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     auto checkCSW = [this](int cswVal) {
@@ -1481,9 +1481,9 @@ OpStatus LMS7002M::TuneCGENVCO()
     lime::debug("csw %d; interval [%d, %d]", (cswHigh + cswLow) / 2, cswLow, cswHigh);
     auto cmphl = checkCSW((cswHigh + cswLow) / 2);
     if (cmphl == 2)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     lime::error("TuneVCO(CGEN) - failed to lock (cmphl!=%d)", cmphl);
-    return OpStatus::ERROR;
+    return OpStatus::Error;
 }
 
 OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
@@ -1527,10 +1527,10 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
     }
     // Initialization activate VCO and comparator
     OpStatus status = Modify_SPI_Reg_bits(addrVCOpd, 2, 1, 0);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     if (Get_SPI_Reg_bits(addrVCOpd, 2, 1) != 0)
-        return ReportError(OpStatus::ERROR, "TuneVCO(%s) - VCO is powered down", moduleName);
+        return ReportError(OpStatus::Error, "TuneVCO(%s) - VCO is powered down", moduleName);
 
     //check if lock is within VCO range
     {
@@ -1540,7 +1540,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
         if (cmphl == 3) //VCO too high
         {
             lime::debug("TuneVCO(%s) - attempted VCO too high", moduleName);
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
         Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, 255);
         std::this_thread::sleep_for(settlingTime);
@@ -1548,7 +1548,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
         if (cmphl == 0) //VCO too low
         {
             lime::debug("TuneVCO(%s) - attempted VCO too low", moduleName);
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
     }
 
@@ -1649,10 +1649,10 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
     if (cmphl == 2)
     {
         lime::debug("TuneVCO(%s) - confirmed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     }
     lime::debug("TuneVCO(%s) - failed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-    return OpStatus::ERROR;
+    return OpStatus::Error;
 }
 
 uint16_t LMS7002M::Get_SPI_Reg_bits(const LMS7Parameter& param, bool fromChip)
@@ -1689,7 +1689,7 @@ OpStatus LMS7002M::Modify_SPI_Reg_bits(
 OpStatus LMS7002M::Modify_SPI_Reg_mask(
     const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop)
 {
-    OpStatus status = OpStatus::SUCCESS;
+    OpStatus status = OpStatus::Success;
     uint16_t reg_data;
     std::vector<uint16_t> addresses;
     std::vector<uint16_t> data;
@@ -1702,7 +1702,7 @@ OpStatus LMS7002M::Modify_SPI_Reg_mask(
         data.push_back(reg_data);
         ++start;
     }
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     status = SPI_write_batch(&addresses[0], &data[0], addresses.size());
     return status;
@@ -1750,7 +1750,7 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         }
     }
     if (canDeliverFrequency == false)
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "SetFrequencySX%s(%g MHz) - required VCO frequencies are out of range [%g-%g] MHz",
             dir == TRXDir::Tx ? "T" : "R",
             freq_Hz / 1e6,
@@ -1815,7 +1815,7 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
                 output->sel_vco = sel_vco;
                 output->csw = csw_value;
             }
-            return OpStatus::SUCCESS;
+            return OpStatus::Success;
         }
     }
 
@@ -1828,14 +1828,14 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
             lime::debug("Tuning %s :", vcoNames[sel_vco]);
             Modify_SPI_Reg_bits(LMS7param(SEL_VCO), sel_vco);
             OpStatus status = TuneVCO(dir == TRXDir::Tx ? VCO_Module::VCO_SXT : VCO_Module::VCO_SXR);
-            if (status == OpStatus::SUCCESS)
+            if (status == OpStatus::Success)
             {
                 tuneScore[sel_vco] = -128 + Get_SPI_Reg_bits(LMS7param(CSW_VCO), true);
                 canDeliverFrequency = true;
                 lime::debug("%s : csw=%d %s",
                     vcoNames[sel_vco],
                     tuneScore[sel_vco] + 128,
-                    (status == OpStatus::SUCCESS ? "tune ok" : "tune fail"));
+                    (status == OpStatus::Success ? "tune ok" : "tune fail"));
             }
             else
             {
@@ -1887,8 +1887,8 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
 
     if (canDeliverFrequency == false)
         return ReportError(
-            OpStatus::ERROR, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", dir == TRXDir::Tx ? "T" : "R", freq_Hz / 1e6);
-    return OpStatus::SUCCESS;
+            OpStatus::Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", dir == TRXDir::Tx ? "T" : "R", freq_Hz / 1e6);
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq_Hz, float_type BW)
@@ -1912,7 +1912,7 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
     }
     else
         status = SetFrequencySX(dir, freq_Hz);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     const int ch = Get_SPI_Reg_bits(LMS7param(MAC));
     for (int i = 0; i < 2; ++i)
@@ -1955,7 +1955,7 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
     }
 
     Modify_SPI_Reg_bits(LMS7param(MAC), ch);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 float_type LMS7002M::GetFrequencySX(TRXDir dir)
@@ -1976,10 +1976,10 @@ float_type LMS7002M::GetFrequencySX(TRXDir dir)
 OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz)
 {
     if (index > 15)
-        return ReportError(OpStatus::INVALID_VALUE, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
+        return ReportError(OpStatus::InvalidValue, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
     float_type refClk_Hz = GetReferenceClk_TSP(dir);
     if (freq_Hz < 0 || freq_Hz / refClk_Hz > 0.5)
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "SetNCOFrequency(index = %d) - Frequency(%g MHz) out of range [0-%g) MHz",
             index,
             freq_Hz / 1e6,
@@ -1988,13 +1988,16 @@ OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz
     uint32_t fcw = static_cast<uint32_t>((freq_Hz / refClk_Hz) * 4294967296);
     SPI_write(addr + 2 + index * 2, (fcw >> 16)); //NCO frequency control word register MSB part.
     SPI_write(addr + 3 + index * 2, fcw); //NCO frequency control word register LSB part.
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 {
     if (index > 15)
-        return ReportError(ERANGE, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
+    {
+        ReportError(OpStatus::InvalidValue, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
+        return 0;
+    }
     float_type refClk_Hz = GetReferenceClk_TSP(dir);
     uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
     uint32_t fcw = 0;
@@ -2008,23 +2011,23 @@ OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
     uint16_t addr = dir == TRXDir::Tx ? 0x0241 : 0x0441;
     uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
     SPI_write(addr, pho);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)
 {
     if (index > 15)
-        return ReportError(OpStatus::INVALID_VALUE, "SetNCOPhaseOffset(index = %d) - index out of range [0, 15]", index);
+        return ReportError(OpStatus::InvalidValue, "SetNCOPhaseOffset(index = %d) - index out of range [0, 15]", index);
     uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
     uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
     SPI_write(addr + index, pho);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
     OpStatus status = SetNCOFrequency(dir, 0, frequencyOffset);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     if (angles_deg != nullptr)
@@ -2032,12 +2035,12 @@ OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_
         for (uint8_t i = 0; i < 16 && i < count; i++)
         {
             status = SetNCOPhaseOffset(dir, i, angles_deg[i]);
-            if (status != OpStatus::SUCCESS)
+            if (status != OpStatus::Success)
                 return status;
         }
         return Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX, 0);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequencyOffset)
@@ -2049,7 +2052,10 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
 float_type LMS7002M::GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index)
 {
     if (index > 15)
-        return ReportError(ERANGE, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
+    {
+        ReportError(OpStatus::InvalidValue, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
+        return 0;
+    }
     uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
     uint16_t pho = SPI_read(addr + index);
     float_type angle = 360 * pho / 65536.0;
@@ -2070,7 +2076,7 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
 
     if (coefCount > maxCoefCount)
     {
-        return ReportError(OpStatus::OUT_OF_RANGE,
+        return ReportError(OpStatus::OutOfRange,
             "SetGFIRCoefficients: too many coefficients(%i), GFIR[%i] can have only %i",
             coefCount,
             gfirIndex,
@@ -2115,7 +2121,7 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    OpStatus status = OpStatus::ERROR;
+    OpStatus status = OpStatus::Error;
 
     if (gfirIndex > 2)
     {
@@ -2128,8 +2134,7 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
 
     if (coefCount > coefLimit)
     {
-        return ReportError(
-            OpStatus::OUT_OF_RANGE, "GetGFIRCoefficients(coefCount=%d) - exceeds coefLimit=%d", coefCount, coefLimit);
+        return ReportError(OpStatus::OutOfRange, "GetGFIRCoefficients(coefCount=%d) - exceeds coefLimit=%d", coefCount, coefLimit);
     }
 
     std::vector<uint16_t> addresses;
@@ -2156,7 +2161,7 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
             uint16_t value = mRegistersMap->GetValue(channel, addresses[index]);
             coef[index] = *reinterpret_cast<int16_t*>(&value) / 32768.0;
         }
-        status = OpStatus::SUCCESS;
+        status = OpStatus::Success;
     }
 
     return status;
@@ -2174,7 +2179,7 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
         SPI_write(0x020C, data);
         mcu->RunProcedure(7);
         mcu->WaitForMCU(50);
-        return SPI_read(0x040B) == data ? OpStatus::SUCCESS : OpStatus::ERROR;
+        return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
     }
     else
         return this->SPI_write_batch(&address, &data, 1, toChip);
@@ -2220,7 +2225,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     if (!controlPort || fromChip == false)
     {
         if (status && !controlPort)
-            *status = ReportError(OpStatus::IO_FAILURE, "chip not connected");
+            *status = ReportError(OpStatus::IOFailure, "chip not connected");
         uint8_t mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
         uint8_t channel = (mac == 2) ? 1 : 0; //only when MAC is B -> use register space B
         if (address < 0x0100)
@@ -2286,22 +2291,22 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
     }
 
     if (data.size() == 0)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
     if (!controlPort)
     {
         if (useCache)
-            return OpStatus::SUCCESS;
-        return ReportError(OpStatus::IO_FAILURE, "No device connected");
+            return OpStatus::Success;
+        return ReportError(OpStatus::IOFailure, "No device connected");
     }
     controlPort->SPI(data.data(), nullptr, data.size());
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, uint16_t cnt)
 {
     if (!controlPort)
     {
-        return ReportError(OpStatus::IO_FAILURE, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected");
     }
 
     std::vector<uint32_t> dataWr(cnt);
@@ -2329,14 +2334,14 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
         if (wr1)
             mRegistersMap->SetValue(1, spiAddr[i], spiData[i]);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 {
     char chex[16];
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected");
 
     OpStatus status;
     ChannelScope scope(this);
@@ -2352,7 +2357,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     //backup A channel
     this->SetActiveChannel(Channel::ChA);
     status = SPI_read_batch(&ch1Addresses[0], &ch1Data[0], ch1Addresses.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     std::vector<uint16_t> ch2Addresses;
@@ -2365,7 +2370,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 
     this->SetActiveChannel(Channel::ChB);
     status = SPI_read_batch(&ch2Addresses[0], &ch2Data[0], ch2Addresses.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     //test registers
@@ -2461,7 +2466,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
             }
             ss << std::endl;
             for (uint8_t p = 0; p < patternsCount; ++p)
-                moduleTestsSuccess &= RegistersTestInterval(startAddr, endAddr, patterns[p], ss) == OpStatus::SUCCESS;
+                moduleTestsSuccess &= RegistersTestInterval(startAddr, endAddr, patterns[p], ss) == OpStatus::Success;
         }
         allTestSuccess &= moduleTestsSuccess;
     }
@@ -2481,8 +2486,8 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     }
 
     if (allTestSuccess)
-        return OpStatus::SUCCESS;
-    return ReportError(OpStatus::ERROR, "RegistersTest() failed");
+        return OpStatus::Success;
+    return ReportError(OpStatus::Error, "RegistersTest() failed");
 }
 
 /** @brief Performs registers test for given address interval by writing given pattern data
@@ -2530,10 +2535,10 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
     dataReceived.resize(addrToWrite.size(), 0);
     OpStatus status;
     status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     status = SPI_read_batch(&addrToWrite[0], &dataReceived[0], addrToWrite.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     bool registersMatch = true;
     char ctemp[16];
@@ -2556,8 +2561,8 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
         ss << "\tRegisters OK (" << ctemp << ")\n";
     }
     if (registersMatch)
-        return OpStatus::SUCCESS;
-    return ReportError(OpStatus::ERROR, "RegistersTestInterval(startAddr=0x%x, endAddr=0x%x) - failed", startAddr, endAddr);
+        return OpStatus::Success;
+    return ReportError(OpStatus::Error, "RegistersTestInterval(startAddr=0x%x, endAddr=0x%x) - failed", startAddr, endAddr);
 }
 
 /** @brief Sets Rx Dc offsets by converting two's complementary numbers to sign and magnitude
@@ -2683,7 +2688,7 @@ bool LMS7002M::IsSynced()
 OpStatus LMS7002M::UploadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected");
 
     ChannelScope scope(this);
 
@@ -2702,14 +2707,14 @@ OpStatus LMS7002M::UploadAll()
         dataToWrite.push_back(mRegistersMap->GetValue(0, address));
 
     status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     //after all channel A registers have been written, update 0x0020 register value
     status = SPI_write(0x0020, x0020_value);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     this->SetActiveChannel(Channel::ChB);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     addrToWrite = mRegistersMap->GetUsedAddresses(1);
@@ -2720,16 +2725,16 @@ OpStatus LMS7002M::UploadAll()
     }
     this->SetActiveChannel(Channel::ChB); //select B channel
     status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::DownloadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IO_FAILURE, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected");
 
     OpStatus status;
     ChannelScope scope(this, true);
@@ -2739,7 +2744,7 @@ OpStatus LMS7002M::DownloadAll()
     dataReceived.resize(addrToRead.size(), 0);
     this->SetActiveChannel(Channel::ChA);
     status = SPI_read_batch(&addrToRead[0], &dataReceived[0], addrToRead.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
@@ -2753,19 +2758,19 @@ OpStatus LMS7002M::DownloadAll()
 
     this->SetActiveChannel(Channel::ChB);
     status = SPI_read_batch(&addrToRead[0], &dataReceived[0], addrToRead.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
         mRegistersMap->SetValue(1, addrToRead[i], dataReceived[i]);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
 {
     OpStatus status;
     status = Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
     Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi);
 
@@ -2827,7 +2832,7 @@ OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t 
     // if (not this->GetCGENLocked() or freqDiff > 10.0)
     {
         status = SetFrequencyCGEN(cgen_freq_Hz);
-        if (status != OpStatus::SUCCESS)
+        if (status != OpStatus::Success)
             return status;
     }
     return status;
@@ -2885,7 +2890,7 @@ OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
 {
     this->Modify_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), enable ? 0 : 1);
     this->Modify_SPI_Reg_bits(LMS7param(DCCORR_AVG_RXTSP), 0x7);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
@@ -2918,7 +2923,7 @@ OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type 
         val = std::lrint(std::abs(Q * 63)) + (Q < 0 ? 64 : 0);
         Modify_SPI_Reg_bits(LMS7param(DCOFFQ_RFE), val);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
@@ -2950,7 +2955,7 @@ OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const 
     this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(IQCORR_TXTSP) : LMS7param(IQCORR_RXTSP), iqcorr);
     this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRI_TXTSP) : LMS7param(GCORRI_RXTSP), gcorri);
     this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRQ_TXTSP) : LMS7param(GCORRQ_RXTSP), gcorrq);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
@@ -2985,7 +2990,7 @@ MCU_BD* LMS7002M::GetMCUControls() const
 
 float_type LMS7002M::GetTemperature()
 {
-    if (CalibrateInternalADC(32) != OpStatus::SUCCESS)
+    if (CalibrateInternalADC(32) != OpStatus::Success)
         return 0;
     Modify_SPI_Reg_bits(LMS7_RSSI_PD, 0);
     Modify_SPI_Reg_bits(LMS7_RSSI_RSSIMODE, 0);
@@ -3031,7 +3036,7 @@ OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, c
     if (controlPort)
         UploadAll();
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
@@ -3075,7 +3080,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     if (edges.size() != 2)
     {
         lime::debug("Not found");
-        return ReportError(OpStatus::INVALID_VALUE, "Failed to find value");
+        return ReportError(OpStatus::InvalidValue, "Failed to find value");
     }
     int8_t found = (edges[0] + edges[1]) / 2;
     wrValue = abs(found);
@@ -3084,7 +3089,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     Modify_SPI_Reg_bits(LMS7param(RSSIDC_DCO1), wrValue, true);
     lime::debug("Found %i", found);
     Modify_SPI_Reg_bits(LMS7_EN_INSHSW_W_RFE, 0);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 double LMS7002M::GetClockFreq(ClockID clk_id)
@@ -3104,7 +3109,7 @@ double LMS7002M::GetClockFreq(ClockID clk_id)
     case ClockID::CLK_TXTSP:
         return GetReferenceClk_TSP(TRXDir::Tx);
     default:
-        lime::ReportError(EINVAL, "Invalid clock ID.");
+        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID.");
         return 0;
     }
 }
@@ -3127,11 +3132,11 @@ OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
         break;
     case ClockID::CLK_RXTSP:
     case ClockID::CLK_TXTSP:
-        return ReportError(OpStatus::INVALID_VALUE, "RxTSP/TxTSP Clocks are read only");
+        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only");
     default:
-        return ReportError(OpStatus::INVALID_VALUE, "LMS7002M::SetClockFreq Unknown clock id");
+        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id");
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 float_type LMS7002M::GetSampleRate(TRXDir dir, Channel ch)
@@ -3186,10 +3191,10 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
         }
     }
     if (!enabled)
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 
     if (bandwidth <= 0)
-        return OpStatus::INVALID_VALUE;
+        return OpStatus::InvalidValue;
 
     double w, w2;
     int L;
@@ -3222,7 +3227,7 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
         if (w2 > 0.495)
         {
             lime::error("GFIR LPF cannot be set to the requested bandwidth (%f)", bandwidth);
-            return OpStatus::ERROR;
+            return OpStatus::Error;
         }
     }
 
@@ -3246,11 +3251,11 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
     }
 
     OpStatus status;
-    if ((status = SetGFIRCoefficients(dir, 0, coef2, L * 5)) != OpStatus::SUCCESS)
+    if ((status = SetGFIRCoefficients(dir, 0, coef2, L * 5)) != OpStatus::Success)
         return status;
-    if ((status = SetGFIRCoefficients(dir, 1, coef2, L * 5)) != OpStatus::SUCCESS)
+    if ((status = SetGFIRCoefficients(dir, 1, coef2, L * 5)) != OpStatus::Success)
         return status;
-    if ((status = SetGFIRCoefficients(dir, 2, coef, L * 15)) != OpStatus::SUCCESS)
+    if ((status = SetGFIRCoefficients(dir, 2, coef, L * 15)) != OpStatus::Success)
         return status;
 
     std::stringstream ss;

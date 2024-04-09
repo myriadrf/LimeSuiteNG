@@ -1,5 +1,5 @@
 #pragma once
 
-#include <wx/wx.h>
+#include <wx/event.h>
 
 wxDECLARE_EVENT(limeEVT_SDR_HANDLE_SELECTED, wxCommandEvent);

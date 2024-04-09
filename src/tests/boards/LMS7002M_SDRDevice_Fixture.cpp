@@ -4,7 +4,10 @@
 #include <gtest/gtest.h>
 
 #include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/StreamConfig.h"
 
+#include <array>
 #include <cmath>
 #include <complex>
 #include <iostream>
@@ -40,10 +43,10 @@ void LMS7002M_SDRDevice_Fixture::TearDown()
 }
 
 void LMS7002M_SDRDevice_Fixture::SetUpDeviceForTestPattern(
-    SDRDevice::ChannelConfig::Direction::TestSignal::Scale scale, SDRDevice::ChannelConfig::Direction::TestSignal::Divide divide)
+    ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide)
 {
-    SDRDevice::SDRConfig deviceConfiguration;
-    SDRDevice::ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
+    SDRConfig deviceConfiguration;
+    ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
     directionConfiguration.enabled = true;
     directionConfiguration.centerFrequency = 1.4e9;
     directionConfiguration.sampleRate = 10e6;
@@ -57,9 +60,9 @@ void LMS7002M_SDRDevice_Fixture::SetUpDeviceForTestPattern(
 
     device->Configure(deviceConfiguration, 0);
 
-    SDRDevice::StreamConfig streamConfiguration;
+    StreamConfig streamConfiguration;
     streamConfiguration.channels[TRXDir::Rx] = { 0 };
-    streamConfiguration.format = SDRDevice::StreamConfig::DataFormat::I16;
+    streamConfiguration.format = DataFormat::I16;
 
     device->StreamSetup(streamConfiguration, 0);
 
@@ -70,8 +73,8 @@ void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
 {
     constexpr int samplesToReceive = 8;
 
-    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half,
-        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4);
+    SetUpDeviceForTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div4);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -81,15 +84,15 @@ void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
 
     device->StreamStop(0);
 
-    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4));
+    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div4));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
 {
     constexpr int samplesToReceive = 8;
 
-    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full,
-        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4);
+    SetUpDeviceForTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div4);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -99,15 +102,15 @@ void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
 
     device->StreamStop(0);
 
-    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4));
+    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div4));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
 {
     constexpr int samplesToReceive = 16;
 
-    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Half,
-        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8);
+    SetUpDeviceForTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -117,15 +120,15 @@ void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
 
     device->StreamStop(0);
 
-    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8));
+    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure8FullTestPatternAndReceiveIt()
 {
     constexpr int samplesToReceive = 16;
 
-    SetUpDeviceForTestPattern(SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full,
-        SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8);
+    SetUpDeviceForTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div8);
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
     sampleBuffer.fill({ 0, 0 });
@@ -135,5 +138,5 @@ void LMS7002M_SDRDevice_Fixture::Configure8FullTestPatternAndReceiveIt()
 
     device->StreamStop(0);
 
-    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div8));
+    EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));
 }

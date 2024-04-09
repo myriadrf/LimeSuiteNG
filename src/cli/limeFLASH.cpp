@@ -17,7 +17,7 @@ void inthandler(int sig)
     terminateProgress = true;
 }
 
-static void PrintMemoryDevices(SDRDevice::Descriptor descriptor)
+static void PrintMemoryDevices(SDRDescriptor descriptor)
 {
     for (const auto& memoryDevice : descriptor.memoryDevices)
     {
@@ -25,11 +25,11 @@ static void PrintMemoryDevices(SDRDevice::Descriptor descriptor)
     }
 }
 
-static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string& targetName)
+static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string& targetName)
 {
     if (!device)
     {
-        return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+        return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
 
     const auto descriptor = device->GetDescriptor();
@@ -45,7 +45,7 @@ static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRD
         cerr << "specify memory device target, -t, --target :" << endl;
         PrintMemoryDevices(descriptor);
 
-        return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+        return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
 
     try
@@ -59,7 +59,7 @@ static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRD
     cerr << "Device does not contain target device (" << targetName << "). Available list:" << endl;
     PrintMemoryDevices(descriptor);
 
-    return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+    return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
 }
 
 static auto lastProgressUpdate = std::chrono::steady_clock::now();
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
     inputFile.close();
 
     if (memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack) !=
-        OpStatus::SUCCESS)
+        OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);
         cout << "Device programming failed." << endl;

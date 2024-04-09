@@ -7,7 +7,7 @@
 #ifndef LMS7API_H
 #define LMS7API_H
 
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
 #include "limesuiteng/config.h"
 #include "limesuiteng/LMS7002M_parameters.h"
 #include "limesuiteng/OpStatus.h"

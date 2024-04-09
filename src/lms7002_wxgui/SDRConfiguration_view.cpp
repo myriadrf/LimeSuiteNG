@@ -1,6 +1,9 @@
 #include "SDRConfiguration_view.h"
+#include "commonWxHeaders.h"
 
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "utilities/toString.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>
@@ -143,7 +146,7 @@ void SOCConfig_view::Setup(SDRDevice* device, int index)
         return;
     }
 
-    const SDRDevice::RFSOCDescriptor& descriptor = device->GetDescriptor().rfSOC.at(index);
+    const RFSOCDescriptor& descriptor = device->GetDescriptor().rfSOC.at(index);
     socIndex = index;
     gui.titledBox->SetLabel(descriptor.name);
 
@@ -163,14 +166,14 @@ void SOCConfig_view::Setup(SDRDevice* device, int index)
     for (const auto& gain : descriptor.gains.at(TRXDir::Rx))
     {
         gui.rxSelectionToValue[rxGains.size()] = gain;
-        rxGains.Add(GAIN_TYPES_TEXT.at(gain));
+        rxGains.Add(ToString(gain));
     }
 
     wxArrayString txGains;
     for (const auto& gain : descriptor.gains.at(TRXDir::Tx))
     {
         gui.txSelectionToValue[txGains.size()] = gain;
-        txGains.Add(GAIN_TYPES_TEXT.at(gain));
+        txGains.Add(ToString(gain));
     }
 
     for (int i = 0; i < descriptor.channelCount; ++i)
@@ -250,7 +253,7 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
     if (!sdrDevice)
         return;
 
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
 
     config.referenceClockFreq = 30.72e6;
 
@@ -264,7 +267,7 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
     for (int i = 0; i < channelCount; ++i)
     {
         const double multiplier = 1e6; // convert from GUI MHz to Hz
-        SDRDevice::ChannelConfig& ch = config.channel[i];
+        ChannelConfig& ch = config.channel[i];
 
         ch.rx.centerFrequency = parseGuiValue(gui.rxLO->GetValue()) * multiplier;
         ch.tx.centerFrequency = parseGuiValue(gui.txLO->GetValue()) * multiplier;
@@ -352,7 +355,7 @@ void SDRConfiguration_view::Setup(lime::SDRDevice* device)
         return;
     }
 
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
 
     wxSizerFlags ctrlFlags(0);
     ctrlFlags = ctrlFlags.Left().Top();

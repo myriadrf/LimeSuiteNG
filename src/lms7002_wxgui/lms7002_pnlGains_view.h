@@ -1,7 +1,6 @@
 #ifndef __lms7002_pnlGains_view__
 #define __lms7002_pnlGains_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
 
 class lms7002_pnlGains_view : public ILMS7002MTab
@@ -17,7 +16,7 @@ class lms7002_pnlGains_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(ILMS7002MTab::ControllerType* pControl) override;
+    virtual void Initialize(lime::LMS7002M* pControl) override;
     virtual void UpdateGUI() override;
     void OnAGCStateChange(wxCommandEvent& event);
 

@@ -2,6 +2,9 @@
 #include "DataPacket.h"
 #include "DeviceExceptions.h"
 #include "USBTransferContext_FT601.h"
+#include "limesuiteng/Logger.h"
+
+using namespace std::literals::string_literals;
 
 namespace lime {
 
@@ -38,7 +41,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 
     if (FT_FAILED(ftStatus))
     {
-        ReportError(ENODEV, "Failed to list USB Devices");
+        ReportError(OpStatus::Error, "Failed to list USB Devices");
         return false;
     }
 

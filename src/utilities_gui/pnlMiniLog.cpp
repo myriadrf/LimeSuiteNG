@@ -1,7 +1,7 @@
 #include "pnlMiniLog.h"
 #include "dlgFullMessageLog.h"
 
-#undef ERROR
+using namespace lime;
 
 static wxTextAttr mDefaultStyle;
 
@@ -66,6 +66,26 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     wxUpdateUIEvent::SetUpdateInterval(100);
 }
 
+static const char* logLevelToName(const LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::Critical:
+        return "CRITICAL";
+    case LogLevel::Error:
+        return "ERROR";
+    case LogLevel::Warning:
+        return "WARNING";
+    case LogLevel::Info:
+        return "INFO";
+    case LogLevel::Verbose:
+        return "VERBOSE";
+    case LogLevel::Debug:
+        return "DEBUG";
+    }
+    return "";
+}
+
 void pnlMiniLog::HandleMessage(wxCommandEvent& event)
 {
     auto level = lime::LogLevel(event.GetInt());
@@ -78,7 +98,7 @@ void pnlMiniLog::HandleMessage(wxCommandEvent& event)
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     strftime(buffer, 80, "%H:%M:%S", timeinfo);
-    wxString line(wxString::Format("[%s] %s: %s", buffer, lime::logLevelToName(level), event.GetString()));
+    wxString line(wxString::Format("[%s] %s: %s", buffer, logLevelToName(level), event.GetString()));
 
     mAllMessages.push_back(line);
     const int allMessageLimit = 3000;
@@ -89,11 +109,11 @@ void pnlMiniLog::HandleMessage(wxCommandEvent& event)
     wxTextAttr style = mDefaultStyle;
     switch (level)
     {
-    case lime::LogLevel::CRITICAL:
-    case lime::LogLevel::ERROR:
+    case lime::LogLevel::Critical:
+    case lime::LogLevel::Error:
         style.SetTextColour(*wxRED);
         break;
-    case lime::LogLevel::WARNING:
+    case lime::LogLevel::Warning:
         style.SetBackgroundColour(*wxYELLOW);
         style.SetTextColour(*wxBLACK);
         break;

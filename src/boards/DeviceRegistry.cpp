@@ -1,4 +1,5 @@
 #include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/Logger.h"
 #include <mutex>
@@ -18,6 +19,11 @@ void __loadBoardSupport();
 /*******************************************************************
  * Registry implementation
  ******************************************************************/
+std::vector<DeviceHandle> DeviceRegistry::enumerate()
+{
+    return enumerate(DeviceHandle());
+}
+
 std::vector<DeviceHandle> DeviceRegistry::enumerate(const DeviceHandle& hint)
 {
     __loadBoardSupport();

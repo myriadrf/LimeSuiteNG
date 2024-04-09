@@ -184,12 +184,12 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::INVALID_VALUE, "Tx Calibration: Device not connected");
+        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected");
     auto beginTime = std::chrono::high_resolution_clock::now();
     int status;
     uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
     if (ch == 0 || ch == 3)
-        return ReportError(OpStatus::INVALID_VALUE, "Tx Calibration: Incorrect channel selection MAC %i", ch);
+        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Incorrect channel selection MAC %i", ch);
 
     //caching variables
     double txFreq = GetFrequencySX(TRXDir::Tx);
@@ -211,9 +211,9 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         lime::debug("Uploading DC/IQ calibration firmware"s);
-        status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        if (status != 0)
-            return OpStatus::ERROR;
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::Success)
+            return status;
     }
 
     //set reference clock parameter inside MCU
@@ -230,7 +230,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, true);
             // if(status != 0)
-            //     return ReportError(OpStatus::INVALID_VALUE, "Tx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Tx Calibration: Failed to enable external loopback");
             uint8_t loopPair = GetExtLoopPair(*this, true);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }
@@ -238,7 +238,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::INVALID_VALUE, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
     }
 
     //sync registers to cache
@@ -261,7 +261,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
     int32_t duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();
     lime::debug("Duration: %i ms", duration);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
@@ -279,14 +279,14 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::IO_FAILURE, "Rx Calibration: Device not connected");
+        return ReportError(OpStatus::IOFailure, "Rx Calibration: Device not connected");
 #ifdef LMS_VERBOSE_OUTPUT
     auto beginTime = std::chrono::high_resolution_clock::now();
 #endif
 
     uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
     if (ch == 0 || ch == 3)
-        return ReportError(OpStatus::INVALID_VALUE, "Rx Calibration: Incorrect channel selection MAC %i", ch);
+        return ReportError(OpStatus::InvalidValue, "Rx Calibration: Incorrect channel selection MAC %i", ch);
     uint8_t channel = ch == 1 ? 0 : 1;
     uint8_t lna = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE));
     double rxFreq = GetFrequencySX(TRXDir::Rx);
@@ -328,9 +328,9 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         lime::debug("Uploading DC/IQ calibration firmware");
-        int status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        if (status != 0)
-            return OpStatus::ERROR;
+        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        if (status != OpStatus::Success)
+            return status;
     }
 
     //set reference clock parameter inside MCU
@@ -347,7 +347,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, false);
             // if(status != 0)
-            //     return ReportError(OpStatus::INVALID_VALUE, "Rx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Rx Calibration: Failed to enable external loopback");
             uint8_t loopPair = GetExtLoopPair(*this, false);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }
@@ -356,7 +356,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         int status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::INVALID_VALUE, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
     }
 
     //sync registers to cache
@@ -381,7 +381,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();
     lime::debug("Duration: %i ms", duration);
 #endif //LMS_VERBOSE_OUTPUT
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
@@ -408,5 +408,5 @@ OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
         Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_RXTSP, 1);
         Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_RXTSP, 0);
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }

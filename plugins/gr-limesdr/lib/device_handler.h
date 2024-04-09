@@ -21,8 +21,7 @@
 #ifndef DEVICE_HANDLER_H
 #define DEVICE_HANDLER_H
 
-#include <limesuiteng/DeviceHandle.h>
-#include <limesuiteng/SDRDevice.h>
+#include "limesuiteng/limesuiteng.hpp"
 #ifdef ENABLE_RFE
 #include <limesuiteng/limeRFE.h>
 #endif
@@ -43,7 +42,7 @@ private:
     struct device {
         // Device address
         lime::SDRDevice* address = nullptr;
-        lime::SDRDevice::StreamConfig stream_config{};
+        lime::StreamConfig stream_config{};
 
         // Flags and variables used to check
         // shared settings and blocks usage
@@ -111,7 +110,7 @@ public:
      *
      * @param   device_number Device number.
      */
-    lime::SDRDevice::StreamConfig& get_stream_config(int device_number);
+    lime::StreamConfig& get_stream_config(int device_number);
 
     /**
      * Connect to the device.

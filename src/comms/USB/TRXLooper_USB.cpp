@@ -47,7 +47,7 @@ TRXLooper_USB::~TRXLooper_USB()
     }
 }
 
-OpStatus TRXLooper_USB::Setup(const lime::SDRDevice::StreamConfig& config)
+OpStatus TRXLooper_USB::Setup(const lime::StreamConfig& config)
 {
     mConfig = config;
 
@@ -130,7 +130,7 @@ void TRXLooper_USB::TransmitPacketsLoop()
     uint32_t bytesUsed = 0;
     uint32_t packetsCreated = 0;
 
-    const bool packed = mConfig.linkFormat == SDRDevice::StreamConfig::DataFormat::I12;
+    const bool packed = mConfig.linkFormat == DataFormat::I12;
     uint32_t samplesInPkt = (packed ? 1360 : 1020) / conversion.channelCount;
 
     const bool mimo = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size()) > 1;
@@ -267,7 +267,7 @@ int TRXLooper_USB::RxSetup()
     const std::string name = "MemPool_Rx" + std::to_string(chipId);
 
     const int channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
-    const int samplesInPkt = (mConfig.linkFormat == SDRDevice::StreamConfig::DataFormat::I16 ? 1020 : 1360) / channelCount;
+    const int samplesInPkt = (mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / channelCount;
     const uint8_t packetsToBatch = mRx.packetsToBatch;
 
     const int upperAllocationLimit =
@@ -301,16 +301,14 @@ void TRXLooper_USB::ReceivePacketsLoop()
     std::vector<uint8_t> buffers(batchCount * bufferSize, 0);
     int bufferIndex = 0;
 
-    const int samplesInPkt =
-        (mConfig.linkFormat == SDRDevice::StreamConfig::DataFormat::I16 ? 1020 : 1360) / conversion.channelCount;
-    const uint8_t outputSampleSize =
-        mConfig.format == SDRDevice::StreamConfig::DataFormat::F32 ? sizeof(complex32f_t) : sizeof(complex16_t);
+    const int samplesInPkt = (mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / conversion.channelCount;
+    const uint8_t outputSampleSize = mConfig.format == DataFormat::F32 ? sizeof(complex32f_t) : sizeof(complex16_t);
     const int32_t outputPktSize = SamplesPacketType::headerSize + packetsToBatch * samplesInPkt * outputSampleSize;
 
     SamplesPacketType* outputPkt = nullptr;
     int64_t expectedTS = 0;
 
-    SDRDevice::StreamStats& stats = mRx.stats;
+    StreamStats& stats = mRx.stats;
 
     // thread ready for work, just wait for stream enable
     {
@@ -448,10 +446,10 @@ void TRXLooper_USB::NegateQ(SamplesPacketType* packet, TRXDir direction)
 
     switch (mConfig.format)
     {
-    case SDRDevice::StreamConfig::DataFormat::I16:
+    case DataFormat::I16:
         packet->Scale<complex16_t>(1, -1, channelCount);
         break;
-    case SDRDevice::StreamConfig::DataFormat::F32:
+    case DataFormat::F32:
         packet->Scale<complex32f_t>(1, -1, channelCount);
         break;
     default:

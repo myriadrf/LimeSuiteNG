@@ -1,9 +1,11 @@
 #ifndef __lms7002_pnlSX_view__
 #define __lms7002_pnlSX_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
-#include "limesuiteng/commonTypes.h"
+#include "limesuiteng/types.h"
+
+class wxSpinCtrl;
+class NumericSlider;
 
 class lms7002_pnlSX_view : public ILMS7002MTab
 {

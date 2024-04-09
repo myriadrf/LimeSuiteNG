@@ -51,7 +51,7 @@ TEST(LMS64CProtocol, LMS7002MSPIEmptyTest)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, nullptr, nullptr, 0);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueRead)
@@ -72,7 +72,7 @@ TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueRead)
     uint32_t miso = 2U;
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueWrite)
@@ -93,7 +93,7 @@ TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueWrite)
     SetWriteBit(mosi);
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, &mosi, nullptr, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIWriteReadReadWrite)
@@ -127,7 +127,7 @@ TEST(LMS64CProtocol, LMS7002MSPIWriteReadReadWrite)
     std::vector<uint32_t> miso{ 1U, 2U, 3U, 4U };
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosi.data(), miso.data(), 4);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIReadWriteReadReadWrite)
@@ -164,7 +164,7 @@ TEST(LMS64CProtocol, LMS7002MSPIReadWriteReadReadWrite)
     std::vector<uint32_t> miso{ 1U, 2U, 3U, 4U, 5U };
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosi.data(), miso.data(), 5);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPISixteenWrites)
@@ -197,7 +197,7 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenWrites)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosis.data(), misos.data(), 16);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPISixteenReads)
@@ -229,7 +229,7 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenReads)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosis.data(), misos.data(), 16);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPINotFullyWritten)
@@ -246,7 +246,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyWritten)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPINotFullyRead)
@@ -269,7 +269,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyRead)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIWrongStatus)
@@ -292,7 +292,7 @@ TEST(LMS64CProtocol, LMS7002MSPIWrongStatus)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, &mosi, &miso, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPINotFullyWrittenOnSecondCall)
@@ -315,7 +315,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyWrittenOnSecondCall)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosi.data(), miso.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPINotFullyReadOnSecondCall)
@@ -338,7 +338,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyReadOnSecondCall)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, 0, mosi.data(), miso.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, LMS7002MSPIPassesThroughCorrectChip)
@@ -363,5 +363,5 @@ TEST(LMS64CProtocol, LMS7002MSPIPassesThroughCorrectChip)
 
     OpStatus returnValue = LMS64CProtocol::LMS7002M_SPI(mockPort, chip, mosi.data(), miso.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }

@@ -6,6 +6,8 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 
+#include <wx/msgdlg.h>
+
 using namespace lime;
 using namespace LMS7002_WXGUI;
 using namespace std::literals::string_literals;
@@ -1651,7 +1653,7 @@ void lms7002_pnlRXTSP_view::onbtnGFIR3Coef(wxCommandEvent& event)
     UpdateGUI();
 }
 
-void lms7002_pnlRXTSP_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlRXTSP_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
 
@@ -1848,7 +1850,7 @@ void lms7002_pnlRXTSP_view::OnbtnSetLPFClick(wxCommandEvent& event)
     double bw;
     txtLPFBW->GetValue().ToDouble(&bw);
     if (lmsControl->SetGFIRFilter(TRXDir::Rx, mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB, true, bw * 1e6) !=
-        OpStatus::SUCCESS)
+        OpStatus::Success)
         wxMessageBox(_("GFIR configuration failed"), _("Error"));
 
     UpdateGUI(); // API changes nco selection

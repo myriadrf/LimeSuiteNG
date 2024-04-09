@@ -1,7 +1,6 @@
 #include "lms7002_pnlR3.h"
-
-#include <wx/wx.h>
-#include <wx/stattext.h>
+#include "commonWxHeaders.h"
+#include <wx/spinctrl.h>
 #include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002_gui_utilities.h"
 #include <chrono>
@@ -473,7 +472,7 @@ lms7002_pnlR3_view::~lms7002_pnlR3_view()
 {
 }
 
-void lms7002_pnlR3_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlR3_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
     if (pControl == nullptr)

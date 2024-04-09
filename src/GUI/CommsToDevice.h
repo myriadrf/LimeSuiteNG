@@ -1,6 +1,6 @@
 #pragma once
 
-#include "limesuiteng/IComms.h"
+#include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 
 namespace lime {

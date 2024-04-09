@@ -16,7 +16,8 @@
 //*)
 
 #include <wx/filedlg.h>
-#include <wx/wx.h>
+#include <wx/msgdlg.h>
+#include <wx/settings.h>
 
 using namespace lime;
 

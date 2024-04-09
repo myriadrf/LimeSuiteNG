@@ -58,7 +58,7 @@ TEST(LMS64CProtocol, GPIOWriteTestOneBlock)
 
     OpStatus returnValue = LMS64CProtocol::GPIOWrite(mockPort, &value, 1);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, GPIOWriteTestTwoBlocks)
@@ -85,7 +85,7 @@ TEST(LMS64CProtocol, GPIOWriteTestTwoBlocks)
 
     OpStatus returnValue = LMS64CProtocol::GPIOWrite(mockPort, values.data(), 2);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, GPIOWriteTestNotFullyWritten)

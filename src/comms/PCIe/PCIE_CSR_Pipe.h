@@ -1,9 +1,11 @@
 #ifndef PCIE_CSR_PIPE_H
 #define PCIE_CSR_PIPE_H
 
-#include "limesuiteng/IComms.h"
-#include "LMS64CProtocol.h"
+#include "comms/IComms.h"
+#include "ISerialPort.h"
 #include "LitePCIe.h"
+
+#include <memory>
 
 namespace lime {
 

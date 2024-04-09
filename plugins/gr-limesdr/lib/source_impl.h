@@ -51,9 +51,9 @@ private:
 
     std::chrono::high_resolution_clock::time_point t1, t2;
 
-    void print_stream_stats(lime::SDRDevice::StreamStats status);
+    void print_stream_stats(lime::StreamStats status);
 
-    void add_time_tag(int channel, lime::SDRDevice::StreamMeta meta);
+    void add_time_tag(int channel, lime::StreamMeta meta);
 
 public:
     source_impl(std::string serial,

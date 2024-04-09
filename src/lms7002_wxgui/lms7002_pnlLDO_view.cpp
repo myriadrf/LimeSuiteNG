@@ -1,6 +1,11 @@
 #include "lms7002_pnlLDO_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
+#include "wx/notebook.h"
+
+#include "limesuiteng/LMS7002M_parameters.h"
+
 using namespace lime;
 
 lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -1362,7 +1367,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlLDO_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlLDO_view::Initialize(LMS7002M* pControl)
 {
     lmsControl = pControl;
     if (lmsControl == nullptr)

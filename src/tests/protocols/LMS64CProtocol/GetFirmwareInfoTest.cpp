@@ -50,7 +50,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoGetsInfo)
 
     OpStatus returnValue = LMS64CProtocol::GetFirmwareInfo(mockPort, info, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, GetFirmwareInfoNotFullyWritten)
@@ -69,7 +69,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoNotFullyWritten)
 
     OpStatus returnValue = LMS64CProtocol::GetFirmwareInfo(mockPort, info, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, GetFirmwareInfoNotFullyRead)
@@ -88,7 +88,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoNotFullyRead)
 
     OpStatus returnValue = LMS64CProtocol::GetFirmwareInfo(mockPort, info, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, GetFirmwareInfoWrongStatus)
@@ -112,5 +112,5 @@ TEST(LMS64CProtocol, GetFirmwareInfoWrongStatus)
 
     OpStatus returnValue = LMS64CProtocol::GetFirmwareInfo(mockPort, info, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::IO_FAILURE);
+    EXPECT_EQ(returnValue, OpStatus::IOFailure);
 }

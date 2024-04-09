@@ -1,7 +1,9 @@
 #include "limesuiteng/SDRDevice.h"
-//#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/complex.h"
+#include "limesuiteng/Logger.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -31,19 +33,19 @@ void intHandler(int dummy)
     runForever.store(false);
 }
 
-static lime::SDRDevice::LogLevel logVerbosity = lime::SDRDevice::LogLevel::DEBUG;
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
     printf("%s\n", msg);
 }
 
-typedef std::pair<SDRDevice::SDRConfig, SDRDevice::StreamConfig> TestConfigType;
+typedef std::pair<SDRConfig, StreamConfig> TestConfigType;
 
 TestConfigType generateTestConfig(bool mimo, float sampleRate)
 {
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.skipDefaults = true; // defaults are already initialized once at the startup
     const uint8_t channelCount = mimo ? 2 : 1;
     for (int i = 0; i < channelCount; ++i)
@@ -68,17 +70,17 @@ TestConfigType generateTestConfig(bool mimo, float sampleRate)
         config.channel[i].tx.testSignal.enabled = false;
     }
 
-    SDRDevice::StreamConfig stream;
+    StreamConfig stream;
     stream.channels[TRXDir::Rx] = { 0, 1 };
     stream.channels[TRXDir::Tx] = { 0, 1 };
-    stream.format = SDRDevice::StreamConfig::DataFormat::F32;
-    stream.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    stream.format = DataFormat::F32;
+    stream.linkFormat = DataFormat::I16;
     stream.alignPhase = false;
     //stream.statusCallback = OnStreamStatusChange; // each test override for it's own purpose
     return TestConfigType(config, stream);
 }
 
-bool OnStreamStatusChange(bool isTx, const SDRDevice::StreamStats* s, void* userData)
+bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
 {
     // TODO: quite spammy if every packet has problems
     // TODO: report first problem instantly and accumulate following ones, report periodically
@@ -96,7 +98,7 @@ bool OnStreamStatusChange(bool isTx, const SDRDevice::StreamStats* s, void* user
     return false;
 }
 
-int TrySDRConfigure(SDRDevice::SDRConfig& config)
+int TrySDRConfigure(SDRConfig& config)
 {
     try
     {
@@ -124,7 +126,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     chipIndex = 0;
     printf("----------TEST FullStreamTxRx, sampleRate: %g MHz, MIMO:%s\n", sampleRate / 1e6, MIMO ? "yes" : "no");
     auto configPair = generateTestConfig(MIMO, sampleRate);
-    SDRDevice::StreamConfig& stream = configPair.second;
+    StreamConfig& stream = configPair.second;
 
     // if(iniArg)
     // {
@@ -141,7 +143,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     if (TrySDRConfigure(configPair.first) != 0)
         return false;
 
-    const int samplesInPkt = 256; //(stream.linkFormat == SDRDevice::StreamConfig::I12 ? 1360 : 1020)/channelCount;
+    const int samplesInPkt = 256; //(stream.linkFormat == StreamConfig::I12 ? 1360 : 1020)/channelCount;
 
     const float rxBufferTime = 0.002; // max buffer size in time (seconds)
     const uint32_t samplesToBuffer = static_cast<int>(rxBufferTime * sampleRate / samplesInPkt) * samplesInPkt;
@@ -215,7 +217,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     {
 
         //Receive samples
-        SDRDevice::StreamMeta rxMeta;
+        StreamMeta rxMeta;
         rxMeta.timestamp = 0;
         auto tt1 = std::chrono::high_resolution_clock::now();
         uint32_t samplesRead = dev.StreamRx(testStreamIndex, dest, samplesInPkt * txPacketCount, &rxMeta);
@@ -245,7 +247,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
         // TODO: verify if Rx RF is what has been transmitted, need to setup digital
         // loopback or verify gain values to know what power change to expect
 
-        SDRDevice::StreamMeta txMeta;
+        StreamMeta txMeta;
         if (rxMeta.timestamp >= ignoreSamplesAtStart && stream.channels.at(lime::TRXDir::Tx).size() > 0)
         {
             ++fired;
@@ -312,7 +314,7 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     const float sampleRate = 122.88e6;
     printf("----------TEST TxTiming, sampleRate: %g MHz, MIMO:%s\n", sampleRate / 1e6, MIMO ? "yes" : "no");
     auto configPair = generateTestConfig(true, sampleRate);
-    SDRDevice::StreamConfig& stream = configPair.second;
+    StreamConfig& stream = configPair.second;
 
     // if(chipIndex == 1)
     // {
@@ -328,8 +330,7 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     if (TrySDRConfigure(configPair.first) != 0)
         return false;
 
-    const int samplesInPkt =
-        (stream.linkFormat == SDRDevice::StreamConfig::DataFormat::I12 ? 1360 : 1020) / stream.channels.at(lime::TRXDir::Rx).size();
+    const int samplesInPkt = (stream.linkFormat == DataFormat::I12 ? 1360 : 1020) / stream.channels.at(lime::TRXDir::Rx).size();
 
     const float rxBufferTime = 0.005; // max buffer size in time (seconds)
     const uint32_t samplesToBuffer = static_cast<int>(rxBufferTime * sampleRate / samplesInPkt) * samplesInPkt;
@@ -384,14 +385,14 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     auto t1 = chrono::high_resolution_clock::now();
 
     bool txPending = false;
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta txMeta;
 
     bool done = false;
     while (chrono::high_resolution_clock::now() - t1 < chrono::milliseconds(3100) && !done)
     //while(!done)
     {
         //Receive samples
-        SDRDevice::StreamMeta rxMeta;
+        StreamMeta rxMeta;
         uint32_t samplesRead = dev.StreamRx(chipIndex, dest, samplesInPkt * txPacketCount, &rxMeta);
         if (samplesRead < 0)
         {

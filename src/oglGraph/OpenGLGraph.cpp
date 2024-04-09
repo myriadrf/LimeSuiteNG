@@ -19,6 +19,8 @@
 #include "GLFont.h"
 #include "StaticFontHeader.h"
 #include "dlgMarkers.h"
+#include <wx/msgdlg.h>
+#include <wx/timer.h>
 using namespace std;
 
 #define OGL_REDRAW_ENABLED 1

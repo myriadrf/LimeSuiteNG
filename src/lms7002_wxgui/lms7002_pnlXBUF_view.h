@@ -1,9 +1,6 @@
 #ifndef __lms7002_pnlXBUF_view__
 #define __lms7002_pnlXBUF_view__
 
-#include "lms7002_wxgui.h"
-
-#include <map>
 #include "ILMS7002MTab.h"
 
 class lms7002_pnlXBUF_view : public ILMS7002MTab

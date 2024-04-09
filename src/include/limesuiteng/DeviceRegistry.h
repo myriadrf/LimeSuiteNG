@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/DeviceHandle.h"
 
 namespace lime {
 
 class SDRDevice;
+class DeviceHandle;
 
 /*!
  * The connection registry provides a way to register
@@ -21,11 +21,17 @@ class LIME_API DeviceRegistry
   public:
     /*!
      * Discovery identifiers that can be used to create a connection.
+     * \return A list of handles which can be used to make a connection
+     */
+    static std::vector<DeviceHandle> enumerate();
+
+    /*!
+     * Discovery identifiers that can be used to create a connection.
      * The hint may contain a connection type, serial number, IP address, etc.
      * \param hint An optional connection handle with some fields filled-in
      * \return A list of handles which can be used to make a connection
      */
-    static std::vector<DeviceHandle> enumerate(const DeviceHandle& hint = DeviceHandle());
+    static std::vector<DeviceHandle> enumerate(const DeviceHandle& hint);
 
     /*!
      * Create a connection from an identifying handle.

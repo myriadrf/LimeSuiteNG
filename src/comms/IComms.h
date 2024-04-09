@@ -8,6 +8,9 @@
 
 namespace lime {
 
+/// @brief The structure for writing and reading custom parameters
+struct CustomParameterIO;
+
 /** @brief An interface for Serial Peripheral Interface communications */
 class LIME_API ISPI
 {
@@ -63,13 +66,6 @@ class LIME_API II2C
     virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length) = 0;
 };
 
-/// @brief The structure for writing and reading custom parameters
-struct CustomParameterIO {
-    int32_t id; ///< The ID of the parameter
-    double value; ///< The value of the parameter.
-    std::string units; ///< The units of the parameter.
-};
-
 /** @brief An interface for general device communications */
 class IComms : public ISPI
 {
@@ -83,7 +79,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
 
     /**
       @brief Reads general-purpose input/output (GPIO) values from device
@@ -91,7 +87,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
 
     /**
       @brief Write general-purpose input/output (GPIO) direction control values to device.
@@ -99,7 +95,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
 
     /**
       @brief Read general-purpose input/output (GPIO) direction control configuration from device.
@@ -107,21 +103,21 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
 
     /**
       @brief Writes a given list of custom parameters to the device.
       @param parameters The list of parameters to write.
       @return The operation success state.
      */
-    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) { return OpStatus::NotImplemented; };
 
     /**
       @brief Reads a given list of custom parameters from the device.
       @param[inout] parameters The list of parameters to read. The read values will end up in this vector.
       @return The operation success state.
      */
-    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) { return OpStatus::NotImplemented; };
 
     /**
       @brief The function to call when writing a program into the device using @ref lime::IComms::ProgramWrite().
@@ -143,7 +139,7 @@ class IComms : public ISPI
      */
     virtual OpStatus ProgramWrite(const char* data, size_t length, int prog_mode, int target, ProgressCallback callback = nullptr)
     {
-        return OpStatus::NOT_IMPLEMENTED;
+        return OpStatus::NotImplemented;
     }
 
     /**
@@ -151,7 +147,7 @@ class IComms : public ISPI
       @param chipSelect Which chip to reset.
       @return Whether the operation succeeded or not.
      */
-    virtual OpStatus ResetDevice(int chipSelect) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus ResetDevice(int chipSelect) { return OpStatus::NotImplemented; };
 
     /**
       @brief Writes given values into a given memory address in EEPROM memory.
@@ -160,7 +156,7 @@ class IComms : public ISPI
       @param dataLength The length of the data to write.
       @return The operation success state.
      */
-    virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) { return OpStatus::NotImplemented; };
 
     /**
       @brief Reads memory from a given memory address in EEPROM memory.
@@ -169,7 +165,7 @@ class IComms : public ISPI
       @param dataLength The length of the destination buffer (the amount of bytes to read).
       @return The operation success state.
      */
-    virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) { return OpStatus::NOT_IMPLEMENTED; };
+    virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) { return OpStatus::NotImplemented; };
 };
 
 } // namespace lime

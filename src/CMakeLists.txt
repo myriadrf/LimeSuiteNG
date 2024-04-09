@@ -4,8 +4,10 @@ set(GUI_EXECUTABLE_NAME limeGUI)
 ########################################################################
 ## public headers
 ########################################################################
-FILE(GLOB LIMESUITENG_PUBLIC_HEADERS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h")
-
+FILE(GLOB LIMESUITENG_PUBLIC_HEADERS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.hpp"
+)
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)
@@ -61,9 +63,9 @@ set(LIME_SUITE_SOURCES
     mcu_program/common_src/lms7002m_filters.c
 
     API/LMS_APIWrapper.cpp
-    include/limesuiteng/commonTypes.cpp
-    include/limesuiteng/OpStatus.cpp
     include/limesuiteng/SDRDevice.cpp
+
+    utilities/toString.cpp
 )
 
 SET_SOURCE_FILES_PROPERTIES(

@@ -5,8 +5,6 @@
 #ifndef LMS_Programing_wxgui_H
 #define LMS_Programing_wxgui_H
 
-#include <wx/frame.h>
-#include <wx/wx.h>
 class wxGauge;
 class wxStaticText;
 class wxFlexGridSizer;
@@ -18,6 +16,7 @@ class wxChoice;
 #include <vector>
 #include "limesuiteng/SDRDevice.h"
 #include "IModuleFrame.h"
+#include <wx/dialog.h>
 
 class LMS_Programing_wxgui : public IModuleFrame
 {
@@ -50,7 +49,7 @@ class LMS_Programing_wxgui : public IModuleFrame
     static bool OnProgrammingCallback(size_t bsent, size_t btotal, const char* progressMsg);
     std::vector<char> mProgramData;
     lime::SDRDevice* lmsControl;
-    std::vector<std::shared_ptr<lime::SDRDevice::DataStorage>> dataStorageEntries;
+    std::vector<std::shared_ptr<lime::DataStorage>> dataStorageEntries;
     std::atomic<bool> mProgrammingInProgress;
     std::atomic<bool> mAbortProgramming;
     std::thread mWorkerThread;
