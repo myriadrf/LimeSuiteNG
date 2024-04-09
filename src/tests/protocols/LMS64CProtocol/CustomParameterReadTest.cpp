@@ -38,13 +38,6 @@ MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct s
     return packet->subDevice == subDevice;
 }
 
-MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count")
-{
-    auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
-
-    return packet->payload[index] == byte;
-}
-
 TEST(LMS64CProtocol, CustomParameterReadTestEmptyDoesNothing)
 {
     SerialPortMock mockPort{};
