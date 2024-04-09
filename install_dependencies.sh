@@ -37,15 +37,23 @@ if [[ ($TYPE == "ubuntu" && ${VERSION_ID:0:2} -le 22) || ($TYPE == "debian" && $
   libwx="libwxbase3.0-dev libwxgtk3.0-gtk3-dev"
 fi
 
+headers=""
+
+if [[ $TYPE == "ubuntu" ]]; then
+  headers="linux-headers-generic-hwe-${VERSION_ID}"
+elif [[ $TYPE == "debian" ]]; then
+  headers="linux-headers-generic"
+fi
+
 yes=""
 if [[ ${1-} == "-y" ]]; then
   yes="-y"
 fi
 
 apt-get install $yes --no-install-recommends \
-  libusb-1.0-0-dev \
   build-essential \
-  $libwx \
-  libsoapysdr-dev \
   cmake \
-  linux-kernel-headers
+  $headers \
+  libsoapysdr-dev \
+  libusb-1.0-0-dev \
+  $libwx \
