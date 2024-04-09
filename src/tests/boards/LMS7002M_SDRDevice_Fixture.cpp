@@ -7,6 +7,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/StreamConfig.h"
 
+#include <array>
 #include <cmath>
 #include <complex>
 #include <iostream>
