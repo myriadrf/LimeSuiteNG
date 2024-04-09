@@ -332,18 +332,18 @@ lms7002_pnlCalibrations_view::lms7002_pnlCalibrations_view(
         NULL,
         this);
 
-    wndId2Enum[cmbIQCORR_TXTSP] = LMS7param(IQCORR_TXTSP);
-    wndId2Enum[cmbDCCORRI_TXTSP] = LMS7param(DCCORRI_TXTSP);
-    wndId2Enum[cmbDCCORRQ_TXTSP] = LMS7param(DCCORRQ_TXTSP);
-    wndId2Enum[cmbGCORRI_TXTSP] = LMS7param(GCORRI_TXTSP);
-    wndId2Enum[cmbGCORRQ_TXTSP] = LMS7param(GCORRQ_TXTSP);
-    wndId2Enum[cmbGCORRI_RXTSP] = LMS7param(GCORRI_RXTSP);
-    wndId2Enum[cmbGCORRQ_RXTSP] = LMS7param(GCORRQ_RXTSP);
-    wndId2Enum[cmbIQCORR_RXTSP] = LMS7param(IQCORR_RXTSP);
-    wndId2Enum[chkEN_DCOFF_RXFE_RFE] = LMS7param(EN_DCOFF_RXFE_RFE);
-    wndId2Enum[cmbDCOFFI_RFE] = LMS7param(DCOFFI_RFE);
-    wndId2Enum[cmbDCOFFQ_RFE] = LMS7param(DCOFFQ_RFE);
-    wndId2Enum[chkDCMODE] = LMS7param(DCMODE);
+    wndId2Enum[cmbIQCORR_TXTSP] = LMS7_IQCORR_TXTSP;
+    wndId2Enum[cmbDCCORRI_TXTSP] = LMS7_DCCORRI_TXTSP;
+    wndId2Enum[cmbDCCORRQ_TXTSP] = LMS7_DCCORRQ_TXTSP;
+    wndId2Enum[cmbGCORRI_TXTSP] = LMS7_GCORRI_TXTSP;
+    wndId2Enum[cmbGCORRQ_TXTSP] = LMS7_GCORRQ_TXTSP;
+    wndId2Enum[cmbGCORRI_RXTSP] = LMS7_GCORRI_RXTSP;
+    wndId2Enum[cmbGCORRQ_RXTSP] = LMS7_GCORRQ_RXTSP;
+    wndId2Enum[cmbIQCORR_RXTSP] = LMS7_IQCORR_RXTSP;
+    wndId2Enum[chkEN_DCOFF_RXFE_RFE] = LMS7_EN_DCOFF_RXFE_RFE;
+    wndId2Enum[cmbDCOFFI_RFE] = LMS7_DCOFFI_RFE;
+    wndId2Enum[cmbDCOFFQ_RFE] = LMS7_DCOFFQ_RFE;
+    wndId2Enum[chkDCMODE] = LMS7_DCMODE;
 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
     rgrCalibrationMethod->Hide();
@@ -446,7 +446,7 @@ void lms7002_pnlCalibrations_view::Initialize(LMS7002M* pControl)
     ILMS7002MTab::Initialize(pControl);
     if (lmsControl == nullptr)
         return;
-    uint16_t value = ReadParam(LMS7param(MASK));
+    uint16_t value = ReadParam(LMS7_MASK);
     chkDCMODE->Enable(value);
 }
 
@@ -500,38 +500,38 @@ void lms7002_pnlCalibrations_view::UpdateGUI()
     ILMS7002MTab::UpdateGUI();
 
     int16_t value;
-    value = ReadParam(LMS7param(IQCORR_RXTSP));
-    int bitsToShift = (15 - LMS7param(IQCORR_RXTSP).msb - LMS7param(IQCORR_RXTSP).lsb);
+    value = ReadParam(LMS7_IQCORR_RXTSP);
+    int bitsToShift = (15 - LMS7_IQCORR_RXTSP.msb - LMS7_IQCORR_RXTSP.lsb);
     value = value << bitsToShift;
     value = value >> bitsToShift;
     cmbIQCORR_RXTSP->SetValue(value);
     float angle = atan(value / 2048.0) * 180 / 3.141596;
     txtRxPhaseAlpha->SetLabel(wxString::Format("%.3f", angle));
 
-    value = ReadParam(LMS7param(IQCORR_TXTSP));
-    bitsToShift = (15 - LMS7param(IQCORR_TXTSP).msb - LMS7param(IQCORR_TXTSP).lsb);
+    value = ReadParam(LMS7_IQCORR_TXTSP);
+    bitsToShift = (15 - LMS7_IQCORR_TXTSP.msb - LMS7_IQCORR_TXTSP.lsb);
     value = value << bitsToShift;
     value = value >> bitsToShift;
     cmbIQCORR_TXTSP->SetValue(value);
     angle = atan(value / 2048.0) * 180 / 3.141596;
     txtPhaseAlpha->SetLabel(wxString::Format("%.3f", angle));
 
-    value = ReadParam(LMS7param(DCOFFI_RFE));
+    value = ReadParam(LMS7_DCOFFI_RFE);
     int16_t dcvalue = value & 0x3F;
     if ((value & 0x40) != 0)
         dcvalue *= -1;
     cmbDCOFFI_RFE->SetValue(dcvalue);
-    value = ReadParam(LMS7param(DCOFFQ_RFE));
+    value = ReadParam(LMS7_DCOFFQ_RFE);
     dcvalue = value & 0x3F;
     if ((value & 0x40) != 0)
         dcvalue *= -1;
     cmbDCOFFQ_RFE->SetValue(dcvalue);
 
     int8_t dccorr;
-    value = ReadParam(LMS7param(DCCORRI_TXTSP));
+    value = ReadParam(LMS7_DCCORRI_TXTSP);
     dccorr = value;
     cmbDCCORRI_TXTSP->SetValue(dccorr);
-    value = ReadParam(LMS7param(DCCORRQ_TXTSP));
+    value = ReadParam(LMS7_DCCORRQ_TXTSP);
     dccorr = value;
     cmbDCCORRQ_TXTSP->SetValue(dccorr);
     // float_type freq;

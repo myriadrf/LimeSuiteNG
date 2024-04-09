@@ -497,29 +497,29 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     btnTuneFilter->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneFilter), NULL, this);
     btnTuneTxGain->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneTxGain), NULL, this);
 
-    wndId2Enum[chkBYPLADDER_TBB] = LMS7param(BYPLADDER_TBB);
-    wndId2Enum[cmbCCAL_LPFLAD_TBB] = LMS7param(CCAL_LPFLAD_TBB);
-    wndId2Enum[cmbCG_IAMP_TBB] = LMS7param(CG_IAMP_TBB);
-    wndId2Enum[chkEN_G_TBB] = LMS7param(EN_G_TBB);
-    wndId2Enum[cmbICT_IAMP_FRP_TBB] = LMS7param(ICT_IAMP_FRP_TBB);
-    wndId2Enum[cmbICT_IAMP_GG_FRP_TBB] = LMS7param(ICT_IAMP_GG_FRP_TBB);
-    wndId2Enum[cmbICT_LPFH_F_TBB] = LMS7param(ICT_LPFH_F_TBB);
-    wndId2Enum[cmbICT_LPFLAD_F_TBB] = LMS7param(ICT_LPFLAD_F_TBB);
-    wndId2Enum[cmbICT_LPFLAD_PT_TBB] = LMS7param(ICT_LPFLAD_PT_TBB);
-    wndId2Enum[cmbICT_LPFS5_F_TBB] = LMS7param(ICT_LPFS5_F_TBB);
-    wndId2Enum[cmbICT_LPFS5_PT_TBB] = LMS7param(ICT_LPFS5_PT_TBB);
-    wndId2Enum[cmbICT_LPF_H_PT_TBB] = LMS7param(ICT_LPF_H_PT_TBB);
-    wndId2Enum[cmbLOOPB_TBB] = LMS7param(LOOPB_TBB);
-    wndId2Enum[chkPD_LPFH_TBB] = LMS7param(PD_LPFH_TBB);
-    wndId2Enum[chkPD_LPFIAMP_TBB] = LMS7param(PD_LPFIAMP_TBB);
-    wndId2Enum[chkPD_LPFLAD_TBB] = LMS7param(PD_LPFLAD_TBB);
-    wndId2Enum[chkPD_LPFS5_TBB] = LMS7param(PD_LPFS5_TBB);
-    wndId2Enum[cmbRCAL_LPFH_TBB] = LMS7param(RCAL_LPFH_TBB);
-    wndId2Enum[cmbRCAL_LPFLAD_TBB] = LMS7param(RCAL_LPFLAD_TBB);
-    wndId2Enum[cmbRCAL_LPFS5_TBB] = LMS7param(RCAL_LPFS5_TBB);
-    wndId2Enum[cmbTSTIN_TBB] = LMS7param(TSTIN_TBB);
-    wndId2Enum[chkEN_DIR_TBB] = LMS7param(EN_DIR_TBB);
-    wndId2Enum[chkR5_LPF_BYP_TBB] = LMS7param(R5_LPF_BYP_TBB);
+    wndId2Enum[chkBYPLADDER_TBB] = LMS7_BYPLADDER_TBB;
+    wndId2Enum[cmbCCAL_LPFLAD_TBB] = LMS7_CCAL_LPFLAD_TBB;
+    wndId2Enum[cmbCG_IAMP_TBB] = LMS7_CG_IAMP_TBB;
+    wndId2Enum[chkEN_G_TBB] = LMS7_EN_G_TBB;
+    wndId2Enum[cmbICT_IAMP_FRP_TBB] = LMS7_ICT_IAMP_FRP_TBB;
+    wndId2Enum[cmbICT_IAMP_GG_FRP_TBB] = LMS7_ICT_IAMP_GG_FRP_TBB;
+    wndId2Enum[cmbICT_LPFH_F_TBB] = LMS7_ICT_LPFH_F_TBB;
+    wndId2Enum[cmbICT_LPFLAD_F_TBB] = LMS7_ICT_LPFLAD_F_TBB;
+    wndId2Enum[cmbICT_LPFLAD_PT_TBB] = LMS7_ICT_LPFLAD_PT_TBB;
+    wndId2Enum[cmbICT_LPFS5_F_TBB] = LMS7_ICT_LPFS5_F_TBB;
+    wndId2Enum[cmbICT_LPFS5_PT_TBB] = LMS7_ICT_LPFS5_PT_TBB;
+    wndId2Enum[cmbICT_LPF_H_PT_TBB] = LMS7_ICT_LPF_H_PT_TBB;
+    wndId2Enum[cmbLOOPB_TBB] = LMS7_LOOPB_TBB;
+    wndId2Enum[chkPD_LPFH_TBB] = LMS7_PD_LPFH_TBB;
+    wndId2Enum[chkPD_LPFIAMP_TBB] = LMS7_PD_LPFIAMP_TBB;
+    wndId2Enum[chkPD_LPFLAD_TBB] = LMS7_PD_LPFLAD_TBB;
+    wndId2Enum[chkPD_LPFS5_TBB] = LMS7_PD_LPFS5_TBB;
+    wndId2Enum[cmbRCAL_LPFH_TBB] = LMS7_RCAL_LPFH_TBB;
+    wndId2Enum[cmbRCAL_LPFLAD_TBB] = LMS7_RCAL_LPFLAD_TBB;
+    wndId2Enum[cmbRCAL_LPFS5_TBB] = LMS7_RCAL_LPFS5_TBB;
+    wndId2Enum[cmbTSTIN_TBB] = LMS7_TSTIN_TBB;
+    wndId2Enum[chkEN_DIR_TBB] = LMS7_EN_DIR_TBB;
+    wndId2Enum[chkR5_LPF_BYP_TBB] = LMS7_R5_LPF_BYP_TBB;
 
     wxArrayString temp;
     temp.clear();
@@ -560,7 +560,7 @@ void lms7002_pnlTBB_view::Initialize(LMS7002M* pControl)
     if (pControl == nullptr)
         return;
 
-    uint16_t value = ReadParam(LMS7param(MASK));
+    uint16_t value = ReadParam(LMS7_MASK);
     chkR5_LPF_BYP_TBB->Enable(value);
 }
 
@@ -595,11 +595,11 @@ void lms7002_pnlTBB_view::UpdateGUI()
     uint16_t value;
     if (mChannel & 1)
     {
-        value = ReadParam(LMS7param(MIMO_SISO));
+        value = ReadParam(LMS7_MIMO_SISO);
         if (value != 0)
             wxMessageBox(_("MIMO channel B is disabled"), _("Warning"));
     }
-    value = ReadParam(LMS7param(TRX_GAIN_SRC));
+    value = ReadParam(LMS7_TRX_GAIN_SRC);
     cmbCG_IAMP_TBB->Enable(!value);
 }
 
@@ -622,7 +622,7 @@ void lms7002_pnlTBB_view::OnbtnTuneTxGain(wxCommandEvent& event)
     txtFilterFrequency->GetValue().ToDouble(&input1);
     // TODO:
     /*uint16_t ch;
-    ReadParam(LMS7param(MAC),&ch);
+    ReadParam(LMS7_MAC,&ch);
     LMS7002M* lms = ((LMS7_Device*)lmsControl)->GetLMS();
     int status = lms->CalibrateTxGain(0, nullptr);
 

@@ -91,16 +91,16 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         wxStaticBoxSizer* sbSizerPowerDowns;
         {
             sbSizerPowerDowns = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Power down controls")), wxVERTICAL);
-            auto rows = { make_tuple(LMS7param(PD_LNA_RFE), wxT("LNA_RFE"), wxT("Power control signal for LNA_RFE")),
-                make_tuple(LMS7param(PD_RLOOPB_1_RFE), wxT("Loopback 1"), wxT("Power control signal for RXFE loopback 1")),
-                make_tuple(LMS7param(PD_RLOOPB_2_RFE), wxT("Loopback 2"), wxT("Power control signal for RXFE loopback 2")),
-                make_tuple(LMS7param(PD_MXLOBUF_RFE), wxT("Mixer LO buffer"), wxT("Power control signal for RXFE mixer lo buffer")),
-                make_tuple(LMS7param(PD_QGEN_RFE),
+            auto rows = { make_tuple(LMS7_PD_LNA_RFE, wxT("LNA_RFE"), wxT("Power control signal for LNA_RFE")),
+                make_tuple(LMS7_PD_RLOOPB_1_RFE, wxT("Loopback 1"), wxT("Power control signal for RXFE loopback 1")),
+                make_tuple(LMS7_PD_RLOOPB_2_RFE, wxT("Loopback 2"), wxT("Power control signal for RXFE loopback 2")),
+                make_tuple(LMS7_PD_MXLOBUF_RFE, wxT("Mixer LO buffer"), wxT("Power control signal for RXFE mixer lo buffer")),
+                make_tuple(LMS7_PD_QGEN_RFE,
                     wxT("Quadrature LO generator"),
                     wxT("Power control signal for RXFE Quadrature LO generator")),
-                make_tuple(LMS7param(PD_RSSI_RFE), wxT("RSSI"), wxT("Power control signal for RXFE RSSI")),
-                make_tuple(LMS7param(PD_TIA_RFE), wxT("TIA"), wxT("Power control signal for RXFE TIA")),
-                make_tuple(LMS7param(EN_G_RFE), wxT("Enable RFE module"), wxT("Enable control for all the RFE_1 power downs")) };
+                make_tuple(LMS7_PD_RSSI_RFE, wxT("RSSI"), wxT("Power control signal for RXFE RSSI")),
+                make_tuple(LMS7_PD_TIA_RFE, wxT("TIA"), wxT("Power control signal for RXFE TIA")),
+                make_tuple(LMS7_EN_G_RFE, wxT("Enable RFE module"), wxT("Enable control for all the RFE_1 power downs")) };
 
             for (const auto& row : rows)
                 sbSizerPowerDowns->Add(
@@ -109,7 +109,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
             wxStaticBoxSizer* sbSizer23 = new wxStaticBoxSizer(
                 new wxStaticBox(sbSizerPowerDowns->GetStaticBox(), wxID_ANY, wxT("Direct control")), wxHORIZONTAL);
             sbSizer23->Add(NewCheckBox(sbSizer23->GetStaticBox(),
-                               LMS7param(EN_DIR_RFE),
+                               LMS7_EN_DIR_RFE,
                                wxT("Direct control of PDs and ENs"),
                                wxT("Enables direct control of PDs and ENs for RFE module")),
                 wxALIGN_LEFT);
@@ -122,16 +122,16 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
             sbSizerInputShorting =
                 new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Input shorting switches")), wxVERTICAL);
             auto rows = {
-                make_tuple(LMS7param(EN_INSHSW_LB1_RFE),
+                make_tuple(LMS7_EN_INSHSW_LB1_RFE,
                     wxT("input of loopback 1"),
                     wxT("Enables the input shorting switch at the input of the loopback 1 (in parallel with LNAL mixer)")),
-                make_tuple(LMS7param(EN_INSHSW_LB2_RFE),
+                make_tuple(LMS7_EN_INSHSW_LB2_RFE,
                     wxT("input of loopback 2"),
                     wxT("Enables the input shorting switch at the input of the loopback 2 (in parallel with LNAW mixer)")),
-                make_tuple(LMS7param(EN_INSHSW_L_RFE),
+                make_tuple(LMS7_EN_INSHSW_L_RFE,
                     wxT("input of LNAL"),
                     wxT("Enables the input shorting switch at the input of the LNAL")),
-                make_tuple(LMS7param(EN_INSHSW_W_RFE),
+                make_tuple(LMS7_EN_INSHSW_W_RFE,
                     wxT("input of LNAW"),
                     wxT("Enables the input shorting switch at the input of the LNAW"))
             };
@@ -154,7 +154,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         fgSizer43->SetFlexibleDirection(wxBOTH);
         fgSizer43->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-        wxComboBox* cmbSEL_PATH_RFE = NewComboBox(this, LMS7param(SEL_PATH_RFE));
+        wxComboBox* cmbSEL_PATH_RFE = NewComboBox(this, LMS7_SEL_PATH_RFE);
         cmbSEL_PATH_RFE->Append(wxT("No path active"));
         cmbSEL_PATH_RFE->Append(wxT("LNAH"));
         cmbSEL_PATH_RFE->Append(wxT("LNAL"));
@@ -162,27 +162,27 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         cmbSEL_PATH_RFE->SetToolTip(wxT("Selects the active path of the RXFE"));
         SizerAddTextAndControl(fgSizer43, wxT("Active path to the RXFE"), cmbSEL_PATH_RFE);
 
-        cmbCAP_RXMXO_RFE = NewComboBox(this, LMS7param(CAP_RXMXO_RFE));
+        cmbCAP_RXMXO_RFE = NewComboBox(this, LMS7_CAP_RXMXO_RFE);
         cmbCAP_RXMXO_RFE->SetToolTip(wxT("Control the decoupling cap at the output of the RX Mixer"));
         SizerAddTextAndControl(fgSizer43, wxT("Decoupling cap at output of RX mixer"), cmbCAP_RXMXO_RFE);
 
-        cmbCGSIN_LNA_RFE = NewComboBox(this, LMS7param(CGSIN_LNA_RFE));
+        cmbCGSIN_LNA_RFE = NewComboBox(this, LMS7_CGSIN_LNA_RFE);
         cmbCGSIN_LNA_RFE->SetToolTip(
             wxT("Controls the cap parallel with the LNA input input NMOS CGS to control the Q of the maching circuit and provides "
                 "trade off between gain/NF and IIP. The higher the frequency, the lower CGSIN_LNA_RFE should be. Also, the higher "
                 "CGSIN, the lower the Q, The lower the gain, the higher the NF, and the higher the IIP3"));
         SizerAddTextAndControl(fgSizer43, wxT("Controls cap parallel with the LNA input"), cmbCGSIN_LNA_RFE);
 
-        cmbRCOMP_TIA_RFE = NewComboBox(this, LMS7param(RCOMP_TIA_RFE));
+        cmbRCOMP_TIA_RFE = NewComboBox(this, LMS7_RCOMP_TIA_RFE);
         cmbRCOMP_TIA_RFE->SetToolTip(wxT("Controls the compensation resistors of the TIA opamp"));
         SizerAddTextAndControl(fgSizer43, wxT("Compensation resistor of TIA opamp"), cmbRCOMP_TIA_RFE);
 
-        cmbRFB_TIA_RFE = NewComboBox(this, LMS7param(RFB_TIA_RFE));
+        cmbRFB_TIA_RFE = NewComboBox(this, LMS7_RFB_TIA_RFE);
         cmbRFB_TIA_RFE->SetToolTip(wxT("Sets the feedback resistor to the nominal value"));
         SizerAddTextAndControl(fgSizer43, wxT("Sets feedback resistor to nominal value"), cmbRFB_TIA_RFE);
 
         fgSizer43->Add(chkEN_NEXTRX_RFE = NewCheckBox(this,
-                           LMS7param(EN_NEXTRX_RFE),
+                           LMS7_EN_NEXTRX_RFE,
                            wxT("Enable Rx MIMO mode"),
                            wxT("Enables the daisy chain LO buffer going from RXFE1 to RXFE2")),
             1,
@@ -199,11 +199,11 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     fgSizer47->SetFlexibleDirection(wxBOTH);
     fgSizer47->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    wxComboBox* cmbICT_LNACMO_RFE = NewComboBox(sbSizerCurrentControl->GetStaticBox(), LMS7param(ICT_LNACMO_RFE));
+    wxComboBox* cmbICT_LNACMO_RFE = NewComboBox(sbSizerCurrentControl->GetStaticBox(), LMS7_ICT_LNACMO_RFE);
     cmbICT_LNACMO_RFE->SetToolTip(wxT("Controls the current generating LNA output common mode voltage"));
     SizerAddTextAndControl(fgSizer47, wxT("LNA output common mode voltage"), cmbICT_LNACMO_RFE);
 
-    wxComboBox* cmbICT_LNA_RFE = NewComboBox(sbSizerCurrentControl->GetStaticBox(), LMS7param(ICT_LNA_RFE));
+    wxComboBox* cmbICT_LNA_RFE = NewComboBox(sbSizerCurrentControl->GetStaticBox(), LMS7_ICT_LNA_RFE);
     cmbICT_LNA_RFE->SetToolTip(wxT("Controls the current of the LNA core"));
     SizerAddTextAndControl(fgSizer47, wxT("LNA core"), cmbICT_LNA_RFE);
 
@@ -221,7 +221,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     fgSizer45->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     cmbDCOFFI_RFE = NewNumericSlider(sbSizerDC->GetStaticBox(),
-        LMS7param(DCOFFI_RFE),
+        LMS7_DCOFFI_RFE,
         wxT("Controls DC offset at the output of the TIA by injecting current to the input of the TIA (I side)"),
         wxDefaultPosition,
         wxDefaultSize,
@@ -232,7 +232,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     SizerAddTextAndControl(fgSizer45, wxT("Offset I"), cmbDCOFFI_RFE);
 
     cmbDCOFFQ_RFE = NewNumericSlider(sbSizerDC->GetStaticBox(),
-        LMS7param(DCOFFQ_RFE),
+        LMS7_DCOFFQ_RFE,
         wxT("Controls DC offset at the output of the TIA by injecting current to the input of the TIA (Q side)"),
         wxDefaultPosition,
         wxDefaultSize,
@@ -242,7 +242,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         0);
     SizerAddTextAndControl(fgSizer45, wxT("Offset Q"), cmbDCOFFQ_RFE);
 
-    cmbICT_LODC_RFE = NewComboBox(sbSizerDC->GetStaticBox(), LMS7param(ICT_LODC_RFE));
+    cmbICT_LODC_RFE = NewComboBox(sbSizerDC->GetStaticBox(), LMS7_ICT_LODC_RFE);
     cmbICT_LODC_RFE->SetToolTip(wxT("Controls the DC of the mixer LO signal at the gate of the mixer switches"));
     SizerAddTextAndControl(fgSizer45, wxT("Mixer LO signal"), cmbICT_LODC_RFE);
 
@@ -276,7 +276,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL,
         0);
 
-    cmbCCOMP_TIA_RFE = NewComboBox(sbSizerCapacitorControls->GetStaticBox(), LMS7param(CCOMP_TIA_RFE));
+    cmbCCOMP_TIA_RFE = NewComboBox(sbSizerCapacitorControls->GetStaticBox(), LMS7_CCOMP_TIA_RFE);
     cmbCCOMP_TIA_RFE->SetToolTip(wxT("Compensation capacitor for TIA"));
 
     fgSizer49->Add(cmbCCOMP_TIA_RFE, 1, wxEXPAND, 0);
@@ -287,7 +287,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         0);
 
     cmbCFB_TIA_RFE = NewNumericSlider(sbSizerCapacitorControls->GetStaticBox(),
-        LMS7param(CFB_TIA_RFE),
+        LMS7_CFB_TIA_RFE,
         wxT("Feedback capacitor for TIA. Controls the 3dB BW of the TIA. Should be set with calibration through digital baseband."),
         wxDefaultPosition,
         wxDefaultSize,
@@ -310,15 +310,15 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     fgSizer50->SetFlexibleDirection(wxBOTH);
     fgSizer50->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    cmbG_LNA_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7param(G_LNA_RFE));
+    cmbG_LNA_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7_G_LNA_RFE);
     cmbG_LNA_RFE->SetToolTip(wxT("Controls the gain of the LNA"));
     SizerAddTextAndControl(fgSizer50, wxT("LNA"), cmbG_LNA_RFE);
 
-    cmbG_RXLOOPB_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7param(G_RXLOOPB_RFE));
+    cmbG_RXLOOPB_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7_G_RXLOOPB_RFE);
     cmbG_RXLOOPB_RFE->SetToolTip(wxT("Controls RXFE loopback gain"));
     SizerAddTextAndControl(fgSizer50, wxT("Loopback"), cmbG_RXLOOPB_RFE);
 
-    cmbG_TIA_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7param(G_TIA_RFE));
+    cmbG_TIA_RFE = NewComboBox(sbSizerGainControls->GetStaticBox(), LMS7_G_TIA_RFE);
     cmbG_TIA_RFE->SetToolTip(wxT("Controls the Gain of the TIA"));
     SizerAddTextAndControl(fgSizer50, wxT("TIA"), cmbG_TIA_RFE);
 
@@ -335,12 +335,12 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     fgSizer46->SetFlexibleDirection(wxBOTH);
     fgSizer46->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    cmbICT_LOOPB_RFE = NewComboBox(sbSizerRefCurrent->GetStaticBox(), LMS7param(ICT_LOOPB_RFE));
+    cmbICT_LOOPB_RFE = NewComboBox(sbSizerRefCurrent->GetStaticBox(), LMS7_ICT_LOOPB_RFE);
     cmbICT_LOOPB_RFE->SetToolTip(wxT("Controls the reference current of the RXFE loopback amplifier"));
     SizerAddTextAndControl(fgSizer46, wxT("Loopback amplifier"), cmbICT_LOOPB_RFE);
 
     cmbICT_TIAMAIN_RFE = NewNumericSlider(sbSizerRefCurrent->GetStaticBox(),
-        LMS7param(ICT_TIAMAIN_RFE),
+        LMS7_ICT_TIAMAIN_RFE,
         wxT("Controls the reference current of the RXFE TIA first stage"),
         wxDefaultPosition,
         wxDefaultSize,
@@ -351,7 +351,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     SizerAddTextAndControl(fgSizer46, wxT("TIA 1st stage"), cmbICT_TIAMAIN_RFE);
 
     cmbICT_TIAOUT_RFE = NewNumericSlider(sbSizerRefCurrent->GetStaticBox(),
-        LMS7param(ICT_TIAOUT_RFE),
+        LMS7_ICT_TIAOUT_RFE,
         wxT("Controls the reference current of the RXFE TIA first stage"),
         wxDefaultPosition,
         wxDefaultSize,
@@ -380,7 +380,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL,
         5);
 
-    cmbCDC_I_RFE = NewComboBox(sbSizerTrimDuty->GetStaticBox(), LMS7param(CDC_I_RFE));
+    cmbCDC_I_RFE = NewComboBox(sbSizerTrimDuty->GetStaticBox(), LMS7_CDC_I_RFE);
     fgSizer51->Add(cmbCDC_I_RFE, 0, wxEXPAND, 5);
 
     fgSizer51->Add(new wxStaticText(sbSizerTrimDuty->GetStaticBox(), wxID_ANY, wxT("Q channel:")),
@@ -388,7 +388,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
         wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL,
         5);
 
-    cmbCDC_Q_RFE = NewComboBox(sbSizerTrimDuty->GetStaticBox(), LMS7param(CDC_Q_RFE));
+    cmbCDC_Q_RFE = NewComboBox(sbSizerTrimDuty->GetStaticBox(), LMS7_CDC_Q_RFE);
     fgSizer51->Add(cmbCDC_Q_RFE, 0, wxEXPAND, 5);
 
     sbSizerTrimDuty->Add(fgSizer51, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -495,18 +495,18 @@ void lms7002_pnlRFE_view::UpdateGUI()
     ILMS7002MTab::UpdateGUI();
 
     uint16_t value;
-    value = ReadParam(LMS7param(G_LNA_RFE));
+    value = ReadParam(LMS7_G_LNA_RFE);
     cmbG_LNA_RFE->SetSelection(value2index(value, g_lna_rfe_IndexValuePairs));
 
-    value = ReadParam(LMS7param(G_TIA_RFE));
+    value = ReadParam(LMS7_G_TIA_RFE);
     cmbG_TIA_RFE->SetSelection(value2index(value, g_tia_rfe_IndexValuePairs));
 
-    value = ReadParam(LMS7param(DCOFFI_RFE));
+    value = ReadParam(LMS7_DCOFFI_RFE);
     int16_t dcvalue = value & 0x3F;
     if ((value & 0x40) != 0)
         dcvalue *= -1;
     cmbDCOFFI_RFE->SetValue(dcvalue);
-    value = ReadParam(LMS7param(DCOFFQ_RFE));
+    value = ReadParam(LMS7_DCOFFQ_RFE);
     dcvalue = value & 0x3F;
     if ((value & 0x40) != 0)
         dcvalue *= -1;
@@ -518,7 +518,7 @@ void lms7002_pnlRFE_view::UpdateGUI()
     else
         chkEN_NEXTRX_RFE->Show();
 
-    value = ReadParam(LMS7param(TRX_GAIN_SRC));
+    value = ReadParam(LMS7_TRX_GAIN_SRC);
     cmbG_LNA_RFE->Enable(!value);
     cmbG_TIA_RFE->Enable(!value);
 }

@@ -269,12 +269,12 @@ void LMS7002M::SetActiveChannel(const Channel ch)
 {
     if (ch == this->GetActiveChannel(false))
         return;
-    this->Modify_SPI_Reg_bits(LMS7param(MAC), static_cast<uint16_t>(ch));
+    this->Modify_SPI_Reg_bits(LMS7_MAC, static_cast<uint16_t>(ch));
 }
 
 LMS7002M::Channel LMS7002M::GetActiveChannel(bool fromChip)
 {
-    auto ch = Get_SPI_Reg_bits(LMS7param(MAC), fromChip);
+    auto ch = Get_SPI_Reg_bits(LMS7_MAC, fromChip);
     return static_cast<Channel>(ch);
 }
 
@@ -294,20 +294,20 @@ OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool e
     if (ch == Channel::ChA)
     {
         if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7param(TXEN_A), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_TXEN_A, enable ? 1 : 0);
         else
-            this->Modify_SPI_Reg_bits(LMS7param(RXEN_A), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_RXEN_A, enable ? 1 : 0);
     }
     else
     {
         if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7param(TXEN_B), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_TXEN_B, enable ? 1 : 0);
         else
-            this->Modify_SPI_Reg_bits(LMS7param(RXEN_B), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_RXEN_B, enable ? 1 : 0);
     }
 
     //--- ADC/DAC ---
-    Modify_SPI_Reg_bits(LMS7param(EN_DIR_AFE), 1);
+    Modify_SPI_Reg_bits(LMS7_EN_DIR_AFE, 1);
 
     if (!enable)
     {
@@ -325,97 +325,97 @@ OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool e
         Modify_SPI_Reg_bits(isTx ? LMS7_PD_TX_AFE2 : LMS7_PD_RX_AFE2, enable ? 0 : 1);
 
     int disabledChannels = (Get_SPI_Reg_bits(LMS7_PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
-    Modify_SPI_Reg_bits(LMS7param(EN_G_AFE), disabledChannels == 0xF ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7param(PD_AFE), disabledChannels == 0xF ? 1 : 0);
+    Modify_SPI_Reg_bits(LMS7_EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
+    Modify_SPI_Reg_bits(LMS7_PD_AFE, disabledChannels == 0xF ? 1 : 0);
 
     //--- digital ---
     if (isTx)
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_TXTSP), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(ISINC_BYP_TXTSP), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR3_BYP_TXTSP), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR2_BYP_TXTSP), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR1_BYP_TXTSP), 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_TXTSP, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_ISINC_BYP_TXTSP, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR3_BYP_TXTSP, 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR2_BYP_TXTSP, 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR1_BYP_TXTSP, 1);
 
         if (!enable)
         {
-            this->Modify_SPI_Reg_bits(LMS7param(CMIX_BYP_TXTSP), 1);
-            this->Modify_SPI_Reg_bits(LMS7param(DC_BYP_TXTSP), 1);
-            this->Modify_SPI_Reg_bits(LMS7param(GC_BYP_TXTSP), 1);
-            this->Modify_SPI_Reg_bits(LMS7param(PH_BYP_TXTSP), 1);
+            this->Modify_SPI_Reg_bits(LMS7_CMIX_BYP_TXTSP, 1);
+            this->Modify_SPI_Reg_bits(LMS7_DC_BYP_TXTSP, 1);
+            this->Modify_SPI_Reg_bits(LMS7_GC_BYP_TXTSP, 1);
+            this->Modify_SPI_Reg_bits(LMS7_PH_BYP_TXTSP, 1);
         }
     }
     else
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_RXTSP), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(DCLOOP_STOP), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(AGC_MODE_RXTSP), 2); //bypass
-        this->Modify_SPI_Reg_bits(LMS7param(AGC_BYP_RXTSP), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR3_BYP_RXTSP), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR2_BYP_RXTSP), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(GFIR1_BYP_RXTSP), 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_RXTSP, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_DC_BYP_RXTSP, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_DCLOOP_STOP, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_AGC_MODE_RXTSP, 2); //bypass
+        this->Modify_SPI_Reg_bits(LMS7_AGC_BYP_RXTSP, 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR3_BYP_RXTSP, 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR2_BYP_RXTSP, 1);
+        this->Modify_SPI_Reg_bits(LMS7_GFIR1_BYP_RXTSP, 1);
         if (!enable)
         {
-            this->Modify_SPI_Reg_bits(LMS7param(CMIX_BYP_RXTSP), 1);
-            this->Modify_SPI_Reg_bits(LMS7param(GC_BYP_RXTSP), 1);
-            this->Modify_SPI_Reg_bits(LMS7param(PH_BYP_RXTSP), 1);
+            this->Modify_SPI_Reg_bits(LMS7_CMIX_BYP_RXTSP, 1);
+            this->Modify_SPI_Reg_bits(LMS7_GC_BYP_RXTSP, 1);
+            this->Modify_SPI_Reg_bits(LMS7_PH_BYP_RXTSP, 1);
         }
     }
 
     //--- baseband ---
     if (isTx)
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_TBB), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G_TBB), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_LPFIAMP_TBB), enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_TBB, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G_TBB, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_PD_LPFIAMP_TBB, enable ? 0 : 1);
     }
     else
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_RBB), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G_RBB), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_PGA_RBB), enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_RBB, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G_RBB, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_PD_PGA_RBB, enable ? 0 : 1);
     }
 
     //--- frontend ---
     if (isTx)
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_TRF), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G_TRF), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_TLOBUF_TRF), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_TXPAD_TRF), enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_TRF, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G_TRF, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_PD_TLOBUF_TRF, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_PD_TXPAD_TRF, enable ? 0 : 1);
     }
     else
     {
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_RFE), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G_RFE), enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_MXLOBUF_RFE), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_QGEN_RFE), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_TIA_RFE), enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7param(PD_LNA_RFE), enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_RFE, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G_RFE, enable ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_PD_MXLOBUF_RFE, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_PD_QGEN_RFE, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_PD_TIA_RFE, enable ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_PD_LNA_RFE, enable ? 0 : 1);
     }
 
     //--- synthesizers ---
     if (isTx)
     {
         this->SetActiveChannel(Channel::ChSXT);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_SXRSXT), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G), (disabledChannels & 3) == 3 ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_SXRSXT, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G, (disabledChannels & 3) == 3 ? 0 : 1);
         if (ch == Channel::ChB) //enable LO to channel B
         {
             this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7param(EN_NEXTTX_TRF), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_EN_NEXTTX_TRF, enable ? 1 : 0);
         }
     }
     else
     {
         this->SetActiveChannel(Channel::ChSXR);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_DIR_SXRSXT), 1);
-        this->Modify_SPI_Reg_bits(LMS7param(EN_G), (disabledChannels & 0xC) == 0xC ? 0 : 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_DIR_SXRSXT, 1);
+        this->Modify_SPI_Reg_bits(LMS7_EN_G, (disabledChannels & 0xC) == 0xC ? 0 : 1);
         if (ch == Channel::ChB) //enable LO to channel B
         {
             this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7param(EN_NEXTRX_RFE), enable ? 1 : 0);
+            this->Modify_SPI_Reg_bits(LMS7_EN_NEXTRX_RFE, enable ? 1 : 0);
         }
     }
     this->SetActiveChannel(ch);
@@ -452,7 +452,7 @@ OpStatus LMS7002M::ResetChip()
     values.push_back((x0020default & ~0x3) | 0x1); // back to A channel only
 
     status = SPI_write_batch(addrs.data(), values.data(), addrs.size(), true);
-    status = Modify_SPI_Reg_bits(LMS7param(MIMO_SISO), 0); //enable B channel after reset
+    status = Modify_SPI_Reg_bits(LMS7_MIMO_SISO, 0); //enable B channel after reset
     return status;
 }
 
@@ -519,7 +519,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
                 sscanf(pairs->second.c_str(), "%hx", &value);
-                if (addr == LMS7param(MAC).address) //skip register containing channel selection
+                if (addr == LMS7_MAC.address) //skip register containing channel selection
                 {
                     x0020_value = value;
                     continue;
@@ -535,7 +535,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             if (parser.select("NCO Rx ch.A") == true)
             {
                 char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
+                int mode = Get_SPI_Reg_bits(LMS7_MODE_RX);
                 if (mode == 0) //FCW
                 {
                     for (int i = 0; i < 16; ++i)
@@ -556,7 +556,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             if (parser.select("NCO Tx ch.A") == true)
             {
                 char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
+                int mode = Get_SPI_Reg_bits(LMS7_MODE_TX);
                 if (mode == 0) //FCW
                 {
                     for (int i = 0; i < 16; ++i)
@@ -602,7 +602,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             if (parser.select("NCO Rx ch.B") == true)
             {
                 char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
+                int mode = Get_SPI_Reg_bits(LMS7_MODE_RX);
                 if (mode == 0) //FCW
                 {
                     for (int i = 0; i < 16; ++i)
@@ -623,7 +623,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             if (parser.select("NCO Tx ch.A") == true)
             {
                 char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
+                int mode = Get_SPI_Reg_bits(LMS7_MODE_TX);
                 if (mode == 0) //FCW
                 {
                     for (int i = 0; i < 16; ++i)
@@ -698,7 +698,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
                 sscanf(pairs->second.c_str(), "%hx", &value);
-                if (addr == LMS7param(MAC).address) //skip register containing channel selection
+                if (addr == LMS7_MAC.address) //skip register containing channel selection
                 {
                     x0020_value = value;
                     continue;
@@ -756,13 +756,13 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
 
     if (tuneDynamicValues)
     {
-        Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-        if (!Get_SPI_Reg_bits(LMS7param(PD_VCO)))
+        Modify_SPI_Reg_bits(LMS7_MAC, 2);
+        if (!Get_SPI_Reg_bits(LMS7_PD_VCO))
             TuneVCO(VCO_Module::VCO_SXT);
-        Modify_SPI_Reg_bits(LMS7param(MAC), 1);
-        if (!Get_SPI_Reg_bits(LMS7param(PD_VCO)))
+        Modify_SPI_Reg_bits(LMS7_MAC, 1);
+        if (!Get_SPI_Reg_bits(LMS7_PD_VCO))
             TuneVCO(VCO_Module::VCO_SXR);
-        if (!Get_SPI_Reg_bits(LMS7param(PD_VCO_CGEN)))
+        if (!Get_SPI_Reg_bits(LMS7_PD_VCO_CGEN))
         {
             TuneVCO(VCO_Module::VCO_CGEN);
             if (mCallback_onCGENChange)
@@ -862,7 +862,7 @@ OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
     ChannelScope scope(this, channel);
 
     int g_pga_rbb = std::clamp(static_cast<int>(std::round(value)) + 12, 0, 31);
-    OpStatus ret = this->Modify_SPI_Reg_bits(LMS7param(G_PGA_RBB), g_pga_rbb);
+    OpStatus ret = this->Modify_SPI_Reg_bits(LMS7_G_PGA_RBB, g_pga_rbb);
 
     int rcc_ctl_pga_rbb = (430.0 * pow(0.65, (g_pga_rbb / 10.0)) - 110.35) / 20.4516 + 16;
 
@@ -876,8 +876,8 @@ OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
     if (21 <= g_pga_rbb)
         c_ctl_pga_rbb = 0;
 
-    this->Modify_SPI_Reg_bits(LMS7param(RCC_CTL_PGA_RBB), rcc_ctl_pga_rbb);
-    ret = this->Modify_SPI_Reg_bits(LMS7param(C_CTL_PGA_RBB), c_ctl_pga_rbb);
+    this->Modify_SPI_Reg_bits(LMS7_RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb);
+    ret = this->Modify_SPI_Reg_bits(LMS7_C_CTL_PGA_RBB, c_ctl_pga_rbb);
     return ret;
 }
 
@@ -885,7 +885,7 @@ float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 {
     ChannelScope scope(this, channel);
 
-    auto g_pga_rbb = this->Get_SPI_Reg_bits(LMS7param(G_PGA_RBB));
+    auto g_pga_rbb = this->Get_SPI_Reg_bits(LMS7_G_PGA_RBB);
     return g_pga_rbb - 12;
 }
 
@@ -928,7 +928,7 @@ OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
     else
         g_lna_rfe = 1;
 
-    return this->Modify_SPI_Reg_bits(LMS7param(G_LNA_RFE), g_lna_rfe);
+    return this->Modify_SPI_Reg_bits(LMS7_G_LNA_RFE, g_lna_rfe);
 }
 
 float_type LMS7002M::GetRFELNA_dB(const Channel channel)
@@ -936,7 +936,7 @@ float_type LMS7002M::GetRFELNA_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     const double gmax = 30;
-    auto g_lna_rfe = this->Get_SPI_Reg_bits(LMS7param(G_LNA_RFE));
+    auto g_lna_rfe = this->Get_SPI_Reg_bits(LMS7_G_LNA_RFE);
     switch (g_lna_rfe)
     {
     case 15:
@@ -1014,7 +1014,7 @@ OpStatus LMS7002M::SetRFELoopbackLNA_dB(const float_type gain, const Channel cha
     else
         g_rxloopb_rfe = 0;
 
-    return this->Modify_SPI_Reg_bits(LMS7param(G_RXLOOPB_RFE), g_rxloopb_rfe);
+    return this->Modify_SPI_Reg_bits(LMS7_G_RXLOOPB_RFE, g_rxloopb_rfe);
 }
 
 float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
@@ -1022,7 +1022,7 @@ float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     const double gmax = 40;
-    auto g_rxloopb_rfe = this->Get_SPI_Reg_bits(LMS7param(G_RXLOOPB_RFE));
+    auto g_rxloopb_rfe = this->Get_SPI_Reg_bits(LMS7_G_RXLOOPB_RFE);
     switch (g_rxloopb_rfe)
     {
     case 15:
@@ -1074,7 +1074,7 @@ OpStatus LMS7002M::SetRFETIA_dB(const float_type value, const Channel channel)
     else
         g_tia_rfe = 1;
 
-    return this->Modify_SPI_Reg_bits(LMS7param(G_TIA_RFE), g_tia_rfe);
+    return this->Modify_SPI_Reg_bits(LMS7_G_TIA_RFE, g_tia_rfe);
 }
 
 float_type LMS7002M::GetRFETIA_dB(const Channel channel)
@@ -1082,7 +1082,7 @@ float_type LMS7002M::GetRFETIA_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     const double gmax = 12;
-    auto g_tia_rfe = this->Get_SPI_Reg_bits(LMS7param(G_TIA_RFE));
+    auto g_tia_rfe = this->Get_SPI_Reg_bits(LMS7_G_TIA_RFE);
     switch (g_tia_rfe)
     {
     case 3:
@@ -1111,8 +1111,8 @@ OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
     loss_int = std::clamp(loss_int, 0, 31);
 
     OpStatus ret;
-    this->Modify_SPI_Reg_bits(LMS7param(LOSS_LIN_TXPAD_TRF), loss_int);
-    ret = this->Modify_SPI_Reg_bits(LMS7param(LOSS_MAIN_TXPAD_TRF), loss_int);
+    this->Modify_SPI_Reg_bits(LMS7_LOSS_LIN_TXPAD_TRF, loss_int);
+    ret = this->Modify_SPI_Reg_bits(LMS7_LOSS_MAIN_TXPAD_TRF, loss_int);
     return ret;
 }
 
@@ -1121,7 +1121,7 @@ float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     const double pmax = 52;
-    auto loss_int = this->Get_SPI_Reg_bits(LMS7param(LOSS_LIN_TXPAD_TRF));
+    auto loss_int = this->Get_SPI_Reg_bits(LMS7_LOSS_LIN_TXPAD_TRF);
     if (loss_int > 10)
         return pmax - 10 - 2 * (loss_int - 10);
     return pmax - loss_int;
@@ -1142,14 +1142,14 @@ OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel cha
     else
         val = 3;
 
-    return this->Modify_SPI_Reg_bits(LMS7param(L_LOOPB_TXPAD_TRF), val);
+    return this->Modify_SPI_Reg_bits(LMS7_L_LOOPB_TXPAD_TRF, val);
 }
 
 float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
 {
     ChannelScope scope(this, channel);
 
-    switch (this->Get_SPI_Reg_bits(LMS7param(L_LOOPB_TXPAD_TRF)))
+    switch (this->Get_SPI_Reg_bits(LMS7_L_LOOPB_TXPAD_TRF))
     {
     case 0:
         return 0.0;
@@ -1179,7 +1179,7 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     }
 
     int g_iamp = static_cast<float_type>(opt_gain_tbb[ind]) * pow(10.0, gain / 20.0) + 0.4;
-    status = Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), std::clamp(g_iamp, 1, 63), true);
+    status = Modify_SPI_Reg_bits(LMS7_CG_IAMP_TBB, std::clamp(g_iamp, 1, 63), true);
 
     return status;
 }
@@ -1188,14 +1188,14 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 {
     ChannelScope scope(this, channel);
 
-    int g_current = Get_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), true);
+    int g_current = Get_SPI_Reg_bits(LMS7_CG_IAMP_TBB, true);
     int ind = this->GetActiveChannelIndex() % 2;
 
     if (opt_gain_tbb[ind] <= 0)
     {
         if (CalibrateTxGain() != OpStatus::Success)
             return 0.0;
-        Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), g_current, true); //restore
+        Modify_SPI_Reg_bits(LMS7_CG_IAMP_TBB, g_current, true); //restore
     }
     return 20.0 * log10(static_cast<float_type>(g_current) / static_cast<float_type>(opt_gain_tbb[ind]));
 }
@@ -1225,35 +1225,35 @@ OpStatus LMS7002M::SetPathRFE(PathRFE path)
         break;
     }
 
-    Modify_SPI_Reg_bits(LMS7param(SEL_PATH_RFE), sel_path_rfe);
+    Modify_SPI_Reg_bits(LMS7_SEL_PATH_RFE, sel_path_rfe);
 
     int pd_lna_rfe = (path == PathRFE::LB2 || path == PathRFE::LB1 || sel_path_rfe == 0) ? 1 : 0;
-    Modify_SPI_Reg_bits(LMS7param(PD_LNA_RFE), pd_lna_rfe);
+    Modify_SPI_Reg_bits(LMS7_PD_LNA_RFE, pd_lna_rfe);
 
-    Modify_SPI_Reg_bits(LMS7param(PD_RLOOPB_1_RFE), pd_lb1);
-    Modify_SPI_Reg_bits(LMS7param(PD_RLOOPB_2_RFE), pd_lb2);
-    Modify_SPI_Reg_bits(LMS7param(EN_INSHSW_LB1_RFE), pd_lb1);
-    Modify_SPI_Reg_bits(LMS7param(EN_INSHSW_LB2_RFE), pd_lb2);
-    Modify_SPI_Reg_bits(LMS7param(EN_INSHSW_L_RFE), (path == PathRFE::LNAL) ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7param(EN_INSHSW_W_RFE), (path == PathRFE::LNAW) ? 0 : 1);
+    Modify_SPI_Reg_bits(LMS7_PD_RLOOPB_1_RFE, pd_lb1);
+    Modify_SPI_Reg_bits(LMS7_PD_RLOOPB_2_RFE, pd_lb2);
+    Modify_SPI_Reg_bits(LMS7_EN_INSHSW_LB1_RFE, pd_lb1);
+    Modify_SPI_Reg_bits(LMS7_EN_INSHSW_LB2_RFE, pd_lb2);
+    Modify_SPI_Reg_bits(LMS7_EN_INSHSW_L_RFE, (path == PathRFE::LNAL) ? 0 : 1);
+    Modify_SPI_Reg_bits(LMS7_EN_INSHSW_W_RFE, (path == PathRFE::LNAW) ? 0 : 1);
 
     //enable/disable the loopback path
     const bool loopback = (path == PathRFE::LB1) or (path == PathRFE::LB2);
-    Modify_SPI_Reg_bits(LMS7param(EN_LOOPB_TXPAD_TRF), loopback ? 1 : 0);
+    Modify_SPI_Reg_bits(LMS7_EN_LOOPB_TXPAD_TRF, loopback ? 1 : 0);
 
     return OpStatus::Success;
 }
 
 LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
 {
-    const int sel_path_rfe = this->Get_SPI_Reg_bits(LMS7param(SEL_PATH_RFE));
-    if (this->Get_SPI_Reg_bits(LMS7param(EN_INSHSW_LB1_RFE)) == 0 && sel_path_rfe == 3)
+    const int sel_path_rfe = this->Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE);
+    if (this->Get_SPI_Reg_bits(LMS7_EN_INSHSW_LB1_RFE) == 0 && sel_path_rfe == 3)
         return PathRFE::LB1;
-    if (this->Get_SPI_Reg_bits(LMS7param(EN_INSHSW_LB2_RFE)) == 0 && sel_path_rfe == 2)
+    if (this->Get_SPI_Reg_bits(LMS7_EN_INSHSW_LB2_RFE) == 0 && sel_path_rfe == 2)
         return PathRFE::LB2;
-    if (this->Get_SPI_Reg_bits(LMS7param(EN_INSHSW_L_RFE)) == 0 && sel_path_rfe == 2)
+    if (this->Get_SPI_Reg_bits(LMS7_EN_INSHSW_L_RFE) == 0 && sel_path_rfe == 2)
         return PathRFE::LNAL;
-    if (this->Get_SPI_Reg_bits(LMS7param(EN_INSHSW_W_RFE)) == 0 && sel_path_rfe == 3)
+    if (this->Get_SPI_Reg_bits(LMS7_EN_INSHSW_W_RFE) == 0 && sel_path_rfe == 3)
         return PathRFE::LNAW;
     if (sel_path_rfe == 1)
         return PathRFE::LNAH;
@@ -1262,17 +1262,17 @@ LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
 
 OpStatus LMS7002M::SetBandTRF(const int band)
 {
-    this->Modify_SPI_Reg_bits(LMS7param(SEL_BAND1_TRF), (band == 1) ? 1 : 0);
-    this->Modify_SPI_Reg_bits(LMS7param(SEL_BAND2_TRF), (band == 2) ? 1 : 0);
+    this->Modify_SPI_Reg_bits(LMS7_SEL_BAND1_TRF, (band == 1) ? 1 : 0);
+    this->Modify_SPI_Reg_bits(LMS7_SEL_BAND2_TRF, (band == 2) ? 1 : 0);
 
     return OpStatus::Success;
 }
 
 int LMS7002M::GetBandTRF(void)
 {
-    if (this->Get_SPI_Reg_bits(LMS7param(SEL_BAND1_TRF)) == 1)
+    if (this->Get_SPI_Reg_bits(LMS7_SEL_BAND1_TRF) == 1)
         return 1;
-    if (this->Get_SPI_Reg_bits(LMS7param(SEL_BAND2_TRF)) == 1)
+    if (this->Get_SPI_Reg_bits(LMS7_SEL_BAND2_TRF) == 1)
         return 2;
     return 0;
 }
@@ -1327,7 +1327,7 @@ std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phas
 float_type LMS7002M::GetFrequencyCGEN()
 {
     float_type dMul =
-        (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7param(DIV_OUTCH_CGEN), true) + 1); //DIV_OUTCH_CGEN
+        (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7_DIV_OUTCH_CGEN, true) + 1); //DIV_OUTCH_CGEN
     uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0, true); //read whole register to reduce SPI transfers
     uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x0087, 15, 0, true);
     return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
@@ -1336,8 +1336,8 @@ float_type LMS7002M::GetFrequencyCGEN()
 float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 {
     float_type cgenFreq = GetFrequencyCGEN();
-    float_type clklfreq = cgenFreq / pow(2.0, Get_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), true));
-    if (Get_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), true) == 0)
+    float_type clklfreq = cgenFreq / pow(2.0, Get_SPI_Reg_bits(LMS7_CLKH_OV_CLKL_CGEN, true));
+    if (Get_SPI_Reg_bits(LMS7_EN_ADCCLKH_CLKGN, true) == 0)
         return dir == TRXDir::Tx ? clklfreq : cgenFreq / 4.0;
     else
         return dir == TRXDir::Tx ? cgenFreq : clklfreq / 4.0;
@@ -1358,8 +1358,8 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
     bool txModeNCO = false;
     if (retainNCOfrequencies)
     {
-        rxModeNCO = Get_SPI_Reg_bits(LMS7param(MODE_RX), true);
-        txModeNCO = Get_SPI_Reg_bits(LMS7param(MODE_TX), true);
+        rxModeNCO = Get_SPI_Reg_bits(LMS7_MODE_RX, true);
+        txModeNCO = Get_SPI_Reg_bits(LMS7_MODE_TX, true);
         for (int ch = 0; ch < 2; ++ch)
         {
             this->SetActiveChannel(IntToChannel(ch));
@@ -1384,10 +1384,10 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
     dFrac = dFvco / GetReferenceClk_SX(TRXDir::Rx) - static_cast<uint32_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx));
     uint32_t gFRAC = static_cast<uint32_t>(dFrac * 1048576);
 
-    Modify_SPI_Reg_bits(LMS7param(INT_SDM_CGEN), gINT); //INT_SDM_CGEN
+    Modify_SPI_Reg_bits(LMS7_INT_SDM_CGEN, gINT); //INT_SDM_CGEN
     Modify_SPI_Reg_bits(0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
     Modify_SPI_Reg_bits(0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
-    Modify_SPI_Reg_bits(LMS7param(DIV_OUTCH_CGEN), iHdiv); //DIV_OUTCH_CGEN
+    Modify_SPI_Reg_bits(LMS7_DIV_OUTCH_CGEN, iHdiv); //DIV_OUTCH_CGEN
 
     lime::debug("INT %d, FRAC %d, DIV_OUTCH_CGEN %d", gINT, gFRAC, iHdiv);
     lime::debug("VCO %.2f MHz, RefClk %.2f MHz", dFvco / 1e6, GetReferenceClk_SX(TRXDir::Rx) / 1e6);
@@ -1418,12 +1418,12 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
         if (output)
         {
             output->success = false;
-            output->csw = Get_SPI_Reg_bits(LMS7param(CSW_VCO_CGEN));
+            output->csw = Get_SPI_Reg_bits(LMS7_CSW_VCO_CGEN);
         }
         return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) failed", freq_Hz / 1e6);
     }
     if (output)
-        output->csw = Get_SPI_Reg_bits(LMS7param(CSW_VCO_CGEN));
+        output->csw = Get_SPI_Reg_bits(LMS7_CSW_VCO_CGEN);
 
     if (mCallback_onCGENChange)
         return mCallback_onCGENChange(mCallback_onCGENChange_userData);
@@ -1432,19 +1432,19 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
 
 bool LMS7002M::GetCGENLocked(void)
 {
-    return (Get_SPI_Reg_bits(LMS7param(VCO_CMPHO_CGEN).address, 13, 12, true) & 0x3) == 2;
+    return (Get_SPI_Reg_bits(LMS7_VCO_CMPHO_CGEN.address, 13, 12, true) & 0x3) == 2;
 }
 
 bool LMS7002M::GetSXLocked(TRXDir dir)
 {
     SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-    return (Get_SPI_Reg_bits(LMS7param(VCO_CMPHO).address, 13, 12, true) & 0x3) == 2;
+    return (Get_SPI_Reg_bits(LMS7_VCO_CMPHO.address, 13, 12, true) & 0x3) == 2;
 }
 
 OpStatus LMS7002M::TuneCGENVCO()
 {
 #ifndef NDEBUG
-    lime::debug("ICT_VCO_CGEN: %d", Get_SPI_Reg_bits(LMS7param(ICT_VCO_CGEN)));
+    lime::debug("ICT_VCO_CGEN: %d", Get_SPI_Reg_bits(LMS7_ICT_VCO_CGEN));
 #endif
     // Initialization activate VCO and comparator
     OpStatus status = Modify_SPI_Reg_bits(LMS7_PD_VCO_CGEN.address, 2, 1, 0);
@@ -1509,21 +1509,21 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
     if (module != VCO_Module::VCO_CGEN) //set addresses to SX module
     {
         this->SetActiveChannel(Channel(module));
-        addrVCOpd = LMS7param(PD_VCO).address;
-        addrCSW_VCO = LMS7param(CSW_VCO).address;
-        lsb = LMS7param(CSW_VCO).lsb;
-        msb = LMS7param(CSW_VCO).msb;
-        addrCMP = LMS7param(VCO_CMPHO).address;
-        lime::debug("TuneVCO(%s) ICT_VCO: %d", moduleName, Get_SPI_Reg_bits(LMS7param(ICT_VCO)));
+        addrVCOpd = LMS7_PD_VCO.address;
+        addrCSW_VCO = LMS7_CSW_VCO.address;
+        lsb = LMS7_CSW_VCO.lsb;
+        msb = LMS7_CSW_VCO.msb;
+        addrCMP = LMS7_VCO_CMPHO.address;
+        lime::debug("TuneVCO(%s) ICT_VCO: %d", moduleName, Get_SPI_Reg_bits(LMS7_ICT_VCO));
     }
     else //set addresses to CGEN module
     {
-        addrVCOpd = LMS7param(PD_VCO_CGEN).address;
-        addrCSW_VCO = LMS7param(CSW_VCO_CGEN).address;
-        lsb = LMS7param(CSW_VCO_CGEN).lsb;
-        msb = LMS7param(CSW_VCO_CGEN).msb;
-        addrCMP = LMS7param(VCO_CMPHO_CGEN).address;
-        lime::debug("TuneVCO(%s) ICT_VCO_CGEN: %d", moduleName, Get_SPI_Reg_bits(LMS7param(ICT_VCO_CGEN)));
+        addrVCOpd = LMS7_PD_VCO_CGEN.address;
+        addrCSW_VCO = LMS7_CSW_VCO_CGEN.address;
+        lsb = LMS7_CSW_VCO_CGEN.lsb;
+        msb = LMS7_CSW_VCO_CGEN.msb;
+        addrCMP = LMS7_VCO_CMPHO_CGEN.address;
+        lime::debug("TuneVCO(%s) ICT_VCO_CGEN: %d", moduleName, Get_SPI_Reg_bits(LMS7_ICT_VCO_CGEN));
     }
     // Initialization activate VCO and comparator
     OpStatus status = Modify_SPI_Reg_bits(addrVCOpd, 2, 1, 0);
@@ -1765,12 +1765,12 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
 
     ChannelScope scope(this);
     this->SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-    Modify_SPI_Reg_bits(LMS7param(EN_INTONLY_SDM), 0);
-    Modify_SPI_Reg_bits(LMS7param(INT_SDM), integerPart); //INT_SDM
+    Modify_SPI_Reg_bits(LMS7_EN_INTONLY_SDM, 0);
+    Modify_SPI_Reg_bits(LMS7_INT_SDM, integerPart); //INT_SDM
     Modify_SPI_Reg_bits(0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
     Modify_SPI_Reg_bits(0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
-    Modify_SPI_Reg_bits(LMS7param(DIV_LOCH), div_loch); //DIV_LOCH
-    Modify_SPI_Reg_bits(LMS7param(EN_DIV2_DIVPROG), (VCOfreq > m_dThrF)); //EN_DIV2_DIVPROG
+    Modify_SPI_Reg_bits(LMS7_DIV_LOCH, div_loch); //DIV_LOCH
+    Modify_SPI_Reg_bits(LMS7_EN_DIV2_DIVPROG, (VCOfreq > m_dThrF)); //EN_DIV2_DIVPROG
 
     lime::info("SetFrequencySX%s, (%.3f MHz)INT %d, FRAC %d, DIV_LOCH %d, EN_DIV2_DIVPROG %d",
         dir == TRXDir::Tx ? "T" : "R",
@@ -1793,19 +1793,19 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
     }
 
     // turn on VCO and comparator
-    Modify_SPI_Reg_bits(LMS7param(PD_VCO), 0); //
-    Modify_SPI_Reg_bits(LMS7param(PD_VCO_COMP), 0);
+    Modify_SPI_Reg_bits(LMS7_PD_VCO, 0); //
+    Modify_SPI_Reg_bits(LMS7_PD_VCO_COMP, 0);
 
     // try setting tuning values from the cache, if it fails perform full tuning
     if (useCache && tuning_cache_sel_vco.count(freq_Hz) > 0)
     {
         sel_vco = tuning_cache_sel_vco[freq_Hz];
         csw_value = tuning_cache_csw_value[freq_Hz];
-        Modify_SPI_Reg_bits(LMS7param(SEL_VCO), sel_vco);
-        Modify_SPI_Reg_bits(LMS7param(CSW_VCO).address, LMS7param(CSW_VCO).msb, LMS7param(CSW_VCO).lsb, csw_value);
+        Modify_SPI_Reg_bits(LMS7_SEL_VCO, sel_vco);
+        Modify_SPI_Reg_bits(LMS7_CSW_VCO.address, LMS7_CSW_VCO.msb, LMS7_CSW_VCO.lsb, csw_value);
         // probably no need for this as the interface is already very slow..
         std::this_thread::sleep_for(std::chrono::microseconds(50));
-        auto cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7param(VCO_CMPHO).address, 13, 12, true));
+        auto cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_VCO_CMPHO.address, 13, 12, true));
         if (cmphl == 2)
         {
             lime::info("Fast Tune success; vco=%d value=%d", tuning_cache_sel_vco[freq_Hz], tuning_cache_csw_value[freq_Hz]);
@@ -1826,11 +1826,11 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         for (sel_vco = 0; sel_vco < 3; ++sel_vco)
         {
             lime::debug("Tuning %s :", vcoNames[sel_vco]);
-            Modify_SPI_Reg_bits(LMS7param(SEL_VCO), sel_vco);
+            Modify_SPI_Reg_bits(LMS7_SEL_VCO, sel_vco);
             OpStatus status = TuneVCO(dir == TRXDir::Tx ? VCO_Module::VCO_SXT : VCO_Module::VCO_SXR);
             if (status == OpStatus::Success)
             {
-                tuneScore[sel_vco] = -128 + Get_SPI_Reg_bits(LMS7param(CSW_VCO), true);
+                tuneScore[sel_vco] = -128 + Get_SPI_Reg_bits(LMS7_CSW_VCO, true);
                 canDeliverFrequency = true;
                 lime::debug("%s : csw=%d %s",
                     vcoNames[sel_vco],
@@ -1844,11 +1844,11 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         }
         if (canDeliverFrequency) //tune OK
             break;
-        auto bias = Get_SPI_Reg_bits(LMS7param(ICT_VCO));
+        auto bias = Get_SPI_Reg_bits(LMS7_ICT_VCO);
         if (bias == 255)
             break;
         bias = bias + 32 > 255 ? 255 : bias + 32; //retry with higher bias current
-        Modify_SPI_Reg_bits(LMS7param(ICT_VCO), bias);
+        Modify_SPI_Reg_bits(LMS7_ICT_VCO, bias);
     }
 
     if (abs(tuneScore[0]) < abs(tuneScore[1]))
@@ -1875,8 +1875,8 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         output->sel_vco = sel_vco;
         output->csw = csw_value;
     }
-    Modify_SPI_Reg_bits(LMS7param(SEL_VCO), sel_vco);
-    Modify_SPI_Reg_bits(LMS7param(CSW_VCO), csw_value);
+    Modify_SPI_Reg_bits(LMS7_SEL_VCO, sel_vco);
+    Modify_SPI_Reg_bits(LMS7_CSW_VCO, csw_value);
 
     // save successful tuning results in cache
     if (useCache && canDeliverFrequency)
@@ -1914,16 +1914,16 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
         status = SetFrequencySX(dir, freq_Hz);
     if (status != OpStatus::Success)
         return status;
-    const int ch = Get_SPI_Reg_bits(LMS7param(MAC));
+    const int ch = Get_SPI_Reg_bits(LMS7_MAC);
     for (int i = 0; i < 2; ++i)
     {
-        Modify_SPI_Reg_bits(LMS7param(MAC), i + 1);
+        Modify_SPI_Reg_bits(LMS7_MAC, i + 1);
         SetNCOFrequency(TRXDir::Rx, 15, 0);
     }
     if (needCancelation)
     {
-        Modify_SPI_Reg_bits(LMS7param(MAC), ch);
-        Modify_SPI_Reg_bits(LMS7param(EN_INTONLY_SDM), 1);
+        Modify_SPI_Reg_bits(LMS7_MAC, ch);
+        Modify_SPI_Reg_bits(LMS7_EN_INTONLY_SDM, 1);
 
         /*uint16_t gINT = Get_SPI_Reg_bits(0x011E, 13, 0);	// read whole register to reduce SPI transfers
         uint32_t gFRAC = ((gINT&0xF) * 65536) | Get_SPI_Reg_bits(0x011D, 15, 0);
@@ -1932,29 +1932,29 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
         if(upconvert)
         {
             gINT+=;
-            Modify_SPI_Reg_bits(LMS7param(INT_SDM), gINT);
+            Modify_SPI_Reg_bits(LMS7_INT_SDM, gINT);
         }
         Modify_SPI_Reg_bits(0x011D, 15, 0, 0);
         Modify_SPI_Reg_bits(0x011E, 3, 0, 0);*/
         //const float_type refClk_Hz = GetReferenceClk_SX(dir);
-        //float actualFreq = (float_type)refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7param(DIV_LOCH)) + 1));
-        //actualFreq *= (gINT + 4) * (Get_SPI_Reg_bits(LMS7param(EN_DIV2_DIVPROG)) + 1);
+        //float actualFreq = (float_type)refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7_DIV_LOCH) + 1));
+        //actualFreq *= (gINT + 4) * (Get_SPI_Reg_bits(LMS7_EN_DIV2_DIVPROG) + 1);
         float actualFreq = newFreq;
         float userFreq = freq_Hz;
         bool upconvert = actualFreq > userFreq;
         for (int i = 0; i < 2; ++i)
         {
-            Modify_SPI_Reg_bits(LMS7param(MAC), i + 1);
-            Modify_SPI_Reg_bits(LMS7param(CMIX_SC_RXTSP), !upconvert);
-            Modify_SPI_Reg_bits(LMS7param(CMIX_BYP_RXTSP), 0);
-            Modify_SPI_Reg_bits(LMS7param(SEL_RX), 15);
-            Modify_SPI_Reg_bits(LMS7param(CMIX_GAIN_RXTSP), 1);
+            Modify_SPI_Reg_bits(LMS7_MAC, i + 1);
+            Modify_SPI_Reg_bits(LMS7_CMIX_SC_RXTSP, !upconvert);
+            Modify_SPI_Reg_bits(LMS7_CMIX_BYP_RXTSP, 0);
+            Modify_SPI_Reg_bits(LMS7_SEL_RX, 15);
+            Modify_SPI_Reg_bits(LMS7_CMIX_GAIN_RXTSP, 1);
             SetNCOFrequency(TRXDir::Rx, 14, 0);
             SetNCOFrequency(TRXDir::Rx, 15, abs(actualFreq - userFreq));
         }
     }
 
-    Modify_SPI_Reg_bits(LMS7param(MAC), ch);
+    Modify_SPI_Reg_bits(LMS7_MAC, ch);
     return OpStatus::Success;
 }
 
@@ -1967,9 +1967,9 @@ float_type LMS7002M::GetFrequencySX(TRXDir dir)
     uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x011D, 15, 0);
 
     const float_type refClk_Hz = GetReferenceClk_SX(dir);
-    dMul = refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7param(DIV_LOCH)) + 1));
+    dMul = refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7_DIV_LOCH) + 1));
     //Calculate real frequency according to the calculated parameters
-    dMul = dMul * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (Get_SPI_Reg_bits(LMS7param(EN_DIV2_DIVPROG)) + 1);
+    dMul = dMul * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (Get_SPI_Reg_bits(LMS7_EN_DIV2_DIVPROG) + 1);
     return dMul;
 }
 
@@ -2112,7 +2112,7 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
             words[i] = 0;
         }
     }
-    LMS7Parameter gfirL_param = LMS7param(GFIR1_L_TXTSP);
+    LMS7Parameter gfirL_param = LMS7_GFIR1_L_TXTSP;
     gfirL_param.address += gfirIndex + (dir == TRXDir::Tx ? 0 : 0x0200);
     Modify_SPI_Reg_bits(gfirL_param, bankLength - 1);
 
@@ -2155,7 +2155,7 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
     }
     else
     {
-        const int channel = Get_SPI_Reg_bits(LMS7param(MAC), false) > 1 ? 1 : 0;
+        const int channel = Get_SPI_Reg_bits(LMS7_MAC, false) > 1 ? 1 : 0;
         for (uint8_t index = 0; index < coefCount; ++index)
         {
             uint16_t value = mRegistersMap->GetValue(channel, addresses[index]);
@@ -2226,7 +2226,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     {
         if (status && !controlPort)
             *status = ReportError(OpStatus::IOFailure, "chip not connected");
-        uint8_t mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
+        uint8_t mac = mRegistersMap->GetValue(0, LMS7_MAC.address) & 0x0003;
         uint8_t channel = (mac == 2) ? 1 : 0; //only when MAC is B -> use register space B
         if (address < 0x0100)
             channel = 0; //force A when below MAC mapped register space
@@ -2260,7 +2260,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiData, uint16_t cnt, bool toChip)
 {
     toChip |= !useCache;
-    int mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
+    int mac = mRegistersMap->GetValue(0, LMS7_MAC.address) & 0x0003;
     std::vector<uint32_t> data;
     for (size_t i = 0; i < cnt; ++i)
     {
@@ -2286,8 +2286,8 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
             mRegistersMap->SetValue(1, spiAddr[i], spiData[i]);
 
         //refresh mac, because batch might also change active channel
-        if (spiAddr[i] == LMS7param(MAC).address)
-            mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
+        if (spiAddr[i] == LMS7_MAC.address)
+            mac = mRegistersMap->GetValue(0, LMS7_MAC.address) & 0x0003;
     }
 
     if (data.size() == 0)
@@ -2318,7 +2318,7 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
 
     controlPort->SPI(dataWr.data(), dataRd.data(), cnt);
 
-    int mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
+    int mac = mRegistersMap->GetValue(0, LMS7_MAC.address) & 0x0003;
 
     for (size_t i = 0; i < cnt; ++i)
     {
@@ -2375,9 +2375,9 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 
     //test registers
     ResetChip();
-    Modify_SPI_Reg_bits(LMS7param(MIMO_SISO), 0);
-    Modify_SPI_Reg_bits(LMS7param(PD_RX_AFE2), 0);
-    Modify_SPI_Reg_bits(LMS7param(PD_TX_AFE2), 0);
+    Modify_SPI_Reg_bits(LMS7_MIMO_SISO, 0);
+    Modify_SPI_Reg_bits(LMS7_PD_RX_AFE2, 0);
+    Modify_SPI_Reg_bits(LMS7_PD_TX_AFE2, 0);
     this->SetActiveChannel(Channel::ChA);
 
     std::stringstream ss;
@@ -2455,7 +2455,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         uint8_t channelCount = startAddr >= 0x0100 ? 2 : 1;
         for (int cc = 1; cc <= channelCount; ++cc)
         {
-            Modify_SPI_Reg_bits(LMS7param(MAC), cc);
+            Modify_SPI_Reg_bits(LMS7_MAC, cc);
             sprintf(chex, "0x%04X", startAddr);
             ss << moduleNames[i] << "  [" << chex << ":";
             sprintf(chex, "0x%04X", endAddr);
@@ -2769,61 +2769,61 @@ OpStatus LMS7002M::DownloadAll()
 OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
 {
     OpStatus status;
-    status = Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd);
+    status = Modify_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP, hbd);
     if (status != OpStatus::Success)
         return status;
-    Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi);
+    Modify_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP, hbi);
 
     auto siso = Get_SPI_Reg_bits(LMS7_LML2_SISODDR);
-    int mclk2src = Get_SPI_Reg_bits(LMS7param(MCLK2SRC));
+    int mclk2src = Get_SPI_Reg_bits(LMS7_MCLK2SRC);
     if (hbd == 7 || (hbd == 0 && siso == 0)) //bypass
     {
-        Modify_SPI_Reg_bits(LMS7param(RXTSPCLKA_DIV), 0);
-        Modify_SPI_Reg_bits(LMS7param(RXDIVEN), false);
-        Modify_SPI_Reg_bits(LMS7param(MCLK2SRC), (mclk2src & 1) | 0x2);
+        Modify_SPI_Reg_bits(LMS7_RXTSPCLKA_DIV, 0);
+        Modify_SPI_Reg_bits(LMS7_RXDIVEN, false);
+        Modify_SPI_Reg_bits(LMS7_MCLK2SRC, (mclk2src & 1) | 0x2);
     }
     else
     {
         uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbd + siso));
         if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7param(RXTSPCLKA_DIV), (divider / 2) - 1);
+            Modify_SPI_Reg_bits(LMS7_RXTSPCLKA_DIV, (divider / 2) - 1);
         else
-            Modify_SPI_Reg_bits(LMS7param(RXTSPCLKA_DIV), 0);
-        Modify_SPI_Reg_bits(LMS7param(RXDIVEN), true);
-        Modify_SPI_Reg_bits(LMS7param(MCLK2SRC), mclk2src & 1);
+            Modify_SPI_Reg_bits(LMS7_RXTSPCLKA_DIV, 0);
+        Modify_SPI_Reg_bits(LMS7_RXDIVEN, true);
+        Modify_SPI_Reg_bits(LMS7_MCLK2SRC, mclk2src & 1);
     }
 
-    if (Get_SPI_Reg_bits(LMS7param(RX_MUX)) == 0)
+    if (Get_SPI_Reg_bits(LMS7_RX_MUX) == 0)
     {
         bool mimoBypass = (hbd == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7param(RXRDCLK_MUX), mimoBypass ? 3 : 1);
-        Modify_SPI_Reg_bits(LMS7param(RXWRCLK_MUX), mimoBypass ? 1 : 2);
+        Modify_SPI_Reg_bits(LMS7_RXRDCLK_MUX, mimoBypass ? 3 : 1);
+        Modify_SPI_Reg_bits(LMS7_RXWRCLK_MUX, mimoBypass ? 1 : 2);
     }
 
     siso = Get_SPI_Reg_bits(LMS7_LML1_SISODDR);
-    int mclk1src = Get_SPI_Reg_bits(LMS7param(MCLK1SRC));
+    int mclk1src = Get_SPI_Reg_bits(LMS7_MCLK1SRC);
     if (hbi == 7 || (hbi == 0 && siso == 0)) //bypass
     {
-        Modify_SPI_Reg_bits(LMS7param(TXTSPCLKA_DIV), 0);
-        Modify_SPI_Reg_bits(LMS7param(TXDIVEN), false);
-        status = Modify_SPI_Reg_bits(LMS7param(MCLK1SRC), (mclk1src & 1) | 0x2);
+        Modify_SPI_Reg_bits(LMS7_TXTSPCLKA_DIV, 0);
+        Modify_SPI_Reg_bits(LMS7_TXDIVEN, false);
+        status = Modify_SPI_Reg_bits(LMS7_MCLK1SRC, (mclk1src & 1) | 0x2);
     }
     else
     {
         uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbi + siso));
         if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7param(TXTSPCLKA_DIV), (divider / 2) - 1);
+            Modify_SPI_Reg_bits(LMS7_TXTSPCLKA_DIV, (divider / 2) - 1);
         else
-            Modify_SPI_Reg_bits(LMS7param(TXTSPCLKA_DIV), 0);
-        Modify_SPI_Reg_bits(LMS7param(TXDIVEN), true);
-        status = Modify_SPI_Reg_bits(LMS7param(MCLK1SRC), mclk1src & 1);
+            Modify_SPI_Reg_bits(LMS7_TXTSPCLKA_DIV, 0);
+        Modify_SPI_Reg_bits(LMS7_TXDIVEN, true);
+        status = Modify_SPI_Reg_bits(LMS7_MCLK1SRC, mclk1src & 1);
     }
 
-    if (Get_SPI_Reg_bits(LMS7param(TX_MUX)) == 0)
+    if (Get_SPI_Reg_bits(LMS7_TX_MUX) == 0)
     {
         bool mimoBypass = (hbi == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7param(TXRDCLK_MUX), mimoBypass ? 0 : 2);
-        Modify_SPI_Reg_bits(LMS7param(TXWRCLK_MUX), 0);
+        Modify_SPI_Reg_bits(LMS7_TXRDCLK_MUX, mimoBypass ? 0 : 2);
+        Modify_SPI_Reg_bits(LMS7_TXWRCLK_MUX, 0);
     }
 
     //clock rate already set because the readback frequency is pretty-close,
@@ -2851,15 +2851,15 @@ void LMS7002M::ConfigureLML_RF2BB(
 
     //load the same config on both LMLs
     //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_S3S), m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_S2S), m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_S1S), m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_S0S), m.at(s0));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_S3S, m.at(s3));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_S2S, m.at(s2));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_S1S, m.at(s1));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_S0S, m.at(s0));
 
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_S3S), m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_S2S), m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_S1S), m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_S0S), m.at(s0));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_S3S, m.at(s3));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_S2S, m.at(s2));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_S1S, m.at(s1));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_S0S, m.at(s0));
 }
 
 void LMS7002M::ConfigureLML_BB2RF(
@@ -2875,21 +2875,21 @@ void LMS7002M::ConfigureLML_BB2RF(
 
     //load the same config on both LMLs
     //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_BQP), m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_BIP), m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_AQP), m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7param(LML1_AIP), m.at(LMLSampleSource::AI));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_BQP, m.at(LMLSampleSource::BQ));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_BIP, m.at(LMLSampleSource::BI));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_AQP, m.at(LMLSampleSource::AQ));
+    this->Modify_SPI_Reg_bits(LMS7_LML1_AIP, m.at(LMLSampleSource::AI));
 
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_BQP), m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_BIP), m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_AQP), m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7param(LML2_AIP), m.at(LMLSampleSource::AI));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_BQP, m.at(LMLSampleSource::BQ));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_BIP, m.at(LMLSampleSource::BI));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_AQP, m.at(LMLSampleSource::AQ));
+    this->Modify_SPI_Reg_bits(LMS7_LML2_AIP, m.at(LMLSampleSource::AI));
 }
 
 OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
 {
-    this->Modify_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), enable ? 0 : 1);
-    this->Modify_SPI_Reg_bits(LMS7param(DCCORR_AVG_RXTSP), 0x7);
+    this->Modify_SPI_Reg_bits(LMS7_DC_BYP_RXTSP, enable ? 0 : 1);
+    this->Modify_SPI_Reg_bits(LMS7_DCCORR_AVG_RXTSP, 0x7);
     return OpStatus::Success;
 }
 
@@ -2903,7 +2903,7 @@ OpStatus LMS7002M::EnableSXTDD(bool tdd)
 
 bool LMS7002M::GetRxDCRemoval(void)
 {
-    return this->Get_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP)) == 0;
+    return this->Get_SPI_Reg_bits(LMS7_DC_BYP_RXTSP) == 0;
 }
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
@@ -2911,17 +2911,17 @@ OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type 
     const bool bypass = I == 0.0 and Q == 0.0;
     if (dir == TRXDir::Tx)
     {
-        this->Modify_SPI_Reg_bits(LMS7param(DC_BYP_TXTSP), bypass ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7param(DCCORRI_TXTSP), std::lrint(I * 127));
-        this->Modify_SPI_Reg_bits(LMS7param(DCCORRQ_TXTSP), std::lrint(Q * 127));
+        this->Modify_SPI_Reg_bits(LMS7_DC_BYP_TXTSP, bypass ? 1 : 0);
+        this->Modify_SPI_Reg_bits(LMS7_DCCORRI_TXTSP, std::lrint(I * 127));
+        this->Modify_SPI_Reg_bits(LMS7_DCCORRQ_TXTSP, std::lrint(Q * 127));
     }
     else
     {
-        Modify_SPI_Reg_bits(LMS7param(EN_DCOFF_RXFE_RFE), bypass ? 0 : 1);
+        Modify_SPI_Reg_bits(LMS7_EN_DCOFF_RXFE_RFE, bypass ? 0 : 1);
         unsigned val = std::lrint(std::abs(I * 63)) + (I < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7param(DCOFFI_RFE), val);
+        Modify_SPI_Reg_bits(LMS7_DCOFFI_RFE, val);
         val = std::lrint(std::abs(Q * 63)) + (Q < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7param(DCOFFQ_RFE), val);
+        Modify_SPI_Reg_bits(LMS7_DCOFFQ_RFE, val);
     }
     return OpStatus::Success;
 }
@@ -2930,14 +2930,14 @@ void LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 {
     if (dir == TRXDir::Tx)
     {
-        I = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7param(DCCORRI_TXTSP))) / 127.0; //signed 8-bit
-        Q = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7param(DCCORRQ_TXTSP))) / 127.0; //signed 8-bit
+        I = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7_DCCORRI_TXTSP)) / 127.0; //signed 8-bit
+        Q = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7_DCCORRQ_TXTSP)) / 127.0; //signed 8-bit
     }
     else
     {
-        auto i = Get_SPI_Reg_bits(LMS7param(DCOFFI_RFE));
+        auto i = Get_SPI_Reg_bits(LMS7_DCOFFI_RFE);
         I = ((i & 0x40) ? -1.0 : 1.0) * (i & 0x3F) / 63.0;
-        auto q = Get_SPI_Reg_bits(LMS7param(DCOFFQ_RFE));
+        auto q = Get_SPI_Reg_bits(LMS7_DCOFFQ_RFE);
         Q = ((q & 0x40) ? -1.0 : 1.0) * (q & 0x3F) / 63.0;
     }
 }
@@ -2950,23 +2950,23 @@ OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const 
     int gcorri = std::lrint(2047 * gainI);
     int gcorrq = std::lrint(2047 * gainQ);
 
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(PH_BYP_TXTSP) : LMS7param(PH_BYP_RXTSP), bypassPhase ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GC_BYP_TXTSP) : LMS7param(GC_BYP_RXTSP), bypassGain ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(IQCORR_TXTSP) : LMS7param(IQCORR_RXTSP), iqcorr);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRI_TXTSP) : LMS7param(GCORRI_RXTSP), gcorri);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRQ_TXTSP) : LMS7param(GCORRQ_RXTSP), gcorrq);
+    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_PH_BYP_TXTSP : LMS7_PH_BYP_RXTSP, bypassPhase ? 1 : 0);
+    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GC_BYP_TXTSP : LMS7_GC_BYP_RXTSP, bypassGain ? 1 : 0);
+    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_IQCORR_TXTSP : LMS7_IQCORR_RXTSP, iqcorr);
+    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRI_TXTSP : LMS7_GCORRI_RXTSP, gcorri);
+    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRQ_TXTSP : LMS7_GCORRQ_RXTSP, gcorrq);
     return OpStatus::Success;
 }
 
 void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
     int iqcorr =
-        static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(IQCORR_TXTSP) : LMS7param(IQCORR_RXTSP)) << 4) >>
+        static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_IQCORR_TXTSP : LMS7_IQCORR_RXTSP) << 4) >>
         4; //sign extend 12-bit
     int gcorri = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRI_TXTSP) : LMS7param(GCORRI_RXTSP))); //unsigned 11-bit
+        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRI_TXTSP : LMS7_GCORRI_RXTSP)); //unsigned 11-bit
     int gcorrq = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7param(GCORRQ_TXTSP) : LMS7param(GCORRQ_RXTSP))); //unsigned 11-bit
+        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRQ_TXTSP : LMS7_GCORRQ_RXTSP)); //unsigned 11-bit
 
     phase = (M_PI / 2) * iqcorr / 2047.0;
     gainI = gcorri / 2047.0;
@@ -3043,22 +3043,22 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
 {
     Modify_SPI_Reg_bits(LMS7_EN_INSHSW_W_RFE, 1);
     CalibrateInternalADC(0);
-    Modify_SPI_Reg_bits(LMS7param(PD_RSSI_RFE), 0);
-    Modify_SPI_Reg_bits(LMS7param(PD_TIA_RFE), 0);
+    Modify_SPI_Reg_bits(LMS7_PD_RSSI_RFE, 0);
+    Modify_SPI_Reg_bits(LMS7_PD_TIA_RFE, 0);
 
-    /*Modify_SPI_Reg_bits(LMS7param(RSSIDC_RSEL), 22);
-    Modify_SPI_Reg_bits(LMS7param(RSSIDC_HYSCMP), 0);
-    Modify_SPI_Reg_bits(LMS7param(RSSIDC_PD), 0);*/
+    /*Modify_SPI_Reg_bits(LMS7_RSSIDC_RSEL, 22);
+    Modify_SPI_Reg_bits(LMS7_RSSIDC_HYSCMP, 0);
+    Modify_SPI_Reg_bits(LMS7_RSSIDC_PD, 0);*/
     SPI_write(0x0640, 22 << 4);
 
-    Modify_SPI_Reg_bits(LMS7param(RSSIDC_DCO2), 0);
+    Modify_SPI_Reg_bits(LMS7_RSSIDC_DCO2, 0);
 
     int value = -63;
     uint8_t wrValue = abs(value);
     if (value < 0)
         wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7param(RSSIDC_DCO1), wrValue, true);
-    uint8_t cmp = Get_SPI_Reg_bits(LMS7param(RSSIDC_CMPSTATUS), true);
+    Modify_SPI_Reg_bits(LMS7_RSSIDC_DCO1, wrValue, true);
+    uint8_t cmp = Get_SPI_Reg_bits(LMS7_RSSIDC_CMPSTATUS, true);
     uint8_t cmpPrev = cmp;
     std::vector<int8_t> edges;
     for (value = -63; value < 64; ++value)
@@ -3066,9 +3066,9 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
         wrValue = abs(value);
         if (value < 0)
             wrValue |= 0x40;
-        Modify_SPI_Reg_bits(LMS7param(RSSIDC_DCO1), wrValue, true);
+        Modify_SPI_Reg_bits(LMS7_RSSIDC_DCO1, wrValue, true);
         std::this_thread::sleep_for(std::chrono::microseconds(5));
-        cmp = Get_SPI_Reg_bits(LMS7param(RSSIDC_CMPSTATUS), true);
+        cmp = Get_SPI_Reg_bits(LMS7_RSSIDC_CMPSTATUS, true);
         if (cmp != cmpPrev)
         {
             edges.push_back(value);
@@ -3086,7 +3086,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     wrValue = abs(found);
     if (found < 0)
         wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7param(RSSIDC_DCO1), wrValue, true);
+    Modify_SPI_Reg_bits(LMS7_RSSIDC_DCO1, wrValue, true);
     lime::debug("Found %i", found);
     Modify_SPI_Reg_bits(LMS7_EN_INSHSW_W_RFE, 0);
     return OpStatus::Success;
@@ -3168,26 +3168,26 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
     const bool bypassFIR = !enabled;
     if (dir == TRXDir::Tx)
     {
-        Modify_SPI_Reg_bits(LMS7param(GFIR1_BYP_TXTSP), bypassFIR);
-        Modify_SPI_Reg_bits(LMS7param(GFIR2_BYP_TXTSP), bypassFIR);
-        Modify_SPI_Reg_bits(LMS7param(GFIR3_BYP_TXTSP), bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR1_BYP_TXTSP, bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR2_BYP_TXTSP, bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR3_BYP_TXTSP, bypassFIR);
     }
     else
     {
-        Modify_SPI_Reg_bits(LMS7param(GFIR1_BYP_RXTSP), bypassFIR);
-        Modify_SPI_Reg_bits(LMS7param(GFIR2_BYP_RXTSP), bypassFIR);
-        Modify_SPI_Reg_bits(LMS7param(GFIR3_BYP_RXTSP), bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR1_BYP_RXTSP, bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR2_BYP_RXTSP, bypassFIR);
+        Modify_SPI_Reg_bits(LMS7_GFIR3_BYP_RXTSP, bypassFIR);
         const bool sisoDDR = Get_SPI_Reg_bits(LMS7_LML1_SISODDR);
         const bool clockIsNotInverted = !(enabled | sisoDDR);
         if (ch == LMS7002M::Channel::ChB)
         {
-            Modify_SPI_Reg_bits(LMS7param(CDSN_RXBLML), clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7param(CDS_RXBLML), enabled ? 3 : 0);
+            Modify_SPI_Reg_bits(LMS7_CDSN_RXBLML, clockIsNotInverted);
+            Modify_SPI_Reg_bits(LMS7_CDS_RXBLML, enabled ? 3 : 0);
         }
         else
         {
-            Modify_SPI_Reg_bits(LMS7param(CDSN_RXALML), clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7param(CDS_RXALML), enabled ? 3 : 0);
+            Modify_SPI_Reg_bits(LMS7_CDSN_RXALML, clockIsNotInverted);
+            Modify_SPI_Reg_bits(LMS7_CDS_RXALML, enabled ? 3 : 0);
         }
     }
     if (!enabled)
@@ -3205,11 +3205,11 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
     int ratio;
     if (dir == TRXDir::Tx)
     {
-        ratio = Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
+        ratio = Get_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP);
     }
     else
     {
-        ratio = Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
+        ratio = Get_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP);
     }
 
     interface_MHz = GetReferenceClk_TSP(dir) / 1e6;
@@ -3239,15 +3239,15 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
 
     if (dir == TRXDir::Tx)
     {
-        Modify_SPI_Reg_bits(LMS7param(GFIR1_N_TXTSP), div);
-        Modify_SPI_Reg_bits(LMS7param(GFIR2_N_TXTSP), div);
-        Modify_SPI_Reg_bits(LMS7param(GFIR3_N_TXTSP), div);
+        Modify_SPI_Reg_bits(LMS7_GFIR1_N_TXTSP, div);
+        Modify_SPI_Reg_bits(LMS7_GFIR2_N_TXTSP, div);
+        Modify_SPI_Reg_bits(LMS7_GFIR3_N_TXTSP, div);
     }
     else
     {
-        Modify_SPI_Reg_bits(LMS7param(GFIR1_N_RXTSP), div);
-        Modify_SPI_Reg_bits(LMS7param(GFIR2_N_RXTSP), div);
-        Modify_SPI_Reg_bits(LMS7param(GFIR3_N_RXTSP), div);
+        Modify_SPI_Reg_bits(LMS7_GFIR1_N_RXTSP, div);
+        Modify_SPI_Reg_bits(LMS7_GFIR2_N_RXTSP, div);
+        Modify_SPI_Reg_bits(LMS7_GFIR3_N_RXTSP, div);
     }
 
     OpStatus status;

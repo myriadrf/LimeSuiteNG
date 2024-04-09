@@ -734,43 +734,43 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     wndId2Enum[cmbCMPLO_CTRL] = LMS7_CMPLO_CTRL_SX;
 
     //ids for updating from chip
-    wndId2Enum[chkBYPLDO_VCO] = LMS7param(BYPLDO_VCO);
-    wndId2Enum[cmbCP2_PLL] = LMS7param(CP2_PLL);
-    wndId2Enum[cmbCP3_PLL] = LMS7param(CP3_PLL);
-    wndId2Enum[ctrCSW_VCO] = LMS7param(CSW_VCO);
-    wndId2Enum[chkCURLIM_VCO] = LMS7param(CURLIM_VCO);
-    wndId2Enum[cmbCZ] = LMS7param(CZ);
-    wndId2Enum[ctrDIV_LOCH] = LMS7param(DIV_LOCH);
-    wndId2Enum[chkEN_COARSEPLL] = LMS7param(EN_COARSEPLL);
-    wndId2Enum[chkEN_DIV2_DIVPROGenabled] = LMS7param(EN_DIV2_DIVPROG);
-    wndId2Enum[chkEN_G] = LMS7param(EN_G);
-    wndId2Enum[chkEN_INTONLY_SDM] = LMS7param(EN_INTONLY_SDM);
-    wndId2Enum[chkEN_SDM_CLK] = LMS7param(EN_SDM_CLK);
-    wndId2Enum[cmbICT_VCO] = LMS7param(ICT_VCO);
-    wndId2Enum[cmbIOFFSET_CP] = LMS7param(IOFFSET_CP);
-    wndId2Enum[cmbIPULSE_CP] = LMS7param(IPULSE_CP);
-    wndId2Enum[chkPD_CP] = LMS7param(PD_CP);
-    wndId2Enum[chkPD_FDIV] = LMS7param(PD_FDIV);
-    wndId2Enum[chkPD_LOCH_T2RBUF] = LMS7param(PD_LOCH_T2RBUF);
-    wndId2Enum[chkPD_SDM] = LMS7param(PD_SDM);
-    wndId2Enum[chkPD_VCO] = LMS7param(PD_VCO);
-    wndId2Enum[chkPD_VCO_COMP] = LMS7param(PD_VCO_COMP);
-    wndId2Enum[ctrPW_DIV2_LOCH] = LMS7param(PW_DIV2_LOCH);
-    wndId2Enum[ctrPW_DIV4_LOCH] = LMS7param(PW_DIV4_LOCH);
-    wndId2Enum[chkRESET_N] = LMS7param(RESET_N);
-    wndId2Enum[chkREVPH_PFD] = LMS7param(REVPH_PFD);
-    wndId2Enum[chkREV_SDMCLK] = LMS7param(REV_SDMCLK);
-    wndId2Enum[cmbRSEL_LDO_VCO] = LMS7param(RSEL_LDO_VCO);
-    wndId2Enum[cmbSEL_SDMCLK] = LMS7param(SEL_SDMCLK);
-    wndId2Enum[rgrSEL_VCO] = LMS7param(SEL_VCO);
-    wndId2Enum[chkSPDUP_VCO] = LMS7param(SPDUP_VCO);
-    wndId2Enum[chkSX_DITHER_EN] = LMS7param(SX_DITHER_EN);
-    wndId2Enum[cmbTST_SX] = LMS7param(TST_SX);
-    wndId2Enum[cmbVDIV_VCO] = LMS7param(VDIV_VCO);
-    wndId2Enum[chkPD_FBDIV] = LMS7param(PD_FBDIV);
-    wndId2Enum[chkEN_DIR_SXRSXT] = LMS7param(EN_DIR_SXRSXT);
-    wndId2Enum[lblINT_SDM] = LMS7param(INT_SDM);
-    wndId2Enum[lblEN_DIV2_DIVPROG] = LMS7param(EN_DIV2_DIVPROG);
+    wndId2Enum[chkBYPLDO_VCO] = LMS7_BYPLDO_VCO;
+    wndId2Enum[cmbCP2_PLL] = LMS7_CP2_PLL;
+    wndId2Enum[cmbCP3_PLL] = LMS7_CP3_PLL;
+    wndId2Enum[ctrCSW_VCO] = LMS7_CSW_VCO;
+    wndId2Enum[chkCURLIM_VCO] = LMS7_CURLIM_VCO;
+    wndId2Enum[cmbCZ] = LMS7_CZ;
+    wndId2Enum[ctrDIV_LOCH] = LMS7_DIV_LOCH;
+    wndId2Enum[chkEN_COARSEPLL] = LMS7_EN_COARSEPLL;
+    wndId2Enum[chkEN_DIV2_DIVPROGenabled] = LMS7_EN_DIV2_DIVPROG;
+    wndId2Enum[chkEN_G] = LMS7_EN_G;
+    wndId2Enum[chkEN_INTONLY_SDM] = LMS7_EN_INTONLY_SDM;
+    wndId2Enum[chkEN_SDM_CLK] = LMS7_EN_SDM_CLK;
+    wndId2Enum[cmbICT_VCO] = LMS7_ICT_VCO;
+    wndId2Enum[cmbIOFFSET_CP] = LMS7_IOFFSET_CP;
+    wndId2Enum[cmbIPULSE_CP] = LMS7_IPULSE_CP;
+    wndId2Enum[chkPD_CP] = LMS7_PD_CP;
+    wndId2Enum[chkPD_FDIV] = LMS7_PD_FDIV;
+    wndId2Enum[chkPD_LOCH_T2RBUF] = LMS7_PD_LOCH_T2RBUF;
+    wndId2Enum[chkPD_SDM] = LMS7_PD_SDM;
+    wndId2Enum[chkPD_VCO] = LMS7_PD_VCO;
+    wndId2Enum[chkPD_VCO_COMP] = LMS7_PD_VCO_COMP;
+    wndId2Enum[ctrPW_DIV2_LOCH] = LMS7_PW_DIV2_LOCH;
+    wndId2Enum[ctrPW_DIV4_LOCH] = LMS7_PW_DIV4_LOCH;
+    wndId2Enum[chkRESET_N] = LMS7_RESET_N;
+    wndId2Enum[chkREVPH_PFD] = LMS7_REVPH_PFD;
+    wndId2Enum[chkREV_SDMCLK] = LMS7_REV_SDMCLK;
+    wndId2Enum[cmbRSEL_LDO_VCO] = LMS7_RSEL_LDO_VCO;
+    wndId2Enum[cmbSEL_SDMCLK] = LMS7_SEL_SDMCLK;
+    wndId2Enum[rgrSEL_VCO] = LMS7_SEL_VCO;
+    wndId2Enum[chkSPDUP_VCO] = LMS7_SPDUP_VCO;
+    wndId2Enum[chkSX_DITHER_EN] = LMS7_SX_DITHER_EN;
+    wndId2Enum[cmbTST_SX] = LMS7_TST_SX;
+    wndId2Enum[cmbVDIV_VCO] = LMS7_VDIV_VCO;
+    wndId2Enum[chkPD_FBDIV] = LMS7_PD_FBDIV;
+    wndId2Enum[chkEN_DIR_SXRSXT] = LMS7_EN_DIR_SXRSXT;
+    wndId2Enum[lblINT_SDM] = LMS7_INT_SDM;
+    wndId2Enum[lblEN_DIV2_DIVPROG] = LMS7_EN_DIV2_DIVPROG;
 
     char ctemp[80];
     wxArrayString temp;
@@ -1384,7 +1384,7 @@ void lms7002_pnlSX_view::OnbtnReadComparators(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
     uint16_t value;
-    value = ReadParam(LMS7param(VCO_CMPHO));
+    value = ReadParam(LMS7_VCO_CMPHO);
 
     lblVCO_CMPHO->SetLabel(std::to_string(value));
     if (value == 1)
@@ -1392,7 +1392,7 @@ void lms7002_pnlSX_view::OnbtnReadComparators(wxCommandEvent& event)
     else
         lblVCO_CMPHO->SetBackgroundColour(*wxRED);
 
-    value = ReadParam(LMS7param(VCO_CMPLO));
+    value = ReadParam(LMS7_VCO_CMPLO);
     lblVCO_CMPLO->SetLabel(std::to_string(value));
     if (value == 0)
         lblVCO_CMPLO->SetBackgroundColour(*wxGREEN);
@@ -1481,7 +1481,7 @@ void lms7002_pnlSX_view::UpdateGUI()
     // TODO: if(chkEnableRefSpurCancelation->IsChecked())
     // {
     //     uint16_t downconvert = 0;
-    //     downconvert = ReadParam(LMS7param(CMIX_SC_RXTSP));
+    //     downconvert = ReadParam(LMS7_CMIX_SC_RXTSP);
     //     double* freqNCO = new double[16];
     //     double PHO;
     //     LMS_GetNCOFrequency(lmsControl, false, 0, freqNCO, &PHO);
@@ -1493,13 +1493,13 @@ void lms7002_pnlSX_view::UpdateGUI()
     // }
     txtFrequency->SetValue(wxString::Format(_("%.3f"), freq / 1e6));
     uint16_t div;
-    div = ReadParam(LMS7param(DIV_LOCH));
+    div = ReadParam(LMS7_DIV_LOCH);
     lblDivider->SetLabel("2^" + std::to_string(div));
 
     uint16_t value;
-    value = ReadParam(LMS7param(FRAC_SDM_MSB));
+    value = ReadParam(LMS7_FRAC_SDM_MSB);
     int fracValue = value << 16;
-    value = ReadParam(LMS7param(FRAC_SDM_LSB));
+    value = ReadParam(LMS7_FRAC_SDM_LSB);
     fracValue |= value;
     lblFRAC_SDM->SetLabel(std::to_string(fracValue));
 
@@ -1524,21 +1524,21 @@ void lms7002_pnlSX_view::OnEnableRefSpurCancelation(wxCommandEvent& event)
     // TODO:
     // txtRefSpurBW->Enable(chkEnableRefSpurCancelation->IsChecked());
     // uint16_t ch = 0;
-    // ReadParam( LMS7param(MAC), &ch);
+    // ReadParam( LMS7_MAC, &ch);
     // for(int i=0; i<2; ++i)
     // {
-    //     WriteParam( LMS7param(MAC), i+1);
-    //     WriteParam( LMS7param(CMIX_GAIN_RXTSP), 1);
-    //     WriteParam( LMS7param(CMIX_BYP_RXTSP), 0);
+    //     WriteParam( LMS7_MAC, i+1);
+    //     WriteParam( LMS7_CMIX_GAIN_RXTSP, 1);
+    //     WriteParam( LMS7_CMIX_BYP_RXTSP, 0);
     //     if(chkEnableRefSpurCancelation->IsChecked())
     //     {
-    //         WriteParam( LMS7param(SEL_RX), 15);
+    //         WriteParam( LMS7_SEL_RX, 15);
     //     }
     //     else
     //     {
-    //         WriteParam( LMS7param(SEL_RX), 14);
+    //         WriteParam( LMS7_SEL_RX, 14);
     //     }
     // }
-    // WriteParam(LMS7param(MAC), ch);
+    // WriteParam(LMS7_MAC, ch);
     // UpdateGUI();
 }

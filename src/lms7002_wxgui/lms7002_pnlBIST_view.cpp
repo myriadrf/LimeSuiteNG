@@ -124,13 +124,13 @@ lms7002_pnlBIST_view::lms7002_pnlBIST_view(wxWindow* parent, wxWindowID id, cons
     btnReadSignature->Connect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::onbtnReadSignature), NULL, this);
 
-    wndId2Enum[chkBENC] = LMS7param(BENC);
-    wndId2Enum[chkBENR] = LMS7param(BENR);
-    wndId2Enum[chkBENT] = LMS7param(BENT);
-    wndId2Enum[chkBSTART] = LMS7param(BSTART);
-    wndId2Enum[chkSDM_TSTO_CGEN] = LMS7param(EN_SDM_TSTO_CGEN);
-    wndId2Enum[chkSDM_TSTO_SXR] = LMS7param(EN_SDM_TSTO_SXR);
-    wndId2Enum[chkSDM_TSTO_SXT] = LMS7param(EN_SDM_TSTO_SXT);
+    wndId2Enum[chkBENC] = LMS7_BENC;
+    wndId2Enum[chkBENR] = LMS7_BENR;
+    wndId2Enum[chkBENT] = LMS7_BENT;
+    wndId2Enum[chkBSTART] = LMS7_BSTART;
+    wndId2Enum[chkSDM_TSTO_CGEN] = LMS7_EN_SDM_TSTO_CGEN;
+    wndId2Enum[chkSDM_TSTO_SXR] = LMS7_EN_SDM_TSTO_SXR;
+    wndId2Enum[chkSDM_TSTO_SXT] = LMS7_EN_SDM_TSTO_SXT;
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
@@ -138,12 +138,12 @@ void lms7002_pnlBIST_view::onbtnReadSignature(wxCommandEvent& event)
 {
 
     uint16_t value;
-    value = ReadParam(LMS7param(BSIGC));
+    value = ReadParam(LMS7_BSIGC);
     lblBSIGC->SetLabel(wxString::Format(_("0x%0.6X"), value));
-    value = ReadParam(LMS7param(BSIGR));
+    value = ReadParam(LMS7_BSIGR);
     lblBSIGR->SetLabel(wxString::Format(_("0x%0.6X"), value));
-    value = ReadParam(LMS7param(BSIGT));
+    value = ReadParam(LMS7_BSIGT);
     lblBSIGT->SetLabel(wxString::Format(_("0x%0.6X"), value));
-    value = ReadParam(LMS7param(BSTATE));
+    value = ReadParam(LMS7_BSTATE);
     lblBSTATE->SetLabel(wxString::Format(_("0x%X"), value));
 }

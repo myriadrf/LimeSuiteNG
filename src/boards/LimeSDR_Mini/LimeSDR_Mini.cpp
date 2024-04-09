@@ -322,21 +322,21 @@ OpStatus LimeSDR_Mini::Init()
     if (status != OpStatus::Success)
         return status;
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1);
 
     if (lms->CalibrateTxGain() != OpStatus::Success)
         return OpStatus::Error;
 
     lms->EnableChannel(TRXDir::Tx, 0, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, 2);
     lms->SPI_write(0x0123, 0x000F); //SXT
     lms->SPI_write(0x0120, 0x80C0); //SXT
     lms->SPI_write(0x011C, 0x8941); //SXT
     lms->EnableChannel(TRXDir::Rx, 0, false);
     lms->EnableChannel(TRXDir::Tx, 0, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1);
 
     /*bool auto_path[2] = {auto_tx_path, auto_rx_path};
     auto_tx_path = false;
@@ -561,16 +561,16 @@ OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
             interpolation + 1); // dec/inter ratio is 2^(value+1)
     }
 
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_MAC, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_LML1_SISODDR, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_LML2_SISODDR, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_CDSN_RXALML, !bypass);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), decimation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), interpolation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_EN_ADCCLKH_CLKGN, 0);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_CLKH_OV_CLKL_CGEN, 2);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_MAC, 2);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP, decimation);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP, interpolation);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_MAC, 1);
     if (bypass)
     {
         return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(sampleRate * 4, 7, 7);

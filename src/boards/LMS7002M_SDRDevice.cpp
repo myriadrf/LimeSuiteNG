@@ -518,7 +518,7 @@ OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M* device, LMS7002M::
 #ifdef NEW_GAIN_BEHAVIOUR
     if (value <= 0)
     {
-        return device->Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), 1);
+        return device->Modify_SPI_Reg_bits(LMS7_CG_IAMP_TBB, 1);
     }
 
     if (device->GetTBBIAMP_dB(channel) < 0.0)
@@ -561,10 +561,10 @@ OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::
 #endif
     int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From datasheet
 
-    if ((device->Modify_SPI_Reg_bits(LMS7param(G_LNA_RFE), lna + 1) != OpStatus::Success) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(G_TIA_RFE), tia + 1) != OpStatus::Success) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(G_PGA_RBB), pga) != OpStatus::Success) ||
-        (device->Modify_SPI_Reg_bits(LMS7param(RCC_CTL_PGA_RBB), rcc_ctl_pga_rbb) != OpStatus::Success))
+    if ((device->Modify_SPI_Reg_bits(LMS7_G_LNA_RFE, lna + 1) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7_G_TIA_RFE, tia + 1) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7_G_PGA_RBB, pga) != OpStatus::Success) ||
+        (device->Modify_SPI_Reg_bits(LMS7_RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb) != OpStatus::Success))
     {
         return OpStatus::IOFailure;
     }
@@ -633,7 +633,7 @@ bool LMS7002M_SDRDevice::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_
     if (trx == TRXDir::Rx)
     {
         auto lms = mLMSChips.at(moduleIndex);
-        return lms->Get_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), channel) == 0;
+        return lms->Get_SPI_Reg_bits(LMS7_DC_BYP_RXTSP, channel) == 0;
     }
 
     return false;
@@ -645,7 +645,7 @@ OpStatus LMS7002M_SDRDevice::SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, ui
         return OpStatus::NotSupported;
 
     auto lms = mLMSChips.at(moduleIndex);
-    return lms->Modify_SPI_Reg_bits(LMS7param(DC_BYP_RXTSP), isAutomatic == 0, channel);
+    return lms->Modify_SPI_Reg_bits(LMS7_DC_BYP_RXTSP, isAutomatic == 0, channel);
 }
 
 complex64f_t LMS7002M_SDRDevice::GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -654,7 +654,7 @@ complex64f_t LMS7002M_SDRDevice::GetDCOffset(uint8_t moduleIndex, TRXDir trx, ui
     double Q = 0.0;
 
     auto lms = mLMSChips.at(moduleIndex);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), (channel % 2) + 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, (channel % 2) + 1);
     lms->GetDCOffset(trx, I, Q);
     return complex64f_t(I, Q);
 }
@@ -662,14 +662,14 @@ complex64f_t LMS7002M_SDRDevice::GetDCOffset(uint8_t moduleIndex, TRXDir trx, ui
 OpStatus LMS7002M_SDRDevice::SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset)
 {
     auto lms = mLMSChips.at(moduleIndex);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), (channel % 2) + 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, (channel % 2) + 1);
     return lms->SetDCOffset(trx, offset.real(), offset.imag());
 }
 
 complex64f_t LMS7002M_SDRDevice::GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
     auto lms = mLMSChips.at(moduleIndex);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), (channel % 2) + 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, (channel % 2) + 1);
 
     double phase = 0.0, gainI = 0.0, gainQ = 0.0;
     lms->GetIQBalance(trx, phase, gainI, gainQ);
@@ -695,7 +695,7 @@ OpStatus LMS7002M_SDRDevice::SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8
     }
 
     auto lms = mLMSChips.at(moduleIndex);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), (channel % 2) + 1);
+    lms->Modify_SPI_Reg_bits(LMS7_MAC, (channel % 2) + 1);
     return lms->SetIQBalance(trx, std::arg(bal), gainI, gainQ);
 }
 
@@ -848,20 +848,20 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     switch (direction)
     {
     case TRXDir::Rx:
-        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_RXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
+        if (lms->Modify_SPI_Reg_bits(LMS7_INSEL_RXTSP, signalConfiguration.enabled, true) != OpStatus::Success)
             return ReportError(OpStatus::IOFailure, "Failed to set Rx test signal.");
 
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_RXTSP), div4 ? 2 : 1);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_RXTSP), fullscale ? 1 : 0);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGMODE_RXTSP), signalConfiguration.dcMode);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGFCW_RXTSP, div4 ? 2 : 1);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGFC_RXTSP, fullscale ? 1 : 0);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGMODE_RXTSP, signalConfiguration.dcMode);
         break;
     case TRXDir::Tx:
-        if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_TXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
+        if (lms->Modify_SPI_Reg_bits(LMS7_INSEL_TXTSP, signalConfiguration.enabled, true) != OpStatus::Success)
             return ReportError(OpStatus::IOFailure, "Failed to set Tx test signal.");
 
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_TXTSP), div4 ? 2 : 1);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_TXTSP), fullscale ? 1 : 0);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGMODE_TXTSP), signalConfiguration.dcMode);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGFCW_TXTSP, div4 ? 2 : 1);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGFC_TXTSP, fullscale ? 1 : 0);
+        lms->Modify_SPI_Reg_bits(LMS7_TSGMODE_TXTSP, signalConfiguration.dcMode);
         break;
     }
 
@@ -879,41 +879,41 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
     switch (direction)
     {
     case TRXDir::Tx:
-        if (lms->Get_SPI_Reg_bits(LMS7param(INSEL_TXTSP)) == 0)
+        if (lms->Get_SPI_Reg_bits(LMS7_INSEL_TXTSP) == 0)
         {
             return signalConfiguration;
         }
         signalConfiguration.enabled = true;
 
-        if (lms->Get_SPI_Reg_bits(LMS7param(TSGMODE_TXTSP)) != 0)
+        if (lms->Get_SPI_Reg_bits(LMS7_TSGMODE_TXTSP) != 0)
         {
             signalConfiguration.dcMode = true;
             return signalConfiguration;
         }
 
         signalConfiguration.divide =
-            static_cast<ChannelConfig::Direction::TestSignal::Divide>(lms->Get_SPI_Reg_bits(LMS7param(TSGFCW_TXTSP)));
+            static_cast<ChannelConfig::Direction::TestSignal::Divide>(lms->Get_SPI_Reg_bits(LMS7_TSGFCW_TXTSP));
         signalConfiguration.scale =
-            static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7param(TSGFC_TXTSP)));
+            static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7_TSGFC_TXTSP));
 
         return signalConfiguration;
     case TRXDir::Rx:
-        if (lms->Get_SPI_Reg_bits(LMS7param(INSEL_RXTSP)) == 0)
+        if (lms->Get_SPI_Reg_bits(LMS7_INSEL_RXTSP) == 0)
         {
             return signalConfiguration;
         }
         signalConfiguration.enabled = true;
 
-        if (lms->Get_SPI_Reg_bits(LMS7param(TSGMODE_RXTSP)) != 0)
+        if (lms->Get_SPI_Reg_bits(LMS7_TSGMODE_RXTSP) != 0)
         {
             signalConfiguration.dcMode = true;
             return signalConfiguration;
         }
 
         signalConfiguration.divide =
-            static_cast<ChannelConfig::Direction::TestSignal::Divide>(lms->Get_SPI_Reg_bits(LMS7param(TSGFCW_RXTSP)));
+            static_cast<ChannelConfig::Direction::TestSignal::Divide>(lms->Get_SPI_Reg_bits(LMS7_TSGFCW_RXTSP));
         signalConfiguration.scale =
-            static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7param(TSGFC_RXTSP)));
+            static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7_TSGFC_RXTSP));
 
         return signalConfiguration;
     }
@@ -1041,14 +1041,14 @@ OpStatus LMS7002M_SDRDevice::UploadMemory(
 OpStatus LMS7002M_SDRDevice::UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex)
 {
     double fpgaTxPLL = soc.GetReferenceClk_TSP(TRXDir::Tx);
-    int interp = soc.Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
+    int interp = soc.Get_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP);
     if (interp != 7)
     {
         uint8_t siso = soc.Get_SPI_Reg_bits(LMS7_LML1_SISODDR);
         fpgaTxPLL /= std::pow(2, interp + siso);
     }
     double fpgaRxPLL = soc.GetReferenceClk_TSP(TRXDir::Rx);
-    int dec = soc.Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
+    int dec = soc.Get_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP);
     if (dec != 7)
     {
         uint8_t siso = soc.Get_SPI_Reg_bits(LMS7_LML2_SISODDR);
