@@ -26,6 +26,7 @@ COPY README.md README.md
 COPY src/ src/
 
 RUN patch debian/control < debian/control.soapy0.7.patch
+RUN patch debian/rules < debian/rules.docker.patch
 RUN dpkg-buildpackage --build=binary --no-sign -d
 
 FROM scratch AS export-stage
