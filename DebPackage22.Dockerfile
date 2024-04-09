@@ -17,7 +17,6 @@ RUN apt update && \
 
 COPY cmake/ cmake/
 COPY debian/ debian/
-COPY debian/control_soapy0.7 debian/control
 COPY external/ external/
 COPY udev-rules/ udev-rules/
 COPY plugins/ plugins/
@@ -26,6 +25,7 @@ COPY CMakeLists.txt CMakeLists.txt
 COPY README.md README.md
 COPY src/ src/
 
+RUN patch debian/control < debian/control.soapy0.7.patch
 RUN dpkg-buildpackage --build=binary --no-sign -d
 
 FROM scratch AS export-stage

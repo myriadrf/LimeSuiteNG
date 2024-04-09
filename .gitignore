@@ -16,8 +16,6 @@ docs/LMS_API_Documentation/*
 /debian/*/lib/*
 /debian/*/DEBIAN
 /debian/*.log
-/debian/limesuite-images20.10.*
-!/debian/limesuite-images20.10.*.in
 /debian/debhelper-build-stamp
 /.vs
 /out/
