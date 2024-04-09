@@ -9,13 +9,7 @@
 ########################################################################
 # Install public header files
 ########################################################################
-install(FILES
-    api.h
-    sink.h
-    source.h
-    DESTINATION include/limesdr
-)
+install(FILES api.h sink.h source.h DESTINATION include/limesdr)
 if(ENABLE_RFE)
-    install(FILES rfe.h DESTINATION include/limesdr
-    )
+    install(FILES rfe.h DESTINATION include/limesdr)
 endif()

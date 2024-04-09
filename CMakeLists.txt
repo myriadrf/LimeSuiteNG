@@ -46,18 +46,19 @@ set(VERSION_PATCH "${CMAKE_MATCH_3}")
 # verify that VersionInfo.h LIMESUITENG_API_VERSION define matches changelog
 file(READ "${PROJECT_SOURCE_DIR}/src/include/limesuiteng/VersionInfo.h" version_info_header_txt)
 string(REGEX MATCH "LIMESUITENG_API_VERSION 0x([A-Fa-f0-9]*)" VERSION_DEFINE_MATCH "${version_info_header_txt}")
-if (NOT VERSION_DEFINE_MATCH)
+if(NOT VERSION_DEFINE_MATCH)
     message(FATAL_ERROR "Failed to extract API version from VersionInfo.h")
 endif()
 math(EXPR VERSION_MAJOR_IN_HEADER "(0x${CMAKE_MATCH_1} >> 24) & 0xFF" OUTPUT_FORMAT DECIMAL)
 math(EXPR VERSION_MINOR_IN_HEADER "(0x${CMAKE_MATCH_1} >> 16) & 0xFF" OUTPUT_FORMAT DECIMAL)
 math(EXPR VERSION_PATCH_IN_HEADER "(0x${CMAKE_MATCH_1}) & 0xFFFF" OUTPUT_FORMAT DECIMAL)
-if (NOT ${VERSION_MAJOR} EQUAL ${VERSION_MAJOR_IN_HEADER}
-    OR NOT ${VERSION_MINOR} EQUAL ${VERSION_MINOR_IN_HEADER}
-    OR NOT ${VERSION_PATCH} EQUAL ${VERSION_PATCH_IN_HEADER}
-    )
-    message(FATAL_ERROR "Changelog release version (${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})"
-        " don't match header API version (${VERSION_MAJOR_IN_HEADER}.${VERSION_MINOR_IN_HEADER}.${VERSION_PATCH_IN_HEADER})")
+if(NOT ${VERSION_MAJOR} EQUAL ${VERSION_MAJOR_IN_HEADER}
+   OR NOT ${VERSION_MINOR} EQUAL ${VERSION_MINOR_IN_HEADER}
+   OR NOT ${VERSION_PATCH} EQUAL ${VERSION_PATCH_IN_HEADER})
+    message(
+        FATAL_ERROR
+            "Changelog release version (${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})"
+            " don't match header API version (${VERSION_MAJOR_IN_HEADER}.${VERSION_MINOR_IN_HEADER}.${VERSION_PATCH_IN_HEADER})")
 endif()
 
 # the ABI compatibility number should be incremented when the ABI changes
@@ -184,7 +185,7 @@ if(MSVC)
     # Check if using correct Visual Studio version
     # VS2015 does not support some of the used C++17 features (<string_view>, <filesystem>, ...)
     if(MSVC_TOOLSET_VERSION LESS 141)
-	    message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
+        message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
     endif()
 
     include_directories(${PROJECT_SOURCE_DIR}/external/msvc)

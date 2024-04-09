@@ -14,16 +14,16 @@ set(LIME_TEST_SUITE_SOURCES
     protocols/LMS64CProtocol/GPIOReadTest.cpp
     protocols/LMS64CProtocol/GPIOWriteTest.cpp
     protocols/LMS64CProtocol/LMS7002M_SPITest.cpp
-    protocols/BufferInterleavingTest.cpp
-)
+    protocols/BufferInterleavingTest.cpp)
 
-if (ENABLE_LITE_PCIE)
-    list(APPEND LIME_TEST_SUITE_SOURCES
+if(ENABLE_LITE_PCIE)
+    list(
+        APPEND
+        LIME_TEST_SUITE_SOURCES
         boards/LimeSDR_X3/LimeSDR_X3Test.cpp
         boards/LimeSDR_X3/SlaveSelectShimTest.cpp
         boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp
-        comms/PCIe/PCIE_CSR_PipeTest.cpp
-    )
+        comms/PCIe/PCIE_CSR_PipeTest.cpp)
 endif()
 
 if(ENABLE_USB_FX3)
