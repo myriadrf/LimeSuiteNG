@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 
+#include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "LMSBoards.h"
@@ -46,7 +47,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
     for (const std::string& nodeName : nodes)
     {
         // look for _control devices only, skip _trx*
-        size_t nameEnd = nodeName.find("_control");
+        std::size_t nameEnd = nodeName.find("_control");
         if (nameEnd == std::string::npos)
             continue;
 
@@ -63,7 +64,9 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
         int subDeviceIndex = 0;
         LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);
 
-        handle.serial = std::to_string(fw.boardSerialNumber); // TODO: to hex
+        handle.serial = intToHex(fw.boardSerialNumber);
+
+        // Add handle conditionally, filter by serial number
         if (handle.IsEqualIgnoringEmpty(hint))
             handles.push_back(handle);
     }

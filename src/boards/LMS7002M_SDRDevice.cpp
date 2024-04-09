@@ -849,6 +849,8 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
     bool div4 = signalConfiguration.divide == SDRDevice::ChannelConfig::Direction::TestSignal::Divide::Div4;
+    bool fullscale = signalConfiguration.scale == SDRDevice::ChannelConfig::Direction::TestSignal::Scale::Full;
+
     switch (direction)
     {
     case TRXDir::Rx:
@@ -856,7 +858,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
             return ReportError(OpStatus::IO_FAILURE, "Failed to set Rx test signal.");
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_RXTSP), div4 ? 2 : 1);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_RXTSP), static_cast<uint8_t>(signalConfiguration.scale));
+        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_RXTSP), fullscale ? 1 : 0);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGMODE_RXTSP), signalConfiguration.dcMode);
         break;
     case TRXDir::Tx:
@@ -864,7 +866,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
             return ReportError(OpStatus::IO_FAILURE, "Failed to set Tx test signal.");
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_TXTSP), div4 ? 2 : 1);
-        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_TXTSP), static_cast<uint8_t>(signalConfiguration.scale));
+        lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_TXTSP), fullscale ? 1 : 0);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGMODE_TXTSP), signalConfiguration.dcMode);
         break;
     }

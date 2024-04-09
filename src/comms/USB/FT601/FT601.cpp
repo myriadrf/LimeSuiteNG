@@ -79,8 +79,12 @@ void FT601::Disconnect()
 #else
     if (dev_handle != nullptr)
     {
-        FT_FlushPipe(STREAM_BULK_READ_ADDRESS);
-        FT_FlushPipe(CONTROL_BULK_READ_ADDRESS);
+        if (isConnected)
+        {
+            FT_FlushPipe(STREAM_BULK_READ_ADDRESS);
+            FT_FlushPipe(CONTROL_BULK_READ_ADDRESS);
+        }
+
         libusb_release_interface(dev_handle, 0);
         libusb_release_interface(dev_handle, 1);
         libusb_close(dev_handle);
@@ -374,7 +378,7 @@ int FT601::FT_FlushPipe(unsigned char ep)
     unsigned char wbuffer[20]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     mUsbCounter++;
-    wbuffer[0] = (mUsbCounter)&0xFF;
+    wbuffer[0] = mUsbCounter & 0xFF;
     wbuffer[1] = (mUsbCounter >> 8) & 0xFF;
     wbuffer[2] = (mUsbCounter >> 16) & 0xFF;
     wbuffer[3] = (mUsbCounter >> 24) & 0xFF;
@@ -387,7 +391,7 @@ int FT601::FT_FlushPipe(unsigned char ep)
     }
 
     mUsbCounter++;
-    wbuffer[0] = (mUsbCounter)&0xFF;
+    wbuffer[0] = mUsbCounter & 0xFF;
     wbuffer[1] = (mUsbCounter >> 8) & 0xFF;
     wbuffer[2] = (mUsbCounter >> 16) & 0xFF;
     wbuffer[3] = (mUsbCounter >> 24) & 0xFF;
@@ -408,7 +412,7 @@ int FT601::FT_SetStreamPipe(unsigned char ep, size_t size)
     unsigned char wbuffer[20] = { 0 };
 
     mUsbCounter++;
-    wbuffer[0] = (mUsbCounter)&0xFF;
+    wbuffer[0] = mUsbCounter & 0xFF;
     wbuffer[1] = (mUsbCounter >> 8) & 0xFF;
     wbuffer[2] = (mUsbCounter >> 16) & 0xFF;
     wbuffer[3] = (mUsbCounter >> 24) & 0xFF;
@@ -421,18 +425,17 @@ int FT601::FT_SetStreamPipe(unsigned char ep, size_t size)
     }
 
     mUsbCounter++;
-    wbuffer[0] = (mUsbCounter)&0xFF;
+    wbuffer[0] = mUsbCounter & 0xFF;
     wbuffer[1] = (mUsbCounter >> 8) & 0xFF;
     wbuffer[2] = (mUsbCounter >> 16) & 0xFF;
     wbuffer[3] = (mUsbCounter >> 24) & 0xFF;
     wbuffer[5] = 0x02;
-    wbuffer[8] = (size)&0xFF;
+    wbuffer[8] = size & 0xFF;
     wbuffer[9] = (size >> 8) & 0xFF;
     wbuffer[10] = (size >> 16) & 0xFF;
     wbuffer[11] = (size >> 24) & 0xFF;
 
     actual = BulkTransfer(0x01, wbuffer, 20, 1000);
-
     if (actual != 20)
     {
         return -1;
