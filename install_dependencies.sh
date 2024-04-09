@@ -40,6 +40,9 @@ fi
 headers=""
 
 if [[ $TYPE == "ubuntu" ]]; then
+  if [[ $VERSION_ID == "23.10" ]]; then
+    VERSION_ID=22.04
+  fi
   headers="linux-headers-generic-hwe-${VERSION_ID}"
 elif [[ $TYPE == "debian" ]]; then
   headers="linux-headers-generic"
@@ -56,4 +59,4 @@ apt-get install $yes --no-install-recommends \
   $headers \
   libsoapysdr-dev \
   libusb-1.0-0-dev \
-  $libwx \
+  $libwx
