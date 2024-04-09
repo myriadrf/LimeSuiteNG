@@ -3,6 +3,7 @@
 
 #include <gmock/gmock.h>
 
+#include "limesuiteng/types.h"
 #include "comms/IComms.h"
 
 namespace lime::testing {
