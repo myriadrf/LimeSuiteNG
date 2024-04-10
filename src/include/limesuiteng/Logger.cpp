@@ -20,7 +20,7 @@
 
 namespace lime {
 
-#define MAX_MSG_LEN 1024
+constexpr size_t MAX_MSG_LEN{ 1024 };
 thread_local int _reportedErrorCode;
 thread_local char _reportedErrorMessage[MAX_MSG_LEN];
 
