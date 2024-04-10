@@ -1,16 +1,20 @@
 #include "fftviewer_frFFTviewer.h"
 #include <wx/timer.h>
+#include <wx/msgdlg.h>
+#include <wx/filedlg.h>
 #include <vector>
+#include "limesuiteng/Logger.h"
 #include "OpenGLGraph.h"
 #include <LMSBoards.h>
 #include "kissFFT/kiss_fft.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 #include "windowFunction.h"
 #include <fstream>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/complex.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/complex.h"
 #include <array>
 
 using namespace std;
@@ -35,7 +39,7 @@ bool fftviewer_frFFTviewer::Initialize(SDRDevice* pDataPort)
 
     lmsIndex = 0;
     cmbRFSOC->Clear();
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
 
     for (size_t i = 0; i < desc.rfSOC.size(); ++i)
     {
@@ -256,8 +260,8 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
     if (mStreamRunning.load() == false)
         return;
 
-    SDRDevice::StreamStats rxStats;
-    SDRDevice::StreamStats txStats;
+    StreamStats rxStats;
+    StreamStats txStats;
     const uint8_t chipIndex = this->lmsIndex;
     device->StreamStatus(chipIndex, &rxStats, &txStats);
 
@@ -406,12 +410,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
             samplesCaptured = 0;
         }
 
-    auto fmt =
-        pthis->cmbFmt->GetSelection() == 1 ? SDRDevice::StreamConfig::DataFormat::I16 : SDRDevice::StreamConfig::DataFormat::I12;
+    auto fmt = pthis->cmbFmt->GetSelection() == 1 ? DataFormat::I16 : DataFormat::I12;
 
-    SDRDevice::StreamConfig config;
+    StreamConfig config;
 
-    config.format = SDRDevice::StreamConfig::DataFormat::F32;
+    config.format = DataFormat::F32;
     config.linkFormat = fmt;
     for (int i = 0; i < channelsCount; ++i)
     {
@@ -473,12 +476,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     // }
 
     pthis->mStreamRunning.store(true);
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta txMeta;
     txMeta.waitForTimestamp = syncTx;
     txMeta.flushPartialPacket = true;
     int fftCounter = 0;
 
-    SDRDevice::StreamMeta rxMeta;
+    StreamMeta rxMeta;
 
     while (pthis->stopProcessing.load() == false)
     {

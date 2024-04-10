@@ -15,7 +15,7 @@
 #include "SamplesPacket.h"
 #include "DataPacket.h"
 #include "TRXLooper.h"
-#include "limesuite/complex.h"
+#include "limesuiteng/complex.h"
 
 using namespace std::literals::string_literals;
 
@@ -80,7 +80,7 @@ class FPGA
         int hardwareVersion;
     };
     GatewareInfo GetGatewareInfo();
-    static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDevice::Descriptor& desc);
+    static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc);
 
   protected:
     OpStatus SelectModule(uint8_t chipIndex);

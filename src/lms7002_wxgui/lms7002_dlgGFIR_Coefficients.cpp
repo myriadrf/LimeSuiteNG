@@ -2,8 +2,8 @@
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include "parsers/CoefficientFileParser.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/types.h"
+#include "limesuiteng/LMS7002M.h"
 
 using namespace lime;
 
@@ -236,7 +236,7 @@ int lms7002_dlgGFIR_Coefficients::ReadCoefficients(lime::TRXDir direction, uint8
     coefficients.resize(maxCoefCount, 0);
 
     OpStatus status = lmsControl->GetGFIRCoefficients(direction, gfirIndex, &coefficients[0], coefficients.size());
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Error reading GFIR coefficients"), _("ERROR"), wxICON_ERROR | wxOK);
         return -1;
@@ -251,7 +251,7 @@ void lms7002_dlgGFIR_Coefficients::WriteCoefficients(lime::TRXDir direction, uin
     std::vector<double> coefficients = GetCoefficients();
     OpStatus status = lmsControl->SetGFIRCoefficients(direction, gfirIndex, &coefficients[0], coefficients.size());
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         wxMessageBox(_("Error writing GFIR coefficients"), _("ERROR"), wxICON_ERROR | wxOK);
     }

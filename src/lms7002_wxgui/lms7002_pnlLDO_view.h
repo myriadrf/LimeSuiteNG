@@ -1,10 +1,9 @@
 #ifndef __lms7002_pnlLDO_view__
 #define __lms7002_pnlLDO_view__
 
-#include <map>
 #include "ILMS7002MTab.h"
 
-#include "wx/notebook.h"
+class wxNotebook;
 
 class lms7002_pnlLDO_view : public ILMS7002MTab
 {
@@ -14,7 +13,7 @@ class lms7002_pnlLDO_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(ILMS7002MTab::ControllerType* pControl) override;
+    virtual void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
     enum {

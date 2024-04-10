@@ -5,7 +5,7 @@
 */
 
 #include "SystemResources.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 #include <cstdlib> //getenv, system
 #include <filesystem>
@@ -17,8 +17,6 @@
     #include <windows.h>
     #include <shlobj.h>
     #include <io.h>
-
-    #undef ERROR
 
     //access mode constants
     #define F_OK 0
@@ -33,7 +31,9 @@
 
 using namespace std::literals::string_literals;
 
-std::string lime::getLimeSuiteRoot(void)
+namespace lime {
+
+std::string getLimeSuiteRoot(void)
 {
     //first check the environment variable
     const char* limeSuiteRoot = std::getenv("LIME_SUITE_ROOT");
@@ -65,7 +65,7 @@ std::string lime::getLimeSuiteRoot(void)
     return "@LIME_SUITE_ROOT@"s;
 }
 
-std::string lime::getHomeDirectory(void)
+std::string getHomeDirectory(void)
 {
     //first check the HOME environment variable
     const char* userHome = std::getenv("HOME");
@@ -109,22 +109,22 @@ static std::string getBareAppDataDirectory(void)
 #endif
 
     //xdg freedesktop standard location for data in home directory
-    return lime::getHomeDirectory() + "/.local/share"s;
+    return getHomeDirectory() + "/.local/share"s;
 }
 
-std::string lime::getAppDataDirectory(void)
+std::string getAppDataDirectory(void)
 {
     return getBareAppDataDirectory() + "/LimeSuite"s;
 }
 
-std::string lime::getConfigDirectory(void)
+std::string getConfigDirectory(void)
 {
     //xdg standard is XDG_CONFIG_HOME or $HOME/.config
     //but historically we have used $HOME/.limesuite
-    return lime::getHomeDirectory() + "/.limesuite"s;
+    return getHomeDirectory() + "/.limesuite"s;
 }
 
-std::vector<std::string> lime::listImageSearchPaths(void)
+std::vector<std::string> listImageSearchPaths(void)
 {
     std::vector<std::string> imageSearchPaths;
 
@@ -158,7 +158,7 @@ std::vector<std::string> lime::listImageSearchPaths(void)
     return imageSearchPaths;
 }
 
-std::string lime::locateImageResource(const std::string& name)
+std::string locateImageResource(const std::string& name)
 {
     for (const auto& searchPath : lime::listImageSearchPaths())
     {
@@ -169,7 +169,13 @@ std::string lime::locateImageResource(const std::string& name)
     return "";
 }
 
-int lime::downloadImageResource(const std::string& name)
+/*!
+ * Download an image resource given only the file name.
+ * The resource will be downloaded in the user's application data directory.
+ * @param name a unique name for the resource file including file extension
+ * @return 0 for success or error code upon error
+ */
+lime::OpStatus downloadImageResource(const std::string& name)
 {
     const std::string destDir(lime::getAppDataDirectory() + "/images/@VERSION_MAJOR@.@VERSION_MINOR@"s);
     const std::string destFile(destDir + "/"s + name);
@@ -179,7 +185,7 @@ int lime::downloadImageResource(const std::string& name)
     {
         if (!std::filesystem::is_directory(destDir))
         {
-            return lime::ReportError("Not a directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::InvalidValue, "Not a directory: %s", destDir.c_str());
         }
     }
     else
@@ -187,13 +193,13 @@ int lime::downloadImageResource(const std::string& name)
         bool result = std::filesystem::create_directories(destDir);
         if (!result)
         {
-            return lime::ReportError(result, "Failed to create directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::Error, "Failed to create directory: %s", destDir.c_str());
         }
     }
 
     //check for write access
     if (access(destDir.c_str(), W_OK) != 0)
-        lime::ReportError("Cannot write: %s", destDir.c_str());
+        lime::ReportError(OpStatus::PermissionDenied, "Cannot write: %s", destDir.c_str());
 
 //download the file
 #ifdef __unix__
@@ -204,7 +210,9 @@ int lime::downloadImageResource(const std::string& name)
 #endif
     int result = std::system(dnloadCmd.c_str());
     if (result != 0)
-        return lime::ReportError(result, "Failed: %s", dnloadCmd.c_str());
+        return lime::ReportError(OpStatus::Error, "Failed: %s", dnloadCmd.c_str());
 
-    return 0;
+    return OpStatus::Success;
 }
+
+} // namespace lime

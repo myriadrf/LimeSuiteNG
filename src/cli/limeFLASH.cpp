@@ -18,7 +18,7 @@ void inthandler(int sig)
     terminateProgress = true;
 }
 
-static void PrintMemoryDevices(SDRDevice::Descriptor descriptor)
+static void PrintMemoryDevices(SDRDescriptor descriptor)
 {
     for (const auto& memoryDevice : descriptor.memoryDevices)
     {
@@ -26,11 +26,11 @@ static void PrintMemoryDevices(SDRDevice::Descriptor descriptor)
     }
 }
 
-static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string_view targetName)
+static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* device, const std::string_view targetName)
 {
     if (!device)
     {
-        return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+        return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
 
     const auto descriptor = device->GetDescriptor();
@@ -46,7 +46,7 @@ static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRD
         cerr << "specify memory device target, -t, --target :" << endl;
         PrintMemoryDevices(descriptor);
 
-        return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+        return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
 
     try
@@ -60,7 +60,7 @@ static const std::shared_ptr<SDRDevice::DataStorage> FindMemoryDeviceByName(SDRD
     cerr << "Device does not contain target device (" << targetName << "). Available list:" << endl;
     PrintMemoryDevices(descriptor);
 
-    return std::make_shared<SDRDevice::DataStorage>(nullptr, eMemoryDevice::COUNT);
+    return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
 }
 
 static auto lastProgressUpdate = std::chrono::steady_clock::now();
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
             return printHelp();
         case 'd':
             if (optarg != NULL)
-                devName = optarg;
+                devName = std::string(optarg);
             break;
         case 't':
             if (optarg != NULL)
@@ -168,25 +168,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDRDevice* device;
-    if (!devName.empty())
-        device = ConnectUsingNameHint(devName);
-    else
-    {
-        if (handles.size() > 1)
-        {
-            cerr << "Multiple devices detected, specify which one to use with -d, --device" << endl;
-            return EXIT_FAILURE;
-        }
-        // device not specified, use the only one available
-        device = DeviceRegistry::makeDevice(handles.at(0));
-    }
-
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
-    {
-        cerr << "Device connection failed" << endl;
         return EXIT_FAILURE;
-    }
 
     auto memorySelect = FindMemoryDeviceByName(device, targetName);
     if (memorySelect->ownerDevice == nullptr)
@@ -213,7 +197,7 @@ int main(int argc, char** argv)
     inputFile.close();
 
     if (memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack) !=
-        OpStatus::SUCCESS)
+        OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);
         cout << "Device programming failed." << endl;

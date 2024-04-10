@@ -4,13 +4,16 @@
 #include <cstdint>
 #include <vector>
 
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/LMS7002M.h"
 
 namespace lime {
 
 class TRXLooper;
 class FPGA;
+class RFSOCDescriptor;
 
 /** @brief Base class for device with multiple LMS7002M chips and FPGA */
 class LIME_API LMS7002M_SDRDevice : public SDRDevice
@@ -19,7 +22,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     LMS7002M_SDRDevice();
     virtual ~LMS7002M_SDRDevice();
 
-    virtual const Descriptor& GetDescriptor() const override;
+    virtual const SDRDescriptor& GetDescriptor() const override;
 
     virtual OpStatus Reset() override;
     virtual OpStatus GetGPSLock(GPS_Lock* status) override;
@@ -29,9 +32,12 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     virtual double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     virtual OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) override;
 
-    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index) override;
+    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) override;
     virtual OpStatus SetNCOFrequency(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset = -1.0) override;
+
+    virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) override;
 
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
@@ -108,7 +114,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
         uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
     virtual uint32_t StreamTx(
         uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    virtual void StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx) override;
+    virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     virtual void SetDataLogCallback(DataCallbackType callback) override;
     virtual void SetMessageLogCallback(LogCallbackType callback) override;
@@ -127,17 +133,19 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);
     void SetGainInformationInDescriptor(RFSOCDescriptor& descriptor);
 
-    OpStatus LMS7002LOConfigure(LMS7002M* chip, const SDRDevice::SDRConfig& config);
-    OpStatus LMS7002ChannelConfigure(LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex);
-    OpStatus LMS7002ChannelCalibration(LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex);
-    OpStatus LMS7002TestSignalConfigure(LMS7002M* chip, const SDRDevice::ChannelConfig& config, uint8_t channelIndex);
+    OpStatus LMS7002LOConfigure(LMS7002M* chip, const SDRConfig& config);
+    OpStatus LMS7002ChannelConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
+    OpStatus LMS7002ChannelCalibration(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
+    OpStatus LMS7002TestSignalConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
+
+    static constexpr uint8_t NCOValueCount = 16;
 
     DataCallbackType mCallback_logData;
     LogCallbackType mCallback_logMessage;
     std::vector<LMS7002M*> mLMSChips;
     std::vector<TRXLooper*> mStreamers;
 
-    Descriptor mDeviceDescriptor;
+    SDRDescriptor mDeviceDescriptor;
     StreamConfig mStreamConfig;
     FPGA* mFPGA;
 

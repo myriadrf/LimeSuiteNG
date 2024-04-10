@@ -1,5 +1,5 @@
 #include "FPGA_XTRX.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include <ciso646>
 #include <vector>
 #include <map>
@@ -30,8 +30,8 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     rxClocks[1].index = 1;
     rxClocks[1].outFrequency = rxRate_Hz;
     rxClocks[1].phaseShift_deg = rxPhase;
-    if (FPGA_XTRX::SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (FPGA_XTRX::SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) != OpStatus::Success)
+        return OpStatus::Error;
 
     std::vector<FPGA_PLL_clock> txClocks(2);
     txClocks[0].index = 0;
@@ -39,10 +39,10 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     txClocks[1].index = 1;
     txClocks[1].outFrequency = txRate_Hz;
     txClocks[1].phaseShift_deg = txPhase;
-    if (FPGA_XTRX::SetPllFrequency(txPLLindex, txRate_Hz, txClocks) != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (FPGA_XTRX::SetPllFrequency(txPLLindex, txRate_Hz, txClocks) != OpStatus::Success)
+        return OpStatus::Error;
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus FPGA_XTRX::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, std::vector<FPGA_PLL_clock>& clocks)

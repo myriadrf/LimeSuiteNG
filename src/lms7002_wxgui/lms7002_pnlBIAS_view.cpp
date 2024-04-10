@@ -1,8 +1,9 @@
 #include "lms7002_pnlBIAS_view.h"
+#include "commonWxHeaders.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/LMS7002M.h"
 using namespace lime;
 
 lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)

@@ -7,8 +7,14 @@
 #include <wx/checkbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
+#include <wx/textctrl.h>
+#include <wx/radiobut.h>
+#include <wx/statbox.h>
+#include <wx/stattext.h>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "comms/IComms.h"
 
 #include <ciso646>
 
@@ -62,7 +68,7 @@ int pnlX3::LMS_WriteCustomBoardParam(lime::SDRDevice* device, const std::vector<
 
     try
     {
-        return device->CustomParameterWrite(parameters) == OpStatus::SUCCESS ? 0 : -1;
+        return device->CustomParameterWrite(parameters) == OpStatus::Success ? 0 : -1;
     } catch (...)
     {
         return -1;
@@ -78,7 +84,7 @@ int pnlX3::LMS_ReadCustomBoardParam(lime::SDRDevice* device, std::vector<CustomP
 
     try
     {
-        int ret = device->CustomParameterRead(parameters) == OpStatus::SUCCESS ? 0 : -1;
+        int ret = device->CustomParameterRead(parameters) == OpStatus::Success ? 0 : -1;
         return ret;
     } catch (...)
     {
@@ -365,7 +371,7 @@ void pnlX3::Initialize(lime::SDRDevice* pControl)
     if (device == nullptr)
         return;
 
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
     const std::string targetSPI{ "FPGA"s };
     for (const auto& nameIds : desc.spiSlaveIds)
     {

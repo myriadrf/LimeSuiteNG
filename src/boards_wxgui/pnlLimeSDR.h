@@ -1,13 +1,16 @@
 #ifndef PNL_LIMESDR_H
 #define PNL_LIMESDR_H
 
-#include "limesuite/SDRDevice.h"
 #include <wx/panel.h>
 
 class wxFlexGridSizer;
 class wxCheckBox;
 
 class pnlGPIO;
+
+namespace lime {
+class SDRDevice;
+}
 
 class pnlLimeSDR : public wxPanel
 {

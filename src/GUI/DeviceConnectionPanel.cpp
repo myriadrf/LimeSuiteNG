@@ -6,9 +6,10 @@
 #include <wx/stattext.h>
 
 #include <vector>
+#include <stdexcept>
 
-#include "limesuite/DeviceHandle.h"
-#include "limesuite/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
 
 #include "GUI/events.h"
 

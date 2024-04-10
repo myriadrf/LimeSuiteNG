@@ -1,7 +1,7 @@
 #pragma once
 
-#include "limesuite/IComms.h"
-#include "limesuite/SDRDevice.h"
+#include "comms/IComms.h"
+#include "limesuiteng/SDRDevice.h"
 
 namespace lime {
 

@@ -1,13 +1,13 @@
 #ifndef LIME_BUFFER_INTERLEAVING_H
 #define LIME_BUFFER_INTERLEAVING_H
 
-#include "TRXLooper.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 
 struct DataConversion {
-    SDRDevice::StreamConfig::DataFormat srcFormat;
-    SDRDevice::StreamConfig::DataFormat destFormat;
+    DataFormat srcFormat;
+    DataFormat destFormat;
     uint8_t channelCount;
 };
 

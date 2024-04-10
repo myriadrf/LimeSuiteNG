@@ -13,7 +13,8 @@
 #include <memory>
 
 #include "mcu_programs.h"
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/OpStatus.h"
 
 namespace lime {
 
@@ -127,7 +128,7 @@ class LIME_API MCU_BD
     int Erase_IRAM();
     int Read_SFR();
     int Program_MCU(int m_iMode1, int m_iMode0);
-    int Program_MCU(const uint8_t* binArray, const MCU_PROG_MODE mode);
+    OpStatus Program_MCU(const uint8_t* binArray, const MCU_PROG_MODE mode);
     void Reset_MCU();
     void RunTest_MCU(int m_iMode1, int m_iMode0, unsigned short test_code, int m_iDebug);
     int RunProductionTest_MCU();

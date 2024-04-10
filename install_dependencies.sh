@@ -47,4 +47,5 @@ apt-get install $yes --no-install-recommends \
   build-essential \
   $libwx \
   libsoapysdr-dev \
-  cmake
+  cmake \
+  linux-kernel-headers

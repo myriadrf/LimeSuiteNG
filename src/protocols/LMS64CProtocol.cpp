@@ -4,7 +4,10 @@
     @brief Implementation of LMS64C protocol.
 */
 
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "comms/IComms.h"
+#include "ISerialPort.h"
 #include "LMS64CProtocol.h"
 #include <chrono>
 #include <cassert>
@@ -171,11 +174,11 @@ static OpStatus SPI16(ISerialPort& port,
 
         sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
         if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
         {
@@ -187,7 +190,7 @@ static OpStatus SPI16(ISerialPort& port,
         }
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice)
@@ -205,13 +208,13 @@ OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevi
     int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (sent != sizeof(pkt))
     {
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     }
 
     int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
     if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
     {
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     }
 
     info.firmware = pkt.payload[0];
@@ -227,10 +230,10 @@ OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevi
         info.boardSerialNumber |= pkt.payload[i];
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
-void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDevice::Descriptor& descriptor)
+void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
 {
     if (fw.deviceId >= eLMS_DEV::LMS_DEV_COUNT)
     {
@@ -296,22 +299,22 @@ OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint
 
         sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
         if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* mosi, size_t count)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count)
 {
-    return OpStatus::NOT_IMPLEMENTED;
+    return OpStatus::NotImplemented;
 }
 
 OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice)
@@ -360,7 +363,7 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
             throw std::runtime_error("CustomParameterWrite read failed"s);
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice)
@@ -415,7 +418,7 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
         }
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus ProgramWrite(ISerialPort& port,
@@ -452,7 +455,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         sprintf(progressMsg, "Programming failed! Target device not supported");
         if (callback)
             callback(bytesSent, length, progressMsg);
-        return ReportError(OpStatus::NOT_SUPPORTED, progressMsg);
+        return ReportError(OpStatus::NotSupported, progressMsg);
     }
 
     LMS64CPacket packet;
@@ -490,13 +493,13 @@ OpStatus ProgramWrite(ISerialPort& port,
         {
             if (callback)
                 callback(bytesSent, length, "Programming failed! Write operation failed");
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
         }
         if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), progTimeout_ms) != sizeof(inPacket))
         {
             if (callback)
                 callback(bytesSent, length, "Programming failed! Read operation failed");
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
         }
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
@@ -504,7 +507,7 @@ OpStatus ProgramWrite(ISerialPort& port,
             sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).data());
             if (callback)
                 callback(bytesSent, length, progressMsg);
-            return ReportError(OpStatus::ERROR, progressMsg);
+            return ReportError(OpStatus::Error, progressMsg);
         }
         bytesSent += packet.payload[5];
         if (needsData == false) //only one packet is needed to initiate bitstream from flash
@@ -519,20 +522,20 @@ OpStatus ProgramWrite(ISerialPort& port,
                 sprintf(progressMsg, "Programming: completed");
             abortProgramming = callback(bytesSent, length, progressMsg);
             if (abortProgramming && !completed)
-                return OpStatus::ABORTED;
+                return OpStatus::Aborted;
         }
     }
 #ifndef NDEBUG
     auto t2 = std::chrono::high_resolution_clock::now();
     if ((device == ProgramWriteTarget::FPGA && prog_mode == 2) == false)
-        lime::log(LogLevel::INFO,
+        lime::log(LogLevel::Info,
             "Programming finished, %li bytes sent! %li ms",
             length,
             std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
     else
-        lime::log(LogLevel::INFO, "FPGA configuring initiated"s);
+        lime::log(LogLevel::Info, "FPGA configuring initiated"s);
 #endif
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
@@ -552,7 +555,7 @@ OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
     int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
         throw std::runtime_error("DeviceReset read failed"s);
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
@@ -583,7 +586,7 @@ OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
         buffer[i] = pkt.payload[i];
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
@@ -614,7 +617,7 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
         buffer[i] = pkt.payload[i];
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength)
@@ -645,7 +648,7 @@ OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t buf
         throw std::runtime_error("GPIODirWrite read failed"s);
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength)
@@ -676,7 +679,7 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
         throw std::runtime_error("GPIOWrite read failed"s);
     }
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice)
@@ -711,16 +714,16 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
         src += chunkSize;
 
         if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
         if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), timeout_ms) != sizeof(inPacket))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         bytesSent += chunkSize;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice)
@@ -750,19 +753,19 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
         writeView.SetChunkSize(std::min(dataLen - bytesGot, chunkSize));
 
         if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
         if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), timeout_ms) != sizeof(inPacket))
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IO_FAILURE;
+            return OpStatus::IOFailure;
         LMS64CPacketMemoryWriteView readView(&inPacket);
         int bToGet = std::min(chunkSize, dataLen - bytesGot);
         readView.GetData(dest, bToGet);
         dest += chunkSize;
         bytesGot += chunkSize;
     }
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 } // namespace LMS64CProtocol

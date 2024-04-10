@@ -5,14 +5,17 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/checkbox.h>
+#include <wx/statbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
 #include "lms7suiteEvents.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 #include <ciso646>
 
 using namespace std;
+using namespace lime;
 using namespace lime;
 
 BEGIN_EVENT_TABLE(pnlXTRX, wxPanel)
@@ -70,7 +73,7 @@ void pnlXTRX::Initialize(lime::SDRDevice* dev, const string& spiSlaveName)
     if (!device)
         return;
 
-    const SDRDevice::Descriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = device->GetDescriptor();
     for (const auto& nameIds : desc.spiSlaveIds)
     {
         if (nameIds.first == spiSlaveName)

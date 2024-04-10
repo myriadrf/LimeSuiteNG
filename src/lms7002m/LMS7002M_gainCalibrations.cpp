@@ -1,5 +1,6 @@
-#include "limesuite/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
+
 using namespace lime;
 
 OpStatus LMS7002M::CalibrateTxGainSetup()
@@ -64,7 +65,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     //CGEN
     SetDefaults(MemorySection::CGEN);
     status = SetFrequencyCGEN(61.44e6);
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
         return status;
 
     //SXR
@@ -94,7 +95,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     LoadDC_REG_IQ(TRXDir::Tx, tsgValue, tsgValue);
     SetNCOFrequency(TRXDir::Tx, 0, 0.5e6);
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::CalibrateTxGain()
@@ -102,13 +103,13 @@ OpStatus LMS7002M::CalibrateTxGain()
     if (!controlPort)
     {
         lime::error("No device connected");
-        return OpStatus::IO_FAILURE;
+        return OpStatus::IOFailure;
     }
     OpStatus status;
     int cg_iamp = 0;
     auto registersBackup = BackupRegisterMap();
     status = CalibrateTxGainSetup();
-    if (status == OpStatus::SUCCESS)
+    if (status == OpStatus::Success)
     {
         cg_iamp = Get_SPI_Reg_bits(LMS7param(CG_IAMP_TBB));
         while (GetRSSI() < 0x7FFF)
@@ -123,7 +124,7 @@ OpStatus LMS7002M::CalibrateTxGain()
     int ind = this->GetActiveChannelIndex() % 2;
     opt_gain_tbb[ind] = cg_iamp > 1 ? cg_iamp - 1 : 1;
 
-    if (status == OpStatus::SUCCESS)
+    if (status == OpStatus::Success)
         Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), opt_gain_tbb[ind]);
     //logic reset
     Modify_SPI_Reg_bits(LMS7param(LRST_TX_A), 0);

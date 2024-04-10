@@ -1,9 +1,13 @@
 #include "lms7002_pnlGains_view.h"
+#include "commonWxHeaders.h"
 #include "numericSlider.h"
 #include <map>
 #include "lms7002_gui_utilities.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M_parameters.h"
+
+#include <wx/spinctrl.h>
 
 using namespace lime;
 using namespace LMS7002_WXGUI;
@@ -234,7 +238,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlGains_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlGains_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
 

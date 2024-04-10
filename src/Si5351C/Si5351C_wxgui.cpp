@@ -6,7 +6,7 @@
 
 #include "Si5351C_wxgui.h"
 #include "Si5351C.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "GUI/CommsToDevice.h"
 #include <LMSBoards.h>
 
@@ -16,7 +16,8 @@
 //*)
 
 #include <wx/filedlg.h>
-#include <wx/wx.h>
+#include <wx/msgdlg.h>
+#include <wx/settings.h>
 
 using namespace lime;
 

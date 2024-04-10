@@ -4,18 +4,19 @@
 @brief 	Implementation of common functions used by all panels
 */
 #include "lms7002_gui_utilities.h"
+#include "commonWxHeaders.h"
 #include <wx/defs.h>
-#include <wx/panel.h>
 #include <wx/combobox.h>
 #include <wx/checkbox.h>
 #include <wx/radiobox.h>
+#include <wx/radiobut.h>
 #include <wx/stattext.h>
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
 #include <wx/spinctrl.h>
 #include <wx/object.h>
 #include <wx/tooltip.h>
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/LMS7002M.h"
 
 using namespace lime;
 

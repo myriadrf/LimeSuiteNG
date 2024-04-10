@@ -1,10 +1,10 @@
 #ifndef __lms7002_pnlLimeLightPAD_view__
 #define __lms7002_pnlLimeLightPAD_view__
 
-#include "lms7002_wxgui.h"
-
-#include <map>
 #include "ILMS7002MTab.h"
+
+class wxNotebook;
+class wxSpinCtrl;
 
 class lms7002_pnlLimeLightPAD_view : public ILMS7002MTab
 {
@@ -18,7 +18,7 @@ class lms7002_pnlLimeLightPAD_view : public ILMS7002MTab
     virtual void UpdateGUI() override;
 
   protected:
-    void SpinParameterChangeHandler(wxSpinEvent& event);
+    virtual void SpinParameterChangeHandler(wxSpinEvent& event) override;
     void onbtnReadVerRevMask(wxCommandEvent& event);
 
     enum {

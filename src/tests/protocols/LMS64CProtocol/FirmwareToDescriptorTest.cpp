@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "LMS64CProtocol.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -9,7 +10,7 @@ using namespace std::literals::string_literals;
 TEST(LMS64CProtocol, FirmwareToDescriptorSetsInfo)
 {
     LMS64CProtocol::FirmwareInfo firmwareInfo{ 1, 3, 2, 4, 5, 6 };
-    SDRDevice::Descriptor descriptor;
+    SDRDescriptor descriptor;
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 
@@ -24,7 +25,7 @@ TEST(LMS64CProtocol, FirmwareToDescriptorSetsInfo)
 TEST(LMS64CProtocol, FirmwareToDescriptorUnknownsLow)
 {
     LMS64CProtocol::FirmwareInfo firmwareInfo{ 0, 0, 0, 0, 0, 0 };
-    SDRDevice::Descriptor descriptor;
+    SDRDescriptor descriptor;
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 
@@ -39,7 +40,7 @@ TEST(LMS64CProtocol, FirmwareToDescriptorUnknownsLow)
 TEST(LMS64CProtocol, FirmwareToDescriptorUnknownsHigh)
 {
     LMS64CProtocol::FirmwareInfo firmwareInfo{ 2000000, 2000001, 2000002, 2000003, 2000004, 2000005 };
-    SDRDevice::Descriptor descriptor;
+    SDRDescriptor descriptor;
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 

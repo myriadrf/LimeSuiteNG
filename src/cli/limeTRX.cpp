@@ -1,7 +1,6 @@
 #include "cli/common.h"
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "limesuite/StreamComposite.h"
+#include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/StreamComposite.h"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -30,23 +29,23 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::ERROR;
-static SDRDevice::LogLevel strToLogLevel(const std::string_view str)
+static LogLevel logVerbosity = LogLevel::Error;
+static LogLevel strToLogLevel(const std::string_view str)
 {
     if ("debug"sv == str)
-        return SDRDevice::LogLevel::DEBUG;
+        return LogLevel::Debug;
     else if ("verbose"sv == str)
-        return SDRDevice::LogLevel::VERBOSE;
+        return LogLevel::Verbose;
     else if ("error"sv == str)
-        return SDRDevice::LogLevel::ERROR;
+        return LogLevel::Error;
     else if ("warning"sv == str)
-        return SDRDevice::LogLevel::WARNING;
+        return LogLevel::Warning;
     else if ("info"sv == str)
-        return SDRDevice::LogLevel::INFO;
-    return SDRDevice::LogLevel::ERROR;
+        return LogLevel::Info;
+    return LogLevel::Error;
 }
 
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -329,7 +328,7 @@ int main(int argc, char** argv)
     int txPacketsInBatch = 0;
     bool useComposite = false;
 
-    SDRDevice::StreamConfig::DataFormat linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+    DataFormat linkFormat = DataFormat::I16;
     static struct option long_options[] = { { "help", no_argument, 0, Args::HELP },
         { "device", required_argument, 0, Args::DEVICE },
         { "chip", required_argument, 0, Args::CHIP },
@@ -363,7 +362,7 @@ int main(int argc, char** argv)
             return printHelp();
         case Args::DEVICE:
             if (optarg != NULL)
-                devName = optarg;
+                devName = std::string(optarg);
             break;
         case Args::CHIP:
             if (optarg != NULL)
@@ -432,9 +431,9 @@ int main(int argc, char** argv)
             if (optarg != NULL)
             {
                 if (strcmp(optarg, "I16") == 0)
-                    linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+                    linkFormat = DataFormat::I16;
                 else if (strcmp(optarg, "I12") == 0)
-                    linkFormat = SDRDevice::StreamConfig::DataFormat::I12;
+                    linkFormat = DataFormat::I12;
                 else
                 {
                     cerr << "Invalid linkFormat " << optarg << std::endl;
@@ -467,32 +466,20 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDRDevice* device;
-    if (!devName.empty())
-        device = ConnectUsingNameHint(devName);
-    else
-    {
-        if (handles.size() > 1)
-        {
-            cerr << "Multiple devices detected, specify which one to use with -d, --device" << endl;
-            return EXIT_FAILURE;
-        }
-        // device not specified, use the only one available
-        device = DeviceRegistry::makeDevice(handles.at(0));
-    }
-
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
-    {
-        cerr << "Device connection failed" << endl;
         return EXIT_FAILURE;
-    }
 
     device->SetMessageLogCallback(LogCallback);
+
+    // if chip index is not specified and device has only one, use it by default
+    if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
+        chipIndexes.push_back(0);
 
     try
     {
         // Samples data streaming configuration
-        SDRDevice::StreamConfig stream;
+        StreamConfig stream;
         for (int i = 0; rx && i < channelCount; ++i)
         {
             stream.channels.at(TRXDir::Rx).push_back(i);
@@ -503,7 +490,7 @@ int main(int argc, char** argv)
             stream.channels.at(TRXDir::Tx).push_back(i);
         }
 
-        stream.format = SDRDevice::StreamConfig::DataFormat::I16;
+        stream.format = DataFormat::I16;
         stream.linkFormat = linkFormat;
 
         if (syncPPS || rxSamplesInPacket || rxPacketsInBatch || txSamplesInPacket || txPacketsInBatch)
@@ -601,8 +588,8 @@ int main(int argc, char** argv)
     FFTPlotter fftplot(sampleRate, fftSize, persistPlotWindows);
 #endif
 
-    SDRDevice::StreamMeta rxMeta;
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta rxMeta;
+    StreamMeta txMeta;
     txMeta.waitForTimestamp = true;
     txMeta.timestamp = sampleRate / 100; // send tx samples 10ms after start
 

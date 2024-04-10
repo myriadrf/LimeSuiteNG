@@ -2,11 +2,14 @@
 #define __lms7002_dlgGFIR_Coefficients__
 
 #include "lms7002_wxgui.h"
-#include "limesuite/commonTypes.h"
-#include "limesuite/LMS7002M.h"
+#include "limesuiteng/types.h"
 
 #include <cstdint>
 #include <vector>
+
+namespace lime {
+class LMS7002M;
+}
 
 class lms7002_dlgGFIR_Coefficients : public wxDialog
 {

@@ -3,8 +3,9 @@
 
 #include "ADF4002/ADF4002.h"
 #include "CDCM6208/CDCM6208_Dev.h"
-#include "limesuite/IComms.h"
-#include "limesuite/SDRDevice.h"
+#include "comms/IComms.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "PacketsFIFO.h"
 #include "protocols/LMS64CProtocol.h"
 
@@ -31,7 +32,7 @@ class LimeSDR_MMX8 : public SDRDevice
     virtual ~LimeSDR_MMX8();
 
     virtual OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
-    virtual const Descriptor& GetDescriptor() const override;
+    virtual const SDRDescriptor& GetDescriptor() const override;
 
     virtual OpStatus Init() override;
     virtual OpStatus Reset() override;
@@ -42,9 +43,12 @@ class LimeSDR_MMX8 : public SDRDevice
     virtual double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     virtual OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) override;
 
-    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index) override;
+    virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) override;
     virtual OpStatus SetNCOFrequency(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset = -1.0) override;
+
+    virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) override;
 
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
@@ -129,14 +133,14 @@ class LimeSDR_MMX8 : public SDRDevice
         uint8_t moduleIndex, const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
     virtual uint32_t StreamTx(
         uint8_t moduleIndex, const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    virtual void StreamStatus(uint8_t moduleIndex, SDRDevice::StreamStats* rx, SDRDevice::StreamStats* tx) override;
+    virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     virtual OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
     virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
-    virtual void SetDataLogCallback(DataCallbackType callback){};
+    virtual void SetDataLogCallback(DataCallbackType callback) override{};
     virtual void SetMessageLogCallback(LogCallbackType callback) override;
 
     virtual void* GetInternalChip(uint32_t index) override;
@@ -150,7 +154,7 @@ class LimeSDR_MMX8 : public SDRDevice
 
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;
-    Descriptor mDeviceDescriptor;
+    SDRDescriptor mDeviceDescriptor;
     std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
     std::vector<LimeSDR_XTRX*> mSubDevices;
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;

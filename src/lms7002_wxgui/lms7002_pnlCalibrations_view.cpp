@@ -1,12 +1,14 @@
 #include "lms7002_pnlCalibrations_view.h"
+#include "commonWxHeaders.h"
 #include "lms7002_gui_utilities.h"
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
 #include "lms7suiteEvents.h"
 #include <wx/busyinfo.h>
 #include "lms7suiteAppFrame.h"
-#include "limesuite/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002M_parameters.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -424,7 +426,7 @@ void lms7002_pnlCalibrations_view::OnbtnCalibrateAll(wxCommandEvent& event)
 
     OpStatus status = lmsControl->CalibrateTx(bandwidth_MHz * 1e6, useExtLoopback);
 
-    if (status != OpStatus::SUCCESS)
+    if (status != OpStatus::Success)
     {
         // wxMessageBox(wxString::Format(_("Tx Calibration Failed: %s"), LMS_GetLastErrorMessage()), _("Info"), wxOK, this);
         UpdateGUI();

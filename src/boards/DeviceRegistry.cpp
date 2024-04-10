@@ -1,6 +1,7 @@
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 #include <mutex>
 #include <map>
 #include <memory>
@@ -18,6 +19,11 @@ void __loadBoardSupport();
 /*******************************************************************
  * Registry implementation
  ******************************************************************/
+std::vector<DeviceHandle> DeviceRegistry::enumerate()
+{
+    return enumerate(DeviceHandle());
+}
+
 std::vector<DeviceHandle> DeviceRegistry::enumerate(const DeviceHandle& hint)
 {
     __loadBoardSupport();
@@ -46,7 +52,7 @@ SDRDevice* DeviceRegistry::makeDevice(const DeviceHandle& handle)
             continue;
 
         auto realHandle = r.front(); //just pick the first
-        return entry.second->make(handle);
+        return entry.second->make(realHandle);
     }
 
     const std::string reason = "No devices found with given handle (" + handle.Serialize() + ")";

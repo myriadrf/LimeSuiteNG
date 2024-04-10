@@ -3,6 +3,9 @@
 
 #include "BufferInterleaving.h"
 
+#include <cassert>
+#include <cstring>
+
 namespace lime {
 
 struct FPGA_RxDataPacket {

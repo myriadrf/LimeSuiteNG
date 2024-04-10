@@ -1,4 +1,5 @@
 #include "lms7002_pnlRFE_view.h"
+#include "commonWxHeaders.h"
 #include <wx/msgdlg.h>
 #include <map>
 #include <vector>
@@ -6,11 +7,11 @@
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7suiteEvents.h"
-#include "limesuite/LMS7002M_parameters.h"
+#include "limesuiteng/LMS7002M_parameters.h"
 #include <tuple>
 #include "wx/spinctrl.h"
-#include "limesuite/SDRDevice.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;

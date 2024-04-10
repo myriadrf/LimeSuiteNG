@@ -7,7 +7,7 @@
 @brief	The FIR coefficient file parser.
 */
 
-#include "limesuite/config.h"
+#include "limesuiteng/config.h"
 
 #include <fstream>
 #include <filesystem>

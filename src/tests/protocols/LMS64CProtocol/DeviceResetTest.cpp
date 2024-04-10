@@ -68,7 +68,7 @@ TEST(LMS64CProtocol, DeviceResetTestCorrectCommand)
 
     OpStatus returnValue = LMS64CProtocol::DeviceReset(mockPort, socIndex, subdevice);
 
-    EXPECT_EQ(returnValue, OpStatus::SUCCESS);
+    EXPECT_EQ(returnValue, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, DeviceResetTestNotFullyWritten)

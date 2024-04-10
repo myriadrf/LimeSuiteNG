@@ -11,12 +11,14 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/gauge.h>
+#include <wx/settings.h>
 
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/wfstream.h>
 
 #include "LMSBoards.h"
+#include "limesuiteng/SDRDescriptor.h"
 
 const long LMS_Programing_wxgui::ID_PROGRAMING_FINISHED_EVENT = wxNewId();
 const long LMS_Programing_wxgui::ID_PROGRAMING_STATUS_EVENT = wxNewId();
@@ -114,7 +116,7 @@ bool LMS_Programing_wxgui::Initialize(lime::SDRDevice* device)
     if (mDevice)
     {
         cmbDevice->Clear();
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
 
         for (const auto& memoryDevice : desc.memoryDevices)
         {
@@ -140,7 +142,7 @@ void LMS_Programing_wxgui::OnbtnOpenClick(wxCommandEvent& event)
     wxString deviceSelection = cmbDevice->GetStringSelection();
     if (mDevice)
     {
-        const SDRDevice::Descriptor& desc = mDevice->GetDescriptor();
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
 
         if (desc.name.find(lime::GetDeviceName(lime::LMS_DEV_LIMESDR)) != std::string::npos)
         {
@@ -293,7 +295,7 @@ void LMS_Programing_wxgui::DoProgramming()
     evt.SetEventObject(this);
     evt.SetId(ID_PROGRAMING_FINISHED_EVENT);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
-    evt.SetString(status == OpStatus::SUCCESS ? _("Programming Completed!") : _("Programming failed!"));
+    evt.SetString(status == OpStatus::Success ? _("Programming Completed!") : _("Programming failed!"));
 
     wxPostEvent(this, evt);
     mProgrammingInProgress.store(false);

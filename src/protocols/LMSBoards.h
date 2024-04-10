@@ -7,6 +7,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 
 using namespace std::literals::string_view_literals;
 
@@ -42,7 +43,8 @@ enum eLMS_DEV {
     LMS_DEV_LIMESDR_X3 = 26, // 3xLMS
     LMS_DEV_LIMESDR_XTRX = 27, // XTRX
     LMS_DEV_LIMESDR_MMX8 = 28,
-    LMS_DEV_EXTERNAL_AMBERSDR = 29,
+    LMS_DEV_LIMESDR_MICRO = 29,
+    LMS_DEV_EXTERNAL_XSDR = 30,
 
     LMS_DEV_COUNT
 };
@@ -77,6 +79,8 @@ constexpr std::array<const std::string_view, LMS_DEV_COUNT> LMS_DEV_NAMES = {
     "LimeSDR X3"sv,
     "LimeSDR XTRX"sv,
     "LimeSDR MMX8"sv,
+    "LimeSDR Micro"sv,
+    "XSDR"sv,
 };
 
 static constexpr const std::string_view GetDeviceName(const eLMS_DEV device)

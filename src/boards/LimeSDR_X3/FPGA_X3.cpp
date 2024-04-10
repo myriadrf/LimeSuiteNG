@@ -1,5 +1,5 @@
 #include "FPGA_X3.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include <ciso646>
 #include <vector>
 #include <map>
@@ -30,8 +30,8 @@ OpStatus FPGA_X3::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double tx
     rxClocks[1].index = 1;
     rxClocks[1].outFrequency = rxRate_Hz;
     rxClocks[1].phaseShift_deg = rxPhase;
-    if (FPGA_X3::SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (FPGA_X3::SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) != OpStatus::Success)
+        return OpStatus::Error;
 
     std::vector<FPGA_PLL_clock> txClocks(2);
     txClocks[0].index = 0;
@@ -39,10 +39,10 @@ OpStatus FPGA_X3::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double tx
     txClocks[1].index = 1;
     txClocks[1].outFrequency = txRate_Hz;
     txClocks[1].phaseShift_deg = txPhase;
-    if (FPGA_X3::SetPllFrequency(txPLLindex, txRate_Hz, txClocks) != OpStatus::SUCCESS)
-        return OpStatus::ERROR;
+    if (FPGA_X3::SetPllFrequency(txPLLindex, txRate_Hz, txClocks) != OpStatus::Success)
+        return OpStatus::Error;
 
-    return OpStatus::SUCCESS;
+    return OpStatus::Success;
 }
 
 OpStatus FPGA_X3::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, std::vector<FPGA_PLL_clock>& clocks)
@@ -59,7 +59,7 @@ OpStatus FPGA_X3::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipI
     if (chipIndex == 0)
         return FPGA::SetInterfaceFreq(txRate_Hz, rxRate_Hz, chipIndex);
     else
-        return OpStatus::SUCCESS;
+        return OpStatus::Success;
 }
 
 } //namespace lime

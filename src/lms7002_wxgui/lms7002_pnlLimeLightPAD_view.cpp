@@ -1,6 +1,10 @@
 #include "lms7002_pnlLimeLightPAD_view.h"
+#include "commonWxHeaders.h"
+#include <wx/notebook.h>
 #include <map>
 #include "lms7002_gui_utilities.h"
+#include "limesuiteng/LMS7002M_parameters.h"
+#include <wx/spinctrl.h>
 using namespace lime;
 
 lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(

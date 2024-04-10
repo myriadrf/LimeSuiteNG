@@ -1,4 +1,5 @@
 #include "LMS64C_LMS7002M_Over_PCIe.h"
+#include "protocols/LMS64CProtocol.h"
 
 using namespace lime;
 

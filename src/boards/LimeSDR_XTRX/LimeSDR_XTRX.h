@@ -2,17 +2,16 @@
 #define LIME_LIMESDR_XTRX_H
 
 #include "LMS7002M_SDRDevice.h"
-#include "limesuite/IComms.h"
 
 #include <vector>
 #include <mutex>
-#include <array>
 #include <memory>
 
 namespace lime {
 
 class LitePCIe;
 class ISerialPort;
+class IComms;
 
 static const float XTRX_DEFAULT_REFERENCE_CLOCK = 26e6;
 

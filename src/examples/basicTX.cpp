@@ -4,8 +4,7 @@
     @brief  minimal TX example
  */
 
-#include "limesuite/DeviceRegistry.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
 #include <math.h>
@@ -24,8 +23,8 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static SDRDevice::LogLevel logVerbosity = SDRDevice::LogLevel::VERBOSE;
-static void LogCallback(SDRDevice::LogLevel lvl, const char* msg)
+static LogLevel logVerbosity = LogLevel::Verbose;
+static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -56,7 +55,7 @@ int main(int argc, char** argv)
     device->Init();
 
     // RF parameters
-    SDRDevice::SDRConfig config;
+    SDRConfig config;
     config.channel[0].tx.enabled = true;
     config.channel[0].rx.enabled = false;
     config.channel[0].rx.centerFrequency = frequencyLO;
@@ -79,12 +78,12 @@ int main(int argc, char** argv)
         std::cout << "SDR configured in " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
 
         // Samples data streaming configuration
-        SDRDevice::StreamConfig stream;
+        StreamConfig stream;
 
         stream.channels[TRXDir::Tx] = { 0 };
 
-        stream.format = SDRDevice::StreamConfig::DataFormat::F32;
-        stream.linkFormat = SDRDevice::StreamConfig::DataFormat::I16;
+        stream.format = DataFormat::F32;
+        stream.linkFormat = DataFormat::I16;
 
         device->StreamSetup(stream, chipIndex);
         device->StreamStart(chipIndex);
@@ -126,7 +125,7 @@ int main(int argc, char** argv)
     auto t1 = startTime;
     auto t2 = t1;
 
-    SDRDevice::StreamMeta txMeta;
+    StreamMeta txMeta;
     txMeta.timestamp = 0;
     txMeta.waitForTimestamp = true;
     txMeta.flushPartialPacket = true;

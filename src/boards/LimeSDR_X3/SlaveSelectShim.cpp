@@ -1,6 +1,6 @@
 #include "SlaveSelectShim.h"
 #include <memory>
-#include "limesuite/IComms.h"
+#include "comms/IComms.h"
 
 using namespace lime;
 

@@ -6,7 +6,7 @@
 
 #include "ADF4002_wxgui.h"
 #include "ADF4002.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 
 #include <vector>
 #include <wx/msgdlg.h>
@@ -19,6 +19,7 @@
 #include <wx/button.h>
 #include <wx/string.h>
 #include <wx/combobox.h>
+#include <wx/settings.h>
 
 using namespace std;
 using namespace lime;

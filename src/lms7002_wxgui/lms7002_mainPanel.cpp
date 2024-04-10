@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "commonWxHeaders.h"
 #include "lms7002_mainPanel.h"
 #include "lms7002_pnlAFE_view.h"
 #include "lms7002_pnlBIAS_view.h"
@@ -22,13 +23,15 @@
 #include <wx/msgdlg.h>
 #include <iostream>
 #include <wx/filedlg.h>
+#include <wx/notebook.h>
+#include <wx/bookctrl.h>
 #include "lms7suiteEvents.h"
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"
 
-#include "limesuite/SDRDevice.h"
-#include "limesuite/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
 
 using namespace std;
 using namespace lime;
@@ -171,11 +174,11 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
 
     lms7002_pnlMCU_BD_view* mTabMCU = new lms7002_pnlMCU_BD_view(tabsNotebook, ID_TAB_MCU);
     tabsNotebook->AddPage(mTabMCU, _("MCU"));
-    mTabs[ID_TAB_MCU] = tab;
+    mTabs[ID_TAB_MCU] = mTabMCU;
 
     lms7002_pnlR3_view* mTabR3 = new lms7002_pnlR3_view(tabsNotebook, ID_TAB_R3);
     tabsNotebook->AddPage(mTabR3, _("R3 Controls"));
-    mTabs[ID_TAB_R3] = tab;
+    mTabs[ID_TAB_R3] = mTabR3;
 #undef CreatePage
 
     mainSizer->Add(tabsNotebook, 0, wxEXPAND, 5);
@@ -303,7 +306,7 @@ void lms7002_mainPanel::OnOpenProject(wxCommandEvent& event)
     }
     try
     {
-        if (chip->LoadConfig(dlg.GetPath().ToStdString()) != OpStatus::SUCCESS)
+        if (chip->LoadConfig(dlg.GetPath().ToStdString()) != OpStatus::Success)
             wxMessageBox(_("Failed to load file"), _("Warning"));
     } catch (std::runtime_error& e)
     {
@@ -328,7 +331,7 @@ void lms7002_mainPanel::OnSaveProject(wxCommandEvent& event)
         return;
     }
 
-    if (chip->SaveConfig(dlg.GetPath().ToStdString()) != OpStatus::SUCCESS)
+    if (chip->SaveConfig(dlg.GetPath().ToStdString()) != OpStatus::Success)
         wxMessageBox(_("Failed to save file"), _("Warning"));
 }
 

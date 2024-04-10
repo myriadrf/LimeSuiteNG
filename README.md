@@ -1,31 +1,45 @@
 # Lime Suite NG
 
-Lime Suite NG is a collection of software supporting several hardware platforms
-based on the LMS7002M transceiver RFIC, such as LimeSDR family. It contains the
-following components:
-* **LimeSuite library** that provides C-style API;
-* **LimeSuiteGUI** application for accessing low-level chip and board settings, displaying FFT, updating firmware and more;
-* **SoapyLMS** plugin for LimeSDR support in SoapySDR;
-* **LimeUtil** command line tool for listing LimeSDR devices and updating firmware;
-* **LimeQuickTest** application to run some basic tests;
-* **LimeSuite API examples** (basicRX, basicTX, singleRX, dualRXTX, gpio_example);
-* **Octave plugin** (provides some basic functionality only);
+**Build Status**: ![Cross platform build status](https://github.com/myriadrf/LimeSuiteNG/actions/workflows/cmake.yml/badge.svg)
 
-## Build Status
-- GitHub: ![Cross platform build status](https://github.com/myriadrf/LimeSuiteNG/actions/workflows/cmake.yml/badge.svg)
+Lime Suite NG is a collection of software supporting several hardware platforms
+based on the LMS7002M transceiver RFIC, such as [LimeSDR](https://wiki.myriadrf.org/LimeSDR) family. It contains the
+following components:
+* **limesuiteng** library that provides C++ API ;
+* **limeGUI** graphical user interface for manipulating low-level chip functions and board settings, displaying FFT;
+
+Plugins for external software:
+* **SoapyLMS** LimeSDR devices support for SoapySDR;
+
+## Supported devices
+* [LimeSDR-USB](https://wiki.myriadrf.org/LimeSDR-USB)
+* [LimeSDR Mini](https://wiki.myriadrf.org/LimeSDR-Mini)
+* [LimeSDR Mini v2](https://limesdr-mini.myriadrf.org/index.html)
+* [LimeSDR XTRX](https://limesdr-xtrx.myriadrf.org/)
+
+## Installing
+
+### Linux:
+* Building from source:
+```
+git clone https://github.com/myriadrf/LimeSuiteNG
+cd LimeSuiteNG
+sudo ./install_dependencies.sh
+cmake -B build && cd build
+make
+sudo make install
+```
+
+* Installing from packages:
+**TODO**
+
+### Windows:
+**TODO**
 
 ## Documentation
-
-Find build and install instructions for Lime Suite on the wiki:
-
-* https://wiki.myriadrf.org/Lime_Suite
-
 Information about LimeSDR boards:
-
 * https://wiki.myriadrf.org/LimeSDR
 
 ## Help and support
-
 The discourse forum is a good way to find help and discuss topics:
-
 * https://discourse.myriadrf.org/

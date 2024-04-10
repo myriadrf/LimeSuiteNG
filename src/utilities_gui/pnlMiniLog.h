@@ -3,7 +3,7 @@
 
 #include <deque>
 #include <utility> //pair
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 class wxChoice;
 class wxButton;
@@ -11,7 +11,7 @@ class wxTextCtrl;
 class wxCheckBox;
 class wxTextAttr;
 
-#include "wx/panel.h"
+#include <wx/panel.h>
 
 class pnlMiniLog : public wxPanel
 {

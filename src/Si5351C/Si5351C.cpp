@@ -5,7 +5,7 @@
 */
 
 #include "Si5351C.h"
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 #include <cmath>
 #include <iomanip>
 #include <fstream>
@@ -15,7 +15,7 @@
 #include <cassert>
 #include <ciso646> // alternative operators for visual c++: not, and, or...
 #include <vector>
-#include "limesuite/IComms.h"
+#include "comms/IComms.h"
 
 using namespace std;
 using namespace lime;

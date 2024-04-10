@@ -4,9 +4,8 @@
     #include <pthread.h>
 #else
     #include <windows.h>
-    #undef ERROR
 #endif
-#include "Logger.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 

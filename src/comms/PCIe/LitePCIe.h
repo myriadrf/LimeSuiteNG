@@ -5,8 +5,8 @@
 #include <vector>
 #include <filesystem>
 
-#include "limesuite/config.h"
-#include "limesuite/OpStatus.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/OpStatus.h"
 
 namespace lime {
 

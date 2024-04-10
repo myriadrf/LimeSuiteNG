@@ -1,7 +1,7 @@
 #ifndef LMS7SUITE_EVENT_IDS_H
 #define LMS7SUITE_EVENT_IDS_H
 
-#include <wx/wx.h>
+#include <wx/event.h>
 
 wxDECLARE_EVENT(CONTROL_PORT_CONNECTED, wxCommandEvent);
 wxDECLARE_EVENT(DATA_PORT_CONNECTED, wxCommandEvent);

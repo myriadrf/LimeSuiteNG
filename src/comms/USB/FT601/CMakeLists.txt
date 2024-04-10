@@ -25,6 +25,8 @@ if(WIN32)
 
     message(STATUS "FTDI_INCLUDE_DIRS: ${FTDI_INCLUDE_DIRS}")
     message(STATUS "FTDI_LIBRARIES: ${FTDI_LIBRARIES}")
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${FTDI_LIBRARIES})
+    target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${FTDI_INCLUDE_DIRS})
 elseif(UNIX)
     find_package(libusb-1.0)
     set_package_properties(libusb-1.0 PROPERTIES
@@ -36,8 +38,15 @@ elseif(UNIX)
     if (NOT ${FTDI_FOUND})
         message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
     endif()
-    set(FTDI_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIRS})
-    set(FTDI_LIBRARIES ${LIBUSB_1_LIBRARIES})
+
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIBUSB_1_LIBRARIES})
+
+    if(LIBUSB_1_INCLUDE_DIR)
+        target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}>
+            $<INSTALL_INTERFACE:include>
+        )
+    endif()
 endif()
 
 include(FeatureSummary)
@@ -53,6 +62,5 @@ set(CONNECTION_FT601_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/USBTransferContext_FT601.cpp
 )
 
-target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC ${FTDI_INCLUDE_DIRS} ${THIS_SOURCE_DIR})
+target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CONNECTION_FT601_SOURCES})
-target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${FTDI_LIBRARIES})

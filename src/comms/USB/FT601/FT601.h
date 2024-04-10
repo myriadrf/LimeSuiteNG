@@ -1,7 +1,7 @@
 #pragma once
 
-#include "USBGeneric.h"
-#include "limesuite/config.h"
+#include "comms/USB/USBGeneric.h"
+#include "limesuiteng/config.h"
 #include "USBTransferContext_FT601.h"
 
 #ifndef __unix__

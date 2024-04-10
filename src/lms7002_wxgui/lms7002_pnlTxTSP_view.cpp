@@ -1,10 +1,13 @@
 #include "lms7002_pnlTxTSP_view.h"
+#include "commonWxHeaders.h"
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7002_dlgGFIR_Coefficients.h"
 #include "lms7suiteAppFrame.h"
-#include "limesuite/LMS7002M.h"
-#include "Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
+
+#include <wx/msgdlg.h>
 
 using namespace lime;
 using namespace LMS7002_WXGUI;
@@ -1460,7 +1463,7 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
 }
 
-void lms7002_pnlTXTSP_view::Initialize(ILMS7002MTab::ControllerType* pControl)
+void lms7002_pnlTXTSP_view::Initialize(LMS7002M* pControl)
 {
     ILMS7002MTab::Initialize(pControl);
     if (pControl == nullptr)
@@ -1650,7 +1653,7 @@ void lms7002_pnlTXTSP_view::OnbtnSetLPFClick(wxCommandEvent& event)
     txtLPFBW->GetValue().ToDouble(&bw);
 
     if (lmsControl->SetGFIRFilter(TRXDir::Tx, mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB, true, bw * 1e6) !=
-        OpStatus::SUCCESS)
+        OpStatus::Success)
         wxMessageBox(_("GFIR configuration failed"), _("Error"));
     UpdateGUI(); // API changes nco selection
 }

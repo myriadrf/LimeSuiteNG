@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "BufferInterleaving.h"
-#include "limesuite/SDRDevice.h"
+#include "limesuiteng/SDRDevice.h"
 #include "protocols/DataPacket.h"
 
 namespace lime {
@@ -23,11 +23,7 @@ template<class T> class TxBufferManager
     /// @param maxSamplesInPkt The maximum amount of samples allowed in a single packet.
     /// @param maxPacketsInBatch The maximum amount of packets allowed in a single transfer batch.
     /// @param inputFormat The input format of the samples for the device.
-    TxBufferManager(bool mimo,
-        bool compressed,
-        uint32_t maxSamplesInPkt,
-        uint32_t maxPacketsInBatch,
-        SDRDevice::StreamConfig::DataFormat inputFormat)
+    TxBufferManager(bool mimo, bool compressed, uint32_t maxSamplesInPkt, uint32_t maxPacketsInBatch, DataFormat inputFormat)
         : header(nullptr)
         , payloadPtr(nullptr)
         , mData(nullptr)
@@ -39,8 +35,8 @@ template<class T> class TxBufferManager
         , payloadSize(0)
     {
         bytesForFrame = (compressed ? 3 : 4) * (mimo ? 2 : 1);
-        conversion.srcFormat = inputFormat; //SDRDevice::StreamConfig::DataFormat::F32;
-        conversion.destFormat = compressed ? SDRDevice::StreamConfig::DataFormat::I12 : SDRDevice::StreamConfig::DataFormat::I16;
+        conversion.srcFormat = inputFormat; //DataFormat::F32;
+        conversion.destFormat = compressed ? DataFormat::I12 : DataFormat::I16;
         conversion.channelCount = mimo ? 2 : 1;
         maxPayloadSize = std::min(4080u, bytesForFrame * maxSamplesInPkt);
     }
