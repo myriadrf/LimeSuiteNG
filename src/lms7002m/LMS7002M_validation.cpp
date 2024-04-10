@@ -84,4 +84,3 @@ bool LMS7002M_Validate(const SDRConfig& cfg, std::vector<std::string>& errors, c
 }
 
 } // namespace lime
-

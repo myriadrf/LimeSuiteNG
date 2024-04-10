@@ -1326,8 +1326,7 @@ std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phas
 
 float_type LMS7002M::GetFrequencyCGEN()
 {
-    float_type dMul =
-        (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7_DIV_OUTCH_CGEN, true) + 1); //DIV_OUTCH_CGEN
+    float_type dMul = (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7_DIV_OUTCH_CGEN, true) + 1); //DIV_OUTCH_CGEN
     uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0, true); //read whole register to reduce SPI transfers
     uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x0087, 15, 0, true);
     return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
@@ -2960,13 +2959,12 @@ OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const 
 
 void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
-    int iqcorr =
-        static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_IQCORR_TXTSP : LMS7_IQCORR_RXTSP) << 4) >>
-        4; //sign extend 12-bit
-    int gcorri = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRI_TXTSP : LMS7_GCORRI_RXTSP)); //unsigned 11-bit
-    int gcorrq = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRQ_TXTSP : LMS7_GCORRQ_RXTSP)); //unsigned 11-bit
+    int iqcorr = static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_IQCORR_TXTSP : LMS7_IQCORR_RXTSP) << 4) >>
+                 4; //sign extend 12-bit
+    int gcorri =
+        static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRI_TXTSP : LMS7_GCORRI_RXTSP)); //unsigned 11-bit
+    int gcorrq =
+        static_cast<int16_t>(this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_GCORRQ_TXTSP : LMS7_GCORRQ_RXTSP)); //unsigned 11-bit
 
     phase = (M_PI / 2) * iqcorr / 2047.0;
     gainI = gcorri / 2047.0;

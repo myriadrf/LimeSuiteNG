@@ -95,9 +95,8 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
                 make_tuple(LMS7_PD_RLOOPB_1_RFE, wxT("Loopback 1"), wxT("Power control signal for RXFE loopback 1")),
                 make_tuple(LMS7_PD_RLOOPB_2_RFE, wxT("Loopback 2"), wxT("Power control signal for RXFE loopback 2")),
                 make_tuple(LMS7_PD_MXLOBUF_RFE, wxT("Mixer LO buffer"), wxT("Power control signal for RXFE mixer lo buffer")),
-                make_tuple(LMS7_PD_QGEN_RFE,
-                    wxT("Quadrature LO generator"),
-                    wxT("Power control signal for RXFE Quadrature LO generator")),
+                make_tuple(
+                    LMS7_PD_QGEN_RFE, wxT("Quadrature LO generator"), wxT("Power control signal for RXFE Quadrature LO generator")),
                 make_tuple(LMS7_PD_RSSI_RFE, wxT("RSSI"), wxT("Power control signal for RXFE RSSI")),
                 make_tuple(LMS7_PD_TIA_RFE, wxT("TIA"), wxT("Power control signal for RXFE TIA")),
                 make_tuple(LMS7_EN_G_RFE, wxT("Enable RFE module"), wxT("Enable control for all the RFE_1 power downs")) };
@@ -128,12 +127,10 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
                 make_tuple(LMS7_EN_INSHSW_LB2_RFE,
                     wxT("input of loopback 2"),
                     wxT("Enables the input shorting switch at the input of the loopback 2 (in parallel with LNAW mixer)")),
-                make_tuple(LMS7_EN_INSHSW_L_RFE,
-                    wxT("input of LNAL"),
-                    wxT("Enables the input shorting switch at the input of the LNAL")),
-                make_tuple(LMS7_EN_INSHSW_W_RFE,
-                    wxT("input of LNAW"),
-                    wxT("Enables the input shorting switch at the input of the LNAW"))
+                make_tuple(
+                    LMS7_EN_INSHSW_L_RFE, wxT("input of LNAL"), wxT("Enables the input shorting switch at the input of the LNAL")),
+                make_tuple(
+                    LMS7_EN_INSHSW_W_RFE, wxT("input of LNAW"), wxT("Enables the input shorting switch at the input of the LNAW"))
             };
             for (const auto& row : rows)
                 sbSizerInputShorting->Add(
