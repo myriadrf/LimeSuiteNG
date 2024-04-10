@@ -123,9 +123,9 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
         if (antennaNames[j] == name)
             return j;
     }
-    std::cerr << "Antenna (" << name.c_str() << " not found. Available:" << std::endl;
+    std::cerr << "Antenna ("sv << name << " not found. Available:"sv << std::endl;
     for (const auto& iter : antennaNames)
-        std::cerr << "\t\"" << iter.c_str() << "\"" << std::endl;
+        std::cerr << "\t\""sv << iter << "\""sv << std::endl;
     return -1;
 }
 
@@ -182,11 +182,11 @@ int main(int argc, char** argv)
 
             if (chipIndexes.empty())
             {
-                cerr << "Invalid chip index" << endl;
+                cerr << "Invalid chip index"sv << endl;
                 return -1;
             }
             else
-                cerr << "Chip count " << chipIndexes.size() << endl;
+                cerr << "Chip count "sv << chipIndexes.size() << endl;
             break;
         case Args::LOG:
             if (optarg != NULL)
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -295,12 +295,12 @@ int main(int argc, char** argv)
             if (!chip)
             {
                 DeviceRegistry::freeDevice(device);
-                cerr << "Failed to get internal chip: " << moduleId << endl;
+                cerr << "Failed to get internal chip: "sv << moduleId << endl;
                 return EXIT_FAILURE;
             }
             if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
             {
-                cerr << "Error loading file: " << configFilepath << endl;
+                cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
 
@@ -327,19 +327,19 @@ int main(int argc, char** argv)
 
             if (device->Configure(config, moduleId) != OpStatus::Success)
             {
-                cerr << "Failed to configure device (chip" << moduleId << ")" << std::endl;
+                cerr << "Failed to configure device (chip"sv << moduleId << ")"sv << std::endl;
                 return EXIT_FAILURE;
             }
         }
     } catch (std::runtime_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "Config failed: " << e.what() << endl;
+        cerr << "Config failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     } catch (std::logic_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "Config failed: " << e.what() << endl;
+        cerr << "Config failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     }
 

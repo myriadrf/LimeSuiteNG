@@ -206,7 +206,7 @@ static bool DisableLPF()
     }
 
     /* Making sure that tia isn't -12dB */
-    if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -217,7 +217,7 @@ static bool DisableLPF()
 
     isLPFEnabled = false;
 
-    if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -238,7 +238,7 @@ static bool EnableLPF()
             StopHW();
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
             return false;
         }
 
@@ -246,7 +246,7 @@ static bool EnableLPF()
             return false;
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
             return false;
         }
         isLPFEnabled = true;

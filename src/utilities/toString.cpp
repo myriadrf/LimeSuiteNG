@@ -7,8 +7,8 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
-static const std::string cRx{ "Rx" };
-static const std::string cTx{ "Tx" };
+static const std::string cRx{ "Rx"s };
+static const std::string cTx{ "Tx"s };
 const std::string& ToString(TRXDir dir)
 {
     switch (dir)

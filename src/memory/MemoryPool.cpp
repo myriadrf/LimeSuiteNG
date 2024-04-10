@@ -72,14 +72,14 @@ void* MemoryPool::Allocate(int size)
 {
     if (size > mBlockSize)
     {
-        const std::string ctemp = "Memory request for " + name + " is too big (" + std::to_string(size) + "), max allowed is " +
+        const std::string ctemp = "Memory request for "s + name + " is too big ("s + std::to_string(size) + "), max allowed is "s +
                                   std::to_string(mBlockSize);
         throw std::runtime_error(ctemp);
     }
     std::lock_guard<std::mutex> lock(mLock);
     if (mFreeBlocks.empty())
     {
-        throw std::runtime_error("No memory in pool " + name);
+        throw std::runtime_error("No memory in pool "s + name);
     }
 
     void* ptr = mFreeBlocks.top();
@@ -116,7 +116,7 @@ void MemoryPool::Free(void* ptr)
             std::stringstream ss;
             ss << ptr;
 
-            throw std::runtime_error("Pointer " + ss.str() + " does not belong to pool " + name);
+            throw std::runtime_error("Pointer "s + ss.str() + " does not belong to pool "s + name);
         }
     }
     ++freeCnt;

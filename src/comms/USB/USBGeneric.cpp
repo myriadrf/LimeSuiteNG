@@ -91,7 +91,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view seri
 
         if (returnCode < 0)
         {
-            lime::error("failed to get device description");
+            lime::error("failed to get device description"s);
             continue;
         }
 
@@ -114,7 +114,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view seri
 
             if (stringLength < 0)
             {
-                lime::error("failed to get serial number");
+                lime::error("Failed to get serial number"s);
             }
             else
             {
@@ -135,17 +135,17 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view seri
 
     if (dev_handle == nullptr)
     {
-        lime::error("libusb_open failed");
+        lime::error("libusb_open failed"s);
         return false;
     }
 
     if (libusb_kernel_driver_active(dev_handle, 0) == 1) // Find out if kernel driver is attached
     {
-        lime::info("Kernel Driver Active");
+        lime::info("Kernel Driver Active"s);
 
         if (libusb_detach_kernel_driver(dev_handle, 0) == 0) // Detach it
         {
-            lime::info("Kernel Driver Detached!");
+            lime::info("Kernel Driver Detached!"s);
         }
     }
 
@@ -261,7 +261,7 @@ static void process_libusbtransfer(libusb_transfer* trans)
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_ERROR:
-        lime::error("USB TRANSFER ERROR");
+        lime::error("USB TRANSFER ERROR"s);
         context->bytesXfered = trans->actual_length;
         context->done.store(true);
         break;
@@ -270,13 +270,13 @@ static void process_libusbtransfer(libusb_transfer* trans)
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_OVERFLOW:
-        lime::error("USB transfer overflow");
+        lime::error("USB transfer overflow"s);
         break;
     case LIBUSB_TRANSFER_STALL:
-        lime::error("USB transfer stalled");
+        lime::error("USB transfer stalled"s);
         break;
     case LIBUSB_TRANSFER_NO_DEVICE:
-        lime::error("USB transfer no device");
+        lime::error("USB transfer no device"s);
         context->done.store(true);
         break;
     }

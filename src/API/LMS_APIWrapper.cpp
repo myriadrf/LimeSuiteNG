@@ -117,7 +117,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device)
 {
     if (device == nullptr)
     {
-        lime::error("Device cannot be NULL.");
+        lime::error("Device cannot be NULL."s);
         return nullptr;
     }
 
@@ -134,7 +134,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
 
     if (chan >= apiDevice->GetRFSOCDescriptor().channelCount)
     {
-        lime::error("Invalid channel number.");
+        lime::error("Invalid channel number."s);
         return nullptr;
     }
 
@@ -202,7 +202,7 @@ API_EXPORT int CALL_CONV LMS_Open(lms_device_t** device, const lms_info_str_t in
 {
     if (device == nullptr)
     {
-        lime::error("Device pointer cannot be NULL.");
+        lime::error("Device pointer cannot be NULL."s);
         return -1;
     }
 
@@ -215,7 +215,7 @@ API_EXPORT int CALL_CONV LMS_Open(lms_device_t** device, const lms_info_str_t in
 
             if (dev == nullptr)
             {
-                lime::error("Unable to open device.");
+                lime::error("Unable to open device."s);
                 return -1;
             }
 
@@ -226,7 +226,7 @@ API_EXPORT int CALL_CONV LMS_Open(lms_device_t** device, const lms_info_str_t in
         }
     }
 
-    lime::error("Specified device could not be found.");
+    lime::error("Specified device could not be found."s);
     return -1;
 }
 
@@ -293,7 +293,7 @@ API_EXPORT int CALL_CONV LMS_EnableChannel(lms_device_t* device, bool dir_tx, si
         apiDevice->device->EnableChannel(apiDevice->moduleIndex, direction, chan, enabled);
     } catch (...)
     {
-        lime::error("Device configuration failed.");
+        lime::error("Device configuration failed."s);
 
         return -1;
     }
@@ -314,7 +314,7 @@ API_EXPORT int CALL_CONV LMS_SetSampleRate(lms_device_t* device, float_type rate
         apiDevice->device->SetSampleRate(apiDevice->moduleIndex, lime::TRXDir::Rx, 0, rate, oversample);
     } catch (...)
     {
-        lime::error("Failed to set sampling rate.");
+        lime::error("Failed to set sampling rate."s);
 
         return -1;
     }
@@ -684,7 +684,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
 
     if (sig > LMS_TESTSIG_DC)
     {
-        lime::error("Invalid signal.");
+        lime::error("Invalid signal."s);
         return -1;
     }
 
@@ -718,7 +718,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
                 lime::ChannelConfig::Direction::TestSignal::Divide::Div4,
                 lime::ChannelConfig::Direction::TestSignal::Scale::Full };
         default:
-            throw std::logic_error("Unexpected enumerator lms_testsig_t value");
+            throw std::logic_error("Unexpected enumerator lms_testsig_t value"s);
         }
     };
 
@@ -743,7 +743,7 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
 
     if (stream == nullptr)
     {
-        lime::error("Stream cannot be NULL.");
+        lime::error("Stream cannot be NULL."s);
         return -1;
     }
 
@@ -768,7 +768,7 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         config.format = lime::DataFormat::I12;
         break;
     default:
-        return lime::error("Setup stream failed: invalid data format.");
+        return lime::error("Setup stream failed: invalid data format."s);
     }
 
     switch (stream->linkFmt)
@@ -808,7 +808,7 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
 
     if (stream == nullptr)
     {
-        lime::error("Stream cannot be NULL.");
+        lime::error("Stream cannot be NULL."s);
         return -1;
     }
 
@@ -902,7 +902,7 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
     const auto direction = stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
     if (direction == lime::TRXDir::Tx)
     {
-        lime::error("Invalid direction.");
+        lime::error("Invalid direction."s);
         return -1;
     }
 
@@ -1011,7 +1011,7 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
     const auto direction = stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
     if (direction == lime::TRXDir::Rx)
     {
-        lime::error("Invalid direction.");
+        lime::error("Invalid direction."s);
         return -1;
     }
 
@@ -1698,7 +1698,7 @@ API_EXPORT int CALL_CONV LMS_GetNCOPhase(lms_device_t* device, bool dir_tx, size
 
     if (phase != nullptr)
     {
-        apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, "MAC", ch);
+        apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, "MAC"s, ch);
 
         for (std::size_t i = 0; i < LMS_NCO_VAL_COUNT; ++i)
         {
@@ -1927,7 +1927,7 @@ API_EXPORT int CALL_CONV LMS_Program(
         return OpStatusToReturnCode(status);
     } catch (std::out_of_range& e)
     {
-        lime::error("Invalid programming mode.");
+        lime::error("Invalid programming mode."s);
 
         return -1;
     }
@@ -1941,7 +1941,8 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
         return -1;
     }
 
-    if (LMS_WriteCustomBoardParam(device, BOARD_PARAM_DAC, val, "") < 0)
+    std::vector<lime::CustomParameterIO> parameter{ { BOARD_PARAM_DAC, static_cast<double>(val), ""s } };
+    if (apiDevice->device->CustomParameterWrite(parameter) != OpStatus::Success)
     {
         return -1;
     }
@@ -1957,13 +1958,13 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
             return OpStatusToReturnCode(status);
         } catch (std::out_of_range& e)
         {
-            lime::error("VCTCXO address not found.");
+            lime::error("VCTCXO address not found."s);
 
             return -1;
         }
     } catch (std::out_of_range& e)
     {
-        lime::error("EEPROM not found.");
+        lime::error("EEPROM not found."s);
 
         return -1;
     } catch (...)
@@ -2009,12 +2010,12 @@ API_EXPORT int CALL_CONV LMS_VCTCXORead(lms_device_t* device, uint16_t* val)
             return OpStatusToReturnCode(status);
         } catch (std::out_of_range& e)
         {
-            lime::error("VCTCXO address not found.");
+            lime::error("VCTCXO address not found."s);
             return VCTCXOReadFallbackPath(apiDevice, val);
         }
     } catch (std::out_of_range& e)
     {
-        lime::warning("EEPROM not found.");
+        lime::warning("EEPROM not found."s);
         return VCTCXOReadFallbackPath(apiDevice, val);
     } catch (...)
     {

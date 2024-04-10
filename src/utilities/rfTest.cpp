@@ -26,7 +26,7 @@ SDRDevice* device = nullptr;
 
 static const double frequencyLO = 2e9;
 static uint8_t chipIndex = 0; // device might have several RF chips
-std::string_view iniArg {""sv};
+std::string_view iniArg{ ""sv };
 
 std::atomic<bool> runForever;
 void intHandler(int dummy)

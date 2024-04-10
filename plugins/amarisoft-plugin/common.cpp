@@ -129,10 +129,10 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
         logVerbosity >= LogLevel::Warning)
     {
         stringstream ss;
-        ss << "Rx| Loss: " << status.rx.loss << " overrun: " << status.rx.overrun << " rate: " << status.rx.dataRate_Bps / 1e6
-           << " MB/s"
-           << "\nTx| Late: " << status.tx.late << " underrun: " << status.tx.underrun << " rate: " << status.tx.dataRate_Bps / 1e6
-           << " MB/s";
+        ss << "Rx| Loss: "sv << status.rx.loss << " overrun: "sv << status.rx.overrun << " rate: "sv << status.rx.dataRate_Bps / 1e6
+           << " MB/s"sv
+           << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
+           << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
         Log(LogLevel::Warning, ss.str().c_str());
         lastStreamUpdate = now;
     }
@@ -232,7 +232,7 @@ static OpStatus MapChannelsToDevices(
             --remainingChannels;
             // Log(LogLevel::Debug,
             //     "%s Channel%i : dev%i chipIndex:%i, chipChannel:%i",
-            //     (dir == TRXDir::Tx ? "Tx" : "Rx"),
+            //     ToCString(dir),
             //     static_cast<int>(channels.size()),
             //     lane.parent->devIndex,
             //     lane.parent->chipIndex,
@@ -304,10 +304,11 @@ static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string& text
     return false;
 }
 
-static int FilterHandles(const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
+static int FilterHandles(
+    const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
 {
     if (handles.empty())
-	return 0;
+        return 0;
 
     DeviceHandle deserializedHandle(text);
     filteredHandles.clear();
@@ -345,7 +346,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
             Log(LogLevel::Error, "No device found to match handle: %s.", node.handleString.c_str());
             return OpStatus::InvalidValue;
         }
-        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize().c_str());
+        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize());
         if (iter != context->uniqueDevices.end())
         {
             node.device = iter->second;
@@ -449,8 +450,7 @@ static void GatherEnvironmentSettings(LimePluginContext* context, LimeSettingsPr
         logVerbosity = std::min(static_cast<LogLevel>(val), LogLevel::Debug);
 }
 
-static void GatherDirectionalSettings(
-    LimeSettingsProvider* settings, DirectionalSettings* dir, const char* varPrefix)
+static void GatherDirectionalSettings(LimeSettingsProvider* settings, DirectionalSettings* dir, const char* varPrefix)
 {
     GetSetting(settings, &dir->antenna, "%s_path", varPrefix);
     GetSetting(settings, &dir->lo_override, "%s_lo_override", varPrefix);
@@ -682,7 +682,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
                 {
                     // TODO: this is board specific, need general API
                     int32_t paramId = 2 + ch;
-                    std::string units = "";
+                    std::string units = ""s;
                     s->device[p]->CustomParameterWrite({ { paramId, dac, units } });
                 }
             }
@@ -877,7 +877,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             if (node.fpgaRegisterWrites.size() > 0)
             {
                 const auto slaves = node.device->GetDescriptor().spiSlaveIds;
-                node.device->SPI(slaves.at("FPGA"), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
+                node.device->SPI(slaves.at("FPGA"s), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
             }
         }
 

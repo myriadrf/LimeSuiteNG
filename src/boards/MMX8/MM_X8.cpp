@@ -108,7 +108,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
             customParameterToDevice[parameter.id] = mSubDevices[i];
         }
 
-        const std::string treeName = subdeviceDescriptor.socTree->name + "#" + std::to_string(i + 1);
+        const std::string treeName = subdeviceDescriptor.socTree->name + "#"s + std::to_string(i + 1);
         subdeviceDescriptor.socTree->name = treeName;
         desc.socTree->children.push_back(subdeviceDescriptor.socTree);
     }

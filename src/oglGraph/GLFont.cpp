@@ -67,7 +67,7 @@ bool GLFont::load(const char* file)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }
@@ -158,7 +158,7 @@ bool GLFont::loadFromArray(const char* array, unsigned int size)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }

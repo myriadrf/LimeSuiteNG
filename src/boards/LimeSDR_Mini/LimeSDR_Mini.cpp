@@ -510,7 +510,7 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 {
     if (mDeviceDescriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
-        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor");
+        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor"s);
     }
 
     return LMS7002M_SDRDevice::GetTemperature(moduleIndex);

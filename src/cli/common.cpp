@@ -1,6 +1,8 @@
 #include "common.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view text)
 {
@@ -27,7 +29,7 @@ static SDRDevice* ConnectUsingNameHint(const std::string_view hintArguments)
     auto handles = DeviceRegistry::enumerate();
     if (handles.empty())
     {
-        std::cerr << "No devices detected." << std::endl;
+        std::cerr << "No devices detected."sv << std::endl;
         return nullptr;
     }
 
@@ -43,22 +45,22 @@ static SDRDevice* ConnectUsingNameHint(const std::string_view hintArguments)
 
     if (filteredHandles.empty())
     {
-        std::cerr << "No devices found that match: " << hintArguments << std::endl;
+        std::cerr << "No devices found that match: "sv << hintArguments << std::endl;
         return nullptr;
     }
 
     if (filteredHandles.size() > 1)
     {
-        std::cerr << "Ambiguous device argument, matches:\n";
+        std::cerr << "Ambiguous device argument, matches:\n"sv;
         for (const auto& h : handles)
-            std::cerr << "\t" << h.Serialize() << std::endl;
+            std::cerr << "\t"sv << h.Serialize() << std::endl;
         return nullptr;
     }
 
     SDRDevice* device = DeviceRegistry::makeDevice(filteredHandles.front());
     if (!device)
     {
-        std::cerr << "Failed to connect to: " << filteredHandles.front().Serialize() << std::endl;
+        std::cerr << "Failed to connect to: "sv << filteredHandles.front().Serialize() << std::endl;
         return nullptr;
     }
     return device;
@@ -73,14 +75,14 @@ SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument)
     auto handles = DeviceRegistry::enumerate();
     if (handles.empty())
     {
-        std::cerr << "No devices detected." << std::endl;
+        std::cerr << "No devices detected."sv << std::endl;
         return nullptr;
     }
     if (handles.size() > 1)
     {
-        std::cerr << "Multiple devices detected, specify which one to use with -d, --device:" << std::endl;
+        std::cerr << "Multiple devices detected, specify which one to use with -d, --device:"sv << std::endl;
         for (const DeviceHandle& h : handles)
-            std::cerr << "\t" << h.Serialize() << std::endl;
+            std::cerr << "\t"sv << h.Serialize() << std::endl;
         return nullptr;
     }
     else
@@ -88,7 +90,7 @@ SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument)
         SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
         if (!device)
         {
-            std::cerr << "Failed to connect to: " << handles.at(0).Serialize() << std::endl;
+            std::cerr << "Failed to connect to: "sv << handles.at(0).Serialize() << std::endl;
             return nullptr;
         }
         return device;

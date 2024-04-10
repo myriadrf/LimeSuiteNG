@@ -730,7 +730,7 @@ int MCU_BD::RunProductionTest_MCU()
         { // detected error code
             if ((retval & 0x0F) > 0)
             {
-                temps = "Test " + std::to_string(retval & 0x0F) + " failed";
+                temps = "Test "s + std::to_string(retval & 0x0F) + " failed"s;
                 return -1;
             }
             else
@@ -1038,7 +1038,7 @@ void MCU_BD::SetParameter(MCU_Parameter param, float value)
         RunProcedure(9);
     }
     if (WaitForMCU(100) != 0)
-        lime::debug("Failed to set MCU parameter");
+        lime::debug("Failed to set MCU parameter"s);
 }
 
 /** @brief Switches MCU into debug mode, MCU program execution is halted

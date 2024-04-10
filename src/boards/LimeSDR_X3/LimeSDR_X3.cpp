@@ -653,7 +653,6 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
 {
-    const char* dirName = dir == TRXDir::Rx ? "Rx" : "Tx";
     ChannelConfig::Direction trx = cfg.channel[ch].GetDirection(dir);
 
     if (socIndex == 1) // LMS2 uses external ADC/DAC
@@ -674,7 +673,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
                                trx.gfir.enabled,
                                trx.gfir.bandwidth) != OpStatus::Success)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", dirName, ch));
+            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToCString(dir), ch));
         }
     }
 
@@ -695,7 +694,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i DC/IQ calibration failed: %s", dirName, ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i DC/IQ calibration failed: %s", ToCString(dir), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 
@@ -716,7 +715,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i filter calibration failed: %s", dirName, ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i filter calibration failed: %s", ToCString(dir), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 }
@@ -1056,7 +1055,7 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
         }
 
         if (path == LMS_PATH_LNAW)
-            lime::warning("LNAW has no connection to RF ports");
+            lime::warning("LNAW has no connection to RF ports"s);
         else if (path == LMS_PATH_LNAH)
             sw_val |= 1 << (11 - chan);
         else if (path == LMS_PATH_LNAL)
@@ -1221,7 +1220,7 @@ void LimeSDR_X3::LMS2_SetSampleRate(double f_Hz, uint8_t oversample)
         throw std::runtime_error("Failed to configure CDCM_Y5"s);
 
     if (!mClockGeneratorCDCM->IsLocked())
-        throw std::runtime_error("CDCM is not locked");
+        throw std::runtime_error("CDCM is not locked"s);
 }
 
 void LimeSDR_X3::LMS3_SetSampleRate_ExternalDAC(double chA_Hz, double chB_Hz)

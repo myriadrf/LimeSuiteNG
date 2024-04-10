@@ -253,9 +253,9 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
     gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_TXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_TXTSP, true));
 
-    Log("Tx calibration finished", LogType::LOG_INFO);
-    lime::debug("Tx | DC  | GAIN | PHASE");
-    lime::debug("---+-----+------+------");
+    lime::info("Tx calibration finished"s);
+    lime::debug("Tx | DC  | GAIN | PHASE"s);
+    lime::debug("---+-----+------+------"s);
     lime::debug("I: | %3i | %4i | %i", dccorri, gcorri, phaseOffset);
     lime::debug("Q: | %3i | %4i |", dccorrq, gcorrq);
     int32_t duration =
@@ -323,7 +323,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         "Current MCU firmware: %i, %s", mcuID, mcuID == MCU_ID_CALIBRATIONS_SINGLE_IMAGE ? "DC/IQ calibration full" : "unknown");
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        lime::debug("Uploading DC/IQ calibration firmware");
+        lime::debug("Uploading DC/IQ calibration firmware"s);
         OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
         if (status != OpStatus::Success)
             return status;
@@ -367,9 +367,9 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_RXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_RXTSP, true));
 
-    Log("Rx calibration finished", LogType::LOG_INFO);
-    lime::debug("RX | DC  | GAIN | PHASE");
-    lime::debug("---+-----+------+------");
+    lime::info("Rx calibration finished"s);
+    lime::debug("RX | DC  | GAIN | PHASE"s);
+    lime::debug("---+-----+------+------"s);
     lime::debug("I: | %3i | %4i | %i", dcoffi, gcorri, phaseOffset);
     lime::debug("Q: | %3i | %4i |", dcoffq, gcorrq);
 #ifdef LMS_VERBOSE_OUTPUT

@@ -1494,7 +1494,7 @@ void lms7002_pnlSX_view::UpdateGUI()
     txtFrequency->SetValue(wxString::Format(_("%.3f"), freq / 1e6));
     uint16_t div;
     div = ReadParam(LMS7param(DIV_LOCH));
-    lblDivider->SetLabel("2^" + std::to_string(div));
+    lblDivider->SetLabel("2^"s + std::to_string(div));
 
     uint16_t value;
     value = ReadParam(LMS7param(FRAC_SDM_MSB));

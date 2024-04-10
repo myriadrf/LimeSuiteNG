@@ -135,7 +135,7 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     RFSOCDescriptor soc;
-    soc.name = "LMS";
+    soc.name = "LMS"s;
     soc.channelCount = 2;
     soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "LNAL"s, "LNAW"s, "LB1"s, "LB2"s };
     soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s, "Band2"s };
@@ -183,12 +183,12 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
         Si5351C::Status status = si5351module->ConfigureClocks();
         if (status != Si5351C::SUCCESS)
         {
-            lime::warning("Failed to configure Si5351C");
+            lime::warning("Failed to configure Si5351C"s);
             return;
         }
         status = si5351module->UploadConfiguration();
         if (status != Si5351C::SUCCESS)
-            lime::warning("Failed to upload Si5351C configuration");
+            lime::warning("Failed to upload Si5351C configuration"s);
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); //some settle time
     }*/
 }
@@ -538,9 +538,9 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                     pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
                     break;
                 case SPI_ADF4002:
-                    throw std::logic_error("LimeSDR ADF4002 registers reading not supported");
+                    throw std::logic_error("LimeSDR ADF4002 registers reading not supported"s);
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
                 int payloadOffset = pkt.blockCount * 2;
                 pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 8;

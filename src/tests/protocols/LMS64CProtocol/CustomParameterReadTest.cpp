@@ -18,21 +18,21 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
-MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command")
+MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->cmd == command;
 }
 
-MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count")
+MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->blockCount == blockCount;
 }
 
-MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice")
+MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
@@ -264,7 +264,7 @@ TEST(LMS64CProtocol, CustomParameterReadNotFullyRead)
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
-    std::vector<CustomParameterIO> parameters{ { 16, 0, "" } };
+    std::vector<CustomParameterIO> parameters{ { 16, 0, ""s } };
 
     EXPECT_THROW(LMS64CProtocol::CustomParameterRead(mockPort, parameters, subdevice);, std::runtime_error);
 }

@@ -425,14 +425,14 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
     batch.Flush();
     // TODO: could possibly write this in the same batch?
     if (WriteRegister(0x0023, reg23val | PHCFG_START) != OpStatus::Success)
-        lime::error("FPGA SetPllFrequency: find phase, failed to write registers");
+        lime::error("FPGA SetPllFrequency: find phase, failed to write registers"s);
 
     const uint16_t doneMask = doPhaseSearch ? 0x4 : 0x1;
     const uint16_t errorMask = doPhaseSearch ? 0x8 : (0xFF << 7);
 
     if (waitLock)
     {
-        const std::string title = "PLL Clock[" + std::to_string(clockIndex) + "] PHCFG_START";
+        const std::string title = "PLL Clock["s + std::to_string(clockIndex) + "] PHCFG_START"s;
         OpStatus status = WaitTillDone(busyAddr, doneMask, errorMask, title);
         if (status != OpStatus::Success)
             return status;
@@ -507,7 +507,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         WriteRegister(0x0023, reg23val | PLLRST_START);
         if (waitForDone)
         {
-            const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLRST_START";
+            const std::string title = "FPGA PLL["s + std::to_string(pllIndex) + "] PLLRST_START"s;
 
             OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
             if (status != OpStatus::Success)
@@ -624,7 +624,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         WriteRegister(0x0023, reg23val | PLLCFG_START);
     if (waitForDone) //wait for config to activate
     {
-        const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLCFG_START";
+        const std::string title = "FPGA PLL["s + std::to_string(pllIndex) + "] PLLCFG_START"s;
 
         OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
         if (status != OpStatus::Success)
@@ -1013,7 +1013,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     if (!phaseSearchSuccess)
     {
-        lime::error("LML RX phase search FAIL");
+        lime::error("LML RX phase search FAIL"s);
         status = OpStatus::Error;
         rxClocks[0].index = 0;
         rxClocks[0].phaseShift_deg = 0;
@@ -1069,7 +1069,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     if (!phaseSearchSuccess)
     {
-        lime::error("LML TX phase search FAIL");
+        lime::error("LML TX phase search FAIL"s);
         status = OpStatus::Error;
         txClocks[0].phaseShift_deg = 0;
         txClocks[0].findPhase = false;

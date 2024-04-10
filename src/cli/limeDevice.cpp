@@ -86,16 +86,16 @@ int main(int argc, char* argv[])
         printf("No devices found\n");
         return -1;
     }
-    cout << "Found " << handles.size() << " device(s) :" << endl;
+    cout << "Found "sv << handles.size() << " device(s) :"sv << endl;
     for (uint32_t i = 0; i < handles.size(); i++)
     {
-        cout << i << ": " << handles[i].Serialize() << endl;
+        cout << i << ": "sv << handles[i].Serialize() << endl;
         if (full)
         {
             SDRDevice* device = DeviceRegistry::makeDevice(handles.at(i));
             if (!device)
             {
-                cout << "\tFailed to connect" << endl;
+                cout << "\tFailed to connect"sv << endl;
                 continue;
             }
             PrintDeviceDetails(device);

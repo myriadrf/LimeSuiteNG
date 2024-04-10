@@ -199,7 +199,7 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
         {
             if (lms->SetFrequencySX(trx, center) != OpStatus::Success)
             {
-                throw std::runtime_error("Setting TDD failed (failed SetFrequencySX)");
+                throw std::runtime_error("Setting TDD failed (failed SetFrequencySX)"s);
             }
         }
 
@@ -356,7 +356,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_
 
     if (index >= NCOValueCount)
     {
-        lime::error("Invalid NCO index value.");
+        lime::error("Invalid NCO index value."s);
         return OpStatus::OutOfRange;
     }
 
@@ -761,7 +761,7 @@ uint16_t LMS7002M_SDRDevice::GetParameter(uint8_t moduleIndex, uint8_t channel, 
         return val;
     } catch (...)
     {
-        throw std::runtime_error("failure getting key: " + parameterKey);
+        throw std::runtime_error("failure getting key: "s + parameterKey);
     }
 }
 
@@ -784,7 +784,7 @@ uint16_t LMS7002M_SDRDevice::GetParameter(uint8_t moduleIndex, uint8_t channel, 
     } catch (...)
     {
         // TODO: fix return
-        throw std::runtime_error("failure setting parameter: " + std::to_string(address));
+        throw std::runtime_error("failure setting parameter: "s + std::to_string(address));
     }
 }
 
@@ -920,7 +920,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
         return signalConfiguration;
     }
 
-    throw std::runtime_error("Failed to get test mode");
+    throw std::runtime_error("Failed to get test mode"s);
 }
 
 std::vector<double> LMS7002M_SDRDevice::GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID)

@@ -16,14 +16,14 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
-MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command")
+MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->cmd == command;
 }
 
-MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count")
+MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 

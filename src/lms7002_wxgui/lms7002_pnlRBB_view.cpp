@@ -378,7 +378,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     temp.clear();
     for (int i = 0; i < 32; ++i)
     {
-        temp.push_back(std::to_string(-12 + i) + " dB");
+        temp.push_back(std::to_string(-12 + i) + " dB"s);
     }
     cmbG_PGA_RBB->Set(temp);
 

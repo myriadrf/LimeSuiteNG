@@ -25,7 +25,7 @@ std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concur
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    //std::cerr << "Stopping\n";
+    //std::cerr << "Stopping\n"sv;
     stopProgram = true;
 }
 
@@ -370,11 +370,11 @@ int main(int argc, char** argv)
 
             if (chipIndexes.empty())
             {
-                cerr << "Invalid chip index" << endl;
+                cerr << "Invalid chip index"sv << endl;
                 return -1;
             }
             else
-                cerr << "Chip count " << chipIndexes.size() << endl;
+                cerr << "Chip count "sv << chipIndexes.size() << endl;
             break;
         case Args::OUTPUT:
             if (optarg != NULL)
@@ -430,13 +430,13 @@ int main(int argc, char** argv)
         case Args::LINKFORMAT:
             if (optarg != NULL)
             {
-                if (strcmp(optarg, "I16") == 0)
+                if (std::string_view{ optarg } == "I16"sv)
                     linkFormat = DataFormat::I16;
-                else if (strcmp(optarg, "I12") == 0)
+                if (std::string_view{ optarg } == "I12"sv)
                     linkFormat = DataFormat::I12;
                 else
                 {
-                    cerr << "Invalid linkFormat " << optarg << std::endl;
+                    cerr << "Invalid linkFormat "sv << optarg << std::endl;
                     return -1;
                 }
             }
@@ -462,7 +462,7 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -524,11 +524,11 @@ int main(int argc, char** argv)
         }
     } catch (std::runtime_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     } catch (std::logic_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     }
 
@@ -547,13 +547,13 @@ int main(int argc, char** argv)
         inputFile.open(txFilename, std::ifstream::in | std::ifstream::binary);
         if (!inputFile)
         {
-            cerr << "Failed to open file: " << txFilename << endl;
+            cerr << "Failed to open file: "sv << txFilename << endl;
             return -1;
         }
         inputFile.seekg(0, std::ios_base::end);
         auto cnt = inputFile.tellg();
         inputFile.seekg(0, std::ios_base::beg);
-        cerr << "File size : " << cnt << " bytes." << endl;
+        cerr << "File size : "sv << cnt << " bytes."sv << endl;
         txData.resize(cnt / sizeof(complex16_t));
         inputFile.read(reinterpret_cast<char*>(txData.data()), cnt);
         inputFile.close();
@@ -570,7 +570,7 @@ int main(int argc, char** argv)
     std::ofstream rxFile;
     if (!rxFilename.empty())
     {
-        std::cout << "Rx data to file: " << rxFilename << std::endl;
+        std::cout << "Rx data to file: "sv << rxFilename << std::endl;
         rxFile.open(rxFilename, std::ofstream::out | std::ofstream::binary);
     }
 

@@ -111,7 +111,7 @@ SDRDevice* DeviceFactoryFTDI::make_LimeSDR_Mini(const DeviceHandle& handle, cons
 
 SDRDevice* DeviceFactoryFTDI::make(const DeviceHandle& handle)
 {
-    const auto splitPos = handle.addr.find(":");
+    const auto splitPos = handle.addr.find(':');
 
     uint16_t vid = 0;
     uint16_t pid = 0;

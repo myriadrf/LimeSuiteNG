@@ -12,7 +12,7 @@ void inthandler(int sig)
 {
     if (terminateProgress == true)
     {
-        cerr << "Force exiting" << endl;
+        cerr << "Force exiting"sv << endl;
         exit(-1);
     }
     terminateProgress = true;
@@ -43,7 +43,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
             return memoryDevices.begin()->second;
         }
 
-        cerr << "specify memory device target, -t, --target :" << endl;
+        cerr << "specify memory device target, -t, --target :"sv << endl;
         PrintMemoryDevices(descriptor);
 
         return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
@@ -57,7 +57,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
         std::cerr << e.what() << '\n';
     }
 
-    cerr << "Device does not contain target device (" << targetName << "). Available list:" << endl;
+    cerr << "Device does not contain target device ("sv << targetName << "). Available list:"sv << endl;
     PrintMemoryDevices(descriptor);
 
     return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
@@ -88,17 +88,17 @@ bool progressCallBack(size_t bsent, size_t btotal, const char* statusMessage)
             std::getline(std::cin, answer);
             if (answer[0] == 'y')
             {
-                cout << "\naborting..." << endl;
+                cout << "\naborting..."sv << endl;
                 return true;
             }
             else if (answer[0] == 'n')
             {
                 terminateProgress = false;
-                cout << "\ncontinuing..." << endl;
+                cout << "\ncontinuing..."sv << endl;
                 return false;
             }
             else
-                cout << "Invalid option(" << answer << "), [y/n]: ";
+                cout << "Invalid option("sv << answer << "), [y/n]: "sv;
         }
     }
     return false;
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
         filePath = argv[optind];
     else
     {
-        cerr << "File path not specified." << endl;
+        cerr << "File path not specified."sv << endl;
         printHelp();
         return -1;
     }
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -185,13 +185,13 @@ int main(int argc, char** argv)
     if (!inputFile)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "Failed to open file: " << filePath << endl;
+        cerr << "Failed to open file: "sv << filePath << endl;
         return EXIT_FAILURE;
     }
     inputFile.seekg(0, std::ios_base::end);
     auto cnt = inputFile.tellg();
     inputFile.seekg(0, std::ios_base::beg);
-    cerr << "File size : " << cnt << " bytes." << endl;
+    cerr << "File size : "sv << cnt << " bytes."sv << endl;
     data.resize(cnt);
     inputFile.read(data.data(), cnt);
     inputFile.close();
@@ -200,13 +200,13 @@ int main(int argc, char** argv)
         OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);
-        cout << "Device programming failed." << endl;
+        cout << "Device programming failed."sv << endl;
         return EXIT_FAILURE;
     }
     if (terminateProgress)
-        cerr << "Programming aborted." << endl;
+        cerr << "Programming aborted."sv << endl;
     else
-        cerr << "Programming completed." << endl;
+        cerr << "Programming completed."sv << endl;
 
     DeviceRegistry::freeDevice(device);
     return EXIT_SUCCESS;

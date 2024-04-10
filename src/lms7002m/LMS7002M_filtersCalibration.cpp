@@ -17,6 +17,7 @@
     #include <ciso646>
 #endif
 using namespace lime;
+using namespace std::literals::string_literals;
 
 //rx lpf range limits
 static const float_type RxLPF_RF_LimitLow = 1.4e6;
@@ -87,7 +88,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     if (g_tia == 1 && rx_lpf_freq_RF < 4e6)
     {
         rx_lpf_freq_RF = 4e6;
-        Log(LogType::LOG_WARNING, "Rx LPF min bandwidth is 4MHz when TIA gain is set to -12 dB");
+        lime::warning("Rx LPF min bandwidth is 4MHz when TIA gain is set to -12 dB"s);
     }
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)

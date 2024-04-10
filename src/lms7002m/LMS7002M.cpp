@@ -34,6 +34,7 @@
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
 #include "MCU_BD.h"
+#include "utilities/toString.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -792,9 +793,9 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 {
     std::ofstream fout;
     fout.open(filename);
-    fout << "[file_info]" << std::endl;
-    fout << "type=lms7002m_minimal_config" << std::endl;
-    fout << "version=1" << std::endl;
+    fout << "[file_info]"sv << std::endl;
+    fout << "type=lms7002m_minimal_config"sv << std::endl;
+    fout << "version=1"sv << std::endl;
 
     char addr[80];
     char value[80];
@@ -809,7 +810,7 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     std::vector<uint16_t> dataReceived;
     dataReceived.resize(addrToRead.size(), 0);
 
-    fout << "[lms7002_registers_a]" << std::endl;
+    fout << "[lms7002_registers_a]"sv << std::endl;
     this->SetActiveChannel(Channel::ChA);
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
@@ -826,16 +827,16 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
             dataReceived[i] &= 0xFF00; //do not save calibration start triggers
         sprintf(addr, "0x%04X", addrToRead[i]);
         sprintf(value, "0x%04X", dataReceived[i]);
-        fout << addr << "=" << value << std::endl;
+        fout << addr << "="sv << value << std::endl;
         // add parameter name/value as comments
         for (const LMS7Parameter& parameter : LMS7parameterList)
         {
             if (parameter.address == addrToRead[i])
-                fout << "//" << parameter.name << " : " << Get_SPI_Reg_bits(parameter) << std::endl;
+                fout << "//"sv << parameter.name << " : "sv << Get_SPI_Reg_bits(parameter) << std::endl;
         }
     }
 
-    fout << "[lms7002_registers_b]" << std::endl;
+    fout << "[lms7002_registers_b]"sv << std::endl;
     addrToRead.clear(); //add only B channel addresses
     for (const auto& memorySectionPair : MemorySectionAddresses)
         if (memorySectionPair.first != MemorySection::RSSI_DC_CALIBRATION)
@@ -849,12 +850,12 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
         dataReceived[i] = Get_SPI_Reg_bits(addrToRead[i], 15, 0, false);
         sprintf(addr, "0x%04X", addrToRead[i]);
         sprintf(value, "0x%04X", dataReceived[i]);
-        fout << addr << "=" << value << std::endl;
+        fout << addr << "="sv << value << std::endl;
     }
 
-    fout << "[reference_clocks]" << std::endl;
-    fout << "sxt_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
-    fout << "sxr_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
+    fout << "[reference_clocks]"sv << std::endl;
+    fout << "sxt_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
+    fout << "sxr_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
     fout.close();
     return OpStatus::Success;
 }
@@ -1564,7 +1565,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
         lime::debug("TuneVCO(%s) - searching interval [%i:%i]", moduleName, cswSearch[t].high, cswSearch[t].low);
         Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].high);
         //binary search for and high value, and on the way store approximate low value
-        lime::debug("binary search:");
+        lime::debug("binary search:"s);
         for (int i = 6; i >= 0; --i)
         {
             cswSearch[t].high |= 1 << i; //CSW_VCO<i>=1
@@ -1581,7 +1582,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
             }
         }
         //linear search to make sure there are no gaps, and move away from edge case
-        lime::debug("adjust with linear search:");
+        lime::debug("adjust with linear search:"s);
         while (cswSearch[t].low <= cswSearch[t].high && cswSearch[t].low > t * 128)
         {
             --cswSearch[t].low;
@@ -1603,7 +1604,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
                 cswSearch[t].low + (cswSearch[t].high - cswSearch[t].low) / 2);
         }
         else
-            lime::debug("CSW interval failed to lock");
+            lime::debug("CSW interval failed to lock"s);
     }
 
     //check if the intervals are joined
@@ -2460,12 +2461,12 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         {
             Modify_SPI_Reg_bits(LMS7param(MAC), cc);
             sprintf(chex, "0x%04X", startAddr);
-            ss << moduleNames[i] << "  [" << chex << ":";
+            ss << moduleNames[i] << "  ["sv << chex << ":"sv;
             sprintf(chex, "0x%04X", endAddr);
-            ss << chex << "]";
+            ss << chex << "]"sv;
             if (startAddr >= 0x0100)
             {
-                ss << " Ch." << (cc == 1 ? "A" : "B");
+                ss << " Ch."sv << (cc == 1 ? "A"sv : "B"sv);
             }
             ss << std::endl;
             for (uint8_t p = 0; p < patternsCount; ++p)
@@ -2551,9 +2552,9 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
         {
             registersMatch = false;
             sprintf(ctemp, "0x%04X", addrToWrite[j]);
-            ss << "\t" << ctemp << "(wr/rd): ";
+            ss << "\t"sv << ctemp << "(wr/rd): "sv;
             sprintf(ctemp, "0x%04X", dataToWrite[j]);
-            ss << ctemp << "/";
+            ss << ctemp << "/"sv;
             sprintf(ctemp, "0x%04X", dataReceived[j]);
             ss << ctemp << std::endl;
         }
@@ -2561,7 +2562,7 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
     if (registersMatch)
     {
         sprintf(ctemp, "0x%04X", pattern);
-        ss << "\tRegisters OK (" << ctemp << ")\n";
+        ss << "\tRegisters OK ("sv << ctemp << ")\n"sv;
     }
     if (registersMatch)
         return OpStatus::Success;
@@ -3082,7 +3083,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     }
     if (edges.size() != 2)
     {
-        lime::debug("Not found");
+        lime::debug("Not found"s);
         return ReportError(OpStatus::InvalidValue, "Failed to find value");
     }
     int8_t found = (edges[0] + edges[1]) / 2;
@@ -3262,14 +3263,14 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
         return status;
 
     std::stringstream ss;
-    ss << "LMS " << (dir == TRXDir::Tx ? "Tx" : "Rx") << " GFIR coefficients (BW: " << bandwidth << " MHz):\n";
-    ss << "GFIR1 = GFIR2:";
+    ss << "LMS "sv << ToString(dir) << " GFIR coefficients (BW: "sv << bandwidth << " MHz):\n"sv;
+    ss << "GFIR1 = GFIR2:"sv;
     for (int i = 0; i < L * 5; ++i)
         ss << " " << coef2[i];
     ss << std::endl;
-    ss << "GFIR3:";
+    ss << "GFIR3:"sv;
     for (int i = 0; i < L * 15; ++i)
-        ss << " " << coef[i];
+        ss << " "sv << coef[i];
     ss << std::endl;
     lime::info(ss.str());
 

@@ -10,8 +10,8 @@
 #include <cstdlib> //getenv, system
 #include <filesystem>
 #include <vector>
+#include <string_view>
 #include <sstream>
-#include <iostream>
 
 #ifdef _MSC_VER
     #include <windows.h>
@@ -30,6 +30,7 @@
 #endif
 
 using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 namespace lime {
 
@@ -54,8 +55,8 @@ std::string getLimeSuiteRoot(void)
         if (size != 0)
         {
             const std::string libPath(path, size);
-            const size_t slash0Pos = libPath.find_last_of("/\\");
-            const size_t slash1Pos = libPath.substr(0, slash0Pos).find_last_of("/\\");
+            const size_t slash0Pos = libPath.find_last_of("/\\"sv);
+            const size_t slash1Pos = libPath.substr(0, slash0Pos).find_last_of("/\\"sv);
             if (slash0Pos != std::string::npos && slash1Pos != std::string::npos)
                 return libPath.substr(0, slash1Pos);
         }
@@ -166,7 +167,7 @@ std::string locateImageResource(const std::string& name)
         if (access(fullPath.c_str(), R_OK) == 0)
             return fullPath;
     }
-    return "";
+    return ""s;
 }
 
 /*!
@@ -203,10 +204,10 @@ lime::OpStatus downloadImageResource(const std::string& name)
 
 //download the file
 #ifdef __unix__
-    const std::string dnloadCmd("wget --output-document=\"" + destFile + "\" \"" + sourceUrl + "\"");
+    const std::string dnloadCmd("wget --output-document=\""s + destFile + "\" \""s + sourceUrl + "\""s);
 #else
     const std::string dnloadCmd(
-        "powershell.exe -Command \"(new-object System.Net.WebClient).DownloadFile('" + sourceUrl + "', '" + destFile + "')\"");
+        "powershell.exe -Command \"(new-object System.Net.WebClient).DownloadFile('"s + sourceUrl + "', '"s + destFile + "')\""s);
 #endif
     int result = std::system(dnloadCmd.c_str());
     if (result != 0)

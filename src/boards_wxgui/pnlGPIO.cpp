@@ -110,7 +110,7 @@ void pnlGPIO::OnUsrGPIODirChange(wxCommandEvent& event)
     }
 
     if (device && device->GPIODirWrite(value, gpioCount > 8 ? 2 : 1) != OpStatus::Success)
-        lime::error("GPIO direction change failed");
+        lime::error("GPIO direction change failed"s);
 }
 
 void pnlGPIO::OnUsrGPIOChange(wxCommandEvent& event)
@@ -123,7 +123,7 @@ void pnlGPIO::OnUsrGPIOChange(wxCommandEvent& event)
     }
 
     if (device && device->GPIOWrite(value, gpioCount > 8 ? 2 : 1) != OpStatus::Success)
-        lime::error("GPIO write failed");
+        lime::error("GPIO write failed"s);
 }
 
 void pnlGPIO::UpdatePanel()
@@ -142,7 +142,7 @@ void pnlGPIO::UpdatePanel()
     }
     else
     {
-        lime::error("GPIO direction read failed");
+        lime::error("GPIO direction read failed"s);
     }
 
     if (device && device->GPIORead(gpio, gpioCount > 8 ? 2 : 1) == OpStatus::Success)
@@ -155,6 +155,6 @@ void pnlGPIO::UpdatePanel()
     }
     else
     {
-        lime::error("GPIO read failed");
+        lime::error("GPIO read failed"s);
     }
 }

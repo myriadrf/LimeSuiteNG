@@ -4,6 +4,7 @@
 #include "CommonFunctions.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
 #ifdef __unix__
@@ -71,7 +72,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
         if (returnCode < 0)
         {
-            lime::error("Failed to get device description");
+            lime::error("Failed to get device description"s);
         }
 
         VidPid id{ desc.idVendor, desc.idProduct };
@@ -147,7 +148,7 @@ DeviceHandle USBEntry::GetDeviceHandle(
 
         if (serialStringLength < 0)
         {
-            lime::error("Failed to get serial number");
+            lime::error("Failed to get serial number"s);
         }
         else
         {

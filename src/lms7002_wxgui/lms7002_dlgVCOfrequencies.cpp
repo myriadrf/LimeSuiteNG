@@ -305,21 +305,21 @@ void lms7002_dlgVCOfrequencies::OnSaveFile(wxCommandEvent& event)
     fstream fout;
     fout.open(dlg.GetPath().mb_str(), ios::out);
 
-    fout << "[VCOH] count: " << 2 << "," << endl;
-    fout << txtVCOH_low->GetValue() << ' ' << "GHz," << endl;
-    fout << txtVCOH_high->GetValue() << ' ' << "GHz," << endl;
+    fout << "[VCOH] count: "sv << 2 << ","sv << endl;
+    fout << txtVCOH_low->GetValue() << ' ' << "GHz,"sv << endl;
+    fout << txtVCOH_high->GetValue() << ' ' << "GHz,"sv << endl;
 
-    fout << "[VCOM] count: " << 2 << "," << endl;
-    fout << txtVCOM_low->GetValue() << ' ' << "GHz," << endl;
-    fout << txtVCOM_high->GetValue() << ' ' << "GHz," << endl;
+    fout << "[VCOM] count: "sv << 2 << ","sv << endl;
+    fout << txtVCOM_low->GetValue() << ' ' << "GHz,"sv << endl;
+    fout << txtVCOM_high->GetValue() << ' ' << "GHz,"sv << endl;
 
-    fout << "[VCOL] count: " << 2 << "," << endl;
-    fout << txtVCOL_low->GetValue() << ' ' << "GHz," << endl;
-    fout << txtVCOL_high->GetValue() << ' ' << "GHz," << endl;
+    fout << "[VCOL] count: "sv << 2 << ","sv << endl;
+    fout << txtVCOL_low->GetValue() << ' ' << "GHz,"sv << endl;
+    fout << txtVCOL_high->GetValue() << ' ' << "GHz,"sv << endl;
 
-    fout << "[VCO_CGEN] count: " << 2 << "," << endl;
-    fout << txtVCOCGEN_low->GetValue() << ' ' << "GHz," << endl;
-    fout << txtVCOCGEN_high->GetValue() << ' ' << "GHz," << endl;
+    fout << "[VCO_CGEN] count: "sv << 2 << ","sv << endl;
+    fout << txtVCOCGEN_low->GetValue() << ' ' << "GHz,"sv << endl;
+    fout << txtVCOCGEN_high->GetValue() << ' ' << "GHz,"sv << endl;
     fout.close();
 }
 
@@ -347,7 +347,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
         fin.getline(cline, lineLen);
         //find name and frequency count
         sscanf(cline, "%s %s %i", vconame, ctemp, &freqCount);
-        if (strcmp(vconame, "[VCOH]") == 0)
+        if (std::string_view{ vconame } == "[VCOH]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -362,7 +362,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOH_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (strcmp(vconame, "[VCOM]") == 0)
+        if (std::string_view{ vconame } == "[VCOH]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -377,7 +377,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOM_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (strcmp(vconame, "[VCOL]") == 0)
+        if (std::string_view{ vconame } == "[VCOL]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -392,7 +392,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOL_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (strcmp(vconame, "[VCO_CGEN]") == 0)
+        if (std::string_view{ vconame } == "[VCO_CGEN]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)

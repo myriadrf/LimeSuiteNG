@@ -15,18 +15,18 @@ static int32_t FindChipSelectByName(SDRDevice* device, const std::string_view ch
     const auto chipMap = device->GetDescriptor().spiSlaveIds;
     if (chipName.size() == 0)
     {
-        cerr << "specify SPI chip select, -c, --chip :" << endl;
+        cerr << "specify SPI chip select, -c, --chip :"sv << endl;
         for (const auto& nameIds : chipMap)
-            cerr << "\t" << nameIds.first << endl;
+            cerr << "\t"sv << nameIds.first << endl;
         return -1;
     }
 
     auto iter = chipMap.find(std::string{ chipName });
     if (iter == chipMap.end())
     {
-        cerr << "Device does not contain target chip (" << chipName << "). Available list:" << endl;
+        cerr << "Device does not contain target chip ("sv << chipName << "). Available list:"sv << endl;
         for (const auto& nameIds : chipMap)
-            cerr << "\t" << nameIds.first << endl;
+            cerr << "\t"sv << nameIds.first << endl;
         return -1;
     }
     return iter->second;
@@ -67,7 +67,7 @@ static int parseWriteInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
         }
         else if (tokenLength != 0)
         {
-            std::cerr << "Invalid input value: " << token << std::endl;
+            std::cerr << "Invalid input value: "sv << token << std::endl;
         }
         ++tokenCount;
         hexstr = hexstr.substr(position + 1);
@@ -95,7 +95,7 @@ static int parseReadInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
         }
         else if (tokenLength != 0)
         {
-            std::cerr << "Invalid input value: " << token << std::endl;
+            std::cerr << "Invalid input value: "sv << token << std::endl;
         }
         ++tokenCount;
         hexstr = hexstr.substr(position + 1);
@@ -171,14 +171,14 @@ int main(int argc, char** argv)
 
     if (isRead && isWrite)
     {
-        cerr << "use --read, OR --write, can't do both at the same time" << endl;
+        cerr << "use --read, OR --write, can't do both at the same time"sv << endl;
         return EXIT_FAILURE;
     }
 
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
         std::ifstream inputFile(filename);
         if (!inputFile.is_open())
         {
-            cerr << "Failed to open file: " << filename << endl;
+            cerr << "Failed to open file: "sv << filename << endl;
             return EXIT_FAILURE;
         }
         inputFile.seekg(0, std::ios::end);
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
     if (hexInput.empty())
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "No input provided" << endl;
+        cerr << "No input provided"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
     } catch (std::runtime_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "SPI failed: " << e.what() << endl;
+        cerr << "SPI failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     }
 
