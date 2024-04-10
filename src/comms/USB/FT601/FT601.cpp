@@ -37,7 +37,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
     FT_STATUS ftStatus = FT_OK;
     DWORD dwNumDevices = 0;
     // Open a device
-    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.c_str())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
+    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.data())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
 
     if (FT_FAILED(ftStatus))
     {

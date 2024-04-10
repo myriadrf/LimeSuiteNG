@@ -3,6 +3,8 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "CommonFunctions.h"
 
+#include <string_view>
+
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;

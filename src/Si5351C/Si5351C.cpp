@@ -16,9 +16,11 @@
 #include <ciso646> // alternative operators for visual c++: not, and, or...
 #include <vector>
 #include "comms/IComms.h"
+#include <string_view>
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 static const uint8_t addrSi5351 = 0xC0;
 

@@ -2,9 +2,12 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <string.h>
+#include <cstring>
+#include <string_view>
 #include <vector>
+
 using namespace std;
+using namespace std::literals::string_view_literals;
 
 static bool IsGlew1_5()
 {

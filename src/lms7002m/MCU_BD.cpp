@@ -17,8 +17,11 @@ using namespace std;
 #include "limesuiteng/Logger.h"
 #include "comms/IComms.h"
 #include <functional>
+#include <string_view>
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 MCU_BD::MCU_BD()
 {
