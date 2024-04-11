@@ -40,6 +40,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
     void OnAvgChange(wxSpinEvent& event) override;
     void OnAvgChangeEnter(wxCommandEvent& event) override;
     void OnWindowFunctionChange(wxCommandEvent& event) override;
+    bool Show(bool show) override;
     static void StreamingLoop(
         fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const int channelsCount, const uint32_t format);
 

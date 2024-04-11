@@ -152,6 +152,9 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
 
 fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
 {
+    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
+    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+
     if (mStreamRunning == true)
     {
         StopStreaming();
@@ -161,6 +164,16 @@ fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
     {
         delete mGUIupdater;
     }
+}
+
+bool fftviewer_frFFTviewer::Show(bool show)
+{
+    if (!show && mStreamRunning)
+    {
+        StopStreaming();
+    }
+
+    return frFFTviewer::Show(show);
 }
 
 void fftviewer_frFFTviewer::OnWindowFunctionChanged(wxCommandEvent& event)
