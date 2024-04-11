@@ -12,7 +12,8 @@ file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if(EXISTS "${LOC_PATH}")
     message(
         FATAL_ERROR
-            "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
+            "You cannot build in a source directory (or any directory with a CMakeLists.txt file)."
+            "Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
     )
 endif()
 
@@ -129,10 +130,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     #symbols are only exported from libraries/modules explicitly
     add_compile_options(-fvisibility=hidden)
-    add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fvisibility-inlines-hidden>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 
     # enable C-style cast warnings in C++
-    add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wold-style-cast>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast>)
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
