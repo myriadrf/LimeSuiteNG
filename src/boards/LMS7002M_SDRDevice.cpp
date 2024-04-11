@@ -851,7 +851,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     {
     case TRXDir::Rx:
         if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_RXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
-            return ReportError(OpStatus::IOFailure, "Failed to set Rx test signal.");
+            return ReportError(OpStatus::IOFailure, "Failed to set Rx test signal."s);
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_RXTSP), div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_RXTSP), fullscale ? 1 : 0);
@@ -859,7 +859,7 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
         break;
     case TRXDir::Tx:
         if (lms->Modify_SPI_Reg_bits(LMS7param(INSEL_TXTSP), signalConfiguration.enabled, true) != OpStatus::Success)
-            return ReportError(OpStatus::IOFailure, "Failed to set Tx test signal.");
+            return ReportError(OpStatus::IOFailure, "Failed to set Tx test signal."s);
 
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFCW_TXTSP), div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7param(TSGFC_TXTSP), fullscale ? 1 : 0);

@@ -81,9 +81,9 @@ TRXLooper_PCIE::~TRXLooper_PCIE()
 OpStatus TRXLooper_PCIE::Setup(const StreamConfig& config)
 {
     if (config.channels.at(lime::TRXDir::Rx).size() > 0 && !mRxArgs.port->IsOpen())
-        return ReportError(OpStatus::IOFailure, "Rx data port not open");
+        return ReportError(OpStatus::IOFailure, "Rx data port not open"s);
     if (config.channels.at(lime::TRXDir::Tx).size() > 0 && !mTxArgs.port->IsOpen())
-        return ReportError(OpStatus::IOFailure, "Tx data port not open");
+        return ReportError(OpStatus::IOFailure, "Tx data port not open"s);
 
     float combinedSampleRate =
         std::max(config.channels.at(lime::TRXDir::Tx).size(), config.channels.at(lime::TRXDir::Rx).size()) * config.hintSampleRate;
@@ -893,7 +893,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
     if (samplesRemaining == 0)
         return OpStatus::Success;
     else
-        return ReportError(OpStatus::Error, "Failed to upload waveform");
+        return ReportError(OpStatus::Error, "Failed to upload waveform"s);
 }
 
 } // namespace lime

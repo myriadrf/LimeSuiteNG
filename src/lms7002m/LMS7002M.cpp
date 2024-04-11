@@ -2229,7 +2229,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     if (!controlPort || fromChip == false)
     {
         if (status && !controlPort)
-            *status = ReportError(OpStatus::IOFailure, "chip not connected");
+            *status = ReportError(OpStatus::IOFailure, "Chip not connected"s);
         uint8_t mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
         uint8_t channel = (mac == 2) ? 1 : 0; //only when MAC is B -> use register space B
         if (address < 0x0100)
@@ -2300,7 +2300,7 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
     {
         if (useCache)
             return OpStatus::Success;
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
     controlPort->SPI(data.data(), nullptr, data.size());
     return OpStatus::Success;
@@ -2310,7 +2310,7 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
 {
     if (!controlPort)
     {
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
 
     std::vector<uint32_t> dataWr(cnt);
@@ -2345,7 +2345,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 {
     char chex[16];
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     OpStatus status;
     ChannelScope scope(this);
@@ -2492,7 +2492,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 
     if (allTestSuccess)
         return OpStatus::Success;
-    return ReportError(OpStatus::Error, "RegistersTest() failed");
+    return ReportError(OpStatus::Error, "RegistersTest() failed"s);
 }
 
 /** @brief Performs registers test for given address interval by writing given pattern data
@@ -2693,7 +2693,7 @@ bool LMS7002M::IsSynced()
 OpStatus LMS7002M::UploadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     ChannelScope scope(this);
 
@@ -2739,7 +2739,7 @@ OpStatus LMS7002M::UploadAll()
 OpStatus LMS7002M::DownloadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     OpStatus status;
     ChannelScope scope(this, true);
@@ -3085,7 +3085,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     if (edges.size() != 2)
     {
         lime::debug("Not found"s);
-        return ReportError(OpStatus::InvalidValue, "Failed to find value");
+        return ReportError(OpStatus::InvalidValue, "Failed to find value"s);
     }
     int8_t found = (edges[0] + edges[1]) / 2;
     wrValue = abs(found);
@@ -3114,7 +3114,7 @@ double LMS7002M::GetClockFreq(ClockID clk_id)
     case ClockID::CLK_TXTSP:
         return GetReferenceClk_TSP(TRXDir::Tx);
     default:
-        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID.");
+        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID."s);
         return 0;
     }
 }
@@ -3137,9 +3137,9 @@ OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
         break;
     case ClockID::CLK_RXTSP:
     case ClockID::CLK_TXTSP:
-        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only");
+        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only"s);
     default:
-        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id");
+        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id"s);
     }
     return OpStatus::Success;
 }

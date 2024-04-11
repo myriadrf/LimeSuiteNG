@@ -504,7 +504,7 @@ int MCU_BD::Program_MCU(int m_iMode1, int m_iMode0)
 OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
 {
     if (!m_serPort)
-        return ReportError(OpStatus::NotConnected, "Device not connected");
+        return ReportError(OpStatus::NotConnected, "Device not connected"s);
 
 #ifndef NDEBUG
     auto timeStart = std::chrono::high_resolution_clock::now();
@@ -545,7 +545,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             } while ((!fifoEmpty) && (t2 - t1) < timeout);
 
             if (!fifoEmpty)
-                return ReportError(OpStatus::Timeout, "MCU FIFO full");
+                return ReportError(OpStatus::Timeout, "MCU FIFO full"s);
 
             //write 32 bytes into FIFO
             for (uint8_t j = 0; j < fifoLen; ++j)
@@ -559,7 +559,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
 #endif
         };
         if (abort)
-            return ReportError(OpStatus::Aborted, "operation aborted by user");
+            return ReportError(OpStatus::Aborted, "Operation aborted by user"s);
 
         //wait until programmed flag
         wrdata[0] = statusReg;
@@ -575,16 +575,16 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
 
 #ifndef NDEBUG
         auto timeEnd = std::chrono::high_resolution_clock::now();
-        lime::debug("MCU Programming finished, %li ms",
-            std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
+        lime::debug(
+            "MCU Programming finished, %li ms", std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
 #endif
         if (!programmed)
-            return ReportError(OpStatus::Timeout, "MCU not programmed");
+            return ReportError(OpStatus::Timeout, "MCU not programmed"s);
         return OpStatus::Success;
     } catch (std::runtime_error& e)
     {
 #ifndef NDEBUG
-        lime::error("MCU programming failed : %s", e.what());
+        lime::error("MCU programming failed: "s + e.what());
 #endif
         return OpStatus::Error;
     }

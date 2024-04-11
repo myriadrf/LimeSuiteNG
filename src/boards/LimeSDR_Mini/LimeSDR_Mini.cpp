@@ -234,7 +234,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             ss << err << std::endl;
         }
 
-        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: %s.", ss.str().c_str());
+        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: "s + ss.str());
     }
 
     bool rxUsed = false;
@@ -262,12 +262,12 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 
         status = LMS7002LOConfigure(chip, cfg);
         if (status != OpStatus::Success)
-            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed.");
+            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed."s);
         for (int i = 0; i < 2; ++i)
         {
             status = LMS7002ChannelConfigure(chip, cfg.channel[i], i);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.", i);
             LMS7002TestSignalConfigure(chip, cfg.channel[i], i);
         }
 
@@ -285,7 +285,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate."s);
         }
 
         for (int i = 0; i < 2; ++i)
@@ -302,15 +302,15 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         {
             status = UpdateFPGAInterface(this);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency."s);
         }
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
     } catch (std::runtime_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
     }
     return OpStatus::Success;
 }

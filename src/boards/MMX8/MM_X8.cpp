@@ -790,7 +790,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 
     SDRDevice* dev = mSubDevices.at(moduleIndex);
     if (!dev)
-        return ReportError(OpStatus::InvalidValue, "Invalid id select");
+        return ReportError(OpStatus::InvalidValue, "Invalid id select"s);
 
     return dev->UploadMemory(device, 0, data, length, callback);
 }
@@ -798,14 +798,14 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::InvalidValue, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryWrite(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::InvalidValue, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "Storage has no owner"s);
 
     return dev->MemoryWrite(storage, region, data);
 }
@@ -813,14 +813,14 @@ OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region 
 OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::InvalidValue, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryRead(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::InvalidValue, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "Storage has no owner"s);
 
     return dev->MemoryRead(storage, region, data);
 }

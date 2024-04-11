@@ -21,12 +21,12 @@ using namespace std::literals::string_literals;
 //     BoardLoopbackStore(lime::IConnection* port) : port(port)
 //     {
 //         if(port && port->ReadRegister(LoopbackCtrAddr, mLoopbackState) != 0)
-//             lime::ReportError(-1, "Failed to read Loopback controls");
+//             lime::ReportError(-1, "Failed to read Loopback controls"s);
 //     }
 //     ~BoardLoopbackStore()
 //     {
 //         if(port && port->WriteRegister(LoopbackCtrAddr, mLoopbackState) != 0)
-//             lime::ReportError(-1, "Failed to restore Loopback controls");
+//             lime::ReportError(-1, "Failed to restore Loopback controls"s);
 //     }
 // private:
 //     lime::IConnection* port;
@@ -153,7 +153,7 @@ static int SetExtLoopback(IConnection* port, uint8_t ch, bool enable, bool tx)
     }
     status = port->WriteRegister(LoopbackCtrAddr, value);
     if(status != 0)
-        return ReportError(status, "Failed to enable external loopback");
+        return ReportError(status, "Failed to enable external loopback"s);
     return status;
 }
 */
@@ -184,7 +184,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected");
+        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected"s);
     auto beginTime = std::chrono::high_resolution_clock::now();
     int status;
     uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
@@ -230,7 +230,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, true);
             // if(status != 0)
-            //     return ReportError(OpStatus::InvalidValue, "Tx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Tx Calibration: Failed to enable external loopback"s);
             uint8_t loopPair = GetExtLoopPair(*this, true);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }
@@ -279,7 +279,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::IOFailure, "Rx Calibration: Device not connected");
+        return ReportError(OpStatus::IOFailure, "Rx Calibration: Device not connected"s);
 #ifdef LMS_VERBOSE_OUTPUT
     auto beginTime = std::chrono::high_resolution_clock::now();
 #endif
@@ -343,7 +343,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, false);
             // if(status != 0)
-            //     return ReportError(OpStatus::InvalidValue, "Rx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Rx Calibration: Failed to enable external loopback"s);
             uint8_t loopPair = GetExtLoopPair(*this, false);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }

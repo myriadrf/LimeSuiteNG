@@ -546,7 +546,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return ReportError(OpStatus::Error, ss.str().c_str());
+        return ReportError(OpStatus::Error, ss.str());
     }
 
     bool rxUsed = false;
@@ -643,7 +643,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_X3 config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_X3 config: "s + e.what());
     } catch (std::runtime_error& e)
     {
         return OpStatus::Error;
@@ -898,7 +898,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
         {
             const std::string reason = "Failed to open device in stream start: "s + trxPort->GetPathName().string();
-            return ReportError(OpStatus::Error, reason.c_str());
+            return ReportError(OpStatus::Error, reason);
         }
     }
     mStreamers[moduleIndex]->Setup(config);

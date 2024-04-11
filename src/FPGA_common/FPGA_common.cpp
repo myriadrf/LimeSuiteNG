@@ -345,7 +345,7 @@ OpStatus FPGA::ResetTimestamp()
         return OpStatus::Success;
 
     if (interface_ctrl_000A & RX_EN)
-        return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp");
+        return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp"s);
 #endif // NDEBUG
     //reset hardware timestamp to 0
     int interface_ctrl_0009 = ReadRegister(0x0009);
@@ -441,7 +441,7 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (WriteRegister(0x0023, reg23val & ~PHCFG_START) != OpStatus::Success) // redundant clear
-        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers");
+        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers"s);
     return OpStatus::Success;
 }
 
@@ -458,7 +458,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     WriteRegistersBatch batch(this);
     const auto timeout = std::chrono::seconds(3);
     if (!fpgaPort)
-        return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 
     const bool waitForDone = HasWaitForDone(ReadRegister(0)); // read targetDevice
     bool willDoPhaseSearch = false;
@@ -541,7 +541,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         }
     }
     if (desiredVCO.size() == 0)
-        return ReportError(OpStatus::InvalidValue, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks");
+        return ReportError(OpStatus::InvalidValue, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks"s);
 
     // Find VCO that satisfies most outputs with integer dividers
     uint64_t bestFreqVCO = std::max_element(
@@ -656,12 +656,12 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
 OpStatus FPGA::SetDirectClocking(int clockIndex)
 {
     if (!fpgaPort)
-        return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL"s);
 
     uint16_t drct_clk_ctrl_0005 = ReadRegister(0x0005);
     //enable direct clocking
     if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
-        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers");
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers"s);
     return OpStatus::Success;
 }
 
