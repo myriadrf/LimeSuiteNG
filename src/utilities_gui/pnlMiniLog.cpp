@@ -37,9 +37,6 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     btnFullLog = new wxButton(this, wxID_ANY, wxT("Show Log"));
     szControls->Add(btnFullLog, 0, wxEXPAND, 5);
 
-    chkLogData = new wxCheckBox(this, wxID_ANY, wxT("Log data"));
-    szControls->Add(chkLogData, 0, 0, 5);
-
     wxStaticText* m_staticText52 = new wxStaticText(this, wxID_ANY, wxT("Log level:"), wxDefaultPosition, wxDefaultSize, 0);
     szControls->Add(m_staticText52, 0, wxTOP, 5);
 
@@ -59,7 +56,6 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     this->Connect(wxEVT_UPDATE_UI, wxUpdateUIEventHandler(pnlMiniLog::OnUpdateGUI));
     btnClear->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnBtnClearClicked), NULL, this);
     btnFullLog->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnShowFullLog), NULL, this);
-    chkLogData->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlMiniLog::OnLogDataClicked), NULL, this);
     choiceLogLvl->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlMiniLog::onLogLvlChange), NULL, this);
 
     mDefaultStyle = txtMessageField->GetDefaultStyle();
@@ -149,9 +145,4 @@ void pnlMiniLog::OnShowFullLog(wxCommandEvent& event)
 void pnlMiniLog::onLogLvlChange(wxCommandEvent& event)
 {
     log_level = 1 + event.GetInt();
-}
-
-void pnlMiniLog::OnLogDataClicked(wxCommandEvent& event)
-{
-    event.Skip();
 }

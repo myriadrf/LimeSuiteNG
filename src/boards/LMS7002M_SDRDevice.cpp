@@ -59,8 +59,7 @@ constexpr static std::array<unsigned int, MAXIMUM_GAIN_VALUE> PGATable = {
 #endif
 
 LMS7002M_SDRDevice::LMS7002M_SDRDevice()
-    : mCallback_logData(nullptr)
-    , mCallback_logMessage(nullptr)
+    : mCallback_logMessage(nullptr)
 {
 }
 
@@ -98,11 +97,6 @@ OpStatus LMS7002M_SDRDevice::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
     return lms->EnableChannel(trx, channel % 2, enable);
-}
-
-void LMS7002M_SDRDevice::SetDataLogCallback(DataCallbackType callback)
-{
-    mCallback_logData = callback;
 }
 
 void LMS7002M_SDRDevice::SetMessageLogCallback(LogCallbackType callback)
