@@ -25,7 +25,8 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    include/limesuiteng/Logger.cpp
+    logger/Logger.cpp
+    logger/LoggerCString.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp

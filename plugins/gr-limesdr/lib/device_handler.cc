@@ -43,7 +43,7 @@ device_handler::~device_handler() {}
 
 void device_handler::error(int device_number)
 {
-    GR_LOG_WARN(d_logger, lime::GetLastErrorMessage());
+    GR_LOG_WARN(d_logger, lime::GetLastErrorMessageCString());
 
     if (device_vector[device_number].address != nullptr)
         close_all_devices();

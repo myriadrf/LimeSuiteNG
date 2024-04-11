@@ -292,7 +292,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset)
 {
     if (index > 15)
-        return ReportError(OpStatus::OutOfRange, "%s NCO%i index invalid", ToCString(trx), index);
+        return ReportError(OpStatus::OutOfRange, "%s NCO%i index invalid", ToString(trx).c_str(), index);
 
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
@@ -304,7 +304,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
     if ((lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_BYP_TXTSP : LMS7_CMIX_BYP_RXTSP, !enable) != OpStatus::Success) ||
         (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_GAIN_TXTSP : LMS7_CMIX_GAIN_RXTSP, enable) != OpStatus::Success))
     {
-        return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToCString(trx), index);
+        return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToString(trx).c_str(), index);
     }
 
     OpStatus status = lms->SetNCOFrequency(trx, index, std::fabs(frequency));
@@ -323,7 +323,7 @@ OpStatus LMS7002M_SDRDevice::SetNCOFrequency(
             (lms->Modify_SPI_Reg_bits(tx ? LMS7_MODE_TX : LMS7_MODE_RX, 0) != OpStatus::Success) ||
             (lms->Modify_SPI_Reg_bits(tx ? LMS7_CMIX_SC_TXTSP : LMS7_CMIX_SC_RXTSP, down) != OpStatus::Success))
         {
-            return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToCString(trx), index);
+            return ReportError(OpStatus::Error, "Failed to set %s NCO%i frequency", ToString(trx).c_str(), index);
         }
     }
 
@@ -419,7 +419,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     if (status != OpStatus::Success)
         return status;
 
-    lime::info("%s LPF configured", ToCString(trx));
+    lime::info(ToString(trx) + " LPF configured"s);
     return OpStatus::Success;
 }
 

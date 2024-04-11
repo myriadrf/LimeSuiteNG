@@ -1514,7 +1514,7 @@ API_EXPORT void LMS_RegisterLogHandler(LMS_LogHandler handler)
 
 API_EXPORT const char* CALL_CONV LMS_GetLastErrorMessage(void)
 {
-    return lime::GetLastErrorMessage();
+    return lime::GetLastErrorMessageCString();
 }
 
 API_EXPORT int CALL_CONV LMS_SetGFIRLPF(lms_device_t* device, bool dir_tx, size_t chan, bool enabled, float_type bandwidth)

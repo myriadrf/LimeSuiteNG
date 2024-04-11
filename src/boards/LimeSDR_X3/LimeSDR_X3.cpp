@@ -673,7 +673,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
                                trx.gfir.enabled,
                                trx.gfir.bandwidth) != OpStatus::Success)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToCString(dir), ch));
+            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
         }
     }
 
@@ -694,7 +694,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i DC/IQ calibration failed: %s", ToCString(dir), ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 
@@ -715,7 +715,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i filter calibration failed: %s", ToCString(dir), ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i filter calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 }
