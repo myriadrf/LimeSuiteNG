@@ -3,6 +3,10 @@
 
 #include "limesuiteng/Logger.h"
 
+#ifdef _MSC_VER
+    #define thread_local __declspec(thread)
+#endif
+
 namespace lime {
 
 class Logger

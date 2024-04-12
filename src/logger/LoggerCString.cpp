@@ -1,14 +1,6 @@
 #include "limesuiteng/Logger.h"
 #include "LoggerInternal.h"
 
-#ifdef _MSC_VER
-    #define thread_local __declspec(thread)
-#endif
-
-#ifdef __APPLE__
-    #define thread_local __thread
-#endif
-
 namespace lime {
 
 LogHandlerCString Logger::logHandlerCString{ &defaultLogHandlerCString };

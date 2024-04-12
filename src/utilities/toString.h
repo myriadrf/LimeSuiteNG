@@ -21,6 +21,6 @@ LIME_API const std::string& ToString(eMemoryRegion value);
 LIME_API const std::string& ToString(eGainTypes value);
 LIME_API const std::string& ToString(eMemoryDevice value);
 
-template<class T> T ToEnumClass(const std::string& str);
+template<class T> LIME_API T ToEnumClass(const std::string& str);
 
 } // namespace lime

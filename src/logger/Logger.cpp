@@ -12,14 +12,6 @@
 
 #include "utilities/toString.h"
 
-#ifdef _MSC_VER
-    #define thread_local __declspec(thread)
-#endif
-
-#ifdef __APPLE__
-    #define thread_local __thread
-#endif
-
 using namespace std::literals::string_literals;
 
 namespace lime {

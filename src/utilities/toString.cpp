@@ -91,7 +91,7 @@ const std::unordered_map<std::remove_cv_t<OriginalValue>, OriginalKey> SwapKeysA
 
 static const auto STRING_TO_GAIN_TYPES = SwapKeysAndValues(GAIN_TYPES_TEXT);
 
-template<> eGainTypes ToEnumClass(const std::string& str)
+template<> LIME_API eGainTypes ToEnumClass(const std::string& str)
 {
     return STRING_TO_GAIN_TYPES.at(str);
 }

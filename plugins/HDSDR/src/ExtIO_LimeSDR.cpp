@@ -138,17 +138,17 @@ static void RecvThread(void* p)
     _endthread();
 }
 //---------------------------------------------------------------------------
-static void error(lime::LogLevel lvl, const char* msg)
+static void error(lime::LogLevel lvl, const std::string& msg)
 {
 #ifdef _MYDEBUG
-    DbgPrintf(msg);
+    DbgPrintf(msg.c_str());
     DbgPrintf("\n");
 #else
     if (isErrorLoggingEnabled && lvl < lime::LogLevel::Warning) {
         if (lvl == lime::LogLevel::Critical) {
             ExtIOCallback(-1, extHw_Stop, 0, NULL);
         }
-        DbgPrintf(msg);
+        DbgPrintf(msg.c_str());
     }
 #endif
 }
