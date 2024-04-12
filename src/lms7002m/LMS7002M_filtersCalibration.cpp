@@ -136,8 +136,7 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     float_type tx_lpf_IF = tx_lpf_freq_RF / 2;
     if (tx_lpf_freq_RF > TxLPF_RF_LimitLowMid && tx_lpf_freq_RF < TxLPF_RF_LimitMidHigh)
     {
-        Log(LogType::LOG_WARNING,
-            "Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz. Setting to %g MHz",
+        lime::warning("Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz. Setting to %g MHz",
             tx_lpf_freq_RF / 1e6,
             TxLPF_RF_LimitLow / 1e6,
             TxLPF_RF_LimitLowMid / 1e6,
@@ -180,11 +179,10 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
         this->SPI_read(addr, true);
 
     if (tx_lpf_IF <= TxLPF_RF_LimitLowMid / 2)
-        Log(LogType::LOG_INFO,
-            "Filter calibrated. Filter order-4th, filter bandwidth set to %g MHz."
-            "Real pole 1st order filter set to 2.5 MHz. Preemphasis filter not active",
+        lime::info("Filter calibrated. Filter order-4th, filter bandwidth set to %g MHz."
+                   "Real pole 1st order filter set to 2.5 MHz. Preemphasis filter not active",
             tx_lpf_IF / 1e6 * 2);
     else
-        Log(LogType::LOG_INFO, "Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
+        lime::info("Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
     return OpStatus::Success;
 }

@@ -173,59 +173,6 @@ class ChannelScope
     bool mNeedsRestore; ///< Whether the channel needs restoring or not
 };
 
-/** @brief Simple logging function to print status messages
-    @param text message to print
-    @param type message type for filtering specific information
-*/
-void LMS7002M::Log(const char* text, LogType type)
-{
-    switch (type)
-    {
-    case LogType::LOG_INFO:
-        lime::info(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_WARNING:
-        lime::warning(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_ERROR:
-        lime::error(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_DATA:
-        lime::debug(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    }
-}
-
-//Compatibility for vasprintf under MSVC
-#if defined(_MSC_VER) || !defined(__unix__)
-int vasprintf(char** strp, const char* fmt, va_list ap)
-{
-    int r = _vscprintf(fmt, ap);
-    if (r < 0)
-        return r;
-    *strp = (char*)malloc(r + 1);
-    return vsprintf_s(*strp, r + 1, fmt, ap);
-}
-#endif
-
-void LMS7002M::Log(LogType type, const char* format, va_list argList)
-{
-    char* message = NULL;
-    if (vasprintf(&message, format, argList) != -1)
-    {
-        Log(message, type);
-        free(message);
-    }
-}
-
 /** @brief Sets connection which is used for data communication with chip
 */
 void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
@@ -3014,11 +2961,6 @@ float_type LMS7002M::GetTemperature()
     Modify_SPI_Reg_bits(LMS7_MUX_BIAS_OUT, biasMux);
     lime::debug("Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (reg606 >> 8) & 0xFF, reg606 & 0xFF, Vdiff, temperature);
     return temperature;
-}
-
-void LMS7002M::SetLogCallback(std::function<void(const char*, LogType)> callback)
-{
-    log_callback = callback;
 }
 
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)
