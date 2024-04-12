@@ -10,11 +10,14 @@
 #include <atomic>
 #include <string>
 #include <functional>
+#include <string>
 #include <memory>
 
 #include "mcu_programs.h"
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
+
+using namespace std::literals::string_literals;
 
 namespace lime {
 
@@ -80,7 +83,7 @@ class LIME_API MCU_BD
      * @param progressMsg string describing current progress state
      * @return 0-continue programming, 1-abort operation
      */
-    typedef std::function<bool(int bsent, int btotal, const char* progressMsg)> ProgrammingCallback;
+    typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)> ProgrammingCallback;
     void SetCallback(ProgrammingCallback callback);
 
   protected:
@@ -97,8 +100,8 @@ class LIME_API MCU_BD
     int m_bLoadedProd;
     int byte_array_size;
 
-    void IncrementStepsDone(unsigned short amount = 1, const char* message = "");
-    void SetStepsDone(unsigned short amount, const char* message = "");
+    void IncrementStepsDone(unsigned short amount = 1, const std::string& message = ""s);
+    void SetStepsDone(unsigned short amount, const std::string& message = ""s);
 
   public:
     uint8_t ReadMCUProgramID();

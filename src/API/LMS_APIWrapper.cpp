@@ -175,9 +175,9 @@ static void APIMsgHandler(const lime::LogLevel level, const char* message)
 }
 
 static lms_prog_callback_t programmingCallback;
-static bool ProgrammingCallback(size_t bsent, size_t btotal, const char* statusMessage)
+static bool ProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& statusMessage)
 {
-    return programmingCallback(static_cast<int>(bsent), static_cast<int>(btotal), statusMessage);
+    return programmingCallback(static_cast<int>(bsent), static_cast<int>(btotal), statusMessage.c_str());
 }
 
 } //unnamed namespace

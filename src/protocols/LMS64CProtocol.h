@@ -5,6 +5,7 @@
 */
 
 #pragma once
+#include <functional>
 #include <mutex>
 #include <thread>
 
@@ -141,7 +142,8 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
 OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
 OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
 
-typedef bool (*ProgressCallback)(size_t bytesSent, size_t bytesTotal, const char* progressMsg); // return true to stop progress
+typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
+
 OpStatus ProgramWrite(ISerialPort& port,
     const char* data,
     size_t length,

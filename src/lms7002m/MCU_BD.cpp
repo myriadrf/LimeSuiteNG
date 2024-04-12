@@ -74,9 +74,8 @@ void MCU_BD::SetCallback(ProgrammingCallback callback)
     m_callback = callback;
 }
 
-void MCU_BD::IncrementStepsDone(unsigned short amount, const char* message)
+void MCU_BD::IncrementStepsDone(unsigned short amount, const std::string& message)
 {
-    assert(message);
     stepsDone += amount;
 
     if (m_callback != nullptr)
@@ -85,9 +84,8 @@ void MCU_BD::IncrementStepsDone(unsigned short amount, const char* message)
     }
 }
 
-void MCU_BD::SetStepsDone(unsigned short amount, const char* message)
+void MCU_BD::SetStepsDone(unsigned short amount, const std::string& message)
 {
-    assert(message);
     stepsDone.store(amount);
 
     if (m_callback != nullptr)

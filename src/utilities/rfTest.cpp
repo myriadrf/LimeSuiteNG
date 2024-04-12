@@ -36,11 +36,11 @@ void intHandler(int dummy)
 }
 
 static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 typedef std::pair<SDRConfig, StreamConfig> TestConfigType;

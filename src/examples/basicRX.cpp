@@ -29,11 +29,11 @@ void intHandler(int dummy)
 }
 
 static LogLevel logVerbosity = LogLevel::Debug;
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 int main(int argc, char** argv)

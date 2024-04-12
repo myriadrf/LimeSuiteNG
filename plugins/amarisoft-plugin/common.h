@@ -9,8 +9,6 @@
 #include <vector>
 #include <deque>
 
-typedef void (*HostLogCallbackType)(lime::LogLevel, const char*);
-
 /// Interface for providing parameters from configuration file
 class LimeSettingsProvider
 {
@@ -97,7 +95,7 @@ struct LimePluginContext {
 
     /* Path of the config file, not terminating by / */
     std::string currentWorkingDirectory;
-    HostLogCallbackType hostLog;
+    lime::SDRDevice::LogCallbackType hostLog;
 };
 
 struct LimeRuntimeParameters {
@@ -123,7 +121,7 @@ void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_n
 void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num);
 
 // context should be allocated/freed by the host
-int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, LimeSettingsProvider* configProvider);
+int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType logFptr, LimeSettingsProvider* configProvider);
 int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params);
 int LimePlugin_Start(LimePluginContext* context);
 int LimePlugin_Stop(LimePluginContext* context);

@@ -13,7 +13,7 @@
 
 using namespace lime;
 
-static void limeSuiteLogHandler(const LogLevel level, const char* message)
+static void limeSuiteLogHandler(const LogLevel level, const std::string& message)
 {
     switch (level)
     {

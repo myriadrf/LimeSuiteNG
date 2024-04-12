@@ -51,11 +51,11 @@ static LogLevel strToLogLevel(const std::string_view str)
     return LogLevel::Error;
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 static int printHelp(void)

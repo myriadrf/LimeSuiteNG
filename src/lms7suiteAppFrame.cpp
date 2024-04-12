@@ -50,12 +50,12 @@ LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
 
 int LMS7SuiteAppFrame::m_lmsSelection = 0;
 
-void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char* message)
+void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
         return;
     wxCommandEvent evt;
-    evt.SetString(wxString::FromAscii(message));
+    evt.SetString(message);
     evt.SetEventType(LOG_MESSAGE);
     evt.SetInt(static_cast<int>(level));
     wxPostEvent(obj_ptr, evt);

@@ -64,7 +64,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
 }
 
 static auto lastProgressUpdate = std::chrono::steady_clock::now();
-bool progressCallBack(size_t bsent, size_t btotal, const char* statusMessage)
+bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& statusMessage)
 {
     float percentage = 100.0 * bsent / btotal;
     const bool hasCompleted = bsent == btotal;

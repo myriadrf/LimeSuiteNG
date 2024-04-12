@@ -2,6 +2,7 @@
 #define LIME_SDRDevice_H
 
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -534,7 +535,7 @@ class LIME_API SDRDevice
     virtual void SetDataLogCallback(DataCallbackType callback){};
 
     /// @brief The definition of a function to call when a log message is generated.
-    typedef void (*LogCallbackType)(LogLevel, const char*);
+    typedef std::function<void(LogLevel, const std::string&)> LogCallbackType;
 
     /// @brief Sets callback function which gets called each a log message is received
     /// @param callback The callback to use from this point onwards.
@@ -546,7 +547,7 @@ class LIME_API SDRDevice
     virtual void* GetInternalChip(uint32_t index) = 0;
 
     /// @brief The definition of a function to call whenever memory is being uploaded.
-    typedef bool (*UploadMemoryCallback)(size_t bsent, size_t btotal, const char* statusMessage);
+    typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> UploadMemoryCallback;
 
     /// @brief Uploads the given memory into the specified device.
     /// @param device The memory device to upload the memory to.

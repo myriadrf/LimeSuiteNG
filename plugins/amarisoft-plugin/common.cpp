@@ -52,7 +52,7 @@ struct StreamStatus {
 static std::mutex gainsMutex;
 static std::array<StreamStatus, LIME_TRX_MAX_RF_PORT> portStreamStates;
 
-static HostLogCallbackType hostCallback = nullptr;
+static lime::SDRDevice::LogCallbackType hostCallback = nullptr;
 
 DevNode::DevNode()
     : device(nullptr)
@@ -125,7 +125,7 @@ static void Log(LogLevel lvl, const char* format, ...)
         hostCallback(lvl, msg);
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -650,7 +650,7 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes)
     return OpStatus::Success;
 }
 
-int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, LimeSettingsProvider* configProvider)
+int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType logFptr, LimeSettingsProvider* configProvider)
 {
     context->hostLog = logFptr;
     hostCallback = logFptr;
