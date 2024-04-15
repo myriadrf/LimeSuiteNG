@@ -118,6 +118,7 @@ template<class T> struct POD_complex_t {
         q = qval;
     }
 
+  private:
     T i; ///< The I component of the number.
     T q; ///< The Q component of the number.
 };

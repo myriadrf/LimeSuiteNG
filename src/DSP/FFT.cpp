@@ -53,8 +53,8 @@ std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFun
 
     for (int i = 0; i < fftSize; ++i)
     {
-        fftIn[i].r = samples[i].i * coefs[i];
-        fftIn[i].i = samples[i].q * coefs[i];
+        fftIn[i].r = samples[i].real() * coefs[i];
+        fftIn[i].i = samples[i].imag() * coefs[i];
     }
     kiss_fft(plan, fftIn.data(), fftOut.data());
     for (int i = 0; i < fftSize; ++i)
@@ -76,8 +76,8 @@ void FFT::Calculate(const complex16_t* src, uint32_t count, std::vector<float>& 
     assert(count == m_fftCalcIn.size());
     for (uint32_t i = 0; i < count; ++i)
     {
-        m_fftCalcIn[i].r = src[i].i / 32768.0 * mWindowCoefs[i];
-        m_fftCalcIn[i].i = src[i].q / 32768.0 * mWindowCoefs[i];
+        m_fftCalcIn[i].r = src[i].real() / 32768.0 * mWindowCoefs[i];
+        m_fftCalcIn[i].i = src[i].imag() / 32768.0 * mWindowCoefs[i];
     }
     kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
     outputBins.resize(count);
@@ -93,8 +93,8 @@ void FFT::Calculate(const complex32f_t* src, uint32_t count, std::vector<float>&
     assert(count == m_fftCalcIn.size());
     for (uint32_t i = 0; i < count; ++i)
     {
-        m_fftCalcIn[i].r = src[i].i * mWindowCoefs[i];
-        m_fftCalcIn[i].i = src[i].q * mWindowCoefs[i];
+        m_fftCalcIn[i].r = src[i].real() * mWindowCoefs[i];
+        m_fftCalcIn[i].i = src[i].imag() * mWindowCoefs[i];
     }
     kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
     outputBins.resize(count);

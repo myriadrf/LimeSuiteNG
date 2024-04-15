@@ -521,8 +521,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
                         break;
                     for (uint32_t i = 0; i < samplesToCopy; ++i)
                     {
-                        captureBuffer[ch][samplesCaptured + i].i = buffers[ch][i].i * 32767;
-                        captureBuffer[ch][samplesCaptured + i].q = buffers[ch][i].q * 32767;
+                        captureBuffer[ch][samplesCaptured + i].real(buffers[ch][i].real() * 32767);
+                        captureBuffer[ch][samplesCaptured + i].imag(buffers[ch][i].imag() * 32767);
                     }
                     samplesToCapture -= samplesToCopy;
                     samplesCaptured += samplesToCopy;
