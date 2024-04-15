@@ -19,11 +19,7 @@ add_subdirectory(bindings)
 ########################################################################
 # Install python sources
 ########################################################################
-GR_PYTHON_INSTALL(
-    FILES
-    __init__.py
-    DESTINATION ${GR_PYTHON_DIR}/limesdr
-)
+gr_python_install(FILES __init__.py DESTINATION ${GR_PYTHON_DIR}/limesdr)
 
 ########################################################################
 # Handle the unit tests

@@ -17,11 +17,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-install(FILES
-    limesdr_source.block.yml
-    limesdr_sink.block.yml
-    DESTINATION share/gnuradio/grc/blocks
-)
+install(FILES limesdr_source.block.yml limesdr_sink.block.yml DESTINATION share/gnuradio/grc/blocks)
 if(ENABLE_RFE)
     install(FILES limesdr_rfe.block.yml DESTINATION share/gnuradio/grc/blocks)
 endif()

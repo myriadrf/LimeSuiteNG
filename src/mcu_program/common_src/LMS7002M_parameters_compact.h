@@ -13,32 +13,32 @@
 typedef struct {
     uint16_t address;
     uint8_t msblsb;
-} LMS7Parameter;
+} LMS7ParameterCompact;
 
 //#define DCOFFI_RFE 0x010E, 13<<4 |  7
 //#define DCOFFQ_RFE 0x010E, 6<<4 |  0
-extern ROM const LMS7Parameter DCOFFI_RFE;
-extern ROM const LMS7Parameter DCOFFQ_RFE;
+extern ROM const LMS7ParameterCompact DCOFFI_RFE;
+extern ROM const LMS7ParameterCompact DCOFFQ_RFE;
 
 //#define DCCORRI_TXTSP 0x0204, 15<<4 |  8
 //#define DCCORRQ_TXTSP 0x0204, 7<<4 |  0
-extern ROM const LMS7Parameter DCCORRI_TXTSP;
-extern ROM const LMS7Parameter DCCORRQ_TXTSP;
+extern ROM const LMS7ParameterCompact DCCORRI_TXTSP;
+extern ROM const LMS7ParameterCompact DCCORRQ_TXTSP;
 
 //#define IQCORR_TXTSP 0x0203, 11<<4 |  0
 //#define IQCORR_RXTSP 0x0403, 11<<4 |  0
-extern ROM const LMS7Parameter IQCORR_TXTSP;
-extern ROM const LMS7Parameter IQCORR_RXTSP;
+extern ROM const LMS7ParameterCompact IQCORR_TXTSP;
+extern ROM const LMS7ParameterCompact IQCORR_RXTSP;
 
 //#define GCORRQ_TXTSP 0x0201, 10<<4 |  0
 //#define GCORRI_TXTSP 0x0202, 10<<4 |  0
-extern ROM const LMS7Parameter GCORRI_TXTSP;
-extern ROM const LMS7Parameter GCORRQ_TXTSP;
+extern ROM const LMS7ParameterCompact GCORRI_TXTSP;
+extern ROM const LMS7ParameterCompact GCORRQ_TXTSP;
 
 //#define GCORRQ_RXTSP 0x0401, 10<<4 |  0
 //#define GCORRI_RXTSP 0x0402, 10<<4 |  0
-extern ROM const LMS7Parameter GCORRI_RXTSP;
-extern ROM const LMS7Parameter GCORRQ_RXTSP;
+extern ROM const LMS7ParameterCompact GCORRI_RXTSP;
+extern ROM const LMS7ParameterCompact GCORRQ_RXTSP;
 
 #define SECTION_LimeLight 0x0020, 0x002F
 #define SECTION_AFE 0x0082, 0x0082

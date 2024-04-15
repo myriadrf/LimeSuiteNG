@@ -7,8 +7,6 @@
 #include <math.h>
 #include <iostream>
 
-#include "Register.h"
-
 namespace lime {
 
 FPGA_Mini::FPGA_Mini(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)

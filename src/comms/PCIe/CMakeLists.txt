@@ -9,8 +9,7 @@ set(COMMS_LITE_PCIE_SOURCES
     ${THIS_SOURCE_DIR}/LMS64C_LMS7002M_Over_PCIe.cpp
     ${THIS_SOURCE_DIR}/LitePCIe.cpp
     ${THIS_SOURCE_DIR}/PCIE_CSR_Pipe.cpp
-    ${THIS_SOURCE_DIR}/TRXLooper_PCIE.cpp
-)
+    ${THIS_SOURCE_DIR}/TRXLooper_PCIE.cpp)
 
 ########################################################################
 ## Feature registration
@@ -19,7 +18,7 @@ include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_LITE_PCIE "Enable Lite PCIe" ON "UNIX;ENABLE_LIBRARY; NOT APPLE" OFF)
 add_feature_info(LITE_PCIE ENABLE_LITE_PCIE "PCIe support")
-if (NOT ENABLE_LITE_PCIE)
+if(NOT ENABLE_LITE_PCIE)
     return()
 endif()
 
@@ -35,7 +34,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     cmake_dependent_option(LITEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module" ON "UNIX; NOT APPLE" OFF)
     add_feature_info(LITEPCIE_KERNEL_MODULE LITEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module")
-    if (LITEPCIE_KERNEL_MODULE)
+    if(LITEPCIE_KERNEL_MODULE)
         add_subdirectory(${THIS_SOURCE_DIR}/linux-kernel-module)
     endif()
 endif()
