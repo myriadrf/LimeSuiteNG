@@ -7,6 +7,7 @@ set(GLEW_PATH "${PROJECT_SOURCE_DIR}/external/glew")
 
 add_library(GLEW STATIC ${GLEW_PATH}/glew.c)
 target_include_directories(GLEW PUBLIC ${GLEW_PATH})
+target_compile_definitions(GLEW PRIVATE GLEW_STATIC)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # Ignore warnings about narrowing: static font header

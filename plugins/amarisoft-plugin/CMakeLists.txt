@@ -22,7 +22,7 @@ else()
 endif()
 
 set(AMARISOFT_PLUGIN_TARGET_NAME trx_limesuite)
-add_library(${AMARISOFT_PLUGIN_TARGET_NAME} trx_limesuite.cpp common.cpp)
+add_library(${AMARISOFT_PLUGIN_TARGET_NAME} SHARED trx_limesuite.cpp common.cpp)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -Wall -Wpedantic)
