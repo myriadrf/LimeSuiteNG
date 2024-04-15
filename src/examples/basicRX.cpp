@@ -5,6 +5,7 @@
  */
 #include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <math.h>
 #include <signal.h>
@@ -160,10 +161,8 @@ int main(int argc, char** argv)
         if (t2 - t1 > std::chrono::seconds(1))
         {
             t1 = t2;
-            printf("Samples received: %li, Peak amplitude %.2f dBFS @ %.3f MHz\n",
-                totalSamplesReceived,
-                peakAmplitude,
-                (frequencyLO + peakFrequency) / 1e6);
+            std::cout << "Samples received: " << totalSamplesReceived << ", Peak amplitude: " << std::fixed << std::setprecision(2)
+                      << peakAmplitude << "dBFS @ " << std::setprecision(3) << (frequencyLO + peakFrequency) / 1e6 << std::endl;
 #ifdef USE_GNU_PLOT
             gp.write("plot '-' with points\n");
             for (uint32_t j = 0; j < samplesRead; ++j)

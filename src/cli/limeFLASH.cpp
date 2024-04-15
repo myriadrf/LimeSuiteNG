@@ -72,8 +72,8 @@ bool progressCallBack(size_t bsent, size_t btotal, const char* statusMessage)
     if (now - lastProgressUpdate > std::chrono::milliseconds(10) || hasCompleted)
     {
         lastProgressUpdate = now;
-        printf("[%3.0f%%] bytes written %li/%li\r", percentage, bsent, btotal);
-        fflush(stdout);
+        std::cout << "[" << std::fixed << std::setprecision(0) << percentage << "] bytes written " << bsent << "/" << btotal << "\r"
+                  << std::flush;
     }
     if (hasCompleted)
         cout << endl;

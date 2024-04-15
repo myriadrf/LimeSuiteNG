@@ -96,18 +96,10 @@ void MemoryPool::Free(void* ptr)
     {
         if (ownedAddresses.find(ptr) != ownedAddresses.end())
         {
-            char ctemp[1024];
-            sprintf(ctemp,
-                "%s Double free?, allocs: %i , frees: %i, used: %li, free: %li, ptr: %p",
-                name.c_str(),
-                allocCnt,
-                freeCnt,
-                mUsedBlocks.size(),
-                mFreeBlocks.size(),
-                ptr);
-            for (auto adr : mUsedBlocks)
-                lime::error("addrs: %p", adr);
-            throw std::runtime_error(ctemp);
+            std::stringstream ss;
+            ss << name << " Double free? , allocs: " << allocCnt << ", frees: " << freeCnt << ", used: " << mUsedBlocks.size()
+               << ", free: " << mFreeBlocks.size() << ", ptr: " << ptr << std::endl;
+            throw std::runtime_error(ss.str().c_str());
         }
         else
         {

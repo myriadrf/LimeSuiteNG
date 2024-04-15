@@ -48,7 +48,7 @@ static void LogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    cerr << msg << endl;
 }
 
 static int printHelp(void)
@@ -163,7 +163,7 @@ class FFTPlotter
         {
             if (plotDataReady.wait_for(lk, std::chrono::milliseconds(2000)) == std::cv_status::timeout)
             {
-                printf("plot timeout\n");
+                cerr << "plot timeout" << endl;
                 continue;
             }
             if (!doWork)
@@ -250,7 +250,7 @@ class ConstellationPlotter
         {
             if (plotDataReady.wait_for(lk, std::chrono::milliseconds(2000)) == std::cv_status::timeout)
             {
-                printf("plot timeout\n");
+                cerr << "plot timeout" << endl;
                 continue;
             }
             if (!doWork)
@@ -694,10 +694,9 @@ int main(int argc, char** argv)
                 if (peakFrequency > sampleRate / 2)
                     peakFrequency = peakFrequency - sampleRate;
 
-                printf("Samples received: %li, Peak amplitude %.2f dBFS @ %.3f MHz\n",
-                    totalSamplesReceived,
-                    peakAmplitude,
-                    (frequencyLO + peakFrequency) / 1e6);
+                std::cerr << "Samples received: " << totalSamplesReceived << " Peak amplitude " << std::fixed
+                          << std::setprecision(2) << peakAmplitude << " dBFS @ " << std::setprecision(3)
+                          << (frequencyLO + peakFrequency) / 1e6 << " MHz" << endl;
                 peakAmplitude = -1000;
 #ifdef USE_GNU_PLOT
                 fftplot.SubmitData(fftBins);
@@ -705,7 +704,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                printf("Samples received: %li\n", totalSamplesReceived);
+                std::cerr << "Samples received: " << totalSamplesReceived << endl;
             }
         }
 

@@ -13,6 +13,7 @@ const std::string& ToString(TRXDir dir)
 {
     switch (dir)
     {
+    default:
     case TRXDir::Rx:
         return cRx;
     case TRXDir::Tx:
