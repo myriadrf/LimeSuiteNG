@@ -32,8 +32,8 @@ set(KBUILD_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # Generate the Kbuild file through cmake.
 file(
     WRITE ${KBUILD_FILE_DIR}/Kbuild
-    "ccflags-y = -Wno-declaration-after-statement
-    ccflags-y = -I${KBUILD_FILE_DIR}/bsp
+    "ccflags-y += -Wno-declaration-after-statement
+    ccflags-y += -I${KBUILD_FILE_DIR}/bsp
     obj-m = litepcie.o")
 
 set(MODULE_OBJECT ${KBUILD_FILE_DIR}/${MODULE_NAME}.ko)
