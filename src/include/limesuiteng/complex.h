@@ -137,8 +137,8 @@ class complex12_t : public complex16_t
         : complex16_t(){};
 
     /// @brief Constructs the 16 bit integer complex number.
-    /// @param re The I (real) component of the number.
-    /// @param im The Q (imaginary) component of the number.
+    /// @param real The I (real) component of the number.
+    /// @param imag The Q (imaginary) component of the number.
     constexpr complex12_t(int16_t real, int16_t imag)
         : complex16_t(real, imag){};
 };

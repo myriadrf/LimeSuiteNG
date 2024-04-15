@@ -1,5 +1,5 @@
 /**
-@file	LMS7002M_parameters_compact.cpp
+@file	LMS7002M_parameters_compact.h
 @author Lime Microsystems (www.limemicro.com)
 @brief 	Definition of LMS7002M transceiver control parameters registers
 */
