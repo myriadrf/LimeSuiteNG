@@ -35,6 +35,9 @@ MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correc
         angle += 2 * M_PI / divideBy;
 
         auto magnitude = std::abs(complex);
+
+        EXPECT_NE(magnitude, 0);
+
         complex = std::polar(magnitude, angle);
 
         // Truncate to a 12-bit number bit-shifted left by 4
