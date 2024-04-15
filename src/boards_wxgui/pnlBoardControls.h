@@ -16,19 +16,22 @@
 #include <wx/frame.h>
 #include <wx/spinctrl.h>
 #include <wx/textctrl.h>
-#include <vector>
-#include <string>
-#include <stdint.h>
 #include <wx/dialog.h>
-#include <LMSBoards.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "IModuleFrame.h"
+#include "LMSBoards.h"
+#include "limesuiteng/OpStatus.h"
+#include "limesuiteng/types.h"
 
 namespace lime {
 class SDRDevice;
+struct DataStorage;
 }
-
-#include "limesuiteng/SDRDevice.h"
 
 class pnlBoardControls : public IModuleFrame
 {
