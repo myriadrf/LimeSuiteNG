@@ -94,4 +94,11 @@ class LMS7SuiteAppFrame : public wxFrame
     lime::DeviceConnectionPanel* pnlDeviceConnection;
 };
 
+struct AppArgs {
+    wxString device{};
+    wxString searchTree{};
+
+    static AppArgs Select;
+};
+
 #endif // __LMS7SuiteAppFrame__

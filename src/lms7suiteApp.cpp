@@ -28,13 +28,19 @@ IMPLEMENT_APP(lms7suiteApp)
 #endif
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
 #include "resources/splash.h"
 #include "resources/LMS_ICO.xpm"
+#include "GUI/events.h"
 
 using namespace std::literals::string_literals;
 
 bool lms7suiteApp::OnInit()
 {
+    if (!wxApp::OnInit())
+        return false;
+
     wxInitAllImageHandlers();
     wxBitmap splashBitmap = wxBITMAP_PNG_FROM_DATA(splash);
     wxSplashScreen* splash = new wxSplashScreen(
@@ -48,5 +54,19 @@ bool lms7suiteApp::OnInit()
 #endif
     splash->Destroy();
     frame->Show();
+    return true;
+}
+
+void lms7suiteApp::OnInitCmdLine(wxCmdLineParser& parser)
+{
+    parser.SetDesc(cmdDescriptions);
+    parser.SetSwitchChars("-");
+}
+
+bool lms7suiteApp::OnCmdLineParsed(wxCmdLineParser& parser)
+{
+    if (parser.Found("d", &(AppArgs::Select.device)))
+        parser.Found("s", &(AppArgs::Select.searchTree));
+
     return true;
 }

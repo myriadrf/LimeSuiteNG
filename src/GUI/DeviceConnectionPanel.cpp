@@ -44,6 +44,14 @@ void DeviceConnectionPanel::EnumerateDevicesToChoice()
     }
 }
 
+void DeviceConnectionPanel::SetSelection(const uint32_t& index)
+{
+    if (index < cmbDevHandle->GetCount())
+        cmbDevHandle->SetSelection(index);
+    else
+        printf("DeviceControlPanel: Index out of range\n");
+}
+
 DeviceConnectionPanel::DeviceConnectionPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxPanel(parent, id, pos, size, style, "DeviceConnectionPanel")
 {

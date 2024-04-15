@@ -51,6 +51,8 @@ LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
 
 int LMS7SuiteAppFrame::m_lmsSelection = 0;
 
+AppArgs AppArgs::Select{};
+
 void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char* message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
@@ -78,6 +80,79 @@ struct DeviceTreeItemData : public wxTreeItemData {
     ISOCPanel* gui;
     const std::shared_ptr<DeviceTreeNode> soc;
 };
+
+static bool FoundDevice(const wxString& criteria, DeviceHandle& outHandle, uint32_t& outIndex)
+{
+    std::vector<lime::DeviceHandle> allDevices;
+    allDevices = lime::DeviceRegistry::enumerate();
+    for (uint32_t i = 0; i < allDevices.size(); ++i)
+    {
+        const lime::DeviceHandle& device = allDevices[i];
+
+        if (device.name.find(criteria) != std::string::npos)
+        {
+            outHandle = device;
+            outIndex = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+static std::vector<std::string> SplitString(const std::string& s, const char delimiter)
+{
+    std::vector<std::string> list;
+
+    size_t right = 0;
+    size_t left = 0;
+
+    while ((right = s.find(delimiter, left)) != std::string::npos)
+    {
+        std::string str = s.substr(left, right - left);
+        list.push_back(str);
+        left = right + 1;
+    }
+    if (left != s.size())
+        list.push_back(s.substr(left));
+    return list;
+}
+
+static bool GetTreeNode(const wxTreeCtrl* treeControl,
+    const wxTreeItemId current,
+    wxTreeItemIdValue& cookie,
+    const std::vector<std::string>& path,
+    const uint32_t currentDepth,
+    wxTreeItemId& result)
+{
+    if (treeControl->GetItemText(current).ToStdString() != path.at(currentDepth))
+        return false;
+
+    if (currentDepth + 1 == path.size())
+    {
+        result = current;
+        return true;
+    }
+
+    wxTreeItemId child = treeControl->GetFirstChild(current, cookie);
+    while (child.IsOk())
+    {
+        if (GetTreeNode(treeControl, child, cookie, path, currentDepth + 1, result))
+            return true;
+        child = treeControl->GetNextSibling(child);
+    }
+    return false;
+}
+
+static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeItemId& result)
+{
+    const std::vector<std::string> nodes = SplitString(branch.ToStdString(), '/');
+
+    wxTreeItemId root = treeControl->GetRootItem();
+    wxTreeItemIdValue cookie;
+    wxTreeItemId deviceLevelNode = treeControl->GetFirstChild(root, cookie);
+
+    return GetTreeNode(treeControl, deviceLevelNode, cookie, nodes, 0, result);
+}
 
 LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
     : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
@@ -178,6 +253,22 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
 
     deviceTree->Bind(
         wxEVT_TREE_SEL_CHANGED, wxTreeEventHandler(LMS7SuiteAppFrame::DeviceTreeSelectionChanged), this, deviceTree->GetId());
+
+    DeviceHandle handle;
+    uint32_t initialIndex;
+    if (!AppArgs::Select.device.IsEmpty() && FoundDevice(AppArgs::Select.device, handle, initialIndex))
+    {
+        pnlDeviceConnection->SetSelection(initialIndex);
+        wxCommandEvent event(limeEVT_SDR_HANDLE_SELECTED, GetId());
+        event.SetString(handle.Serialize());
+        ProcessWindowEvent(event);
+
+        wxTreeItemId searchTreeID;
+        if (GetTreeNode(deviceTree, AppArgs::Select.searchTree, searchTreeID))
+        {
+            deviceTree->SetFocusedItem(searchTreeID);
+        }
+    }
 }
 
 LMS7SuiteAppFrame::~LMS7SuiteAppFrame()

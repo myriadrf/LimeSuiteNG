@@ -16,6 +16,7 @@ class DeviceConnectionPanel : public wxPanel
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
     ~DeviceConnectionPanel();
+    void SetSelection(const uint32_t& index);
 
   protected:
     void SendDisconnectEvent(wxCommandEvent& inEvent);
