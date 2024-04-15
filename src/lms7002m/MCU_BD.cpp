@@ -925,7 +925,7 @@ int MCU_BD::RunInstr_MCU(unsigned short* pPCVAL)
     return retval;
 }
 
-/** 
+/**
  * @brief Returns information about programming or reading data progress
  * @returns The structure containing information about the progress info.
 */
@@ -1138,11 +1138,11 @@ static constexpr std::array<std::string_view, MCU_BD::MCU_ERROR_CODES::MCU_ERROR
     "Tx RCAL_LPF range limit reached"sv,
 };
 
-const char* MCU_BD::MCUStatusMessage(const uint8_t code)
+std::string_view MCU_BD::MCUStatusMessage(const uint8_t code)
 {
     if (code == 255)
-        return "MCU not programmed/procedure still in progress";
+        return "MCU not programmed/procedure still in progress"sv;
     if (code >= MCU_ERROR_CODES_COUNT)
-        return "Error code undefined";
-    return MCU_ErrorMessages[code].data();
+        return "Error code undefined"sv;
+    return MCU_ErrorMessages.at(code);
 }
