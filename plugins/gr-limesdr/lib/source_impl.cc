@@ -146,8 +146,6 @@ int source_impl::work(int noutput_items,
                       gr_vector_const_void_star& input_items,
                       gr_vector_void_star& output_items)
 {
-    gr_complex* out = static_cast<gr_complex*>(output_items[0]);
-
     int ret = 0;
 
     // Receive stream for channel 0 (if channel_mode is SISO)

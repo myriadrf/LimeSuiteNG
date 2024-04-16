@@ -141,7 +141,6 @@ int sink_impl::work(int noutput_items,
 {
     // Init number of items to be sent and timestamps
     nitems_send = noutput_items;
-    uint64_t current_sample = nitems_read(0);
     tx_meta.waitForTimestamp = false;
     tx_meta.flushPartialPacket = false;
     // Check if channel 0 has any tags
