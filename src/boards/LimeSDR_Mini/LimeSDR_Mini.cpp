@@ -31,9 +31,6 @@ using namespace lime;
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
 static const int STREAM_BULK_READ_ADDRESS = 0x83;
 
-static const int CONTROL_BULK_WRITE_ADDRESS = 0x02;
-static const int CONTROL_BULK_READ_ADDRESS = 0x82;
-
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 

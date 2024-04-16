@@ -93,12 +93,6 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x00FB }
 };
 
-static inline void ValidateChannel(uint8_t channel)
-{
-    if (channel > 1)
-        throw std::logic_error("invalid channel index");
-}
-
 /// @brief Constructs a new LimeSDR object
 /// @param spiLMS The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
