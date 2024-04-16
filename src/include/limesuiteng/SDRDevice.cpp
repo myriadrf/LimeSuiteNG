@@ -104,3 +104,16 @@ void SDRDevice::StreamStop(const std::vector<uint8_t> moduleIndexes)
     for (uint8_t i : moduleIndexes)
         StreamStop(i);
 };
+
+OpStatus SDRDevice::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
+{
+    return OpStatus::NotImplemented;
+}
+
+void SDRDevice::SetDataLogCallback(DataCallbackType callback)
+{
+}
+
+void SDRDevice::SetMessageLogCallback(LogCallbackType callback)
+{
+}

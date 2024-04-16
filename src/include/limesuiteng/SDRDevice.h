@@ -485,10 +485,7 @@ class LIME_API SDRDevice
     /// @param samples The samples to upload to the device.
     /// @param count The amount of samples to upload to the device.
     /// @return Operation status.
-    virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
-    {
-        return OpStatus::NotImplemented;
-    }
+    virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count);
 
     /// @copydoc ISPI::SPI()
     /// @param spiBusAddress The SPI address of the device to use.
@@ -531,14 +528,14 @@ class LIME_API SDRDevice
 
     /// @brief Sets callback function which gets called each time data is sent or received
     /// @param callback The callback to use from this point onwards.
-    virtual void SetDataLogCallback(DataCallbackType callback){};
+    virtual void SetDataLogCallback(DataCallbackType callback);
 
     /// @brief The definition of a function to call when a log message is generated.
     typedef void (*LogCallbackType)(LogLevel, const char*);
 
     /// @brief Sets callback function which gets called each a log message is received
     /// @param callback The callback to use from this point onwards.
-    virtual void SetMessageLogCallback(LogCallbackType callback){};
+    virtual void SetMessageLogCallback(LogCallbackType callback);
 
     /// @brief Gets the pointer to an internal chip of the device.
     /// @param index The index of the device to retreive.
