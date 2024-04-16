@@ -37,14 +37,14 @@ OpStatus ReportError(const OpStatus errnum)
 int ReportError(const int errnum, const char* format, va_list argList)
 {
     _reportedErrorCode = errnum;
-    vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
+    std::vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
     log(LogLevel::Error, _reportedErrorMessage);
     return errnum;
 }
 
 OpStatus ReportError(const OpStatus errnum, const char* format, va_list argList)
 {
-    vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
+    std::vsnprintf(_reportedErrorMessage, MAX_MSG_LEN, format, argList);
     log(LogLevel::Error, _reportedErrorMessage);
     return errnum;
 }
@@ -61,7 +61,7 @@ static LogHandler logHandler(&defaultLogHandler);
 void log(const LogLevel level, const char* format, va_list argList)
 {
     char buff[4096];
-    int ret = vsnprintf(buff, sizeof(buff), format, argList);
+    int ret = std::vsnprintf(buff, sizeof(buff), format, argList);
     if (ret > 0)
         logHandler(level, buff);
 }

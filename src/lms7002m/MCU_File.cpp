@@ -252,7 +252,7 @@ void MCU_File::ReadHex(unsigned long limit)
                     unsigned long ssa;
                     char ssaStr[16];
                     sscanf(&szLine[9], "%8lx", &ssa);
-                    sprintf(ssaStr, "%08lX", ssa);
+                    std::snprintf(ssaStr, sizeof(ssaStr), "%08lX", ssa);
                     lime::debug("Segment start address (CS/IP): "s);
                     lime::debug("%s", ssaStr);
                 }
@@ -288,7 +288,7 @@ void MCU_File::ReadHex(unsigned long limit)
                     unsigned long lsa;
                     char lsaStr[16];
                     sscanf(&szLine[9], "%8lx", &lsa);
-                    sprintf(lsaStr, "%08lX", lsa);
+                    std::snprintf(lsaStr, sizeof(lsaStr), "%08lX", lsa);
                     lime::debug("Linear start address: "s);
                     lime::debug("%s", lsaStr);
                 }

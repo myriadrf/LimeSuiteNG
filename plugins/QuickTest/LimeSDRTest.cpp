@@ -417,9 +417,9 @@ std::string LimeSDRTest::RFTestInfo(const RFTestData& data, bool passed)
 {
     char buffer[128];
     if (data.peakval < -999)
-        snprintf(buffer, sizeof(buffer)-1, "  CH%d (SXR=%3.1fMHz, SXT=%3.1fMHz) - ", data.ch, data.rxfreq / 1e6, data.txfreq / 1e6);
+        std::(buffer, sizeof(buffer)-1, "  CH%d (SXR=%3.1fMHz, SXT=%3.1fMHz) - ", data.ch, data.rxfreq / 1e6, data.txfreq / 1e6);
     else
-    snprintf(buffer, sizeof(buffer)-1, "  CH%d (SXR=%3.1fMHz, SXT=%3.1fMHz): Result:(%3.1f dBFS, %3.2f MHz) - ", data.ch, data.rxfreq/1e6, data.txfreq/1e6,data.peakval,data.peakfreq/1e6);
+    std::snprintf(buffer, sizeof(buffer)-1, "  CH%d (SXR=%3.1fMHz, SXT=%3.1fMHz): Result:(%3.1f dBFS, %3.2f MHz) - ", data.ch, data.rxfreq/1e6, data.txfreq/1e6,data.peakval,data.peakfreq/1e6);
     std::string str = buffer;
     str += passed == true ? "PASSED" : "FAILED";
     return str;

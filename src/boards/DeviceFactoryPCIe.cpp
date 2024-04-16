@@ -79,7 +79,7 @@ static std::vector<std::string> GetDevicesWithRegex(const std::string& regex)
     std::vector<std::string> devices;
     FILE* lsPipe;
     char cmd[512];
-    snprintf(cmd, sizeof(cmd) - 1, "find /dev -maxdepth 1 -readable -name %s", regex.c_str());
+    std::snprintf(cmd, sizeof(cmd) - 1, "find /dev -maxdepth 1 -readable -name %s", regex.c_str());
     lsPipe = popen(cmd, "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)

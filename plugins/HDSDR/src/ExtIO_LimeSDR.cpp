@@ -68,8 +68,6 @@ THE SOFTWARE
 #define DbgPrintf(Message) MessageBox(NULL, Message, NULL, MB_OK | MB_ICONERROR)
 #endif
 
-#define snprintf _snprintf
-
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
@@ -344,11 +342,11 @@ static int UpdateDialog()
 
     /* Update LPF bandwidth */
     std::array<char, 7> bandwidth { 0, 0, 0, 0, 0, 0, 0 };
-    sprintf(bandwidth.data(), "%3.2f", LPFBandwidth / 1e6);
+    std::snprintf(bandwidth.data(), bandwidth.size(), "%3.2f", LPFBandwidth / 1e6);
     SetDlgItemText(dialogWindowHandle, IDC_ALPF_BW, bandwidth.data());
 
     /* Update calibration bandwidth */
-    sprintf(bandwidth.data(), "%3.2f", calibrationBandwidth / 1e6);
+    std::snprintf(bandwidth.data(), bandwidth.size(), "%3.2f", calibrationBandwidth / 1e6);
     SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, bandwidth.data());
 
     /* Update calibration text */

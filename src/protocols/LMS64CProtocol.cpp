@@ -230,7 +230,7 @@ void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
     if (fw.deviceId >= eLMS_DEV::LMS_DEV_COUNT)
     {
         char strTemp[64];
-        sprintf(strTemp, "Unknown (0x%X)", fw.deviceId);
+        std::snprintf(strTemp, sizeof(strTemp), "Unknown (0x%X)", fw.deviceId);
         descriptor.name = std::string(strTemp);
     }
     else
@@ -238,7 +238,7 @@ void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
     if (fw.expansionBoardId >= eEXP_BOARD::EXP_BOARD_COUNT)
     {
         char strTemp[64];
-        sprintf(strTemp, "Unknown (0x%X)", fw.expansionBoardId);
+        std::snprintf(strTemp, sizeof(strTemp), "Unknown (0x%X)", fw.expansionBoardId);
         descriptor.expansionName = std::string(strTemp);
     }
     else
@@ -427,7 +427,7 @@ OpStatus ProgramWrite(ISerialPort& port,
     //erasing FLASH can take up to 3 seconds before reply is received
     const int progTimeout_ms = 5000;
     char progressMsg[512];
-    sprintf(progressMsg, "in progress...");
+    std::snprintf(progressMsg, sizeof(progressMsg), "in progress...");
     bool abortProgramming = false;
     size_t bytesSent = 0;
 
@@ -444,7 +444,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         cmd = CMD_ALTERA_FPGA_GW_WR;
     else
     {
-        sprintf(progressMsg, "Programming failed! Target device not supported");
+        std::snprintf(progressMsg, sizeof(progressMsg), "Programming failed! Target device not supported");
         if (callback)
             callback(bytesSent, length, progressMsg);
         return ReportError(OpStatus::NotSupported, progressMsg);
@@ -496,7 +496,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
         {
-            sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).c_str());
+            std::snprintf(progressMsg, sizeof(progressMsg), "Programming failed! %s", status2string(inPacket.status).c_str());
             if (callback)
                 callback(bytesSent, length, progressMsg);
             return ReportError(OpStatus::Error, progressMsg);
@@ -511,7 +511,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         {
             bool completed = chunkIndex == chunkCount - 1;
             if (completed)
-                sprintf(progressMsg, "Programming: completed");
+                std::snprintf(progressMsg, sizeof(progressMsg), "Programming: completed");
             abortProgramming = callback(bytesSent, length, progressMsg);
             if (abortProgramming && !completed)
                 return OpStatus::Aborted;
