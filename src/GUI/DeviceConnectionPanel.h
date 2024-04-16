@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/panel.h>
+#include <cstdint>
 
 class wxButton;
 class wxChoice;
