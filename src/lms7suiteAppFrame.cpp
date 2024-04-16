@@ -51,8 +51,6 @@ LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
 
 int LMS7SuiteAppFrame::m_lmsSelection = 0;
 
-AppArgs AppArgs::Select{};
-
 void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char* message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
@@ -154,7 +152,7 @@ static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeI
     return GetTreeNode(treeControl, deviceLevelNode, cookie, nodes, 0, result);
 }
 
-LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
+LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
     : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
     , lmsControl(nullptr)
 {
@@ -256,7 +254,7 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
 
     DeviceHandle handle;
     uint32_t initialIndex;
-    if (!AppArgs::Select.device.IsEmpty() && FoundDevice(AppArgs::Select.device, handle, initialIndex))
+    if (!appArgs.device.IsEmpty() && FoundDevice(appArgs.device, handle, initialIndex))
     {
         pnlDeviceConnection->SetSelection(initialIndex);
         wxCommandEvent event(limeEVT_SDR_HANDLE_SELECTED, GetId());
@@ -264,7 +262,7 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
         ProcessWindowEvent(event);
 
         wxTreeItemId searchTreeID;
-        if (GetTreeNode(deviceTree, AppArgs::Select.searchTree, searchTreeID))
+        if (GetTreeNode(deviceTree, appArgs.searchTree, searchTreeID))
         {
             deviceTree->SetFocusedItem(searchTreeID);
         }

@@ -46,7 +46,7 @@ bool lms7suiteApp::OnInit()
     wxSplashScreen* splash = new wxSplashScreen(
         splashBitmap, wxSPLASH_CENTRE_ON_SCREEN, 6000, NULL, -1, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxSTAY_ON_TOP);
     wxYield(); //linux needs this to load splash image
-    LMS7SuiteAppFrame* frame = new LMS7SuiteAppFrame(0L);
+    LMS7SuiteAppFrame* frame = new LMS7SuiteAppFrame(0L, appArgs);
     frame->SetIcon(wxICON(LMS_ICO));
 #ifndef NDEBUG
     wxLongLong t1 = wxGetUTCTimeMillis();
@@ -57,6 +57,14 @@ bool lms7suiteApp::OnInit()
     return true;
 }
 
+static const wxCmdLineEntryDesc cmdDescriptions[] = {
+    { wxCMD_LINE_SWITCH, "h", "help", "displays help on the command line parameters", wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+    { wxCMD_LINE_OPTION, "d", "device", "select device on launch", wxCMD_LINE_VAL_STRING, wxCMD_LINE_NONE },
+    { wxCMD_LINE_OPTION, "s", "show-tree", "select initial tree window", wxCMD_LINE_VAL_STRING, wxCMD_LINE_NONE },
+
+    { wxCMD_LINE_NONE }
+};
+
 void lms7suiteApp::OnInitCmdLine(wxCmdLineParser& parser)
 {
     parser.SetDesc(cmdDescriptions);
@@ -65,8 +73,9 @@ void lms7suiteApp::OnInitCmdLine(wxCmdLineParser& parser)
 
 bool lms7suiteApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
-    if (parser.Found("d", &(AppArgs::Select.device)))
-        parser.Found("s", &(AppArgs::Select.searchTree));
+    appArgs = {};
+    if (parser.Found("d", &(appArgs.device)))
+        parser.Found("s", &(appArgs.searchTree));
 
     return true;
 }
