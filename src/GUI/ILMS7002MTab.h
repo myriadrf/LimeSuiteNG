@@ -5,7 +5,7 @@
 #include <cstdint>
 #include "commonWxForwardDeclarations.h"
 
-class LMS7Parameter;
+struct LMS7Parameter;
 namespace lime {
 class LMS7002M;
 }

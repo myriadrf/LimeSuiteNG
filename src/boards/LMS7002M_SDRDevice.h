@@ -13,7 +13,7 @@ namespace lime {
 
 class TRXLooper;
 class FPGA;
-class RFSOCDescriptor;
+struct RFSOCDescriptor;
 
 /** @brief Base class for device with multiple LMS7002M chips and FPGA */
 class LIME_API LMS7002M_SDRDevice : public SDRDevice
