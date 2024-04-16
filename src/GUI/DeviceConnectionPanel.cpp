@@ -44,7 +44,7 @@ void DeviceConnectionPanel::EnumerateDevicesToChoice()
     }
 }
 
-void DeviceConnectionPanel::SetSelection(const uint32_t& index)
+void DeviceConnectionPanel::SetSelection(uint32_t index)
 {
     if (index < cmbDevHandle->GetCount())
         cmbDevHandle->SetSelection(index);
