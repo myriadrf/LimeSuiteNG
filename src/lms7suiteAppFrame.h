@@ -34,6 +34,7 @@
 #include "GUI/ISOCPanel.h"
 #include "GUI/DeviceConnectionPanel.h"
 #include "dlgAbout.h"
+#include "lms7suiteApp.h"
 
 class pnlMiniLog;
 class lms7002_mainPanel;
@@ -57,7 +58,7 @@ class LMS7SuiteAppFrame : public wxFrame
     void DeviceTreeSelectionChanged(wxTreeEvent& event);
 
   public:
-    LMS7SuiteAppFrame(wxWindow* parent);
+    LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs);
 
     virtual ~LMS7SuiteAppFrame();
     static int m_lmsSelection;
