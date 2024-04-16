@@ -276,7 +276,7 @@ static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
     {
         std::string_view writeRegistersStr{ value };
         const auto tokens = splitString(writeRegistersStr, ";"sv);
-        for (const auto token : tokens)
+        for (const auto& token : tokens)
         {
             uint32_t spiVal = 0;
             std::stringstream sstream{ std::string{ token } };
@@ -444,7 +444,7 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             if (token.find("dev"sv) != 0) // token.starts_with in C++20
             {
                 // invalid device name
-                Log(LogLevel::Error, "Port%i assigned invalid (%s) device.", p, token);
+                Log(LogLevel::Error, "Port%i assigned invalid (%s) device.", p, std::string{ token }.c_str());
                 return OpStatus::InvalidValue;
             }
 
