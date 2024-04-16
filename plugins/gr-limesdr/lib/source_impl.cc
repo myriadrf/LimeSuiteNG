@@ -62,7 +62,7 @@ source_impl::source_impl(std::string serial,
     stored.channel_mode = channel_mode;
     stored.align = align_ch_phase ? (1 << 16) : 0;
 
-    if (stored.channel_mode < 0 && stored.channel_mode > 2) {
+    if (stored.channel_mode < 0 || stored.channel_mode > 2) {
         throw std::invalid_argument(
             "source_impl::source_impl(): Channel must be A(0), B(1), or (A+B) MIMO(2)");
     }
