@@ -16,7 +16,7 @@ class LIME_API LitePCIe
     static std::vector<std::string> GetDevicesWithPattern(const std::string& regex);
     static std::vector<std::string> GetPCIeDeviceList();
     LitePCIe();
-    ~LitePCIe();
+    virtual ~LitePCIe();
 
     OpStatus Open(const std::string& deviceFilename, uint32_t flags);
     void Close();

@@ -196,10 +196,6 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     desc.socTree->children.push_back(fpgaNode);
 }
 
-LimeSDR_XTRX::~LimeSDR_XTRX()
-{
-}
-
 static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
 {
     OpStatus status;

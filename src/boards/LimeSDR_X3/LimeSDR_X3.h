@@ -26,34 +26,32 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
         std::shared_ptr<IComms> spiFPGA,
         std::vector<std::shared_ptr<LitePCIe>> trxStreams,
         std::shared_ptr<ISerialPort> control);
-    virtual ~LimeSDR_X3();
+    ~LimeSDR_X3();
 
-    virtual OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
+    OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
 
-    virtual OpStatus Init() override;
-    virtual OpStatus Reset() override;
+    OpStatus Init() override;
+    OpStatus Reset() override;
 
-    virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
-    virtual OpStatus SetSampleRate(
-        uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
-    virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
-    virtual OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
+    double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
+    OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
-    virtual OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+    OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    virtual OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-    virtual void StreamStop(uint8_t moduleIndex) override;
+    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
+    void StreamStop(uint8_t moduleIndex) override;
 
-    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
-    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
+    OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
+    OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
-    virtual OpStatus UploadMemory(
+    OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
-    virtual OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
-    virtual OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
-    virtual OpStatus UploadTxWaveform(
-        const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
+    OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
+    OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
+    OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
 
   protected:
     OpStatus InitLMS1(bool skipTune = false);

@@ -13,7 +13,7 @@ class lms7002_pnlRFE_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void UpdateGUI() override;
+    void UpdateGUI() override;
 
   protected:
     wxCheckBox* NewCheckBox(wxWindow* parent,
@@ -34,7 +34,7 @@ class lms7002_pnlRFE_view : public ILMS7002MTab
         int max,
         int initial,
         const wxString& name);
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
 
     enum {
         ID_PD_LNA_RFE = 2048,

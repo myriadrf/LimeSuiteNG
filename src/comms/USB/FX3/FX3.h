@@ -24,22 +24,22 @@ class FX3 : public USBGeneric
       @param usbContext The USB context to use for the communication.
      */
     FX3(void* usbContext = nullptr);
-    virtual ~FX3();
+    ~FX3();
 
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string& serial = "") override;
-    virtual void Disconnect() override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string& serial = "") override;
+    void Disconnect() override;
 
-    virtual bool IsConnected() override;
+    bool IsConnected() override;
 
 #ifndef __unix__
-    virtual int BeginDataXfer(uint8_t* buffer, uint32_t length, uint8_t endPointAddr) override;
-    virtual bool WaitForXfer(int contextHandle, int32_t timeout_ms) override;
-    virtual int FinishDataXfer(uint8_t* buffer, uint32_t length, int contextHandle) override;
-    virtual void AbortEndpointXfers(uint8_t endPointAddr) override;
+    int BeginDataXfer(uint8_t* buffer, uint32_t length, uint8_t endPointAddr) override;
+    bool WaitForXfer(int contextHandle, int32_t timeout_ms) override;
+    int FinishDataXfer(uint8_t* buffer, uint32_t length, int contextHandle) override;
+    void AbortEndpointXfers(uint8_t endPointAddr) override;
 
-    virtual int32_t BulkTransfer(uint8_t endPoint, uint8_t* data, int length, int32_t timeout_ms = defaultTimeout) override;
+    int32_t BulkTransfer(uint8_t endPoint, uint8_t* data, int length, int32_t timeout_ms = defaultTimeout) override;
 
-    virtual int32_t ControlTransfer(
+    int32_t ControlTransfer(
         int requestType, int request, int value, int index, uint8_t* data, uint32_t length, int32_t timeout_ms = defaultTimeout)
         override;
 #endif
@@ -65,10 +65,10 @@ class FX3 : public USBGeneric
     static constexpr uint8_t STREAM_BULK_IN_ADDRESS = 0x81; ///< The memory address from which to read the incoming samples.
 
   protected:
-    virtual int GetUSBContextIndex() override;
+    int GetUSBContextIndex() override;
 
 #ifndef __unix__
-    virtual void WaitForXfers(uint8_t endPointAddr) override;
+    void WaitForXfers(uint8_t endPointAddr) override;
 
     static const int MAX_EP_CNT = 16;
     CCyFX3Device* USBDevicePrimary;

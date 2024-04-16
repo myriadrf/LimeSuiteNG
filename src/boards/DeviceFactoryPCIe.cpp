@@ -30,10 +30,6 @@ DeviceFactoryPCIe::DeviceFactoryPCIe()
 {
 }
 
-DeviceFactoryPCIe::~DeviceFactoryPCIe()
-{
-}
-
 std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
