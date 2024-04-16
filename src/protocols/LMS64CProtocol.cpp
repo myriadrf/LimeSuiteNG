@@ -434,8 +434,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 #endif
     //erasing FLASH can take up to 3 seconds before reply is received
     const int progTimeout_ms = 5000;
-    char progressMsg[512];
-    sprintf(progressMsg, "in progress...");
+    std::string progressMsg = "in progress..."s;
     bool abortProgramming = false;
     size_t bytesSent = 0;
 
@@ -452,7 +451,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         cmd = CMD_ALTERA_FPGA_GW_WR;
     else
     {
-        sprintf(progressMsg, "Programming failed! Target device not supported");
+        progressMsg = "Programming failed! Target device not supported"s;
         if (callback)
             callback(bytesSent, length, progressMsg);
         return ReportError(OpStatus::NotSupported, progressMsg);
@@ -504,7 +503,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
         {
-            sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).data());
+            progressMsg = "Programming failed! "s + std::string{ status2string(inPacket.status) };
             if (callback)
                 callback(bytesSent, length, progressMsg);
             return ReportError(OpStatus::Error, progressMsg);
@@ -519,7 +518,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         {
             bool completed = chunkIndex == chunkCount - 1;
             if (completed)
-                sprintf(progressMsg, "Programming: completed");
+                progressMsg = "Programming: completed"s;
             abortProgramming = callback(bytesSent, length, progressMsg);
             if (abortProgramming && !completed)
                 return OpStatus::Aborted;
