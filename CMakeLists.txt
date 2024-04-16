@@ -182,6 +182,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    #enable warnings in Debug configurations
+    add_compile_options(-Wall -Wpedantic)
+endif()
+
 if(MSVC)
     # Check if using correct Visual Studio version
     # VS2015 does not support some of the used C++17 features (<string_view>, <filesystem>, ...)
