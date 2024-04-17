@@ -3291,7 +3291,7 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
     Modify_SPI_Reg_bits(LMS7_ICT_TIAMAIN_RFE, 2);
     Modify_SPI_Reg_bits(LMS7_ICT_TIAOUT_RFE, 2);
 
-    Modify_SPI_Reg_bits(LMS7_ICT_LPF_IN_RBB, 0x04);
+    Modify_SPI_Reg_bits(LMS7_ICT_LPF_IN_RBB, 0x0C);
     Modify_SPI_Reg_bits(LMS7_ICT_LPF_OUT_RBB, 0x0C);
 
     Modify_SPI_Reg_bits(LMS7_ICT_PGA_OUT_RBB, 0x14);
