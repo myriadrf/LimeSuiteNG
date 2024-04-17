@@ -3278,3 +3278,241 @@ void LMS7002M::SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* us
     mCallback_onCGENChange = callback;
     mCallback_onCGENChange_userData = userData;
 }
+
+OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
+{
+    const int tiaGain = Get_SPI_Reg_bits(LMS7_G_TIA_RFE);
+    if (tiaGain < 1 || tiaGain > 3)
+        return ReportError(OpStatus::InvalidValue, "RxLPF: Invalid G_TIA gain value");
+
+    Modify_SPI_Reg_bits(LMS7_PD_TIA_RFE, 0);
+    Modify_SPI_Reg_bits(LMS7_EN_G_RFE, 1);
+
+    Modify_SPI_Reg_bits(LMS7_ICT_TIAMAIN_RFE, 2);
+    Modify_SPI_Reg_bits(LMS7_ICT_TIAOUT_RFE, 2);
+
+    Modify_SPI_Reg_bits(LMS7_ICT_LPF_IN_RBB, 0x04);
+    Modify_SPI_Reg_bits(LMS7_ICT_LPF_OUT_RBB, 0x0C);
+
+    Modify_SPI_Reg_bits(LMS7_ICT_PGA_OUT_RBB, 0x14);
+    Modify_SPI_Reg_bits(LMS7_ICT_PGA_IN_RBB, 0x14);
+    const int pgaGain = Get_SPI_Reg_bits(LMS7_G_PGA_RBB);
+    if (pgaGain != 12)
+    {
+        lime::warning("RxLPF modifying G_PGA_RBB %i -> 12", pgaGain);
+        Modify_SPI_Reg_bits(LMS7_G_PGA_RBB, 12);
+    }
+
+    Modify_SPI_Reg_bits(LMS7_RCC_CTL_PGA_RBB, 0x18);
+    Modify_SPI_Reg_bits(LMS7_C_CTL_PGA_RBB, 1);
+
+    const double rxLpfMin = (tiaGain == 1) ? 1.5e6 : 4e6;
+    const double rxLpfMax = 160e6;
+    if (rfBandwidth_Hz != 0 && (rfBandwidth_Hz < rxLpfMin || rfBandwidth_Hz > rxLpfMax))
+    {
+        lime::warning(
+            "Requested RxLPF(%g) is out of range [%g - %g]. Clamping to valid range.", rfBandwidth_Hz, rxLpfMin, rxLpfMax);
+        rfBandwidth_Hz = std::clamp(rfBandwidth_Hz, rxLpfMin, rxLpfMax);
+    }
+
+    const double bandwidth_MHz = rfBandwidth_Hz / 1e6;
+
+    int TIA_C;
+    if (tiaGain == 1)
+        TIA_C = 120 * 45 / (bandwidth_MHz / 2 / 1.5) - 15;
+    else
+        TIA_C = 120 * 14 / (bandwidth_MHz / 2 / 1.5) - 10;
+    TIA_C = std::clamp(TIA_C, 0, 4095);
+
+    int TIA_RCOMP = std::clamp(15 - TIA_C * 2 / 100, 0, 15);
+
+    int TIA_CCOMP = (TIA_C / 100) + (tiaGain == 1 ? 1 : 0);
+    TIA_CCOMP = std::clamp(TIA_CCOMP, 0, 15);
+
+    int RX_L_C = 120 * 18 / (bandwidth_MHz / 2 / 0.75) - 103;
+    RX_L_C = std::clamp(RX_L_C, 0, 2047);
+
+    int RX_H_C = 120 * 50 / (bandwidth_MHz / 2 / 0.75) - 50;
+    RX_H_C = std::clamp(RX_H_C, 0, 255);
+
+    lime::debug("RxLPF(%g): TIA_C=%i, TIA_RCOMP=%i, TIA_CCOMP=%i, RX_L_C=%i, RX_H_C=%i\n",
+        rfBandwidth_Hz,
+        TIA_C,
+        TIA_RCOMP,
+        TIA_CCOMP,
+        RX_L_C,
+        RX_H_C);
+
+    uint16_t cfb_tia_rfe = TIA_C;
+    uint16_t rcomp_tia_rfe = TIA_RCOMP;
+    uint16_t ccomp_tia_rfe = TIA_CCOMP;
+    uint16_t input_ctl_pga_rbb = 4;
+    uint16_t c_ctl_lpfl_rbb = RX_L_C;
+    uint16_t c_ctl_lpfh_rbb = RX_H_C;
+    uint16_t powerDowns = 0xD; // 0x0115[3:0]
+
+    const double ifbw = bandwidth_MHz / 2 / 0.75;
+    const uint16_t rcc_ctl_lpfh_rbb = std::clamp(ifbw - 2, 0.0, 7.0);
+    uint16_t rcc_ctl_lpfl_rbb = 5;
+    if (ifbw >= 20)
+        rcc_ctl_lpfl_rbb = 5;
+    else if (ifbw >= 15)
+        rcc_ctl_lpfl_rbb = 4;
+    else if (ifbw >= 10)
+        rcc_ctl_lpfl_rbb = 3;
+    else if (ifbw >= 5)
+        rcc_ctl_lpfl_rbb = 2;
+    else if (ifbw >= 3)
+        rcc_ctl_lpfl_rbb = 1;
+    else // (bw>=1.5)
+        rcc_ctl_lpfl_rbb = 0;
+
+    if (rfBandwidth_Hz <= 0) // LPF bypass
+    {
+        lime::info("RxLPF bypassed");
+        powerDowns = 0xD;
+        input_ctl_pga_rbb = 4;
+    }
+    else if (rfBandwidth_Hz < rxLpfMin)
+    {
+        lime::warning("RxLPF(%g) frequency too low. Clamping to %g MHz.", rfBandwidth_Hz, rxLpfMin / 1e6);
+        if (tiaGain == 1)
+        {
+            cfb_tia_rfe = 4035;
+            rcc_ctl_lpfl_rbb = 1;
+            c_ctl_lpfl_rbb = 707;
+        }
+        else
+        {
+            cfb_tia_rfe = 3350;
+            rcc_ctl_lpfl_rbb = 0;
+            c_ctl_lpfl_rbb = 2047;
+        }
+        rcomp_tia_rfe = 0;
+        ccomp_tia_rfe = 15;
+        powerDowns = 0x9;
+        input_ctl_pga_rbb = 0;
+    }
+    else if (rxLpfMin <= rfBandwidth_Hz && rfBandwidth_Hz <= 30e6)
+    {
+        powerDowns = 0x9;
+        input_ctl_pga_rbb = 0;
+    }
+    else if (30e6 <= rfBandwidth_Hz && rfBandwidth_Hz <= rxLpfMax)
+    {
+        powerDowns = 0x5;
+        input_ctl_pga_rbb = 2;
+    }
+
+    Modify_SPI_Reg_bits(LMS7_CFB_TIA_RFE, cfb_tia_rfe);
+    Modify_SPI_Reg_bits(LMS7_RCOMP_TIA_RFE, rcomp_tia_rfe);
+    Modify_SPI_Reg_bits(LMS7_CCOMP_TIA_RFE, ccomp_tia_rfe);
+    Modify_SPI_Reg_bits(0x0115, 3, 0, powerDowns);
+    Modify_SPI_Reg_bits(LMS7_INPUT_CTL_PGA_RBB, input_ctl_pga_rbb);
+    Modify_SPI_Reg_bits(LMS7_C_CTL_LPFL_RBB, c_ctl_lpfl_rbb);
+    Modify_SPI_Reg_bits(LMS7_C_CTL_LPFL_RBB, c_ctl_lpfh_rbb);
+    Modify_SPI_Reg_bits(LMS7_RCC_CTL_LPFL_RBB, rcc_ctl_lpfl_rbb);
+    Modify_SPI_Reg_bits(LMS7_RCC_CTL_LPFH_RBB, rcc_ctl_lpfh_rbb);
+
+    return OpStatus::Success;
+}
+
+OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
+{
+    const double txLpfLowRange[2] = { 5e6, 33e6 };
+    const double txLpfHighRange[2] = { 56e6, 160e6 };
+
+    // common setup
+    Modify_SPI_Reg_bits(0x0106, 15, 0, 0x318C);
+    Modify_SPI_Reg_bits(0x0107, 15, 0, 0x318C);
+    Modify_SPI_Reg_bits(LMS7_ICT_IAMP_FRP_TBB, 8);
+    Modify_SPI_Reg_bits(LMS7_ICT_IAMP_GG_FRP_TBB, 12);
+    Modify_SPI_Reg_bits(LMS7_CCAL_LPFLAD_TBB, 31);
+    Modify_SPI_Reg_bits(LMS7_RCAL_LPFS5_TBB, 255);
+    Modify_SPI_Reg_bits(LMS7_R5_LPF_BYP_TBB, 1);
+
+    uint16_t powerDowns = 0x15; // addr 0x0105[4:0]
+
+    if (rfBandwidth_Hz <= 0) // Bypass LPF
+    {
+        lime::info("TxLPF bypassed");
+        powerDowns = 0x15;
+        Modify_SPI_Reg_bits(0x0105, 4, 0, powerDowns);
+        return Modify_SPI_Reg_bits(LMS7_RCAL_LPFS5_TBB, 0);
+    }
+    else if (rfBandwidth_Hz < txLpfLowRange[0] || txLpfHighRange[1] < rfBandwidth_Hz)
+    {
+        lime::warning("Requested TxLPF(%g) bandwidth is out of range [%g - %g]. Clamping to valid value.",
+            rfBandwidth_Hz,
+            txLpfLowRange[0],
+            txLpfHighRange[1]);
+        rfBandwidth_Hz = std::clamp(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
+    }
+
+    const double rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
+    int rcal_lpflad = 0;
+    int rcal_lpfh = 0;
+
+    if (rfBandwidth_Hz < 5.3e6)
+    {
+        lime::warning("TxLPF(%g) setting bandwidth to %g.", rfBandwidth_Hz, txLpfLowRange[0]);
+        rcal_lpflad = 0;
+        powerDowns = 0x11;
+    }
+    else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
+    {
+        const double LADlog = 20.0 * std::log10(rfbandwidth_MHz / (2.6 * 2));
+        double LADterm1;
+        {
+            double t1 = 1.92163e-15;
+            double t2 = std::sqrt(5.9304678933309e99 * std::pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            LADterm1 = t1 * std::pow(t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51, 1.0 / 3.0);
+        }
+
+        double LADterm2;
+        {
+            double t1 = 6.50934553014677e18;
+            double t2 = std::sqrt(5.9304678933309e99 * std::pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            double t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
+            LADterm2 = t1 / std::pow(t3, 1.0 / 3.0);
+        }
+        rcal_lpflad = std::clamp(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
+        powerDowns = 0x11;
+    }
+    else if (txLpfLowRange[1] <= rfBandwidth_Hz && rfBandwidth_Hz <= txLpfHighRange[0]) // 33-56 MHz gap
+    {
+        lime::warning("Requested TxLPF(%g) is in frequency gap [%g-%g], setting bandwidth to %g.",
+            rfBandwidth_Hz,
+            txLpfLowRange[1],
+            txLpfHighRange[0],
+            txLpfHighRange[0]);
+        rcal_lpfh = 0;
+        powerDowns = 0x07;
+    }
+    else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
+    {
+        const double Hlog = 20 * std::log10(rfbandwidth_MHz / (28 * 2));
+        double Hterm1;
+        {
+            double t1 = 5.66735e-16;
+            double t2 = std::sqrt(1.21443429517649e103 * std::pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = std::pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            Hterm1 = t1 * t3;
+        }
+        double Hterm2;
+        {
+            double t1 = 2.12037432410767e019;
+            double t2 = std::sqrt(1.21443429517649e103 * std::pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = std::pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            Hterm2 = t1 / t3;
+        }
+        rcal_lpfh = std::clamp(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
+        powerDowns = 0x07;
+    }
+
+    lime::debug("TxLPF(%g): LAD=%i, H=%i\n", rfBandwidth_Hz, rcal_lpflad, rcal_lpfh);
+
+    Modify_SPI_Reg_bits(LMS7_RCAL_LPFLAD_TBB, rcal_lpflad);
+    Modify_SPI_Reg_bits(LMS7_RCAL_LPFH_TBB, rcal_lpfh);
+    return Modify_SPI_Reg_bits(0x0105, 4, 0, powerDowns);
+}
