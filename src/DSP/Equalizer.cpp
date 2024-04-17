@@ -1,14 +1,16 @@
-#include "Equalizer.h"
-
-#include "Register.h"
-#include "comms/IComms.h"
-
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+#include "Equalizer.h"
+
 #include <assert.h>
 #include <algorithm>
 #include <vector>
+#include <string.h>
 #include <memory>
+
+#include "Register.h"
+#include "comms/IComms.h"
 
 using namespace lime;
 
@@ -57,6 +59,11 @@ static constexpr Register RX_PHCORR(0x00A3, 11, 0, 0, 1);
 static constexpr Register cmbInsel(0x0080, 2, 2, 0, 0);
 
 static constexpr Register MAC(0xFFFF, 1, 0, 0, 0);
+
+Equalizer::Config::Config()
+{
+    memset(this, 0, sizeof(Config));
+}
 
 Equalizer::Equalizer(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr)
     : m_Comms(comms)
