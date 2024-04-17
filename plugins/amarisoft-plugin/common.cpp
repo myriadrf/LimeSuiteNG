@@ -757,8 +757,7 @@ static void TransferRuntimeParametersToConfig(
         trxConfig.centerFrequency = params.freq[i];
         if (trxConfig.gfir.bandwidth == 0) // update only if not set by settings file
             trxConfig.gfir.bandwidth = params.bandwidth[i];
-        if (trxConfig.calibrate)
-            trxConfig.lpf = params.bandwidth[i];
+        trxConfig.lpf = params.bandwidth[i];
 
         const int chipIndex = channelMap[i].parent->chipIndex;
         const auto& desc = channelMap[i].parent->device->GetDescriptor().rfSOC[chipIndex];
