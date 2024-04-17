@@ -3352,7 +3352,7 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
     uint16_t powerDowns = 0xD; // 0x0115[3:0]
 
     const double ifbw = bandwidth_MHz / 2 / 0.75;
-    const uint16_t rcc_ctl_lpfh_rbb = std::clamp(ifbw/10 - 2, 0.0, 7.0);
+    const uint16_t rcc_ctl_lpfh_rbb = std::clamp(ifbw / 10 - 2, 0.0, 7.0);
     uint16_t rcc_ctl_lpfl_rbb = 5;
     if (ifbw >= 20)
         rcc_ctl_lpfl_rbb = 5;
