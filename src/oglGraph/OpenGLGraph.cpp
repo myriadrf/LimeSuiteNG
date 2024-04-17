@@ -4,18 +4,11 @@
 @brief	OpenGL based basic chart drawing
 */
 
+#include "GL/glew.h" // must be first to be included before gl.h
+
 #include "OpenGLGraph.h"
-#include <stdio.h>
-#include <stdarg.h>
 #include <cmath>
 #include <iostream>
-#if defined(__APPLE__)
-    #include <OpenGL/gl.h>
-    #include <OpenGL/glu.h>
-#else
-    #include <GL/gl.h>
-    #include <GL/glu.h>
-#endif
 #include "GLFont.h"
 #include "StaticFontHeader.h"
 #include "dlgMarkers.h"

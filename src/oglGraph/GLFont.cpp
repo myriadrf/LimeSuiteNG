@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string.h>
 #include <vector>
+
+#include "GL/glew.h"
 using namespace std;
 
 static bool IsGlew1_5()
@@ -298,14 +300,14 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
         vbodata[14] = vbodata[6];
         vbodata[15] = vbodata[11];
 
-        //        if(IsGlew1_5())
-        //        {
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), NULL, GL_DYNAMIC_DRAW );
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), vbodata, GL_DYNAMIC_DRAW );
-        //            glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-        //            glFlush();
-        //        }
-        //        else
+        if (IsGlew1_5())
+        {
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
+        else
         {
             glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2f(vbodata[2], vbodata[3]);
@@ -392,14 +394,14 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
         vbodata[14] = vbodata[6];
         vbodata[15] = vbodata[11];
 
-        //        if(IsGlew1_5())
-        //        {
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), (char*)0, GL_DYNAMIC_DRAW );
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), vbodata, GL_DYNAMIC_DRAW );
-        //            glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-        //            glFlush();
-        //        }
-        //        else
+        if (IsGlew1_5())
+        {
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), static_cast<char*>(0), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
+        else
         {
             glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2f(vbodata[2], vbodata[3]);

@@ -1,12 +1,6 @@
 #ifndef GL_FONT_H
 #define GL_FONT_H
 
-#include "GL/glew.h"
-#if defined(__APPLE__)
-    #include <OpenGL/gl.h>
-#else
-    #include <GL/gl.h>
-#endif
 #include <string>
 #include <vector>
 
@@ -66,8 +60,8 @@ class GLFont
 
     int m_texwidth; ///< The width of one texel
     int m_texheight; ///< The height of one texel
-    GLuint m_texID; ///< The ID of the texel
-    GLuint m_vboID; ///< The ID of the vertex buffer object
+    unsigned int m_texID; ///< The ID of the texel
+    unsigned int m_vboID; ///< The ID of the vertex buffer object
     GLGlyph* m_glyphs; ///< The pointer to the font glyphs
     const unsigned short m_glyphCount; ///< The count of glyphs in the font
     unsigned char m_fontSize; ///< The font size
