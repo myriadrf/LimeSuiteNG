@@ -22,7 +22,7 @@
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "MCU_BD.h"
 
-#include "math.h"
+#include <cmath>
 
 namespace lime {
 

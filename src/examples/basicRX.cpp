@@ -7,7 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 #include "kissFFT/kiss_fft.h"
 #ifdef USE_GNU_PLOT

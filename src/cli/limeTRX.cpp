@@ -3,7 +3,7 @@
 #include "limesuiteng/StreamComposite.h"
 #include <iostream>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 #include <thread>
 #include "kissFFT/kiss_fft.h"

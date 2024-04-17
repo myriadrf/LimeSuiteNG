@@ -1,7 +1,7 @@
 #include "LimeSDR_XTRX.h"
 
 #include <fcntl.h>
-#include "math.h"
+#include <cmath>
 
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"

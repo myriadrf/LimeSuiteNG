@@ -6,7 +6,7 @@
 #include "limesuiteng/Logger.h"
 #include <iostream>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <assert.h>
 #include <thread>
 #include <signal.h>

@@ -7,7 +7,7 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 
 using namespace lime;

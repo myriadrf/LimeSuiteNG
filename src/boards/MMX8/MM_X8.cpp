@@ -14,7 +14,7 @@
 #include "DeviceTreeNode.h"
 #include "utilities/toString.h"
 
-#include "math.h"
+#include <cmath>
 
 namespace lime {
 

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <chrono>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <mutex>
 #include <sstream>
 

@@ -6,7 +6,7 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
