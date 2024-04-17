@@ -3306,7 +3306,7 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
     Modify_SPI_Reg_bits(LMS7_RCC_CTL_PGA_RBB, 0x18);
     Modify_SPI_Reg_bits(LMS7_C_CTL_PGA_RBB, 1);
 
-    const double rxLpfMin = (tiaGain == 1) ? 1.5e6 : 4e6;
+    const double rxLpfMin = (tiaGain == 1) ? 4e6 : 1.5e6;
     const double rxLpfMax = 160e6;
     if (rfBandwidth_Hz != 0 && (rfBandwidth_Hz < rxLpfMin || rfBandwidth_Hz > rxLpfMax))
     {
@@ -3410,7 +3410,7 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
     Modify_SPI_Reg_bits(0x0115, 3, 0, powerDowns);
     Modify_SPI_Reg_bits(LMS7_INPUT_CTL_PGA_RBB, input_ctl_pga_rbb);
     Modify_SPI_Reg_bits(LMS7_C_CTL_LPFL_RBB, c_ctl_lpfl_rbb);
-    Modify_SPI_Reg_bits(LMS7_C_CTL_LPFL_RBB, c_ctl_lpfh_rbb);
+    Modify_SPI_Reg_bits(LMS7_C_CTL_LPFH_RBB, c_ctl_lpfh_rbb);
     Modify_SPI_Reg_bits(LMS7_RCC_CTL_LPFL_RBB, rcc_ctl_lpfl_rbb);
     Modify_SPI_Reg_bits(LMS7_RCC_CTL_LPFH_RBB, rcc_ctl_lpfh_rbb);
 
@@ -3438,6 +3438,7 @@ OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
         lime::info("TxLPF bypassed");
         powerDowns = 0x15;
         Modify_SPI_Reg_bits(0x0105, 4, 0, powerDowns);
+        Modify_SPI_Reg_bits(LMS7_BYPLADDER_TBB, 1);
         return Modify_SPI_Reg_bits(LMS7_RCAL_LPFS5_TBB, 0);
     }
     else if (rfBandwidth_Hz < txLpfLowRange[0] || txLpfHighRange[1] < rfBandwidth_Hz)
