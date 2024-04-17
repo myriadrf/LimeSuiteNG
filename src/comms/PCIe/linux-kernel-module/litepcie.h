@@ -11,18 +11,10 @@
 #ifndef _LINUX_LITEPCIE_H
 #define _LINUX_LITEPCIE_H
 
-#include <linux/types.h>
-
 struct litepcie_ioctl_reg {
     uint32_t addr;
     uint32_t val;
     uint8_t is_write;
-};
-
-struct litepcie_ioctl_flash {
-    int tx_len; /* 8 to 40 */
-    __u64 tx_data; /* 8 to 40 bits */
-    __u64 rx_data; /* 40 bits */
 };
 
 struct litepcie_ioctl_icap {
