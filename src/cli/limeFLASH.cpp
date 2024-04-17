@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     int option = 0;
     std::string target;
 
-    while ((option = getopt_long_only(argc, argv, "", long_options, &long_index)) != -1)
+    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
     {
         switch (option)
         {
