@@ -29,7 +29,7 @@ FT601::~FT601()
     Disconnect();
 }
 
-bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
+bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
 {
     Disconnect();
 #ifndef __unix__
@@ -37,11 +37,11 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     FT_STATUS ftStatus = FT_OK;
     DWORD dwNumDevices = 0;
     // Open a device
-    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.c_str())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
+    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.data())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
 
     if (FT_FAILED(ftStatus))
     {
-        ReportError(OpStatus::Error, "Failed to list USB Devices");
+        ReportError(OpStatus::Error, "Failed to list USB Devices"s);
         return false;
     }
 
@@ -143,7 +143,7 @@ int32_t FT601::BulkTransfer(uint8_t endPointAddr, uint8_t* data, int length, int
 
 int32_t FT601::ControlTransfer(int requestType, int request, int value, int index, uint8_t* data, uint32_t length, int32_t timeout)
 {
-    throw(OperationNotSupported("ControlTransfer not supported on FT601 connections."));
+    throw(OperationNotSupported("ControlTransfer not supported on FT601 connections."s));
 }
 
 #ifndef __unix__

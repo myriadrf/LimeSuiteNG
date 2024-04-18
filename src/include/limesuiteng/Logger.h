@@ -14,6 +14,7 @@
 #include <cerrno>
 #include <stdexcept>
 #include <cstdint>
+#include <functional>
 
 namespace lime {
 
@@ -27,16 +28,19 @@ enum class LogLevel : uint8_t {
 };
 
 //! Typedef for the registered log handler function.
-typedef void (*LogHandler)(const LogLevel level, const char* message);
+typedef void (*LogHandlerCString)(const LogLevel level, const char* message);
+typedef std::function<void(const LogLevel level, const std::string& message)> LogHandler;
 
 /*!
  * Register a new system log handler.
  * Platforms should call this to replace the default stdio handler.
  */
+LIME_API void registerLogHandler(const LogHandlerCString handler);
 LIME_API void registerLogHandler(const LogHandler handler);
 
 //! Get the error code to string + any optional message reported.
-LIME_API const char* GetLastErrorMessage(void);
+LIME_API const char* GetLastErrorMessageCString(void);
+LIME_API const std::string& GetLastErrorMessage(void);
 
 // C-string versions
 LIME_API void critical(const char* format, ...); //!< Log a critical error message with formatting
@@ -65,7 +69,7 @@ LIME_API void log(const LogLevel level, const std::string& text);
  * \param errnum a recognized error code
  * \return passthrough errnum
  */
-LIME_API lime::OpStatus ReportError(const lime::OpStatus errnum);
+LIME_API OpStatus ReportError(const OpStatus errnum);
 
 /*!
  * Report an error as an integer code and a formatted message string.
@@ -73,7 +77,11 @@ LIME_API lime::OpStatus ReportError(const lime::OpStatus errnum);
  * \param format a format string followed by args
  * \return passthrough errnum
  */
-LIME_API lime::OpStatus ReportError(const lime::OpStatus errnum, const char* format, ...);
+LIME_API OpStatus ReportError(const OpStatus errnum, const char* format, ...);
+LIME_API OpStatus ReportError(const OpStatus errnum, const std::string& text);
+
+LIME_API int ReportError(const int errnum, const char* format, ...);
+LIME_API int ReportError(const int errnum, const std::string& text);
 
 } // namespace lime
 

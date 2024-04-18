@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <string_view>
 #include <unordered_set>
 #include <thread>
 
@@ -34,8 +35,11 @@
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
 #include "MCU_BD.h"
+#include "utilities/toString.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 constexpr std::array<std::array<float_type, 2>, 3> LMS7002M::gVCO_frequency_table{
     { { 3800e6, 5222e6 }, { 4961e6, 6754e6 }, { 6306e6, 7714e6 } }
@@ -168,59 +172,6 @@ class ChannelScope
     LMS7002M::Channel mStoredValue; ///< The channel to restore to
     bool mNeedsRestore; ///< Whether the channel needs restoring or not
 };
-
-/** @brief Simple logging function to print status messages
-    @param text message to print
-    @param type message type for filtering specific information
-*/
-void LMS7002M::Log(const char* text, LogType type)
-{
-    switch (type)
-    {
-    case LogType::LOG_INFO:
-        lime::info(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_WARNING:
-        lime::warning(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_ERROR:
-        lime::error(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    case LogType::LOG_DATA:
-        lime::debug(text);
-        if (log_callback)
-            log_callback(text, type);
-        break;
-    }
-}
-
-//Compatibility for vasprintf under MSVC
-#if defined(_MSC_VER) || !defined(__unix__)
-int vasprintf(char** strp, const char* fmt, va_list ap)
-{
-    int r = _vscprintf(fmt, ap);
-    if (r < 0)
-        return r;
-    *strp = (char*)malloc(r + 1);
-    return vsprintf_s(*strp, r + 1, fmt, ap);
-}
-#endif
-
-void LMS7002M::Log(LogType type, const char* format, va_list argList)
-{
-    char* message = NULL;
-    if (vasprintf(&message, format, argList) != -1)
-    {
-        Log(message, type);
-        free(message);
-    }
-}
 
 /** @brief Sets connection which is used for data communication with chip
 */
@@ -481,21 +432,21 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     OpStatus status;
     typedef INI<std::string, std::string, std::string> ini_t;
     ini_t parser(filename, true);
-    if (parser.select("FILE INFO") == false)
+    if (parser.select("FILE INFO"s) == false)
         return ReportError(
             OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing FILE INFO section", filename.c_str());
 
-    std::string type = "";
-    type = parser.get("type", "undefined");
+    std::string type{};
+    type = parser.get("type"s, "undefined"s);
 
-    if (type.find("LMS7002 configuration") == std::string::npos)
+    if (type.find("LMS7002 configuration"sv) == std::string::npos)
     {
         return ReportError(
             OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing LMS7002 configuration", filename.c_str());
     }
 
     int fileVersion = 0;
-    fileVersion = parser.get("version", 0);
+    fileVersion = parser.get("version"sv, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -503,15 +454,15 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     {
         ChannelScope scope(this);
 
-        if (parser.select("Reference clocks"))
+        if (parser.select("Reference clocks"s))
         {
-            this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz", 30.72) * 1e6);
-            this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz", 30.72) * 1e6);
+            this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
+            this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
         }
 
-        if (parser.select("LMS7002 registers ch.A") == true)
+        if (parser.select("LMS7002 registers ch.A"s) == true)
         {
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A");
+            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
 
             uint16_t x0020_value = 0;
             this->SetActiveChannel(Channel::ChA); //select A channel
@@ -532,7 +483,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 return status;
 
             //parse FCW or PHO
-            if (parser.select("NCO Rx ch.A") == true)
+            if (parser.select("NCO Rx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
@@ -553,7 +504,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                     }
                 }
             }
-            if (parser.select("NCO Tx ch.A") == true)
+            if (parser.select("NCO Tx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
@@ -581,11 +532,11 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
 
         this->SetActiveChannel(Channel::ChB);
 
-        if (parser.select("LMS7002 registers ch.B") == true)
+        if (parser.select("LMS7002 registers ch.B"s) == true)
         {
             addrToWrite.clear();
             dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B");
+            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B"s);
             for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -599,7 +550,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 return status;
 
             //parse FCW or PHO
-            if (parser.select("NCO Rx ch.B") == true)
+            if (parser.select("NCO Rx ch.B"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
@@ -620,7 +571,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                     }
                 }
             }
-            if (parser.select("NCO Tx ch.A") == true)
+            if (parser.select("NCO Tx ch.A"s) == true)
             {
                 char varname[64];
                 int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
@@ -663,24 +614,24 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     OpStatus status;
     typedef INI<std::string, std::string, std::string> ini_t;
     ini_t parser(filename, true);
-    if (parser.select("file_info") == false)
+    if (parser.select("file_info"s) == false)
     {
         //try loading as legacy format
         status = LoadConfigLegacyFile(filename);
         this->SetActiveChannel(Channel::ChA);
         return status;
     }
-    std::string type = "";
-    type = parser.get("type", "undefined");
+    std::string type{};
+    type = parser.get("type"s, "undefined"s);
 
-    if (type.find("lms7002m_minimal_config") == std::string::npos)
+    if (type.find("lms7002m_minimal_config"sv) == std::string::npos)
     {
         return ReportError(
             OpStatus::InvalidValue, "LoadConfig(%s) - invalid format, missing lms7002m_minimal_config", filename.c_str());
     }
 
     int fileVersion = 0;
-    fileVersion = parser.get("version", 0);
+    fileVersion = parser.get("version"sv, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -688,9 +639,9 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     if (fileVersion == 1)
     {
         ChannelScope scope(this);
-        if (parser.select("lms7002_registers_a") == true)
+        if (parser.select("lms7002_registers_a"s) == true)
         {
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a");
+            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a"s);
 
             uint16_t x0020_value = 0;
             this->SetActiveChannel(Channel::ChA); //select A channel
@@ -729,11 +680,11 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 return status;
         }
 
-        if (parser.select("lms7002_registers_b") == true)
+        if (parser.select("lms7002_registers_b"s) == true)
         {
             addrToWrite.clear();
             dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_b");
+            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_b"s);
             for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -747,9 +698,9 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 return status;
         }
 
-        parser.select("reference_clocks");
-        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz", 30.72) * 1e6);
-        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz", 30.72) * 1e6);
+        parser.select("reference_clocks"s);
+        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz"sv, 30.72) * 1e6);
+        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz"sv, 30.72) * 1e6);
     }
 
     ResetLogicRegisters();
@@ -790,9 +741,9 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 {
     std::ofstream fout;
     fout.open(filename);
-    fout << "[file_info]" << std::endl;
-    fout << "type=lms7002m_minimal_config" << std::endl;
-    fout << "version=1" << std::endl;
+    fout << "[file_info]"sv << std::endl;
+    fout << "type=lms7002m_minimal_config"sv << std::endl;
+    fout << "version=1"sv << std::endl;
 
     char addr[80];
     char value[80];
@@ -807,7 +758,7 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     std::vector<uint16_t> dataReceived;
     dataReceived.resize(addrToRead.size(), 0);
 
-    fout << "[lms7002_registers_a]" << std::endl;
+    fout << "[lms7002_registers_a]"sv << std::endl;
     this->SetActiveChannel(Channel::ChA);
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
@@ -824,16 +775,16 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
             dataReceived[i] &= 0xFF00; //do not save calibration start triggers
         sprintf(addr, "0x%04X", addrToRead[i]);
         sprintf(value, "0x%04X", dataReceived[i]);
-        fout << addr << "=" << value << std::endl;
+        fout << addr << "="sv << value << std::endl;
         // add parameter name/value as comments
         for (const LMS7Parameter& parameter : LMS7parameterList)
         {
             if (parameter.address == addrToRead[i])
-                fout << "//" << parameter.name << " : " << Get_SPI_Reg_bits(parameter) << std::endl;
+                fout << "//"sv << parameter.name << " : "sv << Get_SPI_Reg_bits(parameter) << std::endl;
         }
     }
 
-    fout << "[lms7002_registers_b]" << std::endl;
+    fout << "[lms7002_registers_b]"sv << std::endl;
     addrToRead.clear(); //add only B channel addresses
     for (const auto& memorySectionPair : MemorySectionAddresses)
         if (memorySectionPair.first != MemorySection::RSSI_DC_CALIBRATION)
@@ -847,12 +798,12 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
         dataReceived[i] = Get_SPI_Reg_bits(addrToRead[i], 15, 0, false);
         sprintf(addr, "0x%04X", addrToRead[i]);
         sprintf(value, "0x%04X", dataReceived[i]);
-        fout << addr << "=" << value << std::endl;
+        fout << addr << "="sv << value << std::endl;
     }
 
-    fout << "[reference_clocks]" << std::endl;
-    fout << "sxt_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
-    fout << "sxr_ref_clk_mhz=" << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
+    fout << "[reference_clocks]"sv << std::endl;
+    fout << "sxt_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
+    fout << "sxr_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
     fout.close();
     return OpStatus::Success;
 }
@@ -1346,7 +1297,7 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
 {
     if (freq_Hz > CGEN_MAX_FREQ)
-        throw std::logic_error("requested CGEN frequency too high");
+        throw std::logic_error("requested CGEN frequency too high"s);
     float_type dFvco;
     float_type dFrac;
 
@@ -1562,7 +1513,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
         lime::debug("TuneVCO(%s) - searching interval [%i:%i]", moduleName, cswSearch[t].high, cswSearch[t].low);
         Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].high);
         //binary search for and high value, and on the way store approximate low value
-        lime::debug("binary search:");
+        lime::debug("binary search:"s);
         for (int i = 6; i >= 0; --i)
         {
             cswSearch[t].high |= 1 << i; //CSW_VCO<i>=1
@@ -1579,7 +1530,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
             }
         }
         //linear search to make sure there are no gaps, and move away from edge case
-        lime::debug("adjust with linear search:");
+        lime::debug("adjust with linear search:"s);
         while (cswSearch[t].low <= cswSearch[t].high && cswSearch[t].low > t * 128)
         {
             --cswSearch[t].low;
@@ -1601,7 +1552,7 @@ OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
                 cswSearch[t].low + (cswSearch[t].high - cswSearch[t].low) / 2);
         }
         else
-            lime::debug("CSW interval failed to lock");
+            lime::debug("CSW interval failed to lock"s);
     }
 
     //check if the intervals are joined
@@ -1712,13 +1663,13 @@ const LMS7Parameter& LMS7002M::GetParam(const std::string& name)
 {
     for (const LMS7Parameter& parameter : LMS7parameterList)
     {
-        if (std::string(parameter.name) == name)
+        if (std::string_view{ parameter.name } == name)
         {
             return parameter;
         }
     }
 
-    throw std::logic_error("Parameter " + name + " not found");
+    throw std::logic_error("Parameter "s + name + " not found"s);
 }
 
 OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output)
@@ -2225,7 +2176,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     if (!controlPort || fromChip == false)
     {
         if (status && !controlPort)
-            *status = ReportError(OpStatus::IOFailure, "chip not connected");
+            *status = ReportError(OpStatus::IOFailure, "Chip not connected"s);
         uint8_t mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
         uint8_t channel = (mac == 2) ? 1 : 0; //only when MAC is B -> use register space B
         if (address < 0x0100)
@@ -2296,7 +2247,7 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
     {
         if (useCache)
             return OpStatus::Success;
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
     controlPort->SPI(data.data(), nullptr, data.size());
     return OpStatus::Success;
@@ -2306,7 +2257,7 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
 {
     if (!controlPort)
     {
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
 
     std::vector<uint32_t> dataWr(cnt);
@@ -2341,7 +2292,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 {
     char chex[16];
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     OpStatus status;
     ChannelScope scope(this);
@@ -2412,34 +2363,35 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         MemorySection::LimeLight,
         MemorySection::LDO,
     };
-    const std::string moduleNames[] = {
-        "AFE",
-        "BIAS",
-        "XBUF",
-        "CGEN",
-        "BIST",
-        "CDS",
-        "TRF",
-        "TBB",
-        "RFE",
-        "RBB",
-        "SX",
-        "TxTSP",
-        "TxNCO",
-        "TxGFIR1",
-        "TxGFIR2",
-        "TxGFIR3a",
-        "TxGFIR3b",
-        "TxGFIR3c",
-        "RxTSP",
-        "RxNCO",
-        "RxGFIR1",
-        "RxGFIR2",
-        "RxGFIR3a",
-        "RxGFIR3b",
-        "RxGFIR3c",
-        "LimeLight",
-        "LDO",
+
+    const std::array<std::string_view, 27> moduleNames = {
+        "AFE"sv,
+        "BIAS"sv,
+        "XBUF"sv,
+        "CGEN"sv,
+        "BIST"sv,
+        "CDS"sv,
+        "TRF"sv,
+        "TBB"sv,
+        "RFE"sv,
+        "RBB"sv,
+        "SX"sv,
+        "TxTSP"sv,
+        "TxNCO"sv,
+        "TxGFIR1"sv,
+        "TxGFIR2"sv,
+        "TxGFIR3a"sv,
+        "TxGFIR3b"sv,
+        "TxGFIR3c"sv,
+        "RxTSP"sv,
+        "RxNCO"sv,
+        "RxGFIR1"sv,
+        "RxGFIR2"sv,
+        "RxGFIR3a"sv,
+        "RxGFIR3b"sv,
+        "RxGFIR3c"sv,
+        "LimeLight"sv,
+        "LDO"sv,
     };
 
     const uint16_t patterns[] = { 0xAAAA, 0x5555 };
@@ -2457,12 +2409,12 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         {
             Modify_SPI_Reg_bits(LMS7param(MAC), cc);
             sprintf(chex, "0x%04X", startAddr);
-            ss << moduleNames[i] << "  [" << chex << ":";
+            ss << moduleNames[i] << "  ["sv << chex << ":"sv;
             sprintf(chex, "0x%04X", endAddr);
-            ss << chex << "]";
+            ss << chex << "]"sv;
             if (startAddr >= 0x0100)
             {
-                ss << " Ch." << (cc == 1 ? "A" : "B");
+                ss << " Ch."sv << (cc == 1 ? "A"sv : "B"sv);
             }
             ss << std::endl;
             for (uint8_t p = 0; p < patternsCount; ++p)
@@ -2487,7 +2439,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 
     if (allTestSuccess)
         return OpStatus::Success;
-    return ReportError(OpStatus::Error, "RegistersTest() failed");
+    return ReportError(OpStatus::Error, "RegistersTest() failed"s);
 }
 
 /** @brief Performs registers test for given address interval by writing given pattern data
@@ -2548,9 +2500,9 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
         {
             registersMatch = false;
             sprintf(ctemp, "0x%04X", addrToWrite[j]);
-            ss << "\t" << ctemp << "(wr/rd): ";
+            ss << "\t"sv << ctemp << "(wr/rd): "sv;
             sprintf(ctemp, "0x%04X", dataToWrite[j]);
-            ss << ctemp << "/";
+            ss << ctemp << "/"sv;
             sprintf(ctemp, "0x%04X", dataReceived[j]);
             ss << ctemp << std::endl;
         }
@@ -2558,7 +2510,7 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
     if (registersMatch)
     {
         sprintf(ctemp, "0x%04X", pattern);
-        ss << "\tRegisters OK (" << ctemp << ")\n";
+        ss << "\tRegisters OK ("sv << ctemp << ")\n"sv;
     }
     if (registersMatch)
         return OpStatus::Success;
@@ -2688,7 +2640,7 @@ bool LMS7002M::IsSynced()
 OpStatus LMS7002M::UploadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     ChannelScope scope(this);
 
@@ -2734,7 +2686,7 @@ OpStatus LMS7002M::UploadAll()
 OpStatus LMS7002M::DownloadAll()
 {
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "No device connected");
+        return ReportError(OpStatus::IOFailure, "No device connected"s);
 
     OpStatus status;
     ChannelScope scope(this, true);
@@ -3011,11 +2963,6 @@ float_type LMS7002M::GetTemperature()
     return temperature;
 }
 
-void LMS7002M::SetLogCallback(std::function<void(const char*, LogType)> callback)
-{
-    log_callback = callback;
-}
-
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)
 {
     ChannelScope scope(this);
@@ -3079,8 +3026,8 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
     }
     if (edges.size() != 2)
     {
-        lime::debug("Not found");
-        return ReportError(OpStatus::InvalidValue, "Failed to find value");
+        lime::debug("Not found"s);
+        return ReportError(OpStatus::InvalidValue, "Failed to find value"s);
     }
     int8_t found = (edges[0] + edges[1]) / 2;
     wrValue = abs(found);
@@ -3109,7 +3056,7 @@ double LMS7002M::GetClockFreq(ClockID clk_id)
     case ClockID::CLK_TXTSP:
         return GetReferenceClk_TSP(TRXDir::Tx);
     default:
-        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID.");
+        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID."s);
         return 0;
     }
 }
@@ -3132,9 +3079,9 @@ OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
         break;
     case ClockID::CLK_RXTSP:
     case ClockID::CLK_TXTSP:
-        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only");
+        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only"s);
     default:
-        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id");
+        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id"s);
     }
     return OpStatus::Success;
 }
@@ -3259,14 +3206,14 @@ OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double ba
         return status;
 
     std::stringstream ss;
-    ss << "LMS " << (dir == TRXDir::Tx ? "Tx" : "Rx") << " GFIR coefficients (BW: " << bandwidth << " MHz):\n";
-    ss << "GFIR1 = GFIR2:";
+    ss << "LMS "sv << ToString(dir) << " GFIR coefficients (BW: "sv << bandwidth << " MHz):\n"sv;
+    ss << "GFIR1 = GFIR2:"sv;
     for (int i = 0; i < L * 5; ++i)
         ss << " " << coef2[i];
     ss << std::endl;
-    ss << "GFIR3:";
+    ss << "GFIR3:"sv;
     for (int i = 0; i < L * 15; ++i)
-        ss << " " << coef[i];
+        ss << " "sv << coef[i];
     ss << std::endl;
     lime::info(ss.str());
 

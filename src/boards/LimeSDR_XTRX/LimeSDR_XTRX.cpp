@@ -24,11 +24,13 @@
 
 namespace lime {
 
+using namespace std::literals::string_literals;
+
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
     { 0x0022, 0x0FFF },
@@ -89,7 +91,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 static inline void ValidateChannel(uint8_t channel)
 {
     if (channel > 2)
-        throw std::logic_error("invalid channel index");
+        throw std::logic_error("invalid channel index"s);
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
@@ -133,11 +135,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    desc.spiSlaveIds = { { "LMS7002M", SPI_LMS7002M }, { "FPGA", SPI_FPGA } };
+    desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
-    // desc.memoryDevices[MEMORY_DEVICES_TEXT.at(eMemoryDevice::FPGA_RAM)] =
-    //     std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
-    const std::unordered_map<eMemoryRegion, Region> flashMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
+    // desc.memoryDevices[ToString(eMemoryDevice::FPGA_RAM)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
@@ -153,10 +153,10 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 
     RFSOCDescriptor soc;
     // LMS#1
-    soc.name = "LMS7002M";
+    soc.name = "LMS7002M"s;
     soc.channelCount = 2;
-    soc.pathNames[TRXDir::Rx] = { "None", "LNAH", "LNAL", "LNAW", "LB1", "LB2" };
-    soc.pathNames[TRXDir::Tx] = { "None", "Band1", "Band2" };
+    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "LNAL"s, "LNAW"s, "LB1"s, "LB2"s };
+    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s, "Band2"s };
 
     soc.samplingRateRange = { 100e3, 61.44e6, 0 };
     soc.frequencyRange = { 100e3, 3.8e9, 0 };
@@ -164,13 +164,13 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
     soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
 
-    soc.antennaRange[TRXDir::Rx]["LNAH"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAL"] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Rx]["LNAW"] = { 700e6, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LB1"] = soc.antennaRange[TRXDir::Rx]["LNAL"];
-    soc.antennaRange[TRXDir::Rx]["LB2"] = soc.antennaRange[TRXDir::Rx]["LNAW"];
-    soc.antennaRange[TRXDir::Tx]["Band1"] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 700e6, 900e6 };
+    soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
+    soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
 
     SetGainInformationInDescriptor(soc);
 
@@ -190,9 +190,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     const int chipCount = mLMSChips.size();
     mStreamers.resize(chipCount, nullptr);
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_XTRX, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS7002M", eDeviceTreeNodeClass::LMS7002M, chip));
-    desc.socTree = std::make_shared<DeviceTreeNode>("XTRX", eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_XTRX, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, chip));
+    desc.socTree = std::make_shared<DeviceTreeNode>("XTRX"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 }
 
@@ -246,7 +246,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", ss.str().c_str());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + ss.str());
     }
 
     bool rxUsed = false;
@@ -305,10 +305,10 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + e.what());
     } catch (std::runtime_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + e.what());
     }
     return OpStatus::Success;
 }
@@ -365,7 +365,7 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     case SPI_FPGA:
         return fpgaPort->SPI(MOSI, MISO, count);
     default:
-        throw std::logic_error("invalid SPI chip select");
+        throw std::logic_error("invalid SPI chip select"s);
     }
 }
 
@@ -394,8 +394,8 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 dirFlag = O_WRONLY;
             if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
             {
-                const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
-                return ReportError(OpStatus::IOFailure, reason.c_str());
+                const std::string reason = "Failed to open device in stream start: "s + trxPort->GetPathName().string();
+                return ReportError(OpStatus::IOFailure, reason);
             }
         }
         OpStatus status = mStreamers[moduleIndex]->Setup(config);
@@ -546,7 +546,7 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
             path = LMS_PATH_TX2;
             break;
         default:
-            throw std::logic_error("Invalid LMS1 Tx path");
+            throw std::logic_error("Invalid LMS1 Tx path"s);
         }
         sw_val &= ~(1 << 4);
         if (path == LMS_PATH_TX1)

@@ -3,6 +3,8 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 static int printHelp(void)
 {
@@ -12,18 +14,18 @@ static int printHelp(void)
     return EXIT_SUCCESS;
 }
 
-static std::string GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
+static const std::string_view GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
 {
     switch (status)
     {
     case SDRDevice::GPS_Lock::LockStatus::NotAvailable:
-        return std::string("Not available");
+        return "Not available"sv;
     case SDRDevice::GPS_Lock::LockStatus::Has2D:
-        return std::string("2D");
+        return "2D"sv;
     case SDRDevice::GPS_Lock::LockStatus::Has3D:
-        return std::string("3D");
+        return "3D"sv;
     default:
-        return std::string("Undefined");
+        return "Undefined"sv;
     }
 }
 
@@ -84,16 +86,16 @@ int main(int argc, char* argv[])
         printf("No devices found\n");
         return -1;
     }
-    cout << "Found " << handles.size() << " device(s) :" << endl;
+    cout << "Found "sv << handles.size() << " device(s) :"sv << endl;
     for (uint32_t i = 0; i < handles.size(); i++)
     {
-        cout << i << ": " << handles[i].Serialize() << endl;
+        cout << i << ": "sv << handles[i].Serialize() << endl;
         if (full)
         {
             SDRDevice* device = DeviceRegistry::makeDevice(handles.at(i));
             if (!device)
             {
-                cout << "\tFailed to connect" << endl;
+                cout << "\tFailed to connect"sv << endl;
                 continue;
             }
             PrintDeviceDetails(device);

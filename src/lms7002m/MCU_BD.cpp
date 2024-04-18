@@ -17,13 +17,15 @@ using namespace std;
 #include "limesuiteng/Logger.h"
 #include "comms/IComms.h"
 #include <functional>
+#include <string_view>
 
 using namespace lime;
 using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 MCU_BD::MCU_BD()
 {
-    mLoadedProgramFilename = "";
+    mLoadedProgramFilename = ""s;
     m_bLoadedDebug = 0;
     m_bLoadedProd = 0;
     stepsTotal = 0;
@@ -72,9 +74,8 @@ void MCU_BD::SetCallback(ProgrammingCallback callback)
     m_callback = callback;
 }
 
-void MCU_BD::IncrementStepsDone(unsigned short amount, const char* message)
+void MCU_BD::IncrementStepsDone(unsigned short amount, const std::string& message)
 {
-    assert(message);
     stepsDone += amount;
 
     if (m_callback != nullptr)
@@ -83,9 +84,8 @@ void MCU_BD::IncrementStepsDone(unsigned short amount, const char* message)
     }
 }
 
-void MCU_BD::SetStepsDone(unsigned short amount, const char* message)
+void MCU_BD::SetStepsDone(unsigned short amount, const std::string& message)
 {
-    assert(message);
     stepsDone.store(amount);
 
     if (m_callback != nullptr)
@@ -502,7 +502,7 @@ int MCU_BD::Program_MCU(int m_iMode1, int m_iMode0)
 OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE mode)
 {
     if (!m_serPort)
-        return ReportError(OpStatus::NotConnected, "Device not connected");
+        return ReportError(OpStatus::NotConnected, "Device not connected"s);
 
 #ifndef NDEBUG
     auto timeStart = std::chrono::high_resolution_clock::now();
@@ -543,7 +543,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             } while ((!fifoEmpty) && (t2 - t1) < timeout);
 
             if (!fifoEmpty)
-                return ReportError(OpStatus::Timeout, "MCU FIFO full");
+                return ReportError(OpStatus::Timeout, "MCU FIFO full"s);
 
             //write 32 bytes into FIFO
             for (uint8_t j = 0; j < fifoLen; ++j)
@@ -557,7 +557,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
 #endif
         };
         if (abort)
-            return ReportError(OpStatus::Aborted, "operation aborted by user");
+            return ReportError(OpStatus::Aborted, "Operation aborted by user"s);
 
         //wait until programmed flag
         wrdata[0] = statusReg;
@@ -573,16 +573,16 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
 
 #ifndef NDEBUG
         auto timeEnd = std::chrono::high_resolution_clock::now();
-        lime::debug("MCU Programming finished, %li ms",
-            std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
+        lime::debug(
+            "MCU Programming finished, %li ms", std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count());
 #endif
         if (!programmed)
-            return ReportError(OpStatus::Timeout, "MCU not programmed");
+            return ReportError(OpStatus::Timeout, "MCU not programmed"s);
         return OpStatus::Success;
     } catch (std::runtime_error& e)
     {
 #ifndef NDEBUG
-        lime::error("MCU programming failed : %s", e.what());
+        lime::error("MCU programming failed: "s + e.what());
 #endif
         return OpStatus::Error;
     }
@@ -685,7 +685,7 @@ int MCU_BD::RunProductionTest_MCU()
         Wait_CLK_Cycles(256 * 5);
         retval = mSPI_read(1); //REG1 read
         if (retval != 0x55)
-            temps = "Ext. interrupt 3 test failed.";
+            temps = "Ext. interrupt 3 test failed."s;
         else
         {
             tempi = 0x00AA;
@@ -699,7 +699,7 @@ int MCU_BD::RunProductionTest_MCU()
             Wait_CLK_Cycles(256 * 5);
             retval = mSPI_read(1); //REG1 read
             if (retval != 0xAA)
-                temps = "Ext. interrupt 4 test failed.";
+                temps = "Ext. interrupt 4 test failed."s;
             else
             {
                 tempi = 0x0055;
@@ -714,12 +714,12 @@ int MCU_BD::RunProductionTest_MCU()
                 retval = mSPI_read(1); //REG1 read
                 if (retval != 0x55)
                 {
-                    temps = "Ext. interrupt 5 test failed.";
+                    temps = "Ext. interrupt 5 test failed."s;
                     return -1;
                 }
                 else
                 {
-                    temps = "Production test finished. MCU is OK.";
+                    temps = "Production test finished. MCU is OK."s;
                     return 0;
                 }
             }
@@ -731,19 +731,19 @@ int MCU_BD::RunProductionTest_MCU()
         { // detected error code
             if ((retval & 0x0F) > 0)
             {
-                temps = "Test " + std::to_string(retval & 0x0F) + " failed";
+                temps = "Test "s + std::to_string(retval & 0x0F) + " failed"s;
                 return -1;
             }
             else
             {
-                temps = "Test failed";
+                temps = "Test failed"s;
                 return -1;
             }
         }
         else
         {
             // test too long. Failure.
-            temps = "Test failed.";
+            temps = "Test failed."s;
             return -1;
         }
     }
@@ -925,7 +925,7 @@ int MCU_BD::RunInstr_MCU(unsigned short* pPCVAL)
     return retval;
 }
 
-/** 
+/**
  * @brief Returns information about programming or reading data progress
  * @returns The structure containing information about the progress info.
 */
@@ -1039,7 +1039,7 @@ void MCU_BD::SetParameter(MCU_Parameter param, float value)
         RunProcedure(9);
     }
     if (WaitForMCU(100) != 0)
-        lime::debug("Failed to set MCU parameter");
+        lime::debug("Failed to set MCU parameter"s);
 }
 
 /** @brief Switches MCU into debug mode, MCU program execution is halted
@@ -1120,28 +1120,29 @@ uint8_t MCU_BD::ReadMCUProgramID()
     return statusMcu & 0x7F;
 }
 
-static const char* MCU_ErrorMessages[] = { "No error",
-    "Generic error",
-    "CGEN tune failed",
-    "SXR tune failed",
-    "SXT tune failed",
-    "Loopback signal weak: not connected/insufficient gain?",
-    "Invalid Rx path",
-    "Invalid Tx band",
-    "Rx LPF bandwidth out of range",
-    "Rx invalid TIA gain",
-    "Tx LPF bandwidth out of range",
-    "Procedure is disabled",
-    "Rx R_CTL_LPF range limit reached",
-    "Rx CFB_TIA_RFE range limit reached",
-    "Tx RCAL_LPF range limit reached," };
+static constexpr std::array<std::string_view, MCU_BD::MCU_ERROR_CODES::MCU_ERROR_CODES_COUNT> MCU_ErrorMessages = {
+    "No error"sv,
+    "Generic error"sv,
+    "CGEN tune failed"sv,
+    "SXR tune failed"sv,
+    "SXT tune failed"sv,
+    "Loopback signal weak: not connected/insufficient gain?"sv,
+    "Invalid Rx path"sv,
+    "Invalid Tx band"sv,
+    "Rx LPF bandwidth out of range"sv,
+    "Rx invalid TIA gain"sv,
+    "Tx LPF bandwidth out of range"sv,
+    "Procedure is disabled"sv,
+    "Rx R_CTL_LPF range limit reached"sv,
+    "Rx CFB_TIA_RFE range limit reached"sv,
+    "Tx RCAL_LPF range limit reached"sv,
+};
 
-const char* MCU_BD::MCUStatusMessage(const uint8_t code)
+std::string_view MCU_BD::MCUStatusMessage(const uint8_t code)
 {
-    static_assert(MCU_ERROR_CODES_COUNT == sizeof(MCU_ErrorMessages) / sizeof(char*), "MCU errors enum/string count mismatch");
     if (code == 255)
-        return "MCU not programmed/procedure still in progress";
+        return "MCU not programmed/procedure still in progress"sv;
     if (code >= MCU_ERROR_CODES_COUNT)
-        return "Error code undefined";
-    return MCU_ErrorMessages[code];
+        return "Error code undefined"sv;
+    return MCU_ErrorMessages.at(code);
 }

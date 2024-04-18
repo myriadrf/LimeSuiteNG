@@ -204,7 +204,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
 
     temp.clear();
     for (int i = 0; i < 32; ++i)
-        temp.push_back(std::to_string(-12 + i) + " dB");
+        temp.push_back(std::to_string(-12 + i) + " dB"s);
     cmbG_PGA_RBB->Set(temp);
 
     for (int i = 0; i < 15; ++i)

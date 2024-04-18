@@ -64,7 +64,7 @@ class LMS7SuiteAppFrame : public wxFrame
     static int m_lmsSelection;
 
   protected:
-    static void OnGlobalLogEvent(const lime::LogLevel level, const char* message);
+    static void OnGlobalLogEvent(const lime::LogLevel level, const std::string& message);
     static void OnLogDataTransfer(bool Tx, const unsigned char* data, const unsigned int length);
     void OnLogMessage(wxCommandEvent& event);
     void UpdateConnections(lime::SDRDevice* port);

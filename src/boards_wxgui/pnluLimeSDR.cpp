@@ -77,7 +77,7 @@ void pnluLimeSDR::Initialize(lime::SDRDevice* newDevice)
     {
         for (const auto& id : device->GetDescriptor().spiSlaveIds)
         {
-            if (id.first == "FPGA")
+            if (id.first == "FPGA"s)
             {
                 fpgaSelect = id.second;
                 break;

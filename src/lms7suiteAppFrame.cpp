@@ -37,7 +37,6 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
-//#include "LimeSDR.h"
 
 #include "limesuiteng/Logger.h"
 
@@ -51,12 +50,12 @@ LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
 
 int LMS7SuiteAppFrame::m_lmsSelection = 0;
 
-void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char* message)
+void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
         return;
     wxCommandEvent evt;
-    evt.SetString(wxString::FromAscii(message));
+    evt.SetString(message);
     evt.SetEventType(LOG_MESSAGE);
     evt.SetInt(static_cast<int>(level));
     wxPostEvent(obj_ptr, evt);
@@ -222,16 +221,16 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
 #endif
 
     fftviewer = new fftviewer_frFFTviewer(this, wxNewId());
-    AddModule(fftviewer, "fftviewer");
+    AddModule(fftviewer, "fftviewer"s);
 
     SPI_wxgui* spigui = new SPI_wxgui(this, wxNewId());
-    AddModule(spigui, "SPI");
+    AddModule(spigui, "SPI"s);
 
     boardControlsGui = new pnlBoardControls(this, wxNewId());
-    AddModule(boardControlsGui, "Board controls");
+    AddModule(boardControlsGui, "Board controls"s);
 
     programmer = new LMS_Programing_wxgui(this, wxNewId());
-    AddModule(programmer, "Programming");
+    AddModule(programmer, "Programming"s);
 
     int x, y1, y2;
     m_scrolledWindow1->GetVirtualSize(&x, &y1);
@@ -318,7 +317,7 @@ void LMS7SuiteAppFrame::OnDeviceDisconnect()
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
         evt.SetInt(static_cast<int>(lime::LogLevel::Info));
-        evt.SetString("Disconnected: " + info.name);
+        evt.SetString("Disconnected: "s + info.name);
         wxPostEvent(this, evt);
         UpdateConnections(nullptr);
         lime::DeviceRegistry::freeDevice(lmsControl);
@@ -423,8 +422,8 @@ void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const ui
     if (obj_ptr->mMiniLog == nullptr || obj_ptr->mMiniLog->chkLogData->IsChecked() == false)
         return;
     std::stringstream ss;
-    ss << (Tx ? "Wr(" : "Rd(");
-    ss << length << "): ";
+    ss << (Tx ? "Wr("sv : "Rd("sv);
+    ss << length << "): "sv;
     ss << std::hex << std::setfill('0');
     int repeatedZeros = 0;
     for (int i = length - 1; i >= 0; --i)
@@ -437,9 +436,9 @@ void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const ui
     repeatedZeros = repeatedZeros - (repeatedZeros & 0x1);
     for (size_t i = 0; i < length - repeatedZeros; ++i)
         //casting to short to print as numbers
-        ss << " " << std::setw(2) << static_cast<unsigned short>(data[i]);
+        ss << " "sv << std::setw(2) << static_cast<unsigned short>(data[i]);
     if (repeatedZeros > 2)
-        ss << " (00 x " << std::dec << repeatedZeros << " times)";
+        ss << " (00 x "sv << std::dec << repeatedZeros << " times)"sv;
     lime::debug(ss.str());
     wxCommandEvent* evt = new wxCommandEvent();
     evt->SetString(ss.str());

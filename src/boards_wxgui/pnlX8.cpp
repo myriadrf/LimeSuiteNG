@@ -30,7 +30,7 @@ pnlX8::pnlX8(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     wxFlexGridSizer* submodulesSizer = new wxFlexGridSizer(4, 0, 0, 0);
     for (int i = 0; i < 8; ++i)
     {
-        std::string spiSlaveName = "FPGA@" + std::to_string(i + 1);
+        std::string spiSlaveName = "FPGA@"s + std::to_string(i + 1);
         pnlXTRX* pnl = new pnlXTRX(this, wxNewId(), wxDefaultPosition, wxDefaultSize, 0, spiSlaveName);
         subPanels.push_back(pnl);
         submodulesSizer->Add(pnl);
@@ -47,7 +47,7 @@ void pnlX8::Initialize(lime::SDRDevice* pControl)
     int i=0;
     for (auto& pnl : subPanels)
     {
-        std::string spiSlaveName = "FPGA@" + std::to_string(i + 1);
+        std::string spiSlaveName = "FPGA@"s + std::to_string(i + 1);
         pnl->Initialize(pControl, spiSlaveName);
         ++i;
     }

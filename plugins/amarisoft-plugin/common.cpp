@@ -20,6 +20,30 @@ using namespace std;
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
 static constexpr int LIME_TRX_MAX_RF_PORT = 16;
 
+std::vector<std::string_view> splitString(std::string_view string, std::string_view delimiter)
+{
+    std::vector<std::string_view> ret;
+
+    auto position = string.find(delimiter);
+
+    while (position != std::string_view::npos)
+    {
+        if (position != 0)
+        {
+            ret.push_back(string.substr(0, position));
+        }
+
+        string = string.substr(position + 1);
+        position = string.find(delimiter);
+    }
+
+    if (string.size() > 0)
+    {
+        ret.push_back(string);
+    }
+    return ret;
+}
+
 struct StreamStatus {
     lime::StreamStats rx;
     lime::StreamStats tx;
@@ -28,7 +52,7 @@ struct StreamStatus {
 static std::mutex gainsMutex;
 static std::array<StreamStatus, LIME_TRX_MAX_RF_PORT> portStreamStates;
 
-static HostLogCallbackType hostCallback = nullptr;
+static lime::SDRDevice::LogCallbackType hostCallback = nullptr;
 
 DevNode::DevNode()
     : device(nullptr)
@@ -101,7 +125,7 @@ static void Log(LogLevel lvl, const char* format, ...)
         hostCallback(lvl, msg);
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -129,10 +153,10 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
         logVerbosity >= LogLevel::Warning)
     {
         stringstream ss;
-        ss << "Rx| Loss: " << status.rx.loss << " overrun: " << status.rx.overrun << " rate: " << status.rx.dataRate_Bps / 1e6
-           << " MB/s"
-           << "\nTx| Late: " << status.tx.late << " underrun: " << status.tx.underrun << " rate: " << status.tx.dataRate_Bps / 1e6
-           << " MB/s";
+        ss << "Rx| Loss: "sv << status.rx.loss << " overrun: "sv << status.rx.overrun << " rate: "sv << status.rx.dataRate_Bps / 1e6
+           << " MB/s"sv
+           << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
+           << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
         Log(LogLevel::Warning, ss.str().c_str());
         lastStreamUpdate = now;
     }
@@ -232,7 +256,7 @@ static OpStatus MapChannelsToDevices(
             --remainingChannels;
             // Log(LogLevel::Debug,
             //     "%s Channel%i : dev%i chipIndex:%i, chipChannel:%i",
-            //     (dir == TRXDir::Tx ? "Tx" : "Rx"),
+            //     ToCString(dir),
             //     static_cast<int>(channels.size()),
             //     lane.parent->devIndex,
             //     lane.parent->chipIndex,
@@ -245,22 +269,19 @@ static OpStatus MapChannelsToDevices(
 
 static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
 {
-    std::vector<uint32_t> writeRegisters;
-    char varname[256];
-    sprintf(varname, "dev%i_writeRegisters", devIndex);
-
+    std::string varname = "dev"s + std::to_string(devIndex) + "_writeRegisters"s;
     std::string value;
-    if (context->config->GetString(value, varname))
+
+    if (context->config->GetString(value, varname.c_str()))
     {
-        char writeRegistersStr[512];
-        strcpy(writeRegistersStr, value.c_str());
-        char* token = strtok(writeRegistersStr, ";");
-        while (token)
+        std::string_view writeRegistersStr{ value };
+        const auto tokens = splitString(writeRegistersStr, ";"sv);
+        for (const auto& token : tokens)
         {
             uint32_t spiVal = 0;
-            sscanf(token, "%X", &spiVal);
-            context->rfdev[devIndex].fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
-            token = strtok(NULL, ";");
+            std::stringstream sstream{ std::string{ token } };
+            sstream >> std::hex >> spiVal;
+            context->rfdev.at(devIndex).fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
         }
     }
 }
@@ -304,10 +325,11 @@ static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string& text
     return false;
 }
 
-static int FilterHandles(const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
+static int FilterHandles(
+    const std::string& text, const std::vector<DeviceHandle>& handles, std::vector<DeviceHandle>& filteredHandles)
 {
     if (handles.empty())
-	return 0;
+        return 0;
 
     DeviceHandle deserializedHandle(text);
     filteredHandles.clear();
@@ -345,7 +367,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
             Log(LogLevel::Error, "No device found to match handle: %s.", node.handleString.c_str());
             return OpStatus::InvalidValue;
         }
-        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize().c_str());
+        auto iter = context->uniqueDevices.find(filteredHandles.at(0).Serialize());
         if (iter != context->uniqueDevices.end())
         {
             node.device = iter->second;
@@ -365,7 +387,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
-        context->uniqueDevices[filteredHandles.at(0).Serialize().c_str()] = device;
+        context->uniqueDevices[filteredHandles.at(0).Serialize()] = device;
         node.device = device;
     }
     return OpStatus::Success;
@@ -391,20 +413,20 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
 
         LMS7002M* chip = static_cast<LMS7002M*>(node.device->GetInternalChip(node.chipIndex));
 
-        char configFilepath[512];
+        std::string configFilepath;
         if (node.configInputs.iniFilename[0] != '/') // is not global path
-            sprintf(configFilepath, "%s/%s", context->currentWorkingDirectory.c_str(), node.configInputs.iniFilename.c_str());
-        else
-            sprintf(configFilepath, "%s", node.configInputs.iniFilename.c_str());
+            configFilepath += context->currentWorkingDirectory + "/"s;
+
+        configFilepath += node.configInputs.iniFilename;
 
         if (chip->LoadConfig(configFilepath, false) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "dev%s chip%i Error loading file: %s", i, node.chipIndex, configFilepath);
+            Log(LogLevel::Error, "dev%s chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
             return OpStatus::Error;
         }
 
         node.config.skipDefaults = true;
-        Log(LogLevel::Info, "dev%i chip%i loaded with: %s", i, node.chipIndex, configFilepath);
+        Log(LogLevel::Info, "dev%i chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
     }
     return OpStatus::Success;
 }
@@ -414,20 +436,22 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
     for (int p = 0; p < LIME_TRX_MAX_RF_PORT; ++p)
     {
         PortData& port = context->ports.at(p);
-        char tokens[512];
-        sprintf(tokens, "%s", port.deviceNames.c_str());
-        char* token = strtok(tokens, ",");
-        while (token)
+
+        std::string_view devices{ port.deviceNames };
+        const auto tokens = splitString(devices, ","sv);
+        for (auto token : tokens)
         {
-            if (strstr(token, "dev") != token)
+            if (token.find("dev"sv) != 0) // token.starts_with in C++20
             {
                 // invalid device name
-                Log(LogLevel::Error, "Port%i assigned invalid (%s) device.", p, token);
+                Log(LogLevel::Error, "Port%i assigned invalid (%s) device.", p, std::string{ token }.c_str());
                 return OpStatus::InvalidValue;
             }
 
             int devIndex = 0;
-            sscanf(token + 3, "%i", &devIndex);
+            token.remove_prefix(3);
+            std::stringstream sstream{ std::string{ token } };
+            sstream >> devIndex;
             DevNode* assignedDeviceTreeNode = &context->rfdev.at(devIndex);
             port.nodes.push_back(assignedDeviceTreeNode);
             assignedDeviceTreeNode->portIndex = p;
@@ -436,7 +460,6 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             // copy port's config parameters to each assinged device to form base
             // which will later be modified by individual device parameter overrides
             assignedDeviceTreeNode->configInputs = port.configInputs;
-            token = strtok(NULL, ",");
         }
     }
     return OpStatus::Success;
@@ -449,8 +472,7 @@ static void GatherEnvironmentSettings(LimePluginContext* context, LimeSettingsPr
         logVerbosity = std::min(static_cast<LogLevel>(val), LogLevel::Debug);
 }
 
-static void GatherDirectionalSettings(
-    LimeSettingsProvider* settings, DirectionalSettings* dir, const char* varPrefix)
+static void GatherDirectionalSettings(LimeSettingsProvider* settings, DirectionalSettings* dir, const char* varPrefix)
 {
     GetSetting(settings, &dir->antenna, "%s_path", varPrefix);
     GetSetting(settings, &dir->lo_override, "%s_lo_override", varPrefix);
@@ -580,6 +602,7 @@ static OpStatus TransferDeviceDirectionalSettings(
     if (!settings.calibration.empty())
     {
         const char* value = settings.calibration.c_str();
+        // strcasecmp is not a function in the C++ standard
         if (!strcasecmp(value, "none"))
             flag = CalibrateFlag::None;
         else if ((!strcasecmp(value, "force")) || (!strcasecmp(value, "all")))
@@ -627,7 +650,7 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes)
     return OpStatus::Success;
 }
 
-int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, LimeSettingsProvider* configProvider)
+int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType logFptr, LimeSettingsProvider* configProvider)
 {
     context->hostLog = logFptr;
     hostCallback = logFptr;
@@ -682,7 +705,7 @@ int LimePlugin_Init(LimePluginContext* context, HostLogCallbackType logFptr, Lim
                 {
                     // TODO: this is board specific, need general API
                     int32_t paramId = 2 + ch;
-                    std::string units = "";
+                    std::string units = ""s;
                     s->device[p]->CustomParameterWrite({ { paramId, dac, units } });
                 }
             }
@@ -876,7 +899,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             if (node.fpgaRegisterWrites.size() > 0)
             {
                 const auto slaves = node.device->GetDescriptor().spiSlaveIds;
-                node.device->SPI(slaves.at("FPGA"), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
+                node.device->SPI(slaves.at("FPGA"s), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
             }
         }
 

@@ -5,9 +5,12 @@
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
+#include <string_view>
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 static std::vector<int> ParseIntArray(const std::string& str)
 {
@@ -33,25 +36,26 @@ static std::vector<int> ParseIntArray(const std::string& str)
 }
 
 static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const char* str)
+static LogLevel strToLogLevel(const std::string_view str)
 {
-    if (strstr("debug", str))
+    if ("debug"sv == str)
         return LogLevel::Debug;
-    else if (strstr("verbose", str))
+    else if ("verbose"sv == str)
         return LogLevel::Verbose;
-    else if (strstr("error", str))
+    else if ("error"sv == str)
         return LogLevel::Error;
-    else if (strstr("warning", str))
+    else if ("warning"sv == str)
         return LogLevel::Warning;
-    else if (strstr("info", str))
+    else if ("info"sv == str)
         return LogLevel::Info;
     return LogLevel::Error;
 }
-static void LogCallback(LogLevel lvl, const char* msg)
+
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 static int printHelp(void)
@@ -119,15 +123,15 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
         if (antennaNames[j] == name)
             return j;
     }
-    std::cerr << "Antenna (" << name.c_str() << " not found. Available:" << std::endl;
+    std::cerr << "Antenna ("sv << name << " not found. Available:"sv << std::endl;
     for (const auto& iter : antennaNames)
-        std::cerr << "\t\"" << iter.c_str() << "\"" << std::endl;
+        std::cerr << "\t\""sv << iter << "\""sv << std::endl;
     return -1;
 }
 
 int main(int argc, char** argv)
 {
-    std::string devName;
+    std::string_view devName{ ""sv };
     bool initializeBoard = false;
     std::string iniFilename;
     std::string rxAntennaName;
@@ -178,11 +182,11 @@ int main(int argc, char** argv)
 
             if (chipIndexes.empty())
             {
-                cerr << "Invalid chip index" << endl;
+                cerr << "Invalid chip index"sv << endl;
                 return -1;
             }
             else
-                cerr << "Chip count " << chipIndexes.size() << endl;
+                cerr << "Chip count "sv << chipIndexes.size() << endl;
             break;
         case Args::LOG:
             if (optarg != NULL)
@@ -248,7 +252,7 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -270,16 +274,19 @@ int main(int argc, char** argv)
         std::string configFilepath;
         if (!iniFilename.empty())
         {
+            std::string configFilepath = ""s;
             config.skipDefaults = true;
-            std::string cwd(argv[0]);
-            const size_t slash0Pos = cwd.find_last_of("/\\");
-            if (slash0Pos != std::string::npos)
-                cwd.resize(slash0Pos);
+            std::string_view cwd{ argv[0] };
+            const size_t slash0Pos = cwd.find_last_of("/\\"sv);
+            if (slash0Pos != std::string_view::npos)
+            {
+                cwd = cwd.substr(0, slash0Pos - 1);
+            }
 
             if (iniFilename[0] != '/') // is not global path
-                configFilepath = cwd + "/" + iniFilename;
-            else
-                configFilepath = iniFilename;
+                configFilepath = std::string{ cwd } + "/"s;
+
+            configFilepath += iniFilename;
         }
 
         for (int moduleId : chipIndexes)
@@ -288,12 +295,12 @@ int main(int argc, char** argv)
             if (!chip)
             {
                 DeviceRegistry::freeDevice(device);
-                cerr << "Failed to get internal chip: " << moduleId << endl;
+                cerr << "Failed to get internal chip: "sv << moduleId << endl;
                 return EXIT_FAILURE;
             }
             if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
             {
-                cerr << "Error loading file: " << configFilepath << endl;
+                cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
 
@@ -320,19 +327,19 @@ int main(int argc, char** argv)
 
             if (device->Configure(config, moduleId) != OpStatus::Success)
             {
-                cerr << "Failed to configure device (chip" << moduleId << ")" << std::endl;
+                cerr << "Failed to configure device (chip"sv << moduleId << ")"sv << std::endl;
                 return EXIT_FAILURE;
             }
         }
     } catch (std::runtime_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "Config failed: " << e.what() << endl;
+        cerr << "Config failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     } catch (std::logic_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "Config failed: " << e.what() << endl;
+        cerr << "Config failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     }
 

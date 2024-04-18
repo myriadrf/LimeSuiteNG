@@ -6,6 +6,7 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include <iostream>
 #include <chrono>
+#include <string_view>
 #include <cmath>
 #include <signal.h>
 #ifdef USE_GNU_PLOT
@@ -13,6 +14,7 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 static const double frequencyLO = 1.5e9;
 float sampleRate = 10e6;
@@ -21,16 +23,16 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n";
+    std::cout << "Stoppping\n"sv;
     stopProgram = true;
 }
 
 static LogLevel logVerbosity = LogLevel::Verbose;
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -38,19 +40,19 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        printf("No devices found\n");
+        std::cout << "No devices found\n"sv;
         return -1;
     }
-    std::cout << "Devices found :" << std::endl;
+    std::cout << "Devices found :"sv << std::endl;
     for (size_t i = 0; i < handles.size(); i++)
-        std::cout << i << ": " << handles[i].Serialize() << std::endl;
+        std::cout << i << ": "sv << handles[i].Serialize() << std::endl;
     std::cout << std::endl;
 
     // Use first available device
     SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
     if (!device)
     {
-        std::cout << "Failed to connect to device" << std::endl;
+        std::cout << "Failed to connect to device"sv << std::endl;
         return -1;
     }
     device->SetMessageLogCallback(LogCallback);
@@ -97,27 +99,27 @@ int main(int argc, char** argv)
     gp.write("set size square\n set xrange[-1:1]\n set yrange[-1:1]\n");
 #endif
 
-    std::cout << "Configuring device ...\n";
+    std::cout << "Configuring device ...\n"sv;
     try
     {
         auto t1 = std::chrono::high_resolution_clock::now();
         device->Configure(config, chipIndex);
         auto t2 = std::chrono::high_resolution_clock::now();
-        std::cout << "SDR configured in " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
+        std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
         device->StreamSetup(stream, chipIndex);
         device->StreamStart(chipIndex);
 
     } catch (std::runtime_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     } catch (std::logic_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     }
-    std::cout << "Stream started ...\n";
+    std::cout << "Stream started ...\n"sv;
 
     auto startTime = std::chrono::high_resolution_clock::now();
     auto t1 = startTime;
@@ -148,7 +150,7 @@ int main(int argc, char** argv)
         uint32_t samplesSent = device->StreamTx(chipIndex, rxSamples, samplesInBuffer, &txMeta);
         if (samplesSent < 0)
         {
-            printf("Failure to send\n");
+            std::cout << "Failure to send\n"sv;
             break;
         }
         totalSamplesSent += samplesSent;
@@ -157,8 +159,8 @@ int main(int argc, char** argv)
         if (t2 - t1 > std::chrono::seconds(1))
         {
             t1 = t2;
-            std::cout << "Total samples received: " << totalSamplesReceived << "  signal amplitude: " << sqrt(maxSignalAmplitude)
-                      << "  total samples sent: " << totalSamplesSent << std::endl;
+            std::cout << "Total samples received: "sv << totalSamplesReceived << "  signal amplitude: "sv
+                      << std::sqrt(maxSignalAmplitude) << "  total samples sent: "sv << totalSamplesSent << std::endl;
 
 #ifdef USE_GNU_PLOT
             gp.write("plot '-' with points title 'ch 0'");

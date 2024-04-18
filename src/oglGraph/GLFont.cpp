@@ -2,11 +2,14 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <string.h>
+#include <cstring>
+#include <string_view>
 #include <vector>
 
 #include "GL/glew.h"
+
 using namespace std;
+using namespace std::literals::string_view_literals;
 
 static bool IsGlew1_5()
 {
@@ -69,7 +72,7 @@ bool GLFont::load(const char* file)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }
@@ -160,7 +163,7 @@ bool GLFont::loadFromArray(const char* array, unsigned int size)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }

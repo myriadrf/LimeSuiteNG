@@ -37,7 +37,7 @@ FX3::~FX3()
     Disconnect();
 }
 
-bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
+bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string_view serial)
 {
     Disconnect();
 #ifndef __unix__
@@ -46,13 +46,13 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     unsigned char index = 0;
     if (index > USBDevicePrimary->DeviceCount())
     {
-        ReportError(OpStatus::NotConnected, "FX3::Connect: Device index out of range");
+        ReportError(OpStatus::NotConnected, "FX3::Connect: Device index out of range"s);
         return false;
     }
 
     if (USBDevicePrimary->Open(index) == false)
     {
-        ReportError(OpStatus::Error, "FX3::Connect: Failed to open device");
+        ReportError(OpStatus::Error, "FX3::Connect: Failed to open device"s);
         return false;
     }
 
