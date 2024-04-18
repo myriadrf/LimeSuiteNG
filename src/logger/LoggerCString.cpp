@@ -85,7 +85,7 @@ void log(const LogLevel level, const char* format, ...)
     va_end(args);
 }
 
-constexpr std::size_t MAX_MSG_LEN = 1024;
+static constexpr std::size_t MAX_MSG_LEN = 1024;
 thread_local char _reportedErrorMessageCStringBuffer[MAX_MSG_LEN];
 template<class T> inline T ReportErrorTemplate(const T errnum, const char* format, va_list argList)
 {
