@@ -69,7 +69,6 @@ void debug(const std::string& text)
     log(LogLevel::Debug, text);
 }
 
-//! Log a message with formatting and specified logging level
 void log(const LogLevel level, const std::string& text)
 {
     Logger::logHandler(level, text);

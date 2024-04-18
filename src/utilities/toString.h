@@ -12,7 +12,7 @@ namespace lime {
 /// @return The string representing the direction.
 LIME_API const std::string& ToString(TRXDir dir);
 
-/// @brief Converts a given OpStatus value into a human readable sstring.
+/// @brief Converts a given OpStatus value into a human readable string.
 /// @param value The value to convert.
 /// @return The string representing the status.
 LIME_API const std::string& ToString(OpStatus value);
