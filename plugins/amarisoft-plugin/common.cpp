@@ -452,14 +452,14 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             token.remove_prefix(3);
             std::stringstream sstream{ std::string{ token } };
             sstream >> devIndex;
-            DevNode* assignedDeviceTreeNode = &context->rfdev.at(devIndex);
-            port.nodes.push_back(assignedDeviceTreeNode);
-            assignedDeviceTreeNode->portIndex = p;
-            assignedDeviceTreeNode->assignedToPort = true;
+            DevNode* assignedDevice = &context->rfdev.at(devIndex);
+            port.nodes.push_back(assignedDevice);
+            assignedDevice->portIndex = p;
+            assignedDevice->assignedToPort = true;
 
-            // copy port's config parameters to each assinged device to form base
+            // copy port's config parameters to each assigned device to form base
             // which will later be modified by individual device parameter overrides
-            assignedDeviceTreeNode->configInputs = port.configInputs;
+            assignedDevice->configInputs = port.configInputs;
         }
     }
     return OpStatus::Success;
@@ -486,6 +486,7 @@ static void GatherDirectionalSettings(LimeSettingsProvider* settings, Directiona
 static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* settings, const char* prefix)
 {
     GetSetting(settings, &param->iniFilename, "%s_ini", prefix);
+    GetSetting(settings, &param->lpfBandwidthScale, "%s_lpf_bandwidth_scale", prefix);
     GetSetting(settings, &param->maxChannelsToUse, "%s_max_channels_to_use", prefix);
     GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_double_freq_conversion_to_lower_side", prefix);
     std::string linkFormatStr;
@@ -501,7 +502,7 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
             param->linkFormat = lime::DataFormat::I12;
         }
     }
-    GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_syncPPS", prefix);
+    GetSetting(settings, &param->syncPPS, "%s_syncPPS", prefix);
 
     char dirPrefix[32];
     sprintf(dirPrefix, "%s_rx", prefix);
@@ -781,6 +782,7 @@ static void TransferRuntimeParametersToConfig(
         if (trxConfig.gfir.bandwidth == 0) // update only if not set by settings file
             trxConfig.gfir.bandwidth = params.bandwidth[i];
         trxConfig.lpf = params.bandwidth[i];
+        trxConfig.lpf *= channelMap[i].parent->configInputs.lpfBandwidthScale;
 
         const int chipIndex = channelMap[i].parent->chipIndex;
         const auto& desc = channelMap[i].parent->device->GetDescriptor().rfSOC[chipIndex];

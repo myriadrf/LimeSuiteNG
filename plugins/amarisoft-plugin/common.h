@@ -39,6 +39,7 @@ struct ConfigSettings
     ConfigSettings()
         : maxChannelsToUse(2)
         , linkFormat(lime::DataFormat::I12)
+        , lpfBandwidthScale(1.0)
         , double_freq_conversion_to_lower_side(false)
         , syncPPS(false)
     {
@@ -46,6 +47,7 @@ struct ConfigSettings
     DirectionalSettings rx;
     DirectionalSettings tx;
     std::string iniFilename;
+    float lpfBandwidthScale; // for adjusting initially requested LPF bandwidth
     int maxChannelsToUse; // how many channels can be used from this chip
     lime::DataFormat linkFormat;
     bool double_freq_conversion_to_lower_side;
