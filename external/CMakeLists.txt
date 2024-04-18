@@ -15,7 +15,6 @@ if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
     set_target_properties(GLEW PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 endif()
 
-
 #########################################################################
 # kissFFT
 #########################################################################

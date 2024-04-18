@@ -54,8 +54,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         message(STATUS "Enabling AVX2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX")
         target_compile_options(
-            ${AMARISOFT_PLUGIN_TARGET_NAME}
-            PRIVATE -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=sse)
+            ${AMARISOFT_PLUGIN_TARGET_NAME} PRIVATE -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=sse)
         message(STATUS "Enabling AVX instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE4.2")
         target_compile_options(
