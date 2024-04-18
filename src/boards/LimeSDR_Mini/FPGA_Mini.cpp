@@ -4,10 +4,8 @@
 #include <ciso646>
 #include <vector>
 #include <map>
-#include <math.h>
+#include <cmath>
 #include <iostream>
-
-#include "Register.h"
 
 namespace lime {
 

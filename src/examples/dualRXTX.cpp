@@ -7,7 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <string_view>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"

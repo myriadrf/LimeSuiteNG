@@ -294,11 +294,25 @@ class LIME_API LMS7002M
     OpStatus TuneTxFilter(const float_type tx_lpf_freq_RF);
 
     /**
+     * @brief Set transmitter analog Low Pass Filter.
+     * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
+     * @return The status of the operation
+     */
+    OpStatus SetTxLPF(double rfBandwidth_Hz);
+
+    /**
      * @brief Tunes the Low Pass Filter for the RX direction.
      * @param rx_lpf_freq_RF The frequency (in Hz) to tune the filter to.
      * @return The status of the operation
      */
     OpStatus TuneRxFilter(const float_type rx_lpf_freq_RF);
+
+    /**
+     * @brief Set receiver analog Low Pass Filter.
+     * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
+     * @return The status of the operation
+     */
+    OpStatus SetRxLPF(double rfBandwidth_Hz);
 
     /*!
      * @brief Calibrates the internal Analog to Digital Converter on the chip.

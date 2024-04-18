@@ -408,12 +408,12 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     if (tx)
     {
         int gain = lms->GetTBBIAMP_dB(ch);
-        status = lms->TuneTxFilter(lpf);
+        status = lms->SetTxLPF(lpf);
         lms->SetTBBIAMP_dB(gain, ch);
     }
     else
     {
-        status = lms->TuneRxFilter(lpf);
+        status = lms->SetRxLPF(lpf);
     }
 
     if (status != OpStatus::Success)
@@ -1243,17 +1243,15 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
     }
     if (ch.rx.lpf > 0 && ch.rx.enabled)
     {
-        SetupCalibrations(chip, ch.rx.sampleRate);
-        int status = TuneRxFilter(ch.rx.lpf);
-        if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::Error, "Rx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+        OpStatus status = chip->SetRxLPF(ch.rx.lpf);
+        if (status != OpStatus::Success)
+            return lime::ReportError(status, "Rx ch%i filter calibration failed: %s", i, GetLastErrorMessage());
     }
     if (ch.tx.lpf > 0 && ch.tx.enabled)
     {
-        SetupCalibrations(chip, ch.tx.sampleRate);
-        int status = TuneTxFilter(ch.tx.lpf);
-        if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::Error, "Tx ch%i filter calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+        OpStatus status = chip->SetTxLPF(ch.tx.lpf);
+        if (status != OpStatus::Success)
+            return lime::ReportError(status, "Tx ch%i filter calibration failed: %s", i, GetLastErrorMessage());
     }
     return OpStatus::Success;
 }

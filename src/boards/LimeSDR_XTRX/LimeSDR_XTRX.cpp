@@ -1,7 +1,7 @@
 #include "LimeSDR_XTRX.h"
 
 #include <fcntl.h>
-#include "math.h"
+#include <cmath>
 
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
@@ -500,7 +500,7 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
     mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
     mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
 
-    if (f_Hz >= 122e6)
+    if (f_Hz >= 61.45e6)
     {
         // LimeLight & Pad
         mLMSChip->Modify_SPI_Reg_bits(LMS7param(DIQ2_DS), 1);

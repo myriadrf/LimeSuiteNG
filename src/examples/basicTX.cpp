@@ -8,7 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <string_view>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 
 using namespace lime;

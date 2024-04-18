@@ -6,18 +6,13 @@ set(LIMERFE_GUI_SOURCES
     ${THIS_SOURCE_DIR}/limeRFE_gui.cpp
     ${THIS_SOURCE_DIR}/limeRFE_wxgui.cpp
     ${THIS_SOURCE_DIR}/limeRFE_cmd.cpp
-    ${THIS_SOURCE_DIR}/RFE_Device.cpp
-)
+    ${THIS_SOURCE_DIR}/RFE_Device.cpp)
 #milans 200309
 #if(MSVC)
 #    list(APPEND LIMERFE_GUI_SOURCES ${THIS_SOURCE_DIR}/external/termiWin/termiWin.c)
 #endif()
 
-set(LIMERFE_SOURCES
-    ${THIS_SOURCE_DIR}/limeRFE_cmd.cpp
-    ${THIS_SOURCE_DIR}/limeRFE_api.cpp
-    ${THIS_SOURCE_DIR}/RFE_Device.cpp
-)
+set(LIMERFE_SOURCES ${THIS_SOURCE_DIR}/limeRFE_cmd.cpp ${THIS_SOURCE_DIR}/limeRFE_api.cpp ${THIS_SOURCE_DIR}/RFE_Device.cpp)
 
 #milans 200309
 #if(MSVC)
@@ -36,7 +31,7 @@ if(ENABLE_LIMERFE AND ENABLE_GUI)
     target_compile_definitions(LimeSuiteGUI PUBLIC "LIMERFE")
 endif()
 
-if (NOT ENABLE_LIMERFE)
+if(NOT ENABLE_LIMERFE)
     return()
 endif()
 

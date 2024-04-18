@@ -13,6 +13,7 @@
 
 #ifndef __unix__
     #include "CyAPI.h"
+    #include <codecvt>
 #else
     #ifdef __GNUC__
         #pragma GCC diagnostic push
@@ -70,8 +71,7 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
             uint16_t vendorId = device.VendorID;
             uint16_t productId = device.ProductID;
             handle.name = device.DeviceName;
-            std::wstring ws(device.SerialNumber);
-            handle.serial = std::string(ws.begin(), ws.end());
+            handle.serial = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(device.SerialNumber);
             handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
 
             if (hint.serial.empty() or handle.serial.find(hint.serial) != std::string::npos)

@@ -16,9 +16,11 @@ docs/LMS_API_Documentation/*
 /debian/*/lib/*
 /debian/*/DEBIAN
 /debian/*.log
-/debian/limesuite-images20.10.*
-!/debian/limesuite-images20.10.*.in
 /debian/debhelper-build-stamp
+/debian/limesuite-images*.dirs
+/debian/limesuite-images*.postinst
+/debian/limesuite-images*.prerm
+/debian/*.debhelper
 /.vs
 /out/
 /CMakeSettings.json

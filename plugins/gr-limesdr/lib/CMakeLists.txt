@@ -11,27 +11,22 @@
 ########################################################################
 include(GrPlatform) #define LIB_SUFFIX
 
-list(APPEND limesdr_sources
-    device_handler.cc
-    logging.cc
-    source_impl.cc
-    sink_impl.cc
-    device_handler.cc
-)
+list(APPEND limesdr_sources device_handler.cc logging.cc source_impl.cc sink_impl.cc device_handler.cc)
 
-
-set(limesdr_sources "${limesdr_sources}" PARENT_SCOPE)
+set(limesdr_sources
+    "${limesdr_sources}"
+    PARENT_SCOPE)
 if(NOT limesdr_sources)
-    MESSAGE(STATUS "No C++ sources... skipping lib/")
+    message(STATUS "No C++ sources... skipping lib/")
     return()
 endif(NOT limesdr_sources)
 
 add_library(gnuradio-limesdr SHARED ${limesdr_sources})
 target_link_libraries(gnuradio-limesdr PUBLIC gnuradio::gnuradio-runtime limesuiteng)
-target_include_directories(gnuradio-limesdr
+target_include_directories(
+    gnuradio-limesdr
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    PUBLIC $<INSTALL_INTERFACE:include>
-  )
+    PUBLIC $<INSTALL_INTERFACE:include>)
 set_target_properties(gnuradio-limesdr PROPERTIES DEFINE_SYMBOL "gnuradio_limesdr_EXPORTS")
 
 if(Gnuradio_VERSION VERSION_LESS "3.10")
@@ -45,9 +40,7 @@ if(ENABLE_RFE)
 endif()
 
 if(APPLE)
-    set_target_properties(gnuradio-limesdr PROPERTIES
-        INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-    )
+    set_target_properties(gnuradio-limesdr PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif(APPLE)
 
 add_compile_definitions(GR_LIMESDR_VER="${VERSION}")
@@ -56,7 +49,7 @@ add_compile_definitions(GR_LIMESDR_VER="${VERSION}")
 # Install built library files
 ########################################################################
 include(GrMiscUtils)
-GR_LIBRARY_FOO(gnuradio-limesdr)
+gr_library_foo(gnuradio-limesdr)
 
 ########################################################################
 # Print summary
@@ -72,18 +65,15 @@ include(GrTest)
 # If your unit tests require special include paths, add them here
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
-list(APPEND test_limesdr_sources
-)
+list(APPEND test_limesdr_sources)
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-limesdr)
 
 if(NOT test_limesdr_sources)
-    MESSAGE(STATUS "No C++ unit tests... skipping")
+    message(STATUS "No C++ unit tests... skipping")
     return()
 endif(NOT test_limesdr_sources)
 
 foreach(qa_file ${test_limesdr_sources})
-    GR_ADD_CPP_TEST("limesdr_${qa_file}"
-        ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file}
-    )
+    gr_add_cpp_test("limesdr_${qa_file}" ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file})
 endforeach(qa_file)

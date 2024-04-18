@@ -73,8 +73,8 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
     if (now - lastProgressUpdate > std::chrono::milliseconds(10) || hasCompleted)
     {
         lastProgressUpdate = now;
-        printf("[%3.0f%%] bytes written %li/%li\r", percentage, bsent, btotal);
-        fflush(stdout);
+        std::cout << "[" << std::fixed << std::setprecision(0) << percentage << "] bytes written " << bsent << "/" << btotal << "\r"
+                  << std::flush;
     }
     if (hasCompleted)
         cout << endl;
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     int option = 0;
     std::string target;
 
-    while ((option = getopt_long_only(argc, argv, "", long_options, &long_index)) != -1)
+    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
     {
         switch (option)
         {
