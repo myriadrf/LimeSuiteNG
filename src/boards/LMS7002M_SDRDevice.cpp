@@ -1245,13 +1245,13 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
     {
         OpStatus status = chip->SetRxLPF(ch.rx.lpf);
         if (status != OpStatus::Success)
-            return lime::ReportError(status, "Rx ch%i filter calibration failed: %s", i, GetLastErrorMessage());
+            return lime::ReportError(status, "Rx ch%i filter calibration failed: %s", i, GetLastErrorMessageCString());
     }
     if (ch.tx.lpf > 0 && ch.tx.enabled)
     {
         OpStatus status = chip->SetTxLPF(ch.tx.lpf);
         if (status != OpStatus::Success)
-            return lime::ReportError(status, "Tx ch%i filter calibration failed: %s", i, GetLastErrorMessage());
+            return lime::ReportError(status, "Tx ch%i filter calibration failed: %s", i, GetLastErrorMessageCString());
     }
     return OpStatus::Success;
 }
