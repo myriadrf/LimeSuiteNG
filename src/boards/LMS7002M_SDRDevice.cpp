@@ -1163,6 +1163,16 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
 
     const bool tddMode = cfg.channel[0].rx.centerFrequency == cfg.channel[0].tx.centerFrequency;
     chip->EnableSXTDD(tddMode);
+
+    {
+        // TODO: verify if every FPGA gateware has this
+        // configure FPGA to do TDD switching
+        uint16_t reg000A = mFPGA->ReadRegister(0x000A);
+        reg000A &= ~(1 << 11);
+        if (tddMode)
+            reg000A |= (1 << 11);
+        mFPGA->WriteRegister(0x000A, reg000A);
+    }
     // Rx PLL is not used in TDD mode
     if (!tddMode && rxUsed && cfg.channel[0].rx.centerFrequency > 0)
     {
