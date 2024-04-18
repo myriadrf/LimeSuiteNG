@@ -9,7 +9,6 @@
 
 #include "TRXLooper.h"
 
-using namespace std;
 using namespace std::literals::string_literals;
 
 namespace lime {
@@ -68,7 +67,7 @@ OpStatus TRXLooper::SetHardwareTimestamp(const uint64_t now)
 OpStatus TRXLooper::Setup(const StreamConfig& cfg)
 {
     if (mRx.thread.joinable() || mTx.thread.joinable())
-        return ReportError(OpStatus::Busy, "Samples streaming already running");
+        return ReportError(OpStatus::Busy, "Samples streaming already running"s);
 
     bool needTx = cfg.channels.at(TRXDir::Tx).size() > 0;
     bool needRx = cfg.channels.at(TRXDir::Rx).size() > 0; // always need Rx to know current timestamps, cfg.rxCount > 0;
@@ -79,7 +78,7 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     {
         if (cfg.channels.at(TRXDir::Rx).at(i) > 1)
         {
-            return ReportError(OpStatus::InvalidValue, "Invalid Rx channel, only [0,1] channels supported");
+            return ReportError(OpStatus::InvalidValue, "Invalid Rx channel, only [0,1] channels supported"s);
         }
         else
         {
@@ -91,7 +90,7 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     {
         if (cfg.channels.at(TRXDir::Tx).at(i) > 1)
         {
-            return ReportError(OpStatus::InvalidValue, "Invalid Tx channel, only [0,1] channels supported");
+            return ReportError(OpStatus::InvalidValue, "Invalid Tx channel, only [0,1] channels supported"s);
         }
         else
         {
@@ -101,7 +100,7 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
 
     if ((cfg.linkFormat != DataFormat::I12) && (cfg.linkFormat != DataFormat::I16))
     {
-        return ReportError(OpStatus::InvalidValue, "Unsupported stream link format");
+        return ReportError(OpStatus::InvalidValue, "Unsupported stream link format"s);
     }
 
     mConfig = cfg;

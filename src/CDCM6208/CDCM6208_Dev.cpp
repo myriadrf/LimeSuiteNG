@@ -2,7 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <thread>
 #include "comms/IComms.h"
 

@@ -6,7 +6,7 @@ set(THIS_SOURCE_DIR comms/USB)
 include(${THIS_SOURCE_DIR}/FT601/CMakeLists.txt)
 include(${THIS_SOURCE_DIR}/FX3/CMakeLists.txt)
 
-if (NOT ENABLE_USB_FX3 AND NOT ENABLE_USB_FTDI)
+if(NOT ENABLE_USB_FX3 AND NOT ENABLE_USB_FTDI)
     return()
 endif()
 
@@ -17,8 +17,7 @@ set(COMMS_USB_SOURCES
     ${THIS_SOURCE_DIR}/TRXLooper_USB.cpp
     ${THIS_SOURCE_DIR}/USBEntry.cpp
     ${THIS_SOURCE_DIR}/USBGeneric.cpp
-    ${THIS_SOURCE_DIR}/USBTransferContext.cpp
-)
+    ${THIS_SOURCE_DIR}/USBTransferContext.cpp)
 
 ########################################################################
 ## Add to library

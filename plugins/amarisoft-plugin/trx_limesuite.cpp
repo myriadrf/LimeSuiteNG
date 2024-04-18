@@ -69,11 +69,11 @@ static void Log(LogLevel lvl, const char* format, ...)
     printf("\n");
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    printf("%s\n", msg.c_str());
 }
 
 //static TRXStatistics trxstats;

@@ -22,9 +22,11 @@
 #include "mcu_program/common_src/lms7002m_filters.h"
 #include "MCU_BD.h"
 
-#include "math.h"
+#include <cmath>
 
 namespace lime {
+
+using namespace std::literals::string_literals;
 
 // X3 board specific subdevice ids
 static const uint8_t SPI_LMS7002M_1 = 0;
@@ -32,13 +34,13 @@ static const uint8_t SPI_LMS7002M_2 = 1;
 static const uint8_t SPI_LMS7002M_3 = 2;
 static const uint8_t SPI_FPGA = 3;
 
-static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
-static CustomParameter cp_temperature = { "Board Temperature", 1, 0, 65535, true };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static CustomParameter cp_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
-static CustomParameter cp_lms1_tx1dac = { "LMS1 TX1DAC", 2, 0, 65535, false };
-static CustomParameter cp_lms1_tx2dac = { "LMS1 TX2DAC", 3, 0, 65535, false };
+static CustomParameter cp_lms1_tx1dac = { "LMS1 TX1DAC"s, 2, 0, 65535, false };
+static CustomParameter cp_lms1_tx2dac = { "LMS1 TX2DAC"s, 3, 0, 65535, false };
 
-static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = { //
+static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = {
     { 0x0022, 0x0FFF },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -84,10 +86,10 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = {
     { 0x0400, 0x8081 },
     { 0x0404, 0x0006 },
     { 0x040B, 0x1020 },
-    { 0x040C, 0x00FB }
+    { 0x040C, 0x00FB },
 };
 
-static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride = { //
+static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride = {
     { 0x0022, 0x0FFF },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -134,13 +136,13 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride
     { 0x0400, 0x8081 },
     { 0x0404, 0x0006 },
     { 0x040B, 0x1020 },
-    { 0x040C, 0x00FB }
+    { 0x040C, 0x00FB },
 };
 
 static inline void ValidateChannel(uint8_t channel)
 {
     if (channel > 2)
-        throw std::logic_error("invalid channel index");
+        throw std::logic_error("invalid channel index"s);
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
@@ -180,7 +182,10 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
     desc.spiSlaveIds = {
-        { "LMS7002M_1", SPI_LMS7002M_1 }, { "LMS7002M_2", SPI_LMS7002M_2 }, { "LMS7002M_3", SPI_LMS7002M_3 }, { "FPGA", SPI_FPGA }
+        { "LMS7002M_1"s, SPI_LMS7002M_1 },
+        { "LMS7002M_2"s, SPI_LMS7002M_2 },
+        { "LMS7002M_3"s, SPI_LMS7002M_3 },
+        { "FPGA"s, SPI_FPGA },
     };
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
@@ -205,10 +210,10 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     RFSOCDescriptor soc;
 
     // LMS#1
-    soc.name = "LMS 1";
+    soc.name = "LMS 1"s;
     soc.channelCount = 2;
-    soc.pathNames[TRXDir::Rx] = { "None", "LNAH", "LNAL" };
-    soc.pathNames[TRXDir::Tx] = { "None", "Band1", "Band2" };
+    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "LNAL"s };
+    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s, "Band2"s };
 
     soc.samplingRateRange = { 100e3, 61.44e6, 0 };
     soc.frequencyRange = { 100e3, 3.8e9, 0 };
@@ -216,10 +221,10 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
     soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
 
-    soc.antennaRange[TRXDir::Rx]["LNAH"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAL"] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Tx]["Band1"] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 700e6, 900e6 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
 
     SetGainInformationInDescriptor(soc);
 
@@ -231,9 +236,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     mLMSChips.push_back(lms1);
 
     // LMS#2
-    soc.name = "LMS 2";
-    soc.pathNames[TRXDir::Rx] = { "None", "TDD", "FDD", "Calibration (LMS3)" };
-    soc.pathNames[TRXDir::Tx] = { "None", "TDD", "FDD" };
+    soc.name = "LMS 2"s;
+    soc.pathNames[TRXDir::Rx] = { "None"s, "TDD"s, "FDD"s, "Calibration (LMS3)"s };
+    soc.pathNames[TRXDir::Tx] = { "None"s, "TDD"s, "FDD"s };
     desc.rfSOC.push_back(soc);
     mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_2);
     LMS7002M* lms2 = new LMS7002M(mLMS7002Mcomms[1]);
@@ -241,9 +246,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     mLMSChips.push_back(lms2);
 
     // LMS#3
-    soc.name = "LMS 3";
-    soc.pathNames[TRXDir::Rx] = { "None", "LNAH", "Calibration (LMS2)" };
-    soc.pathNames[TRXDir::Tx] = { "None", "Band1" };
+    soc.name = "LMS 3"s;
+    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "Calibration (LMS2)"s };
+    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s };
     desc.rfSOC.push_back(soc);
     mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_3);
     LMS7002M* lms3 = new LMS7002M(mLMS7002Mcomms[2]);
@@ -259,15 +264,15 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     const int chipCount = mLMSChips.size();
     mStreamers.resize(chipCount, nullptr);
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_X3, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1", eDeviceTreeNodeClass::LMS7002M, lms1));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2", eDeviceTreeNodeClass::LMS7002M, lms2));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3", eDeviceTreeNodeClass::LMS7002M, lms3));
-    desc.socTree = std::make_shared<DeviceTreeNode>("X3", eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1"s, eDeviceTreeNodeClass::LMS7002M, lms1));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, lms2));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3"s, eDeviceTreeNodeClass::LMS7002M, lms3));
+    desc.socTree = std::make_shared<DeviceTreeNode>("X3"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 
     desc.socTree->children.push_back(
-        std::make_shared<DeviceTreeNode>("CDCM6208", eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM));
+        std::make_shared<DeviceTreeNode>("CDCM6208"s, eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM));
 }
 
 LimeSDR_X3::~LimeSDR_X3()
@@ -289,7 +294,7 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     LMS1_PA_Enable(1, false);
 
     double dacVal = 65535;
-    const std::vector<CustomParameterIO> params{ { cp_lms1_tx1dac.id, dacVal, "" }, { cp_lms1_tx2dac.id, dacVal, "" } };
+    const std::vector<CustomParameterIO> params{ { cp_lms1_tx1dac.id, dacVal, ""s }, { cp_lms1_tx2dac.id, dacVal, ""s } };
     CustomParameterWrite(params);
 
     OpStatus status;
@@ -541,7 +546,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         std::stringstream ss;
         for (const auto& err : errors)
             ss << err << std::endl;
-        return ReportError(OpStatus::Error, ss.str().c_str());
+        return ReportError(OpStatus::Error, ss.str());
     }
 
     bool rxUsed = false;
@@ -638,7 +643,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_X3 config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_X3 config: "s + e.what());
     } catch (std::runtime_error& e)
     {
         return OpStatus::Error;
@@ -648,7 +653,6 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
 {
-    const char* dirName = dir == TRXDir::Rx ? "Rx" : "Tx";
     ChannelConfig::Direction trx = cfg.channel[ch].GetDirection(dir);
 
     if (socIndex == 1) // LMS2 uses external ADC/DAC
@@ -669,7 +673,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
                                trx.gfir.enabled,
                                trx.gfir.bandwidth) != OpStatus::Success)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", dirName, ch));
+            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
         }
     }
 
@@ -690,7 +694,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i DC/IQ calibration failed: %s", dirName, ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 
@@ -711,7 +715,7 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         if (status != MCU_BD::MCU_NO_ERROR)
         {
             throw std::runtime_error(
-                strFormat("%s ch%i filter calibration failed: %s", dirName, ch, MCU_BD::MCUStatusMessage(status)));
+                strFormat("%s ch%i filter calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
         }
     }
 }
@@ -865,7 +869,7 @@ OpStatus LimeSDR_X3::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MI
     case SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
-        throw std::logic_error("invalid SPI chip select");
+        throw std::logic_error("invalid SPI chip select"s);
     }
 }
 
@@ -893,8 +897,8 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
             dirFlag = O_WRONLY;
         if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
         {
-            const std::string reason = "Failed to open device in stream start: " + trxPort->GetPathName();
-            return ReportError(OpStatus::Error, reason.c_str());
+            const std::string reason = "Failed to open device in stream start: "s + trxPort->GetPathName().string();
+            return ReportError(OpStatus::Error, reason);
         }
     }
     mStreamers[moduleIndex]->Setup(config);
@@ -1019,7 +1023,7 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             path = LMS_PATH_TX2;
             break;
         default:
-            throw std::logic_error("Invalid LMS1 Tx path");
+            throw std::logic_error("Invalid LMS1 Tx path"s);
         }
 
         if (path == LMS_PATH_TX1)
@@ -1047,11 +1051,11 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
         // TODO:
         //case ePathLMS1_Rx::LNAW : path = LMS7002M::LNAW; break;
         default:
-            throw std::logic_error("Invalid LMS1 Rx path");
+            throw std::logic_error("Invalid LMS1 Rx path"s);
         }
 
         if (path == LMS_PATH_LNAW)
-            lime::warning("LNAW has no connection to RF ports");
+            lime::warning("LNAW has no connection to RF ports"s);
         else if (path == LMS_PATH_LNAH)
             sw_val |= 1 << (11 - chan);
         else if (path == LMS_PATH_LNAL)
@@ -1209,24 +1213,24 @@ void LimeSDR_X3::LMS2_SetSampleRate(double f_Hz, uint8_t oversample)
     mEqualizer->SetOversample(oversample);
 
     if (mClockGeneratorCDCM->SetFrequency(CDCM_Y0Y1, txClock, false) != 0) // Tx Ch. A&B
-        throw std::runtime_error("Failed to configure CDCM_Y0Y1");
+        throw std::runtime_error("Failed to configure CDCM_Y0Y1"s);
     if (mClockGeneratorCDCM->SetFrequency(CDCM_Y4, f_Hz, false) != 0) // Rx Ch. A
-        throw std::runtime_error("Failed to configure CDCM_Y4");
+        throw std::runtime_error("Failed to configure CDCM_Y4"s);
     if (mClockGeneratorCDCM->SetFrequency(CDCM_Y5, f_Hz, true) != 0) // Rx Ch. B
-        throw std::runtime_error("Failed to configure CDCM_Y5");
+        throw std::runtime_error("Failed to configure CDCM_Y5"s);
 
     if (!mClockGeneratorCDCM->IsLocked())
-        throw std::runtime_error("CDCM is not locked");
+        throw std::runtime_error("CDCM is not locked"s);
 }
 
 void LimeSDR_X3::LMS3_SetSampleRate_ExternalDAC(double chA_Hz, double chB_Hz)
 {
     if (mClockGeneratorCDCM->SetFrequency(CDCM_Y6, chA_Hz, false) != 0) // Rx Ch. A
-        throw std::runtime_error("Failed to configure CDCM_Y4");
+        throw std::runtime_error("Failed to configure CDCM_Y4"s);
     if (mClockGeneratorCDCM->SetFrequency(CDCM_Y7, chB_Hz, true) != 0) // Rx Ch. B
-        throw std::runtime_error("Failed to configure CDCM_Y5");
+        throw std::runtime_error("Failed to configure CDCM_Y5"s);
     if (!mClockGeneratorCDCM->IsLocked())
-        throw std::runtime_error("CDCM is not locked");
+        throw std::runtime_error("CDCM is not locked"s);
 }
 
 OpStatus LimeSDR_X3::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)

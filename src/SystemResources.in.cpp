@@ -10,8 +10,8 @@
 #include <cstdlib> //getenv, system
 #include <filesystem>
 #include <vector>
+#include <string_view>
 #include <sstream>
-#include <iostream>
 
 #ifdef _MSC_VER
     #include <windows.h>
@@ -28,6 +28,9 @@
     #include <pwd.h>
     #include <unistd.h>
 #endif
+
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 namespace lime {
 
@@ -52,15 +55,15 @@ std::string getLimeSuiteRoot(void)
         if (size != 0)
         {
             const std::string libPath(path, size);
-            const size_t slash0Pos = libPath.find_last_of("/\\");
-            const size_t slash1Pos = libPath.substr(0, slash0Pos).find_last_of("/\\");
+            const size_t slash0Pos = libPath.find_last_of("/\\"sv);
+            const size_t slash1Pos = libPath.substr(0, slash0Pos).find_last_of("/\\"sv);
             if (slash0Pos != std::string::npos && slash1Pos != std::string::npos)
                 return libPath.substr(0, slash1Pos);
         }
     }
 #endif //_MSC_VER && LIME_DLL
 
-    return "@LIME_SUITE_ROOT@";
+    return "@LIME_SUITE_ROOT@"s;
 }
 
 std::string getHomeDirectory(void)
@@ -77,7 +80,7 @@ std::string getHomeDirectory(void)
         return pwDir;
 #endif
 
-    return "";
+    return ""s;
 }
 
 /*!
@@ -107,19 +110,19 @@ static std::string getBareAppDataDirectory(void)
 #endif
 
     //xdg freedesktop standard location for data in home directory
-    return getHomeDirectory() + "/.local/share";
+    return getHomeDirectory() + "/.local/share"s;
 }
 
 std::string getAppDataDirectory(void)
 {
-    return getBareAppDataDirectory() + "/LimeSuite";
+    return getBareAppDataDirectory() + "/LimeSuite"s;
 }
 
 std::string getConfigDirectory(void)
 {
     //xdg standard is XDG_CONFIG_HOME or $HOME/.config
     //but historically we have used $HOME/.limesuite
-    return getHomeDirectory() + "/.limesuite";
+    return getHomeDirectory() + "/.limesuite"s;
 }
 
 std::vector<std::string> listImageSearchPaths(void)
@@ -148,10 +151,10 @@ std::vector<std::string> listImageSearchPaths(void)
     }
 
     //search directories in the user's home directory
-    imageSearchPaths.push_back(lime::getAppDataDirectory() + "/images");
+    imageSearchPaths.push_back(lime::getAppDataDirectory() + "/images"s);
 
     //search global installation directories
-    imageSearchPaths.push_back(lime::getLimeSuiteRoot() + "/share/LimeSuite/images");
+    imageSearchPaths.push_back(lime::getLimeSuiteRoot() + "/share/LimeSuite/images"s);
 
     return imageSearchPaths;
 }
@@ -160,11 +163,11 @@ std::string locateImageResource(const std::string& name)
 {
     for (const auto& searchPath : lime::listImageSearchPaths())
     {
-        const std::string fullPath(searchPath + "/@VERSION_MAJOR@.@VERSION_MINOR@/" + name);
+        const std::string fullPath(searchPath + "/@VERSION_MAJOR@.@VERSION_MINOR@/"s + name);
         if (access(fullPath.c_str(), R_OK) == 0)
             return fullPath;
     }
-    return "";
+    return ""s;
 }
 
 /*!
@@ -175,15 +178,15 @@ std::string locateImageResource(const std::string& name)
  */
 lime::OpStatus downloadImageResource(const std::string& name)
 {
-    const std::string destDir(lime::getAppDataDirectory() + "/images/@VERSION_MAJOR@.@VERSION_MINOR@");
-    const std::string destFile(destDir + "/" + name);
-    const std::string sourceUrl("https://downloads.myriadrf.org/project/limesuite/@VERSION_MAJOR@.@VERSION_MINOR@/" + name);
+    const std::string destDir(lime::getAppDataDirectory() + "/images/@VERSION_MAJOR@.@VERSION_MINOR@"s);
+    const std::string destFile(destDir + "/"s + name);
+    const std::string sourceUrl("https://downloads.myriadrf.org/project/limesuite/@VERSION_MAJOR@.@VERSION_MINOR@/"s + name);
 
     if (std::filesystem::exists(destDir))
     {
         if (!std::filesystem::is_directory(destDir))
         {
-            return lime::ReportError(OpStatus::InvalidValue, "Not a directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::InvalidValue, "Not a directory: "s + destDir);
         }
     }
     else
@@ -191,24 +194,24 @@ lime::OpStatus downloadImageResource(const std::string& name)
         bool result = std::filesystem::create_directories(destDir);
         if (!result)
         {
-            return lime::ReportError(OpStatus::Error, "Failed to create directory: %s", destDir.c_str());
+            return lime::ReportError(OpStatus::Error, "Failed to create directory: "s + destDir);
         }
     }
 
     //check for write access
     if (access(destDir.c_str(), W_OK) != 0)
-        lime::ReportError(OpStatus::PermissionDenied, "Cannot write: %s", destDir.c_str());
+        lime::ReportError(OpStatus::PermissionDenied, "Cannot write: "s + destDir);
 
 //download the file
 #ifdef __unix__
-    const std::string dnloadCmd("wget --output-document=\"" + destFile + "\" \"" + sourceUrl + "\"");
+    const std::string dnloadCmd("wget --output-document=\""s + destFile + "\" \""s + sourceUrl + "\""s);
 #else
     const std::string dnloadCmd(
-        "powershell.exe -Command \"(new-object System.Net.WebClient).DownloadFile('" + sourceUrl + "', '" + destFile + "')\"");
+        "powershell.exe -Command \"(new-object System.Net.WebClient).DownloadFile('"s + sourceUrl + "', '"s + destFile + "')\""s);
 #endif
     int result = std::system(dnloadCmd.c_str());
     if (result != 0)
-        return lime::ReportError(OpStatus::Error, "Failed: %s", dnloadCmd.c_str());
+        return lime::ReportError(OpStatus::Error, "Failed: "s + dnloadCmd);
 
     return OpStatus::Success;
 }

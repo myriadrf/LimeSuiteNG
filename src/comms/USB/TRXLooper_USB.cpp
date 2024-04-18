@@ -66,7 +66,7 @@ OpStatus TRXLooper_USB::Setup(const lime::StreamConfig& config)
 
 int TRXLooper_USB::TxSetup()
 {
-    const std::string name = "MemPool_Tx" + std::to_string(chipId);
+    const std::string name = "MemPool_Tx"s + std::to_string(chipId);
 
     const int channelCount = std::max(mConfig.channels.at(TRXDir::Tx).size(), mConfig.channels.at(TRXDir::Rx).size());
     const int upperAllocationLimit =
@@ -264,7 +264,7 @@ void TRXLooper_USB::TransmitPacketsLoop()
 
 int TRXLooper_USB::RxSetup()
 {
-    const std::string name = "MemPool_Rx" + std::to_string(chipId);
+    const std::string name = "MemPool_Rx"s + std::to_string(chipId);
 
     const int channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
     const int samplesInPkt = (mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / channelCount;

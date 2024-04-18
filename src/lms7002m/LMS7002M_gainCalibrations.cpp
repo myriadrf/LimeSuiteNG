@@ -2,6 +2,7 @@
 #include "limesuiteng/Logger.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 OpStatus LMS7002M::CalibrateTxGainSetup()
 {
@@ -102,7 +103,7 @@ OpStatus LMS7002M::CalibrateTxGain()
 {
     if (!controlPort)
     {
-        lime::error("No device connected");
+        lime::error("No device connected"s);
         return OpStatus::IOFailure;
     }
     OpStatus status;

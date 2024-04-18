@@ -9,18 +9,14 @@
 # Check if there is C++ code at all
 ########################################################################
 if(NOT limesdr_sources)
-    MESSAGE(STATUS "No C++ sources... skipping python bindings")
+    message(STATUS "No C++ sources... skipping python bindings")
     return()
 endif(NOT limesdr_sources)
 
 ########################################################################
 # Check for pygccxml
 ########################################################################
-GR_PYTHON_CHECK_MODULE_RAW(
-    "pygccxml"
-    "import pygccxml"
-    PYGCCXML_FOUND
-    )
+gr_python_check_module_raw("pygccxml" "import pygccxml" PYGCCXML_FOUND)
 
 include(GrPybind)
 
@@ -28,28 +24,22 @@ include(GrPybind)
 # Python Bindings
 ########################################################################
 
-list(APPEND limesdr_python_files
-    sink_python.cc
-    source_python.cc
-    python_bindings.cc)
+list(APPEND limesdr_python_files sink_python.cc source_python.cc python_bindings.cc)
 
-execute_process(COMMAND gr_modtool bind source
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
+execute_process(COMMAND gr_modtool bind source WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-execute_process(COMMAND gr_modtool bind sink
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
+execute_process(COMMAND gr_modtool bind sink WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 if(ENABLE_RFE)
     list(APPEND limesdr_python_files rfe_python.cc)
     add_compile_definitions(ENABLE_RFE)
 
-    execute_process(COMMAND gr_modtool bind rfe
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})    
+    execute_process(COMMAND gr_modtool bind rfe WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
-GR_PYBIND_MAKE_OOT(limesdr
-   ../..
-   gr::limesdr
-   "${limesdr_python_files}")
+gr_pybind_make_oot(limesdr ../.. gr::limesdr "${limesdr_python_files}")
 
-install(TARGETS limesdr_python DESTINATION ${GR_PYTHON_DIR}/limesdr COMPONENT pythonapi)
+install(
+    TARGETS limesdr_python
+    DESTINATION ${GR_PYTHON_DIR}/limesdr
+    COMPONENT pythonapi)

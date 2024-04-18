@@ -7,6 +7,7 @@
 #include "lms7suiteEvents.h"
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002M_parameters.h"
 
 using namespace lime;
@@ -378,7 +379,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     temp.clear();
     for (int i = 0; i < 32; ++i)
     {
-        temp.push_back(std::to_string(-12 + i) + " dB");
+        temp.push_back(std::to_string(-12 + i) + " dB"s);
     }
     cmbG_PGA_RBB->Set(temp);
 
@@ -509,16 +510,11 @@ void lms7002_pnlRBB_view::UpdateGUI()
 
 void lms7002_pnlRBB_view::OnbtnTuneFilter(wxCommandEvent& event)
 {
-    double input1;
-    txtLowBW_MHz->GetValue().ToDouble(&input1);
+    double bandwidth_MHz;
+    txtLowBW_MHz->GetValue().ToDouble(&bandwidth_MHz);
 
-    // int status;
-    // uint16_t ch;
-    // TODO: status = LMS_SetLPFBW(lmsControl, LMS_CH_RX, mChannel, input1 * 1e6);
-    // if (status != 0){
-    //     wxMessageBox(wxString(_("Rx Filter tune failed")), _("Error"));
-    //     return;
-    // }
-    // LMS_Synchronize(lmsControl,false);
+    OpStatus status = lmsControl->SetRxLPF(bandwidth_MHz * 1e6);
+    if (status != OpStatus::Success)
+        wxMessageBox(wxString(_("Error setting Rx Filter")), _("Error"));
     UpdateGUI();
 }

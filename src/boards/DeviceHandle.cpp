@@ -4,13 +4,14 @@
 #include <map>
 #include <iso646.h> // alternative operators for visual c++: not, and, or...
 using namespace lime;
+using namespace std::literals::string_literals;
 
 /*******************************************************************
  * String parsing helpers
  ******************************************************************/
-static std::string trim(const std::string& s)
+static std::string_view trim(const std::string_view s)
 {
-    std::string out = s;
+    std::string_view out = s;
     while (not out.empty() and std::isspace(out[0]))
         out = out.substr(1);
     while (not out.empty() and std::isspace(out[out.size() - 1]))
@@ -18,7 +19,7 @@ static std::string trim(const std::string& s)
     return out;
 }
 
-static std::map<std::string, std::string> argsToMap(const std::string& args)
+static std::map<std::string, std::string> argsToMap(const std::string_view args)
 {
     std::map<std::string, std::string> kwmap;
 
@@ -49,8 +50,8 @@ static std::map<std::string, std::string> argsToMap(const std::string& args)
             val = trim(val);
             if (not key.empty())
                 kwmap[key] = val;
-            key = "";
-            val = "";
+            key = ""s;
+            val = ""s;
         }
     }
 
@@ -61,34 +62,41 @@ static std::map<std::string, std::string> argsToMap(const std::string& args)
  * Connection handle implementation
  ******************************************************************/
 DeviceHandle::DeviceHandle()
+    : media()
+    , name()
+    , addr()
+    , serial()
 {
-    return;
 }
 
 DeviceHandle::DeviceHandle(const std::string& args)
+    : media()
+    , name()
+    , addr()
+    , serial()
 {
-    auto kwmap = argsToMap("name=" + args); //append name= since it was stripped in serialize
-    if (kwmap.count("media") != 0)
-        media = kwmap.at("media");
-    if (kwmap.count("name") != 0)
-        name = kwmap.at("name");
-    if (kwmap.count("addr") != 0)
-        addr = kwmap.at("addr");
-    if (kwmap.count("serial") != 0)
-        serial = kwmap.at("serial");
+    auto kwmap = argsToMap("name="s + args); // Append name= since it was stripped in serialize
+    if (kwmap.count("media"s) != 0)
+        media = kwmap.at("media"s);
+    if (kwmap.count("name"s) != 0)
+        name = kwmap.at("name"s);
+    if (kwmap.count("addr"s) != 0)
+        addr = kwmap.at("addr"s);
+    if (kwmap.count("serial"s) != 0)
+        serial = kwmap.at("serial"s);
 }
 
 std::string DeviceHandle::Serialize(void) const
 {
-    std::string out;
+    std::string out = ""s;
     if (not name.empty())
         out += name;
     if (not media.empty())
-        out += ", media=" + media;
+        out += ", media="s + media;
     if (not addr.empty())
-        out += ", addr=" + addr;
+        out += ", addr="s + addr;
     if (not serial.empty())
-        out += ", serial=" + serial;
+        out += ", serial="s + serial;
 
     return out;
 }
@@ -98,16 +106,15 @@ std::string DeviceHandle::ToString(void) const
     //name and media format
     std::string out(name);
     if (not media.empty())
-        out += " [" + media + "]";
+        out += " ["s + media + "]"s;
 
-    //remove leading zeros for a displayable serial
-    std::string trimmedSerial(serial);
+    // Remove leading zeros for a displayable serial
+    std::string_view trimmedSerial{ serial };
     while (not trimmedSerial.empty() and trimmedSerial.at(0) == '0')
-    {
         trimmedSerial = trimmedSerial.substr(1);
-    }
+
     if (not trimmedSerial.empty())
-        out += " " + trimmedSerial;
+        out += " "s + std::string{ trimmedSerial };
 
     //backup condition if we are empty somehow
     if (out.empty())

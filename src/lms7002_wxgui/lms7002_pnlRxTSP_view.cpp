@@ -1584,7 +1584,7 @@ lms7002_pnlRXTSP_view::lms7002_pnlRXTSP_view(wxWindow* parent, wxWindowID id, co
 
     temp.clear();
     for (int i = 0; i < 7; ++i)
-        temp.push_back("2^" + std::to_string(i + 12));
+        temp.push_back("2^"s + std::to_string(i + 12));
     cmbDCCORR_AVG->Set(temp);
 
     temp.clear();

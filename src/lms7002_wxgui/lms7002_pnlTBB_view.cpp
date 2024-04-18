@@ -605,14 +605,11 @@ void lms7002_pnlTBB_view::UpdateGUI()
 
 void lms7002_pnlTBB_view::OnbtnTuneFilter(wxCommandEvent& event)
 {
-    double input1;
-    txtFilterFrequency->GetValue().ToDouble(&input1);
-    // TOOD: int status = lmsControl->SetLPF(true, mChannel, true, input1 * 1e6);
-    // if (status != 0) {
-    //     wxMessageBox(wxString(_("Tx calibration failed")));
-    //     return;
-    // }
-    // LMS_Synchronize(lmsControl,false);
+    double bandwidth_MHz;
+    txtFilterFrequency->GetValue().ToDouble(&bandwidth_MHz);
+    OpStatus status = lmsControl->SetTxLPF(bandwidth_MHz * 1e6);
+    if (status != OpStatus::Success)
+        wxMessageBox(wxString(_("Error setting Tx filter")));
     UpdateGUI();
 }
 

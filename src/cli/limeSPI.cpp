@@ -3,29 +3,30 @@
 #include <cassert>
 #include <cstring>
 #include <getopt.h>
+#include <filesystem>
 
 using namespace std;
 using namespace lime;
 
-static int32_t FindChipSelectByName(SDRDevice* device, const std::string& chipName)
+static int32_t FindChipSelectByName(SDRDevice* device, const std::string_view chipName)
 {
     if (!device)
         return -1;
     const auto chipMap = device->GetDescriptor().spiSlaveIds;
     if (chipName.size() == 0)
     {
-        cerr << "specify SPI chip select, -c, --chip :" << endl;
+        cerr << "specify SPI chip select, -c, --chip :"sv << endl;
         for (const auto& nameIds : chipMap)
-            cerr << "\t" << nameIds.first << endl;
+            cerr << "\t"sv << nameIds.first << endl;
         return -1;
     }
 
-    auto iter = chipMap.find(std::string(chipName));
+    auto iter = chipMap.find(std::string{ chipName });
     if (iter == chipMap.end())
     {
-        cerr << "Device does not contain target chip (" << chipName << "). Available list:" << endl;
+        cerr << "Device does not contain target chip ("sv << chipName << "). Available list:"sv << endl;
         for (const auto& nameIds : chipMap)
-            cerr << "\t" << nameIds.first << endl;
+            cerr << "\t"sv << nameIds.first << endl;
         return -1;
     }
     return iter->second;
@@ -38,55 +39,66 @@ static void PrintMISO(std::ostream& stream, const std::vector<uint32_t>& miso)
         stream << std::setw(8) << value << std::endl;
 }
 
-static uint32_t hex2int(const char* hexstr)
+static uint32_t hex2int(const std::string_view hexstr)
 {
-    assert(hexstr);
     uint32_t value = 0;
-    sscanf(hexstr, "%X", &value);
+    sscanf(hexstr.data(), "%X", &value);
     return value;
 }
 
-static int parseWriteInput(char* hexstr, std::vector<uint32_t>& mosi)
+static int parseWriteInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
 {
-    static const char* delimiters = " \n,";
+    static const std::string_view delimiters = " \n,"sv;
     mosi.clear();
-    char* token = std::strtok(hexstr, delimiters);
+
     const uint32_t spiWriteBit = 1 << 31;
     int tokenCount = 0;
-    while (token)
+
+    std::size_t position = 0;
+    while (position != std::string_view::npos)
     {
-        int tokenLength = strlen(token);
+        position = hexstr.find_first_of(delimiters);
+        std::string_view token = hexstr.substr(0, position);
+        int tokenLength = token.size();
         if (tokenLength <= 8 && tokenLength > 4) // write instruction
         {
             uint32_t value = hex2int(token);
             mosi.push_back(spiWriteBit | value);
         }
-        else
-            std::cerr << "Invalid input value: " << token << std::endl;
+        else if (tokenLength != 0)
+        {
+            std::cerr << "Invalid input value: "sv << token << std::endl;
+        }
         ++tokenCount;
-        token = std::strtok(nullptr, delimiters);
+        hexstr = hexstr.substr(position + 1);
     }
     return tokenCount;
 }
 
-static int parseReadInput(char* hexstr, std::vector<uint32_t>& mosi)
+static int parseReadInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
 {
-    static const char* delimiters = " \n,";
+    static const std::string_view delimiters = " \n,"sv;
     mosi.clear();
-    char* token = std::strtok(hexstr, delimiters);
+
     int tokenCount = 0;
-    while (token)
+
+    std::size_t position = 0;
+    while (position != std::string_view::npos)
     {
-        int tokenLength = strlen(token);
+        position = hexstr.find_first_of(delimiters);
+        std::string_view token = hexstr.substr(0, position);
+        int tokenLength = token.size();
         if (tokenLength <= 4 && tokenLength > 0) // read instruction
         {
             uint32_t value = hex2int(token);
             mosi.push_back(value);
         }
-        else
-            std::cerr << "Invalid input value: " << token << std::endl;
+        else if (tokenLength != 0)
+        {
+            std::cerr << "Invalid input value: "sv << token << std::endl;
+        }
         ++tokenCount;
-        token = std::strtok(nullptr, delimiters);
+        hexstr = hexstr.substr(position + 1);
     }
     return tokenCount;
 }
@@ -106,9 +118,9 @@ static int printHelp(void)
 
 int main(int argc, char** argv)
 {
-    std::string devName;
-    char* chipName = nullptr;
-    char* hexInput = nullptr;
+    std::string_view devName{ ""sv };
+    std::string_view chipName{ ""sv };
+    std::string_view hexInput{ ""sv };
     bool hexInputIsFilename = false;
     bool isWrite = false;
     bool isRead = false;
@@ -123,7 +135,7 @@ int main(int argc, char** argv)
 
     int long_index = 0;
     int option = 0;
-    while ((option = getopt_long_only(argc, argv, "", long_options, &long_index)) != -1)
+    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
     {
         switch (option)
         {
@@ -159,14 +171,14 @@ int main(int argc, char** argv)
 
     if (isRead && isWrite)
     {
-        cerr << "use --read, OR --write, can't do both at the same time" << endl;
+        cerr << "use --read, OR --write, can't do both at the same time"sv << endl;
         return EXIT_FAILURE;
     }
 
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -185,11 +197,11 @@ int main(int argc, char** argv)
     if (hexInputIsFilename)
     {
         //read file
-        const std::string filename(hexInput);
+        const std::filesystem::path filename(hexInput);
         std::ifstream inputFile(filename);
         if (!inputFile.is_open())
         {
-            cerr << "Failed to open file: " << filename << endl;
+            cerr << "Failed to open file: "sv << filename << endl;
             return EXIT_FAILURE;
         }
         inputFile.seekg(0, std::ios::end);
@@ -202,10 +214,10 @@ int main(int argc, char** argv)
         hexInput = buffer.data();
     }
 
-    if (!hexInput)
+    if (hexInput.empty())
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "No input provided" << endl;
+        cerr << "No input provided"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -223,7 +235,7 @@ int main(int argc, char** argv)
     } catch (std::runtime_error& e)
     {
         DeviceRegistry::freeDevice(device);
-        cerr << "SPI failed: " << e.what() << endl;
+        cerr << "SPI failed: "sv << e.what() << endl;
         return EXIT_FAILURE;
     }
 

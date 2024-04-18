@@ -17,6 +17,7 @@
     #include <ciso646>
 #endif
 using namespace lime;
+using namespace std::literals::string_literals;
 
 //rx lpf range limits
 static const float_type RxLPF_RF_LimitLow = 1.4e6;
@@ -87,14 +88,14 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     if (g_tia == 1 && rx_lpf_freq_RF < 4e6)
     {
         rx_lpf_freq_RF = 4e6;
-        Log(LogType::LOG_WARNING, "Rx LPF min bandwidth is 4MHz when TIA gain is set to -12 dB");
+        lime::warning("Rx LPF min bandwidth is 4MHz when TIA gain is set to -12 dB"s);
     }
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
         if (status != OpStatus::Success)
-            return ReportError(status, "Tune Rx Filter: failed to program MCU");
+            return ReportError(status, "Tune Rx Filter: failed to program MCU"s);
     }
 
     //set reference clock parameter inside MCU
@@ -135,8 +136,7 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     float_type tx_lpf_IF = tx_lpf_freq_RF / 2;
     if (tx_lpf_freq_RF > TxLPF_RF_LimitLowMid && tx_lpf_freq_RF < TxLPF_RF_LimitMidHigh)
     {
-        Log(LogType::LOG_WARNING,
-            "Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz. Setting to %g MHz",
+        lime::warning("Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz. Setting to %g MHz",
             tx_lpf_freq_RF / 1e6,
             TxLPF_RF_LimitLow / 1e6,
             TxLPF_RF_LimitLowMid / 1e6,
@@ -147,13 +147,13 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     }
 
     if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "Tune Tx Filter: No device connected");
+        return ReportError(OpStatus::IOFailure, "Tune Tx Filter: No device connected"s);
 
     if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
         OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
         if (status != OpStatus::Success)
-            return ReportError(status, "Tune Tx Filter: failed to program MCU");
+            return ReportError(status, "Tune Tx Filter: failed to program MCU"s);
     }
 
     int ind = this->GetActiveChannelIndex() % 2;
@@ -179,11 +179,10 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
         this->SPI_read(addr, true);
 
     if (tx_lpf_IF <= TxLPF_RF_LimitLowMid / 2)
-        Log(LogType::LOG_INFO,
-            "Filter calibrated. Filter order-4th, filter bandwidth set to %g MHz."
-            "Real pole 1st order filter set to 2.5 MHz. Preemphasis filter not active",
+        lime::info("Filter calibrated. Filter order-4th, filter bandwidth set to %g MHz."
+                   "Real pole 1st order filter set to 2.5 MHz. Preemphasis filter not active",
             tx_lpf_IF / 1e6 * 2);
     else
-        Log(LogType::LOG_INFO, "Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
+        lime::info("Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
     return OpStatus::Success;
 }

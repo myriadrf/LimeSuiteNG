@@ -294,11 +294,25 @@ class LIME_API LMS7002M
     OpStatus TuneTxFilter(const float_type tx_lpf_freq_RF);
 
     /**
+     * @brief Set transmitter analog Low Pass Filter.
+     * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
+     * @return The status of the operation
+     */
+    OpStatus SetTxLPF(double rfBandwidth_Hz);
+
+    /**
      * @brief Tunes the Low Pass Filter for the RX direction.
      * @param rx_lpf_freq_RF The frequency (in Hz) to tune the filter to.
      * @return The status of the operation
      */
     OpStatus TuneRxFilter(const float_type rx_lpf_freq_RF);
+
+    /**
+     * @brief Set receiver analog Low Pass Filter.
+     * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
+     * @return The status of the operation
+     */
+    OpStatus SetRxLPF(double rfBandwidth_Hz);
 
     /*!
      * @brief Calibrates the internal Analog to Digital Converter on the chip.
@@ -839,14 +853,6 @@ class LIME_API LMS7002M
      */
     float_type GetTemperature();
 
-    /// @brief The available log types on the LMS7002M
-    enum class LogType : uint8_t { LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DATA };
-    /*!
-     * @brief Sets the function to call for any logs to be written to.
-     * @param callback The function to call on LMS7002M logs
-     */
-    void SetLogCallback(std::function<void(const char*, LogType)> callback);
-
     /*!
      * @brief Batches multiple register writes into least amount of transactions
      * @param spiAddr spi register addresses to be written
@@ -948,19 +954,6 @@ class LIME_API LMS7002M
     OpStatus RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, uint16_t pattern, std::stringstream& ss);
 
     OpStatus Modify_SPI_Reg_mask(const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop);
-
-    virtual void Log(const char* text, LogType type);
-
-    void Log(LogType type, const char* format, ...)
-    {
-        va_list argList;
-        va_start(argList, format);
-        Log(type, format, argList);
-        va_end(argList);
-    }
-
-    std::function<void(const char*, LogType)> log_callback;
-    void Log(LogType type, const char* format, va_list argList);
 
     std::shared_ptr<ISPI> controlPort;
     std::array<int, 2> opt_gain_tbb;

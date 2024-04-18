@@ -1,41 +1,30 @@
-set(oglGraph_src_files
-	dlgMarkers.cpp
-	GLFont.cpp
-	OpenGLGraph.cpp
-	${PROJECT_SOURCE_DIR}/external/glew/glew.c
-)
-
-#ignore warnings about narrowing: static font header
-if(CMAKE_COMPILER_IS_GNUCXX)
-	add_definitions(-Wno-narrowing -Wno-address)
-endif()
-
-ADD_DEFINITIONS(-DGLEW_STATIC)
-add_library(oglGraph STATIC ${oglGraph_src_files})
+set(oglGraph_src_files dlgMarkers.cpp GLFont.cpp OpenGLGraph.cpp)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 if(NOT TARGET OpenGL::GL)
     message(FATAL_ERROR "OpenGL/GL not found!")
 endif(NOT TARGET OpenGL::GL)
-if(NOT TARGET OpenGL::GLU)
-    message(FATAL_ERROR "OpenGL/GLU not found!")
-endif(NOT TARGET OpenGL::GLU)
 message(STATUS "OPENGL_INCLUDE_DIR: ${OPENGL_INCLUDE_DIR}")
 message(STATUS "OPENGL_LIBRARIES: ${OPENGL_LIBRARIES}")
 
-target_include_directories(oglGraph PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${OPENGL_INCLUDE_DIR}
-    ${PROJECT_SOURCE_DIR}/external/glew
+add_library(oglGraph STATIC ${oglGraph_src_files})
+
+target_include_directories(
+    oglGraph
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC ${OPENGL_INCLUDE_DIR} # public, because <wx/glcanvas.h> includes GL/gl.h but the include dir is not added by wxWidgets
 )
 
-if (APPLE)
-	set(GL_LIBS "-framework OpenGL" "-framework GLUT")
-elseif (UNIX)
-	set(GL_LIBS GL ${OPENGL_LIBRARIES})
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Ignore warnings about narrowing: static font header
+    target_compile_options(oglGraph PRIVATE -Wno-narrowing -Wno-address)
 endif()
 
-if(UNIX)
-	target_link_libraries(oglGraph ${GL_LIBS} ${wxWidgets_LIBRARIES})
+if(APPLE)
+    set(GL_LIBS "-framework OpenGL" "-framework GLUT")
+elseif(UNIX)
+    set(GL_LIBS ${OPENGL_LIBRARIES})
 endif()
+
+target_link_libraries(oglGraph PUBLIC GLEW ${GL_LIBS} ${wxWidgets_LIBRARIES})

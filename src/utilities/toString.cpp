@@ -7,57 +7,35 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
-static const std::string cRx{ "Rx"s };
-static const std::string cTx{ "Tx"s };
+static const std::unordered_map<TRXDir, const std::string> TRXDIR_TEXT{
+    { TRXDir::Rx, "Rx"s },
+    { TRXDir::Tx, "Tx"s },
+};
 
 const std::string& ToString(TRXDir dir)
 {
-    switch (dir)
-    {
-    case TRXDir::Rx:
-        return cRx;
-    case TRXDir::Tx:
-        return cTx;
-    }
+    return TRXDIR_TEXT.at(dir);
 }
 
-const char* ToCString(TRXDir dir)
-{
-    return ToString(dir).c_str();
-}
+static const std::unordered_map<OpStatus, const std::string> OP_STATUS_TEXT{
+    { OpStatus::Success, "Success"s },
+    { OpStatus::Error, "Error"s },
+    { OpStatus::NotImplemented, "Not implemented"s },
+    { OpStatus::IOFailure, "Input/output failure"s },
+    { OpStatus::InvalidValue, "Invalid value"s },
+    { OpStatus::FileNotFound, "File not found"s },
+    { OpStatus::OutOfRange, "Value out of range"s },
+    { OpStatus::NotSupported, "Not supported"s },
+    { OpStatus::Timeout, "Timeout"s },
+    { OpStatus::Busy, "Busy"s },
+    { OpStatus::Aborted, "Aborted"s },
+    { OpStatus::PermissionDenied, "Permission denied"s },
+    { OpStatus::NotConnected, "Not connected"s },
+};
 
-const char* ToCString(OpStatus value)
+const std::string& ToString(OpStatus value)
 {
-    switch (value)
-    {
-    case OpStatus::Success:
-        return "success";
-    case OpStatus::Error:
-        return "error";
-    case OpStatus::NotImplemented:
-        return "not implemented";
-    case OpStatus::IOFailure:
-        return "input/output failure";
-    case OpStatus::InvalidValue:
-        return "invalid value";
-    case OpStatus::FileNotFound:
-        return "file not found";
-    case OpStatus::OutOfRange:
-        return "value out of range";
-    case OpStatus::NotSupported:
-        return "not supported";
-    case OpStatus::Timeout:
-        return "timeout";
-    case OpStatus::Busy:
-        return "busy";
-    case OpStatus::Aborted:
-        return "aborted";
-    case OpStatus::PermissionDenied:
-        return "permission denied";
-    case OpStatus::NotConnected:
-        return "not connected";
-    }
-    return "";
+    return OP_STATUS_TEXT.at(value);
 }
 
 static const std::unordered_map<eMemoryRegion, const std::string> MEMORY_REGIONS_TEXT{
@@ -111,9 +89,8 @@ const std::unordered_map<std::remove_cv_t<OriginalValue>, OriginalKey> SwapKeysA
     return map;
 }
 
-const std::unordered_map<std::string, eMemoryDevice> STRING_TO_MEMORY_DEVICES = SwapKeysAndValues(MEMORY_DEVICES_TEXT);
+static const auto STRING_TO_GAIN_TYPES = SwapKeysAndValues(GAIN_TYPES_TEXT);
 
-static const std::unordered_map<std::string, eGainTypes> STRING_TO_GAIN_TYPES = SwapKeysAndValues(GAIN_TYPES_TEXT);
 template<> LIME_API eGainTypes ToEnumClass(const std::string& str)
 {
     return STRING_TO_GAIN_TYPES.at(str);

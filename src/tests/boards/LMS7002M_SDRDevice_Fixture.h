@@ -12,7 +12,7 @@
 #include <cmath>
 #include <complex>
 
-using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 // Allow for a one or two bit offset (in 12-bit format) in calculation in the samples.
 constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, int16_t allowedExactDelta1, int16_t allowedExactDelta2)
@@ -20,7 +20,7 @@ constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, int16_t allowedEx
     return target == actual || std::abs(target - actual) == allowedExactDelta1 || std::abs(target - actual) == allowedExactDelta2;
 }
 
-MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples"s)
+MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples"sv)
 {
     auto nextExpectedSample = arg.at(0);
     const int divideBy = divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 ? 4 : 8;

@@ -881,17 +881,18 @@ void lms7002_pnlMCU_BD_view::OnRegWriteRead(wxCommandEvent& event)
 }
 
 lms7002_pnlMCU_BD_view* lms7002_pnlMCU_BD_view::obj_ptr = nullptr;
-bool lms7002_pnlMCU_BD_view::OnProgrammingCallback(int bsent, int btotal, const char* progressMsg)
+bool lms7002_pnlMCU_BD_view::OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)
 {
     wxCommandEvent evt;
     evt.SetEventObject(obj_ptr);
     evt.SetInt(100.0 * bsent / btotal); //round to int
-    evt.SetString(wxString::From8BitData(progressMsg));
+    evt.SetString(progressMsg);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
     evt.SetId(ID_PROGRAMING_STATUS_EVENT);
     wxPostEvent(obj_ptr, evt);
     return false;
 }
+
 void lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate(wxCommandEvent& event)
 {
     progressBar->SetValue(event.GetInt());

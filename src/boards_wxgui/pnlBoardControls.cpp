@@ -26,6 +26,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
 
 // wrapper class for assigning user data to wxWidgets event handling
 struct UserDataContainer : public wxObject {
@@ -143,7 +144,7 @@ pnlBoardControls::pnlBoardControls(
 
     for (const auto& board : board_list)
     {
-        cmbBoardSelection->AppendString(GetDeviceName(board));
+        cmbBoardSelection->AppendString(std::string{ GetDeviceName(board) });
     }
 
     fgSizer247->Add(fgSizer248, 1, wxEXPAND, 5);
@@ -189,7 +190,7 @@ pnlBoardControls::pnlBoardControls(
 
     wxArrayString unitChoices;
     for (int i = 0; i < ADC_UNITS_COUNT; ++i) //add all defined units
-        unitChoices.push_back(wxString(adcUnits2string(i)));
+        unitChoices.push_back(std::string{ adcUnits2string(i) });
     for (int i = ADC_UNITS_COUNT; i < ADC_UNITS_COUNT + 4; ++i) //add some options to use undefined units
         unitChoices.push_back(std::to_string(i));
     cmbCustomUnitsWr = new wxChoice(pnlCustomControls, wxNewId(), wxDefaultPosition, wxDefaultSize, unitChoices, 0);
@@ -282,7 +283,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
     {
         ids.push_back(param.channel);
         values.push_back(0);
-        units.push_back("");
+        units.push_back(""s);
     }
 
     std::vector<CustomParameterIO> params;
@@ -290,7 +291,7 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
 
     for (size_t i = 0; i < mParameters.size(); ++i)
     {
-        params.push_back({ mParameters[i].channel, 0, "" });
+        params.push_back({ mParameters[i].channel, 0, ""s });
     }
 
     OpStatus status = ReadCustomBoardParam(mDevice, params);
@@ -343,7 +344,7 @@ void pnlBoardControls::OnWriteAll(wxCommandEvent& event)
         if (!mParameters[i].writable)
             continue;
 
-        params.push_back({ mParameters[i].channel, mParameters[i].value, "" });
+        params.push_back({ mParameters[i].channel, mParameters[i].value, ""s });
     }
 
     OpStatus status = WriteCustomBoardParam(mDevice, params);
@@ -398,7 +399,7 @@ void pnlBoardControls::Update()
     }
 }
 
-std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(const string& boardID)
+std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(std::string_view boardID)
 {
     std::vector<ADC_DAC> paramList;
     if (!mDevice)
@@ -407,8 +408,8 @@ std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(const st
     const SDRDescriptor& desc = mDevice->GetDescriptor();
 
     for (const auto& param : desc.customParameters)
-        paramList.push_back(
-            ADC_DAC{ param.name, !param.readOnly, 0, param.id, adcUnits2string(RAW), 0, param.minValue, param.maxValue });
+        paramList.push_back(ADC_DAC{
+            param.name, !param.readOnly, 0, param.id, std::string{ adcUnits2string(RAW) }, 0, param.minValue, param.maxValue });
     return paramList;
 }
 
@@ -449,7 +450,7 @@ void pnlBoardControls::OnDACWrite(wxCommandEvent& event)
     OnReadAll(event);
 }
 
-void pnlBoardControls::SetupControls(const std::string& boardID)
+void pnlBoardControls::SetupControls(const std::string_view boardID)
 {
 
     if (additionalControls)
@@ -654,7 +655,7 @@ void pnlBoardControls::OnSetDACvalues(wxSpinEvent& event)
             if (mDevice == nullptr)
                 return;
 
-            OpStatus status = WriteCustomBoardParam(mDevice, { { mParameters[i].channel, mParameters[i].value, "" } });
+            OpStatus status = WriteCustomBoardParam(mDevice, { { mParameters[i].channel, mParameters[i].value, ""s } });
             if (status != OpStatus::Success)
                 wxMessageBox(_("Failed to set value"), _("Warning"));
             return;
@@ -670,7 +671,7 @@ void pnlBoardControls::OnUserChangedBoardType(wxCommandEvent& event)
 void pnlBoardControls::OnCustomRead(wxCommandEvent& event)
 {
     uint8_t id = spinCustomChannelRd->GetValue();
-    std::vector<CustomParameterIO> param{ { id, 0, "" } };
+    std::vector<CustomParameterIO> param{ { id, 0, ""s } };
 
     OpStatus status = ReadCustomBoardParam(mDevice, param);
     if (status != OpStatus::Success)
@@ -690,7 +691,8 @@ void pnlBoardControls::OnCustomWrite(wxCommandEvent& event)
 
     double value = spinCustomValueWr->GetValue() * pow(10, powerOf10);
 
-    OpStatus status = WriteCustomBoardParam(mDevice, { { id, value, adcUnits2string(cmbCustomUnitsWr->GetSelection()) } });
+    OpStatus status =
+        WriteCustomBoardParam(mDevice, { { id, value, std::string{ adcUnits2string(cmbCustomUnitsWr->GetSelection()) } } });
     if (status != OpStatus::Success)
     {
         wxMessageBox(_("Failed to write value"), _("Warning"));

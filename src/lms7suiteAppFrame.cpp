@@ -37,7 +37,6 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
-//#include "LimeSDR.h"
 
 #include "limesuiteng/Logger.h"
 
@@ -51,12 +50,12 @@ LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
 
 int LMS7SuiteAppFrame::m_lmsSelection = 0;
 
-void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const char* message)
+void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
         return;
     wxCommandEvent evt;
-    evt.SetString(wxString::FromAscii(message));
+    evt.SetString(message);
     evt.SetEventType(LOG_MESSAGE);
     evt.SetInt(static_cast<int>(level));
     wxPostEvent(obj_ptr, evt);
@@ -79,7 +78,80 @@ struct DeviceTreeItemData : public wxTreeItemData {
     const std::shared_ptr<DeviceTreeNode> soc;
 };
 
-LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
+static bool FoundDevice(const wxString& criteria, DeviceHandle& outHandle, uint32_t& outIndex)
+{
+    std::vector<lime::DeviceHandle> allDevices;
+    allDevices = lime::DeviceRegistry::enumerate();
+    for (uint32_t i = 0; i < allDevices.size(); ++i)
+    {
+        const lime::DeviceHandle& device = allDevices[i];
+
+        if (device.name.find(criteria) != std::string::npos)
+        {
+            outHandle = device;
+            outIndex = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+static std::vector<std::string> SplitString(const std::string& s, const char delimiter)
+{
+    std::vector<std::string> list;
+
+    size_t right = 0;
+    size_t left = 0;
+
+    while ((right = s.find(delimiter, left)) != std::string::npos)
+    {
+        std::string str = s.substr(left, right - left);
+        list.push_back(str);
+        left = right + 1;
+    }
+    if (left != s.size())
+        list.push_back(s.substr(left));
+    return list;
+}
+
+static bool GetTreeNode(const wxTreeCtrl* treeControl,
+    const wxTreeItemId current,
+    wxTreeItemIdValue& cookie,
+    const std::vector<std::string>& path,
+    const uint32_t currentDepth,
+    wxTreeItemId& result)
+{
+    if (treeControl->GetItemText(current).ToStdString() != path.at(currentDepth))
+        return false;
+
+    if (currentDepth + 1 == path.size())
+    {
+        result = current;
+        return true;
+    }
+
+    wxTreeItemId child = treeControl->GetFirstChild(current, cookie);
+    while (child.IsOk())
+    {
+        if (GetTreeNode(treeControl, child, cookie, path, currentDepth + 1, result))
+            return true;
+        child = treeControl->GetNextSibling(child);
+    }
+    return false;
+}
+
+static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeItemId& result)
+{
+    const std::vector<std::string> nodes = SplitString(branch.ToStdString(), '/');
+
+    wxTreeItemId root = treeControl->GetRootItem();
+    wxTreeItemIdValue cookie;
+    wxTreeItemId deviceLevelNode = treeControl->GetFirstChild(root, cookie);
+
+    return GetTreeNode(treeControl, deviceLevelNode, cookie, nodes, 0, result);
+}
+
+LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
     : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
     , lmsControl(nullptr)
 {
@@ -149,16 +221,16 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
 #endif
 
     fftviewer = new fftviewer_frFFTviewer(this, wxNewId());
-    AddModule(fftviewer, "fftviewer");
+    AddModule(fftviewer, "fftviewer"s);
 
     SPI_wxgui* spigui = new SPI_wxgui(this, wxNewId());
-    AddModule(spigui, "SPI");
+    AddModule(spigui, "SPI"s);
 
     boardControlsGui = new pnlBoardControls(this, wxNewId());
-    AddModule(boardControlsGui, "Board controls");
+    AddModule(boardControlsGui, "Board controls"s);
 
     programmer = new LMS_Programing_wxgui(this, wxNewId());
-    AddModule(programmer, "Programming");
+    AddModule(programmer, "Programming"s);
 
     int x, y1, y2;
     m_scrolledWindow1->GetVirtualSize(&x, &y1);
@@ -178,6 +250,22 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent)
 
     deviceTree->Bind(
         wxEVT_TREE_SEL_CHANGED, wxTreeEventHandler(LMS7SuiteAppFrame::DeviceTreeSelectionChanged), this, deviceTree->GetId());
+
+    DeviceHandle handle;
+    uint32_t initialIndex;
+    if (!appArgs.device.IsEmpty() && FoundDevice(appArgs.device, handle, initialIndex))
+    {
+        pnlDeviceConnection->SetSelection(initialIndex);
+        wxCommandEvent event(limeEVT_SDR_HANDLE_SELECTED, GetId());
+        event.SetString(handle.Serialize());
+        ProcessWindowEvent(event);
+
+        wxTreeItemId searchTreeID;
+        if (GetTreeNode(deviceTree, appArgs.searchTree, searchTreeID))
+        {
+            deviceTree->SetFocusedItem(searchTreeID);
+        }
+    }
 }
 
 LMS7SuiteAppFrame::~LMS7SuiteAppFrame()
@@ -229,7 +317,7 @@ void LMS7SuiteAppFrame::OnDeviceDisconnect()
         wxCommandEvent evt;
         evt.SetEventType(LOG_MESSAGE);
         evt.SetInt(static_cast<int>(lime::LogLevel::Info));
-        evt.SetString("Disconnected: " + info.name);
+        evt.SetString("Disconnected: "s + info.name);
         wxPostEvent(this, evt);
         UpdateConnections(nullptr);
         lime::DeviceRegistry::freeDevice(lmsControl);
@@ -334,8 +422,8 @@ void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const ui
     if (obj_ptr->mMiniLog == nullptr || obj_ptr->mMiniLog->chkLogData->IsChecked() == false)
         return;
     std::stringstream ss;
-    ss << (Tx ? "Wr(" : "Rd(");
-    ss << length << "): ";
+    ss << (Tx ? "Wr("sv : "Rd("sv);
+    ss << length << "): "sv;
     ss << std::hex << std::setfill('0');
     int repeatedZeros = 0;
     for (int i = length - 1; i >= 0; --i)
@@ -348,9 +436,9 @@ void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const ui
     repeatedZeros = repeatedZeros - (repeatedZeros & 0x1);
     for (size_t i = 0; i < length - repeatedZeros; ++i)
         //casting to short to print as numbers
-        ss << " " << std::setw(2) << static_cast<unsigned short>(data[i]);
+        ss << " "sv << std::setw(2) << static_cast<unsigned short>(data[i]);
     if (repeatedZeros > 2)
-        ss << " (00 x " << std::dec << repeatedZeros << " times)";
+        ss << " (00 x "sv << std::dec << repeatedZeros << " times)"sv;
     lime::debug(ss.str());
     wxCommandEvent* evt = new wxCommandEvent();
     evt->SetString(ss.str());

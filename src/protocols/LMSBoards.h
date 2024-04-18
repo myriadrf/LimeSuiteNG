@@ -7,6 +7,9 @@
 
 #include <array>
 #include <string>
+#include <string_view>
+
+using namespace std::literals::string_view_literals;
 
 namespace lime {
 
@@ -46,41 +49,41 @@ enum eLMS_DEV {
     LMS_DEV_COUNT
 };
 
-const std::array<const std::string, LMS_DEV_COUNT> LMS_DEV_NAMES = {
-    "UNKNOWN",
-    "EVB6",
-    "DigiGreen",
-    "DigiRed",
-    "EVB7",
-    "ZIPPER",
-    "Socket Board",
-    "EVB7_v2",
-    "Stream",
-    "Novena",
-    "DataSpark",
-    "RF-Spark",
-    "LMS6002-USB Stick",
-    "RF-ESpark",
-    "LimeSDR-USB",
-    "LimeSDR-PCIe",
-    "LimeSDR-QPCIe",
-    "LimeSDR-Mini",
-    "uStream",
-    "LimeSDR SONY PA",
-    "LimeSDR-USB SP",
-    "LMS7002M Ultimate EVB",
-    "LimeNET-Micro",
-    "LimeSDR-Core",
-    "LimeSDR-Core-HE",
-    "LimeSDR-Mini_v2",
-    "LimeSDR X3",
-    "LimeSDR XTRX",
-    "LimeSDR MMX8",
-    "LimeSDR Micro",
-    "XSDR",
+constexpr std::array<const std::string_view, LMS_DEV_COUNT> LMS_DEV_NAMES = {
+    "UNKNOWN"sv,
+    "EVB6"sv,
+    "DigiGreen"sv,
+    "DigiRed"sv,
+    "EVB7"sv,
+    "ZIPPER"sv,
+    "Socket Board"sv,
+    "EVB7_v2"sv,
+    "Stream"sv,
+    "Novena"sv,
+    "DataSpark"sv,
+    "RF-Spark"sv,
+    "LMS6002-USB Stick"sv,
+    "RF-ESpark"sv,
+    "LimeSDR-USB"sv,
+    "LimeSDR-PCIe"sv,
+    "LimeSDR-QPCIe"sv,
+    "LimeSDR-Mini"sv,
+    "uStream"sv,
+    "LimeSDR SONY PA"sv,
+    "LimeSDR-USB SP"sv,
+    "LMS7002M Ultimate EVB"sv,
+    "LimeNET-Micro"sv,
+    "LimeSDR-Core"sv,
+    "LimeSDR-Core-HE"sv,
+    "LimeSDR-Mini_v2"sv,
+    "LimeSDR X3"sv,
+    "LimeSDR XTRX"sv,
+    "LimeSDR MMX8"sv,
+    "LimeSDR Micro"sv,
+    "XSDR"sv,
 };
 
-static constexpr const std::string& GetDeviceName(const eLMS_DEV device)
+static constexpr const std::string_view GetDeviceName(const eLMS_DEV device)
 {
     if (LMS_DEV_UNKNOWN < device && device < LMS_DEV_COUNT)
     {
@@ -105,20 +108,20 @@ enum eEXP_BOARD {
     EXP_BOARD_COUNT
 };
 
-const std::array<const std::string, EXP_BOARD_COUNT> EXP_BOARD_NAMES = {
-    "UNKNOWN",
-    "UNSUPPORTED",
-    "NOT AVAILABLE",
-    "Myriad1",
-    "Myriad2",
-    "Novena",
-    "HPM1000",
-    "Myriad7",
-    "HMP7",
-    "Myriad7 Novena",
+constexpr std::array<const std::string_view, EXP_BOARD_COUNT> EXP_BOARD_NAMES = {
+    "UNKNOWN"sv,
+    "UNSUPPORTED"sv,
+    "NOT AVAILABLE"sv,
+    "Myriad1"sv,
+    "Myriad2"sv,
+    "Novena"sv,
+    "HPM1000"sv,
+    "Myriad7"sv,
+    "HMP7"sv,
+    "Myriad7 Novena"sv,
 };
 
-static constexpr const std::string& GetExpansionBoardName(const eEXP_BOARD board)
+static constexpr const std::string_view GetExpansionBoardName(const eEXP_BOARD board)
 {
     if (EXP_BOARD_UNKNOWN < board && board < EXP_BOARD_COUNT)
     {

@@ -15,28 +15,28 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
-MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command")
+MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->cmd == command;
 }
 
-MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice")
+MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->subDevice == subDevice;
 }
 
-MATCHER_P(IsPeripheralIDCorrect, periphID, "Checks if the packet has the correct peripheral ID")
+MATCHER_P(IsPeripheralIDCorrect, periphID, "Checks if the packet has the correct peripheral ID"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->periphID == periphID;
 }
 
-MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count")
+MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
 

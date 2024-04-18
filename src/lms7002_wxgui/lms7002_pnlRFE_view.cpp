@@ -401,7 +401,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
     wxArrayString temp;
     temp.clear();
     for (int i = 0; i < 32; ++i)
-        temp.push_back(std::to_string((i + 1) * 80) + " fF");
+        temp.push_back(std::to_string((i + 1) * 80) + " fF"s);
     cmbCAP_RXMXO_RFE->Set(temp);
 
     for (int i = 0; i < 15; ++i)

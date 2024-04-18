@@ -11,6 +11,7 @@ class wxCheckBox;
 class wxRadioButton;
 class wxButton;
 
+using namespace std::literals::string_literals;
 class pnlXTRX : public wxPanel
 {
   public:
@@ -20,7 +21,7 @@ class pnlXTRX : public wxPanel
         const wxSize& size = wxDefaultSize,
         int style = 0,
         wxString name = wxEmptyString);
-    void Initialize(lime::SDRDevice* device, const std::string& spiSlaveName = "FPGA");
+    void Initialize(lime::SDRDevice* device, const std::string& spiSlaveName = "FPGA"s);
     virtual ~pnlXTRX();
     virtual void UpdatePanel();
 

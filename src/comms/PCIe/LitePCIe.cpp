@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <thread>
+#include <filesystem>
 #include "limesuiteng/Logger.h"
 
 #ifdef __unix__
@@ -50,7 +51,7 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 }
 
 LitePCIe::LitePCIe()
-    : mFilePath("")
+    : mFilePath()
     , mFileDescriptor(-1)
     , isConnected(false)
 {
@@ -61,7 +62,7 @@ LitePCIe::~LitePCIe()
     Close();
 }
 
-OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
+OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
     // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
@@ -91,7 +92,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
             ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
             if (ret != 0 || lockInfo.dma_writer_status == 0)
             {
-                const std::string msg = mFilePath + ": DMA writer request denied";
+                const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
                 throw std::runtime_error(msg);
             }
             uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
@@ -102,7 +103,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
                 info.dma_rx_buf_offset));
             if (buf == MAP_FAILED || buf == nullptr)
             {
-                const std::string msg = mFilePath + ": failed to MMAP Rx DMA buffer";
+                const std::string msg = mFilePath.string() + ": failed to MMAP Rx DMA buffer"s;
                 throw std::runtime_error(msg);
             }
             mDMA.rxMemory = buf;
@@ -115,7 +116,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
             ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
             if (ret != 0 || lockInfo.dma_reader_status == 0)
             {
-                const std::string msg = mFilePath + ": DMA reader request denied";
+                const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
                 throw std::runtime_error(msg);
             }
             uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
@@ -126,7 +127,7 @@ OpStatus LitePCIe::Open(const std::string& deviceFilename, uint32_t flags)
                 info.dma_tx_buf_offset));
             if (buf == MAP_FAILED || buf == nullptr)
             {
-                const std::string msg = mFilePath + ": failed to MMAP Tx DMA buffer";
+                const std::string msg = mFilePath.string() + ": failed to MMAP Tx DMA buffer"s;
                 throw std::runtime_error(msg);
             }
             mDMA.txMemory = buf;
@@ -187,14 +188,14 @@ int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 
     //if ((status & 0xFF00) == 0)
-    //throw std::runtime_error("LitePCIe read status timeout");
+    //throw std::runtime_error("LitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
 }
 
 int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened");
+        throw std::runtime_error("LitePCIe port not opened"s);
     auto t1 = chrono::high_resolution_clock::now();
     int bytesRemaining = length;
     while (bytesRemaining > 0 &&
@@ -251,7 +252,7 @@ int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
 int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened");
+        throw std::runtime_error("LitePCIe port not opened"s);
 
     int bytesRemaining = length;
     uint8_t* dest = buffer;
@@ -364,7 +365,7 @@ LitePCIe::DMAState LitePCIe::GetRxDMAState()
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &dma);
     if (ret)
-        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters");
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters"s);
     DMAState state;
     state.enabled = dma.enable;
     state.hwIndex = dma.hw_count;
@@ -379,7 +380,7 @@ LitePCIe::DMAState LitePCIe::GetTxDMAState()
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &dma);
     if (ret)
-        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters");
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters"s);
     DMAState state;
     state.enabled = dma.enable;
     state.hwIndex = dma.hw_count;
@@ -399,7 +400,7 @@ bool LitePCIe::WaitRx()
     int ret = ppoll(&desc, 1, &timeout_ts, NULL);
     if (ret < 0)
     {
-        const std::string msg = "DMA writer poll errno(" + std::to_string(errno) + ") " + strerror(errno);
+        const std::string msg = "DMA writer poll errno("s + std::to_string(errno) + ") "s + strerror(errno);
         if (errno == EINTR)
             return false;
         //throw std::runtime_error(msg);
@@ -435,7 +436,7 @@ bool LitePCIe::WaitTx()
         if (errno == EINTR)
             return false;
 
-        const std::string msg = "DMA reader poll errno(" + std::to_string(errno) + ") " + strerror(errno);
+        const std::string msg = "DMA reader poll errno("s + std::to_string(errno) + ") "s + strerror(errno);
         throw std::runtime_error(msg);
     }
     else if (ret == 0)
@@ -458,7 +459,7 @@ int LitePCIe::SetRxDMAState(DMAState s)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
     if (ret < 0)
     {
-        throw std::runtime_error("DMA writer failed update");
+        throw std::runtime_error("DMA writer failed update"s);
     }
     return ret;
 }
@@ -473,7 +474,7 @@ int LitePCIe::SetTxDMAState(DMAState s)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
     // if (ret < 0)
     // {
-    //     std::string msg = "DMA reader failed update";
+    //     std::string msg = "DMA reader failed update"s;
     // }
     return ret;
 }
@@ -488,7 +489,7 @@ void LitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_CACHE_FLUSH, &sub);
     if (ret < 0)
     {
-        std::string msg = "DMA reader failed update";
+        std::string msg = "DMA reader failed update"s;
     }
 }
 
@@ -511,8 +512,8 @@ int LitePCIe::ReadDPDBuffer(char *buffer, unsigned length)
     StartReading(buffer, 2, 60);
 
     uint16_t len = length / 24;
-    //std::cout << "[INFO] length: " << len << std::endl;
-    WriteRegister(0x01A0, len); // lenght
+    //std::cout << "[INFO] length: "sv << len << std::endl;
+    WriteRegister(0x01A0, len); // length
 
     ReadRegister(0x01A1, interface_cfg);  // CAP_EN
     interface_cfg = (interface_cfg | 0x1); // set lsb
