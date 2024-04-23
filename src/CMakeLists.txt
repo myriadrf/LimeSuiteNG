@@ -53,7 +53,6 @@ set(LIME_SUITE_SOURCES
     mcu_program/spi.cpp
     mcu_program/common_src/lms7002m_calibrations.c
     mcu_program/common_src/lms7002m_controls.c
-    mcu_program/common_src/lms7002m_filters.c
     API/LMS_APIWrapper.cpp
     API/LimePlugin.cpp
     include/limesuiteng/SDRDevice.cpp
@@ -62,7 +61,6 @@ set(LIME_SUITE_SOURCES
 set_source_files_properties(
     mcu_program/common_src/lms7002m_calibrations.c
     mcu_program/common_src/lms7002m_controls.c
-    mcu_program/common_src/lms7002m_filters.c
     PROPERTIES LANGUAGE CXX)
 
 set(LIME_SUITE_INCLUDES

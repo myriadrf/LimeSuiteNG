@@ -4,7 +4,6 @@
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
-#include "mcu_program/common_src/lms7002m_filters.h"
 #include "lms7002m/MCU_BD.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
@@ -1191,6 +1190,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
 
 OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
 {
+    OpStatus status;
     const ChannelConfig& ch = config;
     chip->SetActiveChannel((channelIndex & 1) ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA);
 
@@ -1218,8 +1218,15 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M* chip, const Chann
     {
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
+
+    status = chip->SetRxLPF(ch.rx.lpf);
+    if (status != OpStatus::Success)
+        return status;
+    status = chip->SetTxLPF(ch.tx.lpf);
+    if (status != OpStatus::Success)
+        return status;
     // TODO: set GFIR filters...
-    return OpStatus::Success;
+    return status;
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex)
@@ -1250,18 +1257,6 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
         int status = CalibrateTx(false);
         if (status != MCU_BD::MCU_NO_ERROR)
             return lime::ReportError(OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
-    }
-    if (ch.rx.lpf > 0 && ch.rx.enabled)
-    {
-        OpStatus status = chip->SetRxLPF(ch.rx.lpf);
-        if (status != OpStatus::Success)
-            return lime::ReportError(status, "Rx ch%i filter calibration failed: %s", i, GetLastErrorMessageCString());
-    }
-    if (ch.tx.lpf > 0 && ch.tx.enabled)
-    {
-        OpStatus status = chip->SetTxLPF(ch.tx.lpf);
-        if (status != OpStatus::Success)
-            return lime::ReportError(status, "Tx ch%i filter calibration failed: %s", i, GetLastErrorMessageCString());
     }
     return OpStatus::Success;
 }
