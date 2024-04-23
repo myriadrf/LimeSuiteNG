@@ -1,4 +1,4 @@
-#include "common.h"
+#include "limesuiteng/LimePlugin.h"
 #include "gainTable.h"
 
 #include <assert.h>
@@ -7,6 +7,7 @@
 #include <cmath>
 #include <mutex>
 #include <sstream>
+#include <string_view>
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/DeviceHandle.h"

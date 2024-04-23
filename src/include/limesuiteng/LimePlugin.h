@@ -1,5 +1,7 @@
-#pragma once
+#ifndef LIMESUITENG_LIMEPLUGIN_H
+#define LIMESUITENG_LIMEPLUGIN_H
 
+#include "limesuiteng/config.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamComposite.h"
 #include "limesuiteng/Logger.h"
@@ -34,12 +36,11 @@ struct DirectionalSettings {
     bool gfir_enable;
 };
 
-struct ConfigSettings
-{
+struct ConfigSettings {
     ConfigSettings()
-        : maxChannelsToUse(2)
+        : lpfBandwidthScale(1.0)
+        , maxChannelsToUse(2)
         , linkFormat(lime::DataFormat::I12)
-        , lpfBandwidthScale(1.0)
         , double_freq_conversion_to_lower_side(false)
         , syncPPS(false)
     {
@@ -119,23 +120,24 @@ struct LimeRuntimeParameters {
     std::vector<PortParams> rf_ports;
 };
 
-void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num);
-void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num);
+LIME_API void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num);
+LIME_API void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num);
 
 // context should be allocated/freed by the host
-int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType logFptr, LimeSettingsProvider* configProvider);
-int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params);
-int LimePlugin_Start(LimePluginContext* context);
-int LimePlugin_Stop(LimePluginContext* context);
-int LimePlugin_Destroy(LimePluginContext* context);
+LIME_API int LimePlugin_Init(
+    LimePluginContext* context, lime::SDRDevice::LogCallbackType logFptr, LimeSettingsProvider* configProvider);
+LIME_API int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params);
+LIME_API int LimePlugin_Start(LimePluginContext* context);
+LIME_API int LimePlugin_Stop(LimePluginContext* context);
+LIME_API int LimePlugin_Destroy(LimePluginContext* context);
 
-int LimePlugin_Write_complex32f(
+LIME_API int LimePlugin_Write_complex32f(
     LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
-int LimePlugin_Write_complex16(
+LIME_API int LimePlugin_Write_complex16(
     LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
-int LimePlugin_Read_complex32f(
+LIME_API int LimePlugin_Read_complex32f(
     LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::StreamMeta& meta);
-int LimePlugin_Read_complex16(
+LIME_API int LimePlugin_Read_complex16(
     LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::StreamMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
@@ -150,3 +152,5 @@ template<class T, class S> void AssignCArrayToVector(std::vector<T>& vec, const 
     for (size_t i = 0; i < count; ++i)
         vec[i] = arr[i];
 }
+
+#endif // LIMESUITENG_LIMEPLUGIN_H
