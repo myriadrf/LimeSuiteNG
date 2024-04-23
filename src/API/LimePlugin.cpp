@@ -15,6 +15,11 @@
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 
+#ifdef _MSC_VER
+    #define strncasecmp _strnicmp
+    #define strcasecmp _stricmp
+#endif
+
 using namespace lime;
 using namespace std;
 
