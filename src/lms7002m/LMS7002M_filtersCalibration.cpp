@@ -109,7 +109,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     status = mcuControl->WaitForMCU(1000);
     if (status != MCU_BD::MCU_NO_ERROR)
     {
-        lime::error("Tune Rx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+        lime::error("Tune Rx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
         return OpStatus::Error;
     }
     //sync registers to cache
@@ -170,7 +170,7 @@ OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
     status = mcuControl->WaitForMCU(1000);
     if (status != MCU_BD::MCU_NO_ERROR)
     {
-        lime::error("Tune Tx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+        lime::error("Tune Tx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
         return OpStatus::Error;
     }
     //sync registers to cache

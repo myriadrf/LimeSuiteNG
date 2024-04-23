@@ -1249,14 +1249,16 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
         SetupCalibrations(chip, ch.rx.sampleRate);
         int status = CalibrateRx(false, false);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(
+                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status).c_str());
     }
     if (ch.tx.calibrate && ch.tx.enabled)
     {
         SetupCalibrations(chip, ch.tx.sampleRate);
         int status = CalibrateTx(false);
         if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status));
+            return lime::ReportError(
+                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status).c_str());
     }
     return OpStatus::Success;
 }

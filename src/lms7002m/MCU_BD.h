@@ -10,7 +10,6 @@
 #include <atomic>
 #include <string>
 #include <functional>
-#include <string_view>
 #include <memory>
 
 #include "mcu_programs.h"
@@ -74,7 +73,7 @@ class LIME_API MCU_BD
     };
     void SetParameter(MCU_Parameter param, float value);
     int WaitForMCU(uint32_t timeout_ms);
-    static std::string_view MCUStatusMessage(const uint8_t code);
+    static const std::string& MCUStatusMessage(const uint8_t code);
 
     /*!
      * Callback from programming processes

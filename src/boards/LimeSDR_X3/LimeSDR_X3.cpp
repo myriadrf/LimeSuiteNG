@@ -692,8 +692,8 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
 
         if (status != MCU_BD::MCU_NO_ERROR)
         {
-            throw std::runtime_error(
-                strFormat("%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
+            throw std::runtime_error(strFormat(
+                "%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status).c_str()));
         }
     }
 

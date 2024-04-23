@@ -238,7 +238,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::InvalidValue, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
     }
 
     //sync registers to cache
@@ -352,7 +352,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         int status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::InvalidValue, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
     }
 
     //sync registers to cache
