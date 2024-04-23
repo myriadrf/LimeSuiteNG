@@ -272,17 +272,19 @@ static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
     std::string varname = "dev"s + std::to_string(devIndex) + "_writeRegisters"s;
     std::string value;
 
-    if (context->config->GetString(value, varname.c_str()))
+    if (!context->config->GetString(value, varname.c_str()))
     {
-        std::string_view writeRegistersStr{ value };
-        const auto tokens = splitString(writeRegistersStr, ";"sv);
-        for (const auto& token : tokens)
-        {
-            uint32_t spiVal = 0;
-            std::stringstream sstream{ std::string{ token } };
-            sstream >> std::hex >> spiVal;
-            context->rfdev.at(devIndex).fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
-        }
+        return;
+    }
+
+    std::string_view writeRegistersStr{ value };
+    const auto tokens = splitString(writeRegistersStr, ";"sv);
+    for (const auto& token : tokens)
+    {
+        uint32_t spiVal = 0;
+        std::stringstream sstream{ std::string{ token } };
+        sstream >> std::hex >> spiVal;
+        context->rfdev.at(devIndex).fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
     }
 }
 
