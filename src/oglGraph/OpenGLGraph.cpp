@@ -1267,79 +1267,82 @@ void OpenGLGraph::RemoveMarker(int id)
 */
 void OpenGLGraph::DrawMarkers()
 {
-    if (series.size() <= 0)
-        return;
-
-    if (settings.markersEnabled && series[0]->size > 0 && series[0] != NULL)
+    if (series.size() <= 0 || !settings.markersEnabled || series[0] == nullptr || series[0]->size <= 0)
     {
-        switchToWindowView();
+        return;
+    }
 
-        float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
-        float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
+    switchToWindowView();
 
-        glBegin(GL_TRIANGLES);
-        int posX, posY;
-        for (unsigned i = 0; i < markers.size(); ++i)
+    float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
+    float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
+
+    glBegin(GL_TRIANGLES);
+    int posX, posY;
+    for (unsigned i = 0; i < markers.size(); ++i)
+    {
+        if (markers[i].used == false)
+            continue;
+        for (unsigned int j = 0; j < series.size(); j++)
         {
-            if (markers[i].used == false)
-                continue;
-            for (unsigned int j = 0; j < series.size(); j++)
+            if (series[j]->size <= 0 || !series[j]->visible)
             {
-                if (series[j]->size > 0 && series[j]->visible)
-                {
-                    markers[i].posY = series[j]->values[markers[i].dataValueIndex + 1];
-                    // X axis grid lines
-                    posY = settings.marginBottom +
-                           ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
-                    posX = settings.marginLeft + ((markers[i].posX - settings.visibleArea.x1) / pixelXvalue);
-                    markers[i].iposX = posX;
-                    markers[i].iposY = posY;
-                    markers[i].size = 10;
-
-                    if (posX >= settings.marginLeft && posX <= settings.windowWidth - settings.marginRight)
-                    {
-                        markers[i].color = mMarkerColors[i];
-                        glColor4f(markers[i].color.red, markers[i].color.green, markers[i].color.blue, markers[i].color.alpha);
-                        if (posY >= settings.marginBottom && posY <= settings.windowHeight - settings.marginTop)
-                        {
-                            glVertex3f(posX, posY, 10);
-                            glVertex3f(posX + markers[i].size, posY + markers[i].size, 10);
-                            glVertex3f(posX - markers[i].size, posY + markers[i].size, 10);
-                        }
-                        glVertex3f(posX, settings.marginBottom + markers[i].size, 10);
-                        glVertex3f(posX - markers[i].size, settings.marginBottom, 10);
-                        glVertex3f(posX + markers[i].size, settings.marginBottom, 10);
-                    }
-                }
+                continue;
             }
-        }
-        glEnd();
-        glFlush();
 
-        //draw marker data at the right upper corner of data view
-        char text[256];
-        float textScale = 1;
-        int hpos = textScale * m_font->lineHeight() * 2.5;
-        for (unsigned i = 0; i < markers.size(); ++i)
-        {
-            if (markers[i].used == false)
+            markers[i].posY = series[j]->values[markers[i].dataValueIndex + 1];
+            // X axis grid lines
+            posY = settings.marginBottom +
+                   ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+            posX = settings.marginLeft + ((markers[i].posX - settings.visibleArea.x1) / pixelXvalue);
+            markers[i].iposX = posX;
+            markers[i].iposY = posY;
+            markers[i].size = 10;
+
+            if (posX < settings.marginLeft || posX > settings.windowWidth - settings.marginRight)
+            {
                 continue;
+            }
+
+            markers[i].color = mMarkerColors[i];
             glColor4f(markers[i].color.red, markers[i].color.green, markers[i].color.blue, markers[i].color.alpha);
-            int cnt = sprintf(text, "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex] / 1000000);
-
-            for (unsigned int j = 0; j < series.size(); j++)
-                if (series[j]->size > 0 && series[j]->visible)
-                    cnt += sprintf(text + cnt, "/ Ch %c: %#+3.1f dBFS ", 65 + j, series[j]->values[markers[i].dataValueIndex + 1]);
-
-            markers[i].posY = series[0]->values[markers[i].dataValueIndex + 1];
-            posX = settings.marginLeft;
-            posY = settings.windowHeight - settings.marginTop - hpos;
-            //glPrint(posX, posY, 0, textScale, "%s", text);
-            if (markers[i].show == false)
-                continue;
-            hpos += textScale * m_font->lineHeight();
-            glRenderText(posX, posY, 0, textScale * m_font->lineHeight(), markers[i].color.getColor4b(), "%s", text);
+            if (posY >= settings.marginBottom && posY <= settings.windowHeight - settings.marginTop)
+            {
+                glVertex3f(posX, posY, 10);
+                glVertex3f(posX + markers[i].size, posY + markers[i].size, 10);
+                glVertex3f(posX - markers[i].size, posY + markers[i].size, 10);
+            }
+            glVertex3f(posX, settings.marginBottom + markers[i].size, 10);
+            glVertex3f(posX - markers[i].size, settings.marginBottom, 10);
+            glVertex3f(posX + markers[i].size, settings.marginBottom, 10);
         }
+    }
+    glEnd();
+    glFlush();
+
+    //draw marker data at the right upper corner of data view
+    char text[256];
+    float textScale = 1;
+    int hpos = textScale * m_font->lineHeight() * 2.5;
+    for (unsigned i = 0; i < markers.size(); ++i)
+    {
+        if (markers[i].used == false)
+            continue;
+        glColor4f(markers[i].color.red, markers[i].color.green, markers[i].color.blue, markers[i].color.alpha);
+        int cnt = sprintf(text, "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex] / 1000000);
+
+        for (unsigned int j = 0; j < series.size(); j++)
+            if (series[j]->size > 0 && series[j]->visible)
+                cnt += sprintf(text + cnt, "/ Ch %c: %#+3.1f dBFS ", 65 + j, series[j]->values[markers[i].dataValueIndex + 1]);
+
+        markers[i].posY = series[0]->values[markers[i].dataValueIndex + 1];
+        posX = settings.marginLeft;
+        posY = settings.windowHeight - settings.marginTop - hpos;
+        //glPrint(posX, posY, 0, textScale, "%s", text);
+        if (markers[i].show == false)
+            continue;
+        hpos += textScale * m_font->lineHeight();
+        glRenderText(posX, posY, 0, textScale * m_font->lineHeight(), markers[i].color.getColor4b(), "%s", text);
     }
 }
 
@@ -1353,29 +1356,31 @@ int OpenGLGraph::clickedOnMarker(int X, int Y)
 {
     for (unsigned i = 0; i < markers.size(); ++i)
     {
-        if (markers[i].used == false)
-            continue;
-        if (X > markers[i].iposX - markers[i].size && X < markers[i].iposX + markers[i].size)
+        if (markers[i].used == false || X <= markers[i].iposX - markers[i].size || X >= markers[i].iposX + markers[i].size)
         {
-            if (Y > settings.marginBottom && Y < settings.marginBottom + markers[i].size)
+            continue;
+        }
+
+        if (Y > settings.marginBottom && Y < settings.marginBottom + markers[i].size)
+        {
+            printf("selected %i marker\n", i);
+            return i;
+        }
+
+        for (unsigned int j = 0; j < series.size(); j++)
+        {
+            if (series[j]->size <= 0 || !series[j]->visible)
+            {
+                continue;
+            }
+
+            float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
+            int posY = settings.marginBottom +
+                       ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+            if (Y > posY && Y < posY + markers[i].size)
             {
                 printf("selected %i marker\n", i);
                 return i;
-            }
-
-            for (unsigned int j = 0; j < series.size(); j++)
-            {
-                if (series[j]->size > 0 && series[j]->visible)
-                {
-                    float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
-                    int posY = settings.marginBottom +
-                               ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
-                    if (Y > posY && Y < posY + markers[i].size)
-                    {
-                        printf("selected %i marker\n", i);
-                        return i;
-                    }
-                }
             }
         }
     }
@@ -1389,64 +1394,76 @@ int OpenGLGraph::clickedOnMarker(int X, int Y)
 */
 void OpenGLGraph::MoveMarker(int markerID, int posX)
 {
-    if (series[0]->size > 0 && markerID >= 0)
+    if (series[0]->size <= 0 || markerID < 0)
     {
-        if (markers[markerID].used == false)
-            return;
-        float tempY = 0;
-        dataViewPixelToValue(posX - settings.marginLeft, 0, markers[markerID].posX, tempY);
-
-        //determine which way marker was moved, search for closest data point
-        if (posX < markers[markerID].iposX)
-        {
-            for (int i = markers[markerID].dataValueIndex; i > 0; i -= 2)
-            {
-                if (series[0]->values[i] <= markers[markerID].posX)
-                {
-                    float toLeft = markers[markerID].posX - series[0]->values[i - 2];
-                    float toRight = series[0]->values[i] - markers[markerID].posX;
-                    if (toRight < toLeft)
-                    {
-                        markers[markerID].dataValueIndex = i;
-                    }
-                    else
-                    {
-                        markers[markerID].dataValueIndex = i - 2;
-                    }
-                    break;
-                }
-            }
-        }
-        else
-        {
-            for (unsigned i = markers[markerID].dataValueIndex; i < series[0]->size * 2; i += 2)
-            {
-                if (series[0]->values[i] >= markers[markerID].posX)
-                {
-                    float toLeft = markers[markerID].posX - series[0]->values[i - 2];
-                    float toRight = series[0]->values[i] - markers[markerID].posX;
-                    if (toRight < toLeft)
-                    {
-                        markers[markerID].dataValueIndex = i;
-                    }
-                    else
-                    {
-                        markers[markerID].dataValueIndex = i - 2;
-                    }
-                    break;
-                }
-            }
-        }
-        float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
-        float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
-        markers[markerID].posX = series[0]->values[markers[markerID].dataValueIndex];
-        markers[markerID].posY = series[0]->values[markers[markerID].dataValueIndex + 1];
-        int posY = settings.marginBottom +
-                   ((series[0]->values[markers[markerID].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
-        int posX = settings.marginLeft + ((markers[markerID].posX - settings.visibleArea.x1) / pixelXvalue);
-        markers[markerID].iposX = posX;
-        markers[markerID].iposY = posY;
+        mMarkersDlg->refreshMarkFreq = true;
+#ifdef OGL_REDRAW_ENABLED
+        Refresh();
+#endif
+        return;
     }
+
+    if (markers[markerID].used == false)
+        return;
+
+    float tempY = 0;
+    dataViewPixelToValue(posX - settings.marginLeft, 0, markers[markerID].posX, tempY);
+
+    //determine which way marker was moved, search for closest data point
+    if (posX < markers[markerID].iposX)
+    {
+        for (int i = markers[markerID].dataValueIndex; i > 0; i -= 2)
+        {
+            if (series[0]->values[i] > markers[markerID].posX)
+            {
+                continue;
+            }
+
+            float toLeft = markers[markerID].posX - series[0]->values[i - 2];
+            float toRight = series[0]->values[i] - markers[markerID].posX;
+            if (toRight < toLeft)
+            {
+                markers[markerID].dataValueIndex = i;
+            }
+            else
+            {
+                markers[markerID].dataValueIndex = i - 2;
+            }
+            break;
+        }
+    }
+    else
+    {
+        for (unsigned i = markers[markerID].dataValueIndex; i < series[0]->size * 2; i += 2)
+        {
+            if (series[0]->values[i] < markers[markerID].posX)
+            {
+                continue;
+            }
+
+            float toLeft = markers[markerID].posX - series[0]->values[i - 2];
+            float toRight = series[0]->values[i] - markers[markerID].posX;
+            if (toRight < toLeft)
+            {
+                markers[markerID].dataValueIndex = i;
+            }
+            else
+            {
+                markers[markerID].dataValueIndex = i - 2;
+            }
+            break;
+        }
+    }
+    float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
+    float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
+    markers[markerID].posX = series[0]->values[markers[markerID].dataValueIndex];
+    markers[markerID].posY = series[0]->values[markers[markerID].dataValueIndex + 1];
+    int posY =
+        settings.marginBottom + ((series[0]->values[markers[markerID].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+    int newPosX = settings.marginLeft + ((markers[markerID].posX - settings.visibleArea.x1) / pixelXvalue);
+    markers[markerID].iposX = newPosX;
+    markers[markerID].iposY = posY;
+
     mMarkersDlg->refreshMarkFreq = true;
 #ifdef OGL_REDRAW_ENABLED
     Refresh();
@@ -1460,43 +1477,52 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
 */
 void OpenGLGraph::ChangeMarker(int markerID, float xValue)
 {
-    if (series[0]->size > 0 && markerID >= 0)
+    if (series[0]->size <= 0 || markerID < 0)
     {
-        OGLMarker* mark = NULL;
-        for (size_t i = 0; i < markers.size(); ++i)
-            if (markers[i].id == markerID)
-                mark = &markers[i];
-        if (mark == NULL)
-            return;
-
-        mark->posX = xValue;
-        bool found = false;
-        //find closest data point index
-        for (unsigned i = 0; i < series[0]->size; ++i)
-        {
-            if (series[0]->values[2 * i] > mark->posX)
-            {
-                float toLeft = mark->posX - series[0]->values[2 * (i - 1)];
-                float toRight = series[0]->values[2 * i] - mark->posX;
-                if (toRight < toLeft)
-                {
-                    mark->dataValueIndex = 2 * i;
-                }
-                else
-                {
-                    mark->dataValueIndex = 2 * (i - 1);
-                }
-                found = true;
-                break;
-            }
-        }
-        if (!found) //if no closest point found, add marker to middle point
-        {
-            mark->dataValueIndex = series[0]->size;
-        }
-        mark->posX = series[0]->values[mark->dataValueIndex];
-        mark->posY = series[0]->values[mark->dataValueIndex + 1];
+        Refresh();
+#ifdef OGL_REDRAW_ENABLED
+        Refresh();
+#endif
+        return;
     }
+
+    OGLMarker* mark = NULL;
+    for (size_t i = 0; i < markers.size(); ++i)
+        if (markers[i].id == markerID)
+            mark = &markers[i];
+    if (mark == NULL)
+        return;
+
+    mark->posX = xValue;
+    bool found = false;
+    //find closest data point index
+    for (unsigned i = 0; i < series[0]->size; ++i)
+    {
+        if (series[0]->values[2 * i] < mark->posX)
+        {
+            continue;
+        }
+
+        float toLeft = mark->posX - series[0]->values[2 * (i - 1)];
+        float toRight = series[0]->values[2 * i] - mark->posX;
+        if (toRight < toLeft)
+        {
+            mark->dataValueIndex = 2 * i;
+        }
+        else
+        {
+            mark->dataValueIndex = 2 * (i - 1);
+        }
+        found = true;
+        break;
+    }
+    if (!found) //if no closest point found, add marker to middle point
+    {
+        mark->dataValueIndex = series[0]->size;
+    }
+    mark->posX = series[0]->values[mark->dataValueIndex];
+    mark->posY = series[0]->values[mark->dataValueIndex + 1];
+
     Refresh();
 #ifdef OGL_REDRAW_ENABLED
     Refresh();
@@ -1603,7 +1629,6 @@ void OpenGLGraph::onShowMarkersMenu(wxCommandEvent& event)
         m_timer->Start(500);
     mMarkersDlg->Show();
     mMarkersDlg->refreshMarkFreq = true;
-    ;
 }
 
 void OpenGLGraph::onLockAspect(wxCommandEvent& event)
