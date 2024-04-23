@@ -1143,15 +1143,6 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
 
 OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig& cfg)
 {
-    bool rxUsed = false;
-    bool txUsed = false;
-    for (int i = 0; i < 2; ++i)
-    {
-        const ChannelConfig& ch = cfg.channel[i];
-        rxUsed |= ch.rx.enabled;
-        txUsed |= ch.tx.enabled;
-    }
-
     OpStatus status = OpStatus::Success;
     if (cfg.referenceClockFreq != 0)
     {
@@ -1161,8 +1152,6 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
     }
 
     const bool tddMode = cfg.channel[0].rx.centerFrequency == cfg.channel[0].tx.centerFrequency;
-    chip->EnableSXTDD(tddMode);
-
     {
         // TODO: verify if every FPGA gateware has this
         // configure FPGA to do TDD switching
@@ -1173,18 +1162,19 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M* chip, const SDRConfig&
         mFPGA->WriteRegister(0x000A, reg000A);
     }
     // Rx PLL is not used in TDD mode
-    if (!tddMode && rxUsed && cfg.channel[0].rx.centerFrequency > 0)
+    if (cfg.channel[0].rx.centerFrequency > 0)
     {
         status = chip->SetFrequencySX(TRXDir::Rx, cfg.channel[0].rx.centerFrequency);
         if (status != OpStatus::Success)
             return status;
     }
-    if (txUsed && cfg.channel[0].tx.centerFrequency > 0)
+    if (cfg.channel[0].tx.centerFrequency > 0)
     {
         status = chip->SetFrequencySX(TRXDir::Tx, cfg.channel[0].tx.centerFrequency);
         if (status != OpStatus::Success)
             return status;
     }
+    chip->EnableSXTDD(tddMode);
     return status;
 }
 
@@ -1244,22 +1234,26 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
         chip->SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::Success)
         return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
 
+    int rxStatus = MCU_BD::MCU_NO_ERROR;
+    int txStatus = MCU_BD::MCU_NO_ERROR;
     if (ch.rx.calibrate && ch.rx.enabled)
     {
         SetupCalibrations(chip, ch.rx.sampleRate);
-        int status = CalibrateRx(false, false);
-        if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(
-                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status).c_str());
+        rxStatus = CalibrateRx(false, false);
+        if (rxStatus != MCU_BD::MCU_NO_ERROR)
+            lime::ReportError(
+                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(rxStatus).c_str());
     }
     if (ch.tx.calibrate && ch.tx.enabled)
     {
         SetupCalibrations(chip, ch.tx.sampleRate);
-        int status = CalibrateTx(false);
-        if (status != MCU_BD::MCU_NO_ERROR)
-            return lime::ReportError(
-                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(status).c_str());
+        txStatus = CalibrateTx(false);
+        if (txStatus != MCU_BD::MCU_NO_ERROR)
+            lime::ReportError(
+                OpStatus::Error, "Tx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(txStatus).c_str());
     }
+    if (rxStatus != MCU_BD::MCU_NO_ERROR || txStatus != MCU_BD::MCU_NO_ERROR)
+        return OpStatus::Error;
     return OpStatus::Success;
 }
 

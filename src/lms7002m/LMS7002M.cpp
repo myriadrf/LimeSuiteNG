@@ -2847,9 +2847,9 @@ OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
 
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
 {
-    Modify_SPI_Reg_bits(LMS7_MAC, 2);
+    ChannelScope scope(this, LMS7002M::Channel::ChSXT);
     Modify_SPI_Reg_bits(LMS7_PD_LOCH_T2RBUF, tdd ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    Modify_SPI_Reg_bits(LMS7_MAC, 1); // switch to SXR
     return Modify_SPI_Reg_bits(LMS7_PD_VCO, tdd ? 1 : 0);
 }
 
