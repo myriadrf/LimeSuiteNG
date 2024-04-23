@@ -59,9 +59,7 @@ set(LIME_SUITE_SOURCES
     utilities/toString.cpp)
 
 set_source_files_properties(
-    mcu_program/common_src/lms7002m_calibrations.c
-    mcu_program/common_src/lms7002m_controls.c
-    PROPERTIES LANGUAGE CXX)
+    mcu_program/common_src/lms7002m_calibrations.c mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
 set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
