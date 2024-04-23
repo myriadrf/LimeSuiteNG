@@ -697,10 +697,10 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         }
     }
 
-    OpStatus status;
+    OpStatus status = OpStatus::Success;
     if (trx.enabled && dir == TRXDir::Rx)
         status = chip->SetRxLPF(trx.lpf);
-    else
+    else if (trx.enabled && dir == TRXDir::Tx)
         status = chip->SetTxLPF(trx.lpf);
 
     if (status != OpStatus::Success)
