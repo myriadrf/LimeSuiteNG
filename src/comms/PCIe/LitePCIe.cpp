@@ -79,59 +79,54 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
 
     litepcie_ioctl_mmap_dma_info info;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_INFO, &info);
-    if (ret == 0)
+    if (ret != 0)
     {
-        mDMA.bufferCount = info.dma_rx_buf_count;
-        mDMA.bufferSize = info.dma_rx_buf_size;
-        litepcie_ioctl_lock lockInfo;
-        // O_RDONLY has value of 0, so cannot detect if file is being opened as read only when other flags are preset
-        if ((flags & O_WRONLY) != O_WRONLY || (flags & O_RDWR) == O_RDWR)
-        {
-            memset(&lockInfo, 0, sizeof(lockInfo));
-            lockInfo.dma_writer_request = 1;
-            ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
-            if (ret != 0 || lockInfo.dma_writer_status == 0)
-            {
-                const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
-                throw std::runtime_error(msg);
-            }
-            uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
-                info.dma_rx_buf_size * info.dma_rx_buf_count,
-                PROT_READ,
-                MAP_SHARED,
-                mFileDescriptor,
-                info.dma_rx_buf_offset));
-            if (buf == MAP_FAILED || buf == nullptr)
-            {
-                const std::string msg = mFilePath.string() + ": failed to MMAP Rx DMA buffer"s;
-                throw std::runtime_error(msg);
-            }
-            mDMA.rxMemory = buf;
-        }
+        isConnected = true;
+        return OpStatus::Success;
+    }
 
-        if ((flags & O_WRONLY) == O_WRONLY || (flags & O_RDWR) == O_RDWR)
+    mDMA.bufferCount = info.dma_rx_buf_count;
+    mDMA.bufferSize = info.dma_rx_buf_size;
+    litepcie_ioctl_lock lockInfo;
+    // O_RDONLY has value of 0, so cannot detect if file is being opened as read only when other flags are preset
+    if ((flags & O_WRONLY) != O_WRONLY || (flags & O_RDWR) == O_RDWR)
+    {
+        memset(&lockInfo, 0, sizeof(lockInfo));
+        lockInfo.dma_writer_request = 1;
+        ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
+        if (ret != 0 || lockInfo.dma_writer_status == 0)
         {
-            memset(&lockInfo, 0, sizeof(lockInfo));
-            lockInfo.dma_reader_request = 1;
-            ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
-            if (ret != 0 || lockInfo.dma_reader_status == 0)
-            {
-                const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
-                throw std::runtime_error(msg);
-            }
-            uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
-                info.dma_tx_buf_size * info.dma_tx_buf_count,
-                PROT_WRITE,
-                MAP_SHARED,
-                mFileDescriptor,
-                info.dma_tx_buf_offset));
-            if (buf == MAP_FAILED || buf == nullptr)
-            {
-                const std::string msg = mFilePath.string() + ": failed to MMAP Tx DMA buffer"s;
-                throw std::runtime_error(msg);
-            }
-            mDMA.txMemory = buf;
+            const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
+            throw std::runtime_error(msg);
         }
+        uint8_t* buf = static_cast<uint8_t*>(mmap(
+            NULL, info.dma_rx_buf_size * info.dma_rx_buf_count, PROT_READ, MAP_SHARED, mFileDescriptor, info.dma_rx_buf_offset));
+        if (buf == MAP_FAILED || buf == nullptr)
+        {
+            const std::string msg = mFilePath.string() + ": failed to MMAP Rx DMA buffer"s;
+            throw std::runtime_error(msg);
+        }
+        mDMA.rxMemory = buf;
+    }
+
+    if ((flags & O_WRONLY) == O_WRONLY || (flags & O_RDWR) == O_RDWR)
+    {
+        memset(&lockInfo, 0, sizeof(lockInfo));
+        lockInfo.dma_reader_request = 1;
+        ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
+        if (ret != 0 || lockInfo.dma_reader_status == 0)
+        {
+            const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
+            throw std::runtime_error(msg);
+        }
+        uint8_t* buf = static_cast<uint8_t*>(mmap(
+            NULL, info.dma_tx_buf_size * info.dma_tx_buf_count, PROT_WRITE, MAP_SHARED, mFileDescriptor, info.dma_tx_buf_offset));
+        if (buf == MAP_FAILED || buf == nullptr)
+        {
+            const std::string msg = mFilePath.string() + ": failed to MMAP Tx DMA buffer"s;
+            throw std::runtime_error(msg);
+        }
+        mDMA.txMemory = buf;
     }
 
     isConnected = true;

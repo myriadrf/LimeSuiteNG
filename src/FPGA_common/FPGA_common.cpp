@@ -378,16 +378,18 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
             //return OpStatus::Busy;
         }
 
-        if (!done)
+        if (done)
         {
-            if ((std::chrono::high_resolution_clock::now() - t1) > timeout)
-            {
-                lime::warning("%s timeout", title.c_str());
-                return OpStatus::Timeout;
-            }
-            else
-                std::this_thread::sleep_for(busyPollPeriod);
+            break;
         }
+
+        if ((std::chrono::high_resolution_clock::now() - t1) > timeout)
+        {
+            lime::warning("%s timeout", title.c_str());
+            return OpStatus::Timeout;
+        }
+        else
+            std::this_thread::sleep_for(busyPollPeriod);
     } while (!done);
     if (!title.empty())
     {
@@ -1060,11 +1062,9 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
             phaseSearchSuccess = true;
             break;
         }
-        else
-        {
-            lime::debug("Retry%i: SetPllFrequency", i);
-            std::this_thread::sleep_for(busyPollPeriod);
-        }
+
+        lime::debug("Retry%i: SetPllFrequency", i);
+        std::this_thread::sleep_for(busyPollPeriod);
     }
 
     if (!phaseSearchSuccess)

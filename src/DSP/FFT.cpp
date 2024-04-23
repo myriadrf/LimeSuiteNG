@@ -127,36 +127,40 @@ void FFT::ProcessLoop()
         int ret = samplesFIFO.Consume(samples.data() + samplesReady, samplesNeeded);
         samplesReady += ret;
 
-        if (samplesReady == samples.size())
+        if (samplesReady != samples.size())
         {
-            // auto t1 = std::chrono::high_resolution_clock::now();
-            Calculate(samples.data(), samples.size(), fftBins);
-            ++resultsDone;
-            samplesReady = 0;
-
-            for (uint32_t i = 0; i < fftBins.size(); ++i)
-                avgOutput[i] += fftBins[i] * fftBins[i];
-
-            if (resultsDone == avgCount)
-            {
-                if (resultsCallback)
-                {
-                    // to log scale
-                    for (size_t i = 0; i < fftBins.size(); ++i)
-                        avgOutput[i] = sqrt(avgOutput[i] / avgCount);
-                    for (size_t i = 0; i < fftBins.size(); ++i)
-                    {
-                        fftBins[i] = avgOutput[i] > 0 ? 10 * log10(avgOutput[i]) : -150;
-                    }
-                    resultsCallback(fftBins, mUserData);
-                }
-                resultsDone = 0;
-                memset(avgOutput.data(), 0, avgOutput.size() * sizeof(float));
-            }
-            // auto t2 = std::chrono::high_resolution_clock::now();
-            // auto timePeriod = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-            //printf("FFT update %lius\n", timePeriod);
+            continue;
         }
+
+        // auto t1 = std::chrono::high_resolution_clock::now();
+        Calculate(samples.data(), samples.size(), fftBins);
+        ++resultsDone;
+        samplesReady = 0;
+
+        for (uint32_t i = 0; i < fftBins.size(); ++i)
+            avgOutput[i] += fftBins[i] * fftBins[i];
+
+        if (resultsDone != avgCount)
+        {
+            continue;
+        }
+
+        if (resultsCallback)
+        {
+            // to log scale
+            for (size_t i = 0; i < fftBins.size(); ++i)
+                avgOutput[i] = sqrt(avgOutput[i] / avgCount);
+            for (size_t i = 0; i < fftBins.size(); ++i)
+            {
+                fftBins[i] = avgOutput[i] > 0 ? 10 * log10(avgOutput[i]) : -150;
+            }
+            resultsCallback(fftBins, mUserData);
+        }
+        resultsDone = 0;
+        memset(avgOutput.data(), 0, avgOutput.size() * sizeof(float));
+        // auto t2 = std::chrono::high_resolution_clock::now();
+        // auto timePeriod = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+        //printf("FFT update %lius\n", timePeriod);
     }
 }
 

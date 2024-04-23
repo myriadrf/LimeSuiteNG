@@ -179,16 +179,18 @@ void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
 {
     controlPort = port;
 
-    if (controlPort != nullptr)
+    if (controlPort == nullptr)
     {
-        unsigned byte_array_size = 0;
-        unsigned chipRev = this->Get_SPI_Reg_bits(LMS7_MASK, true);
-        if (chipRev >= 1)
-            byte_array_size = 1024 * 16;
-        else
-            byte_array_size = 1024 * 8;
-        mcuControl->Initialize(port, byte_array_size);
+        return;
     }
+
+    unsigned byte_array_size = 0;
+    unsigned chipRev = this->Get_SPI_Reg_bits(LMS7_MASK, true);
+    if (chipRev >= 1)
+        byte_array_size = 1024 * 16;
+    else
+        byte_array_size = 1024 * 8;
+    mcuControl->Initialize(port, byte_array_size);
 }
 
 /** @brief Creates LMS7002M main control object.
@@ -450,152 +452,153 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
-    if (fileVersion == 1)
+    if (fileVersion != 1)
     {
-        ChannelScope scope(this);
-
-        if (parser.select("Reference clocks"s))
-        {
-            this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
-            this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
-        }
-
-        if (parser.select("LMS7002 registers ch.A"s) == true)
-        {
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
-
-            uint16_t x0020_value = 0;
-            this->SetActiveChannel(Channel::ChA); //select A channel
-            for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
-            {
-                sscanf(pairs->first.c_str(), "%hx", &addr);
-                sscanf(pairs->second.c_str(), "%hx", &value);
-                if (addr == LMS7param(MAC).address) //skip register containing channel selection
-                {
-                    x0020_value = value;
-                    continue;
-                }
-                addrToWrite.push_back(addr);
-                dataToWrite.push_back(value);
-            }
-            status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::Success && controlPort != nullptr)
-                return status;
-
-            //parse FCW or PHO
-            if (parser.select("NCO Rx ch.A"s) == true)
-            {
-                char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
-                if (mode == 0) //FCW
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "FCW%02i", i);
-                        SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "PHO%02i", i);
-                        SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
-                    }
-                }
-            }
-            if (parser.select("NCO Tx ch.A"s) == true)
-            {
-                char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
-                if (mode == 0) //FCW
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "FCW%02i", i);
-                        SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "PHO%02i", i);
-                        SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
-                    }
-                }
-            }
-            status = SPI_write(0x0020, x0020_value);
-            if (status != OpStatus::Success && controlPort != nullptr)
-                return status;
-        }
-
-        this->SetActiveChannel(Channel::ChB);
-
-        if (parser.select("LMS7002 registers ch.B"s) == true)
-        {
-            addrToWrite.clear();
-            dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B"s);
-            for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
-            {
-                sscanf(pairs->first.c_str(), "%hx", &addr);
-                sscanf(pairs->second.c_str(), "%hx", &value);
-                addrToWrite.push_back(addr);
-                dataToWrite.push_back(value);
-            }
-            this->SetActiveChannel(Channel::ChB); //select B channel
-            status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
-            if (status != OpStatus::Success && controlPort != nullptr)
-                return status;
-
-            //parse FCW or PHO
-            if (parser.select("NCO Rx ch.B"s) == true)
-            {
-                char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
-                if (mode == 0) //FCW
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "FCW%02i", i);
-                        SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "PHO%02i", i);
-                        SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
-                    }
-                }
-            }
-            if (parser.select("NCO Tx ch.A"s) == true)
-            {
-                char varname[64];
-                int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
-                if (mode == 0) //FCW
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "FCW%02i", i);
-                        SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 16; ++i)
-                    {
-                        sprintf(varname, "PHO%02i", i);
-                        SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
-                    }
-                }
-            }
-        }
-        return OpStatus::Success;
+        return ReportError(OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format", filename.c_str());
     }
-    return ReportError(OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format", filename.c_str());
+
+    ChannelScope scope(this);
+
+    if (parser.select("Reference clocks"s))
+    {
+        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
+        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
+    }
+
+    if (parser.select("LMS7002 registers ch.A"s) == true)
+    {
+        ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
+
+        uint16_t x0020_value = 0;
+        this->SetActiveChannel(Channel::ChA); //select A channel
+        for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+        {
+            sscanf(pairs->first.c_str(), "%hx", &addr);
+            sscanf(pairs->second.c_str(), "%hx", &value);
+            if (addr == LMS7param(MAC).address) //skip register containing channel selection
+            {
+                x0020_value = value;
+                continue;
+            }
+            addrToWrite.push_back(addr);
+            dataToWrite.push_back(value);
+        }
+        status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
+        if (status != OpStatus::Success && controlPort != nullptr)
+            return status;
+
+        //parse FCW or PHO
+        if (parser.select("NCO Rx ch.A"s) == true)
+        {
+            char varname[64];
+            int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
+            if (mode == 0) //FCW
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "FCW%02i", i);
+                    SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "PHO%02i", i);
+                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
+                }
+            }
+        }
+        if (parser.select("NCO Tx ch.A"s) == true)
+        {
+            char varname[64];
+            int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
+            if (mode == 0) //FCW
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "FCW%02i", i);
+                    SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "PHO%02i", i);
+                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
+                }
+            }
+        }
+        status = SPI_write(0x0020, x0020_value);
+        if (status != OpStatus::Success && controlPort != nullptr)
+            return status;
+    }
+
+    this->SetActiveChannel(Channel::ChB);
+
+    if (parser.select("LMS7002 registers ch.B"s) == true)
+    {
+        addrToWrite.clear();
+        dataToWrite.clear();
+        ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B"s);
+        for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+        {
+            sscanf(pairs->first.c_str(), "%hx", &addr);
+            sscanf(pairs->second.c_str(), "%hx", &value);
+            addrToWrite.push_back(addr);
+            dataToWrite.push_back(value);
+        }
+        this->SetActiveChannel(Channel::ChB); //select B channel
+        status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
+        if (status != OpStatus::Success && controlPort != nullptr)
+            return status;
+
+        //parse FCW or PHO
+        if (parser.select("NCO Rx ch.B"s) == true)
+        {
+            char varname[64];
+            int mode = Get_SPI_Reg_bits(LMS7param(MODE_RX));
+            if (mode == 0) //FCW
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "FCW%02i", i);
+                    SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "PHO%02i", i);
+                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
+                }
+            }
+        }
+        if (parser.select("NCO Tx ch.A"s) == true)
+        {
+            char varname[64];
+            int mode = Get_SPI_Reg_bits(LMS7param(MODE_TX));
+            if (mode == 0) //FCW
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "FCW%02i", i);
+                    SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 16; ++i)
+                {
+                    sprintf(varname, "PHO%02i", i);
+                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
+                }
+            }
+        }
+    }
+    return OpStatus::Success;
 }
 
 OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValues)
@@ -1981,17 +1984,18 @@ OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_
     if (status != OpStatus::Success)
         return status;
 
-    if (angles_deg != nullptr)
+    if (angles_deg == nullptr)
     {
-        for (uint8_t i = 0; i < 16 && i < count; i++)
-        {
-            status = SetNCOPhaseOffset(dir, i, angles_deg[i]);
-            if (status != OpStatus::Success)
-                return status;
-        }
-        return Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX, 0);
+        return OpStatus::Success;
     }
-    return OpStatus::Success;
+
+    for (uint8_t i = 0; i < 16 && i < count; i++)
+    {
+        status = SetNCOPhaseOffset(dir, i, angles_deg[i]);
+        if (status != OpStatus::Success)
+            return status;
+    }
+    return Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7_SEL_TX : LMS7_SEL_RX, 0);
 }
 
 std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequencyOffset)
@@ -2120,20 +2124,20 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
 
 OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
 {
-    if (address == 0x0640 || address == 0x0641)
+    if (address != 0x0640 && address != 0x0641)
     {
-        MCU_BD* mcu = GetMCUControls();
-        mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
-        if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
-            mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        SPI_write(0x002D, address);
-        SPI_write(0x020C, data);
-        mcu->RunProcedure(7);
-        mcu->WaitForMCU(50);
-        return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
+        return SPI_write_batch(&address, &data, 1, toChip);
     }
-    else
-        return this->SPI_write_batch(&address, &data, 1, toChip);
+
+    MCU_BD* mcu = GetMCUControls();
+    mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
+    if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
+        mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+    SPI_write(0x002D, address);
+    SPI_write(0x020C, data);
+    mcu->RunProcedure(7);
+    mcu->WaitForMCU(50);
+    return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
 }
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
@@ -2183,29 +2187,30 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
             channel = 0; //force A when below MAC mapped register space
         return mRegistersMap->GetValue(channel, address);
     }
-    if (controlPort)
+    if (!controlPort)
     {
-        uint16_t data = 0;
-        OpStatus st;
-        if (address == 0x0640 || address == 0x0641)
-        {
-            MCU_BD* mcu = GetMCUControls();
-            mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
-            if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
-                mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-            SPI_write(0x002D, address);
-            mcu->RunProcedure(8);
-            mcu->WaitForMCU(50);
-            uint16_t rdVal = SPI_read(0x040B, true, status);
-            return rdVal;
-        }
-        else
-            st = this->SPI_read_batch(&address, &data, 1);
-        if (status != nullptr)
-            *status = st;
-        return data;
+        return 0;
     }
-    return 0;
+
+    uint16_t data = 0;
+    OpStatus st;
+    if (address == 0x0640 || address == 0x0641)
+    {
+        MCU_BD* mcu = GetMCUControls();
+        mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
+        if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
+            mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+        SPI_write(0x002D, address);
+        mcu->RunProcedure(8);
+        mcu->WaitForMCU(50);
+        uint16_t rdVal = SPI_read(0x040B, true, status);
+        return rdVal;
+    }
+    else
+        st = this->SPI_read_batch(&address, &data, 1);
+    if (status != nullptr)
+        *status = st;
+    return data;
 }
 
 OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiData, uint16_t cnt, bool toChip)
