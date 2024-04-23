@@ -167,39 +167,42 @@ void device_handler::close_device(int device_number, int block_type)
     }
 
     // Check if other block finished and close device
-    if (device_vector[device_number].source_flag == false &&
-        device_vector[device_number].sink_flag == false) {
-        if (device_vector[device_number].address != nullptr) {
-            GR_LOG_INFO(d_logger, "##################");
-            auto status = device_vector[device_number].address->Reset();
-            if (status != lime::OpStatus::Success)
-                error(device_number);
-
-            lime::DeviceRegistry::freeDevice(device_vector[device_number].address);
-
-            GR_LOG_INFO(d_logger,
-                        fmt::format("device_handler::close_device(): disconnected from "
-                                    "device number {:d}.",
-                                    device_number));
-            device_vector[device_number].address = nullptr;
-            GR_LOG_INFO(d_logger, "##################");
-        }
+    if (device_vector[device_number].source_flag ||
+        device_vector[device_number].sink_flag ||
+        device_vector[device_number].address == nullptr) {
+        return;
     }
+
+    GR_LOG_INFO(d_logger, "##################");
+    auto status = device_vector[device_number].address->Reset();
+    if (status != lime::OpStatus::Success)
+        error(device_number);
+
+    lime::DeviceRegistry::freeDevice(device_vector[device_number].address);
+
+    GR_LOG_INFO(d_logger,
+                fmt::format("device_handler::close_device(): disconnected from "
+                            "device number {:d}.",
+                            device_number));
+    device_vector[device_number].address = nullptr;
+    GR_LOG_INFO(d_logger, "##################");
 }
 
 void device_handler::close_all_devices()
 {
-    if (close_flag == false) {
-        for (std::size_t i = 0; i < device_vector.size(); i++) {
-            if (device_vector[i].address != nullptr) {
-                device_vector[i].address->Reset();
-                lime::DeviceRegistry::freeDevice(device_vector[i].address);
-
-                device_vector[i] = device();
-            }
-        }
-        close_flag = true;
+    if (close_flag) {
+        return;
     }
+
+    for (std::size_t i = 0; i < device_vector.size(); i++) {
+        if (device_vector[i].address != nullptr) {
+            device_vector[i].address->Reset();
+            lime::DeviceRegistry::freeDevice(device_vector[i].address);
+
+            device_vector[i] = device();
+        }
+    }
+    close_flag = true;
 }
 
 void device_handler::check_blocks(int device_number,
@@ -243,31 +246,32 @@ void device_handler::check_blocks(int device_number,
     }
 
     // Check block settings which must match
-    if (device_vector[device_number].source_flag &&
-        device_vector[device_number].sink_flag) {
-        // Chip_mode must match in blocks with the same serial
-        if (device_vector[device_number].source_channel_mode !=
-            device_vector[device_number].sink_channel_mode) {
-            close_all_devices();
-            throw std::invalid_argument(fmt::format(
-                "device_handler::check_blocks(): channel mismatch in LimeSuite "
-                "Source (RX) ({:d}) and LimeSuite Sink (TX) ({:d})",
-                device_vector[device_number].source_channel_mode,
-                device_vector[device_number].sink_channel_mode));
-        }
+    if (!device_vector[device_number].source_flag ||
+        !device_vector[device_number].sink_flag) {
+        return;
+    }
 
-        // When file_switch is 1 check filename match throughout the blocks with the same
-        // serial
-        if (device_vector[device_number].source_filename !=
-            device_vector[device_number].sink_filename) {
+    // Chip_mode must match in blocks with the same serial
+    if (device_vector[device_number].source_channel_mode !=
+        device_vector[device_number].sink_channel_mode) {
+        close_all_devices();
+        throw std::invalid_argument(
+            fmt::format("device_handler::check_blocks(): channel mismatch in LimeSuite "
+                        "Source (RX) ({:d}) and LimeSuite Sink (TX) ({:d})",
+                        device_vector[device_number].source_channel_mode,
+                        device_vector[device_number].sink_channel_mode));
+    }
 
-            close_all_devices();
-            throw std::invalid_argument(fmt::format(
-                "device_handler::check_blocks(): file must match in LimeSuite "
-                "Source (RX) ({:s}) and LimeSuite Sink (TX) ({:s})",
-                device_vector[device_number].source_filename,
-                device_vector[device_number].sink_filename));
-        }
+    // When file_switch is 1 check filename match throughout the blocks with the same
+    // serial
+    if (device_vector[device_number].source_filename !=
+        device_vector[device_number].sink_filename) {
+        close_all_devices();
+        throw std::invalid_argument(
+            fmt::format("device_handler::check_blocks(): file must match in LimeSuite "
+                        "Source (RX) ({:s}) and LimeSuite Sink (TX) ({:s})",
+                        device_vector[device_number].source_filename,
+                        device_vector[device_number].sink_filename));
     }
 }
 
@@ -403,21 +407,20 @@ double device_handler::set_rf_freq(int device_number,
         close_all_devices();
         throw std::invalid_argument(
             "device_handler::set_rf_freq(): rf_freq must be more than 0 Hz.");
-    } else {
-        GR_LOG_DEBUG(d_debug_logger, "device_handler::set_rf_freq(): ");
-        if (device->SetFrequency(0, direction, channel, rf_freq) !=
-            lime::OpStatus::Success) {
-            instance.error(device_number);
-        }
-
-        value = device->GetFrequency(0, direction, channel);
-
-        const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
-        GR_LOG_INFO(d_logger,
-                    fmt::format("RF frequency set [{:s}]: {:f} MHz.",
-                                s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
-                                (value / 1e6)));
     }
+
+    GR_LOG_DEBUG(d_debug_logger, "device_handler::set_rf_freq(): ");
+    if (device->SetFrequency(0, direction, channel, rf_freq) != lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    value = device->GetFrequency(0, direction, channel);
+
+    const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
+    GR_LOG_INFO(d_logger,
+                fmt::format("RF frequency set [{:s}]: {:f} MHz.",
+                            s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
+                            (value / 1e6)));
 
     return value;
 }
@@ -468,19 +471,19 @@ double device_handler::set_analog_filter(int device_number,
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
 
-    if (channel == 0 || channel == 1) {
-        GR_LOG_DEBUG(d_debug_logger, "device_handler::set_analog_filter(): ");
-        if (device->SetLowPassFilter(0, direction, channel, analog_bandw) !=
-            lime::OpStatus::Success) {
-            instance.error(device_number);
-        }
-
-        analog_value = device->GetLowPassFilter(0, direction, channel);
-    } else {
+    if (channel < 0 || channel > 1) {
         close_all_devices();
         throw std::invalid_argument(
             "device_handler::set_analog_filter(): channel must be 0 or 1.");
     }
+
+    GR_LOG_DEBUG(d_debug_logger, "device_handler::set_analog_filter(): ");
+    if (device->SetLowPassFilter(0, direction, channel, analog_bandw) !=
+        lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    analog_value = device->GetLowPassFilter(0, direction, channel);
 
     return analog_value;
 }
@@ -493,30 +496,30 @@ double device_handler::set_digital_filter(int device_number,
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
 
-    if (channel == 0 || channel == 1) {
-        bool enable = (digital_bandw > 0) ? true : false;
-        GR_LOG_DEBUG(d_debug_logger, "device_handler::set_digital_filter(): ");
-        if (device->ConfigureGFIR(0, direction, channel, { enable, digital_bandw }) !=
-            lime::OpStatus::Success) {
-            instance.error(device_number);
-        }
-
-        const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
-        const std::string msg_start =
-            fmt::format("Digital filter CH{:d} [{:s}]",
-                        channel,
-                        s_dir[direction == lime::TRXDir::Tx ? 1 : 0]);
-
-        if (enable) {
-            GR_LOG_INFO(d_logger,
-                        fmt::format("{:s} set: {:f}", msg_start, digital_bandw / 1e6));
-        } else {
-            GR_LOG_INFO(d_logger, fmt::format("{:s} disabled.", msg_start));
-        }
-    } else {
+    if (channel < 0 || channel > 1) {
         close_all_devices();
         throw std::invalid_argument(
             "device_handler::set_digital_filter(): channel must be 0 or 1.");
+    }
+
+    bool enable = (digital_bandw > 0) ? true : false;
+    GR_LOG_DEBUG(d_debug_logger, "device_handler::set_digital_filter(): ");
+    if (device->ConfigureGFIR(0, direction, channel, { enable, digital_bandw }) !=
+        lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
+    const std::string msg_start =
+        fmt::format("Digital filter CH{:d} [{:s}]",
+                    channel,
+                    s_dir[direction == lime::TRXDir::Tx ? 1 : 0]);
+
+    if (enable) {
+        GR_LOG_INFO(d_logger,
+                    fmt::format("{:s} set: {:f}", msg_start, digital_bandw / 1e6));
+    } else {
+        GR_LOG_INFO(d_logger, fmt::format("{:s} disabled.", msg_start));
     }
 
     return digital_bandw;
@@ -531,33 +534,32 @@ unsigned device_handler::set_gain(int device_number,
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
 
-    if (gain_dB >= 0 && gain_dB <= 73) {
-        GR_LOG_DEBUG(d_debug_logger, "device_handler::set_gain(): ");
-
-        if (device->SetGain(0, direction, channel, lime::eGainTypes::UNKNOWN, gain_dB) !=
-            lime::OpStatus::Success) {
-            instance.error(device_number);
-        }
-
-        const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
-
-        double gain_double = 0.0;
-        if (device->GetGain(
-                0, direction, channel, lime::eGainTypes::UNKNOWN, gain_double) !=
-            lime::OpStatus::Success) {
-            instance.error(device_number);
-        }
-
-        gain_value = std::lround(gain_double) + 12;
-        GR_LOG_INFO(d_logger,
-                    fmt::format("CH{:d} gain set [{:s}]: {:d}.",
-                                channel,
-                                s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
-                                gain_value));
-    } else {
+    if (gain_dB < 0 || gain_dB > 73) {
         close_all_devices();
         throw std::invalid_argument("device_handler::set_gain(): valid range [0, 73]");
     }
+
+    GR_LOG_DEBUG(d_debug_logger, "device_handler::set_gain(): ");
+
+    if (device->SetGain(0, direction, channel, lime::eGainTypes::UNKNOWN, gain_dB) !=
+        lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
+
+    double gain_double = 0.0;
+    if (device->GetGain(0, direction, channel, lime::eGainTypes::UNKNOWN, gain_double) !=
+        lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    gain_value = std::lround(gain_double) + 12;
+    GR_LOG_INFO(d_logger,
+                fmt::format("CH{:d} gain set [{:s}]: {:d}.",
+                            channel,
+                            s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
+                            gain_value));
 
     return gain_value;
 }
@@ -582,44 +584,45 @@ void device_handler::set_nco(int device_number,
                     fmt::format("NCO [{:s}] CH{:d} gain disabled.",
                                 s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
                                 channel));
-    } else {
-        int cmix_mode = 0;
+        return;
+    }
 
-        if (nco_freq > 0)
-            cmix_mode = 0;
-        else if (nco_freq < 0)
-            cmix_mode = 1;
+    int cmix_mode = 0;
 
-        for (int i = 0; i < 16; ++i) {
-            if (device->SetNCOFrequency(0, direction, channel, i, nco_freq) !=
-                lime::OpStatus::Success) {
-                instance.error(device_number);
-            }
-        }
+    if (nco_freq > 0)
+        cmix_mode = 0;
+    else if (nco_freq < 0)
+        cmix_mode = 1;
 
-        if (device->SetNCOIndex(0, direction, channel, 0, cmix_mode) !=
+    for (int i = 0; i < 16; ++i) {
+        if (device->SetNCOFrequency(0, direction, channel, i, nco_freq) !=
             lime::OpStatus::Success) {
             instance.error(device_number);
         }
-
-        const std::array<std::string, 2> s_cmix = { "UPCONVERT"s, "DOWNCONVERT"s };
-
-        std::array<double, 16> freq_value_out;
-        double pho_value_out;
-
-        for (int i = 0; i < 16; ++i) {
-            freq_value_out[i] =
-                device->GetNCOFrequency(0, direction, channel, i, pho_value_out);
-        }
-
-        GR_LOG_INFO(d_logger,
-                    fmt::format("NCO [{:s}] CH{:d}: {:f} MHz ({:f} deg.)({:s}).",
-                                s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
-                                channel,
-                                freq_value_out[0] / 1e6,
-                                pho_value_out,
-                                s_cmix[cmix_mode]));
     }
+
+    if (device->SetNCOIndex(0, direction, channel, 0, cmix_mode) !=
+        lime::OpStatus::Success) {
+        instance.error(device_number);
+    }
+
+    const std::array<std::string, 2> s_cmix = { "UPCONVERT"s, "DOWNCONVERT"s };
+
+    std::array<double, 16> freq_value_out;
+    double pho_value_out;
+
+    for (int i = 0; i < 16; ++i) {
+        freq_value_out[i] =
+            device->GetNCOFrequency(0, direction, channel, i, pho_value_out);
+    }
+
+    GR_LOG_INFO(d_logger,
+                fmt::format("NCO [{:s}] CH{:d}: {:f} MHz ({:f} deg.)({:s}).",
+                            s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
+                            channel,
+                            freq_value_out[0] / 1e6,
+                            pho_value_out,
+                            s_cmix[cmix_mode]));
 }
 
 void device_handler::disable_DC_corrections(int device_number)
@@ -658,20 +661,20 @@ void device_handler::set_rfe_device(rfe_dev_t* rfe_dev) { rfe_device.rfe_dev = r
 
 void device_handler::update_rfe_channels()
 {
-    if (rfe_device.rfe_dev) {
-        GR_LOG_DEBUG(d_debug_logger, "device_handler::update_rfe_channels(): ");
-        if (RFE_AssignSDRChannels(
-                rfe_device.rfe_dev, rfe_device.rx_channel, rfe_device.tx_channel) != 0) {
-            throw std::runtime_error("Failed to assign SDR channels");
-        }
-        GR_LOG_INFO(d_logger,
-                    fmt::format("RFE RX channel: {:d} TX channel: {:d}",
-                                rfe_device.rx_channel,
-                                rfe_device.tx_channel));
-    } else {
+    if (!rfe_device.rfe_dev) {
         throw std::runtime_error(
             "device_handler::update_rfe_channels(): no assigned RFE device");
     }
+
+    GR_LOG_DEBUG(d_debug_logger, "device_handler::update_rfe_channels(): ");
+    if (RFE_AssignSDRChannels(
+            rfe_device.rfe_dev, rfe_device.rx_channel, rfe_device.tx_channel) != 0) {
+        throw std::runtime_error("Failed to assign SDR channels");
+    }
+    GR_LOG_INFO(d_logger,
+                fmt::format("RFE RX channel: {:d} TX channel: {:d}",
+                            rfe_device.rx_channel,
+                            rfe_device.tx_channel));
 }
 #endif
 

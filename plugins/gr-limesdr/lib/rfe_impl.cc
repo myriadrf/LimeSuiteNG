@@ -132,95 +132,96 @@ rfe::~rfe()
 
 int rfe::change_mode(int mode)
 {
-    if (rfe_dev) {
-        if (mode == RFE_MODE_TXRX) {
-            if (boardState.selPortRX == boardState.selPortTX &&
-                boardState.channelIDRX < RFE_CID_CELL_BAND01) {
-                GR_LOG_ERROR(d_logger,
-                             "Mode cannot be set to RX+TX when same port is selected");
-                return -1;
-            }
-        }
-        int error = 0;
-        if (mode > 3 || mode < 0) {
-            GR_LOG_ERROR(d_logger, fmt::format("Invalid mode {:d}", mode));
-            return -1;
-        }
-        std::array<std::string, 4> mode_str = { "RX"s, "TX"s, "NONE"s, "RX+TX"s };
-        GR_LOG_INFO(d_logger, fmt::format("Changing mode to {:s}", mode_str[mode]));
-
-        if ((error = RFE_Mode(rfe_dev, mode)) != 0) {
-            GR_LOG_ERROR(
-                d_logger,
-                fmt::format("Failed to change mode: {:s}", this->strerror(error)));
-        }
-        boardState.mode = mode;
-        return error;
+    if (!rfe_dev) {
+        GR_LOG_ERROR(d_logger, "No RFE device opened");
+        return -1;
     }
-    GR_LOG_ERROR(d_logger, "No RFE device opened");
-    return -1;
+
+    if (mode == RFE_MODE_TXRX && boardState.selPortRX == boardState.selPortTX &&
+        boardState.channelIDRX < RFE_CID_CELL_BAND01) {
+        GR_LOG_ERROR(d_logger, "Mode cannot be set to RX+TX when same port is selected");
+        return -1;
+    }
+
+    int error = 0;
+    if (mode > 3 || mode < 0) {
+        GR_LOG_ERROR(d_logger, fmt::format("Invalid mode {:d}", mode));
+        return -1;
+    }
+    std::array<std::string, 4> mode_str = { "RX"s, "TX"s, "NONE"s, "RX+TX"s };
+    GR_LOG_INFO(d_logger, fmt::format("Changing mode to {:s}", mode_str[mode]));
+
+    if ((error = RFE_Mode(rfe_dev, mode)) != 0) {
+        GR_LOG_ERROR(d_logger,
+                     fmt::format("Failed to change mode: {:s}", this->strerror(error)));
+    }
+    boardState.mode = mode;
+    return error;
 }
 
 int rfe::set_fan(int enable)
 {
-    if (rfe_dev) {
-        std::array<std::string, 2> enable_str = { "Disabling"s, "Enabling"s };
-        GR_LOG_INFO(d_logger, fmt::format("{:s} fan", enable_str[enable]));
-        int error = 0;
-        if ((error = RFE_Fan(rfe_dev, enable)) != 0) {
-            GR_LOG_ERROR(
-                d_logger,
-                fmt::format("Failed to change mode: {:s}", this->strerror(error)));
-        }
-        return error;
+    if (!rfe_dev) {
+        GR_LOG_ERROR(d_logger, "No RFE device opened");
+        return -1;
     }
-    GR_LOG_ERROR(d_logger, "No RFE device opened");
-    return -1;
+
+    std::array<std::string, 2> enable_str = { "Disabling"s, "Enabling"s };
+    GR_LOG_INFO(d_logger, fmt::format("{:s} fan", enable_str[enable]));
+    int error = 0;
+    if ((error = RFE_Fan(rfe_dev, enable)) != 0) {
+        GR_LOG_ERROR(d_logger,
+                     fmt::format("Failed to change mode: {:s}", this->strerror(error)));
+    }
+    return error;
 }
 
 int rfe::set_attenuation(int attenuation)
 {
-    if (rfe_dev) {
-        int error = 0;
-        if (attenuation > 7) {
-            GR_LOG_ERROR(d_logger, "Attenuation value too high, valid range [0, 7]");
-            return -1;
-        }
-        GR_LOG_INFO(d_logger,
-                    fmt::format("Changing attenuation value to: {:d}", attenuation));
-
-        boardState.attValue = attenuation;
-        if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
-            GR_LOG_ERROR(
-                d_logger,
-                fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
-        }
-        return error;
+    if (!rfe_dev) {
+        GR_LOG_ERROR(d_logger, "No RFE device opened");
+        return -1;
     }
-    GR_LOG_ERROR(d_logger, "No RFE device opened");
-    return -1;
+
+    int error = 0;
+    if (attenuation > 7) {
+        GR_LOG_ERROR(d_logger, "Attenuation value too high, valid range [0, 7]");
+        return -1;
+    }
+    GR_LOG_INFO(d_logger,
+                fmt::format("Changing attenuation value to: {:d}", attenuation));
+
+    boardState.attValue = attenuation;
+    if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
+        GR_LOG_ERROR(
+            d_logger,
+            fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
+    }
+    return error;
 }
 
 int rfe::set_notch(int enable)
 {
-    if (rfe_dev) {
-        if (boardState.channelIDRX > RFE_CID_HAM_0920 ||
-            boardState.channelIDRX == RFE_CID_WB_4000) {
-            GR_LOG_ERROR(d_logger, "Notch filter cannot be se for this RX channel");
-            return -1;
-        }
-        int error = 0; //! TODO: might need renaming
-        boardState.notchOnOff = enable;
-        std::array<std::string, 2> en_dis = { "Disabling"s, "Enabling"s };
-        GR_LOG_INFO(d_logger, fmt::format("{:s} notch filter", en_dis[enable]));
-        if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
-            GR_LOG_ERROR(
-                d_logger,
-                fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
-        }
-        return error;
+    if (!rfe_dev) {
+        GR_LOG_ERROR(d_logger, "No RFE device opened");
+        return -1;
     }
-    return -1;
+
+    if (boardState.channelIDRX > RFE_CID_HAM_0920 ||
+        boardState.channelIDRX == RFE_CID_WB_4000) {
+        GR_LOG_ERROR(d_logger, "Notch filter cannot be se for this RX channel");
+        return -1;
+    }
+    int error = 0; //! TODO: might need renaming
+    boardState.notchOnOff = enable;
+    std::array<std::string, 2> en_dis = { "Disabling"s, "Enabling"s };
+    GR_LOG_INFO(d_logger, fmt::format("{:s} notch filter", en_dis[enable]));
+    if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
+        GR_LOG_ERROR(
+            d_logger,
+            fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
+    }
+    return error;
 }
 
 std::string rfe::strerror(int error)
