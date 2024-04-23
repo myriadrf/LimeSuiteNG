@@ -12,7 +12,7 @@
 #include <deque>
 
 /// Interface for providing parameters from configuration file
-class LimeSettingsProvider
+class LIME_API LimeSettingsProvider
 {
   public:
     virtual ~LimeSettingsProvider(){};
@@ -25,7 +25,7 @@ class LimeSettingsProvider
 };
 
 // Tx/Rx settings from configuration file
-struct DirectionalSettings {
+struct LIME_API DirectionalSettings {
     std::string antenna;
     std::string calibration;
     double lo_override;
@@ -36,7 +36,7 @@ struct DirectionalSettings {
     bool gfir_enable;
 };
 
-struct ConfigSettings {
+struct LIME_API ConfigSettings {
     ConfigSettings()
         : lpfBandwidthScale(1.0)
         , maxChannelsToUse(2)
@@ -56,7 +56,7 @@ struct ConfigSettings {
 };
 
 // Individual RF SOC device configuration
-struct DevNode {
+struct LIME_API DevNode {
   public:
     DevNode();
     ConfigSettings configInputs;
@@ -71,13 +71,13 @@ struct DevNode {
     bool assignedToPort;
 };
 
-struct ChannelData {
+struct LIME_API ChannelData {
     DevNode* parent;
     int chipChannel;
 };
 
 // Ports/Cells that can have combined multiple RF devices to act as one
-struct PortData {
+struct LIME_API PortData {
     // settings from file
     std::string deviceNames;
 
@@ -86,7 +86,7 @@ struct PortData {
     ConfigSettings configInputs;
 };
 
-struct LimePluginContext {
+struct LIME_API LimePluginContext {
     LimePluginContext();
     std::vector<ChannelData> rxChannels;
     std::vector<ChannelData> txChannels;
@@ -101,8 +101,8 @@ struct LimePluginContext {
     lime::SDRDevice::LogCallbackType hostLog;
 };
 
-struct LimeRuntimeParameters {
-    struct ChannelParams {
+struct LIME_API LimeRuntimeParameters {
+    struct LIME_API ChannelParams {
         std::vector<int64_t> freq;
         std::vector<double> gain;
         std::vector<int> bandwidth;
@@ -111,7 +111,7 @@ struct LimeRuntimeParameters {
     ChannelParams rx;
     ChannelParams tx;
 
-    struct PortParams {
+    struct LIME_API PortParams {
         double sample_rate;
         int rx_channel_count;
         int tx_channel_count;
