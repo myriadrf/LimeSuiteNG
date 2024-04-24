@@ -125,7 +125,7 @@ if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    #enable warnings in Debug configurations
+    #enable warnings
     add_compile_options(-Wall -Wpedantic)
 
     #symbols are only exported from libraries/modules explicitly
@@ -183,7 +183,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    #enable warnings in Debug configurations
+    #enable warnings
     add_compile_options(-Wall -Wpedantic)
 endif()
 
