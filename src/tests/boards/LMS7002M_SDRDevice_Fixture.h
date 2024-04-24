@@ -1,3 +1,6 @@
+#ifndef LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H
+#define LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H
+
 #define _USE_MATH_DEFINES
 
 #include <gmock/gmock.h>
@@ -71,3 +74,5 @@ class LMS7002M_SDRDevice_Fixture : public ::testing::Test
 };
 
 } // namespace lime::testing
+
+#endif // LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H
