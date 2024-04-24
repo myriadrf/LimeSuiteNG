@@ -144,12 +144,12 @@ SoapySDR::Kwargs SoapyLMS7::getHardwareInfo(void) const
  * Channels API
  ******************************************************************/
 
-size_t SoapyLMS7::getNumChannels(const int /*direction*/) const
+size_t SoapyLMS7::getNumChannels([[maybe_unused]] const int direction) const
 {
     return sdrDevice->GetDescriptor().rfSOC.at(0).channelCount;
 }
 
-bool SoapyLMS7::getFullDuplex(const int /*direction*/, const size_t /*channel*/) const
+bool SoapyLMS7::getFullDuplex([[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     return true;
 }
@@ -158,7 +158,7 @@ bool SoapyLMS7::getFullDuplex(const int /*direction*/, const size_t /*channel*/)
  * Antenna API
  ******************************************************************/
 
-std::vector<std::string> SoapyLMS7::listAntennas(const int direction, const size_t /*channel*/) const
+std::vector<std::string> SoapyLMS7::listAntennas(const int direction, [[maybe_unused]] const size_t channel) const
 {
     return sdrDevice->GetDescriptor().rfSOC.at(0).pathNames.at(direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx);
 }
@@ -204,7 +204,7 @@ std::string SoapyLMS7::getAntenna(const int direction, const size_t channel) con
  * Frontend corrections API
  ******************************************************************/
 
-bool SoapyLMS7::hasDCOffsetMode(const int direction, const size_t /*channel*/) const
+bool SoapyLMS7::hasDCOffsetMode(const int direction, [[maybe_unused]] const size_t channel) const
 {
     return (direction == SOAPY_SDR_RX);
 }
@@ -221,7 +221,7 @@ bool SoapyLMS7::getDCOffsetMode(const int direction, const size_t channel) const
     return sdrDevice->GetDCOffsetMode(0, direction == SOAPY_SDR_RX ? ::TRXDir::Rx : TRXDir::Tx, channel);
 }
 
-bool SoapyLMS7::hasDCOffset(const int /*direction*/, const size_t /*channel*/) const
+bool SoapyLMS7::hasDCOffset([[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     return true;
 }
@@ -242,7 +242,7 @@ std::complex<double> SoapyLMS7::getDCOffset(const int direction, const size_t ch
     return { complex.real(), complex.imag() };
 }
 
-bool SoapyLMS7::hasIQBalance(const int /*direction*/, const size_t /*channel*/) const
+bool SoapyLMS7::hasIQBalance([[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     return true;
 }
@@ -267,7 +267,7 @@ std::complex<double> SoapyLMS7::getIQBalance(const int direction, const size_t c
  * Gain API
  ******************************************************************/
 
-std::vector<std::string> SoapyLMS7::listGains(const int direction, const size_t /*channel*/) const
+std::vector<std::string> SoapyLMS7::listGains(const int direction, [[maybe_unused]] const size_t channel) const
 {
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
     const auto& gainEnums = sdrDevice->GetDescriptor().rfSOC.at(0).gains.at(dir);
@@ -444,7 +444,8 @@ double SoapyLMS7::getFrequency(const int direction, const size_t channel) const
     return sdrDevice->GetFrequency(0, direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx, channel);
 }
 
-std::vector<std::string> SoapyLMS7::listFrequencies(const int /*direction*/, const size_t /*channel*/) const
+std::vector<std::string> SoapyLMS7::listFrequencies(
+    [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     std::vector<std::string> opts;
     opts.push_back("RF");
@@ -677,7 +678,7 @@ std::string SoapyLMS7::readSensor(const std::string& name) const
     throw std::runtime_error("SoapyLMS7::readSensor(" + name + ") - unknown sensor name");
 }
 
-std::vector<std::string> SoapyLMS7::listSensors(const int /*direction*/, const size_t /*channel*/) const
+std::vector<std::string> SoapyLMS7::listSensors([[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     std::vector<std::string> sensors;
     sensors.push_back("lo_locked");
