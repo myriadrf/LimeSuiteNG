@@ -33,6 +33,7 @@ set(KBUILD_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 file(
     WRITE ${KBUILD_FILE_DIR}/Kbuild
     "ccflags-y += -Wno-declaration-after-statement
+    ccflags-y += -std=gnu11
     ccflags-y += -I${KBUILD_FILE_DIR}/bsp
     obj-m = litepcie.o")
 
