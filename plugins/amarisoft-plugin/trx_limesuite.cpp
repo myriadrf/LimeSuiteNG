@@ -2,7 +2,7 @@
  * LimeMicroSystem transceiver driver
  * Copyright (C) 2015-2018 Amarisoft/LimeMicroSystems
  */
-#include "common.h"
+#include "limesuiteng/LimePlugin.h"
 #include "limesuiteng/StreamConfig.h"
 
 #include <stdarg.h>
@@ -69,11 +69,11 @@ static void Log(LogLevel lvl, const char* format, ...)
     printf("\n");
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    printf("%s\n", msg.c_str());
 }
 
 //static TRXStatistics trxstats;

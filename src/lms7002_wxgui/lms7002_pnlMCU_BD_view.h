@@ -38,7 +38,7 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     void OnReadSFRfinished(wxThreadEvent& event);
     void OnProgrammingfinished(wxThreadEvent& event);
 
-    static bool OnProgrammingCallback(int bsent, int btotal, const char* progressMsg);
+    static bool OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg);
 
   public:
     lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id);

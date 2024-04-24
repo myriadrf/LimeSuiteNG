@@ -1,14 +1,7 @@
 #include "WriteRegistersBatch.h"
 
-#ifndef NDEBUG
-    #define ASSERT_WARNING(cond, message) \
-        if (!cond) \
-        lime::warning("%s (%s)\n", message, #cond)
-#else
-    #define ASSERT_WARNING(cond, message)
-#endif
-
 using namespace lime;
+using namespace std::literals::string_literals;
 
 /// @brief Constructor for the batch.
 /// @param fpga The FPGA this batch belongs to.
@@ -17,7 +10,8 @@ WriteRegistersBatch::WriteRegistersBatch(FPGA* fpga)
 
 WriteRegistersBatch::~WriteRegistersBatch()
 {
-    ASSERT_WARNING(addrs.size() == 0, "FPGA WriteRegistersBatch not flushed");
+    if (addrs.size() != 0)
+        lime::warning("FPGA WriteRegistersBatch not flushed"s);
 }
 
 /// @brief Writes the modified values into the FPGA.

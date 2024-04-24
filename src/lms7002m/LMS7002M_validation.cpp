@@ -1,5 +1,4 @@
-#ifndef LMS7_VALIDATION
-#define LMS7_VALIDATION
+#include "LMS7002M_validation.h"
 
 #include <string>
 #include <cstdarg>
@@ -85,5 +84,3 @@ bool LMS7002M_Validate(const SDRConfig& cfg, std::vector<std::string>& errors, c
 }
 
 } // namespace lime
-
-#endif // LMS7_VALIDATION

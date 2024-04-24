@@ -27,6 +27,7 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
 static const int STREAM_BULK_READ_ADDRESS = 0x83;
@@ -34,8 +35,8 @@ static const int STREAM_BULK_READ_ADDRESS = 0x83;
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static const CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)", 0, 0, 255, false };
-static const CustomParameter CP_TEMPERATURE = { "Board Temperature", 1, 0, 65535, true };
+static const CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)"s, 0, 0, 255, false };
+static const CustomParameter CP_TEMPERATURE = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v0 = { //
     { 0x0022, 0x0FFF },
@@ -176,31 +177,31 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         descriptor.customParameters.push_back(CP_TEMPERATURE);
     }
 
-    descriptor.spiSlaveIds = { { "LMS7002M", SPI_LMS7002M }, { "FPGA", SPI_FPGA } };
+    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     RFSOCDescriptor soc;
     soc.name = "LMS";
     soc.channelCount = 1;
-    soc.pathNames[TRXDir::Rx] = { "NONE", "LNAH", "LNAL_NC", "LNAW", "Auto" };
-    soc.pathNames[TRXDir::Tx] = { "NONE", "Band1", "Band2", "Auto" };
+    soc.pathNames[TRXDir::Rx] = { "NONE"s, "LNAH"s, "LNAL_NC"s, "LNAW"s, "Auto"s };
+    soc.pathNames[TRXDir::Tx] = { "NONE"s, "Band1"s, "Band2"s, "Auto"s };
     soc.samplingRateRange = { 100e3, 30.72e6, 0 };
     soc.frequencyRange = { 10e6, 3.5e9, 0 };
 
     soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
     soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
 
-    soc.antennaRange[TRXDir::Rx]["LNAH"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAW"] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Tx]["Band1"] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"] = { 30e6, 1.9e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 900e6 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
     SetGainInformationInDescriptor(soc);
 
     descriptor.rfSOC.push_back(soc);
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA", eDeviceTreeNodeClass::FPGA_MINI, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS", eDeviceTreeNodeClass::LMS7002M, mLMSChips[0]));
-    descriptor.socTree = std::make_shared<DeviceTreeNode>("SDR Mini", eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips[0]));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>("SDR Mini"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
     mDeviceDescriptor = descriptor;
@@ -230,7 +231,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             ss << err << std::endl;
         }
 
-        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: %s.", ss.str().c_str());
+        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: "s + ss.str());
     }
 
     bool rxUsed = false;
@@ -258,12 +259,12 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 
         status = LMS7002LOConfigure(chip, cfg);
         if (status != OpStatus::Success)
-            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed.");
+            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed."s);
         for (int i = 0; i < 2; ++i)
         {
             status = LMS7002ChannelConfigure(chip, cfg.channel[i], i);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.", i);
             LMS7002TestSignalConfigure(chip, cfg.channel[i], i);
         }
 
@@ -281,7 +282,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate."s);
         }
 
         for (int i = 0; i < 2; ++i)
@@ -298,15 +299,15 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         {
             status = UpdateFPGAInterface(this);
             if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency.");
+                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency."s);
         }
     } //try
     catch (std::logic_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
     } catch (std::runtime_error& e)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: %s", e.what());
+        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
     }
     return OpStatus::Success;
 }
@@ -429,7 +430,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                     pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
                     break;
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
 
                 int payloadOffset = pkt.blockCount * 4;
@@ -449,7 +450,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                     pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
                     break;
                 default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select");
+                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
                 }
 
                 int payloadOffset = pkt.blockCount * 2;
@@ -466,7 +467,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         int sent = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
         {
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
         }
 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
@@ -485,7 +486,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         }
         else
         {
-            throw std::runtime_error("SPI failed");
+            throw std::runtime_error("SPI failed"s);
         }
     }
 
@@ -506,7 +507,7 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 {
     if (mDeviceDescriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
-        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor");
+        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor"s);
     }
 
     return LMS7002M_SDRDevice::GetTemperature(moduleIndex);
@@ -640,7 +641,7 @@ void LimeSDR_Mini::StreamStart(uint8_t moduleIndex)
     }
     else
     {
-        throw std::runtime_error("Stream not setup");
+        throw std::runtime_error("Stream not setup"s);
     }
 }
 

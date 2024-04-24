@@ -11,11 +11,21 @@
 #define LMS7PROJECTAPP_H
 
 #include <wx/app.h>
+#include <wx/cmdline.h>
+
+struct AppArgs {
+    wxString device{};
+    wxString searchTree{};
+};
 
 class lms7suiteApp : public wxApp
 {
+    AppArgs appArgs;
+
   public:
     virtual bool OnInit();
+    virtual void OnInitCmdLine(wxCmdLineParser& parser);
+    virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
 };
 
 #endif // LMS7PROJECTAPP_H

@@ -1,5 +1,10 @@
-#ifndef LMS7_VALIDATION
-#define LMS7_VALIDATION
+#ifndef LMS7_VALIDATION_H
+#define LMS7_VALIDATION_H
+
+#include "limesuiteng/SDRConfig.h"
+
+#include <string>
+#include <vector>
 
 namespace lime {
 
@@ -8,4 +13,4 @@ bool LMS7002M_Validate(const SDRConfig& config, std::vector<std::string>& out_er
 
 } // namespace lime
 
-#endif // LMS7_VALIDATION
+#endif // LMS7_VALIDATION_H

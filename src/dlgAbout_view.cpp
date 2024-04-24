@@ -80,8 +80,8 @@ dlgAbout_view::dlgAbout_view(
 
     ID_HYPERLINKCTRL1 = new wxHyperlinkCtrl(this,
         wxID_ANY,
-        wxT("http://www.limemicro.com"),
-        wxT("http://www.limemicro.com"),
+        wxT("https://www.limemicro.com"),
+        wxT("https://www.limemicro.com"),
         wxDefaultPosition,
         wxDefaultSize,
         wxHL_DEFAULT_STYLE);

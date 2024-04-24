@@ -26,7 +26,7 @@ void __loadDeviceFactoryPCIe(void) //TODO fixme replace with LoadLibrary/dlopen
 }
 
 DeviceFactoryPCIe::DeviceFactoryPCIe()
-    : DeviceRegistryEntry("LitePCIe")
+    : DeviceRegistryEntry("LitePCIe"s)
 {
 }
 
@@ -34,7 +34,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
     DeviceHandle handle;
-    handle.media = "PCIe";
+    handle.media = "PCIe"s;
 
     if (!hint.media.empty() && hint.media != handle.media)
         return handles;
@@ -44,12 +44,12 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
     for (const std::string& nodeName : nodes)
     {
         // look for _control devices only, skip _trx*
-        std::size_t nameEnd = nodeName.find("_control");
+        std::size_t nameEnd = nodeName.find("_control"sv);
         if (nameEnd == std::string::npos)
             continue;
 
         handle.name = nodeName.substr(0, nameEnd); // removed _control postfix
-        handle.addr = std::string("/dev/") + nodeName;
+        handle.addr = "/dev/"s + nodeName;
 
         std::shared_ptr<LitePCIe> pcidev = std::make_shared<LitePCIe>();
         if (pcidev->Open(handle.addr, O_RDWR) != OpStatus::Success)
@@ -98,7 +98,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
         return nullptr;
     }
 
-    std::vector<std::string> streamEndpoints = GetDevicesWithRegex(handle.name + "_trx*");
+    std::vector<std::string> streamEndpoints = GetDevicesWithRegex(handle.name + "_trx*"s);
     std::sort(streamEndpoints.begin(), streamEndpoints.end());
     for (const std::string& endpointPath : streamEndpoints)
     {

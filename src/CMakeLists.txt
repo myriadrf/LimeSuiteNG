@@ -22,7 +22,8 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
-    include/limesuiteng/Logger.cpp
+    logger/Logger.cpp
+    logger/LoggerCString.cpp
     ADF4002/ADF4002.cpp
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp
@@ -52,16 +53,13 @@ set(LIME_SUITE_SOURCES
     mcu_program/spi.cpp
     mcu_program/common_src/lms7002m_calibrations.c
     mcu_program/common_src/lms7002m_controls.c
-    mcu_program/common_src/lms7002m_filters.c
     API/LMS_APIWrapper.cpp
+    API/LimePlugin.cpp
     include/limesuiteng/SDRDevice.cpp
     utilities/toString.cpp)
 
 set_source_files_properties(
-    mcu_program/common_src/lms7002m_calibrations.c
-    mcu_program/common_src/lms7002m_controls.c
-    mcu_program/common_src/lms7002m_filters.c
-    PROPERTIES LANGUAGE CXX)
+    mcu_program/common_src/lms7002m_calibrations.c mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
 set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}

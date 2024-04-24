@@ -14,14 +14,6 @@
 
 using namespace std;
 
-#ifndef NDEBUG
-    #define ASSERT_WARNING(cond, message) \
-        if (!cond) \
-        lime::warning("W: %s (%s)", message, #cond)
-#else
-    #define ASSERT_WARNING(cond, message)
-#endif
-
 namespace lime {
 
 // 0x000A
@@ -317,7 +309,12 @@ OpStatus FPGA::StartStreaming()
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
         return OpStatus::IOFailure;
-    ASSERT_WARNING((interface_ctrl_000A & RX_EN) == 0, "FPGA stream is already started");
+
+    if ((interface_ctrl_000A & RX_EN) != 0)
+    {
+        lime::warning("FPGA stream is already started"s);
+    }
+
     interface_ctrl_000A &= ~(TX_PTRN_EN | RX_PTRN_EN); // disable test patterns
     return WriteRegister(0x000A, interface_ctrl_000A | RX_EN);
 }
@@ -345,7 +342,7 @@ OpStatus FPGA::ResetTimestamp()
         return OpStatus::Success;
 
     if (interface_ctrl_000A & RX_EN)
-        return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp");
+        return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp"s);
 #endif // NDEBUG
     //reset hardware timestamp to 0
     int interface_ctrl_0009 = ReadRegister(0x0009);
@@ -425,14 +422,14 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
     batch.Flush();
     // TODO: could possibly write this in the same batch?
     if (WriteRegister(0x0023, reg23val | PHCFG_START) != OpStatus::Success)
-        lime::error("FPGA SetPllFrequency: find phase, failed to write registers");
+        lime::error("FPGA SetPllFrequency: find phase, failed to write registers"s);
 
     const uint16_t doneMask = doPhaseSearch ? 0x4 : 0x1;
     const uint16_t errorMask = doPhaseSearch ? 0x8 : (0xFF << 7);
 
     if (waitLock)
     {
-        const std::string title = "PLL Clock[" + std::to_string(clockIndex) + "] PHCFG_START";
+        const std::string title = "PLL Clock["s + std::to_string(clockIndex) + "] PHCFG_START"s;
         OpStatus status = WaitTillDone(busyAddr, doneMask, errorMask, title);
         if (status != OpStatus::Success)
             return status;
@@ -441,7 +438,7 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (WriteRegister(0x0023, reg23val & ~PHCFG_START) != OpStatus::Success) // redundant clear
-        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers");
+        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers"s);
     return OpStatus::Success;
 }
 
@@ -457,7 +454,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     lime::debug("FPGA SetPllFrequency: PLL[%i] input:%.3f MHz clockCount:%i", pllIndex, inputFreq / 1e6, clockCount);
     WriteRegistersBatch batch(this);
     if (!fpgaPort)
-        return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 
     const bool waitForDone = HasWaitForDone(ReadRegister(0)); // read targetDevice
     bool willDoPhaseSearch = false;
@@ -506,7 +503,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         WriteRegister(0x0023, reg23val | PLLRST_START);
         if (waitForDone)
         {
-            const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLRST_START";
+            const std::string title = "FPGA PLL["s + std::to_string(pllIndex) + "] PLLRST_START"s;
 
             OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
             if (status != OpStatus::Success)
@@ -540,7 +537,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         }
     }
     if (desiredVCO.size() == 0)
-        return ReportError(OpStatus::InvalidValue, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks");
+        return ReportError(OpStatus::InvalidValue, "FPGA SetPllFrequency: no suitable VCO frequencies found for requested clocks"s);
 
     // Find VCO that satisfies most outputs with integer dividers
     uint64_t bestFreqVCO = std::max_element(
@@ -623,7 +620,7 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
         WriteRegister(0x0023, reg23val | PLLCFG_START);
     if (waitForDone) //wait for config to activate
     {
-        const std::string title = "FPGA PLL[" + std::to_string(pllIndex) + "] PLLCFG_START";
+        const std::string title = "FPGA PLL["s + std::to_string(pllIndex) + "] PLLCFG_START"s;
 
         OpStatus status = WaitTillDone(busyAddr, 0x0001, 0xFF << 7, title);
         if (status != OpStatus::Success)
@@ -655,12 +652,12 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
 OpStatus FPGA::SetDirectClocking(int clockIndex)
 {
     if (!fpgaPort)
-        return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL");
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL"s);
 
     uint16_t drct_clk_ctrl_0005 = ReadRegister(0x0005);
     //enable direct clocking
     if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
-        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers");
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers"s);
     return OpStatus::Success;
 }
 
@@ -1012,7 +1009,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     if (!phaseSearchSuccess)
     {
-        lime::error("LML RX phase search FAIL");
+        lime::error("LML RX phase search FAIL"s);
         status = OpStatus::Error;
         rxClocks[0].index = 0;
         rxClocks[0].phaseShift_deg = 0;
@@ -1068,7 +1065,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     if (!phaseSearchSuccess)
     {
-        lime::error("LML TX phase search FAIL");
+        lime::error("LML TX phase search FAIL"s);
         status = OpStatus::Error;
         txClocks[0].phaseShift_deg = 0;
         txClocks[0].findPhase = false;
@@ -1194,7 +1191,7 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
 /// @param[out] desc The descriptor to output the information to.
 void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc)
 {
-    desc.gatewareTargetBoard = GetDeviceName(eLMS_DEV(gw.boardID));
+    desc.gatewareTargetBoard = GetDeviceName(static_cast<eLMS_DEV>(gw.boardID));
     desc.gatewareVersion = std::to_string(gw.version);
     desc.gatewareRevision = std::to_string(gw.revision);
     desc.hardwareVersion = std::to_string(gw.hardwareVersion);

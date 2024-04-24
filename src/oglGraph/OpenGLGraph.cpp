@@ -4,18 +4,11 @@
 @brief	OpenGL based basic chart drawing
 */
 
+#include "GL/glew.h" // must be first to be included before gl.h
+
 #include "OpenGLGraph.h"
-#include <stdio.h>
-#include <stdarg.h>
 #include <cmath>
 #include <iostream>
-#if defined(__APPLE__)
-    #include <OpenGL/gl.h>
-    #include <OpenGL/glu.h>
-#else
-    #include <GL/gl.h>
-    #include <GL/glu.h>
-#endif
 #include "GLFont.h"
 #include "StaticFontHeader.h"
 #include "dlgMarkers.h"
@@ -49,11 +42,11 @@ static bool IsGlew1_5()
 }
 
 GLG_settings::GLG_settings()
-    : title("")
-    , titleXaxis("")
-    , titleYaxis("")
-    , xUnits("")
-    , yUnits("")
+    : title(""s)
+    , titleXaxis(""s)
+    , titleYaxis(""s)
+    , xUnits(""s)
+    , yUnits(""s)
     , drawGridX(true)
     , drawGridY(true)
     , drawTitle(true)
@@ -142,8 +135,8 @@ OpenGLGraph::OpenGLGraph(wxWindow* parent,
 
     for (int i = 0; i < 3; ++i)
     {
-        info_msg.push_back("");
-        info_msg_toDisplay.push_back("");
+        info_msg.push_back(""s);
+        info_msg_toDisplay.push_back(""s);
     }
 
     m_timer = new wxTimer(this, markers_timer_id);

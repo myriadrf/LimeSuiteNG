@@ -14,14 +14,16 @@
 #include "DeviceTreeNode.h"
 #include "utilities/toString.h"
 
-#include "math.h"
+#include <cmath>
 
 namespace lime {
+
+using namespace std::literals::string_literals;
 
 static const char DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
 static const char PATH_SEPARATOR_SYMBOL = '/';
 
-static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)", 0, 0, 65535, false };
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
 
 /// @brief Constructs the LimeSDR_MMX8 object.
@@ -54,15 +56,15 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     // FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     // FPGA::GatewareToDescriptor(gw, desc);
 
-    desc.socTree = std::make_shared<DeviceTreeNode>("X8", eDeviceTreeNodeClass::SDRDevice, this);
+    desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
 
     mADF = new ADF4002();
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF));
 
     mSubDevices.resize(8);
-    desc.spiSlaveIds["FPGA"] = 0;
+    desc.spiSlaveIds["FPGA"s] = 0;
 
     const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
 
@@ -91,8 +93,8 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                    PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            const std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
+                                          PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
@@ -106,7 +108,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
             customParameterToDevice[parameter.id] = mSubDevices[i];
         }
 
-        const std::string treeName = subdeviceDescriptor.socTree->name + "#" + std::to_string(i + 1);
+        const std::string treeName = subdeviceDescriptor.socTree->name + "#"s + std::to_string(i + 1);
         subdeviceDescriptor.socTree->name = treeName;
         desc.socTree->children.push_back(subdeviceDescriptor.socTree);
     }
@@ -709,7 +711,7 @@ OpStatus LimeSDR_MMX8::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     SDRDevice* dev = chipSelectToDevice.at(chipSelect);
     if (!dev)
     {
-        throw std::logic_error("invalid SPI chip select");
+        throw std::logic_error("invalid SPI chip select"s);
     }
 
     uint32_t subSelect = chipSelect & 0xFF;
@@ -788,7 +790,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 
     SDRDevice* dev = mSubDevices.at(moduleIndex);
     if (!dev)
-        return ReportError(OpStatus::InvalidValue, "Invalid id select");
+        return ReportError(OpStatus::InvalidValue, "Invalid id select"s);
 
     return dev->UploadMemory(device, 0, data, length, callback);
 }
@@ -796,14 +798,14 @@ OpStatus LimeSDR_MMX8::UploadMemory(
 OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::InvalidValue, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryWrite(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::InvalidValue, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "Storage has no owner"s);
 
     return dev->MemoryWrite(storage, region, data);
 }
@@ -811,14 +813,14 @@ OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region 
 OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr)
-        return ReportError(OpStatus::InvalidValue, "invalid storage");
+        return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
         return mMainFPGAcomms->MemoryRead(region.address, data, region.size);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
-        return ReportError(OpStatus::InvalidValue, "storage has no owner");
+        return ReportError(OpStatus::InvalidValue, "Storage has no owner"s);
 
     return dev->MemoryRead(storage, region, data);
 }

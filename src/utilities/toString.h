@@ -7,20 +7,20 @@
 
 namespace lime {
 
-/// @brief Converts a given TRXDir value into a human readable C-string.
-/// @param value The value to convert.
-/// @return The C-string representing the direction.
-LIME_API const char* ToCString(TRXDir dir);
+/// @brief Converts a given TRXDir value into a human readable string.
+/// @param dir The value to convert.
+/// @return The string representing the direction.
 LIME_API const std::string& ToString(TRXDir dir);
 
-/// @brief Converts a given OpStatus value into a human readable C-string.
+/// @brief Converts a given OpStatus value into a human readable string.
 /// @param value The value to convert.
-/// @return The C-string representing the status.
-LIME_API const char* ToCString(OpStatus value);
+/// @return The string representing the status.
+LIME_API const std::string& ToString(OpStatus value);
 
 LIME_API const std::string& ToString(eMemoryRegion value);
 LIME_API const std::string& ToString(eGainTypes value);
 LIME_API const std::string& ToString(eMemoryDevice value);
 
-template<class T> T ToEnumClass(const std::string& str);
+template<class T> LIME_API T ToEnumClass(const std::string& str);
+
 } // namespace lime

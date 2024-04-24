@@ -163,20 +163,20 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(${ENABLE_SIMD_FLAGS} MATCHES "native")
         add_compile_options(-march=native)
         if(X86)
-            add_compile_options(-mfpmath=both)
+            add_compile_options(-mfpmath=sse)
         endif()
         message(STATUS "Enabling native optimizations")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX2")
-        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfma -mavx2 -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfma -mavx2 -mfpmath=sse)
         message(STATUS "Enabling AVX2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "AVX")
-        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mavx -mfpmath=sse)
         message(STATUS "Enabling AVX instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE4.2")
-        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mfpmath=sse)
         message(STATUS "Enabling SSE4.2 instructions")
     elseif(${ENABLE_SIMD_FLAGS} MATCHES "SSE3")
-        add_compile_options(-mmmx -msse -msse2 -msse3 -mfpmath=both)
+        add_compile_options(-mmmx -msse -msse2 -msse3 -mfpmath=sse)
         message(STATUS "Enabling SSE3 instructions")
     endif()
 
@@ -255,9 +255,9 @@ if(ENABLE_TESTING)
     enable_testing()
 endif()
 
-########################################################################
-# rpath setup - http://www.cmake.org/Wiki/CMake_RPATH_handling
-########################################################################
+###########################################################################################
+# rpath setup - https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+###########################################################################################
 # use, i.e. don't skip the full RPATH for the build tree
 option(CMAKE_SKIP_BUILD_RPATH "skip rpath build" FALSE)
 

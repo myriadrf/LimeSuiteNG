@@ -4,7 +4,7 @@
 #include <ciso646>
 #include <vector>
 #include <map>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 namespace lime {
@@ -160,12 +160,12 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
 
         if (!txPhaseSearchSuccess)
         {
-            lime::error("LML TX phase search FAIL");
+            lime::error("LML TX phase search FAIL"s);
         }
     }
     else
     {
-        lime::error("LML RX phase search FAIL");
+        lime::error("LML RX phase search FAIL"s);
     }
 
     //Restore registers
