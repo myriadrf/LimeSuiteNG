@@ -691,36 +691,36 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     sizerR3->Add(cmbCMPLO_CTRL, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5);
     wndId2Enum[cmbCMPLO_CTRL] = LMS7_CMPLO_CTRL_CGEN;
 
-    wndId2Enum[cmbCLKH_OV_CLKL_CGEN] = LMS7_CLKH_OV_CLKL_CGEN;
-    wndId2Enum[chkCOARSE_START_CGEN] = LMS7_COARSE_START_CGEN;
-    wndId2Enum[cmbCP2_CGEN] = LMS7_CP2_CGEN;
-    wndId2Enum[cmbCP3_CGEN] = LMS7_CP3_CGEN;
-    wndId2Enum[cmbCSW_VCO_CGEN] = LMS7_CSW_VCO_CGEN;
-    wndId2Enum[cmbCZ_CGEN] = LMS7_CZ_CGEN;
-    wndId2Enum[chkEN_COARSE_CKLGEN] = LMS7_EN_COARSE_CKLGEN;
-    wndId2Enum[cmbEN_ADCCLKH_CLKGN] = LMS7_EN_ADCCLKH_CLKGN;
-    wndId2Enum[chkEN_G_CGEN] = LMS7_EN_G_CGEN;
-    wndId2Enum[chkEN_INTONLY_SDM_CGEN] = LMS7_EN_INTONLY_SDM_CGEN;
-    wndId2Enum[chkEN_SDM_CLK_CGEN] = LMS7_EN_SDM_CLK_CGEN;
-    wndId2Enum[cmbICT_VCO_CGEN] = LMS7_ICT_VCO_CGEN;
-    wndId2Enum[lblINT_SDM_CGEN] = LMS7_INT_SDM_CGEN;
-    wndId2Enum[cmbIOFFSET_CP_CGEN] = LMS7_IOFFSET_CP_CGEN;
-    wndId2Enum[cmbIPULSE_CP_CGEN] = LMS7_IPULSE_CP_CGEN;
-    wndId2Enum[chkPD_CP_CGEN] = LMS7_PD_CP_CGEN;
-    wndId2Enum[chkPD_FDIV_FB_CGEN] = LMS7_PD_FDIV_FB_CGEN;
-    wndId2Enum[chkPD_FDIV_O_CGEN] = LMS7_PD_FDIV_O_CGEN;
-    wndId2Enum[chkPD_SDM_CGEN] = LMS7_PD_SDM_CGEN;
-    wndId2Enum[chkPD_VCO_CGEN] = LMS7_PD_VCO_CGEN;
-    wndId2Enum[chkPD_VCO_COMP_CGEN] = LMS7_PD_VCO_COMP_CGEN;
-    wndId2Enum[chkRESET_N_CGEN] = LMS7_RESET_N_CGEN;
-    wndId2Enum[chkREVPH_PFD_CGEN] = LMS7_REVPH_PFD_CGEN;
-    wndId2Enum[chkREV_CLKADC_CGEN] = LMS7_REV_CLKADC_CGEN;
-    wndId2Enum[chkREV_CLKDAC_CGEN] = LMS7_REV_CLKDAC_CGEN;
-    wndId2Enum[chkREV_SDMCLK_CGEN] = LMS7_REV_SDMCLK_CGEN;
-    wndId2Enum[rgrSEL_SDMCLK_CGEN] = LMS7_SEL_SDMCLK_CGEN;
-    wndId2Enum[chkSPDUP_VCO_CGEN] = LMS7_SPDUP_VCO_CGEN;
-    wndId2Enum[chkSX_DITHER_EN_CGEN] = LMS7_SX_DITHER_EN_CGEN;
-    wndId2Enum[cmbTST_CGEN] = LMS7_TST_CGEN;
+    wndId2Enum[cmbCLKH_OV_CLKL_CGEN] = LMS7param(CLKH_OV_CLKL_CGEN);
+    wndId2Enum[chkCOARSE_START_CGEN] = LMS7param(COARSE_START_CGEN);
+    wndId2Enum[cmbCP2_CGEN] = LMS7param(CP2_CGEN);
+    wndId2Enum[cmbCP3_CGEN] = LMS7param(CP3_CGEN);
+    wndId2Enum[cmbCSW_VCO_CGEN] = LMS7param(CSW_VCO_CGEN);
+    wndId2Enum[cmbCZ_CGEN] = LMS7param(CZ_CGEN);
+    wndId2Enum[chkEN_COARSE_CKLGEN] = LMS7param(EN_COARSE_CKLGEN);
+    wndId2Enum[cmbEN_ADCCLKH_CLKGN] = LMS7param(EN_ADCCLKH_CLKGN);
+    wndId2Enum[chkEN_G_CGEN] = LMS7param(EN_G_CGEN);
+    wndId2Enum[chkEN_INTONLY_SDM_CGEN] = LMS7param(EN_INTONLY_SDM_CGEN);
+    wndId2Enum[chkEN_SDM_CLK_CGEN] = LMS7param(EN_SDM_CLK_CGEN);
+    wndId2Enum[cmbICT_VCO_CGEN] = LMS7param(ICT_VCO_CGEN);
+    wndId2Enum[lblINT_SDM_CGEN] = LMS7param(INT_SDM_CGEN);
+    wndId2Enum[cmbIOFFSET_CP_CGEN] = LMS7param(IOFFSET_CP_CGEN);
+    wndId2Enum[cmbIPULSE_CP_CGEN] = LMS7param(IPULSE_CP_CGEN);
+    wndId2Enum[chkPD_CP_CGEN] = LMS7param(PD_CP_CGEN);
+    wndId2Enum[chkPD_FDIV_FB_CGEN] = LMS7param(PD_FDIV_FB_CGEN);
+    wndId2Enum[chkPD_FDIV_O_CGEN] = LMS7param(PD_FDIV_O_CGEN);
+    wndId2Enum[chkPD_SDM_CGEN] = LMS7param(PD_SDM_CGEN);
+    wndId2Enum[chkPD_VCO_CGEN] = LMS7param(PD_VCO_CGEN);
+    wndId2Enum[chkPD_VCO_COMP_CGEN] = LMS7param(PD_VCO_COMP_CGEN);
+    wndId2Enum[chkRESET_N_CGEN] = LMS7param(RESET_N_CGEN);
+    wndId2Enum[chkREVPH_PFD_CGEN] = LMS7param(REVPH_PFD_CGEN);
+    wndId2Enum[chkREV_CLKADC_CGEN] = LMS7param(REV_CLKADC_CGEN);
+    wndId2Enum[chkREV_CLKDAC_CGEN] = LMS7param(REV_CLKDAC_CGEN);
+    wndId2Enum[chkREV_SDMCLK_CGEN] = LMS7param(REV_SDMCLK_CGEN);
+    wndId2Enum[rgrSEL_SDMCLK_CGEN] = LMS7param(SEL_SDMCLK_CGEN);
+    wndId2Enum[chkSPDUP_VCO_CGEN] = LMS7param(SPDUP_VCO_CGEN);
+    wndId2Enum[chkSX_DITHER_EN_CGEN] = LMS7param(SX_DITHER_EN_CGEN);
+    wndId2Enum[cmbTST_CGEN] = LMS7param(TST_CGEN);
 
     wxArrayString temp;
     temp.clear();
@@ -831,9 +831,9 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
     double freqMHz;
     txtFrequency->GetValue().ToDouble(&freqMHz);
     LMS7002M* lms = lmsControl;
-    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1, true);
-    int interp = lms->Get_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP);
-    int decim = lms->Get_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP);
+    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
+    int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
+    int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
     if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
@@ -856,9 +856,9 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
     //auto device = lmsControl;
     txtFrequency->GetValue().ToDouble(&freqMHz);
     LMS7002M* lms = lmsControl;
-    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1, true);
-    int interp = lms->Get_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP);
-    int decim = lms->Get_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP);
+    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
+    int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
+    int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
     if (lms->SetInterfaceFrequency(freqMHz * 1e6, interp, decim) != OpStatus::Success)
     {
         wxMessageBox(_("CLKGEN: failed to set interface frequency"));
@@ -884,14 +884,14 @@ void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxCommandEvent& event)
 void lms7002_pnlCLKGEN_view::onbtnTuneClick(wxCommandEvent& event)
 {
     LMS7002M* lms = lmsControl;
-    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1, true);
+    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
     if (lms->TuneVCO(lime::LMS7002M::VCO_Module::VCO_CGEN) != OpStatus::Success)
     {
         wxMessageBox(wxString(_("CLKGEN VCO Tune failed")));
         return;
     }
 
-    uint16_t value = ReadParam(LMS7_CSW_VCO_CGEN);
+    uint16_t value = ReadParam(LMS7param(CSW_VCO_CGEN));
     cmbCSW_VCO_CGEN->SetValue(value);
     OnbtnReadComparators(event);
 }
@@ -912,12 +912,12 @@ void lms7002_pnlCLKGEN_view::UpdateGUI()
     freq = lmsControl->GetReferenceClk_SX(TRXDir::Rx);
     lblRefClk_MHz->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
     uint16_t value;
-    value = ReadParam(LMS7_FRAC_SDM_CGEN_MSB);
+    value = ReadParam(LMS7param(FRAC_SDM_CGEN_MSB));
     int fracValue = value << 16;
-    value = ReadParam(LMS7_FRAC_SDM_CGEN_LSB);
+    value = ReadParam(LMS7param(FRAC_SDM_CGEN_LSB));
     fracValue |= value;
     lblFRAC_SDM_CGEN->SetLabel(std::to_string(fracValue));
-    value = ReadParam(LMS7_DIV_OUTCH_CGEN);
+    value = ReadParam(LMS7param(DIV_OUTCH_CGEN));
     lblDivider->SetLabel("2*" + std::to_string(value + 1));
 }
 
@@ -933,7 +933,7 @@ void lms7002_pnlCLKGEN_view::UpdateInterfaceFrequencies()
 void lms7002_pnlCLKGEN_view::OnbtnReadComparators(wxCommandEvent& event)
 {
     uint16_t param;
-    param = ReadParam(LMS7_VCO_CMPHO_CGEN);
+    param = ReadParam(LMS7param(VCO_CMPHO_CGEN));
 
     lblVCO_CMPHO_CGEN->SetLabel(std::to_string(param));
     if (param == 1)
@@ -941,7 +941,7 @@ void lms7002_pnlCLKGEN_view::OnbtnReadComparators(wxCommandEvent& event)
     else
         lblVCO_CMPHO_CGEN->SetBackgroundColour(*wxRED);
 
-    param = ReadParam(LMS7_VCO_CMPLO_CGEN);
+    param = ReadParam(LMS7param(VCO_CMPLO_CGEN));
 
     lblVCO_CMPLO_CGEN->SetLabel(std::to_string(param));
     if (param == 0)
@@ -953,9 +953,9 @@ void lms7002_pnlCLKGEN_view::OnbtnReadComparators(wxCommandEvent& event)
 void lms7002_pnlCLKGEN_view::OnbtnUpdateCoarse(wxCommandEvent& event)
 {
     uint16_t param;
-    param = ReadParam(LMS7_COARSE_STEPDONE);
+    param = ReadParam(LMS7param(COARSE_STEPDONE));
     lblCOARSE_STEPDONE_CGEN->SetLabel(std::to_string(param));
-    param = ReadParam(LMS7_COARSEPLL_COMPO_CGEN);
+    param = ReadParam(LMS7param(COARSEPLL_COMPO_CGEN));
     lblCOARSEPLL_COMPO_CGEN->SetLabel(std::to_string(param));
 }
 

@@ -206,19 +206,19 @@ static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
-    // lms->Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
     //     return -1;
 
     // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7_MAC, 2);
+    // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
     //     return -1;
 
     // EnableChannel(false, 2*i+1, false);
     // EnableChannel(true, 2*i+1, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
     if (skipTune)
         return OpStatus::Success;
@@ -295,9 +295,9 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
-        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7_TX_MUX);
-        chip->Modify_SPI_Reg_bits(LMS7_TX_MUX, 2);
-        chip->Modify_SPI_Reg_bits(LMS7_TX_MUX, txMux);
+        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7param(TX_MUX));
+        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), 2);
+        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), txMux);
 
         mConfigInProgress = false;
         if (sampleRate > 0)
@@ -484,31 +484,31 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
         1 + hbd_ovr,
         1 + hbi_ovr);
     LMS7002M* mLMSChip = mLMSChips[0];
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_EN_ADCCLKH_CLKGN, 0);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
     if (rxDecimation != 0)
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2 - std::log2(txInterpolation / rxDecimation));
     else
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_CLKH_OV_CLKL_CGEN, 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_MAC, 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP, hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP, hbi_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_MAC, 1);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_HBD_OVR_RXTSP, hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7_HBI_OVR_TXTSP, hbi_ovr);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
 
     if (f_Hz >= 61.45e6)
     {
         // LimeLight & Pad
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_DIQ2_DS, 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_LML1_SISODDR, 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_LML2_SISODDR, 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(DIQ2_DS), 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(LML1_SISODDR), 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(LML2_SISODDR), 1);
         // CDS
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_CDSN_RXALML, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_CDS_RXALML, 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CDSN_RXALML), 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CDS_RXALML), 1);
         // LDO
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_PD_LDO_DIGIp1, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_PD_LDO_DIGIp2, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7_RDIV_DIGIp2, 140);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(PD_LDO_DIGIp1), 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(PD_LDO_DIGIp2), 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7param(RDIV_DIGIp2), 140);
     }
 
     return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);

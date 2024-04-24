@@ -107,13 +107,13 @@ lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, cons
     btnCalibrateRP_BIAS->Connect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::OnCalibrateRP_BIAS), NULL, this);
 
-    wndId2Enum[chkPD_BIAS_MASTER] = LMS7_PD_BIAS_MASTER;
-    wndId2Enum[cmbMUX_BIAS_OUT] = LMS7_MUX_BIAS_OUT;
-    wndId2Enum[chkPD_FRP_BIAS] = LMS7_PD_FRP_BIAS;
-    wndId2Enum[chkPD_F_BIAS] = LMS7_PD_F_BIAS;
-    wndId2Enum[chkPD_PTRP_BIAS] = LMS7_PD_PTRP_BIAS;
-    wndId2Enum[chkPD_PT_BIAS] = LMS7_PD_PT_BIAS;
-    wndId2Enum[cmbRP_CALIB_BIAS] = LMS7_RP_CALIB_BIAS;
+    wndId2Enum[chkPD_BIAS_MASTER] = LMS7param(PD_BIAS_MASTER);
+    wndId2Enum[cmbMUX_BIAS_OUT] = LMS7param(MUX_BIAS_OUT);
+    wndId2Enum[chkPD_FRP_BIAS] = LMS7param(PD_FRP_BIAS);
+    wndId2Enum[chkPD_F_BIAS] = LMS7param(PD_F_BIAS);
+    wndId2Enum[chkPD_PTRP_BIAS] = LMS7param(PD_PTRP_BIAS);
+    wndId2Enum[chkPD_PT_BIAS] = LMS7param(PD_PT_BIAS);
+    wndId2Enum[cmbRP_CALIB_BIAS] = LMS7param(RP_CALIB_BIAS);
 
     wxArrayString temp;
     temp.clear();

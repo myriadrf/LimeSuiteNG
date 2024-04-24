@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+#define LMS7param(id) LMS7_ ## id
+
 /** @brief Structure defining a LMS7002M parameter. */
 struct LMS7Parameter
 {

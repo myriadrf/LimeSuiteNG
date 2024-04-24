@@ -116,8 +116,8 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
 
     // const uint16_t MIMO_EN = needMIMO << 8;
-    // const uint16_t TRIQ_PULSE = lms->Get_SPI_Reg_bits(LMS7_LML1_TRXIQPULSE) << 7; // 0-OFF, 1-ON
-    // const uint16_t DDR_EN = lms->Get_SPI_Reg_bits(LMS7_LML1_SISODDR) << 6; // 0-SDR, 1-DDR
+    // const uint16_t TRIQ_PULSE = lms->Get_SPI_Reg_bits(LMS7param(LML1_TRXIQPULSE)) << 7; // 0-OFF, 1-ON
+    // const uint16_t DDR_EN = lms->Get_SPI_Reg_bits(LMS7param(LML1_SISODDR)) << 6; // 0-SDR, 1-DDR
     // const uint16_t MODE = 0 << 5; // 0-TRXIQ, 1-JESD207 (not impelemented)
     // const uint16_t smpl_width =
     //     cfg.linkFormat == DataFormat::I12 ? 2 : 0;
@@ -125,9 +125,9 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     // const uint16_t reg8 = MIMO_EN | TRIQ_PULSE | DDR_EN | MODE | smpl_width;
 
     uint16_t mode = 0x0100;
-    if (lms->Get_SPI_Reg_bits(LMS7_LML1_SISODDR))
+    if (lms->Get_SPI_Reg_bits(LMS7param(LML1_SISODDR)))
         mode = 0x0040;
-    else if (lms->Get_SPI_Reg_bits(LMS7_LML1_TRXIQPULSE))
+    else if (lms->Get_SPI_Reg_bits(LMS7param(LML1_TRXIQPULSE)))
         mode = 0x0180;
 
     const uint16_t smpl_width = cfg.linkFormat == DataFormat::I12 ? 2 : 0;

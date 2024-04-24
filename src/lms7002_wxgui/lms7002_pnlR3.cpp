@@ -477,7 +477,7 @@ void lms7002_pnlR3_view::Initialize(LMS7002M* pControl)
     ILMS7002MTab::Initialize(pControl);
     if (pControl == nullptr)
         return;
-    uint16_t value = ReadParam(LMS7_MASK);
+    uint16_t value = ReadParam(LMS7param(MASK));
     this->Enable(value);
 }
 

@@ -143,16 +143,16 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
     rgrMODE_INTERLEAVE_AFE->Connect(
         wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
 
-    wndId2Enum[chkEN_G_AFE] = LMS7_EN_G_AFE;
-    wndId2Enum[cmbISEL_DAC_AFE] = LMS7_ISEL_DAC_AFE;
-    wndId2Enum[rgrMODE_INTERLEAVE_AFE] = LMS7_MODE_INTERLEAVE_AFE;
-    wndId2Enum[cmbMUX_AFE_1] = LMS7_MUX_AFE_1;
-    wndId2Enum[cmbMUX_AFE_2] = LMS7_MUX_AFE_2;
-    wndId2Enum[chkPD_AFE] = LMS7_PD_AFE;
-    wndId2Enum[chkPD_RX_AFE1] = LMS7_PD_RX_AFE1;
-    wndId2Enum[chkPD_RX_AFE2] = LMS7_PD_RX_AFE2;
-    wndId2Enum[chkPD_TX_AFE1] = LMS7_PD_TX_AFE1;
-    wndId2Enum[chkPD_TX_AFE2] = LMS7_PD_TX_AFE2;
+    wndId2Enum[chkEN_G_AFE] = LMS7param(EN_G_AFE);
+    wndId2Enum[cmbISEL_DAC_AFE] = LMS7param(ISEL_DAC_AFE);
+    wndId2Enum[rgrMODE_INTERLEAVE_AFE] = LMS7param(MODE_INTERLEAVE_AFE);
+    wndId2Enum[cmbMUX_AFE_1] = LMS7param(MUX_AFE_1);
+    wndId2Enum[cmbMUX_AFE_2] = LMS7param(MUX_AFE_2);
+    wndId2Enum[chkPD_AFE] = LMS7param(PD_AFE);
+    wndId2Enum[chkPD_RX_AFE1] = LMS7param(PD_RX_AFE1);
+    wndId2Enum[chkPD_RX_AFE2] = LMS7param(PD_RX_AFE2);
+    wndId2Enum[chkPD_TX_AFE1] = LMS7param(PD_TX_AFE1);
+    wndId2Enum[chkPD_TX_AFE2] = LMS7param(PD_TX_AFE2);
 
     wxArrayString temp;
     temp.clear();
