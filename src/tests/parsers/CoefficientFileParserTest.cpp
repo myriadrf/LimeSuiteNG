@@ -5,12 +5,16 @@
 
 #include <fstream>
 #include <filesystem>
+#include <string>
+#include <string_view>
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 TEST(CoefficientFileParser, StandardOutputFile)
 {
-    const std::string fileContents = R"""(/* ******************************************************************
+    constexpr std::string_view fileContents = R"""(/* ******************************************************************
    FILE:	rx2
    DESCRIPTION:	
    DATE:	
@@ -57,11 +61,11 @@ TEST(CoefficientFileParser, StandardOutputFile)
 	1.283670,
 	1.822108,
 	0.338786
-)""";
+)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -121,15 +125,15 @@ TEST(CoefficientFileParser, StandardOutputFile)
 
 TEST(CoefficientFileParser, SingleLineComments)
 {
-    const std::string fileContents = R"""(0.111111 // 0.222222
+    constexpr std::string_view fileContents = R"""(0.111111 // 0.222222
     0.333333//0.444444
     0.555555 // Random characters as well
     0.777777
-)""";
+)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -150,13 +154,13 @@ TEST(CoefficientFileParser, SingleLineComments)
 
 TEST(CoefficientFileParser, SinglelineCommentsMultilineCommentIsIgnored)
 {
-    const std::string fileContents = R"""(0.111111 ///*0.222222 
+    constexpr std::string_view fileContents = R"""(0.111111 ///*0.222222 
     // /* 0.333333 
-    0.444444)""";
+    0.444444)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -177,13 +181,13 @@ TEST(CoefficientFileParser, SinglelineCommentsMultilineCommentIsIgnored)
 
 TEST(CoefficientFileParser, SingleLineCommentFileEnd)
 {
-    const std::string fileContents = R"""(0.111111 // 0.222222
+    constexpr std::string_view fileContents = R"""(0.111111 // 0.222222
     0.333333//0.444444
-    0.555555// Random characters as well)""";
+    0.555555// Random characters as well)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -204,11 +208,11 @@ TEST(CoefficientFileParser, SingleLineCommentFileEnd)
 
 TEST(CoefficientFileParser, SingleLineCommentImmediateFileEnd)
 {
-    const std::string fileContents = R"""(0.111111 //)""";
+    constexpr std::string_view fileContents = R"""(0.111111 //)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -229,12 +233,12 @@ TEST(CoefficientFileParser, SingleLineCommentImmediateFileEnd)
 
 TEST(CoefficientFileParser, MultilineCommentsSingleLine)
 {
-    const std::string fileContents =
-        R"""(0.111111/*0.222222*/0.333333/* 0.444444*/ 0.555555 /* 0.666666 */ 0.777777/*0.888888*/,0.99)""";
+    constexpr std::string_view fileContents =
+        R"""(0.111111/*0.222222*/0.333333/* 0.444444*/ 0.555555 /* 0.666666 */ 0.777777/*0.888888*/,0.99)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -255,15 +259,15 @@ TEST(CoefficientFileParser, MultilineCommentsSingleLine)
 
 TEST(CoefficientFileParser, MultilineCommentsMultiLine)
 {
-    const std::string fileContents = R"""(0.111111/*0.222222
+    constexpr std::string_view fileContents = R"""(0.111111/*0.222222
     */0.333333/* 
     0.444444*/ 0.555555 /* 
     0.666666 
-    */ 0.777777)""";
+    */ 0.777777)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -284,15 +288,15 @@ TEST(CoefficientFileParser, MultilineCommentsMultiLine)
 
 TEST(CoefficientFileParser, MultilineCommentsNested)
 {
-    const std::string fileContents = R"""(0.111111/*0.222222
+    constexpr std::string_view fileContents = R"""(0.111111/*0.222222
     */0.333333/* /*
     0.444444*/*/ 0.555555 /*/**/*//*
     0.666666 
-    */ 0.777777)""";
+    */ 0.777777)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -313,12 +317,12 @@ TEST(CoefficientFileParser, MultilineCommentsNested)
 
 TEST(CoefficientFileParser, MultilineCommentsUnclosed)
 {
-    const std::string fileContents = R"""(0.111111/* 0.222222
-    0.333333)""";
+    constexpr std::string_view fileContents = R"""(0.111111/* 0.222222
+    0.333333)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -339,11 +343,11 @@ TEST(CoefficientFileParser, MultilineCommentsUnclosed)
 
 TEST(CoefficientFileParser, MultilineCommentsUnclosedImmediateEndOfFile)
 {
-    const std::string fileContents = R"""(/*)""";
+    constexpr std::string_view fileContents = R"""(/*)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -364,12 +368,12 @@ TEST(CoefficientFileParser, MultilineCommentsUnclosedImmediateEndOfFile)
 
 TEST(CoefficientFileParser, CommasAreWhitespace)
 {
-    const std::string fileContents = R"""(,,,,,0.111111,,,0.222222
- , , , 0.333333,,,,,,)""";
+    constexpr std::string_view fileContents = R"""(,,,,,0.111111,,,0.222222
+ , , , 0.333333,,,,,,)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -390,7 +394,7 @@ TEST(CoefficientFileParser, CommasAreWhitespace)
 
 TEST(CoefficientFileParser, NoFilenameProvided)
 {
-    const std::string fileName = "";
+    const std::filesystem::path fileName = ""s;
 
     std::vector<double> coefficients(10, 0);
     auto parser = CoefficientFileParser(fileName);
@@ -404,7 +408,7 @@ TEST(CoefficientFileParser, NonExistentFilenameProvided)
 {
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::vector<double> coefficients(10, 0);
     auto parser = CoefficientFileParser(fileName);
@@ -415,11 +419,11 @@ TEST(CoefficientFileParser, NonExistentFilenameProvided)
 
 TEST(CoefficientFileParser, EmptyFile)
 {
-    const std::string fileContents = "";
+    constexpr std::string_view fileContents = ""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -440,11 +444,11 @@ TEST(CoefficientFileParser, EmptyFile)
 
 TEST(CoefficientFileParser, TooManyCoefficients)
 {
-    const std::string fileContents = R"""(  0.111111 -0.222222)""";
+    constexpr std::string_view fileContents = R"""(  0.111111 -0.222222)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -465,11 +469,11 @@ TEST(CoefficientFileParser, TooManyCoefficients)
 
 TEST(CoefficientFileParser, SyntaxError)
 {
-    const std::string fileContents = R"""(0.123456 These characters are not in a comment)""";
+    constexpr std::string_view fileContents = R"""(0.123456 These characters are not in a comment)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -490,11 +494,11 @@ TEST(CoefficientFileParser, SyntaxError)
 
 TEST(CoefficientFileParser, EndOfFileWithComma)
 {
-    const std::string fileContents = R"""(0.123456,)""";
+    constexpr std::string_view fileContents = R"""(0.123456,)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     std::ofstream outFile(fileName);
     outFile << fileContents;
@@ -515,7 +519,7 @@ TEST(CoefficientFileParser, EndOfFileWithComma)
 
 TEST(CoefficientFileParser, SaveFile)
 {
-    const std::string fileContents = R"""(/* ******************************************************************
+    constexpr std::string_view fileContents = R"""(/* ******************************************************************
    FILE:	CoefficientFileParser_SaveFile.fir
    DESCRIPTION:	
    DATE:	
@@ -524,11 +528,11 @@ TEST(CoefficientFileParser, SaveFile)
 
 	0.111111,
 	-0.222222,
-	0.333333)""";
+	0.333333)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = testSuiteName + "_" + testName + ".fir";
+    const std::filesystem::path fileName = testSuiteName + "_"s + testName + ".fir"s;
 
     const std::vector<double> input{ 0.111111, -0.222222, 0.333333 };
     auto parser = CoefficientFileParser(fileName);
@@ -547,7 +551,7 @@ TEST(CoefficientFileParser, SaveFile)
 
 TEST(CoefficientFileParser, SaveFileInSubfolder)
 {
-    const std::string fileContents = R"""(/* ******************************************************************
+    constexpr std::string_view fileContents = R"""(/* ******************************************************************
    FILE:	CoefficientFileParser_SaveFileInSubfolder.fir
    DESCRIPTION:	
    DATE:	
@@ -556,11 +560,12 @@ TEST(CoefficientFileParser, SaveFileInSubfolder)
 
 	0.111111,
 	-0.222222,
-	0.333333)""";
+	0.333333)"""sv;
 
     const std::string testSuiteName = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     const std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-    const std::string fileName = "./" + testSuiteName + "_" + testName + ".fir"; // Use this folder as the testing path.
+    const std::filesystem::path fileName =
+        "./"s + testSuiteName + "_"s + testName + ".fir"s; // Use this folder as the testing path.
 
     const std::vector<double> input{ 0.111111, -0.222222, 0.333333 };
     auto parser = CoefficientFileParser(fileName);

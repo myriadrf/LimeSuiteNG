@@ -25,7 +25,11 @@
 
 #include "device_handler.h"
 
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("rx_time");
+#include <string>
+
+using namespace std::literals::string_literals;
+
+static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("rx_time"s);
 
 namespace gr {
 namespace limesdr {

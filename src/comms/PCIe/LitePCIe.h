@@ -3,6 +3,7 @@
 #include <mutex>
 #include <atomic>
 #include <vector>
+#include <filesystem>
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
@@ -18,7 +19,7 @@ class LIME_API LitePCIe
     LitePCIe();
     ~LitePCIe();
 
-    OpStatus Open(const std::string& deviceFilename, uint32_t flags);
+    OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
     void Close();
     bool IsOpen();
 
@@ -30,8 +31,8 @@ class LIME_API LitePCIe
     int WriteRaw(const uint8_t* buffer, int length, int timeout_ms = 100);
     int ReadRaw(uint8_t* buffer, int length, int timeout_ms = 100);
 
-    const std::string& GetPathName() const { return mFilePath; };
-    void SetPathName(const std::string& filePath) { mFilePath = filePath; };
+    const std::filesystem::path& GetPathName() const { return mFilePath; };
+    void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
 
     int GetFd() const { return mFileDescriptor; };
 
@@ -74,7 +75,7 @@ class LIME_API LitePCIe
     void CacheFlush(bool isTx, bool toDevice, uint16_t index);
 
   protected:
-    std::string mFilePath;
+    std::filesystem::path mFilePath;
     DMAInfo mDMA;
     int mFileDescriptor;
     bool isConnected;

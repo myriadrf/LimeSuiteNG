@@ -3,7 +3,11 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "CommonFunctions.h"
 
+#include <string_view>
+
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 #ifdef __unix__
 libusb_context* USBEntry::ctx{ nullptr };
@@ -51,7 +55,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
 {
     std::vector<DeviceHandle> handles;
 
-    if (!hint.media.empty() && hint.media.find("USB") == std::string::npos)
+    if (!hint.media.empty() && hint.media.find("USB"sv) == std::string::npos)
         return handles;
 
 #ifdef __unix__
@@ -70,7 +74,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
         if (returnCode < 0)
         {
-            lime::error("Failed to get device description");
+            lime::error("Failed to get device description"s);
         }
 
         VidPid id{ desc.idVendor, desc.idProduct };
@@ -105,18 +109,18 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
 }
 
 #ifdef __unix__
-std::string USBEntry::GetUSBDeviceSpeedString(libusb_device* device)
+std::string_view USBEntry::GetUSBDeviceSpeedString(libusb_device* device)
 {
     int speed = libusb_get_device_speed(device);
 
     switch (speed)
     {
     case LIBUSB_SPEED_HIGH:
-        return "USB 2.0";
+        return "USB 2.0"sv;
     case LIBUSB_SPEED_SUPER:
-        return "USB 3.0";
+        return "USB 3.0"sv;
     default:
-        return "USB";
+        return "USB"sv;
     }
 }
 
@@ -146,7 +150,7 @@ DeviceHandle USBEntry::GetDeviceHandle(
 
         if (serialStringLength < 0)
         {
-            lime::error("Failed to get serial number");
+            lime::error("Failed to get serial number"s);
         }
         else
         {

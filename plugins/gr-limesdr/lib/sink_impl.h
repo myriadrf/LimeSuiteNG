@@ -24,9 +24,11 @@
 #include "device_handler.h"
 #include <limesdr/sink.h>
 #include <array>
+#include <string>
 
+using namespace std::literals::string_literals;
 
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("tx_time");
+static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("tx_time"s);
 
 namespace gr {
 namespace limesdr {

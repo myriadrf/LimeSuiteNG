@@ -7,7 +7,8 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
-#include <math.h>
+#include <string_view>
+#include <cmath>
 #include <signal.h>
 #include "kissFFT/kiss_fft.h"
 #ifdef USE_GNU_PLOT
@@ -15,6 +16,7 @@
 #endif
 
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 static const double frequencyLO = 1.9e9;
 float sampleRate = 10e6;
@@ -23,20 +25,21 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n";
+    std::cout << "Stoppping\n"sv;
     stopProgram = true;
 }
 
-static LogLevel logVerbosity = LogLevel::Debug;
-static void LogCallback(LogLevel lvl, const char* msg)
+static LogLevel logVerbosity = LogLevel::Verbose;
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
-    printf("%s\n", msg);
+    std::cout << msg << std::endl;
 }
 
 int main(int argc, char** argv)
 {
+    lime::registerLogHandler(LogCallback);
     auto handles = DeviceRegistry::enumerate();
     float peakAmplitude = -1000, peakFrequency = 0;
 
@@ -45,16 +48,16 @@ int main(int argc, char** argv)
         printf("No devices found\n");
         return -1;
     }
-    std::cout << "Devices found :" << std::endl;
+    std::cout << "Devices found :"sv << std::endl;
     for (size_t i = 0; i < handles.size(); i++)
-        std::cout << i << ": " << handles[i].Serialize() << std::endl;
+        std::cout << i << ": "sv << handles[i].Serialize() << std::endl;
     std::cout << std::endl;
 
     // Use first available device
     SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
     if (!device)
     {
-        std::cout << "Failed to connect to device" << std::endl;
+        std::cout << "Failed to connect to device"sv << std::endl;
         return -1;
     }
     device->SetMessageLogCallback(LogCallback);
@@ -78,13 +81,13 @@ int main(int argc, char** argv)
     config.channel[0].tx.centerFrequency = frequencyLO - 1e6;
     config.channel[0].tx.testSignal.enabled = false;
 
-    std::cout << "Configuring device ...\n";
+    std::cout << "Configuring device ...\n"sv;
     try
     {
         auto t1 = std::chrono::high_resolution_clock::now();
         device->Configure(config, chipIndex);
         auto t2 = std::chrono::high_resolution_clock::now();
-        std::cout << "SDR configured in " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
+        std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
         // Samples data streaming configuration
         StreamConfig stream;
@@ -97,15 +100,15 @@ int main(int argc, char** argv)
 
     } catch (std::runtime_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     } catch (std::logic_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     }
 
-    std::cout << "Stream started ...\n";
+    std::cout << "Stream started ...\n"sv;
     signal(SIGINT, intHandler);
 
     const unsigned int fftSize = 16384;

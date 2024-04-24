@@ -105,7 +105,7 @@ class pnlBoardControls : public IModuleFrame
     bool Initialize(lime::SDRDevice* device) override;
     void Update() override;
 
-    void SetupControls(const std::string& boardID);
+    void SetupControls(const std::string_view boardID);
     void OnSetDACvalues(wxSpinEvent& event);
     void OnSetDACvaluesENTER(wxCommandEvent& event);
     void OnDACWrite(wxCommandEvent& event);
@@ -141,7 +141,7 @@ class pnlBoardControls : public IModuleFrame
 
     wxFlexGridSizer* sizerAdditionalControls;
 
-    std::vector<ADC_DAC> getBoardParams(const std::string& boardID);
+    std::vector<ADC_DAC> getBoardParams(std::string_view boardID);
 
     void OnUserChangedBoardType(wxCommandEvent& event);
     void OnReadAll(wxCommandEvent& event);

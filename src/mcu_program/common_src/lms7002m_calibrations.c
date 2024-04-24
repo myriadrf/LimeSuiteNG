@@ -5,34 +5,29 @@
 #include <math.h>
 #include "mcu_defines.h"
 #include <stdlib.h>
+#include "limesuiteng/Logger.h"
 
 #define ENABLE_EXTERNAL_LOOPBACK 1
 
-#ifdef __cplusplus
-//#define VERBOSE 1
 //#define DRAW_GNU_PLOTS
 
-    #include <thread>
-    #include <vector>
-    #include <chrono>
-    #include <stdio.h>
-    #include <sstream>
+#include <thread>
+#include <vector>
+#include <chrono>
+#include <stdio.h>
+#include <sstream>
 
-    #ifdef DRAW_GNU_PLOTS
-        #define PUSH_GMEASUREMENT_VALUES(value, rssi) gMeasurements.push_back({ value, rssi })
+#ifdef DRAW_GNU_PLOTS
+    #define PUSH_GMEASUREMENT_VALUES(value, rssi) gMeasurements.push_back({ value, rssi })
 GNUPlotPipe saturationPlot;
 GNUPlotPipe IQImbalancePlot;
 GNUPlotPipe txDCPlot;
-
-    #else
-        #define PUSH_GMEASUREMENT_VALUES(value, rssi)
-    #endif
     #include <gnuPlotPipe.h>
 
 typedef std::vector<std::pair<float, float>> MeasurementsVector;
 MeasurementsVector gMeasurements;
 
-void SortMeasurements(MeasurementsVector& vec)
+static void SortMeasurements(MeasurementsVector& vec)
 {
     for (size_t i = 0; i < vec.size(); ++i)
         for (size_t j = i; j < vec.size(); ++j)
@@ -44,23 +39,20 @@ void SortMeasurements(MeasurementsVector& vec)
             }
 }
 
-void DrawMeasurement(GNUPlotPipe& gp, const MeasurementsVector& vec)
+static void DrawMeasurement(GNUPlotPipe& gp, const MeasurementsVector& vec)
 {
     for (auto i : vec)
         gp.writef("%f %f\n", i.first, i.second);
     gp.write("e\n");
 }
+#else
+    #define PUSH_GMEASUREMENT_VALUES(value, rssi)
+#endif
 
 extern "C" {
-#else
-    #define VERBOSE 0
-    #define PUSH_GMEASUREMENT_VALUES(value, rssi)
-
-    #include "lms7002_regx51.h" //MCU timer sfr
-#endif // __cplusplus
 
 ///APPROXIMATE conversion
-float ChipRSSI_2_dBFS(uint32_t rssi)
+static float ChipRSSI_2_dBFS(uint32_t rssi)
 {
     uint32_t maxRSSI = 0x15FF4;
     if (rssi == 0)
@@ -68,7 +60,7 @@ float ChipRSSI_2_dBFS(uint32_t rssi)
     return 20 * log10((float)(rssi) / maxRSSI);
 }
 
-int16_t toSigned(int16_t val, uint8_t msblsb)
+static int16_t toSigned(int16_t val, uint8_t msblsb)
 {
     val <<= 15 - ((msblsb >> 4) & 0xF);
     val >>= 15 - ((msblsb >> 4) & 0xF);
@@ -262,11 +254,8 @@ int CheckSaturationTxRx(bool extLoopback)
         g_rfe = (uint8_t)Get_SPI_Reg_bits(G_RXLOOPB_RFE);
     rssi = GetRSSI();
     PUSH_GMEASUREMENT_VALUES(index, ChipRSSI_2_dBFS(rssi));
-
-#if VERBOSE
-    printf("Receiver saturation search, target level: %i (%2.3f dBFS)\n", saturationLevel, ChipRSSI_2_dBFS(saturationLevel));
-    printf("initial  PGA: %2i, %s: %2i, %3.2f dbFS\n", g_pga, (extLoopback ? "LNA" : "RXLOOPB"), g_rfe, ChipRSSI_2_dBFS(rssi));
-#endif
+    lime::debug("Receiver saturation search, target level: %i (%2.3f dBFS)", saturationLevel, ChipRSSI_2_dBFS(saturationLevel));
+    lime::debug("initial  PGA: %2i, %s: %2i, %3.2f dbFS", g_pga, (extLoopback ? "LNA" : "RXLOOPB"), g_rfe, ChipRSSI_2_dBFS(rssi));
     while (rssi < saturationLevel)
     {
         if (g_rfe < 15)
@@ -308,18 +297,17 @@ int CheckSaturationTxRx(bool extLoopback)
     DrawMeasurement(gp, gMeasurements);
     gp.flush();
 #endif // DRAW_GNU_PLOTS
-#if VERBOSE
-    printf("adjusted PGA: %2i, %s: %2i, %3.2f dbFS\n",
+    lime::debug("adjusted PGA: %2i, %s: %2i, %3.2f dBFS",
         Get_SPI_Reg_bits(G_PGA_RBB),
         (extLoopback ? "LNA" : "RXLOOPB"),
         g_rfe,
         ChipRSSI_2_dBFS(rssi));
-#endif
-    if (rssi < 0xB21) // ~(-30 dbFS)
+    const int thresholdRSSI = 0xB21; // ~(-30 dbFS)
+    if (rssi < thresholdRSSI)
     {
-#if VERBOSE
-        printf("Signal strength (%3.1f dBFS) very low, loopback not working?\n", ChipRSSI_2_dBFS(rssi));
-#endif // VERBOSE
+        lime::debug("Signal strength (%3.1f dBFS) low, expected to be more than (%3.1f dBFS), loopback not working?",
+            ChipRSSI_2_dBFS(rssi),
+            ChipRSSI_2_dBFS(thresholdRSSI));
         return MCU_LOOPBACK_SIGNAL_WEAK;
     }
     Modify_SPI_Reg_bits(CMIX_BYP_RXTSP, 1);
@@ -499,14 +487,12 @@ void CalibrateRxDCAuto()
         while (SPI_read(0x05C1) & 0xF000)
             ;
     }
-#if VERBOSE
     {
         int16_t dci = ReadAnalogDC(dcRegAddr);
         int16_t dcq = ReadAnalogDC(dcRegAddr + 1);
         uint32_t rssi = GetRSSI();
-        printf("Rx DC auto   I: %3i, Q: %3i, %3.1f dBFS\n", dci, dcq, ChipRSSI_2_dBFS(rssi));
+        lime::debug("Rx DC auto   I: %3i, Q: %3i, %3.1f dBFS", dci, dcq, ChipRSSI_2_dBFS(rssi));
     }
-#endif // VERBOSE
 
     //manual adjustments
     Modify_SPI_Reg_bits(GCORRQ_RXTSP, 0);
@@ -514,19 +500,15 @@ void CalibrateRxDCAuto()
     Modify_SPI_Reg_bits(GCORRQ_RXTSP, 2047);
     AdjustAutoDC(dcRegAddr + 1, false);
 
-#if VERBOSE
     {
         int16_t dci = ReadAnalogDC(dcRegAddr);
         int16_t dcq = ReadAnalogDC(dcRegAddr + 1);
         uint32_t rssi = GetRSSI();
-        printf("Rx DC manual I: %3i, Q: %3i, %3.1f dBFS\n", dci, dcq, ChipRSSI_2_dBFS(rssi));
+        lime::debug("Rx DC manual I: %3i, Q: %3i, %3.1f dBFS", dci, dcq, ChipRSSI_2_dBFS(rssi));
     }
-#endif
 
     Modify_SPI_Reg_bits(DC_BYP_RXTSP, 0); // DC_BYP 0
-#if VERBOSE
-    printf("RxTSP DC corrector enabled %3.1f dBFS\n", ChipRSSI_2_dBFS(GetRSSI()));
-#endif
+    lime::debug("RxTSP DC corrector enabled %3.1f dBFS", ChipRSSI_2_dBFS(GetRSSI()));
     Modify_SPI_Reg_bits(EN_G_TRF, 1);
 }
 
@@ -595,14 +577,12 @@ void CalibrateTxDCAuto()
             data.push_back(gMeasurements);
             gMeasurements.clear();
 #endif // DRAW_GNU_PLOTS
-#if VERBOSE
             {
                 int16_t dci = ReadAnalogDC(iparams.param.address);
                 int16_t dcq = ReadAnalogDC(qparams.param.address);
                 uint32_t rssi = GetRSSI();
-                printf("#%i Tx DC manual I: %4i, Q: %4i, %3.1f dBFS\n", i, dci, dcq, ChipRSSI_2_dBFS(rssi));
+                lime::debug("#%i Tx DC manual I: %4i, Q: %4i, %3.1f dBFS", i, dci, dcq, ChipRSSI_2_dBFS(rssi));
             }
-#endif // VERBOSE
         }
     }
 
@@ -633,9 +613,8 @@ void CalibrateTxDCAuto()
 
 void CalibrateIQImbalance(bool tx)
 {
-#if defined(VERBOSE) || defined(DRAW_GNU_PLOTS)
     const char* dirName = tx ? "Tx" : "Rx";
-#endif
+
 #ifdef DRAW_GNU_PLOTS
     GNUPlotPipe& gp = IQImbalancePlot;
     std::vector<MeasurementsVector> data;
@@ -672,9 +651,7 @@ void CalibrateIQImbalance(bool tx)
     argsPhase.maxValue = 128;
     argsPhase.minValue = -128;
     BinarySearch(&argsPhase);
-#if VERBOSE
-    printf("#0 %s IQCORR: %i, %3.1f dBFS\n", dirName, argsPhase.result, ChipRSSI_2_dBFS(GetRSSI()));
-#endif // VERBOSE
+    lime::debug("#0 %s IQCORR: %i, %3.1f dBFS", dirName, argsPhase.result, ChipRSSI_2_dBFS(GetRSSI()));
 #ifdef DRAW_GNU_PLOTS
     SortMeasurements(gMeasurements);
     DrawMeasurement(gp, gMeasurements);
@@ -701,10 +678,10 @@ void CalibrateIQImbalance(bool tx)
     argsGain.maxValue = 2047;
     argsGain.minValue = 2047 - 512;
     BinarySearch(&argsGain);
-#if VERBOSE
+
     const char* chName = (argsGain.param.address == gcorriAddress ? "I" : "Q");
-    printf("#1 %s GAIN_%s: %i, %3.1f dBFS\n", dirName, chName, argsGain.result, ChipRSSI_2_dBFS(GetRSSI()));
-#endif // VERBOSE
+    lime::debug("#1 %s GAIN_%s: %i, %3.1f dBFS", dirName, chName, argsGain.result, ChipRSSI_2_dBFS(GetRSSI()));
+
 #ifdef DRAW_GNU_PLOTS
     SortMeasurements(gMeasurements);
     DrawMeasurement(gp, gMeasurements);
@@ -714,9 +691,9 @@ void CalibrateIQImbalance(bool tx)
     argsPhase.maxValue = argsPhase.result + 16;
     argsPhase.minValue = argsPhase.result - 16;
     BinarySearch(&argsPhase);
-#if VERBOSE
-    printf("#2 %s IQCORR: %i, %3.1f dBFS\n", dirName, argsPhase.result, ChipRSSI_2_dBFS(GetRSSI()));
-#endif // VERBOSE
+
+    lime::debug("#2 %s IQCORR: %i, %3.1f dBFS", dirName, argsPhase.result, ChipRSSI_2_dBFS(GetRSSI()));
+
 #ifdef DRAW_GNU_PLOTS
     SortMeasurements(gMeasurements);
     DrawMeasurement(gp, gMeasurements);
@@ -949,9 +926,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
             }
             else
             {
-    #if VERBOSE
-                printf("Tx Calibration: external calibration is not supported on selected Tx Band");
-    #endif
+                lime::error("Tx Calibration: external calibration is not supported on selected Tx Band");
                 return MCU_INVALID_TX_BAND;
             }
         }
@@ -960,7 +935,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
         {
             if (sel_band1_2_trf != 0x1 && sel_band1_2_trf != 0x2) //BAND1
             {
-                //printf("Tx Calibration: band not selected");
+                lime::error("Tx Calibration: band not selected");
                 return MCU_INVALID_TX_BAND;
             }
             Modify_SPI_Reg_bits(SEL_PATH_RFE, sel_band1_2_trf + 1);
@@ -981,18 +956,14 @@ uint8_t CalibrateTxSetup(bool extLoopback)
 uint8_t CalibrateTx(bool extLoopback)
 {
     const uint16_t x0020val = SPI_read(0x0020);
-#if defined(VERBOSE) && defined(__cplusplus)
     auto beginTime = std::chrono::high_resolution_clock::now();
-#endif
-#if VERBOSE
     uint8_t sel_band1_trf = (uint8_t)Get_SPI_Reg_bits(SEL_BAND1_TRF);
-    printf("Tx ch.%s , BW: %g MHz, RF output: %s, Gain: %i, loopb: %s\n",
+    lime::debug("Tx ch.%s , BW: %g MHz, RF output: %s, Gain: %i, loopb: %s",
         (x0020val & 3) == 0x1 ? "A" : "B",
         bandwidthRF / 1e6,
         sel_band1_trf == 1 ? "BAND1" : "BAND2",
         Get_SPI_Reg_bits(CG_IAMP_TBB),
         extLoopback ? "external" : "internal");
-#endif
     uint8_t status;
 #if !ENABLE_EXTERNAL_LOOPBACK
     if (extLoopback)
@@ -1022,22 +993,19 @@ TxCalibrationEnd : {
     SPI_write(0x0020, x0020val);
     if (status != MCU_NO_ERROR)
     {
-#if VERBOSE
-        printf("Tx calibration failed");
-#endif
+        lime::debug("Tx calibration failed");
         return status;
     }
     Modify_SPI_Reg_bits(GCORRI_TXTSP, gcorri);
     Modify_SPI_Reg_bits(GCORRQ_TXTSP, gcorrq);
     Modify_SPI_Reg_bits(IQCORR_TXTSP, phaseOffset);
-#if VERBOSE
+
     int16_t dcI = ReadAnalogDC((x0020val & 1) ? 0x5C3 : 0x5C5);
     int16_t dcQ = ReadAnalogDC((x0020val & 1) ? 0x5C4 : 0x5C6);
-    printf("Tx | DC   | GAIN | PHASE\n");
-    printf("---+------+------+------\n");
-    printf("I: | %4i | %4i | %i\n", dcI, gcorri, toSigned(phaseOffset, MSB_LSB(11, 0)));
-    printf("Q: | %4i | %4i |\n", dcQ, gcorrq);
-#endif
+    lime::debug("Tx | DC   | GAIN | PHASE");
+    lime::debug("---+------+------+------");
+    lime::debug("I: | %4i | %4i | %i", dcI, gcorri, toSigned(phaseOffset, MSB_LSB(11, 0)));
+    lime::debug("Q: | %4i | %4i |", dcQ, gcorrq);
 }
 
     Modify_SPI_Reg_bits(DCMODE, 1);
@@ -1048,11 +1016,9 @@ TxCalibrationEnd : {
     Modify_SPI_Reg_bits(DC_BYP_TXTSP, 1);
     Modify_SPI_Reg_bits(0x0208, 1 << 4 | 0, 0); //GC_BYP PH_BYP
     //LoadDC_REG_TX_IQ(); //not necessary, just for testing convenience
-#if VERBOSE
     int32_t duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();
-    printf("Duration: %i ms\n", duration);
-#endif //LMS_VERBOSE_OUTPUT
+    lime::debug("Calibrate Tx duration: %i ms", duration);
     return 0;
 }
 
@@ -1346,9 +1312,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
         Modify_SPI_Reg_bits(LOSS_MAIN_TXPAD_TRF, g_lossmain);
         rssi = GetRSSI();
         PUSH_GMEASUREMENT_VALUES(++index, ChipRSSI_2_dBFS(rssi));
-    #if VERBOSE
-        printf("Initial gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS\n", g_lossmain, cg_iamp, ChipRSSI_2_dBFS(rssi));
-    #endif
+        lime::debug("Initial gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS", g_lossmain, cg_iamp, ChipRSSI_2_dBFS(rssi));
         while (rssi < target_rssi)
         {
             g_lossmain -= 1;
@@ -1366,9 +1330,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
         Modify_SPI_Reg_bits(G_RXLOOPB_RFE, g_rxloopb_rfe);
         rssi = GetRSSI();
         PUSH_GMEASUREMENT_VALUES(++index, ChipRSSI_2_dBFS(rssi));
-#if VERBOSE
-        printf("Initial gains:\tG_RXLOOPB: %2i, CG_IAMP: %2i | %2.3f dbFS\n", g_rxloopb_rfe, cg_iamp, ChipRSSI_2_dBFS(rssi));
-#endif
+        lime::debug("Initial gains:\tG_RXLOOPB: %2i, CG_IAMP: %2i | %2.3f dBFS", g_rxloopb_rfe, cg_iamp, ChipRSSI_2_dBFS(rssi));
         while (rssi < target_rssi)
         {
             g_rxloopb_rfe += 2;
@@ -1404,29 +1366,28 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
         rssi = GetRSSI();
         PUSH_GMEASUREMENT_VALUES(++index, ChipRSSI_2_dBFS(rssi));
     }
-#if VERBOSE
     if (extLoopback)
-        printf("Initial gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS\n",
+        lime::debug("Initial gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS",
             Get_SPI_Reg_bits(LOSS_MAIN_TXPAD_TRF),
             Get_SPI_Reg_bits(CG_IAMP_TBB),
             ChipRSSI_2_dBFS(rssi));
     else
-        printf("Adjusted gains: G_RXLOOPB: %2i, CG_IAMP: %2i | %2.3f dbFS\n",
+        lime::debug("Adjusted gains: G_RXLOOPB: %2i, CG_IAMP: %2i | %2.3f dbFS",
             Get_SPI_Reg_bits(G_RXLOOPB_RFE),
             Get_SPI_Reg_bits(CG_IAMP_TBB),
             ChipRSSI_2_dBFS(rssi));
-#endif
 #ifdef DRAW_GNU_PLOTS
     DrawMeasurement(gp, gMeasurements);
     gMeasurements.clear();
     gp.writef("%i %f\n%i %f\ne\n", 0, ChipRSSI_2_dBFS(target_rssi), index, ChipRSSI_2_dBFS(target_rssi));
     gp.flush();
 #endif
-    if (rssi < 0xB21) // ~(-30 dbFS)
+    const int thresholdRSSI = 0xB21; // ~(-30 dbFS)
+    if (rssi < thresholdRSSI)
     {
-#if VERBOSE
-        printf("Signal strength (%3.1f dBFS) very low, loopback not working?\n", ChipRSSI_2_dBFS(rssi));
-#endif // VERBOSE
+        lime::debug("Signal strength (%3.1f dBFS) low, expected to be more than (%3.1f dBFS), loopback not working?",
+            ChipRSSI_2_dBFS(rssi),
+            ChipRSSI_2_dBFS(thresholdRSSI));
         return MCU_LOOPBACK_SIGNAL_WEAK;
     }
     return MCU_NO_ERROR;
@@ -1434,9 +1395,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
 
 uint8_t CalibrateRx(bool extLoopback, bool dcOnly)
 {
-#if defined(VERBOSE) && defined(__cplusplus)
     auto beginTime = std::chrono::high_resolution_clock::now();
-#endif
     uint8_t status;
     const uint16_t x0020val = SPI_read(0x0020); //remember used channel
 
@@ -1444,7 +1403,6 @@ uint8_t CalibrateRx(bool extLoopback, bool dcOnly)
     if (extLoopback)
         return MCU_PROCEDURE_DISABLED;
 #endif
-#if VERBOSE
     double rxFreq = GetFrequencySX(LMS7002M_Rx);
     const char* lnaName;
     switch (Get_SPI_Reg_bits(SEL_PATH_RFE))
@@ -1465,7 +1423,7 @@ uint8_t CalibrateRx(bool extLoopback, bool dcOnly)
         lnaName = "none";
         break;
     }
-    printf("Rx ch.%s @ %4g MHz, BW: %g MHz, RF input: %s, PGA: %i, LNA: %i, TIA: %i\n",
+    lime::debug("Rx calibrate ch.%s @ %4g MHz, BW: %g MHz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         (x0020val & 0x3) == 1 ? "A" : "B",
         rxFreq / 1e6,
         bandwidthRF / 1e6,
@@ -1473,8 +1431,6 @@ uint8_t CalibrateRx(bool extLoopback, bool dcOnly)
         Get_SPI_Reg_bits(G_PGA_RBB),
         Get_SPI_Reg_bits(G_LNA_RFE),
         Get_SPI_Reg_bits(G_TIA_RFE));
-    printf("Rx calibration started\n");
-#endif
     SaveChipState(0);
     status = CalibrateRxSetup(extLoopback);
     if (status != 0)
@@ -1521,9 +1477,7 @@ RxCalibrationEndStage : {
     SPI_write(0x0020, x0020val);
     if (status != MCU_NO_ERROR)
     {
-#if VERBOSE
-        printf("Rx calibration failed");
-#endif
+        lime::debug("Rx calibration failed");
         return status;
     }
     // dc corrector values not overwritten by chip state restore
@@ -1533,15 +1487,13 @@ RxCalibrationEndStage : {
         Modify_SPI_Reg_bits(GCORRQ_RXTSP, gcorrq);
         Modify_SPI_Reg_bits(IQCORR_RXTSP, phaseOffset);
     }
-#if VERBOSE
     int16_t dcI = ReadAnalogDC((x0020val & 1) ? 0x5C7 : 0x5C8);
     int16_t dcQ = ReadAnalogDC((x0020val & 1) ? 0x5C9 : 0x5CA);
     int16_t phaseSigned = toSigned(phaseOffset, MSB_LSB(11, 0));
-    printf("Tx | DC   | GAIN | PHASE\n");
-    printf("---+------+------+------\n");
-    printf("I: | %4i | %4i | %i\n", dcI, gcorri, phaseSigned);
-    printf("Q: | %4i | %4i |\n", dcQ, gcorrq);
-#endif
+    lime::debug("Tx | DC   | GAIN | PHASE");
+    lime::debug("---+------+------+------");
+    lime::debug("I: | %4i | %4i | %i", dcI, gcorri, phaseSigned);
+    lime::debug("Q: | %4i | %4i |", dcQ, gcorrq);
 }
     Modify_SPI_Reg_bits(DCMODE, 1);
     if (x0020val & 0x1)
@@ -1551,11 +1503,9 @@ RxCalibrationEndStage : {
     Modify_SPI_Reg_bits(0x040C, MSB_LSB(2, 0), 0); //DC_BYP 0, GC_BYP 0, PH_BYP 0
     Modify_SPI_Reg_bits(0x040C, MSB_LSB(8, 8), 0); //DCLOOP_STOP
     //Log("Rx calibration finished", LOG_INFO);
-#if VERBOSE
     int32_t duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();
-    printf("Duration: %i ms\n", duration);
-#endif //LMS_VERBOSE_OUTPUT
+    lime::debug("Calibrate Rx duration: %i ms", duration);
     return MCU_NO_ERROR;
 }
 

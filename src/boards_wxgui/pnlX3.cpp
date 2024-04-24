@@ -20,6 +20,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_literals;
 
 BEGIN_EVENT_TABLE(pnlX3, wxPanel)
 END_EVENT_TABLE()
@@ -371,7 +372,7 @@ void pnlX3::Initialize(lime::SDRDevice* pControl)
         return;
 
     const SDRDescriptor& desc = device->GetDescriptor();
-    const std::string targetSPI = "FPGA";
+    const std::string targetSPI{ "FPGA"s };
     for (const auto& nameIds : desc.spiSlaveIds)
     {
         if (nameIds.first == targetSPI)
@@ -454,7 +455,7 @@ void pnlX3::OnInputChange(wxCommandEvent& event)
 void pnlX3::OnDacChange(wxCommandEvent& event)
 {
     LMS_WriteCustomBoardParam(
-        device, { { 2, static_cast<double>(spinDac1->GetValue()), "" }, { 3, static_cast<double>(spinDac2->GetValue()), "" } });
+        device, { { 2, static_cast<double>(spinDac1->GetValue()), ""s }, { 3, static_cast<double>(spinDac2->GetValue()), ""s } });
 }
 
 void pnlX3::UpdatePanel()
@@ -497,7 +498,7 @@ void pnlX3::UpdatePanel()
     Lms1tx2En->SetValue((value >> 4) & 1);
     Lms1tx1En->SetValue((value >> 5) & 1);
 
-    std::vector<CustomParameterIO> params{ { 2, 0, "" }, { 3, 0, "" } };
+    std::vector<CustomParameterIO> params{ { 2, 0, ""s }, { 3, 0, ""s } };
 
     LMS_ReadCustomBoardParam(device, params);
 

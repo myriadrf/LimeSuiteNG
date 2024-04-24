@@ -6,13 +6,13 @@
 #include <vector>
 #include <cstdint>
 
-#define CDCM_VCO_MIN_V1 2390 * 1e6
-#define CDCM_VCO_MAX_V1 2550 * 1e6
-#define CDCM_VCO_MIN_V2 2940 * 1e6
-#define CDCM_VCO_MAX_V2 3130 * 1e6
+constexpr double CDCM_VCO_MIN_V1{ 2390.0 * 1e6 };
+constexpr double CDCM_VCO_MAX_V1{ 2550.0 * 1e6 };
+constexpr double CDCM_VCO_MIN_V2{ 2940.0 * 1e6 };
+constexpr double CDCM_VCO_MAX_V2{ 3130.0 * 1e6 };
 
-#define CDCM1_BASE_ADDR 0x120
-#define CDCM2_BASE_ADDR 0x140
+constexpr uint16_t CDCM1_BASE_ADDR{ 0x120 };
+constexpr uint16_t CDCM2_BASE_ADDR{ 0x140 };
 
 typedef enum {
     CDCM_Y0Y1 = 0, ///< Integer LMS2_DAC1 LMS2_DAC2

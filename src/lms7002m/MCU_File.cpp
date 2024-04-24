@@ -83,7 +83,7 @@ void MCU_File::ReadHex(unsigned long limit)
         {
             if (ferror(m_file))
             {
-                throw "Error reading input!"s;
+                throw std::runtime_error("Error reading input!"s);
             }
             continue;
         }
@@ -100,7 +100,7 @@ void MCU_File::ReadHex(unsigned long limit)
 
         if (strlen(szLine) == 1023)
         {
-            throw "Hex file lines to long!"s;
+            throw std::runtime_error("Hex file lines to long!"s);
         }
         // Ignore blank lines
         if (szLine[0] == '\n')
@@ -135,7 +135,7 @@ void MCU_File::ReadHex(unsigned long limit)
 
         if (endSeen)
         {
-            throw "Hex line after end of file record!"s;
+            throw std::runtime_error("Hex line after end of file record!"s);
         }
 
         if (intel)
@@ -145,12 +145,12 @@ void MCU_File::ReadHex(unsigned long limit)
             unsigned long type;
             if (sscanf(&szLine[1], "%2lx%4lx%2lx", &dataBytes, &startAddress, &type) != 3)
             {
-                throw "Hex line beginning corrupt!"s;
+                throw std::runtime_error("Hex line beginning corrupt!"s);
             }
             // Check line length
             if (szLine[11 + dataBytes * 2] != '\n' && szLine[11 + dataBytes * 2] != 0)
             {
-                throw "Hex line length incorrect!"s;
+                throw std::runtime_error("Hex line length incorrect!"s);
             }
             // Check line checksum
             unsigned char checkSum = 0;
@@ -159,13 +159,13 @@ void MCU_File::ReadHex(unsigned long limit)
             {
                 if (sscanf(&szLine[1 + i * 2], "%2lx", &tmp) != 1)
                 {
-                    throw "Hex line data corrupt!"s;
+                    throw std::runtime_error("Hex line data corrupt!"s);
                 }
                 checkSum += static_cast<unsigned char>(tmp);
             }
             if (checkSum != 0)
             {
-                throw "Hex line checksum error!"s;
+                throw std::runtime_error("Hex line checksum error!"s);
             }
 
             switch (type)
@@ -179,7 +179,7 @@ void MCU_File::ReadHex(unsigned long limit)
                     test += dataBytes;
                     if (test > 0xffff)
                     {
-                        throw "Can't handle wrapped segments!"s;
+                        throw std::runtime_error("Can't handle wrapped segments!"s);
                     }
                 }
                 if (!m_chunks.size() ||
@@ -226,11 +226,11 @@ void MCU_File::ReadHex(unsigned long limit)
                 // Extended segment address record
                 if (dataBytes != 2)
                 {
-                    throw "Length field must be 2 in extended segment address record!"s;
+                    throw std::runtime_error("Length field must be 2 in extended segment address record!"s);
                 }
                 if (startAddress != 0)
                 {
-                    throw "Address field must be zero in extended segment address record!"s;
+                    throw std::runtime_error("Address field must be zero in extended segment address record!"s);
                 }
                 sscanf(&szLine[9], "%4lx", &startAddress);
                 addressBase = startAddress << 4;
@@ -262,11 +262,11 @@ void MCU_File::ReadHex(unsigned long limit)
                 // Extended linear address record
                 if (dataBytes != 2)
                 {
-                    throw "Length field must be 2 in extended linear address record!"s;
+                    throw std::runtime_error("Length field must be 2 in extended linear address record!"s);
                 }
                 if (startAddress != 0)
                 {
-                    throw "Address field must be zero in extended linear address record!"s;
+                    throw std::runtime_error("Address field must be zero in extended linear address record!"s);
                 }
                 sscanf(&szLine[9], "%4lx", &startAddress);
                 addressBase = startAddress << 16;
@@ -305,12 +305,12 @@ void MCU_File::ReadHex(unsigned long limit)
             char type;
             if (sscanf(&szLine[1], "%c%2lx", &type, &count) != 2)
             {
-                throw "Hex line beginning corrupt!"s;
+                throw std::runtime_error("Hex line beginning corrupt!"s);
             }
             // Check line length
             if (szLine[4 + count * 2] != '\n' && szLine[4 + count * 2] != 0)
             {
-                throw "Hex line length incorrect!"s;
+                throw std::runtime_error("Hex line length incorrect!"s);
             }
             // Check line checksum
             unsigned char checkSum = 0;
@@ -319,13 +319,13 @@ void MCU_File::ReadHex(unsigned long limit)
             {
                 if (sscanf(&szLine[2 + i * 2], "%2lx", &tmp) != 1)
                 {
-                    throw "Hex line data corrupt!"s;
+                    throw std::runtime_error("Hex line data corrupt!"s);
                 }
                 checkSum += static_cast<unsigned char>(tmp);
             }
             if (checkSum != 255)
             {
-                throw "Hex line checksum error!"s;
+                throw std::runtime_error("Hex line checksum error!"s);
             }
 
             switch (type)
@@ -400,7 +400,7 @@ void MCU_File::ReadHex(unsigned long limit)
                     sscanf(&szLine[4], "%4lx", &address);
                     if (address != dataRecords)
                     {
-                        throw "Wrong number of data records!"s;
+                        throw std::runtime_error("Wrong number of data records!"s);
                     }
                 }
                 break;
@@ -423,7 +423,7 @@ void MCU_File::ReadHex(unsigned long limit)
     }
     if (!m_chunks.size())
     {
-        throw "No data in file!"s;
+        throw std::runtime_error("No data in file!"s);
     }
     vector<MemBlock>::iterator vi;
     m_top = 0;
@@ -487,16 +487,16 @@ bool MCU_File::BitString(const unsigned long address, const unsigned char bits, 
 
     unsigned long mask = 1;
 
-    str = "";
+    str = ""s;
     for (i = 0; i < bits; i++)
     {
         if (data & mask)
         {
-            str.insert(0, "1");
+            str.insert(0, "1"s);
         }
         else
         {
-            str.insert(0, "0");
+            str.insert(0, "0"s);
         }
         mask <<= 1;
     }

@@ -3,13 +3,14 @@
 #include "limesuiteng/StreamComposite.h"
 #include <iostream>
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <signal.h>
 #include <thread>
 #include "kissFFT/kiss_fft.h"
 #include <condition_variable>
 #include <mutex>
 #include <getopt.h>
+#include <filesystem>
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -24,27 +25,27 @@ std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concur
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    //std::cerr << "Stopping\n";
+    //std::cerr << "Stopping\n"sv;
     stopProgram = true;
 }
 
 static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const char* str)
+static LogLevel strToLogLevel(const std::string_view str)
 {
-    if (strstr("debug", str))
+    if ("debug"sv == str)
         return LogLevel::Debug;
-    else if (strstr("verbose", str))
+    else if ("verbose"sv == str)
         return LogLevel::Verbose;
-    else if (strstr("error", str))
+    else if ("error"sv == str)
         return LogLevel::Error;
-    else if (strstr("warning", str))
+    else if ("warning"sv == str)
         return LogLevel::Warning;
-    else if (strstr("info", str))
+    else if ("info"sv == str)
         return LogLevel::Info;
     return LogLevel::Error;
 }
 
-static void LogCallback(LogLevel lvl, const char* msg)
+static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
         return;
@@ -275,21 +276,23 @@ class ConstellationPlotter
 };
 #endif
 
-static std::vector<int> ParseIntArray(const std::string& str)
+static std::vector<int> ParseIntArray(std::string_view str)
 {
     std::vector<int> numbers;
-    size_t parsed = 0;
-    while (parsed < str.length())
+    while (str.length() > 0)
     {
         try
         {
-            int nr = stoi(&str[parsed]);
+            std::size_t index = str.find_first_of(',');
+            int nr = std::stoi(std::string{ str.substr(0, index) });
             numbers.push_back(nr);
-            size_t next = str.find_first_of(',', parsed);
-            if (next == string::npos)
+
+            if (index == std::string_view::npos)
+            {
                 return numbers;
-            else
-                parsed = next + 1;
+            }
+
+            str = str.substr(index + 1);
         } catch (...)
         {
             return numbers;
@@ -301,9 +304,9 @@ static std::vector<int> ParseIntArray(const std::string& str)
 int main(int argc, char** argv)
 {
     StreamComposite* composite = nullptr;
-    std::string devName;
-    char* rxFilename = nullptr;
-    char* txFilename = nullptr;
+    std::string_view devName{ ""sv };
+    std::filesystem::path rxFilename{ ""sv };
+    std::filesystem::path txFilename{ ""sv };
     bool rx = true;
     bool tx = false;
     bool showFFT = false;
@@ -351,7 +354,7 @@ int main(int argc, char** argv)
 
     int long_index = 0;
     int option = 0;
-    while ((option = getopt_long_only(argc, argv, "", long_options, &long_index)) != -1)
+    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
     {
         switch (option)
         {
@@ -367,11 +370,11 @@ int main(int argc, char** argv)
 
             if (chipIndexes.empty())
             {
-                cerr << "Invalid chip index" << endl;
+                cerr << "Invalid chip index"sv << endl;
                 return -1;
             }
             else
-                cerr << "Chip count " << chipIndexes.size() << endl;
+                cerr << "Chip count "sv << chipIndexes.size() << endl;
             break;
         case Args::OUTPUT:
             if (optarg != NULL)
@@ -427,13 +430,13 @@ int main(int argc, char** argv)
         case Args::LINKFORMAT:
             if (optarg != NULL)
             {
-                if (strcmp(optarg, "I16") == 0)
+                if (std::string_view{ optarg } == "I16"sv)
                     linkFormat = DataFormat::I16;
-                else if (strcmp(optarg, "I12") == 0)
+                if (std::string_view{ optarg } == "I12"sv)
                     linkFormat = DataFormat::I12;
                 else
                 {
-                    cerr << "Invalid linkFormat " << optarg << std::endl;
+                    cerr << "Invalid linkFormat "sv << optarg << std::endl;
                     return -1;
                 }
             }
@@ -459,7 +462,7 @@ int main(int argc, char** argv)
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        cerr << "No devices found" << endl;
+        cerr << "No devices found"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -521,11 +524,11 @@ int main(int argc, char** argv)
         }
     } catch (std::runtime_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     } catch (std::logic_error& e)
     {
-        std::cout << "Failed to configure settings: " << e.what() << std::endl;
+        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     }
 
@@ -538,19 +541,19 @@ int main(int argc, char** argv)
 
     std::vector<complex16_t> txData;
     int64_t txSent = 0;
-    if (tx && txFilename)
+    if (tx && !txFilename.empty())
     {
         std::ifstream inputFile;
         inputFile.open(txFilename, std::ifstream::in | std::ifstream::binary);
         if (!inputFile)
         {
-            cerr << "Failed to open file: " << txFilename << endl;
+            cerr << "Failed to open file: "sv << txFilename << endl;
             return -1;
         }
         inputFile.seekg(0, std::ios_base::end);
         auto cnt = inputFile.tellg();
         inputFile.seekg(0, std::ios_base::beg);
-        cerr << "File size : " << cnt << " bytes." << endl;
+        cerr << "File size : "sv << cnt << " bytes."sv << endl;
         txData.resize(cnt / sizeof(complex16_t));
         inputFile.read(reinterpret_cast<char*>(txData.data()), cnt);
         inputFile.close();
@@ -565,9 +568,9 @@ int main(int argc, char** argv)
     fftBins[0] = 0;
 
     std::ofstream rxFile;
-    if (rxFilename)
+    if (!rxFilename.empty())
     {
-        std::cout << "Rx data to file: " << rxFilename << std::endl;
+        std::cout << "Rx data to file: "sv << rxFilename << std::endl;
         rxFile.open(rxFilename, std::ofstream::out | std::ofstream::binary);
     }
 
@@ -656,7 +659,7 @@ int main(int argc, char** argv)
 
         // process samples
         totalSamplesReceived += samplesRead;
-        if (rxFilename)
+        if (!rxFilename.empty())
         {
             rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
         }

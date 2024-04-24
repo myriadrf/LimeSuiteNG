@@ -7,14 +7,17 @@
 #endif
 #include "limesuiteng/Logger.h"
 
+#include <string>
+
 using namespace lime;
+using namespace std::literals::string_literals;
 
 #ifdef __unix__
 int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std::thread* thread)
 {
     if (!thread)
     {
-        lime::debug("SetOSThreadPriority: null thread pointer");
+        lime::debug("SetOSThreadPriority: null thread pointer"s);
         return -1;
     }
 
@@ -38,7 +41,7 @@ int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std:
 
     if (prio_min == -1 || prio_max == -1)
     {
-        lime::debug("SetOSThreadPriority: Failed to get available priority values");
+        lime::debug("SetOSThreadPriority: Failed to get available priority values"s);
         return -1;
     }
 
@@ -83,7 +86,7 @@ int lime::SetOSCurrentThreadPriority(ThreadPriority priority, ThreadPolicy polic
 
     if (prio_min == -1 || prio_max == -1)
     {
-        lime::debug("SetOSCurrentThreadPriority: Failed to get available priority values");
+        lime::debug("SetOSCurrentThreadPriority: Failed to get available priority values"s);
         return -1;
     }
 
@@ -112,7 +115,7 @@ int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy /*policy*/, 
 {
     if (!thread)
     {
-        lime::debug("SetOSThreadPriority: null thread pointer");
+        lime::debug("SetOSThreadPriority: null thread pointer"s);
         return -1;
     }
 

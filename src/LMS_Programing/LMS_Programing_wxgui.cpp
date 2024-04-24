@@ -265,12 +265,12 @@ void LMS_Programing_wxgui::OnAbortProgramming(wxCommandEvent& event)
 }
 
 LMS_Programing_wxgui* LMS_Programing_wxgui::obj_ptr = nullptr;
-bool LMS_Programing_wxgui::OnProgrammingCallback(size_t bsent, size_t btotal, const char* progressMsg)
+bool LMS_Programing_wxgui::OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)
 {
     wxCommandEvent evt;
     evt.SetEventObject(obj_ptr);
     evt.SetInt(100.0 * bsent / btotal); //round to int
-    evt.SetString(wxString::From8BitData(progressMsg));
+    evt.SetString(progressMsg);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
     evt.SetId(ID_PROGRAMING_STATUS_EVENT);
     wxPostEvent(obj_ptr, evt);

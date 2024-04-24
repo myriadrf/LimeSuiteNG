@@ -2,9 +2,14 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <string.h>
+#include <cstring>
+#include <string_view>
 #include <vector>
+
+#include "GL/glew.h"
+
 using namespace std;
+using namespace std::literals::string_view_literals;
 
 static bool IsGlew1_5()
 {
@@ -67,7 +72,7 @@ bool GLFont::load(const char* file)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }
@@ -158,7 +163,7 @@ bool GLFont::loadFromArray(const char* array, unsigned int size)
     char header[13];
     header[12] = 0;
     in.read(header, 12);
-    if (strcmp("OpenGL Font", header) != 0)
+    if ("OpenGL Font"sv != std::string_view{ header })
     {
         return false;
     }
@@ -298,14 +303,14 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
         vbodata[14] = vbodata[6];
         vbodata[15] = vbodata[11];
 
-        //        if(IsGlew1_5())
-        //        {
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), NULL, GL_DYNAMIC_DRAW );
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), vbodata, GL_DYNAMIC_DRAW );
-        //            glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-        //            glFlush();
-        //        }
-        //        else
+        if (IsGlew1_5())
+        {
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
+        else
         {
             glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2f(vbodata[2], vbodata[3]);
@@ -392,14 +397,14 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
         vbodata[14] = vbodata[6];
         vbodata[15] = vbodata[11];
 
-        //        if(IsGlew1_5())
-        //        {
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), (char*)0, GL_DYNAMIC_DRAW );
-        //            glBufferData( GL_ARRAY_BUFFER, 16*sizeof(float), vbodata, GL_DYNAMIC_DRAW );
-        //            glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-        //            glFlush();
-        //        }
-        //        else
+        if (IsGlew1_5())
+        {
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), static_cast<char*>(0), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glFlush();
+        }
+        else
         {
             glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2f(vbodata[2], vbodata[3]);

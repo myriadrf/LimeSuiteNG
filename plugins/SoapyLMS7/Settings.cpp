@@ -23,8 +23,6 @@
 
 using namespace lime;
 
-#define dirName ((direction == SOAPY_SDR_RX) ? "Rx" : "Tx")
-
 /*******************************************************************
  * Constructor/destructor
  ******************************************************************/
@@ -167,9 +165,9 @@ void SoapyLMS7::setAntenna(const int direction, const size_t channel, const std:
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
 
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setAntenna(%s, %ld, %s)", dirName, channel, name.c_str());
-
     TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setAntenna(%s, %ld, %s)", ToString(dir).c_str(), channel, name.c_str());
+
     std::vector<std::string> nameList = sdrDevice->GetDescriptor().rfSOC.at(0).pathNames.at(dir);
 
     for (std::size_t path = 0; path < nameList.size(); path++)
@@ -284,12 +282,12 @@ std::vector<std::string> SoapyLMS7::listGains(const int direction, const size_t 
 void SoapyLMS7::setGain(const int direction, const size_t channel, const double value)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %g dB)", dirName, channel, value);
-
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %g dB)", ToString(dir).c_str(), channel, value);
+
     sdrDevice->SetGain(0, dir, channel, eGainTypes::UNKNOWN, value);
 
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "Actual %s[%ld] gain %g dB", dirName, channel, getGain(direction, channel));
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "Actual %s[%ld] gain %g dB", ToString(dir).c_str(), channel, getGain(direction, channel));
 }
 
 double SoapyLMS7::getGain(const int direction, const size_t channel) const
@@ -301,8 +299,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel) const
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, eGainTypes::UNKNOWN, gain);
     if (returnValue != OpStatus::Success)
     {
-        throw std::runtime_error(
-            "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
+        throw std::runtime_error("SoapyLMS7::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
     }
 
     return gain;
@@ -311,15 +308,19 @@ double SoapyLMS7::getGain(const int direction, const size_t channel) const
 void SoapyLMS7::setGain(const int direction, const size_t channel, const std::string& name, const double value)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %s, %g dB)", dirName, channel, name.c_str(), value);
-
     TRXDir dir = direction == SOAPY_SDR_RX ? TRXDir::Rx : TRXDir::Tx;
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setGain(%s, %ld, %s, %g dB)", ToString(dir).c_str(), channel, name.c_str(), value);
+
     eGainTypes gainType = ToEnumClass<eGainTypes>(name);
 
     sdrDevice->SetGain(0, dir, channel, gainType, value);
 
-    SoapySDR::logf(
-        SOAPY_SDR_DEBUG, "Actual %s%s[%ld] gain %g dB", dirName, name.c_str(), channel, getGain(direction, channel, name));
+    SoapySDR::logf(SOAPY_SDR_DEBUG,
+        "Actual %s%s[%ld] gain %g dB",
+        ToString(dir).c_str(),
+        name.c_str(),
+        channel,
+        getGain(direction, channel, name));
 }
 
 double SoapyLMS7::getGain(const int direction, const size_t channel, const std::string& name) const
@@ -333,8 +334,7 @@ double SoapyLMS7::getGain(const int direction, const size_t channel, const std::
     OpStatus returnValue = sdrDevice->GetGain(0, dir, channel, gainType, gain);
     if (returnValue != OpStatus::Success)
     {
-        throw std::runtime_error(
-            "SoapyLMS7::getGain(" + std::string{ dirName } + ", " + std::to_string(channel) + ") - failed to get gain");
+        throw std::runtime_error("SoapyLMS7::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
     }
 
     return gain;
@@ -370,14 +370,19 @@ SoapySDR::ArgInfoList SoapyLMS7::getFrequencyArgsInfo(const int direction, const
 void SoapyLMS7::setFrequency(int direction, size_t channel, double frequency, const SoapySDR::Kwargs& args)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
+    TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
 
     try
     {
-        sdrDevice->SetFrequency(0, direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx, channel, frequency);
+        sdrDevice->SetFrequency(0, dir, channel, frequency);
     } catch (const std::exception& e)
     {
-        SoapySDR::logf(
-            SOAPY_SDR_ERROR, "setFrequency(%s, %ld, %g MHz) Failed with message %s", dirName, channel, frequency / 1e6, e.what());
+        SoapySDR::logf(SOAPY_SDR_ERROR,
+            "setFrequency(%s, %ld, %g MHz) Failed with message %s",
+            ToString(dir).c_str(),
+            channel,
+            frequency / 1e6,
+            e.what());
         throw std::runtime_error("SoapyLMS7::setFrequency() failed");
     }
 }
@@ -386,9 +391,13 @@ void SoapyLMS7::setFrequency(
     const int direction, const size_t channel, const std::string& name, const double frequency, const SoapySDR::Kwargs& args)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
-    SoapySDR::logf(
-        SOAPY_SDR_DEBUG, "SoapyLMS7::setFrequency(%s, %ld, %s, %g MHz)", dirName, channel, name.c_str(), frequency / 1e6);
     TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
+    SoapySDR::logf(SOAPY_SDR_DEBUG,
+        "SoapyLMS7::setFrequency(%s, %ld, %s, %g MHz)",
+        ToString(dir).c_str(),
+        channel,
+        name.c_str(),
+        frequency / 1e6);
     if (name == "RF")
     {
         try
@@ -400,7 +409,8 @@ void SoapyLMS7::setFrequency(
             return;
         } catch (...)
         {
-            SoapySDR::logf(SOAPY_SDR_ERROR, "setFrequency(%s, %ld, RF, %g MHz) Failed", dirName, channel, frequency / 1e6);
+            SoapySDR::logf(
+                SOAPY_SDR_ERROR, "setFrequency(%s, %ld, RF, %g MHz) Failed", ToString(dir).c_str(), channel, frequency / 1e6);
             throw std::runtime_error("SoapyLMS7::setFrequency(RF) failed");
         }
     }
@@ -482,25 +492,26 @@ SoapySDR::RangeList SoapyLMS7::getFrequencyRange(const int direction, const size
 void SoapyLMS7::setSampleRate(const int direction, const size_t channel, const double rate)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
+    TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
 
     if (!activeStreams.empty())
     {
         SoapySDR::logf(SOAPY_SDR_ERROR,
             "setSampleRate(%s, %ld, %g MHz) setting the sample rate while the stream is running is not allowed.",
-            dirName,
+            ToString(dir).c_str(),
             channel,
             rate / 1e6);
         throw std::runtime_error("SoapyLMS7::setSampleRate(): setting the sample rate while the stream is running is not allowed.");
     }
 
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "setSampleRate(%s, %ld, %g MHz)", dirName, channel, rate / 1e6);
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "setSampleRate(%s, %ld, %g MHz)", ToString(dir).c_str(), channel, rate / 1e6);
 
     try
     {
-        sdrDevice->SetSampleRate(0, direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx, channel, rate, oversampling);
+        sdrDevice->SetSampleRate(0, dir, channel, rate, oversampling);
     } catch (const std::exception& e)
     {
-        SoapySDR::logf(SOAPY_SDR_ERROR, "setSampleRate(%s, %ld, %g MHz) Failed", dirName, channel, rate / 1e6);
+        SoapySDR::logf(SOAPY_SDR_ERROR, "setSampleRate(%s, %ld, %g MHz) Failed", ToString(dir).c_str(), channel, rate / 1e6);
         throw std::runtime_error("SoapyLMS7::setSampleRate() failed with message " + std::string{ e.what() });
     }
 
@@ -534,9 +545,9 @@ void SoapyLMS7::setBandwidth(const int direction, const size_t channel, const do
     }
 
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
-    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setBandwidth(%s, %ld, %g MHz)", dirName, channel, bw / 1e6);
-
     TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
+
+    SoapySDR::logf(SOAPY_SDR_DEBUG, "SoapyLMS7::setBandwidth(%s, %ld, %g MHz)", ToString(dir).c_str(), channel, bw / 1e6);
 
     try
     {
@@ -545,7 +556,8 @@ void SoapyLMS7::setBandwidth(const int direction, const size_t channel, const do
         // sdrDevice->Calibrate(0, dir, channel, bw);
     } catch (...)
     {
-        SoapySDR::logf(SOAPY_SDR_ERROR, "SoapyLMS7::setBandwidth(%s, %ld, %g MHz) Failed", dirName, channel, bw / 1e6);
+        SoapySDR::logf(
+            SOAPY_SDR_ERROR, "SoapyLMS7::setBandwidth(%s, %ld, %g MHz) Failed", ToString(dir).c_str(), channel, bw / 1e6);
         throw std::runtime_error("setBandwidth() failed");
     }
 }
@@ -1134,7 +1146,7 @@ void SoapyLMS7::writeGPIO(const std::string&, const unsigned value)
     OpStatus r = sdrDevice->GPIOWrite(reinterpret_cast<const uint8_t*>(&value), sizeof(value));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("SoapyLMS7::writeGPIO() " + std::string(GetLastErrorMessage()));
+        throw std::runtime_error("SoapyLMS7::writeGPIO() " + GetLastErrorMessage());
     }
 }
 
@@ -1144,7 +1156,7 @@ unsigned SoapyLMS7::readGPIO(const std::string&) const
     OpStatus r = sdrDevice->GPIORead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("SoapyLMS7::readGPIO() " + std::string(GetLastErrorMessage()));
+        throw std::runtime_error("SoapyLMS7::readGPIO() " + GetLastErrorMessage());
     }
     return buffer;
 }
@@ -1154,7 +1166,7 @@ void SoapyLMS7::writeGPIODir(const std::string&, const unsigned dir)
     OpStatus r = sdrDevice->GPIODirWrite(reinterpret_cast<const uint8_t*>(&dir), sizeof(dir));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("SoapyLMS7::writeGPIODir() " + std::string(GetLastErrorMessage()));
+        throw std::runtime_error("SoapyLMS7::writeGPIODir() " + GetLastErrorMessage());
     }
 }
 
@@ -1164,7 +1176,7 @@ unsigned SoapyLMS7::readGPIODir(const std::string&) const
     OpStatus r = sdrDevice->GPIODirRead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("SoapyLMS7::readGPIODir() " + std::string(GetLastErrorMessage()));
+        throw std::runtime_error("SoapyLMS7::readGPIODir() " + GetLastErrorMessage());
     }
     return buffer;
 }

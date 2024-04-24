@@ -136,17 +136,17 @@ static void RecvThread(void* p)
     _endthread();
 }
 //---------------------------------------------------------------------------
-static void error(lime::LogLevel lvl, const char* msg)
+static void error(lime::LogLevel lvl, const std::string& msg)
 {
 #ifdef _MYDEBUG
-    DbgPrintf(msg);
+    DbgPrintf(msg.c_str());
     DbgPrintf("\n");
 #else
     if (isErrorLoggingEnabled && lvl < lime::LogLevel::Warning) {
         if (lvl == lime::LogLevel::Critical) {
             ExtIOCallback(-1, extHw_Stop, 0, NULL);
         }
-        DbgPrintf(msg);
+        DbgPrintf(msg.c_str());
     }
 #endif
 }
@@ -204,7 +204,7 @@ static bool DisableLPF()
     }
 
     /* Making sure that tia isn't -12dB */
-    if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -215,7 +215,7 @@ static bool DisableLPF()
 
     isLPFEnabled = false;
 
-    if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
         return false;
     }
 
@@ -236,7 +236,7 @@ static bool EnableLPF()
             StopHW();
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", 3) != lime::OpStatus::Success) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
             return false;
         }
 
@@ -244,7 +244,7 @@ static bool EnableLPF()
             return false;
         }
 
-        if (device->SetParameter(0, 0, "G_TIA_RFE", TIA) != lime::OpStatus::Success) {
+        if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
             return false;
         }
         isLPFEnabled = true;

@@ -5,6 +5,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 TEST(LMS64CProtocol, FirmwareToDescriptorSetsInfo)
 {
@@ -13,11 +14,11 @@ TEST(LMS64CProtocol, FirmwareToDescriptorSetsInfo)
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 
-    EXPECT_EQ(descriptor.name, "EVB6");
-    EXPECT_EQ(descriptor.expansionName, "Myriad1");
-    EXPECT_EQ(descriptor.firmwareVersion, "2");
-    EXPECT_EQ(descriptor.hardwareVersion, "4");
-    EXPECT_EQ(descriptor.protocolVersion, "5");
+    EXPECT_EQ(descriptor.name, "EVB6"s);
+    EXPECT_EQ(descriptor.expansionName, "Myriad1"s);
+    EXPECT_EQ(descriptor.firmwareVersion, "2"s);
+    EXPECT_EQ(descriptor.hardwareVersion, "4"s);
+    EXPECT_EQ(descriptor.protocolVersion, "5"s);
     EXPECT_EQ(descriptor.serialNumber, 6);
 }
 
@@ -28,11 +29,11 @@ TEST(LMS64CProtocol, FirmwareToDescriptorUnknownsLow)
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 
-    EXPECT_EQ(descriptor.name, "UNKNOWN");
-    EXPECT_EQ(descriptor.expansionName, "UNKNOWN");
-    EXPECT_EQ(descriptor.firmwareVersion, "0");
-    EXPECT_EQ(descriptor.hardwareVersion, "0");
-    EXPECT_EQ(descriptor.protocolVersion, "0");
+    EXPECT_EQ(descriptor.name, "UNKNOWN"s);
+    EXPECT_EQ(descriptor.expansionName, "UNKNOWN"s);
+    EXPECT_EQ(descriptor.firmwareVersion, "0"s);
+    EXPECT_EQ(descriptor.hardwareVersion, "0"s);
+    EXPECT_EQ(descriptor.protocolVersion, "0"s);
     EXPECT_EQ(descriptor.serialNumber, 0);
 }
 
@@ -43,10 +44,10 @@ TEST(LMS64CProtocol, FirmwareToDescriptorUnknownsHigh)
 
     LMS64CProtocol::FirmwareToDescriptor(firmwareInfo, descriptor);
 
-    EXPECT_EQ(descriptor.name, "Unknown (0x1E8480)");
-    EXPECT_EQ(descriptor.expansionName, "Unknown (0x1E8481)");
-    EXPECT_EQ(descriptor.firmwareVersion, "2000002");
-    EXPECT_EQ(descriptor.hardwareVersion, "2000003");
-    EXPECT_EQ(descriptor.protocolVersion, "2000004");
+    EXPECT_EQ(descriptor.name, "Unknown (0x1E8480)"s);
+    EXPECT_EQ(descriptor.expansionName, "Unknown (0x1E8481)"s);
+    EXPECT_EQ(descriptor.firmwareVersion, "2000002"s);
+    EXPECT_EQ(descriptor.hardwareVersion, "2000003"s);
+    EXPECT_EQ(descriptor.protocolVersion, "2000004"s);
     EXPECT_EQ(descriptor.serialNumber, 2000005);
 }

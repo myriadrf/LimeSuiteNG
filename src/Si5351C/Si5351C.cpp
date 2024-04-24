@@ -16,9 +16,11 @@
 #include <ciso646> // alternative operators for visual c++: not, and, or...
 #include <vector>
 #include "comms/IComms.h"
+#include <string_view>
 
 using namespace std;
 using namespace lime;
+using namespace std::literals::string_view_literals;
 
 static const uint8_t addrSi5351 = 0xC0;
 
@@ -566,7 +568,7 @@ Si5351C::Status Si5351C::UploadConfiguration()
         return Status::SUCCESS;
     } catch (std::runtime_error& e)
     {
-        lime::error("Si5351C configuration failed %s", e.what());
+        lime::error("Si5351C configuration failed "s + e.what());
         return Status::FAILED;
     }
 }
@@ -589,7 +591,7 @@ void Si5351C::LoadRegValuesFromFile(string FName)
     while (!fin.eof())
     {
         fin.getline(line, len);
-        if (strcmp(line, "#END_PROFILE") == 0)
+        if (std::string_view{ line } == "#END_PROFILE"sv)
             break;
         if (line[0] == '#')
             continue;
@@ -881,7 +883,7 @@ Si5351C::Status Si5351C::ConfigureClocks()
 
         if (CLK[i].multisynthDivider < 8 || 900 < CLK[i].multisynthDivider)
         {
-            lime::error("Si5351C - Output multisynth divider is outside [8;900] interval.");
+            lime::error("Si5351C - Output multisynth divider is outside [8;900] interval."s);
             return Status::FAILED;
         }
 
@@ -910,7 +912,7 @@ Si5351C::Status Si5351C::ConfigureClocks()
             }
             else if (CLK[i].outputFreqHz <= 160000000) // AVAILABLE ONLY ON 0-5 MULTISYNTHS
             {
-                lime::error("Si5351C - clock configuring for more than 150 MHz not implemented");
+                lime::error("Si5351C - clock configuring for more than 150 MHz not implemented"s);
                 return Status::FAILED;
             }
         }
@@ -923,7 +925,7 @@ Si5351C::Status Si5351C::ConfigureClocks()
                     m_newConfiguration[90] = DivA;
                     if (DivA % 2 != 0)
                     {
-                        lime::error("Si5351C - CLK6 multisynth divider is not even integer");
+                        lime::error("Si5351C - CLK6 multisynth divider is not even integer"s);
                         return Status::FAILED;
                     }
                 }
@@ -932,14 +934,14 @@ Si5351C::Status Si5351C::ConfigureClocks()
                     m_newConfiguration[91] = DivA;
                     if (DivA % 2 != 0)
                     {
-                        lime::error("Si5351C - CLK7 multisynth divider is not even integer");
+                        lime::error("Si5351C - CLK7 multisynth divider is not even integer"s);
                         return Status::FAILED;
                     }
                 }
             }
             else if (CLK[i].outputFreqHz <= 160000000) // AVAILABLE ONLY ON 0-5 MULTISYNTHS
             {
-                lime::error("Si5351C - clock configuring for more than 150 MHz not implemented");
+                lime::error("Si5351C - clock configuring for more than 150 MHz not implemented"s);
                 return Status::FAILED;
             }
         }
@@ -955,12 +957,12 @@ Si5351C::Status Si5351C::ConfigureClocks()
         addr = 26 + i * 8;
         if (PLL[i].feedbackDivider < 15 || PLL[i].feedbackDivider > 90)
         {
-            lime::error("Si5351C - VCO frequency divider out of range [15:90].");
+            lime::error("Si5351C - VCO frequency divider out of range [15:90]."s);
             return Status::FAILED;
         }
         if (PLL[i].VCO_Hz < 600000000 || PLL[i].VCO_Hz > 900000000)
         {
-            lime::error("Si5351C - Can't calculate valid VCO frequency.");
+            lime::error("Si5351C - Can't calculate valid VCO frequency."s);
             return Status::FAILED;
         }
 
@@ -1086,7 +1088,7 @@ Si5351C::Status Si5351C::ClearStatus()
         return Status::SUCCESS;
     } catch (std::runtime_error& e)
     {
-        lime::error("Si5351C configuration failed %s", e.what());
+        lime::error("Si5351C configuration failed "s + e.what());
         return Status::FAILED;
     }
 }

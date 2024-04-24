@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <string.h>
 #include <memory>
 #include "Register.h"
 
@@ -36,7 +35,7 @@ class Equalizer
         bool bypassRxEqualizer[2];
         bool bypassTxEqualizer[2];
 
-        Config() { memset(this, 0, sizeof(Config)); }
+        Config();
     };
 
     Equalizer(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr);
