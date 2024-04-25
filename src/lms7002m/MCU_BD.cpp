@@ -598,7 +598,6 @@ void MCU_BD::Reset_MCU()
 
 int MCU_BD::RunProductionTest_MCU()
 {
-    string temps;
     unsigned short tempi = 0x0080; // was 0x0000
     int m_iMode1_ = 0;
     int m_iMode0_ = 0;
@@ -677,18 +676,15 @@ int MCU_BD::RunProductionTest_MCU()
         if ((retval & 0xF0) != 0x30)
         {
             // test too long. Failure.
-            temps = "Test failed."s;
             return -1;
         }
 
         // detected error code
         if ((retval & 0x0F) > 0)
         {
-            temps = "Test "s + std::to_string(retval & 0x0F) + " failed"s;
             return -1;
         }
 
-        temps = "Test failed"s;
         return -1;
     }
 
@@ -704,8 +700,6 @@ int MCU_BD::RunProductionTest_MCU()
     retval = mSPI_read(1); //REG1 read
     if (retval != 0x55)
     {
-        temps = "Ext. interrupt 3 test failed."s;
-
         //Baseband gets back the control over SPI switch
         mSPI_write(0x0006, 0x0000); //REG6 write
 
@@ -724,8 +718,6 @@ int MCU_BD::RunProductionTest_MCU()
     retval = mSPI_read(1); //REG1 read
     if (retval != 0xAA)
     {
-        temps = "Ext. interrupt 4 test failed."s;
-
         //Baseband gets back the control over SPI switch
         mSPI_write(0x0006, 0x0000); //REG6 write
 
@@ -744,11 +736,9 @@ int MCU_BD::RunProductionTest_MCU()
     retval = mSPI_read(1); //REG1 read
     if (retval != 0x55)
     {
-        temps = "Ext. interrupt 5 test failed."s;
         return -1;
     }
 
-    temps = "Production test finished. MCU is OK."s;
     return 0;
 }
 
