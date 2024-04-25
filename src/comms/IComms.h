@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 #include "limesuiteng/config.h"
@@ -126,7 +127,7 @@ class IComms : public ISPI
       @param progressMsg A C-string describing the current status of the data transfer.
       @return Whether to stop writing the data or not (true - stop, false - continue).
      */
-    typedef bool (*ProgressCallback)(size_t bytesSent, size_t bytesTotal, const char* progressMsg);
+    typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
 
     /**
       @brief Writes the given program into the device.

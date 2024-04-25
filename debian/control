@@ -1,4 +1,4 @@
-Source: limesuite
+Source: limesuiteng
 Section: comm
 Priority: optional
 Maintainer: Lime Microsystems <info@limemicro.com>
@@ -12,7 +12,7 @@ Homepage: https://myriadrf.org/projects/lime-suite/
 Vcs-Git: https://github.com/myriadrf/LimeSuiteNG.git
 Vcs-Browser: https://github.com/myriadrf/LimeSuiteNG.git
 
-Package: liblimesuite24.0-1
+Package: liblimesuiteng
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -22,20 +22,20 @@ Recommends: limesuite-udev, limesuite-images
 Description: Lime Suite - shared library
  Lime Suite application software.
 
-Package: liblimesuite-dev
+Package: liblimesuiteng-dev
 Section: libdevel
 Architecture: any
 Depends:
-    liblimesuite24.0-1 (= ${binary:Version}),
+    liblimesuiteng (= ${binary:Version}),
     ${misc:Depends}
 Description: Lime Suite - development files
  Lime Suite application software.
 
-Package: limesuite
+Package: limesuiteng
 Section: comm
 Architecture: any
 Depends:
-    liblimesuite24.0-1 (= ${binary:Version}),
+    liblimesuiteng (= ${binary:Version}),
     ${shlibs:Depends},
     ${misc:Depends},
     xdg-utils
@@ -50,7 +50,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, udev
 Description: Lime Suite - USB rules for udev
  Lime Suite application software.
 
-Package: limesuite-images24.0
+Package: limesuiteng-images
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -64,12 +64,19 @@ Package: limesuite-images
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, limesuite-images24.0
+Depends: ${shlibs:Depends}, ${misc:Depends}, limesuiteng-images
 Description: Lime Suite - Install firmware and gateware images
  Lime Suite application software.
  .
  This is an empty dependency package that pulls in the images
  for the default version of Lime Suite.
+
+Package: limesuiteng-litepcie-kernel-module
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Lime Suite NG LitePCIe kernel driver.
 
 Package: soapysdr-module-lms7
 Section: libs
@@ -84,7 +91,7 @@ Section: comm
 Architecture: any
 Multi-Arch: same
 Depends:
-    liblimesuite24.0-1 (= ${binary:Version}),
+    liblimesuiteng (= ${binary:Version}),
     ${shlibs:Depends},
     ${misc:Depends}
 Description: Lime Suite - SoapySDR bindings

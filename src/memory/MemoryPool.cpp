@@ -7,6 +7,8 @@
 
 #include "limesuiteng/Logger.h"
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 /// @brief Constructs the Memory Pool and allocates the memory of the pool.
@@ -29,7 +31,7 @@ MemoryPool::MemoryPool(int blockCount, int blockSize, int alignment, const std::
 #endif
         if (!ptr)
         {
-            throw std::runtime_error("Failed to allocate memory");
+            throw std::runtime_error("Failed to allocate memory"s);
         }
 
         std::memset(ptr, 0, blockSize);
@@ -41,7 +43,7 @@ MemoryPool::MemoryPool(int blockCount, int blockSize, int alignment, const std::
 MemoryPool::~MemoryPool()
 {
     // if(mFreeBlocks.size() != ownedAddresses.size())
-    //     throw std::runtime_error("Not all memory was freed");
+    //     throw std::runtime_error("Not all memory was freed"s);
     std::lock_guard<std::mutex> lock(mLock);
     while (!mFreeBlocks.empty())
     {
@@ -70,14 +72,14 @@ void* MemoryPool::Allocate(int size)
 {
     if (size > mBlockSize)
     {
-        const std::string ctemp = "Memory request for " + name + " is too big (" + std::to_string(size) + "), max allowed is " +
+        const std::string ctemp = "Memory request for "s + name + " is too big ("s + std::to_string(size) + "), max allowed is "s +
                                   std::to_string(mBlockSize);
         throw std::runtime_error(ctemp);
     }
     std::lock_guard<std::mutex> lock(mLock);
     if (mFreeBlocks.empty())
     {
-        throw std::runtime_error("No memory in pool " + name);
+        throw std::runtime_error("No memory in pool "s + name);
     }
 
     void* ptr = mFreeBlocks.top();
@@ -96,25 +98,17 @@ void MemoryPool::Free(void* ptr)
     {
         if (ownedAddresses.find(ptr) != ownedAddresses.end())
         {
-            char ctemp[1024];
-            sprintf(ctemp,
-                "%s Double free?, allocs: %i , frees: %i, used: %li, free: %li, ptr: %p",
-                name.c_str(),
-                allocCnt,
-                freeCnt,
-                mUsedBlocks.size(),
-                mFreeBlocks.size(),
-                ptr);
-            for (auto adr : mUsedBlocks)
-                lime::error("addrs: %p", adr);
-            throw std::runtime_error(ctemp);
+            std::stringstream ss;
+            ss << name << " Double free? , allocs: " << allocCnt << ", frees: " << freeCnt << ", used: " << mUsedBlocks.size()
+               << ", free: " << mFreeBlocks.size() << ", ptr: " << ptr << std::endl;
+            throw std::runtime_error(ss.str().c_str());
         }
         else
         {
             std::stringstream ss;
             ss << ptr;
 
-            throw std::runtime_error("Pointer " + ss.str() + " does not belong to pool " + name);
+            throw std::runtime_error("Pointer "s + ss.str() + " does not belong to pool "s + name);
         }
     }
     ++freeCnt;

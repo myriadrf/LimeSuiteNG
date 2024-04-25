@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/panel.h>
+#include <cstdint>
 
 class wxButton;
 class wxChoice;
@@ -16,6 +17,7 @@ class DeviceConnectionPanel : public wxPanel
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
     ~DeviceConnectionPanel();
+    void SetSelection(uint32_t index);
 
   protected:
     void SendDisconnectEvent(wxCommandEvent& inEvent);

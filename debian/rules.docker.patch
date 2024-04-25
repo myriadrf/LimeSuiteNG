@@ -1,0 +1,12 @@
+diff --git a/debian/rules b/debian/rules
+index 86597a4f..6bf65564 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -30,6 +30,7 @@ export DH_OPTIONS
+ override_dh_auto_configure: $(GENERATED_INSTALL_FILES)
+ 	dh_auto_configure -- \
+ 		-DBUILD_SHARED_LIBS=ON \
++		-DLITEPCIE_KERNEL_MODULE=OFF \
+ 		-DCMAKE_AUTOSET_INSTALL_RPATH=FALSE \
+ 		-DUDEV_RULES_INSTALL_PATH=/lib/udev/rules.d \
+ 		-DLIB_SUFFIX="/$(DEB_HOST_MULTIARCH)" \

@@ -351,66 +351,51 @@ lms7002_pnlCalibrations_view::lms7002_pnlCalibrations_view(
 
 void lms7002_pnlCalibrations_view::OnbtnCalibrateRx(wxCommandEvent& event)
 {
-    //     int flags = 0;
-    //     if(rgrCalibrationMethod->GetSelection() == 0)
-    //         flags = 0;
-    //     else
-    //     {
-    //         flags = 1;
-    //     }
-    //     double bandwidth_MHz = 0;
-    //     txtCalibrationBW->GetValue().ToDouble(&bandwidth_MHz);
-    //     int status;
-    //     {
-    // #ifdef NDEBUG
-    //         wxBusyInfo wait("Please wait, calibrating receiver...");
-    // #endif
-    //         // TODO: status = LMS_Calibrate(lmsControl, LMS_CH_RX, mChannel, bandwidth_MHz * 1e6, flags);
-    //     }
-    // if (status != 0)
-    //     wxMessageBox(wxString::Format(_("Rx calibration failed: %s"), LMS_GetLastErrorMessage()));
-    // else
-    // {
-    //     wxMessageBox(_("Rx Calibration Finished"), _("Info"), wxOK, this);
-    //     wxCommandEvent evt;
-    //     evt.SetEventType(LOG_MESSAGE);
-    //     evt.SetInt(lime::LOG_LEVEL_INFO);
-    //     evt.SetString(_("Rx Calibrated"));
-    //     wxPostEvent(this, evt);
-    // }
+    double bandwidth_MHz = 0;
+    txtCalibrationBW->GetValue().ToDouble(&bandwidth_MHz);
+    OpStatus status;
+    {
+#ifdef NDEBUG
+        wxBusyInfo wait("Please wait, calibrating receiver...");
+#endif
+        status = lmsControl->CalibrateRx(bandwidth_MHz * 1e6);
+    }
+    if (status != OpStatus::Success)
+        wxMessageBox(wxString::Format(_("Rx calibration failed: %s"), lime::GetLastErrorMessageCString()));
+    else
+    {
+        wxMessageBox(_("Rx Calibration Finished"), _("Info"), wxOK, this);
+        wxCommandEvent evt;
+        evt.SetEventType(LOG_MESSAGE);
+        evt.SetInt(static_cast<int>(lime::LogLevel::Info));
+        evt.SetString(_("Rx Calibrated"));
+        wxPostEvent(this, evt);
+    }
     UpdateGUI();
 }
 
 void lms7002_pnlCalibrations_view::OnbtnCalibrateTx(wxCommandEvent& event)
 {
-    //     bool useExtLoopback = false;
-    //     if(rgrCalibrationMethod->GetSelection() == 0)
-    //         useExtLoopback = false;
-    //     else
-    //     {
-    //         useExtLoopback = true;
-    //     }
-    //     double bandwidth_MHz = 0;
-    //     txtCalibrationBW->GetValue().ToDouble(&bandwidth_MHz);
-    //     int status = 0;
-    //     {
-    // #ifdef NDEBUG
-    //         wxBusyInfo wait("Please wait, calibrating transmitter...");
-    // #endif
-    //         status =
-    //             lmsControl->CalibrateTx(bandwidth_MHz * 1e6, useExtLoopback);
-    //     }
-    // if (status != 0)
-    //     wxMessageBox(wxString::Format(_("Tx calibration failed: %s"), LMS_GetLastErrorMessage()));
-    // else
-    // {
-    //     wxMessageBox(_("Tx Calibration Finished"), _("Info"), wxOK, this);
-    //     wxCommandEvent evt;
-    //     evt.SetEventType(LOG_MESSAGE);
-    //     evt.SetInt(lime::LOG_LEVEL_INFO);
-    //     evt.SetString(_("Tx Calibrated"));
-    //     wxPostEvent(this, evt);
-    // }
+    double bandwidth_MHz = 0;
+    txtCalibrationBW->GetValue().ToDouble(&bandwidth_MHz);
+    OpStatus status;
+    {
+#ifdef NDEBUG
+        wxBusyInfo wait("Please wait, calibrating transmitter...");
+#endif
+        status = lmsControl->CalibrateTx(bandwidth_MHz * 1e6);
+    }
+    if (status != OpStatus::Success)
+        wxMessageBox(wxString::Format(_("Tx calibration failed: %s"), lime::GetLastErrorMessageCString()));
+    else
+    {
+        wxMessageBox(_("Tx Calibration Finished"), _("Info"), wxOK, this);
+        wxCommandEvent evt;
+        evt.SetEventType(LOG_MESSAGE);
+        evt.SetInt(static_cast<int>(lime::LogLevel::Info));
+        evt.SetString(_("Tx Calibrated"));
+        wxPostEvent(this, evt);
+    }
     UpdateGUI();
 }
 

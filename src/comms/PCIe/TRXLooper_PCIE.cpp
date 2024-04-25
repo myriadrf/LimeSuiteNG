@@ -81,9 +81,9 @@ TRXLooper_PCIE::~TRXLooper_PCIE()
 OpStatus TRXLooper_PCIE::Setup(const StreamConfig& config)
 {
     if (config.channels.at(lime::TRXDir::Rx).size() > 0 && !mRxArgs.port->IsOpen())
-        return ReportError(OpStatus::IOFailure, "Rx data port not open");
+        return ReportError(OpStatus::IOFailure, "Rx data port not open"s);
     if (config.channels.at(lime::TRXDir::Tx).size() > 0 && !mTxArgs.port->IsOpen())
-        return ReportError(OpStatus::IOFailure, "Tx data port not open");
+        return ReportError(OpStatus::IOFailure, "Tx data port not open"s);
 
     float combinedSampleRate =
         std::max(config.channels.at(lime::TRXDir::Tx).size(), config.channels.at(lime::TRXDir::Rx).size()) * config.hintSampleRate;
@@ -176,7 +176,7 @@ int TRXLooper_PCIE::TxSetup()
         mCallback_logMessage(LogLevel::Debug, msg);
     }
 
-    const std::string name = "MemPool_Tx" + std::to_string(chipId);
+    const std::string name = "MemPool_Tx"s + std::to_string(chipId);
     const int upperAllocationLimit =
         65536; //sizeof(complex32f_t) * mTx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mTx.memPool = new MemoryPool(1024, upperAllocationLimit, 4096, name);
@@ -569,7 +569,7 @@ int TRXLooper_PCIE::RxSetup()
     mRxArgs.packetsToBatch = mRx.packetsToBatch;
     mRxArgs.samplesInPacket = samplesInPkt;
 
-    const std::string name = "MemPool_Rx" + std::to_string(chipId);
+    const std::string name = "MemPool_Rx"s + std::to_string(chipId);
     const int upperAllocationLimit =
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 4096, name);
@@ -857,7 +857,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
 
         int payloadSize = (samplesDataSize / 4) * 4;
         if (samplesDataSize % 4 != 0)
-            lime::warning("Packet samples count not multiple of 4");
+            lime::warning("Packet samples count not multiple of 4"s);
         pkt->reserved[2] = (payloadSize >> 8) & 0xFF; //WFM loading
         pkt->reserved[1] = payloadSize & 0xFF; //WFM loading
         pkt->reserved[0] = 0x1 << 5; //WFM loading
@@ -893,7 +893,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
     if (samplesRemaining == 0)
         return OpStatus::Success;
     else
-        return ReportError(OpStatus::Error, "Failed to upload waveform");
+        return ReportError(OpStatus::Error, "Failed to upload waveform"s);
 }
 
 } // namespace lime

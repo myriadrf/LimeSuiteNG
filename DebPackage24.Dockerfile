@@ -26,7 +26,11 @@ COPY README.md README.md
 COPY src/ src/
 
 RUN patch debian/control < debian/control.gnuradio.patch
+RUN patch debian/control < debian/control.no_kernel_driver.patch
+RUN patch debian/rules < debian/rules.docker.patch
 RUN patch debian/rules < debian/rules.gnuradio.patch
+# https://github.com/gnuradio/gnuradio/issues/6477
+RUN patch $(find / -path */dist-packages/gnuradio/blocktool/core/parseheader_generic.py) < plugins/gr-limesdr/patch_gnuradio.patch
 RUN dpkg-buildpackage --build=binary --no-sign
 
 FROM scratch AS export-stage

@@ -17,6 +17,9 @@
 #include "ADCUnits.h"
 #include <cstring>
 
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
+
 //! CMD_LMS7002_RST options
 const int LMS_RST_DEACTIVATE = 0;
 const int LMS_RST_ACTIVATE = 1;
@@ -92,20 +95,25 @@ constexpr size_t LMS64CPacketMemoryWriteView::GetMaxDataSize()
 
 namespace LMS64CProtocol {
 
-static const std::array<const std::string, eCMD_STATUS::STATUS_COUNT> COMMAND_STATUS_TEXT = {
-    "Undefined/Failure", "Completed", "Unknown command", "Busy", "Too many blocks", "Error", "Wrong order", "Resource denied"
+static constexpr std::array<const std::string_view, eCMD_STATUS::STATUS_COUNT> COMMAND_STATUS_TEXT = {
+    "Undefined/Failure"sv,
+    "Completed"sv,
+    "Unknown command"sv,
+    "Busy"sv,
+    "Too many blocks"sv,
+    "Error"sv,
+    "Wrong order"sv,
+    "Resource denied"sv,
 };
 
-static const std::string UNKNOWN{ "Unknown status" };
-
-static constexpr const std::string& status2string(const int status)
+static constexpr const std::string_view status2string(const int status)
 {
     if (status >= 0 && status < eCMD_STATUS::STATUS_COUNT)
     {
         return COMMAND_STATUS_TEXT.at(status);
     }
 
-    return UNKNOWN;
+    return "Unknown status"sv;
 }
 
 static constexpr std::array<char, 16> ADC_UNITS_PREFIX = {
@@ -329,10 +337,10 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
             pkt.payload[byteIndex++] = parameters[index].id;
             int powerOf10 = 0;
 
-            if (parameters[index].value > 65535.0 && (parameters[index].units != ""))
+            if (parameters[index].value > 65535.0 && (parameters[index].units != ""s))
                 powerOf10 = log10(parameters[index].value / 65.536) / 3;
 
-            if (parameters[index].value < 65.536 && (parameters[index].units != ""))
+            if (parameters[index].value < 65.536 && (parameters[index].units != ""s))
                 powerOf10 = log10(parameters[index].value / 65535.0) / 3;
 
             int unitsId = 0; // need to convert given units to their enum
@@ -348,11 +356,11 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
 
         int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("CustomParameterWrite write failed");
+            throw std::runtime_error("CustomParameterWrite write failed"s);
 
         int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-            throw std::runtime_error("CustomParameterWrite read failed");
+            throw std::runtime_error("CustomParameterWrite read failed"s);
     }
 
     return OpStatus::Success;
@@ -382,11 +390,11 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
 
         int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("CustomParameterRead write failed");
+            throw std::runtime_error("CustomParameterRead write failed"s);
 
         int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-            throw std::runtime_error("CustomParameterRead read failed");
+            throw std::runtime_error("CustomParameterRead read failed"s);
 
         for (std::size_t i = 0; i < pkt.blockCount; ++i)
         {
@@ -426,8 +434,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 #endif
     //erasing FLASH can take up to 3 seconds before reply is received
     const int progTimeout_ms = 5000;
-    char progressMsg[512];
-    sprintf(progressMsg, "in progress...");
+    std::string progressMsg = "in progress..."s;
     bool abortProgramming = false;
     size_t bytesSent = 0;
 
@@ -444,7 +451,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         cmd = CMD_ALTERA_FPGA_GW_WR;
     else
     {
-        sprintf(progressMsg, "Programming failed! Target device not supported");
+        progressMsg = "Programming failed! Target device not supported"s;
         if (callback)
             callback(bytesSent, length, progressMsg);
         return ReportError(OpStatus::NotSupported, progressMsg);
@@ -496,7 +503,7 @@ OpStatus ProgramWrite(ISerialPort& port,
 
         if (inPacket.status != STATUS_COMPLETED_CMD)
         {
-            sprintf(progressMsg, "Programming failed! %s", status2string(inPacket.status).c_str());
+            progressMsg = "Programming failed! "s + std::string{ status2string(inPacket.status) };
             if (callback)
                 callback(bytesSent, length, progressMsg);
             return ReportError(OpStatus::Error, progressMsg);
@@ -511,7 +518,7 @@ OpStatus ProgramWrite(ISerialPort& port,
         {
             bool completed = chunkIndex == chunkCount - 1;
             if (completed)
-                sprintf(progressMsg, "Programming: completed");
+                progressMsg = "Programming: completed"s;
             abortProgramming = callback(bytesSent, length, progressMsg);
             if (abortProgramming && !completed)
                 return OpStatus::Aborted;
@@ -543,10 +550,10 @@ OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
 
     int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (sent != sizeof(pkt))
-        throw std::runtime_error("DeviceReset write failed");
+        throw std::runtime_error("DeviceReset write failed"s);
     int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-        throw std::runtime_error("DeviceReset read failed");
+        throw std::runtime_error("DeviceReset read failed"s);
     return OpStatus::Success;
 }
 
@@ -554,7 +561,7 @@ OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
     {
-        throw std::invalid_argument("Buffer is too big for one packet.");
+        throw std::invalid_argument("Buffer is too big for one packet."s);
     }
 
     LMS64CPacket pkt;
@@ -564,13 +571,13 @@ OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesSent != sizeof(pkt))
     {
-        throw std::runtime_error("GPIODirRead write failed");
+        throw std::runtime_error("GPIODirRead write failed"s);
     }
 
     int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
     {
-        throw std::runtime_error("GPIODirRead read failed");
+        throw std::runtime_error("GPIODirRead read failed"s);
     }
 
     for (size_t i = 0; i < bufLength; ++i)
@@ -585,7 +592,7 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
     {
-        throw std::invalid_argument("Buffer is too big for one packet.");
+        throw std::invalid_argument("Buffer is too big for one packet."s);
     }
 
     LMS64CPacket pkt;
@@ -595,13 +602,13 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesSent != sizeof(pkt))
     {
-        throw std::runtime_error("GPIORead write failed");
+        throw std::runtime_error("GPIORead write failed"s);
     }
 
     int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
     {
-        throw std::runtime_error("GPIORead read failed");
+        throw std::runtime_error("GPIORead read failed"s);
     }
 
     for (size_t i = 0; i < bufLength; ++i)
@@ -616,7 +623,7 @@ OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t buf
 {
     if (bufLength > LMS64CPacket::payloadSize)
     {
-        throw std::invalid_argument("Buffer is too big for one packet.");
+        throw std::invalid_argument("Buffer is too big for one packet."s);
     }
 
     LMS64CPacket pkt;
@@ -631,13 +638,13 @@ OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t buf
     int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesSent != sizeof(pkt))
     {
-        throw std::runtime_error("GPIODirWrite write failed");
+        throw std::runtime_error("GPIODirWrite write failed"s);
     }
 
     int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
     {
-        throw std::runtime_error("GPIODirWrite read failed");
+        throw std::runtime_error("GPIODirWrite read failed"s);
     }
 
     return OpStatus::Success;
@@ -647,7 +654,7 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
 {
     if (bufLength > LMS64CPacket::payloadSize)
     {
-        throw std::invalid_argument("Buffer is too big for one packet.");
+        throw std::invalid_argument("Buffer is too big for one packet."s);
     }
 
     LMS64CPacket pkt;
@@ -662,13 +669,13 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
     int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesSent != sizeof(pkt))
     {
-        throw std::runtime_error("GPIOWrite write failed");
+        throw std::runtime_error("GPIOWrite write failed"s);
     }
 
     int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
     if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
     {
-        throw std::runtime_error("GPIOWrite read failed");
+        throw std::runtime_error("GPIOWrite read failed"s);
     }
 
     return OpStatus::Success;

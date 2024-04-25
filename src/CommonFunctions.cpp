@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <string>
 
+using namespace std::literals::string_literals;
+
 namespace lime {
 
 static constexpr int BUFFER_SIZE = 256;

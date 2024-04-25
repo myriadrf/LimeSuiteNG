@@ -21,12 +21,12 @@ using namespace std::literals::string_literals;
 //     BoardLoopbackStore(lime::IConnection* port) : port(port)
 //     {
 //         if(port && port->ReadRegister(LoopbackCtrAddr, mLoopbackState) != 0)
-//             lime::ReportError(-1, "Failed to read Loopback controls");
+//             lime::ReportError(-1, "Failed to read Loopback controls"s);
 //     }
 //     ~BoardLoopbackStore()
 //     {
 //         if(port && port->WriteRegister(LoopbackCtrAddr, mLoopbackState) != 0)
-//             lime::ReportError(-1, "Failed to restore Loopback controls");
+//             lime::ReportError(-1, "Failed to restore Loopback controls"s);
 //     }
 // private:
 //     lime::IConnection* port;
@@ -153,7 +153,7 @@ static int SetExtLoopback(IConnection* port, uint8_t ch, bool enable, bool tx)
     }
     status = port->WriteRegister(LoopbackCtrAddr, value);
     if(status != 0)
-        return ReportError(status, "Failed to enable external loopback");
+        return ReportError(status, "Failed to enable external loopback"s);
     return status;
 }
 */
@@ -184,7 +184,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected");
+        return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected"s);
     auto beginTime = std::chrono::high_resolution_clock::now();
     int status;
     uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
@@ -230,7 +230,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, true);
             // if(status != 0)
-            //     return ReportError(OpStatus::InvalidValue, "Tx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Tx Calibration: Failed to enable external loopback"s);
             uint8_t loopPair = GetExtLoopPair(*this, true);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }
@@ -238,7 +238,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::InvalidValue, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Tx Calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
     }
 
     //sync registers to cache
@@ -253,9 +253,9 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
     gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_TXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_TXTSP, true));
 
-    Log("Tx calibration finished", LogType::LOG_INFO);
-    lime::debug("Tx | DC  | GAIN | PHASE");
-    lime::debug("---+-----+------+------");
+    lime::info("Tx calibration finished"s);
+    lime::debug("Tx | DC  | GAIN | PHASE"s);
+    lime::debug("---+-----+------+------"s);
     lime::debug("I: | %3i | %4i | %i", dccorri, gcorri, phaseOffset);
     lime::debug("Q: | %3i | %4i |", dccorrq, gcorrq);
     int32_t duration =
@@ -279,7 +279,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         bandwidth_Hz = TrxCalib_RF_LimitHigh;
     }
     if (controlPort == nullptr)
-        return ReportError(OpStatus::IOFailure, "Rx Calibration: Device not connected");
+        return ReportError(OpStatus::IOFailure, "Rx Calibration: Device not connected"s);
 #ifdef LMS_VERBOSE_OUTPUT
     auto beginTime = std::chrono::high_resolution_clock::now();
 #endif
@@ -291,31 +291,27 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     uint8_t lna = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE));
     double rxFreq = GetFrequencySX(TRXDir::Rx);
 
-    const char* lnaName;
-    switch (lna)
-    {
-    case 0:
-        lnaName = "none";
-        break;
-    case 1:
-        lnaName = "LNAH";
-        break;
-    case 2:
-        lnaName = "LNAL";
-        break;
-    case 3:
-        lnaName = "LNAW";
-        break;
-    default:
-        lnaName = "none";
-        break;
-    }
+    const std::string_view lnaName = [lna]() {
+        switch (lna)
+        {
+        case 0:
+            return "none"sv;
+        case 1:
+            return "LNAH"sv;
+        case 2:
+            return "LNAL"sv;
+        case 3:
+            return "LNAW"sv;
+        default:
+            return "none"sv;
+        }
+    }();
     lime::debug("Rx calibration using %s loopback", (useExtLoopback ? "EXTERNAL" : "INTERNAL"));
     lime::debug("Rx ch.%s @ %4g MHz, BW: %g MHz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         ch == static_cast<uint8_t>(Channel::ChA) ? "A" : "B",
         rxFreq / 1e6,
         bandwidth_Hz / 1e6,
-        lnaName,
+        lnaName.data(),
         Get_SPI_Reg_bits(LMS7_G_PGA_RBB),
         Get_SPI_Reg_bits(LMS7_G_LNA_RFE),
         Get_SPI_Reg_bits(LMS7_G_TIA_RFE));
@@ -327,7 +323,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         "Current MCU firmware: %i, %s", mcuID, mcuID == MCU_ID_CALIBRATIONS_SINGLE_IMAGE ? "DC/IQ calibration full" : "unknown");
     if (mcuID != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
     {
-        lime::debug("Uploading DC/IQ calibration firmware");
+        lime::debug("Uploading DC/IQ calibration firmware"s);
         OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
         if (status != OpStatus::Success)
             return status;
@@ -347,7 +343,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
             // TODO:
             // status = SetExtLoopback(controlPort, ch, true, false);
             // if(status != 0)
-            //     return ReportError(OpStatus::InvalidValue, "Rx Calibration: Failed to enable external loopback");
+            //     return ReportError(OpStatus::InvalidValue, "Rx Calibration: Failed to enable external loopback"s);
             uint8_t loopPair = GetExtLoopPair(*this, false);
             mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_EXT_LOOPBACK_PAIR, loopPair);
         }
@@ -356,7 +352,7 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         int status = mcuControl->WaitForMCU(1000);
         if (status != MCU_BD::MCU_NO_ERROR)
             return ReportError(
-                OpStatus::InvalidValue, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status));
+                OpStatus::InvalidValue, "Rx calibration: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
     }
 
     //sync registers to cache
@@ -371,9 +367,9 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_RXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_RXTSP, true));
 
-    Log("Rx calibration finished", LogType::LOG_INFO);
-    lime::debug("RX | DC  | GAIN | PHASE");
-    lime::debug("---+-----+------+------");
+    lime::info("Rx calibration finished"s);
+    lime::debug("RX | DC  | GAIN | PHASE"s);
+    lime::debug("---+-----+------+------"s);
     lime::debug("I: | %3i | %4i | %i", dcoffi, gcorri, phaseOffset);
     lime::debug("Q: | %3i | %4i |", dcoffq, gcorrq);
 #ifdef LMS_VERBOSE_OUTPUT

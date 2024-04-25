@@ -10,6 +10,7 @@
 #include <fstream>
 #include <algorithm>
 #include <signal.h>
+#include <string_view>
 
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
@@ -17,6 +18,6 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
 
-lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string& argument);
+lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument);
 
 #endif

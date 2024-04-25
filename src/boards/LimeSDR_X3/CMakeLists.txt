@@ -4,11 +4,7 @@
 
 set(THIS_SOURCE_DIR boards/LimeSDR_X3)
 
-set(LIMESDR_X3_SOURCES
-    ${THIS_SOURCE_DIR}/FPGA_X3.cpp
-    ${THIS_SOURCE_DIR}/LimeSDR_X3.cpp
-    ${THIS_SOURCE_DIR}/SlaveSelectShim.cpp
-)
+set(LIMESDR_X3_SOURCES ${THIS_SOURCE_DIR}/FPGA_X3.cpp ${THIS_SOURCE_DIR}/LimeSDR_X3.cpp ${THIS_SOURCE_DIR}/SlaveSelectShim.cpp)
 
 ########################################################################
 ## Add to library

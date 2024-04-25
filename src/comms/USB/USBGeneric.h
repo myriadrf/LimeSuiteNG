@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mutex>
-#include <string>
+#include <string_view>
 #include <thread>
 #include "USBTransferContext.h"
 
@@ -15,6 +15,8 @@
         #pragma GCC diagnostic pop
     #endif
 #endif
+
+using namespace std::literals::string_view_literals;
 
 namespace lime {
 
@@ -42,7 +44,7 @@ class USBGeneric
       @param serial The serial number of the device.
       @return The status of the operation (true on success).
      */
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string& serial = "");
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv);
 
     /**
       @brief Returns whether this instance is connected to a device.
