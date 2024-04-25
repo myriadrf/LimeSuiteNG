@@ -659,16 +659,14 @@ static int OnCalibrate(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     calibrationBandwidth = std::atof(textBuffer) * 1e6;
     if (calibrationBandwidth >= minimumCalibrationBandwidth && calibrationBandwidth <= maximumCalibrationBandwidth) {
         PerformCalibration(true);
-
-        UpdateDialog();
     } else {
         DbgPrintf("Frequency out of range, available range from 2.5 to 120 MHz");
         calibrationBandwidth = sampleRates.at(sampleRateIndex);
         if (calibrationBandwidth < minimumCalibrationBandwidth) {
             calibrationBandwidth = minimumCalibrationBandwidth;
         }
-        UpdateDialog();
     }
+    UpdateDialog();
 
     delete[] textBuffer;
     return TRUE;
