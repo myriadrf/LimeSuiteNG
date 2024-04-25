@@ -673,18 +673,6 @@ int MCU_BD::RunProductionTest_MCU()
 
     if (retval != 0x10)
     {
-        if ((retval & 0xF0) != 0x30)
-        {
-            // test too long. Failure.
-            return -1;
-        }
-
-        // detected error code
-        if ((retval & 0x0F) > 0)
-        {
-            return -1;
-        }
-
         return -1;
     }
 
