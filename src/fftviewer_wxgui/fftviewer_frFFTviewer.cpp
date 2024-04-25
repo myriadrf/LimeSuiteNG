@@ -8,7 +8,7 @@
 #include <LMSBoards.h>
 #include "kissFFT/kiss_fft.h"
 #include "limesuiteng/LMS7002M.h"
-#include "windowFunction.h"
+#include "DSP/FFT.h"
 #include <fstream>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
@@ -387,13 +387,13 @@ void fftviewer_frFFTviewer::StreamingLoop(
 {
     const bool runTx = pthis->chkEnTx->GetValue();
     int avgCount = pthis->spinAvgCount->GetValue();
-    int wndFunction = pthis->windowFunctionID.load();
+    auto wndFunction = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
     bool fftEnabled = true;
 
     bool syncTx = pthis->chkEnSync->GetValue();
 
     vector<float> wndCoef;
-    GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+    lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
 
     lime::complex32f_t** buffers;
 
@@ -544,7 +544,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
                     }
                 if (fftEnabled)
                 {
-                    if (wndFunction == 0)
+                    if (wndFunction == lime::FFT::WindowFunctionType::NONE)
                     {
                         for (unsigned i = 0; i < fftSize; ++i)
                         {
@@ -600,11 +600,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
             fftCounter = 0;
             fftEnabled = pthis->enableFFT.load();
             avgCount = pthis->averageCount.load();
-            int wndFunctionSelection = pthis->windowFunctionID.load();
+            auto wndFunctionSelection = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
             if (wndFunctionSelection != wndFunction)
             {
                 wndFunction = wndFunctionSelection;
-                GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+                lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
             }
         }
     }

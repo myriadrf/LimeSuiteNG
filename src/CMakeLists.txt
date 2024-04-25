@@ -43,7 +43,6 @@ set(LIME_SUITE_SOURCES
     Si5351C/Si5351C.cpp
     FPGA_common/FPGA_common.cpp
     FPGA_common/WriteRegistersBatch.cpp
-    windowFunction.cpp
     threadHelper/threadHelper.cpp
     CDCM6208/CDCM6208_Dev.cpp
     parsers/CoefficientFileParser.cpp
@@ -254,7 +253,6 @@ set(LMS7SUITE_GUI_SOURCES
     boards_wxgui/pnlX8.cpp
     boards_wxgui/pnlXTRX.cpp
     boards_wxgui/pnluLimeSDR.cpp
-    windowFunction.cpp
     boards_wxgui/pnlLimeSDR.cpp
     boards_wxgui/pnlGPIO.cpp
     GUI/CommsToDevice.cpp
