@@ -8,8 +8,9 @@
 #include "limesuiteng/Logger.h"
 #include "FPGA_Mini.h"
 #include "TRXLooper_USB.h"
-#include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002m/LMS7002M_validation.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
+#include "DSP/EqualizerCSR.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
@@ -27,6 +28,8 @@
 #endif
 
 using namespace lime;
+using namespace lime::EqualizerCSR;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
@@ -272,8 +275,8 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         }
 
         // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(LMS7_PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         double sampleRate;
@@ -323,21 +326,21 @@ OpStatus LimeSDR_Mini::Init()
     if (status != OpStatus::Success)
         return status;
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     if (lms->CalibrateTxGain() != OpStatus::Success)
         return OpStatus::Error;
 
     lms->EnableChannel(TRXDir::Tx, 0, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
     lms->SPI_write(0x0123, 0x000F); //SXT
     lms->SPI_write(0x0120, 0x80C0); //SXT
     lms->SPI_write(0x011C, 0x8941); //SXT
     lms->EnableChannel(TRXDir::Rx, 0, false);
     lms->EnableChannel(TRXDir::Tx, 0, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     /*bool auto_path[2] = {auto_tx_path, auto_rx_path};
     auto_tx_path = false;
@@ -562,16 +565,16 @@ OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
             interpolation + 1); // dec/inter ratio is 2^(value+1)
     }
 
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_LML1_SISODDR, 1);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_LML2_SISODDR, 1);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7_CDSN_RXALML, !bypass);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), decimation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), interpolation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML1_SISODDR, 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML2_SISODDR, 1);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CDSN_RXALML, !bypass);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::EN_ADCCLKH_CLKGN, 0);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CLKH_OV_CLKL_CGEN, 2);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 2);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBD_OVR_RXTSP, decimation);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBI_OVR_TXTSP, interpolation);
+    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
     if (bypass)
     {
         return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(sampleRate * 4, 7, 7);

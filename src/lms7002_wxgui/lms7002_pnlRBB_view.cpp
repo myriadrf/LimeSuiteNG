@@ -8,9 +8,10 @@
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
-#include "limesuiteng/LMS7002M_parameters.h"
+#include "limesuiteng/LMS7002MCSR.h"
 
 using namespace lime;
+
 using namespace std::literals::string_literals;
 
 lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -355,25 +356,25 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     cmbRCC_CTL_PGA_RBB->Connect(
         wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
 
-    wndId2Enum[cmbC_CTL_LPFH_RBB] = LMS7param(C_CTL_LPFH_RBB);
-    wndId2Enum[cmbC_CTL_LPFL_RBB] = LMS7param(C_CTL_LPFL_RBB);
-    wndId2Enum[cmbC_CTL_PGA_RBB] = LMS7param(C_CTL_PGA_RBB);
-    wndId2Enum[chkEN_G_RBB] = LMS7param(EN_G_RBB);
-    wndId2Enum[cmbG_PGA_RBB] = LMS7param(G_PGA_RBB);
-    wndId2Enum[cmbICT_LPF_IN_RBB] = LMS7param(ICT_LPF_IN_RBB);
-    wndId2Enum[cmbICT_LPF_OUT_RBB] = LMS7param(ICT_LPF_OUT_RBB);
-    wndId2Enum[cmbICT_PGA_IN_RBB] = LMS7param(ICT_PGA_IN_RBB);
-    wndId2Enum[cmbICT_PGA_OUT_RBB] = LMS7param(ICT_PGA_OUT_RBB);
-    wndId2Enum[cmbINPUT_CTL_PGA_RBB] = LMS7param(INPUT_CTL_PGA_RBB);
-    wndId2Enum[rgrOSW_PGA_RBB] = LMS7param(OSW_PGA_RBB);
-    wndId2Enum[chkPD_LPFH_RBB] = LMS7param(PD_LPFH_RBB);
-    wndId2Enum[chkPD_LPFL_RBB] = LMS7param(PD_LPFL_RBB);
-    wndId2Enum[chkPD_PGA_RBB] = LMS7param(PD_PGA_RBB);
-    wndId2Enum[cmbRCC_CTL_LPFH_RBB] = LMS7param(RCC_CTL_LPFH_RBB);
-    wndId2Enum[cmbRCC_CTL_LPFL_RBB] = LMS7param(RCC_CTL_LPFL_RBB);
-    wndId2Enum[cmbRCC_CTL_PGA_RBB] = LMS7param(RCC_CTL_PGA_RBB);
-    wndId2Enum[cmbR_CTL_LPF_RBB] = LMS7param(R_CTL_LPF_RBB);
-    wndId2Enum[chkEN_DIR_RBB] = LMS7param(EN_DIR_RBB);
+    wndId2Enum[cmbC_CTL_LPFH_RBB] = LMS7002MCSR::C_CTL_LPFH_RBB;
+    wndId2Enum[cmbC_CTL_LPFL_RBB] = LMS7002MCSR::C_CTL_LPFL_RBB;
+    wndId2Enum[cmbC_CTL_PGA_RBB] = LMS7002MCSR::C_CTL_PGA_RBB;
+    wndId2Enum[chkEN_G_RBB] = LMS7002MCSR::EN_G_RBB;
+    wndId2Enum[cmbG_PGA_RBB] = LMS7002MCSR::G_PGA_RBB;
+    wndId2Enum[cmbICT_LPF_IN_RBB] = LMS7002MCSR::ICT_LPF_IN_RBB;
+    wndId2Enum[cmbICT_LPF_OUT_RBB] = LMS7002MCSR::ICT_LPF_OUT_RBB;
+    wndId2Enum[cmbICT_PGA_IN_RBB] = LMS7002MCSR::ICT_PGA_IN_RBB;
+    wndId2Enum[cmbICT_PGA_OUT_RBB] = LMS7002MCSR::ICT_PGA_OUT_RBB;
+    wndId2Enum[cmbINPUT_CTL_PGA_RBB] = LMS7002MCSR::INPUT_CTL_PGA_RBB;
+    wndId2Enum[rgrOSW_PGA_RBB] = LMS7002MCSR::OSW_PGA_RBB;
+    wndId2Enum[chkPD_LPFH_RBB] = LMS7002MCSR::PD_LPFH_RBB;
+    wndId2Enum[chkPD_LPFL_RBB] = LMS7002MCSR::PD_LPFL_RBB;
+    wndId2Enum[chkPD_PGA_RBB] = LMS7002MCSR::PD_PGA_RBB;
+    wndId2Enum[cmbRCC_CTL_LPFH_RBB] = LMS7002MCSR::RCC_CTL_LPFH_RBB;
+    wndId2Enum[cmbRCC_CTL_LPFL_RBB] = LMS7002MCSR::RCC_CTL_LPFL_RBB;
+    wndId2Enum[cmbRCC_CTL_PGA_RBB] = LMS7002MCSR::RCC_CTL_PGA_RBB;
+    wndId2Enum[cmbR_CTL_LPF_RBB] = LMS7002MCSR::R_CTL_LPF_RBB;
+    wndId2Enum[chkEN_DIR_RBB] = LMS7002MCSR::EN_DIR_RBB;
 
     wxArrayString temp;
     temp.clear();
@@ -434,7 +435,7 @@ void lms7002_pnlRBB_view::ParameterChangeHandler(wxSpinEvent& event)
 void lms7002_pnlRBB_view::ParameterChangeHandler(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -451,20 +452,20 @@ void lms7002_pnlRBB_view::OncmbBBLoopbackSelected(wxCommandEvent& event)
     switch (cmbBBLoopback->GetSelection())
     {
     case 0:
-        WriteParam(LMS7param(EN_LB_LPFH_RBB), true);
-        WriteParam(LMS7param(EN_LB_LPFL_RBB), false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFH_RBB, true);
+        WriteParam(LMS7002MCSR::EN_LB_LPFL_RBB, false);
         break;
     case 1:
-        WriteParam(LMS7param(EN_LB_LPFH_RBB), false);
-        WriteParam(LMS7param(EN_LB_LPFL_RBB), true);
+        WriteParam(LMS7002MCSR::EN_LB_LPFH_RBB, false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFL_RBB, true);
         break;
     case 2:
-        WriteParam(LMS7param(EN_LB_LPFH_RBB), false);
-        WriteParam(LMS7param(EN_LB_LPFL_RBB), false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFH_RBB, false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFL_RBB, false);
         break;
     default:
-        WriteParam(LMS7param(EN_LB_LPFH_RBB), false);
-        WriteParam(LMS7param(EN_LB_LPFL_RBB), false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFH_RBB, false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFL_RBB, false);
     }
 }
 
@@ -476,10 +477,10 @@ void lms7002_pnlRBB_view::UpdateGUI()
 
     long BBloopbackValue = 0;
     uint16_t EN_LB_LPFH_RBBvalue;
-    EN_LB_LPFH_RBBvalue = ReadParam(LMS7param(EN_LB_LPFH_RBB));
+    EN_LB_LPFH_RBBvalue = ReadParam(LMS7002MCSR::EN_LB_LPFH_RBB);
 
     uint16_t EN_LB_LPFL_RBBvalue;
-    EN_LB_LPFL_RBBvalue = ReadParam(LMS7param(EN_LB_LPFL_RBB));
+    EN_LB_LPFL_RBBvalue = ReadParam(LMS7002MCSR::EN_LB_LPFL_RBB);
     if (!EN_LB_LPFH_RBBvalue && !EN_LB_LPFL_RBBvalue)
         BBloopbackValue = 2;
     else if (EN_LB_LPFH_RBBvalue && !EN_LB_LPFL_RBBvalue)
@@ -489,8 +490,8 @@ void lms7002_pnlRBB_view::UpdateGUI()
     else //invalid combination
     {
         BBloopbackValue = 2;
-        WriteParam(LMS7param(EN_LB_LPFH_RBB), false);
-        WriteParam(LMS7param(EN_LB_LPFL_RBB), false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFH_RBB, false);
+        WriteParam(LMS7002MCSR::EN_LB_LPFL_RBB, false);
     }
     cmbBBLoopback->SetSelection(BBloopbackValue);
 
@@ -498,12 +499,12 @@ void lms7002_pnlRBB_view::UpdateGUI()
     uint16_t value;
     if (mChannel & 1)
     {
-        value = ReadParam(LMS7param(MIMO_SISO));
+        value = ReadParam(LMS7002MCSR::MIMO_SISO);
         if (value != 0)
             wxMessageBox(_("MIMO channel B is disabled"), _("Warning"));
     }
 
-    value = ReadParam(LMS7param(TRX_GAIN_SRC));
+    value = ReadParam(LMS7002MCSR::TRX_GAIN_SRC);
     cmbG_PGA_RBB->Enable(!value);
     cmbC_CTL_PGA_RBB->Enable(!value);
 }

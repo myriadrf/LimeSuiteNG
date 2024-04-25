@@ -3,8 +3,10 @@
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7002_dlgGFIR_Coefficients.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "lms7suiteAppFrame.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002MCSR.h"
 #include "limesuiteng/Logger.h"
 
 #include <wx/msgdlg.h>
@@ -1321,55 +1323,55 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     cmbDCCORRQ_TXTSP->Connect(
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
 
-    wndId2Enum[rgrMODE_TX] = LMS7param(MODE_TX);
-    wndId2Enum[chkBSTART_TXTSP] = LMS7param(BSTART_TXTSP);
-    wndId2Enum[chkCMIX_BYP_TXTSP] = LMS7param(CMIX_BYP_TXTSP);
-    wndId2Enum[cmbCMIX_GAIN_TXTSP] = LMS7param(CMIX_GAIN_TXTSP);
-    wndId2Enum[cmbDCCORRI_TXTSP] = LMS7param(DCCORRI_TXTSP);
-    wndId2Enum[cmbDCCORRQ_TXTSP] = LMS7param(DCCORRQ_TXTSP);
-    wndId2Enum[chkDC_BYP_TXTSP] = LMS7param(DC_BYP_TXTSP);
-    wndId2Enum[chkEN_TXTSP] = LMS7param(EN_TXTSP);
-    wndId2Enum[cmbGCORRI_TXTSP] = LMS7param(GCORRI_TXTSP);
-    wndId2Enum[cmbGCORRQ_TXTSP] = LMS7param(GCORRQ_TXTSP);
-    wndId2Enum[chkGC_BYP_TXTSP] = LMS7param(GC_BYP_TXTSP);
-    wndId2Enum[chkGFIR1_BYP_TXTSP] = LMS7param(GFIR1_BYP_TXTSP);
-    wndId2Enum[cmbGFIR1_L_TXTSP] = LMS7param(GFIR1_L_TXTSP);
-    wndId2Enum[cmbGFIR1_N_TXTSP] = LMS7param(GFIR1_N_TXTSP);
-    wndId2Enum[chkGFIR2_BYP_TXTSP] = LMS7param(GFIR2_BYP_TXTSP);
-    wndId2Enum[cmbGFIR2_L_TXTSP] = LMS7param(GFIR2_L_TXTSP);
-    wndId2Enum[cmbGFIR2_N_TXTSP] = LMS7param(GFIR2_N_TXTSP);
-    wndId2Enum[chkGFIR3_BYP_TXTSP] = LMS7param(GFIR3_BYP_TXTSP);
-    wndId2Enum[cmbGFIR3_L_TXTSP] = LMS7param(GFIR3_L_TXTSP);
-    wndId2Enum[cmbGFIR3_N_TXTSP] = LMS7param(GFIR3_N_TXTSP);
-    wndId2Enum[cmbHBI_OVR_TXTSP] = LMS7param(HBI_OVR_TXTSP);
-    wndId2Enum[cmbIQCORR_TXTSP] = LMS7param(IQCORR_TXTSP);
-    wndId2Enum[chkISINC_BYP_TXTSP] = LMS7param(ISINC_BYP_TXTSP);
-    wndId2Enum[chkPH_BYP_TXTSP] = LMS7param(PH_BYP_TXTSP);
-    wndId2Enum[cmbCMIX_SC_TXTSP] = LMS7param(CMIX_SC_TXTSP);
+    wndId2Enum[rgrMODE_TX] = LMS7002MCSR::MODE_TX;
+    wndId2Enum[chkBSTART_TXTSP] = LMS7002MCSR::BSTART_TXTSP;
+    wndId2Enum[chkCMIX_BYP_TXTSP] = LMS7002MCSR::CMIX_BYP_TXTSP;
+    wndId2Enum[cmbCMIX_GAIN_TXTSP] = LMS7002MCSR::CMIX_GAIN_TXTSP;
+    wndId2Enum[cmbDCCORRI_TXTSP] = LMS7002MCSR::DCCORRI_TXTSP;
+    wndId2Enum[cmbDCCORRQ_TXTSP] = LMS7002MCSR::DCCORRQ_TXTSP;
+    wndId2Enum[chkDC_BYP_TXTSP] = LMS7002MCSR::DC_BYP_TXTSP;
+    wndId2Enum[chkEN_TXTSP] = LMS7002MCSR::EN_TXTSP;
+    wndId2Enum[cmbGCORRI_TXTSP] = LMS7002MCSR::GCORRI_TXTSP;
+    wndId2Enum[cmbGCORRQ_TXTSP] = LMS7002MCSR::GCORRQ_TXTSP;
+    wndId2Enum[chkGC_BYP_TXTSP] = LMS7002MCSR::GC_BYP_TXTSP;
+    wndId2Enum[chkGFIR1_BYP_TXTSP] = LMS7002MCSR::GFIR1_BYP_TXTSP;
+    wndId2Enum[cmbGFIR1_L_TXTSP] = LMS7002MCSR::GFIR1_L_TXTSP;
+    wndId2Enum[cmbGFIR1_N_TXTSP] = LMS7002MCSR::GFIR1_N_TXTSP;
+    wndId2Enum[chkGFIR2_BYP_TXTSP] = LMS7002MCSR::GFIR2_BYP_TXTSP;
+    wndId2Enum[cmbGFIR2_L_TXTSP] = LMS7002MCSR::GFIR2_L_TXTSP;
+    wndId2Enum[cmbGFIR2_N_TXTSP] = LMS7002MCSR::GFIR2_N_TXTSP;
+    wndId2Enum[chkGFIR3_BYP_TXTSP] = LMS7002MCSR::GFIR3_BYP_TXTSP;
+    wndId2Enum[cmbGFIR3_L_TXTSP] = LMS7002MCSR::GFIR3_L_TXTSP;
+    wndId2Enum[cmbGFIR3_N_TXTSP] = LMS7002MCSR::GFIR3_N_TXTSP;
+    wndId2Enum[cmbHBI_OVR_TXTSP] = LMS7002MCSR::HBI_OVR_TXTSP;
+    wndId2Enum[cmbIQCORR_TXTSP] = LMS7002MCSR::IQCORR_TXTSP;
+    wndId2Enum[chkISINC_BYP_TXTSP] = LMS7002MCSR::ISINC_BYP_TXTSP;
+    wndId2Enum[chkPH_BYP_TXTSP] = LMS7002MCSR::PH_BYP_TXTSP;
+    wndId2Enum[cmbCMIX_SC_TXTSP] = LMS7002MCSR::CMIX_SC_TXTSP;
 
-    wndId2Enum[rgrTSGFCW_TXTSP] = LMS7param(TSGFCW_TXTSP);
-    wndId2Enum[chkTSGSWAPIQ_TXTSP] = LMS7param(TSGSWAPIQ_TXTSP);
-    wndId2Enum[rgrTSGMODE_TXTSP] = LMS7param(TSGMODE_TXTSP);
-    wndId2Enum[rgrINSEL_TXTSP] = LMS7param(INSEL_TXTSP);
-    wndId2Enum[rgrTSGFC_TXTSP] = LMS7param(TSGFC_TXTSP);
-    wndId2Enum[cmbDTHBIT_TX] = LMS7param(DTHBIT_TX);
+    wndId2Enum[rgrTSGFCW_TXTSP] = LMS7002MCSR::TSGFCW_TXTSP;
+    wndId2Enum[chkTSGSWAPIQ_TXTSP] = LMS7002MCSR::TSGSWAPIQ_TXTSP;
+    wndId2Enum[rgrTSGMODE_TXTSP] = LMS7002MCSR::TSGMODE_TXTSP;
+    wndId2Enum[rgrINSEL_TXTSP] = LMS7002MCSR::INSEL_TXTSP;
+    wndId2Enum[rgrTSGFC_TXTSP] = LMS7002MCSR::TSGFC_TXTSP;
+    wndId2Enum[cmbDTHBIT_TX] = LMS7002MCSR::DTHBIT_TX;
 
-    wndId2Enum[rgrSEL0] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL01] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL02] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL03] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL04] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL05] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL06] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL07] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL08] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL09] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL10] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL11] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL12] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL13] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL14] = LMS7param(SEL_TX);
-    wndId2Enum[rgrSEL15] = LMS7param(SEL_TX);
+    wndId2Enum[rgrSEL0] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL01] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL02] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL03] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL04] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL05] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL06] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL07] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL08] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL09] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL10] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL11] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL12] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL13] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL14] = LMS7002MCSR::SEL_TX;
+    wndId2Enum[rgrSEL15] = LMS7002MCSR::SEL_TX;
 
     lblNCOangles.push_back(txtAnglePHO0);
     lblNCOangles.push_back(txtAnglePHO01);
@@ -1470,7 +1472,7 @@ void lms7002_pnlTXTSP_view::Initialize(LMS7002M* pControl)
         return;
 
     uint16_t value;
-    if (LMS_ReadParam(lmsControl, LMS7param(MASK), &value) != 0 || value != 0)
+    if (LMS_ReadParam(lmsControl, LMS7002MCSR::MASK, &value) != 0 || value != 0)
         value = 1;
     wxArrayString temp;
     temp.clear();
@@ -1494,7 +1496,7 @@ void lms7002_pnlTXTSP_view::ParameterChangeHandler(wxSpinEvent& event)
 void lms7002_pnlTXTSP_view::ParameterChangeHandler(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -1519,7 +1521,7 @@ void lms7002_pnlTXTSP_view::ParameterChangeHandler(wxCommandEvent& event)
     }
     else if (event.GetEventObject() == cmbCMIX_GAIN_TXTSP)
     {
-        WriteParam(LMS7_CMIX_GAIN_TXTSP_R3, value % 0x2);
+        WriteParam(LMS7002MCSR::CMIX_GAIN_TXTSP_R3, value % 0x2);
         value = index2value(value, cmix_gain_txtsp_IndexValuePairs);
     }
 
@@ -1539,17 +1541,17 @@ void lms7002_pnlTXTSP_view::OnNCOSelectionChange(wxCommandEvent& event)
             value = i;
             break;
         }
-    WriteParam(LMS7param(SEL_TX), value);
+    WriteParam(LMS7002MCSR::SEL_TX, value);
 }
 
 void lms7002_pnlTXTSP_view::onbtnReadBISTSignature(wxCommandEvent& event)
 {
     uint16_t value;
-    LMS_ReadParam(lmsControl, LMS7param(BSTATE_TXTSP), &value);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::BSTATE_TXTSP, &value);
     lblBSTATE_TXTSP->SetLabel(std::to_string(value));
-    LMS_ReadParam(lmsControl, LMS7param(BSIGI_TXTSP), &value);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::BSIGI_TXTSP, &value);
     lblBSIGI_TXTSP->SetLabel(wxString::Format("0x%0.6X", value));
-    LMS_ReadParam(lmsControl, LMS7param(BSIGQ_TXTSP), &value);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::BSIGQ_TXTSP, &value);
     lblBSIGQ_TXTSP->SetLabel(wxString::Format("0x%0.6X", value));
 }
 
@@ -1557,20 +1559,20 @@ void lms7002_pnlTXTSP_view::OnbtnLoadDCIClick(wxCommandEvent& event)
 {
     long value = 0;
     txtDC_REG_TXTSP->GetValue().ToLong(&value, 16);
-    WriteParam(LMS7param(DC_REG_TXTSP), value);
-    WriteParam(LMS7param(TSGDCLDI_TXTSP), 0);
-    WriteParam(LMS7param(TSGDCLDI_TXTSP), 1);
-    WriteParam(LMS7param(TSGDCLDI_TXTSP), 0);
+    WriteParam(LMS7002MCSR::DC_REG_TXTSP, value);
+    WriteParam(LMS7002MCSR::TSGDCLDI_TXTSP, 0);
+    WriteParam(LMS7002MCSR::TSGDCLDI_TXTSP, 1);
+    WriteParam(LMS7002MCSR::TSGDCLDI_TXTSP, 0);
 }
 
 void lms7002_pnlTXTSP_view::OnbtnLoadDCQClick(wxCommandEvent& event)
 {
     long value = 0;
     txtDC_REG_TXTSP->GetValue().ToLong(&value, 16);
-    WriteParam(LMS7param(DC_REG_TXTSP), value);
-    WriteParam(LMS7param(TSGDCLDQ_TXTSP), 0);
-    WriteParam(LMS7param(TSGDCLDQ_TXTSP), 1);
-    WriteParam(LMS7param(TSGDCLDQ_TXTSP), 0);
+    WriteParam(LMS7002MCSR::DC_REG_TXTSP, value);
+    WriteParam(LMS7002MCSR::TSGDCLDQ_TXTSP, 0);
+    WriteParam(LMS7002MCSR::TSGDCLDQ_TXTSP, 1);
+    WriteParam(LMS7002MCSR::TSGDCLDQ_TXTSP, 0);
 }
 
 void lms7002_pnlTXTSP_view::onbtnGFIR1Coef(wxCommandEvent& event)
@@ -1614,7 +1616,7 @@ void lms7002_pnlTXTSP_view::onbtnGFIR3Coef(wxCommandEvent& event)
 
 void lms7002_pnlTXTSP_view::OnbtnUploadNCOClick(wxCommandEvent& event)
 {
-    WriteParam(LMS7param(MODE_TX), rgrMODE_TX->GetSelection());
+    WriteParam(LMS7002MCSR::MODE_TX, rgrMODE_TX->GetSelection());
     assert(txtNCOinputs.size() == 16);
 
     if (rgrMODE_TX->GetSelection() == 0)
@@ -1646,7 +1648,7 @@ void lms7002_pnlTXTSP_view::OnbtnUploadNCOClick(wxCommandEvent& event)
 void lms7002_pnlTXTSP_view::OnbtnSetLPFClick(wxCommandEvent& event)
 {
     uint16_t ch;
-    ch = ReadParam(LMS7param(MAC));
+    ch = ReadParam(LMS7002MCSR::MAC);
     ch = (ch == 2) ? 1 : 0;
     ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
     double bw;
@@ -1697,36 +1699,37 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     lblRefClk->SetLabel(wxString::Format(_("%3.3f"), freq / 1e6));
 
     uint16_t hbi;
-    LMS_ReadParam(lmsControl, LMS7param(HBI_OVR_TXTSP), &hbi);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::HBI_OVR_TXTSP, &hbi);
     cmbHBI_OVR_TXTSP->SetSelection(value2index(hbi, hbi_ovr_txtsp_IndexValuePairs));
 
     int16_t value;
-    LMS_ReadParam(lmsControl, LMS7param(TSGFCW_TXTSP), reinterpret_cast<uint16_t*>(&value));
+    LMS_ReadParam(lmsControl, LMS7002MCSR::TSGFCW_TXTSP, reinterpret_cast<uint16_t*>(&value));
 
     rgrTSGFCW_TXTSP->SetSelection(value2index(value, tsgfcw_txtsp_IndexValuePairs));
 
-    LMS_ReadParam(lmsControl, LMS7param(IQCORR_TXTSP), reinterpret_cast<uint16_t*>(&value));
-    int bitsToShift = (15 - LMS7param(IQCORR_TXTSP).msb - LMS7param(IQCORR_TXTSP).lsb);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::IQCORR_TXTSP, reinterpret_cast<uint16_t*>(&value));
+    const LMS7002MCSR_Data::CSRegister r = GetRegister(LMS7002MCSR::IQCORR_TXTSP);
+    int bitsToShift = (15 - r.msb - r.lsb);
     value = value << bitsToShift;
     value = value >> bitsToShift;
     cmbIQCORR_TXTSP->SetValue(value);
 
-    LMS_ReadParam(lmsControl, LMS7param(SEL_TX), reinterpret_cast<uint16_t*>(&value));
+    LMS_ReadParam(lmsControl, LMS7002MCSR::SEL_TX, reinterpret_cast<uint16_t*>(&value));
     assert(rgrNCOselections.size() == 16);
     rgrNCOselections[value & 0xF]->SetValue(true);
     UpdateNCOinputs();
 
-    LMS_ReadParam(lmsControl, LMS7param(DCCORRI_TXTSP), reinterpret_cast<uint16_t*>(&value));
+    LMS_ReadParam(lmsControl, LMS7002MCSR::DCCORRI_TXTSP, reinterpret_cast<uint16_t*>(&value));
     int8_t dccorr = value;
     cmbDCCORRI_TXTSP->SetValue(dccorr);
-    LMS_ReadParam(lmsControl, LMS7param(DCCORRQ_TXTSP), reinterpret_cast<uint16_t*>(&value));
+    LMS_ReadParam(lmsControl, LMS7002MCSR::DCCORRQ_TXTSP, reinterpret_cast<uint16_t*>(&value));
     dccorr = value;
     cmbDCCORRQ_TXTSP->SetValue(dccorr);
 
     uint16_t g_cmix;
-    LMS_ReadParam(lmsControl, LMS7param(CMIX_GAIN_TXTSP), &g_cmix);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::CMIX_GAIN_TXTSP, &g_cmix);
     value = value2index(g_cmix, cmix_gain_txtsp_IndexValuePairs);
-    LMS_ReadParam(lmsControl, LMS7param(CMIX_GAIN_TXTSP_R3), &g_cmix);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::CMIX_GAIN_TXTSP_R3, &g_cmix);
     if (g_cmix)
         value |= 1;
     else
@@ -1734,7 +1737,7 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     cmbCMIX_GAIN_TXTSP->SetSelection(value);
 
     uint16_t ch;
-    LMS_ReadParam(lmsControl, LMS7param(MAC), &ch);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, &ch);
     ch = (ch == 2) ? 1 : 0;
     ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
 
@@ -1743,10 +1746,10 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     //LMS_GetSampleRate(lmsControl, LMS_CH_TX, ch , &sr, nullptr);
     txtRATEVAL->SetLabel(wxString::Format("%3.3f MHz", sr / 1e6));
     //check if B channel is enabled
-    LMS_ReadParam(lmsControl, LMS7param(MAC), reinterpret_cast<uint16_t*>(&value));
+    LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, reinterpret_cast<uint16_t*>(&value));
     if (value >= 2)
     {
-        LMS_ReadParam(lmsControl, LMS7param(MIMO_SISO), reinterpret_cast<uint16_t*>(&value));
+        LMS_ReadParam(lmsControl, LMS7002MCSR::MIMO_SISO, reinterpret_cast<uint16_t*>(&value));
         if (value != 0)
             wxMessageBox(_("MIMO channel B is disabled"), _("Warning"));
     }
@@ -1755,7 +1758,7 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
 void lms7002_pnlTXTSP_view::PHOinputChanged(wxCommandEvent& event)
 {
     uint16_t ch{ 0 };
-    LMS_ReadParam(lmsControl, LMS7param(MAC), &ch);
+    LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, &ch);
     ch = (ch == 2) ? 1 : 0;
     ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
     // Write values for NCO phase or frequency each time they change - to ease the tuning of these values in measurements

@@ -1,6 +1,6 @@
 #include "lms7002m_controls.h"
 #include "spi.h"
-#include "LMS7002M_parameters_compact.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "math.h"
 #include "typedefs.h"
 #include "mcu_defines.h"
@@ -11,6 +11,26 @@
     #include <thread>
     #include <vector>
 using namespace std;
+using namespace lime::LMS7002MCSR_Data;
+
+    #define SECTION_LimeLight 0x0020, 0x002F
+    #define SECTION_AFE 0x0082, 0x0082
+    #define SECTION_BIAS 0x0084, 0x0084
+    #define SECTION_XBUF 0x0085, 0x0085
+    #define SECTION_CGEN 0x0086, 0x008C
+    #define SECTION_LDO 0x0092, 0x00A7
+    #define SECTION_BIST 0x00A8, 0x00A8
+    #define SECTION_CDS 0x00AD, 0x00AE
+    #define SECTION_TRF 0x0100, 0x0104
+    #define SECTION_TBB 0x0105, 0x010A
+    #define SECTION_RFE 0x010C, 0x0114
+    #define SECTION_RBB 0x0115, 0x011A
+    #define SECTION_SX 0x011C, 0x0124
+    #define SECTION_TxTSP 0x0200, 0x020C
+    #define SECTION_TxNCO 0x0240, 0x0261
+    #define SECTION_RxTSP 0x0400, 0x040F
+    #define SECTION_RxNCO 0x0440, 0x0461
+    #define SECTION_RSSI_DC_CALIBRATION 0x05C0, 0x05CC
 
 extern "C" {
 #else
@@ -106,7 +126,7 @@ void SetDefaultsSX()
     for (i = sizeof(SXAddr) / sizeof(uint16_t); i; --i)
         SPI_write(SXAddr[i - 1], SXdefVals[i - 1]);
     //keep 0x0120[7:0]ICT_VCO bias value intact
-    Modify_SPI_Reg_bits(0x0120, MSB_LSB(15, 8), 0xB9FF);
+    Modify_SPI_Reg_bits(VDIV_VCO, 0xB9FF);
 }
 
 void ClockLogicResets()
@@ -125,8 +145,8 @@ void ClockLogicResets()
 float_type GetFrequencyCGEN()
 {
     const float_type dMul = (RefClk / 2.0) / (Get_SPI_Reg_bits(DIV_OUTCH_CGEN) + 1); //DIV_OUTCH_CGEN
-    const uint16_t gINT = Get_SPI_Reg_bits(0x0088, MSB_LSB(13, 0)); //read whole register to reduce SPI transfers
-    const uint32_t gFRAC = ((uint32_t)(gINT & 0xF) << 16) | Get_SPI_Reg_bits(0x0087, MSB_LSB(15, 0));
+    const uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0); //read whole register to reduce SPI transfers
+    const uint32_t gFRAC = ((uint32_t)(gINT & 0xF) << 16) | Get_SPI_Reg_bits(0x0087, 15, 0);
     return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
 }
 
@@ -149,8 +169,8 @@ uint8_t SetFrequencyCGEN(float_type freq)
     {
         const float_type dFrac = intpart - (uint32_t)(dFvco / RefClk);
         const uint32_t gFRAC = (uint32_t)(dFrac * 1048576);
-        Modify_SPI_Reg_bits(0x0087, MSB_LSB(15, 0), gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
-        Modify_SPI_Reg_bits(0x0088, MSB_LSB(3, 0), gFRAC >> 16); //INT_SDM_CGEN[19:16]
+        Modify_SPI_Reg_bits(0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
+        Modify_SPI_Reg_bits(0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
     }
 
 #if VERBOSE
@@ -184,7 +204,7 @@ float_type GetFrequencySX(const bool Tx)
     const uint16_t ch = SPI_read(0x0020); //(uint8_t)Get_SPI_Reg_bits(MAC); //remember previously used channel
     Modify_SPI_Reg_bits(MAC, Tx ? 2 : 1); // Rx mac = 1, Tx mac = 2
     {
-        const uint16_t gINT = Get_SPI_Reg_bits(0x011E, MSB_LSB(13, 0)); // read whole register to reduce SPI transfers
+        const uint16_t gINT = Get_SPI_Reg_bits(0x011E, 13, 0); // read whole register to reduce SPI transfers
         const uint32_t gFRAC = ((uint32_t)(gINT & 0xF) << 16) | SPI_read(0x011D);
         const uint8_t enDiv2 = Get_SPI_Reg_bits(EN_DIV2_DIVPROG) + 1;
         const uint8_t divLoch = Get_SPI_Reg_bits(DIV_LOCH) + 1;
@@ -223,7 +243,7 @@ uint8_t SetFrequencySX(const bool tx, const float_type freq_Hz)
             fractionalPart = (uint32_t)((temp - (uint32_t)(temp)) * 1048576);
 
             Modify_SPI_Reg_bits(INT_SDM, (uint16_t)(temp - 4)); //INT_SDM
-            Modify_SPI_Reg_bits(0x011E, MSB_LSB(3, 0), (fractionalPart >> 16)); //FRAC_SDM[19:16]
+            Modify_SPI_Reg_bits(0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
             SPI_write(0x011D, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
         }
     }
@@ -274,7 +294,7 @@ static uint8_t ReadCMP(const bool SX)
     while (!TF0)
         ; // wait for timer overflow
 #endif
-    return (uint8_t)(Get_SPI_Reg_bits(SX ? 0x0123 : 0x008C, MSB_LSB(13, 12)));
+    return (uint8_t)(Get_SPI_Reg_bits(SX ? 0x0123 : 0x008C, 13, 12));
 }
 
 uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
@@ -286,7 +306,8 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
     } CSWInteval;
 
     uint16_t addrCSW_VCO;
-    uint8_t msblsb;
+    uint8_t msb;
+    uint8_t lsb;
 
     CSWInteval cswSearch[2];
     cswSearch[0].high = 0; //search interval lowest value
@@ -298,24 +319,26 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
     if (SX)
     {
         addrCSW_VCO = 0x0121;
-        msblsb = MSB_LSB(10, 3); //CSW msb lsb
+        msb = 10;
+        lsb = 3; //CSW msb lsb
         //assuming the active channel is already correct
-        Modify_SPI_Reg_bits(0x011C, MSB_LSB(2, 1), 0); //activate VCO and comparator
+        Modify_SPI_Reg_bits(0x011C, 2, 1, 0); //activate VCO and comparator
     }
     else //CGEN
     {
         addrCSW_VCO = 0x008B;
-        msblsb = MSB_LSB(8, 1); //CSW msb lsb
-        Modify_SPI_Reg_bits(0x0086, MSB_LSB(2, 1), 0); //activate VCO and comparator
+        msb = 8;
+        lsb = 1; //CSW msb lsb
+        Modify_SPI_Reg_bits(0x0086, 2, 1, 0); //activate VCO and comparator
     }
 #ifndef __cplusplus
     gComparatorDelayCounter = 0xFFFF - (uint16_t)((0.0009 / 12) * RefClk); // ~900us
 #endif
     //check if lock is within VCO range
-    Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, 0);
+    Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, 0);
     if (ReadCMP(SX) == 3) //VCO too high
         return MCU_ERROR;
-    Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, 255);
+    Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, 255);
     if (ReadCMP(SX) == 0) //VCO too low
         return MCU_ERROR;
 
@@ -329,7 +352,7 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
             {
                 uint8_t cmpValue;
                 cswSearch[t].high |= mask; // CSW_VCO<i>=1
-                Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, cswSearch[t].high);
+                Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].high);
                 cmpValue = ReadCMP(SX);
                 if (cmpValue == 0x03) // reduce CSW
                     cswSearch[t].high ^= mask; // CSW_VCO<i>=0
@@ -341,7 +364,7 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
             }
             for (; cswSearch[t].low; --cswSearch[t].low)
             {
-                Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, cswSearch[t].low);
+                Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].low);
                 if (ReadCMP(SX) != 0x2)
                 {
                     if (cswSearch[t].low < cswSearch[t].high)
@@ -361,9 +384,9 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
                 cswValue = cswSearch[0].low + ((cswSearch[0].high - cswSearch[0].low) >> 1);
         }
 
-        Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, cswValue);
+        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswValue);
         if (ReadCMP(SX) != 0x2) //just in case high-low==1, if low fails, check if high locks
-            Modify_SPI_Reg_bits(addrCSW_VCO, msblsb, ++cswValue);
+            Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, ++cswValue);
     }
     if (ReadCMP(SX) == 0x2)
         return MCU_NO_ERROR;

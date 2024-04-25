@@ -17,11 +17,12 @@
 #include <wx/object.h>
 #include <wx/tooltip.h>
 #include "limesuiteng/LMS7002M.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 
 using namespace lime;
 
 void LMS7002_WXGUI::UpdateControlsByMap(
-    wxPanel* panel, LMS7002M* lmsControl, const std::map<wxWindow*, LMS7Parameter>& wndId2param, const uint8_t channel)
+    wxPanel* panel, LMS7002M* lmsControl, const std::map<wxWindow*, LMS7002MCSR>& wndId2param, const uint8_t channel)
 {
     if (panel == nullptr || lmsControl == nullptr)
         return;
@@ -94,12 +95,12 @@ void LMS7002_WXGUI::UpdateControlsByMap(
         else
         {
             wxString str;
-#ifndef NDEBUG
-            str = wxString::Format(_("Unhandled control class type. className=%s, was assigned address %04X"),
-                wndClass->GetClassName(),
-                idParam.second.address);
-            wxMessageBox(str, "ERROR!");
-#endif
+            // #ifndef NDEBUG
+            //             str = wxString::Format(_("Unhandled control class type. className=%s, was assigned address %04X"),
+            //                 wndClass->GetClassName(),
+            //                 idParam.second.address);
+            //             wxMessageBox(str, "ERROR!");
+            // #endif
         }
     }
     panel->Thaw();
@@ -125,13 +126,14 @@ int LMS7002_WXGUI::value2index(int value, const indexValueMap& pairs)
     @param wndId2param wxWidgets controls and LMS parameters pairs
     @param replace Replace all tooltips with new ones, or keep old ones and just add missing ones
 */
-void LMS7002_WXGUI::UpdateTooltips(const std::map<wxWindow*, LMS7Parameter>& wndId2param, bool replace)
+void LMS7002_WXGUI::UpdateTooltips(const std::map<wxWindow*, LMS7002MCSR>& wndId2param, bool replace)
 {
 #if wxUSE_TOOLTIPS
     wxString sttip = _("");
-    std::map<wxWindow*, LMS7Parameter>::const_iterator iter;
+    std::map<wxWindow*, LMS7002MCSR>::const_iterator iter;
     for (iter = wndId2param.begin(); iter != wndId2param.end(); ++iter)
     {
+        lime::LMS7002MCSR_Data::CSRegister reg = GetRegister(iter->second);
         wxToolTip* ttip = NULL;
         ttip = iter->first->GetToolTip();
         if (ttip)
@@ -140,20 +142,20 @@ void LMS7002_WXGUI::UpdateTooltips(const std::map<wxWindow*, LMS7Parameter>& wnd
             sttip = _("");
 
         if (replace || sttip.length() == 0)
-            sttip = wxString::From8BitData(iter->second.tooltip);
+            sttip = wxString::From8BitData(reg.tooltip);
 
         if (sttip.length() != 0)
             sttip += _("\n");
 
-        int bitCount = iter->second.msb - iter->second.lsb + 1;
+        int bitCount = reg.msb - reg.lsb + 1;
         if (bitCount == 1)
-            sttip += wxString::Format(_("0x%.4X[%i]"), iter->second.address, iter->second.lsb);
+            sttip += wxString::Format(_("0x%.4X[%i]"), reg.address, reg.lsb);
         else
-            sttip += wxString::Format(_("0x%.4X[%i:%i]"), iter->second.address, iter->second.msb, iter->second.lsb);
+            sttip += wxString::Format(_("0x%.4X[%i:%i]"), reg.address, reg.msb, reg.lsb);
         if (iter->first->IsKindOf(wxClassInfo::FindClass(_("NumericSlider")))) //set tooltip is not virtual method, need to cast
-            (reinterpret_cast<NumericSlider*>(iter->first))->SetToolTip(sttip + wxString::From8BitData(iter->second.name));
+            (reinterpret_cast<NumericSlider*>(iter->first))->SetToolTip(sttip + wxString::From8BitData(reg.name));
         else
-            iter->first->SetToolTip(sttip + wxString::From8BitData(iter->second.name));
+            iter->first->SetToolTip(sttip + wxString::From8BitData(reg.name));
     }
 #endif
 }

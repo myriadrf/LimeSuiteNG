@@ -4,8 +4,8 @@
 #include <map>
 #include <cstdint>
 #include "commonWxForwardDeclarations.h"
+#include "limesuiteng/LMS7002MCSR.h"
 
-class LMS7Parameter;
 namespace lime {
 class LMS7002M;
 }
@@ -28,11 +28,11 @@ class ILMS7002MTab : public wxPanel
     virtual void ParameterChangeHandler(wxCommandEvent& event);
     virtual void SpinParameterChangeHandler(wxSpinEvent& event);
 
-    virtual void WriteParam(const LMS7Parameter& param, uint16_t val);
-    virtual int ReadParam(const LMS7Parameter& param);
-    int LMS_ReadParam(lime::LMS7002M* lmsControl, const LMS7Parameter& param, uint16_t* value);
+    virtual void WriteParam(const lime::LMS7002MCSR param, uint16_t val);
+    virtual int ReadParam(const lime::LMS7002MCSR param);
+    int LMS_ReadParam(lime::LMS7002M* lmsControl, const lime::LMS7002MCSR param, uint16_t* value);
 
     lime::LMS7002M* lmsControl;
-    std::map<wxWindow*, LMS7Parameter> wndId2Enum;
+    std::map<wxWindow*, lime::LMS7002MCSR> wndId2Enum;
     uint8_t mChannel;
 };

@@ -7,6 +7,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 #include "LMS7002M_RegistersMap.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include <cmath>
 #include <iostream>
 #include <assert.h>
@@ -17,6 +18,7 @@
     #include <ciso646>
 #endif
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 //rx lpf range limits
@@ -84,7 +86,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
             RxLPF_RF_LimitLow / 1e6,
             RxLPF_RF_LimitHigh / 1e6);
 
-    uint8_t g_tia = Get_SPI_Reg_bits(LMS7param(G_TIA_RFE));
+    uint8_t g_tia = Get_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE);
     if (g_tia == 1 && rx_lpf_freq_RF < 4e6)
     {
         rx_lpf_freq_RF = 4e6;

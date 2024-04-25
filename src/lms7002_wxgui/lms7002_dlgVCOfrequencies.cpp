@@ -250,7 +250,7 @@ lms7002_dlgVCOfrequencies::lms7002_dlgVCOfrequencies(wxWindow* parent, LMS7002M*
     // TODO: should be deprecated by automatically measuring VCO frequencies and storing in EEPROM
     // lmsControl = plmsControl;
     // double multiplier = 0.000000001;
-    // LMS7002M* lms = ((LMS7_Device*)lmsControl)->GetLMS();
+    // LMS7002M* lms = ((Device*)lmsControl)->GetLMS();
 
     // txtVCOL_low->SetValue(wxString::Format(_("%.3f"), lms->gVCO_frequency_table[0][0] * multiplier));
     // txtVCOL_high->SetValue(wxString::Format(_("%.3f"), lms->gVCO_frequency_table[0][1] * multiplier));
@@ -267,7 +267,7 @@ void lms7002_dlgVCOfrequencies::OnBtnOkClick(wxCommandEvent& event)
     // double multiplier = 1e9;
     // double value;
     // TODO:
-    // LMS7002M* lms = ((LMS7_Device*)lmsControl)->GetLMS();
+    // LMS7002M* lms = ((Device*)lmsControl)->GetLMS();
 
     // txtVCOL_low->GetValue().ToDouble(&value);
     // lms->gVCO_frequency_table[0][0]=value*multiplier;
