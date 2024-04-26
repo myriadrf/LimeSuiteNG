@@ -137,10 +137,8 @@ class Si5351C_wxgui : public wxFrame
     void OnbtnLoadFileClick(wxCommandEvent& event);
     void OnbtnConfigureClockClick(wxCommandEvent& event);
     void OnbtnResetToDefaultsClick(wxCommandEvent& event);
-    void OnButton1Click(wxCommandEvent& event);
     void OnbtnReadStatusClick(wxCommandEvent& event);
     void OnbtnClearStatusClick(wxCommandEvent& event);
-    unsigned char m_newConfiguration[255];
     lime::SDRDevice* device;
     //*)
 

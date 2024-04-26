@@ -7,6 +7,7 @@
 #ifndef SI5351C_MODULE
 #define SI5351C_MODULE
 
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <map>
@@ -118,8 +119,7 @@ class LIME_API Si5351C
     Si5351_PLL PLL[2];
     Si5351_Channel CLK[8];
 
-    static const unsigned char m_defaultConfiguration[];
-    unsigned char m_newConfiguration[255];
+    std::array<unsigned char, 255> m_newConfiguration;
 };
 
 } // namespace lime
