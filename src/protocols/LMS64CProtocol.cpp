@@ -238,7 +238,7 @@ void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
     if (fw.deviceId >= eLMS_DEV::LMS_DEV_COUNT)
     {
         char strTemp[64];
-        sprintf(strTemp, "Unknown (0x%X)", fw.deviceId);
+        std::snprintf(strTemp, sizeof(strTemp), "Unknown (0x%X)", fw.deviceId);
         descriptor.name = std::string(strTemp);
     }
     else
@@ -246,7 +246,7 @@ void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
     if (fw.expansionBoardId >= eEXP_BOARD::EXP_BOARD_COUNT)
     {
         char strTemp[64];
-        sprintf(strTemp, "Unknown (0x%X)", fw.expansionBoardId);
+        std::snprintf(strTemp, sizeof(strTemp), "Unknown (0x%X)", fw.expansionBoardId);
         descriptor.expansionName = std::string(strTemp);
     }
     else

@@ -62,13 +62,11 @@ THE SOFTWARE
 #ifdef _MYDEBUG
 /* Debug Trace Enabled */
 #include <stdio.h>
-#define DbgPrintf(Message) printf("%s", Message)
+#define DbgPrintf(Message) std::printf("%s", Message)
 #else
 /* Debug Trace Disabled */
 #define DbgPrintf(Message) MessageBox(NULL, Message, NULL, MB_OK | MB_ICONERROR)
 #endif
-
-#define snprintf _snprintf
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -344,11 +342,11 @@ static int UpdateDialog()
 
     /* Update LPF bandwidth */
     std::array<char, 7> bandwidth { 0, 0, 0, 0, 0, 0, 0 };
-    sprintf(bandwidth.data(), "%3.2f", LPFBandwidth / 1e6);
+    std::snprintf(bandwidth.data(), bandwidth.size(), "%3.2f", LPFBandwidth / 1e6);
     SetDlgItemText(dialogWindowHandle, IDC_ALPF_BW, bandwidth.data());
 
     /* Update calibration bandwidth */
-    sprintf(bandwidth.data(), "%3.2f", calibrationBandwidth / 1e6);
+    std::snprintf(bandwidth.data(), bandwidth.size(), "%3.2f", calibrationBandwidth / 1e6);
     SetDlgItemText(dialogWindowHandle, IDC_CAL_BW, bandwidth.data());
 
     /* Update calibration text */
@@ -1093,52 +1091,52 @@ int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value)
 {
     switch (idx) {
     case 0:
-        snprintf(description, 1024, "%s", "HW Name");
-        strcpy_s(value, 1024, lastUsedDeviceName.c_str());
+        std::snprintf(description, 1024, "%s", "HW Name");
+        std::strncpy(value, lastUsedDeviceName.c_str(), 1024);
         return 0;
     case 1:
-        snprintf(description, 1024, "%s", "Channel");
-        snprintf(value, 1024, "%zd", channel);
+        std::snprintf(description, 1024, "%s", "Channel");
+        std::snprintf(value, 1024, "%zd", channel);
         return 0;
     case 2:
-        snprintf(description, 1024, "%s", "Antenna");
-        snprintf(value, 1024, "%d", antennaSelect);
+        std::snprintf(description, 1024, "%s", "Antenna");
+        std::snprintf(value, 1024, "%d", antennaSelect);
         return 0;
     case 3:
-        snprintf(description, 1024, "%s", "LPF bandwidth");
-        snprintf(value, 1024, "%f", LPFBandwidth);
+        std::snprintf(description, 1024, "%s", "LPF bandwidth");
+        std::snprintf(value, 1024, "%f", LPFBandwidth);
         return 0;
     case 4:
-        snprintf(description, 1024, "%s", "LPF enable");
-        snprintf(value, 1024, "%d", isLPFEnabled);
+        std::snprintf(description, 1024, "%s", "LPF enable");
+        std::snprintf(value, 1024, "%d", isLPFEnabled);
         return 0;
     case 5:
-        snprintf(description, 1024, "%s", "Sample rate index");
-        snprintf(value, 1024, "%d", sampleRateIndex);
+        std::snprintf(description, 1024, "%s", "Sample rate index");
+        std::snprintf(value, 1024, "%d", sampleRateIndex);
         return 0;
     case 6:
-        snprintf(description, 1024, "%s", "LNA gain");
-        snprintf(value, 1024, "%d", LNA);
+        std::snprintf(description, 1024, "%s", "LNA gain");
+        std::snprintf(value, 1024, "%d", LNA);
         return 0;
     case 7:
-        snprintf(description, 1024, "%s", "TIA gain");
-        snprintf(value, 1024, "%d", TIA);
+        std::snprintf(description, 1024, "%s", "TIA gain");
+        std::snprintf(value, 1024, "%d", TIA);
         return 0;
     case 8:
-        snprintf(description, 1024, "%s", "PGA gain");
-        snprintf(value, 1024, "%d", PGA);
+        std::snprintf(description, 1024, "%s", "PGA gain");
+        std::snprintf(value, 1024, "%d", PGA);
         return 0;
     case 9:
-        snprintf(description, 1024, "%s", "Current Device index");
-        snprintf(value, 1024, "%zd", currentDeviceIndex);
+        std::snprintf(description, 1024, "%s", "Current Device index");
+        std::snprintf(value, 1024, "%zd", currentDeviceIndex);
         return 0;
     case 10:
-        snprintf(description, 1024, "%s", "Calibration bandwidth");
-        snprintf(value, 1024, "%f", calibrationBandwidth);
+        std::snprintf(description, 1024, "%s", "Calibration bandwidth");
+        std::snprintf(value, 1024, "%f", calibrationBandwidth);
         return 0;
     case 11:
-        snprintf(description, 1024, "%s", "Current LO frequency");
-        snprintf(value, 1024, "%lld", currentLOFreq);
+        std::snprintf(description, 1024, "%s", "Current LO frequency");
+        std::snprintf(value, 1024, "%lld", currentLOFreq);
         return 0;
     default: return -1; // ERROR
     }

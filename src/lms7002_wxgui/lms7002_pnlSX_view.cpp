@@ -778,7 +778,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i < 16; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f pF", (i * 6 * 387.0) / 1000.0);
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f pF", (i * 6 * 387.0) / 1000.0);
         temp.push_back(ctemp);
     }
     cmbCP2_PLL->Set(temp);
@@ -786,7 +786,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i < 16; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f pF", (i * 6 * 980.0) / 1000.0);
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f pF", (i * 6 * 980.0) / 1000.0);
         temp.push_back(ctemp);
     }
     cmbCP3_PLL->Set(temp);
@@ -794,7 +794,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i < 16; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f pF", i * 8 * 5.88);
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f pF", i * 8 * 5.88);
         temp.push_back(ctemp);
     }
     cmbCZ->Set(temp);
@@ -802,7 +802,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i < 64; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f uA", 0.243 * i);
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f uA", 0.243 * i);
         temp.push_back(ctemp);
     }
     cmbIOFFSET_CP->Set(temp);
@@ -810,7 +810,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i < 64; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f uA", 2.312 * i);
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f uA", 2.312 * i);
         temp.push_back(ctemp);
     }
     cmbIPULSE_CP->Set(temp);
@@ -818,12 +818,12 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     temp.clear();
     for (int i = 0; i <= 6; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "1.6 V");
+        std::snprintf(ctemp, sizeof(ctemp), "1.6 V");
         temp.push_back(ctemp);
     }
     for (int i = 7; i < 32; ++i)
     {
-        snprintf(ctemp, sizeof(ctemp), "%.3f V", (0.000060 * 180000.0 / i));
+        std::snprintf(ctemp, sizeof(ctemp), "%.3f V", (0.000060 * 180000.0 / i));
         temp.push_back(ctemp);
     }
     cmbRSEL_LDO_VCO->Set(temp);

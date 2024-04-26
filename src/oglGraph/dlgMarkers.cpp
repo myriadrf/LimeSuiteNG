@@ -180,13 +180,14 @@ void dlgMarkers::UpdateValues()
             if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
             {
                 valueA = parent_graph->series[0]->values[parent_graph->markers[i].dataValueIndex + 1];
-                cnt = sprintf(text, "%3.1f (ChA) ; ", valueA);
+                cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
             }
 
             if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
             {
                 valueB = parent_graph->series[1]->values[parent_graph->markers[i].dataValueIndex + 1];
-                sprintf(text + cnt, "%3.1f (ChB) ;", valueB);
+
+                std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
             }
 
             labels[i]->SetLabel(wxString(text));
@@ -206,13 +207,13 @@ void dlgMarkers::UpdateValues()
             if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
             {
                 float deltaValue = marker_valuesA[src1] - marker_valuesA[src2];
-                cnt = sprintf(text, "%.3f (ChA) ; ", deltaValue);
+                cnt = std::snprintf(text, sizeof(text), "%.3f (ChA) ; ", deltaValue);
             }
 
             if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
             {
                 float deltaValue = marker_valuesB[src1] - marker_valuesB[src2];
-                sprintf(text + cnt, "%.3f (ChB)", deltaValue);
+                std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%.3f (ChB)", deltaValue);
             }
             deltaValues[i]->SetLabel(wxString(text));
         }

@@ -15,7 +15,7 @@ const std::string strFormat(const char* format, ...)
     va_list args;
 
     va_start(args, format);
-    vsnprintf(ctemp, BUFFER_SIZE, format, args);
+    std::vsnprintf(ctemp, BUFFER_SIZE, format, args);
     va_end(args);
 
     return std::string(ctemp);
