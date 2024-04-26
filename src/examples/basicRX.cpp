@@ -29,7 +29,7 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static LogLevel logVerbosity = LogLevel::Debug;
+static LogLevel logVerbosity = LogLevel::Verbose;
 static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
@@ -39,6 +39,7 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
 
 int main(int argc, char** argv)
 {
+    lime::registerLogHandler(LogCallback);
     auto handles = DeviceRegistry::enumerate();
     float peakAmplitude = -1000, peakFrequency = 0;
 

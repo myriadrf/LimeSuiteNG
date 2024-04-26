@@ -19,7 +19,6 @@
 #include "utilities/toString.h"
 
 #include "mcu_program/common_src/lms7002m_calibrations.h"
-#include "mcu_program/common_src/lms7002m_filters.h"
 #include "MCU_BD.h"
 
 #include <cmath>
@@ -693,30 +692,21 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
 
         if (status != MCU_BD::MCU_NO_ERROR)
         {
-            throw std::runtime_error(
-                strFormat("%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
+            throw std::runtime_error(strFormat(
+                "%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status).c_str()));
         }
     }
 
-    if (trx.lpf > 0 && trx.enabled)
+    OpStatus status = OpStatus::Success;
+    if (trx.enabled && dir == TRXDir::Rx)
+        status = chip->SetRxLPF(trx.lpf);
+    else if (trx.enabled && dir == TRXDir::Tx)
+        status = chip->SetTxLPF(trx.lpf);
+
+    if (status != OpStatus::Success)
     {
-        SetupCalibrations(chip, trx.sampleRate);
-        int status;
-
-        if (dir == TRXDir::Rx)
-        {
-            status = TuneRxFilter(trx.lpf);
-        }
-        else
-        {
-            status = TuneTxFilter(trx.lpf);
-        }
-
-        if (status != MCU_BD::MCU_NO_ERROR)
-        {
-            throw std::runtime_error(
-                strFormat("%s ch%i filter calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status)));
-        }
+        throw std::runtime_error(
+            strFormat("%s ch%i lpf filter error: %s", ToString(dir).c_str(), ch, GetLastErrorMessageCString()));
     }
 }
 

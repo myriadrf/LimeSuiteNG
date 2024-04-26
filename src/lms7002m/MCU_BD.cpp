@@ -1096,29 +1096,29 @@ uint8_t MCU_BD::ReadMCUProgramID()
     return statusMcu & 0x7F;
 }
 
-static constexpr std::array<std::string_view, MCU_BD::MCU_ERROR_CODES::MCU_ERROR_CODES_COUNT> MCU_ErrorMessages = {
-    "No error"sv,
-    "Generic error"sv,
-    "CGEN tune failed"sv,
-    "SXR tune failed"sv,
-    "SXT tune failed"sv,
-    "Loopback signal weak: not connected/insufficient gain?"sv,
-    "Invalid Rx path"sv,
-    "Invalid Tx band"sv,
-    "Rx LPF bandwidth out of range"sv,
-    "Rx invalid TIA gain"sv,
-    "Tx LPF bandwidth out of range"sv,
-    "Procedure is disabled"sv,
-    "Rx R_CTL_LPF range limit reached"sv,
-    "Rx CFB_TIA_RFE range limit reached"sv,
-    "Tx RCAL_LPF range limit reached"sv,
+static const std::array<const std::string, MCU_BD::MCU_ERROR_CODES::MCU_ERROR_CODES_COUNT> MCU_ErrorMessages = {
+    "No error"s,
+    "Generic error"s,
+    "CGEN tune failed"s,
+    "SXR tune failed"s,
+    "SXT tune failed"s,
+    "Loopback signal weak: not connected/insufficient gain?"s,
+    "Invalid Rx path"s,
+    "Invalid Tx band"s,
+    "Rx LPF bandwidth out of range"s,
+    "Rx invalid TIA gain"s,
+    "Tx LPF bandwidth out of range"s,
+    "Procedure is disabled"s,
+    "Rx R_CTL_LPF range limit reached"s,
+    "Rx CFB_TIA_RFE range limit reached"s,
+    "Tx RCAL_LPF range limit reached"s,
 };
 
-std::string_view MCU_BD::MCUStatusMessage(const uint8_t code)
+const std::string& MCU_BD::MCUStatusMessage(const uint8_t code)
 {
     if (code == 255)
-        return "MCU not programmed/procedure still in progress"sv;
+        return "MCU not programmed/procedure still in progress"s;
     if (code >= MCU_ERROR_CODES_COUNT)
-        return "Error code undefined"sv;
+        return "Error code undefined"s;
     return MCU_ErrorMessages.at(code);
 }

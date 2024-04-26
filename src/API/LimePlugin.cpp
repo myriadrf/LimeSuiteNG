@@ -1,4 +1,4 @@
-#include "common.h"
+#include "limesuiteng/LimePlugin.h"
 #include "gainTable.h"
 
 #include <assert.h>
@@ -7,12 +7,18 @@
 #include <cmath>
 #include <mutex>
 #include <sstream>
+#include <string_view>
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
+
+#ifdef _MSC_VER
+    #define strncasecmp _strnicmp
+    #define strcasecmp _stricmp
+#endif
 
 using namespace lime;
 using namespace std;
@@ -74,7 +80,7 @@ template<class T> static bool GetSetting(LimeSettingsProvider* settings, T* pval
     char name[256];
     va_list args;
     va_start(args, prop_name_format);
-    vsprintf(name, prop_name_format, args);
+    std::vsnprintf(name, sizeof(name), prop_name_format, args);
     va_end(args);
 
     double val = 0;
@@ -89,7 +95,7 @@ template<> bool GetSetting(LimeSettingsProvider* settings, std::string* pval, co
     char name[256];
     va_list args;
     va_start(args, prop_name_format);
-    vsprintf(name, prop_name_format, args);
+    std::vsnprintf(name, sizeof(name), prop_name_format, args);
     va_end(args);
 
     return settings->GetString(*pval, name);
@@ -100,7 +106,7 @@ template<class T> static bool GetParam(LimePluginContext* context, T& pval, cons
     char name[256];
     va_list args;
     va_start(args, prop_name_format);
-    vsprintf(name, prop_name_format, args);
+    std::vsnprintf(name, sizeof(name), prop_name_format, args);
     va_end(args);
 
     double val = 0;
@@ -119,7 +125,7 @@ static void Log(LogLevel lvl, const char* format, ...)
     char msg[512];
     va_list args;
     va_start(args, format);
-    vsprintf(msg, format, args);
+    std::vsnprintf(msg, sizeof(msg), format, args);
     va_end(args);
     if (hostCallback)
         hostCallback(lvl, msg);
@@ -507,9 +513,9 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     GetSetting(settings, &param->syncPPS, "%s_syncPPS", prefix);
 
     char dirPrefix[32];
-    sprintf(dirPrefix, "%s_rx", prefix);
+    std::snprintf(dirPrefix, sizeof(dirPrefix), "%s_rx", prefix);
     GatherDirectionalSettings(settings, &param->rx, dirPrefix);
-    sprintf(dirPrefix, "%s_tx", prefix);
+    std::snprintf(dirPrefix, sizeof(dirPrefix), "%s_tx", prefix);
     GatherDirectionalSettings(settings, &param->tx, dirPrefix);
 }
 
@@ -519,7 +525,7 @@ static void GatherDeviceTreeNodeSettings(LimePluginContext* context, LimeSetting
     {
         DevNode& dev = context->rfdev.at(i);
         char devPrefix[16];
-        sprintf(devPrefix, "dev%i", i);
+        std::snprintf(devPrefix, sizeof(devPrefix), "dev%i", i);
         GetSetting(settings, &dev.handleString, devPrefix);
         GetSetting(settings, &dev.chipIndex, "%s_chip_index", devPrefix);
 
@@ -535,7 +541,7 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
     {
         PortData& port = context->ports.at(i);
         char portPrefix[16];
-        sprintf(portPrefix, "port%i", i);
+        std::snprintf(portPrefix, sizeof(portPrefix), "port%i", i);
         GatherConfigSettings(&port.configInputs, settings, portPrefix);
         if (GetSetting(settings, &port.deviceNames, portPrefix))
         {
@@ -591,7 +597,8 @@ static OpStatus TransferDeviceDirectionalSettings(
     if (settings.lo_override > 0)
     {
         //Log(LogLevel::Info, "dev%i chip%i ch%i %.2f", devIndex, rf.chipIndex, chipChannel, freqOverride);
-        sprintf(loFreqStr,
+        std::snprintf(loFreqStr,
+            sizeof(loFreqStr),
             "expectedLO: %.3f MHz [override: %.3f (diff:%+.3f) MHz]",
             trx.centerFrequency / 1.0e6,
             settings.lo_override / 1.0e6,
@@ -599,7 +606,7 @@ static OpStatus TransferDeviceDirectionalSettings(
         trx.centerFrequency = settings.lo_override;
     }
     else
-        sprintf(loFreqStr, "LO: %.3f MHz", trx.centerFrequency / 1.0e6);
+        std::snprintf(loFreqStr, sizeof(loFreqStr), "LO: %.3f MHz", trx.centerFrequency / 1.0e6);
 
     int flag = CalibrateFlag::Filter; // by default calibrate only filters
     if (!settings.calibration.empty())
@@ -703,7 +710,7 @@ int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType
             for (int ch = 0; ch < TRX_MAX_CHANNELS; ++ch)
             {
                 double dac = 0;
-                sprintf(varname, "port%i_ch%i_pa_dac", p, ch);
+                std::snprintf(varname, sizeof(varname), "port%i_ch%i_pa_dac", p, ch);
                 if (trx_get_param_double(hostState, &dac, varname) == 0)
                 {
                     // TODO: this is board specific, need general API
@@ -715,37 +722,37 @@ int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType
 
             StreamConfig::Extras* extra = new StreamConfig::Extras();
 
-            sprintf(varname, "port%i_syncPPS", p);
+            std::snprintf(varname, sizeof(varname), "port%i_syncPPS", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->waitPPS = val != 0;
                 s->streamExtras[p] = extra;
             }
-            sprintf(varname, "port%i_rxSamplesInPacket", p);
+            std::snprintf(varname, sizeof(varname), "port%i_rxSamplesInPacket", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->rxSamplesInPacket = val;
                 s->streamExtras[p] = extra;
             }
-            sprintf(varname, "port%i_rxPacketsInBatch", p);
+            std::snprintf(varname, sizeof(varname), "port%i_rxPacketsInBatch", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->rxPacketsInBatch = val;
                 s->streamExtras[p] = extra;
             }
-            sprintf(varname, "port%i_txMaxPacketsInBatch", p);
+            std::snprintf(varname, sizeof(varname), "port%i_txMaxPacketsInBatch", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->txMaxPacketsInBatch = val;
                 s->streamExtras[p] = extra;
             }
-            sprintf(varname, "port%i_txSamplesInPacket", p);
+            std::snprintf(varname, sizeof(varname), "port%i_txSamplesInPacket", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->txSamplesInPacket = val;
                 s->streamExtras[p] = extra;
             }
-            sprintf(varname, "port%i_double_freq_conversion_to_lower_side", p);
+            std::snprintf(varname, sizeof(varname), "port%i_double_freq_conversion_to_lower_side", p);
             if (trx_get_param_double(hostState, &val, varname) == 0)
             {
                 extra->negateQ = val;

@@ -14,7 +14,6 @@ typedef bit bool;
     #define ROM code
     #define false 0
     #define true 1
-    #define ROM code
 #else //for convenience when compiling for PC
     #include <stdint.h>
     #include <stdbool.h>

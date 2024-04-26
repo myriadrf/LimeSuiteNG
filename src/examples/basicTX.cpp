@@ -35,6 +35,7 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
 
 int main(int argc, char** argv)
 {
+    lime::registerLogHandler(LogCallback);
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {

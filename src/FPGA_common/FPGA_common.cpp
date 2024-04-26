@@ -14,14 +14,6 @@
 
 using namespace std;
 
-#ifndef NDEBUG
-    #define ASSERT_WARNING(cond, message) \
-        if (!cond) \
-        lime::warning("W: %s (%s)", message, #cond)
-#else
-    #define ASSERT_WARNING(cond, message)
-#endif
-
 namespace lime {
 
 // 0x000A
@@ -317,7 +309,12 @@ OpStatus FPGA::StartStreaming()
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
         return OpStatus::IOFailure;
-    ASSERT_WARNING((interface_ctrl_000A & RX_EN) == 0, "FPGA stream is already started");
+
+    if ((interface_ctrl_000A & RX_EN) != 0)
+    {
+        lime::warning("FPGA stream is already started"s);
+    }
+
     interface_ctrl_000A &= ~(TX_PTRN_EN | RX_PTRN_EN); // disable test patterns
     return WriteRegister(0x000A, interface_ctrl_000A | RX_EN);
 }

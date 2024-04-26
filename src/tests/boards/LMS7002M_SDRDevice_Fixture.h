@@ -1,3 +1,6 @@
+#ifndef LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H
+#define LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H
+
 #define _USE_MATH_DEFINES
 
 #include <gmock/gmock.h>
@@ -35,6 +38,9 @@ MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correc
         angle += 2 * M_PI / divideBy;
 
         auto magnitude = std::abs(complex);
+
+        EXPECT_NE(magnitude, 0);
+
         complex = std::polar(magnitude, angle);
 
         // Truncate to a 12-bit number bit-shifted left by 4
@@ -71,3 +77,5 @@ class LMS7002M_SDRDevice_Fixture : public ::testing::Test
 };
 
 } // namespace lime::testing
+
+#endif // LIMESUITENG_LMS7002M_SDRDEVICE_FIXTURE_H

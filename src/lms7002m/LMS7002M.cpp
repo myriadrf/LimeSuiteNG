@@ -496,7 +496,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "FCW%02i", i);
+                    std::snprintf(varname, sizeof(varname), "FCW%02i", i);
                     SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
                 }
             }
@@ -504,7 +504,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "PHO%02i", i);
+                    std::snprintf(varname, sizeof(varname), "PHO%02i", i);
                     SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
                 }
             }
@@ -517,7 +517,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "FCW%02i", i);
+                    std::snprintf(varname, sizeof(varname), "FCW%02i", i);
                     SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
                 }
             }
@@ -525,7 +525,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "PHO%02i", i);
+                    std::snprintf(varname, sizeof(varname), "PHO%02i", i);
                     SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
                 }
             }
@@ -563,7 +563,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "FCW%02i", i);
+                    std::snprintf(varname, sizeof(varname), "FCW%02i", i);
                     SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
                 }
             }
@@ -571,7 +571,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "PHO%02i", i);
+                    std::snprintf(varname, sizeof(varname), "PHO%02i", i);
                     SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
                 }
             }
@@ -584,7 +584,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "FCW%02i", i);
+                    std::snprintf(varname, sizeof(varname), "FCW%02i", i);
                     SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
                 }
             }
@@ -592,7 +592,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             {
                 for (int i = 0; i < 16; ++i)
                 {
-                    sprintf(varname, "PHO%02i", i);
+                    std::snprintf(varname, sizeof(varname), "PHO%02i", i);
                     SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
                 }
             }
@@ -776,8 +776,8 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
             dataReceived[i] = 0x40 | (~dataReceived[i] & 0x3F); //magnitude bits  5:0
         else if (addrToRead[i] == 0x5C2)
             dataReceived[i] &= 0xFF00; //do not save calibration start triggers
-        sprintf(addr, "0x%04X", addrToRead[i]);
-        sprintf(value, "0x%04X", dataReceived[i]);
+        std::snprintf(addr, sizeof(addr), "0x%04X", addrToRead[i]);
+        std::snprintf(value, sizeof(value), "0x%04X", dataReceived[i]);
         fout << addr << "="sv << value << std::endl;
         // add parameter name/value as comments
         for (const LMS7Parameter& parameter : LMS7parameterList)
@@ -799,8 +799,8 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
         dataReceived[i] = Get_SPI_Reg_bits(addrToRead[i], 15, 0, false);
-        sprintf(addr, "0x%04X", addrToRead[i]);
-        sprintf(value, "0x%04X", dataReceived[i]);
+        std::snprintf(addr, sizeof(addr), "0x%04X", addrToRead[i]);
+        std::snprintf(value, sizeof(value), "0x%04X", dataReceived[i]);
         fout << addr << "="sv << value << std::endl;
     }
 
@@ -2180,7 +2180,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     if (!controlPort || fromChip == false)
     {
         if (status && !controlPort)
-            *status = ReportError(OpStatus::IOFailure, "Chip not connected"s);
+            *status = ReportError(OpStatus::IOFailure, "chip not connected");
         uint8_t mac = mRegistersMap->GetValue(0, LMS7param(MAC).address) & 0x0003;
         uint8_t channel = (mac == 2) ? 1 : 0; //only when MAC is B -> use register space B
         if (address < 0x0100)
@@ -2413,9 +2413,9 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
         for (int cc = 1; cc <= channelCount; ++cc)
         {
             Modify_SPI_Reg_bits(LMS7param(MAC), cc);
-            sprintf(chex, "0x%04X", startAddr);
+            std::snprintf(chex, sizeof(chex), "0x%04X", startAddr);
             ss << moduleNames[i] << "  ["sv << chex << ":"sv;
-            sprintf(chex, "0x%04X", endAddr);
+            std::snprintf(chex, sizeof(chex), "0x%04X", endAddr);
             ss << chex << "]"sv;
             if (startAddr >= 0x0100)
             {
@@ -2504,17 +2504,17 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
         if (dataToWrite[j] != (dataReceived[j] & dataMasks[j]))
         {
             registersMatch = false;
-            sprintf(ctemp, "0x%04X", addrToWrite[j]);
+            std::snprintf(ctemp, sizeof(ctemp), "0x%04X", addrToWrite[j]);
             ss << "\t"sv << ctemp << "(wr/rd): "sv;
-            sprintf(ctemp, "0x%04X", dataToWrite[j]);
+            std::snprintf(ctemp, sizeof(ctemp), "0x%04X", dataToWrite[j]);
             ss << ctemp << "/"sv;
-            sprintf(ctemp, "0x%04X", dataReceived[j]);
+            std::snprintf(ctemp, sizeof(ctemp), "0x%04X", dataReceived[j]);
             ss << ctemp << std::endl;
         }
     }
     if (registersMatch)
     {
-        sprintf(ctemp, "0x%04X", pattern);
+        std::snprintf(ctemp, sizeof(ctemp), "0x%04X", pattern);
         ss << "\tRegisters OK ("sv << ctemp << ")\n"sv;
     }
     if (registersMatch)
@@ -2852,9 +2852,9 @@ OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
 
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
 {
-    Modify_SPI_Reg_bits(LMS7_MAC, 2);
+    ChannelScope scope(this, LMS7002M::Channel::ChSXT);
     Modify_SPI_Reg_bits(LMS7_PD_LOCH_T2RBUF, tdd ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    Modify_SPI_Reg_bits(LMS7_MAC, 1); // switch to SXR
     return Modify_SPI_Reg_bits(LMS7_PD_VCO, tdd ? 1 : 0);
 }
 

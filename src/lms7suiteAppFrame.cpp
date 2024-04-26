@@ -27,7 +27,6 @@
 #include "lms7002_pnlLimeLightPAD_view.h"
 #include "pnlBoardControls.h"
 #include "LMSBoards.h"
-#include <sstream>
 #include "SPI_wxgui.h"
 #include "GUI/events.h"
 #include "GUI/ISOCPanel.h"
@@ -37,7 +36,6 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
-
 #include "limesuiteng/Logger.h"
 
 using namespace std;
@@ -378,7 +376,6 @@ void LMS7SuiteAppFrame::OnDeviceHandleChange(wxCommandEvent& event)
 
         //bind callback for spi data logging
         const SDRDescriptor& info = lmsControl->GetDescriptor();
-        lmsControl->SetDataLogCallback(&LMS7SuiteAppFrame::OnLogDataTransfer);
         wxString controlDev = _("Device: ");
         controlDev.Append(handle.ToString());
         double refClk = lmsControl->GetClockFreq(LMS_CLOCK_REF,
@@ -414,38 +411,6 @@ void LMS7SuiteAppFrame::OnLogMessage(wxCommandEvent& event)
 {
     if (mMiniLog)
         mMiniLog->HandleMessage(event);
-}
-
-#include <iomanip>
-void LMS7SuiteAppFrame::OnLogDataTransfer(bool Tx, const uint8_t* data, const uint32_t length)
-{
-    if (obj_ptr->mMiniLog == nullptr || obj_ptr->mMiniLog->chkLogData->IsChecked() == false)
-        return;
-    std::stringstream ss;
-    ss << (Tx ? "Wr("sv : "Rd("sv);
-    ss << length << "): "sv;
-    ss << std::hex << std::setfill('0');
-    int repeatedZeros = 0;
-    for (int i = length - 1; i >= 0; --i)
-        if (data[i] == 0)
-            ++repeatedZeros;
-        else
-            break;
-    if (repeatedZeros == 2)
-        repeatedZeros = 0;
-    repeatedZeros = repeatedZeros - (repeatedZeros & 0x1);
-    for (size_t i = 0; i < length - repeatedZeros; ++i)
-        //casting to short to print as numbers
-        ss << " "sv << std::setw(2) << static_cast<unsigned short>(data[i]);
-    if (repeatedZeros > 2)
-        ss << " (00 x "sv << std::dec << repeatedZeros << " times)"sv;
-    lime::debug(ss.str());
-    wxCommandEvent* evt = new wxCommandEvent();
-    evt->SetString(ss.str());
-    evt->SetEventObject(obj_ptr);
-    evt->SetEventType(LOG_MESSAGE);
-    evt->SetInt(static_cast<int>(lime::LogLevel::Info));
-    wxQueueEvent(obj_ptr, evt);
 }
 
 void LMS7SuiteAppFrame::AddModule(IModuleFrame* module, const std::string& title)

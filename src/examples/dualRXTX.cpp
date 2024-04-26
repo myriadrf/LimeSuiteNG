@@ -27,7 +27,7 @@ void intHandler(int dummy)
     stopProgram = true;
 }
 
-static LogLevel logVerbosity = LogLevel::Verbose;
+static LogLevel logVerbosity = LogLevel::Error;
 static void LogCallback(LogLevel lvl, const std::string& msg)
 {
     if (lvl > logVerbosity)
@@ -37,6 +37,7 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
 
 int main(int argc, char** argv)
 {
+    lime::registerLogHandler(LogCallback);
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {

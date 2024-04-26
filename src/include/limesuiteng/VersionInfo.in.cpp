@@ -5,10 +5,8 @@
 */
 
 #include "limesuiteng/VersionInfo.h"
+#include <string>
 #include <sstream>
-
-#define QUOTE_(x) #x
-#define QUOTE(x) QUOTE_(x)
 
 using namespace std::literals::string_literals;
 
@@ -24,7 +22,7 @@ std::string lime::GetBuildTimestamp(void)
 
 std::string lime::GetAPIVersion(void)
 {
-    const std::string verStr(QUOTE(LIMESUITENG_API_VERSION));
+    const std::string verStr{ std::to_string(LIMESUITENG_API_VERSION) };
     std::stringstream ss;
     ss << std::stoi(verStr.substr(2, 4)) << "." << std::stoi(verStr.substr(6, 2)) << "." << std::stoi(verStr.substr(8, 2));
     return ss.str();

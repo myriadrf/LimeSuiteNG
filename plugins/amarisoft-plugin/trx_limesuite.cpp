@@ -2,7 +2,7 @@
  * LimeMicroSystem transceiver driver
  * Copyright (C) 2015-2018 Amarisoft/LimeMicroSystems
  */
-#include "common.h"
+#include "limesuiteng/LimePlugin.h"
 #include "limesuiteng/StreamConfig.h"
 
 #include <stdarg.h>
