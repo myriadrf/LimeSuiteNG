@@ -1,13 +1,10 @@
-########################################################################
-## Feature registration
-########################################################################
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(LINUX TRUE)
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    return()
 endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_DESKTOP "Enable LimeSuiteNG launcher and icons" ON "ENABLE_GUI;LINUX" OFF)
+cmake_dependent_option(ENABLE_DESKTOP "Enable LimeSuiteNG launcher and icons" ON "ENABLE_GUI" OFF)
 add_feature_info(DESKTOP ENABLE_DESKTOP "LimeSuiteNG freedesktop integration")
 if(NOT ENABLE_DESKTOP)
     return()
