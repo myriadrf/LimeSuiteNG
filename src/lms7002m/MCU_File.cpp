@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdint>
+#include <numeric>
 #include "limesuiteng/Logger.h"
 
 using namespace std;
@@ -425,32 +426,25 @@ void MCU_File::ReadHex(unsigned long limit)
     {
         throw std::runtime_error("No data in file!"s);
     }
-    vector<MemBlock>::iterator vi;
-    m_top = 0;
-    for (vi = m_chunks.begin(); vi < m_chunks.end(); vi++)
-    {
-        m_top = std::max(m_top, (vi->m_startAddress + vi->m_bytes.size() - 1));
-    }
+
+    m_top = std::accumulate(m_chunks.begin(), m_chunks.end(), 0, [](const size_t& acc, const MemBlock& value) {
+        return std::max(acc, (value.m_startAddress + value.m_bytes.size() - 1));
+    });
 }
 
 // Rather inefficient this one, fix sometime
 bool MCU_File::GetByte(const unsigned long address, unsigned char& chr)
 {
-    vector<MemBlock>::iterator vi;
-
-    for (vi = m_chunks.begin(); vi < m_chunks.end(); vi++)
+    for (const auto& chunk : m_chunks)
     {
-        if (vi->m_startAddress + vi->m_bytes.size() > address && vi->m_startAddress <= address)
+        if (chunk.m_startAddress + chunk.m_bytes.size() > address && chunk.m_startAddress <= address)
         {
-            break;
+            chr = chunk.m_bytes.at(address - chunk.m_startAddress);
+            return true;
         }
     }
-    if (vi == m_chunks.end())
-    {
-        return false;
-    }
-    chr = vi->m_bytes[address - vi->m_startAddress];
-    return true;
+
+    return false;
 }
 
 bool MCU_File::BitString(const unsigned long address, const unsigned char bits, const bool lEndian, string& str)
