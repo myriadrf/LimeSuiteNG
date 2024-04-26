@@ -1509,6 +1509,4 @@ RxCalibrationEndStage : {
     return MCU_NO_ERROR;
 }
 
-#ifdef __cplusplus
 } // extern C
-#endif
