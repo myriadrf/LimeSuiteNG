@@ -1,18 +1,16 @@
 if(WIN32)
     find_package(CyAPI)
 
-    if (NOT CYAPI_FOUND) # if locally installed FX3SDK was not found, download alternative
+    if(NOT CYAPI_FOUND) # if locally installed FX3SDK was not found, download alternative
         message(STATUS "Downloading FX3SDK to: " ${PROJECT_BINARY_DIR}/_deps/fx3sdk)
         include(FetchContent)
         cmake_policy(SET CMP0135 NEW)
-        FetchContent_Declare(
-          cyapi
-          URL "https://downloads.myriadrf.org/project/limesuite/appveyor/FX3SDK.zip"
-          URL_HASH SHA1=f24fd11fcac1099312fe6fb534145169dc35a75a
-          SOURCE_DIR ${PROJECT_BINARY_DIR}/_deps/fx3sdk
-          EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(cyapi)
+        fetchcontent_declare(
+            cyapi
+            URL "https://downloads.myriadrf.org/project/limesuite/appveyor/FX3SDK.zip"
+            URL_HASH SHA1=f24fd11fcac1099312fe6fb534145169dc35a75a
+            SOURCE_DIR ${PROJECT_BINARY_DIR}/_deps/fx3sdk EXCLUDE_FROM_ALL)
+        fetchcontent_makeavailable(cyapi)
         # repeat CyAPI search with the downloaded path
         set(FX3_SDK_PATH ${PROJECT_BINARY_DIR}/_deps/fx3sdk)
         find_package(CyAPI)

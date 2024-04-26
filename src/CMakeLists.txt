@@ -166,37 +166,31 @@ set(wxWidgets_USE_UNIVERSAL OFF)
 set(wxWidgets_USE_STATIC ON)
 find_package(wxWidgets COMPONENTS richtext adv core base gl)
 include(FetchContent)
-if (NOT wxWidgets_FOUND AND WIN32)
+if(NOT wxWidgets_FOUND AND WIN32)
     cmake_policy(SET CMP0135 NEW)
     message(STATUS "Downloading wxWidgets headers.")
     set(wxRoot ${PROJECT_BINARY_DIR}/_deps/wxWidgets)
-    if (CMAKE_CL_64)
-        FetchContent_Declare(
-          wxWidgets
-          URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
-          URL_HASH SHA1=19cf62ade3c3fc55813ad9a2f1a49220574cb54a
-          SOURCE_DIR ${wxRoot}
-          EXCLUDE_FROM_ALL
-        )
+    if(CMAKE_CL_64)
+        fetchcontent_declare(
+            wxWidgets
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
+            URL_HASH SHA1=19cf62ade3c3fc55813ad9a2f1a49220574cb54a
+            SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
     else()
-        FetchContent_Declare(
-          wxWidgets
-          URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
-          URL_HASH SHA1=29647b24e5120b62e588827c163f0fe660936002
-          SOURCE_DIR ${wxRoot}
-          EXCLUDE_FROM_ALL
-        )
+        fetchcontent_declare(
+            wxWidgets
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
+            URL_HASH SHA1=29647b24e5120b62e588827c163f0fe660936002
+            SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
     endif()
 
-    FetchContent_Declare(
-      wxWidgetsHeaders
-      URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
-      URL_HASH SHA1=86022483a0bfe81edf5aee38de07a0800f0a0602
-      SOURCE_DIR ${wxRoot}/include
-      EXCLUDE_FROM_ALL
-    )
+    fetchcontent_declare(
+        wxWidgetsHeaders
+        URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
+        URL_HASH SHA1=86022483a0bfe81edf5aee38de07a0800f0a0602
+        SOURCE_DIR ${wxRoot}/include EXCLUDE_FROM_ALL)
 
-    FetchContent_MakeAvailable(wxWidgets wxWidgetsHeaders)
+    fetchcontent_makeavailable(wxWidgets wxWidgetsHeaders)
 
     # find downloaded libraries
     set(wxWidgets_ROOT_DIR ${wxRoot})
