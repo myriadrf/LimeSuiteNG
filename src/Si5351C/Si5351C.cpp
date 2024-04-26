@@ -13,7 +13,7 @@
 #include <map>
 #include <cstring>
 #include <cassert>
-#include <ciso646> // alternative operators for visual c++: not, and, or...
+#include <algorithm>
 #include <vector>
 #include "comms/IComms.h"
 #include <string_view>
@@ -602,6 +602,54 @@ void Si5351C::LoadRegValuesFromFile(string FName)
     fin.close();
 }
 
+std::set<unsigned long> Si5351C::GenerateFrequencies(
+    const unsigned long outputFrequency, const unsigned long Fmin, const unsigned long Fmax)
+{
+    std::set<unsigned long> returnSet;
+    unsigned int mult = 6;
+    unsigned long freq = outputFrequency;
+
+    while (freq <= Fmax && mult <= 254)
+    {
+        freq = outputFrequency * mult;
+        if (freq >= Fmin && freq <= Fmax)
+        {
+            returnSet.insert(freq);
+        }
+        mult += 2;
+    }
+
+    return returnSet;
+}
+
+unsigned long Si5351C::FindBestVCO(lime::Si5351_Channel* clocks, std::map<unsigned long, int>& availableFrequencies)
+{
+    int bestScore = 0; //score shows how many outputs have integer dividers
+    //calculate scores for all available frequencies
+    unsigned long bestVCO = 0;
+
+    for (auto& freq : availableFrequencies)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
+                continue;
+
+            if ((freq.first % clocks[i].outputFreqHz) == 0)
+            {
+                freq.second = freq.second + 1;
+            }
+        }
+        if (freq.second >= bestScore)
+        {
+            bestScore = freq.second;
+            bestVCO = freq.first;
+        }
+    }
+
+    return bestVCO;
+}
+
 /** @brief Calculates multisynth dividers and VCO frequencies
     @param clocks output clocks configuration
     @param plls plls configurations
@@ -631,58 +679,36 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
     //if clk6 or clk7 is used make available frequencies according to them
     if (clocks[6].powered || clocks[7].powered)
     {
-        set<unsigned long> clk6freqs;
-        set<unsigned long> clk7freqs;
-        set<unsigned long> sharedFreqs;
-        unsigned int mult = 6;
+        std::set<unsigned long> clk6freqs;
+        std::set<unsigned long> clk7freqs;
         if (!clk6satisfied)
         {
-            unsigned long freq = clocks[6].outputFreqHz;
-            while (freq <= Fmax && mult <= 254)
-            {
-                freq = clocks[6].outputFreqHz * mult;
-                if (freq >= Fmin && freq <= Fmax)
-                {
-                    clk6freqs.insert(freq);
-                }
-                mult += 2;
-            }
+            clk6freqs = GenerateFrequencies(clocks[6].outputFreqHz, Fmin, Fmax);
         }
-        mult = 6;
+
         if (!clk7satisfied)
         {
-            unsigned long freq = clocks[7].outputFreqHz;
-            while (freq <= Fmax && mult <= 254)
-            {
-                freq = clocks[7].outputFreqHz * mult;
-                if (freq >= Fmin && freq <= Fmax)
-                {
-                    clk7freqs.insert(freq);
-                }
-                mult += 2;
-            }
+            clk7freqs = GenerateFrequencies(clocks[7].outputFreqHz, Fmin, Fmax);
         }
-        bool canShare = false;
+
+        std::set<unsigned long> sharedFreqs;
         //find if clk6 and clk7 can share the same pll
-        for (set<unsigned long>::iterator it6 = clk6freqs.begin(); it6 != clk6freqs.end(); ++it6)
-        {
-            for (set<unsigned long>::iterator it7 = clk7freqs.begin(); it7 != clk7freqs.end(); ++it7)
-            {
-                if (*it6 == *it7)
-                {
-                    canShare = true;
-                    sharedFreqs.insert(*it6);
-                }
-            }
-        }
+        std::set_intersection(clk6freqs.begin(),
+            clk6freqs.end(),
+            clk7freqs.begin(),
+            clk7freqs.end(),
+            std::inserter(sharedFreqs, sharedFreqs.begin()));
+        bool canShare = !sharedFreqs.empty();
+
         if (canShare) //assign PLLA for both clocks
         {
             clocks[6].pllSource = 0;
             clocks[7].pllSource = 0;
             pllAused = true;
-            for (set<unsigned long>::iterator it = sharedFreqs.begin(); it != sharedFreqs.end(); ++it)
+
+            for (const auto freq : sharedFreqs)
             {
-                availableFrequenciesPLLA.insert(pair<unsigned long, int>(*it, 0));
+                availableFrequenciesPLLA[freq] = 0;
             }
         }
         else //if clocks 6 and 7 can't share pll, assign pllA to clk6 and pllB to clk7
@@ -691,18 +717,18 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
             {
                 clocks[6].pllSource = 0;
                 pllAused = true;
-                for (set<unsigned long>::iterator it6 = clk6freqs.begin(); it6 != clk6freqs.end(); ++it6)
+                for (const auto freq : clk6freqs)
                 {
-                    availableFrequenciesPLLA.insert(pair<unsigned long, int>(*it6, 0));
+                    availableFrequenciesPLLA[freq] = 0;
                 }
             }
             if (!clk7satisfied)
             {
                 clocks[7].pllSource = 1;
                 pllBused = true;
-                for (set<unsigned long>::iterator it7 = clk7freqs.begin(); it7 != clk7freqs.end(); ++it7)
+                for (const auto freq : clk7freqs)
                 {
-                    availableFrequenciesPLLB.insert(pair<unsigned long, int>(*it7, 0));
+                    availableFrequenciesPLLB[freq] = 0;
                 }
             }
         }
@@ -721,33 +747,13 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
             while (freq >= Fmin && freq <= Fmax)
             {
                 //add all output frequency multiples that are in VCO interval
-                availableFrequenciesPLLA.insert(pair<unsigned long, int>(freq, 0));
+                availableFrequenciesPLLA[freq] = 0;
                 freq += clocks[i].outputFreqHz;
             }
         }
     }
 
-    int bestScore = 0; //score shows how many outputs have integer dividers
-    //calculate scores for all available frequencies
-    unsigned long bestVCOA = 0;
-    for (map<unsigned long, int>::iterator it = availableFrequenciesPLLA.begin(); it != availableFrequenciesPLLA.end(); ++it)
-    {
-        for (int i = 0; i < 8; ++i)
-        {
-            if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
-                continue;
-
-            if ((it->first % clocks[i].outputFreqHz) == 0)
-            {
-                it->second = it->second + 1;
-            }
-        }
-        if (it->second >= bestScore)
-        {
-            bestScore = it->second;
-            bestVCOA = it->first;
-        }
-    }
+    auto bestVCOA = FindBestVCO(clocks, availableFrequenciesPLLA);
 
     plls[0].VCO_Hz = bestVCOA;
     plls[0].feedbackDivider = static_cast<double>(bestVCOA) / plls[0].inputFreqHz;
@@ -788,33 +794,13 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
                     : (clocks[i].outputFreqHz * ((Fmin / clocks[i].outputFreqHz) + ((Fmin % clocks[i].outputFreqHz) != 0)));
             while (freq >= Fmin && freq <= Fmax)
             {
-                availableFrequenciesPLLB.insert(pair<unsigned long, int>(freq, 0));
+                availableFrequenciesPLLB[freq] = 0;
                 freq += clocks[i].outputFreqHz;
             }
         }
     }
 
-    bestScore = 0;
-    //calculate scores for all available frequencies
-    unsigned long bestVCOB = 0;
-    for (map<unsigned long, int>::iterator it = availableFrequenciesPLLB.begin(); it != availableFrequenciesPLLB.end(); ++it)
-    {
-        for (int i = 0; i < 8; ++i)
-        {
-            if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
-                continue;
-
-            if ((it->first % clocks[i].outputFreqHz) == 0)
-            {
-                it->second = it->second + 1;
-            }
-        }
-        if (it->second >= bestScore)
-        {
-            bestScore = it->second;
-            bestVCOB = it->first;
-        }
-    }
+    auto bestVCOB = FindBestVCO(clocks, availableFrequenciesPLLB);
 
     if (bestVCOB == 0) //just in case if pllb is not used make it the same frequency as plla
         bestVCOB = bestVCOA;

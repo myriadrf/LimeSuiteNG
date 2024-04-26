@@ -9,7 +9,9 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <map>
 #include <string>
+#include <set>
 #include "limesuiteng/config.h"
 //---------------------------------------------------------------------------
 namespace lime {
@@ -107,6 +109,10 @@ class LIME_API Si5351C
 
   private:
     void FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned long Fmin, const unsigned long Fmax);
+    std::set<unsigned long> GenerateFrequencies(
+        const unsigned long outputFrequency, const unsigned long Fmin, const unsigned long Fmax);
+    unsigned long FindBestVCO(lime::Si5351_Channel* clocks, std::map<unsigned long, int>& availableFrequencies);
+
     lime::II2C& comms;
 
     Si5351_PLL PLL[2];
