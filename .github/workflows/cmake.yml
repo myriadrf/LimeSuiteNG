@@ -44,7 +44,8 @@ jobs:
 
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
-        run: brew install castxml gnuradio pybind11 wxwidgets
+        # TODO: figure out why 'spdlog/tweakme.h' is not found from packages when generating gnuradio python bindings
+        run: brew install wxwidgets #castxml gnuradio pybind11
 
       - name: Download Windows dependencies
         if: matrix.os == 'windows-latest'
