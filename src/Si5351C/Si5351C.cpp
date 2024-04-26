@@ -338,7 +338,6 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
         if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
             continue;
 
-        clocks[i].multisynthDivider = bestVCOA / clocks[i].outputFreqHz;
         if (bestVCOA % clocks[i].outputFreqHz == 0)
         {
             clocks[i].int_mode = true;
@@ -388,7 +387,7 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
 
         if (clocks[i].int_mode)
             continue;
-        clocks[i].multisynthDivider = bestVCOB / clocks[i].outputFreqHz;
+
         if (bestVCOB % clocks[i].outputFreqHz == 0)
         {
             clocks[i].int_mode = true;
