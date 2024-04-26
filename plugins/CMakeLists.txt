@@ -18,7 +18,7 @@ add_subdirectory(SoapyLMS7)
 ## GNU Radio plugin
 ########################################################################
 find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
-cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_LIBRARY;Gnuradio_FOUND" OFF)
+cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_LIBRARY;Gnuradio_FOUND;BUILD_SHARED_LIBS" OFF)
 add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
 if(ENABLE_GNURADIO)
     add_subdirectory(gr-limesdr)
