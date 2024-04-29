@@ -50,17 +50,19 @@ static void DrawMeasurement(GNUPlotPipe& gp, const MeasurementsVector& vec)
 #endif
 
 ///APPROXIMATE conversion
-static constexpr float ChipRSSI_2_dBFS(uint32_t rssi)
+static float ChipRSSI_2_dBFS(uint32_t rssi)
 {
     const uint32_t maxRSSI = 0x15FF4;
     if (rssi == 0)
         rssi = 1;
+    // std::log10 is not constexpr
     return 20 * std::log10(static_cast<float>(rssi) / maxRSSI);
 }
 
-static constexpr uint32_t dBFS_2_ChipRSSI(float dBFS)
+static uint32_t dBFS_2_ChipRSSI(float dBFS)
 {
     const uint32_t maxRSSI = 0x15FF4;
+    // std::pow is not constexpr
     return maxRSSI * std::pow(10.0, dBFS / 20.0);
 }
 
@@ -223,7 +225,7 @@ static void SetRxGFIR3Coefficients()
 
 int CheckSaturationTxRx(bool extLoopback)
 {
-    constexpr uint16_t saturationLevel = dBFS_2_ChipRSSI(-12.86);
+    uint16_t saturationLevel = dBFS_2_ChipRSSI(-12.86);
     uint8_t g_pga;
     uint8_t g_rfe;
     uint16_t rssi;
@@ -1295,7 +1297,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
 
 uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
 {
-    constexpr uint16_t target_rssi = dBFS_2_ChipRSSI(-10.0);
+    uint16_t target_rssi = dBFS_2_ChipRSSI(-10.0);
     uint16_t rssi;
     uint8_t cg_iamp = (uint8_t)Get_SPI_Reg_bits(CG_IAMP_TBB);
 #ifdef DRAW_GNU_PLOTS
