@@ -16,7 +16,7 @@ enable_testing()
 find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
 include(CMakeDependentOption)
 include(FeatureSummary)
-cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_GNURADIO_PREREQ;Gnuradio_FOUND" OFF)
+cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "Gnuradio_FOUND" OFF)
 add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
 if(NOT ENABLE_GNURADIO)
     return()
