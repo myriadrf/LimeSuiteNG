@@ -13,6 +13,15 @@ cmake_minimum_required(VERSION 3.12)
 project(gr-limesdr CXX C)
 enable_testing()
 
+find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
+include(CMakeDependentOption)
+include(FeatureSummary)
+cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "Gnuradio_FOUND" OFF)
+add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
+if(NOT ENABLE_GNURADIO)
+    return()
+endif()
+
 # Install to PyBOMBS target prefix if defined
 if(DEFINED ENV{PYBOMBS_PREFIX})
     set(CMAKE_INSTALL_PREFIX $ENV{PYBOMBS_PREFIX})
@@ -97,7 +106,7 @@ else()
     # Requires GNU Radio commit 02da1cb623f77d7d443ddbb291b7fec1eb147b04 (for v3.10) or 4b030830625849df9620e6aac78b7da46c788d26 (v3.11+) to be present
     if(Gnuradio_VERSION VERSION_LESS "3.10.4")
         message(
-            SEND_ERROR
+            WARNING
                 "gr-limesdr in-tree build is not possible. Needed GNU Radio version is at least 3.10.4, GNU Radio version found: ${Gnuradio_VERSION}"
         )
         return()
@@ -160,13 +169,12 @@ file(TO_CMAKE_PATH "${PYTHON_NUMPY_INCLUDE_DIR}" PYTHON_NUMPY_INCLUDE_DIR)
 ########################################################################
 # LimeRFE
 ########################################################################
-include(FeatureSummary)
-include(CMakeDependentOption)
-option(ENABLE_RFE "Enable LimeRFE support" OFF)
-add_feature_info(LimeRFE ENABLE_LIBRARY "LimeRFE support")
-if(ENABLE_RFE)
-    message(STATUS "Enabling LimeRFE support")
-endif()
+# RFE Support not added yet
+# option(ENABLE_RFE "Enable LimeRFE support" OFF)
+# add_feature_info(LimeRFE ENABLE_LIBRARY "LimeRFE support")
+# if(ENABLE_RFE)
+#     message(STATUS "Enabling LimeRFE support")
+# endif()
 
 ########################################################################
 # Setup doxygen option

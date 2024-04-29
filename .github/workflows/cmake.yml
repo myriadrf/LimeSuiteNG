@@ -39,12 +39,15 @@ jobs:
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo add-apt-repository ppa:gnuradio/gnuradio-releases
           sudo apt-get update
-          sudo apt-get install -qq gnuradio-dev libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
+          sudo apt-get install gnuradio-dev python3-packaging
+          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
 
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
-        run: brew install castxml gnuradio pybind11 wxwidgets
+        # TODO: figure out why 'spdlog/tweakme.h' is not found from packages when generating gnuradio python bindings
+        run: brew install wxwidgets #castxml gnuradio pybind11
 
       - name: Download Windows dependencies
         if: matrix.os == 'windows-latest'

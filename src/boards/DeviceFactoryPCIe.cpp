@@ -70,20 +70,6 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
     return handles;
 }
 
-static std::vector<std::string> GetDevicesWithRegex(const std::string& regex)
-{
-    std::vector<std::string> devices;
-    FILE* lsPipe;
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd) - 1, "find /dev -maxdepth 1 -readable -name %s", regex.c_str());
-    lsPipe = popen(cmd, "r");
-    char tempBuffer[512];
-    while (fscanf(lsPipe, "%s", tempBuffer) == 1)
-        devices.push_back(tempBuffer);
-    pclose(lsPipe);
-    return devices;
-}
-
 SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
 {
     // Data transmission layer
@@ -98,7 +84,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
         return nullptr;
     }
 
-    std::vector<std::string> streamEndpoints = GetDevicesWithRegex(handle.name + "_trx*"s);
+    std::vector<std::string> streamEndpoints = LitePCIe::GetDevicesWithPattern(handle.name + "_trx*"s);
     std::sort(streamEndpoints.begin(), streamEndpoints.end());
     for (const std::string& endpointPath : streamEndpoints)
     {

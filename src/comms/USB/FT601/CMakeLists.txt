@@ -24,7 +24,7 @@ if(WIN32)
 
     message(STATUS "FTDI_INCLUDE_DIRS: ${FTDI_INCLUDE_DIRS}")
     message(STATUS "FTDI_LIBRARIES: ${FTDI_LIBRARIES}")
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${FTDI_LIBRARIES})
+    target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE ${FTDI_LIBRARIES})
     target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${FTDI_INCLUDE_DIRS})
 elseif(UNIX)
     find_package(libusb-1.0)
@@ -38,11 +38,11 @@ elseif(UNIX)
         message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
     endif()
 
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIBUSB_1_LIBRARIES})
+    target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE ${LIBUSB_1_LIBRARIES})
 
     if(LIBUSB_1_INCLUDE_DIR)
         target_include_directories(
-            ${MAIN_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
+            ${MAIN_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
     endif()
 endif()
 

@@ -27,8 +27,6 @@ class pnlMiniLog : public wxPanel
     //// end generated class members
     void HandleMessage(wxCommandEvent& event);
     void OnUpdateGUI(wxUpdateUIEvent& event);
-    void OnLogDataClicked(wxCommandEvent& event);
-    wxCheckBox* chkLogData;
 
   private:
     std::deque<wxString> mAllMessages;

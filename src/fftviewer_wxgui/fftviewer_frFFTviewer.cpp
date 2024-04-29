@@ -153,6 +153,9 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
 
 fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
 {
+    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
+    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+
     if (mStreamRunning == true)
     {
         StopStreaming();
@@ -162,6 +165,16 @@ fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
     {
         delete mGUIupdater;
     }
+}
+
+bool fftviewer_frFFTviewer::Show(bool show)
+{
+    if (!show && mStreamRunning)
+    {
+        StopStreaming();
+    }
+
+    return frFFTviewer::Show(show);
 }
 
 void fftviewer_frFFTviewer::OnWindowFunctionChanged(wxCommandEvent& event)
@@ -509,8 +522,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
                         break;
                     for (uint32_t i = 0; i < samplesToCopy; ++i)
                     {
-                        captureBuffer[ch][samplesCaptured + i].i = buffers[ch][i].i * 32767;
-                        captureBuffer[ch][samplesCaptured + i].q = buffers[ch][i].q * 32767;
+                        captureBuffer[ch][samplesCaptured + i].real(buffers[ch][i].real() * 32767);
+                        captureBuffer[ch][samplesCaptured + i].imag(buffers[ch][i].imag() * 32767);
                     }
                     samplesToCapture -= samplesToCopy;
                     samplesCaptured += samplesToCopy;

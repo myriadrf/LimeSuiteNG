@@ -1138,11 +1138,13 @@ static const std::array<const std::string, MCU_BD::MCU_ERROR_CODES::MCU_ERROR_CO
     "Tx RCAL_LPF range limit reached"s,
 };
 
+static const string sMCU_undefined{ "Error code undefined"s };
+static const string sMCU_inprogress{ "Error code undefined"s };
 const std::string& MCU_BD::MCUStatusMessage(const uint8_t code)
 {
     if (code == 255)
-        return "MCU not programmed/procedure still in progress"s;
+        return sMCU_inprogress;
     if (code >= MCU_ERROR_CODES_COUNT)
-        return "Error code undefined"s;
+        return sMCU_undefined;
     return MCU_ErrorMessages.at(code);
 }

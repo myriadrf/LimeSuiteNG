@@ -167,7 +167,8 @@ int TRXLooper_PCIE::TxSetup()
     if (mCallback_logMessage)
     {
         char msg[256];
-        sprintf(msg,
+        std::snprintf(msg,
+            sizeof(msg),
             "Stream%i samplesInTxPkt:%i maxTxPktInBatch:%i, batchSizeInTime:%gus",
             chipId,
             samplesInPkt,
@@ -421,7 +422,7 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
             if (showStats || mCallback_logMessage)
             {
                 char msg[512];
-                snprintf(msg,
+                std::snprintf(msg,
                     sizeof(msg) - 1,
                     "%s Tx: %3.3f MB/s | TS:%li pkt:%li o:%i shw:%u/%u(%+i) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
@@ -474,7 +475,8 @@ void TRXLooper_PCIE::TxTeardown()
     if (mCallback_logMessage)
     {
         char msg[256];
-        sprintf(msg,
+        std::snprintf(msg,
+            sizeof(msg),
             "Tx Loop totals: packets sent: %li (0x%08lX) , FPGA packet counter: %i (0x%08X), diff: %li, FPGA tx drops: %i",
             mTx.stats.packets,
             mTx.stats.packets,
@@ -539,7 +541,8 @@ int TRXLooper_PCIE::RxSetup()
     if (mCallback_logMessage)
     {
         char msg[256];
-        sprintf(msg,
+        std::snprintf(msg,
+            sizeof(msg),
             "%s usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, batchSizeInTime:%gus\n",
             mRxArgs.port->GetPathName().c_str(),
             usePoll ? 1 : 0,
@@ -650,7 +653,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
             mRx.stats.dataRate_Bps = dataRateBps;
 
             char msg[512];
-            snprintf(msg,
+            std::snprintf(msg,
                 sizeof(msg) - 1,
                 "%s Rx: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%u/%u(%u) swFIFO:%li",
                 mRxArgs.port->GetPathName().c_str(),
@@ -779,7 +782,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     if (mCallback_logMessage)
     {
         char msg[256];
-        sprintf(msg, "Rx%i: packetsIn: %li", chipId, stats.packets);
+        std::snprintf(msg, sizeof(msg), "Rx%i: packetsIn: %li", chipId, stats.packets);
         mCallback_logMessage(LogLevel::Debug, msg);
     }
 }

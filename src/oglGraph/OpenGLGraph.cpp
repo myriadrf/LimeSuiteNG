@@ -173,12 +173,10 @@ OpenGLGraph::~OpenGLGraph()
 
 bool OpenGLGraph::Initialize(int width, int height)
 {
-    char tempc[256];
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
-        sprintf(tempc, "GLEW ERROR %s", glewGetErrorString(err));
-        cout << tempc << endl;
+        cout << "GLEW ERROR "sv << glewGetErrorString(err) << endl;
     }
 
     char userOGLversion[255];
@@ -483,9 +481,9 @@ void OpenGLGraph::DrawStaticElements()
 
     char format[10];
     if (settings.staticGrid)
-        sprintf(format, "%%.3f %%s");
+        std::snprintf(format, sizeof(format), "%%.3f %%s");
     else
-        sprintf(format, "%%.%if %%s", settings.gridXprec);
+        std::snprintf(format, sizeof(format), "%%.%if %%s", settings.gridXprec);
 
     float numbersH = 16;
     // X axis grid lines
@@ -502,7 +500,7 @@ void OpenGLGraph::DrawStaticElements()
                 value = gridpx / 1000000.0 + settings.gridXoffset;
             else
                 value = gridpx + settings.gridXoffset;
-            sprintf(text, format, value, settings.xUnits.c_str());
+            std::snprintf(text, sizeof(text), format, value, settings.xUnits.c_str());
             m_font->getTextSize(text, tw, th, numbersH);
             glRenderText(posX - tw / 2, posY - th - 2, 0, numbersH, 0, "%s", text);
         }
@@ -516,7 +514,7 @@ void OpenGLGraph::DrawStaticElements()
     value = 0;
     double gridYstart = settings.gridYstart;
 
-    sprintf(format, "%%.%if %%s", settings.gridYprec);
+    std::snprintf(format, sizeof(format), "%%.%if %%s", settings.gridYprec);
 
     // Y axis grid lines
     posY = settings.marginBottom;
@@ -529,7 +527,7 @@ void OpenGLGraph::DrawStaticElements()
         if (posY > settings.marginBottom && posY < settings.windowHeight - settings.marginTop)
         {
             value = gridpy;
-            sprintf(text, format, value, settings.yUnits.c_str());
+            std::snprintf(text, sizeof(text), format, value, settings.yUnits.c_str());
             m_font->getTextSize(text, tw, th, numbersH);
             glRenderText(posX - tw - 2, posY - th / 2, 0, numbersH, 0, "%s", text);
         }
@@ -840,7 +838,7 @@ GLvoid OpenGLGraph::glRenderText(float posx, float posy, float angle, float scal
         return; // Do nothing
 
     va_start(ap, fmt); // Parses the string for variables
-    vsprintf(text, fmt, ap); // And converts symbols to actual numbers
+    std::vsnprintf(text, sizeof(text), fmt, ap); // And converts symbols to actual numbers
     va_end(ap); // Results are stored in text
 
     glPushMatrix();
@@ -1109,9 +1107,9 @@ int OpenGLGraph::TextWidthInPixels(const char* str)
 int OpenGLGraph::NumberWidthInPixels(float num, unsigned int prec)
 {
     char format[20];
-    sprintf(format, "%%.%if", prec);
+    std::snprintf(format, sizeof(format), "%%.%if", prec);
     char ctemp[20];
-    sprintf(ctemp, format, num);
+    std::snprintf(ctemp, sizeof(ctemp), format, num);
     return TextWidthInPixels(ctemp);
 }
 
@@ -1325,11 +1323,16 @@ void OpenGLGraph::DrawMarkers()
             if (markers[i].used == false)
                 continue;
             glColor4f(markers[i].color.red, markers[i].color.green, markers[i].color.blue, markers[i].color.alpha);
-            int cnt = sprintf(text, "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex] / 1000000);
+            int cnt =
+                std::snprintf(text, sizeof(text), "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex] / 1000000);
 
             for (unsigned int j = 0; j < series.size(); j++)
                 if (series[j]->size > 0 && series[j]->visible)
-                    cnt += sprintf(text + cnt, "/ Ch %c: %#+3.1f dBFS ", 65 + j, series[j]->values[markers[i].dataValueIndex + 1]);
+                    cnt += std::snprintf(text + cnt,
+                        std::max<int>(sizeof(text) - cnt, 0),
+                        "/ Ch %c: %#+3.1f dBFS ",
+                        65 + j,
+                        series[j]->values[markers[i].dataValueIndex + 1]);
 
             markers[i].posY = series[0]->values[markers[i].dataValueIndex + 1];
             posX = settings.marginLeft;

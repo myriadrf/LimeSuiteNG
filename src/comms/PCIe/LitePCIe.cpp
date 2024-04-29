@@ -26,9 +26,8 @@ std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& rege
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd) - 1, "find /dev -maxdepth 1 -readable -name %s", regex.c_str());
-    lsPipe = popen(cmd, "r");
+    std::string cmd = "find /dev -maxdepth 1 -readable -name "s + regex;
+    lsPipe = popen(cmd.c_str(), "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
         devices.push_back(tempBuffer);
@@ -40,9 +39,7 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd) - 1, "ls /sys/class/litepcie -1");
-    lsPipe = popen(cmd, "r");
+    lsPipe = popen("ls -1 -- /sys/class/litepcie", "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
         devices.push_back(tempBuffer);

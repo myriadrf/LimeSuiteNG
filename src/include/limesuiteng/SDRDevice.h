@@ -48,7 +48,7 @@ class LIME_API SDRDevice
         LockStatus gps; ///< Status for the GPS system (American system).
     };
 
-    virtual ~SDRDevice(){};
+    virtual ~SDRDevice();
 
     /// @brief Configures the device using the given configuration.
     /// @param config The configuration to set up the device with.
@@ -523,13 +523,6 @@ class LIME_API SDRDevice
 
     /// @copydoc IComms::CustomParameterRead()
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters);
-
-    /// @brief The definition of a function to run when data is received.
-    typedef void (*DataCallbackType)(bool, const uint8_t*, const uint32_t);
-
-    /// @brief Sets callback function which gets called each time data is sent or received
-    /// @param callback The callback to use from this point onwards.
-    virtual void SetDataLogCallback(DataCallbackType callback);
 
     /// @brief The definition of a function to call when a log message is generated.
     typedef std::function<void(LogLevel, const std::string&)> LogCallbackType;

@@ -51,15 +51,14 @@ set(LIME_SUITE_SOURCES
     DSP/FFT.cpp
     memory/MemoryPool.cpp
     mcu_program/spi.cpp
-    mcu_program/common_src/lms7002m_calibrations.c
+    mcu_program/common_src/lms7002m_calibrations.cpp
     mcu_program/common_src/lms7002m_controls.c
     API/LMS_APIWrapper.cpp
     API/LimePlugin.cpp
     include/limesuiteng/SDRDevice.cpp
     utilities/toString.cpp)
 
-set_source_files_properties(
-    mcu_program/common_src/lms7002m_calibrations.c mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
 set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -145,7 +144,6 @@ if(ENABLE_LIBRARY)
     endif(MSVC)
 
     add_subdirectory(GFIR)
-    set(LIME_SUITE_LIBS LimeSuite)
 endif()
 
 ########################################################################
@@ -166,7 +164,39 @@ set(wxWidgets_USE_DEBUG OFF)
 set(wxWidgets_USE_UNICODE ON)
 set(wxWidgets_USE_UNIVERSAL OFF)
 set(wxWidgets_USE_STATIC ON)
-find_package(wxWidgets COMPONENTS richtext xml html xrc adv aui core base gl)
+find_package(wxWidgets COMPONENTS richtext adv core base gl)
+include(FetchContent)
+if(NOT wxWidgets_FOUND AND WIN32)
+    cmake_policy(SET CMP0135 NEW)
+    message(STATUS "Downloading wxWidgets headers.")
+    set(wxRoot ${PROJECT_BINARY_DIR}/_deps/wxWidgets)
+    if(CMAKE_CL_64)
+        fetchcontent_declare(
+            wxWidgets
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
+            URL_HASH SHA1=19cf62ade3c3fc55813ad9a2f1a49220574cb54a
+            SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
+    else()
+        fetchcontent_declare(
+            wxWidgets
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
+            URL_HASH SHA1=29647b24e5120b62e588827c163f0fe660936002
+            SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
+    endif()
+
+    fetchcontent_declare(
+        wxWidgetsHeaders
+        URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
+        URL_HASH SHA1=86022483a0bfe81edf5aee38de07a0800f0a0602
+        SOURCE_DIR ${wxRoot}/include EXCLUDE_FROM_ALL)
+
+    fetchcontent_makeavailable(wxWidgets wxWidgetsHeaders)
+
+    # find downloaded libraries
+    set(wxWidgets_ROOT_DIR ${wxRoot})
+    find_package(wxWidgets COMPONENTS richtext adv core base gl)
+endif()
+
 message(STATUS "wxWidgets_DEFINITIONS: ${wxWidgets_DEFINITIONS}")
 message(STATUS "wxWidgets_INCLUDE_DIRS: ${wxWidgets_INCLUDE_DIRS}")
 message(STATUS "wxWidgets_LIBRARIES: ${wxWidgets_LIBRARIES}")

@@ -1475,7 +1475,7 @@ static int ReadInfo(struct litepcie_device *s)
     }
     s->info.serialNumber = serialNumber;
 
-    sprintf(s->info.devName, "%s", GetDeviceName(s->info.boardId));
+    snprintf(s->info.devName, sizeof(s->info.devName), "%s", GetDeviceName(s->info.boardId));
 
     dev_info(&s->dev->dev,
         "[device info] %s FW:%u HW:%u PROTOCOL:%u S/N:0x%016llX \n",

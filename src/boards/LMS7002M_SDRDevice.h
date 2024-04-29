@@ -113,7 +113,6 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     uint32_t StreamTx(uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
     void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
-    void SetDataLogCallback(DataCallbackType callback) override;
     void SetMessageLogCallback(LogCallbackType callback) override;
 
     void* GetInternalChip(uint32_t index) override;
@@ -137,7 +136,6 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
 
     static constexpr uint8_t NCOValueCount = 16;
 
-    DataCallbackType mCallback_logData;
     LogCallbackType mCallback_logMessage;
     std::vector<LMS7002M*> mLMSChips;
     std::vector<TRXLooper*> mStreamers;

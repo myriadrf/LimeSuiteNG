@@ -9,7 +9,7 @@ void Logger::defaultLogHandlerCString(const LogLevel level, const char* message)
 {
     if (level > LogLevel::Error)
         return;
-    fprintf(stderr, "%s\n", message);
+    std::fprintf(stderr, "%s\n", message);
 }
 
 void Logger::logHandlerCStringWrapper(const LogLevel level, const char* message)
@@ -31,7 +31,7 @@ const char* GetLastErrorMessageCString(void)
 void log(const LogLevel level, const char* format, va_list argList)
 {
     char buff[4096];
-    int ret = vsnprintf(buff, sizeof(buff), format, argList);
+    int ret = std::vsnprintf(buff, sizeof(buff), format, argList);
     if (ret > 0)
         Logger::logHandlerCString(level, buff);
 }
@@ -91,7 +91,7 @@ template<class T> inline T ReportErrorTemplate(const T errnum, const char* forma
 {
     Logger::_reportedErrorCode = static_cast<int>(errnum);
 
-    int ret = vsnprintf(_reportedErrorMessageCStringBuffer, MAX_MSG_LEN, format, argList);
+    int ret = std::vsnprintf(_reportedErrorMessageCStringBuffer, MAX_MSG_LEN, format, argList);
     if (ret > 0)
     {
         Logger::_reportedErrorMessage = _reportedErrorMessageCStringBuffer;
