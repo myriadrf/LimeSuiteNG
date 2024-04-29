@@ -14,6 +14,7 @@ project(gr-limesdr CXX C)
 enable_testing()
 
 find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
+include(CMakeDependentOption)
 cmake_dependent_option(
     ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_LIBRARY;Gnuradio_FOUND;BUILD_SHARED_LIBS" OFF)
 add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
@@ -169,7 +170,6 @@ file(TO_CMAKE_PATH "${PYTHON_NUMPY_INCLUDE_DIR}" PYTHON_NUMPY_INCLUDE_DIR)
 # LimeRFE
 ########################################################################
 include(FeatureSummary)
-include(CMakeDependentOption)
 # RFE Support not added yet
 # option(ENABLE_RFE "Enable LimeRFE support" OFF)
 # add_feature_info(LimeRFE ENABLE_LIBRARY "LimeRFE support")
