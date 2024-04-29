@@ -13,6 +13,14 @@ cmake_minimum_required(VERSION 3.12)
 project(gr-limesdr CXX C)
 enable_testing()
 
+find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
+cmake_dependent_option(
+    ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_LIBRARY;Gnuradio_FOUND;BUILD_SHARED_LIBS" OFF)
+add_feature_info(GNURADIO ENABLE_GNURADIO "GNU Radio 3.9+ Plug-in")
+if(NOT ENABLE_GNURADIO)
+    return()
+endif()
+
 # Install to PyBOMBS target prefix if defined
 if(DEFINED ENV{PYBOMBS_PREFIX})
     set(CMAKE_INSTALL_PREFIX $ENV{PYBOMBS_PREFIX})
