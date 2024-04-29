@@ -140,6 +140,8 @@ static bool GetTreeNode(const wxTreeCtrl* treeControl,
 
 static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeItemId& result)
 {
+    if (branch.IsEmpty())
+        return false;
     const std::vector<std::string> nodes = SplitString(branch.ToStdString(), '/');
 
     wxTreeItemId root = treeControl->GetRootItem();
