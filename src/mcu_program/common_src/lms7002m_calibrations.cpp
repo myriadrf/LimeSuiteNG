@@ -49,16 +49,22 @@ static void DrawMeasurement(GNUPlotPipe& gp, const MeasurementsVector& vec)
     #define PUSH_GMEASUREMENT_VALUES(value, rssi)
 #endif
 
-extern "C" {
-
 ///APPROXIMATE conversion
-static float ChipRSSI_2_dBFS(uint32_t rssi)
+static constexpr float ChipRSSI_2_dBFS(uint32_t rssi)
 {
-    uint32_t maxRSSI = 0x15FF4;
+    const uint32_t maxRSSI = 0x15FF4;
     if (rssi == 0)
         rssi = 1;
-    return 20 * log10((float)(rssi) / maxRSSI);
+    return 20 * std::log10(static_cast<float>(rssi) / maxRSSI);
 }
+
+static constexpr uint32_t dBFS_2_ChipRSSI(float dBFS)
+{
+    const uint32_t maxRSSI = 0x15FF4;
+    return maxRSSI * std::pow(10.0, dBFS / 20.0);
+}
+
+extern "C" {
 
 static int16_t toSigned(int16_t val, uint8_t msblsb)
 {
@@ -217,7 +223,7 @@ static void SetRxGFIR3Coefficients()
 
 int CheckSaturationTxRx(bool extLoopback)
 {
-    const uint16_t saturationLevel = 0x05000; //-3dBFS
+    constexpr uint16_t saturationLevel = dBFS_2_ChipRSSI(-12.86);
     uint8_t g_pga;
     uint8_t g_rfe;
     uint16_t rssi;
@@ -302,13 +308,19 @@ int CheckSaturationTxRx(bool extLoopback)
         (extLoopback ? "LNA" : "RXLOOPB"),
         g_rfe,
         ChipRSSI_2_dBFS(rssi));
-    const int thresholdRSSI = 0xB21; // ~(-30 dbFS)
-    if (rssi < thresholdRSSI)
+    const float signalLevel_dBFS = ChipRSSI_2_dBFS(rssi);
+    constexpr float expectedSignalLevel_dBFS = -30.0;
+    if (signalLevel_dBFS < expectedSignalLevel_dBFS)
     {
-        lime::debug("Signal strength (%3.1f dBFS) low, expected to be more than (%3.1f dBFS), loopback not working?",
-            ChipRSSI_2_dBFS(rssi),
-            ChipRSSI_2_dBFS(thresholdRSSI));
-        return MCU_LOOPBACK_SIGNAL_WEAK;
+        const char* messageFormat = "Low calibration test signal level (%3.1f dBFS), expected to be more than (%3.1f dBFS)."
+            " Calibration results might be impacted. Try re-calibrating or adjusting the TX gains.";
+        if (signalLevel_dBFS < -50.0)
+        {
+            lime::error(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);
+            return MCU_LOOPBACK_SIGNAL_WEAK;
+        }
+        else
+            lime::warning(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);
     }
     Modify_SPI_Reg_bits(CMIX_BYP_RXTSP, 1);
     Modify_SPI_Reg_bits(DC_BYP_RXTSP, 1);
@@ -1283,7 +1295,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
 
 uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
 {
-    ROM const uint16_t target_rssi = 0x07000; //0x0B000 = -3 dBFS
+    constexpr uint16_t target_rssi = dBFS_2_ChipRSSI(-10.0);
     uint16_t rssi;
     uint8_t cg_iamp = (uint8_t)Get_SPI_Reg_bits(CG_IAMP_TBB);
 #ifdef DRAW_GNU_PLOTS
@@ -1347,7 +1359,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
 #endif // DRAW_GNU_PLOTS
 
     PUSH_GMEASUREMENT_VALUES(index, ChipRSSI_2_dBFS(rssi));
-    while (rssi < 0x01000)
+    while (rssi < dBFS_2_ChipRSSI(-27))
     {
         cg_iamp += 2;
         if (cg_iamp > 63 - 6)
@@ -1367,7 +1379,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
         PUSH_GMEASUREMENT_VALUES(++index, ChipRSSI_2_dBFS(rssi));
     }
     if (extLoopback)
-        lime::debug("Initial gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS",
+        lime::debug("Adjusted gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %2.3f dbFS",
             Get_SPI_Reg_bits(LOSS_MAIN_TXPAD_TRF),
             Get_SPI_Reg_bits(CG_IAMP_TBB),
             ChipRSSI_2_dBFS(rssi));
@@ -1382,13 +1394,19 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
     gp.writef("%i %f\n%i %f\ne\n", 0, ChipRSSI_2_dBFS(target_rssi), index, ChipRSSI_2_dBFS(target_rssi));
     gp.flush();
 #endif
-    const int thresholdRSSI = 0xB21; // ~(-30 dbFS)
-    if (rssi < thresholdRSSI)
+    const float signalLevel_dBFS = ChipRSSI_2_dBFS(rssi);
+    constexpr float expectedSignalLevel_dBFS = -30.0;
+    if (signalLevel_dBFS < expectedSignalLevel_dBFS)
     {
-        lime::debug("Signal strength (%3.1f dBFS) low, expected to be more than (%3.1f dBFS), loopback not working?",
-            ChipRSSI_2_dBFS(rssi),
-            ChipRSSI_2_dBFS(thresholdRSSI));
-        return MCU_LOOPBACK_SIGNAL_WEAK;
+        const char* messageFormat = "Low calibration test signal level (%3.1f dBFS), expected to be more than (%3.1f dBFS)."
+            " Calibration results might be impacted. Try re-calibrating or adjusting the RX gains.";
+        if (signalLevel_dBFS < -50.0)
+        {
+            lime::error(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);
+            return MCU_LOOPBACK_SIGNAL_WEAK;
+        }
+        else
+            lime::warning(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);
     }
     return MCU_NO_ERROR;
 }
@@ -1490,7 +1508,7 @@ RxCalibrationEndStage : {
     int16_t dcI = ReadAnalogDC((x0020val & 1) ? 0x5C7 : 0x5C8);
     int16_t dcQ = ReadAnalogDC((x0020val & 1) ? 0x5C9 : 0x5CA);
     int16_t phaseSigned = toSigned(phaseOffset, MSB_LSB(11, 0));
-    lime::debug("Tx | DC   | GAIN | PHASE");
+    lime::debug("Rx | DC   | GAIN | PHASE");
     lime::debug("---+------+------+------");
     lime::debug("I: | %4i | %4i | %i", dcI, gcorri, phaseSigned);
     lime::debug("Q: | %4i | %4i |", dcQ, gcorrq);
