@@ -253,8 +253,6 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         LMS7002M* chip = mLMSChips.at(0);
         if (!cfg.skipDefaults)
         {
-            const bool skipTune = true;
-            // TODO: skip tune
             status = Init();
             if (status != OpStatus::Success)
                 return status;

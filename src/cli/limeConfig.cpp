@@ -117,7 +117,6 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
     if (name.empty())
         return -1;
 
-    bool match = false;
     for (size_t j = 0; j < antennaNames.size(); ++j)
     {
         if (antennaNames[j] == name)

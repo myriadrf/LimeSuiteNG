@@ -48,7 +48,7 @@ class LIME_API SDRDevice
         LockStatus gps; ///< Status for the GPS system (American system).
     };
 
-    virtual ~SDRDevice(){};
+    virtual ~SDRDevice();
 
     /// @brief Configures the device using the given configuration.
     /// @param config The configuration to set up the device with.
@@ -486,10 +486,7 @@ class LIME_API SDRDevice
     /// @param samples The samples to upload to the device.
     /// @param count The amount of samples to upload to the device.
     /// @return Operation status.
-    virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
-    {
-        return OpStatus::NotImplemented;
-    }
+    virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count);
 
     /// @copydoc ISPI::SPI()
     /// @param spiBusAddress The SPI address of the device to use.
@@ -532,7 +529,7 @@ class LIME_API SDRDevice
 
     /// @brief Sets callback function which gets called each a log message is received
     /// @param callback The callback to use from this point onwards.
-    virtual void SetMessageLogCallback(LogCallbackType callback){};
+    virtual void SetMessageLogCallback(LogCallbackType callback);
 
     /// @brief Gets the pointer to an internal chip of the device.
     /// @param index The index of the device to retreive.

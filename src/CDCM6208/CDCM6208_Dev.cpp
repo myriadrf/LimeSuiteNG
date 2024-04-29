@@ -708,8 +708,8 @@ double CDCM_Dev::SolveFracDiv(double target, CDCM_Output* Output)
     // Recast back
     div3_result = static_cast<float>(div3_fixed) / (1 << 20);
     // Find best match
-    double div2_difference = abs(result - (div2_result * 2.0));
-    double div3_difference = abs(result - (div3_result * 3.0));
+    double div2_difference = std::abs(result - (div2_result * 2.0));
+    double div3_difference = std::abs(result - (div3_result * 3.0));
     if (div2_difference < div3_difference)
     {
         Output->integer_part = (div2_fixed >> 20) & ((1 << 8) - 1);

@@ -313,7 +313,7 @@ int CheckSaturationTxRx(bool extLoopback)
     if (signalLevel_dBFS < expectedSignalLevel_dBFS)
     {
         const char* messageFormat = "Low calibration test signal level (%3.1f dBFS), expected to be more than (%3.1f dBFS)."
-            " Calibration results might be impacted. Try re-calibrating or adjusting the TX gains.";
+                                    " Calibration results might be impacted. Try re-calibrating or adjusting the TX gains.";
         if (signalLevel_dBFS < -50.0)
         {
             lime::error(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);
@@ -1399,7 +1399,7 @@ uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
     if (signalLevel_dBFS < expectedSignalLevel_dBFS)
     {
         const char* messageFormat = "Low calibration test signal level (%3.1f dBFS), expected to be more than (%3.1f dBFS)."
-            " Calibration results might be impacted. Try re-calibrating or adjusting the RX gains.";
+                                    " Calibration results might be impacted. Try re-calibrating or adjusting the RX gains.";
         if (signalLevel_dBFS < -50.0)
         {
             lime::error(messageFormat, signalLevel_dBFS, expectedSignalLevel_dBFS);

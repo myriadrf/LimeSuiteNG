@@ -33,6 +33,13 @@ StreamConfig::StreamConfig()
     channels[TRXDir::Tx] = {};
 }
 
+SDRDevice::~SDRDevice(){};
+
+OpStatus SDRDevice::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
+{
+    return OpStatus::NotImplemented;
+}
+
 OpStatus SDRDevice::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
     return ReportError(OpStatus::NotImplemented, "TransactSPI not implemented"s);
@@ -77,6 +84,8 @@ OpStatus SDRDevice::CustomParameterRead(std::vector<CustomParameterIO>& paramete
 {
     return ReportError(OpStatus::NotImplemented, "CustomParameterRead not implemented"s);
 }
+
+void SDRDevice::SetMessageLogCallback(LogCallbackType callback){};
 
 OpStatus SDRDevice::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
