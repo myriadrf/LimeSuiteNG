@@ -17,7 +17,12 @@ add_subdirectory(SoapyLMS7)
 ########################################################################
 ## GNU Radio plugin
 ########################################################################
-add_subdirectory(gr-limesdr)
+include(CMakeDependentOption)
+cmake_dependent_option(ENABLE_GNURADIO_PREREQ "Build LimeSuiteNG plugin for GNU Radio" ON "ENABLE_LIBRARY;BUILD_SHARED_LIBS" OFF)
+
+if(ENABLE_GNURADIO_PREREQ)
+    add_subdirectory(gr-limesdr)
+endif()
 
 ########################################################################
 ## HDSDR plugin
