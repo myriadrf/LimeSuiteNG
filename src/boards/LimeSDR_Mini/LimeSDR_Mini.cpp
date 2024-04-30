@@ -27,6 +27,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS64CProtocol;
 using namespace std::literals::string_literals;
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
@@ -404,7 +405,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
     while (srcIndex < count)
     {
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+        pkt.status = eCMD_STATUS::STATUS_UNDEFINED;
         pkt.blockCount = 0;
         pkt.periphID = chipSelect;
 
@@ -425,10 +426,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_WR;
+                    pkt.cmd = eCMD_LMS::CMD_LMS7002_WR;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
+                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_WR;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -445,10 +446,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_RD;
+                    pkt.cmd = eCMD_LMS::CMD_LMS7002_RD;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
+                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_RD;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -474,7 +475,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
 
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == LMS64CProtocol::STATUS_COMPLETED_CMD)
+        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == eCMD_STATUS::STATUS_COMPLETED_CMD)
         {
             for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
             {

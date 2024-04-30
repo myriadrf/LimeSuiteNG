@@ -36,6 +36,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS64CProtocol;
 using namespace std::literals::string_literals;
 
 static const uint8_t SPI_LMS7002M = 0;
@@ -488,7 +489,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 
     while (srcIndex < count)
     {
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+        pkt.status = eCMD_STATUS::STATUS_UNDEFINED;
         pkt.blockCount = 0;
         pkt.periphID = chipSelect;
 
@@ -508,13 +509,13 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_WR;
+                    pkt.cmd = eCMD_LMS::CMD_LMS7002_WR;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
+                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_WR;
                     break;
                 case SPI_ADF4002:
-                    pkt.cmd = LMS64CProtocol::CMD_ADF4002_WR;
+                    pkt.cmd = eCMD_LMS::CMD_ADF4002_WR;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -530,10 +531,10 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_RD;
+                    pkt.cmd = eCMD_LMS::CMD_LMS7002_RD;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
+                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_RD;
                     break;
                 case SPI_ADF4002:
                     throw std::logic_error("LimeSDR ADF4002 registers reading not supported"s);
@@ -557,7 +558,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
 
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == LMS64CProtocol::STATUS_COMPLETED_CMD)
+        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == eCMD_STATUS::STATUS_COMPLETED_CMD)
         {
             for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
             {
@@ -636,8 +637,8 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 void LimeSDR::ResetUSBFIFO()
 {
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_USB_FIFO_RST;
-    pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+    pkt.cmd = eCMD_LMS::CMD_USB_FIFO_RST;
+    pkt.status = eCMD_STATUS::STATUS_UNDEFINED;
     pkt.blockCount = 1;
     pkt.payload[0] = 0;
 

@@ -18,23 +18,9 @@ class ISerialPort;
 struct SDRDescriptor;
 struct CustomParameterIO;
 
-struct LMS64CPacket {
-    static constexpr int size = 64;
-    static constexpr int payloadSize = 56;
-    static constexpr int headerSize = size - payloadSize;
-    LMS64CPacket();
-    uint8_t cmd;
-    uint8_t status;
-    uint8_t blockCount;
-    uint8_t periphID;
-    uint8_t subDevice;
-    uint8_t reserved[3];
-    uint8_t payload[payloadSize];
-};
-
 namespace LMS64CProtocol {
 
-enum eCMD_LMS {
+enum class eCMD_LMS : uint8_t {
     CMD_GET_INFO = 0x00,
     CMD_LMS6002_RST = 0x10,
     ///Writes data to SI5356 synthesizer via I2C
@@ -97,7 +83,7 @@ enum eCMD_LMS {
     CMD_MEMORY_RD = 0x8D
 };
 
-enum eCMD_STATUS {
+enum class eCMD_STATUS : uint8_t {
     STATUS_UNDEFINED,
     STATUS_COMPLETED_CMD,
     STATUS_UNKNOWN_CMD,
@@ -157,6 +143,20 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
 OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
 
 } // namespace LMS64CProtocol
+
+struct LMS64CPacket {
+    static constexpr int size = 64;
+    static constexpr int payloadSize = 56;
+    static constexpr int headerSize = size - payloadSize;
+    LMS64CPacket();
+    LMS64CProtocol::eCMD_LMS cmd;
+    LMS64CProtocol::eCMD_STATUS status;
+    uint8_t blockCount;
+    uint8_t periphID;
+    uint8_t subDevice;
+    uint8_t reserved[3];
+    uint8_t payload[payloadSize];
+};
 
 /** @brief Class for interacting with the EEPROM management packets */
 class LMS64CPacketMemoryWriteView
