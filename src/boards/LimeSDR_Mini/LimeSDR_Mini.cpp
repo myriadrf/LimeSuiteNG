@@ -405,7 +405,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
     while (srcIndex < count)
     {
-        pkt.status = eCMD_STATUS::STATUS_UNDEFINED;
+        pkt.status = CommandStatus::Undefined;
         pkt.blockCount = 0;
         pkt.periphID = chipSelect;
 
@@ -426,10 +426,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = eCMD_LMS::CMD_LMS7002_WR;
+                    pkt.cmd = Command::LMS7002_WR;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_WR;
+                    pkt.cmd = Command::BRDSPI_WR;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -446,10 +446,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = eCMD_LMS::CMD_LMS7002_RD;
+                    pkt.cmd = Command::LMS7002_RD;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = eCMD_LMS::CMD_BRDSPI_RD;
+                    pkt.cmd = Command::BRDSPI_RD;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -475,7 +475,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
 
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == eCMD_STATUS::STATUS_COMPLETED_CMD)
+        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == CommandStatus::Completed)
         {
             for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
             {
