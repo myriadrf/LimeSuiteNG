@@ -50,12 +50,41 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     virtual OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     virtual OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
+    virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
+    virtual OpStatus WriteSerialNumber(uint64_t serialNumber) override;
+
   protected:
     void LMS1SetPath(bool tx, uint8_t chan, uint8_t path);
     OpStatus LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     static OpStatus LMS1_UpdateFPGAInterface(void* userData);
 
     enum class ePathLMS1_Tx : uint8_t { NONE, BAND1, BAND2 };
+
+    struct TestData {
+        TestData();
+        uint32_t vctcxoMinCount;
+        uint32_t vctcxoMaxCount;
+        bool refClkPassed;
+        bool gnssPassed;
+        bool vctcxoPassed;
+        bool lmsChipPassed;
+        struct RFData {
+            float frequency;
+            float amplitude;
+            bool passed;
+        };
+        RFData lnal[2];
+        RFData lnaw[2];
+        RFData lnah[2];
+    };
+
+    OpStatus ClkTest(OEMTestReporter& reporter, TestData& results);
+    OpStatus VCTCXOTest(OEMTestReporter& reporter, TestData& results);
+    OpStatus GNSSTest(OEMTestReporter& reporter, TestData& results);
+    OpStatus LMS7002_Test(OEMTestReporter& reporter, TestData& results);
+    OpStatus RunTestConfig(
+        OEMTestReporter& reporter, TestData::RFData* results, const std::string& name, double LOFreq, int gain, int rxPath);
+    OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
   private:
     std::shared_ptr<IComms> lms7002mPort;

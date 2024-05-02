@@ -8,9 +8,10 @@ using namespace std::literals::string_view_literals;
 
 static int printHelp(void)
 {
-    cout << "limeDevice [options]" << endl;
-    cout << "    -h, --help\t This help" << endl;
-    cout << "    -f, --full\t Force print detailed device(s) info" << endl;
+    cerr << "limeDevice [options]"sv << endl;
+    cerr << "    -h, --help\t This help"sv << endl;
+    cerr << "    -f, --full\t Force print detailed device(s) info"sv << endl;
+    cerr << "    --write-serial-number\t Serial number to be written to device" << endl;
     return EXIT_SUCCESS;
 }
 
@@ -62,31 +63,49 @@ void PrintDeviceDetails(SDRDevice* device)
          << "Beidou - " << GPSLockToString(gpsStatus.beidou) << endl;
 }
 
+enum Args { DEVICE = 'd', Help = 'h', Full = 'f', WriteSerial = 200 };
+
 int main(int argc, char* argv[])
 {
-    static struct option long_options[] = { { "help", no_argument, 0, 'h' }, { "full", no_argument, 0, 'f' }, { 0, 0, 0, 0 } };
+    static struct option long_options[] = { { "help", no_argument, 0, Args::Help },
+        { "full", no_argument, 0, Args::Full },
+        { "device", required_argument, 0, Args::DEVICE },
+        { "write-serial-number", required_argument, 0, Args::WriteSerial },
+        { 0, 0, 0, 0 } };
 
     bool full(false);
     int long_index = 0;
     int option = 0;
+    uint64_t serialNumberArg = 0;
+    std::string devName;
 
     while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
     {
         switch (option)
         {
-        case 'h':
+        case Args::DEVICE:
+            if (optarg)
+                devName = std::string(optarg);
+            break;
+        case Args::Help:
             return printHelp();
-        case 'f':
+        case Args::Full:
             full = true;
+            break;
+        case Args::WriteSerial:
+            if (optarg)
+                serialNumberArg = std::stoll(std::string(optarg));
+            break;
         }
     }
-    auto handles = DeviceRegistry::enumerate();
+
+    std::vector<DeviceHandle> handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        printf("No devices found\n");
+        cerr << "No devices found"sv << endl;
         return -1;
     }
-    cout << "Found "sv << handles.size() << " device(s) :"sv << endl;
+    cerr << "Found "sv << handles.size() << " device(s) :"sv << endl;
     for (uint32_t i = 0; i < handles.size(); i++)
     {
         cout << i << ": "sv << handles[i].Serialize() << endl;
@@ -95,13 +114,29 @@ int main(int argc, char* argv[])
             SDRDevice* device = DeviceRegistry::makeDevice(handles.at(i));
             if (!device)
             {
-                cout << "\tFailed to connect"sv << endl;
+                cerr << "\tFailed to connect"sv << endl;
                 continue;
             }
             PrintDeviceDetails(device);
             DeviceRegistry::freeDevice(device);
         }
     }
-    cout << endl;
+
+    if (serialNumberArg)
+    {
+        SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
+        if (!device)
+            return EXIT_FAILURE;
+
+        OpStatus status = device->WriteSerialNumber(serialNumberArg);
+        if (status != OpStatus::Success)
+        {
+            cerr << "Failed to write serial number." << endl;
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+        DeviceRegistry::freeDevice(device);
+    }
+
     return EXIT_SUCCESS;
 }

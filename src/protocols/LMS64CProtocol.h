@@ -8,6 +8,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "limesuiteng/OpStatus.h"
 #include "LMSBoards.h"
@@ -22,6 +23,8 @@ namespace LMS64CProtocol {
 
 enum class Command : uint8_t {
     GET_INFO = 0x00,
+    SERIAL_WR = 0x03, // Write device serial number
+    SERIAL_RD = 0x04, // Read device serial number
     LMS6002_RST = 0x10,
     ///Writes data to SI5356 synthesizer via I2C
     SI5356_WR = 0x11,
@@ -142,6 +145,9 @@ OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice = 
 OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice = 0);
 OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
 
+OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& data);
+OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data);
+
 } // namespace LMS64CProtocol
 
 struct LMS64CPacket {
@@ -175,6 +181,25 @@ class LMS64CPacketMemoryWriteView
 
   private:
     LMS64CPacketMemoryWriteView() = delete;
+    LMS64CPacket* packet;
+};
+
+/** @brief Class for manipulating device serial number */
+class LMS64CPacketSerialCommandView
+{
+  public:
+    enum class Storage : uint8_t { Default = 0, Volatile = 1, NonVolatile = 2, OneTimeProgramable = 3 };
+
+    LMS64CPacketSerialCommandView(LMS64CPacket* pkt);
+
+    void SetStorageType(Storage type);
+    void SetUnlockKey(uint8_t key);
+    void SetSerial(const std::vector<uint8_t>& bytes);
+    void GetSerial(std::vector<uint8_t>& bytes) const;
+    static constexpr size_t GetMaxSerialLength();
+
+  private:
+    LMS64CPacketSerialCommandView() = delete;
     LMS64CPacket* packet;
 };
 

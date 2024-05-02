@@ -61,6 +61,16 @@ class LimeSDR : public LMS7002M_SDRDevice
     void ResetUSBFIFO();
     static OpStatus UpdateFPGAInterface(void* userData);
 
+    int GPIFClkTest(OEMTestReporter& reporter);
+    int Si5351CTest(OEMTestReporter& reporter);
+    int ADF4002Test(OEMTestReporter& reporter);
+    int ClockNetworkTest(OEMTestReporter& reporter);
+    int VCTCXOTest(OEMTestReporter& reporter);
+    int FPGA_EEPROM_Test(OEMTestReporter& reporter);
+    int LMS7002_Test(OEMTestReporter& reporter);
+    int RunTestConfig(OEMTestReporter& reporter, const std::string& name, double LOFreq, int gain, int rxPath);
+    int RFTest(OEMTestReporter& reporter);
+
   private:
     std::shared_ptr<USBGeneric> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;

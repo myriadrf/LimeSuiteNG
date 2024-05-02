@@ -27,7 +27,8 @@ enum class eGainTypes : uint8_t {
     LoopbackPAD,
     IAMP,
     PA, ///< On-board Power Amplifier
-    UNKNOWN
+    UNKNOWN,
+    GENERIC = UNKNOWN,
 };
 
 /// @brief Structure describing the range possible.

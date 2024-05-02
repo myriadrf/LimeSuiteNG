@@ -94,6 +94,38 @@ constexpr size_t LMS64CPacketMemoryWriteView::GetMaxDataSize()
     return 32;
 }
 
+LMS64CPacketSerialCommandView::LMS64CPacketSerialCommandView(LMS64CPacket* pkt)
+    : packet(pkt)
+{
+}
+
+void LMS64CPacketSerialCommandView::SetStorageType(Storage type)
+{
+    packet->payload[0] = static_cast<uint8_t>(type);
+}
+
+void LMS64CPacketSerialCommandView::SetUnlockKey(uint8_t key)
+{
+    packet->payload[2] = static_cast<uint8_t>(key);
+}
+
+void LMS64CPacketSerialCommandView::SetSerial(const std::vector<uint8_t>& bytes)
+{
+    assert(bytes.size() <= 32);
+    packet->payload[1] = bytes.size();
+    memcpy(&packet->payload[24], bytes.data(), bytes.size());
+}
+void LMS64CPacketSerialCommandView::GetSerial(std::vector<uint8_t>& bytes) const
+{
+    const uint8_t bytesCount = packet->payload[1];
+    bytes.resize(bytesCount);
+    memcpy(bytes.data(), &packet->payload[24], bytesCount);
+}
+constexpr size_t LMS64CPacketSerialCommandView::GetMaxSerialLength()
+{
+    return 32;
+}
+
 namespace LMS64CProtocol {
 
 static constexpr std::array<const std::string_view, static_cast<size_t>(CommandStatus::Count)> COMMAND_STATUS_TEXT = {
@@ -354,11 +386,11 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
 
         int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (sent != sizeof(pkt))
-            throw std::runtime_error("CustomParameterWrite write failed"s);
+            return OpStatus::IOFailure;
 
         int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         if (recv < pkt.headerSize || pkt.status != CommandStatus::Completed)
-            throw std::runtime_error("CustomParameterWrite read failed"s);
+            return OpStatus::Busy;
     }
 
     return OpStatus::Success;
@@ -762,6 +794,77 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
         dest += chunkSize;
         bytesGot += chunkSize;
     }
+    return OpStatus::Success;
+}
+
+OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
+{
+    if (bytes.empty())
+        return OpStatus::InvalidValue;
+
+    const int timeout_ms = 100;
+
+    LMS64CPacket packet;
+    memset(packet.payload, 0, packet.payloadSize);
+
+    packet.cmd = Command::SERIAL_WR;
+    packet.blockCount = 1;
+    packet.subDevice = 0;
+
+    if (bytes.size() > LMS64CPacketSerialCommandView::GetMaxSerialLength())
+        return OpStatus::OutOfRange;
+
+    LMS64CPacketSerialCommandView payloadView(&packet);
+    const bool permanentWrite = false;
+    if (permanentWrite)
+    {
+        payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
+        payloadView.SetUnlockKey(0x5A);
+    }
+    else
+    {
+        // payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::NonVolatile);
+        payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::Volatile);
+        payloadView.SetUnlockKey(0x00);
+    }
+    payloadView.SetSerial(bytes);
+
+    if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+        return OpStatus::IOFailure;
+    if (port.Read(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+        return OpStatus::IOFailure;
+
+    if (packet.status != CommandStatus::Completed)
+        return OpStatus::Error;
+    return OpStatus::Success;
+}
+
+OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data)
+{
+    const int timeout_ms = 100;
+
+    LMS64CPacket packet;
+    memset(packet.payload, 0, packet.payloadSize);
+
+    packet.cmd = Command::SERIAL_RD;
+    packet.blockCount = 1;
+    packet.subDevice = 0;
+
+    if (data.size() > LMS64CPacketSerialCommandView::GetMaxSerialLength())
+        return OpStatus::OutOfRange;
+
+    LMS64CPacketSerialCommandView payloadView(&packet);
+
+    if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+        return OpStatus::IOFailure;
+    if (port.Read(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+        return OpStatus::IOFailure;
+
+    if (packet.status != CommandStatus::Completed)
+        return OpStatus::Error;
+
+    data.clear();
+    payloadView.GetSerial(data);
     return OpStatus::Success;
 }
 

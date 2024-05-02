@@ -36,4 +36,9 @@ set_target_properties(limeTRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_include_directories(limeTRX PRIVATE ${LIME_SUITE_INCLUDES})
 target_link_libraries(limeTRX PRIVATE cli-shared kissFFT)
 
-install(TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig DESTINATION bin)
+add_executable(limeOEMTest limeOEMTest.cpp)
+set_target_properties(limeOEMTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_include_directories(limeOEMTest PRIVATE ${LIME_SUITE_INCLUDES})
+target_link_libraries(limeOEMTest PRIVATE cli-shared)
+
+install(TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEMTest DESTINATION bin)

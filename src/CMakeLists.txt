@@ -22,6 +22,7 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
+    OEMTesting.cpp
     logger/Logger.cpp
     logger/LoggerCString.cpp
     ADF4002/ADF4002.cpp
