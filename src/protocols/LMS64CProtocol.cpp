@@ -820,6 +820,17 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
     {
         payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
         payloadView.SetUnlockKey(0x5A);
+
+        // OTP, has to be done in two packets:
+        // 1. Send the correct key
+        // 2. Send the serial number
+        if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+            return OpStatus::IOFailure;
+        if (port.Read(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
+            return OpStatus::IOFailure;
+        if (packet.status != CommandStatus::Completed)
+            return ReportError(OpStatus::Error, "Failed to send one time programming key");
+        // key has been sent, continue to send the serial number bytes
     }
     else
     {
