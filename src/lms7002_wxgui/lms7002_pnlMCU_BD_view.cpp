@@ -853,13 +853,12 @@ void lms7002_pnlMCU_BD_view::OnSelDivSelect(wxCommandEvent& event)
 
 void lms7002_pnlMCU_BD_view::Onm_cCtrlBasebandSelect(wxCommandEvent& event)
 {
-    LMS_WriteLMSReg(lmsControl, 0x0006, 0x0000);
+    WriteLMSReg(0x0006, 0x0000);
 }
 
 void lms7002_pnlMCU_BD_view::Onm_cCtrlMCU_BDSelect(wxCommandEvent& event)
 {
-    LMS_WriteLMSReg(lmsControl, 0x0006, 0x0001);
-    ; //REG6 write
+    WriteLMSReg(0x0006, 0x0001); // REG6 write
 }
 
 void lms7002_pnlMCU_BD_view::OnRegWriteRead(wxCommandEvent& event)
@@ -871,11 +870,10 @@ void lms7002_pnlMCU_BD_view::OnRegWriteRead(wxCommandEvent& event)
         data = 0;
 
     if (rbtnRegWrite->GetValue() == 1)
-        LMS_WriteLMSReg(lmsControl, 0x8000 + addr, data); //REG write
+        WriteLMSReg(0x8000 + addr, data); //REG write
     else
     {
-        unsigned short retval = 0;
-        LMS_ReadLMSReg(lmsControl, addr, &retval); //REG read
+        unsigned short retval{ ReadLMSReg(addr) }; //REG read
         ReadResult->SetLabel(wxString::Format("Result is: 0x%02X", retval));
     }
 }

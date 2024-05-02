@@ -1469,8 +1469,8 @@ void lms7002_pnlTXTSP_view::Initialize(LMS7002M* pControl)
     if (pControl == nullptr)
         return;
 
-    uint16_t value;
-    if (LMS_ReadParam(lmsControl, LMS7param(MASK), &value) != 0 || value != 0)
+    uint16_t value{ ReadParam(LMS7param(MASK)) };
+    if (value != 0)
         value = 1;
     wxArrayString temp;
     temp.clear();
@@ -1544,12 +1544,11 @@ void lms7002_pnlTXTSP_view::OnNCOSelectionChange(wxCommandEvent& event)
 
 void lms7002_pnlTXTSP_view::onbtnReadBISTSignature(wxCommandEvent& event)
 {
-    uint16_t value;
-    LMS_ReadParam(lmsControl, LMS7param(BSTATE_TXTSP), &value);
+    uint16_t value{ ReadParam(LMS7param(BSTATE_TXTSP)) };
     lblBSTATE_TXTSP->SetLabel(std::to_string(value));
-    LMS_ReadParam(lmsControl, LMS7param(BSIGI_TXTSP), &value);
+    value = ReadParam(LMS7param(BSIGI_TXTSP));
     lblBSIGI_TXTSP->SetLabel(wxString::Format("0x%0.6X", value));
-    LMS_ReadParam(lmsControl, LMS7param(BSIGQ_TXTSP), &value);
+    value = ReadParam(LMS7param(BSIGQ_TXTSP));
     lblBSIGQ_TXTSP->SetLabel(wxString::Format("0x%0.6X", value));
 }
 
@@ -1696,45 +1695,39 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     freq = lmsControl->GetReferenceClk_TSP(TRXDir::Tx);
     lblRefClk->SetLabel(wxString::Format(_("%3.3f"), freq / 1e6));
 
-    uint16_t hbi;
-    LMS_ReadParam(lmsControl, LMS7param(HBI_OVR_TXTSP), &hbi);
+    uint16_t hbi{ ReadParam(LMS7param(HBI_OVR_TXTSP)) };
     cmbHBI_OVR_TXTSP->SetSelection(value2index(hbi, hbi_ovr_txtsp_IndexValuePairs));
 
-    int16_t value;
-    LMS_ReadParam(lmsControl, LMS7param(TSGFCW_TXTSP), reinterpret_cast<uint16_t*>(&value));
+    int16_t value{ static_cast<int16_t>(ReadParam(LMS7param(TSGFCW_TXTSP))) };
 
     rgrTSGFCW_TXTSP->SetSelection(value2index(value, tsgfcw_txtsp_IndexValuePairs));
 
-    LMS_ReadParam(lmsControl, LMS7param(IQCORR_TXTSP), reinterpret_cast<uint16_t*>(&value));
+    value = ReadParam(LMS7param(IQCORR_TXTSP));
     int bitsToShift = (15 - LMS7param(IQCORR_TXTSP).msb - LMS7param(IQCORR_TXTSP).lsb);
     value = value << bitsToShift;
     value = value >> bitsToShift;
     cmbIQCORR_TXTSP->SetValue(value);
 
-    LMS_ReadParam(lmsControl, LMS7param(SEL_TX), reinterpret_cast<uint16_t*>(&value));
+    value = ReadParam(LMS7param(SEL_TX));
     assert(rgrNCOselections.size() == 16);
     rgrNCOselections[value & 0xF]->SetValue(true);
     UpdateNCOinputs();
 
-    LMS_ReadParam(lmsControl, LMS7param(DCCORRI_TXTSP), reinterpret_cast<uint16_t*>(&value));
-    int8_t dccorr = value;
+    int8_t dccorr{ static_cast<int8_t>(ReadParam(LMS7param(DCCORRI_TXTSP))) };
     cmbDCCORRI_TXTSP->SetValue(dccorr);
-    LMS_ReadParam(lmsControl, LMS7param(DCCORRQ_TXTSP), reinterpret_cast<uint16_t*>(&value));
-    dccorr = value;
+    dccorr = ReadParam(LMS7param(DCCORRQ_TXTSP));
     cmbDCCORRQ_TXTSP->SetValue(dccorr);
 
-    uint16_t g_cmix;
-    LMS_ReadParam(lmsControl, LMS7param(CMIX_GAIN_TXTSP), &g_cmix);
+    uint16_t g_cmix{ ReadParam(LMS7param(CMIX_GAIN_TXTSP)) };
     value = value2index(g_cmix, cmix_gain_txtsp_IndexValuePairs);
-    LMS_ReadParam(lmsControl, LMS7param(CMIX_GAIN_TXTSP_R3), &g_cmix);
+    g_cmix = ReadParam(LMS7param(CMIX_GAIN_TXTSP_R3));
     if (g_cmix)
         value |= 1;
     else
         value &= ~1;
     cmbCMIX_GAIN_TXTSP->SetSelection(value);
 
-    uint16_t ch;
-    LMS_ReadParam(lmsControl, LMS7param(MAC), &ch);
+    uint16_t ch{ ReadParam(LMS7param(MAC)) };
     ch = (ch == 2) ? 1 : 0;
     ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
 
@@ -1743,10 +1736,10 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     //LMS_GetSampleRate(lmsControl, LMS_CH_TX, ch , &sr, nullptr);
     txtRATEVAL->SetLabel(wxString::Format("%3.3f MHz", sr / 1e6));
     //check if B channel is enabled
-    LMS_ReadParam(lmsControl, LMS7param(MAC), reinterpret_cast<uint16_t*>(&value));
+    value = ReadParam(LMS7param(MAC));
     if (value >= 2)
     {
-        LMS_ReadParam(lmsControl, LMS7param(MIMO_SISO), reinterpret_cast<uint16_t*>(&value));
+        value = ReadParam(LMS7param(MIMO_SISO));
         if (value != 0)
             wxMessageBox(_("MIMO channel B is disabled"), _("Warning"));
     }
@@ -1754,8 +1747,7 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
 
 void lms7002_pnlTXTSP_view::PHOinputChanged(wxCommandEvent& event)
 {
-    uint16_t ch{ 0 };
-    LMS_ReadParam(lmsControl, LMS7param(MAC), &ch);
+    uint16_t ch{ ReadParam(LMS7param(MAC)) };
     ch = (ch == 2) ? 1 : 0;
     ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
     // Write values for NCO phase or frequency each time they change - to ease the tuning of these values in measurements
