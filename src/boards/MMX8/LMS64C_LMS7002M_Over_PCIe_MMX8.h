@@ -24,6 +24,17 @@ class LMS64C_LMS7002M_Over_PCIe_MMX8 : public IComms
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
     virtual OpStatus ResetDevice(int chipSelect) override;
 
+    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
+    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
+    virtual OpStatus ProgramWrite(
+        const char* data, size_t length, int prog_mode, int target, ProgressCallback callback = nullptr) override;
+    virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) override;
+    virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) override;
+
   private:
     PCIE_CSR_Pipe pipe;
     uint32_t subdeviceIndex;

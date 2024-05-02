@@ -22,6 +22,16 @@ class LMS64C_LMS7002M_Over_USB : public IComms
 
     virtual OpStatus ResetDevice(int chipSelect) override;
 
+    OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
+    OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
+    OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
+    OpStatus ProgramWrite(const char* data, size_t length, int prog_mode, int target, ProgressCallback callback = nullptr) override;
+    OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) override;
+    OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) override;
+
   private:
     std::shared_ptr<USB_CSR_Pipe> pipe;
 };

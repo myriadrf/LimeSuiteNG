@@ -80,7 +80,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) = 0;
 
     /**
       @brief Reads general-purpose input/output (GPIO) values from device
@@ -88,7 +88,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) = 0;
 
     /**
       @brief Write general-purpose input/output (GPIO) direction control values to device.
@@ -96,7 +96,7 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) = 0;
 
     /**
       @brief Read general-purpose input/output (GPIO) direction control configuration from device.
@@ -104,21 +104,21 @@ class IComms : public ISPI
       @param bufLength The length of @p buffer.
       @return The operation success state.
      */
-    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) = 0;
 
     /**
       @brief Writes a given list of custom parameters to the device.
       @param parameters The list of parameters to write.
       @return The operation success state.
      */
-    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) { return OpStatus::NotImplemented; };
+    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) = 0;
 
     /**
       @brief Reads a given list of custom parameters from the device.
       @param[inout] parameters The list of parameters to read. The read values will end up in this vector.
       @return The operation success state.
      */
-    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) { return OpStatus::NotImplemented; };
+    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) = 0;
 
     /**
       @brief The function to call when writing a program into the device using @ref lime::IComms::ProgramWrite().
@@ -138,17 +138,15 @@ class IComms : public ISPI
       @param callback The progress callback to call when writing data.
       @return The operation success state.
      */
-    virtual OpStatus ProgramWrite(const char* data, size_t length, int prog_mode, int target, ProgressCallback callback = nullptr)
-    {
-        return OpStatus::NotImplemented;
-    }
+    virtual OpStatus ProgramWrite(
+        const char* data, size_t length, int prog_mode, int target, ProgressCallback callback = nullptr) = 0;
 
     /**
       @brief Resets the selected device.
       @param chipSelect Which chip to reset.
       @return Whether the operation succeeded or not.
      */
-    virtual OpStatus ResetDevice(int chipSelect) { return OpStatus::NotImplemented; };
+    virtual OpStatus ResetDevice(int chipSelect) = 0;
 
     /**
       @brief Writes given values into a given memory address in EEPROM memory.
@@ -157,7 +155,7 @@ class IComms : public ISPI
       @param dataLength The length of the data to write.
       @return The operation success state.
      */
-    virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) = 0;
 
     /**
       @brief Reads memory from a given memory address in EEPROM memory.
@@ -166,7 +164,7 @@ class IComms : public ISPI
       @param dataLength The length of the destination buffer (the amount of bytes to read).
       @return The operation success state.
      */
-    virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) { return OpStatus::NotImplemented; };
+    virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) = 0;
 };
 
 } // namespace lime

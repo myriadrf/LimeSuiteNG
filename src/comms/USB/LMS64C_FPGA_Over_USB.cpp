@@ -63,3 +63,8 @@ OpStatus LMS64C_FPGA_Over_USB::MemoryRead(uint32_t address, void* data, uint32_t
 {
     return LMS64CProtocol::MemoryRead(*pipe, address, data, dataLength);
 }
+
+OpStatus LMS64C_FPGA_Over_USB::ResetDevice(int chipSelect)
+{
+    return OpStatus::NotImplemented;
+}

@@ -32,6 +32,13 @@ class LMS64C_FPGA_Over_PCIe : public IComms
     virtual OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) override;
     virtual OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLength) override;
 
+    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
+    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
+
+    virtual OpStatus ResetDevice(int chipSelect) override;
+
   private:
     PCIE_CSR_Pipe pipe;
 };
