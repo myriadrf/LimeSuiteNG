@@ -831,6 +831,8 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
         if (packet.status != CommandStatus::Completed)
             return ReportError(OpStatus::Error, "Failed to send one time programming key");
         // key has been sent, continue to send the serial number bytes
+        payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
+        payloadView.SetUnlockKey(0x5A);
     }
     else
     {
