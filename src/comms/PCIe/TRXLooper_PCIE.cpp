@@ -533,28 +533,17 @@ int TRXLooper_PCIE::RxSetup()
 
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dma.bufferSize / packetSize);
 
-    int irqPeriod = 16;
-    float bufferTimeDuration = 0;
-    if (mConfig.hintSampleRate > 0)
-    {
-        bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
-        irqPeriod = 80e-6 / bufferTimeDuration;
-    }
-    irqPeriod = std::clamp(irqPeriod, 1, 16);
-    irqPeriod = 4;
-
     if (mCallback_logMessage)
     {
         char msg[256];
         std::snprintf(msg,
             sizeof(msg),
-            "%s usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, batchSizeInTime:%gus\n",
+            "%s usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i\n",
             mRxArgs.port->GetPathName().c_str(),
             usePoll ? 1 : 0,
             samplesInPkt,
             mRx.packetsToBatch,
-            mRx.packetsToBatch * packetSize,
-            bufferTimeDuration * 1e6);
+            mRx.packetsToBatch * packetSize);
         mCallback_logMessage(LogLevel::Debug, msg);
     }
 
@@ -578,6 +567,8 @@ int TRXLooper_PCIE::RxSetup()
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 4096, name);
 
     const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+
+    constexpr int irqPeriod{ 4 };
     mRxArgs.port->RxDMAEnable(true, readSize, irqPeriod);
     return 0;
 }
