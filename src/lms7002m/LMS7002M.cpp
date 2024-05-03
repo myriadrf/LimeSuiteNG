@@ -30,7 +30,7 @@
 
 #include "lms_gfir.h"
 #include "limesuiteng/types.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"

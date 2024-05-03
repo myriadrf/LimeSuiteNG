@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <thread>
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 
 using namespace lime;
 

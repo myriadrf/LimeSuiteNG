@@ -2,6 +2,9 @@
 #define LIME_SLAVESELECTSHIM_H
 
 #include "comms/IComms.h"
+#include "comms/ISPI.h"
+
+#include <cstdint>
 #include <memory>
 
 namespace lime {

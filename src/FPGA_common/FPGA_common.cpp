@@ -1,5 +1,5 @@
 #include "FPGA_common.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"

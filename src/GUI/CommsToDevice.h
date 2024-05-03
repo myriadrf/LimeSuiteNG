@@ -1,6 +1,7 @@
 #pragma once
 
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
+#include "comms/II2C.h"
 #include "limesuiteng/SDRDevice.h"
 
 namespace lime {
