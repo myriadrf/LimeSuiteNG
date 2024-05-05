@@ -2,6 +2,7 @@
 #define lms7002_pnlRFE_view_h
 
 #include "ILMS7002MTab.h"
+#include "limesuiteng/LMS7002MCSR.h"
 
 class NumericSlider;
 
@@ -17,15 +18,15 @@ class lms7002_pnlRFE_view : public ILMS7002MTab
 
   protected:
     wxCheckBox* NewCheckBox(wxWindow* parent,
-        const LMS7Parameter& param,
+        const lime::LMS7002MCSR param,
         const wxString& label,
         const wxString& tooltip,
         const wxPoint& pos,
         const wxSize& size);
     wxComboBox* NewComboBox(
-        wxWindow* parent, const LMS7Parameter& param, const wxString& tooltip, const wxPoint& pos, const wxSize& size);
+        wxWindow* parent, const lime::LMS7002MCSR param, const wxString& tooltip, const wxPoint& pos, const wxSize& size);
     NumericSlider* NewNumericSlider(wxWindow* parent,
-        const LMS7Parameter& param,
+        const lime::LMS7002MCSR param,
         const wxString& value,
         const wxPoint& pos,
         const wxSize& size,

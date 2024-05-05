@@ -8,7 +8,7 @@
 #include "limesuiteng/Logger.h"
 #include "FPGA_common.h"
 #include "TRXLooper_USB.h"
-#include "limesuiteng/LMS7002M_parameters.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
@@ -36,6 +36,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 static const uint8_t SPI_LMS7002M = 0;
@@ -242,8 +243,8 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         }
 
         // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(LMS7_PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         double sampleRate;
@@ -268,9 +269,9 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
-        // uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7param(TX_MUX));
-        // chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), 2);
-        // chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), txMux);
+        // uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX);
+        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, 2);
+        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, txMux);
 
         mConfigInProgress = false;
         if (sampleRate > 0)
@@ -349,12 +350,12 @@ OpStatus LimeSDR::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel
     }
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
-    lms->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-    lms->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), decimation);
-    lms->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), interpolation);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, decimation);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, interpolation);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
     return lms->SetInterfaceFrequency(cgenFreq, interpolation, decimation);
 }
 
@@ -367,7 +368,7 @@ OpStatus LimeSDR::Init()
     if (status != OpStatus::Success)
         return status;
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     // TODO:
     // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
@@ -375,7 +376,7 @@ OpStatus LimeSDR::Init()
 
     EnableChannel(0, TRXDir::Rx, 0, false);
     EnableChannel(0, TRXDir::Tx, 0, false);
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
 
     // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
     //     return -1;
@@ -383,7 +384,7 @@ OpStatus LimeSDR::Init()
     EnableChannel(0, TRXDir::Rx, 1, false);
     EnableChannel(0, TRXDir::Tx, 1, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     // if(lms->SetFrequency(SDRDevice::Dir::Tx, 0, lms->GetFrequency(SDRDevice::Dir::Tx, 0)) != OpStatus::Success)
     //     return -1;
@@ -443,7 +444,7 @@ OpStatus LimeSDR::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel
 {
     OpStatus status = mLMSChips.at(moduleIndex)->EnableChannel(trx, channel, enable);
     if (trx == TRXDir::Tx) //always enable DAC1, otherwise sample rates <2.5MHz do not work
-        mLMSChips[0]->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
+        mLMSChips[0]->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
     return status;
 }
 /*

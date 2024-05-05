@@ -1,17 +1,19 @@
 #include "lms7002_pnlR3.h"
 #include "commonWxHeaders.h"
 #include <wx/spinctrl.h>
-#include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002_gui_utilities.h"
 #include <chrono>
 #include <thread>
 #include "mcu_programs.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/LMS7002MCSR.h"
 #include "limesuiteng/Logger.h"
 
 #include <vector>
 
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std;
 using namespace std::literals::string_literals;
 
@@ -26,40 +28,41 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
         wxWindow* panel = dcCalibGroup->GetStaticBox();
         {
             wxFlexGridSizer* sizer = new wxFlexGridSizer(0, 1, 0, 5);
-            std::vector<const LMS7Parameter*> params = { &LMS7_PD_DCDAC_RXB,
-                &LMS7_PD_DCDAC_RXA,
-                &LMS7_PD_DCDAC_TXB,
-                &LMS7_PD_DCDAC_TXA,
-                &LMS7_PD_DCCMP_RXB,
-                &LMS7_PD_DCCMP_RXA,
-                &LMS7_PD_DCCMP_TXB,
-                &LMS7_PD_DCCMP_TXA };
+            constexpr std::array<LMS7002MCSR, 8> params = { LMS7002MCSR::PD_DCDAC_RXB,
+                LMS7002MCSR::PD_DCDAC_RXA,
+                LMS7002MCSR::PD_DCDAC_TXB,
+                LMS7002MCSR::PD_DCDAC_TXA,
+                LMS7002MCSR::PD_DCCMP_RXB,
+                LMS7002MCSR::PD_DCCMP_RXA,
+                LMS7002MCSR::PD_DCCMP_TXB,
+                LMS7002MCSR::PD_DCCMP_TXA };
             int row = 0;
             for (auto i : params)
             {
+                CSRegister r = GetRegister(i);
                 sizer->AddGrowableRow(row++);
-                wxCheckBox* chkbox = new wxCheckBox(dcCalibGroup->GetStaticBox(), wxNewId(), i->name);
+                wxCheckBox* chkbox = new wxCheckBox(dcCalibGroup->GetStaticBox(), wxNewId(), r.name);
                 chkbox->Connect(
                     wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
                 sizer->Add(chkbox, 1, wxEXPAND, 5);
-                wndId2Enum[chkbox] = *i;
+                wndId2Enum[chkbox] = i;
             }
             dcCalibGroup->Add(sizer, 0, wxEXPAND, 5);
         }
         {
             wxFlexGridSizer* sizer = new wxFlexGridSizer(0, 2, 0, 0);
-            std::vector<const LMS7Parameter*> paramsRx = { &LMS7_DCWR_RXBQ,
-                &LMS7_DCRD_RXBQ,
-                &LMS7_DC_RXBQ,
-                &LMS7_DCWR_RXBI,
-                &LMS7_DCRD_RXBI,
-                &LMS7_DC_RXBI,
-                &LMS7_DCWR_RXAQ,
-                &LMS7_DCRD_RXAQ,
-                &LMS7_DC_RXAQ,
-                &LMS7_DCWR_RXAI,
-                &LMS7_DCRD_RXAI,
-                &LMS7_DC_RXAI };
+            constexpr std::array<LMS7002MCSR, 12> paramsRx = { LMS7002MCSR::DCWR_RXBQ,
+                LMS7002MCSR::DCRD_RXBQ,
+                LMS7002MCSR::DC_RXBQ,
+                LMS7002MCSR::DCWR_RXBI,
+                LMS7002MCSR::DCRD_RXBI,
+                LMS7002MCSR::DC_RXBI,
+                LMS7002MCSR::DCWR_RXAQ,
+                LMS7002MCSR::DCRD_RXAQ,
+                LMS7002MCSR::DC_RXAQ,
+                LMS7002MCSR::DCWR_RXAI,
+                LMS7002MCSR::DCRD_RXAI,
+                LMS7002MCSR::DC_RXAI };
             for (size_t i = 0; i < paramsRx.size(); i += 3)
             {
                 wxButton* btnReadDC = new wxButton(dcCalibGroup->GetStaticBox(), wxNewId(), _("Read"));
@@ -77,20 +80,20 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
                 cmbDCControlsRx.push_back(slider);
                 slider->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::OnWriteRxDC), NULL, this);
                 sizer->Add(slider, 1, wxEXPAND, 5);
-                wndId2Enum[slider] = *paramsRx[i + 2];
+                wndId2Enum[slider] = paramsRx[i + 2];
             }
-            std::vector<const LMS7Parameter*> paramsTx = { &LMS7_DCWR_TXBQ,
-                &LMS7_DCRD_TXBQ,
-                &LMS7_DC_TXBQ,
-                &LMS7_DCWR_TXBI,
-                &LMS7_DCRD_TXBI,
-                &LMS7_DC_TXBI,
-                &LMS7_DCWR_TXAQ,
-                &LMS7_DCRD_TXAQ,
-                &LMS7_DC_TXAQ,
-                &LMS7_DCWR_TXAI,
-                &LMS7_DCRD_TXAI,
-                &LMS7_DC_TXAI };
+            constexpr std::array<LMS7002MCSR, 12> paramsTx = { LMS7002MCSR::DCWR_TXBQ,
+                LMS7002MCSR::DCRD_TXBQ,
+                LMS7002MCSR::DC_TXBQ,
+                LMS7002MCSR::DCWR_TXBI,
+                LMS7002MCSR::DCRD_TXBI,
+                LMS7002MCSR::DC_TXBI,
+                LMS7002MCSR::DCWR_TXAQ,
+                LMS7002MCSR::DCRD_TXAQ,
+                LMS7002MCSR::DC_TXAQ,
+                LMS7002MCSR::DCWR_TXAI,
+                LMS7002MCSR::DCRD_TXAI,
+                LMS7002MCSR::DC_TXAI };
             for (size_t i = 0; i < paramsTx.size(); i += 3)
             {
                 wxButton* btnReadDC = new wxButton(dcCalibGroup->GetStaticBox(), wxNewId(), _("Read"));
@@ -108,7 +111,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
                 cmbDCControlsTx.push_back(slider);
                 slider->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::OnWriteTxDC), NULL, this);
                 sizer->Add(slider, 1, wxEXPAND, 5);
-                wndId2Enum[slider] = *paramsTx[i + 2];
+                wndId2Enum[slider] = paramsTx[i + 2];
             }
             dcCalibGroup->Add(sizer, 0, 0, 5);
         }
@@ -116,38 +119,38 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             const std::vector<wxString> names = {
                 _("RXBQ"), _("RXBI"), _("RXAQ"), _("RXAI"), _("TXBQ"), _("TXBI"), _("TXAQ"), _("TXAI")
             };
-            const std::vector<LMS7Parameter> cmpcfg = { (LMS7_DCCAL_CMPCFG_RXBQ),
-                (LMS7_DCCAL_CMPCFG_RXBI),
-                (LMS7_DCCAL_CMPCFG_RXAQ),
-                (LMS7_DCCAL_CMPCFG_RXAI),
-                (LMS7_DCCAL_CMPCFG_TXBQ),
-                (LMS7_DCCAL_CMPCFG_TXBI),
-                (LMS7_DCCAL_CMPCFG_TXAQ),
-                (LMS7_DCCAL_CMPCFG_TXAI) };
-            const std::vector<LMS7Parameter> cmpstatus = { (LMS7_DCCAL_CMPSTATUS_RXBQ),
-                (LMS7_DCCAL_CMPSTATUS_RXBI),
-                (LMS7_DCCAL_CMPSTATUS_RXAQ),
-                (LMS7_DCCAL_CMPSTATUS_RXAI),
-                (LMS7_DCCAL_CMPSTATUS_TXBQ),
-                (LMS7_DCCAL_CMPSTATUS_TXBI),
-                (LMS7_DCCAL_CMPSTATUS_TXAQ),
-                (LMS7_DCCAL_CMPSTATUS_TXAI) };
-            const std::vector<LMS7Parameter> calstatus = { (LMS7_DCCAL_CALSTATUS_RXBQ),
-                (LMS7_DCCAL_CALSTATUS_RXBI),
-                (LMS7_DCCAL_CALSTATUS_RXAQ),
-                (LMS7_DCCAL_CALSTATUS_RXAI),
-                (LMS7_DCCAL_CALSTATUS_TXBQ),
-                (LMS7_DCCAL_CALSTATUS_TXBI),
-                (LMS7_DCCAL_CALSTATUS_TXAQ),
-                (LMS7_DCCAL_CMPSTATUS_TXAI) };
-            const std::vector<LMS7Parameter> start = { (LMS7_DCCAL_START_RXBQ),
-                (LMS7_DCCAL_START_RXBI),
-                (LMS7_DCCAL_START_RXAQ),
-                (LMS7_DCCAL_START_RXAI),
-                (LMS7_DCCAL_START_TXBQ),
-                (LMS7_DCCAL_START_TXBI),
-                (LMS7_DCCAL_START_TXAQ),
-                (LMS7_DCCAL_START_TXAI) };
+            constexpr std::array<LMS7002MCSR, 8> cmpcfg = { LMS7002MCSR::DCCAL_CMPCFG_RXBQ,
+                LMS7002MCSR::DCCAL_CMPCFG_RXBI,
+                LMS7002MCSR::DCCAL_CMPCFG_RXAQ,
+                LMS7002MCSR::DCCAL_CMPCFG_RXAI,
+                LMS7002MCSR::DCCAL_CMPCFG_TXBQ,
+                LMS7002MCSR::DCCAL_CMPCFG_TXBI,
+                LMS7002MCSR::DCCAL_CMPCFG_TXAQ,
+                LMS7002MCSR::DCCAL_CMPCFG_TXAI };
+            constexpr std::array<LMS7002MCSR, 8> cmpstatus = { LMS7002MCSR::DCCAL_CMPSTATUS_RXBQ,
+                LMS7002MCSR::DCCAL_CMPSTATUS_RXBI,
+                LMS7002MCSR::DCCAL_CMPSTATUS_RXAQ,
+                LMS7002MCSR::DCCAL_CMPSTATUS_RXAI,
+                LMS7002MCSR::DCCAL_CMPSTATUS_TXBQ,
+                LMS7002MCSR::DCCAL_CMPSTATUS_TXBI,
+                LMS7002MCSR::DCCAL_CMPSTATUS_TXAQ,
+                LMS7002MCSR::DCCAL_CMPSTATUS_TXAI };
+            constexpr std::array<LMS7002MCSR, 8> calstatus = { LMS7002MCSR::DCCAL_CALSTATUS_RXBQ,
+                LMS7002MCSR::DCCAL_CALSTATUS_RXBI,
+                LMS7002MCSR::DCCAL_CALSTATUS_RXAQ,
+                LMS7002MCSR::DCCAL_CALSTATUS_RXAI,
+                LMS7002MCSR::DCCAL_CALSTATUS_TXBQ,
+                LMS7002MCSR::DCCAL_CALSTATUS_TXBI,
+                LMS7002MCSR::DCCAL_CALSTATUS_TXAQ,
+                LMS7002MCSR::DCCAL_CMPSTATUS_TXAI };
+            constexpr std::array<LMS7002MCSR, 8> start = { LMS7002MCSR::DCCAL_START_RXBQ,
+                LMS7002MCSR::DCCAL_START_RXBI,
+                LMS7002MCSR::DCCAL_START_RXAQ,
+                LMS7002MCSR::DCCAL_START_RXAI,
+                LMS7002MCSR::DCCAL_START_TXBQ,
+                LMS7002MCSR::DCCAL_START_TXBI,
+                LMS7002MCSR::DCCAL_START_TXAQ,
+                LMS7002MCSR::DCCAL_START_TXAI };
 
             wxFlexGridSizer* sizer = new wxFlexGridSizer(0, 5, 0, 5);
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("Name:")), 1, wxEXPAND, 0);
@@ -202,7 +205,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_DC_RXCDIV;
+            wndId2Enum[ctrl] = LMS7002MCSR::DC_RXCDIV;
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("DC_TXCDIV")), 1, wxALIGN_CENTER_VERTICAL, 0);
             ctrl = new NumericSlider(dcCalibGroup->GetStaticBox(),
                 wxNewId(),
@@ -216,7 +219,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_DC_TXCDIV;
+            wndId2Enum[ctrl] = LMS7002MCSR::DC_TXCDIV;
 
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("HYSCMP_RXB")), 1, wxALIGN_CENTER_VERTICAL, 0);
             ctrl = new NumericSlider(
@@ -224,7 +227,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_HYSCMP_RXB;
+            wndId2Enum[ctrl] = LMS7002MCSR::HYSCMP_RXB;
 
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("HYSCMP_RXA")), 1, wxALIGN_CENTER_VERTICAL, 0);
             ctrl = new NumericSlider(
@@ -232,7 +235,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_HYSCMP_RXA;
+            wndId2Enum[ctrl] = LMS7002MCSR::HYSCMP_RXA;
 
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("HYSCMP_TXB")), 1, wxALIGN_CENTER_VERTICAL, 0);
             ctrl = new NumericSlider(
@@ -240,7 +243,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_HYSCMP_TXB;
+            wndId2Enum[ctrl] = LMS7002MCSR::HYSCMP_TXB;
 
             sizer->Add(new wxStaticText(dcCalibGroup->GetStaticBox(), wxID_ANY, _("HYSCMP_TXA")), 1, wxALIGN_CENTER_VERTICAL, 0);
             ctrl = new NumericSlider(
@@ -248,7 +251,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             ctrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(ctrl, 1, wxEXPAND, 5);
-            wndId2Enum[ctrl] = LMS7_HYSCMP_TXA;
+            wndId2Enum[ctrl] = LMS7002MCSR::HYSCMP_TXA;
             dcCalibGroup->Add(sizer, 0, wxLEFT | wxEXPAND, 5);
         }
         mainSizer->Add(dcCalibGroup, 1, wxEXPAND, 5);
@@ -265,13 +268,13 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             chkbox->Connect(
                 wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(chkbox);
-            wndId2Enum[chkbox] = LMS7_RSSI_PD;
+            wndId2Enum[chkbox] = LMS7002MCSR::RSSI_PD;
 
             chkbox = new wxCheckBox(panel, wxNewId(), _("Manual operation mode"));
             chkbox->Connect(
                 wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(chkbox);
-            wndId2Enum[chkbox] = LMS7_RSSI_RSSIMODE;
+            wndId2Enum[chkbox] = LMS7002MCSR::RSSI_RSSIMODE;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("DAC_CLKDIV")), 1, wxALIGN_CENTER_VERTICAL, 0);
             NumericSlider* spnCtrl =
@@ -279,7 +282,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             spnCtrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(spnCtrl);
-            wndId2Enum[spnCtrl] = LMS7_DAC_CLKDIV;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::DAC_CLKDIV;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("Reference bias current to test ADC")), 1, wxALIGN_CENTER_VERTICAL, 0);
             spnCtrl =
@@ -287,7 +290,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             spnCtrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(spnCtrl);
-            wndId2Enum[spnCtrl] = LMS7_RSSI_BIAS;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSI_BIAS;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("HYSCMP")), 1, wxALIGN_CENTER_VERTICAL, 0);
             spnCtrl =
@@ -295,7 +298,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             spnCtrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(spnCtrl);
-            wndId2Enum[spnCtrl] = LMS7_RSSI_HYSCMP;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSI_HYSCMP;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("DAC_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             spnCtrl =
@@ -303,59 +306,60 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             spnCtrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(spnCtrl);
-            wndId2Enum[spnCtrl] = LMS7_RSSI_DAC_VAL;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSI_DAC_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("PDET2_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             pdet_vals[1] = new wxStaticText(panel, wxID_ANY, _("????"));
             sizer->Add(pdet_vals[1]);
-            wndId2Enum[pdet_vals[1]] = LMS7_RSSI_PDET2_VAL;
+            wndId2Enum[pdet_vals[1]] = LMS7002MCSR::RSSI_PDET2_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("PDET1_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             pdet_vals[0] = new wxStaticText(panel, wxID_ANY, _("????"));
             sizer->Add(pdet_vals[0]);
-            wndId2Enum[pdet_vals[0]] = LMS7_RSSI_PDET1_VAL;
+            wndId2Enum[pdet_vals[0]] = LMS7002MCSR::RSSI_PDET1_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("RSSI2_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             rssi_vals[1] = new wxStaticText(panel, wxID_ANY, _("????"));
             sizer->Add(rssi_vals[1]);
-            wndId2Enum[rssi_vals[1]] = LMS7_RSSI_RSSI2_VAL;
+            wndId2Enum[rssi_vals[1]] = LMS7002MCSR::RSSI_RSSI2_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("RSSI1_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             rssi_vals[0] = new wxStaticText(panel, wxID_ANY, _("????"));
             sizer->Add(rssi_vals[0]);
-            wndId2Enum[rssi_vals[0]] = LMS7_RSSI_RSSI1_VAL;
+            wndId2Enum[rssi_vals[0]] = LMS7002MCSR::RSSI_RSSI1_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("TREF_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             tref_val = new wxStaticText(panel, wxID_ANY, _("????"));
             sizer->Add(tref_val);
-            wndId2Enum[tref_val] = LMS7_RSSI_TREF_VAL;
+            wndId2Enum[tref_val] = LMS7002MCSR::RSSI_TREF_VAL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("TVPTAT_VAL")), 1, wxALIGN_CENTER_VERTICAL, 0);
             tvptat_val = new wxStaticText(panel, wxID_ANY, _("????"));
-            wndId2Enum[tvptat_val] = LMS7_RSSI_TVPTAT_VAL;
+            wndId2Enum[tvptat_val] = LMS7002MCSR::RSSI_TVPTAT_VAL;
             sizer->Add(tvptat_val);
 
             RSSIPDETGroup->Add(sizer);
 
             wxFlexGridSizer* sizerCMP = new wxFlexGridSizer(0, 2, 0, 5);
-            std::vector<LMS7Parameter> paramStatus = { LMS7_INTADC_CMPSTATUS_TEMPREF,
-                LMS7_INTADC_CMPSTATUS_TEMPVPTAT,
-                LMS7_INTADC_CMPSTATUS_RSSI2,
-                LMS7_INTADC_CMPSTATUS_RSSI1,
-                LMS7_INTADC_CMPSTATUS_PDET2,
-                LMS7_INTADC_CMPSTATUS_PDET1 };
-            std::vector<LMS7Parameter> params = { LMS7_INTADC_CMPCFG_TEMPREF,
-                LMS7_INTADC_CMPCFG_TEMPVPTAT,
-                LMS7_INTADC_CMPCFG_RSSI2,
-                LMS7_INTADC_CMPCFG_RSSI1,
-                LMS7_INTADC_CMPCFG_PDET2,
-                LMS7_INTADC_CMPCFG_PDET1 };
+            constexpr std::array<LMS7002MCSR, 6> paramStatus = { LMS7002MCSR::INTADC_CMPSTATUS_TEMPREF,
+                LMS7002MCSR::INTADC_CMPSTATUS_TEMPVPTAT,
+                LMS7002MCSR::INTADC_CMPSTATUS_RSSI2,
+                LMS7002MCSR::INTADC_CMPSTATUS_RSSI1,
+                LMS7002MCSR::INTADC_CMPSTATUS_PDET2,
+                LMS7002MCSR::INTADC_CMPSTATUS_PDET1 };
+            constexpr std::array<LMS7002MCSR, 6> params = { LMS7002MCSR::INTADC_CMPCFG_TEMPREF,
+                LMS7002MCSR::INTADC_CMPCFG_TEMPVPTAT,
+                LMS7002MCSR::INTADC_CMPCFG_RSSI2,
+                LMS7002MCSR::INTADC_CMPCFG_RSSI1,
+                LMS7002MCSR::INTADC_CMPCFG_PDET2,
+                LMS7002MCSR::INTADC_CMPCFG_PDET1 };
             sizerCMP->Add(new wxStaticText(panel, wxID_ANY, _("Invert:")));
             sizerCMP->Add(new wxStaticText(panel, wxID_ANY, _("CMP:")));
 
             for (int i = 0; i < 6; ++i)
             {
-                rssiCMPCFG[i] = new wxCheckBox(panel, wxNewId(), params[i].name);
+                CSRegister r = GetRegister(params[i]);
+                rssiCMPCFG[i] = new wxCheckBox(panel, wxNewId(), r.name);
                 sizerCMP->Add(rssiCMPCFG[i]);
                 wndId2Enum[rssiCMPCFG[i]] = params[i];
                 rssiCMPCFG[i]->Connect(
@@ -385,7 +389,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             chkbox->Connect(
                 wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(chkbox);
-            wndId2Enum[chkbox] = LMS7_RSSIDC_PD;
+            wndId2Enum[chkbox] = LMS7002MCSR::RSSIDC_PD;
             chkRSSI_PD = chkbox;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("HYSCMP")), 1, wxALIGN_CENTER_VERTICAL, 0);
@@ -395,7 +399,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             spnCtrl->Connect(
                 wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(lms7002_pnlR3_view::ParameterChangeHandler), NULL, this);
             sizer->Add(spnCtrl, 0, wxEXPAND, 0);
-            wndId2Enum[spnCtrl] = LMS7_RSSIDC_HYSCMP;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSIDC_HYSCMP;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("DCO2")), 1, wxALIGN_CENTER_VERTICAL, 0);
             spnCtrl =
@@ -406,7 +410,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
                 NULL,
                 this);
             sizer->Add(spnCtrl, 0, wxEXPAND, 0);
-            wndId2Enum[spnCtrl] = LMS7_RSSIDC_DCO2;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSIDC_DCO2;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("DCO1")), 1, wxALIGN_CENTER_VERTICAL, 0);
             spnCtrl =
@@ -417,7 +421,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
                 NULL,
                 this);
             sizer->Add(spnCtrl, 0, wxEXPAND, 0);
-            wndId2Enum[spnCtrl] = LMS7_RSSIDC_DCO1;
+            wndId2Enum[spnCtrl] = LMS7002MCSR::RSSIDC_DCO1;
 
             wxArrayString rselArray;
             float value_mV = 800;
@@ -445,7 +449,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
                 NULL,
                 this);
             sizer->Add(cmbRSEL);
-            wndId2Enum[cmbRSEL] = LMS7_RSSIDC_RSEL;
+            wndId2Enum[cmbRSEL] = LMS7002MCSR::RSSIDC_RSEL;
 
             sizer->Add(new wxStaticText(panel, wxID_ANY, _("CMPSTATUS")), 1, wxALIGN_CENTER_VERTICAL, 0);
             rssidc_cmpstatus = new wxStaticText(panel, wxID_ANY, _("?"));
@@ -477,7 +481,7 @@ void lms7002_pnlR3_view::Initialize(LMS7002M* pControl)
     ILMS7002MTab::Initialize(pControl);
     if (pControl == nullptr)
         return;
-    uint16_t value = ReadParam(LMS7param(MASK));
+    uint16_t value = ReadParam(LMS7002MCSR::MASK);
     this->Enable(value);
 }
 
@@ -494,10 +498,10 @@ void lms7002_pnlR3_view::UpdateGUI()
     {
         uint16_t value = 0;
         auto parameter = wndId2Enum[cmbDCControlsRx[i]];
-        lmsControl->SPI_write(parameter.address, 0);
-        lmsControl->SPI_write(parameter.address, 0x4000);
+        lmsControl->SPI_write(parameter, 0);
+        lmsControl->SPI_write(parameter, 0x4000);
         value = ReadParam(wndId2Enum[cmbDCControlsRx[i]]);
-        lmsControl->SPI_write(parameter.address, value & ~0xC000);
+        lmsControl->SPI_write(parameter, value & ~0xC000);
         int absval = (value & 0x3F);
         if (value & 0x40)
             absval *= -1;
@@ -507,10 +511,10 @@ void lms7002_pnlR3_view::UpdateGUI()
     {
         uint16_t value = 0;
         auto parameter = wndId2Enum[cmbDCControlsTx[i]];
-        lmsControl->SPI_write(parameter.address, 0);
-        lmsControl->SPI_write(parameter.address, 0x4000);
+        lmsControl->SPI_write(parameter, 0);
+        lmsControl->SPI_write(parameter, 0x4000);
         value = ReadParam(wndId2Enum[cmbDCControlsTx[i]]);
-        lmsControl->SPI_write(parameter.address, value & ~0xC000);
+        lmsControl->SPI_write(parameter, value & ~0xC000);
         int absval = (value & 0x3FF);
         if (value & 0x400)
             absval *= -1;
@@ -566,7 +570,7 @@ void lms7002_pnlR3_view::ParameterChangeHandler(wxCommandEvent& event)
 {
     if (!lmsControl)
         return;
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -645,12 +649,12 @@ void lms7002_pnlR3_view::OnWriteTxDC(wxCommandEvent& event)
 {
     if (!lmsControl)
         return;
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
         uint16_t regVal = 0;
-        regVal = lmsControl->SPI_read(parameter.address);
+        regVal = lmsControl->SPI_read(parameter);
         regVal &= 0xF800;
         int dcVal = event.GetInt();
         if (dcVal < 0)
@@ -659,9 +663,9 @@ void lms7002_pnlR3_view::OnWriteTxDC(wxCommandEvent& event)
             regVal |= 0x0400;
         }
         regVal |= (abs(dcVal + 0x400) & 0x3FF);
-        lmsControl->SPI_write(parameter.address, regVal);
-        lmsControl->SPI_write(parameter.address, regVal | 0x8000);
-        lmsControl->SPI_write(parameter.address, regVal);
+        lmsControl->SPI_write(parameter, regVal);
+        lmsControl->SPI_write(parameter, regVal | 0x8000);
+        lmsControl->SPI_write(parameter, regVal);
         return;
     } catch (std::exception& e)
     {
@@ -674,12 +678,12 @@ void lms7002_pnlR3_view::OnWriteRxDC(wxCommandEvent& event)
 {
     if (!lmsControl)
         return;
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
         uint16_t regVal = 0;
-        regVal = lmsControl->SPI_read(parameter.address);
+        regVal = lmsControl->SPI_read(parameter);
         regVal &= 0xFF80;
         int dcVal = event.GetInt();
         if (dcVal < 0)
@@ -688,9 +692,9 @@ void lms7002_pnlR3_view::OnWriteRxDC(wxCommandEvent& event)
             regVal |= 0x0040;
         }
         regVal |= (abs(dcVal + 0x40) & 0x3F);
-        lmsControl->SPI_write(parameter.address, regVal & ~0x8000);
-        lmsControl->SPI_write(parameter.address, regVal | 0x8000);
-        lmsControl->SPI_write(parameter.address, regVal);
+        lmsControl->SPI_write(parameter, regVal & ~0x8000);
+        lmsControl->SPI_write(parameter, regVal | 0x8000);
+        lmsControl->SPI_write(parameter, regVal);
         return;
     } catch (std::exception& e)
     {

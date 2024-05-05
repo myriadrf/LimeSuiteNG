@@ -2,6 +2,7 @@
 #define LIME_REGISTER_H
 
 #include <cstdint>
+#include "limesuiteng/config.h"
 
 namespace lime {
 
@@ -23,10 +24,8 @@ struct Register {
     /// @brief Constructs the register with default values.
     constexpr Register()
         : address(0)
-        , defaultValue(0)
         , msb(15)
-        , lsb(0)
-        , twoComplement(false){};
+        , lsb(0){};
 
     /// @brief Constructs the register with the given values.
     /// @param address The memory address of the register.
@@ -34,18 +33,14 @@ struct Register {
     /// @param lsb The index of the least significant bit of the register.
     /// @param defaultValue The default value of the register.
     /// @param twocomplement Whether the register is represented in a Two's Complement way.
-    constexpr Register(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t defaultValue, bool twocomplement)
+    constexpr Register(uint16_t address, uint8_t msb, uint8_t lsb)
         : address(address)
-        , defaultValue(defaultValue)
         , msb(msb)
-        , lsb(lsb)
-        , twoComplement(twocomplement){};
+        , lsb(lsb){};
 
     uint16_t address; ///< The memory address.
-    uint16_t defaultValue; ///< The default value of the register.
     uint8_t msb; ///< The index of the most significant bit of the register.
     uint8_t lsb; ///< The index of the least significant bit of the register.
-    bool twoComplement; ///< Indicates if the register is represented in a Two's Complement way.
 };
 
 } // namespace lime

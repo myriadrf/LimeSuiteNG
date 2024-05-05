@@ -7,6 +7,7 @@
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
@@ -24,6 +25,7 @@
 #include <cmath>
 
 namespace lime {
+using namespace lime::LMS7002MCSR_Data;
 
 using namespace std::literals::string_literals;
 
@@ -306,7 +308,7 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     //     return -1;
 
     // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
 
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
     //     return -1;
@@ -343,97 +345,97 @@ static void EnableChannelLMS2(LMS7002M* chip, TRXDir dir, const uint8_t channel,
     if (ch == LMS7002M::Channel::ChA)
     {
         if (isTx)
-            chip->Modify_SPI_Reg_bits(LMS7param(TXEN_A), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_A, enable ? 1 : 0);
         else
-            chip->Modify_SPI_Reg_bits(LMS7param(RXEN_A), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_A, enable ? 1 : 0);
     }
     else
     {
         if (isTx)
-            chip->Modify_SPI_Reg_bits(LMS7param(TXEN_B), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_B, enable ? 1 : 0);
         else
-            chip->Modify_SPI_Reg_bits(LMS7param(RXEN_B), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_B, enable ? 1 : 0);
     }
 
     //--- ADC/DAC ---
-    chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_AFE), 1);
-    chip->Modify_SPI_Reg_bits(isTx ? LMS7_PD_TX_AFE1 : LMS7_PD_RX_AFE1, 1);
-    chip->Modify_SPI_Reg_bits(isTx ? LMS7_PD_TX_AFE2 : LMS7_PD_RX_AFE2, 1);
+    chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_AFE, 1);
+    chip->Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, 1);
+    chip->Modify_SPI_Reg_bits(isTx ? PD_TX_AFE2 : PD_RX_AFE2, 1);
 
-    //int disabledChannels = (chip->Get_SPI_Reg_bits(LMS7_PD_AFE.address,4,1)&0xF);//check if all channels are disabled
-    //chip->Modify_SPI_Reg_bits(LMS7param(EN_G_AFE),disabledChannels==0xF ? 0 : 1);
-    //chip->Modify_SPI_Reg_bits(LMS7param(PD_AFE), disabledChannels==0xF ? 1 : 0);
+    //int disabledChannels = (chip->Get_SPI_Reg_bits(PD_AFE.address,4,1)&0xF);//check if all channels are disabled
+    //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE,disabledChannels==0xF ? 0 : 1);
+    //chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, disabledChannels==0xF ? 1 : 0);
 
     //--- digital --- not used for LMS2
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_TXTSP), 0);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP, 0);
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_RXTSP), 0);
-        // chip->Modify_SPI_Reg_bits(LMS7param(AGC_MODE_RXTSP), 2); //bypass
-        // chip->Modify_SPI_Reg_bits(LMS7param(AGC_BYP_RXTSP), 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP, 0);
+        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 2); //bypass
+        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 1);
         //chip->SPI_write(0x040C, 0x01FF) // bypass all RxTSP
     }
 
     //--- baseband ---
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_TBB), 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G_TBB), enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_LPFIAMP_TBB), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(TSTIN_TBB), 3); // switch to external DAC
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TBB, 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB, enable ? 1 : 0);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFIAMP_TBB, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 3); // switch to external DAC
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_RBB), 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G_RBB), enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_PGA_RBB), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(OSW_PGA_RBB), 1); // switch external ADC
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RBB, 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB, enable ? 1 : 0);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_PGA_RBB, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 1); // switch external ADC
     }
 
     //--- frontend ---
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_TRF), 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G_TRF), enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_TLOBUF_TRF), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_TXPAD_TRF), enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TRF, 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, enable ? 1 : 0);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, enable ? 0 : 1);
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_RFE), 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G_RFE), enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_MXLOBUF_RFE), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_QGEN_RFE), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_TIA_RFE), enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7param(PD_LNA_RFE), enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RFE, 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, enable ? 1 : 0);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_MXLOBUF_RFE, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, enable ? 0 : 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, enable ? 0 : 1);
     }
 
     //--- synthesizers ---
     if (isTx)
     {
         chip->SetActiveChannel(LMS7002M::Channel::ChSXT);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_SXRSXT), 1);
-        //chip->Modify_SPI_Reg_bits(LMS7param(EN_G), (disabledChannels&3) == 3?0:1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G), 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
+        //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&3) == 3?0:1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
         if (ch == LMS7002M::Channel::ChB) //enable LO to channel B
         {
             chip->SetActiveChannel(LMS7002M::Channel::ChA);
-            chip->Modify_SPI_Reg_bits(LMS7param(EN_NEXTTX_TRF), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTTX_TRF, enable ? 1 : 0);
         }
     }
     else
     {
         chip->SetActiveChannel(LMS7002M::Channel::ChSXR);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_DIR_SXRSXT), 1);
-        //chip->Modify_SPI_Reg_bits(LMS7param(EN_G), (disabledChannels&0xC)==0xC?0:1);
-        chip->Modify_SPI_Reg_bits(LMS7param(EN_G), 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
+        //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&0xC)==0xC?0:1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
         if (ch == LMS7002M::Channel::ChB) //enable LO to channel B
         {
             chip->SetActiveChannel(LMS7002M::Channel::ChA);
-            chip->Modify_SPI_Reg_bits(LMS7param(EN_NEXTRX_RFE), enable ? 1 : 0);
+            chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTRX_RFE, enable ? 1 : 0);
         }
     }
     chip->SetActiveChannel(macBck);
@@ -584,7 +586,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         LMS7002LOConfigure(chip, cfg);
 
         if (socIndex == 0)
-            chip->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0); // enabled DAC is required for FPGA to work
+            chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0); // enabled DAC is required for FPGA to work
 
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
@@ -627,15 +629,15 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         if (socIndex == 0)
         {
             // enabled ADC/DAC is required for FPGA to work
-            chip->Modify_SPI_Reg_bits(LMS7_PD_RX_AFE1, 0);
-            chip->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
+            chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+            chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         }
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
-        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7param(TX_MUX));
-        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), 2);
-        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), txMux);
+        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, 2);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, txMux);
 
         mConfigInProgress = false;
         PostConfigure(cfg, socIndex);
@@ -956,14 +958,14 @@ void LimeSDR_X3::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t t
         1 + hbd_ovr,
         1 + hbi_ovr);
     LMS7002M* mLMSChip = mLMSChips[0];
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2 - std::log2(txInterpolation / rxDecimation));
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
     mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
 }
 

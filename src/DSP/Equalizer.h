@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <memory>
-#include "Register.h"
+#include "EqualizerCSR.h"
 
 namespace lime {
 
