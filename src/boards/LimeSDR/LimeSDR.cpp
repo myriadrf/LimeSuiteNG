@@ -94,12 +94,6 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x00FB }
 };
 
-static inline void ValidateChannel(uint8_t channel)
-{
-    if (channel > 1)
-        throw std::logic_error("invalid channel index"s);
-}
-
 /// @brief Constructs a new LimeSDR object
 /// @param spiLMS The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
@@ -382,15 +376,15 @@ OpStatus LimeSDR::Init()
     // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
     //     return -1;
 
-    EnableChannel(TRXDir::Rx, 0, false);
-    EnableChannel(TRXDir::Tx, 0, false);
+    EnableChannel(0, TRXDir::Rx, 0, false);
+    EnableChannel(0, TRXDir::Tx, 0, false);
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
 
     // if(lms->CalibrateTxGain(0,nullptr) != OpStatus::Success)
     //     return -1;
 
-    EnableChannel(TRXDir::Rx, 1, false);
-    EnableChannel(TRXDir::Tx, 1, false);
+    EnableChannel(0, TRXDir::Rx, 1, false);
+    EnableChannel(0, TRXDir::Tx, 1, false);
 
     lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
 
@@ -448,10 +442,10 @@ OpStatus LimeSDR::Reset()
     return LMS64CProtocol::DeviceReset(*mSerialPort, 0);
 }
 
-OpStatus LimeSDR::EnableChannel(TRXDir dir, uint8_t channel, bool enabled)
+OpStatus LimeSDR::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable)
 {
-    OpStatus status = mLMSChips[0]->EnableChannel(dir, channel, enabled);
-    if (dir == TRXDir::Tx) //always enable DAC1, otherwise sample rates <2.5MHz do not work
+    OpStatus status = mLMSChips.at(moduleIndex)->EnableChannel(trx, channel, enable);
+    if (trx == TRXDir::Tx) //always enable DAC1, otherwise sample rates <2.5MHz do not work
         mLMSChips[0]->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
     return status;
 }

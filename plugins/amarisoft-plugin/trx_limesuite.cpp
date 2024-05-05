@@ -27,7 +27,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
 
     void Block() { blockAccess = true; }
 
-    virtual bool GetString(std::string& dest, const char* varname) override
+    bool GetString(std::string& dest, const char* varname) override
     {
         if (blockAccess)
         {
@@ -43,7 +43,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
         return true;
     }
 
-    virtual bool GetDouble(double& dest, const char* varname) override
+    bool GetDouble(double& dest, const char* varname) override
     {
         if (blockAccess)
         {

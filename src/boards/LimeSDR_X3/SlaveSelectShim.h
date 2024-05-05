@@ -16,14 +16,14 @@ class SlaveSelectShim : public ISPI
     @param slaveId The ID of the slave for this shim.
    */
     SlaveSelectShim(std::shared_ptr<IComms> comms, uint32_t slaveId);
-    virtual OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-    virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+    OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+    OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
     /**
       @brief Send the reset device command to the device under this shim.
       @return The status of the operation.
      */
-    virtual OpStatus ResetDevice();
+    OpStatus ResetDevice();
 
   private:
     std::shared_ptr<IComms> port;

@@ -55,7 +55,7 @@ sink_impl::sink_impl(std::string serial,
     stored.serial = serial;
     stored.channel_mode = channel_mode;
 
-    if (stored.channel_mode < 0 && stored.channel_mode > 2) {
+    if (stored.channel_mode < 0 || stored.channel_mode > 2) {
         throw std::invalid_argument(
             "sink_impl::sink_impl(): Channel must be A(0), B(1), or (A+B) MIMO(2)");
     }
@@ -141,7 +141,6 @@ int sink_impl::work(int noutput_items,
 {
     // Init number of items to be sent and timestamps
     nitems_send = noutput_items;
-    uint64_t current_sample = nitems_read(0);
     tx_meta.waitForTimestamp = false;
     tx_meta.flushPartialPacket = false;
     // Check if channel 0 has any tags

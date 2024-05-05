@@ -124,18 +124,11 @@ template<class T> class PacketsFIFO
         {
             if (!wait)
                 return false;
-            // The queue is empty
-            //std::unique_lock<std::mutex> lk(mrd);
-            auto t1 = std::chrono::high_resolution_clock::now();
+
+            if (canRead.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
             {
-                auto elapsed = std::chrono::high_resolution_clock::now() - t1;
-                // if(elapsed >= std::chrono::milliseconds(timeout))
-                //   return false;
-                if (canRead.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
-                {
-                    //lime::error("pop fifo timeout"s);
-                    return false;
-                }
+                //lime::error("pop fifo timeout"s);
+                return false;
             }
         }
 

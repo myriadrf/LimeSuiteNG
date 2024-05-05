@@ -56,8 +56,8 @@ class lms7002_pnlR3_view : public ILMS7002MTab
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
     ~lms7002_pnlR3_view();
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
 };
 
 #endif // __lms7002_pnlAFE_view__

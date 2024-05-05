@@ -453,7 +453,6 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     const uint8_t clockCount = clocks.size();
     lime::debug("FPGA SetPllFrequency: PLL[%i] input:%.3f MHz clockCount:%i", pllIndex, inputFreq / 1e6, clockCount);
     WriteRegistersBatch batch(this);
-    const auto timeout = std::chrono::seconds(3);
     if (!fpgaPort)
         return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 

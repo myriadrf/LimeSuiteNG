@@ -11,10 +11,10 @@ class lms7002_pnlTRF_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void UpdateGUI() override;
+    void UpdateGUI() override;
 
   protected:
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnBandChange(wxCommandEvent& event);
 
     enum {

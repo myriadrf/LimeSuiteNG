@@ -18,8 +18,8 @@ class USB_CSR_Pipe_SDR : public USB_CSR_Pipe
      */
     explicit USB_CSR_Pipe_SDR(FX3& port);
 
-    virtual int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
-    virtual int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
+    int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
+    int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
 
   protected:
     FX3& port;

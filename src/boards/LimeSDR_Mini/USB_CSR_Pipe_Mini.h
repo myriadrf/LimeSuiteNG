@@ -16,8 +16,8 @@ class USB_CSR_Pipe_Mini : public USB_CSR_Pipe
      */
     explicit USB_CSR_Pipe_Mini(FT601& port);
 
-    virtual int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
-    virtual int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
+    int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
+    int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
 
   protected:
     FT601& port;
