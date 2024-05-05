@@ -85,14 +85,12 @@ SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument)
             std::cerr << "\t"sv << h.Serialize() << std::endl;
         return nullptr;
     }
-    else
+
+    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
+    if (!device)
     {
-        SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
-        if (!device)
-        {
-            std::cerr << "Failed to connect to: "sv << handles.at(0).Serialize() << std::endl;
-            return nullptr;
-        }
-        return device;
+        std::cerr << "Failed to connect to: "sv << handles.at(0).Serialize() << std::endl;
+        return nullptr;
     }
+    return device;
 }

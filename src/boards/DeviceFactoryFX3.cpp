@@ -53,32 +53,35 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
     }
 
     CCyUSBDevice device;
-    if (device.DeviceCount() > 0)
+    if (device.DeviceCount() <= 0)
     {
-        for (int i = 0; i < device.DeviceCount(); ++i)
-        {
-            if (device.IsOpen())
-                device.Close();
-            device.Open(i);
-            DeviceHandle handle;
-            if (device.bSuperSpeed == true)
-                handle.media = "USB 3.0"s;
-            else if (device.bHighSpeed == true)
-                handle.media = "USB 2.0"s;
-            else
-                handle.media = "USB"s;
-
-            uint16_t vendorId = device.VendorID;
-            uint16_t productId = device.ProductID;
-            handle.name = device.DeviceName;
-            handle.serial = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(device.SerialNumber);
-            handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
-
-            if (hint.serial.empty() or handle.serial.find(hint.serial) != std::string::npos)
-                handles.push_back(handle); //filter on serial
-            device.Close();
-        }
+        return handles;
     }
+
+    for (int i = 0; i < device.DeviceCount(); ++i)
+    {
+        if (device.IsOpen())
+            device.Close();
+        device.Open(i);
+        DeviceHandle handle;
+        if (device.bSuperSpeed == true)
+            handle.media = "USB 3.0"s;
+        else if (device.bHighSpeed == true)
+            handle.media = "USB 2.0"s;
+        else
+            handle.media = "USB"s;
+
+        uint16_t vendorId = device.VendorID;
+        uint16_t productId = device.ProductID;
+        handle.name = device.DeviceName;
+        handle.serial = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(device.SerialNumber);
+        handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
+
+        if (hint.serial.empty() or handle.serial.find(hint.serial) != std::string::npos)
+            handles.push_back(handle); //filter on serial
+        device.Close();
+    }
+
     return handles;
 }
 #endif

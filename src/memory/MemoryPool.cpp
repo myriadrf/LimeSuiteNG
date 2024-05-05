@@ -103,13 +103,11 @@ void MemoryPool::Free(void* ptr)
                << ", free: " << mFreeBlocks.size() << ", ptr: " << ptr << std::endl;
             throw std::runtime_error(ss.str().c_str());
         }
-        else
-        {
-            std::stringstream ss;
-            ss << ptr;
 
-            throw std::runtime_error("Pointer "s + ss.str() + " does not belong to pool "s + name);
-        }
+        std::stringstream ss;
+        ss << ptr;
+
+        throw std::runtime_error("Pointer "s + ss.str() + " does not belong to pool "s + name);
     }
     ++freeCnt;
     mFreeBlocks.push(ptr);

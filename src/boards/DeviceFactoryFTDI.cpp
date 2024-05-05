@@ -59,30 +59,33 @@ std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
 
     ftStatus = FT_CreateDeviceInfoList(&numDevs);
 
-    if (!FT_FAILED(ftStatus) && numDevs > 0)
+    if (FT_FAILED(ftStatus) || numDevs <= 0)
     {
-        DWORD Flags = 0;
-        char SerialNumber[16] = { 0 };
-        char Description[32] = { 0 };
-        for (DWORD i = 0; i < numDevs; i++)
+        return handles;
+    }
+
+    DWORD Flags = 0;
+    char SerialNumber[16] = { 0 };
+    char Description[32] = { 0 };
+    for (DWORD i = 0; i < numDevs; i++)
+    {
+        DWORD deviceId = 0;
+        ftStatus = FT_GetDeviceInfoDetail(i, &Flags, nullptr, &deviceId, nullptr, SerialNumber, Description, nullptr);
+        if (!FT_FAILED(ftStatus))
         {
-            DWORD deviceId = 0;
-            ftStatus = FT_GetDeviceInfoDetail(i, &Flags, nullptr, &deviceId, nullptr, SerialNumber, Description, nullptr);
-            if (!FT_FAILED(ftStatus))
-            {
-                WORD vendorId = (deviceId >> 16);
-                WORD productId = static_cast<WORD>(deviceId);
-                DeviceHandle handle;
-                handle.media = Flags & FT_FLAGS_SUPERSPEED ? "USB 3"s : Flags & FT_FLAGS_HISPEED ? "USB 2"s : "USB"s;
-                handle.name = Description;
-                handle.serial = SerialNumber;
-                handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
-                // Add handle conditionally, filter by serial number
-                if (hint.serial.empty() || handle.serial.find(hint.serial) != std::string::npos)
-                    handles.push_back(handle);
-            }
+            WORD vendorId = (deviceId >> 16);
+            WORD productId = static_cast<WORD>(deviceId);
+            DeviceHandle handle;
+            handle.media = Flags & FT_FLAGS_SUPERSPEED ? "USB 3"s : Flags & FT_FLAGS_HISPEED ? "USB 2"s : "USB"s;
+            handle.name = Description;
+            handle.serial = SerialNumber;
+            handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
+            // Add handle conditionally, filter by serial number
+            if (hint.serial.empty() || handle.serial.find(hint.serial) != std::string::npos)
+                handles.push_back(handle);
         }
     }
+
     return handles;
 }
 #endif

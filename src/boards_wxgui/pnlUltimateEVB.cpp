@@ -191,34 +191,34 @@ void pnlUltimateEVB::OnSave(wxCommandEvent& event)
     std::string captureFilename = std::string(dlg.GetPath().mb_str());
     std::ofstream ofile(captureFilename);
 
-    if (ofile)
+    if (!ofile.good())
     {
-        ofile << "Temperature;" << pnlBoardControls::mParameters[1].value << ";" << pnlBoardControls::mParameters[1].units
-              << std::endl;
-        ofile << "Name;Voltage;;Current;;Power;;" << std::endl;
-        for (size_t i = 0; i < vltgParams.size(); ++i)
-        {
-            std::string str = std::string(vltgParams[i].value->GetLabel().mb_str());
-            str.replace(str.find(' '), 1, 1, ';');
-            ofile << vltgParams[i].name << ";" << str << ";" << std::endl;
-        }
-        for (size_t i = 0; i < pwrParams.size(); ++i)
-        {
-            ofile << pwrParams[i].name << ";";
-            std::string str = std::string(pwrParams[i++].value->GetLabel().mb_str());
-            str.replace(str.find(' '), 1, 1, ';');
-            ofile << str << ";";
-            str = pwrParams[i++].value->GetLabel().mb_str();
-            str.replace(str.find(' '), 1, 1, ';');
-            ofile << str << ";";
-            str = pwrParams[i].value->GetLabel().mb_str();
-            str.replace(str.find(' '), 1, 1, ';');
-            ofile << str << ";" << std::endl;
-        }
-        {
-            std::string str = std::string(totalPwr->GetLabel().mb_str());
-            str.replace(str.find(' '), 1, 1, ';');
-            ofile << "Total LMS power;;;;;" << str << ";" << std::endl;
-        }
+        return;
     }
+
+    ofile << "Temperature;" << pnlBoardControls::mParameters[1].value << ";" << pnlBoardControls::mParameters[1].units << std::endl;
+    ofile << "Name;Voltage;;Current;;Power;;" << std::endl;
+    for (size_t i = 0; i < vltgParams.size(); ++i)
+    {
+        std::string str = std::string(vltgParams[i].value->GetLabel().mb_str());
+        str.replace(str.find(' '), 1, 1, ';');
+        ofile << vltgParams[i].name << ";" << str << ";" << std::endl;
+    }
+    for (size_t i = 0; i < pwrParams.size(); ++i)
+    {
+        ofile << pwrParams[i].name << ";";
+        std::string str = std::string(pwrParams[i++].value->GetLabel().mb_str());
+        str.replace(str.find(' '), 1, 1, ';');
+        ofile << str << ";";
+        str = pwrParams[i++].value->GetLabel().mb_str();
+        str.replace(str.find(' '), 1, 1, ';');
+        ofile << str << ";";
+        str = pwrParams[i].value->GetLabel().mb_str();
+        str.replace(str.find(' '), 1, 1, ';');
+        ofile << str << ";" << std::endl;
+    }
+
+    std::string str = std::string(totalPwr->GetLabel().mb_str());
+    str.replace(str.find(' '), 1, 1, ';');
+    ofile << "Total LMS power;;;;;" << str << ";" << std::endl;
 }

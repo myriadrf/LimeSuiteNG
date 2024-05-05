@@ -320,7 +320,11 @@ OpStatus LimeSDR::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel
     //         break;
     //     }
     // }
-    if (!bypass)
+    if (bypass)
+    {
+        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: bypass, Interp: bypass", sampleRate / 1e6, cgenFreq / 1e6);
+    }
+    else
     {
         if (oversample == 0)
         {
@@ -336,14 +340,7 @@ OpStatus LimeSDR::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel
         }
         interpolation = decimation;
         cgenFreq *= 2 << decimation;
-    }
 
-    if (bypass)
-    {
-        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: bypass, Interp: bypass", sampleRate / 1e6, cgenFreq / 1e6);
-    }
-    else
-    {
         lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
             sampleRate / 1e6,
             cgenFreq / 1e6,

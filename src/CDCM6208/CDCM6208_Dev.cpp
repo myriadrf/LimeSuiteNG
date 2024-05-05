@@ -1034,60 +1034,59 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
     else
         do_vco_calc = false;
 
-    if (do_vco_calc)
+    if (!do_vco_calc)
     {
-        // Find number of valid VCO freqs for each prescaler
-        std::vector<CDCM_VCO> Config_vector;
-        Config_vector = FindValidVCOFreqs(int_lcm, VCO.version);
-
-        int have_error = 0;
-        int max_r_div = GetVCOInput() ? 16 : 1;
-
-        for (size_t i = 0; i < Config_vector.size(); i++)
-        {
-            Config_vector[i].prim_freq = VCO.prim_freq;
-            Config_vector[i].sec_freq = VCO.sec_freq;
-            double min_err = std::numeric_limits<double>::max();
-
-            for (int r_div = 1; r_div <= max_r_div; r_div++)
-            {
-                double input_freq = ((GetVCOInput() == 1 ? VCO.prim_freq : VCO.sec_freq) / r_div) * input_shift;
-                int n_mul = 1, m_div = 1;
-
-                Config_vector[i].freq_err = DecToFrac(Config_vector[i].output_freq / input_freq, &n_mul, &m_div);
-
-                if (min_err > Config_vector[i].freq_err)
-                {
-                    min_err = Config_vector[i].freq_err;
-                    Config_vector[i].R_div = r_div;
-                    Config_vector[i].N_mul_full = n_mul;
-                    Config_vector[i].M_div = m_div;
-                }
-            }
-
-            if (Config_vector[i].freq_err > 0)
-                have_error++;
-        }
-
-        if (Config_vector.size() > 0)
-        {
-            // Find index of best config
-            int best_index = FindBestVCOConfigIndex(Config_vector, have_error);
-            Config_vector[best_index].valid = true;
-            Config_vector[best_index].input_mux = GetVCOInput();
-            return Config_vector[best_index];
-        }
-        else
-        {
-            CDCM_VCO vco_config;
-            vco_config.valid = false;
-            return vco_config;
-        }
+        // No algorithm for fractional only frequency planning
+        CDCM_VCO vco_config;
+        vco_config.valid = true;
+        return vco_config;
     }
-    // No algorithm for fractional only frequency planning
-    CDCM_VCO vco_config;
-    vco_config.valid = true;
-    return vco_config;
+
+    // Find number of valid VCO freqs for each prescaler
+    std::vector<CDCM_VCO> Config_vector;
+    Config_vector = FindValidVCOFreqs(int_lcm, VCO.version);
+
+    int have_error = 0;
+    int max_r_div = GetVCOInput() ? 16 : 1;
+
+    for (size_t i = 0; i < Config_vector.size(); i++)
+    {
+        Config_vector[i].prim_freq = VCO.prim_freq;
+        Config_vector[i].sec_freq = VCO.sec_freq;
+        double min_err = std::numeric_limits<double>::max();
+
+        for (int r_div = 1; r_div <= max_r_div; r_div++)
+        {
+            double input_freq = ((GetVCOInput() == 1 ? VCO.prim_freq : VCO.sec_freq) / r_div) * input_shift;
+            int n_mul = 1, m_div = 1;
+
+            Config_vector[i].freq_err = DecToFrac(Config_vector[i].output_freq / input_freq, &n_mul, &m_div);
+
+            if (min_err > Config_vector[i].freq_err)
+            {
+                min_err = Config_vector[i].freq_err;
+                Config_vector[i].R_div = r_div;
+                Config_vector[i].N_mul_full = n_mul;
+                Config_vector[i].M_div = m_div;
+            }
+        }
+
+        if (Config_vector[i].freq_err > 0)
+            have_error++;
+    }
+
+    if (Config_vector.empty())
+    {
+        CDCM_VCO vco_config;
+        vco_config.valid = false;
+        return vco_config;
+    }
+
+    // Find index of best config
+    int best_index = FindBestVCOConfigIndex(Config_vector, have_error);
+    Config_vector[best_index].valid = true;
+    Config_vector[best_index].input_mux = GetVCOInput();
+    return Config_vector[best_index];
 }
 
 /**

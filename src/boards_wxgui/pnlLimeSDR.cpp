@@ -72,10 +72,7 @@ void pnlLimeSDR::Initialize(lime::SDRDevice* pControl)
         auto controls = controlsSizer->GetChildren();
         for (auto i : controls)
             i->GetWindow()->Enable();
-    }
 
-    if (device)
-    {
         for (const auto& id : device->GetDescriptor().spiSlaveIds)
         {
             if (id.first == "FPGA"s)

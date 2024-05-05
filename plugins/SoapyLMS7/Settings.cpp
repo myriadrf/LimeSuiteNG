@@ -607,36 +607,32 @@ bool SoapyLMS7::hasHardwareTime(const std::string& what) const
 
 long long SoapyLMS7::getHardwareTime(const std::string& what) const
 {
-    if (what.empty())
-    {
-        if (sampleRate[SOAPY_SDR_RX] == 0)
-        {
-            throw std::runtime_error("SoapyLMS7::getHardwareTime() sample rate unset");
-        }
-        auto ticks = sdrDevice->GetHardwareTimestamp(0);
-        return SoapySDR::ticksToTimeNs(ticks, sampleRate[SOAPY_SDR_RX]);
-    }
-    else
+    if (!what.empty())
     {
         throw std::invalid_argument("SoapyLMS7::getHardwareTime(" + what + ") unknown argument");
     }
+
+    if (sampleRate[SOAPY_SDR_RX] == 0)
+    {
+        throw std::runtime_error("SoapyLMS7::getHardwareTime() sample rate unset");
+    }
+    auto ticks = sdrDevice->GetHardwareTimestamp(0);
+    return SoapySDR::ticksToTimeNs(ticks, sampleRate[SOAPY_SDR_RX]);
 }
 
 void SoapyLMS7::setHardwareTime(const long long timeNs, const std::string& what)
 {
-    if (what.empty())
-    {
-        if (sampleRate[SOAPY_SDR_RX] == 0)
-        {
-            throw std::runtime_error("SoapyLMS7::setHardwareTime() sample rate unset");
-        }
-        auto ticks = SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX]);
-        sdrDevice->SetHardwareTimestamp(0, ticks);
-    }
-    else
+    if (!what.empty())
     {
         throw std::invalid_argument("SoapyLMS7::setHardwareTime(" + what + ") unknown argument");
     }
+
+    if (sampleRate[SOAPY_SDR_RX] == 0)
+    {
+        throw std::runtime_error("SoapyLMS7::setHardwareTime() sample rate unset");
+    }
+    auto ticks = SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX]);
+    sdrDevice->SetHardwareTimestamp(0, ticks);
 }
 
 /*******************************************************************

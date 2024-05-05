@@ -210,39 +210,41 @@ void sink_impl::work_tags(int noutput_items)
     uint64_t current_sample = nitems_read(0);
     get_tags_in_range(tags, 0, current_sample, current_sample + noutput_items);
 
-    if (!tags.empty()) {
-        std::sort(tags.begin(), tags.end(), tag_t::offset_compare);
-        // Go through the tags
-        for (tag_t cTag : tags) {
-            // Found tx_time tag
-            if (pmt::eq(cTag.key, TIME_TAG)) {
-                // Convert time to sample timestamp
-                uint64_t secs = pmt::to_uint64(pmt::tuple_ref(cTag.value, 0));
-                double fracs = pmt::to_double(pmt::tuple_ref(cTag.value, 1));
-                uint64_t u_rate = static_cast<uint64_t>(stored.samp_rate);
-                double f_rate = stored.samp_rate - u_rate;
-                uint64_t timestamp =
-                    u_rate * secs + llround(secs * f_rate + fracs * stored.samp_rate);
+    if (tags.empty()) {
+        return;
+    }
 
-                if (cTag.offset == current_sample) {
-                    tx_meta.waitForTimestamp = true;
-                    tx_meta.timestamp = timestamp;
-                } else {
-                    nitems_send = static_cast<int>(cTag.offset - current_sample);
-                    break;
-                }
+    std::sort(tags.begin(), tags.end(), tag_t::offset_compare);
+    // Go through the tags
+    for (tag_t cTag : tags) {
+        // Found tx_time tag
+        if (pmt::eq(cTag.key, TIME_TAG)) {
+            // Convert time to sample timestamp
+            uint64_t secs = pmt::to_uint64(pmt::tuple_ref(cTag.value, 0));
+            double fracs = pmt::to_double(pmt::tuple_ref(cTag.value, 1));
+            uint64_t u_rate = static_cast<uint64_t>(stored.samp_rate);
+            double f_rate = stored.samp_rate - u_rate;
+            uint64_t timestamp =
+                u_rate * secs + llround(secs * f_rate + fracs * stored.samp_rate);
+
+            if (cTag.offset == current_sample) {
+                tx_meta.waitForTimestamp = true;
+                tx_meta.timestamp = timestamp;
+            } else {
+                nitems_send = static_cast<int>(cTag.offset - current_sample);
+                break;
             }
-            // Found length tag
-            else if (!pmt::is_null(LENGTH_TAG) && pmt::eq(cTag.key, LENGTH_TAG)) {
-                if (cTag.offset == current_sample) {
-                    // Found length tag in the middle of the burst
-                    if (burst_length > 0 && ret > 0)
-                        GR_LOG_WARN(d_logger, "Length tag has been preempted");
-                    burst_length = pmt::to_long(cTag.value);
-                } else {
-                    nitems_send = static_cast<int>(cTag.offset - current_sample);
-                    break;
-                }
+        }
+        // Found length tag
+        else if (!pmt::is_null(LENGTH_TAG) && pmt::eq(cTag.key, LENGTH_TAG)) {
+            if (cTag.offset == current_sample) {
+                // Found length tag in the middle of the burst
+                if (burst_length > 0 && ret > 0)
+                    GR_LOG_WARN(d_logger, "Length tag has been preempted");
+                burst_length = pmt::to_long(cTag.value);
+            } else {
+                nitems_send = static_cast<int>(cTag.offset - current_sample);
+                break;
             }
         }
     }
@@ -254,22 +256,24 @@ void sink_impl::print_stream_stats(int channel)
     t2 = std::chrono::high_resolution_clock::now();
     auto timePeriod =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    if (timePeriod >= 1000) {
-        lime::StreamStats status;
-        device_handler::getInstance()
-            .get_device(stored.device_number)
-            ->StreamStatus(0, nullptr, &status);
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        GR_LOG_INFO(d_logger,
-                    fmt::format("TX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
-                                status.dataRate_Bps / 1e6,
-                                status.loss,
-                                100 * status.FIFO.ratio()));
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        t1 = t2;
+    if (timePeriod < 1000) {
+        return;
     }
+
+    lime::StreamStats status;
+    device_handler::getInstance()
+        .get_device(stored.device_number)
+        ->StreamStatus(0, nullptr, &status);
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    GR_LOG_INFO(d_logger,
+                fmt::format("TX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
+                            status.dataRate_Bps / 1e6,
+                            status.loss,
+                            100 * status.FIFO.ratio()));
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    t1 = t2;
 }
 
 // Setup stream

@@ -242,19 +242,21 @@ void source_impl::print_stream_stats(lime::StreamStats status)
     t2 = std::chrono::high_resolution_clock::now();
     auto timePeriod =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    if (timePeriod >= 1000) {
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        GR_LOG_INFO(d_logger,
-                    fmt::format("RX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
-                                (status.dataRate_Bps / 1e6),
-                                pktLoss,
-                                (100 * status.FIFO.ratio())));
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        pktLoss = 0;
-        t1 = t2;
+    if (timePeriod < 1000) {
+        return;
     }
+
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    GR_LOG_INFO(d_logger,
+                fmt::format("RX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
+                            (status.dataRate_Bps / 1e6),
+                            pktLoss,
+                            (100 * status.FIFO.ratio())));
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    pktLoss = 0;
+    t1 = t2;
 }
 
 // Add rx_time tag to stream

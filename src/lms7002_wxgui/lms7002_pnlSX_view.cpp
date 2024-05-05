@@ -904,20 +904,24 @@ void lms7002_pnlSX_view::OnbtnChangeRefClkClick(wxCommandEvent& event)
 
     freq = lmsControl->GetReferenceClk_SX(direction);
     dlg->SetValue(std::to_string(freq / 1e6));
-    if (dlg->ShowModal() == wxID_OK)
+    if (dlg->ShowModal() != wxID_OK)
     {
-        dlg->GetValue().ToDouble(&refClkMHz);
-        if (refClkMHz != 0)
-        {
-            double currentFreq_MHz;
-            txtFrequency->GetValue().ToDouble(&currentFreq_MHz);
-            lmsControl->SetReferenceClk_SX(direction, refClkMHz * 1e6);
-            OpStatus status = lmsControl->SetFrequencySX(direction, currentFreq_MHz * 1e6);
-            if (status != OpStatus::Success)
-                wxMessageBox(_("Set SX frequency failed"));
-            UpdateGUI();
-        }
+        return;
     }
+
+    dlg->GetValue().ToDouble(&refClkMHz);
+    if (refClkMHz == 0)
+    {
+        return;
+    }
+
+    double currentFreq_MHz;
+    txtFrequency->GetValue().ToDouble(&currentFreq_MHz);
+    lmsControl->SetReferenceClk_SX(direction, refClkMHz * 1e6);
+    OpStatus status = lmsControl->SetFrequencySX(direction, currentFreq_MHz * 1e6);
+    if (status != OpStatus::Success)
+        wxMessageBox(_("Set SX frequency failed"));
+    UpdateGUI();
 }
 
 void lms7002_pnlSX_view::OnbtnCalculateClick(wxCommandEvent& event)
