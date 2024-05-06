@@ -268,15 +268,6 @@ class LIME_API LMS7002M
     OpStatus SPI_write(uint16_t address, uint16_t data, bool toChip = false);
 
     /*!
-     * @brief Write given data value to whole register
-     * @param parameter LMS7002MCSR parameter
-     * @param data new register value
-     * @param toChip whether we're writing to the chip or not
-     * @return The status of the operation
-     */
-    OpStatus SPI_write(lime::LMS7002MCSR parameter, uint16_t data, bool toChip = false);
-
-    /*!
      * @brief Reads whole register value from given address
      * @param address SPI address
      * @param fromChip read value directly from chip
@@ -284,15 +275,6 @@ class LIME_API LMS7002M
      * @return register value
     */
     uint16_t SPI_read(uint16_t address, bool fromChip = false, OpStatus* status = 0);
-
-    /*!
-     * @brief Reads whole register value from given address
-     * @param address LMS7002MCSR parameter
-     * @param fromChip read value directly from chip
-     * @param status The operation success status (optional).
-     * @return register value
-    */
-    uint16_t SPI_read(lime::LMS7002MCSR parameter, bool fromChip = false, OpStatus* status = 0);
 
     /*!
      * @brief Performs registers test by writing known data and confirming readback data

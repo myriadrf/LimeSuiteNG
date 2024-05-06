@@ -1901,7 +1901,7 @@ void lms7002_pnlRXTSP_view::UpdateGUI()
 
     int16_t iqcorr_value;
     iqcorr_value = ReadParam(LMS7002MCSR::IQCORR_RXTSP);
-    LMS7002MCSR_Data::CSRegister r = GetRegister(LMS7002MCSR::IQCORR_RXTSP);
+    const LMS7002MCSR_Data::CSRegister& r = GetRegister(LMS7002MCSR::IQCORR_RXTSP);
     int bitsToShift = (15 - r.msb - r.lsb);
     iqcorr_value = iqcorr_value << bitsToShift;
     iqcorr_value = iqcorr_value >> bitsToShift;

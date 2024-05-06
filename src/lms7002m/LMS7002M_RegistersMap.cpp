@@ -27,7 +27,7 @@ void LMS7002M_RegistersMap::SetDefaultValue(uint16_t address, uint16_t value)
     mChannelB[address].defaultValue = value;
 }
 
-void LMS7002M_RegistersMap::InitializeDefaultValues(const std::vector<lime::LMS7002MCSR_Data::CSRegister*>& parameterList)
+void LMS7002M_RegistersMap::InitializeDefaultValues(const std::vector<const lime::LMS7002MCSR_Data::CSRegister*>& parameterList)
 {
     for (const LMS7002MCSR_Data::CSRegister* element : parameterList)
     {

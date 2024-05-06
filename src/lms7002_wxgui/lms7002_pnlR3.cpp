@@ -39,7 +39,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
             int row = 0;
             for (auto i : params)
             {
-                CSRegister r = GetRegister(i);
+                const CSRegister& r = GetRegister(i);
                 sizer->AddGrowableRow(row++);
                 wxCheckBox* chkbox = new wxCheckBox(dcCalibGroup->GetStaticBox(), wxNewId(), r.name);
                 chkbox->Connect(
@@ -358,7 +358,7 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
 
             for (int i = 0; i < 6; ++i)
             {
-                CSRegister r = GetRegister(params[i]);
+                const CSRegister& r = GetRegister(params[i]);
                 rssiCMPCFG[i] = new wxCheckBox(panel, wxNewId(), r.name);
                 sizerCMP->Add(rssiCMPCFG[i]);
                 wndId2Enum[rssiCMPCFG[i]] = params[i];
@@ -498,10 +498,11 @@ void lms7002_pnlR3_view::UpdateGUI()
     {
         uint16_t value = 0;
         auto parameter = wndId2Enum[cmbDCControlsRx[i]];
-        lmsControl->SPI_write(parameter, 0);
-        lmsControl->SPI_write(parameter, 0x4000);
+        uint16_t baseAddress = GetRegister(parameter).address;
+        lmsControl->SPI_write(baseAddress, 0);
+        lmsControl->SPI_write(baseAddress, 0x4000);
         value = ReadParam(wndId2Enum[cmbDCControlsRx[i]]);
-        lmsControl->SPI_write(parameter, value & ~0xC000);
+        lmsControl->SPI_write(baseAddress, value & ~0xC000);
         int absval = (value & 0x3F);
         if (value & 0x40)
             absval *= -1;
@@ -511,10 +512,11 @@ void lms7002_pnlR3_view::UpdateGUI()
     {
         uint16_t value = 0;
         auto parameter = wndId2Enum[cmbDCControlsTx[i]];
-        lmsControl->SPI_write(parameter, 0);
-        lmsControl->SPI_write(parameter, 0x4000);
+        uint16_t baseAddress = GetRegister(parameter).address;
+        lmsControl->SPI_write(baseAddress, 0);
+        lmsControl->SPI_write(baseAddress, 0x4000);
         value = ReadParam(wndId2Enum[cmbDCControlsTx[i]]);
-        lmsControl->SPI_write(parameter, value & ~0xC000);
+        lmsControl->SPI_write(baseAddress, value & ~0xC000);
         int absval = (value & 0x3FF);
         if (value & 0x400)
             absval *= -1;
@@ -654,7 +656,8 @@ void lms7002_pnlR3_view::OnWriteTxDC(wxCommandEvent& event)
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
         uint16_t regVal = 0;
-        regVal = lmsControl->SPI_read(parameter);
+        uint16_t baseAddress = GetRegister(parameter).address;
+        regVal = lmsControl->SPI_read(baseAddress);
         regVal &= 0xF800;
         int dcVal = event.GetInt();
         if (dcVal < 0)
@@ -663,9 +666,9 @@ void lms7002_pnlR3_view::OnWriteTxDC(wxCommandEvent& event)
             regVal |= 0x0400;
         }
         regVal |= (abs(dcVal + 0x400) & 0x3FF);
-        lmsControl->SPI_write(parameter, regVal);
-        lmsControl->SPI_write(parameter, regVal | 0x8000);
-        lmsControl->SPI_write(parameter, regVal);
+        lmsControl->SPI_write(baseAddress, regVal);
+        lmsControl->SPI_write(baseAddress, regVal | 0x8000);
+        lmsControl->SPI_write(baseAddress, regVal);
         return;
     } catch (std::exception& e)
     {
@@ -683,7 +686,8 @@ void lms7002_pnlR3_view::OnWriteRxDC(wxCommandEvent& event)
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
         uint16_t regVal = 0;
-        regVal = lmsControl->SPI_read(parameter);
+        uint16_t baseAddress = GetRegister(parameter).address;
+        regVal = lmsControl->SPI_read(baseAddress);
         regVal &= 0xFF80;
         int dcVal = event.GetInt();
         if (dcVal < 0)
@@ -692,9 +696,9 @@ void lms7002_pnlR3_view::OnWriteRxDC(wxCommandEvent& event)
             regVal |= 0x0040;
         }
         regVal |= (abs(dcVal + 0x40) & 0x3F);
-        lmsControl->SPI_write(parameter, regVal & ~0x8000);
-        lmsControl->SPI_write(parameter, regVal | 0x8000);
-        lmsControl->SPI_write(parameter, regVal);
+        lmsControl->SPI_write(baseAddress, regVal & ~0x8000);
+        lmsControl->SPI_write(baseAddress, regVal | 0x8000);
+        lmsControl->SPI_write(baseAddress, regVal);
         return;
     } catch (std::exception& e)
     {

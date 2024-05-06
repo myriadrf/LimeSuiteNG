@@ -54,12 +54,6 @@ constexpr LMS7002M::Channel IntToChannel(int channel)
     return channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
 }
 
-namespace lime {
-namespace LMS7002MCSR_Data {
-extern const std::vector<LMS7002MCSR_Data::CSRegister*> LMS7002MCSRList;
-}
-} // namespace lime
-
 // Module addresses needs to be sorted in ascending order
 const std::vector<LMS7002M::ReadOnlyRegister> LMS7002M::readOnlyRegisters{
     { 0x002F, 0x0000 },
@@ -213,7 +207,14 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     opt_gain_tbb[0] = -1;
     opt_gain_tbb[1] = -1;
 
-    mRegistersMap->InitializeDefaultValues(LMS7002MCSRList);
+    std::vector<const LMS7002MCSR_Data::CSRegister*> parameterList;
+    parameterList.reserve(static_cast<int>(LMS7002MCSR::ENUM_COUNT));
+    for (int i = 0; i < static_cast<int>(LMS7002MCSR::ENUM_COUNT); ++i)
+    {
+        const LMS7002MCSR_Data::CSRegister& parameter = GetRegister(static_cast<LMS7002MCSR>(i));
+        parameterList.push_back(&parameter);
+    }
+    mRegistersMap->InitializeDefaultValues(parameterList);
     mcuControl = new MCU_BD();
     mcuControl->Initialize(controlPort);
 }
@@ -786,10 +787,11 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
         std::snprintf(value, sizeof(value), "0x%04X", dataReceived[i]);
         fout << addr << "="sv << value << std::endl;
         // add parameter name/value as comments
-        for (const CSRegister* parameter : LMS7002MCSRList)
+        for (int p = 0; p < static_cast<int>(LMS7002MCSR::ENUM_COUNT); ++p)
         {
-            if (parameter->address == addrToRead[i])
-                fout << "//"sv << parameter->name << " : "sv << Get_SPI_Reg_bits(*parameter) << std::endl;
+            const LMS7002MCSR_Data::CSRegister& parameter = GetRegister(static_cast<LMS7002MCSR>(p));
+            if (parameter.address == addrToRead[i])
+                fout << "//"sv << parameter.name << " : "sv << Get_SPI_Reg_bits(static_cast<LMS7002MCSR>(p)) << std::endl;
         }
     }
 
@@ -1627,7 +1629,7 @@ uint16_t LMS7002M::Get_SPI_Reg_bits(uint16_t address, uint8_t msb, uint8_t lsb, 
 
 uint16_t LMS7002M::Get_SPI_Reg_bits(const LMS7002MCSR param, bool fromChip)
 {
-    CSRegister reg = GetRegister(param);
+    const CSRegister& reg = GetRegister(param);
     return Get_SPI_Reg_bits(reg.address, reg.msb, reg.lsb, fromChip);
 }
 
@@ -1647,7 +1649,7 @@ OpStatus LMS7002M::Modify_SPI_Reg_bits(const LMS7002MCSR_Data::CSRegister& param
 
 OpStatus LMS7002M::Modify_SPI_Reg_bits(const LMS7002MCSR param, const uint16_t value, bool fromChip)
 {
-    CSRegister reg = GetRegister(param);
+    const CSRegister& reg = GetRegister(param);
     return Modify_SPI_Reg_bits(reg, value, fromChip);
 }
 
@@ -1682,12 +1684,11 @@ OpStatus LMS7002M::Modify_SPI_Reg_mask(
 
 const CSRegister& LMS7002M::GetParam(const std::string& name)
 {
-    for (const CSRegister* parameter : LMS7002MCSRList)
+    for (int i = 0; i < static_cast<int>(LMS7002MCSR::ENUM_COUNT); ++i)
     {
-        if (std::string_view{ parameter->name } == name)
-        {
-            return *parameter;
-        }
+        const LMS7002MCSR_Data::CSRegister& parameter = GetRegister(static_cast<LMS7002MCSR>(i));
+        if (std::string_view{ parameter.name } == name)
+            return parameter;
     }
 
     throw std::logic_error("Parameter "s + name + " not found"s);
@@ -2158,12 +2159,6 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
     return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
 }
 
-OpStatus LMS7002M::SPI_write(lime::LMS7002MCSR e, uint16_t data, bool toChip)
-{
-    CSRegister reg = GetRegister(e);
-    return SPI_write(reg.address, data, toChip);
-}
-
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 {
     fromChip |= !useCache;
@@ -2235,12 +2230,6 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
     if (status != nullptr)
         *status = st;
     return data;
-}
-
-uint16_t LMS7002M::SPI_read(lime::LMS7002MCSR e, bool fromChip, OpStatus* status)
-{
-    CSRegister reg = GetRegister(e);
-    return SPI_read(reg.address, fromChip, status);
 }
 
 OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiData, uint16_t cnt, bool toChip)

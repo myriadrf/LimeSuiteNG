@@ -7,10 +7,9 @@
 namespace lime {
 namespace LMS7002MCSR_Data {
 struct CSRegister;
-extern const std::vector<CSRegister*> LMS7002MCSRList;
 } // namespace LMS7002MCSR_Data
 
-enum class LMS7002MCSR : uint32_t {
+enum class LMS7002MCSR : uint16_t {
     LRST_TX_B,
     MRST_TX_B,
     LRST_TX_A,
@@ -715,7 +714,7 @@ enum class LMS7002MCSR : uint32_t {
     RSSIDC_DCO2,
     RSSIDC_DCO1,
     DCLOOP_STOP,
-    COUNT,
+    ENUM_COUNT,
 };
 } // namespace lime
 

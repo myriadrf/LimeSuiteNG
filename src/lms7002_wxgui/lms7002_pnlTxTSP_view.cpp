@@ -1708,7 +1708,7 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
     rgrTSGFCW_TXTSP->SetSelection(value2index(value, tsgfcw_txtsp_IndexValuePairs));
 
     LMS_ReadParam(lmsControl, LMS7002MCSR::IQCORR_TXTSP, reinterpret_cast<uint16_t*>(&value));
-    const LMS7002MCSR_Data::CSRegister r = GetRegister(LMS7002MCSR::IQCORR_TXTSP);
+    const LMS7002MCSR_Data::CSRegister& r = GetRegister(LMS7002MCSR::IQCORR_TXTSP);
     int bitsToShift = (15 - r.msb - r.lsb);
     value = value << bitsToShift;
     value = value >> bitsToShift;
