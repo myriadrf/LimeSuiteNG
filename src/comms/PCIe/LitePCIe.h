@@ -1,6 +1,7 @@
 #ifndef LIME_LITEPCIE_H
 #define LIME_LITEPCIE_H
 
+#include "comms/IDMA.h"
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 
@@ -12,7 +13,7 @@
 namespace lime {
 
 /** @brief Class for communicating with a PCIe device. */
-class LIME_API LitePCIe
+class LIME_API LitePCIe : public IDMA
 {
   public:
     static std::vector<std::string> GetDevicesWithPattern(const std::string& regex);
@@ -22,7 +23,7 @@ class LIME_API LitePCIe
 
     OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
     void Close();
-    bool IsOpen();
+    bool IsOpen() const override;
 
     // Write/Read for communicating to control end points (SPI, I2C...)
     int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
@@ -31,8 +32,9 @@ class LIME_API LitePCIe
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
 
-    void RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod);
-    void TxDMAEnable(bool enabled);
+    void RxEnable(uint32_t bufferSize, uint8_t irqPeriod) override;
+    void TxEnable() override;
+    void Disable(TRXDir direction) override;
 
     /** @brief Structure for holding the Direct Memory Access (DMA) information. */
     struct DMAInfo {
@@ -43,21 +45,30 @@ class LIME_API LitePCIe
             , bufferCount(0)
         {
         }
-        uint8_t* rxMemory;
-        uint8_t* txMemory;
+        std::byte* rxMemory;
+        std::byte* txMemory;
         int bufferSize;
         int bufferCount;
     };
-    DMAInfo GetDMAInfo() { return mDMA; }
+    int GetBufferSize() const override;
+    int GetBufferCount() const override;
+    std::byte* GetMemoryAddress(TRXDir direction) const override;
 
-    /** @brief Structure for holding the current state of the Direct Memory Access (DMA). */
-    struct DMAState {
-        uint32_t hwIndex;
-        uint32_t swIndex;
-        uint32_t bufferSize;
-        bool enabled;
-        bool genIRQ;
-    };
+    DMAState GetState(TRXDir direction) override;
+    int SetState(TRXDir direction, DMAState state) override;
+
+    bool Wait(TRXDir direction) override;
+
+    void CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index) override;
+
+  private:
+    std::filesystem::path mFilePath;
+    DMAInfo mDMA;
+    int mFileDescriptor;
+
+    void RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod);
+    void TxDMAEnable(bool enabled);
+
     DMAState GetRxDMAState();
     DMAState GetTxDMAState();
 
@@ -66,13 +77,6 @@ class LIME_API LitePCIe
 
     bool WaitRx();
     bool WaitTx();
-
-    void CacheFlush(bool isTx, bool toDevice, uint16_t index);
-
-  protected:
-    std::filesystem::path mFilePath;
-    DMAInfo mDMA;
-    int mFileDescriptor;
 };
 
 } // namespace lime

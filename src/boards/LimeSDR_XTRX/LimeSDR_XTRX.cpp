@@ -378,7 +378,7 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
 
     try
     {
-        mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mStreamPort, mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
+        mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
         if (mCallback_logMessage)
             mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
         std::shared_ptr<LitePCIe> trxPort{ mStreamPort };

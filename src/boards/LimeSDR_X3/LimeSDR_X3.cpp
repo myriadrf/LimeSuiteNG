@@ -871,8 +871,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) = new TRXLooper_PCIE(
-        mTRXStreamPorts.at(moduleIndex), mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
+    mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
     if (mCallback_logMessage)
         mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
     std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };

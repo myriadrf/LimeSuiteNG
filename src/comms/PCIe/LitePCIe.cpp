@@ -90,7 +90,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
                 const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
                 throw std::runtime_error(msg);
             }
-            uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
+            auto buf = static_cast<std::byte*>(mmap(NULL,
                 info.dma_rx_buf_size * info.dma_rx_buf_count,
                 PROT_READ,
                 MAP_SHARED,
@@ -114,7 +114,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
                 const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
                 throw std::runtime_error(msg);
             }
-            uint8_t* buf = static_cast<uint8_t*>(mmap(NULL,
+            auto buf = static_cast<std::byte*>(mmap(NULL,
                 info.dma_tx_buf_size * info.dma_tx_buf_count,
                 PROT_WRITE,
                 MAP_SHARED,
@@ -132,7 +132,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
     return OpStatus::Success;
 }
 
-bool LitePCIe::IsOpen()
+bool LitePCIe::IsOpen() const
 {
     return mFileDescriptor >= 0;
 }
@@ -181,8 +181,6 @@ int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 
-    //if ((status & 0xFF00) == 0)
-    //throw std::runtime_error("LitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
 }
 
@@ -219,7 +217,7 @@ void LitePCIe::TxDMAEnable(bool enabled)
         lime::error("Failed DMA reader ioctl. err(%i) %s", errno, strerror(errno));
 }
 
-LitePCIe::DMAState LitePCIe::GetRxDMAState()
+IDMA::DMAState LitePCIe::GetRxDMAState()
 {
     litepcie_ioctl_dma_writer dma;
     memset(&dma, 0, sizeof(litepcie_ioctl_dma_writer));
@@ -228,13 +226,13 @@ LitePCIe::DMAState LitePCIe::GetRxDMAState()
     if (ret)
         throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters"s);
     DMAState state;
-    state.enabled = dma.enable;
-    state.hwIndex = dma.hw_count;
-    state.swIndex = dma.sw_count;
+    state.isEnabled = dma.enable;
+    state.hardwareIndex = dma.hw_count;
+    state.softwareIndex = dma.sw_count;
     return state;
 }
 
-LitePCIe::DMAState LitePCIe::GetTxDMAState()
+IDMA::DMAState LitePCIe::GetTxDMAState()
 {
     litepcie_ioctl_dma_reader dma;
     memset(&dma, 0, sizeof(litepcie_ioctl_dma_reader));
@@ -243,9 +241,9 @@ LitePCIe::DMAState LitePCIe::GetTxDMAState()
     if (ret)
         throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters"s);
     DMAState state;
-    state.enabled = dma.enable;
-    state.hwIndex = dma.hw_count;
-    state.swIndex = dma.sw_count;
+    state.isEnabled = dma.enable;
+    state.hardwareIndex = dma.hw_count;
+    state.softwareIndex = dma.sw_count;
     return state;
 }
 
@@ -276,10 +274,7 @@ bool LitePCIe::WaitRx()
             return true;
     }
     auto state = GetRxDMAState();
-    if (state.hwIndex - state.swIndex != 0)
-        return true;
-    else
-        return false;
+    return state.hardwareIndex - state.softwareIndex != 0;
 }
 
 bool LitePCIe::WaitTx()
@@ -315,7 +310,7 @@ int LitePCIe::SetRxDMAState(DMAState s)
 {
     litepcie_ioctl_mmap_dma_update sub;
     memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
-    sub.sw_count = s.swIndex;
+    sub.sw_count = s.softwareIndex;
     sub.buffer_size = mDMA.bufferSize;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
     if (ret < 0)
@@ -329,9 +324,9 @@ int LitePCIe::SetTxDMAState(DMAState s)
 {
     litepcie_ioctl_mmap_dma_update sub;
     memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
-    sub.sw_count = s.swIndex;
+    sub.sw_count = s.softwareIndex;
     sub.buffer_size = s.bufferSize;
-    sub.genIRQ = s.genIRQ;
+    sub.genIRQ = s.generateIRQ;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
     // if (ret < 0)
     // {
@@ -340,16 +335,91 @@ int LitePCIe::SetTxDMAState(DMAState s)
     return ret;
 }
 
-void LitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
+void LitePCIe::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index)
 {
     litepcie_cache_flush sub;
     memset(&sub, 0, sizeof(litepcie_cache_flush));
-    sub.isTx = isTx;
-    sub.toDevice = toDevice;
+    sub.isTx = samplesDirection == TRXDir::Tx;
+    sub.toDevice = dataDirection == DataTransferDirection::HostToDevice;
     sub.bufferIndex = index;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_CACHE_FLUSH, &sub);
     if (ret < 0)
     {
         std::string msg = "DMA reader failed update"s;
+    }
+}
+
+IDMA::DMAState LitePCIe::GetState(TRXDir direction)
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return GetRxDMAState();
+    case TRXDir::Tx:
+        return GetTxDMAState();
+    }
+}
+
+bool LitePCIe::Wait(TRXDir direction)
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return WaitRx();
+    case TRXDir::Tx:
+        return WaitTx();
+    }
+}
+
+void LitePCIe::Disable(TRXDir direction)
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return RxDMAEnable(false, 0, 0);
+    case TRXDir::Tx:
+        return TxDMAEnable(false);
+    }
+}
+
+void LitePCIe::RxEnable(uint32_t bufferSize, uint8_t irqPeriod)
+{
+    return RxDMAEnable(true, bufferSize, irqPeriod);
+}
+
+void LitePCIe::TxEnable()
+{
+    return TxDMAEnable(true);
+}
+
+int LitePCIe::GetBufferSize() const
+{
+    return mDMA.bufferSize;
+}
+
+int LitePCIe::GetBufferCount() const
+{
+    return mDMA.bufferCount;
+}
+
+std::byte* LitePCIe::GetMemoryAddress(TRXDir direction) const
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return mDMA.rxMemory;
+    case TRXDir::Tx:
+        return mDMA.txMemory;
+    }
+}
+
+int LitePCIe::SetState(TRXDir direction, DMAState state)
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return SetRxDMAState(state);
+    case TRXDir::Tx:
+        return SetTxDMAState(state);
     }
 }

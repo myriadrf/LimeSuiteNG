@@ -6,7 +6,7 @@
 namespace lime {
 
 template<class SrcT, class DestT>
-static int DeinterleaveMIMO(DestT* const* dest, const uint8_t* buffer, uint32_t length, const DataConversion& fmt)
+static int DeinterleaveMIMO(DestT* const* dest, const std::byte* buffer, uint32_t length, const DataConversion& fmt)
 {
     int samplesProduced = length / sizeof(SrcT);
     const bool mimo = fmt.channelCount > 1;
@@ -21,7 +21,7 @@ static int DeinterleaveMIMO(DestT* const* dest, const uint8_t* buffer, uint32_t 
 }
 
 template<class DestT>
-static int DeinterleaveCompressionType(DestT* const* dest, const uint8_t* buffer, uint32_t length, const DataConversion& fmt)
+static int DeinterleaveCompressionType(DestT* const* dest, const std::byte* buffer, uint32_t length, const DataConversion& fmt)
 {
     const bool compressed = fmt.srcFormat == DataFormat::I12;
     if (!compressed)
@@ -30,7 +30,7 @@ static int DeinterleaveCompressionType(DestT* const* dest, const uint8_t* buffer
         return DeinterleaveMIMO<complex12packed_t>(dest, buffer, length, fmt);
 }
 
-int Deinterleave(void* const* dest, const uint8_t* buffer, uint32_t length, const DataConversion& fmt)
+int Deinterleave(void* const* dest, const std::byte* buffer, uint32_t length, const DataConversion& fmt)
 {
     int samplesProduced;
     switch (fmt.destFormat)
@@ -53,7 +53,7 @@ int Deinterleave(void* const* dest, const uint8_t* buffer, uint32_t length, cons
 }
 
 template<class DestT, class SrcT>
-static int InterleaveMIMO(uint8_t* buffer, const SrcT* const* input, uint32_t count, const DataConversion& fmt)
+static int InterleaveMIMO(std::byte* buffer, const SrcT* const* input, uint32_t count, const DataConversion& fmt)
 {
     DestT* dest = reinterpret_cast<DestT*>(buffer);
     int bytesProduced = count * sizeof(DestT);
@@ -69,7 +69,7 @@ static int InterleaveMIMO(uint8_t* buffer, const SrcT* const* input, uint32_t co
 }
 
 template<class SrcT>
-static int InterleaveCompressionType(uint8_t* dest, const SrcT* const* src, uint32_t count, const DataConversion& fmt)
+static int InterleaveCompressionType(std::byte* dest, const SrcT* const* src, uint32_t count, const DataConversion& fmt)
 {
     const bool compressed = fmt.destFormat == DataFormat::I12;
     if (!compressed)
@@ -78,7 +78,7 @@ static int InterleaveCompressionType(uint8_t* dest, const SrcT* const* src, uint
         return InterleaveMIMO<complex12packed_t>(dest, src, count, fmt);
 }
 
-int Interleave(uint8_t* dest, const void* const* src, uint32_t count, const DataConversion& fmt)
+int Interleave(std::byte* dest, const void* const* src, uint32_t count, const DataConversion& fmt)
 {
     int bytesProduced;
     switch (fmt.srcFormat)
