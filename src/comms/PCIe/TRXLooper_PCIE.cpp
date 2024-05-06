@@ -618,7 +618,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
         IDMA::DMAState dma{ mRxArgs.port->GetState(TRXDir::Rx) };
         if (dma.hardwareIndex != lastHwIndex)
         {
-            const uint32_t buffersTransferred{ dma.hardwareIndex - lastHwIndex };
+            const uint8_t buffersTransferred{ static_cast<uint8_t>(dma.hardwareIndex - lastHwIndex) };
             const int bytesTransferred = buffersTransferred * readSize;
             assert(bytesTransferred > 0);
             Bps += bytesTransferred;
