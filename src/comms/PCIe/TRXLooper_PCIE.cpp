@@ -197,7 +197,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
     int64_t totalBytesSent = 0; //for data rate calculation
     int packetsSent = 0;
     int totalPacketSent = 0;
-    std::size_t maxFIFOlevel = 0;
     int64_t lastTS = 0;
 
     struct PendingWrite {
@@ -254,9 +253,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
             totalBytesSent += dataBlock.size;
             pendingWrites.pop();
         }
-
-        // get input data
-        maxFIFOlevel = std::max(maxFIFOlevel, fifo->size());
 
         // collect and transform samples data to output buffer
         while (!outputReady && output.hasSpace() && !mTx.terminate.load(std::memory_order_relaxed))
@@ -453,7 +449,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
             packetsSent = 0;
             totalBytesSent = 0;
             mTx.stats.dataRate_Bps = dataRate;
-            maxFIFOlevel = 0;
         }
     }
 }
@@ -612,9 +607,6 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     SamplesPacketType* outputPkt = nullptr;
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
-        if (!outputPkt)
-            outputPkt = SamplesPacketType::ConstructSamplesPacket(
-                mRx.memPool->Allocate(outputPktSize), samplesInPkt * mRxArgs.packetsToBatch, outputSampleSize);
         IDMA::DMAState dma{ mRxArgs.port->GetState(TRXDir::Rx) };
         if (dma.hardwareIndex != lastHwIndex)
         {
@@ -676,27 +668,30 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
             overrun.add(1);
         }
 
-        if (!buffersAvailable)
+        if (buffersAvailable == 0)
         {
-            if (mConfig.extraConfig.usePoll)
+            if (mConfig.extraConfig.usePoll && !mRxArgs.port->Wait(TRXDir::Rx))
             {
-                if (mRxArgs.port->Wait(TRXDir::Rx))
-                {
-                    continue;
-                }
-                else
-                {
-                    std::this_thread::yield();
-                }
+                std::this_thread::yield();
             }
+
             continue;
         }
 
-        mRxArgs.port->CacheFlush(TRXDir::Rx, DataTransferDirection::DeviceToHost, dma.softwareIndex % bufferCount);
-        const std::byte* buffer{ dmaBuffers[dma.softwareIndex % bufferCount] };
+        const uint32_t currentBufferIndex{ dma.softwareIndex % bufferCount };
+        mRxArgs.port->CacheFlush(TRXDir::Rx, DataTransferDirection::DeviceToHost, currentBufferIndex);
+        const std::byte* buffer{ dmaBuffers.at(currentBufferIndex) };
         const FPGA_RxDataPacket* pkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
-        if (outputPkt)
-            outputPkt->timestamp = pkt->counter;
+
+        if (outputPkt == nullptr)
+        {
+            outputPkt = SamplesPacketType::ConstructSamplesPacket(
+                mRx.memPool->Allocate(outputPktSize), samplesInPkt * mRxArgs.packetsToBatch, outputSampleSize);
+        }
+
+        assert(outputPkt != nullptr);
+
+        outputPkt->timestamp = pkt->counter;
 
         const int srcPktCount = mRxArgs.packetsToBatch;
         for (int i = 0; i < srcPktCount; ++i)
@@ -720,35 +715,32 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
         stats.timestamp = expectedTS;
         mRx.lastTimestamp.store(expectedTS, std::memory_order_relaxed);
 
-        if (outputPkt)
+        if (mConfig.extraConfig.negateQ)
         {
-            if (mConfig.extraConfig.negateQ)
+            switch (mConfig.format)
             {
-                switch (mConfig.format)
-                {
-                case DataFormat::I16:
-                    outputPkt->Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
-                    break;
-                case DataFormat::F32:
-                    outputPkt->Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
-                    break;
-                default:
-                    break;
-                }
-            }
-            if (fifo->push(outputPkt, false))
-            {
-                //maxFIFOlevel = std::max(maxFIFOlevel, (int)rxFIFO.size());
-                outputPkt = nullptr;
-            }
-            else
-            {
-                ++stats.overrun;
-                if (outputPkt)
-                    outputPkt->Reset();
+            case DataFormat::I16:
+                outputPkt->Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
+                break;
+            case DataFormat::F32:
+                outputPkt->Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
+                break;
+            default:
+                break;
             }
         }
-        mRxArgs.port->CacheFlush(TRXDir::Rx, DataTransferDirection::HostToDevice, dma.softwareIndex % bufferCount);
+
+        if (fifo->push(outputPkt, false))
+        {
+            outputPkt = nullptr;
+        }
+        else
+        {
+            ++stats.overrun;
+            outputPkt->Reset();
+        }
+
+        mRxArgs.port->CacheFlush(TRXDir::Rx, DataTransferDirection::HostToDevice, currentBufferIndex);
 
         ++dma.softwareIndex;
         mRxArgs.port->SetState(TRXDir::Rx, dma);

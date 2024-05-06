@@ -262,17 +262,19 @@ bool LitePCIe::WaitRx()
         const std::string msg = "DMA writer poll errno("s + std::to_string(errno) + ") "s + strerror(errno);
         if (errno == EINTR)
             return false;
-        //throw std::runtime_error(msg);
+        throw std::runtime_error(msg);
     }
-    else if (ret == 0)
+
+    if (ret != 0 && desc.revents & POLLIN)
     {
-        //lime::error("PollRx timeout"s);
+        return true;
     }
-    else
+
+    if (ret == 0)
     {
-        if (desc.revents & POLLIN)
-            return true;
+        lime::error("PollRx timeout"s);
     }
+
     auto state = GetRxDMAState();
     return state.hardwareIndex - state.softwareIndex != 0;
 }
@@ -295,15 +297,14 @@ bool LitePCIe::WaitTx()
         const std::string msg = "DMA reader poll errno("s + std::to_string(errno) + ") "s + strerror(errno);
         throw std::runtime_error(msg);
     }
-    else if (ret == 0)
+
+    if (ret == 0)
     {
-        //lime::error("PollTx timeout"s);
+        lime::error("PollTx timeout"s);
+        return false;
     }
-    else
-    {
-        return desc.revents & POLLOUT;
-    }
-    return ret > 0;
+
+    return desc.revents & POLLOUT;
 }
 
 int LitePCIe::SetRxDMAState(DMAState s)

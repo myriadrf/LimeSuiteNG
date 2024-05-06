@@ -79,6 +79,9 @@ struct FPGA_TxDataPacket {
     uint8_t data[4080];
 };
 
+static_assert(sizeof(FPGA_TxDataPacket) == 4096);
+static_assert(sizeof(FPGA_TxDataPacket) == sizeof(FPGA_RxDataPacket));
+
 /** @brief Data structure used for interacting with the header of sample stream packets. */
 struct StreamHeader {
     StreamHeader() { Clear(); }
@@ -119,6 +122,8 @@ struct StreamHeader {
     int64_t
         counter; // should be unsigned, but that's prone to underflow during arithmetic and would choke FPGA, packets would not be sent
 };
+
+static_assert(sizeof(StreamHeader) == 16);
 
 } // namespace lime
 
