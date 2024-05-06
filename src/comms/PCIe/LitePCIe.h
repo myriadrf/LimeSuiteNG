@@ -26,8 +26,8 @@ class LIME_API LitePCIe : public IDMA
     bool IsOpen() const override;
 
     // Write/Read for communicating to control end points (SPI, I2C...)
-    int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
-    int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
+    virtual int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
+    virtual int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
 
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
