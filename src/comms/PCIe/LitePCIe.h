@@ -1,12 +1,13 @@
-#pragma once
-#include <string>
-#include <mutex>
-#include <atomic>
-#include <vector>
-#include <filesystem>
+#ifndef LIME_LITEPCIE_H
+#define LIME_LITEPCIE_H
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
+
+#include <cstdint>
+#include <filesystem>
+#include <vector>
+#include <string>
 
 namespace lime {
 
@@ -24,17 +25,11 @@ class LIME_API LitePCIe
     bool IsOpen();
 
     // Write/Read for communicating to control end points (SPI, I2C...)
-    virtual int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
-    virtual int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
-
-    // Write/Read for samples streaming
-    int WriteRaw(const uint8_t* buffer, int length, int timeout_ms = 100);
-    int ReadRaw(uint8_t* buffer, int length, int timeout_ms = 100);
+    int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
+    int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
 
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
-
-    int GetFd() const { return mFileDescriptor; };
 
     void RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod);
     void TxDMAEnable(bool enabled);
@@ -53,7 +48,7 @@ class LIME_API LitePCIe
         int bufferSize;
         int bufferCount;
     };
-    DMAInfo GetDMAInfo() { return mDMA; };
+    DMAInfo GetDMAInfo() { return mDMA; }
 
     /** @brief Structure for holding the current state of the Direct Memory Access (DMA). */
     struct DMAState {
@@ -78,7 +73,8 @@ class LIME_API LitePCIe
     std::filesystem::path mFilePath;
     DMAInfo mDMA;
     int mFileDescriptor;
-    bool isConnected;
 };
 
 } // namespace lime
+
+#endif // LIME_LITEPCIE_H

@@ -50,7 +50,6 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 LitePCIe::LitePCIe()
     : mFilePath()
     , mFileDescriptor(-1)
-    , isConnected(false)
 {
 }
 
@@ -68,7 +67,6 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
     mFileDescriptor = open(mFilePath.c_str(), flags);
     if (mFileDescriptor < 0)
     {
-        isConnected = false;
         lime::error("LitePCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
         // TODO: convert errno to OpStatus
         return OpStatus::FileNotFound;
@@ -131,7 +129,6 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
         }
     }
 
-    isConnected = true;
     return OpStatus::Success;
 }
 
@@ -187,139 +184,6 @@ int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
     //if ((status & 0xFF00) == 0)
     //throw std::runtime_error("LitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
-}
-
-int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
-{
-    if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened"s);
-    auto t1 = chrono::high_resolution_clock::now();
-    int bytesRemaining = length;
-    while (bytesRemaining > 0 &&
-           std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms)
-    {
-        int bytesOut = write(mFileDescriptor, buffer, bytesRemaining);
-
-        if (bytesOut < 0)
-        {
-            switch (errno)
-            {
-            case EAGAIN:
-                bytesOut = 0;
-                break;
-            case EINTR:
-                lime::error("Write EINTR"s);
-                continue;
-            default:
-                lime::error("Write default"s);
-                return errno;
-            }
-        }
-        if (bytesOut == 0)
-        {
-            pollfd desc;
-            desc.fd = mFileDescriptor;
-            desc.events = POLLOUT;
-
-            const int pollTimeout =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count();
-            if (pollTimeout <= 0)
-                break;
-            lime::debug("poll for %ims", pollTimeout);
-            int ret = poll(&desc, 1, pollTimeout);
-            if (ret < 0)
-            {
-                lime::error("Write poll errno(%i) %s", errno, strerror(errno));
-                return -errno;
-            }
-            else if (ret == 0) // timeout
-            {
-                lime::error("Write poll timeout %i", pollTimeout);
-                break;
-            }
-            continue;
-        }
-        bytesRemaining -= bytesOut;
-        buffer += bytesOut;
-    }
-
-    return length - bytesRemaining;
-}
-
-int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
-{
-    if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened"s);
-
-    int bytesRemaining = length;
-    uint8_t* dest = buffer;
-    auto t1 = chrono::high_resolution_clock::now();
-    do
-    {
-        int bytesIn = read(mFileDescriptor, dest, bytesRemaining);
-
-        if (bytesIn < 0)
-        {
-            switch (errno)
-            {
-            case EAGAIN:
-                bytesIn = 0;
-                return length - bytesRemaining;
-            case EINTR:
-                lime::error("Read EINTR"s);
-                continue;
-            default:
-                lime::error("Read default"s);
-                return -errno;
-            }
-        }
-        if (bytesIn == 0)
-        {
-            break;
-            pollfd desc;
-            desc.fd = mFileDescriptor;
-            desc.events = POLLIN;
-
-            const int pollTimeout =
-                timeout_ms -
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count();
-            if (pollTimeout <= 0)
-            {
-                lime::error("Read poll timeout of %i", pollTimeout);
-                return length - bytesRemaining;
-            }
-            int ret = poll(&desc, 1, pollTimeout);
-            if (ret < 0)
-            {
-                lime::error("Read poll errno(%i) %s", errno, strerror(errno));
-                return -errno;
-            }
-            else if (ret == 0) // timeout
-            {
-                lime::error("Read poll timeout %i", timeout_ms);
-                break;
-            }
-            continue;
-        }
-#ifdef EXTRA_CHECKS
-        if (bytesIn > bytesRemaining)
-        {
-            lime::error("LitePCIe::ReadRaw read expected(%i), returned(%i)", bytesRemaining, bytesIn);
-            return -1;
-        }
-#endif
-        bytesRemaining -= bytesIn;
-        dest += bytesIn;
-    } while (bytesRemaining > 0 &&
-             std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
-#ifdef EXTRA_CHECKS
-    // if (bytesRemaining > 0)
-    //     lime::error("LitePCIe::ReadRaw %i bytes remaining after timeout", bytesRemaining);
-    // auto rdTime = std::chrono::duration_cast<std::chrono::microseconds>(chrono::high_resolution_clock::now() - t1).count();
-    // if(rdTime > 100)
-    //     lime::error("ReadRaw too long %i", rdTime);
-#endif
-    return length - bytesRemaining;
 }
 
 void LitePCIe::RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod)
@@ -489,44 +353,3 @@ void LitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
         std::string msg = "DMA reader failed update"s;
     }
 }
-
-/*
-// B.J.
-int LitePCIe::ReadDPDBuffer(char *buffer, unsigned length)
-{
-
-    int totalBytesReaded = 0;
-    uint16_t interface_cfg;
-
-    ReadRegister(0x01A1, interface_cfg);  // CAP_RESETN
-    interface_cfg = (interface_cfg & ~0x10); // reset bit 4
-    WriteRegister(0x01A1, interface_cfg);
-
-    ReadRegister(0x01A1, interface_cfg);
-    interface_cfg = (interface_cfg | 0x10); // set bit 4
-    WriteRegister(0x01A1, interface_cfg);
-
-    StartReading(buffer, 2, 60);
-
-    uint16_t len = length / 24;
-    //std::cout << "[INFO] length: "sv << len << std::endl;
-    WriteRegister(0x01A0, len); // length
-
-    ReadRegister(0x01A1, interface_cfg);  // CAP_EN
-    interface_cfg = (interface_cfg | 0x1); // set lsb
-    WriteRegister(0x01A1, interface_cfg);
-
-    for (int i = 0; i < 20; i++) // wait some time
-        ReadRegister(0x01A1, interface_cfg);
-
-    ReadRegister(0x01A1, interface_cfg);
-    interface_cfg = (interface_cfg & ~0x1); // reset lsb
-    WriteRegister(0x01A1, interface_cfg);
-
-    totalBytesReaded = ReceiveData2(buffer, length, 2, 100);
-
-    AbortReading(2);
-    return totalBytesReaded;
-}
-// end B.J.
-*/
