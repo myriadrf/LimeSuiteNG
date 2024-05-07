@@ -838,8 +838,13 @@ OpStatus LimeSDR_XTRX::LMS7002_Test(OEMTestReporter& reporter, TestData& results
     return OpStatus::Success;
 }
 
-OpStatus LimeSDR_XTRX::RunTestConfig(
-    OEMTestReporter& reporter, TestData::RFData* results, const std::string& name, double LOFreq, int gain, int rxPath)
+OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
+    TestData::RFData* results,
+    const std::string& name,
+    double LOFreq,
+    int gain,
+    int rxPath,
+    double expected_dBFS)
 {
     SDRConfig config;
     config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = 61.44e6;
@@ -871,7 +876,7 @@ OpStatus LimeSDR_XTRX::RunTestConfig(
     args.rfTestTolerance_dB = 6;
     args.rfTestTolerance_Hz = 50e3;
     args.sampleRate = config.channel[0].rx.sampleRate;
-    args.expectedPeakval_dBFS = -15;
+    args.expectedPeakval_dBFS = expected_dBFS;
     args.expectedPeakFrequency = tx_offset;
     args.moduleIndex = 0;
 
@@ -912,9 +917,9 @@ OpStatus LimeSDR_XTRX::RFTest(OEMTestReporter& reporter, TestData& results)
     reporter.OnStepUpdate(test, "->Init Done");
     std::vector<OpStatus> statuses(3);
 
-    statuses.push_back(RunTestConfig(reporter, results.lnal, "TX_2->LNA_L", 1000e6, 0, 2));
-    statuses.push_back(RunTestConfig(reporter, results.lnaw, "TX_2->LNA_W", 2000e6, 14, 3));
-    statuses.push_back(RunTestConfig(reporter, results.lnah, "TX_1->LNA_H", 3500e6, 35, 1));
+    statuses.push_back(RunTestConfig(reporter, results.lnal, "TX_2->LNA_L", 1000e6, 0, 2, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnaw, "TX_2->LNA_W", 2000e6, 14, 3, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnah, "TX_1->LNA_H", 3500e6, 35, 1, -15));
 
     for (OpStatus s : statuses)
     {

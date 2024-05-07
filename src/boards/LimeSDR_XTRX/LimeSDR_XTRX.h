@@ -80,8 +80,13 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     OpStatus VCTCXOTest(OEMTestReporter& reporter, TestData& results);
     OpStatus GNSSTest(OEMTestReporter& reporter, TestData& results);
     OpStatus LMS7002_Test(OEMTestReporter& reporter, TestData& results);
-    OpStatus RunTestConfig(
-        OEMTestReporter& reporter, TestData::RFData* results, const std::string& name, double LOFreq, int gain, int rxPath);
+    OpStatus RunTestConfig(OEMTestReporter& reporter,
+        TestData::RFData* results,
+        const std::string& name,
+        double LOFreq,
+        int gain,
+        int rxPath,
+        double expected_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
   private:
