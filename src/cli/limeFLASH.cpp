@@ -78,27 +78,31 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
     }
     if (hasCompleted)
         cout << endl;
-    if (terminateProgress)
+    if (!terminateProgress)
     {
-        printf("\nAborting programing will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
-        fflush(stdout);
-        std::string answer;
-        while (1)
+        return false;
+    }
+
+    printf("\nAborting programing will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
+    fflush(stdout);
+    std::string answer;
+    while (1)
+    {
+        std::getline(std::cin, answer);
+        if (answer[0] == 'y')
         {
-            std::getline(std::cin, answer);
-            if (answer[0] == 'y')
-            {
-                cout << "\naborting..."sv << endl;
-                return true;
-            }
-            else if (answer[0] == 'n')
-            {
-                terminateProgress = false;
-                cout << "\ncontinuing..."sv << endl;
-                return false;
-            }
-            else
-                cout << "Invalid option("sv << answer << "), [y/n]: "sv;
+            cout << "\naborting..."sv << endl;
+            return true;
+        }
+        else if (answer[0] == 'n')
+        {
+            terminateProgress = false;
+            cout << "\ncontinuing..."sv << endl;
+            return false;
+        }
+        else
+        {
+            cout << "Invalid option("sv << answer << "), [y/n]: "sv;
         }
     }
     return false;

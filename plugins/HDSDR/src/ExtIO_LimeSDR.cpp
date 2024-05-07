@@ -142,12 +142,15 @@ static void error(lime::LogLevel lvl, const std::string& msg)
     DbgPrintf(msg.c_str());
     DbgPrintf("\n");
 #else
-    if (isErrorLoggingEnabled && lvl < lime::LogLevel::Warning) {
-        if (lvl == lime::LogLevel::Critical) {
-            ExtIOCallback(-1, extHw_Stop, 0, NULL);
-        }
-        DbgPrintf(msg.c_str());
+    if (!isErrorLoggingEnabled || lvl >= lime::LogLevel::Warning) {
+        return;
     }
+
+    if (lvl == lime::LogLevel::Critical) {
+        ExtIOCallback(-1, extHw_Stop, 0, NULL);
+    }
+
+    DbgPrintf(msg.c_str());
 #endif
 }
 //---------------------------------------------------------------------------
@@ -228,39 +231,39 @@ static bool DisableLPF()
 //---------------------------------------------------------------------------
 static bool EnableLPF()
 {
-    if (LPFBandwidth > minimumLPFBandwidth && LPFBandwidth <= maximumLPFBandwidth) {
-        int64_t freq = -1;
-
-        if (isRunning) {
-            freq = GetHWLO64();
-            StopHW();
-        }
-
-        if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
-            return false;
-        }
-
-        if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, LPFBandwidth) != lime::OpStatus::Success) {
-            return false;
-        }
-
-        if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
-            return false;
-        }
-        isLPFEnabled = true;
-
-        if (LPFBandwidth > minimumCalibrationBandwidth) {
-            calibrationBandwidth = LPFBandwidth;
-        } else {
-            calibrationBandwidth = minimumCalibrationBandwidth;
-        }
-
-        if (freq != -1) {
-            StartHW64(freq);
-        }
-    } else {
+    if (LPFBandwidth <= minimumLPFBandwidth || LPFBandwidth > maximumLPFBandwidth) {
         DbgPrintf("RxLPF frequency out of range, available range from 1.4 to 130 MHz");
         return false;
+    }
+
+    int64_t freq = -1;
+
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, 3) != lime::OpStatus::Success) {
+        return false;
+    }
+
+    if (device->SetLowPassFilter(0, lime::TRXDir::Rx, channel, LPFBandwidth) != lime::OpStatus::Success) {
+        return false;
+    }
+
+    if (device->SetParameter(0, 0, "G_TIA_RFE"s, TIA) != lime::OpStatus::Success) {
+        return false;
+    }
+    isLPFEnabled = true;
+
+    if (LPFBandwidth > minimumCalibrationBandwidth) {
+        calibrationBandwidth = LPFBandwidth;
+    } else {
+        calibrationBandwidth = minimumCalibrationBandwidth;
+    }
+
+    if (freq != -1) {
+        StartHW64(freq);
     }
 
     return true;
@@ -419,8 +422,9 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* LNA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_LNA) == reinterpret_cast<HWND>(lParam)) {
-        if (LNA != 16 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_LNA, TBM_GETPOS, 0, NULL)) {
-            LNA = 16 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_LNA, TBM_GETPOS, 0, NULL);
+        auto newLNA = 16 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_LNA, TBM_GETPOS, 0, NULL);
+        if (LNA != newLNA) {
+            LNA = newLNA;
             std::string lna_value = std::to_string(LNA > 8 ? (LNA - 15) : (LNA - 11) * 3); // Calculate from index to dB
             lna_value.append(" dB"sv);
             Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_LNA), lna_value.c_str());
@@ -437,8 +441,9 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     /* TIA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_TIA) == reinterpret_cast<HWND>(lParam)) {
-        if (TIA != 4 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_TIA, TBM_GETPOS, 0, NULL)) {
-            TIA = 4 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_TIA, TBM_GETPOS, 0, NULL);
+        auto newTIA = 4 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_TIA, TBM_GETPOS, 0, NULL);
+        if (TIA != newTIA) {
+            TIA = newTIA;
             std::string tia_value = std::to_string((TIA == 3) ? 0 : (TIA == 2) ? -3 : -12); // Calculate from index to dB
             tia_value.append(" dB"sv);
             Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_TIA), tia_value.c_str());
@@ -455,8 +460,9 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     /* PGA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_PGA) == reinterpret_cast<HWND>(lParam)) {
-        if (PGA != 31 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_PGA, TBM_GETPOS, 0, NULL)) {
-            PGA = 31 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_PGA, TBM_GETPOS, 0, NULL);
+        auto newPGA = 31 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_PGA, TBM_GETPOS, 0, NULL);
+        if (PGA != newPGA) {
+            PGA = newPGA;
             std::string pga_value = std::to_string(PGA - 12); // Calculate from index to dB
             pga_value.append(" dB"sv);
             Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_PGA), pga_value.c_str());
@@ -480,265 +486,265 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 static int OnAntennaChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
-        int currentSel = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
-        antennaSelect = ComboBox_GetItemData(GET_WM_COMMAND_HWND(wParam, lParam), currentSel);
-
-        int64_t freq = -1;
-        if (isRunning) {
-            freq = GetHWLO64();
-            StopHW();
-        }
-
-        if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
-            return FALSE;
-        }
-
-        PerformCalibration(false);
-
-        if (freq != -1) {
-            StartHW64(freq);
-        }
-
-        UpdateDialog();
-
-        return TRUE;
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != CBN_SELCHANGE) {
+        return FALSE;
     }
-    return FALSE;
+
+    int currentSel = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
+    antennaSelect = ComboBox_GetItemData(GET_WM_COMMAND_HWND(wParam, lParam), currentSel);
+
+    int64_t freq = -1;
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+
+    PerformCalibration(false);
+
+    if (freq != -1) {
+        StartHW64(freq);
+    }
+
+    UpdateDialog();
+
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
-        if (currentDeviceIndex != ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam))) {
-            int64_t freq = -1;
-
-            if (isRunning) {
-                freq = GetHWLO64();
-                StopHW();
-            }
-
-            lime::DeviceRegistry::freeDevice(device);
-            device = nullptr;
-
-            currentDeviceIndex = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
-
-            /* Default settings */
-            channel = 0;
-            sampleRateIndex = 1;
-            antennaSelect = 1;
-
-            LNA = 10;
-            TIA = 3;
-            PGA = 16;
-
-            isLPFEnabled = true;
-            LPFBandwidth = sampleRates.at(sampleRateIndex);
-            calibrationBandwidth = sampleRates.at(sampleRateIndex);
-
-            if (!InitializeLMS()) {
-                return FALSE;
-            }
-
-            /* Remove all channel selections */
-            while (ComboBox_GetCount(GetDlgItem(hwndDlg, IDC_COMBO_CHAN)) != 0) {
-                ComboBox_DeleteString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), 0);
-            }
-
-            /* Add channel selections */
-            for (uint8_t i = 0; i < numberOfChannels; i++) {
-                std::string channels = "RX"s + std::to_string(i + 1);
-                ComboBox_AddString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), channels.c_str());
-            }
-
-            while (ComboBox_GetCount(GetDlgItem(hwndDlg, IDC_COMBO_ANT)) != 0) {
-                ComboBox_DeleteString(GetDlgItem(hwndDlg, IDC_COMBO_ANT), 0);
-            }
-
-            const lime::SDRDescriptor& descriptor = device->GetDescriptor();
-
-            /* Add antenna choices */
-            for (std::size_t i = 0; i < descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).size(); ++i) {
-                ComboBox_AddString(
-                    GetDlgItem(hwndDlg, IDC_COMBO_ANT), descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).at(i).c_str());
-                ComboBox_SetItemData(GetDlgItem(hwndDlg, IDC_COMBO_ANT), i, i);
-            }
-
-            UpdateDialog();
-
-            /* Change last used device name */
-            lastUsedDeviceName = descriptor.name;
-
-            ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
-            ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
-
-            if (freq != -1) {
-                StartHW64(freq);
-            }
-
-            return TRUE;
-        }
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != CBN_SELCHANGE
+        || currentDeviceIndex == ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam))) {
+        return FALSE;
     }
-    return FALSE;
+
+    int64_t freq = -1;
+
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    lime::DeviceRegistry::freeDevice(device);
+    device = nullptr;
+
+    currentDeviceIndex = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
+
+    /* Default settings */
+    channel = 0;
+    sampleRateIndex = 1;
+    antennaSelect = 1;
+
+    LNA = 10;
+    TIA = 3;
+    PGA = 16;
+
+    isLPFEnabled = true;
+    LPFBandwidth = sampleRates.at(sampleRateIndex);
+    calibrationBandwidth = sampleRates.at(sampleRateIndex);
+
+    if (!InitializeLMS()) {
+        return FALSE;
+    }
+
+    /* Remove all channel selections */
+    while (ComboBox_GetCount(GetDlgItem(hwndDlg, IDC_COMBO_CHAN)) != 0) {
+        ComboBox_DeleteString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), 0);
+    }
+
+    /* Add channel selections */
+    for (uint8_t i = 0; i < numberOfChannels; i++) {
+        std::string channels = "RX"s + std::to_string(i + 1);
+        ComboBox_AddString(GetDlgItem(hwndDlg, IDC_COMBO_CHAN), channels.c_str());
+    }
+
+    while (ComboBox_GetCount(GetDlgItem(hwndDlg, IDC_COMBO_ANT)) != 0) {
+        ComboBox_DeleteString(GetDlgItem(hwndDlg, IDC_COMBO_ANT), 0);
+    }
+
+    const lime::SDRDescriptor& descriptor = device->GetDescriptor();
+
+    /* Add antenna choices */
+    for (std::size_t i = 0; i < descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).size(); ++i) {
+        ComboBox_AddString(
+            GetDlgItem(hwndDlg, IDC_COMBO_ANT), descriptor.rfSOC.at(0).pathNames.at(lime::TRXDir::Rx).at(i).c_str());
+        ComboBox_SetItemData(GetDlgItem(hwndDlg, IDC_COMBO_ANT), i, i);
+    }
+
+    UpdateDialog();
+
+    /* Change last used device name */
+    lastUsedDeviceName = descriptor.name;
+
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
+    ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+
+    if (freq != -1) {
+        StartHW64(freq);
+    }
+
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int OnChannelChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == CBN_SELCHANGE) {
-        if (channel != ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam))) {
-            int64_t freq = -1;
-            if (isRunning) {
-                freq = GetHWLO64();
-                StopHW();
-            }
-
-            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, false) != lime::OpStatus::Success) {
-                return FALSE;
-            }
-            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, false) != lime::OpStatus::Success) {
-                return FALSE;
-            }
-
-            channel = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
-
-            if (device->EnableChannel(0, lime::TRXDir::Rx, channel, true) != lime::OpStatus::Success) {
-                return FALSE;
-            }
-            if (device->EnableChannel(0, lime::TRXDir::Tx, channel, true) != lime::OpStatus::Success) {
-                return FALSE;
-            }
-
-            if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
-                return FALSE;
-            }
-
-            if (isLPFEnabled) {
-                EnableLPF();
-            } else {
-                DisableLPF();
-            }
-
-            if (!SetGain()) {
-                return FALSE;
-            }
-
-            PerformCalibration(false);
-
-            if (freq != -1) {
-                StartHW64(freq);
-            }
-
-            UpdateDialog();
-
-            return TRUE;
-        }
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != CBN_SELCHANGE
+        || channel == ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam))) {
+        return FALSE;
     }
 
-    return FALSE;
+    int64_t freq = -1;
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    if (device->EnableChannel(0, lime::TRXDir::Rx, channel, false) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+    if (device->EnableChannel(0, lime::TRXDir::Tx, channel, false) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+
+    channel = ComboBox_GetCurSel(GET_WM_COMMAND_HWND(wParam, lParam));
+
+    if (device->EnableChannel(0, lime::TRXDir::Rx, channel, true) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+    if (device->EnableChannel(0, lime::TRXDir::Tx, channel, true) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+
+    if (device->SetAntenna(0, lime::TRXDir::Rx, channel, antennaSelect) != lime::OpStatus::Success) {
+        return FALSE;
+    }
+
+    if (isLPFEnabled) {
+        EnableLPF();
+    } else {
+        DisableLPF();
+    }
+
+    if (!SetGain()) {
+        return FALSE;
+    }
+
+    PerformCalibration(false);
+
+    if (freq != -1) {
+        StartHW64(freq);
+    }
+
+    UpdateDialog();
+
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int OnCalibrate(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-
-        int buffSize = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CAL_BW));
-        char* textBuffer = new char[buffSize + 1];
-
-        GetDlgItemText(hwndDlg, IDC_CAL_BW, textBuffer, buffSize + 1);
-
-        calibrationBandwidth = std::atof(textBuffer) * 1e6;
-        if (calibrationBandwidth >= minimumCalibrationBandwidth && calibrationBandwidth <= maximumCalibrationBandwidth) {
-            PerformCalibration(true);
-
-            UpdateDialog();
-        } else {
-            DbgPrintf("Frequency out of range, available range from 2.5 to 120 MHz");
-            calibrationBandwidth = sampleRates.at(sampleRateIndex);
-            if (calibrationBandwidth < minimumCalibrationBandwidth) {
-                calibrationBandwidth = minimumCalibrationBandwidth;
-            }
-            UpdateDialog();
-        }
-
-        delete[] textBuffer;
-        return TRUE;
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != BN_CLICKED) {
+        return FALSE;
     }
 
-    return FALSE;
+    int buffSize = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_CAL_BW));
+    char* textBuffer = new char[buffSize + 1];
+
+    GetDlgItemText(hwndDlg, IDC_CAL_BW, textBuffer, buffSize + 1);
+
+    calibrationBandwidth = std::atof(textBuffer) * 1e6;
+    if (calibrationBandwidth >= minimumCalibrationBandwidth && calibrationBandwidth <= maximumCalibrationBandwidth) {
+        PerformCalibration(true);
+    } else {
+        DbgPrintf("Frequency out of range, available range from 2.5 to 120 MHz");
+        calibrationBandwidth = sampleRates.at(sampleRateIndex);
+        if (calibrationBandwidth < minimumCalibrationBandwidth) {
+            calibrationBandwidth = minimumCalibrationBandwidth;
+        }
+    }
+    UpdateDialog();
+
+    delete[] textBuffer;
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int OnSet(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-        int buffSize = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_ALPF_BW));
-        char* textBuffer = new char[buffSize + 1];
-
-        GetDlgItemText(hwndDlg, IDC_ALPF_BW, textBuffer, buffSize + 1);
-
-        LPFBandwidth = std::atof(textBuffer) * 1e6;
-        EnableLPF();
-        PerformCalibration(false);
-        UpdateDialog();
-
-        delete[] textBuffer;
-        return TRUE;
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != BN_CLICKED) {
+        return FALSE;
     }
-    return FALSE;
+
+    int buffSize = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_ALPF_BW));
+    char* textBuffer = new char[buffSize + 1];
+
+    GetDlgItemText(hwndDlg, IDC_ALPF_BW, textBuffer, buffSize + 1);
+
+    LPFBandwidth = std::atof(textBuffer) * 1e6;
+    EnableLPF();
+    PerformCalibration(false);
+    UpdateDialog();
+
+    delete[] textBuffer;
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int OnLPF(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-        if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_ALPF) == BST_CHECKED) {
-            EnableLPF();
-            PerformCalibration(false);
-            UpdateDialog();
-        } else if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_ALPF) == BST_UNCHECKED) {
-            DisableLPF();
-            PerformCalibration(false);
-            UpdateDialog();
-        }
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != BN_CLICKED) {
+        return TRUE;
     }
-    return TRUE;
+
+    if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_ALPF) == BST_CHECKED) {
+        EnableLPF();
+        PerformCalibration(false);
+        UpdateDialog();
+    } else if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_ALPF) == BST_UNCHECKED) {
+        DisableLPF();
+        PerformCalibration(false);
+        UpdateDialog();
+    }
 }
 //---------------------------------------------------------------------------
 static int OnReset(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (GET_WM_COMMAND_CMD(wParam, lParam) == BN_CLICKED) {
-        int64_t freq = -1;
-        if (isRunning) {
-            freq = GetHWLO64();
-            StopHW();
-        }
-
-        /* Default settings */
-        isLPFEnabled = true;
-        channel = 0;
-        sampleRateIndex = 1;
-        LPFBandwidth = sampleRates.at(sampleRateIndex);
-        calibrationBandwidth = LPFBandwidth;
-        antennaSelect = 1;
-
-        LNA = 10;
-        TIA = 3;
-        PGA = 16;
-
-        lime::DeviceRegistry::freeDevice(device);
-        device = nullptr;
-        InitializeLMS();
-
-        ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
-        ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
-
-        if (freq != -1) {
-            StartHW64(freq);
-        }
-
-        UpdateDialog();
-
-        return TRUE;
+    if (GET_WM_COMMAND_CMD(wParam, lParam) != BN_CLICKED) {
+        return FALSE;
     }
-    return FALSE;
+
+    int64_t freq = -1;
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    /* Default settings */
+    isLPFEnabled = true;
+    channel = 0;
+    sampleRateIndex = 1;
+    LPFBandwidth = sampleRates.at(sampleRateIndex);
+    calibrationBandwidth = LPFBandwidth;
+    antennaSelect = 1;
+
+    LNA = 10;
+    TIA = 3;
+    PGA = 16;
+
+    lime::DeviceRegistry::freeDevice(device);
+    device = nullptr;
+    InitializeLMS();
+
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
+    ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+
+    if (freq != -1) {
+        StartHW64(freq);
+    }
+
+    UpdateDialog();
+
+    return TRUE;
 }
 //---------------------------------------------------------------------------
 static int CommandMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -772,21 +778,21 @@ static int CommandMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static int StaticTextColorMessage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* Calibrated text color */
-    if (GetDlgCtrlID(reinterpret_cast<HWND>(lParam)) == IDC_TEXT_CALIBRATED) {
-        HDC hdcStatic = reinterpret_cast<HDC>(wParam);
-        if (isCalibrated == CalibrationStatus::Calibrated) {
-            SetTextColor(hdcStatic, RGB(24, 135, 0));
-        } else if (isCalibrated == CalibrationStatus::NotCalibrated) {
-            SetTextColor(hdcStatic, RGB(0, 0, 0));
-        } else if (isCalibrated == CalibrationStatus::CalibrationErr) {
-            SetTextColor(hdcStatic, RGB(255, 0, 0));
-        }
-
-        SetBkColor(reinterpret_cast<HDC>(wParam), COLORREF(GetSysColor(COLOR_3DFACE)));
-        return reinterpret_cast<INT_PTR>(GetSysColorBrush(COLOR_3DFACE));
+    if (GetDlgCtrlID(reinterpret_cast<HWND>(lParam)) != IDC_TEXT_CALIBRATED) {
+        return FALSE;
     }
 
-    return FALSE;
+    HDC hdcStatic = reinterpret_cast<HDC>(wParam);
+    if (isCalibrated == CalibrationStatus::Calibrated) {
+        SetTextColor(hdcStatic, RGB(24, 135, 0));
+    } else if (isCalibrated == CalibrationStatus::NotCalibrated) {
+        SetTextColor(hdcStatic, RGB(0, 0, 0));
+    } else if (isCalibrated == CalibrationStatus::CalibrationErr) {
+        SetTextColor(hdcStatic, RGB(255, 0, 0));
+    }
+
+    SetBkColor(reinterpret_cast<HDC>(wParam), COLORREF(GetSysColor(COLOR_3DFACE)));
+    return reinterpret_cast<INT_PTR>(GetSysColorBrush(COLOR_3DFACE));
 }
 //---------------------------------------------------------------------------
 static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -913,14 +919,16 @@ int EXTIO_API StartHW64(int64_t LOfreq)
 //---------------------------------------------------------------------------
 void EXTIO_API StopHW(void)
 {
-    if (isRunning) {
-        isRunning = false;
-
-        WaitForSingleObject(threadHandle, INFINITE);
-        threadHandle = INVALID_HANDLE_VALUE;
-
-        device->StreamStop(0);
+    if (!isRunning) {
+        return;
     }
+
+    isRunning = false;
+
+    WaitForSingleObject(threadHandle, INFINITE);
+    threadHandle = INVALID_HANDLE_VALUE;
+
+    device->StreamStop(0);
 }
 //---------------------------------------------------------------------------
 void EXTIO_API CloseHW(void)
@@ -1050,41 +1058,41 @@ int EXTIO_API ExtIoGetActualSrateIdx(void) { return sampleRateIndex; }
 //---------------------------------------------------------------------------
 int EXTIO_API ExtIoSetSrate(int srate_idx)
 {
-    if (srate_idx >= 0 && srate_idx < sampleRates.size()) {
-        int64_t freq = 0;
-
-        if (isRunning) {
-            freq = GetHWLO64();
-            StopHW();
-        }
-
-        if (device->SetSampleRate(0, lime::TRXDir::Rx, 0, sampleRates.at(srate_idx), oversample) != lime::OpStatus::Success) {
-            return -1;
-        }
-
-        calibrationBandwidth = LPFBandwidth = sampleRates.at(srate_idx);
-        if (calibrationBandwidth < minimumCalibrationBandwidth) {
-            calibrationBandwidth = minimumCalibrationBandwidth;
-        }
-
-        if (isLPFEnabled) {
-            EnableLPF();
-        }
-
-        PerformCalibration(false);
-
-        if (freq != 0) {
-            StartHW64(freq);
-        }
-
-        sampleRateIndex = srate_idx;
-        ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
-
-        UpdateDialog();
-        return 0;
+    if (srate_idx < 0 && srate_idx >= sampleRates.size()) {
+        return -1; // ERROR
     }
 
-    return -1; // ERROR
+    int64_t freq = 0;
+
+    if (isRunning) {
+        freq = GetHWLO64();
+        StopHW();
+    }
+
+    if (device->SetSampleRate(0, lime::TRXDir::Rx, 0, sampleRates.at(srate_idx), oversample) != lime::OpStatus::Success) {
+        return -1;
+    }
+
+    calibrationBandwidth = LPFBandwidth = sampleRates.at(srate_idx);
+    if (calibrationBandwidth < minimumCalibrationBandwidth) {
+        calibrationBandwidth = minimumCalibrationBandwidth;
+    }
+
+    if (isLPFEnabled) {
+        EnableLPF();
+    }
+
+    PerformCalibration(false);
+
+    if (freq != 0) {
+        StartHW64(freq);
+    }
+
+    sampleRateIndex = srate_idx;
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
+
+    UpdateDialog();
+    return 0;
 }
 //---------------------------------------------------------------------------
 int EXTIO_API ExtIoGetSetting(int idx, char* description, char* value)

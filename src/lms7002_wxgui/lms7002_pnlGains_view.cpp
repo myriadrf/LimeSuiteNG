@@ -5,11 +5,12 @@
 #include "lms7002_gui_utilities.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/LMS7002M_parameters.h"
+#include "limesuiteng/LMS7002MCSR.h"
 
 #include <wx/spinctrl.h>
 
 using namespace lime;
+
 using namespace LMS7002_WXGUI;
 using namespace std::literals::string_literals;
 
@@ -185,14 +186,14 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
     chkAGC->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlGains_view::OnAGCStateChange), NULL, this);
 
-    wndId2Enum[chkTRX_GAIN_SRC] = LMS7param(TRX_GAIN_SRC);
-    wndId2Enum[cmbG_PGA_RBB] = LMS7param(G_PGA_RBB_R3);
-    wndId2Enum[cmbG_LNA_RFE] = LMS7param(G_LNA_RFE_R3);
-    wndId2Enum[cmbG_TIA_RFE] = LMS7param(G_TIA_RFE_R3);
-    wndId2Enum[cmbCG_IAMP_TBB] = LMS7param(CG_IAMP_TBB_R3);
-    wndId2Enum[cmbLOSS_LIN_TXPAD_TRF] = LMS7param(LOSS_LIN_TXPAD_R3);
-    wndId2Enum[cmbLOSS_MAIN_TXPAD_TRF] = LMS7param(LOSS_MAIN_TXPAD_R3);
-    wndId2Enum[cmbC_CTL_PGA_RBB] = LMS7param(C_CTL_PGA_RBB_R3);
+    wndId2Enum[chkTRX_GAIN_SRC] = LMS7002MCSR::TRX_GAIN_SRC;
+    wndId2Enum[cmbG_PGA_RBB] = LMS7002MCSR::G_PGA_RBB_R3;
+    wndId2Enum[cmbG_LNA_RFE] = LMS7002MCSR::G_LNA_RFE_R3;
+    wndId2Enum[cmbG_TIA_RFE] = LMS7002MCSR::G_TIA_RFE_R3;
+    wndId2Enum[cmbCG_IAMP_TBB] = LMS7002MCSR::CG_IAMP_TBB_R3;
+    wndId2Enum[cmbLOSS_LIN_TXPAD_TRF] = LMS7002MCSR::LOSS_LIN_TXPAD_R3;
+    wndId2Enum[cmbLOSS_MAIN_TXPAD_TRF] = LMS7002MCSR::LOSS_MAIN_TXPAD_R3;
+    wndId2Enum[cmbC_CTL_PGA_RBB] = LMS7002MCSR::C_CTL_PGA_RBB_R3;
 
     wxArrayString temp;
 
@@ -245,7 +246,7 @@ void lms7002_pnlGains_view::Initialize(LMS7002M* pControl)
     if (pControl == nullptr)
         return;
 
-    if (ReadParam(LMS7param(MASK)) == 0)
+    if (ReadParam(LMS7002MCSR::MASK) == 0)
     {
         chkTRX_GAIN_SRC->Enable(false);
         chkTRX_GAIN_SRC->SetValue(false);
@@ -262,7 +263,7 @@ void lms7002_pnlGains_view::ParameterChangeHandler(wxSpinEvent& event)
 void lms7002_pnlGains_view::ParameterChangeHandler(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -297,10 +298,10 @@ void lms7002_pnlGains_view::UpdateGUI()
 {
     ILMS7002MTab::UpdateGUI();
     uint16_t value;
-    value = ReadParam(LMS7param(G_LNA_RFE_R3));
+    value = ReadParam(LMS7002MCSR::G_LNA_RFE_R3);
     cmbG_LNA_RFE->SetSelection(value2index(value, g_lna_rfe_IndexValuePairs));
 
-    value = ReadParam(LMS7param(G_TIA_RFE_R3));
+    value = ReadParam(LMS7002MCSR::G_TIA_RFE_R3);
     cmbG_TIA_RFE->SetSelection(value2index(value, g_tia_rfe_IndexValuePairs));
 
     value = chkTRX_GAIN_SRC->GetValue();

@@ -29,8 +29,9 @@ set(LIME_SUITE_SOURCES
     lms7002m/MCU_BD.cpp
     lms7002m/MCU_File.cpp
     lms7002m/LMS7002M_RegistersMap.cpp
-    lms7002m/LMS7002M_parameters.cpp
     lms7002m/LMS7002M.cpp
+    lms7002m/LMS7002MCSR_Data.cpp
+    lms7002m/LMS7002MCSR_To_LMS7002MCSR_Data.cpp
     lms7002m/LMS7002M_validation.cpp
     lms7002m/LMS7002M_RxTxCalibrations.cpp
     lms7002m/LMS7002M_BaseCalibrations.cpp
@@ -49,6 +50,7 @@ set(LIME_SUITE_SOURCES
     parsers/CoefficientFileParser.cpp
     EnumToString.cpp
     DSP/Equalizer.cpp
+    DSP/EqualizerCSR.cpp
     DSP/FFT.cpp
     memory/MemoryPool.cpp
     mcu_program/spi.cpp

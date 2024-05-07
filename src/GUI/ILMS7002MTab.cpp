@@ -32,7 +32,7 @@ void ILMS7002MTab::UpdateGUI()
 void ILMS7002MTab::ParameterChangeHandler(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -58,13 +58,13 @@ void ILMS7002MTab::SetChannel(uint8_t channel)
     mChannel = channel;
 }
 
-void ILMS7002MTab::WriteParam(const LMS7Parameter& param, uint16_t val)
+void ILMS7002MTab::WriteParam(const LMS7002MCSR param, uint16_t val)
 {
     lmsControl->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
     lmsControl->Modify_SPI_Reg_bits(param, val);
 }
 
-int ILMS7002MTab::ReadParam(const LMS7Parameter& param)
+int ILMS7002MTab::ReadParam(const LMS7002MCSR param)
 {
     lmsControl->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
     return lmsControl->Get_SPI_Reg_bits(param);
@@ -80,7 +80,7 @@ int ILMS7002MTab::LMS_WriteLMSReg(LMS7002M* lms, uint16_t address, uint16_t valu
     return lms->SPI_write(address, value) == OpStatus::Success ? 0 : -1;
 }
 
-int ILMS7002MTab::LMS_ReadParam(LMS7002M* lmsControl, const LMS7Parameter& param, uint16_t* value)
+int ILMS7002MTab::LMS_ReadParam(LMS7002M* lmsControl, const LMS7002MCSR param, uint16_t* value)
 {
     *value = ReadParam(param);
     return 0;

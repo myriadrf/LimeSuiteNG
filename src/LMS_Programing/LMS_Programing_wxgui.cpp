@@ -113,22 +113,25 @@ LMS_Programing_wxgui::~LMS_Programing_wxgui()
 bool LMS_Programing_wxgui::Initialize(lime::SDRDevice* device)
 {
     mDevice = device;
-    if (mDevice)
+    if (!mDevice)
     {
-        cmbDevice->Clear();
-        const SDRDescriptor& desc = mDevice->GetDescriptor();
-
-        for (const auto& memoryDevice : desc.memoryDevices)
-        {
-            cmbDevice->Append(wxString(memoryDevice.first));
-            dataStorageEntries.push_back(memoryDevice.second);
-        }
-
-        cmbDevice->SetSelection(0);
-        wxCommandEvent evt;
-        OncmbDeviceSelect(evt);
-        Layout();
+        return true;
     }
+
+    cmbDevice->Clear();
+    const SDRDescriptor& desc = mDevice->GetDescriptor();
+
+    for (const auto& memoryDevice : desc.memoryDevices)
+    {
+        cmbDevice->Append(wxString(memoryDevice.first));
+        dataStorageEntries.push_back(memoryDevice.second);
+    }
+
+    cmbDevice->SetSelection(0);
+    wxCommandEvent evt;
+    OncmbDeviceSelect(evt);
+    Layout();
+
     return true;
 }
 

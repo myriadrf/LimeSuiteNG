@@ -1,11 +1,13 @@
 #include "lms7002m_calibrations.h"
-#include "LMS7002M_parameters_compact.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "spi.h"
 #include "lms7002m_controls.h"
 #include <math.h>
 #include "mcu_defines.h"
 #include <stdlib.h>
 #include "limesuiteng/Logger.h"
+
+using namespace lime::LMS7002MCSR_Data;
 
 #define ENABLE_EXTERNAL_LOOPBACK 1
 
@@ -68,10 +70,10 @@ static uint32_t dBFS_2_ChipRSSI(float dBFS)
 
 extern "C" {
 
-static int16_t toSigned(int16_t val, uint8_t msblsb)
+static int16_t toSigned(int16_t val, uint8_t msb)
 {
-    val <<= 15 - ((msblsb >> 4) & 0xF);
-    val >>= 15 - ((msblsb >> 4) & 0xF);
+    val <<= 15 - msb;
+    val >>= 15 - msb;
     return val;
 }
 
@@ -95,15 +97,15 @@ int16_t clamp(int16_t value, int16_t minBound, int16_t maxBound)
     return value;
 }
 
-static void FlipRisingEdge(const uint16_t addr, const uint8_t bits)
+static void FlipRisingEdge(const CSRegister& reg)
 {
-    Modify_SPI_Reg_bits(addr, bits, 0);
-    Modify_SPI_Reg_bits(addr, bits, 1);
+    Modify_SPI_Reg_bits(reg, 0);
+    Modify_SPI_Reg_bits(reg, 1);
 }
 
 static bool IsPLLTuned()
 {
-    if (Get_SPI_Reg_bits(0x0123, MSB_LSB(13, 12)) == 2)
+    if (Get_SPI_Reg_bits(0x0123, 13, 12) == 2)
         return true;
     return TuneVCO(true) == MCU_NO_ERROR;
 }
@@ -330,12 +332,12 @@ int CheckSaturationTxRx(bool extLoopback)
 }
 
 /** @brief Binary search information */
-typedef struct {
-    LMS7ParameterCompact param; ///< The address and the value of where to search
+struct BinSearchParam {
+    CSRegister param; ///< The address and the value of where to search
     int16_t result; ///< The result of the search
     int16_t minValue; ///< Minumum value of the search
     int16_t maxValue; ///< Maximum value of the search
-} BinSearchParam;
+};
 
 void BinarySearch(BinSearchParam bdata* args)
 {
@@ -345,9 +347,10 @@ void BinarySearch(BinSearchParam bdata* args)
     int16_t right = args->maxValue;
     int16_t step;
     const uint16_t addr = args->param.address;
-    const uint8_t msblsb = args->param.msblsb;
+    const uint8_t msb = args->param.msb;
+    const uint8_t lsb = args->param.lsb;
 
-    Modify_SPI_Reg_bits(addr, msblsb, right);
+    Modify_SPI_Reg_bits(addr, msb, lsb, right);
     rssiRight = GetRSSI();
     PUSH_GMEASUREMENT_VALUES(right, ChipRSSI_2_dBFS(rssiRight));
     while (right - left >= 1)
@@ -355,13 +358,13 @@ void BinarySearch(BinSearchParam bdata* args)
         step = (right - left) / 2;
         if (rssiLeft < rssiRight)
         {
-            Modify_SPI_Reg_bits(addr, msblsb, right);
+            Modify_SPI_Reg_bits(addr, msb, lsb, right);
             rssiRight = GetRSSI();
             PUSH_GMEASUREMENT_VALUES(right, ChipRSSI_2_dBFS(rssiRight));
         }
         else
         {
-            Modify_SPI_Reg_bits(addr, msblsb, left);
+            Modify_SPI_Reg_bits(addr, msb, lsb, left);
             rssiLeft = GetRSSI();
             PUSH_GMEASUREMENT_VALUES(left, ChipRSSI_2_dBFS(rssiLeft));
         }
@@ -373,7 +376,7 @@ void BinarySearch(BinSearchParam bdata* args)
             left += step;
     }
     args->result = rssiLeft < rssiRight ? left : right;
-    Modify_SPI_Reg_bits(addr, msblsb, args->result);
+    Modify_SPI_Reg_bits(addr, msb, lsb, args->result);
 }
 
 int16_t ReadAnalogDC(const uint16_t addr)
@@ -545,8 +548,10 @@ void CalibrateTxDCAuto()
     Modify_SPI_Reg_bits(DCMODE, 1);
     //Modify_SPI_Reg_bits(GCORRI_TXTSP.address, GCORRI_TXTSP.msblsb, 0);
     //Modify_SPI_Reg_bits(GCORRQ_TXTSP.address, GCORRQ_TXTSP.msblsb, 0);
-    iparams.param.msblsb = 10 << 4 | 0;
-    qparams.param.msblsb = 10 << 4 | 0;
+    iparams.param.msb = 10;
+    iparams.param.lsb = 0;
+    qparams.param.msb = 10;
+    qparams.param.lsb = 0;
     if (ch == 1)
     {
         iparams.param.address = 0x5C3; // DC_TXAI;
@@ -647,8 +652,10 @@ void CalibrateIQImbalance(bool tx)
     uint16_t gcorrqAddress;
     BinSearchParam argsPhase;
     BinSearchParam argsGain;
-    argsGain.param.msblsb = MSB_LSB(10, 0);
-    argsPhase.param.msblsb = MSB_LSB(11, 0);
+    argsGain.param.msb = 10;
+    argsGain.param.lsb = 0;
+    argsPhase.param.msb = 11;
+    argsPhase.param.lsb = 0;
     if (tx)
     {
         gcorrqAddress = 0x0201;
@@ -714,7 +721,7 @@ void CalibrateIQImbalance(bool tx)
     gMeasurements.clear();
 #endif
     SPI_write(argsGain.param.address, argsGain.result);
-    Modify_SPI_Reg_bits(argsPhase.param.address, argsPhase.param.msblsb, argsPhase.result);
+    Modify_SPI_Reg_bits(argsPhase.param.address, argsPhase.param.msb, argsPhase.param.lsb, argsPhase.result);
 }
 
 uint8_t SetupCGEN()
@@ -921,7 +928,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
     LoadDC_REG_TX_IQ();
     SetNCOFrequency(LMS7002M_Tx, bandwidthRF / calibUserBwDivider, 0);
     {
-        const uint8_t sel_band1_2_trf = (uint8_t)Get_SPI_Reg_bits(0x0103, MSB_LSB(11, 10));
+        const uint8_t sel_band1_2_trf = (uint8_t)Get_SPI_Reg_bits(0x0103, 11, 10);
 #if ENABLE_EXTERNAL_LOOPBACK
         if (extLoopback)
         {
@@ -932,7 +939,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
                 //activate selected lna path for external loopback
                 lnaPath = extLoopbackPair & 0x3;
                 Modify_SPI_Reg_bits(SEL_PATH_RFE, lnaPath);
-                Modify_SPI_Reg_bits(0x010D, MSB_LSB(2, 1), ~(lnaPath - 1)); //EN_INSHSW_*_RFE
+                Modify_SPI_Reg_bits(0x010D, 2, 1, ~(lnaPath - 1)); //EN_INSHSW_*_RFE
 
                 //check if correct tx band for external loop
                 if (extLoopbackPair >> 2 != !(sel_band1_2_trf - 1))
@@ -955,10 +962,10 @@ uint8_t CalibrateTxSetup(bool extLoopback)
             Modify_SPI_Reg_bits(SEL_PATH_RFE, sel_band1_2_trf + 1);
             //Modify_SPI_Reg_bits(PD_RLOOPB_1_RFE, 0);
             //Modify_SPI_Reg_bits(PD_RLOOPB_2_RFE, 1);
-            Modify_SPI_Reg_bits(0x010C, MSB_LSB(6, 5), sel_band1_2_trf ^ 0x3);
+            Modify_SPI_Reg_bits(0x010C, 6, 5, sel_band1_2_trf ^ 0x3);
             //Modify_SPI_Reg_bits(EN_INSHSW_LB1_RFE, 0);
             //Modify_SPI_Reg_bits(EN_INSHSW_LB2_RFE, 1);
-            Modify_SPI_Reg_bits(0x010D, MSB_LSB(4, 3), sel_band1_2_trf ^ 0x3);
+            Modify_SPI_Reg_bits(0x010D, 4, 3, sel_band1_2_trf ^ 0x3);
         }
     }
     //if calibrating ch. B enable buffers
@@ -1018,7 +1025,7 @@ TxCalibrationEnd : {
     int16_t dcQ = ReadAnalogDC((x0020val & 1) ? 0x5C4 : 0x5C6);
     lime::debug("Tx | DC   | GAIN | PHASE");
     lime::debug("---+------+------+------");
-    lime::debug("I: | %4i | %4i | %i", dcI, gcorri, toSigned(phaseOffset, MSB_LSB(11, 0)));
+    lime::debug("I: | %4i | %4i | %i", dcI, gcorri, toSigned(phaseOffset, 11));
     lime::debug("Q: | %4i | %4i |", dcQ, gcorrq);
 }
 
@@ -1028,7 +1035,7 @@ TxCalibrationEnd : {
     else
         Modify_SPI_Reg_bits(PD_DCDAC_TXB, 0);
     Modify_SPI_Reg_bits(DC_BYP_TXTSP, 1);
-    Modify_SPI_Reg_bits(0x0208, 1 << 4 | 0, 0); //GC_BYP PH_BYP
+    Modify_SPI_Reg_bits(0x0208, 1, 0, 0); //GC_BYP PH_BYP
     //LoadDC_REG_TX_IQ(); //not necessary, just for testing convenience
     int32_t duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();
@@ -1225,7 +1232,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
     if (extLoopback) // external looback
     {
         const uint8_t band1_band2 = 2 - ((extLoopbackPair >> 2) & 1);
-        Modify_SPI_Reg_bits(0x0103, MSB_LSB(11, 10), band1_band2);
+        Modify_SPI_Reg_bits(0x0103, 11, 10, band1_band2);
         if (Get_SPI_Reg_bits(SEL_PATH_RFE) != (extLoopbackPair & 0x3))
             return MCU_INVALID_RX_PATH;
     }
@@ -1237,13 +1244,13 @@ uint8_t CalibrateRxSetup(bool extLoopback)
         case 2: //LNA_L
             //Modify_SPI_Reg_bits(SEL_BAND2_TRF, 1);
             //Modify_SPI_Reg_bits(SEL_BAND1_TRF, 0);
-            Modify_SPI_Reg_bits(0x0103, MSB_LSB(11, 10), 1);
+            Modify_SPI_Reg_bits(0x0103, 11, 10, 1);
             break;
         case 3: //LNA_W
         case 1: //LNA_H
             //Modify_SPI_Reg_bits(SEL_BAND2_TRF, 0);
             //Modify_SPI_Reg_bits(SEL_BAND1_TRF, 1);
-            Modify_SPI_Reg_bits(0x0103, MSB_LSB(11, 10), 2);
+            Modify_SPI_Reg_bits(0x0103, 11, 10, 2);
             break;
         default:
             return MCU_INVALID_RX_PATH;
@@ -1509,7 +1516,7 @@ RxCalibrationEndStage : {
     }
     int16_t dcI = ReadAnalogDC((x0020val & 1) ? 0x5C7 : 0x5C8);
     int16_t dcQ = ReadAnalogDC((x0020val & 1) ? 0x5C9 : 0x5CA);
-    int16_t phaseSigned = toSigned(phaseOffset, MSB_LSB(11, 0));
+    int16_t phaseSigned = toSigned(phaseOffset, 11);
     lime::debug("Rx | DC   | GAIN | PHASE");
     lime::debug("---+------+------+------");
     lime::debug("I: | %4i | %4i | %i", dcI, gcorri, phaseSigned);
@@ -1520,8 +1527,8 @@ RxCalibrationEndStage : {
         Modify_SPI_Reg_bits(PD_DCDAC_RXA, 0);
     else
         Modify_SPI_Reg_bits(PD_DCDAC_RXB, 0);
-    Modify_SPI_Reg_bits(0x040C, MSB_LSB(2, 0), 0); //DC_BYP 0, GC_BYP 0, PH_BYP 0
-    Modify_SPI_Reg_bits(0x040C, MSB_LSB(8, 8), 0); //DCLOOP_STOP
+    Modify_SPI_Reg_bits(0x040C, 2, 0, 0); //DC_BYP 0, GC_BYP 0, PH_BYP 0
+    Modify_SPI_Reg_bits(0x040C, 8, 8, 0); //DCLOOP_STOP
     //Log("Rx calibration finished", LOG_INFO);
     int32_t duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginTime).count();

@@ -62,12 +62,9 @@ USBGeneric::~USBGeneric()
 
     --activeUSBconnections;
 
-    if (activeUSBconnections == 0)
+    if (activeUSBconnections == 0 && gUSBProcessingThread.joinable())
     {
-        if (gUSBProcessingThread.joinable())
-        {
-            gUSBProcessingThread.join();
-        }
+        gUSBProcessingThread.join();
     }
 #endif
 }

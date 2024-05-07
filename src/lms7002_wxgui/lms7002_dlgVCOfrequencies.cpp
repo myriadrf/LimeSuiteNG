@@ -250,7 +250,7 @@ lms7002_dlgVCOfrequencies::lms7002_dlgVCOfrequencies(wxWindow* parent, LMS7002M*
     // TODO: should be deprecated by automatically measuring VCO frequencies and storing in EEPROM
     // lmsControl = plmsControl;
     // double multiplier = 0.000000001;
-    // LMS7002M* lms = ((LMS7_Device*)lmsControl)->GetLMS();
+    // LMS7002M* lms = ((Device*)lmsControl)->GetLMS();
 
     // txtVCOL_low->SetValue(wxString::Format(_("%.3f"), lms->gVCO_frequency_table[0][0] * multiplier));
     // txtVCOL_high->SetValue(wxString::Format(_("%.3f"), lms->gVCO_frequency_table[0][1] * multiplier));
@@ -267,7 +267,7 @@ void lms7002_dlgVCOfrequencies::OnBtnOkClick(wxCommandEvent& event)
     // double multiplier = 1e9;
     // double value;
     // TODO:
-    // LMS7002M* lms = ((LMS7_Device*)lmsControl)->GetLMS();
+    // LMS7002M* lms = ((Device*)lmsControl)->GetLMS();
 
     // txtVCOL_low->GetValue().ToDouble(&value);
     // lms->gVCO_frequency_table[0][0]=value*multiplier;
@@ -347,7 +347,8 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
         fin.getline(cline, lineLen);
         //find name and frequency count
         sscanf(cline, "%s %s %i", vconame, ctemp, &freqCount);
-        if (std::string_view{ vconame } == "[VCOH]"sv)
+        const std::string_view name{ vconame };
+        if (name == "[VCOH]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -362,7 +363,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOH_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (std::string_view{ vconame } == "[VCOH]"sv)
+        else if (name == "[VCOH]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -377,7 +378,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOM_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (std::string_view{ vconame } == "[VCOL]"sv)
+        else if (name == "[VCOL]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)
@@ -392,7 +393,7 @@ void lms7002_dlgVCOfrequencies::OnLoadFile(wxCommandEvent& event)
                 txtVCOL_high->SetValue(wxString::Format(_("%.3f"), frequencies[frequencies.size() - 1]));
             }
         }
-        if (std::string_view{ vconame } == "[VCO_CGEN]"sv)
+        else if (name == "[VCO_CGEN]"sv)
         {
             frequencies.clear();
             for (int i = 0; i < freqCount; ++i)

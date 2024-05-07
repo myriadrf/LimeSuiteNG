@@ -464,34 +464,33 @@ void lms7002_pnlMCU_BD_view::OnButton_LOADHexClick(wxCommandEvent& event)
 void lms7002_pnlMCU_BD_view::OnchkResetClick(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    if (chkReset->IsChecked())
-    {
-        // MODE=0
-        // RESET
-        m_iMode0 = 0;
-        m_iMode1 = 0;
-        // TODO: LMS_Program(lmsControl, nullptr, 0, lime::program_mode::mcuReset, nullptr);
-        rgrMode->Enable(false);
-        btnStartProgramming->Enable(false);
-        DebugMode->SetValue(false);
-
-        m_iDebug = 0;
-        RunInstr->Enable(false);
-        ResetPC->Enable(false);
-        InstrNo->Enable(false);
-        ViewSFRs->Enable(false);
-        ViewIRAM->Enable(false);
-        EraseIRAM->Enable(false);
-        SelDiv->Enable(false);
-        // global variables
-        m_bLoadedDebug = 0;
-        m_bLoadedProd = 0;
-    }
-    else
+    if (!chkReset->IsChecked())
     {
         rgrMode->Enable(true);
         btnStartProgramming->Enable(true);
+        return;
     }
+
+    // MODE=0
+    // RESET
+    m_iMode0 = 0;
+    m_iMode1 = 0;
+    // TODO: LMS_Program(lmsControl, nullptr, 0, lime::program_mode::mcuReset, nullptr);
+    rgrMode->Enable(false);
+    btnStartProgramming->Enable(false);
+    DebugMode->SetValue(false);
+
+    m_iDebug = 0;
+    RunInstr->Enable(false);
+    ResetPC->Enable(false);
+    InstrNo->Enable(false);
+    ViewSFRs->Enable(false);
+    ViewIRAM->Enable(false);
+    EraseIRAM->Enable(false);
+    SelDiv->Enable(false);
+    // global variables
+    m_bLoadedDebug = 0;
+    m_bLoadedProd = 0;
 }
 
 void lms7002_pnlMCU_BD_view::OnbtnStartProgrammingClick(wxCommandEvent& event)
@@ -565,30 +564,33 @@ void lms7002_pnlMCU_BD_view::OnbtnLoadTestFileClick(wxCommandEvent& event)
 
     std::ifstream inFile(std::string{ m_sTxtFileName });
 
-    if (inFile.is_open())
+    if (!inFile.is_open())
     {
-        m_iTestResultFileLine = 0;
-        for (int i = 0; i < 256; i++)
-        {
-            TestResultArray_code[i] = 0;
-            TestResultArray_address[i] = 0;
-            TestResultArray_value[i] = 0;
-        }
+        inFile.close();
+        return;
+    }
 
-        m_iTestResultFileLine = 0;
+    m_iTestResultFileLine = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        TestResultArray_code[i] = 0;
+        TestResultArray_address[i] = 0;
+        TestResultArray_value[i] = 0;
+    }
+
+    m_iTestResultFileLine = 0;
+    inFile >> test_code;
+
+    while (!inFile.eof() && !inFile.fail())
+    {
+        inFile >> address;
+        inFile >> value;
+        TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
+        TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
+        TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
+
+        m_iTestResultFileLine++;
         inFile >> test_code;
-
-        while (!inFile.eof() && !inFile.fail())
-        {
-            inFile >> address;
-            inFile >> value;
-            TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
-            TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
-            TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
-
-            m_iTestResultFileLine++;
-            inFile >> test_code;
-        }
     }
 
     inFile.close();
@@ -601,38 +603,36 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
 
     std::ifstream inFile(std::string{ m_sTxtFileName });
 
-    if (inFile.is_open())
-    {
-        m_iTestResultFileLine = 0;
-        for (int i = 0; i < 256; i++)
-        {
-            TestResultArray_code[i] = 0;
-            TestResultArray_address[i] = 0;
-            TestResultArray_value[i] = 0;
-        }
-
-        m_iTestResultFileLine = 0;
-        int test_code = 0;
-        int address = 0;
-        int value = 0;
-
-        inFile >> test_code;
-        while (!inFile.eof() && !inFile.fail())
-        {
-            inFile >> address;
-            inFile >> value;
-            TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
-            TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
-            TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
-
-            m_iTestResultFileLine++;
-            inFile >> test_code;
-        }
-    }
-    else
+    if (!inFile.is_open())
     {
         wxMessageBox(_("lms7suite_mcu/TestResults.txt file not found"));
         return;
+    }
+
+    m_iTestResultFileLine = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        TestResultArray_code[i] = 0;
+        TestResultArray_address[i] = 0;
+        TestResultArray_value[i] = 0;
+    }
+
+    m_iTestResultFileLine = 0;
+    int test_code = 0;
+    int address = 0;
+    int value = 0;
+
+    inFile >> test_code;
+    while (!inFile.eof() && !inFile.fail())
+    {
+        inFile >> address;
+        inFile >> value;
+        TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
+        TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
+        TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
+
+        m_iTestResultFileLine++;
+        inFile >> test_code;
     }
 
     inFile.close();

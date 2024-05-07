@@ -20,8 +20,8 @@ class SDRDevice;
 class fftviewer_frFFTviewer : public frFFTviewer
 {
   public:
-    virtual bool Initialize(lime::SDRDevice* device) override;
-    virtual void Update() override;
+    bool Initialize(lime::SDRDevice* device) override;
+    void Update() override;
 
   protected:
     std::atomic<bool> enableTransmitter;

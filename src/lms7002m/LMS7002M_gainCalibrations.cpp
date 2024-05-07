@@ -1,13 +1,15 @@
 #include "limesuiteng/LMS7002M.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "limesuiteng/Logger.h"
 
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 OpStatus LMS7002M::CalibrateTxGainSetup()
 {
     OpStatus status;
-    int ch = Get_SPI_Reg_bits(LMS7param(MAC));
+    int ch = Get_SPI_Reg_bits(LMS7002MCSR::MAC);
 
     uint16_t value = SPI_read(0x0020);
     if ((value & 3) == 1)
@@ -19,43 +21,43 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     //RxTSP
     SetDefaults(MemorySection::RxTSP);
     SetDefaults(MemorySection::RxNCO);
-    Modify_SPI_Reg_bits(LMS7param(AGC_MODE_RXTSP), 1);
-    Modify_SPI_Reg_bits(LMS7param(AGC_AVG_RXTSP), 1);
-    Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), 1);
-    Modify_SPI_Reg_bits(LMS7param(CMIX_BYP_RXTSP), 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::AGC_AVG_RXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_RXTSP, 1);
 
     //TBB
-    Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), 1);
-    Modify_SPI_Reg_bits(LMS7param(LOOPB_TBB), 3);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::LOOPB_TBB, 3);
 
     //RFE
-    Modify_SPI_Reg_bits(LMS7param(EN_G_RFE), 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, 0);
     Modify_SPI_Reg_bits(0x010D, 4, 1, 0xF);
 
     //RBB
     SetDefaults(MemorySection::RBB);
-    Modify_SPI_Reg_bits(LMS7param(PD_LPFL_RBB), 1);
-    Modify_SPI_Reg_bits(LMS7param(INPUT_CTL_PGA_RBB), 3);
-    Modify_SPI_Reg_bits(LMS7param(G_PGA_RBB), 12);
-    Modify_SPI_Reg_bits(LMS7param(RCC_CTL_PGA_RBB), 23);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFL_RBB, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::INPUT_CTL_PGA_RBB, 3);
+    Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, 12);
+    Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, 23);
 
     //TRF
-    Modify_SPI_Reg_bits(LMS7param(EN_G_TRF), 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, 0);
 
     //AFE
-    const int isel_dac_afe = Get_SPI_Reg_bits(LMS7param(ISEL_DAC_AFE));
+    const int isel_dac_afe = Get_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE);
     SetDefaults(MemorySection::AFE);
-    Modify_SPI_Reg_bits(LMS7param(ISEL_DAC_AFE), isel_dac_afe);
+    Modify_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE, isel_dac_afe);
     if (ch == 2)
     {
-        Modify_SPI_Reg_bits(LMS7param(PD_RX_AFE2), 0);
-        Modify_SPI_Reg_bits(LMS7param(PD_TX_AFE2), 0);
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE2, 0);
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE2, 0);
     }
 
     //BIAS
-    const int rp_calib_bias = Get_SPI_Reg_bits(LMS7param(RP_CALIB_BIAS));
+    const int rp_calib_bias = Get_SPI_Reg_bits(LMS7002MCSR::RP_CALIB_BIAS);
     SetDefaults(MemorySection::BIAS);
-    Modify_SPI_Reg_bits(LMS7param(RP_CALIB_BIAS), rp_calib_bias);
+    Modify_SPI_Reg_bits(LMS7002MCSR::RP_CALIB_BIAS, rp_calib_bias);
 
     //LDO
     //do nothing
@@ -70,22 +72,22 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
         return status;
 
     //SXR
-    Modify_SPI_Reg_bits(LMS7param(MAC), 1);
-    Modify_SPI_Reg_bits(LMS7param(PD_VCO), 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO, 1);
 
-    Modify_SPI_Reg_bits(LMS7param(MAC), ch);
+    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, ch);
 
     //TxTSP
-    const int isinc = Get_SPI_Reg_bits(LMS7param(ISINC_BYP_TXTSP));
-    const int txcmixGainLSB = Get_SPI_Reg_bits(LMS7param(CMIX_GAIN_TXTSP));
-    const int txcmixGainMSB = Get_SPI_Reg_bits(LMS7param(CMIX_GAIN_TXTSP_R3));
+    const int isinc = Get_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP);
+    const int txcmixGainLSB = Get_SPI_Reg_bits(LMS7002MCSR::CMIX_GAIN_TXTSP);
+    const int txcmixGainMSB = Get_SPI_Reg_bits(LMS7002MCSR::CMIX_GAIN_TXTSP_R3);
     SetDefaults(MemorySection::TxTSP);
     SetDefaults(MemorySection::TxNCO);
-    Modify_SPI_Reg_bits(LMS7param(CMIX_GAIN_TXTSP), txcmixGainLSB);
-    Modify_SPI_Reg_bits(LMS7param(CMIX_GAIN_TXTSP_R3), txcmixGainMSB);
-    Modify_SPI_Reg_bits(LMS7param(ISINC_BYP_TXTSP), isinc);
-    Modify_SPI_Reg_bits(LMS7param(TSGMODE_TXTSP), 1);
-    Modify_SPI_Reg_bits(LMS7param(INSEL_TXTSP), 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_GAIN_TXTSP, txcmixGainLSB);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_GAIN_TXTSP_R3, txcmixGainMSB);
+    Modify_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP, isinc);
+    Modify_SPI_Reg_bits(LMS7002MCSR::TSGMODE_TXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::INSEL_TXTSP, 1);
     int16_t tsgValue = 0x7FFF;
     if (txcmixGainMSB == 0 && txcmixGainLSB == 1)
         tsgValue = 0x3FFF;
@@ -112,12 +114,12 @@ OpStatus LMS7002M::CalibrateTxGain()
     status = CalibrateTxGainSetup();
     if (status == OpStatus::Success)
     {
-        cg_iamp = Get_SPI_Reg_bits(LMS7param(CG_IAMP_TBB));
+        cg_iamp = Get_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB);
         while (GetRSSI() < 0x7FFF)
         {
             if (++cg_iamp > 63)
                 break;
-            Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), cg_iamp);
+            Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
         }
     }
     RestoreRegisterMap(registersBackup);
@@ -126,12 +128,12 @@ OpStatus LMS7002M::CalibrateTxGain()
     opt_gain_tbb[ind] = cg_iamp > 1 ? cg_iamp - 1 : 1;
 
     if (status == OpStatus::Success)
-        Modify_SPI_Reg_bits(LMS7param(CG_IAMP_TBB), opt_gain_tbb[ind]);
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, opt_gain_tbb[ind]);
     //logic reset
-    Modify_SPI_Reg_bits(LMS7param(LRST_TX_A), 0);
-    Modify_SPI_Reg_bits(LMS7param(LRST_TX_B), 0);
-    Modify_SPI_Reg_bits(LMS7param(LRST_TX_A), 1);
-    Modify_SPI_Reg_bits(LMS7param(LRST_TX_B), 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_A, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_B, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_A, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_B, 1);
 
     return status;
 }

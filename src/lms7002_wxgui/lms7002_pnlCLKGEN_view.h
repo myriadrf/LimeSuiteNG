@@ -7,7 +7,7 @@ class lms7002_pnlCLKGEN_view : public ILMS7002MTab
 {
   protected:
     // Handlers for pnlCLKGEN_view events.
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void ParameterChangeHandler(wxSpinEvent& event);
     void onbtnTuneClick(wxCommandEvent& event);
     void OnbtnReadComparators(wxCommandEvent& event);
@@ -26,8 +26,8 @@ class lms7002_pnlCLKGEN_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
     void UpdateInterfaceFrequencies();
     wxSpinCtrl* rxPhase;
     wxSpinCtrl* txPhase;

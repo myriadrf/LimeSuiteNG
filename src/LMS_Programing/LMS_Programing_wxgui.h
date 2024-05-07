@@ -28,10 +28,10 @@ class LMS_Programing_wxgui : public IModuleFrame
         const wxSize& size = wxDefaultSize,
         int style = wxDEFAULT_DIALOG_STYLE,
         wxString name = wxEmptyString);
-    virtual ~LMS_Programing_wxgui();
+    ~LMS_Programing_wxgui();
 
-    virtual bool Initialize(lime::SDRDevice* device) override;
-    virtual void Update() override;
+    bool Initialize(lime::SDRDevice* device) override;
+    void Update() override;
 
   protected:
     wxChoice* cmbDevice;

@@ -37,13 +37,13 @@ class CDCM6208_panelgui : public ISOCPanel
         long style = 0);
     ~CDCM6208_panelgui();
     void Initialize(CDCM_Dev* cdcm);
-    virtual void UpdateGUI() override;
+    void UpdateGUI() override;
 
     double primaryFreq = 30.72 * 1e6;
     double secondaryFreq = 30.72 * 1e6;
 
     bool Initialize(lime::SDRDevice* device);
-    virtual void Update() override;
+    void Update() override;
 
   protected:
     CDCM_Dev* CDCM;

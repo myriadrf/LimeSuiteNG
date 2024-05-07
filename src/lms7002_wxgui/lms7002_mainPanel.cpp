@@ -221,11 +221,11 @@ void lms7002_mainPanel::UpdateVisiblePanel()
     assert(chip);
 
     if (pageId == ID_TAB_SXR) //change active channel to A
-        chip->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
     else if (pageId == ID_TAB_SXT) //change active channel to B
-        chip->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
     else
-        chip->Modify_SPI_Reg_bits(LMS7param(MAC), rbChannelA->GetValue() == 1 ? 1 : 2);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, rbChannelA->GetValue() == 1 ? 1 : 2);
     spisw_ctrl = chip->SPI_read(0x0006);
 
     if (spisw_ctrl & 1) // transceiver controlled by MCU
@@ -314,7 +314,7 @@ void lms7002_mainPanel::OnOpenProject(wxCommandEvent& event)
         return;
     }
     wxCommandEvent tevt;
-    // LMS_WriteParam(sdrDevice, LMS7param(MAC), rbChannelA->GetValue() == 1 ? 1 : 2);
+    // LMS_WriteParam(sdrDevice, LMS7002MCSR::MAC, rbChannelA->GetValue() == 1 ? 1 : 2);
     UpdateGUI();
 }
 
@@ -428,13 +428,13 @@ void lms7002_mainPanel::OnEnableMIMOchecked(wxCommandEvent& event)
 {
     // TODO:
     // uint16_t chBck;
-    // LMS_ReadParam(sdrDevice, LMS7param(MAC), &chBck);
+    // LMS_ReadParam(sdrDevice, LMS7002MCSR::MAC, &chBck);
     // bool enable = chkEnableMIMO->IsChecked();
     // for (int ch = enable ? 0 : 1; ch < LMS_GetNumChannels(sdrDevice, false); ch++) {
     //     LMS_EnableChannel(sdrDevice, LMS_CH_RX, ch, enable);
     //     LMS_EnableChannel(sdrDevice, LMS_CH_TX, ch, enable);
     // }
-    // LMS_WriteParam(sdrDevice, LMS7param(MAC), chBck);
+    // LMS_WriteParam(sdrDevice, LMS7002MCSR::MAC, chBck);
     // UpdateVisiblePanel();
 }
 

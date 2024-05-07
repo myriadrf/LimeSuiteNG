@@ -199,8 +199,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
     auto fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    int packetsSent = 0;
-    int totalPacketSent = 0;
     std::size_t maxFIFOlevel = 0;
     int64_t lastTS = 0;
 
@@ -400,8 +398,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
                 transferSize.Add(wrInfo.size);
                 ++stagingBufferIndex;
                 stagingBufferIndex &= 0xFFFF;
-                packetsSent += output.packetCount();
-                totalPacketSent += output.packetCount();
                 stats.timestamp = lastTS;
                 stats.bytesTransferred += wrInfo.size;
                 mTxArgs.port->CacheFlush(true, false, stagingBufferIndex % bufferCount);
@@ -458,7 +454,6 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
             }
             loss.checkpoint();
             underrun.checkpoint();
-            packetsSent = 0;
             totalBytesSent = 0;
             mTx.stats.dataRate_Bps = dataRate;
             maxFIFOlevel = 0;

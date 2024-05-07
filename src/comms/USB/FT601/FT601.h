@@ -21,17 +21,16 @@ class FT601 : public USBGeneric
       @param usbContext The USB context to use for the communication.
      */
     FT601(void* usbContext = nullptr);
-    virtual ~FT601();
+    ~FT601();
 
-    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv) override;
-    virtual void Disconnect() override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string_view serial = ""sv) override;
+    void Disconnect() override;
 
 #ifndef __unix__
-    virtual int32_t BulkTransfer(
-        uint8_t endPoint, uint8_t* data, int length, int32_t timeout = USBGeneric::defaultTimeout) override;
+    int32_t BulkTransfer(uint8_t endPoint, uint8_t* data, int length, int32_t timeout = USBGeneric::defaultTimeout) override;
 #endif
 
-    virtual int32_t ControlTransfer(int requestType,
+    int32_t ControlTransfer(int requestType,
         int request,
         int value,
         int index,
@@ -40,10 +39,10 @@ class FT601 : public USBGeneric
         int32_t timeout = USBGeneric::defaultTimeout) override;
 
 #ifndef __unix__
-    virtual int BeginDataXfer(uint8_t* buffer, uint32_t length, uint8_t endPointAddr) override;
-    virtual bool WaitForXfer(int contextHandle, int32_t timeout_ms) override;
-    virtual int FinishDataXfer(uint8_t* buffer, uint32_t length, int contextHandle) override;
-    virtual void AbortEndpointXfers(uint8_t endPointAddr) override;
+    int BeginDataXfer(uint8_t* buffer, uint32_t length, uint8_t endPointAddr) override;
+    bool WaitForXfer(int contextHandle, int32_t timeout_ms) override;
+    int FinishDataXfer(uint8_t* buffer, uint32_t length, int contextHandle) override;
+    void AbortEndpointXfers(uint8_t endPointAddr) override;
 #endif
 
     /**
@@ -56,14 +55,14 @@ class FT601 : public USBGeneric
 #ifndef __unix__
     FT_HANDLE mFTHandle;
     int ReinitPipe(unsigned char ep);
-    virtual void WaitForXfers(uint8_t endPointAddr) override;
+    void WaitForXfers(uint8_t endPointAddr) override;
 #else
     int FT_SetStreamPipe(unsigned char ep, size_t size);
     int FT_FlushPipe(unsigned char ep);
     uint32_t mUsbCounter;
 #endif
 
-    virtual int GetUSBContextIndex() override;
+    int GetUSBContextIndex() override;
 };
 
 } // namespace lime
