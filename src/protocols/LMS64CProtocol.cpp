@@ -16,6 +16,7 @@
 #include <ciso646> // alternative operators for visual c++: not, and, or...
 #include "ADCUnits.h"
 #include <cstring>
+#include <iomanip>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -797,10 +798,36 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
     return OpStatus::Success;
 }
 
-OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
+OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serialBytes)
 {
-    if (bytes.empty())
+    if (serialBytes.empty())
         return OpStatus::InvalidValue;
+    std::vector<uint8_t> bytes = serialBytes;
+    {
+        std::vector<uint8_t> currentSerial;
+        OpStatus readStatus = ReadSerialNumber(port, currentSerial);
+        if (readStatus != OpStatus::Success)
+            return readStatus;
+
+        if (currentSerial.empty())
+            return ReportError(OpStatus::NotSupported, "Serial number is not supported");
+        for (uint8_t value : currentSerial)
+            if (value != 0xFF)
+                return ReportError(OpStatus::Error,
+                    "One time programable serial number already set, additional attempts to write can corrupt the value");
+        if (bytes.size() > currentSerial.size())
+            return ReportError(OpStatus::OutOfRange, "Serial number to be written is too long");
+
+        if (currentSerial.size() > bytes.size())
+        {
+            bytes.resize(currentSerial.size());
+            std::stringstream ss;
+            ss << "Padding serial number to:";
+            for (size_t i = 0; i < bytes.size(); ++i)
+                ss << std::setw(2) << std::setfill('0') << std::hex << bytes[i] << " ";
+            lime::debug(ss.str());
+        }
+    }
 
     const int timeout_ms = 100;
 
@@ -815,11 +842,13 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
         return OpStatus::OutOfRange;
 
     LMS64CPacketSerialCommandView payloadView(&packet);
-    const bool permanentWrite = false;
+    const bool permanentWrite = true;
     if (permanentWrite)
     {
         payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
         payloadView.SetUnlockKey(0x5A);
+
+        payloadView.SetSerial(bytes); // not necessary when sending just the key
 
         // OTP, has to be done in two packets:
         // 1. Send the correct key
@@ -830,6 +859,7 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
             return OpStatus::IOFailure;
         if (packet.status != CommandStatus::Completed)
             return ReportError(OpStatus::Error, "Failed to send one time programming key");
+
         // key has been sent, continue to send the serial number bytes
         payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
         payloadView.SetUnlockKey(0x5A);
@@ -846,9 +876,16 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& bytes)
         return OpStatus::IOFailure;
     if (port.Read(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
         return OpStatus::IOFailure;
-
     if (packet.status != CommandStatus::Completed)
         return OpStatus::Error;
+
+    std::stringstream ss;
+    ss << "Serial number written:";
+    for (uint8_t b : bytes)
+        ss << std::hex << b << " ";
+    lime::info(ss.str());
+    // wait for things to settle, otherwise reading serial immediately will return zeroes
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return OpStatus::Success;
 }
 
@@ -875,7 +912,6 @@ OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data)
 
     if (packet.status != CommandStatus::Completed)
         return OpStatus::Error;
-
     data.clear();
     payloadView.GetSerial(data);
     return OpStatus::Success;

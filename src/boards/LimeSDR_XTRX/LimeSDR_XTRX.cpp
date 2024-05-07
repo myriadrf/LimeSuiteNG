@@ -135,15 +135,6 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    std::vector<uint8_t> gwSerial;
-    OpStatus serialFromGatewareStatus = LMS64CProtocol::ReadSerialNumber(*mSerialPort, gwSerial);
-    if (serialFromGatewareStatus == OpStatus::Success)
-    {
-        desc.serialNumber = 0;
-        for (size_t i = 0; i < gwSerial.size(); ++i)
-            desc.serialNumber |= (gwSerial[i] << (8 * i));
-    }
-
     desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     // desc.memoryDevices[ToString(eMemoryDevice::FPGA_RAM)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
@@ -154,11 +145,6 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     mFPGA = new lime::FPGA_XTRX(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
-
-    Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
-    if (MemoryRead(desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
-        OpStatus::Success)
-        desc.serialNumber = 0;
 
     RFSOCDescriptor soc;
     // LMS#1

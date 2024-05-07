@@ -164,6 +164,10 @@ int main(int argc, char** argv)
     device->SetMessageLogCallback(LogCallback);
 
     uint64_t serialNumber = device->GetDescriptor().serialNumber;
+    cerr << "Board serial number: " << serialNumber << " (";
+    for (size_t i = 0; i < sizeof(serialNumber); ++i)
+        cerr << hex << std::setw(2) << std::setfill('0') << ((serialNumber >> 8 * i) & 0xFF) << " ";
+    cerr << ")" << endl;
 
     PrintOEMTestReporter reporter(serialNumber, reportFilename);
     reporter.ReportColumn("S/N", std::to_string(serialNumber));
