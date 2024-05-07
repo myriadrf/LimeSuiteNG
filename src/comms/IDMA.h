@@ -19,6 +19,8 @@ class IDMA
         bool generateIRQ; ///< Generate an Interrupt Request (IRQ)
     };
 
+    virtual ~IDMA() {}
+
     virtual void RxEnable(uint32_t bufferSize, uint8_t irqPeriod) = 0;
     virtual void TxEnable() = 0;
     virtual void Disable(TRXDir direction) = 0;

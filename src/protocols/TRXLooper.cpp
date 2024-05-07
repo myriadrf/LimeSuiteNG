@@ -264,7 +264,10 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
     while (samplesProduced < count)
     {
         if (!mRx.stagingPacket && !mRx.fifo->pop(&mRx.stagingPacket, firstIteration, 2000))
+        {
+            lime::error("No samples or timeout"s);
             return samplesProduced;
+        }
 
         if (!timestampSet && meta)
         {
