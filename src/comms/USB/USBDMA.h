@@ -5,8 +5,12 @@
 #include "USBGeneric.h"
 
 #include <array>
+#include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <thread>
 
 namespace lime {
 
@@ -42,6 +46,11 @@ class USBDMA : public IDMA
         std::byte* buffer;
         DMAState state;
         std::array<int, USBGeneric::GetBufferCount()> contextHandles;
+        std::atomic<bool> isRunning;
+
+        std::thread sendThread;
+        std::mutex mutex;
+        std::condition_variable cv;
     };
 
     DirectionState rx;
@@ -50,14 +59,20 @@ class USBDMA : public IDMA
     DirectionState& GetDirectionState(TRXDir direction);
     const DirectionState& GetDirectionState(TRXDir direction) const;
 
-    void IncreaseHardwareIndex(TRXDir direction);
-    void HandleIncreasedSoftwareIndex(TRXDir direction, uint32_t oldIndex);
     int GetContextHandle(TRXDir direction);
+    int GetContextHandleFromIndex(TRXDir direction, uint16_t index);
     void SetContextHandle(TRXDir direction, int handle);
     std::size_t GetTransferArrayIndexFromState(TRXDir direction);
+    std::size_t GetTransferArrayIndex(uint16_t index);
     std::byte* GetIndexAddress(TRXDir direction, uint16_t index);
     uint8_t GetEndpointAddress(TRXDir direction);
     uint32_t GetStateSoftwareIndex(TRXDir direction);
+
+    std::mutex& GetStateMutex(TRXDir direction);
+    std::condition_variable& GetStateCV(TRXDir direction);
+
+    void RxStartTransferThread();
+    void TxStartTransferThread();
 };
 
 } // namespace lime

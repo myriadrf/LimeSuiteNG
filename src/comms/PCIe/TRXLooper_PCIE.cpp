@@ -550,10 +550,6 @@ int TRXLooper_PCIE::RxSetup()
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 4096, name);
 
-    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-
-    constexpr int irqPeriod{ 4 };
-    mRxArgs.port->RxEnable(readSize, irqPeriod);
     return 0;
 }
 
@@ -584,7 +580,6 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     // Anticipate the overflow 2 interrupts early, just in case of missing an interrupt
     // Avoid situations where CPU and device is at the same buffer index
     // CPU reading while device writing creates coherency issues.
-    const uint16_t overrunLimit = std::max(bufferCount - 4, bufferCount / 2);
     mRxArgs.cnt = 0;
     mRxArgs.sw = 0;
     mRxArgs.hw = 0;
@@ -599,6 +594,9 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
 
     auto t1{ std::chrono::steady_clock::now() };
     auto t2 = t1;
+
+    constexpr int irqPeriod{ 4 };
+    mRxArgs.port->RxEnable(readSize, irqPeriod);
 
     int32_t Bps = 0;
 
@@ -660,13 +658,6 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
 
         // process received data
         bool reportProblems = false;
-        if (buffersAvailable >= overrunLimit) // data overflow
-        {
-            // jump CPU to 1 buffer behind hardware index, to avoid device starting to write into buffer being read by CPU
-            dma.softwareIndex = (dma.hardwareIndex - 1);
-            ++stats.loss;
-            overrun.add(1);
-        }
 
         if (buffersAvailable == 0)
         {
