@@ -7,7 +7,6 @@
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_Mini.h"
-#include "comms/PCIe/TRXLooper_PCIE.h"
 #include "comms/USB/USBDMA.h"
 #include "limesuiteng/LMS7002M_parameters.h"
 #include "lms7002m/LMS7002M_validation.h"
@@ -631,7 +630,7 @@ OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     auto connection = std::static_pointer_cast<FT601>(mStreamPort);
     connection->ResetStreamBuffers();
 
-    mStreamers.at(0) = new TRXLooper_PCIE(
+    mStreamers.at(0) = new TRXLooper(
         std::static_pointer_cast<IDMA>(std::make_shared<USBDMA>(mStreamPort, STREAM_BULK_READ_ADDRESS, STREAM_BULK_WRITE_ADDRESS)),
         mFPGA,
         mLMSChips.at(0),

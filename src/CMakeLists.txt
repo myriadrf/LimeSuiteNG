@@ -39,6 +39,7 @@ set(LIME_SUITE_SOURCES
     protocols/LMS64CProtocol.cpp
     protocols/TRXLooper.cpp
     protocols/BufferInterleaving.cpp
+    protocols/AvgRmsCounter.cpp
     Si5351C/Si5351C.cpp
     FPGA_common/FPGA_common.cpp
     FPGA_common/WriteRegistersBatch.cpp

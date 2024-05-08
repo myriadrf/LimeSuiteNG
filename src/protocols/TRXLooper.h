@@ -12,21 +12,23 @@
 #include "SamplesPacket.h"
 
 namespace lime {
+
 class FPGA;
+class IDMA;
 class LMS7002M;
 
 /** @brief Class responsible for receiving and transmitting continuous sample data */
 class TRXLooper
 {
   public:
-    TRXLooper(FPGA* f, LMS7002M* chip, int id);
-    virtual ~TRXLooper();
+    TRXLooper(std::shared_ptr<IDMA> comms, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
+    ~TRXLooper();
 
     uint64_t GetHardwareTimestamp() const;
     OpStatus SetHardwareTimestamp(const uint64_t now);
-    virtual OpStatus Setup(const lime::StreamConfig& cfg);
-    virtual void Start();
-    virtual void Stop();
+    OpStatus Setup(const lime::StreamConfig& cfg);
+    void Start();
+    void Stop();
 
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
@@ -36,12 +38,12 @@ class TRXLooper
     /// @return The current configuration of the stream.
     constexpr const lime::StreamConfig& GetConfig() const { return mConfig; }
 
-    virtual uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta);
 
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.
@@ -52,21 +54,44 @@ class TRXLooper
     /// @brief The type of a sample packet.
     typedef SamplesPacket<2> SamplesPacketType;
 
-  protected:
-    virtual int RxSetup() { return 0; };
-    virtual void ReceivePacketsLoop() = 0;
-    virtual void RxTeardown(){};
+    static OpStatus UploadTxWaveform(FPGA* fpga,
+        std::shared_ptr<IDMA> port,
+        const StreamConfig& config,
+        uint8_t moduleIndex,
+        const void** samples,
+        uint32_t count);
 
-    virtual int TxSetup() { return 0; };
-    virtual void TransmitPacketsLoop() = 0;
-    virtual void TxTeardown(){};
+    /** @brief The transfer arguments. */
+    struct TransferArgs {
+        std::shared_ptr<IDMA> port;
+        std::vector<std::byte*> buffers;
+        int32_t bufferSize;
+        int16_t packetSize;
+        uint8_t packetsToBatch;
+        int32_t samplesInPacket;
+        int64_t cnt;
+        int64_t sw;
+        int64_t hw;
+    };
+
+  protected:
+    int RxSetup();
+    void ReceivePacketsLoop();
+    void RxTeardown();
+
+    int TxSetup();
+    void TransmitPacketsLoop();
+    void TxTeardown();
 
     uint64_t mTimestampOffset;
     lime::StreamConfig mConfig;
 
+    TransferArgs mRxArgs;
+    TransferArgs mTxArgs;
+
     FPGA* fpga;
     LMS7002M* lms;
-    int chipId;
+    uint8_t chipId;
 
     std::chrono::time_point<std::chrono::steady_clock> streamClockStart;
 

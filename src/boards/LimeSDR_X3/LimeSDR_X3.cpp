@@ -8,7 +8,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "FPGA_common.h"
-#include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
@@ -871,7 +870,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
+    mStreamers.at(moduleIndex) = new TRXLooper(mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
     if (mCallback_logMessage)
         mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
     std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
@@ -1275,7 +1274,7 @@ OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region reg
 
 OpStatus LimeSDR_X3::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
-    return TRXLooper_PCIE::UploadTxWaveform(mFPGA, mTRXStreamPorts[moduleIndex], config, moduleIndex, samples, count);
+    return TRXLooper::UploadTxWaveform(mFPGA, mTRXStreamPorts[moduleIndex], config, moduleIndex, samples, count);
 }
 
 } //namespace lime

@@ -6,7 +6,6 @@
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "FPGA_common.h"
-#include "TRXLooper_PCIE.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer.h"
@@ -378,7 +377,7 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
 
     try
     {
-        mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
+        mStreamers.at(moduleIndex) = new TRXLooper(mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
         if (mCallback_logMessage)
             mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
         std::shared_ptr<LitePCIe> trxPort{ mStreamPort };
