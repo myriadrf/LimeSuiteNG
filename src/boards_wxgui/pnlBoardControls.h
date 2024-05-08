@@ -96,6 +96,7 @@ class pnlBoardControls : public IModuleFrame
         wxStaticText* rValue;
         wxSpinCtrl* wValue;
     };
+
   public:
     pnlBoardControls(wxWindow* parent,
         wxWindowID id = wxID_ANY,
