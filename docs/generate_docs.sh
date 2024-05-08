@@ -26,11 +26,11 @@ if [[ $1 == "clean" ]]; then
     fi
 fi
 
-if [[ $1 == "rebuild" ]]; then
-    cmake -S .. -B ../build
-    make --no-print-directory -C ../build -j"$(nproc)" doc
-    breathe-apidoc --generate class --members --force --output-dir apidoc ../build/xml/
-    python add_undoc_members.py
-fi
+# if [[ $1 == "rebuild" ]]; then
+#     cmake -S .. -B ../build
+#     make --no-print-directory -C ../build -j"$(nproc)" doxygen
+#     breathe-apidoc --generate class --members --force --output-dir apidoc ../build/docs/doxygen/xml/
+#     python add_undoc_members.py
+# fi
 
 make -j"$(nproc)" html

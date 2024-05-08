@@ -1,11 +1,5 @@
 #pragma once
 
-#if __cplusplus < 201402L
-    #define CPP14constexpr
-#else
-    #define CPP14constexpr constexpr
-#endif
-
 namespace lime {
 
 /**
@@ -19,7 +13,7 @@ template<class T> class DeltaVariable
     @brief Construct a new DeltaVariable object.
     @param init The initial value of the variable.
    */
-    constexpr DeltaVariable(T init)
+    DeltaVariable(T init)
         : mValue(init)
         , mLastValue(0){};
 
@@ -27,28 +21,28 @@ template<class T> class DeltaVariable
       @brief Sets the value of the delta variable.
       @param val The value to set the delta variable to.
      */
-    CPP14constexpr void set(T val) { mValue = val; }
+    void set(T val) { mValue = val; }
 
     /**
       @brief Adds the given value to the delta variable
       @param val The value to add to the delta variable.
      */
-    CPP14constexpr void add(T val) { mValue += val; }
+    void add(T val) { mValue += val; }
 
     /**
       @brief Gets the difference between the value at last reset and current value.
       @return The delta between the last time the delta variable was reset and the current value.
      */
-    constexpr T delta() const { return mValue - mLastValue; }
+    T delta() const { return mValue - mLastValue; }
 
     /**
       @brief Gets the current value of the delta variable.
       @return The current stored value of the delta variable.
      */
-    constexpr T value() const { return mValue; }
+    T value() const { return mValue; }
 
     /** @brief Resets the delta variable to start measuring from its current value. */
-    CPP14constexpr void checkpoint() { mLastValue = mValue; }
+    void checkpoint() { mLastValue = mValue; }
 
   private:
     T mValue;
