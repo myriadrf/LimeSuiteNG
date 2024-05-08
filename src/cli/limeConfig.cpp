@@ -63,7 +63,7 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
 int main(int argc, char** argv)
 {
     // clang-format off
-    args::ArgumentParser            parser("limeConfig - CLI Device Configuration", "End");
+    args::ArgumentParser            parser("limeConfig - SDR parameters configuring", "");
     args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
     args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
     args::NargsValueFlag<int>       chipFlag(parser, "chip", "Selects destination chip/chips", {'c', "chips"}, {1, static_cast<size_t>(-1)});

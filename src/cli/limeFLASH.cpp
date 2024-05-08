@@ -110,7 +110,7 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
 int main(int argc, char** argv)
 {
     // clang-format off
-    args::ArgumentParser            parser("limeFLASH - CLI Memory device flashing", "");
+    args::ArgumentParser            parser("limeFLASH - Program gateware file to device flash memory", "");
     args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
     args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
     args::ValueFlag<std::string>    targetFlag(parser, "TARGET", "Specifies which target to use", {'t', "target"}, "");

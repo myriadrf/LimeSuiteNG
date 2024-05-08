@@ -57,7 +57,7 @@ void PrintDeviceDetails(SDRDevice* device)
 
 int main(int argc, char* argv[])
 {
-    args::ArgumentParser parser("limeDevice Description", "limeDevice End");
+    args::ArgumentParser parser("limeDevice - Device operations", "");
     args::HelpFlag help(parser, "help", "Display this help menu", { 'h', "help" });
     args::Flag fullFlag(parser, "full", "Force print detailed device(s) info", { 'f', "full" });
 
