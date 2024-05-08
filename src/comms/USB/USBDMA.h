@@ -66,7 +66,6 @@ class USBDMA : public IDMA
     std::size_t GetTransferArrayIndex(uint16_t index);
     std::byte* GetIndexAddress(TRXDir direction, uint16_t index);
     uint8_t GetEndpointAddress(TRXDir direction);
-    uint32_t GetStateSoftwareIndex(TRXDir direction);
 
     std::mutex& GetStateMutex(TRXDir direction);
     std::condition_variable& GetStateCV(TRXDir direction);

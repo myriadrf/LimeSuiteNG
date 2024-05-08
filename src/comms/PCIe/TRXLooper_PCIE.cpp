@@ -25,6 +25,11 @@
 #include <thread>
 #include <vector>
 
+// needed for the hacky workarounds
+// TODO: delete
+#include "LitePCIe.h"
+#include "USBDMA.h"
+
 static constexpr bool showStats{ false };
 static constexpr int statsPeriod_ms{ 1000 }; // at 122.88 MHz MIMO, fpga tx pkt counter overflows every 272ms
 
@@ -486,34 +491,36 @@ int TRXLooper_PCIE::RxSetup()
     const bool usePoll = mConfig.extraConfig.usePoll;
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = (mConfig.linkFormat == DataFormat::I16 ? 4 : 3); // sizeof IQ pair
-    const int maxSamplesInPkt = 1024 / chCount;
 
-    int requestSamplesInPkt = 256; //maxSamplesInPkt;
-    if (mConfig.extraConfig.rx.samplesInPacket != 0)
-    {
-        requestSamplesInPkt = mConfig.extraConfig.rx.samplesInPacket;
-    }
+    constexpr std::size_t headerSize{ sizeof(StreamHeader) };
 
-    int samplesInPkt = std::clamp(requestSamplesInPkt, 64, maxSamplesInPkt);
+    int requestSamplesInPkt = 4080 / sampleSize / chCount;
+
     int payloadSize = requestSamplesInPkt * sampleSize * chCount;
+    const int samplesInPkt = payloadSize / (sampleSize * chCount);
 
-    // iqSamplesCount must be N*16, or N*8 depending on device BUS width
-    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
-    payloadSize = iqSamplesCount * sampleSize * 2;
-    samplesInPkt = payloadSize / (sampleSize * chCount);
+    uint32_t packetSize = payloadSize + headerSize;
 
-    const uint32_t packetSize = 16 + payloadSize;
-
-    // Request fpga to provide Rx packets with desired payloadSize
-    // Two writes are needed
-    fpga->WriteRegister(0xFFFF, 1 << chipId);
-    uint32_t requestAddr[] = { 0x0019, 0x000E };
-    uint32_t requestData[] = { packetSize, iqSamplesCount };
-    fpga->WriteRegisters(requestAddr, requestData, 2);
-
-    if (mConfig.extraConfig.rx.packetsInBatch != 0)
+    // TODO: fix workaround
+    // only if PCIe device
+    if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
     {
-        mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
+        // iqSamplesCount must be N*16, or N*8 depending on device BUS width
+        const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
+        payloadSize = iqSamplesCount * sampleSize * 2;
+        packetSize = payloadSize + headerSize;
+
+        // Request fpga to provide Rx packets with desired payloadSize
+        // Two writes are needed
+        fpga->WriteRegister(0xFFFF, 1 << chipId);
+        uint32_t requestAddr[] = { 0x0019, 0x000E };
+        uint32_t requestData[] = { packetSize, iqSamplesCount };
+        fpga->WriteRegisters(requestAddr, requestData, 2);
+
+        if (mConfig.extraConfig.rx.packetsInBatch != 0)
+        {
+            mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
+        }
     }
 
     const auto dmaBufferSize{ mRxArgs.port->GetBufferSize() };
@@ -548,7 +555,17 @@ int TRXLooper_PCIE::RxSetup()
     const std::string name = "MemPool_Rx"s + std::to_string(chipId);
     const int upperAllocationLimit =
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
-    mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 4096, name);
+    mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 8, name);
+
+    // TODO: fix
+    // very hacky but does the job somewhy
+    if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
+    {
+        // only do this now if it's a PCIe device
+        constexpr uint8_t irqPeriod{ 4 };
+        const uint32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+        mRxArgs.port->RxEnable(readSize, irqPeriod);
+    }
 
     return 0;
 }
@@ -558,6 +575,8 @@ int TRXLooper_PCIE::RxSetup()
 */
 void TRXLooper_PCIE::ReceivePacketsLoop()
 {
+    constexpr int headerSize{ sizeof(StreamHeader) };
+
     DataConversion conversion;
     conversion.srcFormat = mConfig.linkFormat;
     conversion.destFormat = mConfig.format;
@@ -577,9 +596,6 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     DeltaVariable<int32_t> overrun(0);
     DeltaVariable<int32_t> loss(0);
 
-    // Anticipate the overflow 2 interrupts early, just in case of missing an interrupt
-    // Avoid situations where CPU and device is at the same buffer index
-    // CPU reading while device writing creates coherency issues.
     mRxArgs.cnt = 0;
     mRxArgs.sw = 0;
     mRxArgs.hw = 0;
@@ -595,8 +611,14 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
     auto t1{ std::chrono::steady_clock::now() };
     auto t2 = t1;
 
-    constexpr int irqPeriod{ 4 };
-    mRxArgs.port->RxEnable(readSize, irqPeriod);
+    // TODO: fix
+    // very hacky but does the job somewhy
+    if (dynamic_cast<USBDMA*>(mRxArgs.port.get()) != nullptr)
+    {
+        // only run this here if it's a USB device
+        constexpr uint8_t irqPeriod{ 4 };
+        mRxArgs.port->RxEnable(readSize, irqPeriod);
+    }
 
     int32_t Bps = 0;
 
@@ -697,7 +719,8 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
             if (pkt->txWasDropped())
                 ++mTx.stats.loss;
 
-            const int payloadSize = packetSize - 16;
+            const int payloadSize{ packetSize - headerSize };
+
             const int samplesProduced = Deinterleave(outputPkt->back(), pkt->data, payloadSize, conversion);
             outputPkt->SetSize(outputPkt->size() + samplesProduced);
             expectedTS = pkt->counter + samplesProduced;

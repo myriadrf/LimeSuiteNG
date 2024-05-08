@@ -71,7 +71,7 @@ void LMS7002M_SDRDevice_Fixture::SetUpDeviceForTestPattern(
 
 void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 8;
+    constexpr int samplesToReceive = 8192;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div4);
@@ -90,7 +90,7 @@ void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
 
 void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 8;
+    constexpr int samplesToReceive = 8192;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div4);
@@ -109,7 +109,7 @@ void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
 
 void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 16;
+    constexpr int samplesToReceive = 16384;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8);
@@ -128,7 +128,7 @@ void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
 
 void LMS7002M_SDRDevice_Fixture::Configure8FullTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 16;
+    constexpr int samplesToReceive = 16384;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div8);

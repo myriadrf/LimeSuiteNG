@@ -124,6 +124,8 @@ struct StreamHeader {
 };
 
 static_assert(sizeof(StreamHeader) == 16);
+static_assert(sizeof(FPGA_RxDataPacket::data) == sizeof(FPGA_RxDataPacket) - sizeof(StreamHeader));
+static_assert(sizeof(FPGA_TxDataPacket::data) == sizeof(FPGA_TxDataPacket) - sizeof(StreamHeader));
 
 } // namespace lime
 
