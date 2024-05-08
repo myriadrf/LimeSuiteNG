@@ -11,7 +11,7 @@
 #include <mutex>
 #include <getopt.h>
 #include <filesystem>
-#include <args.hxx>
+#include "args/args.hxx"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT

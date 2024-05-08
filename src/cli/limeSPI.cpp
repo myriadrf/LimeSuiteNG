@@ -4,7 +4,7 @@
 #include <cstring>
 #include <getopt.h>
 #include <filesystem>
-#include <args.hxx>
+#include "args/args.hxx"
 
 using namespace std;
 using namespace lime;

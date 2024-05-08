@@ -1,19 +1,11 @@
 #include "cli/common.h"
 #include <getopt.h>
-#include <args.hxx>
+#include "args/args.hxx"
 
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-static int printHelp(void)
-{
-    cout << "limeDevice [options]" << endl;
-    cout << "    -h, --help\t This help" << endl;
-    cout << "    -f, --full\t Force print detailed device(s) info" << endl;
-    return EXIT_SUCCESS;
-}
 
 static const std::string_view GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
 {
