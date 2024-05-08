@@ -1,6 +1,7 @@
 #include "CommonFunctions.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
 #include "utilities/toString.h"
@@ -15,6 +16,7 @@
 #include <vector>
 
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 namespace {
@@ -1585,7 +1587,7 @@ API_EXPORT int CALL_CONV LMS_SetGFIR(lms_device_t* device, bool dir_tx, size_t c
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Parameter param, uint16_t* val)
+API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t* val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
@@ -1599,7 +1601,7 @@ API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Paramete
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Parameter param, uint16_t val)
+API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
@@ -1677,7 +1679,7 @@ API_EXPORT int CALL_CONV LMS_SetNCOPhase(lms_device_t* device, bool dir_tx, size
             apiDevice->device->WriteRegister(apiDevice->moduleIndex, addr + i, pho);
         }
 
-        auto& selectionParameter = dir_tx ? LMS7_SEL_TX : LMS7_SEL_RX;
+        auto& selectionParameter = dir_tx ? SEL_TX : SEL_RX;
         apiDevice->device->SetParameter(
             apiDevice->moduleIndex, ch, selectionParameter.address, selectionParameter.msb, selectionParameter.lsb, 0);
     }

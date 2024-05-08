@@ -1,6 +1,8 @@
 #include "LMS7002M_RegistersMap.h"
-#include "limesuiteng/LMS7002M_parameters.h"
+#include "LMS7002MCSR_Data.h"
+
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 
 LMS7002M_RegistersMap::LMS7002M_RegistersMap()
 {
@@ -25,10 +27,11 @@ void LMS7002M_RegistersMap::SetDefaultValue(uint16_t address, uint16_t value)
     mChannelB[address].defaultValue = value;
 }
 
-void LMS7002M_RegistersMap::InitializeDefaultValues(const std::vector<std::reference_wrapper<const LMS7Parameter>> parameterList)
+void LMS7002M_RegistersMap::InitializeDefaultValues(const std::vector<const lime::LMS7002MCSR_Data::CSRegister*>& parameterList)
 {
-    for (const LMS7Parameter& parameter : parameterList)
+    for (const LMS7002MCSR_Data::CSRegister* element : parameterList)
     {
+        const CSRegister& parameter = *element;
         uint16_t regValue = mChannelA[parameter.address].defaultValue;
         mChannelA[parameter.address].defaultValue = regValue | (parameter.defaultValue << parameter.lsb);
         mChannelA[parameter.address].value = mChannelA[parameter.address].defaultValue;

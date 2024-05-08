@@ -73,19 +73,20 @@ void pnluLimeSDR::Initialize(lime::SDRDevice* newDevice)
     mainSizer->SetSizeHints(this);
     Layout();
 
-    if (device)
+    if (!device)
     {
-        for (const auto& id : device->GetDescriptor().spiSlaveIds)
+        fpgaSelect = -1;
+        return;
+    }
+
+    for (const auto& id : device->GetDescriptor().spiSlaveIds)
+    {
+        if (id.first == "FPGA"s)
         {
-            if (id.first == "FPGA"s)
-            {
-                fpgaSelect = id.second;
-                break;
-            }
+            fpgaSelect = id.second;
+            break;
         }
     }
-    else
-        fpgaSelect = -1;
 }
 
 pnluLimeSDR::~pnluLimeSDR()

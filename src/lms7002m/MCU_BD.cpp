@@ -598,7 +598,6 @@ void MCU_BD::Reset_MCU()
 
 int MCU_BD::RunProductionTest_MCU()
 {
-    string temps;
     unsigned short tempi = 0x0080; // was 0x0000
     int m_iMode1_ = 0;
     int m_iMode0_ = 0;
@@ -672,84 +671,61 @@ int MCU_BD::RunProductionTest_MCU()
     //int temps = wxString::Format("Result is: 0x%02X", retval);
     //ReadResult->SetLabel(temps);
 
-    if (retval == 0x10)
+    if (retval != 0x10)
     {
-        tempi = 0x0055;
-        mSPI_write(0x8000, tempi); // P0=0x55;
-        // EXT_INT3=1, external interrupt 3 is raised
-        mSPI_write(0x8002, formREG2command(0, 0, 1, 0, m_iMode1_, m_iMode0_)); // EXT_INT3=1
-        // here you can put any Delay function
-        Wait_CLK_Cycles(256);
-        // EXT_INT3=0, external interrupt 3 is pulled down
-        mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT3=0
-        Wait_CLK_Cycles(256 * 5);
-        retval = mSPI_read(1); //REG1 read
-        if (retval != 0x55)
-            temps = "Ext. interrupt 3 test failed."s;
-        else
-        {
-            tempi = 0x00AA;
-            mSPI_write(0x8000, tempi); // P0=0xAA;
-            // EXT_INT4=1, external interrupt 4 is raised
-            mSPI_write(0x8002, formREG2command(0, 1, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT4=1
-            // here you can put any Delay function
-            Wait_CLK_Cycles(256);
-            // EXT_INT4=0, external interrupt 4 is pulled down
-            mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT4=0
-            Wait_CLK_Cycles(256 * 5);
-            retval = mSPI_read(1); //REG1 read
-            if (retval != 0xAA)
-                temps = "Ext. interrupt 4 test failed."s;
-            else
-            {
-                tempi = 0x0055;
-                mSPI_write(0x8000, tempi); // P0=0x55;
-                // EXT_INT5=1, external interrupt 5 is raised
-                mSPI_write(0x8002, formREG2command(1, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT5=1
-                // here you can put any Delay function
-                Wait_CLK_Cycles(256);
-                // EXT_INT5=0, external interrupt 5 is pulled down
-                mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT5=0
-                Wait_CLK_Cycles(256 * 5);
-                retval = mSPI_read(1); //REG1 read
-                if (retval != 0x55)
-                {
-                    temps = "Ext. interrupt 5 test failed."s;
-                    return -1;
-                }
-                else
-                {
-                    temps = "Production test finished. MCU is OK."s;
-                    return 0;
-                }
-            }
-        }
-    }
-    else
-    {
-        if ((retval & 0xF0) == 0x30)
-        { // detected error code
-            if ((retval & 0x0F) > 0)
-            {
-                temps = "Test "s + std::to_string(retval & 0x0F) + " failed"s;
-                return -1;
-            }
-            else
-            {
-                temps = "Test failed"s;
-                return -1;
-            }
-        }
-        else
-        {
-            // test too long. Failure.
-            temps = "Test failed."s;
-            return -1;
-        }
+        return -1;
     }
 
-    //Baseband gets back the control over SPI switch
-    mSPI_write(0x0006, 0x0000); //REG6 write
+    tempi = 0x0055;
+    mSPI_write(0x8000, tempi); // P0=0x55;
+    // EXT_INT3=1, external interrupt 3 is raised
+    mSPI_write(0x8002, formREG2command(0, 0, 1, 0, m_iMode1_, m_iMode0_)); // EXT_INT3=1
+    // here you can put any Delay function
+    Wait_CLK_Cycles(256);
+    // EXT_INT3=0, external interrupt 3 is pulled down
+    mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT3=0
+    Wait_CLK_Cycles(256 * 5);
+    retval = mSPI_read(1); //REG1 read
+    if (retval != 0x55)
+    {
+        //Baseband gets back the control over SPI switch
+        mSPI_write(0x0006, 0x0000); //REG6 write
+
+        return 0;
+    }
+
+    tempi = 0x00AA;
+    mSPI_write(0x8000, tempi); // P0=0xAA;
+    // EXT_INT4=1, external interrupt 4 is raised
+    mSPI_write(0x8002, formREG2command(0, 1, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT4=1
+    // here you can put any Delay function
+    Wait_CLK_Cycles(256);
+    // EXT_INT4=0, external interrupt 4 is pulled down
+    mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT4=0
+    Wait_CLK_Cycles(256 * 5);
+    retval = mSPI_read(1); //REG1 read
+    if (retval != 0xAA)
+    {
+        //Baseband gets back the control over SPI switch
+        mSPI_write(0x0006, 0x0000); //REG6 write
+
+        return 0;
+    }
+
+    tempi = 0x0055;
+    mSPI_write(0x8000, tempi); // P0=0x55;
+    // EXT_INT5=1, external interrupt 5 is raised
+    mSPI_write(0x8002, formREG2command(1, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT5=1
+    // here you can put any Delay function
+    Wait_CLK_Cycles(256);
+    // EXT_INT5=0, external interrupt 5 is pulled down
+    mSPI_write(0x8002, formREG2command(0, 0, 0, 0, m_iMode1_, m_iMode0_)); // EXT_INT5=0
+    Wait_CLK_Cycles(256 * 5);
+    retval = mSPI_read(1); //REG1 read
+    if (retval != 0x55)
+    {
+        return -1;
+    }
 
     return 0;
 }

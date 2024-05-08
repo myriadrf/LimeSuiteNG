@@ -5,6 +5,7 @@
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "LMSBoards.h"
 #include "threadHelper.h"
 #include "TxBufferManager.h"
@@ -23,6 +24,7 @@ using namespace std::literals::string_literals;
 #include "USBDMA.h"
 
 namespace lime {
+using namespace LMS7002MCSR_Data;
 
 using namespace std::chrono;
 
@@ -193,8 +195,8 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
 
     // const uint16_t MIMO_EN = needMIMO << 8;
-    // const uint16_t TRIQ_PULSE = lms->Get_SPI_Reg_bits(LMS7param(LML1_TRXIQPULSE)) << 7; // 0-OFF, 1-ON
-    // const uint16_t DDR_EN = lms->Get_SPI_Reg_bits(LMS7param(LML1_SISODDR)) << 6; // 0-SDR, 1-DDR
+    // const uint16_t TRIQ_PULSE = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_TRXIQPULSE) << 7; // 0-OFF, 1-ON
+    // const uint16_t DDR_EN = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR) << 6; // 0-SDR, 1-DDR
     // const uint16_t MODE = 0 << 5; // 0-TRXIQ, 1-JESD207 (not impelemented)
     // const uint16_t smpl_width =
     //     cfg.linkFormat == DataFormat::I12 ? 2 : 0;
@@ -202,9 +204,9 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     // const uint16_t reg8 = MIMO_EN | TRIQ_PULSE | DDR_EN | MODE | smpl_width;
 
     uint16_t mode = 0x0100;
-    if (lms->Get_SPI_Reg_bits(LMS7param(LML1_SISODDR)))
+    if (lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR))
         mode = 0x0040;
-    else if (lms->Get_SPI_Reg_bits(LMS7param(LML1_TRXIQPULSE)))
+    else if (lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_TRXIQPULSE))
         mode = 0x0180;
 
     const uint16_t smpl_width = cfg.linkFormat == DataFormat::I12 ? 2 : 0;
@@ -774,8 +776,6 @@ void TRXLooper::TransmitPacketsLoop()
     auto fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    int packetsSent = 0;
-    int totalPacketSent = 0;
     int64_t lastTS = 0;
 
     struct PendingWrite {
@@ -968,8 +968,6 @@ void TRXLooper::TransmitPacketsLoop()
                 transferSize.Add(wrInfo.size);
                 ++stagingBufferIndex;
                 stagingBufferIndex &= 0xFFFF;
-                packetsSent += output.packetCount();
-                totalPacketSent += output.packetCount();
                 stats.timestamp = lastTS;
                 stats.bytesTransferred += wrInfo.size;
                 mTxArgs.port->CacheFlush(TRXDir::Tx, DataTransferDirection::DeviceToHost, stagingBufferIndex % bufferCount);
@@ -1025,7 +1023,6 @@ void TRXLooper::TransmitPacketsLoop()
             }
             loss.checkpoint();
             underrun.checkpoint();
-            packetsSent = 0;
             totalBytesSent = 0;
             mTx.stats.dataRate_Bps = dataRate;
         }
@@ -1058,6 +1055,7 @@ void TRXLooper::TxTeardown()
         mCallback_logMessage(LogLevel::Debug, msg);
     }
 }
+
 template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta)
 {
     const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;

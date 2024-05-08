@@ -1010,17 +1010,19 @@ Si5351C::Status Si5351C::ConfigureClocks()
 */
 void Si5351C::SetClock(unsigned char id, unsigned long fOut_Hz, bool enabled, bool inverted)
 {
-    if (id < 8)
+    if (id >= 8)
     {
-        if (fOut_Hz < 8000 || fOut_Hz > 160000000)
-        {
-            lime::error("Si5351C - CLK%d output frequency must be between 8kHz and 160MHz. fOut_MHz = %g", id, fOut_Hz / 1000000.0);
-            return;
-        }
-        CLK[id].powered = enabled;
-        CLK[id].inverted = inverted;
-        CLK[id].outputFreqHz = fOut_Hz;
+        return;
     }
+
+    if (fOut_Hz < 8000 || fOut_Hz > 160000000)
+    {
+        lime::error("Si5351C - CLK%d output frequency must be between 8kHz and 160MHz. fOut_MHz = %g", id, fOut_Hz / 1000000.0);
+        return;
+    }
+    CLK[id].powered = enabled;
+    CLK[id].inverted = inverted;
+    CLK[id].outputFreqHz = fOut_Hz;
 }
 
 /** @brief Sets PLL input frequency

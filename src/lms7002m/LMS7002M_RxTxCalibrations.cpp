@@ -1,4 +1,5 @@
 #include "limesuiteng/LMS7002M.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include <assert.h>
 #include "MCU_BD.h"
 #include "mcu_programs.h"
@@ -13,6 +14,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 // class BoardLoopbackStore
@@ -43,8 +45,8 @@ static uint8_t GetExtLoopPair(lime::LMS7002M& ctr, bool calibratingTx)
     //     return 0;
 
     // auto devName = port->GetDeviceInfo().deviceName;
-    // uint8_t activeLNA = ctr.Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE);
-    // uint8_t activeBand = (ctr.Get_SPI_Reg_bits(LMS7_SEL_BAND2_TRF) << 1 | ctr.Get_SPI_Reg_bits(LMS7_SEL_BAND1_TRF))-1;
+    // uint8_t activeLNA = ctr.Get_SPI_Reg_bits(SEL_PATH_RFE);
+    // uint8_t activeBand = (ctr.Get_SPI_Reg_bits(SEL_BAND2_TRF) << 1 | ctr.Get_SPI_Reg_bits(SEL_BAND1_TRF))-1;
 
     // if(devName == lime::GetDeviceName(lime::LMS_DEV_LIMESDR))
     //     loopPair = 1 << 2 | 0x1; // band2 -> LNAH
@@ -67,7 +69,7 @@ static inline int16_t signextIqCorr(const uint16_t regVal)
 const double TrxCalib_RF_LimitLow = 2.5e6;
 const double TrxCalib_RF_LimitHigh = 120e6;
 
-static int16_t ReadAnalogDC(lime::LMS7002M* lmsControl, const LMS7Parameter& param)
+static int16_t ReadAnalogDC(lime::LMS7002M* lmsControl, const LMS7002MCSR_Data::CSRegister& param)
 {
     uint16_t mask = param.address < 0x05C7 ? 0x03FF : 0x003F;
 
@@ -163,8 +165,8 @@ uint32_t LMS7002M::GetRSSI()
 {
     //delay to make sure RSSI gets enough samples to refresh before reading it
     this_thread::sleep_for(chrono::microseconds(50));
-    Modify_SPI_Reg_bits(LMS7_CAPTURE, 0);
-    Modify_SPI_Reg_bits(LMS7_CAPTURE, 1);
+    Modify_SPI_Reg_bits(CAPTURE, 0);
+    Modify_SPI_Reg_bits(CAPTURE, 1);
     uint32_t rssi = (Get_SPI_Reg_bits(0x040F, 15, 0, true) << 2) | Get_SPI_Reg_bits(0x040E, 1, 0, true);
     return rssi;
 }
@@ -187,14 +189,14 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         return ReportError(OpStatus::InvalidValue, "Tx Calibration: Device not connected"s);
     auto beginTime = std::chrono::high_resolution_clock::now();
     int status;
-    uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
+    uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(MAC));
     if (ch == 0 || ch == 3)
         return ReportError(OpStatus::InvalidValue, "Tx Calibration: Incorrect channel selection MAC %i", ch);
 
     //caching variables
     double txFreq = GetFrequencySX(TRXDir::Tx);
     uint8_t channel = ch == 1 ? 0 : 1;
-    int band = Get_SPI_Reg_bits(LMS7_SEL_BAND1_TRF) ? 0 : 1;
+    int band = Get_SPI_Reg_bits(SEL_BAND1_TRF) ? 0 : 1;
 
     int dccorri(0), dccorrq(0), gcorri(0), gcorrq(0), phaseOffset(0);
     lime::debug("Tx calibration using MCU %s loopback", useExtLoopback ? "EXTERNAL" : "INTERNAL");
@@ -203,7 +205,7 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         txFreq / 1e6,
         bandwidth_Hz / 1e6,
         band ? "BAND2" : "BAND1",
-        Get_SPI_Reg_bits(LMS7_CG_IAMP_TBB));
+        Get_SPI_Reg_bits(CG_IAMP_TBB));
 
     uint8_t mcuID = mcuControl->ReadMCUProgramID();
     lime::debug(
@@ -247,11 +249,11 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         this->SPI_read(addr, true);
 
     //need to read back calibration results
-    dccorri = ReadAnalogDC(this, channel ? LMS7_DC_TXBI : LMS7_DC_TXAI);
-    dccorrq = ReadAnalogDC(this, channel ? LMS7_DC_TXBQ : LMS7_DC_TXAQ);
-    gcorri = Get_SPI_Reg_bits(LMS7_GCORRI_TXTSP, true);
-    gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_TXTSP, true);
-    phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_TXTSP, true));
+    dccorri = ReadAnalogDC(this, channel ? DC_TXBI : DC_TXAI);
+    dccorrq = ReadAnalogDC(this, channel ? DC_TXBQ : DC_TXAQ);
+    gcorri = Get_SPI_Reg_bits(GCORRI_TXTSP, true);
+    gcorrq = Get_SPI_Reg_bits(GCORRQ_TXTSP, true);
+    phaseOffset = signextIqCorr(Get_SPI_Reg_bits(IQCORR_TXTSP, true));
 
     lime::info("Tx calibration finished"s);
     lime::debug("Tx | DC  | GAIN | PHASE"s);
@@ -284,11 +286,11 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
     auto beginTime = std::chrono::high_resolution_clock::now();
 #endif
 
-    uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_MAC));
+    uint8_t ch = static_cast<uint8_t>(Get_SPI_Reg_bits(MAC));
     if (ch == 0 || ch == 3)
         return ReportError(OpStatus::InvalidValue, "Rx Calibration: Incorrect channel selection MAC %i", ch);
     uint8_t channel = ch == 1 ? 0 : 1;
-    uint8_t lna = static_cast<uint8_t>(Get_SPI_Reg_bits(LMS7_SEL_PATH_RFE));
+    uint8_t lna = static_cast<uint8_t>(Get_SPI_Reg_bits(SEL_PATH_RFE));
     double rxFreq = GetFrequencySX(TRXDir::Rx);
 
     const std::string_view lnaName = [lna]() {
@@ -312,9 +314,9 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         rxFreq / 1e6,
         bandwidth_Hz / 1e6,
         lnaName.data(),
-        Get_SPI_Reg_bits(LMS7_G_PGA_RBB),
-        Get_SPI_Reg_bits(LMS7_G_LNA_RFE),
-        Get_SPI_Reg_bits(LMS7_G_TIA_RFE));
+        Get_SPI_Reg_bits(G_PGA_RBB),
+        Get_SPI_Reg_bits(G_LNA_RFE),
+        Get_SPI_Reg_bits(G_TIA_RFE));
 
     int dcoffi(0), dcoffq(0), gcorri(0), gcorrq(0), phaseOffset(0);
     //check if MCU has correct firmware
@@ -361,11 +363,11 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         this->SPI_read(addr, true);
 
     //read back for cache input and print
-    dcoffi = ReadAnalogDC(this, channel ? LMS7_DC_RXBI : LMS7_DC_RXAI);
-    dcoffq = ReadAnalogDC(this, channel ? LMS7_DC_RXBQ : LMS7_DC_RXAQ);
-    gcorri = Get_SPI_Reg_bits(LMS7_GCORRI_RXTSP, true);
-    gcorrq = Get_SPI_Reg_bits(LMS7_GCORRQ_RXTSP, true);
-    phaseOffset = signextIqCorr(Get_SPI_Reg_bits(LMS7_IQCORR_RXTSP, true));
+    dcoffi = ReadAnalogDC(this, channel ? DC_RXBI : DC_RXAI);
+    dcoffq = ReadAnalogDC(this, channel ? DC_RXBQ : DC_RXAQ);
+    gcorri = Get_SPI_Reg_bits(GCORRI_RXTSP, true);
+    gcorrq = Get_SPI_Reg_bits(GCORRQ_RXTSP, true);
+    phaseOffset = signextIqCorr(Get_SPI_Reg_bits(IQCORR_RXTSP, true));
 
     lime::info("Rx calibration finished"s);
     lime::debug("RX | DC  | GAIN | PHASE"s);
@@ -384,25 +386,25 @@ OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
 {
     if (dir == TRXDir::Tx)
     {
-        Modify_SPI_Reg_bits(LMS7_DC_REG_TXTSP, I);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_TXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_TXTSP, 1);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_TXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_DC_REG_TXTSP, Q);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_TXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_TXTSP, 1);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_TXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_TXTSP, I);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_TXTSP, Q);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
     }
     else
     {
-        Modify_SPI_Reg_bits(LMS7_DC_REG_RXTSP, I);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_RXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_RXTSP, 1);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDI_RXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_DC_REG_RXTSP, Q);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_RXTSP, 0);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_RXTSP, 1);
-        Modify_SPI_Reg_bits(LMS7_TSGDCLDQ_RXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_RXTSP, I);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_RXTSP, Q);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
     }
     return OpStatus::Success;
 }

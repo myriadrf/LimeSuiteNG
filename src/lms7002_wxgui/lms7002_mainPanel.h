@@ -42,7 +42,7 @@ class lms7002_mainPanel : public ISOCPanel
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual ~lms7002_mainPanel();
+    ~lms7002_mainPanel();
     void UpdateVisiblePanel();
     void UpdateGUI() override;
     void Initialize(lime::LMS7002M* socPtr);

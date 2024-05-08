@@ -62,7 +62,7 @@ source_impl::source_impl(std::string serial,
     stored.channel_mode = channel_mode;
     stored.align = align_ch_phase ? (1 << 16) : 0;
 
-    if (stored.channel_mode < 0 && stored.channel_mode > 2) {
+    if (stored.channel_mode < 0 || stored.channel_mode > 2) {
         throw std::invalid_argument(
             "source_impl::source_impl(): Channel must be A(0), B(1), or (A+B) MIMO(2)");
     }
@@ -146,8 +146,6 @@ int source_impl::work(int noutput_items,
                       gr_vector_const_void_star& input_items,
                       gr_vector_void_star& output_items)
 {
-    gr_complex* out = static_cast<gr_complex*>(output_items[0]);
-
     int ret = 0;
 
     // Receive stream for channel 0 (if channel_mode is SISO)
@@ -244,19 +242,21 @@ void source_impl::print_stream_stats(lime::StreamStats status)
     t2 = std::chrono::high_resolution_clock::now();
     auto timePeriod =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    if (timePeriod >= 1000) {
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        GR_LOG_INFO(d_logger,
-                    fmt::format("RX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
-                                (status.dataRate_Bps / 1e6),
-                                pktLoss,
-                                (100 * status.FIFO.ratio())));
-        GR_LOG_INFO(d_logger,
-                    "---------------------------------------------------------------");
-        pktLoss = 0;
-        t1 = t2;
+    if (timePeriod < 1000) {
+        return;
     }
+
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    GR_LOG_INFO(d_logger,
+                fmt::format("RX |rate: {:f} MB/s |dropped packets: {:d} |FIFO: {:d}%",
+                            (status.dataRate_Bps / 1e6),
+                            pktLoss,
+                            (100 * status.FIFO.ratio())));
+    GR_LOG_INFO(d_logger,
+                "---------------------------------------------------------------");
+    pktLoss = 0;
+    t1 = t2;
 }
 
 // Add rx_time tag to stream

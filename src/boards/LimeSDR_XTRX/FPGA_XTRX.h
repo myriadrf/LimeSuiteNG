@@ -12,7 +12,6 @@ class FPGA_XTRX : public FPGA
 {
   public:
     FPGA_XTRX(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI);
-    virtual ~FPGA_XTRX(){};
 
   protected:
     OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, double txPhase, double rxPhase, int chipIndex = 0) override;

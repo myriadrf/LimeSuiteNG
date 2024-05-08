@@ -19,8 +19,9 @@ class LMS64C_LMS7002M_Over_PCIe : public IComms
       @param dataPort The PCIe data connection to use.
      */
     LMS64C_LMS7002M_Over_PCIe(std::shared_ptr<LitePCIe> dataPort);
-    virtual OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-    virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+
+    OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+    OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
   private:
     PCIE_CSR_Pipe pipe;

@@ -452,7 +452,7 @@ void pnlQSpark::OnbtnUpdateAll(wxCommandEvent& event)
 void pnlQSpark::OnConfigurePLL(wxCommandEvent& event)
 {
 
-    auto conn = ((LMS7_Device*)lmsControl)->GetConnection();
+    auto conn = ((Device*)lmsControl)->GetConnection();
     if (!conn || !conn->IsOpen())
     {
         wxMessageBox(_("device not connected"), _("Error"), wxICON_ERROR | wxOK);
@@ -463,7 +463,7 @@ void pnlQSpark::OnConfigurePLL(wxCommandEvent& event)
     txtPllFreqTxMHz->GetValue().ToDouble(&FreqTxMHz);
     txtPllFreqRxMHz->GetValue().ToDouble(&FreqRxMHz);
 
-    if (((LMS7_Device*)lmsControl)->SetRate(4, FreqRxMHz * 1e6, FreqTxMHz * 1e6) != 0)
+    if (((Device*)lmsControl)->SetRate(4, FreqRxMHz * 1e6, FreqTxMHz * 1e6) != 0)
         wxMessageBox(_("PLL configuration failed"), _("Error"), wxICON_ERROR | wxOK);
     else
         OnNcoFrequencyChanged(event);

@@ -16,7 +16,7 @@ using namespace lime;
 auto t1 = chrono::high_resolution_clock::now();
 auto t2 = chrono::high_resolution_clock::now();
 
-bool ConfigureCGEN(LMS7_Device* device, double freqMHz);
+bool ConfigureCGEN(Device* device, double freqMHz);
 
 int printHelp(void);
 
@@ -168,13 +168,13 @@ int main(int argc, char** argv)
     return 0;
 }
 
-bool ConfigureCGEN(LMS7_Device* device, double freqMHz)
+bool ConfigureCGEN(Device* device, double freqMHz)
 {
     std::cout << "Set CGEN " << freqMHz / 1e6 << " MHz: ";
     LMS7002M* lms = device->GetLMS();
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1, true);
-    int interp = lms->Get_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP));
-    int decim = lms->Get_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP));
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1, true);
+    int interp = lms->Get_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP);
+    int decim = lms->Get_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP);
     if (lms->SetInterfaceFrequency(freqMHz, interp, decim) != 0)
     {
         std::cout << "LMS VCO Fail" << endl;

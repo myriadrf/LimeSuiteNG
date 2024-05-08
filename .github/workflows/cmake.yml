@@ -1,4 +1,4 @@
-name: CMake
+name: Build All
 
 on:
   workflow_dispatch:
@@ -10,98 +10,72 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   CMAKE_BUILD_PARALLEL_LEVEL: 2
-  SOAPY_SDR_BRANCH: master
   INSTALL_PREFIX: ${{github.workspace}}/deps
+  CMAKE_OPTIONS: -DINSTALL_KERNEL_MODULE=0 -DENABLE_UDEV_RULES=0
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  build-Linux:
+    name: Linux build
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            compiler: gcc
-          - os: ubuntu-latest
-            compiler: clang
-          - os: windows-latest
-            compiler: msvc
-            arch: x64
-          - os: windows-latest
-            compiler: msvc
-            arch: Win32
-          - os: macos-latest
-            compiler: clang
+        compiler: [ {cpp: g++, c: gcc}, {cpp: clang++, c: clang} ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo add-apt-repository ppa:gnuradio/gnuradio-releases
+          sudo apt-get update
+          sudo apt-get install -qq gnuradio-dev python3-packaging
+          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev libsoapysdr-dev
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cpp }} -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}
+
+  build-Windows:
+    name: Windows build
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, Win32]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo add-apt-repository ppa:gnuradio/gnuradio-releases
-          sudo apt-get update
-          sudo apt-get install gnuradio-dev python3-packaging
-          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev liboctave-dev
-
-      - name: Install macOS dependencies
-        if: matrix.os == 'macos-latest'
-        # TODO: figure out why 'spdlog/tweakme.h' is not found from packages when generating gnuradio python bindings
-        run: brew install wxwidgets #castxml gnuradio pybind11
-
-      - name: Download Windows dependencies
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir ${{github.workspace}}/deps
-          curl -o ${{github.workspace}}/deps/FX3SDK.zip -L https://downloads.myriadrf.org/project/limesuite/appveyor/FX3SDK.zip
-          7z x ${{github.workspace}}/deps/FX3SDK.zip -o${{github.workspace}}/deps/FX3SDK
-          curl -o ${{github.workspace}}/deps/wxWidgets-headers.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
-          7z x ${{github.workspace}}/deps/wxWidgets-headers.7z -o${{github.workspace}}/deps/wxWidgets
-
-      - name: Download Windows dependencies (64-bit wxWidgets)
-        if: matrix.os == 'windows-latest' && matrix.arch == 'x64'
-        run: |
-          curl -o ${{github.workspace}}/deps/wxWidgets.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
-          7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
-
-      - name: Download Windows dependencies (32-bit wxWidgets)
-        if: matrix.os == 'windows-latest' && matrix.arch == 'Win32'
-        run: |
-          curl -o ${{github.workspace}}/deps/wxWidgets.7z -L https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
-          7z x ${{github.workspace}}/deps/wxWidgets.7z -o${{github.workspace}}/deps/wxWidgets
-
       - name: Install SoapySDR from source
-        if: matrix.os != 'macos-latest' # Not needed on Mac OS because it is installed as a GNU Radio dependency
         run: |
-          git clone -b ${{env.SOAPY_SDR_BRANCH}} --depth 1 https://github.com/pothosware/SoapySDR.git
+          git clone -b master --depth 1 https://github.com/pothosware/SoapySDR.git
           cd SoapySDR
           mkdir build && cd build
-          cmake ../ -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON3=OFF
-          cmake --build .
+          cmake ../ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON3=OFF -DENABLE_CSHARP=OFF
+          cmake --build . --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}
           cmake --build . --target install
 
-      - name: Configure CMake (Windows)
-        if: matrix.os == 'windows-latest' && matrix.compiler == 'msvc'
-        run: cmake -B ${{github.workspace}}/build -A${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DwxWidgets_ROOT_DIR=${{github.workspace}}/deps/wxWidgets -DFX3_SDK_RELATIVE_PATH=deps/FX3SDK
-
-      - name: Configure CMake (GCC)
-        if: matrix.compiler == 'gcc'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DINSTALL_KERNEL_MODULE=0 -DENABLE_UDEV_RULES=0
-
-      - name: Configure CMake (Clang)
-        if: matrix.compiler == 'clang'
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DINSTALL_KERNEL_MODULE=0 -DENABLE_UDEV_RULES=0
-
-      - name: Configure GNU Radio in-tree CMake (mac)
-        if: matrix.os == 'macos-latest'
-        run: cmake -B ${{github.workspace}}/build -DENABLE_GNURADIO=1
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -A${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
 
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}
 
-      - name: Build GNU Radio plug-in by itself (ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install
-          cmake -B ${{github.workspace}}/plugins/gr-limesdr/build -S ${{github.workspace}}/plugins/gr-limesdr -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}}
-          cmake --build ${{github.workspace}}/plugins/gr-limesdr/build --config ${{env.BUILD_TYPE}}
+  build-MacOS:
+    name: MacOS build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+      # GNURadio plugin fails to build due to issues with spdlog dependency
+      # gnuradio pybind11 castxml
+        run: brew install wxwidgets soapysdr
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}

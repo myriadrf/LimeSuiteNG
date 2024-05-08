@@ -19,7 +19,7 @@ class LIME_API LitePCIe : public IDMA
     static std::vector<std::string> GetDevicesWithPattern(const std::string& regex);
     static std::vector<std::string> GetPCIeDeviceList();
     LitePCIe();
-    ~LitePCIe();
+    virtual ~LitePCIe();
 
     OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
     void Close();

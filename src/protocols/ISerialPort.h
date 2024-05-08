@@ -10,6 +10,8 @@ namespace lime {
 class ISerialPort
 {
   public:
+    virtual ~ISerialPort(){};
+
     /**
     @brief Writes the specified data into whatever device is implementing this interface.
     

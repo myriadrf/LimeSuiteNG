@@ -6,7 +6,7 @@
 class lms7002_pnlRBB_view : public ILMS7002MTab
 {
   protected:
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void ParameterChangeHandler(wxSpinEvent& event);
     void OncmbBBLoopbackSelected(wxCommandEvent& event);
     void OnbtnTuneFilter(wxCommandEvent& event);
@@ -17,7 +17,7 @@ class lms7002_pnlRBB_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void UpdateGUI() override;
+    void UpdateGUI() override;
 
   protected:
     enum {

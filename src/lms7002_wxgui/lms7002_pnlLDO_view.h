@@ -13,7 +13,7 @@ class lms7002_pnlLDO_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
+    void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
     enum {

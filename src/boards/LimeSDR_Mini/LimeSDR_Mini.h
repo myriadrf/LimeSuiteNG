@@ -20,37 +20,36 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
         std::shared_ptr<IComms> spiFPGA,
         std::shared_ptr<USBGeneric> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
-    virtual ~LimeSDR_Mini();
+    ~LimeSDR_Mini();
 
-    virtual OpStatus Configure(const SDRConfig& config, uint8_t moduleIndex) override;
+    OpStatus Configure(const SDRConfig& config, uint8_t moduleIndex) override;
 
-    virtual OpStatus Init() override;
-    virtual OpStatus Reset() override;
+    OpStatus Init() override;
+    OpStatus Reset() override;
 
-    virtual OpStatus SetSampleRate(
-        uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
+    OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
-    virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
-    virtual OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
+    double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
+    OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
-    virtual double GetTemperature(uint8_t moduleIndex) override;
+    double GetTemperature(uint8_t moduleIndex) override;
 
-    virtual OpStatus Synchronize(bool toChip) override;
+    OpStatus Synchronize(bool toChip) override;
 
-    virtual OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
+    OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    virtual OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
+    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
 
-    virtual void StreamStart(uint8_t moduleIndex) override;
-    virtual void StreamStop(uint8_t moduleIndex) override;
+    void StreamStart(uint8_t moduleIndex) override;
+    void StreamStop(uint8_t moduleIndex) override;
 
-    virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
-    virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
-    virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
-    virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
+    OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
 
-    virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
-    virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
+    OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
+    OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
   protected:
     SDRDescriptor GetDeviceInfo();

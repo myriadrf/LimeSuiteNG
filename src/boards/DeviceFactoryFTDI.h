@@ -12,10 +12,10 @@ class DeviceFactoryFTDI : public USBEntry
     DeviceFactoryFTDI();
 
 #ifndef __unix__
-    virtual std::vector<DeviceHandle> enumerate(const DeviceHandle& hint) override;
+    std::vector<DeviceHandle> enumerate(const DeviceHandle& hint) override;
 #endif
 
-    virtual SDRDevice* make(const DeviceHandle& handle) override;
+    SDRDevice* make(const DeviceHandle& handle) override;
 
   private:
     SDRDevice* make_LimeSDR_Mini(const DeviceHandle& handle, const uint16_t& vid, const uint16_t& pid);
