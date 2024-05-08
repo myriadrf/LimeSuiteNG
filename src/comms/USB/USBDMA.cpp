@@ -229,6 +229,11 @@ void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirec
         return;
     }
 
+    if (samplesDirection == TRXDir::Tx)
+    {
+        index++;
+    }
+
     const auto address{ GetIndexAddress(samplesDirection, index) };
 
     if (address == nullptr)
@@ -236,13 +241,19 @@ void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirec
         throw std::runtime_error("Address is null"s);
     }
 
-    if (!port->WaitForXfer(GetContextHandleFromIndex(samplesDirection, index)))
+    const auto contextHandle{ GetContextHandleFromIndex(samplesDirection, index) };
+
+    if (contextHandle == -1 && samplesDirection == TRXDir::Tx)
+    {
+        return;
+    }
+
+    if (!port->WaitForXfer(contextHandle))
     {
         throw std::runtime_error("Communication timeout"s);
     }
 
-    const auto received{ port->FinishDataXfer(
-        reinterpret_cast<uint8_t*>(address), GetBufferSize(), GetContextHandleFromIndex(samplesDirection, index)) };
+    const auto received{ port->FinishDataXfer(reinterpret_cast<uint8_t*>(address), GetBufferSize(), contextHandle) };
 
     if (received != GetBufferSize())
     {
@@ -282,7 +293,7 @@ void USBDMA::TxStartTransferThread()
     {
         std::unique_lock lck{ tx.mutex };
 
-        if (GetContextHandle(direction) != -1 && tx.state.hardwareIndex == tx.state.softwareIndex)
+        if (GetContextHandle(direction) != -1 || tx.state.hardwareIndex == tx.state.softwareIndex)
         {
             tx.cv.wait(lck);
             continue;
