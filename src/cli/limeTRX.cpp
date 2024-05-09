@@ -244,7 +244,7 @@ int main(int argc, char** argv)
     args::HelpFlag                      helpFlag(parser, "help", "This help", {'h', "help"});
 
     args::ValueFlag<std::string>        deviceFlag(parser, "name", "Specifies which device to use", {'d', "device"});
-    args::NargsValueFlag<int>           chipFlag(parser, "index", "Specify chip index, or index list for aggregation [0,1...]", {'c', "chip"}, {1, static_cast<size_t>(-1)});
+    args::NargsValueFlag<int>           chipFlag(parser, "index", "Specify chip index, or index list for aggregation [0,1...]", {'c', "chip"}, args::Nargs{1, static_cast<size_t>(-1)}); // Arg count range [1, size_t::maxValue]
     args::ValueFlag<std::string>        inputFlag(parser, "file path", "Waveform file for samples transmitting", {'i', "input"});
     args::ValueFlag<std::string>        outputFlag(parser, "file path", "Waveform file for received samples", {'o', "output"}, "", args::Options{});
     args::Flag                          looptxFlag(parser, "", "Loop tx samples transmission", {"looptx"});

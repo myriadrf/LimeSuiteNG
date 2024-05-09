@@ -117,7 +117,7 @@ static std::string ReadFile(const std::string& fileName)
     long fileSize = inputFile.tellg();
     inputFile.seekg(0, std::ios::beg);
 
-    buffer.resize(fileSize + 1); // +1 to add null termination
+    buffer.resize(fileSize);
     inputFile.read(&buffer[0], fileSize);
     inputFile.close();
     buffer[fileSize] = 0;
