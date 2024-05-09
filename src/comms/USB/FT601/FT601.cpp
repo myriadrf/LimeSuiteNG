@@ -193,11 +193,12 @@ bool FT601::WaitForXfer(int contextHandle, int32_t timeout_ms)
 
     USBTransferContext_FT601* context = &dynamic_cast<USBTransferContext_FT601*>(contexts)[contextHandle];
 
-    if (!context->isTransferUsed)
+    if (!context->isTransferUsed || context->transferWaitedFor)
     {
         return true; //there is nothing to wait for (signal wait finished)
     }
 
+    context->transferWaitedFor = true;
     DWORD dwRet = WaitForSingleObject(context->inOvLap->hEvent, timeout_ms);
 
     if (dwRet == WAIT_OBJECT_0)

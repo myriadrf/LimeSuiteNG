@@ -199,7 +199,7 @@ bool USBDMA::Wait(TRXDir direction)
         return false;
     }
 
-    return !port->WaitForXfer(handle, 0);
+    return port->WaitForXfer(handle, 0);
 }
 
 static constexpr bool DoDirectionsMatch(const TRXDir samplesDirection, const DataTransferDirection dataDirection)

@@ -293,11 +293,12 @@ bool FX3::WaitForXfer(int contextHandle, int32_t timeout_ms)
 
     USBTransferContext_FX3* FX3context = &static_cast<USBTransferContext_FX3*>(contexts)[contextHandle];
 
-    if (!FX3context->isTransferUsed)
+    if (!FX3context->isTransferUsed || FX3context->transferWaitedFor)
     {
         return true; //there is nothing to wait for (signal wait finished)
     }
 
+    FX3context->transferWaitedFor = true;
     bool status = FX3context->EndPt->WaitForXfer(FX3context->inOvLap, timeout_ms);
     return status;
 }
