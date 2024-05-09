@@ -2,17 +2,18 @@
 #define LIME_USBDMA_H
 
 #include "comms/IDMA.h"
-#include "USBGeneric.h"
 
-#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace lime {
+
+class USBGeneric;
 
 class USBDMA : public IDMA
 {
@@ -45,7 +46,7 @@ class USBDMA : public IDMA
         uint8_t endpoint;
         std::byte* buffer;
         DMAState state;
-        std::array<int, USBGeneric::GetBufferCount()> contextHandles;
+        std::vector<int> contextHandles;
         std::atomic<bool> isRunning;
 
         std::thread sendThread;

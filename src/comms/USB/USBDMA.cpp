@@ -17,7 +17,6 @@ USBDMA::DirectionState::DirectionState(uint8_t endpoint, std::byte* buffer)
     , buffer(buffer)
     , state()
 {
-    contextHandles.fill(-1);
     isRunning.store(false);
 }
 
@@ -73,7 +72,8 @@ void USBDMA::RxEnable(uint32_t bufferSize, uint8_t irqPeriod)
 {
     std::unique_lock lock{ GetStateMutex(TRXDir::Rx) };
 
-    rx.contextHandles.fill(-1);
+    rx.contextHandles.clear();
+    rx.contextHandles.resize(port->GetBufferCount(), -1);
     rx.state = {};
     rx.state.isEnabled = true;
     rx.isRunning.store(true);
@@ -84,7 +84,8 @@ void USBDMA::TxEnable()
 {
     std::unique_lock lock{ GetStateMutex(TRXDir::Tx) };
 
-    tx.contextHandles.fill(-1);
+    tx.contextHandles.clear();
+    tx.contextHandles.resize(port->GetBufferCount(), -1);
     tx.state = {};
     tx.state.isEnabled = true;
     tx.isRunning.store(true);
@@ -118,7 +119,7 @@ inline int USBDMA::GetBufferSize() const
 
 inline int USBDMA::GetBufferCount() const
 {
-    return USBGeneric::GetBufferCount();
+    return port->GetBufferCount();
 }
 
 std::byte* USBDMA::GetMemoryAddress(TRXDir direction) const
@@ -138,12 +139,12 @@ std::condition_variable& USBDMA::GetStateCV(TRXDir direction)
 
 std::size_t USBDMA::GetTransferArrayIndexFromState(TRXDir direction)
 {
-    return GetDirectionState(direction).state.hardwareIndex % USBGeneric::GetBufferCount();
+    return GetDirectionState(direction).state.hardwareIndex % GetBufferCount();
 }
 
 std::size_t USBDMA::GetTransferArrayIndex(uint16_t index)
 {
-    return index % USBGeneric::GetBufferCount();
+    return index % GetBufferCount();
 }
 
 int USBDMA::GetContextHandle(TRXDir direction)
@@ -224,6 +225,11 @@ void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirec
     // logic: directions match - finish, directions mismatch - done using buffer send more data please
     if (!DoDirectionsMatch(samplesDirection, dataDirection))
     {
+        if (TRXDir::Tx == samplesDirection && tx.contextHandles.empty())
+        {
+            return;
+        }
+
         GetDirectionState(samplesDirection).contextHandles.at(GetTransferArrayIndex(index)) = -1;
         GetStateCV(samplesDirection).notify_all();
         return;
