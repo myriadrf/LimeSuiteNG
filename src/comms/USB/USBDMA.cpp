@@ -279,6 +279,7 @@ void USBDMA::RxStartTransferThread()
                 GetBufferSize(),
                 GetEndpointAddress(direction)));
         rx.state.hardwareIndex++; // TODO: deal with potential overflow?
+        lck.unlock();
         std::this_thread::yield();
     }
 
@@ -304,6 +305,7 @@ void USBDMA::TxStartTransferThread()
                 GetBufferSize(),
                 GetEndpointAddress(direction)));
         tx.state.hardwareIndex++; // TODO: deal with potential overflow?
+        lck.unlock();
         std::this_thread::yield();
     }
 
