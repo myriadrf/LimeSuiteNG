@@ -20,7 +20,9 @@ using namespace std::literals::string_literals;
 
 // needed for the hacky workarounds
 // TODO: delete
-#include "LitePCIe.h"
+#ifdef __unix__
+    #include "LitePCIe.h"
+#endif
 #include "USBDMA.h"
 
 namespace lime {
@@ -349,6 +351,7 @@ int TRXLooper::RxSetup()
 
     uint32_t packetSize = payloadSize + headerSize;
 
+#ifdef __unix__
     // TODO: fix workaround
     // only if PCIe device
     if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
@@ -370,6 +373,7 @@ int TRXLooper::RxSetup()
             mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
         }
     }
+#endif
 
     const auto dmaBufferSize{ mRxArgs.port->GetBufferSize() };
 
@@ -405,6 +409,7 @@ int TRXLooper::RxSetup()
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 8, name);
 
+#ifdef __unix__
     // TODO: fix
     // very hacky but does the job somewhy
     if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
@@ -414,6 +419,7 @@ int TRXLooper::RxSetup()
         const uint32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
         mRxArgs.port->RxEnable(readSize, irqPeriod);
     }
+#endif
 
     return 0;
 }
