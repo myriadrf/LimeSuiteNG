@@ -80,8 +80,8 @@ std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)
             handle.name = Description;
             handle.serial = SerialNumber;
             handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
-            // Add handle conditionally, filter by serial number
-            if (hint.serial.empty() || handle.serial.find(hint.serial) != std::string::npos)
+            // Add handle conditionally
+            if (handle.IsEqualIgnoringEmpty(hint))
                 handles.push_back(handle);
         }
     }

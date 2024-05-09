@@ -77,8 +77,8 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
         handle.serial = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(device.SerialNumber);
         handle.addr = intToHex(vendorId) + ':' + intToHex(productId);
 
-        if (hint.serial.empty() or handle.serial.find(hint.serial) != std::string::npos)
-            handles.push_back(handle); //filter on serial
+        if (handle.IsEqualIgnoringEmpty(hint))
+            handles.push_back(handle);
         device.Close();
     }
 
