@@ -281,7 +281,7 @@ int main(int argc, char** argv)
     const std::string devName = args::get(deviceFlag);
     const std::string rxFilename = args::get(outputFlag);
     const std::string txFilename = args::get(inputFlag);
-    const bool rx = outputFlag;
+    const bool rx = true; // Need to always read data to get timestamps - BY DESIGN
     const bool tx = inputFlag || repeaterFlag;
     const bool showFFT = fftFlag;
 #ifdef USE_GNU_PLOT
