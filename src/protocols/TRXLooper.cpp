@@ -20,7 +20,7 @@ using namespace std::literals::string_literals;
 
 // needed for the hacky workarounds
 // TODO: delete
-#ifdef __unix__
+#if defined(__unix__) && !defined(__APPLE__)
     #include "LitePCIe.h"
 #endif
 #include "USBDMA.h"
@@ -351,7 +351,7 @@ int TRXLooper::RxSetup()
 
     uint32_t packetSize = payloadSize + headerSize;
 
-#ifdef __unix__
+#if defined(__unix__) && !defined(__APPLE__)
     // TODO: fix workaround
     // only if PCIe device
     if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
@@ -409,7 +409,7 @@ int TRXLooper::RxSetup()
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 8, name);
 
-#ifdef __unix__
+#if defined(__unix__) && !defined(__APPLE__)
     // TODO: fix
     // very hacky but does the job somewhy
     if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
