@@ -18,12 +18,11 @@
 
 using namespace std::literals::string_literals;
 
-// needed for the hacky workarounds
+// needed for the hacky workaround
 // TODO: delete
 #if defined(__unix__) && !defined(__APPLE__)
     #include "LitePCIe.h"
 #endif
-#include "USBDMA.h"
 
 namespace lime {
 using namespace LMS7002MCSR_Data;
@@ -344,9 +343,9 @@ int TRXLooper::RxSetup()
 
     constexpr std::size_t headerSize{ sizeof(StreamHeader) };
 
-    int requestSamplesInPkt = 4080 / sampleSize / chCount;
+    const int requestSamplesInPkt = 4080 / sampleSize / chCount;
 
-    int payloadSize = requestSamplesInPkt * sampleSize * chCount;
+    const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
     const int samplesInPkt = payloadSize / (sampleSize * chCount);
 
     uint32_t packetSize = payloadSize + headerSize;
@@ -358,8 +357,7 @@ int TRXLooper::RxSetup()
     {
         // iqSamplesCount must be N*16, or N*8 depending on device BUS width
         const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
-        payloadSize = iqSamplesCount * sampleSize * 2;
-        packetSize = payloadSize + headerSize;
+        packetSize = (iqSamplesCount * sampleSize * 2) + headerSize;
 
         // Request fpga to provide Rx packets with desired payloadSize
         // Two writes are needed
@@ -367,13 +365,13 @@ int TRXLooper::RxSetup()
         uint32_t requestAddr[] = { 0x0019, 0x000E };
         uint32_t requestData[] = { packetSize, iqSamplesCount };
         fpga->WriteRegisters(requestAddr, requestData, 2);
-
-        if (mConfig.extraConfig.rx.packetsInBatch != 0)
-        {
-            mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
-        }
     }
 #endif
+
+    if (mConfig.extraConfig.rx.packetsInBatch != 0)
+    {
+        mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
+    }
 
     const auto dmaBufferSize{ mRxArgs.port->GetBufferSize() };
 
@@ -408,18 +406,6 @@ int TRXLooper::RxSetup()
     const int upperAllocationLimit =
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = new MemoryPool(1024, upperAllocationLimit, 8, name);
-
-#if defined(__unix__) && !defined(__APPLE__)
-    // TODO: fix
-    // very hacky but does the job somewhy
-    if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
-    {
-        // only do this now if it's a PCIe device
-        constexpr uint8_t irqPeriod{ 4 };
-        const uint32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-        mRxArgs.port->RxEnable(readSize, irqPeriod);
-    }
-#endif
 
     return 0;
 }
@@ -465,14 +451,8 @@ void TRXLooper::ReceivePacketsLoop()
     auto t1{ std::chrono::steady_clock::now() };
     auto t2 = t1;
 
-    // TODO: fix
-    // very hacky but does the job somewhy
-    if (dynamic_cast<USBDMA*>(mRxArgs.port.get()) != nullptr)
-    {
-        // only run this here if it's a USB device
-        constexpr uint8_t irqPeriod{ 4 };
-        mRxArgs.port->RxEnable(readSize, irqPeriod);
-    }
+    constexpr uint8_t irqPeriod{ 4 };
+    mRxArgs.port->RxEnable(readSize, irqPeriod);
 
     int32_t Bps = 0;
 

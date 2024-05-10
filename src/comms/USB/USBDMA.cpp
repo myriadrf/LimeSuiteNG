@@ -311,7 +311,8 @@ void USBDMA::TxStartTransferThread()
             port->BeginDataXfer(reinterpret_cast<uint8_t*>(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction))),
                 GetBufferSize(),
                 GetEndpointAddress(direction)));
-        tx.state.hardwareIndex++; // TODO: deal with potential overflow?
+        tx.state.hardwareIndex++;
+        tx.state.hardwareIndex &= 0xFFFF;
         lck.unlock();
         std::this_thread::yield();
     }
