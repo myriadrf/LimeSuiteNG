@@ -1,7 +1,7 @@
 #ifndef LIME_LIMESDR_X3_H
 #define LIME_LIMESDR_X3_H
 
-#include "CDCM6208/CDCM6208_Dev.h"
+#include "chips/CDCM6208/CDCM6208.h"
 #include "LMS7002M_SDRDevice.h"
 #include "protocols/LMS64CProtocol.h"
 

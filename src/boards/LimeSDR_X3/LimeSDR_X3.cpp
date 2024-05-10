@@ -6,21 +6,21 @@
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "lms7002m/LMS7002M_validation.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/LMS7002M_validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
-#include "DSP/Equalizer.h"
+#include "DSP/Equalizer/Equalizer.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
 #include "utilities/toString.h"
 
-#include "mcu_program/common_src/lms7002m_calibrations.h"
-#include "MCU_BD.h"
+#include "chips/LMS7002M/lms7002m_calibrations.h"
+#include "chips/LMS7002M/MCU_BD.h"
 
 #include <cmath>
 
