@@ -32,7 +32,7 @@ void ILMS7002MTab::UpdateGUI()
 void ILMS7002MTab::ParameterChangeHandler(wxCommandEvent& event)
 {
     assert(lmsControl != nullptr);
-    LMS7Parameter parameter;
+    LMS7002MCSR parameter;
     try
     {
         parameter = wndId2Enum.at(reinterpret_cast<wxWindow*>(event.GetEventObject()));
@@ -58,13 +58,13 @@ void ILMS7002MTab::SetChannel(uint8_t channel)
     mChannel = channel;
 }
 
-void ILMS7002MTab::WriteParam(const LMS7Parameter& param, uint16_t val)
+void ILMS7002MTab::WriteParam(const LMS7002MCSR param, uint16_t val)
 {
     lmsControl->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
     lmsControl->Modify_SPI_Reg_bits(param, val);
 }
 
-uint16_t ILMS7002MTab::ReadParam(const LMS7Parameter& param)
+uint16_t ILMS7002MTab::ReadParam(const LMS7002MCSR param)
 {
     lmsControl->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
     return lmsControl->Get_SPI_Reg_bits(param);

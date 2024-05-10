@@ -14,6 +14,7 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 
 #ifdef _MSC_VER
     #define strncasecmp _strnicmp
@@ -21,6 +22,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS7002MCSR_Data;
 using namespace std;
 
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
@@ -181,10 +183,10 @@ void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_n
 
     SDRDevice* device = context->txChannels[channel_num].parent->device;
     LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(context->txChannels[channel_num].parent->chipIndex));
-    chip->Modify_SPI_Reg_bits(LMS7_MAC, context->txChannels[channel_num].chipChannel + 1);
-    chip->Modify_SPI_Reg_bits(LMS7_LOSS_MAIN_TXPAD_TRF, txGainTable[row].main);
-    chip->Modify_SPI_Reg_bits(LMS7_LOSS_LIN_TXPAD_TRF, txGainTable[row].lin);
-    chip->Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    chip->Modify_SPI_Reg_bits(MAC, context->txChannels[channel_num].chipChannel + 1);
+    chip->Modify_SPI_Reg_bits(LOSS_MAIN_TXPAD_TRF, txGainTable[row].main);
+    chip->Modify_SPI_Reg_bits(LOSS_LIN_TXPAD_TRF, txGainTable[row].lin);
+    chip->Modify_SPI_Reg_bits(MAC, 1);
     Log(LogLevel::Debug,
         "chip%i ch%i Tx gain set MAIN:%i, LIN:%i",
         context->txChannels[channel_num].parent->chipIndex,
@@ -203,10 +205,10 @@ void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_n
 
     SDRDevice* device = context->rxChannels[channel_num].parent->device;
     LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(context->rxChannels[channel_num].parent->chipIndex));
-    chip->Modify_SPI_Reg_bits(LMS7_MAC, context->rxChannels[channel_num].chipChannel + 1);
-    chip->Modify_SPI_Reg_bits(LMS7_G_LNA_RFE, rxGainTable[row].lna);
-    chip->Modify_SPI_Reg_bits(LMS7_G_PGA_RBB, rxGainTable[row].pga);
-    chip->Modify_SPI_Reg_bits(LMS7_MAC, 1);
+    chip->Modify_SPI_Reg_bits(MAC, context->rxChannels[channel_num].chipChannel + 1);
+    chip->Modify_SPI_Reg_bits(G_LNA_RFE, rxGainTable[row].lna);
+    chip->Modify_SPI_Reg_bits(G_PGA_RBB, rxGainTable[row].pga);
+    chip->Modify_SPI_Reg_bits(MAC, 1);
     Log(LogLevel::Debug,
         "chip%i ch%i Rx gain set LNA:%i, PGA:%i",
         context->rxChannels[channel_num].parent->chipIndex,
@@ -278,17 +280,19 @@ static void ParseFPGARegistersWrites(LimePluginContext* context, int devIndex)
     std::string varname = "dev"s + std::to_string(devIndex) + "_writeRegisters"s;
     std::string value;
 
-    if (context->config->GetString(value, varname.c_str()))
+    if (!context->config->GetString(value, varname.c_str()))
     {
-        std::string_view writeRegistersStr{ value };
-        const auto tokens = splitString(writeRegistersStr, ";"sv);
-        for (const auto& token : tokens)
-        {
-            uint32_t spiVal = 0;
-            std::stringstream sstream{ std::string{ token } };
-            sstream >> std::hex >> spiVal;
-            context->rfdev.at(devIndex).fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
-        }
+        return;
+    }
+
+    std::string_view writeRegistersStr{ value };
+    const auto tokens = splitString(writeRegistersStr, ";"sv);
+    for (const auto& token : tokens)
+    {
+        uint32_t spiVal = 0;
+        std::stringstream sstream{ std::string{ token } };
+        sstream >> std::hex >> spiVal;
+        context->rfdev.at(devIndex).fpgaRegisterWrites.push_back(spiVal | (1 << 31)); // adding spi write bit for convenience
     }
 }
 

@@ -35,7 +35,7 @@ struct DataStorage;
 
 class pnlBoardControls : public IModuleFrame
 {
-  public:
+  private:
     struct ADC_DAC {
         std::string name;
         bool writable;
@@ -97,6 +97,7 @@ class pnlBoardControls : public IModuleFrame
         wxSpinCtrl* wValue;
     };
 
+  public:
     pnlBoardControls(wxWindow* parent,
         wxWindowID id = wxID_ANY,
         const wxString& title = _("Board controls"),

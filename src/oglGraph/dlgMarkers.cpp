@@ -164,69 +164,73 @@ void dlgMarkers::OnMarkerChange(wxCommandEvent& event)
 
 void dlgMarkers::UpdateValues()
 {
-    if (IsShownOnScreen())
+    if (!IsShownOnScreen())
     {
-        for (size_t i = 0; i < labels.size(); ++i)
-        {
-            if (parent_graph == NULL)
-                return;
-            if (!parent_graph->markers[i].used)
-                continue;
-            char text[128];
-            double valueA = 0;
-            double valueB = 0;
-            int cnt = 0;
-
-            if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
-            {
-                valueA = parent_graph->series[0]->values[parent_graph->markers[i].dataValueIndex + 1];
-                cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
-            }
-
-            if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
-            {
-                valueB = parent_graph->series[1]->values[parent_graph->markers[i].dataValueIndex + 1];
-
-                std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
-            }
-
-            labels[i]->SetLabel(wxString(text));
-            marker_valuesA[i] = valueA;
-            marker_valuesB[i] = valueB;
-            enables[i]->SetValue(parent_graph->markers[i].used);
-            shows[i]->SetValue(parent_graph->markers[i].show);
-        }
-
-        for (int i = 0; i < 5; ++i)
-        {
-            int src1 = deltaSrc[2 * i]->GetSelection();
-            int src2 = deltaSrc[2 * i + 1]->GetSelection();
-            char text[128] = { 0 };
-            int cnt = 0;
-
-            if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
-            {
-                float deltaValue = marker_valuesA[src1] - marker_valuesA[src2];
-                cnt = std::snprintf(text, sizeof(text), "%.3f (ChA) ; ", deltaValue);
-            }
-
-            if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
-            {
-                float deltaValue = marker_valuesB[src1] - marker_valuesB[src2];
-                std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%.3f (ChB)", deltaValue);
-            }
-            deltaValues[i]->SetLabel(wxString(text));
-        }
-        if (refreshMarkFreq)
-        {
-            for (size_t i = 0; i < labels.size(); ++i)
-            {
-                double freq = parent_graph->markers[i].posX / 1000000;
-                freqs[i]->SetValue(wxString::Format("%3.2f", freq));
-            }
-            refreshMarkFreq = false;
-        }
+        return;
     }
+
+    for (size_t i = 0; i < labels.size(); ++i)
+    {
+        if (parent_graph == NULL)
+            return;
+        if (!parent_graph->markers[i].used)
+            continue;
+        char text[128];
+        double valueA = 0;
+        double valueB = 0;
+        int cnt = 0;
+
+        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        {
+            valueA = parent_graph->series[0]->values[parent_graph->markers[i].dataValueIndex + 1];
+            cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
+        }
+
+        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        {
+            valueB = parent_graph->series[1]->values[parent_graph->markers[i].dataValueIndex + 1];
+            std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
+        }
+
+        labels[i]->SetLabel(wxString(text));
+        marker_valuesA[i] = valueA;
+        marker_valuesB[i] = valueB;
+        enables[i]->SetValue(parent_graph->markers[i].used);
+        shows[i]->SetValue(parent_graph->markers[i].show);
+    }
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int src1 = deltaSrc[2 * i]->GetSelection();
+        int src2 = deltaSrc[2 * i + 1]->GetSelection();
+        char text[128] = { 0 };
+        int cnt = 0;
+
+        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        {
+            float deltaValue = marker_valuesA[src1] - marker_valuesA[src2];
+            cnt = std::snprintf(text, sizeof(text), "%.3f (ChA) ; ", deltaValue);
+        }
+
+        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        {
+            float deltaValue = marker_valuesB[src1] - marker_valuesB[src2];
+            std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%.3f (ChB)", deltaValue);
+        }
+        deltaValues[i]->SetLabel(wxString(text));
+    }
+
+    if (!refreshMarkFreq)
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < labels.size(); ++i)
+    {
+        double freq = parent_graph->markers[i].posX / 1000000;
+        freqs[i]->SetValue(wxString::Format("%3.2f", freq));
+    }
+    refreshMarkFreq = false;
 }
 
 void dlgMarkers::OnButton1Click1(wxCommandEvent& event)

@@ -16,12 +16,15 @@
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
 #include "lms7002m/LMS7002M_validation.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 #include "mcu_program/common_src/lms7002m_calibrations.h"
 #include "MCU_BD.h"
 
 #include "limesuiteng/LMS7002M.h"
 
 namespace lime {
+using namespace EqualizerCSR;
+using namespace LMS7002MCSR_Data;
 
 using namespace std::literals::string_literals;
 
@@ -195,29 +198,25 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     desc.socTree->children.push_back(fpgaNode);
 }
 
-LimeSDR_XTRX::~LimeSDR_XTRX()
-{
-}
-
 static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
 {
     OpStatus status;
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
-    // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
     //     return -1;
 
     // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
+    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
     // if(lms->CalibrateTxGain(0,nullptr) != 0)
     //     return -1;
 
     // EnableChannel(false, 2*i+1, false);
     // EnableChannel(true, 2*i+1, false);
 
-    lms->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
+    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     if (skipTune)
         return OpStatus::Success;
@@ -275,8 +274,8 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         }
 
         // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(LMS7_PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(LMS7_PD_TX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         double sampleRate = cfg.channel[0].GetDirection(rxUsed ? TRXDir::Rx : TRXDir::Tx).sampleRate;
@@ -294,9 +293,9 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
         // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
-        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7param(TX_MUX));
-        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), 2);
-        chip->Modify_SPI_Reg_bits(LMS7param(TX_MUX), txMux);
+        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, 2);
+        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, txMux);
 
         mConfigInProgress = false;
         if (sampleRate > 0)
@@ -483,31 +482,31 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
         1 + hbd_ovr,
         1 + hbi_ovr);
     LMS7002M* mLMSChip = mLMSChips[0];
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(EN_ADCCLKH_CLKGN), 0);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
     if (rxDecimation != 0)
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2 - std::log2(txInterpolation / rxDecimation));
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
     else
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CLKH_OV_CLKL_CGEN), 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(MAC), 1);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBD_OVR_RXTSP), hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7param(HBI_OVR_TXTSP), hbi_ovr);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
 
     if (f_Hz >= 61.45e6)
     {
         // LimeLight & Pad
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(DIQ2_DS), 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(LML1_SISODDR), 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(LML2_SISODDR), 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::DIQ2_DS, 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR, 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_SISODDR, 1);
         // CDS
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CDSN_RXALML), 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(CDS_RXALML), 1);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXALML, 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXALML, 1);
         // LDO
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(PD_LDO_DIGIp1), 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(PD_LDO_DIGIp2), 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7param(RDIV_DIGIp2), 140);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp1, 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp2, 0);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::RDIV_DIGIp2, 140);
     }
 
     return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);

@@ -17,9 +17,10 @@ class TRXLooper_PCIE : public TRXLooper
   public:
     TRXLooper_PCIE(
         std::shared_ptr<LitePCIe> rxPort, std::shared_ptr<LitePCIe> txPort, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
-    virtual ~TRXLooper_PCIE();
-    virtual OpStatus Setup(const StreamConfig& config) override;
-    virtual void Start() override;
+    ~TRXLooper_PCIE();
+
+    OpStatus Setup(const StreamConfig& config) override;
+    void Start() override;
 
     static OpStatus UploadTxWaveform(FPGA* fpga,
         std::shared_ptr<LitePCIe> port,
@@ -42,13 +43,13 @@ class TRXLooper_PCIE : public TRXLooper
     };
 
   protected:
-    virtual int RxSetup() override;
-    virtual void ReceivePacketsLoop() override;
-    virtual void RxTeardown() override;
+    int RxSetup() override;
+    void ReceivePacketsLoop() override;
+    void RxTeardown() override;
 
-    virtual int TxSetup() override;
-    virtual void TransmitPacketsLoop() override;
-    virtual void TxTeardown() override;
+    int TxSetup() override;
+    void TransmitPacketsLoop() override;
+    void TxTeardown() override;
 
     TransferArgs mRxArgs;
     TransferArgs mTxArgs;

@@ -11,7 +11,7 @@ class lms7002_pnlSX_view : public ILMS7002MTab
 {
   protected:
     // Handlers for pnlSX_view events.
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnbtnReadComparators(wxCommandEvent& event);
     void OnbtnChangeRefClkClick(wxCommandEvent& event);
     void OnbtnCalculateClick(wxCommandEvent& event);
@@ -28,7 +28,7 @@ class lms7002_pnlSX_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void UpdateGUI() override;
+    void UpdateGUI() override;
     lime::TRXDir direction;
 
   protected:

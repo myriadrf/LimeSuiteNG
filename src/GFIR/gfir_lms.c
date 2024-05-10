@@ -21,7 +21,8 @@
 #define CSDPREC 16 /* CSD Coefficients precision */
 
 /* *********************************************************************** */
-int gfir_lms(hr, hi, hcsd, n, w1, w2, a1, a2, cprec, csdprec, correction) struct dfilter *hr, *hi, *hcsd;
+int gfir_lms(hr, hi, hcsd, n, w1, w2, a1, a2, cprec, csdprec, correction)
+struct dfilter *hr, *hi, *hcsd;
 int n;
 double w1, w2, a1, a2;
 int cprec;
@@ -29,7 +30,7 @@ int csdprec;
 double (*correction)();
 {
     double *weights, *desired, *w;
-    int i, points;
+    int i, points, p1, p2;
     double deltaw;
 
     int **bincode, **csdcode, **csdcoder, **xpx, **xmx, **x;
@@ -93,28 +94,24 @@ double (*correction)();
     hcsd->nw = 2 * points;
     hcsd->w = w;
 
-    if (1)
+    /* Construct grid, desired response and weighting function */
+    /* 0-w1 band */
+    p1 = points / 4;
+    deltaw = w1 / (double)(p1 - 1);
+    for (i = 0; i < p1; i++)
     {
-        int p1, p2;
-        /* Construct grid, desired response and weighting function */
-        /* 0-w1 band */
-        p1 = points / 4;
-        deltaw = w1 / (double)(p1 - 1);
-        for (i = 0; i < p1; i++)
-        {
-            w[i] = (double)(i)*deltaw;
-            desired[i] = a1 * (correction)(w[i]);
-            weights[i] = 1.0; //0.003;
-        }
-        /* w2-0.5 band */
-        p2 = 2 * points - p1;
-        deltaw = (0.5 - w2) / (double)(p2 - 1);
-        for (i = 0; i < p2; i++)
-        {
-            w[i + p1] = w2 + (double)(i)*deltaw;
-            desired[i + p1] = a2 * (correction)(w[i + p1]);
-            weights[i + p1] = 0.0001; //1.0;
-        }
+        w[i] = (double)(i)*deltaw;
+        desired[i] = a1 * (correction)(w[i]);
+        weights[i] = 1.0; //0.003;
+    }
+    /* w2-0.5 band */
+    p2 = 2 * points - p1;
+    deltaw = (0.5 - w2) / (double)(p2 - 1);
+    for (i = 0; i < p2; i++)
+    {
+        w[i + p1] = w2 + (double)(i)*deltaw;
+        desired[i + p1] = a2 * (correction)(w[i + p1]);
+        weights[i + p1] = 0.0001; //1.0;
     }
 
     /* Do LMS optimization */

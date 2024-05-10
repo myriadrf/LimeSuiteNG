@@ -1,4 +1,4 @@
-name: clang-format
+name: Formatting
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
   pull_request:
 
 jobs:
-  build:
+  clang-format:
     runs-on: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -34,3 +34,23 @@ jobs:
 
           echo "$diff" | colordiff
           exit 1
+
+  cmake-format:
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq cmake-format
+
+      - name: Run cmake-format
+        run: |
+          cmake-format --check $(find ${{github.workspace}} -name CMakeLists.txt)
+          code=$?
+          if [[ $code != 0 ]]; then
+              exit 1
+          fi
+          exit 0

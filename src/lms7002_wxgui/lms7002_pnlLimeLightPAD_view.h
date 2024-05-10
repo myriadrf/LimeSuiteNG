@@ -14,11 +14,11 @@ class lms7002_pnlLimeLightPAD_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
 
   protected:
-    virtual void SpinParameterChangeHandler(wxSpinEvent& event) override;
+    void SpinParameterChangeHandler(wxSpinEvent& event) override;
     void onbtnReadVerRevMask(wxCommandEvent& event);
 
     enum {

@@ -9,8 +9,8 @@
 
 #include "limesuiteng/types.h"
 #include "limesuiteng/config.h"
-#include "limesuiteng/LMS7002M_parameters.h"
 #include "limesuiteng/OpStatus.h"
+#include "limesuiteng/LMS7002MCSR.h"
 
 #include <array>
 #include <cstdarg>
@@ -23,6 +23,9 @@
 #include <vector>
 
 namespace lime {
+namespace LMS7002MCSR_Data {
+struct CSRegister;
+}
 class ISPI;
 class LMS7002M_RegistersMap;
 class MCU_BD;
@@ -202,11 +205,19 @@ class LIME_API LMS7002M
 
     /*!
      * @brief Returns given parameter value from chip register
+     * @param param LMS7002MCSR control parameter
+     * @param fromChip read directly from chip
+     * @return parameter value
+    */
+    uint16_t Get_SPI_Reg_bits(const LMS7002MCSR param, bool fromChip = false);
+
+    /*!
+     * @brief Returns given parameter value from chip register
      * @param param LMS7002M control parameter
      * @param fromChip read directly from chip
      * @return parameter value
     */
-    uint16_t Get_SPI_Reg_bits(const LMS7Parameter& param, bool fromChip = false);
+    uint16_t Get_SPI_Reg_bits(const LMS7002MCSR_Data::CSRegister& param, bool fromChip = false);
 
     /*!
      * @brief Returns given parameter value from chip register
@@ -220,12 +231,21 @@ class LIME_API LMS7002M
 
     /*!
      * @brief Change given parameter value
+     * @param param LMS7002MCSR parameter
+     * @param fromChip read initial value directly from chip
+     * @param value new parameter value
+     * @return The status of the operation
+     */
+    OpStatus Modify_SPI_Reg_bits(const LMS7002MCSR param, const uint16_t value, bool fromChip = false);
+
+    /*!
+     * @brief Change given parameter value
      * @param param LMS7002M control parameter
      * @param fromChip read initial value directly from chip
      * @param value new parameter value
      * @return The status of the operation
      */
-    OpStatus Modify_SPI_Reg_bits(const LMS7Parameter& param, const uint16_t value, bool fromChip = false);
+    OpStatus Modify_SPI_Reg_bits(const LMS7002MCSR_Data::CSRegister& param, const uint16_t value, bool fromChip = false);
 
     /*!
      * @brief Change given parameter value
@@ -268,7 +288,7 @@ class LIME_API LMS7002M
      * @param name The name of the parameter to get.
      * @return A constant reference to the parameter
      */
-    static const LMS7Parameter& GetParam(const std::string& name);
+    static const LMS7002MCSR_Data::CSRegister& GetParam(const std::string& name);
 
     /*!
      * @brief Calibrates Receiver. DC offset, IQ gains, IQ phase correction

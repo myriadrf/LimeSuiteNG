@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/types.h"
+#include "lms7002m/LMS7002MCSR_Data.h"
 
 static lime::LMS7002M* serPort;
 
@@ -19,6 +20,7 @@ void SetupCalibrations(lime::LMS7002M* chip, double BW)
 #include <string>
 #include <fstream>
 using namespace std;
+using namespace lime::LMS7002MCSR_Data;
 
 //spiAddrReg might not have SPI write bit, add it here if necessary
 void SPI_write(unsigned short spiAddrReg, unsigned short spiDataReg)
@@ -32,26 +34,34 @@ unsigned short SPI_read(unsigned short spiAddrReg)
 }
 
 void Modify_SPI_Reg_bits_WrOnly(
-    const uint16_t SPI_reg_addr, const uint8_t bits, const uint16_t new_bits_data, const uint16_t spiDataReg)
+    const uint16_t address, const uint8_t msb, const uint8_t lsb, const uint16_t value, const uint16_t spiDataReg)
 {
-    const uint16_t spiMask = (~(~0u << ((bits >> 4) - (bits & 0xF) + 1))) << (bits & 0xF); // creates bit mask
-    //spiDataReg = (spiDataReg & (~spiMask)) | ((new_bits_data << (bits&0xF)) & spiMask) ;//clear bits
-    SPI_write(SPI_reg_addr,
-        (spiDataReg & (~spiMask)) | ((new_bits_data << (bits & 0xF)) & spiMask)); //write modified data back to SPI reg
+    uint16_t spiMask = (~(~0u << (msb - lsb + 1))) << (lsb); // creates bit mask
+    // spiDataReg = (spiDataReg & (~spiMask)) | ((value << lsb) & spiMask); //clear bits
+    return SPI_write(address, (spiDataReg & (~spiMask)) | ((value << lsb) & spiMask)); //write modified data back to SPI reg
 }
 
-void Modify_SPI_Reg_bits(const uint16_t SPI_reg_addr, const uint8_t bits, const uint16_t new_bits_data)
+void Modify_SPI_Reg_bits(const uint16_t address, const uint8_t msb, const uint8_t lsb, const uint16_t value)
 {
-    uint16_t spiDataReg = SPI_read(SPI_reg_addr); //read current SPI reg data
-    const uint16_t spiMask = (~(~0u << ((bits >> 4) - (bits & 0xF) + 1))) << (bits & 0xF); // creates bit mask
-    spiDataReg = (spiDataReg & (~spiMask)) | ((new_bits_data << (bits & 0xF)) & spiMask); //clear bits
-
-    SPI_write(SPI_reg_addr, spiDataReg); //write modified data back to SPI reg
+    uint16_t spiDataReg = SPI_read(address); //read current SPI reg data
+    uint16_t spiMask = (~(~0u << (msb - lsb + 1))) << (lsb); // creates bit mask
+    spiDataReg = (spiDataReg & (~spiMask)) | ((value << lsb) & spiMask); //clear bits
+    return SPI_write(address, spiDataReg); //write modified data back to SPI reg
 }
 
-uint16_t Get_SPI_Reg_bits(const uint16_t SPI_reg_addr, const uint8_t bits)
+void Modify_SPI_Reg_bits(const CSRegister& param, const uint16_t value)
 {
-    return (SPI_read(SPI_reg_addr) & (~(~0u << ((bits >> 4) + 1)))) >> (bits & 0xF); //shift bits to LSB
+    return Modify_SPI_Reg_bits(param.address, param.msb, param.lsb, value);
+}
+
+uint16_t Get_SPI_Reg_bits(uint16_t address, uint8_t msb, uint8_t lsb)
+{
+    return (SPI_read(address) & (~(~0u << (msb + 1)))) >> lsb; //shift bits to LSB
+}
+
+uint16_t Get_SPI_Reg_bits(const CSRegister& reg)
+{
+    return Get_SPI_Reg_bits(reg.address, reg.msb, reg.lsb);
 }
 
 void SPI_read_batch(const uint16_t* addr, uint16_t* values, uint8_t cnt)

@@ -19,40 +19,40 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     OpStatus status = OpStatus::Success;
 
     std::vector<FPGA_PLL_clock> clocks(4);
-    if ((txRate_Hz >= 5e6) && (rxRate_Hz >= 5e6))
+    if ((txRate_Hz < 5e6) || (rxRate_Hz < 5e6))
     {
-        clocks[0].bypass = false;
-        clocks[0].index = 0;
-        clocks[0].outFrequency = txRate_Hz;
-        clocks[0].phaseShift_deg = 0;
-        clocks[0].findPhase = false;
-        clocks[1].bypass = false;
-        clocks[1].index = 1;
-        clocks[1].outFrequency = txRate_Hz;
-        clocks[1].findPhase = false;
-        clocks[1].phaseShift_deg = txPhase;
-        clocks[2].bypass = false;
-        clocks[2].index = 2;
-        clocks[2].outFrequency = rxRate_Hz;
-        clocks[2].phaseShift_deg = 0;
-        clocks[2].findPhase = false;
-        clocks[3].bypass = false;
-        clocks[3].index = 3;
-        clocks[3].outFrequency = rxRate_Hz;
-        clocks[3].findPhase = false;
-        clocks[3].phaseShift_deg = rxPhase;
+        status = SetDirectClocking(0);
+        if (status != OpStatus::Success)
+        {
+            return status;
+        }
 
-        status = SetPllFrequency(0, rxRate_Hz, clocks);
+        status = SetDirectClocking(1);
         return status;
     }
 
-    status = SetDirectClocking(0);
-    if (status != OpStatus::Success)
-    {
-        return status;
-    }
+    clocks[0].bypass = false;
+    clocks[0].index = 0;
+    clocks[0].outFrequency = txRate_Hz;
+    clocks[0].phaseShift_deg = 0;
+    clocks[0].findPhase = false;
+    clocks[1].bypass = false;
+    clocks[1].index = 1;
+    clocks[1].outFrequency = txRate_Hz;
+    clocks[1].findPhase = false;
+    clocks[1].phaseShift_deg = txPhase;
+    clocks[2].bypass = false;
+    clocks[2].index = 2;
+    clocks[2].outFrequency = rxRate_Hz;
+    clocks[2].phaseShift_deg = 0;
+    clocks[2].findPhase = false;
+    clocks[3].bypass = false;
+    clocks[3].index = 3;
+    clocks[3].outFrequency = rxRate_Hz;
+    clocks[3].findPhase = false;
+    clocks[3].phaseShift_deg = rxPhase;
 
-    status = SetDirectClocking(1);
+    status = SetPllFrequency(0, rxRate_Hz, clocks);
     return status;
 }
 

@@ -8,7 +8,7 @@ class NumericSlider;
 class lms7002_pnlCalibrations_view : public ILMS7002MTab
 {
   protected:
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     void ParameterChangeHandler(wxSpinEvent& event);
     void OnbtnCalibrateRx(wxCommandEvent& event);
     void OnbtnCalibrateTx(wxCommandEvent& event);
@@ -21,8 +21,8 @@ class lms7002_pnlCalibrations_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
 
   protected:
     enum {

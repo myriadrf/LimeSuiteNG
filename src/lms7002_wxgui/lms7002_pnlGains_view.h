@@ -8,7 +8,7 @@ class lms7002_pnlGains_view : public ILMS7002MTab
   protected:
     // Handlers for pnlGains_view events.
     void ParameterChangeHandler(wxSpinEvent& event);
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
 
   public:
     lms7002_pnlGains_view(wxWindow* parent,
@@ -16,8 +16,8 @@ class lms7002_pnlGains_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
     void OnAGCStateChange(wxCommandEvent& event);
 
   protected:

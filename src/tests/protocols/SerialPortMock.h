@@ -11,8 +11,8 @@ class SerialPortMock : public ISerialPort
   public:
     SerialPortMock()
     {
-        ON_CALL(*this, Write).WillByDefault([this](const uint8_t* data, size_t length, int timeout_ms) { return length; });
-        ON_CALL(*this, Read).WillByDefault([this](uint8_t* data, size_t length, int timeout_ms) { return length; });
+        ON_CALL(*this, Write).WillByDefault([](const uint8_t* data, size_t length, int timeout_ms) -> int { return length; });
+        ON_CALL(*this, Read).WillByDefault([](uint8_t* data, size_t length, int timeout_ms) -> int { return length; });
     }
 
     MOCK_METHOD(int, Write, (const uint8_t* data, size_t length, int timeout_ms), (override));

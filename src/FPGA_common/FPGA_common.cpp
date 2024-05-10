@@ -375,16 +375,18 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
             //return OpStatus::Busy;
         }
 
-        if (!done)
+        if (done)
         {
-            if ((std::chrono::high_resolution_clock::now() - t1) > timeout)
-            {
-                lime::warning("%s timeout", title.c_str());
-                return OpStatus::Timeout;
-            }
-            else
-                std::this_thread::sleep_for(busyPollPeriod);
+            break;
         }
+
+        if ((std::chrono::high_resolution_clock::now() - t1) > timeout)
+        {
+            lime::warning("%s timeout", title.c_str());
+            return OpStatus::Timeout;
+        }
+        else
+            std::this_thread::sleep_for(busyPollPeriod);
     } while (!done);
     if (!title.empty())
     {
@@ -453,7 +455,6 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     const uint8_t clockCount = clocks.size();
     lime::debug("FPGA SetPllFrequency: PLL[%i] input:%.3f MHz clockCount:%i", pllIndex, inputFreq / 1e6, clockCount);
     WriteRegistersBatch batch(this);
-    const auto timeout = std::chrono::seconds(3);
     if (!fpgaPort)
         return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 
@@ -1057,11 +1058,9 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
             phaseSearchSuccess = true;
             break;
         }
-        else
-        {
-            lime::debug("Retry%i: SetPllFrequency", i);
-            std::this_thread::sleep_for(busyPollPeriod);
-        }
+
+        lime::debug("Retry%i: SetPllFrequency", i);
+        std::this_thread::sleep_for(busyPollPeriod);
     }
 
     if (!phaseSearchSuccess)

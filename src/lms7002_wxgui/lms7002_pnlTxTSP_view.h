@@ -12,8 +12,8 @@ class lms7002_pnlTXTSP_view : public ILMS7002MTab
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    virtual void Initialize(lime::LMS7002M* pControl) override;
-    virtual void UpdateGUI() override;
+    void Initialize(lime::LMS7002M* pControl) override;
+    void UpdateGUI() override;
     void UpdateNCOinputs();
 
   protected:
@@ -183,7 +183,7 @@ class lms7002_pnlTXTSP_view : public ILMS7002MTab
     NumericSlider* cmbDCCORRQ_TXTSP;
 
     // Virtual event handlers, overide them in your derived class
-    virtual void ParameterChangeHandler(wxCommandEvent& event) override;
+    void ParameterChangeHandler(wxCommandEvent& event) override;
     virtual void onbtnReadBISTSignature(wxCommandEvent& event);
     virtual void OnNCOSelectionChange(wxCommandEvent& event);
     virtual void PHOinputChanged(wxCommandEvent& event);

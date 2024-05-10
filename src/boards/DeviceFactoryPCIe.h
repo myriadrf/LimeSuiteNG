@@ -9,7 +9,6 @@ class DeviceFactoryPCIe : public DeviceRegistryEntry
 {
   public:
     DeviceFactoryPCIe();
-    virtual ~DeviceFactoryPCIe();
     std::vector<DeviceHandle> enumerate(const DeviceHandle& hint) override;
     SDRDevice* make(const DeviceHandle& handle) override;
 };

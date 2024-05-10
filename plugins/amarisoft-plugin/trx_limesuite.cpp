@@ -27,7 +27,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
 
     void Block() { blockAccess = true; }
 
-    virtual bool GetString(std::string& dest, const char* varname) override
+    bool GetString(std::string& dest, const char* varname) override
     {
         if (blockAccess)
         {
@@ -43,7 +43,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
         return true;
     }
 
-    virtual bool GetDouble(double& dest, const char* varname) override
+    bool GetDouble(double& dest, const char* varname) override
     {
         if (blockAccess)
         {
@@ -234,21 +234,19 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
             }
         }
         Log(LogLevel::Error, "Port[%i] Could not find suitable sampling rate for %i bandwidth", p, bandwidth);
+        return -1;
     }
-    else
+
+    if (rate < bandwidth)
     {
-        if (rate < bandwidth)
-        {
-            Log(LogLevel::Error, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
-            return -1;
-        }
-        Log(LogLevel::Info, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
-        psample_rate->num = rate;
-        psample_rate->den = 1;
-        *psample_rate_num = rate / 1920000;
-        return 0;
+        Log(LogLevel::Error, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
+        return -1;
     }
-    return -1;
+    Log(LogLevel::Info, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);
+    psample_rate->num = rate;
+    psample_rate->den = 1;
+    *psample_rate_num = rate / 1920000;
+    return 0;
 }
 
 // return expected number of samples in Tx packet
