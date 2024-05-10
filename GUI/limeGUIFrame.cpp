@@ -8,7 +8,7 @@
 
 #include "chips/LMS7002M/lms7002_mainPanel.h"
 
-#include "lms7suiteAppFrame.h"
+#include "limeGUIFrame.h"
 #include "dlgAbout.h"
 #include "lms7suiteEvents.h"
 #include "fftviewer_frFFTviewer.h"
@@ -41,11 +41,11 @@ using namespace std::literals::string_literals;
 
 static constexpr int controlColumn = 1;
 
-LMS7SuiteAppFrame* LMS7SuiteAppFrame::obj_ptr = nullptr;
+limeGUIFrame* limeGUIFrame::obj_ptr = nullptr;
 
-int LMS7SuiteAppFrame::m_lmsSelection = 0;
+int limeGUIFrame::m_lmsSelection = 0;
 
-void LMS7SuiteAppFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
+void limeGUIFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {
     if (obj_ptr == nullptr || obj_ptr->mMiniLog == nullptr)
         return;
@@ -148,7 +148,7 @@ static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeI
     return GetTreeNode(treeControl, deviceLevelNode, cookie, nodes, 0, result);
 }
 
-LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
+limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
     , lmsControl(nullptr)
 {
@@ -159,7 +159,7 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
     wxMenuItem* menuFileQuit = new wxMenuItem(
         fileMenu, idMenuQuit, wxString(wxT("&Quit")) + wxT('\t') + wxT("Alt+F4"), wxT("Quit the application"), wxITEM_NORMAL);
     fileMenu->Append(menuFileQuit);
-    Connect(menuFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnQuit));
+    Connect(menuFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnQuit));
     mbar->Append(fileMenu, wxT("&File"));
 
     mnuModules = new wxMenu();
@@ -172,7 +172,7 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
         wxT("Show info about this application"),
         wxITEM_NORMAL);
     helpMenu->Append(menuHelpAbout);
-    Connect(menuHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnAbout));
+    Connect(menuHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnAbout));
 
     mbar->Append(helpMenu, wxT("&Help"));
     SetMenuBar(mbar);
@@ -240,12 +240,12 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
     // mnuCacheValues->Check(false);
     const int statusWidths[] = { -1, -3, -3 };
     statusBar->SetStatusWidths(3, statusWidths);
-    Bind(limeEVT_SDR_HANDLE_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnDeviceHandleChange), this);
-    Connect(LOG_MESSAGE, wxCommandEventHandler(LMS7SuiteAppFrame::OnLogMessage), 0, this);
-    lime::registerLogHandler(&LMS7SuiteAppFrame::OnGlobalLogEvent);
+    Bind(limeEVT_SDR_HANDLE_SELECTED, wxCommandEventHandler(limeGUIFrame::OnDeviceHandleChange), this);
+    Connect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), 0, this);
+    lime::registerLogHandler(&limeGUIFrame::OnGlobalLogEvent);
 
     deviceTree->Bind(
-        wxEVT_TREE_SEL_CHANGED, wxTreeEventHandler(LMS7SuiteAppFrame::DeviceTreeSelectionChanged), this, deviceTree->GetId());
+        wxEVT_TREE_SEL_CHANGED, wxTreeEventHandler(limeGUIFrame::DeviceTreeSelectionChanged), this, deviceTree->GetId());
 
     DeviceHandle handle;
     uint32_t initialIndex;
@@ -264,37 +264,37 @@ LMS7SuiteAppFrame::LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs)
     }
 }
 
-LMS7SuiteAppFrame::~LMS7SuiteAppFrame()
+limeGUIFrame::~limeGUIFrame()
 {
     for (auto iter : mModules)
         iter.second->Destroy();
 
     OnDeviceDisconnect();
 
-    Disconnect(idMenuQuit, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnQuit));
-    Disconnect(idMenuAbout, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnAbout));
-    Disconnect(LOG_MESSAGE, wxCommandEventHandler(LMS7SuiteAppFrame::OnLogMessage), 0, this);
+    Disconnect(idMenuQuit, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnQuit));
+    Disconnect(idMenuAbout, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnAbout));
+    Disconnect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), 0, this);
 
     obj_ptr = nullptr;
 }
 
-void LMS7SuiteAppFrame::OnClose(wxCloseEvent& event)
+void limeGUIFrame::OnClose(wxCloseEvent& event)
 {
     Destroy();
 }
 
-void LMS7SuiteAppFrame::OnQuit(wxCommandEvent& event)
+void limeGUIFrame::OnQuit(wxCommandEvent& event)
 {
     Destroy();
 }
 
-void LMS7SuiteAppFrame::OnAbout(wxCommandEvent& event)
+void limeGUIFrame::OnAbout(wxCommandEvent& event)
 {
     dlgAbout dlg(this);
     dlg.ShowModal();
 }
 
-void LMS7SuiteAppFrame::UpdateConnections(SDRDevice* device)
+void limeGUIFrame::UpdateConnections(SDRDevice* device)
 {
     for (auto iter : mModules)
     {
@@ -302,7 +302,7 @@ void LMS7SuiteAppFrame::UpdateConnections(SDRDevice* device)
     }
 }
 
-void LMS7SuiteAppFrame::OnDeviceDisconnect()
+void limeGUIFrame::OnDeviceDisconnect()
 {
     if (fftviewer)
         fftviewer->StopStreaming();
@@ -354,7 +354,7 @@ void FillDeviceTree(wxTreeCtrl* root, lime::SDRDevice* device, wxWindow* parentW
     root->SelectItem(rootId, true);
 }
 
-void LMS7SuiteAppFrame::OnDeviceHandleChange(wxCommandEvent& event)
+void limeGUIFrame::OnDeviceHandleChange(wxCommandEvent& event)
 {
     OnDeviceDisconnect();
     // event.GetString() is the target device handle text
@@ -405,13 +405,13 @@ void LMS7SuiteAppFrame::OnDeviceHandleChange(wxCommandEvent& event)
     }
 }
 
-void LMS7SuiteAppFrame::OnLogMessage(wxCommandEvent& event)
+void limeGUIFrame::OnLogMessage(wxCommandEvent& event)
 {
     if (mMiniLog)
         mMiniLog->HandleMessage(event);
 }
 
-void LMS7SuiteAppFrame::AddModule(IModuleFrame* module, const std::string& title)
+void limeGUIFrame::AddModule(IModuleFrame* module, const std::string& title)
 {
     wxWindowID moduleId = module->GetId();
     lime::debug("Add module %i", moduleId);
@@ -420,15 +420,15 @@ void LMS7SuiteAppFrame::AddModule(IModuleFrame* module, const std::string& title
     mnuModules->Append(item);
 
     mModules[moduleId] = module;
-    module->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(LMS7SuiteAppFrame::OnModuleClose), NULL, this);
-    Connect(item->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(LMS7SuiteAppFrame::OnShowModule));
+    module->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(limeGUIFrame::OnModuleClose), NULL, this);
+    Connect(item->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnShowModule));
 }
 
-void LMS7SuiteAppFrame::RemoveModule(IModuleFrame* module)
+void limeGUIFrame::RemoveModule(IModuleFrame* module)
 {
 }
 
-void LMS7SuiteAppFrame::OnModuleClose(wxCloseEvent& event)
+void limeGUIFrame::OnModuleClose(wxCloseEvent& event)
 {
     lime::debug("Close module %i", event.GetId());
     IModuleFrame* module = mModules.at(event.GetId());
@@ -438,7 +438,7 @@ void LMS7SuiteAppFrame::OnModuleClose(wxCloseEvent& event)
     }
 }
 
-void LMS7SuiteAppFrame::OnShowModule(wxCommandEvent& event)
+void limeGUIFrame::OnShowModule(wxCommandEvent& event)
 {
     lime::debug("show module %i", event.GetId());
     IModuleFrame* module = mModules.at(event.GetId());
@@ -483,7 +483,7 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
     }
 }
 
-void LMS7SuiteAppFrame::DeviceTreeSelectionChanged(wxTreeEvent& event)
+void limeGUIFrame::DeviceTreeSelectionChanged(wxTreeEvent& event)
 {
     DeviceTreeItemData* item = reinterpret_cast<DeviceTreeItemData*>(deviceTree->GetItemData(event.GetItem()));
     if (item->gui != nullptr && mContent == item->gui)

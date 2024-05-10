@@ -4,7 +4,6 @@
 #include "numericSlider.h"
 #include "lms7002_dlgGFIR_Coefficients.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "lms7suiteAppFrame.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
 #include "limesuiteng/Logger.h"
@@ -1647,10 +1646,6 @@ void lms7002_pnlTXTSP_view::OnbtnUploadNCOClick(wxCommandEvent& event)
 
 void lms7002_pnlTXTSP_view::OnbtnSetLPFClick(wxCommandEvent& event)
 {
-    uint16_t ch;
-    ch = ReadParam(LMS7002MCSR::MAC);
-    ch = (ch == 2) ? 1 : 0;
-    ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
     double bw;
     txtLPFBW->GetValue().ToDouble(&bw);
 
@@ -1736,14 +1731,8 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
         value &= ~1;
     cmbCMIX_GAIN_TXTSP->SetSelection(value);
 
-    uint16_t ch;
-    LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, &ch);
-    ch = (ch == 2) ? 1 : 0;
-    ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
-
     double sr = 0;
     sr = lmsControl->GetSampleRate(TRXDir::Tx);
-    //LMS_GetSampleRate(lmsControl, LMS_CH_TX, ch , &sr, nullptr);
     txtRATEVAL->SetLabel(wxString::Format("%3.3f MHz", sr / 1e6));
     //check if B channel is enabled
     LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, reinterpret_cast<uint16_t*>(&value));
@@ -1757,10 +1746,6 @@ void lms7002_pnlTXTSP_view::UpdateGUI()
 
 void lms7002_pnlTXTSP_view::PHOinputChanged(wxCommandEvent& event)
 {
-    uint16_t ch{ 0 };
-    LMS_ReadParam(lmsControl, LMS7002MCSR::MAC, &ch);
-    ch = (ch == 2) ? 1 : 0;
-    ch += 2 * LMS7SuiteAppFrame::m_lmsSelection;
     // Write values for NCO phase or frequency each time they change - to ease the tuning of these values in measurements
     if (rgrMODE_TX->GetSelection() == 0)
     {

@@ -2,7 +2,6 @@
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "lms7002_dlgGFIR_Coefficients.h"
-#include "lms7suiteAppFrame.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"

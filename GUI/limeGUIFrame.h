@@ -1,5 +1,5 @@
-#ifndef __LMS7SuiteAppFrame__
-#define __LMS7SuiteAppFrame__
+#ifndef LIME_GUI_FRAME_H
+#define LIME_GUI_FRAME_H
 
 #include "limesuiteng/Logger.h"
 
@@ -33,7 +33,7 @@
 #include "ISOCPanel.h"
 #include "DeviceConnectionPanel.h"
 #include "dlgAbout.h"
-#include "lms7suiteApp.h"
+#include "limeGUI.h"
 
 class pnlMiniLog;
 class lms7002_mainPanel;
@@ -41,7 +41,7 @@ class fftviewer_frFFTviewer;
 class LMS_Programing_wxgui;
 class pnlBoardControls;
 
-class LMS7SuiteAppFrame : public wxFrame
+class limeGUIFrame : public wxFrame
 {
   protected:
     void AddModule(IModuleFrame* module, const std::string& title);
@@ -58,9 +58,9 @@ class LMS7SuiteAppFrame : public wxFrame
     void DeviceTreeSelectionChanged(wxTreeEvent& event);
 
   public:
-    LMS7SuiteAppFrame(wxWindow* parent, const AppArgs& appArgs);
+    limeGUIFrame(wxWindow* parent, const AppArgs& appArgs);
 
-    virtual ~LMS7SuiteAppFrame();
+    virtual ~limeGUIFrame();
     static int m_lmsSelection;
 
   protected:
@@ -71,7 +71,7 @@ class LMS7SuiteAppFrame : public wxFrame
     lime::SDRDevice* lmsControl;
     pnlMiniLog* mMiniLog;
     fftviewer_frFFTviewer* fftviewer;
-    static LMS7SuiteAppFrame* obj_ptr;
+    static limeGUIFrame* obj_ptr;
 
     std::map<wxWindowID, IModuleFrame*> mModules;
 
@@ -94,4 +94,4 @@ class LMS7SuiteAppFrame : public wxFrame
     lime::DeviceConnectionPanel* pnlDeviceConnection;
 };
 
-#endif // __LMS7SuiteAppFrame__
+#endif // LIME_GUI_FRAME_H

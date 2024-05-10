@@ -51,14 +51,14 @@ if(NOT ENABLE_GUI)
 endif()
 
 set(GUI_SOURCES
+    limeGUI.cpp
+    limeGUIFrame.cpp
     LMS_Programing/LMS_Programing_wxgui.cpp
     utility/pnlMiniLog.cpp
     utility/SPI_wxgui.cpp
     utility/dlgFullMessageLog.cpp
     utility/utilities_gui.cpp
-    lms7suiteAppFrame.cpp
     dlgAbout_view.cpp
-    lms7suiteApp.cpp
     dlgAbout.cpp
     numericSlider/numericSlider.cpp
     fftviewer_wxgui/fftviewer_wxgui.cpp

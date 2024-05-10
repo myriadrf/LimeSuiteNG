@@ -6,7 +6,6 @@
 #include "lms7suiteEvents.h"
 #include <wx/busyinfo.h>
 #include <wx/spinctrl.h>
-#include "lms7suiteAppFrame.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"

@@ -6,7 +6,6 @@
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
 #include "lms7suiteEvents.h"
-#include "lms7suiteAppFrame.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
