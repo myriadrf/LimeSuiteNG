@@ -6,7 +6,7 @@
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/LMS7002M/LMS7002M_validation.h"
+#include "chips/LMS7002M/validation.h"
 #include "FPGA_common.h"
 #include "DSP/Equalizer/Equalizer.h"
 

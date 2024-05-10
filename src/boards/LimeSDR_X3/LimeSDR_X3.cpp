@@ -6,8 +6,6 @@
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/LMS7002M/LMS7002M_validation.h"
-#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
@@ -19,7 +17,9 @@
 #include "SlaveSelectShim.h"
 #include "utilities/toString.h"
 
-#include "chips/LMS7002M/lms7002m_calibrations.h"
+#include "chips/LMS7002M/calibrations.h"
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
 
 #include <cmath>

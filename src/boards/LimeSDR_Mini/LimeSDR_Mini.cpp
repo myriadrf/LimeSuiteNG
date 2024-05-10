@@ -8,7 +8,7 @@
 #include "limesuiteng/Logger.h"
 #include "FPGA_Mini.h"
 #include "TRXLooper_USB.h"
-#include "chips/LMS7002M/LMS7002M_validation.h"
+#include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "DSP/Equalizer/EqualizerCSR.h"
 #include "protocols/LMS64CProtocol.h"

@@ -1,4 +1,4 @@
-#include "LMS7002M_validation.h"
+#include "validation.h"
 
 #include <string>
 #include <cstdarg>

@@ -9,7 +9,7 @@
 #include "FPGA_common.h"
 #include "TRXLooper_USB.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "chips/LMS7002M/LMS7002M_validation.h"
+#include "chips/LMS7002M/validation.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"

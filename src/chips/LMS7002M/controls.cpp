@@ -1,9 +1,8 @@
-#include "lms7002m_controls.h"
+#include "controls.h"
 #include "spi.h"
+#include "mcu_defines.h"
 #include "LMS7002MCSR_Data.h"
 #include "math.h"
-#include "typedefs.h"
-#include "mcu_defines.h"
 #include <stdlib.h>
 
 #ifdef __cplusplus
@@ -41,15 +40,15 @@ uint16_t gComparatorDelayCounter = 0xFF00; // ~100us @ ref 30.72MHz
 #define VERBOSE 0
 
 //TODO add functions to modify reference clock
-float_type RefClk = 30.72e6; //board reference clock
+float RefClk = 30.72e6; //board reference clock
 
 uint16_t pow2(const uint8_t power)
 {
     return 1 << power;
 }
 
-xdata uint16_t x0020state;
-ROM const uint16_t chipStateAddr[] = {
+uint16_t x0020state;
+const uint16_t chipStateAddr[] = {
     0x0021,
     0x002F, //LimeLight
     0x0081,
@@ -73,7 +72,7 @@ ROM const uint16_t chipStateAddr[] = {
     0x5C0,
     0x5C0 //DC Calibration Configuration
 };
-xdata uint16_t chipStateData[500];
+uint16_t chipStateData[500];
 
 void SaveChipState(bool wr)
 {
@@ -119,8 +118,8 @@ void SaveChipState(bool wr)
 
 void SetDefaultsSX()
 {
-    ROM const uint16_t SXAddr[] = { 0x011C, 0x011D, 0x011E, 0x011F, 0x0121, 0x0122, 0x0123 };
-    ROM const uint16_t SXdefVals[] = { 0xAD43, 0x0400, 0x0780, 0x3640, 0x3404, 0x033F, 0x067B };
+    const uint16_t SXAddr[] = { 0x011C, 0x011D, 0x011E, 0x011F, 0x0121, 0x0122, 0x0123 };
+    const uint16_t SXdefVals[] = { 0xAD43, 0x0400, 0x0780, 0x3640, 0x3404, 0x033F, 0x067B };
 
     uint8_t i;
     for (i = sizeof(SXAddr) / sizeof(uint16_t); i; --i)
@@ -142,18 +141,18 @@ void ClockLogicResets()
     SPI_write(0x0020, reg);
 }
 
-float_type GetFrequencyCGEN()
+float GetFrequencyCGEN()
 {
-    const float_type dMul = (RefClk / 2.0) / (Get_SPI_Reg_bits(DIV_OUTCH_CGEN) + 1); //DIV_OUTCH_CGEN
+    const float dMul = (RefClk / 2.0) / (Get_SPI_Reg_bits(DIV_OUTCH_CGEN) + 1); //DIV_OUTCH_CGEN
     const uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0); //read whole register to reduce SPI transfers
     const uint32_t gFRAC = ((uint32_t)(gINT & 0xF) << 16) | Get_SPI_Reg_bits(0x0087, 15, 0);
     return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
 }
 
-uint8_t SetFrequencyCGEN(float_type freq)
+uint8_t SetFrequencyCGEN(float freq)
 {
-    float_type dFvco;
-    float_type intpart;
+    float dFvco;
+    float intpart;
     //VCO frequency selection according to F_CLKH
     {
         uint8_t iHdiv_high = (2.94e9 / 2 / freq) - 1;
@@ -167,7 +166,7 @@ uint8_t SetFrequencyCGEN(float_type freq)
     Modify_SPI_Reg_bits(INT_SDM_CGEN, intpart - 1); //INT_SDM_CGEN
     //Fractional division
     {
-        const float_type dFrac = intpart - (uint32_t)(dFvco / RefClk);
+        const float dFrac = intpart - (uint32_t)(dFvco / RefClk);
         const uint32_t gFRAC = (uint32_t)(dFrac * 1048576);
         Modify_SPI_Reg_bits(0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
         Modify_SPI_Reg_bits(0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
@@ -181,10 +180,10 @@ uint8_t SetFrequencyCGEN(float_type freq)
     return 0;
 }
 
-float_type GetReferenceClk_TSP_MHz(bool tx)
+float GetReferenceClk_TSP_MHz(bool tx)
 {
-    const float_type cgenFreq = GetFrequencyCGEN();
-    const float_type clklfreq = cgenFreq / pow2(Get_SPI_Reg_bits(CLKH_OV_CLKL_CGEN));
+    const float cgenFreq = GetFrequencyCGEN();
+    const float clklfreq = cgenFreq / pow2(Get_SPI_Reg_bits(CLKH_OV_CLKL_CGEN));
     if (Get_SPI_Reg_bits(EN_ADCCLKH_CLKGN) == 0)
         return tx ? clklfreq : cgenFreq / 4;
     else
@@ -199,7 +198,7 @@ void SetNCOFrequency(const bool tx, const float freq, uint8_t index)
     SPI_write(addr + 1, fcw); //NCO frequency control word register LSB part.
 }
 
-float_type GetFrequencySX(const bool Tx)
+float GetFrequencySX(const bool Tx)
 {
     const uint16_t ch = SPI_read(0x0020); //(uint8_t)Get_SPI_Reg_bits(MAC); //remember previously used channel
     Modify_SPI_Reg_bits(MAC, Tx ? 2 : 1); // Rx mac = 1, Tx mac = 2
@@ -214,7 +213,7 @@ float_type GetFrequencySX(const bool Tx)
     }
 }
 
-uint8_t SetFrequencySX(const bool tx, const float_type freq_Hz)
+uint8_t SetFrequencySX(const bool tx, const float freq_Hz)
 {
     int16_t tuneScore[3] = { 255, 255, 255 }; // best is closest to 0
     const uint16_t macBck = SPI_read(0x0020);
@@ -223,8 +222,8 @@ uint8_t SetFrequencySX(const bool tx, const float_type freq_Hz)
     Modify_SPI_Reg_bits(MAC, tx ? 2 : 1);
     //find required VCO frequency
     {
-        float_type VCOfreq;
-        float_type temp;
+        float VCOfreq;
+        float temp;
         {
             uint8_t div_loch;
             for (div_loch = 7; div_loch; --div_loch)
@@ -393,7 +392,7 @@ uint8_t TuneVCO(bool SX) // 0-cgen, 1-SXR, 2-SXT
     return MCU_ERROR;
 }
 
-void WriteMaskedRegs(const RegisterBatch ROM* regs)
+void WriteMaskedRegs(const RegisterBatch* regs)
 {
     uint8_t i;
     uint8_t index;
@@ -457,7 +456,7 @@ void EnableMIMOBuffersIfNecessary()
 
 void SetDefaults(uint16_t start, uint16_t end)
 {
-    ROM const uint16_t defaultAddrs[] = { 0x0020,
+    const uint16_t defaultAddrs[] = { 0x0020,
         0x0021,
         0x0022,
         0x0023,
@@ -662,7 +661,7 @@ void SetDefaults(uint16_t start, uint16_t end)
         0x0606,
         0x0640,
         0x0641 };
-    ROM const uint16_t defaultValues[] = { 0xFFFF,
+    const uint16_t defaultValues[] = { 0xFFFF,
         0x0E9F,
         0x07DF,
         0x5559,

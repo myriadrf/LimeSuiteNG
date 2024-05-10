@@ -1,7 +1,7 @@
-#include "lms7002m_calibrations.h"
+#include "calibrations.h"
 #include "LMS7002MCSR_Data.h"
 #include "spi.h"
-#include "lms7002m_controls.h"
+#include "controls.h"
 #include <math.h>
 #include "mcu_defines.h"
 #include <stdlib.h>
@@ -118,7 +118,7 @@ void LoadDC_REG_TX_IQ()
     FlipRisingEdge(TSGDCLDQ_TXTSP);
 }
 
-extern float_type RefClk;
+extern float RefClk;
 void UpdateRSSIDelay()
 {
     const uint16_t sampleCount = (2 << 7) << Get_SPI_Reg_bits(AGC_AVG_RXTSP);
@@ -156,7 +156,7 @@ uint32_t GetRSSI()
 static void SetRxGFIR3Coefficients()
 {
     //FIR coefficients symmetrical, storing only one half
-    ROM const int16_t firCoefs[] = {
+    const int16_t firCoefs[] = {
         8,
         4,
         0,
@@ -339,7 +339,7 @@ struct BinSearchParam {
     int16_t maxValue; ///< Maximum value of the search
 };
 
-void BinarySearch(BinSearchParam bdata* args)
+void BinarySearch(BinSearchParam* args)
 {
     uint16_t rssiLeft = ~0;
     uint16_t rssiRight;
@@ -575,7 +575,7 @@ void CalibrateTxDCAuto()
     //while(SPI_read(0x05C1) & 0x0F00);
 
     {
-        ROM const int16_t offset[3] = { 1023, 128, 8 };
+        const int16_t offset[3] = { 1023, 128, 8 };
         uint8_t i;
         iparams.result = 0; //ReadAnalogDC(iparams.param.address);
         qparams.result = 0; //ReadAnalogDC(qparams.param.address);
@@ -827,10 +827,10 @@ uint8_t CalibrateTxSetup(bool extLoopback)
     else
         Modify_SPI_Reg_bits(PD_RX_AFE2, 0);
     {
-        ROM const uint16_t TxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x0101, 0x0200, 0x0201, 0x0202, 0x0208 };
-        ROM const uint16_t TxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0001, 0x000C, 0x07FF, 0x07FF, 0x0000 };
-        ROM const uint16_t TxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x1801, 0x000C, 0x07FF, 0x07FF, 0xF10B };
-        ROM const uint16_t TxSetupWrOnlyAddr[] = { 0x010C,
+        const uint16_t TxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x0101, 0x0200, 0x0201, 0x0202, 0x0208 };
+        const uint16_t TxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0001, 0x000C, 0x07FF, 0x07FF, 0x0000 };
+        const uint16_t TxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x1801, 0x000C, 0x07FF, 0x07FF, 0xF10B };
+        const uint16_t TxSetupWrOnlyAddr[] = { 0x010C,
             0x010D,
             0x010E,
             0x010F,
@@ -862,7 +862,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
             0x0405,
             0x0404,
             0x0081 };
-        ROM const uint16_t TxSetupWrOnlyData[] = { 0x88E5,
+        const uint16_t TxSetupWrOnlyData[] = { 0x88E5,
             0x009E,
             0x2040,
             0x30C6,
@@ -884,7 +884,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
             0x0700,
             0x1001,
             0x2098 }; // rest of values will be written as zeros
-        ROM const RegisterBatch batch = { TxSetupAddr,
+        const RegisterBatch batch = { TxSetupAddr,
             TxSetupData,
             TxSetupMask,
             sizeof(TxSetupAddr) / sizeof(uint16_t),
@@ -903,7 +903,7 @@ uint8_t CalibrateTxSetup(bool extLoopback)
     SetDefaultsSX();
     Modify_SPI_Reg_bits(ICT_VCO, 255);
     {
-        const float_type SXRfreq = GetFrequencySX(LMS7002M_Tx) - bandwidthRF / calibUserBwDivider - calibrationSXOffset_Hz;
+        const float SXRfreq = GetFrequencySX(LMS7002M_Tx) - bandwidthRF / calibUserBwDivider - calibrationSXOffset_Hz;
         //SX VCO is powered up in SetFrequencySX/Tune
         status = SetFrequencySX(LMS7002M_Rx, SXRfreq);
         if (status != MCU_NO_ERROR)
@@ -1049,10 +1049,10 @@ uint8_t CalibrateRxSetup(bool extLoopback)
     const uint16_t x0020val = SPI_read(0x0020);
     //rfe
     {
-        ROM const uint16_t RxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x010C, 0x010D, 0x0113, 0x0115, 0x0119 };
-        ROM const uint16_t RxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0000, 0x0046, 0x000C, 0x0000, 0x0000 };
-        ROM const uint16_t RxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x001A, 0x0046, 0x003C, 0xC000, 0x8000 };
-        ROM const uint16_t RxSetupWrOnlyAddr[] = { 0x0100,
+        const uint16_t RxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x010C, 0x010D, 0x0113, 0x0115, 0x0119 };
+        const uint16_t RxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0000, 0x0046, 0x000C, 0x0000, 0x0000 };
+        const uint16_t RxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x001A, 0x0046, 0x003C, 0xC000, 0x8000 };
+        const uint16_t RxSetupWrOnlyAddr[] = { 0x0100,
             0x0101,
             0x0102,
             0x0103,
@@ -1102,7 +1102,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
             0x05CA,
             0x05CC,
             0x0081 };
-        ROM const uint16_t RxSetupWrOnlyData[] = { 0x3408,
+        const uint16_t RxSetupWrOnlyData[] = { 0x3408,
             0x6001,
             0x3180,
             0x0A12,
@@ -1128,7 +1128,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
             0x0020,
             0x00FF,
             0x2020 };
-        ROM const RegisterBatch batch = { RxSetupAddr,
+        const RegisterBatch batch = { RxSetupAddr,
             RxSetupData,
             RxSetupMask,
             sizeof(RxSetupAddr) / sizeof(uint16_t),
@@ -1270,7 +1270,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
     else
     {
         //SXR
-        float_type SXRfreqHz;
+        float SXRfreqHz;
         Modify_SPI_Reg_bits(MAC, 1);
         //check if Rx is tuned
         if (!IsPLLTuned())
@@ -1302,7 +1302,7 @@ uint8_t CalibrateRxSetup(bool extLoopback)
     return MCU_NO_ERROR;
 }
 
-uint8_t CheckSaturationRx(const float_type bandwidth_Hz, bool extLoopback)
+uint8_t CheckSaturationRx(const float bandwidth_Hz, bool extLoopback)
 {
     uint16_t target_rssi = dBFS_2_ChipRSSI(-10.0);
     uint16_t rssi;

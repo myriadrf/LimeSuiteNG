@@ -1,8 +1,6 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include "typedefs.h"
-
 namespace lime {
 namespace LMS7002MCSR_Data {
 struct CSRegister;
