@@ -15,7 +15,7 @@ class XSDR : public LimeSDR_XTRX
     XSDR() = delete;
     XSDR(std::shared_ptr<IComms> spiLMS7002M,
         std::shared_ptr<IComms> spiFPGA,
-        std::shared_ptr<LitePCIe> sampleStream,
+        std::shared_ptr<LimeLitePCIe> sampleStream,
         std::shared_ptr<ISerialPort> control,
         double refClk = XSDR_DEFAULT_REFERENCE_CLOCK);
     virtual ~XSDR();

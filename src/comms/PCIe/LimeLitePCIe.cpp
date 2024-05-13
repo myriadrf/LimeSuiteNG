@@ -1,4 +1,4 @@
-#include "LitePCIe.h"
+#include "LimeLitePCIe.h"
 
 #include <iostream>
 #include <errno.h>
@@ -13,7 +13,7 @@
     #include <poll.h>
     #include <sys/mman.h>
     #include <sys/ioctl.h>
-    #include "linux-kernel-module/litepcie.h"
+    #include "linux-kernel-module/limelitepcie.h"
 #endif
 
 using namespace std;
@@ -22,11 +22,12 @@ using namespace std::literals::string_literals;
 
 #define EXTRA_CHECKS 1
 
-std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& regex)
+std::vector<std::string> LimeLitePCIe::GetEndpointsWithPattern(const std::string& deviceAddr, const std::string& regex)
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    std::string cmd = "find /dev -maxdepth 1 -readable -name "s + regex;
+
+    std::string cmd = "find "s + deviceAddr + " -readable -name "s + regex;
     lsPipe = popen(cmd.c_str(), "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
@@ -35,33 +36,45 @@ std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& rege
     return devices;
 }
 
-std::vector<std::string> LitePCIe::GetPCIeDeviceList()
+std::vector<std::string> LimeLitePCIe::GetPCIeDeviceList()
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    lsPipe = popen("ls -1 -- /sys/class/litepcie", "r");
+    lsPipe = popen("ls -1 -- /sys/class/limelitepcie", "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
-        devices.push_back(tempBuffer);
+    {
+        // Kernel code fakes directories by replacing '/' char with '!'
+        // open() can't open that
+        // Replace '!' with '/' so we could open device
+        std::string parsedDevicePath{tempBuffer};
+        for (auto &c : parsedDevicePath)
+        {
+            if (c == '!')
+                c = '/';
+        }
+        devices.push_back(parsedDevicePath);
+    }
     pclose(lsPipe);
     return devices;
 }
 
-LitePCIe::LitePCIe()
+LimeLitePCIe::LimeLitePCIe()
     : mFilePath()
     , mFileDescriptor(-1)
     , isConnected(false)
 {
 }
 
-LitePCIe::~LitePCIe()
+LimeLitePCIe::~LimeLitePCIe()
 {
     Close();
 }
 
-OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
+OpStatus LimeLitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
+
     // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
     flags &= ~O_WRONLY;
     flags |= O_RDWR;
@@ -69,13 +82,20 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
     if (mFileDescriptor < 0)
     {
         isConnected = false;
-        lime::error("LitePCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
+        lime::error("LimeLitePCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
         // TODO: convert errno to OpStatus
         return OpStatus::FileNotFound;
     }
 
-    litepcie_ioctl_mmap_dma_info info;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_INFO, &info);
+    limelitepcie_version version;
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_VERSION, &version);
+    if (ret == 0)
+        lime::debug("PCIe Driver Version: %i.%i.%i", version.major, version.minor, version.patch);
+    else
+        lime::error("Unable to get PCIe Driver Version");
+
+    limelitepcie_ioctl_mmap_dma_info info;
+    ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_MMAP_DMA_INFO, &info);
     if (ret != 0)
     {
         isConnected = true;
@@ -84,13 +104,13 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
 
     mDMA.bufferCount = info.dma_rx_buf_count;
     mDMA.bufferSize = info.dma_rx_buf_size;
-    litepcie_ioctl_lock lockInfo;
+    limelitepcie_ioctl_lock lockInfo;
     // O_RDONLY has value of 0, so cannot detect if file is being opened as read only when other flags are preset
     if ((flags & O_WRONLY) != O_WRONLY || (flags & O_RDWR) == O_RDWR)
     {
         memset(&lockInfo, 0, sizeof(lockInfo));
         lockInfo.dma_writer_request = 1;
-        ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
+        ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_LOCK, &lockInfo);
         if (ret != 0 || lockInfo.dma_writer_status == 0)
         {
             const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
@@ -110,7 +130,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
     {
         memset(&lockInfo, 0, sizeof(lockInfo));
         lockInfo.dma_reader_request = 1;
-        ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
+        ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_LOCK, &lockInfo);
         if (ret != 0 || lockInfo.dma_reader_status == 0)
         {
             const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
@@ -130,16 +150,16 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
     return OpStatus::Success;
 }
 
-bool LitePCIe::IsOpen()
+bool LimeLitePCIe::IsOpen()
 {
     return mFileDescriptor >= 0;
 }
 
-void LitePCIe::Close()
+void LimeLitePCIe::Close()
 {
     if (mFileDescriptor >= 0)
     {
-        litepcie_ioctl_lock lockInfo{ 0, 0, 0, 0, 0, 0 };
+        limelitepcie_ioctl_lock lockInfo{ 0, 0, 0, 0, 0, 0 };
         if (mDMA.rxMemory)
         {
             munmap(mDMA.rxMemory, mDMA.bufferSize * mDMA.bufferCount);
@@ -150,18 +170,18 @@ void LitePCIe::Close()
             munmap(mDMA.txMemory, mDMA.bufferSize * mDMA.bufferCount);
             lockInfo.dma_reader_release = 1;
         }
-        ioctl(mFileDescriptor, LITEPCIE_IOCTL_LOCK, &lockInfo);
+        ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_LOCK, &lockInfo);
         close(mFileDescriptor);
     }
     mFileDescriptor = -1;
 }
 
-int LitePCIe::WriteControl(const uint8_t* buffer, const int length, int timeout_ms)
+int LimeLitePCIe::WriteControl(const uint8_t* buffer, const int length, int timeout_ms)
 {
     return write(mFileDescriptor, buffer, length);
 }
 
-int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
+int LimeLitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 {
     memset(buffer, 0, length);
     uint32_t status = 0;
@@ -180,14 +200,14 @@ int LitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 
     //if ((status & 0xFF00) == 0)
-    //throw std::runtime_error("LitePCIe read status timeout"s);
+    //throw std::runtime_error("LimeLitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
 }
 
-int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
+int LimeLitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened"s);
+        throw std::runtime_error("LimeLitePCIe port not opened"s);
     auto t1 = chrono::high_resolution_clock::now();
     int bytesRemaining = length;
     while (bytesRemaining > 0 &&
@@ -241,10 +261,10 @@ int LitePCIe::WriteRaw(const uint8_t* buffer, const int length, int timeout_ms)
     return length - bytesRemaining;
 }
 
-int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
+int LimeLitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
 {
     if (mFileDescriptor < 0)
-        throw std::runtime_error("LitePCIe port not opened"s);
+        throw std::runtime_error("LimeLitePCIe port not opened"s);
 
     int bytesRemaining = length;
     uint8_t* dest = buffer;
@@ -299,7 +319,7 @@ int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
 #ifdef EXTRA_CHECKS
         if (bytesIn > bytesRemaining)
         {
-            lime::error("LitePCIe::ReadRaw read expected(%i), returned(%i)", bytesRemaining, bytesIn);
+            lime::error("LimeLitePCIe::ReadRaw read expected(%i), returned(%i)", bytesRemaining, bytesIn);
             return -1;
         }
 #endif
@@ -309,7 +329,7 @@ int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
              std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 #ifdef EXTRA_CHECKS
     // if (bytesRemaining > 0)
-    //     lime::error("LitePCIe::ReadRaw %i bytes remaining after timeout", bytesRemaining);
+    //     lime::error("LimeLitePCIe::ReadRaw %i bytes remaining after timeout", bytesRemaining);
     // auto rdTime = std::chrono::duration_cast<std::chrono::microseconds>(chrono::high_resolution_clock::now() - t1).count();
     // if(rdTime > 100)
     //     lime::error("ReadRaw too long %i", rdTime);
@@ -317,12 +337,12 @@ int LitePCIe::ReadRaw(uint8_t* buffer, const int length, int timeout_ms)
     return length - bytesRemaining;
 }
 
-void LitePCIe::RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod)
+void LimeLitePCIe::RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod)
 {
     if (!IsOpen())
         return;
-    litepcie_ioctl_dma_writer writer;
-    memset(&writer, 0, sizeof(litepcie_ioctl_dma_writer));
+    limelitepcie_ioctl_dma_writer writer;
+    memset(&writer, 0, sizeof(limelitepcie_ioctl_dma_writer));
     writer.enable = enabled ? 1 : 0;
     writer.hw_count = 0;
     writer.sw_count = 0;
@@ -331,31 +351,31 @@ void LitePCIe::RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod)
         writer.write_size = bufferSize;
         writer.irqFreq = irqPeriod;
     }
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &writer);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_DMA_WRITER, &writer);
     if (ret < 0)
         lime::error("Failed DMA writer ioctl. errno(%i) %s", errno, strerror(errno));
 }
 
-void LitePCIe::TxDMAEnable(bool enabled)
+void LimeLitePCIe::TxDMAEnable(bool enabled)
 {
     if (!IsOpen())
         return;
-    litepcie_ioctl_dma_reader reader;
-    memset(&reader, 0, sizeof(litepcie_ioctl_dma_reader));
+    limelitepcie_ioctl_dma_reader reader;
+    memset(&reader, 0, sizeof(limelitepcie_ioctl_dma_reader));
     reader.enable = enabled ? 1 : 0;
     reader.hw_count = 0;
     reader.sw_count = 0;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &reader);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_DMA_READER, &reader);
     if (ret < 0)
         lime::error("Failed DMA reader ioctl. err(%i) %s", errno, strerror(errno));
 }
 
-LitePCIe::DMAState LitePCIe::GetRxDMAState()
+LimeLitePCIe::DMAState LimeLitePCIe::GetRxDMAState()
 {
-    litepcie_ioctl_dma_writer dma;
-    memset(&dma, 0, sizeof(litepcie_ioctl_dma_writer));
+    limelitepcie_ioctl_dma_writer dma;
+    memset(&dma, 0, sizeof(limelitepcie_ioctl_dma_writer));
     dma.enable = 1;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &dma);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_DMA_WRITER, &dma);
     if (ret)
         throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters"s);
     DMAState state;
@@ -365,12 +385,12 @@ LitePCIe::DMAState LitePCIe::GetRxDMAState()
     return state;
 }
 
-LitePCIe::DMAState LitePCIe::GetTxDMAState()
+LimeLitePCIe::DMAState LimeLitePCIe::GetTxDMAState()
 {
-    litepcie_ioctl_dma_reader dma;
-    memset(&dma, 0, sizeof(litepcie_ioctl_dma_reader));
+    limelitepcie_ioctl_dma_reader dma;
+    memset(&dma, 0, sizeof(limelitepcie_ioctl_dma_reader));
     dma.enable = 1;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &dma);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_DMA_READER, &dma);
     if (ret)
         throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters"s);
     DMAState state;
@@ -380,7 +400,7 @@ LitePCIe::DMAState LitePCIe::GetTxDMAState()
     return state;
 }
 
-bool LitePCIe::WaitRx()
+bool LimeLitePCIe::WaitRx()
 {
     pollfd desc;
     desc.fd = mFileDescriptor;
@@ -413,7 +433,7 @@ bool LitePCIe::WaitRx()
         return false;
 }
 
-bool LitePCIe::WaitTx()
+bool LimeLitePCIe::WaitTx()
 {
     pollfd desc;
     desc.fd = mFileDescriptor;
@@ -442,13 +462,13 @@ bool LitePCIe::WaitTx()
     return ret > 0;
 }
 
-int LitePCIe::SetRxDMAState(DMAState s)
+int LimeLitePCIe::SetRxDMAState(DMAState s)
 {
-    litepcie_ioctl_mmap_dma_update sub;
-    memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
+    limelitepcie_ioctl_mmap_dma_update sub;
+    memset(&sub, 0, sizeof(limelitepcie_ioctl_mmap_dma_update));
     sub.sw_count = s.swIndex;
     sub.buffer_size = mDMA.bufferSize;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
     if (ret < 0)
     {
         throw std::runtime_error("DMA writer failed update"s);
@@ -456,14 +476,14 @@ int LitePCIe::SetRxDMAState(DMAState s)
     return ret;
 }
 
-int LitePCIe::SetTxDMAState(DMAState s)
+int LimeLitePCIe::SetTxDMAState(DMAState s)
 {
-    litepcie_ioctl_mmap_dma_update sub;
-    memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
+    limelitepcie_ioctl_mmap_dma_update sub;
+    memset(&sub, 0, sizeof(limelitepcie_ioctl_mmap_dma_update));
     sub.sw_count = s.swIndex;
     sub.buffer_size = s.bufferSize;
     sub.genIRQ = s.genIRQ;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
     // if (ret < 0)
     // {
     //     std::string msg = "DMA reader failed update"s;
@@ -471,57 +491,16 @@ int LitePCIe::SetTxDMAState(DMAState s)
     return ret;
 }
 
-void LitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
+void LimeLitePCIe::CacheFlush(bool isTx, bool toDevice, uint16_t index)
 {
-    litepcie_cache_flush sub;
-    memset(&sub, 0, sizeof(litepcie_cache_flush));
+    limelitepcie_cache_flush sub;
+    memset(&sub, 0, sizeof(limelitepcie_cache_flush));
     sub.isTx = isTx;
     sub.toDevice = toDevice;
     sub.bufferIndex = index;
-    int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_CACHE_FLUSH, &sub);
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_CACHE_FLUSH, &sub);
     if (ret < 0)
     {
         std::string msg = "DMA reader failed update"s;
     }
 }
-
-/*
-// B.J.
-int LitePCIe::ReadDPDBuffer(char *buffer, unsigned length)
-{
-
-    int totalBytesReaded = 0;
-    uint16_t interface_cfg;
-
-    ReadRegister(0x01A1, interface_cfg);  // CAP_RESETN
-    interface_cfg = (interface_cfg & ~0x10); // reset bit 4
-    WriteRegister(0x01A1, interface_cfg);
-
-    ReadRegister(0x01A1, interface_cfg);
-    interface_cfg = (interface_cfg | 0x10); // set bit 4
-    WriteRegister(0x01A1, interface_cfg);
-
-    StartReading(buffer, 2, 60);
-
-    uint16_t len = length / 24;
-    //std::cout << "[INFO] length: "sv << len << std::endl;
-    WriteRegister(0x01A0, len); // length
-
-    ReadRegister(0x01A1, interface_cfg);  // CAP_EN
-    interface_cfg = (interface_cfg | 0x1); // set lsb
-    WriteRegister(0x01A1, interface_cfg);
-
-    for (int i = 0; i < 20; i++) // wait some time
-        ReadRegister(0x01A1, interface_cfg);
-
-    ReadRegister(0x01A1, interface_cfg);
-    interface_cfg = (interface_cfg & ~0x1); // reset lsb
-    WriteRegister(0x01A1, interface_cfg);
-
-    totalBytesReaded = ReceiveData2(buffer, length, 2, 100);
-
-    AbortReading(2);
-    return totalBytesReaded;
-}
-// end B.J.
-*/

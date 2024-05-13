@@ -16,7 +16,7 @@ set(LIME_TEST_SUITE_SOURCES
     protocols/LMS64CProtocol/LMS7002M_SPITest.cpp
     protocols/BufferInterleavingTest.cpp)
 
-if(ENABLE_LITE_PCIE)
+if(ENABLE_LIMELITEPCIE)
     list(
         APPEND
         LIME_TEST_SUITE_SOURCES

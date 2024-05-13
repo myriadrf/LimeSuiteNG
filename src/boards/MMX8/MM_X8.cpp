@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
+#include "LimeLitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "lms7002m/LMS7002M_validation.h"
 #include "FPGA_common.h"
@@ -35,7 +35,7 @@ static double X8ReferenceClock = 30.72e6;
 /// @param adfComms The communications port to the device's ADF4002 chip.
 LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     std::vector<std::shared_ptr<IComms>>& spiFPGA,
-    std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+    std::vector<std::shared_ptr<LimeLitePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control,
     std::shared_ptr<ISPI> adfComms)
     : mTRXStreamPorts(trxStreams)

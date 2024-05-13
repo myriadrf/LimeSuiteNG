@@ -5,7 +5,7 @@
 #cmakedefine ENABLE_LIMESDR_MMX8
 #cmakedefine ENABLE_USB_FTDI
 
-#cmakedefine ENABLE_LITE_PCIE
+#cmakedefine ENABLE_LIMELITEPCIE
 
 void __loadFX3();
 void __loadFTDI();
@@ -21,7 +21,7 @@ void __loadBoardSupport()
     __loadFTDI();
 #endif
 
-#ifdef ENABLE_LITE_PCIE
+#ifdef ENABLE_LIMELITEPCIE
     __loadDeviceFactoryPCIe();
 #endif
 }

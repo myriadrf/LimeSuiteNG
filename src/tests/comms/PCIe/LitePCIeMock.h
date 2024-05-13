@@ -7,7 +7,7 @@
 
 namespace lime::testing {
 
-class LitePCIeMock : public LitePCIe
+class LitePCIeMock : public LimeLitePCIe
 {
   public:
     MOCK_METHOD(int, WriteControl, (const uint8_t* buffer, int length, int timeout_ms), (override));

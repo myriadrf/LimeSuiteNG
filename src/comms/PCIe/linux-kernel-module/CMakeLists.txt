@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(
-    litepcie-kernel
+    limelitepcie-kernel
     VERSION 0.1.0
     LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set(MODULE_NAME litepcie)
+set(MODULE_NAME limelitepcie)
 
 find_package(LinuxKernelHeaders REQUIRED)
 
@@ -35,7 +35,7 @@ file(
     "ccflags-y += -Wno-declaration-after-statement
     ccflags-y += -std=gnu11
     ccflags-y += -I${KBUILD_FILE_DIR}/bsp
-    obj-m = litepcie.o")
+    obj-m = limelitepcie.o")
 
 set(MODULE_OBJECT ${KBUILD_FILE_DIR}/${MODULE_NAME}.ko)
 set(KBUILD_CMD
@@ -50,7 +50,7 @@ set(KBUILD_CMD
 
 set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} ARCH=${ARCH} M=${KBUILD_FILE_DIR} clean)
 
-set(KERNEL_SOURCE_RELATIVE_PATHS litepcie.c litepcie.h boards.h bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h)
+set(KERNEL_SOURCE_RELATIVE_PATHS limelitepcie.c limelitepcie.h boards.h bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h)
 
 # Copy all source files into build directory and compile there, as the Kbuild produces artifacts in tree
 foreach(SRC_FILENAME ${KERNEL_SOURCE_RELATIVE_PATHS})
@@ -66,9 +66,9 @@ add_custom_command(
     VERBATIM
     COMMENT "Building Linux kernel module in dir: ${KBUILD_FILE_DIR}")
 
-add_custom_target(litepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
+add_custom_target(limelitepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
 
-cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LITEPCIE_KERNEL_MODULE" OFF)
+cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LIMELITEPCIE_KERNEL_MODULE" OFF)
 if(NOT INSTALL_KERNEL_MODULE)
     return()
 endif()

@@ -16,7 +16,7 @@
 
 namespace lime {
 
-class LitePCIe;
+class LimeLitePCIe;
 class LimeSDR_XTRX;
 
 /** @brief Class for managing the LimeSDR-MMX8 device and its subdevices. */
@@ -26,7 +26,7 @@ class LimeSDR_MMX8 : public SDRDevice
     LimeSDR_MMX8() = delete;
     LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
         std::vector<std::shared_ptr<IComms>>& spiFPGA,
-        std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+        std::vector<std::shared_ptr<LimeLitePCIe>> trxStreams,
         std::shared_ptr<ISerialPort> control,
         std::shared_ptr<ISPI> adfComms);
     ~LimeSDR_MMX8();
@@ -152,7 +152,7 @@ class LimeSDR_MMX8 : public SDRDevice
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;
     SDRDescriptor mDeviceDescriptor;
-    std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
+    std::vector<std::shared_ptr<LimeLitePCIe>> mTRXStreamPorts;
     std::vector<LimeSDR_XTRX*> mSubDevices;
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;
     std::map<uint32_t, LimeSDR_XTRX*> customParameterToDevice;

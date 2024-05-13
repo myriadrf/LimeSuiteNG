@@ -2,7 +2,7 @@
 
 using namespace lime;
 
-PCIE_CSR_Pipe::PCIE_CSR_Pipe(std::shared_ptr<LitePCIe> port)
+PCIE_CSR_Pipe::PCIE_CSR_Pipe(std::shared_ptr<LimeLitePCIe> port)
     : port(port)
 {
 }

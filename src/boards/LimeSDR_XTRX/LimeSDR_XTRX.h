@@ -9,7 +9,7 @@
 
 namespace lime {
 
-class LitePCIe;
+class LimeLitePCIe;
 class ISerialPort;
 class IComms;
 
@@ -22,7 +22,7 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     LimeSDR_XTRX() = delete;
     LimeSDR_XTRX(std::shared_ptr<IComms> spiLMS7002M,
         std::shared_ptr<IComms> spiFPGA,
-        std::shared_ptr<LitePCIe> sampleStream,
+        std::shared_ptr<LimeLitePCIe> sampleStream,
         std::shared_ptr<ISerialPort> control,
         double refClk = XTRX_DEFAULT_REFERENCE_CLOCK);
 
@@ -58,7 +58,7 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
   private:
     std::shared_ptr<IComms> lms7002mPort;
     std::shared_ptr<IComms> fpgaPort;
-    std::shared_ptr<LitePCIe> mStreamPort;
+    std::shared_ptr<LimeLitePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 
     std::mutex mCommsMutex;
