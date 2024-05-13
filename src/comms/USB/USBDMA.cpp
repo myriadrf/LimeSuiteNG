@@ -13,7 +13,7 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
-USBDMA::DirectionState::DirectionState(uint8_t endpoint, std::byte* buffer)
+USBDMA::DirectionState::DirectionState(uint8_t endpoint, std::byte* const buffer)
     : endpoint(endpoint)
     , buffer(buffer)
     , state()
@@ -36,7 +36,6 @@ USBDMA::DirectionState::~DirectionState()
     if (buffer != nullptr)
     {
         delete[] buffer;
-        buffer = nullptr;
     }
 }
 
@@ -123,7 +122,7 @@ inline int USBDMA::GetBufferCount() const
     return port->GetBufferCount();
 }
 
-std::byte* USBDMA::GetMemoryAddress(TRXDir direction) const
+std::byte* const USBDMA::GetMemoryAddress(TRXDir direction) const
 {
     return GetDirectionState(direction).buffer;
 }

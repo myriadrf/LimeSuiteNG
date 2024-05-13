@@ -397,7 +397,7 @@ int LitePCIe::GetBufferCount() const
     return mDMA.bufferCount;
 }
 
-std::byte* LitePCIe::GetMemoryAddress(TRXDir direction) const
+std::byte* const LitePCIe::GetMemoryAddress(TRXDir direction) const
 {
     switch (direction)
     {

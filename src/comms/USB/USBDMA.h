@@ -28,7 +28,7 @@ class USBDMA : public IDMA
 
     int GetBufferSize() const override;
     int GetBufferCount() const override;
-    std::byte* GetMemoryAddress(TRXDir direction) const override;
+    std::byte* const GetMemoryAddress(TRXDir direction) const override;
     DMAState GetState(TRXDir direction) override;
     int SetState(TRXDir direction, DMAState state) override;
 
@@ -40,11 +40,11 @@ class USBDMA : public IDMA
     std::shared_ptr<USBGeneric> port;
 
     struct DirectionState {
-        DirectionState(uint8_t endpoint, std::byte* buffer);
+        DirectionState(uint8_t endpoint, std::byte* const buffer);
         ~DirectionState();
 
         uint8_t endpoint;
-        std::byte* buffer;
+        std::byte* const buffer;
         DMAState state;
         std::vector<int> contextHandles;
         std::atomic<bool> isRunning;
