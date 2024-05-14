@@ -413,20 +413,16 @@ Si5351C::Status Si5351C::ConfigureClocks()
     for (int i = 0; i < 8; ++i)
     {
         m_newConfiguration[3] |= (!CLK[i].powered) << i; //enabled
-        m_newConfiguration[16 + i] = 0;
-        m_newConfiguration[16 + i] |= !CLK[i].powered << 7; // powered
+        m_newConfiguration[16 + i] = !CLK[i].powered << 7; // powered
 
         if (CLK[i].int_mode)
         {
             m_newConfiguration[16 + i] |= 1 << 6; //integer mode
         }
-        else
-            m_newConfiguration[16 + i] |= 0 << 6;
 
         m_newConfiguration[16 + i] |= CLK[i].pllSource << 5; //PLL source
         m_newConfiguration[16 + i] |= CLK[i].inverted << 4; // invert
-        m_newConfiguration[16 + i] |= 3 << 2;
-        m_newConfiguration[16 + i] |= 3;
+        m_newConfiguration[16 + i] |= 0b1111;
 
         addr = 42 + i * 8;
         int DivA, DivB, DivC;
@@ -458,12 +454,10 @@ Si5351C::Status Si5351C::ConfigureClocks()
                 m_newConfiguration[addr] = MSX_P3 >> 8;
                 m_newConfiguration[addr + 1] = MSX_P3;
 
-                m_newConfiguration[addr + 2] = 0;
-                m_newConfiguration[addr + 2] |= (MSX_P1 >> 16) & 0x03;
+                m_newConfiguration[addr + 2] = (MSX_P1 >> 16) & 0x03;
                 m_newConfiguration[addr + 3] = MSX_P1 >> 8;
                 m_newConfiguration[addr + 4] = MSX_P1;
 
-                m_newConfiguration[addr + 5] = 0;
                 m_newConfiguration[addr + 5] = (MSX_P2 >> 16) & 0x0F;
                 m_newConfiguration[addr + 5] |= (MSX_P3 >> 16) << 4;
 
@@ -509,7 +503,7 @@ Si5351C::Status Si5351C::ConfigureClocks()
 
     //configure pll
     //set input clk source
-    m_newConfiguration[15] = m_newConfiguration[15] & 0xF3;
+    m_newConfiguration[15] &= 0xF3;
     m_newConfiguration[15] |= (PLL[0].CLK_SRC & 1) << 2;
     m_newConfiguration[15] |= (PLL[1].CLK_SRC & 1) << 3;
     for (int i = 0; i < 2; ++i)
@@ -552,7 +546,6 @@ Si5351C::Status Si5351C::ConfigureClocks()
 
         m_newConfiguration[addr + 7] = MSNx_P2;
         m_newConfiguration[addr + 6] = MSNx_P2 >> 8;
-        m_newConfiguration[addr + 5] = 0;
         m_newConfiguration[addr + 5] = (MSNx_P2 >> 16) & 0x0F;
 
         m_newConfiguration[addr + 5] |= (MSNx_P3 >> 16) << 4;
