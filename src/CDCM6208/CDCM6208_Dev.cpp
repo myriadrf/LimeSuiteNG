@@ -1,4 +1,5 @@
 #include "CDCM6208_Dev.h"
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <chrono>
@@ -939,19 +940,9 @@ uint64_t CDCM_Dev::FindGCD(uint64_t a, uint64_t b)
 */
 int CDCM_Dev::FindLowestPSAOutput(std::vector<CDCM_VCO> input)
 {
-    int min_nom = 0xFFFFFFF;
-    int index = 0;
-    int curr_val;
-    for (size_t i = 0; i < input.size(); i++)
-    {
-        curr_val = input[i].N_mul_full * input[i].prescaler_A;
-        if (curr_val < min_nom)
-        {
-            min_nom = curr_val;
-            index = i;
-        }
-    }
-    return index;
+    return std::distance(input.begin(), std::min_element(input.begin(), input.end(), [&](const CDCM_VCO& a, const CDCM_VCO& b) {
+        return a.N_mul_full * a.prescaler_A < b.N_mul_full * b.prescaler_A;
+    }));
 }
 
 /**
@@ -961,17 +952,9 @@ int CDCM_Dev::FindLowestPSAOutput(std::vector<CDCM_VCO> input)
 */
 int CDCM_Dev::GetLowestFreqErr(std::vector<CDCM_VCO> input)
 {
-    double min_err = 100e6;
-    int index = 0;
-    for (size_t i = 0; i < input.size(); i++)
-    {
-        if (input[i].freq_err < min_err)
-        {
-            min_err = input[i].freq_err;
-            index = i;
-        }
-    }
-    return index;
+    return std::distance(input.begin(), std::min_element(input.begin(), input.end(), [&](const CDCM_VCO& a, const CDCM_VCO& b) {
+        return a.freq_err < b.freq_err;
+    }));
 }
 
 /**
@@ -1043,16 +1026,15 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
     }
 
     // Find number of valid VCO freqs for each prescaler
-    std::vector<CDCM_VCO> Config_vector;
-    Config_vector = FindValidVCOFreqs(int_lcm, VCO.version);
+    std::vector<CDCM_VCO> Config_vector{ FindValidVCOFreqs(int_lcm, VCO.version) };
 
     int have_error = 0;
-    int max_r_div = GetVCOInput() ? 16 : 1;
+    const int max_r_div = GetVCOInput() ? 16 : 1;
 
-    for (size_t i = 0; i < Config_vector.size(); i++)
+    for (auto& config : Config_vector)
     {
-        Config_vector[i].prim_freq = VCO.prim_freq;
-        Config_vector[i].sec_freq = VCO.sec_freq;
+        config.prim_freq = VCO.prim_freq;
+        config.sec_freq = VCO.sec_freq;
         double min_err = std::numeric_limits<double>::max();
 
         for (int r_div = 1; r_div <= max_r_div; r_div++)
@@ -1060,18 +1042,18 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
             double input_freq = ((GetVCOInput() == 1 ? VCO.prim_freq : VCO.sec_freq) / r_div) * input_shift;
             int n_mul = 1, m_div = 1;
 
-            Config_vector[i].freq_err = DecToFrac(Config_vector[i].output_freq / input_freq, &n_mul, &m_div);
+            config.freq_err = DecToFrac(config.output_freq / input_freq, &n_mul, &m_div);
 
-            if (min_err > Config_vector[i].freq_err)
+            if (min_err > config.freq_err)
             {
-                min_err = Config_vector[i].freq_err;
-                Config_vector[i].R_div = r_div;
-                Config_vector[i].N_mul_full = n_mul;
-                Config_vector[i].M_div = m_div;
+                min_err = config.freq_err;
+                config.R_div = r_div;
+                config.N_mul_full = n_mul;
+                config.M_div = m_div;
             }
         }
 
-        if (Config_vector[i].freq_err > 0)
+        if (config.freq_err > 0)
             have_error++;
     }
 
