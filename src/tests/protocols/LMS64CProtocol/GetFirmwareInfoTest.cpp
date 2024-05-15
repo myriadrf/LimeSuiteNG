@@ -35,7 +35,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoGetsInfo)
     LMS64CPacket packet{};
     packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
 
-    LMS64CProtocol::FirmwareInfo info;
+    LMS64CProtocol::FirmwareInfo info{};
 
     uint32_t subdevice = 1U;
 
@@ -56,7 +56,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoGetsInfo)
 TEST(LMS64CProtocol, GetFirmwareInfoNotFullyWritten)
 {
     SerialPortMock mockPort{};
-    LMS64CProtocol::FirmwareInfo info;
+    LMS64CProtocol::FirmwareInfo info{};
 
     uint32_t subdevice = 1U;
 
@@ -75,7 +75,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoNotFullyWritten)
 TEST(LMS64CProtocol, GetFirmwareInfoNotFullyRead)
 {
     SerialPortMock mockPort{};
-    LMS64CProtocol::FirmwareInfo info;
+    LMS64CProtocol::FirmwareInfo info{};
 
     uint32_t subdevice = 1U;
 
@@ -97,7 +97,7 @@ TEST(LMS64CProtocol, GetFirmwareInfoWrongStatus)
     LMS64CPacket packet{};
     packet.status = LMS64CProtocol::STATUS_RESOURCE_DENIED_CMD;
 
-    LMS64CProtocol::FirmwareInfo info;
+    LMS64CProtocol::FirmwareInfo info{};
 
     uint32_t subdevice = 1U;
 

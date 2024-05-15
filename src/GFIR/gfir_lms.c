@@ -17,8 +17,10 @@
 #include "lms.h"
 #include "dfilter.h"
 
-#define CPREC 16 /* Coefficients precision */
-#define CSDPREC 16 /* CSD Coefficients precision */
+enum {
+    CPREC = 16, /* Coefficients precision */
+    CSDPREC = 16 /* CSD Coefficients precision */
+};
 
 /* *********************************************************************** */
 int gfir_lms(hr, hi, hcsd, n, w1, w2, a1, a2, cprec, csdprec, correction)

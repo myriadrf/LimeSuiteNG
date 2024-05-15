@@ -63,7 +63,8 @@ static std::array<StreamStatus, LIME_TRX_MAX_RF_PORT> portStreamStates;
 static lime::SDRDevice::LogCallbackType hostCallback = nullptr;
 
 DevNode::DevNode()
-    : device(nullptr)
+    : chipIndex(0)
+    , device(nullptr)
 {
 }
 
@@ -162,8 +163,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
     {
         stringstream ss;
         ss << "Rx| Loss: "sv << status.rx.loss << " overrun: "sv << status.rx.overrun << " rate: "sv << status.rx.dataRate_Bps / 1e6
-           << " MB/s"sv
-           << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
+           << " MB/s"sv << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
            << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
         Log(LogLevel::Warning, ss.str().c_str());
         lastStreamUpdate = now;
@@ -256,7 +256,7 @@ static OpStatus MapChannelsToDevices(
                 remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
                 chipRelativeChannelIndex = 0;
             }
-            ChannelData lane;
+            ChannelData lane{};
             lane.chipChannel = chipRelativeChannelIndex;
             ++chipRelativeChannelIndex;
             lane.parent = assignedDevices.front();

@@ -8,14 +8,12 @@ using namespace std;
 using namespace std::literals::string_literals;
 
 MCU_File::MCU_File(const char* fileName, const char* mode)
+    : m_file(fopen(fileName, mode))
 {
-    m_file = fopen(fileName, mode);
-    if (m_file != NULL)
+    if (m_file == nullptr)
     {
-        return;
+        lime::error("Error opening "s + fileName);
     }
-
-    lime::error("Error opening "s + fileName);
 }
 
 MCU_File::~MCU_File()
@@ -32,8 +30,6 @@ bool MCU_File::FileOpened()
 // Read binary file
 void MCU_File::ReadBin(unsigned long limit)
 {
-    m_top = 0;
-
     m_chunks.push_back(MemBlock());
     m_chunks.back().m_startAddress = 0;
 
@@ -48,7 +44,6 @@ void MCU_File::ReadBin(unsigned long limit)
         if (m_chunks.back().m_bytes.size() > limit + 1)
         {
             m_chunks.back().m_bytes.pop_back();
-            m_top = m_chunks.back().m_bytes.size() - 1;
             lime::error("Ignoring data above address space!"s);
             lime::error(" Limit: "s + std::to_string(limit));
             return;
@@ -56,8 +51,6 @@ void MCU_File::ReadBin(unsigned long limit)
 
         tmp = fgetc(m_file);
     }
-
-    m_top = m_chunks.back().m_bytes.size() - 1;
 
     if (!m_chunks.back().m_bytes.size())
     {
@@ -424,12 +417,6 @@ void MCU_File::ReadHex(unsigned long limit)
     if (!m_chunks.size())
     {
         throw std::runtime_error("No data in file!"s);
-    }
-    vector<MemBlock>::iterator vi;
-    m_top = 0;
-    for (vi = m_chunks.begin(); vi < m_chunks.end(); vi++)
-    {
-        m_top = std::max(m_top, (vi->m_startAddress + vi->m_bytes.size() - 1));
     }
 }
 

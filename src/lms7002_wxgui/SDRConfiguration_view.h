@@ -50,7 +50,7 @@ class SOCConfig_view : public wxPanel
 
   protected:
     SDRConfigGUI gui;
-    lime::SDRDevice* sdrDevice;
+    lime::SDRDevice* sdrDevice{};
     int socIndex;
 
   private:

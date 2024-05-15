@@ -415,7 +415,7 @@ std::vector<pnlBoardControls::ADC_DAC> pnlBoardControls::getBoardParams(std::str
 
 void pnlBoardControls::OnMemoryWrite(wxCommandEvent& event)
 {
-    UserDataContainer* ud = static_cast<UserDataContainer*>(event.GetEventUserData());
+    UserDataContainer* ud = dynamic_cast<UserDataContainer*>(event.GetEventUserData());
     MemoryParamGUI* gui = static_cast<MemoryParamGUI*>(ud->ptr);
     long val = 0;
     gui->txtValue->GetValue().ToLong(&val);
@@ -437,7 +437,7 @@ OpStatus pnlBoardControls::ReadMemory(MemoryParamGUI* gui)
 
 void pnlBoardControls::OnMemoryRead(wxCommandEvent& event)
 {
-    UserDataContainer* ud = static_cast<UserDataContainer*>(event.GetEventUserData());
+    UserDataContainer* ud = dynamic_cast<UserDataContainer*>(event.GetEventUserData());
     MemoryParamGUI* gui = static_cast<MemoryParamGUI*>(ud->ptr);
     ReadMemory(gui);
 }

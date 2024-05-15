@@ -24,7 +24,9 @@ static constexpr uint16_t defaultSamplesInPkt = 256;
 /// @param chip The LMS7002M device to use for streaming.
 /// @param id The ID of the chip to use.
 TRXLooper::TRXLooper(FPGA* f, LMS7002M* chip, int id)
-    : mCallback_logMessage(nullptr)
+    : mTimestampOffset(0)
+    , chipId(id)
+    , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
 {
     mRx.packetsToBatch = 4;
@@ -36,8 +38,7 @@ TRXLooper::TRXLooper(FPGA* f, LMS7002M* chip, int id)
     mTx.fifo = new PacketsFIFO<SamplesPacketType*>(fifoLen);
 
     lms = chip, fpga = f;
-    chipId = id;
-    mTimestampOffset = 0;
+
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
     mRx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminate.store(false, std::memory_order_relaxed);

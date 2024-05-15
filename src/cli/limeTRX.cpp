@@ -450,8 +450,8 @@ int main(int argc, char** argv)
     FFTPlotter fftplot(sampleRate, fftSize, persistPlotWindows);
 #endif
 
-    StreamMeta rxMeta;
-    StreamMeta txMeta;
+    StreamMeta rxMeta{};
+    StreamMeta txMeta{};
     txMeta.waitForTimestamp = true;
     txMeta.timestamp = sampleRate / 100; // send tx samples 10ms after start
 

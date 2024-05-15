@@ -23,9 +23,9 @@ class pnlGPIO : public wxPanel
     void OnUsrGPIOChange(wxCommandEvent& event);
 
   protected:
-    wxStaticText* gpioIn[16];
-    wxCheckBox* gpioDir[16];
-    wxCheckBox* gpioOut[16];
+    wxStaticText* gpioIn[16]{};
+    wxCheckBox* gpioDir[16]{};
+    wxCheckBox* gpioOut[16]{};
 
     lime::SDRDevice* device;
     int gpioCount;

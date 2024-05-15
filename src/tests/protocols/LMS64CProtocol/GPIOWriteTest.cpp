@@ -32,7 +32,7 @@ MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct
 
 MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count"sv)
 {
-    LMS64CPacket* packet = reinterpret_cast<LMS64CPacket*>(const_cast<uint8_t*>(arg));
+    const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
 
     return packet->payload[index] == byte;
 }

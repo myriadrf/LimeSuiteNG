@@ -33,7 +33,6 @@ class LIME_API MCU_File
 
     FILE* Handle() const { return m_file; };
     std::vector<MemBlock> m_chunks;
-    size_t m_top;
 
   private:
     FILE* m_file;

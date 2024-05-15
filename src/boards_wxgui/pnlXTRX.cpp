@@ -22,10 +22,9 @@ BEGIN_EVENT_TABLE(pnlXTRX, wxPanel)
 END_EVENT_TABLE()
 
 pnlXTRX::pnlXTRX(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
+    : chipSelect(-1)
+    , device(nullptr)
 {
-    chipSelect = -1;
-    device = nullptr;
-
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));

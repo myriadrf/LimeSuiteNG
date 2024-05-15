@@ -8,14 +8,10 @@
 class lms7002_pnlR3_view : public ILMS7002MTab
 {
   protected:
-    wxComboBox* cmbISINK_SPIBUFF;
-    wxButton* btnReadADC;
-    wxStaticText* dccal_statuses[8];
-    wxStaticText* dccal_cmpstatuses[8];
-    wxCheckBox* dccal_cmpcfg[8];
-    wxCheckBox* dccal_start[8];
-    wxStaticText* rssi_vals[2];
-    wxStaticText* pdet_vals[2];
+    wxStaticText* dccal_statuses[8]{};
+    wxStaticText* dccal_cmpstatuses[8]{};
+    wxStaticText* rssi_vals[2]{};
+    wxStaticText* pdet_vals[2]{};
     wxStaticText* tref_val;
     wxStaticText* tvptat_val;
     wxStaticText* rssidc_cmpstatus;
@@ -27,8 +23,8 @@ class lms7002_pnlR3_view : public ILMS7002MTab
     std::vector<NumericSlider*> cmbDCControlsRx;
     std::vector<NumericSlider*> cmbDCControlsTx;
 
-    wxStaticText* rssiCMPSTATUS[6];
-    wxCheckBox* rssiCMPCFG[6];
+    wxStaticText* rssiCMPSTATUS[6]{};
+    wxCheckBox* rssiCMPCFG[6]{};
 
     // Virtual event handlers, overide them in your derived class
     void ParameterChangeHandler(wxSpinEvent& event);

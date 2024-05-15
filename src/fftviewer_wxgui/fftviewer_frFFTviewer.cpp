@@ -83,12 +83,12 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     : frFFTviewer(parent, id)
     , mStreamRunning(false)
     , device(nullptr)
+    , mGUIupdater(new wxTimer(this, wxID_ANY))
 {
     captureSamples.store(false);
     averageCount.store(50);
     spinAvgCount->SetValue(averageCount);
     updateGUI.store(true);
-    enableTransmitter.store(false);
     windowFunctionID.store(false);
     enableFFT.store(false);
 #ifndef __unix__
@@ -141,7 +141,6 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mConstelationPanel->settings.gridYlines = 8;
     mConstelationPanel->settings.marginLeft = 48;
 
-    mGUIupdater = new wxTimer(this, wxID_ANY); //timer for updating plots
     Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
     Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
 
@@ -310,13 +309,11 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
             float f0 = (cFreq[c] - bw[c] / 2) * 1e6;
             float fn = (cFreq[c] + bw[c] / 2) * 1e6;
             float sum = 0;
-            int bins = 0;
             const int lmsch = mFFTpanel->series[0]->visible ? 0 : 1;
             for (int i = 0; i < fftSize; ++i)
                 if (f0 <= fftFreqAxis[i] && fftFreqAxis[i] <= fn)
                 {
                     sum += streamData.fftBins[lmsch][i];
-                    ++bins;
                 }
             chPwr[c] = sum;
         }
@@ -489,12 +486,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     // }
 
     pthis->mStreamRunning.store(true);
-    StreamMeta txMeta;
+    StreamMeta txMeta{};
     txMeta.waitForTimestamp = syncTx;
     txMeta.flushPartialPacket = true;
     int fftCounter = 0;
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
 
     while (pthis->stopProcessing.load() == false)
     {

@@ -40,7 +40,7 @@ private:
     int sink_block = 2;
 
     pmt::pmt_t LENGTH_TAG;
-    lime::StreamMeta tx_meta;
+    lime::StreamMeta tx_meta{};
     long burst_length = 0;
     int nitems_send = 0;
     int ret = 0;

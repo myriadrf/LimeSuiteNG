@@ -106,7 +106,7 @@ void TRXLooper_USB::TransmitPacketsLoop()
 {
     //at this point FPGA has to be already configured to output samples
 
-    DataConversion conversion;
+    DataConversion conversion{};
     conversion.destFormat = mConfig.linkFormat;
     conversion.srcFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
@@ -288,7 +288,7 @@ void TRXLooper_USB::ReceivePacketsLoop()
     const uint8_t safeRxEndPt = rxEndPt; // To make sure no undefined behaviour happens when killing the thread
     //at this point FPGA has to be already configured to output samples
 
-    DataConversion conversion;
+    DataConversion conversion{};
     conversion.srcFormat = mConfig.linkFormat;
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());

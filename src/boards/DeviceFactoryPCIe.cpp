@@ -57,7 +57,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
 
         // use GET_INFO command to recognize the device
         auto controlPipe = std::make_shared<PCIE_CSR_Pipe>(pcidev);
-        LMS64CProtocol::FirmwareInfo fw;
+        LMS64CProtocol::FirmwareInfo fw{};
         int subDeviceIndex = 0;
         LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);
 
@@ -96,7 +96,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_PCIe>(controlPort);
     auto route_fpga = std::make_shared<LMS64C_FPGA_Over_PCIe>(controlPort);
 
-    LMS64CProtocol::FirmwareInfo fw;
+    LMS64CProtocol::FirmwareInfo fw{};
     int subDeviceIndex = 0;
     auto controlPipe = std::make_shared<PCIE_CSR_Pipe>(controlPort);
     LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);

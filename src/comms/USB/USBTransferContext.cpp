@@ -4,10 +4,12 @@ using namespace lime;
 
 USBTransferContext::USBTransferContext()
     : isTransferUsed(false)
+#ifdef __unix__
+    , transfer(libusb_alloc_transfer(0))
+    , bytesXfered(0)
+#endif
 {
 #ifdef __unix__
-    transfer = libusb_alloc_transfer(0);
-    bytesXfered = 0;
     done.store(false);
 #endif
 }

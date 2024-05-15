@@ -40,38 +40,24 @@ class lms7002_pnlCalibrations_view : public ILMS7002MTab
         ID_DCCORRQ_TXTSP
     };
 
-    wxStaticText* ID_STATICTEXT51;
     NumericSlider* cmbGCORRI_RXTSP;
-    wxStaticText* ID_STATICTEXT41;
     NumericSlider* cmbGCORRQ_RXTSP;
-    wxButton* ID_BUTTON101;
     NumericSlider* cmbIQCORR_RXTSP;
-    wxStaticText* ID_STATICTEXT161;
     wxStaticText* txtRxPhaseAlpha;
-    wxStaticText* ID_STATICTEXT6;
     NumericSlider* cmbDCOFFI_RFE;
-    wxStaticText* ID_STATICTEXT7;
     NumericSlider* cmbDCOFFQ_RFE;
     wxCheckBox* chkEN_DCOFF_RXFE_RFE;
     wxCheckBox* chkDCMODE;
     wxButton* btnCalibrateRx;
-    wxStaticText* ID_STATICTEXT5;
     NumericSlider* cmbGCORRI_TXTSP;
-    wxStaticText* ID_STATICTEXT4;
     NumericSlider* cmbGCORRQ_TXTSP;
-    wxButton* ID_BUTTON10;
     NumericSlider* cmbIQCORR_TXTSP;
-    wxStaticText* ID_STATICTEXT16;
     wxStaticText* txtPhaseAlpha;
-    wxStaticText* ID_STATICTEXT8;
     NumericSlider* cmbDCCORRI_TXTSP;
-    wxStaticText* ID_STATICTEXT9;
     NumericSlider* cmbDCCORRQ_TXTSP;
     wxButton* btnCalibrateTx;
     wxButton* btnCalibrateAll;
-    wxStaticText* m_staticText431;
     wxStaticText* lblCGENrefClk;
-    wxStaticText* m_staticText372;
     wxTextCtrl* txtCalibrationBW;
     wxRadioBox* rgrCalibrationMethod;
     wxStaticText* lblCalibrationNote;

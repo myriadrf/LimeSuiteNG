@@ -113,7 +113,7 @@ class LIME_API Si5351C
     Si5351_Channel CLK[8];
 
     static const unsigned char m_defaultConfiguration[];
-    unsigned char m_newConfiguration[255];
+    unsigned char m_newConfiguration[255]{};
 };
 
 } // namespace lime

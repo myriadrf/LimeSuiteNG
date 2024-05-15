@@ -18,15 +18,15 @@ BEGIN_EVENT_TABLE(pnlLimeSDR, wxPanel)
 END_EVENT_TABLE()
 
 pnlLimeSDR::pnlLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
-    : fpgaSelect(-1)
+    : controlsSizer(new wxFlexGridSizer(0, 2, 5, 5))
+    , mainSizer(new wxFlexGridSizer(0, 2, 5, 5))
+    , fpgaSelect(-1)
+    , device(nullptr)
 {
-    device = nullptr;
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 #endif
-    mainSizer = new wxFlexGridSizer(0, 2, 5, 5);
-    controlsSizer = new wxFlexGridSizer(0, 2, 5, 5);
 
     SetSizer(mainSizer);
     chkRFLB_A_EN = new wxCheckBox(this, wxNewId(), _("RF loopback ch.A"));

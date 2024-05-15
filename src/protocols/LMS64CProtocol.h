@@ -23,13 +23,13 @@ struct LMS64CPacket {
     static constexpr int payloadSize = 56;
     static constexpr int headerSize = size - payloadSize;
     LMS64CPacket();
-    uint8_t cmd;
-    uint8_t status;
-    uint8_t blockCount;
-    uint8_t periphID;
-    uint8_t subDevice;
-    uint8_t reserved[3];
-    uint8_t payload[payloadSize];
+    uint8_t cmd{};
+    uint8_t status{};
+    uint8_t blockCount{};
+    uint8_t periphID{};
+    uint8_t subDevice{};
+    uint8_t reserved[3]{};
+    uint8_t payload[payloadSize]{};
 };
 
 namespace LMS64CProtocol {

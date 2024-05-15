@@ -14,9 +14,9 @@ using namespace lime;
 using namespace std;
 
 pnlGPIO::pnlGPIO(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
+    : device(nullptr)
+    , gpioCount(8)
 {
-    device = nullptr;
-    gpioCount = 8;
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));

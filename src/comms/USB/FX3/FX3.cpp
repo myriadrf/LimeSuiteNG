@@ -366,7 +366,7 @@ int FX3::GetUSBContextIndex()
 {
     std::unique_lock<std::mutex> lock{ contextsLock };
 
-    USBTransferContext_FX3* FX3contexts = static_cast<USBTransferContext_FX3*>(contexts);
+    USBTransferContext_FX3* FX3contexts = dynamic_cast<USBTransferContext_FX3*>(contexts);
 
     if (FX3contexts == nullptr)
     {

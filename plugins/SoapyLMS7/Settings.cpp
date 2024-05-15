@@ -28,14 +28,14 @@ using namespace lime;
  ******************************************************************/
 SoapyLMS7::SoapyLMS7(const DeviceHandle& handle, const SoapySDR::Kwargs& args)
     : _moduleName(handle.media)
+    , sdrDevice([&] {
+        SoapySDR::log(SOAPY_SDR_INFO, "Make connection: '" + handle.ToString() + "'");
+        return DeviceRegistry::makeDevice(handle);
+    }())
     , streamConfig()
     , sampleRate{ 0.0, 0.0 }
     , oversampling(0) // Auto
 {
-    // Connect
-    SoapySDR::log(SOAPY_SDR_INFO, "Make connection: '" + handle.ToString() + "'");
-
-    sdrDevice = DeviceRegistry::makeDevice(handle);
     if (sdrDevice == nullptr)
     {
         throw std::runtime_error("Failed to make connection with '" + handle.Serialize() + "'");

@@ -21,8 +21,8 @@ using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
 //! CMD_LMS7002_RST options
-const int LMS_RST_DEACTIVATE = 0;
-const int LMS_RST_ACTIVATE = 1;
+// const int LMS_RST_DEACTIVATE = 0;
+// const int LMS_RST_ACTIVATE = 1;
 const int LMS_RST_PULSE = 2;
 
 using namespace std::literals::string_literals;

@@ -570,26 +570,13 @@ void lms7002_pnlMCU_BD_view::OnbtnLoadTestFileClick(wxCommandEvent& event)
         return;
     }
 
-    m_iTestResultFileLine = 0;
-    for (int i = 0; i < 256; i++)
-    {
-        TestResultArray_code[i] = 0;
-        TestResultArray_address[i] = 0;
-        TestResultArray_value[i] = 0;
-    }
-
-    m_iTestResultFileLine = 0;
     inFile >> test_code;
 
+    // Test reading the file?
     while (!inFile.eof() && !inFile.fail())
     {
         inFile >> address;
         inFile >> value;
-        TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
-        TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
-        TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
-
-        m_iTestResultFileLine++;
         inFile >> test_code;
     }
 
@@ -609,7 +596,10 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
         return;
     }
 
-    m_iTestResultFileLine = 0;
+    std::array<int, 256> TestResultArray_code{};
+    std::array<int, 256> TestResultArray_address{};
+    std::array<int, 256> TestResultArray_value{};
+
     for (int i = 0; i < 256; i++)
     {
         TestResultArray_code[i] = 0;
@@ -617,7 +607,7 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
         TestResultArray_value[i] = 0;
     }
 
-    m_iTestResultFileLine = 0;
+    int m_iTestResultFileLine{ 0 };
     int test_code = 0;
     int address = 0;
     int value = 0;

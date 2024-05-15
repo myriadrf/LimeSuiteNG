@@ -312,10 +312,6 @@ void Si5351C_wxgui::Initialize(SDRDevice* pModule)
     device = pModule;
 }
 
-void Si5351C_wxgui::BuildContent(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
-{
-}
-
 Si5351C_wxgui::~Si5351C_wxgui()
 {
 }
