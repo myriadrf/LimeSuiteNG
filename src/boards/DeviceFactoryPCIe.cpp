@@ -18,6 +18,8 @@
 #include "boards/MMX8/MM_X8.h"
 #include "boards/external/XSDR/XSDR.h"
 
+#include <algorithm>
+
 using namespace lime;
 
 void __loadDeviceFactoryPCIe(void) //TODO fixme replace with LoadLibrary/dlopen

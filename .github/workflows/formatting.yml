@@ -70,7 +70,8 @@ jobs:
 
       - name: Run clang-tidy (everything but GTest tests)
         run: |
-          cmake -B build -S . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ 
+          cmake -B build -S . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          rm plugins/gr-limesdr/python/bindings/*.cc # Fail due to missing headers which get generated when compiling
           run-clang-tidy -warnings-as-errors '*' -p build/ -j $(nproc)
   
       - name: Run clang-tidy (only library and GTest tests)
