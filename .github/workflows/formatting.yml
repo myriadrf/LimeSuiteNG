@@ -71,7 +71,7 @@ jobs:
       - name: Run clang-tidy (everything but GTest tests)
         run: |
           cmake -B build -S . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-          rm plugins/gr-limesdr/python/bindings/*.cc # Fail due to missing headers which get generated when compiling
+          for file in $(find plugins/gr-limesdr/python/bindings -name "*.cc"); do echo "" > "$file"; done # Fail due to missing headers which get generated when compiling; replacing instead of deleting because missing files error out
           run-clang-tidy -warnings-as-errors '*' -p build/ -j $(nproc)
   
       - name: Run clang-tidy (only library and GTest tests)
