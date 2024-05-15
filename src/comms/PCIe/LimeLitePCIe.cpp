@@ -47,8 +47,8 @@ std::vector<std::string> LimeLitePCIe::GetPCIeDeviceList()
         // Kernel code fakes directories by replacing '/' char with '!'
         // open() can't open that
         // Replace '!' with '/' so we could open device
-        std::string parsedDevicePath{tempBuffer};
-        for (auto &c : parsedDevicePath)
+        std::string parsedDevicePath{ tempBuffer };
+        for (auto& c : parsedDevicePath)
         {
             if (c == '!')
                 c = '/';

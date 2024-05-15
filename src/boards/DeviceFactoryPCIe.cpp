@@ -85,7 +85,8 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     }
 
     std::vector<std::string> streamEndpoints = LimeLitePCIe::GetEndpointsWithPattern(handle.addr, "trx*"s);
-    std::sort(streamEndpoints.begin(), streamEndpoints.end()); // TODO: Fix potential sorting problem if there would be trx1 and trx11
+    std::sort(
+        streamEndpoints.begin(), streamEndpoints.end()); // TODO: Fix potential sorting problem if there would be trx1 and trx11
     for (const std::string& endpointPath : streamEndpoints)
     {
         streamPorts.push_back(std::make_shared<LimeLitePCIe>());
