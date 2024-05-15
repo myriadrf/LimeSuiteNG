@@ -30,8 +30,6 @@ END_EVENT_TABLE()
 
 dlgMarkers::dlgMarkers(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
     : parent_graph(dynamic_cast<OpenGLGraph*>(parent))
-    , btnClose(
-          new wxButton(this, ID_BUTTON1, _T("Close"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON1")))
     , sizerMarkerList(new wxFlexGridSizer(0, 1, 0, 0))
     , sizerDeltasList(new wxFlexGridSizer(0, 1, 0, 0))
     , FlexGridSizer1(new wxFlexGridSizer(0, 1, 0, 0))
@@ -50,6 +48,8 @@ dlgMarkers::dlgMarkers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     FlexGridSizer1->Add(sizerMarkerList, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     FlexGridSizer1->Add(sizerDeltasList, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
+    btnClose =
+        new wxButton(this, ID_BUTTON1, _T("Close"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON1"));
     FlexGridSizer1->Add(btnClose, 1, wxALIGN_TOP | wxALIGN_CENTER_HORIZONTAL, 5);
     SetSizer(FlexGridSizer1);
     FlexGridSizer1->Fit(this);
