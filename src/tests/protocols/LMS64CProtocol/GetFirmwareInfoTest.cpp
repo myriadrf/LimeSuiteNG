@@ -15,6 +15,7 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -22,6 +23,7 @@ MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct comma
     return packet->cmd == command;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);

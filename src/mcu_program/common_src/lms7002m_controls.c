@@ -38,6 +38,7 @@ extern "C" {
 uint16_t gComparatorDelayCounter = 0xFF00; // ~100us @ ref 30.72MHz
 #endif
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define VERBOSE 0
 
 //TODO add functions to modify reference clock
