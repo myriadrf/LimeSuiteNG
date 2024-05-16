@@ -11,6 +11,7 @@
 #include <mutex>
 #include <getopt.h>
 #include <filesystem>
+#include "args/args.hxx"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -51,54 +52,6 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
         return;
     cerr << msg << endl;
 }
-
-static int printHelp(void)
-{
-    cerr << "limeTRX [options]" << endl;
-    cerr << "    -h, --help\t\t\t This help" << endl;
-    cerr << "    -d, --device <name>\t\t\t Specifies which device to use" << endl;
-    cerr << "    -c, --chip <indexes>\t\t Specify chip index, or index list for aggregation [0,1...]" << endl;
-    cerr << "    -i, --input \"filepath\"\t\t Waveform file for samples transmitting" << endl;
-    cerr << "    -o, --output \"filepath\"\t\t Waveform file for received samples" << endl;
-    cerr << "    --looptx \t Loop tx samples transmission" << endl;
-    cerr << "    -s, --samplesCount\t\t Number of samples to receive" << endl;
-    cerr << "    -t, --time\t\t Time duration in milliseconds to receive" << endl;
-    cerr << "    -f, --fft\t\t Display Rx FFT plot" << endl;
-    cerr << "    --constellation\t\t Display IQ constellation plot" << endl;
-    cerr << "    -l, --log\t\t Log verbosity: info, warning, error, verbose, debug" << endl;
-    cerr << "    --mimo [channelCount]\t\t use multiple channels" << endl;
-    cerr << "    --repeater [delaySamples]\t\t retransmit received samples with a delay" << endl;
-    cerr << "    --linkFormat [I16, I12]\t\t Data transfer format" << endl;
-    cerr << "    --syncPPS \t\t start sampling on next PPS" << endl;
-    cerr << "    --rxSamplesInPacket \t\t number of samples in Rx packet" << endl;
-    cerr << "    --txSamplesInPacket \t\t number of samples in Tx packet" << endl;
-    cerr << "    --rxPacketsInBatch \t\t number of Rx packets in data transfer" << endl;
-    cerr << "    --txPacketsInBatch \t\t number of Tx packets in data transfer" << endl;
-
-    return EXIT_SUCCESS;
-}
-
-enum Args {
-    HELP = 'h',
-    DEVICE = 'd',
-    CHIP = 'c',
-    INPUTFILE = 'i',
-    OUTPUT = 'o',
-    SAMPLES_COUNT = 's',
-    TIME = 't',
-    FFT = 'f',
-    CONSTELLATION = 'x',
-    LOG = 'l',
-    LOOPTX = 'r',
-    MIMO = 200,
-    REPEATER,
-    LINKFORMAT,
-    SYNCPPS,
-    RXSAMPLESINPACKET,
-    TXSAMPLESINPACKET,
-    RXPACKETSINBATCH,
-    TXPACKETSINBATCH
-};
 
 #ifdef USE_GNU_PLOT
 /** @brief The fast Fourier transform diagram plotter */
@@ -276,186 +229,95 @@ class ConstellationPlotter
 };
 #endif
 
-static std::vector<int> ParseIntArray(std::string_view str)
+static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
 {
     std::vector<int> numbers;
-    while (str.length() > 0)
-    {
-        try
-        {
-            std::size_t index = str.find_first_of(',');
-            int nr = std::stoi(std::string{ str.substr(0, index) });
-            numbers.push_back(nr);
-
-            if (index == std::string_view::npos)
-            {
-                return numbers;
-            }
-
-            str = str.substr(index + 1);
-        } catch (...)
-        {
-            return numbers;
-        }
-    }
+    for (const auto& number : args::get(flag))
+        numbers.push_back(number);
     return numbers;
 }
 
 int main(int argc, char** argv)
 {
-    StreamComposite* composite = nullptr;
-    std::string_view devName{ ""sv };
-    std::filesystem::path rxFilename{ ""sv };
-    std::filesystem::path txFilename{ ""sv };
-    bool rx = true;
-    bool tx = false;
-    bool showFFT = false;
+    // clang-format off
+    args::ArgumentParser                parser("limeTRX - Realtime streaming of RF samples", "");
+    args::HelpFlag                      helpFlag(parser, "help", "This help", {'h', "help"});
+
+    args::ValueFlag<std::string>        deviceFlag(parser, "name", "Specifies which device to use", {'d', "device"});
+    args::NargsValueFlag<int>           chipFlag(parser, "index", "Specify chip index, or index list for aggregation [0,1...]", {'c', "chip"}, args::Nargs{1, static_cast<size_t>(-1)}); // Arg count range [1, size_t::maxValue]
+    args::ValueFlag<std::string>        inputFlag(parser, "file path", "Waveform file for samples transmitting", {'i', "input"});
+    args::ValueFlag<std::string>        outputFlag(parser, "file path", "Waveform file for received samples", {'o', "output"}, "", args::Options{});
+    args::Flag                          looptxFlag(parser, "", "Loop tx samples transmission", {"looptx"});
+    args::ValueFlag<int64_t>            samplesCountFlag(parser, "sample count", "Number of samples to receive", {'s', "samplesCount"}, 0, args::Options{});
+    args::ValueFlag<int64_t>            timeFlag(parser, "ms", "Time duration in milliseconds to receive", {"time"}, 0, args::Options{});
+    args::Flag                          fftFlag(parser, "", "Display Rx FFT plot", {"fft"});
+    args::ValueFlag<std::string>        logFlag(parser, "", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error", args::Options{});
+    args::ImplicitValueFlag<int>        mimoFlag(parser, "channel count", "use multiple channels", {"mimo"}, 2, args::Options{});
+    args::ImplicitValueFlag<int64_t>    repeaterFlag(parser, "delaySamples", "retransmit received samples with a delay", {"repeater"}, 0, args::Options{});
+    args::ValueFlag<std::string>        linkFormatFlag(parser, "I16, I12", "Data transfer format. Default: I12", {"linkFormat"}, "I12", args::Options{});
+    args::Flag                          syncPPSFlag(parser, "", "start sampling on next PPS", {"syncPPS"});
+    args::ValueFlag<int>                rxSamplesInPacketFlag(parser, "packets", "number of samples in Rx packet", {"rxSamplesInPacket"}, 0, args::Options{});
+    args::ValueFlag<int>                txSamplesInPacketFlag(parser, "packets", "number of samples in Tx packet", {"txSamplesInPacket"}, 0, args::Options{});
+    args::ValueFlag<int>                rxPacketsInBatchFlag(parser, "packets", "number of Rx packets in data transfer", {"rxPacketsInBatch"}, 0, args::Options{});
+    args::ValueFlag<int>                txPacketsInBatchFlag(parser, "packets", "number of Tx packets in data transfer", {"txPacketsInBatch"}, 0, args::Options{});
 #ifdef USE_GNU_PLOT
-    bool showConstelation = false;
+    args::Flag                          constellationFlag(parser, "", "Display IQ constellation plot", {"constellation"});
 #endif
-    bool loopTx = false;
-    int64_t samplesToCollect = 0;
-    int64_t workTime = 0;
-    std::vector<int> chipIndexes;
+    // clang-format on
+
+    try
+    {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&)
+    {
+        cout << parser << endl;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+
+    const std::string devName = args::get(deviceFlag);
+    const std::string rxFilename = args::get(outputFlag);
+    const std::string txFilename = args::get(inputFlag);
+    const bool rx = true; // Need to always read data to get timestamps - BY DESIGN
+    const bool tx = inputFlag || repeaterFlag;
+    const bool showFFT = fftFlag;
+#ifdef USE_GNU_PLOT
+    const bool showConstelation = constellationFlag;
+#endif
+    const bool loopTx = looptxFlag;
+    const int64_t samplesToCollect = args::get(samplesCountFlag);
+    const int64_t workTime = args::get(timeFlag);
+    const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
+    const bool repeater = repeaterFlag;
+    const int64_t repeaterDelay = args::get(repeaterFlag);
+    const bool syncPPS = syncPPSFlag;
+    const int rxSamplesInPacket = args::get(rxSamplesInPacketFlag);
+    const int txSamplesInPacket = args::get(txSamplesInPacketFlag);
+    const int rxPacketsInBatch = args::get(rxPacketsInBatchFlag);
+    const int txPacketsInBatch = args::get(txPacketsInBatchFlag);
+
+    std::vector<int> chipIndexes = ParseIntArray(chipFlag);
+
+    StreamComposite* composite = nullptr;
+    logVerbosity = strToLogLevel(args::get(logFlag));
     int chipIndex = 0;
-    int channelCount = 1;
-    bool repeater = false;
-    int64_t repeaterDelay = 0;
-    bool syncPPS = false;
-    int rxSamplesInPacket = 0;
-    int txSamplesInPacket = 0;
-    int rxPacketsInBatch = 0;
-    int txPacketsInBatch = 0;
     bool useComposite = false;
 
-    DataFormat linkFormat = DataFormat::I16;
-    static struct option long_options[] = { { "help", no_argument, 0, Args::HELP },
-        { "device", required_argument, 0, Args::DEVICE },
-        { "chip", required_argument, 0, Args::CHIP },
-        { "input", required_argument, 0, Args::INPUTFILE },
-        { "output", required_argument, 0, Args::OUTPUT },
-        { "looptx", no_argument, 0, Args::LOOPTX },
-        { "samplesCount", required_argument, 0, Args::SAMPLES_COUNT },
-        { "time", required_argument, 0, Args::TIME },
-        { "fft", no_argument, 0, Args::FFT },
-#ifdef USE_GNU_PLOT
-        { "constellation", no_argument, 0, Args::CONSTELLATION },
-#endif
-        { "log", required_argument, 0, Args::LOG },
-        { "mimo", optional_argument, 0, Args::MIMO },
-        { "repeater", optional_argument, 0, Args::REPEATER },
-        { "linkFormat", required_argument, 0, Args::LINKFORMAT },
-        { "syncPPS", no_argument, 0, Args::SYNCPPS },
-        { "rxSamplesInPacket", required_argument, 0, Args::RXSAMPLESINPACKET },
-        { "txSamplesInPacket", required_argument, 0, Args::TXSAMPLESINPACKET },
-        { "rxPacketsInBatch", required_argument, 0, Args::RXPACKETSINBATCH },
-        { "txPacketsInBatch", required_argument, 0, Args::TXPACKETSINBATCH },
-        { 0, 0, 0, 0 } };
-
-    int long_index = 0;
-    int option = 0;
-    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
+    DataFormat linkFormat = DataFormat::I12;
+    if (linkFormatFlag)
     {
-        switch (option)
+        std::string val = args::get(linkFormatFlag);
+        if (val == "I16")
+            linkFormat = DataFormat::I16;
+        else if (val == "I12")
+            linkFormat = DataFormat::I12;
+        else
         {
-        case Args::HELP:
-            return printHelp();
-        case Args::DEVICE:
-            if (optarg != NULL)
-                devName = std::string(optarg);
-            break;
-        case Args::CHIP:
-            if (optarg != NULL)
-                chipIndexes = ParseIntArray(optarg);
-
-            if (chipIndexes.empty())
-            {
-                cerr << "Invalid chip index"sv << endl;
-                return -1;
-            }
-            else
-                cerr << "Chip count "sv << chipIndexes.size() << endl;
-            break;
-        case Args::OUTPUT:
-            if (optarg != NULL)
-            {
-                rx = true;
-                rxFilename = optarg;
-            }
-            break;
-        case Args::LOOPTX:
-            loopTx = true;
-            break;
-        case Args::INPUTFILE:
-            if (optarg != NULL)
-            {
-                tx = true;
-                txFilename = optarg;
-            }
-            break;
-        case Args::SAMPLES_COUNT:
-            samplesToCollect = stoi(optarg);
-            break;
-        case Args::TIME:
-            workTime = stoi(optarg);
-            break;
-        case Args::FFT:
-            showFFT = true;
-            break;
-#ifdef USE_GNU_PLOT
-        case Args::CONSTELLATION:
-            showConstelation = true;
-            break;
-#endif
-        case Args::LOG:
-            if (optarg != NULL)
-            {
-                logVerbosity = strToLogLevel(optarg);
-            }
-            break;
-        case Args::MIMO:
-            if (optarg != NULL)
-                channelCount = stoi(optarg);
-            else
-                channelCount = 2;
-            break;
-        case Args::REPEATER:
-            repeater = true;
-            tx = true;
-            if (optarg != NULL)
-            {
-                repeaterDelay = stoi(optarg);
-            }
-            break;
-        case Args::LINKFORMAT:
-            if (optarg != NULL)
-            {
-                if (std::string_view{ optarg } == "I16"sv)
-                    linkFormat = DataFormat::I16;
-                if (std::string_view{ optarg } == "I12"sv)
-                    linkFormat = DataFormat::I12;
-                else
-                {
-                    cerr << "Invalid linkFormat "sv << optarg << std::endl;
-                    return -1;
-                }
-            }
-            break;
-        case Args::SYNCPPS:
-            syncPPS = true;
-            break;
-        case Args::RXSAMPLESINPACKET:
-            rxSamplesInPacket = optarg != NULL ? stoi(optarg) : 0;
-            break;
-        case Args::TXSAMPLESINPACKET:
-            txSamplesInPacket = optarg != NULL ? stoi(optarg) : 0;
-            break;
-        case Args::RXPACKETSINBATCH:
-            rxPacketsInBatch = optarg != NULL ? stoi(optarg) : 0;
-            break;
-        case Args::TXPACKETSINBATCH:
-            txPacketsInBatch = optarg != NULL ? stoi(optarg) : 0;
-            break;
+            cerr << "Invalid linkFormat "sv << optarg << std::endl;
+            return EXIT_FAILURE;
         }
     }
 
