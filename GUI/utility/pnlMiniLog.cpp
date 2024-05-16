@@ -40,7 +40,7 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     wxStaticText* m_staticText52 = new wxStaticText(this, wxID_ANY, wxT("Log level:"), wxDefaultPosition, wxDefaultSize, 0);
     szControls->Add(m_staticText52, 0, wxTOP, 5);
 
-    wxString choiceLogLvlChoices[] = { wxT("Error"), wxT("Warning"), wxT("Info"), wxT("Debug") };
+    wxString choiceLogLvlChoices[] = { wxT("Error"), wxT("Warning"), wxT("Info"), wxT("Verbose"), wxT("Debug") };
     int choiceLogLvlNChoices = sizeof(choiceLogLvlChoices) / sizeof(wxString);
     choiceLogLvl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, choiceLogLvlNChoices, choiceLogLvlChoices, 0);
     choiceLogLvl->SetSelection(2);
