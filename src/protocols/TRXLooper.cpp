@@ -510,18 +510,12 @@ void TRXLooper::ReceivePacketsLoop()
             Bps = 0;
         }
 
-        const uint32_t buffersAvailable{ dma.hardwareIndex - dma.softwareIndex };
-
         // process received data
         bool reportProblems = false;
 
-        if (buffersAvailable == 0)
+        if (!mRxArgs.port->Wait(TRXDir::Rx))
         {
-            if (mConfig.extraConfig.usePoll && !mRxArgs.port->Wait(TRXDir::Rx))
-            {
-                std::this_thread::yield();
-            }
-
+            std::this_thread::yield();
             continue;
         }
 
@@ -883,20 +877,17 @@ void TRXLooper::TransmitPacketsLoop()
             }
         }
         const uint32_t pendingBuffers{ stagingBufferIndex - state.hardwareIndex };
-        bool canSend = pendingBuffers < overflowLimit;
+        const bool canSend = pendingBuffers < overflowLimit;
         if (!canSend)
         {
-            if (mConfig.extraConfig.usePoll)
-            {
-                canSend = mTxArgs.port->Wait(TRXDir::Tx);
-            }
-            else
+            if (!mTxArgs.port->Wait(TRXDir::Tx))
             {
                 std::this_thread::yield();
+                continue;
             }
         }
         // send output buffer if possible
-        if (outputReady && canSend)
+        if (outputReady)
         {
             PendingWrite wrInfo;
             wrInfo.id = stagingBufferIndex;

@@ -84,7 +84,7 @@ void USBDMA::TxEnable()
 
 void USBDMA::Disable(TRXDir direction)
 {
-    auto dirState{ GetDirectionState(direction) };
+    auto& dirState{ GetDirectionState(direction) };
     dirState.state.isEnabled = false;
 
     port->AbortEndpointXfers(GetEndpointAddress(direction));
@@ -195,7 +195,7 @@ int USBDMA::SetStateTransmit(DMAState state)
 
     while (tx.state.hardwareIndex != tx.state.softwareIndex)
     {
-        if (GetContextHandle(direction) != -1)
+        if (!Wait(direction))
         {
             throw std::runtime_error("Asking for a transfer when not all transfers have not been completed"s);
         }
@@ -224,75 +224,36 @@ int USBDMA::SetState(TRXDir direction, DMAState state)
 
 bool USBDMA::Wait(TRXDir direction)
 {
-    const auto handle{ GetContextHandle(direction) };
+    const auto index{ GetDirectionState(direction).state.softwareIndex };
+    const auto handle{ GetContextHandleFromIndex(direction, index) };
 
-    if (handle == -1)
+    if (handle == -1) // No transfer here
+    {
+        return true;
+    }
+
+    if (!port->WaitForXfer(handle))
     {
         return false;
     }
 
-    return port->WaitForXfer(handle, 0);
-}
-
-static constexpr bool DoDirectionsMatch(const TRXDir samplesDirection, const DataTransferDirection dataDirection)
-{
-    if (samplesDirection == TRXDir::Tx && dataDirection == DataTransferDirection::HostToDevice)
-    {
-        return true;
-    }
-
-    if (samplesDirection == TRXDir::Rx && dataDirection == DataTransferDirection::DeviceToHost)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index)
-{
-    // logic: directions match - finish, directions mismatch - done using buffer send more data please
-    if (!DoDirectionsMatch(samplesDirection, dataDirection))
-    {
-        if (TRXDir::Tx == samplesDirection && tx.contextHandles.empty())
-        {
-            return;
-        }
-
-        GetDirectionState(samplesDirection).contextHandles.at(GetTransferArrayIndex(index)) = -1;
-        return;
-    }
-
-    if (samplesDirection == TRXDir::Tx)
-    {
-        index++;
-    }
-
-    const auto address{ GetIndexAddress(samplesDirection, index) };
-
-    if (address == nullptr)
-    {
-        throw std::runtime_error("Address is null"s);
-    }
-
-    const auto contextHandle{ GetContextHandleFromIndex(samplesDirection, index) };
-
-    if (contextHandle == -1 && samplesDirection == TRXDir::Tx)
-    {
-        return;
-    }
-
-    if (!port->WaitForXfer(contextHandle))
-    {
-        throw std::runtime_error("Communication timeout"s);
-    }
-
-    const auto received{ port->FinishDataXfer(reinterpret_cast<uint8_t*>(address), GetBufferSize(), contextHandle) };
+    const auto address{ GetIndexAddress(direction, index) };
+    const auto received{ port->FinishDataXfer(reinterpret_cast<uint8_t*>(address), GetBufferSize(), handle) };
 
     if (received != GetBufferSize())
     {
         throw std::runtime_error("Did not transfer all bytes"s);
     }
+
+    GetDirectionState(direction).contextHandles.at(GetTransferArrayIndex(index)) = -1;
+
+    return true;
+}
+
+void USBDMA::CacheFlush(
+    [[maybe_unused]] TRXDir samplesDirection, [[maybe_unused]] DataTransferDirection dataDirection, [[maybe_unused]] uint16_t index)
+{
+    return;
 }
 
 } // namespace lime

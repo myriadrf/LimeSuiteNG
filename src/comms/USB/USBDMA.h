@@ -39,6 +39,9 @@ class USBDMA : public IDMA
         DirectionState(uint8_t endpoint, uint8_t* const buffer);
         ~DirectionState();
 
+        DirectionState(const DirectionState&) = delete;
+        DirectionState& operator=(const DirectionState&) = delete;
+
         uint8_t endpoint;
         uint8_t* const buffer;
         DMAState state;
