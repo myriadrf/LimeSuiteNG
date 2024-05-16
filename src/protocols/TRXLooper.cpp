@@ -5,7 +5,7 @@
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "LMSBoards.h"
 #include "threadHelper.h"
 #include "TxBufferManager.h"

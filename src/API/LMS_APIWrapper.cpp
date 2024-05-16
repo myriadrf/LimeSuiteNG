@@ -1,7 +1,7 @@
 #include "CommonFunctions.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
-#include "lms7002m/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
 #include "utilities/toString.h"

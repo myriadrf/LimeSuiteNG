@@ -8,21 +8,17 @@
 #include "FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
-#include "DSP/Equalizer.h"
 #include "CommonFunctions.h"
 #include "utilities/toString.h"
 
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
-#include "lms7002m/LMS7002M_validation.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
-#include "mcu_program/common_src/lms7002m_calibrations.h"
-#include "MCU_BD.h"
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 
 #include "limesuiteng/LMS7002M.h"
 
 namespace lime {
-using namespace EqualizerCSR;
 using namespace LMS7002MCSR_Data;
 
 using namespace std::literals::string_literals;
