@@ -1478,16 +1478,16 @@ static bool ValidChar(char c)
     return isalnum(c) || c == '-' || c == '_' || c == ' ';
 }
 
-static void ParseIdentifier(const char *identifier, char *destination)
+static void ParseIdentifier(const char *identifier, char *destination, const size_t dstSize)
 {
     uint8_t size = 0;
-    while (size < sizeof(identifier) && ValidChar(identifier[size]))
+    while (size < dstSize && ValidChar(identifier[size]))
         size++;
 
     while (size > 0 && identifier[size - 1] == ' ')
         size--;
 
-    size = size <= sizeof(destination) ? size : sizeof(destination);
+    size = size <= dstSize ? size : dstSize;
     strncpy(destination, identifier, size);
 
     for (size_t i = 0; i < size; i++)
@@ -1580,7 +1580,7 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
         goto fail2;
 
     if (ValidIdentifier(fpga_identifier))
-        ParseIdentifier(fpga_identifier, limelitepcie_dev->info.devName);
+        ParseIdentifier(fpga_identifier, limelitepcie_dev->info.devName, sizeof(limelitepcie_dev->info.devName));
     else if (ReadInfo(limelitepcie_dev) != 0)
     {
         dev_err(&dev->dev, "Failed to read limelitepcie device info\n");
