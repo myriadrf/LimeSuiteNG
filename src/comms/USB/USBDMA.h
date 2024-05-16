@@ -3,12 +3,8 @@
 
 #include "comms/IDMA.h"
 
-#include <atomic>
-#include <condition_variable>
 #include <cstdint>
 #include <memory>
-#include <mutex>
-#include <thread>
 #include <vector>
 
 namespace lime {
@@ -47,11 +43,6 @@ class USBDMA : public IDMA
         uint8_t* const buffer;
         DMAState state;
         std::vector<int> contextHandles;
-        std::atomic<bool> isRunning;
-
-        std::thread sendThread;
-        std::mutex mutex;
-        std::condition_variable cv;
     };
 
     DirectionState rx;
@@ -68,11 +59,8 @@ class USBDMA : public IDMA
     uint8_t* GetIndexAddress(TRXDir direction, uint16_t index);
     uint8_t GetEndpointAddress(TRXDir direction);
 
-    std::mutex& GetStateMutex(TRXDir direction);
-    std::condition_variable& GetStateCV(TRXDir direction);
-
-    void RxStartTransferThread();
-    void TxStartTransferThread();
+    int SetStateReceive(DMAState state);
+    int SetStateTransmit(DMAState state);
 };
 
 } // namespace lime

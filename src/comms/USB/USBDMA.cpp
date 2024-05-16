@@ -18,21 +18,10 @@ USBDMA::DirectionState::DirectionState(uint8_t endpoint, uint8_t* const buffer)
     , buffer(buffer)
     , state()
 {
-    isRunning.store(false);
 }
 
 USBDMA::DirectionState::~DirectionState()
 {
-    std::unique_lock lck{ mutex };
-
-    isRunning.store(false);
-    cv.notify_all();
-
-    if (sendThread.joinable())
-    {
-        sendThread.join();
-    }
-
     if (buffer != nullptr)
     {
         delete[] buffer;
@@ -70,40 +59,37 @@ const USBDMA::DirectionState& USBDMA::GetDirectionState(TRXDir direction) const
 
 void USBDMA::RxEnable(uint32_t bufferSize, uint8_t irqPeriod)
 {
-    std::unique_lock lock{ GetStateMutex(TRXDir::Rx) };
-
     rx.contextHandles.clear();
     rx.contextHandles.resize(port->GetBufferCount(), -1);
     rx.state = {};
     rx.state.isEnabled = true;
-    rx.isRunning.store(true);
-    rx.sendThread = std::thread(&USBDMA::RxStartTransferThread, this);
+
+    for (rx.state.hardwareIndex = 0; rx.state.hardwareIndex < port->GetBufferCount(); rx.state.hardwareIndex++)
+    {
+        constexpr TRXDir direction{ TRXDir::Rx };
+        SetContextHandle(direction,
+            port->BeginDataXfer(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction)),
+                GetBufferSize(),
+                GetEndpointAddress(direction)));
+    }
 }
 
 void USBDMA::TxEnable()
 {
-    std::unique_lock lock{ GetStateMutex(TRXDir::Tx) };
-
     tx.contextHandles.clear();
     tx.contextHandles.resize(port->GetBufferCount(), -1);
     tx.state = {};
     tx.state.isEnabled = true;
-    tx.isRunning.store(true);
-    tx.sendThread = std::thread(&USBDMA::TxStartTransferThread, this);
 }
 
 void USBDMA::Disable(TRXDir direction)
 {
-    auto& state{ GetDirectionState(direction) };
-    state.state.isEnabled = false;
-    state.isRunning.store(false);
+    auto dirState{ GetDirectionState(direction) };
+    dirState.state.isEnabled = false;
 
-    state.cv.notify_all();
+    port->AbortEndpointXfers(GetEndpointAddress(direction));
 
-    if (state.sendThread.joinable())
-    {
-        state.sendThread.join();
-    }
+    dirState.contextHandles.clear();
 }
 
 bool USBDMA::IsOpen() const
@@ -125,16 +111,6 @@ inline int USBDMA::GetBufferCount() const
 uint8_t* const USBDMA::GetMemoryAddress(TRXDir direction) const
 {
     return GetDirectionState(direction).buffer;
-}
-
-std::mutex& USBDMA::GetStateMutex(TRXDir direction)
-{
-    return GetDirectionState(direction).mutex;
-}
-
-std::condition_variable& USBDMA::GetStateCV(TRXDir direction)
-{
-    return GetDirectionState(direction).cv;
 }
 
 std::size_t USBDMA::GetTransferArrayIndexFromState(TRXDir direction)
@@ -174,25 +150,80 @@ uint8_t* USBDMA::GetIndexAddress(TRXDir direction, uint16_t index)
 
 IDMA::DMAState USBDMA::GetState(TRXDir direction)
 {
-    std::unique_lock lock{ GetStateMutex(direction) };
-
     return GetDirectionState(direction).state;
 }
 
-int USBDMA::SetState(TRXDir direction, DMAState state)
+int USBDMA::SetStateReceive(DMAState state)
 {
-    std::unique_lock lock{ GetStateMutex(direction) };
+    constexpr auto direction{ TRXDir::Rx };
 
-    GetDirectionState(direction).state.softwareIndex = state.softwareIndex;
+    if (!rx.state.isEnabled)
+    {
+        return 0;
+    }
 
-    GetStateCV(direction).notify_all();
+    while (state.softwareIndex != rx.state.softwareIndex)
+    {
+        rx.state.softwareIndex++;
+
+        if (GetContextHandle(direction) != -1)
+        {
+            throw std::runtime_error("Asking for a transfer when not all transfers have not been completed"s);
+        }
+
+        SetContextHandle(direction,
+            port->BeginDataXfer(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction)),
+                GetBufferSize(),
+                GetEndpointAddress(direction)));
+        rx.state.hardwareIndex++;
+        rx.state.hardwareIndex &= 0xFFFF;
+    }
 
     return 0;
 }
 
+int USBDMA::SetStateTransmit(DMAState state)
+{
+    constexpr TRXDir direction{ TRXDir::Tx };
+
+    GetDirectionState(direction).state.softwareIndex = state.softwareIndex;
+
+    if (!tx.state.isEnabled)
+    {
+        return 0;
+    }
+
+    while (tx.state.hardwareIndex != tx.state.softwareIndex)
+    {
+        if (GetContextHandle(direction) != -1)
+        {
+            throw std::runtime_error("Asking for a transfer when not all transfers have not been completed"s);
+        }
+
+        SetContextHandle(direction,
+            port->BeginDataXfer(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction)),
+                GetBufferSize(),
+                GetEndpointAddress(direction)));
+        tx.state.hardwareIndex++;
+        tx.state.hardwareIndex &= 0xFFFF;
+    }
+
+    return 0;
+}
+
+int USBDMA::SetState(TRXDir direction, DMAState state)
+{
+    switch (direction)
+    {
+    case TRXDir::Rx:
+        return SetStateReceive(state);
+    case TRXDir::Tx:
+        return SetStateTransmit(state);
+    }
+}
+
 bool USBDMA::Wait(TRXDir direction)
 {
-    std::unique_lock lck{ GetStateMutex(direction) };
     const auto handle{ GetContextHandle(direction) };
 
     if (handle == -1)
@@ -220,8 +251,6 @@ static constexpr bool DoDirectionsMatch(const TRXDir samplesDirection, const Dat
 
 void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index)
 {
-    std::unique_lock lck{ GetStateMutex(samplesDirection) };
-
     // logic: directions match - finish, directions mismatch - done using buffer send more data please
     if (!DoDirectionsMatch(samplesDirection, dataDirection))
     {
@@ -231,7 +260,6 @@ void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirec
         }
 
         GetDirectionState(samplesDirection).contextHandles.at(GetTransferArrayIndex(index)) = -1;
-        GetStateCV(samplesDirection).notify_all();
         return;
     }
 
@@ -265,58 +293,6 @@ void USBDMA::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirec
     {
         throw std::runtime_error("Did not transfer all bytes"s);
     }
-}
-
-void USBDMA::RxStartTransferThread()
-{
-    constexpr auto direction{ TRXDir::Rx };
-    while (rx.isRunning.load())
-    {
-        std::unique_lock lck{ rx.mutex };
-
-        if (GetContextHandle(direction) != -1)
-        {
-            rx.cv.wait(lck);
-            continue;
-        }
-
-        SetContextHandle(direction,
-            port->BeginDataXfer(reinterpret_cast<uint8_t*>(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction))),
-                GetBufferSize(),
-                GetEndpointAddress(direction)));
-        rx.state.hardwareIndex++; // TODO: deal with potential overflow?
-        lck.unlock();
-        std::this_thread::yield();
-    }
-
-    port->AbortEndpointXfers(GetEndpointAddress(direction));
-}
-
-void USBDMA::TxStartTransferThread()
-{
-    constexpr auto direction{ TRXDir::Tx };
-
-    while (tx.isRunning.load())
-    {
-        std::unique_lock lck{ tx.mutex };
-
-        if (GetContextHandle(direction) != -1 || tx.state.hardwareIndex == tx.state.softwareIndex)
-        {
-            tx.cv.wait(lck);
-            continue;
-        }
-
-        SetContextHandle(direction,
-            port->BeginDataXfer(reinterpret_cast<uint8_t*>(GetIndexAddress(direction, GetTransferArrayIndexFromState(direction))),
-                GetBufferSize(),
-                GetEndpointAddress(direction)));
-        tx.state.hardwareIndex++;
-        tx.state.hardwareIndex &= 0xFFFF;
-        lck.unlock();
-        std::this_thread::yield();
-    }
-
-    port->AbortEndpointXfers(GetEndpointAddress(direction));
 }
 
 } // namespace lime
