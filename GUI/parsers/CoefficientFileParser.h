@@ -18,7 +18,7 @@
 
 namespace lime {
 
-class LIME_API CoefficientFileParser
+class CoefficientFileParser
 {
   public:
     CoefficientFileParser(const std::filesystem::path& filename);
