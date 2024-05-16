@@ -74,6 +74,19 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
     }
 }
 
+static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
+{
+    switch (static_cast<eLMS_DEV>(targetDevice))
+    {
+    case LMS_DEV_LIMESDR_X3:
+    case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_LIMESDR_MMX8:
+        return true;
+    default:
+        return false;
+    }
+}
+
 /// @brief Constructs the FPGA object.
 /// @param fpgaSPI The FPGA communications interface.
 /// @param lms7002mSPI The LMS7002M chip communications interface.
@@ -1200,6 +1213,33 @@ void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& des
 OpStatus FPGA::SelectModule(uint8_t chipIndex)
 {
     return WriteRegister(0xFFFF, 1 << chipIndex);
+}
+
+/// @brief Sets up the variable receive packet size (if the device supports it)
+/// @param packetSize The target size of the packet
+/// @param payloadSize The side of the whole payload
+/// @param sampleSize The size of a single sample
+/// @param chipId The ID of the chip to set up
+/// @return The packet size after the changes (returns @p packetSize if not supported)
+uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId)
+{
+    if (!HasVariableRxPacketSize(ReadRegister(0)))
+    {
+        return packetSize;
+    }
+
+    // iqSamplesCount must be N*16, or N*8 depending on device BUS width
+    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
+    packetSize = (iqSamplesCount * sampleSize * 2) + sizeof(StreamHeader);
+
+    // Request fpga to provide Rx packets with desired payloadSize
+    // Two writes are needed
+    WriteRegister(0xFFFF, 1 << chipId);
+    uint32_t requestAddr[] = { 0x0019, 0x000E };
+    uint32_t requestData[] = { packetSize, iqSamplesCount };
+    WriteRegisters(requestAddr, requestData, 2);
+
+    return packetSize;
 }
 
 } //namespace lime

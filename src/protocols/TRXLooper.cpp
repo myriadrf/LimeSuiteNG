@@ -18,12 +18,6 @@
 
 using namespace std::literals::string_literals;
 
-// needed for the hacky workaround
-// TODO: delete
-#if defined(__unix__) && !defined(__APPLE__)
-    #include "LitePCIe.h"
-#endif
-
 namespace lime {
 using namespace LMS7002MCSR_Data;
 
@@ -349,24 +343,7 @@ int TRXLooper::RxSetup()
     const int samplesInPkt = payloadSize / (sampleSize * chCount);
 
     uint32_t packetSize = payloadSize + headerSize;
-
-#if defined(__unix__) && !defined(__APPLE__)
-    // TODO: fix workaround
-    // only if PCIe device
-    if (dynamic_cast<LitePCIe*>(mRxArgs.port.get()) != nullptr)
-    {
-        // iqSamplesCount must be N*16, or N*8 depending on device BUS width
-        const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
-        packetSize = (iqSamplesCount * sampleSize * 2) + headerSize;
-
-        // Request fpga to provide Rx packets with desired payloadSize
-        // Two writes are needed
-        fpga->WriteRegister(0xFFFF, 1 << chipId);
-        uint32_t requestAddr[] = { 0x0019, 0x000E };
-        uint32_t requestData[] = { packetSize, iqSamplesCount };
-        fpga->WriteRegisters(requestAddr, requestData, 2);
-    }
-#endif
+    packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
 
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
     {

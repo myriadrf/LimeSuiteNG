@@ -72,6 +72,8 @@ class FPGA
     OpStatus WriteLMS7002MSPI(const uint32_t* addr, uint32_t length);
     OpStatus ReadLMS7002MSPI(const uint32_t* addr, uint32_t* values, uint32_t length);
 
+    uint32_t SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId);
+
     /** @brief Structure containing the gateware information of the FPGA */
     struct GatewareInfo {
         int boardID;
