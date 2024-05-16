@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     std::cout << std::endl;
 
     // Use first available device
-    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(1));
+    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
