@@ -45,7 +45,6 @@
 
 #define LIMELITEPCIE_NAME "limelitepcie"
 #define LIMELITEPCIE_MINOR_COUNT 32
-#define UNKNOW_DEVICE_PLACEHOLDER "LimeSDR"
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
@@ -871,10 +870,6 @@ static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsi
 {
     long ret = 0;
 
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *dev = chan->limelitepcie_dev;
-
     switch (cmd)
     {
     case LIMELITEPCIE_IOCTL_VERSION: {
@@ -1242,30 +1237,6 @@ static const struct file_operations limelitepcie_fops_control = {
     .write = limelitepcie_ctrl_write,
 };
 
-static void device_create_release(struct device *dev)
-{
-    pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
-    kfree(dev);
-}
-
-struct device *lime_device_create(const struct class *class, struct device *parent, dev_t devt, void *drvdata, const char *s)
-{
-    struct device *dev = NULL;
-    int retval = -ENODEV;
-    dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-    device_initialize(dev);
-    dev->devt = devt;
-    dev->class = class;
-    dev->parent = parent;
-    dev->groups = NULL;
-    dev->release = device_create_release;
-    dev_set_drvdata(dev, drvdata);
-    dev->kobj.name = kstrdup_const(s, GFP_KERNEL);
-    retval = device_add(dev);
-
-    return dev;
-}
-
 static int limelitepcie_alloc_chdev(struct limelitepcie_device *s)
 {
     int ret;
@@ -1483,11 +1454,7 @@ static int ReadInfo(struct limelitepcie_device *s)
     }
     s->info.serialNumber = serialNumber;
 
-    if (0 < s->info.boardId && s->info.boardId < LMS_DEV_COUNT)
-        sprintf(s->info.devName, "%s", GetDeviceName(s->info.boardId));
-    //  sprintf(s->info.devName, "%s", "LimeSDR");
-    else
-        sprintf(s->info.devName, "%s", UNKNOW_DEVICE_PLACEHOLDER);
+    sprintf(s->info.devName, "%s", GetDeviceName(s->info.boardId));
 
     dev_info(&s->dev->dev,
         "[device info] %s FW:%u HW:%u PROTOCOL:%u S/N:0x%016llX \n",
@@ -1499,7 +1466,7 @@ static int ReadInfo(struct limelitepcie_device *s)
     return 0;
 }
 
-static bool ValidIdentifier(char *identifier)
+static bool ValidIdentifier(const char *identifier)
 {
     if (strncmp("Lime", identifier, 4) == 0)
         return true;
@@ -1511,20 +1478,21 @@ static bool ValidChar(char c)
     return isalnum(c) || c == '-' || c == '_' || c == ' ';
 }
 
-static void ParseIdentifier(char *identifier, char *destination)
+static void ParseIdentifier(const char *identifier, char *destination)
 {
     uint8_t size = 0;
-    while (size < 256 && ValidChar(identifier[size]))
-    {
-        if (identifier[size] == ' ')
-            identifier[size] = '-';
+    while (size < sizeof(identifier) && ValidChar(identifier[size]))
         size++;
-    }
 
-    while (size > 0 && identifier[size - 1] == '-')
+    while (size > 0 && identifier[size - 1] == ' ')
         size--;
 
+    size = size <= sizeof(destination) ? size : sizeof(destination);
     strncpy(destination, identifier, size);
+
+    for (size_t i = 0; i < size; i++)
+        if (destination[i] == ' ')
+            destination[i] = '-';
 }
 
 static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
@@ -1614,7 +1582,10 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     if (ValidIdentifier(fpga_identifier))
         ParseIdentifier(fpga_identifier, limelitepcie_dev->info.devName);
     else if (ReadInfo(limelitepcie_dev) != 0)
+    {
+        dev_err(&dev->dev, "Failed to read limelitepcie device info\n");
         goto fail2;
+    }
 
     uint32_t dmaBufferSize = 8192;
 

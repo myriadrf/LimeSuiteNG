@@ -38,7 +38,7 @@ enum eLMS_DEV {
 };
 
 const char LMS_DEV_NAMES[][80] = {
-    "LimeSDR", // Unknown
+    "LimeSDR-Unknown",
     "EVB6",
     "DigiGreen",
     "DigiRed",
