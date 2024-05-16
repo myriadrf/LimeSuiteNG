@@ -42,6 +42,9 @@ class USBDMA : public IDMA
         DirectionState(const DirectionState&) = delete;
         DirectionState& operator=(const DirectionState&) = delete;
 
+        DirectionState(DirectionState&&) = default;
+        DirectionState& operator=(DirectionState&&) = default;
+
         uint8_t endpoint;
         uint8_t* const buffer;
         DMAState state;
@@ -54,8 +57,6 @@ class USBDMA : public IDMA
     DirectionState& GetDirectionState(TRXDir direction);
     const DirectionState& GetDirectionState(TRXDir direction) const;
 
-    int GetContextHandle(TRXDir direction);
-    int GetContextHandleFromIndex(TRXDir direction, uint16_t index);
     void SetContextHandle(TRXDir direction, int handle);
     std::size_t GetTransferArrayIndexFromState(TRXDir direction);
     std::size_t GetTransferArrayIndex(uint16_t index);

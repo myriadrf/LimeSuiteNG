@@ -123,16 +123,6 @@ std::size_t USBDMA::GetTransferArrayIndex(uint16_t index)
     return index % GetBufferCount();
 }
 
-int USBDMA::GetContextHandle(TRXDir direction)
-{
-    return GetDirectionState(direction).contextHandles.at(GetTransferArrayIndexFromState(direction));
-}
-
-int USBDMA::GetContextHandleFromIndex(TRXDir direction, uint16_t index)
-{
-    return GetDirectionState(direction).contextHandles.at(GetTransferArrayIndex(index));
-}
-
 void USBDMA::SetContextHandle(TRXDir direction, int handle)
 {
     GetDirectionState(direction).contextHandles.at(GetTransferArrayIndexFromState(direction)) = handle;
@@ -166,7 +156,8 @@ int USBDMA::SetStateReceive(DMAState state)
     {
         rx.state.softwareIndex++;
 
-        if (GetContextHandle(direction) != -1)
+        const auto contextHandle{ GetDirectionState(direction).contextHandles.at(GetTransferArrayIndexFromState(direction)) };
+        if (contextHandle != -1)
         {
             throw std::runtime_error("Asking for a transfer when not all transfers have not been completed"s);
         }
@@ -225,7 +216,7 @@ int USBDMA::SetState(TRXDir direction, DMAState state)
 bool USBDMA::Wait(TRXDir direction)
 {
     const auto index{ GetDirectionState(direction).state.softwareIndex };
-    const auto handle{ GetContextHandleFromIndex(direction, index) };
+    const auto handle{ GetDirectionState(direction).contextHandles.at(GetTransferArrayIndex(index)) };
 
     if (handle == -1) // No transfer here
     {
