@@ -45,14 +45,14 @@ class LIME_API LitePCIe : public IDMA
             , bufferCount(0)
         {
         }
-        std::byte* rxMemory;
-        std::byte* txMemory;
+        uint8_t* rxMemory;
+        uint8_t* txMemory;
         int bufferSize;
         int bufferCount;
     };
     int GetBufferSize() const override;
     int GetBufferCount() const override;
-    std::byte* const GetMemoryAddress(TRXDir direction) const override;
+    uint8_t* const GetMemoryAddress(TRXDir direction) const override;
 
     DMAState GetState(TRXDir direction) override;
     int SetState(TRXDir direction, DMAState state) override;

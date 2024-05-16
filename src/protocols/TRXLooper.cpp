@@ -390,7 +390,7 @@ int TRXLooper::RxSetup()
         mCallback_logMessage(LogLevel::Debug, msg);
     }
 
-    std::vector<std::byte*> dmaBuffers(mRxArgs.port->GetBufferCount());
+    std::vector<uint8_t*> dmaBuffers(mRxArgs.port->GetBufferCount());
     for (uint32_t i = 0; i < dmaBuffers.size(); ++i)
     {
         dmaBuffers[i] = mRxArgs.port->GetMemoryAddress(TRXDir::Rx) + dmaBufferSize * i;
@@ -426,7 +426,7 @@ void TRXLooper::ReceivePacketsLoop()
     const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
     const int32_t packetSize = mRxArgs.packetSize;
     const int32_t samplesInPkt = mRxArgs.samplesInPacket;
-    const std::vector<std::byte*>& dmaBuffers{ mRxArgs.buffers };
+    const std::vector<uint8_t*>& dmaBuffers{ mRxArgs.buffers };
     StreamStats& stats = mRx.stats;
     auto fifo = mRx.fifo;
 
@@ -527,7 +527,7 @@ void TRXLooper::ReceivePacketsLoop()
 
         const uint32_t currentBufferIndex{ dma.softwareIndex % bufferCount };
         mRxArgs.port->CacheFlush(TRXDir::Rx, DataTransferDirection::DeviceToHost, currentBufferIndex);
-        const std::byte* buffer{ dmaBuffers.at(currentBufferIndex) };
+        const uint8_t* buffer{ dmaBuffers.at(currentBufferIndex) };
         const FPGA_RxDataPacket* pkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
 
         if (outputPkt == nullptr)
@@ -714,7 +714,7 @@ int TRXLooper::TxSetup()
     const auto dmaBufferSize{ mTxArgs.port->GetBufferSize() };
     mTx.packetsToBatch = std::clamp<uint8_t>(mTx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
-    std::vector<std::byte*> dmaBuffers(mTxArgs.port->GetBufferCount());
+    std::vector<uint8_t*> dmaBuffers(mTxArgs.port->GetBufferCount());
     for (uint32_t i = 0; i < dmaBuffers.size(); ++i)
     {
         dmaBuffers[i] = mTxArgs.port->GetMemoryAddress(TRXDir::Tx) + dmaBufferSize * i;
@@ -755,7 +755,7 @@ void TRXLooper::TransmitPacketsLoop()
 
     const int32_t bufferCount = mTxArgs.buffers.size();
     const uint32_t overflowLimit = bufferCount - irqPeriod;
-    const std::vector<std::byte*>& dmaBuffers{ mTxArgs.buffers };
+    const std::vector<uint8_t*>& dmaBuffers{ mTxArgs.buffers };
 
     StreamStats& stats = mTx.stats;
 
@@ -766,7 +766,7 @@ void TRXLooper::TransmitPacketsLoop()
 
     struct PendingWrite {
         uint32_t id;
-        std::byte* data;
+        uint8_t* data;
         int32_t offset;
         int32_t size;
     };
@@ -1168,7 +1168,7 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
 
     fpga->WriteRegister(0x000D, 0x4); // WFM_LOAD
 
-    std::vector<std::byte*> dmaBuffers(port->GetBufferCount());
+    std::vector<uint8_t*> dmaBuffers(port->GetBufferCount());
     for (uint32_t i = 0; i < dmaBuffers.size(); ++i)
     {
         dmaBuffers[i] = port->GetMemoryAddress(TRXDir::Tx) + port->GetBufferSize() * i;

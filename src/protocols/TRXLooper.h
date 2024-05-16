@@ -64,7 +64,7 @@ class TRXLooper
     /** @brief The transfer arguments. */
     struct TransferArgs {
         std::shared_ptr<IDMA> port;
-        std::vector<std::byte*> buffers;
+        std::vector<uint8_t*> buffers;
         int32_t bufferSize;
         int16_t packetSize;
         uint8_t packetsToBatch;

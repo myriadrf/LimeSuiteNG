@@ -35,7 +35,7 @@ struct FPGA_RxDataPacket {
     uint8_t reserved[5];
     int64_t
         counter; // should be unsigned, but that's prone to underflow during arithmetic and would choke FPGA, packets would not be sent
-    std::byte data[4080];
+    uint8_t data[4080];
 };
 
 struct FPGA_TxDataPacket {

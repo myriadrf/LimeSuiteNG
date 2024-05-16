@@ -93,7 +93,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
             const std::string msg = mFilePath.string() + ": DMA writer request denied"s;
             throw std::runtime_error(msg);
         }
-        auto buf = static_cast<std::byte*>(mmap(
+        auto buf = static_cast<uint8_t*>(mmap(
             NULL, info.dma_rx_buf_size * info.dma_rx_buf_count, PROT_READ, MAP_SHARED, mFileDescriptor, info.dma_rx_buf_offset));
         if (buf == MAP_FAILED || buf == nullptr)
         {
@@ -113,7 +113,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
             const std::string msg = mFilePath.string() + ": DMA reader request denied"s;
             throw std::runtime_error(msg);
         }
-        auto buf = static_cast<std::byte*>(mmap(
+        auto buf = static_cast<uint8_t*>(mmap(
             NULL, info.dma_tx_buf_size * info.dma_tx_buf_count, PROT_WRITE, MAP_SHARED, mFileDescriptor, info.dma_tx_buf_offset));
         if (buf == MAP_FAILED || buf == nullptr)
         {
@@ -397,7 +397,7 @@ int LitePCIe::GetBufferCount() const
     return mDMA.bufferCount;
 }
 
-std::byte* const LitePCIe::GetMemoryAddress(TRXDir direction) const
+uint8_t* const LitePCIe::GetMemoryAddress(TRXDir direction) const
 {
     switch (direction)
     {

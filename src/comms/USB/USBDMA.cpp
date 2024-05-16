@@ -13,7 +13,7 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
-USBDMA::DirectionState::DirectionState(uint8_t endpoint, std::byte* const buffer)
+USBDMA::DirectionState::DirectionState(uint8_t endpoint, uint8_t* const buffer)
     : endpoint(endpoint)
     , buffer(buffer)
     , state()
@@ -41,8 +41,8 @@ USBDMA::DirectionState::~DirectionState()
 
 USBDMA::USBDMA(std::shared_ptr<USBGeneric> port, uint8_t rxEndpoint, uint8_t txEndpoint)
     : port(port)
-    , rx(rxEndpoint, new std::byte[GetBufferSize() * GetBufferCount()])
-    , tx(txEndpoint, new std::byte[GetBufferSize() * GetBufferCount()])
+    , rx(rxEndpoint, new uint8_t[GetBufferSize() * GetBufferCount()])
+    , tx(txEndpoint, new uint8_t[GetBufferSize() * GetBufferCount()])
 {
 }
 
@@ -122,7 +122,7 @@ inline int USBDMA::GetBufferCount() const
     return port->GetBufferCount();
 }
 
-std::byte* const USBDMA::GetMemoryAddress(TRXDir direction) const
+uint8_t* const USBDMA::GetMemoryAddress(TRXDir direction) const
 {
     return GetDirectionState(direction).buffer;
 }
@@ -167,7 +167,7 @@ uint8_t USBDMA::GetEndpointAddress(TRXDir direction)
     return GetDirectionState(direction).endpoint;
 }
 
-std::byte* USBDMA::GetIndexAddress(TRXDir direction, uint16_t index)
+uint8_t* USBDMA::GetIndexAddress(TRXDir direction, uint16_t index)
 {
     return GetDirectionState(direction).buffer + GetBufferSize() * GetTransferArrayIndex(index);
 }

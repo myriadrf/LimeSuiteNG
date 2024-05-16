@@ -29,7 +29,7 @@ class IDMA
 
     virtual int GetBufferSize() const = 0;
     virtual int GetBufferCount() const = 0;
-    virtual std::byte* const GetMemoryAddress(TRXDir direction) const = 0;
+    virtual uint8_t* const GetMemoryAddress(TRXDir direction) const = 0;
     virtual DMAState GetState(TRXDir direction) = 0;
     virtual int SetState(TRXDir direction, DMAState state) = 0;
 

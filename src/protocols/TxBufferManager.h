@@ -44,7 +44,7 @@ template<class T> class TxBufferManager
     /// @brief Resets the buffer to point to an empty buffer.
     /// @param memPtr The pointer of memory to set.
     /// @param capacity The total capacity of the buffer.
-    void Reset(std::byte* memPtr, uint32_t capacity)
+    void Reset(uint8_t* memPtr, uint32_t capacity)
     {
         packetsCreated = 0;
         bytesUsed = 0;
@@ -54,7 +54,7 @@ template<class T> class TxBufferManager
         header = reinterpret_cast<StreamHeader*>(mData);
         header->Clear();
         payloadSize = 0;
-        payloadPtr = reinterpret_cast<std::byte*>(header) + sizeof(StreamHeader);
+        payloadPtr = reinterpret_cast<uint8_t*>(header) + sizeof(StreamHeader);
     }
 
     /// @brief Checks if the buffer still has space in it.
@@ -77,7 +77,7 @@ template<class T> class TxBufferManager
             {
                 header = reinterpret_cast<StreamHeader*>(mData + bytesUsed);
                 header->Clear();
-                payloadPtr = reinterpret_cast<std::byte*>(header) + sizeof(StreamHeader);
+                payloadPtr = reinterpret_cast<uint8_t*>(header) + sizeof(StreamHeader);
                 payloadSize = 0;
             }
 
@@ -131,7 +131,7 @@ template<class T> class TxBufferManager
 
     /// @brief Gets the pointer to the buffer of the transfer.
     /// @return The pointer to the buffer of the transfer.
-    constexpr std::byte* data() const { return mData; };
+    constexpr uint8_t* data() const { return mData; };
 
     /// @brief Gets the amount of packets in this transfer.
     /// @return The amount of packets in this transfer.
@@ -140,8 +140,8 @@ template<class T> class TxBufferManager
   private:
     DataConversion conversion;
     StreamHeader* header;
-    std::byte* payloadPtr;
-    std::byte* mData;
+    uint8_t* payloadPtr;
+    uint8_t* mData;
     uint32_t bytesUsed;
     uint32_t mCapacity;
     uint32_t maxPacketsInBatch;
