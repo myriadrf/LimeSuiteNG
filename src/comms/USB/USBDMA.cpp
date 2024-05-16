@@ -156,8 +156,7 @@ int USBDMA::SetStateReceive(DMAState state)
     {
         rx.state.softwareIndex++;
 
-        const auto contextHandle{ GetDirectionState(direction).contextHandles.at(GetTransferArrayIndexFromState(direction)) };
-        if (contextHandle != -1)
+        if (!Wait(direction))
         {
             throw std::runtime_error("Asking for a transfer when not all transfers have not been completed"s);
         }
