@@ -18,8 +18,6 @@ class USBTransferContext_FT601 : public USBTransferContext
 #ifndef __unix__
     LPOVERLAPPED inOvLap;
     uint8_t endPointAddr;
-
-    bool transferWaitedFor;
 #endif
 };
 

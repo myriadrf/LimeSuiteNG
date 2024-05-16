@@ -7,7 +7,6 @@ USBTransferContext_FX3::USBTransferContext_FX3()
 #ifndef __unix__
     , inOvLap(new OVERLAPPED)
     , EndPt(nullptr)
-    , transferWaitedFor(false)
 #endif
 {
 #ifndef __unix__

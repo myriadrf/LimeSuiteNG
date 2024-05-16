@@ -8,7 +8,6 @@ USBTransferContext_FT601::USBTransferContext_FT601()
 #ifndef __unix__
     , inOvLap(new OVERLAPPED())
     , endPointAddr(0)
-    , transferWaitedFor(false)
 #endif
 {
 }

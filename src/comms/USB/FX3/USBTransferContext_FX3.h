@@ -25,8 +25,6 @@ class USBTransferContext_FX3 : public USBTransferContext
 #ifndef __unix__
     CCyUSBEndPoint* EndPt;
     OVERLAPPED* inOvLap;
-
-    bool transferWaitedFor;
 #endif
 };
 

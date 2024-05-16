@@ -111,7 +111,7 @@ class USBGeneric
      */
     virtual void AbortEndpointXfers(uint8_t endPointAddr);
 
-    static constexpr uint GetBufferCount() { return USB_MAX_CONTEXTS / 2; }
+    static constexpr unsigned int GetBufferCount() { return USB_MAX_CONTEXTS / 2; }
 
   protected:
     static constexpr int USB_MAX_CONTEXTS{ 16 }; //maximum number of contexts for asynchronous transfers
