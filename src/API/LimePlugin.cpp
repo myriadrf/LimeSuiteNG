@@ -14,7 +14,7 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 
 #ifdef _MSC_VER
     #define strncasecmp _strnicmp
