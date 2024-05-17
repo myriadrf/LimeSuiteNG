@@ -1,5 +1,6 @@
 #include "LMS7002MCSR_Data.h"
 
+#include <cassert>
 #include <unordered_map>
 #include <stdexcept>
 
@@ -763,6 +764,8 @@ LIME_API const lime::LMS7002MCSR_Data::CSRegister& GetRegister(lime::LMS7002MCSR
         { LMS7002MCSR::RSSIDC_DCO1, LMS7002MCSR_Data::RSSIDC_DCO1 },
         { LMS7002MCSR::DCLOOP_STOP, LMS7002MCSR_Data::DCLOOP_STOP },
     };
+
+    assert(LMS7002MCSR_map.size() == static_cast<std::size_t>(LMS7002MCSR::ENUM_COUNT));
 
     try
     {
