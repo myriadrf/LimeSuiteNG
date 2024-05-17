@@ -770,7 +770,7 @@ LIME_API const lime::LMS7002MCSR_Data::CSRegister& GetRegister(lime::LMS7002MCSR
     try
     {
         return LMS7002MCSR_map.at(csr_enum);
-    } catch (std::out_of_range& e)
+    } catch ([[maybe_unused]] const std::out_of_range& e)
     {
         return InvalidReg;
     }
