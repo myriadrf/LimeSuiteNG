@@ -6,6 +6,7 @@
 
 #define _USE_MATH_DEFINES
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
 #include <algorithm>
 #include <cassert>
@@ -193,6 +194,36 @@ void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
     mcuControl->Initialize(port, byte_array_size);
 }
 
+static int spi16_transact(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData)
+{
+    LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        if (mosi[i] & (1 << 31))
+        {
+            uint16_t addr = mosi[i] >> 16;
+            addr &= 0x7FFF; // clear write bit for now
+            uint16_t value = mosi[i] & 0xFFFF;
+            chip->SPI_write(addr, value);
+        }
+        else
+        {
+            uint16_t addr = mosi[i] >> 16;
+            uint16_t value = 0;
+            value = chip->SPI_read(addr);
+            if (miso)
+                miso[i] = value;
+        }
+    }
+    return 0;
+}
+
+static void log_hook(int logLevel, const char* message, void* userData)
+{
+    LogLevel level = static_cast<lime::LogLevel>(logLevel);
+    log(level, std::string{ message });
+}
+
 /** @brief Creates LMS7002M main control object.
 It requires IConnection to be set by SetConnection() to communicate with chip
 */
@@ -203,7 +234,26 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , mRegistersMap(new LMS7002M_RegistersMap())
     , controlPort(port)
     , _cachedRefClockRate(30.72e6)
+    , mC_impl(nullptr)
 {
+    struct lms7002m_hooks hooks;
+    memset(&hooks, 0, sizeof(hooks));
+
+    hooks.spi16_userData = this;
+    hooks.spi16_transact = spi16_transact;
+    hooks.log = log_hook;
+    hooks.log_userData = this;
+    hooks.on_cgen_frequency_changed_userData = this;
+    hooks.on_cgen_frequency_changed = [](void* userData) -> void {
+        LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
+        if (chip->mCallback_onCGENChange)
+            chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData);
+    };
+
+    mC_impl = lms7002m_initialize(&hooks);
+    if (mC_impl == nullptr)
+        lime::error("Failed to initialize LMS7002M C implementation");
+
     opt_gain_tbb[0] = -1;
     opt_gain_tbb[1] = -1;
 
@@ -221,6 +271,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
 
 LMS7002M::~LMS7002M()
 {
+    lms7002m_destroy(mC_impl);
     delete mcuControl;
     delete mRegistersMap;
 }
@@ -1307,89 +1358,8 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 
 OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
 {
-    if (freq_Hz > CGEN_MAX_FREQ)
-        throw std::logic_error("requested CGEN frequency too high"s);
-    float_type dFvco;
-    float_type dFrac;
-
-    //remember NCO frequencies
-    Channel chBck = this->GetActiveChannel();
-    std::vector<std::vector<float_type>> rxNCO(2);
-    std::vector<std::vector<float_type>> txNCO(2);
-    bool rxModeNCO = false;
-    bool txModeNCO = false;
-    if (retainNCOfrequencies)
-    {
-        rxModeNCO = Get_SPI_Reg_bits(LMS7002MCSR::MODE_RX, true);
-        txModeNCO = Get_SPI_Reg_bits(LMS7002MCSR::MODE_TX, true);
-        for (int ch = 0; ch < 2; ++ch)
-        {
-            this->SetActiveChannel(IntToChannel(ch));
-            for (int i = 0; i < 16 && rxModeNCO == 0; ++i)
-                rxNCO[ch].push_back(GetNCOFrequency(TRXDir::Rx, i, false));
-            for (int i = 0; i < 16 && txModeNCO == 0; ++i)
-                txNCO[ch].push_back(GetNCOFrequency(TRXDir::Tx, i, false));
-        }
-    }
-    //VCO frequency selection according to F_CLKH
-    uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;
-    uint16_t iHdiv_low = (gCGEN_VCO_frequencies[0] / 2 / freq_Hz);
-    uint16_t iHdiv = (iHdiv_low + iHdiv_high) / 2;
-    iHdiv = iHdiv > 255 ? 255 : iHdiv;
-    dFvco = 2 * (iHdiv + 1) * freq_Hz;
-    if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
-        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
-    //Integer division
-    uint16_t gINT = static_cast<uint16_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx) - 1);
-
-    //Fractional division
-    dFrac = dFvco / GetReferenceClk_SX(TRXDir::Rx) - static_cast<uint32_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx));
-    uint32_t gFRAC = static_cast<uint32_t>(dFrac * 1048576);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::INT_SDM_CGEN, gINT); //INT_SDM_CGEN
-    Modify_SPI_Reg_bits(0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
-    Modify_SPI_Reg_bits(0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
-    Modify_SPI_Reg_bits(LMS7002MCSR::DIV_OUTCH_CGEN, iHdiv); //DIV_OUTCH_CGEN
-
-    lime::debug("INT %d, FRAC %d, DIV_OUTCH_CGEN %d", gINT, gFRAC, iHdiv);
-    lime::debug("VCO %.2f MHz, RefClk %.2f MHz", dFvco / 1e6, GetReferenceClk_SX(TRXDir::Rx) / 1e6);
-
-    if (output)
-    {
-        output->frequency = freq_Hz;
-        output->frequencyVCO = dFvco;
-        output->referenceClock = GetReferenceClk_SX(TRXDir::Rx);
-        output->INT = gINT;
-        output->FRAC = gFRAC;
-        output->div_outch_cgen = iHdiv;
-        output->success = true;
-    }
-
-    //recalculate NCO
-    for (int ch = 0; ch < 2 && retainNCOfrequencies; ++ch)
-    {
-        this->SetActiveChannel(IntToChannel(ch));
-        for (int i = 0; i < 16 && rxModeNCO == 0; ++i)
-            SetNCOFrequency(TRXDir::Rx, i, rxNCO[ch][i]);
-        for (int i = 0; i < 16 && txModeNCO == 0; ++i)
-            SetNCOFrequency(TRXDir::Tx, i, txNCO[ch][i]);
-    }
-    this->SetActiveChannel(chBck);
-    if (TuneVCO(VCO_Module::VCO_CGEN) != OpStatus::Success)
-    {
-        if (output)
-        {
-            output->success = false;
-            output->csw = Get_SPI_Reg_bits(LMS7002MCSR::CSW_VCO_CGEN);
-        }
-        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) failed", freq_Hz / 1e6);
-    }
-    if (output)
-        output->csw = Get_SPI_Reg_bits(LMS7002MCSR::CSW_VCO_CGEN);
-
-    if (mCallback_onCGENChange)
-        return mCallback_onCGENChange(mCallback_onCGENChange_userData);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_frequency_cgen(mC_impl, freq_Hz);
+    return static_cast<lime::OpStatus>(result);
 }
 
 bool LMS7002M::GetCGENLocked(void)

@@ -16,3 +16,6 @@ set(LMS7002M_SOURCES
     controls.cpp)
 
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LMS7002M_SOURCES})
+target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE lms7002m)
+
+target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include})

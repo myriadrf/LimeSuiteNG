@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+struct lms7002m_context;
+
 namespace lime {
 namespace LMS7002MCSR_Data {
 struct CSRegister;
@@ -979,6 +981,8 @@ class LIME_API LMS7002M
     std::array<int, 2> opt_gain_tbb;
     double _cachedRefClockRate;
     OpStatus LoadConfigLegacyFile(const std::string& filename);
+
+    lms7002m_context* mC_impl;
 };
 } // namespace lime
 #endif

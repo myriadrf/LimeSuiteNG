@@ -1,0 +1,39 @@
+#ifndef LIME_LMS7002M_H
+#define LIME_LMS7002M_H
+
+#include "limesuiteng/embedded/result.h"
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct lms7002m_context;
+
+enum lms7002m_vco_type { LMS7002M_VCO_CGEN, LMS7002M_VCO_SXR, LMS7002M_VCO_SXT };
+
+typedef int (*lms7002m_spi16_transact_hook)(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData);
+typedef void (*lms7002m_log_hook)(int level, const char* message, void* userData);
+typedef void (*lms7002m_on_cgen_frequency_changed_hook)(void* userData);
+
+typedef struct lms7002m_hooks {
+    lms7002m_log_hook log;
+    void* log_userData;
+
+    lms7002m_spi16_transact_hook spi16_transact;
+    void* spi16_userData;
+
+    lms7002m_on_cgen_frequency_changed_hook on_cgen_frequency_changed;
+    void* on_cgen_frequency_changed_userData;
+} lms7002m_hooks;
+
+struct lms7002m_context* lms7002m_initialize(const lms7002m_hooks* hooks);
+void lms7002m_destroy(struct lms7002m_context* context);
+
+lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, float frequency_Hz);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // LIME_LMS7002M_H
