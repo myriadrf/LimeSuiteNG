@@ -1955,7 +1955,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
         const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
-            const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);
+            const auto& region = dataStorage->regions.at("VCTCXO_DAC"s);
             OpStatus status = apiDevice->device->MemoryWrite(dataStorage, region, &val);
             return OpStatusToReturnCode(status);
         } catch (std::out_of_range& e)
@@ -2006,7 +2006,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXORead(lms_device_t* device, uint16_t* val)
         const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
         try
         {
-            const auto& region = dataStorage->regions.at(lime::eMemoryRegion::VCTCXO_DAC);
+            const auto& region = dataStorage->regions.at("VCTCXO_DAC"s);
 
             OpStatus status = apiDevice->device->MemoryRead(dataStorage, region, val);
             return OpStatusToReturnCode(status);

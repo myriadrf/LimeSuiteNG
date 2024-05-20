@@ -157,8 +157,8 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.socTree = std::make_shared<DeviceTreeNode>("SDR-USB"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
-    const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
     descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 0x0010, 1 } } };
     descriptor.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 

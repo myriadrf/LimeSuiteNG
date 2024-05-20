@@ -189,7 +189,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         { "FPGA"s, SPI_FPGA },
     };
 
-    const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
+    const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
 
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);

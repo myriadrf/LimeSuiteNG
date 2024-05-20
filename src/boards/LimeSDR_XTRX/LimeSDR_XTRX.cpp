@@ -135,8 +135,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 
     desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
-    // desc.memoryDevices[ToString(eMemoryDevice::FPGA_RAM)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
-    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
+        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
 

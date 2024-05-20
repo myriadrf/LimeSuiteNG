@@ -45,8 +45,6 @@ struct Range {
     double step; ///< The step of the range (or 0.0 for any step)
 };
 
-enum class eMemoryRegion : uint8_t { VCTCXO_DAC, COUNT };
-
 /// @brief Structure for storing the information of a memory region.
 struct Region {
     int32_t address; ///< Starting address of the memory region
