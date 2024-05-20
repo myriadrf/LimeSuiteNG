@@ -469,3 +469,41 @@ float lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
     lms7002m_set_active_channel(self, savedChannel);
     return pmax - loss_int;
 }
+
+lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const float gain, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    //there are 4 discrete gain values, use the midpoints
+    int val = 3;
+    if (gain >= (-1.4 - 0) / 2)
+        val = 0;
+    else if (gain >= (-1.4 - 3.3) / 2)
+        val = 1;
+    else if (gain >= (-3.3 - 4.3) / 2)
+        val = 2;
+
+    lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_L_LOOPB_TXPAD_TRF, val);
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    uint16_t value = lms7002m_spi_read_csr(self, LMS7002M_L_LOOPB_TXPAD_TRF);
+
+    float retval = 0.0;
+    float value_table[] = { 0.0, -1.4, -3.3, -4.3 };
+
+    if (value < 4)
+    {
+        retval = value_table[value];
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return retval;
+}

@@ -946,38 +946,13 @@ float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
 
 OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    //there are 4 discrete gain values, use the midpoints
-    int val = 0;
-    if (gain >= (-1.4 - 0) / 2)
-        val = 0;
-    else if (gain >= (-1.4 - 3.3) / 2)
-        val = 1;
-    else if (gain >= (-3.3 - 4.3) / 2)
-        val = 2;
-    else
-        val = 3;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::L_LOOPB_TXPAD_TRF, val);
+    lime_Result result = lms7002m_set_trf_loopback_pad_db(mC_impl, gain, static_cast<uint8_t>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    switch (this->Get_SPI_Reg_bits(LMS7002MCSR::L_LOOPB_TXPAD_TRF))
-    {
-    case 0:
-        return 0.0;
-    case 1:
-        return -1.4;
-    case 2:
-        return -3.3;
-    case 3:
-        return -4.3;
-    }
-    return 0.0;
+    return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
 OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
