@@ -935,34 +935,13 @@ float_type LMS7002M::GetRFETIA_dB(const Channel channel)
 
 OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double pmax = 52;
-    int loss_int = std::round(pmax - value);
-
-    //different scaling realm
-    if (loss_int > 10)
-    {
-        loss_int = (loss_int + 10) / 2;
-    }
-
-    loss_int = std::clamp(loss_int, 0, 31);
-
-    OpStatus ret;
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF, loss_int);
-    ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_MAIN_TXPAD_TRF, loss_int);
-    return ret;
+    lime_Result result = lms7002m_set_trfpad_db(mC_impl, value, static_cast<uint8_t>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double pmax = 52;
-    auto loss_int = this->Get_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF);
-    if (loss_int > 10)
-        return pmax - 10 - 2 * (loss_int - 10);
-    return pmax - loss_int;
+    return lms7002m_get_trfpad_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
 OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel channel)

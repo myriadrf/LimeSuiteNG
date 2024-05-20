@@ -431,3 +431,41 @@ float lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
     lms7002m_set_active_channel(self, savedChannel);
     return retval;
 }
+
+lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const float value, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double pmax = 52;
+    uint16_t loss_int = lroundl(pmax - value);
+
+    //different scaling realm
+    if (loss_int > 10)
+    {
+        loss_int = (loss_int + 10) / 2;
+    }
+
+    loss_int = clamp(loss_int, 0, 31);
+
+    lime_Result ret;
+    lms7002m_spi_modify_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF, loss_int);
+    ret = lms7002m_spi_modify_csr(self, LMS7002M_LOSS_MAIN_TXPAD_TRF, loss_int);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double pmax = 52;
+    uint16_t loss_int = lms7002m_spi_read_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF);
+    if (loss_int > 10)
+        return pmax - 10 - 2 * (loss_int - 10);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return pmax - loss_int;
+}
