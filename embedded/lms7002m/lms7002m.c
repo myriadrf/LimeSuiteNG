@@ -316,7 +316,7 @@ float lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 30;
-    auto g_lna_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_LNA_RFE);
+    uint16_t g_lna_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_LNA_RFE);
 
     float retval = 0.0;
     const int value_to_minus[16] = { 0, 30, 27, 24, 21, 18, 15, 12, 9, 6, 5, 4, 3, 2, 1, 0 };
@@ -330,3 +330,70 @@ float lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
     return retval;
 }
 
+lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const float gain, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 40;
+    double val = gain - gmax;
+
+    int g_rxloopb_rfe = 0;
+    if (val >= 0)
+        g_rxloopb_rfe = 15;
+    else if (val >= -0.5)
+        g_rxloopb_rfe = 14;
+    else if (val >= -1)
+        g_rxloopb_rfe = 13;
+    else if (val >= -1.6)
+        g_rxloopb_rfe = 12;
+    else if (val >= -2.4)
+        g_rxloopb_rfe = 11;
+    else if (val >= -3)
+        g_rxloopb_rfe = 10;
+    else if (val >= -4)
+        g_rxloopb_rfe = 9;
+    else if (val >= -5)
+        g_rxloopb_rfe = 8;
+    else if (val >= -6.2)
+        g_rxloopb_rfe = 7;
+    else if (val >= -7.5)
+        g_rxloopb_rfe = 6;
+    else if (val >= -9)
+        g_rxloopb_rfe = 5;
+    else if (val >= -11)
+        g_rxloopb_rfe = 4;
+    else if (val >= -14)
+        g_rxloopb_rfe = 3;
+    else if (val >= -17)
+        g_rxloopb_rfe = 2;
+    else if (val >= -24)
+        g_rxloopb_rfe = 1;
+    else
+        g_rxloopb_rfe = 0;
+
+    lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_RXLOOPB_RFE, g_rxloopb_rfe);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 40;
+    uint16_t g_rxloopb_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_RXLOOPB_RFE);
+
+    float retval = 0.0;
+    const float value_to_minus[16] = { 0, 24, 17, 14, 11, 9, 7.5, 6.2, 5, 4, 3, 2.4, 1.6, 1, 0.5, 0 };
+
+    if (g_rxloopb_rfe > 0 && g_rxloopb_rfe < 16)
+    {
+        retval = gmax - value_to_minus[g_rxloopb_rfe];
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return retval;
+}
