@@ -26,6 +26,8 @@ class LIME_API LimeLitePCIe
     // Write/Read for communicating to control end points (SPI, I2C...)
     virtual int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
     virtual int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
+    virtual OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms = 100);
+    virtual OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100);
 
     // Write/Read for samples streaming
     int WriteRaw(const uint8_t* buffer, int length, int timeout_ms = 100);

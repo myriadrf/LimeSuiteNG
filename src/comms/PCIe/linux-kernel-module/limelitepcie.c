@@ -22,6 +22,9 @@
 #include <linux/dma-mapping.h>
 #include <linux/version.h>
 #include <linux/ctype.h>
+#include <linux/mutex.h>
+#include <linux/jiffies.h>
+#include <linux/wait.h>
 
 #include "limelitepcie.h"
 #include "csr.h"
@@ -111,6 +114,7 @@ struct limelitepcie_device {
     int channels;
     struct cdev control_cdev; // non DMA channel for control packets
     struct deviceInfo info;
+    struct semaphore control_semaphore;
 };
 
 struct limelitepcie_chan_priv {
@@ -869,9 +873,71 @@ static int limelitepcie_flash_spi(struct limelitepcie_device *s, struct limelite
 static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
+    struct limelitepcie_device *dev = file->private_data;
 
     switch (cmd)
     {
+    case LIMELITEPCIE_IOCTL_RUN_CONTROL_COMMAND: {
+        struct semaphore *sem = &(dev->control_semaphore);
+        struct limelitepcie_control_packet m;
+
+        if (copy_from_user(&m, (void *)arg, sizeof(m)))
+        {
+            ret = -EFAULT;
+            break;
+        }
+
+        uint64_t end_time = ktime_get_raw_ns() + m.timeout_ms * 1000000llu;
+
+        int success = down_timeout(sem, msecs_to_jiffies(m.timeout_ms));
+        if (success != 0) // on failure
+        {
+            ret = -EBUSY;
+            break;
+        }
+
+        uint32_t byteCount = min(m.length, (uint32_t)(CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t)));
+        uint32_t value;
+        for (int i = 0; i < byteCount; i += sizeof(value))
+        {
+            memcpy(&value, m.request + i, sizeof(value));
+            limelitepcie_writel(dev, CSR_CNTRL_BASE + i, value);
+        }
+
+        success = false;
+        while (ktime_get_raw_ns() < end_time)
+        {
+            uint32_t status = limelitepcie_readl(dev, CSR_CNTRL_BASE);
+            if ((status & 0xFF00) != 0)
+            {
+                success = true;
+                break;
+            }
+        }
+
+        if (!success)
+        {
+            up(sem);
+            ret = -EFAULT;
+            break;
+        }
+
+        for (int i = 0; i < byteCount; i += sizeof(uint32_t))
+        {
+            value = limelitepcie_readl(dev, CSR_CNTRL_BASE + i);
+            memcpy(m.response + i, &value, sizeof(uint32_t));
+        }
+
+        if (copy_to_user((void *)arg, &m, sizeof(m)))
+        {
+            up(sem);
+            ret = -EFAULT;
+            break;
+        }
+
+        up(sem);
+    }
+    break;
     case LIMELITEPCIE_IOCTL_VERSION: {
         struct limelitepcie_version m;
 
@@ -1669,6 +1735,8 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
         dev_err(&dev->dev, "Failed to allocate DMA\n");
         goto fail3;
     }
+
+    sema_init(&limelitepcie_dev->control_semaphore, 1);
 
 #ifdef CSR_UART_XOVER_RXTX_ADDR
     tty_res = devm_kzalloc(&dev->dev, sizeof(struct resource), GFP_KERNEL);

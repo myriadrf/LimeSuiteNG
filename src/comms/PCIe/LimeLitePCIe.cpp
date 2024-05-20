@@ -6,6 +6,7 @@
 #include <thread>
 #include <filesystem>
 #include "limesuiteng/Logger.h"
+#include "LMS64CProtocol.h"
 
 #ifdef __unix__
     #include <unistd.h>
@@ -69,6 +70,41 @@ LimeLitePCIe::LimeLitePCIe()
 LimeLitePCIe::~LimeLitePCIe()
 {
     Close();
+}
+
+OpStatus LimeLitePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
+{
+    limelitepcie_control_packet pkt;
+    pkt.timeout_ms = timeout_ms;
+    pkt.length = length;
+
+    memcpy(pkt.request, request, length);
+
+    int ret = ioctl(mFileDescriptor, LIMELITEPCIE_IOCTL_RUN_CONTROL_COMMAND, &pkt);
+
+    switch (ret)
+    {
+    case EBUSY:
+    case -EBUSY:
+        return OpStatus::Busy;
+    default:
+        lime::error("Unable to send control packet");
+        return OpStatus::IOFailure;
+    case 0:
+        break;
+    }
+
+    if (pkt.length != length)
+        return OpStatus::IOFailure;
+
+    memcpy(response, pkt.response, length);
+
+    return OpStatus::Success;
+}
+
+OpStatus LimeLitePCIe::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
+{
+    return RunControlCommand(data, data, length, timeout_ms);
 }
 
 OpStatus LimeLitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)

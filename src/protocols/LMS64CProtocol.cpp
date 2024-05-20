@@ -120,6 +120,28 @@ static constexpr std::array<char, 16> ADC_UNITS_PREFIX = {
     ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'y', 'z', 'a', 'f', 'p', 'n', 'u', 'm'
 };
 
+static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100)
+{
+    OpStatus status;
+    do
+    {
+        status = port.RunControlCommand(request, response, length, timeout_ms);
+    } while (status == OpStatus::Busy);
+
+    if (status != OpStatus::Success)
+        return status;
+
+    if (reinterpret_cast<LMS64CPacket*>(response)->status != STATUS_COMPLETED_CMD)
+        return OpStatus::IOFailure;
+
+    return OpStatus::Success;
+}
+
+static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t length, int timeout_ms = 100)
+{
+    return RunControlCommand(port, data, data, length, timeout_ms);
+}
+
 static OpStatus SPI16(ISerialPort& port,
     uint8_t chipSelect,
     eCMD_LMS writeCmd,
@@ -169,16 +191,9 @@ static OpStatus SPI16(ISerialPort& port,
             ++srcIndex;
         }
 
-        int sent = 0;
-        int recv = 0;
-
-        sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            return OpStatus::IOFailure;
-
-        recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
-        if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IOFailure;
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+        if (status != OpStatus::Success)
+            return status;
 
         for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
         {
@@ -205,17 +220,10 @@ OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevi
     LMS64CPacket pkt;
     pkt.cmd = CMD_GET_INFO;
     pkt.subDevice = subDevice;
-    int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (sent != sizeof(pkt))
-    {
-        return OpStatus::IOFailure;
-    }
 
-    int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
-    if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
-    {
-        return OpStatus::IOFailure;
-    }
+    OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+    if (status != OpStatus::Success)
+        return status;
 
     info.firmware = pkt.payload[0];
     info.deviceId = pkt.payload[1];
@@ -294,16 +302,9 @@ OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint
             ++srcIndex;
         }
 
-        int sent = 0;
-        int recv = 0;
-
-        sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            return OpStatus::IOFailure;
-
-        recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1000);
-        if (recv != sizeof(pkt) || pkt.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IOFailure;
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+        if (status != OpStatus::Success)
+            return status;
     }
     return OpStatus::Success;
 }
@@ -354,13 +355,9 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
             ++index;
         }
 
-        int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            throw std::runtime_error("CustomParameterWrite write failed"s);
-
-        int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-            throw std::runtime_error("CustomParameterWrite read failed"s);
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+        if (status != OpStatus::Success)
+            return status;
     }
 
     return OpStatus::Success;
@@ -388,13 +385,9 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
             ++index;
         }
 
-        int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            throw std::runtime_error("CustomParameterRead write failed"s);
-
-        int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-            throw std::runtime_error("CustomParameterRead read failed"s);
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+        if (status != OpStatus::Success)
+            return status;
 
         for (std::size_t i = 0; i < pkt.blockCount; ++i)
         {
@@ -488,20 +481,10 @@ OpStatus ProgramWrite(ISerialPort& port,
             data += chunkSize;
         }
 
-        if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), progTimeout_ms) != sizeof(packet))
-        {
-            if (callback)
-                callback(bytesSent, length, "Programming failed! Write operation failed");
-            return OpStatus::IOFailure;
-        }
-        if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), progTimeout_ms) != sizeof(inPacket))
-        {
-            if (callback)
-                callback(bytesSent, length, "Programming failed! Read operation failed");
-            return OpStatus::IOFailure;
-        }
+        OpStatus status = RunControlCommand(
+            port, reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&inPacket), sizeof(packet), progTimeout_ms);
 
-        if (inPacket.status != STATUS_COMPLETED_CMD)
+        if (status != OpStatus::Success)
         {
             progressMsg = "Programming failed! "s + std::string{ status2string(inPacket.status) };
             if (callback)
@@ -548,13 +531,7 @@ OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
 
     pkt.payload[0] = LMS_RST_PULSE;
 
-    int sent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (sent != sizeof(pkt))
-        throw std::runtime_error("DeviceReset write failed"s);
-    int recv = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (recv < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-        throw std::runtime_error("DeviceReset read failed"s);
-    return OpStatus::Success;
+    return RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
 }
 
 OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
@@ -568,17 +545,9 @@ OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     pkt.cmd = LMS64CProtocol::CMD_GPIO_DIR_RD;
     pkt.blockCount = bufLength;
 
-    int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesSent != sizeof(pkt))
-    {
-        throw std::runtime_error("GPIODirRead write failed"s);
-    }
-
-    int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-    {
-        throw std::runtime_error("GPIODirRead read failed"s);
-    }
+    OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+    if (status != OpStatus::Success)
+        return status;
 
     for (size_t i = 0; i < bufLength; ++i)
     {
@@ -599,17 +568,9 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     pkt.cmd = LMS64CProtocol::CMD_GPIO_RD;
     pkt.blockCount = bufLength;
 
-    int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesSent != sizeof(pkt))
-    {
-        throw std::runtime_error("GPIORead write failed"s);
-    }
-
-    int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-    {
-        throw std::runtime_error("GPIORead read failed"s);
-    }
+    OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+    if (status != OpStatus::Success)
+        return status;
 
     for (size_t i = 0; i < bufLength; ++i)
     {
@@ -635,19 +596,7 @@ OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t buf
         pkt.payload[i] = buffer[i];
     }
 
-    int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesSent != sizeof(pkt))
-    {
-        throw std::runtime_error("GPIODirWrite write failed"s);
-    }
-
-    int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-    {
-        throw std::runtime_error("GPIODirWrite read failed"s);
-    }
-
-    return OpStatus::Success;
+    return RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
 }
 
 OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength)
@@ -666,19 +615,7 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
         pkt.payload[i] = buffer[i];
     }
 
-    int bytesSent = port.Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesSent != sizeof(pkt))
-    {
-        throw std::runtime_error("GPIOWrite write failed"s);
-    }
-
-    int bytesReceived = port.Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-    if (bytesReceived < pkt.headerSize || pkt.status != STATUS_COMPLETED_CMD)
-    {
-        throw std::runtime_error("GPIOWrite read failed"s);
-    }
-
-    return OpStatus::Success;
+    return RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
 }
 
 OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice)
@@ -712,13 +649,11 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
         progView.SetData(src, chunkSize);
         src += chunkSize;
 
-        if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
-            return OpStatus::IOFailure;
-        if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), timeout_ms) != sizeof(inPacket))
-            return OpStatus::IOFailure;
+        OpStatus status = RunControlCommand(
+            port, reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&inPacket), sizeof(packet), timeout_ms);
 
-        if (inPacket.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IOFailure;
+        if (status != OpStatus::Success)
+            return status;
 
         bytesSent += chunkSize;
     }
@@ -751,13 +686,12 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
         writeView.SetAddress(address + bytesGot);
         writeView.SetChunkSize(std::min(dataLen - bytesGot, chunkSize));
 
-        if (port.Write(reinterpret_cast<uint8_t*>(&packet), sizeof(packet), timeout_ms) != sizeof(packet))
-            return OpStatus::IOFailure;
-        if (port.Read(reinterpret_cast<uint8_t*>(&inPacket), sizeof(inPacket), timeout_ms) != sizeof(inPacket))
-            return OpStatus::IOFailure;
+        OpStatus status = RunControlCommand(
+            port, reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&inPacket), sizeof(packet), timeout_ms);
 
-        if (inPacket.status != STATUS_COMPLETED_CMD)
-            return OpStatus::IOFailure;
+        if (status != OpStatus::Success)
+            return status;
+
         LMS64CPacketMemoryWriteView readView(&inPacket);
         int bToGet = std::min(chunkSize, dataLen - bytesGot);
         readView.GetData(dest, bToGet);

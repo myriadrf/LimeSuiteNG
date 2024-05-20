@@ -64,6 +64,13 @@ struct limelitepcie_version {
     int patch;
 };
 
+struct limelitepcie_control_packet {
+    uint8_t request[64];
+    uint8_t response[64];
+    uint32_t length;
+    int timeout_ms;
+};
+
 #define LIMELITEPCIE_IOCTL 'S'
 
 #define LIMELITEPCIE_IOCTL_DMA_WRITER _IOWR(LIMELITEPCIE_IOCTL, 21, struct limelitepcie_ioctl_dma_writer)
@@ -74,5 +81,6 @@ struct limelitepcie_version {
 #define LIMELITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE _IOW(LIMELITEPCIE_IOCTL, 27, struct limelitepcie_ioctl_mmap_dma_update)
 #define LIMELITEPCIE_IOCTL_CACHE_FLUSH _IOW(LIMELITEPCIE_IOCTL, 28, struct limelitepcie_cache_flush)
 #define LIMELITEPCIE_IOCTL_VERSION _IOWR(LIMELITEPCIE_IOCTL, 29, struct limelitepcie_version)
+#define LIMELITEPCIE_IOCTL_RUN_CONTROL_COMMAND _IOWR(LIMELITEPCIE_IOCTL, 30, struct limelitepcie_control_packet)
 
 #endif /* _LINUX_LIMELITEPCIE_H */
