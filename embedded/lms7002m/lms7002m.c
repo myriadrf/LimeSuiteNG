@@ -2,6 +2,7 @@
 #include "limesuiteng/embedded/loglevel.h"
 #include "lms7002m_context.h"
 
+#include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -94,9 +95,30 @@ static uint16_t lms7002m_spi_read_bits(lms7002m_context* self, uint16_t address,
     return (regVal & (~(~0u << (msb + 1)))) >> lsb; //shift bits to LSB
 }
 
-static lime_Result lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
+static uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
 {
     return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
+}
+
+static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max)
+{
+    if (value < min)
+        return min;
+    if (value > max)
+        return max;
+    return value;
+}
+
+uint8_t lms7002m_get_active_channel(lms7002m_context* self)
+{
+    return lms7002m_spi_read_csr(self, LMS7002M_MAC);
+}
+
+lime_Result lms7002m_set_active_channel(lms7002m_context* self, const uint8_t channel)
+{
+    if (channel == lms7002m_get_active_channel(self))
+        return lime_Result_Success;
+    return lms7002m_spi_modify_csr(self, LMS7002M_MAC, channel);
 }
 
 static uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
@@ -203,4 +225,42 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
         self->hooks.on_cgen_frequency_changed(self->hooks.on_cgen_frequency_changed_userData);
 
     return lime_Result_Success;
+}
+
+lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    int g_pga_rbb = clamp(lroundf(value) + 12, 0, 31);
+    lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_PGA_RBB, g_pga_rbb);
+
+    int rcc_ctl_pga_rbb = (430.0 * pow(0.65, (g_pga_rbb / 10.0)) - 110.35) / 20.4516 + 16;
+
+    int c_ctl_pga_rbb = 0;
+    if (0 <= g_pga_rbb && g_pga_rbb < 8)
+        c_ctl_pga_rbb = 3;
+    if (8 <= g_pga_rbb && g_pga_rbb < 13)
+        c_ctl_pga_rbb = 2;
+    if (13 <= g_pga_rbb && g_pga_rbb < 21)
+        c_ctl_pga_rbb = 1;
+    if (21 <= g_pga_rbb)
+        c_ctl_pga_rbb = 0;
+
+    ret = lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb);
+    ret = lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_PGA_RBB, c_ctl_pga_rbb);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    uint16_t g_pga_rbb = lms7002m_spi_read_csr(self, LMS7002M_G_PGA_RBB);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return g_pga_rbb - 12;
 }

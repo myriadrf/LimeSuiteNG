@@ -117,7 +117,7 @@ class LIME_API LMS7002M
      *
      * @param ch The channel to set the chip to.
      */
-    void SetActiveChannel(const Channel ch);
+    OpStatus SetActiveChannel(const Channel ch);
 
     /*!
      * Get the selected channel (MAC).

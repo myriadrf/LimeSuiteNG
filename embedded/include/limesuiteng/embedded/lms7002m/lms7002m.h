@@ -33,7 +33,13 @@ void lms7002m_destroy(struct lms7002m_context* context);
 float lms7002m_get_reference_clock(struct lms7002m_context* context);
 lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, float frequency_Hz);
 
+uint8_t lms7002m_get_active_channel(struct lms7002m_context* self);
+lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const uint8_t channel);
+
 lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, float frequency_Hz);
+
+lime_Result lms7002m_set_rbbpga_db(struct lms7002m_context* self, const float value, const uint8_t channel);
+float lms7002m_get_rbbpga_db(struct lms7002m_context* self, const uint8_t channel);
 
 #ifdef __cplusplus
 }

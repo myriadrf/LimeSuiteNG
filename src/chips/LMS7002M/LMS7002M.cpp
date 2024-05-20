@@ -295,22 +295,22 @@ LMS7002M::~LMS7002M()
     delete mRegistersMap;
 }
 
-void LMS7002M::SetActiveChannel(const Channel ch)
+OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 {
-    if (ch == this->GetActiveChannel(false))
-        return;
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, static_cast<uint16_t>(ch));
+    lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<uint8_t>(ch));
+    return ResultToStatus(result);
 }
 
 LMS7002M::Channel LMS7002M::GetActiveChannel(bool fromChip)
 {
-    auto ch = Get_SPI_Reg_bits(LMS7002MCSR::MAC, fromChip);
-    return static_cast<Channel>(ch);
+    auto result{ GetActiveChannelIndex(fromChip) };
+    return static_cast<Channel>(result);
 }
 
 size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 {
-    return this->GetActiveChannel(fromChip) == Channel::ChB ? 1 : 0;
+    uint8_t result = lms7002m_get_active_channel(mC_impl);
+    return result;
 }
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
@@ -891,34 +891,13 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 
 OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    int g_pga_rbb = std::clamp(static_cast<int>(std::round(value)) + 12, 0, 31);
-    OpStatus ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, g_pga_rbb);
-
-    int rcc_ctl_pga_rbb = (430.0 * pow(0.65, (g_pga_rbb / 10.0)) - 110.35) / 20.4516 + 16;
-
-    int c_ctl_pga_rbb = 0;
-    if (0 <= g_pga_rbb && g_pga_rbb < 8)
-        c_ctl_pga_rbb = 3;
-    if (8 <= g_pga_rbb && g_pga_rbb < 13)
-        c_ctl_pga_rbb = 2;
-    if (13 <= g_pga_rbb && g_pga_rbb < 21)
-        c_ctl_pga_rbb = 1;
-    if (21 <= g_pga_rbb)
-        c_ctl_pga_rbb = 0;
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb);
-    ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::C_CTL_PGA_RBB, c_ctl_pga_rbb);
-    return ret;
+    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, value, static_cast<uint8_t>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    auto g_pga_rbb = this->Get_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB);
-    return g_pga_rbb - 12;
+    return lms7002m_get_rbbpga_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
 OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
