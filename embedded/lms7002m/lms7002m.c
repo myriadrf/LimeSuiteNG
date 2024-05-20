@@ -240,12 +240,10 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, co
     int c_ctl_pga_rbb = 0;
     if (0 <= g_pga_rbb && g_pga_rbb < 8)
         c_ctl_pga_rbb = 3;
-    if (8 <= g_pga_rbb && g_pga_rbb < 13)
+    else if (8 <= g_pga_rbb && g_pga_rbb < 13)
         c_ctl_pga_rbb = 2;
-    if (13 <= g_pga_rbb && g_pga_rbb < 21)
+    else if (13 <= g_pga_rbb && g_pga_rbb < 21)
         c_ctl_pga_rbb = 1;
-    if (21 <= g_pga_rbb)
-        c_ctl_pga_rbb = 0;
 
     ret = lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb);
     ret = lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_PGA_RBB, c_ctl_pga_rbb);
@@ -273,7 +271,7 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, co
     const double gmax = 30;
     double val = value - gmax;
 
-    int g_lna_rfe = 0;
+    int g_lna_rfe = 1;
     if (val >= 0)
         g_lna_rfe = 15;
     else if (val >= -1)
@@ -302,8 +300,6 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, co
         g_lna_rfe = 3;
     else if (val >= -27)
         g_lna_rfe = 2;
-    else
-        g_lna_rfe = 1;
 
     lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_LNA_RFE, g_lna_rfe);
     lms7002m_set_active_channel(self, savedChannel);
@@ -369,8 +365,6 @@ lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const float
         g_rxloopb_rfe = 2;
     else if (val >= -24)
         g_rxloopb_rfe = 1;
-    else
-        g_rxloopb_rfe = 0;
 
     lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_RXLOOPB_RFE, g_rxloopb_rfe);
 
