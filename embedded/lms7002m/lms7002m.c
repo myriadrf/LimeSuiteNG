@@ -110,6 +110,145 @@ static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max)
     return value;
 }
 
+lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, uint8_t channel, const bool enable)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    channel = clamp(channel, 0, 1) + 1;
+    lms7002m_set_active_channel(self, channel);
+
+    //--- LML ---
+    if (channel == LMS7002M_CHANNEL_A)
+    {
+        if (isTx)
+            lms7002m_spi_modify_csr(self, LMS7002M_TXEN_A, enable ? 1 : 0);
+        else
+            lms7002m_spi_modify_csr(self, LMS7002M_RXEN_A, enable ? 1 : 0);
+    }
+    else
+    {
+        if (isTx)
+            lms7002m_spi_modify_csr(self, LMS7002M_TXEN_B, enable ? 1 : 0);
+        else
+            lms7002m_spi_modify_csr(self, LMS7002M_RXEN_B, enable ? 1 : 0);
+    }
+
+    //--- ADC/DAC ---
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_AFE, 1);
+
+    if (!enable)
+    {
+        bool disable;
+        if (channel == LMS7002M_CHANNEL_A)
+            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
+        else
+            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_A : LMS7002M_RXEN_A) == 0;
+        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
+    }
+    else
+        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, 0);
+
+    if (channel == LMS7002M_CHANNEL_B)
+        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, enable ? 0 : 1);
+
+    int disabledChannels = (lms7002m_spi_read_bits(self, LMS7002M_PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_AFE, disabledChannels == 0xF ? 1 : 0);
+
+    //--- digital ---
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_TXTSP, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_ISINC_BYP_TXTSP, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_TXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_TXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_TXTSP, 1);
+
+        if (!enable)
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CMIX_BYP_TXTSP, 1);
+            lms7002m_spi_modify_csr(self, LMS7002M_DC_BYP_TXTSP, 1);
+            lms7002m_spi_modify_csr(self, LMS7002M_GC_BYP_TXTSP, 1);
+            lms7002m_spi_modify_csr(self, LMS7002M_PH_BYP_TXTSP, 1);
+        }
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_RXTSP, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_BYP_RXTSP, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_DCLOOP_STOP, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_AGC_MODE_RXTSP, 2); //bypass
+        lms7002m_spi_modify_csr(self, LMS7002M_AGC_BYP_RXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_RXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_RXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_RXTSP, 1);
+        if (!enable)
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CMIX_BYP_RXTSP, 1);
+            lms7002m_spi_modify_csr(self, LMS7002M_GC_BYP_RXTSP, 1);
+            lms7002m_spi_modify_csr(self, LMS7002M_PH_BYP_RXTSP, 1);
+        }
+    }
+
+    //--- baseband ---
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_TBB, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TBB, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_LPFIAMP_TBB, enable ? 0 : 1);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_RBB, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G_RBB, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_PGA_RBB, enable ? 0 : 1);
+    }
+
+    //--- frontend ---
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_TRF, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_TLOBUF_TRF, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_TXPAD_TRF, enable ? 0 : 1);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_RFE, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G_RFE, enable ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_MXLOBUF_RFE, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_QGEN_RFE, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_TIA_RFE, enable ? 0 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_PD_LNA_RFE, enable ? 0 : 1);
+    }
+
+    //--- synthesizers ---
+    if (isTx)
+    {
+        lms7002m_set_active_channel(self, LMS7002M_CHANNEL_SXT);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_SXRSXT, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G, (disabledChannels & 3) == 3 ? 0 : 1);
+        if (channel == LMS7002M_CHANNEL_B) //enable LO to channel B
+        {
+            lms7002m_set_active_channel(self, LMS7002M_CHANNEL_A);
+            lms7002m_spi_modify_csr(self, LMS7002M_EN_NEXTTX_TRF, enable ? 1 : 0);
+        }
+    }
+    else
+    {
+        lms7002m_set_active_channel(self, LMS7002M_CHANNEL_SXR);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_SXRSXT, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_G, (disabledChannels & 0xC) == 0xC ? 0 : 1);
+        if (channel == LMS7002M_CHANNEL_B) //enable LO to channel B
+        {
+            lms7002m_set_active_channel(self, LMS7002M_CHANNEL_A);
+            lms7002m_spi_modify_csr(self, LMS7002M_EN_NEXTRX_RFE, enable ? 1 : 0);
+        }
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return lime_Result_Success;
+}
+
 uint8_t lms7002m_get_active_channel(lms7002m_context* self)
 {
     return lms7002m_spi_read_csr(self, LMS7002M_MAC);

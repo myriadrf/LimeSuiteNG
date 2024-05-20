@@ -314,142 +314,8 @@ size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
 {
-    ChannelScope scope(this, channel, false);
-
-    const Channel ch = IntToChannel(channel);
-
-    const bool isTx = dir == TRXDir::Tx;
-    //--- LML ---
-    if (ch == Channel::ChA)
-    {
-        if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_A, enable ? 1 : 0);
-        else
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_A, enable ? 1 : 0);
-    }
-    else
-    {
-        if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_B, enable ? 1 : 0);
-        else
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_B, enable ? 1 : 0);
-    }
-
-    //--- ADC/DAC ---
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_AFE, 1);
-
-    if (!enable)
-    {
-        bool disable;
-        if (ch == Channel::ChA)
-            disable = Get_SPI_Reg_bits(isTx ? TXEN_B : RXEN_B) == 0;
-        else
-            disable = Get_SPI_Reg_bits(isTx ? TXEN_A : RXEN_A) == 0;
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, disable);
-    }
-    else
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, 0);
-
-    if (ch == Channel::ChB)
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE2 : PD_RX_AFE2, enable ? 0 : 1);
-
-    int disabledChannels = (Get_SPI_Reg_bits(PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, disabledChannels == 0xF ? 1 : 0);
-
-    //--- digital ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_TXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_TXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_TXTSP, 1);
-
-        if (!enable)
-        {
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::GC_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::PH_BYP_TXTSP, 1);
-        }
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCLOOP_STOP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 2); //bypass
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_RXTSP, 1);
-        if (!enable)
-        {
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_RXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::GC_BYP_RXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::PH_BYP_RXTSP, 1);
-        }
-    }
-
-    //--- baseband ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TBB, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFIAMP_TBB, enable ? 0 : 1);
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RBB, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_PGA_RBB, enable ? 0 : 1);
-    }
-
-    //--- frontend ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TRF, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, enable ? 0 : 1);
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RFE, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_MXLOBUF_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, enable ? 0 : 1);
-    }
-
-    //--- synthesizers ---
-    if (isTx)
-    {
-        this->SetActiveChannel(Channel::ChSXT);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels & 3) == 3 ? 0 : 1);
-        if (ch == Channel::ChB) //enable LO to channel B
-        {
-            this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTTX_TRF, enable ? 1 : 0);
-        }
-    }
-    else
-    {
-        this->SetActiveChannel(Channel::ChSXR);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels & 0xC) == 0xC ? 0 : 1);
-        if (ch == Channel::ChB) //enable LO to channel B
-        {
-            this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTRX_RFE, enable ? 1 : 0);
-        }
-    }
-    this->SetActiveChannel(ch);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, channel, enable);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::ResetChip()
@@ -954,6 +820,7 @@ float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
     return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
+// opt_gain_tbb
 OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
 {
     OpStatus status;
@@ -975,6 +842,7 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     return status;
 }
 
+// opt_gain_tbb
 float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 {
     ChannelScope scope(this, channel);

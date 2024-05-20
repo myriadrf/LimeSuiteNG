@@ -2,6 +2,8 @@
 #define LIME_LMS7002M_H
 
 #include "limesuiteng/embedded/result.h"
+
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -18,6 +20,14 @@ enum lms7002m_path_rfe {
     LMS7002M_PATH_RFE_LNAW,
     LMS7002M_PATH_RFE_LB1,
     LMS7002M_PATH_RFE_LB2
+};
+
+enum lms7002m_channel {
+    LMS7002M_CHANNEL_A = 1U,
+    LMS7002M_CHANNEL_B = 2U,
+    LMS7002M_CHANNEL_AB = 3U,
+    LMS7002M_CHANNEL_SXR = 1U,
+    LMS7002M_CHANNEL_SXT = 2U
 };
 
 typedef int (*lms7002m_spi16_transact_hook)(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData);
@@ -40,6 +50,8 @@ void lms7002m_destroy(struct lms7002m_context* context);
 
 float lms7002m_get_reference_clock(struct lms7002m_context* context);
 lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, float frequency_Hz);
+
+lime_Result lms7002m_enable_channel(struct lms7002m_context* self, const bool isTx, const uint8_t channel, const bool enable);
 
 uint8_t lms7002m_get_active_channel(struct lms7002m_context* self);
 lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const uint8_t channel);
