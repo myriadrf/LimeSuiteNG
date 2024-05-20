@@ -47,6 +47,9 @@ float lms7002m_get_rfelna_db(struct lms7002m_context* self, const uint8_t channe
 lime_Result lms7002m_set_rfe_loopback_lna_db(struct lms7002m_context* self, const float gain, const uint8_t channel);
 float lms7002m_get_rfe_loopback_lna_db(struct lms7002m_context* self, const uint8_t channel);
 
+lime_Result lms7002m_set_rfetia_db(struct lms7002m_context* self, const float value, const uint8_t channel);
+float lms7002m_get_rfetia_db(struct lms7002m_context* self, const uint8_t channel);
+
 #ifdef __cplusplus
 }
 #endif

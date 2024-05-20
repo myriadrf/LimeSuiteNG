@@ -391,3 +391,43 @@ float lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t cha
     lms7002m_set_active_channel(self, savedChannel);
     return retval;
 }
+
+lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const float value, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 12;
+    double val = value - gmax;
+
+    int g_tia_rfe = 1;
+
+    if (val >= 0)
+        g_tia_rfe = 3;
+    else if (val >= -3)
+        g_tia_rfe = 2;
+
+    uint16_t ret = lms7002m_spi_modify_csr(self, LMS7002M_G_TIA_RFE, g_tia_rfe);
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 12;
+    uint8_t g_tia_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_TIA_RFE);
+
+    float retval = 0.0;
+    const float value_to_minus[4] = { 0, 12, 3, 0 };
+
+    if (g_tia_rfe > 0 && g_tia_rfe < 4)
+    {
+        retval = gmax - value_to_minus[g_tia_rfe];
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return retval;
+}

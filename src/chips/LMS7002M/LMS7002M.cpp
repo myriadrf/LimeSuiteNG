@@ -924,38 +924,13 @@ float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
 
 OpStatus LMS7002M::SetRFETIA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 12;
-    double val = value - gmax;
-
-    int g_tia_rfe = 0;
-    if (val >= 0)
-        g_tia_rfe = 3;
-    else if (val >= -3)
-        g_tia_rfe = 2;
-    else
-        g_tia_rfe = 1;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, g_tia_rfe);
+    lime_Result result = lms7002m_set_rfetia_db(mC_impl, value, static_cast<uint8_t>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFETIA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 12;
-    auto g_tia_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE);
-    switch (g_tia_rfe)
-    {
-    case 3:
-        return gmax - 0;
-    case 2:
-        return gmax - 3;
-    case 1:
-        return gmax - 12;
-    }
-    return 0.0;
+    return lms7002m_get_rfetia_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
 OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
