@@ -48,7 +48,6 @@ using namespace std::literals::string_view_literals;
 constexpr std::array<std::array<float_type, 2>, 3> LMS7002M::gVCO_frequency_table{
     { { 3800e6, 5222e6 }, { 4961e6, 6754e6 }, { 6306e6, 7714e6 } }
 };
-constexpr std::array<float_type, 2> LMS7002M::gCGEN_VCO_frequencies{ 1930e6, 2940e6 };
 
 constexpr LMS7002M::Channel IntToChannel(int channel)
 {

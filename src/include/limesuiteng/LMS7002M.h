@@ -966,7 +966,6 @@ class LIME_API LMS7002M
 
     static const std::map<MemorySection, std::array<uint16_t, 2>> MemorySectionAddresses;
     static const std::array<std::array<float_type, 2>, 3> gVCO_frequency_table;
-    static const std::array<float_type, 2> gCGEN_VCO_frequencies;
 
     uint32_t GetRSSI();
     void SetRxDCOFF(int8_t offsetI, int8_t offsetQ);

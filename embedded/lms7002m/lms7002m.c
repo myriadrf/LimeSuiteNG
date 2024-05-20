@@ -166,12 +166,12 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
     return lime_Result_Error;
 }
 
-float lms7002m_get_reference_clock(struct lms7002m_context* context)
+float lms7002m_get_reference_clock(lms7002m_context* context)
 {
     return context->reference_clock_hz;
 }
 
-lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, float frequency_Hz)
+lime_Result lms7002m_set_reference_clock(lms7002m_context* context, float frequency_Hz)
 {
     if (frequency_Hz <= 0)
         return lime_Result_InvalidValue;
@@ -490,7 +490,7 @@ lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const float
     return ret;
 }
 
-float lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint8_t channel)
+float lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const uint8_t channel)
 {
     uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
