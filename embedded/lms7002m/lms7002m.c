@@ -46,7 +46,7 @@ static lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result 
     return result;
 }
 
-struct lms7002m_context* lms7002m_initialize(const lms7002m_hooks* hooks)
+struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
     lms7002m_context* self = malloc(sizeof(lms7002m_context));
     memcpy(&self->hooks, hooks, sizeof(lms7002m_hooks));
@@ -143,6 +143,20 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
     return lime_Result_Error;
 }
 
+float lms7002m_get_reference_clock(struct lms7002m_context* context)
+{
+    return context->reference_clock_hz;
+}
+
+lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, float frequency_Hz)
+{
+    if (frequency_Hz <= 0)
+        return lime_Result_InvalidValue;
+
+    context->reference_clock_hz = frequency_Hz;
+    return lime_Result_Success;
+}
+
 static const float gCGEN_VCO_frequencies[2] = { 1930e6, 2940e6 };
 lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
 {
@@ -152,7 +166,7 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
     float dFvco;
     float dFrac;
 
-    float refClk = 30.72e6;
+    const float refClk = lms7002m_get_reference_clock(self);
 
     //VCO frequency selection according to F_CLKH
     uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;

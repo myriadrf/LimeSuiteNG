@@ -107,6 +107,25 @@ const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> LMS7002M::Memor
     { LMS7002M::MemorySection::RSSI_DC_CONFIG, { 0x0640, 0x0641 } },
 };
 
+static_assert(OpStatus::Success == static_cast<lime::OpStatus>(lime_Result_Success));
+static_assert(OpStatus::Error == static_cast<lime::OpStatus>(lime_Result_Error));
+static_assert(OpStatus::NotImplemented == static_cast<lime::OpStatus>(lime_Result_NotImplemented));
+static_assert(OpStatus::IOFailure == static_cast<lime::OpStatus>(lime_Result_IOFailure));
+static_assert(OpStatus::InvalidValue == static_cast<lime::OpStatus>(lime_Result_InvalidValue));
+static_assert(OpStatus::FileNotFound == static_cast<lime::OpStatus>(lime_Result_FileNotFound));
+static_assert(OpStatus::OutOfRange == static_cast<lime::OpStatus>(lime_Result_OutOfRange));
+static_assert(OpStatus::NotSupported == static_cast<lime::OpStatus>(lime_Result_NotSupported));
+static_assert(OpStatus::Timeout == static_cast<lime::OpStatus>(lime_Result_Timeout));
+static_assert(OpStatus::Busy == static_cast<lime::OpStatus>(lime_Result_Busy));
+static_assert(OpStatus::Aborted == static_cast<lime::OpStatus>(lime_Result_Aborted));
+static_assert(OpStatus::PermissionDenied == static_cast<lime::OpStatus>(lime_Result_PermissionDenied));
+static_assert(OpStatus::NotConnected == static_cast<lime::OpStatus>(lime_Result_NotConnected));
+
+static OpStatus ResultToStatus(lime_Result result)
+{
+    return static_cast<lime::OpStatus>(result);
+}
+
 /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
 class ChannelScope
 {
@@ -233,7 +252,6 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , useCache(0)
     , mRegistersMap(new LMS7002M_RegistersMap())
     , controlPort(port)
-    , _cachedRefClockRate(30.72e6)
     , mC_impl(nullptr)
 {
     struct lms7002m_hooks hooks;
@@ -250,9 +268,10 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
             chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData);
     };
 
-    mC_impl = lms7002m_initialize(&hooks);
+    mC_impl = lms7002m_create(&hooks);
     if (mC_impl == nullptr)
         lime::error("Failed to initialize LMS7002M C implementation");
+    lms7002m_set_reference_clock(mC_impl, 30.72e6);
 
     opt_gain_tbb[0] = -1;
     opt_gain_tbb[1] = -1;
@@ -1304,13 +1323,13 @@ OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 
 OpStatus LMS7002M::SetReferenceClk_SX(TRXDir dir, float_type freq_Hz)
 {
-    _cachedRefClockRate = freq_Hz;
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_reference_clock(mC_impl, freq_Hz);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
 {
-    return _cachedRefClockRate;
+    return lms7002m_get_reference_clock(mC_impl);
 }
 
 OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
@@ -1359,7 +1378,7 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
 {
     lime_Result result = lms7002m_set_frequency_cgen(mC_impl, freq_Hz);
-    return static_cast<lime::OpStatus>(result);
+    return ResultToStatus(result);
 }
 
 bool LMS7002M::GetCGENLocked(void)
@@ -1708,6 +1727,7 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
 
     ChannelScope scope(this);
     this->SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
+
     Modify_SPI_Reg_bits(LMS7002MCSR::EN_INTONLY_SDM, 0);
     Modify_SPI_Reg_bits(LMS7002MCSR::INT_SDM, integerPart); //INT_SDM
     Modify_SPI_Reg_bits(0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]

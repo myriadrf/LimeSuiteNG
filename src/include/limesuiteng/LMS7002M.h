@@ -979,7 +979,6 @@ class LIME_API LMS7002M
 
     std::shared_ptr<ISPI> controlPort;
     std::array<int, 2> opt_gain_tbb;
-    double _cachedRefClockRate;
     OpStatus LoadConfigLegacyFile(const std::string& filename);
 
     lms7002m_context* mC_impl;

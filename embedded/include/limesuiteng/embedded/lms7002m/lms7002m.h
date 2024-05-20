@@ -27,8 +27,11 @@ typedef struct lms7002m_hooks {
     void* on_cgen_frequency_changed_userData;
 } lms7002m_hooks;
 
-struct lms7002m_context* lms7002m_initialize(const lms7002m_hooks* hooks);
+struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks);
 void lms7002m_destroy(struct lms7002m_context* context);
+
+float lms7002m_get_reference_clock(struct lms7002m_context* context);
+lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, float frequency_Hz);
 
 lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, float frequency_Hz);
 
