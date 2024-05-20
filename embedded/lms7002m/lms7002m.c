@@ -264,3 +264,69 @@ float lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
     lms7002m_set_active_channel(self, savedChannel);
     return g_pga_rbb - 12;
 }
+
+lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 30;
+    double val = value - gmax;
+
+    int g_lna_rfe = 0;
+    if (val >= 0)
+        g_lna_rfe = 15;
+    else if (val >= -1)
+        g_lna_rfe = 14;
+    else if (val >= -2)
+        g_lna_rfe = 13;
+    else if (val >= -3)
+        g_lna_rfe = 12;
+    else if (val >= -4)
+        g_lna_rfe = 11;
+    else if (val >= -5)
+        g_lna_rfe = 10;
+    else if (val >= -6)
+        g_lna_rfe = 9;
+    else if (val >= -9)
+        g_lna_rfe = 8;
+    else if (val >= -12)
+        g_lna_rfe = 7;
+    else if (val >= -15)
+        g_lna_rfe = 6;
+    else if (val >= -18)
+        g_lna_rfe = 5;
+    else if (val >= -21)
+        g_lna_rfe = 4;
+    else if (val >= -24)
+        g_lna_rfe = 3;
+    else if (val >= -27)
+        g_lna_rfe = 2;
+    else
+        g_lna_rfe = 1;
+
+    lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_LNA_RFE, g_lna_rfe);
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}
+
+float lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    const double gmax = 30;
+    auto g_lna_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_LNA_RFE);
+
+    float retval = 0.0;
+    const int value_to_minus[16] = { 0, 30, 27, 24, 21, 18, 15, 12, 9, 6, 5, 4, 3, 2, 1, 0 };
+
+    if (g_lna_rfe > 0 && g_lna_rfe < 16)
+    {
+        retval = gmax - value_to_minus[g_lna_rfe];
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return retval;
+}
+

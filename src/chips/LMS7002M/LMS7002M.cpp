@@ -902,86 +902,13 @@ float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 
 OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 30;
-    double val = value - gmax;
-
-    int g_lna_rfe = 0;
-    if (val >= 0)
-        g_lna_rfe = 15;
-    else if (val >= -1)
-        g_lna_rfe = 14;
-    else if (val >= -2)
-        g_lna_rfe = 13;
-    else if (val >= -3)
-        g_lna_rfe = 12;
-    else if (val >= -4)
-        g_lna_rfe = 11;
-    else if (val >= -5)
-        g_lna_rfe = 10;
-    else if (val >= -6)
-        g_lna_rfe = 9;
-    else if (val >= -9)
-        g_lna_rfe = 8;
-    else if (val >= -12)
-        g_lna_rfe = 7;
-    else if (val >= -15)
-        g_lna_rfe = 6;
-    else if (val >= -18)
-        g_lna_rfe = 5;
-    else if (val >= -21)
-        g_lna_rfe = 4;
-    else if (val >= -24)
-        g_lna_rfe = 3;
-    else if (val >= -27)
-        g_lna_rfe = 2;
-    else
-        g_lna_rfe = 1;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, g_lna_rfe);
+    lime_Result result = lms7002m_set_rfelna_db(mC_impl, value, static_cast<uint8_t>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELNA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 30;
-    auto g_lna_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE);
-    switch (g_lna_rfe)
-    {
-    case 15:
-        return gmax - 0;
-    case 14:
-        return gmax - 1;
-    case 13:
-        return gmax - 2;
-    case 12:
-        return gmax - 3;
-    case 11:
-        return gmax - 4;
-    case 10:
-        return gmax - 5;
-    case 9:
-        return gmax - 6;
-    case 8:
-        return gmax - 9;
-    case 7:
-        return gmax - 12;
-    case 6:
-        return gmax - 15;
-    case 5:
-        return gmax - 18;
-    case 4:
-        return gmax - 21;
-    case 3:
-        return gmax - 24;
-    case 2:
-        return gmax - 27;
-    case 1:
-        return gmax - 30;
-    }
-    return 0.0;
+    return lms7002m_get_rfelna_db(mC_impl, static_cast<uint8_t>(channel));
 }
 
 OpStatus LMS7002M::SetRFELoopbackLNA_dB(const float_type gain, const Channel channel)
