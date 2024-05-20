@@ -11,6 +11,14 @@ extern "C" {
 struct lms7002m_context;
 
 enum lms7002m_vco_type { LMS7002M_VCO_CGEN, LMS7002M_VCO_SXR, LMS7002M_VCO_SXT };
+enum lms7002m_path_rfe {
+    LMS7002M_PATH_RFE_NONE,
+    LMS7002M_PATH_RFE_LNAH,
+    LMS7002M_PATH_RFE_LNAL,
+    LMS7002M_PATH_RFE_LNAW,
+    LMS7002M_PATH_RFE_LB1,
+    LMS7002M_PATH_RFE_LB2
+};
 
 typedef int (*lms7002m_spi16_transact_hook)(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData);
 typedef void (*lms7002m_log_hook)(int level, const char* message, void* userData);
@@ -55,6 +63,9 @@ float lms7002m_get_trfpad_db(struct lms7002m_context* self, const uint8_t channe
 
 lime_Result lms7002m_set_trf_loopback_pad_db(struct lms7002m_context* self, const float gain, const uint8_t channel);
 float lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint8_t channel);
+
+lime_Result lms7002m_set_path_rfe(struct lms7002m_context* self, const uint8_t path);
+uint8_t lms7002m_get_path_rfe(struct lms7002m_context* self);
 
 #ifdef __cplusplus
 }

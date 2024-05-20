@@ -3,10 +3,11 @@
 #include "lms7002m_context.h"
 
 #include <math.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "csr.h"
@@ -506,4 +507,65 @@ float lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint
 
     lms7002m_set_active_channel(self, savedChannel);
     return retval;
+}
+
+lime_Result lms7002m_set_path_rfe(lms7002m_context* self, const uint8_t path)
+{
+    int sel_path_rfe;
+    int pd_lb1 = 1;
+    int pd_lb2 = 1;
+
+    switch (path)
+    {
+    case LMS7002M_PATH_RFE_LNAH:
+        sel_path_rfe = 1;
+        break;
+    case LMS7002M_PATH_RFE_LB2:
+        pd_lb2 = 0;
+    case LMS7002M_PATH_RFE_LNAL:
+        sel_path_rfe = 2;
+        break;
+    case LMS7002M_PATH_RFE_LB1:
+        pd_lb1 = 0;
+    case LMS7002M_PATH_RFE_LNAW:
+        sel_path_rfe = 3;
+        break;
+    default:
+        sel_path_rfe = 0;
+        break;
+    }
+
+    lms7002m_spi_modify_csr(self, LMS7002M_SEL_PATH_RFE, sel_path_rfe);
+
+    int pd_lna_rfe = (path == 5 || path == 4 || sel_path_rfe == 0) ? 1 : 0;
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_LNA_RFE, pd_lna_rfe);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_RLOOPB_1_RFE, pd_lb1);
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_RLOOPB_2_RFE, pd_lb2);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_LB1_RFE, pd_lb1);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_LB2_RFE, pd_lb2);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_L_RFE, (path == LMS7002M_PATH_RFE_LNAL) ? 0 : 1);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_W_RFE, (path == LMS7002M_PATH_RFE_LNAW) ? 0 : 1);
+
+    //enable/disable the loopback path
+    const bool loopback = (path == LMS7002M_PATH_RFE_LB1) || (path == LMS7002M_PATH_RFE_LB2);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_LOOPB_TXPAD_TRF, loopback ? 1 : 0);
+
+    return lime_Result_Success;
+}
+
+uint8_t lms7002m_get_path_rfe(lms7002m_context* self)
+{
+    const int sel_path_rfe = lms7002m_spi_read_csr(self, LMS7002M_SEL_PATH_RFE);
+    if (lms7002m_spi_read_csr(self, LMS7002M_EN_INSHSW_LB1_RFE) == 0 && sel_path_rfe == 3)
+        return LMS7002M_PATH_RFE_LB1;
+    if (lms7002m_spi_read_csr(self, LMS7002M_EN_INSHSW_LB2_RFE) == 0 && sel_path_rfe == 2)
+        return LMS7002M_PATH_RFE_LB2;
+    if (lms7002m_spi_read_csr(self, LMS7002M_EN_INSHSW_L_RFE) == 0 && sel_path_rfe == 2)
+        return LMS7002M_PATH_RFE_LNAL;
+    if (lms7002m_spi_read_csr(self, LMS7002M_EN_INSHSW_W_RFE) == 0 && sel_path_rfe == 3)
+        return LMS7002M_PATH_RFE_LNAW;
+    if (sel_path_rfe == 1)
+        return LMS7002M_PATH_RFE_LNAH;
+    return LMS7002M_PATH_RFE_NONE;
 }

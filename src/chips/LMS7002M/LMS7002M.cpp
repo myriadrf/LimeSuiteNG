@@ -994,62 +994,13 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 
 OpStatus LMS7002M::SetPathRFE(PathRFE path)
 {
-    int sel_path_rfe;
-    int pd_lb1 = 1;
-    int pd_lb2 = 1;
-    switch (path)
-    {
-    case PathRFE::LNAH:
-        sel_path_rfe = 1;
-        break;
-    case PathRFE::LB2:
-        pd_lb2 = 0;
-    case PathRFE::LNAL:
-        sel_path_rfe = 2;
-        break;
-    case PathRFE::LB1:
-        pd_lb1 = 0;
-    case PathRFE::LNAW:
-        sel_path_rfe = 3;
-        break;
-    default:
-        sel_path_rfe = 0;
-        break;
-    }
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::SEL_PATH_RFE, sel_path_rfe);
-
-    int pd_lna_rfe = (path == PathRFE::LB2 || path == PathRFE::LB1 || sel_path_rfe == 0) ? 1 : 0;
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, pd_lna_rfe);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RLOOPB_1_RFE, pd_lb1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RLOOPB_2_RFE, pd_lb2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB1_RFE, pd_lb1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB2_RFE, pd_lb2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_L_RFE, (path == PathRFE::LNAL) ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_W_RFE, (path == PathRFE::LNAW) ? 0 : 1);
-
-    //enable/disable the loopback path
-    const bool loopback = (path == PathRFE::LB1) or (path == PathRFE::LB2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_LOOPB_TXPAD_TRF, loopback ? 1 : 0);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_path_rfe(mC_impl, static_cast<uint8_t>(path));
+    return ResultToStatus(result);
 }
 
 LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
 {
-    const int sel_path_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_PATH_RFE);
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB1_RFE) == 0 && sel_path_rfe == 3)
-        return PathRFE::LB1;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB2_RFE) == 0 && sel_path_rfe == 2)
-        return PathRFE::LB2;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_L_RFE) == 0 && sel_path_rfe == 2)
-        return PathRFE::LNAL;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_W_RFE) == 0 && sel_path_rfe == 3)
-        return PathRFE::LNAW;
-    if (sel_path_rfe == 1)
-        return PathRFE::LNAH;
-    return PathRFE::NONE;
+    return static_cast<PathRFE>(lms7002m_get_path_rfe(mC_impl));
 }
 
 OpStatus LMS7002M::SetBandTRF(const int band)
