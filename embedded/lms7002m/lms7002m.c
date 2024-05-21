@@ -801,11 +801,11 @@ float lms7002m_get_reference_clock_tsp(lms7002m_context* self, bool isTx)
 
 bool lms7002m_get_cgen_locked(lms7002m_context* self)
 {
-    return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO_CGEN.address, 13, 12) & 0b11) == 0b10;
+    return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO_CGEN.address, 13, 12) & 0x3) == 0x2;
 }
 
 bool lms7002m_get_sx_locked(lms7002m_context* self, bool isTx)
 {
     lms7002m_set_active_channel(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
-    return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO.address, 13, 12) & 0b11) == 0b10;
+    return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO.address, 13, 12) & 0x3) == 0x2;
 }
