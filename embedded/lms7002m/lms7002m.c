@@ -394,6 +394,19 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
     return lime_Result_Success;
 }
 
+float lms7002m_get_frequency_cgen(lms7002m_context* self)
+{
+    const float ref_clock = lms7002m_get_reference_clock(self);
+    const uint16_t div_outch_cgen = lms7002m_spi_read_csr(self, LMS7002M_DIV_OUTCH_CGEN);
+    const float dMul = (ref_clock / 2.0) / (div_outch_cgen + 1);
+
+    const uint16_t gINT = lms7002m_spi_read_bits(self, 0x0088, 13, 0); //read whole register to reduce SPI transfers
+    const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x0087, 15, 0);
+
+    const uint32_t gFRAC = ((gINT & 0xF) << 16) | lowerRegister;
+    return dMul * ((gINT >> 4) + 1 + gFRAC / 1048576.0);
+}
+
 lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, const uint8_t channel)
 {
     uint8_t savedChannel = lms7002m_get_active_channel(self);

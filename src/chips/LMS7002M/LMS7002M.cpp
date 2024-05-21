@@ -913,11 +913,7 @@ std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phas
 
 float_type LMS7002M::GetFrequencyCGEN()
 {
-    float_type dMul =
-        (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7002MCSR::DIV_OUTCH_CGEN, true) + 1); //DIV_OUTCH_CGEN
-    uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0, true); //read whole register to reduce SPI transfers
-    uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x0087, 15, 0, true);
-    return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
+    return lms7002m_get_frequency_cgen(mC_impl);
 }
 
 float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
