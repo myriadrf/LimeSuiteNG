@@ -1248,32 +1248,14 @@ OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
 
 OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)
 {
-    if (index > 15)
-        return ReportError(OpStatus::InvalidValue, "SetNCOPhaseOffset(index = %d) - index out of range [0, 15]", index);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
-    uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
-    SPI_write(addr + index, pho);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_phase_offset(mC_impl, dir == TRXDir::Tx, index, angle_deg);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
-    OpStatus status = SetNCOFrequency(dir, 0, frequencyOffset);
-    if (status != OpStatus::Success)
-        return status;
-
-    if (angles_deg == nullptr)
-    {
-        return OpStatus::Success;
-    }
-
-    for (uint8_t i = 0; i < 16 && i < count; i++)
-    {
-        status = SetNCOPhaseOffset(dir, i, angles_deg[i]);
-        if (status != OpStatus::Success)
-            return status;
-    }
-    return Modify_SPI_Reg_bits(dir == TRXDir::Tx ? SEL_TX : SEL_RX, 0);
+    lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, angles_deg, count, frequencyOffset);
+    return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequencyOffset)

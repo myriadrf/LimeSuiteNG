@@ -1044,12 +1044,50 @@ double lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8
     return refClk_Hz * (fcw / 4294967296.0);
 }
 
+lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index, double angle_deg)
+{
+    if (index > 15)
+    {
+        return lms7002m_report_error(
+            self, lime_Result_InvalidValue, "SetNCOPhaseOffset(index = %d) - index out of range [0, 15]", index);
+    }
+
+    const uint16_t addr = isTx ? 0x0244 : 0x0444;
+    const uint16_t pho = 65536 * (angle_deg / 360);
+    lms7002m_spi_write(self, addr + index, pho);
+    return lime_Result_Success;
+}
+
 lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, double angle_deg)
 {
     const uint16_t addr = isTx ? 0x0241 : 0x0441;
     const uint16_t pho = 65536 * (angle_deg / 360);
     lms7002m_spi_write(self, addr, pho);
     return lime_Result_Success;
+}
+
+lime_Result lms7002m_set_nco_phases(
+    lms7002m_context* self, bool isTx, const double* const angles_deg, uint8_t count, double frequencyOffset)
+{
+    lime_Result status = lms7002m_set_nco_frequency(self, isTx, 0, frequencyOffset);
+    if (status != lime_Result_Success)
+    {
+        return status;
+    }
+
+    if (angles_deg == NULL)
+    {
+        return lime_Result_Success;
+    }
+
+    for (uint8_t i = 0; i < 16 && i < count; i++)
+    {
+        status = lms7002m_set_nco_phase_offset(self, isTx, i, angles_deg[i]);
+        if (status != lime_Result_Success)
+            return status;
+    }
+
+    return lms7002m_spi_modify_csr(self, isTx ? LMS7002M_SEL_TX : LMS7002M_SEL_RX, 0);
 }
 
 lime_Result lms7002m_set_nco_frequencies(
