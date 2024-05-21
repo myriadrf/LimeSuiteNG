@@ -200,7 +200,8 @@ TEST(LMS64CProtocol, CustomParameterWriteNotFullyWritten)
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(0);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_EQ(status, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteNotFullyRead)
@@ -219,7 +220,8 @@ TEST(LMS64CProtocol, CustomParameterWriteNotFullyRead)
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_NE(status, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteWrongStatus)
@@ -242,5 +244,6 @@ TEST(LMS64CProtocol, CustomParameterWriteWrongStatus)
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_NE(status, OpStatus::Success);
 }
