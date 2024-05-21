@@ -1272,3 +1272,16 @@ lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, double cgen
 
     return lms7002m_set_frequency_cgen(self, cgen_freq_Hz);
 }
+
+lime_Result lms7002m_enable_sxtdd(lms7002m_context* self, bool tdd)
+{
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, LMS7002M_CHANNEL_SXT);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_LOCH_T2RBUF, tdd ? 0 : 1);
+    lms7002m_spi_modify_csr(self, LMS7002M_MAC, 1); // switch to SXR
+    lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO, tdd ? 1 : 0);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}

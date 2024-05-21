@@ -119,6 +119,8 @@ lime_Result lms7002m_get_gfir_coefficients(
 lime_Result lms7002m_set_interface_frequency(
     struct lms7002m_context* self, double cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd);
 
+lime_Result lms7002m_enable_sxtdd(struct lms7002m_context* self, bool tdd);
+
 #ifdef __cplusplus
 }
 #endif

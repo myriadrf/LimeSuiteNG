@@ -1870,10 +1870,8 @@ OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t 
 
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
 {
-    ChannelScope scope(this, LMS7002M::Channel::ChSXT);
-    Modify_SPI_Reg_bits(PD_LOCH_T2RBUF, tdd ? 0 : 1);
-    Modify_SPI_Reg_bits(MAC, 1); // switch to SXR
-    return Modify_SPI_Reg_bits(PD_VCO, tdd ? 1 : 0);
+    lime_Result result = lms7002m_enable_sxtdd(mC_impl, tdd);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
