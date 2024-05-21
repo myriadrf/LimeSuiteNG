@@ -1876,22 +1876,8 @@ OpStatus LMS7002M::EnableSXTDD(bool tdd)
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
 {
-    const bool bypass = I == 0.0 and Q == 0.0;
-    if (dir == TRXDir::Tx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_TXTSP, bypass ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORRI_TXTSP, std::lrint(I * 127));
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORRQ_TXTSP, std::lrint(Q * 127));
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::EN_DCOFF_RXFE_RFE, bypass ? 0 : 1);
-        unsigned val = std::lrint(std::abs(I * 63)) + (I < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::DCOFFI_RFE, val);
-        val = std::lrint(std::abs(Q * 63)) + (Q < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::DCOFFQ_RFE, val);
-    }
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_dc_offset(mC_impl, dir == TRXDir::Tx, I, Q);
+    return ResultToStatus(result);
 }
 
 void LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)

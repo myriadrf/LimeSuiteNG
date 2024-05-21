@@ -1285,3 +1285,24 @@ lime_Result lms7002m_enable_sxtdd(lms7002m_context* self, bool tdd)
     lms7002m_set_active_channel(self, savedChannel);
     return ret;
 }
+
+lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const double I, const double Q)
+{
+    const bool bypass = I == 0.0 && Q == 0.0;
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_BYP_TXTSP, bypass ? 1 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DCCORRI_TXTSP, lrint(I * 127));
+        lms7002m_spi_modify_csr(self, LMS7002M_DCCORRQ_TXTSP, lrint(Q * 127));
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DCOFF_RXFE_RFE, bypass ? 0 : 1);
+        unsigned int val = lrint(abs(I * 63)) + (I < 0 ? 64 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DCOFFI_RFE, val);
+        val = lrint(abs(Q * 63)) + (Q < 0 ? 64 : 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DCOFFQ_RFE, val);
+    }
+
+    return lime_Result_Success;
+}
