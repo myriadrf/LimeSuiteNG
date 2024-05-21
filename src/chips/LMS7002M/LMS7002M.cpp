@@ -1279,107 +1279,14 @@ float_type LMS7002M::GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index)
 
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
-    if (gfirIndex > 2)
-    {
-        lime::warning("SetGFIRCoefficients: Invalid GFIR index(%i). Will configure GFIR[2].", gfirIndex);
-        gfirIndex = 2;
-    }
-
-    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (dir == TRXDir::Tx ? 0 : 0x0200);
-    const uint8_t maxCoefCount = gfirIndex < 2 ? 40 : 120;
-    const uint8_t bankCount = gfirIndex < 2 ? 5 : 15;
-
-    if (coefCount > maxCoefCount)
-    {
-        return ReportError(OpStatus::OutOfRange,
-            "SetGFIRCoefficients: too many coefficients(%i), GFIR[%i] can have only %i",
-            coefCount,
-            gfirIndex,
-            maxCoefCount);
-    }
-
-    uint16_t addrs[120];
-    int16_t words[120];
-    // actual used coefficients count is multiple of 'bankCount'
-    // if coefCount is not multiple, extra '0' coefficients will be written
-    const uint8_t bankLength = std::ceil(static_cast<float>(coefCount) / bankCount);
-    const int16_t actualCoefCount = bankLength * bankCount;
-    assert(actualCoefCount <= maxCoefCount);
-
-    for (int i = 0; i < actualCoefCount; ++i)
-    {
-        uint8_t bank = i / bankLength;
-        uint8_t bankRow = i % bankLength;
-        addrs[i] = startAddr + (bank * 8) + bankRow;
-        addrs[i] += 24 * (bank / 5);
-
-        if (i < coefCount)
-        {
-            words[i] = coef[i] * 32767;
-
-            if (coef[i] < -1 || coef[i] > 1)
-            {
-                lime::warning("Coefficient %f is outside of range [-1:1], incorrect value will be written.", coef[i]);
-            }
-        }
-        else
-        {
-            words[i] = 0;
-        }
-    }
-    CSRegister gfirL_param = GFIR1_L_TXTSP;
-    gfirL_param.address += gfirIndex + (dir == TRXDir::Tx ? 0 : 0x0200);
-    Modify_SPI_Reg_bits(gfirL_param, bankLength - 1);
-
-    return SPI_write_batch(addrs, reinterpret_cast<const uint16_t*>(words), actualCoefCount, true);
+    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, coef, coefCount);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    OpStatus status = OpStatus::Error;
-
-    if (gfirIndex > 2)
-    {
-        lime::warning("GetGFIRCoefficients: Invalid GFIR index(%i). Will read GFIR[2].", gfirIndex);
-        gfirIndex = 2;
-    }
-
-    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (dir == TRXDir::Tx ? 0 : 0x0200);
-    const uint8_t coefLimit = gfirIndex < 2 ? 40 : 120;
-
-    if (coefCount > coefLimit)
-    {
-        return ReportError(OpStatus::OutOfRange, "GetGFIRCoefficients(coefCount=%d) - exceeds coefLimit=%d", coefCount, coefLimit);
-    }
-
-    std::vector<uint16_t> addresses;
-    for (uint8_t index = 0; index < coefCount; ++index)
-    {
-        addresses.push_back(startAddr + index + 24 * (index / 40));
-    }
-
-    int16_t spiData[120];
-    std::memset(spiData, 0, 120 * sizeof(int16_t));
-    if (controlPort)
-    {
-        status = SPI_read_batch(&addresses[0], reinterpret_cast<uint16_t*>(spiData), coefCount);
-        for (uint8_t index = 0; index < coefCount; ++index)
-        {
-            coef[index] = spiData[index] / 32768.0;
-        }
-    }
-    else
-    {
-        const int channel = Get_SPI_Reg_bits(LMS7002MCSR::MAC, false) > 1 ? 1 : 0;
-        for (uint8_t index = 0; index < coefCount; ++index)
-        {
-            uint16_t value = mRegistersMap->GetValue(channel, addresses[index]);
-            coef[index] = *reinterpret_cast<int16_t*>(&value) / 32768.0;
-        }
-        status = OpStatus::Success;
-    }
-
-    return status;
+    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, coef, coefCount);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)

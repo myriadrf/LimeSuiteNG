@@ -2,6 +2,7 @@
 #include "limesuiteng/embedded/loglevel.h"
 #include "lms7002m_context.h"
 
+#include <assert.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -1119,6 +1120,92 @@ lime_Result lms7002m_get_nco_frequencies(
     {
         uint16_t value = lms7002m_spi_read(self, isTx ? 0x0241 : 0x0441);
         *phaseOffset = 360.0 * value / 65536.0;
+    }
+
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_set_gfir_coefficients(
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, const double* const coef, uint8_t coefCount)
+{
+    if (gfirIndex > 2)
+    {
+        lms7002m_log(
+            self, lime_LogLevel_Warning, "SetGFIRCoefficients: Invalid GFIR index(%i). Will configure GFIR[2].", gfirIndex);
+        gfirIndex = 2;
+    }
+
+    const uint8_t maxCoefCount = gfirIndex < 2 ? 40 : 120;
+    if (coefCount > maxCoefCount)
+    {
+        return lms7002m_report_error(self,
+            lime_Result_OutOfRange,
+            "SetGFIRCoefficients: too many coefficients(%i), GFIR[%i] can have only %i",
+            coefCount,
+            gfirIndex,
+            maxCoefCount);
+    }
+
+    // actual used coefficients count is multiple of 'bankCount'
+    // if coefCount is not multiple, extra '0' coefficients will be written
+    const uint8_t bankCount = gfirIndex < 2 ? 5 : 15;
+    const uint8_t bankLength = ceil((float)(coefCount) / bankCount);
+    const int16_t actualCoefCount = bankLength * bankCount;
+    assert(actualCoefCount <= maxCoefCount);
+
+    lms7002m_csr gfirL_param = LMS7002M_GFIR1_L_TXTSP;
+    gfirL_param.address += gfirIndex + (isTx ? 0 : 0x0200);
+    lms7002m_spi_modify_csr(self, gfirL_param, bankLength - 1);
+
+    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (isTx ? 0 : 0x0200);
+    for (int i = 0; i < actualCoefCount; ++i)
+    {
+        const uint8_t bank = i / bankLength;
+        const uint8_t bankRow = i % bankLength;
+        const uint16_t address = (startAddr + (bank * 8) + bankRow) + (24 * (bank / 5));
+        int16_t valueToWrite = 0;
+
+        if (i < coefCount)
+        {
+            valueToWrite = coef[i] * 32768;
+
+            if (coef[i] < -1 || coef[i] > 1)
+            {
+                lms7002m_log(self,
+                    lime_LogLevel_Warning,
+                    "Coefficient %f is outside of range [-1:1], incorrect value will be written.",
+                    coef[i]);
+            }
+        }
+
+        lms7002m_spi_write(self, address, (uint16_t)valueToWrite);
+    }
+
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_get_gfir_coefficients(
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, double* const coef, uint8_t coefCount)
+{
+    if (gfirIndex > 2)
+    {
+        lms7002m_log(self, lime_LogLevel_Warning, "GetGFIRCoefficients: Invalid GFIR index(%i). Will read GFIR[2].", gfirIndex);
+        gfirIndex = 2;
+    }
+
+    const uint8_t coefLimit = gfirIndex < 2 ? 40 : 120;
+
+    if (coefCount > coefLimit)
+    {
+        return lms7002m_report_error(
+            self, lime_Result_OutOfRange, "GetGFIRCoefficients(coefCount=%d) - exceeds coefLimit=%d", coefCount, coefLimit);
+    }
+
+    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (isTx ? 0 : 0x0200);
+    for (uint8_t index = 0; index < coefCount; ++index)
+    {
+        const int16_t registerValue = (int16_t)(lms7002m_spi_read(self, startAddr + index + 24 * (index / 40)));
+        coef[index] = registerValue / 32768.0;
     }
 
     return lime_Result_Success;

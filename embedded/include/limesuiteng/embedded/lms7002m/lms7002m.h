@@ -111,6 +111,11 @@ lime_Result lms7002m_set_nco_frequencies(
 lime_Result lms7002m_get_nco_frequencies(
     struct lms7002m_context* self, bool isTx, double* const freq_Hz, uint8_t count, double* phaseOffset);
 
+lime_Result lms7002m_set_gfir_coefficients(
+    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, const double* const coef, uint8_t coefCount);
+lime_Result lms7002m_get_gfir_coefficients(
+    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, double* const coef, uint8_t coefCount);
+
 #ifdef __cplusplus
 }
 #endif
