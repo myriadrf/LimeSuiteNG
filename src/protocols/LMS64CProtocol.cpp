@@ -17,6 +17,7 @@
 #include "ADCUnits.h"
 #include <cstring>
 #include <iomanip>
+#include <sstream>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
