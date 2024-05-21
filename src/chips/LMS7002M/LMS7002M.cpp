@@ -854,7 +854,7 @@ OpStatus LMS7002M::SetPathRFE(PathRFE path)
     return ResultToStatus(result);
 }
 
-LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
+LMS7002M::PathRFE LMS7002M::GetPathRFE()
 {
     return static_cast<PathRFE>(lms7002m_get_path_rfe(mC_impl));
 }
@@ -865,7 +865,7 @@ OpStatus LMS7002M::SetBandTRF(const int band)
     return ResultToStatus(result);
 }
 
-int LMS7002M::GetBandTRF(void)
+int LMS7002M::GetBandTRF()
 {
     return lms7002m_get_band_trf(mC_impl);
 }
@@ -932,7 +932,7 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
     return ResultToStatus(result);
 }
 
-bool LMS7002M::GetCGENLocked(void)
+bool LMS7002M::GetCGENLocked()
 {
     return (Get_SPI_Reg_bits(VCO_CMPHO_CGEN.address, 13, 12, true) & 0x3) == 2;
 }
@@ -2350,7 +2350,7 @@ OpStatus LMS7002M::EnableSXTDD(bool tdd)
     return Modify_SPI_Reg_bits(PD_VCO, tdd ? 1 : 0);
 }
 
-bool LMS7002M::GetRxDCRemoval(void)
+bool LMS7002M::GetRxDCRemoval()
 {
     return this->Get_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP) == 0;
 }
