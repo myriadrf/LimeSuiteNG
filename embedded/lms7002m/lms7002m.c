@@ -752,3 +752,23 @@ uint8_t lms7002m_get_band_trf(lms7002m_context* self)
         return 2;
     return 0;
 }
+
+lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, uint8_t channel, uint8_t path)
+{
+    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, channel);
+
+    lime_Result ret = lime_Result_Success;
+
+    if (isTx)
+    {
+        ret = lms7002m_set_band_trf(self, path);
+    }
+    else
+    {
+        ret = lms7002m_set_path_rfe(self, path);
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return ret;
+}

@@ -872,14 +872,8 @@ int LMS7002M::GetBandTRF(void)
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 {
-    ChannelScope scope(this, channel, false);
-
-    if (direction == TRXDir::Tx)
-    {
-        return SetBandTRF(path);
-    }
-
-    return SetPathRFE(lime::LMS7002M::PathRFE(path));
+    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, channel, path);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetReferenceClk_SX(TRXDir dir, float_type freq_Hz)
