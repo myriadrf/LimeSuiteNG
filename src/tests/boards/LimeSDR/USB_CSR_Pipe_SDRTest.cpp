@@ -16,7 +16,7 @@ TEST(USB_CSR_Pipe_SDR, WriteBulkTransfer)
     USB_CSR_Pipe_SDR pipe{ mockConnection };
 
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_GPIO_RD;
+    pkt.cmd = LMS64CProtocol::Command::GPIO_RD;
 
     int timeout = 100;
     int length = sizeof(LMS64CPacket);
@@ -33,7 +33,7 @@ TEST(USB_CSR_Pipe_SDR, WriteControlTransfer)
     USB_CSR_Pipe_SDR pipe{ mockConnection };
 
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_GET_INFO;
+    pkt.cmd = LMS64CProtocol::Command::GET_INFO;
 
     int timeout = 100;
     int length = sizeof(LMS64CPacket);
@@ -64,7 +64,7 @@ TEST(USB_CSR_Pipe_SDR, ReadBulkTransfer)
     USB_CSR_Pipe_SDR pipe{ mockConnection };
 
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_GPIO_RD;
+    pkt.cmd = LMS64CProtocol::Command::GPIO_RD;
 
     int timeout = 100;
     int length = sizeof(LMS64CPacket);
@@ -81,7 +81,7 @@ TEST(USB_CSR_Pipe_SDR, ReadControlTransfer)
     USB_CSR_Pipe_SDR pipe{ mockConnection };
 
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_GET_INFO;
+    pkt.cmd = LMS64CProtocol::Command::GET_INFO;
 
     int timeout = 100;
     int length = sizeof(LMS64CPacket);
