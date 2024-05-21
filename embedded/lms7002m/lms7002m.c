@@ -113,7 +113,7 @@ static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max)
 
 lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, uint8_t channel, const bool enable)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     channel = clamp(channel, 0, 1) + 1;
     lms7002m_set_active_channel(self, channel);
 
@@ -409,7 +409,7 @@ float lms7002m_get_frequency_cgen(lms7002m_context* self)
 
 lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     int g_pga_rbb = clamp(lroundf(value) + 12, 0, 31);
@@ -434,7 +434,7 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, co
 
 float lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     uint16_t g_pga_rbb = lms7002m_spi_read_csr(self, LMS7002M_G_PGA_RBB);
@@ -445,7 +445,7 @@ float lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
 
 lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 30;
@@ -488,7 +488,7 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, co
 
 float lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 30;
@@ -508,7 +508,7 @@ float lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
 
 lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const float gain, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 40;
@@ -554,7 +554,7 @@ lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const float
 
 float lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 40;
@@ -574,7 +574,7 @@ float lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t cha
 
 lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const float value, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 12;
@@ -594,7 +594,7 @@ lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const float value, co
 
 float lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double gmax = 12;
@@ -614,7 +614,7 @@ float lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
 
 lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const float value, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double pmax = 52;
@@ -638,7 +638,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const float value, co
 
 float lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     const double pmax = 52;
@@ -652,7 +652,7 @@ float lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
 
 lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const float gain, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     //there are 4 discrete gain values, use the midpoints
@@ -671,7 +671,7 @@ lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const float
 
 float lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const uint8_t channel)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     uint16_t value = lms7002m_spi_read_csr(self, LMS7002M_L_LOOPB_TXPAD_TRF);
@@ -768,7 +768,7 @@ uint8_t lms7002m_get_band_trf(lms7002m_context* self)
 
 lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, uint8_t channel, uint8_t path)
 {
-    uint8_t savedChannel = lms7002m_get_active_channel(self);
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     lime_Result ret = lime_Result_Success;
