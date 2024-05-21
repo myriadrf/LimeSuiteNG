@@ -91,6 +91,8 @@ uint8_t lms7002m_get_band_trf(struct lms7002m_context* self);
 lime_Result lms7002m_set_path(struct lms7002m_context* self, bool isTx, uint8_t channel, uint8_t path);
 
 float lms7002m_get_reference_clock_tsp(struct lms7002m_context* self, bool isTx);
+bool lms7002m_get_cgen_locked(struct lms7002m_context* self);
+bool lms7002m_get_sx_locked(struct lms7002m_context* self, bool isTx);
 
 #ifdef __cplusplus
 }

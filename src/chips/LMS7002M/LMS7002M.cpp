@@ -929,13 +929,12 @@ OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainN
 
 bool LMS7002M::GetCGENLocked()
 {
-    return (Get_SPI_Reg_bits(VCO_CMPHO_CGEN.address, 13, 12, true) & 0x3) == 2;
+    return lms7002m_get_cgen_locked(mC_impl);
 }
 
 bool LMS7002M::GetSXLocked(TRXDir dir)
 {
-    SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-    return (Get_SPI_Reg_bits(VCO_CMPHO.address, 13, 12, true) & 0x3) == 2;
+    return lms7002m_get_sx_locked(mC_impl, dir == TRXDir::Tx);
 }
 
 OpStatus LMS7002M::TuneCGENVCO()
