@@ -341,7 +341,7 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
         if (check_cgen_csw(self, cswHigh + step) == 2)
             cswHigh = cswHigh + step;
 
-    // lime::debug("csw %d; interval [%d, %d]", (cswHigh + cswLow) / 2, cswLow, cswHigh);
+    // LOG_D(self, "csw %d; interval [%d, %d]", (cswHigh + cswLow) / 2, cswLow, cswHigh);
     uint8_t cmphl = check_cgen_csw(self, (cswHigh + cswLow) / 2);
     if (cmphl == 2)
         return lime_Result_Success;
@@ -808,4 +808,178 @@ bool lms7002m_get_sx_locked(lms7002m_context* self, bool isTx)
 {
     lms7002m_set_active_channel(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
     return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO.address, 13, 12) & 0x3) == 0x2;
+}
+
+lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type module)
+{
+    if (module == LMS7002M_VCO_CGEN)
+        return lms7002m_tune_cgen_vco(self);
+
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, module);
+
+    const char* const moduleName = (module == LMS7002M_VCO_SXR) ? "SXR" : "SXT";
+    LOG_D(self, "TuneVCO(%s) ICT_VCO: %d", moduleName, lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO));
+
+    // Initialization activate VCO and comparator
+    const uint16_t addrVCOpd = LMS7002M_PD_VCO.address; // VCO power down address
+    const lime_Result status = lms7002m_spi_modify(self, addrVCOpd, 2, 1, 0);
+    if (status != lime_Result_Success)
+    {
+        lms7002m_set_active_channel(self, savedChannel);
+        return status;
+    }
+
+    if (lms7002m_spi_read_bits(self, addrVCOpd, 2, 1) != 0)
+    {
+        lms7002m_log(self, lime_LogLevel_Error, "TuneVCO(%s) - VCO is powered down", moduleName);
+
+        lms7002m_set_active_channel(self, savedChannel);
+        return lime_Result_Error;
+    }
+
+    //check if lock is within VCO range
+    const uint16_t addrCSW_VCO = LMS7002M_CSW_VCO.address;
+    const uint8_t lsb = LMS7002M_CSW_VCO.lsb; //SWC lsb index
+    const uint8_t msb = LMS7002M_CSW_VCO.msb; //SWC msb index
+    lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, 0);
+
+    const uint16_t settlingTimeMicroseconds = 50; //can be lower
+    lms7002m_sleep(settlingTimeMicroseconds);
+
+    const uint16_t addrCMP = LMS7002M_VCO_CMPHO.address; //comparator address
+
+    uint8_t cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12); //comparators
+    if (cmphl == 3) //VCO too high
+    {
+        LOG_D(self, "TuneVCO(%s) - attempted VCO too high", moduleName);
+
+        lms7002m_set_active_channel(self, savedChannel);
+        return lime_Result_Error;
+    }
+
+    lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, 255);
+    lms7002m_sleep(settlingTimeMicroseconds);
+    cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+    if (cmphl == 0) //VCO too low
+    {
+        LOG_D(self, "TuneVCO(%s) - attempted VCO too low", moduleName);
+
+        lms7002m_set_active_channel(self, savedChannel);
+        return lime_Result_Error;
+    }
+
+    typedef struct {
+        int16_t high;
+        int16_t low;
+    } CSWInteval;
+
+    CSWInteval cswSearch[2];
+
+    //search intervals [0-127][128-255]
+    for (int t = 0; t < 2; ++t)
+    {
+        bool hadLock = false;
+        // initialize search range with invalid values
+        cswSearch[t].low = 128 * (t + 1); // set low to highest possible value
+        cswSearch[t].high = 128 * t; // set high to lowest possible value
+        LOG_D(self, "TuneVCO(%s) - searching interval [%i:%i]", moduleName, cswSearch[t].high, cswSearch[t].low);
+        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].high);
+        //binary search for and high value, and on the way store approximate low value
+        LOG_D(self, "%s", "binary search:");
+        for (int i = 6; i >= 0; --i)
+        {
+            cswSearch[t].high |= 1 << i; //CSW_VCO<i>=1
+            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].high);
+            lms7002m_sleep(settlingTimeMicroseconds);
+            cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+            LOG_D(self, "csw=%d\tcmphl=%d", cswSearch[t].high, cmphl);
+            if (cmphl & 0x01) // reduce CSW
+                cswSearch[t].high &= ~(1 << i); //CSW_VCO<i>=0
+            if (cmphl == 2 && cswSearch[t].high < cswSearch[t].low)
+            {
+                cswSearch[t].low = cswSearch[t].high;
+                hadLock = true;
+            }
+        }
+        //linear search to make sure there are no gaps, and move away from edge case
+        LOG_D(self, "%s", "adjust with linear search:");
+        while (cswSearch[t].low <= cswSearch[t].high && cswSearch[t].low > t * 128)
+        {
+            --cswSearch[t].low;
+            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].low);
+            lms7002m_sleep(settlingTimeMicroseconds);
+            const uint8_t tempCMPvalue = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+            LOG_D(self, "csw=%d\tcmphl=%d", cswSearch[t].low, tempCMPvalue);
+            if (tempCMPvalue != 2)
+            {
+                ++cswSearch[t].low;
+                break;
+            }
+        }
+        if (hadLock)
+        {
+            LOG_D(self,
+                "CSW: lowest=%d, highest=%d, will use=%d",
+                cswSearch[t].low,
+                cswSearch[t].high,
+                cswSearch[t].low + (cswSearch[t].high - cswSearch[t].low) / 2);
+        }
+        else
+            LOG_D(self, "%s", "CSW interval failed to lock");
+    }
+
+    //check if the intervals are joined
+    int16_t cswHigh = 0, cswLow = 0;
+    if (cswSearch[0].high == cswSearch[1].low - 1)
+    {
+        cswHigh = cswSearch[1].high;
+        cswLow = cswSearch[0].low;
+        LOG_D(self, "CSW is locking in one continous range: low=%d, high=%d", cswLow, cswHigh);
+    }
+    //compare which interval is wider
+    else
+    {
+        uint8_t intervalIndex = (cswSearch[1].high - cswSearch[1].low > cswSearch[0].high - cswSearch[0].low);
+        cswHigh = cswSearch[intervalIndex].high;
+        cswLow = cswSearch[intervalIndex].low;
+        LOG_D(self, "choosing wider CSW locking range: low=%d, high=%d", cswLow, cswHigh);
+    }
+
+    uint8_t finalCSW = 0;
+    if (cswHigh - cswLow == 1)
+    {
+        LOG_D(self,
+            "TuneVCO(%s) - narrow locking values range detected [%i:%i]. VCO lock status might change with temperature.",
+            moduleName,
+            cswLow,
+            cswHigh);
+        //check which of two values really locks
+        finalCSW = cswLow;
+        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswLow);
+        lms7002m_sleep(settlingTimeMicroseconds);
+        cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+        if (cmphl != 2)
+        {
+            finalCSW = cswHigh;
+            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswHigh);
+        }
+    }
+    else
+    {
+        finalCSW = cswLow + (cswHigh - cswLow) / 2;
+        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, finalCSW);
+    }
+    lms7002m_sleep(settlingTimeMicroseconds);
+    cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+    lms7002m_set_active_channel(self, savedChannel);
+
+    if (cmphl != 2)
+    {
+        LOG_D(self, "TuneVCO(%s) - failed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
+        return lime_Result_Error;
+    }
+
+    LOG_D(self, "TuneVCO(%s) - confirmed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
+    return lime_Result_Success;
 }
