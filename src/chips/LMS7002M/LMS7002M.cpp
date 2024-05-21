@@ -1892,74 +1892,8 @@ OpStatus LMS7002M::DownloadAll()
 
 OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
 {
-    OpStatus status;
-    status = Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd);
-    if (status != OpStatus::Success)
-        return status;
-    Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi);
-
-    auto siso = Get_SPI_Reg_bits(LML2_SISODDR);
-    int mclk2src = Get_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC);
-    if (hbd == 7 || (hbd == 0 && siso == 0)) //bypass
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXDIVEN, false);
-        Modify_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC, (mclk2src & 1) | 0x2);
-    }
-    else
-    {
-        uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbd + siso));
-        if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, (divider / 2) - 1);
-        else
-            Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXDIVEN, true);
-        Modify_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC, mclk2src & 1);
-    }
-
-    if (Get_SPI_Reg_bits(LMS7002MCSR::RX_MUX) == 0)
-    {
-        bool mimoBypass = (hbd == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXRDCLK_MUX, mimoBypass ? 3 : 1);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXWRCLK_MUX, mimoBypass ? 1 : 2);
-    }
-
-    siso = Get_SPI_Reg_bits(LML1_SISODDR);
-    int mclk1src = Get_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC);
-    if (hbi == 7 || (hbi == 0 && siso == 0)) //bypass
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXDIVEN, false);
-        status = Modify_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC, (mclk1src & 1) | 0x2);
-    }
-    else
-    {
-        uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbi + siso));
-        if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, (divider / 2) - 1);
-        else
-            Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXDIVEN, true);
-        status = Modify_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC, mclk1src & 1);
-    }
-
-    if (Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX) == 0)
-    {
-        bool mimoBypass = (hbi == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXRDCLK_MUX, mimoBypass ? 0 : 2);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXWRCLK_MUX, 0);
-    }
-
-    //clock rate already set because the readback frequency is pretty-close,
-    //dont set the cgen frequency again to save time due to VCO selection
-    // const auto freqDiff = std::abs(this->GetFrequencyCGEN() - cgen_freq_Hz);
-    // if (not this->GetCGENLocked() or freqDiff > 10.0)
-    {
-        status = SetFrequencyCGEN(cgen_freq_Hz);
-        if (status != OpStatus::Success)
-            return status;
-    }
-    return status;
+    lime_Result result = lms7002m_set_interface_frequency(mC_impl, cgen_freq_Hz, hbi, hbd);
+    return ResultToStatus(result);
 }
 
 void LMS7002M::ConfigureLML_RF2BB(

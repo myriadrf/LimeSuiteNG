@@ -1210,3 +1210,65 @@ lime_Result lms7002m_get_gfir_coefficients(
 
     return lime_Result_Success;
 }
+
+lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, double cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
+{
+    const lime_Result status = lms7002m_spi_modify_csr(self, LMS7002M_HBD_OVR_RXTSP, hbd);
+    if (status != lime_Result_Success)
+        return status;
+    lms7002m_spi_modify_csr(self, LMS7002M_HBI_OVR_TXTSP, hbi);
+
+    uint16_t siso = lms7002m_spi_read_csr(self, LMS7002M_LML2_SISODDR);
+    const int mclk2src = lms7002m_spi_read_csr(self, LMS7002M_MCLK2SRC);
+    if (hbd == 7 || (hbd == 0 && siso == 0)) //bypass
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_RXTSPCLKA_DIV, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_RXDIVEN, false);
+        lms7002m_spi_modify_csr(self, LMS7002M_MCLK2SRC, (mclk2src & 1) | 0x2);
+    }
+    else
+    {
+        const uint8_t divider = pow(2.0, hbd + siso);
+        if (divider > 1)
+            lms7002m_spi_modify_csr(self, LMS7002M_RXTSPCLKA_DIV, (divider / 2) - 1);
+        else
+            lms7002m_spi_modify_csr(self, LMS7002M_RXTSPCLKA_DIV, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_RXDIVEN, true);
+        lms7002m_spi_modify_csr(self, LMS7002M_MCLK2SRC, mclk2src & 1);
+    }
+
+    if (lms7002m_spi_read_csr(self, LMS7002M_RX_MUX) == 0)
+    {
+        const bool mimoBypass = (hbd == 7) && (siso == 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_RXRDCLK_MUX, mimoBypass ? 3 : 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_RXWRCLK_MUX, mimoBypass ? 1 : 2);
+    }
+
+    siso = lms7002m_spi_read_csr(self, LMS7002M_LML1_SISODDR);
+    const int mclk1src = lms7002m_spi_read_csr(self, LMS7002M_MCLK1SRC);
+    if (hbi == 7 || (hbi == 0 && siso == 0)) //bypass
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_TXTSPCLKA_DIV, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TXDIVEN, false);
+        lms7002m_spi_modify_csr(self, LMS7002M_MCLK1SRC, (mclk1src & 1) | 0x2);
+    }
+    else
+    {
+        const uint8_t divider = pow(2.0, hbi + siso);
+        if (divider > 1)
+            lms7002m_spi_modify_csr(self, LMS7002M_TXTSPCLKA_DIV, (divider / 2) - 1);
+        else
+            lms7002m_spi_modify_csr(self, LMS7002M_TXTSPCLKA_DIV, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TXDIVEN, true);
+        lms7002m_spi_modify_csr(self, LMS7002M_MCLK1SRC, mclk1src & 1);
+    }
+
+    if (lms7002m_spi_read_csr(self, LMS7002M_TX_MUX) == 0)
+    {
+        const bool mimoBypass = (hbi == 7) && (siso == 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TXRDCLK_MUX, mimoBypass ? 0 : 2);
+        lms7002m_spi_modify_csr(self, LMS7002M_TXWRCLK_MUX, 0);
+    }
+
+    return lms7002m_set_frequency_cgen(self, cgen_freq_Hz);
+}
