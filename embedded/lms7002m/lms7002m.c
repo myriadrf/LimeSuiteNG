@@ -261,6 +261,25 @@ lime_Result lms7002m_set_active_channel(lms7002m_context* self, const uint8_t ch
     return lms7002m_spi_modify_csr(self, LMS7002M_MAC, channel);
 }
 
+lime_Result lms7002m_soft_reset(lms7002m_context* self)
+{
+    uint16_t reg_0x0020 = lms7002m_spi_read(self, 0x0020);
+    uint16_t reg_0x002E = lms7002m_spi_read(self, 0x002E);
+    lms7002m_spi_write(self, 0x0020, 0x0);
+    lms7002m_spi_write(self, 0x0020, reg_0x0020);
+    lms7002m_spi_write(self, 0x002E, reg_0x002E); //must write, enables/disabled MIMO channel B
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_reset_logic_registers(lms7002m_context* self)
+{
+    const uint16_t x0020_value = lms7002m_spi_read(self, 0x0020); //reset logic registers
+
+    lms7002m_spi_write(self, 0x0020, x0020_value & 0x553F);
+    lms7002m_spi_write(self, 0x0020, x0020_value | 0xFFC0);
+    return lime_Result_Success;
+}
+
 static uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
 {
     lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO_CGEN, csw); //write CSW value

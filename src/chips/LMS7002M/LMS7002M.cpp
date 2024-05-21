@@ -353,12 +353,14 @@ OpStatus LMS7002M::ResetChip()
 
 OpStatus LMS7002M::SoftReset()
 {
-    auto reg_0x0020 = this->SPI_read(0x0020, true);
-    auto reg_0x002E = this->SPI_read(0x002E, true);
-    this->SPI_write(0x0020, 0x0);
-    this->SPI_write(0x0020, reg_0x0020);
-    this->SPI_write(0x002E, reg_0x002E); //must write, enables/disabled MIMO channel B
-    return OpStatus::Success;
+    lime_Result result = lms7002m_soft_reset(mC_impl);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::ResetLogicRegisters()
+{
+    lime_Result result = lms7002m_reset_logic_registers(mC_impl);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
@@ -667,19 +669,6 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     }
     this->SetActiveChannel(Channel::ChA);
     return OpStatus::Success;
-}
-
-OpStatus LMS7002M::ResetLogicRegisters()
-{
-    const uint16_t x0020_value = SPI_read(0x0020); //reset logic registers
-    const uint16_t addr[] = { 0x0020, 0x0020 };
-    const uint16_t values[] = {
-        static_cast<uint16_t>(x0020_value & 0x553F),
-        static_cast<uint16_t>(x0020_value | 0xFFC0),
-    };
-    //const uint16_t values[] = {x0020_value & 0x55FF, x0020_value | 0xFF00};
-    // LRST_TX_B, LRST_TX_A, LRST_RX_B, LRST_RX_A
-    return SPI_write_batch(addr, values, 2);
 }
 
 OpStatus LMS7002M::SaveConfig(const std::string& filename)
