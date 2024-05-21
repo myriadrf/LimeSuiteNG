@@ -974,8 +974,6 @@ class LIME_API LMS7002M
 
     OpStatus RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, uint16_t pattern, std::stringstream& ss);
 
-    OpStatus Modify_SPI_Reg_mask(const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop);
-
     std::shared_ptr<ISPI> controlPort;
     std::array<int, 2> opt_gain_tbb;
     OpStatus LoadConfigLegacyFile(const std::string& filename);

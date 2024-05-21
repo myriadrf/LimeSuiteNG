@@ -1170,35 +1170,6 @@ OpStatus LMS7002M::Modify_SPI_Reg_bits(const LMS7002MCSR param, const uint16_t v
     return Modify_SPI_Reg_bits(reg, value, fromChip);
 }
 
-/** @brief Modifies given registers with values applied using masks
-    @param addr array of register addresses
-    @param masks array of applied masks
-    @param values array of values to be written
-    @param start starting index of given arrays
-    @param stop end index of given arrays
-*/
-OpStatus LMS7002M::Modify_SPI_Reg_mask(
-    const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop)
-{
-    OpStatus status = OpStatus::Success;
-    uint16_t reg_data;
-    std::vector<uint16_t> addresses;
-    std::vector<uint16_t> data;
-    while (start <= stop)
-    {
-        reg_data = SPI_read(addr[start], true, &status); //read current SPI reg data
-        reg_data &= ~masks[start]; //clear bits
-        reg_data |= (values[start] & masks[start]);
-        addresses.push_back(addr[start]);
-        data.push_back(reg_data);
-        ++start;
-    }
-    if (status != OpStatus::Success)
-        return status;
-    status = SPI_write_batch(&addresses[0], &data[0], addresses.size());
-    return status;
-}
-
 const CSRegister& LMS7002M::GetParam(const std::string& name)
 {
     for (int i = 0; i < static_cast<int>(LMS7002MCSR::ENUM_COUNT); ++i)
