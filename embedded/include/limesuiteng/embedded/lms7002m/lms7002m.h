@@ -122,6 +122,7 @@ lime_Result lms7002m_set_interface_frequency(
 lime_Result lms7002m_enable_sxtdd(struct lms7002m_context* self, bool tdd);
 
 lime_Result lms7002m_set_dc_offset(struct lms7002m_context* self, bool isTx, const double I, const double Q);
+lime_Result lms7002m_get_dc_offset(struct lms7002m_context* self, bool isTx, double* const I, double* const Q);
 
 #ifdef __cplusplus
 }

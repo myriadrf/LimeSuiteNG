@@ -761,8 +761,9 @@ class LIME_API LMS7002M
      * @param dir true for tx, false for rx
      * @param [out] I the real adjustment [+1.0, -1.0]
      * @param [out] Q the imaginary adjustment [+1.0, -1.0]
+     * @return The status of the operation
      */
-    void GetDCOffset(TRXDir dir, float_type& I, float_type& Q);
+    OpStatus GetDCOffset(TRXDir dir, float_type& I, float_type& Q);
 
     /*!
      * Set the IQ imbalance correction.

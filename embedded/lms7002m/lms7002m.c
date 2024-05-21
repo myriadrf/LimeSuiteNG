@@ -1306,3 +1306,24 @@ lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const doub
 
     return lime_Result_Success;
 }
+
+lime_Result lms7002m_get_dc_offset(lms7002m_context* self, bool isTx, double* const I, double* const Q)
+{
+    if (I == NULL || Q == NULL)
+    {
+        return lime_Result_Success;
+    }
+
+    if (isTx)
+    {
+        *I = (int8_t)(lms7002m_spi_read_csr(self, LMS7002M_DCCORRI_TXTSP)) / 127.0; //signed 8-bit
+        *Q = (int8_t)(lms7002m_spi_read_csr(self, LMS7002M_DCCORRQ_TXTSP)) / 127.0; //signed 8-bit
+        return lime_Result_Success;
+    }
+
+    uint16_t i = lms7002m_spi_read_csr(self, LMS7002M_DCOFFI_RFE);
+    *I = ((i & 0x40) ? -1.0 : 1.0) * (i & 0x3F) / 63.0;
+    uint16_t q = lms7002m_spi_read_csr(self, LMS7002M_DCOFFQ_RFE);
+    *Q = ((q & 0x40) ? -1.0 : 1.0) * (q & 0x3F) / 63.0;
+    return lime_Result_Success;
+}

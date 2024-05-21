@@ -1880,20 +1880,10 @@ OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type 
     return ResultToStatus(result);
 }
 
-void LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
+OpStatus LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 {
-    if (dir == TRXDir::Tx)
-    {
-        I = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7002MCSR::DCCORRI_TXTSP)) / 127.0; //signed 8-bit
-        Q = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7002MCSR::DCCORRQ_TXTSP)) / 127.0; //signed 8-bit
-    }
-    else
-    {
-        auto i = Get_SPI_Reg_bits(LMS7002MCSR::DCOFFI_RFE);
-        I = ((i & 0x40) ? -1.0 : 1.0) * (i & 0x3F) / 63.0;
-        auto q = Get_SPI_Reg_bits(LMS7002MCSR::DCOFFQ_RFE);
-        Q = ((q & 0x40) ? -1.0 : 1.0) * (q & 0x3F) / 63.0;
-    }
+    lime_Result result = lms7002m_get_dc_offset(mC_impl, dir == TRXDir::Tx, &I, &Q);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const float_type gainI, const float_type gainQ)
