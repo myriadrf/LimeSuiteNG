@@ -1908,6 +1908,18 @@ MCU_BD* LMS7002M::GetMCUControls() const
     return mcuControl;
 }
 
+OpStatus LMS7002M::CalibrateInternalADC(int clkDiv)
+{
+    lime_Result result = lms7002m_calibrate_internal_adc(mC_impl, clkDiv);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::CalibrateRP_BIAS()
+{
+    lime_Result result = lms7002m_calibrate_rp_bias(mC_impl);
+    return ResultToStatus(result);
+}
+
 float_type LMS7002M::GetTemperature()
 {
     if (CalibrateInternalADC(32) != OpStatus::Success)

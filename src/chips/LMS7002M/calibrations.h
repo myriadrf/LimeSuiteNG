@@ -23,7 +23,7 @@ uint8_t CalibrateRx(bool extLoopback, bool dcOnly);
 uint8_t CalibrateRxExternalLoop();
 void CalibrateRxDCAuto();
 uint8_t RunAGC(uint32_t wantedRSSI);
-int16_t clamp(int16_t value, int16_t minBound, int16_t maxBound);
+int16_t clamp_int(int16_t value, int16_t minBound, int16_t maxBound);
 
 #ifdef __cplusplus
 }

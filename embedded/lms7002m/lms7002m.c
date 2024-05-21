@@ -1,6 +1,9 @@
 #include "limesuiteng/embedded/lms7002m/lms7002m.h"
+
+#include "csr.h"
 #include "limesuiteng/embedded/loglevel.h"
 #include "lms7002m_context.h"
+#include "privates.h"
 
 #include <assert.h>
 #include <math.h>
@@ -10,55 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-
-#include "csr.h"
 
 #define CGEN_MAX_FREQ 640e6
-
-static void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* format, ...)
-{
-    if (context->hooks.log == NULL)
-        return;
-
-    char buff[4096];
-
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buff, sizeof(buff), format, args);
-    va_end(args);
-
-    context->hooks.log(level, buff, context->hooks.log_userData);
-}
-
-#define LOG_D(context, format, ...) \
-    do \
-    { \
-        lms7002m_log(context, lime_LogLevel_Debug, format, __VA_ARGS__); \
-    } while (0)
-
-static lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result, const char* format, ...)
-{
-    if (context->hooks.log == NULL)
-        return result;
-
-    va_list args;
-    va_start(args, format);
-    lms7002m_log(context, lime_LogLevel_Error, format, args);
-    va_end(args);
-
-    return result;
-}
-
-static void lms7002m_sleep(long timeInMicroseconds)
-{
-    struct timespec time;
-    time.tv_sec = 0;
-    time.tv_nsec = timeInMicroseconds * 1000;
-
-    // POSIX function, non-standard C
-    nanosleep(&time, NULL);
-}
 
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
@@ -73,59 +29,10 @@ void lms7002m_destroy(lms7002m_context* context)
         free(context);
 }
 
-static void lms7002m_spi_write(lms7002m_context* self, uint16_t address, uint16_t value)
-{
-    uint32_t mosi = address << 16 | value;
-    mosi |= 1 << 31;
-    self->hooks.spi16_transact(&mosi, NULL, 1, self->hooks.spi16_userData);
-}
-
-static uint16_t lms7002m_spi_read(lms7002m_context* self, uint16_t address)
-{
-    uint32_t mosi = address << 16;
-    uint32_t miso = 0;
-    self->hooks.spi16_transact(&mosi, &miso, 1, self->hooks.spi16_userData);
-    return miso & 0xFFFF;
-}
-
-static lime_Result lms7002m_spi_modify(lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)
-{
-    uint16_t spiDataReg = lms7002m_spi_read(self, address);
-    uint16_t spiMask = (~(~0u << (msb - lsb + 1))) << (lsb); // creates bit mask
-    spiDataReg = (spiDataReg & (~spiMask)) | ((value << lsb) & spiMask); //clear bits
-    lms7002m_spi_write(self, address, spiDataReg);
-    return lime_Result_Success;
-}
-
-static lime_Result lms7002m_spi_modify_csr(lms7002m_context* self, const lms7002m_csr csr, uint16_t value)
-{
-    return lms7002m_spi_modify(self, csr.address, csr.msb, csr.lsb, value);
-}
-
-static uint16_t lms7002m_spi_read_bits(lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb)
-{
-    uint16_t regVal = lms7002m_spi_read(self, address);
-    return (regVal & (~(~0u << (msb + 1)))) >> lsb; //shift bits to LSB
-}
-
-static uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
-{
-    return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
-}
-
-static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max)
-{
-    if (value < min)
-        return min;
-    if (value > max)
-        return max;
-    return value;
-}
-
 lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, uint8_t channel, const bool enable)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
-    channel = clamp(channel, 0, 1) + 1;
+    channel = clamp_uint(channel, 0, 1) + 1;
     lms7002m_set_active_channel(self, channel);
 
     //--- LML ---
@@ -359,7 +266,7 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, double freq_Hz)
     //VCO frequency selection according to F_CLKH
     const uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;
     const uint16_t iHdiv_low = (gCGEN_VCO_frequencies[0] / 2 / freq_Hz);
-    const uint16_t iHdiv = clamp((iHdiv_low + iHdiv_high) / 2, 0, 255);
+    const uint16_t iHdiv = clamp_uint((iHdiv_low + iHdiv_high) / 2, 0, 255);
     const double dFvco = 2 * (iHdiv + 1) * freq_Hz;
     if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
     {
@@ -413,7 +320,7 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, c
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    int g_pga_rbb = clamp(lroundf(value) + 12, 0, 31);
+    int g_pga_rbb = clamp_uint(lroundf(value) + 12, 0, 31);
     lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_PGA_RBB, g_pga_rbb);
 
     int rcc_ctl_pga_rbb = (430.0 * pow(0.65, (g_pga_rbb / 10.0)) - 110.35) / 20.4516 + 16;
@@ -627,7 +534,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, c
         loss_int = (loss_int + 10) / 2;
     }
 
-    loss_int = clamp(loss_int, 0, 31);
+    loss_int = clamp_uint(loss_int, 0, 31);
 
     lime_Result ret;
     lms7002m_spi_modify_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF, loss_int);

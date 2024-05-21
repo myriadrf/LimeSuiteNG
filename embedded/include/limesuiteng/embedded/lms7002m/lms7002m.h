@@ -129,6 +129,9 @@ lime_Result lms7002m_set_i_q_balance(
 lime_Result lms7002m_get_i_q_balance(
     struct lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ);
 
+lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);
+lime_Result lms7002m_calibrate_rp_bias(struct lms7002m_context* self);
+
 #ifdef __cplusplus
 }
 #endif

@@ -88,7 +88,7 @@ uint16_t RSSIDelayCounter = 1; // MCU timer delay between RSSI measurements
 // [1:0] SEL_PATH_RFE, when calibrating Tx
 uint8_t extLoopbackPair = 0;
 
-int16_t clamp(int16_t value, int16_t minBound, int16_t maxBound)
+int16_t clamp_int(int16_t value, int16_t minBound, int16_t maxBound)
 {
     if (value < minBound)
         return minBound;
@@ -460,12 +460,12 @@ void AdjustAutoDC(const uint16_t address, bool tx)
 
     minValue = initVal = ReadAnalogDC(address);
     minRSSI = rssi = GetRSSI();
-    WriteAnalogDC(address, clamp(initVal + 1, -range, range));
+    WriteAnalogDC(address, clamp_int(initVal + 1, -range, range));
     valChange = GetRSSI() < rssi ? 1 : -1;
 
     for (i = 8; i; --i)
     {
-        initVal = clamp(initVal + valChange, -range, range);
+        initVal = clamp_int(initVal + valChange, -range, range);
         WriteAnalogDC(address, initVal);
         rssi = GetRSSI();
         if (rssi < minRSSI)
@@ -581,10 +581,10 @@ void CalibrateTxDCAuto()
         qparams.result = 0; //ReadAnalogDC(qparams.param.address);
         for (i = 0; i < 3; ++i)
         {
-            iparams.minValue = clamp(iparams.result - offset[i], -1024, 1023);
-            iparams.maxValue = clamp(iparams.result + offset[i], -1024, 1023);
-            qparams.minValue = clamp(qparams.result - offset[i], -1024, 1023);
-            qparams.maxValue = clamp(qparams.result + offset[i], -1024, 1023);
+            iparams.minValue = clamp_int(iparams.result - offset[i], -1024, 1023);
+            iparams.maxValue = clamp_int(iparams.result + offset[i], -1024, 1023);
+            qparams.minValue = clamp_int(qparams.result - offset[i], -1024, 1023);
+            qparams.maxValue = clamp_int(qparams.result + offset[i], -1024, 1023);
 
             TxDcBinarySearch(&iparams);
 #ifdef DRAW_GNU_PLOTS
@@ -728,7 +728,7 @@ uint8_t SetupCGEN()
 {
     uint8_t cgenMultiplier;
     uint8_t gfir3n;
-    cgenMultiplier = clamp((GetFrequencyCGEN() / 46.08e6) + 0.5, 2, 13);
+    cgenMultiplier = clamp_int((GetFrequencyCGEN() / 46.08e6) + 0.5, 2, 13);
     gfir3n = 4 * cgenMultiplier;
     if (Get_SPI_Reg_bits(EN_ADCCLKH_CLKGN) == 1)
         gfir3n /= pow2(Get_SPI_Reg_bits(CLKH_OV_CLKL_CGEN));
