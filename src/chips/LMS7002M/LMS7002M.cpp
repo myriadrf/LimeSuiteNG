@@ -889,25 +889,14 @@ float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
 
 OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
 {
-    for (uint8_t i = 0; i < 16 && i < count; i++)
-    {
-        OpStatus status = SetNCOFrequency(dir, i, freq_Hz[i]);
-        if (status != OpStatus::Success)
-            return status;
-    }
-    return SetNCOPhaseOffsetForMode0(dir, phaseOffset);
+    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, freq_Hz, count, phaseOffset);
+    return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset)
 {
-    std::vector<float_type> ncos;
-    for (int i = 0; i < 16; ++i)
-        ncos.push_back(GetNCOFrequency(dir, i, !useCache));
-    if (phaseOffset != nullptr)
-    {
-        uint16_t value = SPI_read(dir == TRXDir::Tx ? 0x0241 : 0x0441);
-        *phaseOffset = 360.0 * value / 65536.0;
-    }
+    std::vector<float_type> ncos(16);
+    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncos.data(), ncos.size(), phaseOffset);
     return ncos;
 }
 

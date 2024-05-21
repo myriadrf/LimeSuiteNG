@@ -1051,3 +1051,37 @@ lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, boo
     lms7002m_spi_write(self, addr, pho);
     return lime_Result_Success;
 }
+
+lime_Result lms7002m_set_nco_frequencies(
+    lms7002m_context* self, bool isTx, const double* const freq_Hz, uint8_t count, double phaseOffset)
+{
+    for (uint8_t i = 0; i < 16 && i < count; i++)
+    {
+        const lime_Result status = lms7002m_set_nco_frequency(self, isTx, i, freq_Hz[i]);
+        if (status != lime_Result_Success)
+            return status;
+    }
+    return lms7002m_set_nco_phase_offset_for_mode_0(self, isTx, phaseOffset);
+}
+
+lime_Result lms7002m_get_nco_frequencies(
+    lms7002m_context* self, bool isTx, double* const freq_Hz, uint8_t count, double* phaseOffset)
+{
+    if (freq_Hz == NULL)
+    {
+        return lime_Result_Success;
+    }
+
+    for (int i = 0; i < 16 && i < count; ++i)
+    {
+        freq_Hz[i] = lms7002m_get_nco_frequency(self, isTx, i);
+    }
+
+    if (phaseOffset != NULL)
+    {
+        uint16_t value = lms7002m_spi_read(self, isTx ? 0x0241 : 0x0441);
+        *phaseOffset = 360.0 * value / 65536.0;
+    }
+
+    return lime_Result_Success;
+}

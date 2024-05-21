@@ -103,6 +103,11 @@ double lms7002m_get_nco_frequency(struct lms7002m_context* self, bool isTx, cons
 
 lime_Result lms7002m_set_nco_phase_offset_for_mode_0(struct lms7002m_context* self, bool isTx, double angle_deg);
 
+lime_Result lms7002m_set_nco_frequencies(
+    struct lms7002m_context* self, bool isTx, const double* const freq_Hz, uint8_t count, double phaseOffset);
+lime_Result lms7002m_get_nco_frequencies(
+    struct lms7002m_context* self, bool isTx, double* const freq_Hz, uint8_t count, double* phaseOffset);
+
 #ifdef __cplusplus
 }
 #endif
