@@ -1242,4 +1242,33 @@ uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sam
     return packetSize;
 }
 
+OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
+{
+    uint16_t completed;
+    uint32_t addr[] = { 0x61, 0x63 };
+    uint32_t vals[] = { 0x0, 0x0 };
+    uint16_t test = static_cast<uint16_t>(testId);
+    if (WriteRegisters(addr, vals, 2) != OpStatus::Success)
+        return OpStatus::IOFailure;
+
+    auto start = std::chrono::steady_clock::now();
+    if (WriteRegister(0x61, test) != OpStatus::Success)
+        return OpStatus::IOFailure;
+
+    if (timeout < 0)
+        return OpStatus::Success;
+
+    while (1)
+    {
+        completed = ReadRegister(0x65);
+        if ((completed & test) == test)
+            return OpStatus::Success;
+
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        if (elapsed_seconds.count() > timeout)
+            return OpStatus::Error;
+    }
+}
+
 } //namespace lime

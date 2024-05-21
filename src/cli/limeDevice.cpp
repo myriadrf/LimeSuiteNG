@@ -77,10 +77,10 @@ int main(int argc, char* argv[])
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        printf("No devices found\n");
+        cerr << "No devices found"sv << endl;
         return -1;
     }
-    cout << "Found "sv << handles.size() << " device(s) :"sv << endl;
+    cerr << "Found "sv << handles.size() << " device(s) :"sv << endl;
     for (uint32_t i = 0; i < handles.size(); i++)
     {
         cout << i << ": "sv << handles[i].Serialize() << endl;
@@ -89,13 +89,12 @@ int main(int argc, char* argv[])
             SDRDevice* device = DeviceRegistry::makeDevice(handles.at(i));
             if (!device)
             {
-                cout << "\tFailed to connect"sv << endl;
+                cerr << "\tFailed to connect"sv << endl;
                 continue;
             }
             PrintDeviceDetails(device);
             DeviceRegistry::freeDevice(device);
         }
     }
-    cout << endl;
     return EXIT_SUCCESS;
 }

@@ -227,7 +227,7 @@ pnlBoardControls::pnlBoardControls(
 
     pnlEEPROMControls = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
     wxStaticBoxSizer* eepromBoxSizer =
-        new wxStaticBoxSizer(new wxStaticBox(pnlEEPROMControls, wxID_ANY, wxT("EEPROM")), wxVERTICAL);
+        new wxStaticBoxSizer(new wxStaticBox(pnlEEPROMControls, wxID_ANY, wxT("Non Volatile memory")), wxVERTICAL);
     pnlEEPROMControls->SetSizer(eepromBoxSizer);
     EEPROMsizer = new wxFlexGridSizer(0, 4, 0, 0);
     eepromBoxSizer->Add(EEPROMsizer, 1, wxEXPAND | wxALL, 5);
@@ -429,7 +429,7 @@ OpStatus pnlBoardControls::ReadMemory(MemoryParamGUI* gui)
     long val = 0;
     assert(sizeof(val) >= size_t(gui->memoryRegion.size));
     OpStatus rez = mDevice->MemoryRead(gui->dataStorage, gui->memoryRegion, &val);
-    if (rez != OpStatus::Success)
+    if (rez == OpStatus::Success)
         gui->txtValue->SetValue(std::to_string(val));
     return rez;
 }
@@ -556,8 +556,16 @@ void pnlBoardControls::SetupControls(const std::string_view boardID)
             for (const auto& region : regions)
             {
                 MemoryParamGUI* gui = new MemoryParamGUI();
-                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, ToString(region.first));
+                gui->title = new wxStaticText(pnlEEPROMControls, wxID_ANY, region.first);
                 gui->txtValue = new wxTextCtrl(pnlEEPROMControls, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize);
+#if wxUSE_TOOLTIPS
+                wxString tooltip = wxString::Format(_("[%s]\n%s @ 0x%08X : %i Bytes"),
+                    mem.first.c_str(),
+                    region.first.c_str(),
+                    region.second.address,
+                    region.second.size);
+                gui->txtValue->SetToolTip(tooltip);
+#endif
                 gui->btnRead = new wxButton(pnlEEPROMControls, wxNewId(), _("Read"), wxDefaultPosition, wxDefaultSize);
                 gui->btnWrite = new wxButton(pnlEEPROMControls, wxNewId(), _("Write"), wxDefaultPosition, wxDefaultSize);
                 gui->dataStorage = mem.second;

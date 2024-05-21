@@ -21,6 +21,7 @@ endif()
 set(LIME_SUITE_SOURCES
     StreamComposite.cpp
     CommonFunctions.cpp
+    OEMTesting.cpp
     logger/Logger.cpp
     logger/LoggerCString.cpp
     protocols/LMS64CProtocol.cpp

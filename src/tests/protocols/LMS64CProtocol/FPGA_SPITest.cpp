@@ -51,13 +51,14 @@ TEST(LMS64CProtocol, FPGASPIOneCountTestValueRead)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -72,13 +73,14 @@ TEST(LMS64CProtocol, FPGASPIOneCountTestValueWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -93,7 +95,7 @@ TEST(LMS64CProtocol, FPGASPIWriteReadReadWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -101,13 +103,16 @@ TEST(LMS64CProtocol, FPGASPIWriteReadReadWrite)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -127,7 +132,7 @@ TEST(LMS64CProtocol, FPGASPIReadWriteReadReadWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -135,16 +140,20 @@ TEST(LMS64CProtocol, FPGASPIReadWriteReadReadWrite)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -164,7 +173,7 @@ TEST(LMS64CProtocol, FPGASPISixteenWrites)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -172,10 +181,12 @@ TEST(LMS64CProtocol, FPGASPISixteenWrites)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(14)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(14)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_WR), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_WR), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -197,7 +208,7 @@ TEST(LMS64CProtocol, FPGASPISixteenReads)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -205,10 +216,12 @@ TEST(LMS64CProtocol, FPGASPISixteenReads)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(14)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(14)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::BRDSPI_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -246,7 +259,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyRead)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -269,7 +282,7 @@ TEST(LMS64CProtocol, FPGASPIWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_UNKNOWN_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Unknown;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -292,7 +305,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyWrittenOnSecondCall)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -315,7 +328,7 @@ TEST(LMS64CProtocol, FPGASPINotFullyReadOnSecondCall)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     EXPECT_CALL(mockPort, Write(_, PACKET_SIZE, _)).Times(2);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _))

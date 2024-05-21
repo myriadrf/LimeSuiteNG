@@ -562,6 +562,16 @@ class LIME_API SDRDevice
     /// @param data The storage buffer for the data being read.
     /// @return The operation success state.
     virtual OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data);
+
+    /// @brief Runs various device specific tests to check functionality
+    /// @param reporter Object for handling test results callbacks
+    /// @return The operation success state.
+    virtual OpStatus OEMTest(OEMTestReporter* reporter);
+
+    /// @brief Writes one time programmable serial number of the device
+    /// @param serialNumber Device's serial number
+    /// @return The operation success state.
+    virtual OpStatus WriteSerialNumber(uint64_t serialNumber);
 };
 
 } // namespace lime

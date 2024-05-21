@@ -16,6 +16,7 @@
 #include "DataPacket.h"
 #include "TRXLooper.h"
 #include "limesuiteng/complex.h"
+#include "limesuiteng/OpStatus.h"
 
 using namespace std::literals::string_literals;
 
@@ -83,6 +84,15 @@ class FPGA
     };
     GatewareInfo GetGatewareInfo();
     static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc);
+
+    enum class TestID {
+        HostReferenceClock = 1 << 0,
+        Si5351C = 1 << 1,
+        VCTCXO = 1 << 2,
+        ADF4002 = 1 << 3,
+        GNSS = 1 << 4,
+    };
+    virtual OpStatus OEMTestSetup(TestID test, double timeout);
 
   protected:
     OpStatus SelectModule(uint8_t chipIndex);

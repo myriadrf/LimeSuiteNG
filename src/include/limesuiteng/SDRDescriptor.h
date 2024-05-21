@@ -25,7 +25,7 @@ struct CustomParameter {
 struct DataStorage {
     SDRDevice* ownerDevice; ///< Pointer to the device that actually owns the data storage
     eMemoryDevice memoryDeviceType; ///< The type of memory being described
-    std::unordered_map<eMemoryRegion, Region> regions; ///< The documented memory regions of the data storage
+    std::unordered_map<std::string, Region> regions; ///< The documented memory regions of the data storage
 
     /// @brief Constructs a new Data Storage object
     /// @param device The device this storage belongs to.
@@ -33,7 +33,7 @@ struct DataStorage {
     /// @param regions The memory regions this memory contains.
     DataStorage(SDRDevice* device = nullptr,
         eMemoryDevice type = eMemoryDevice::COUNT,
-        std::unordered_map<eMemoryRegion, Region> regions = {})
+        std::unordered_map<std::string, Region> regions = {})
         : ownerDevice(device)
         , memoryDeviceType(type)
         , regions(regions)
