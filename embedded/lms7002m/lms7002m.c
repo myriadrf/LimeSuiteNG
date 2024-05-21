@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "csr.h"
 
@@ -280,10 +281,31 @@ lime_Result lms7002m_reset_logic_registers(lms7002m_context* self)
     return lime_Result_Success;
 }
 
+float lms7002m_get_reference_clock(lms7002m_context* context)
+{
+    return context->reference_clock_hz;
+}
+
+lime_Result lms7002m_set_reference_clock(lms7002m_context* context, float frequency_Hz)
+{
+    if (frequency_Hz <= 0)
+        return lime_Result_InvalidValue;
+
+    context->reference_clock_hz = frequency_Hz;
+    return lime_Result_Success;
+}
+
 static uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
 {
     lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO_CGEN, csw); //write CSW value
-    //std::this_thread::sleep_for(std::chrono::microseconds(50)); //comparator settling time
+
+    struct timespec time;
+    time.tv_sec = 0;
+    time.tv_nsec = 50 * 1000; // 50 microseconds
+
+    // POSIX function, non-standard C
+    nanosleep(&time, NULL);
+
     return lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO_CGEN.address, 13, 12); //read comparators
 }
 
@@ -322,20 +344,6 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
         return lime_Result_Success;
     // lime::error("TuneVCO(CGEN) - failed to lock (cmphl!=%d)", cmphl);
     return lime_Result_Error;
-}
-
-float lms7002m_get_reference_clock(lms7002m_context* context)
-{
-    return context->reference_clock_hz;
-}
-
-lime_Result lms7002m_set_reference_clock(lms7002m_context* context, float frequency_Hz)
-{
-    if (frequency_Hz <= 0)
-        return lime_Result_InvalidValue;
-
-    context->reference_clock_hz = frequency_Hz;
-    return lime_Result_Success;
 }
 
 static const float gCGEN_VCO_frequencies[2] = { 1930e6, 2940e6 };

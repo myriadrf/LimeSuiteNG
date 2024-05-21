@@ -59,6 +59,7 @@ lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const uin
 lime_Result lms7002m_soft_reset(struct lms7002m_context* self);
 lime_Result lms7002m_reset_logic_registers(struct lms7002m_context* self);
 
+lime_Result lms7002m_tune_cgen_vco(struct lms7002m_context* self);
 lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, float frequency_Hz);
 
 lime_Result lms7002m_set_rbbpga_db(struct lms7002m_context* self, const float value, const uint8_t channel);

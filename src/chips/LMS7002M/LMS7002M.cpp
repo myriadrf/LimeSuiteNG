@@ -961,47 +961,8 @@ bool LMS7002M::GetSXLocked(TRXDir dir)
 
 OpStatus LMS7002M::TuneCGENVCO()
 {
-#ifndef NDEBUG
-    lime::debug("ICT_VCO_CGEN: %d", Get_SPI_Reg_bits(LMS7002MCSR::ICT_VCO_CGEN));
-#endif
-    // Initialization activate VCO and comparator
-    OpStatus status = Modify_SPI_Reg_bits(PD_VCO_CGEN.address, 2, 1, 0);
-    if (status != OpStatus::Success)
-        return status;
-
-    auto checkCSW = [this](int cswVal) {
-        Modify_SPI_Reg_bits(CSW_VCO_CGEN, cswVal); //write CSW value
-        std::this_thread::sleep_for(std::chrono::microseconds(50)); //comparator settling time
-        return Get_SPI_Reg_bits(VCO_CMPHO_CGEN.address, 13, 12, true); //read comparators
-    };
-    //find lock
-    int csw = 127;
-    for (int step = 64; step > 0; step >>= 1)
-    {
-        auto cmphl = checkCSW(csw);
-        if (cmphl == 0)
-            csw += step;
-        else if (cmphl == 3)
-            csw -= step;
-        else
-            break;
-    }
-    //search around (+/-7) to determine lock interval
-    //number of iterations could be reduced in some cases by narrowing down the search interval in find lock phase
-    int cswLow = csw, cswHigh = csw;
-    for (int step = 4; step > 0; step >>= 1)
-        if (checkCSW(cswLow - step) != 0)
-            cswLow = cswLow - step;
-    for (int step = 4; step > 0; step >>= 1)
-        if (checkCSW(cswHigh + step) == 2)
-            cswHigh = cswHigh + step;
-
-    lime::debug("csw %d; interval [%d, %d]", (cswHigh + cswLow) / 2, cswLow, cswHigh);
-    auto cmphl = checkCSW((cswHigh + cswLow) / 2);
-    if (cmphl == 2)
-        return OpStatus::Success;
-    lime::error("TuneVCO(CGEN) - failed to lock (cmphl!=%d)", cmphl);
-    return OpStatus::Error;
+    lime_Result result = lms7002m_tune_cgen_vco(mC_impl);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
