@@ -98,6 +98,9 @@ lime_Result lms7002m_tune_vco(struct lms7002m_context* self, enum lms7002m_vco_t
 
 float lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
 
+lime_Result lms7002m_set_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index, float freq_Hz);
+float lms7002m_get_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index);
+
 #ifdef __cplusplus
 }
 #endif

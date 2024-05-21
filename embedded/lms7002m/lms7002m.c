@@ -1003,3 +1003,46 @@ float lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
     lms7002m_set_active_channel(self, savedChannel);
     return dMul;
 }
+
+lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index, float freq_Hz)
+{
+    if (index > 15)
+    {
+        return lms7002m_report_error(
+            self, lime_Result_InvalidValue, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
+    }
+
+    float refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    if (freq_Hz < 0 || freq_Hz / refClk_Hz > 0.5)
+    {
+        return lms7002m_report_error(self,
+            lime_Result_OutOfRange,
+            "SetNCOFrequency(index = %d) - Frequency(%g MHz) out of range [0-%g) MHz",
+            index,
+            freq_Hz / 1e6,
+            refClk_Hz / 2e6);
+    }
+
+    const uint16_t addr = isTx ? 0x0240 : 0x0440;
+    const uint32_t fcw = (freq_Hz / refClk_Hz) * 4294967296;
+    lms7002m_spi_write(self, addr + 2 + index * 2, (fcw >> 16)); //NCO frequency control word register MSB part.
+    lms7002m_spi_write(self, addr + 3 + index * 2, fcw); //NCO frequency control word register LSB part.
+    return lime_Result_Success;
+}
+
+float lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index)
+{
+    if (index > 15)
+    {
+        lms7002m_report_error(
+            self, lime_Result_InvalidValue, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
+        return 0.0f;
+    }
+
+    const float refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    const uint16_t addr = isTx ? 0x0240 : 0x0440;
+    uint32_t fcw = 0;
+    fcw |= lms7002m_spi_read(self, addr + 2 + index * 2) << 16; //NCO frequency control word register MSB part.
+    fcw |= lms7002m_spi_read(self, addr + 3 + index * 2); //NCO frequency control word register LSB part.
+    return refClk_Hz * (fcw / 4294967296.0);
+}

@@ -1242,35 +1242,13 @@ float_type LMS7002M::GetFrequencySX(TRXDir dir)
 
 OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz)
 {
-    if (index > 15)
-        return ReportError(OpStatus::InvalidValue, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
-    float_type refClk_Hz = GetReferenceClk_TSP(dir);
-    if (freq_Hz < 0 || freq_Hz / refClk_Hz > 0.5)
-        return ReportError(OpStatus::OutOfRange,
-            "SetNCOFrequency(index = %d) - Frequency(%g MHz) out of range [0-%g) MHz",
-            index,
-            freq_Hz / 1e6,
-            refClk_Hz / 2e6);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
-    uint32_t fcw = static_cast<uint32_t>((freq_Hz / refClk_Hz) * 4294967296);
-    SPI_write(addr + 2 + index * 2, (fcw >> 16)); //NCO frequency control word register MSB part.
-    SPI_write(addr + 3 + index * 2, fcw); //NCO frequency control word register LSB part.
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_frequency(mC_impl, dir == TRXDir::Tx, index, freq_Hz);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 {
-    if (index > 15)
-    {
-        ReportError(OpStatus::InvalidValue, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
-        return 0;
-    }
-    float_type refClk_Hz = GetReferenceClk_TSP(dir);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
-    uint32_t fcw = 0;
-    fcw |= SPI_read(addr + 2 + index * 2, fromChip) << 16; //NCO frequency control word register MSB part.
-    fcw |= SPI_read(addr + 3 + index * 2, fromChip); //NCO frequency control word register LSB part.
-    return refClk_Hz * (fcw / 4294967296.0);
+    return lms7002m_get_nco_frequency(mC_impl, dir == TRXDir::Tx, index);
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
