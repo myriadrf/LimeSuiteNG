@@ -49,6 +49,16 @@ static lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result 
     return result;
 }
 
+static void lms7002m_sleep(long timeInMicroseconds)
+{
+    struct timespec time;
+    time.tv_sec = 0;
+    time.tv_nsec = timeInMicroseconds * 1000;
+
+    // POSIX function, non-standard C
+    nanosleep(&time, NULL);
+}
+
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
     lms7002m_context* self = malloc(sizeof(lms7002m_context));
@@ -298,14 +308,7 @@ lime_Result lms7002m_set_reference_clock(lms7002m_context* context, float freque
 static uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
 {
     lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO_CGEN, csw); //write CSW value
-
-    struct timespec time;
-    time.tv_sec = 0;
-    time.tv_nsec = 50 * 1000; // 50 microseconds
-
-    // POSIX function, non-standard C
-    nanosleep(&time, NULL);
-
+    lms7002m_sleep(50);
     return lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO_CGEN.address, 13, 12); //read comparators
 }
 
