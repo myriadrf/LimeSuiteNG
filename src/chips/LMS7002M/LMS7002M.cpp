@@ -1253,10 +1253,8 @@ float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 
 OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
 {
-    uint16_t addr = dir == TRXDir::Tx ? 0x0241 : 0x0441;
-    uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
-    SPI_write(addr, pho);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_phase_offset_for_mode_0(mC_impl, dir == TRXDir::Tx, angle_deg);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)

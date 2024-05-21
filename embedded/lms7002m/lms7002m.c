@@ -1046,3 +1046,11 @@ float lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8_
     fcw |= lms7002m_spi_read(self, addr + 3 + index * 2); //NCO frequency control word register LSB part.
     return refClk_Hz * (fcw / 4294967296.0);
 }
+
+lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, float angle_deg)
+{
+    const uint16_t addr = isTx ? 0x0241 : 0x0441;
+    const uint16_t pho = 65536 * (angle_deg / 360);
+    lms7002m_spi_write(self, addr, pho);
+    return lime_Result_Success;
+}
