@@ -918,12 +918,7 @@ float_type LMS7002M::GetFrequencyCGEN()
 
 float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 {
-    float_type cgenFreq = GetFrequencyCGEN();
-    float_type clklfreq = cgenFreq / pow(2.0, Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, true));
-    if (Get_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, true) == 0)
-        return dir == TRXDir::Tx ? clklfreq : cgenFreq / 4.0;
-    else
-        return dir == TRXDir::Tx ? cgenFreq : clklfreq / 4.0;
+    return lms7002m_get_reference_clock_tsp(mC_impl, dir == TRXDir::Tx);
 }
 
 OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)

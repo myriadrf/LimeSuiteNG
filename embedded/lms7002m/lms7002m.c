@@ -785,3 +785,13 @@ lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, uint8_t channel
     lms7002m_set_active_channel(self, savedChannel);
     return ret;
 }
+
+float lms7002m_get_reference_clock_tsp(lms7002m_context* self, bool isTx)
+{
+    const float cgenFreq = lms7002m_get_frequency_cgen(self);
+    const float clklfreq = cgenFreq / pow(2.0, lms7002m_spi_read_csr(self, LMS7002M_CLKH_OV_CLKL_CGEN));
+    if (lms7002m_spi_read_csr(self, LMS7002M_EN_ADCCLKH_CLKGN) == 0)
+        return isTx ? clklfreq : cgenFreq / 4.0;
+
+    return isTx ? cgenFreq : clklfreq / 4.0;
+}
