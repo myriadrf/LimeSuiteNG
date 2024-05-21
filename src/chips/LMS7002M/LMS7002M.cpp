@@ -1888,33 +1888,14 @@ OpStatus LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 
 OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const float_type gainI, const float_type gainQ)
 {
-    const bool bypassPhase = (phase == 0.0);
-    const bool bypassGain = ((gainI == 1.0) and (gainQ == 1.0)) or ((gainI == 0.0) and (gainQ == 0.0));
-    int iqcorr = std::lrint(2047 * (phase / (M_PI / 2)));
-    int gcorri = std::lrint(2047 * gainI);
-    int gcorrq = std::lrint(2047 * gainQ);
-
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::PH_BYP_TXTSP : LMS7002MCSR::PH_BYP_RXTSP, bypassPhase ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GC_BYP_TXTSP : LMS7002MCSR::GC_BYP_RXTSP, bypassGain ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::IQCORR_TXTSP : LMS7002MCSR::IQCORR_RXTSP, iqcorr);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRI_TXTSP : LMS7002MCSR::GCORRI_RXTSP, gcorri);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRQ_TXTSP : LMS7002MCSR::GCORRQ_RXTSP, gcorrq);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_i_q_balance(mC_impl, dir == TRXDir::Tx, phase, gainI, gainQ);
+    return ResultToStatus(result);
 }
 
-void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
+OpStatus LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
-    int iqcorr = static_cast<int16_t>(
-                     this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::IQCORR_TXTSP : LMS7002MCSR::IQCORR_RXTSP) << 4) >>
-                 4; //sign extend 12-bit
-    int gcorri = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRI_TXTSP : LMS7002MCSR::GCORRI_RXTSP)); //unsigned 11-bit
-    int gcorrq = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRQ_TXTSP : LMS7002MCSR::GCORRQ_RXTSP)); //unsigned 11-bit
-
-    phase = (M_PI / 2) * iqcorr / 2047.0;
-    gainI = gcorri / 2047.0;
-    gainQ = gcorrq / 2047.0;
+    lime_Result result = lms7002m_get_i_q_balance(mC_impl, dir == TRXDir::Tx, &phase, &gainI, &gainQ);
+    return ResultToStatus(result);
 }
 
 void LMS7002M::EnableValuesCache(bool enabled)

@@ -781,8 +781,9 @@ class LIME_API LMS7002M
      * @param [out] phase the phase adjustment [+pi, -pi]
      * @param [out] gainI the real gain adjustment [+1.0, 0.0]
      * @param [out] gainQ the imaginary gain adjustment [+1.0, 0.0]
+     * @return The status of the operation
      */
-    void GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ);
+    OpStatus GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ);
 
     /*!
      * @brief Gets the frequency of the selected clock.

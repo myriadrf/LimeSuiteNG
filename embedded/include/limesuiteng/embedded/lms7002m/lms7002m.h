@@ -124,6 +124,11 @@ lime_Result lms7002m_enable_sxtdd(struct lms7002m_context* self, bool tdd);
 lime_Result lms7002m_set_dc_offset(struct lms7002m_context* self, bool isTx, const double I, const double Q);
 lime_Result lms7002m_get_dc_offset(struct lms7002m_context* self, bool isTx, double* const I, double* const Q);
 
+lime_Result lms7002m_set_i_q_balance(
+    struct lms7002m_context* self, bool isTx, const double phase, const double gainI, const double gainQ);
+lime_Result lms7002m_get_i_q_balance(
+    struct lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ);
+
 #ifdef __cplusplus
 }
 #endif

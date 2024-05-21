@@ -1327,3 +1327,41 @@ lime_Result lms7002m_get_dc_offset(lms7002m_context* self, bool isTx, double* co
     *Q = ((q & 0x40) ? -1.0 : 1.0) * (q & 0x3F) / 63.0;
     return lime_Result_Success;
 }
+
+lime_Result lms7002m_set_i_q_balance(lms7002m_context* self, bool isTx, const double phase, const double gainI, const double gainQ)
+{
+    const bool bypassPhase = phase == 0.0;
+    const bool bypassGain = ((gainI == 1.0) && (gainQ == 1.0)) || ((gainI == 0.0) && (gainQ == 0.0));
+    const int iqcorr = lrint(2047 * (phase / (M_PI / 2)));
+    const int gcorri = lrint(2047 * gainI);
+    const int gcorrq = lrint(2047 * gainQ);
+
+    lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PH_BYP_TXTSP : LMS7002M_PH_BYP_RXTSP, bypassPhase ? 1 : 0);
+    lms7002m_spi_modify_csr(self, isTx ? LMS7002M_GC_BYP_TXTSP : LMS7002M_GC_BYP_RXTSP, bypassGain ? 1 : 0);
+    lms7002m_spi_modify_csr(self, isTx ? LMS7002M_IQCORR_TXTSP : LMS7002M_IQCORR_RXTSP, iqcorr);
+    lms7002m_spi_modify_csr(self, isTx ? LMS7002M_GCORRI_TXTSP : LMS7002M_GCORRI_RXTSP, gcorri);
+    lms7002m_spi_modify_csr(self, isTx ? LMS7002M_GCORRQ_TXTSP : LMS7002M_GCORRQ_RXTSP, gcorrq);
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_get_i_q_balance(
+    lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ)
+{
+    if (phase == NULL || gainI == NULL || gainQ == NULL)
+    {
+        return lime_Result_Success;
+    }
+
+    const int iqcorr =
+        (int16_t)(lms7002m_spi_read_csr(self, isTx ? LMS7002M_IQCORR_TXTSP : LMS7002M_IQCORR_RXTSP) << 4) >> 4; //sign extend 12-bit
+    const int gcorri =
+        (int16_t)(lms7002m_spi_read_csr(self, isTx ? LMS7002M_GCORRI_TXTSP : LMS7002M_GCORRI_RXTSP)); //unsigned 11-bit
+    const int gcorrq =
+        (int16_t)(lms7002m_spi_read_csr(self, isTx ? LMS7002M_GCORRQ_TXTSP : LMS7002M_GCORRQ_RXTSP)); //unsigned 11-bit
+
+    *phase = (M_PI / 2) * iqcorr / 2047.0;
+    *gainI = gcorri / 2047.0;
+    *gainQ = gcorrq / 2047.0;
+
+    return lime_Result_Success;
+}
