@@ -641,14 +641,6 @@ class LIME_API LMS7002M
     OpStatus SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg);
 
     /*!
-     * @brief Returns chosen NCO's phase offset angle in radians
-     * @param dir transmitter or receiver selection
-     * @param index PHO index from 0 to 15
-     * @return phase offset angle in degrees
-     */
-    float_type GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index);
-
-    /*!
      * @brief Returns TSP reference frequency
      * @param dir TxTSP or RxTSP selection
      * @return TSP reference frequency in Hz
@@ -748,45 +740,6 @@ class LIME_API LMS7002M
      */
     float_type GetSampleRate(TRXDir dir);
 
-    /// @brief The sample source for the LML.
-    enum class LMLSampleSource : uint8_t {
-        AI,
-        AQ,
-        BI,
-        BQ,
-    };
-
-    /*!
-     * @brief Set the LML sample positions in the RF to baseband direction.
-     * @param s0
-     * @param s1
-     * @param s2
-     * @param s3
-     */
-    void ConfigureLML_RF2BB(const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3);
-
-    /*!
-     * @brief Set the LML sample positions in the baseband to RF direction.
-     * @param s0
-     * @param s1
-     * @param s2
-     * @param s3
-     */
-    void ConfigureLML_BB2RF(const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3);
-
-    /*!
-     * @brief Enables or disables the DC corrector bypass
-     * @param enable Enables or disables the
-     * @return The status of the operation
-     */
-    OpStatus SetRxDCRemoval(const bool enable);
-
-    /*!
-     * Get the RX DC removal filter enabled.
-     * @return Whether the DC corrector bypass is enabled or not.
-     */
-    bool GetRxDCRemoval(void);
-
     /*!
      * Enables/disables TDD mode
      * @param enable true - use same PLL for Tx and Rx, false - us seperate PLLs
@@ -856,12 +809,6 @@ class LIME_API LMS7002M
      * @param enabled Whether to enable the cache or not.
      */
     void EnableValuesCache(bool enabled = true);
-
-    /*!
-     * @brief Returns whether register value caching on the host is enabled or not.
-     * @return True - cache is being used, false - device values only.
-     */
-    bool IsValuesCacheEnabled() const;
 
     /*!
      * @brief Gets the class to control the MCU on the chip.
@@ -968,7 +915,6 @@ class LIME_API LMS7002M
     static const std::array<std::array<float_type, 2>, 3> gVCO_frequency_table;
 
     uint32_t GetRSSI();
-    void SetRxDCOFF(int8_t offsetI, int8_t offsetQ);
 
     OpStatus CalibrateTxGainSetup();
 

@@ -1264,19 +1264,6 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
     return angles_deg;
 }
 
-float_type LMS7002M::GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index)
-{
-    if (index > 15)
-    {
-        ReportError(OpStatus::InvalidValue, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
-        return 0;
-    }
-    uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
-    uint16_t pho = SPI_read(addr + index);
-    float_type angle = 360 * pho / 65536.0;
-    return angle;
-}
-
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
     lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, coef, coefCount);
@@ -1689,21 +1676,6 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
     return ReportError(OpStatus::Error, "RegistersTestInterval(startAddr=0x%x, endAddr=0x%x) - failed", startAddr, endAddr);
 }
 
-/** @brief Sets Rx Dc offsets by converting two's complementary numbers to sign and magnitude
-*/
-void LMS7002M::SetRxDCOFF(int8_t offsetI, int8_t offsetQ)
-{
-    uint16_t valToSend = 0;
-    if (offsetI < 0)
-        valToSend |= 0x40;
-    valToSend |= labs(offsetI);
-    valToSend = valToSend << 7;
-    if (offsetQ < 0)
-        valToSend |= 0x40;
-    valToSend |= labs(offsetQ);
-    SPI_write(0x010E, valToSend);
-}
-
 OpStatus LMS7002M::SetDefaults(MemorySection module)
 {
     OpStatus status;
@@ -1896,72 +1868,12 @@ OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t 
     return ResultToStatus(result);
 }
 
-void LMS7002M::ConfigureLML_RF2BB(
-    const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3)
-{
-    //map a sample source to a position
-    const std::map<LMLSampleSource, uint16_t> m{
-        { LMLSampleSource::AI, 1 },
-        { LMLSampleSource::AQ, 0 },
-        { LMLSampleSource::BI, 3 },
-        { LMLSampleSource::BQ, 2 },
-    };
-
-    //load the same config on both LMLs
-    //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S3S, m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S2S, m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S1S, m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S0S, m.at(s0));
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S3S, m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S2S, m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S1S, m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S0S, m.at(s0));
-}
-
-void LMS7002M::ConfigureLML_BB2RF(
-    const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3)
-{
-    //map a sample source to a position
-    const std::map<LMLSampleSource, uint16_t> m{
-        { s3, 2 },
-        { s2, 3 },
-        { s0, 1 },
-        { s1, 0 },
-    };
-
-    //load the same config on both LMLs
-    //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_BQP, m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_BIP, m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_AQP, m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_AIP, m.at(LMLSampleSource::AI));
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_BQP, m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_BIP, m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_AQP, m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_AIP, m.at(LMLSampleSource::AI));
-}
-
-OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
-{
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, enable ? 0 : 1);
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORR_AVG_RXTSP, 0x7);
-    return OpStatus::Success;
-}
-
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
 {
     ChannelScope scope(this, LMS7002M::Channel::ChSXT);
     Modify_SPI_Reg_bits(PD_LOCH_T2RBUF, tdd ? 0 : 1);
     Modify_SPI_Reg_bits(MAC, 1); // switch to SXR
     return Modify_SPI_Reg_bits(PD_VCO, tdd ? 1 : 0);
-}
-
-bool LMS7002M::GetRxDCRemoval()
-{
-    return this->Get_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP) == 0;
 }
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
@@ -2034,11 +1946,6 @@ void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gai
 void LMS7002M::EnableValuesCache(bool enabled)
 {
     useCache = enabled;
-}
-
-bool LMS7002M::IsValuesCacheEnabled() const
-{
-    return useCache;
 }
 
 MCU_BD* LMS7002M::GetMCUControls() const
