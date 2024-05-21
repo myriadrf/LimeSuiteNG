@@ -11,6 +11,7 @@
 #include "LMS64CProtocol.h"
 #include "CommonFunctions.h"
 #include "utilities/toString.h"
+#include "OEMTesting.h"
 
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
@@ -144,11 +145,6 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     mFPGA = new lime::FPGA_XTRX(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
-
-    Region serialNumberAddr = { 0x01FE0000, sizeof(uint64_t) };
-    if (MemoryRead(desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)], serialNumberAddr, &desc.serialNumber) !=
-        OpStatus::Success)
-        desc.serialNumber = 0;
 
     RFSOCDescriptor soc;
     // LMS#1
@@ -618,6 +614,382 @@ OpStatus LimeSDR_XTRX::MemoryRead(std::shared_ptr<DataStorage> storage, Region r
     if (storage == nullptr || storage->ownerDevice != this)
         return OpStatus::InvalidValue;
     return fpgaPort->MemoryRead(region.address, data, region.size);
+}
+
+OpStatus LimeSDR_XTRX::ClkTest(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("PCIe Reference clock");
+    reporter.OnStart(test);
+    if (mFPGA->OEMTestSetup(FPGA::TestID::HostReferenceClock, 1.0) != OpStatus::Success)
+    {
+        reporter.OnFail(test, "timeout");
+        return OpStatus::Error;
+    }
+
+    uint32_t addr[] = { 0x69, 0x69, 0x69 };
+    uint32_t vals[3];
+    try
+    {
+        fpgaPort->SPI(addr, vals, 3);
+    } catch (...)
+    {
+        reporter.OnFail(test, "SPI failed");
+        return OpStatus::IOFailure;
+    }
+
+    const bool pass = !(vals[0] == vals[1] && vals[1] == vals[2]);
+    reporter.OnStepUpdate(
+        test, "results: " + std::to_string(vals[0]) + "; " + std::to_string(vals[1]) + "; " + std::to_string(vals[2]));
+    results.refClkPassed = pass;
+    if (pass)
+    {
+        test.passed = true;
+        reporter.OnSuccess(test);
+        return OpStatus::Success;
+    }
+    else
+    {
+        reporter.OnFail(test, "values match");
+        return OpStatus::Error;
+    }
+}
+
+OpStatus LimeSDR_XTRX::GNSSTest(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("GNSS");
+    reporter.OnStart(test);
+    OpStatus status = mFPGA->OEMTestSetup(FPGA::TestID::GNSS, 1.0);
+    results.gnssPassed = status == OpStatus::Success;
+    if (status != OpStatus::Success)
+    {
+        reporter.OnFail(test, "timeout");
+        return OpStatus::Error;
+    }
+    test.passed = true;
+    reporter.OnSuccess(test);
+    return OpStatus::Success;
+}
+
+class CustomParameterStash
+{
+  public:
+    CustomParameterStash(SDRDevice* dev, const std::vector<CustomParameterIO>& args)
+        : device(dev)
+        , stash(args)
+    {
+        assert(dev);
+        device->CustomParameterRead(stash);
+    }
+    ~CustomParameterStash() { device->CustomParameterWrite(stash); }
+
+  private:
+    SDRDevice* device;
+    std::vector<CustomParameterIO> stash;
+};
+
+OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("VCTCXO");
+    reporter.OnStart(test);
+
+    unsigned count1;
+    unsigned count2;
+
+    std::vector<CustomParameterIO> params{ { cp_vctcxo_dac.id, 0, "" } };
+
+    try
+    {
+        OpStatus status;
+        // Store current value, and restore it on return
+        CustomParameterStash vctcxoStash(this, params);
+
+        params[0].value = cp_vctcxo_dac.minValue;
+        status = CustomParameterWrite(params);
+        if (status != OpStatus::Success)
+            return status;
+
+        status = mFPGA->OEMTestSetup(FPGA::TestID::VCTCXO, 1.0);
+        if (status != OpStatus::Success)
+        {
+            reporter.OnFail(test, "timeout");
+            return status;
+        }
+
+        uint32_t addr[] = { 0x72, 0x73 };
+        uint32_t vals[2];
+        if (mFPGA->ReadRegisters(addr, vals, 2) != OpStatus::Success)
+        {
+            reporter.OnFail(test, "IO failure");
+            return OpStatus::IOFailure;
+        }
+
+        count1 = vals[0] + (vals[1] << 16);
+        params[0].value = cp_vctcxo_dac.maxValue;
+        if (CustomParameterWrite(params) != OpStatus::Success)
+        {
+            reporter.OnFail(test, "IO failure");
+            return OpStatus::IOFailure;
+        }
+
+        status = mFPGA->OEMTestSetup(FPGA::TestID::VCTCXO, 1.0);
+        if (status != OpStatus::Success)
+        {
+            reporter.OnFail(test, "timeout");
+            return status;
+        }
+
+        if (mFPGA->ReadRegisters(addr, vals, 2) != OpStatus::Success)
+        {
+            reporter.OnFail(test, "IO failure");
+            return OpStatus::IOFailure;
+        }
+
+        count2 = vals[0] + (vals[1] << 16);
+        std::string str = "Count : " + std::to_string(count1) + " (min); " + std::to_string(count2) + " (max)";
+        results.vctcxoMinCount = count1;
+        results.vctcxoMaxCount = count2;
+        reporter.OnStepUpdate(test, str);
+
+        const bool fail = (count1 + 25 > count2) || (count1 + 35 < count2);
+        if (fail)
+        {
+            reporter.OnFail(test, "unexpected values");
+            return OpStatus::Error;
+        }
+        results.vctcxoPassed = true;
+        test.passed = true;
+        reporter.OnSuccess(test);
+    } catch (...)
+    {
+        reporter.OnFail(test, "IO failure");
+        return OpStatus::IOFailure;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LimeSDR_XTRX::LMS7002_Test(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("LMS7002M");
+    reporter.OnStart(test);
+    reporter.OnStepUpdate(test, "Registers test");
+
+    LMS7002M* lmsControl = mLMSChips.at(0);
+
+    try
+    {
+        lmsControl->SPI_write(0xA6, 0x0001);
+        lmsControl->SPI_write(0x92, 0xFFFF);
+        lmsControl->SPI_write(0x93, 0x03FF);
+    } catch (...)
+    {
+        reporter.OnFail(test, "SPI failed");
+        return OpStatus::IOFailure;
+    }
+
+    if (lmsControl->RegistersTest() != OpStatus::Success)
+    {
+        reporter.OnFail(test, "Registers test FAILED");
+        return OpStatus::Error;
+    }
+    reporter.OnStepUpdate(test, "Registers test PASSED");
+
+    LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+
+    reporter.OnStepUpdate(test, "External Reset line test");
+    try
+    {
+        lmsControl->SPI_write(0x0020, 0xFFFD);
+        OpStatus status;
+        int val = lmsControl->SPI_read(0x20, true, &status);
+        if (status != OpStatus::Success)
+            return status;
+        char str[64];
+        std::snprintf(str, sizeof(str), "  Reg 0x20: Write value 0xFFFD, Read value 0x%04X", val);
+        reporter.OnStepUpdate(test, str);
+        if (val != 0xFFFD)
+        {
+            reporter.OnFail(test, "Register value mismatch");
+            return OpStatus::Error;
+        }
+
+        LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+        val = lmsControl->SPI_read(0x20, true, &status);
+        if (status != OpStatus::Success)
+            return status;
+
+        std::snprintf(str, sizeof(str), "  Reg 0x20: value after reset 0x0%4X", val);
+        reporter.OnStepUpdate(test, str);
+        if (val != 0xFFFF)
+        {
+            reporter.OnStepUpdate(test, "External Reset line test FAILED");
+            return OpStatus::Error;
+        }
+    } catch (...)
+    {
+        reporter.OnFail(test, "SPI failed");
+        return OpStatus::IOFailure;
+    }
+    results.lmsChipPassed = true;
+    test.passed = true;
+    reporter.OnSuccess(test);
+    return OpStatus::Success;
+}
+
+OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
+    TestData::RFData* results,
+    const std::string& name,
+    double LOFreq,
+    int gain,
+    int rxPath,
+    double expected_dBFS)
+{
+    SDRConfig config;
+    config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = 61.44e6;
+    config.channel[0].rx.enabled = true;
+    config.channel[0].tx.enabled = true;
+    config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
+    config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
+
+    const double tx_offset = 5e6;
+    config.channel[0].rx.centerFrequency = LOFreq;
+    config.channel[0].tx.centerFrequency = LOFreq + tx_offset;
+    config.channel[0].rx.path = rxPath;
+    config.channel[0].rx.gain[eGainTypes::GENERIC] = gain;
+
+    // If RX H is chosen, use TX 1; else use TX 2
+    config.channel[0].tx.path = rxPath == 1 ? 1 : 2;
+
+    // same config for both channels
+    config.channel[1] = config.channel[0];
+
+    bool configPass = false;
+    bool chAPass = false;
+    bool chBPass = false;
+
+    OpStatus status = Configure(config, 0);
+    configPass = status == OpStatus::Success;
+
+    RFTestInput args;
+    args.rfTestTolerance_dB = 6;
+    args.rfTestTolerance_Hz = 50e3;
+    args.sampleRate = config.channel[0].rx.sampleRate;
+    args.expectedPeakval_dBFS = expected_dBFS;
+    args.expectedPeakFrequency = tx_offset;
+    args.moduleIndex = 0;
+
+    args.testName = name + " ChA";
+    args.channelIndex = 0;
+
+    RFTestOutput output;
+    if (configPass)
+        chAPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
+    results[0].frequency = output.frequency;
+    results[0].amplitude = output.amplitude_dBFS;
+    results[0].passed = chAPass;
+    args.testName = name + " ChB";
+    args.channelIndex = 1;
+    if (configPass)
+        chBPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
+    results[1].frequency = output.frequency;
+    results[1].amplitude = output.amplitude_dBFS;
+    results[1].passed = chBPass;
+
+    bool pass = configPass && chAPass && chBPass;
+    return pass ? OpStatus::Success : OpStatus::Error;
+}
+
+OpStatus LimeSDR_XTRX::RFTest(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("RF");
+    reporter.OnStart(test);
+    //reporter.OnStepUpdate(test, "Note: The test should be run with loop connected between RF ports");
+    reporter.OnStepUpdate(test, "->Configure LMS");
+
+    if (this->Init() != OpStatus::Success)
+    {
+        test.passed = false;
+        reporter.OnFail(test, "Failed to initialize device");
+        return OpStatus::Error;
+    }
+    reporter.OnStepUpdate(test, "->Init Done");
+    std::vector<OpStatus> statuses(3);
+
+    statuses.push_back(RunTestConfig(reporter, results.lnal, "TX_2->LNA_L", 1000e6, 0, 2, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnaw, "TX_2->LNA_W", 2000e6, 14, 3, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnah, "TX_1->LNA_H", 3500e6, 35, 1, -15));
+
+    for (OpStatus s : statuses)
+    {
+        if (s != OpStatus::Success)
+        {
+            reporter.OnFail(test);
+            return OpStatus::Error;
+        }
+    }
+    test.passed = true;
+    reporter.OnSuccess(test);
+    return OpStatus::Success;
+}
+
+static std::string BoolToString(bool pass)
+{
+    return pass ? "PASS" : "FAIL";
+}
+
+LimeSDR_XTRX::TestData::TestData()
+{
+    memset(this, 0, sizeof(TestData));
+}
+
+OpStatus LimeSDR_XTRX::OEMTest(OEMTestReporter* reporter)
+{
+    TestData results;
+    OEMTestData test("LimeSDR-XTRX OEM Test");
+    reporter->OnStart(test);
+    bool pass = true;
+    pass &= ClkTest(*reporter, results) == OpStatus::Success;
+    pass &= VCTCXOTest(*reporter, results) == OpStatus::Success;
+    pass &= GNSSTest(*reporter, results) == OpStatus::Success;
+    pass &= LMS7002_Test(*reporter, results) == OpStatus::Success;
+    const bool rfPassed = RFTest(*reporter, results) == OpStatus::Success;
+    pass &= rfPassed;
+
+    reporter->ReportColumn("PCIe Ref Clk", BoolToString(results.refClkPassed));
+    reporter->ReportColumn("VCTCXO", BoolToString(results.vctcxoPassed));
+    reporter->ReportColumn("VCTCXO min", std::to_string(results.vctcxoMinCount));
+    reporter->ReportColumn("VCTCXO max", std::to_string(results.vctcxoMaxCount));
+    reporter->ReportColumn("GNSS", BoolToString(results.gnssPassed));
+    reporter->ReportColumn("LMS7002M", BoolToString(results.lmsChipPassed));
+    reporter->ReportColumn("RF", BoolToString(rfPassed));
+    reporter->ReportColumn("TX_2->LNA_L A", std::to_string(results.lnal[0].amplitude));
+    reporter->ReportColumn("TX_2->LNA_L B", std::to_string(results.lnal[1].amplitude));
+    reporter->ReportColumn("TX_2->LNA_W A", std::to_string(results.lnaw[0].amplitude));
+    reporter->ReportColumn("TX_2->LNA_W B", std::to_string(results.lnaw[1].amplitude));
+    reporter->ReportColumn("TX_1->LNA_H A", std::to_string(results.lnah[0].amplitude));
+    reporter->ReportColumn("TX_1->LNA_H B", std::to_string(results.lnah[1].amplitude));
+
+    if (pass)
+    {
+        reporter->OnSuccess(test);
+        return OpStatus::Success;
+    }
+    else
+    {
+        reporter->OnFail(test);
+        return OpStatus::Error;
+    }
+}
+
+OpStatus LimeSDR_XTRX::WriteSerialNumber(uint64_t serialNumber)
+{
+    std::vector<uint8_t> bytes(sizeof(serialNumber));
+    for (size_t i = 0; i < sizeof(serialNumber); ++i)
+        bytes[i] = serialNumber >> (8 * i);
+    OpStatus status = LMS64CProtocol::WriteSerialNumber(*mSerialPort, bytes);
+
+    if (status == OpStatus::Success)
+        mDeviceDescriptor.serialNumber = serialNumber;
+    return status;
 }
 
 } //namespace lime
