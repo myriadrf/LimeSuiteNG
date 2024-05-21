@@ -983,3 +983,23 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     LOG_D(self, "TuneVCO(%s) - confirmed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
     return lime_Result_Success;
 }
+
+float lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+{
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
+
+    const uint16_t gINT = lms7002m_spi_read_bits(self, 0x011E, 13, 0); // read whole register to reduce SPI transfers
+    const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x011D, 15, 0);
+    const uint32_t gFRAC = ((gINT & 0xF) << 16) | lowerRegister;
+
+    const float refClk_Hz = lms7002m_get_reference_clock(self);
+    const uint16_t div_loch = lms7002m_spi_read_csr(self, LMS7002M_DIV_LOCH);
+    const uint16_t en_div2_divprog = lms7002m_spi_read_csr(self, LMS7002M_EN_DIV2_DIVPROG);
+
+    // Calculate real frequency according to the calculated parameters
+    float dMul = (refClk_Hz / (1 << (div_loch + 1))) * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (en_div2_divprog + 1);
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return dMul;
+}

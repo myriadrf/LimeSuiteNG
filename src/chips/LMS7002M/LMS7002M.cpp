@@ -1237,17 +1237,7 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
 
 float_type LMS7002M::GetFrequencySX(TRXDir dir)
 {
-    ChannelScope(this, dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-
-    float_type dMul;
-    uint16_t gINT = Get_SPI_Reg_bits(0x011E, 13, 0); // read whole register to reduce SPI transfers
-    uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x011D, 15, 0);
-
-    const float_type refClk_Hz = GetReferenceClk_SX(dir);
-    dMul = refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7002MCSR::DIV_LOCH) + 1));
-    //Calculate real frequency according to the calculated parameters
-    dMul = dMul * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (Get_SPI_Reg_bits(LMS7002MCSR::EN_DIV2_DIVPROG) + 1);
-    return dMul;
+    return lms7002m_get_frequency_sx(mC_impl, dir == TRXDir::Tx);
 }
 
 OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz)
