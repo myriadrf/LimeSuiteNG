@@ -861,19 +861,13 @@ LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
 
 OpStatus LMS7002M::SetBandTRF(const int band)
 {
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::SEL_BAND1_TRF, (band == 1) ? 1 : 0);
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::SEL_BAND2_TRF, (band == 2) ? 1 : 0);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_band_trf(mC_impl, static_cast<uint8_t>(band));
+    return ResultToStatus(result);
 }
 
 int LMS7002M::GetBandTRF(void)
 {
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_BAND1_TRF) == 1)
-        return 1;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_BAND2_TRF) == 1)
-        return 2;
-    return 0;
+    return lms7002m_get_band_trf(mC_impl);
 }
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)

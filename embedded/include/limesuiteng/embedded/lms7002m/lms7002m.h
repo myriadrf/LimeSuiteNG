@@ -83,6 +83,9 @@ float lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint
 lime_Result lms7002m_set_path_rfe(struct lms7002m_context* self, const uint8_t path);
 uint8_t lms7002m_get_path_rfe(struct lms7002m_context* self);
 
+lime_Result lms7002m_set_band_trf(struct lms7002m_context* self, const uint8_t band);
+uint8_t lms7002m_get_band_trf(struct lms7002m_context* self);
+
 #ifdef __cplusplus
 }
 #endif

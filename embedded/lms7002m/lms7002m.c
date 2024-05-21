@@ -735,3 +735,20 @@ uint8_t lms7002m_get_path_rfe(lms7002m_context* self)
         return LMS7002M_PATH_RFE_LNAH;
     return LMS7002M_PATH_RFE_NONE;
 }
+
+lime_Result lms7002m_set_band_trf(lms7002m_context* self, const uint8_t band)
+{
+    lms7002m_spi_modify_csr(self, LMS7002M_SEL_BAND1_TRF, (band == 1) ? 1 : 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_SEL_BAND2_TRF, (band == 2) ? 1 : 0);
+
+    return lime_Result_Success;
+}
+
+uint8_t lms7002m_get_band_trf(lms7002m_context* self)
+{
+    if (lms7002m_spi_read_csr(self, LMS7002M_SEL_BAND1_TRF) == 1)
+        return 1;
+    if (lms7002m_spi_read_csr(self, LMS7002M_SEL_BAND2_TRF) == 1)
+        return 2;
+    return 0;
+}
