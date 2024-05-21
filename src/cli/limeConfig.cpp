@@ -111,6 +111,9 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
+    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
+                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag;
+
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
     const std::string iniFilename = args::get(iniFlag);
@@ -200,6 +203,9 @@ int main(int argc, char** argv)
                 cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
+
+            if (!doConfigure)
+                continue;
 
             const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
 
