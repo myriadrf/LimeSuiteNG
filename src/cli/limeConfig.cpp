@@ -171,16 +171,15 @@ int main(int argc, char** argv)
         if (initializeBoard)
             device->Init();
 
-        std::string configFilepath;
+        std::string configFilepath = ""s;
         if (!iniFilename.empty())
         {
-            std::string configFilepath = ""s;
             config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
             {
-                cwd = cwd.substr(0, slash0Pos - 1);
+                cwd = cwd.substr(0, slash0Pos);
             }
 
             if (iniFilename[0] != '/') // is not global path
