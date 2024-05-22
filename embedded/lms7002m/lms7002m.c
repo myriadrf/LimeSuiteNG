@@ -3,6 +3,7 @@
 #include "csr.h"
 #include "limesuiteng/embedded/loglevel.h"
 #include "lms7002m_context.h"
+#include "lms_gfir.h"
 #include "privates.h"
 
 #include <assert.h>
@@ -1333,4 +1334,109 @@ double lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms7002m
 
     lms7002m_set_active_channel(self, savedChannel);
     return interface_Hz;
+}
+
+lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, double bandwidth)
+{
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, ch);
+
+    const bool bypassFIR = !enabled;
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_TXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_TXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_TXTSP, bypassFIR);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_RXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_RXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_RXTSP, bypassFIR);
+
+        const bool sisoDDR = lms7002m_spi_read_csr(self, LMS7002M_LML1_SISODDR);
+        const bool clockIsNotInverted = !(enabled | sisoDDR);
+        if (ch == LMS7002M_CHANNEL_B)
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CDSN_RXBLML, clockIsNotInverted);
+            lms7002m_spi_modify_csr(self, LMS7002M_CDS_RXBLML, enabled ? 3 : 0);
+        }
+        else
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CDSN_RXALML, clockIsNotInverted);
+            lms7002m_spi_modify_csr(self, LMS7002M_CDS_RXALML, enabled ? 3 : 0);
+        }
+    }
+    if (!enabled)
+        return lime_Result_Success;
+
+    if (bandwidth <= 0)
+        return lime_Result_InvalidValue;
+
+    int ratio = 0;
+    if (isTx)
+    {
+        ratio = lms7002m_spi_read_csr(self, LMS7002M_HBI_OVR_TXTSP);
+    }
+    else
+    {
+        ratio = lms7002m_spi_read_csr(self, LMS7002M_HBD_OVR_RXTSP);
+    }
+
+    int div = 1;
+    if (ratio != 7)
+        div = (2 << (ratio));
+
+    bandwidth /= 1e6;
+    const double interface_MHz = lms7002m_get_reference_clock_tsp(self, isTx) / 1e6;
+    const double w = (bandwidth / 2) / (interface_MHz / div);
+
+    const int L = div > 8 ? 8 : div;
+    div -= 1;
+
+    double w2 = w * 1.1;
+    if (w2 > 0.495)
+    {
+        w2 = w * 1.05;
+        if (w2 > 0.495)
+        {
+            lms7002m_log(self, lime_LogLevel_Error, "GFIR LPF cannot be set to the requested bandwidth (%f)", bandwidth);
+            return lime_Result_Error;
+        }
+    }
+
+    double coef[120];
+    double coef2[40];
+
+    GenerateFilter(L * 15, w, w2, 1.0, 0, coef);
+    GenerateFilter(L * 5, w, w2, 1.0, 0, coef2);
+
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, div);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, div);
+    }
+
+    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2, L * 5);
+    if (status != lime_Result_Success)
+        return status;
+
+    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2, L * 5);
+    if (status != lime_Result_Success)
+        return status;
+
+    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coef, L * 15);
+    if (status != lime_Result_Success)
+        return status;
+
+    const lime_Result result = lms7002m_reset_logic_registers(self);
+    lms7002m_set_active_channel(self, savedChannel);
+    return result;
 }

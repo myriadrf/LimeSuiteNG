@@ -147,6 +147,9 @@ double lms7002m_get_clock_frequency(struct lms7002m_context* self, enum lms7002m
 
 double lms7002m_get_sample_rate(struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch);
 
+lime_Result lms7002m_set_gfir_filter(
+    struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, double bandwidth);
+
 // Calibrations
 
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);

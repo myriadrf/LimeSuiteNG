@@ -11,4 +11,5 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 ########################################################################
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/" DESTINATION include)
 
+add_subdirectory(gfir)
 add_subdirectory(lms7002m)

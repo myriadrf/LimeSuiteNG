@@ -29,7 +29,7 @@
     #pragma GCC diagnostic pop
 #endif
 
-#include "DSP/GFIR/lms_gfir.h"
+#include "lms_gfir.h"
 #include "limesuiteng/types.h"
 #include "comms/IComms.h"
 #include "LMS7002M_RegistersMap.h"
@@ -2020,113 +2020,9 @@ float_type LMS7002M::GetSampleRate(TRXDir dir)
 
 OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double bandwidth)
 {
-    ChannelScope scope(this, ch);
-    const bool bypassFIR = !enabled;
-    if (dir == TRXDir::Tx)
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_TXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_TXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_TXTSP, bypassFIR);
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_RXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_RXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_RXTSP, bypassFIR);
-        const bool sisoDDR = Get_SPI_Reg_bits(LML1_SISODDR);
-        const bool clockIsNotInverted = !(enabled | sisoDDR);
-        if (ch == LMS7002M::Channel::ChB)
-        {
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXBLML, clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXBLML, enabled ? 3 : 0);
-        }
-        else
-        {
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXALML, clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXALML, enabled ? 3 : 0);
-        }
-    }
-    if (!enabled)
-        return OpStatus::Success;
-
-    if (bandwidth <= 0)
-        return OpStatus::InvalidValue;
-
-    double w, w2;
-    int L;
-    int div = 1;
-
-    bandwidth /= 1e6;
-    double interface_MHz;
-    int ratio;
-    if (dir == TRXDir::Tx)
-    {
-        ratio = Get_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP);
-    }
-    else
-    {
-        ratio = Get_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP);
-    }
-
-    interface_MHz = GetReferenceClk_TSP(dir) / 1e6;
-    if (ratio != 7)
-        div = (2 << (ratio));
-
-    w = (bandwidth / 2) / (interface_MHz / div);
-    L = div > 8 ? 8 : div;
-    div -= 1;
-
-    w2 = w * 1.1;
-    if (w2 > 0.495)
-    {
-        w2 = w * 1.05;
-        if (w2 > 0.495)
-        {
-            lime::error("GFIR LPF cannot be set to the requested bandwidth (%f)", bandwidth);
-            return OpStatus::Error;
-        }
-    }
-
-    double coef[120];
-    double coef2[40];
-
-    GenerateFilter(L * 15, w, w2, 1.0, 0, coef);
-    GenerateFilter(L * 5, w, w2, 1.0, 0, coef2);
-
-    if (dir == TRXDir::Tx)
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_N_TXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_N_TXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_N_TXTSP, div);
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_N_RXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_N_RXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_N_RXTSP, div);
-    }
-
-    OpStatus status;
-    if ((status = SetGFIRCoefficients(dir, 0, coef2, L * 5)) != OpStatus::Success)
-        return status;
-    if ((status = SetGFIRCoefficients(dir, 1, coef2, L * 5)) != OpStatus::Success)
-        return status;
-    if ((status = SetGFIRCoefficients(dir, 2, coef, L * 15)) != OpStatus::Success)
-        return status;
-
-    std::stringstream ss;
-    ss << "LMS "sv << ToString(dir) << " GFIR coefficients (BW: "sv << bandwidth << " MHz):\n"sv;
-    ss << "GFIR1 = GFIR2:"sv;
-    for (int i = 0; i < L * 5; ++i)
-        ss << " " << coef2[i];
-    ss << std::endl;
-    ss << "GFIR3:"sv;
-    for (int i = 0; i < L * 15; ++i)
-        ss << " "sv << coef[i];
-    ss << std::endl;
-    lime::info(ss.str());
-
-    return ResetLogicRegisters();
+    lime_Result result =
+        lms7002m_set_gfir_filter(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(ch), enabled, bandwidth);
+    return ResultToStatus(result);
 }
 
 void LMS7002M::SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* userData)

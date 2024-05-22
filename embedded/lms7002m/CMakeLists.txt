@@ -1,9 +1,11 @@
 add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c)
 
 target_compile_options(lms7002m PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
-target_include_directories(lms7002m PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_include_directories(lms7002m PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(lms7002m PRIVATE lms_gfir)
+target_include_directories(lms7002m PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/gfir>)
 
 # Don't install for now.
 # install(
