@@ -129,10 +129,13 @@ lime_Result lms7002m_set_i_q_balance(
 lime_Result lms7002m_get_i_q_balance(
     struct lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ);
 
+double lms7002m_get_temperature(struct lms7002m_context* self);
+
+// Calibrations
+
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);
 lime_Result lms7002m_calibrate_rp_bias(struct lms7002m_context* self);
-
-double lms7002m_get_temperature(struct lms7002m_context* self);
+lime_Result lms7002m_calibrate_analog_rssi_dc_offset(struct lms7002m_context* self);
 
 #ifdef __cplusplus
 }

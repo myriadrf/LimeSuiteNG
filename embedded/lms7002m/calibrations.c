@@ -5,6 +5,7 @@
 #include "privates.h"
 
 #include <stdint.h>
+#include <stdlib.h>
 
 lime_Result lms7002m_calibrate_internal_adc(lms7002m_context* self, int clkDiv)
 {
@@ -82,5 +83,59 @@ lime_Result lms7002m_calibrate_rp_bias(lms7002m_context* self)
         }
     }
     lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, biasMux);
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_calibrate_analog_rssi_dc_offset(lms7002m_context* self)
+{
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_W_RFE, 1);
+    lms7002m_calibrate_internal_adc(self, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_RSSI_RFE, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_TIA_RFE, 0);
+
+    lms7002m_spi_write(self, 0x0640, 22 << 4);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_RSSIDC_DCO2, 0);
+
+    int value = -63;
+    uint8_t wrValue = abs(value);
+    if (value < 0)
+        wrValue |= 0x40;
+    lms7002m_spi_modify_csr(self, LMS7002M_RSSIDC_DCO1, wrValue);
+    uint8_t cmp = lms7002m_spi_read_csr(self, LMS7002M_RSSIDC_CMPSTATUS);
+    uint8_t cmpPrev = cmp;
+    int8_t edges[2];
+    uint8_t edgesIndex = 0;
+    for (value = -63; value < 64; ++value)
+    {
+        wrValue = abs(value);
+        if (value < 0)
+            wrValue |= 0x40;
+        lms7002m_spi_modify_csr(self, LMS7002M_RSSIDC_DCO1, wrValue);
+        lms7002m_sleep(5);
+        cmp = lms7002m_spi_read_csr(self, LMS7002M_RSSIDC_CMPSTATUS);
+        if (cmp != cmpPrev)
+        {
+            edges[edgesIndex++] = value;
+            cmpPrev = cmp;
+
+            if (edgesIndex > 1)
+            {
+                break;
+            }
+        }
+    }
+    if (edgesIndex != 2)
+    {
+        LOG_D(self, "%s", "Not found");
+        return lms7002m_report_error(self, lime_Result_InvalidValue, "%s", "Failed to find value");
+    }
+    const int8_t found = (edges[0] + edges[1]) / 2;
+    wrValue = abs(found);
+    if (found < 0)
+        wrValue |= 0x40;
+    lms7002m_spi_modify_csr(self, LMS7002M_RSSIDC_DCO1, wrValue);
+    LOG_D(self, "Found %i", found);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INSHSW_W_RFE, 0);
     return lime_Result_Success;
 }

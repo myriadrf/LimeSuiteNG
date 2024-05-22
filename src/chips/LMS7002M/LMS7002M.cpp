@@ -1950,55 +1950,8 @@ OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, c
 
 OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
 {
-    Modify_SPI_Reg_bits(EN_INSHSW_W_RFE, 1);
-    CalibrateInternalADC(0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RSSI_RFE, 0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, 0);
-
-    /*Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_RSEL, 22);
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_HYSCMP, 0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_PD, 0);*/
-    SPI_write(0x0640, 22 << 4);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO2, 0);
-
-    int value = -63;
-    uint8_t wrValue = abs(value);
-    if (value < 0)
-        wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-    uint8_t cmp = Get_SPI_Reg_bits(LMS7002MCSR::RSSIDC_CMPSTATUS, true);
-    uint8_t cmpPrev = cmp;
-    std::vector<int8_t> edges;
-    for (value = -63; value < 64; ++value)
-    {
-        wrValue = abs(value);
-        if (value < 0)
-            wrValue |= 0x40;
-        Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-        std::this_thread::sleep_for(std::chrono::microseconds(5));
-        cmp = Get_SPI_Reg_bits(LMS7002MCSR::RSSIDC_CMPSTATUS, true);
-        if (cmp != cmpPrev)
-        {
-            edges.push_back(value);
-            cmpPrev = cmp;
-        }
-        if (edges.size() > 1)
-            break;
-    }
-    if (edges.size() != 2)
-    {
-        lime::debug("Not found"s);
-        return ReportError(OpStatus::InvalidValue, "Failed to find value"s);
-    }
-    int8_t found = (edges[0] + edges[1]) / 2;
-    wrValue = abs(found);
-    if (found < 0)
-        wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-    lime::debug("Found %i", found);
-    Modify_SPI_Reg_bits(EN_INSHSW_W_RFE, 0);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_calibrate_analog_rssi_dc_offset(mC_impl);
+    return ResultToStatus(result);
 }
 
 double LMS7002M::GetClockFreq(ClockID clk_id)
