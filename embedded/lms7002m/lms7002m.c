@@ -1315,3 +1315,22 @@ double lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_
         return 0;
     }
 }
+
+double lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms7002m_channel ch)
+{
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, ch);
+
+    const uint16_t ratio = lms7002m_spi_read_csr(self, isTx ? LMS7002M_HBI_OVR_TXTSP : LMS7002M_HBD_OVR_RXTSP);
+
+    double interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+
+    // If decimation/interpolation is 0 (2^1) or 7 (bypass), interface clocks should not be divided
+    if (ratio != 7)
+    {
+        interface_Hz /= 2 * pow(2.0, ratio);
+    }
+
+    lms7002m_set_active_channel(self, savedChannel);
+    return interface_Hz;
+}

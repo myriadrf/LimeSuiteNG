@@ -145,6 +145,8 @@ double lms7002m_get_temperature(struct lms7002m_context* self);
 
 double lms7002m_get_clock_frequency(struct lms7002m_context* self, enum lms7002m_clock_id clk_id);
 
+double lms7002m_get_sample_rate(struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch);
+
 // Calibrations
 
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);

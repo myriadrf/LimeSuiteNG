@@ -2010,25 +2010,12 @@ OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
 
 float_type LMS7002M::GetSampleRate(TRXDir dir, Channel ch)
 {
-    ChannelScope scope(this, ch);
-    return GetSampleRate(dir);
+    return lms7002m_get_sample_rate(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(ch));
 }
 
 float_type LMS7002M::GetSampleRate(TRXDir dir)
 {
-    const auto& parameter = dir == TRXDir::Tx ? HBI_OVR_TXTSP : HBD_OVR_RXTSP;
-
-    uint16_t ratio = Get_SPI_Reg_bits(parameter);
-
-    double interface_Hz = GetReferenceClk_TSP(dir);
-
-    // If decimation/interpolation is 0 (2^1) or 7 (bypass), interface clocks should not be divided
-    if (ratio != 7)
-    {
-        interface_Hz /= 2 * pow(2.0, ratio);
-    }
-
-    return interface_Hz;
+    return lms7002m_get_sample_rate(mC_impl, dir == TRXDir::Tx, lms7002m_get_active_channel(mC_impl));
 }
 
 OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double bandwidth)
