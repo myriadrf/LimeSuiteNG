@@ -11,6 +11,7 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/LMS7002MCSR.h"
+#include "limesuiteng/Register.h"
 
 #include <array>
 #include <cstdarg>
@@ -925,6 +926,9 @@ class LIME_API LMS7002M
     std::shared_ptr<ISPI> controlPort;
     std::array<int, 2> opt_gain_tbb;
     OpStatus LoadConfigLegacyFile(const std::string& filename);
+
+    int16_t ReadAnalogDC(const uint16_t addr);
+    uint16_t GetRSSIDelayCounter();
 
     lms7002m_context* mC_impl;
 };

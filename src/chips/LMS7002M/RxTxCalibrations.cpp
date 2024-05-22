@@ -69,19 +69,6 @@ static inline int16_t signextIqCorr(const uint16_t regVal)
 const double TrxCalib_RF_LimitLow = 2.5e6;
 const double TrxCalib_RF_LimitHigh = 120e6;
 
-static int16_t ReadAnalogDC(lime::LMS7002M* lmsControl, const LMS7002MCSR_Data::CSRegister& param)
-{
-    uint16_t mask = param.address < 0x05C7 ? 0x03FF : 0x003F;
-
-    lmsControl->SPI_write(param.address, 0);
-    lmsControl->SPI_write(param.address, 0x4000);
-    uint16_t value = lmsControl->SPI_read(param.address, true);
-    lmsControl->SPI_write(param.address, value & ~0xC000);
-    int16_t result = (value & mask);
-    if (value & (mask + 1))
-        result *= -1;
-    return result;
-}
 /*
 static int SetExtLoopback(IConnection* port, uint8_t ch, bool enable, bool tx)
 {
@@ -159,16 +146,45 @@ static int SetExtLoopback(IConnection* port, uint8_t ch, bool enable, bool tx)
     return status;
 }
 */
+
+uint16_t LMS7002M::GetRSSIDelayCounter()
+{
+    const uint16_t sampleCount = (2 << 7) << Get_SPI_Reg_bits(AGC_AVG_RXTSP);
+    uint8_t decimation = Get_SPI_Reg_bits(HBD_OVR_RXTSP);
+    if (decimation < 6)
+        decimation = (2 << decimation);
+    else
+        decimation = 1; //bypass
+
+    const float waitTime = sampleCount / ((GetReferenceClk_TSP(TRXDir::Rx) / 2) / decimation);
+    return (0xFFFF) - static_cast<uint16_t>(waitTime * GetReferenceClk_SX(TRXDir::Rx) / 12);
+}
+
 /** @brief Flips the CAPTURE bit and returns digital RSSI value
 */
 uint32_t LMS7002M::GetRSSI()
 {
-    //delay to make sure RSSI gets enough samples to refresh before reading it
-    this_thread::sleep_for(chrono::microseconds(50));
+    const int waitTime = 1000000.0 * (0xFFFF - GetRSSIDelayCounter()) * 12 / GetReferenceClk_SX(TRXDir::Rx);
+    std::this_thread::sleep_for(std::chrono::microseconds(waitTime));
     Modify_SPI_Reg_bits(CAPTURE, 0);
     Modify_SPI_Reg_bits(CAPTURE, 1);
-    uint32_t rssi = (Get_SPI_Reg_bits(0x040F, 15, 0, true) << 2) | Get_SPI_Reg_bits(0x040E, 1, 0, true);
-    return rssi;
+    const uint32_t rssi = SPI_read(0x040F);
+    return (rssi << 2 | (SPI_read(0x040E) & 0x3));
+}
+
+int16_t LMS7002M::ReadAnalogDC(const uint16_t addr)
+{
+    const uint16_t mask = addr < 0x05C7 ? 0x03FF : 0x003F;
+    uint16_t value;
+    int16_t result;
+    SPI_write(addr, 0);
+    SPI_write(addr, 0x4000);
+    value = SPI_read(addr);
+    SPI_write(addr, value & ~0xC000);
+    result = (value & mask);
+    if (value & (mask + 1))
+        result *= -1;
+    return result;
 }
 
 OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
@@ -249,8 +265,8 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
         this->SPI_read(addr, true);
 
     //need to read back calibration results
-    dccorri = ReadAnalogDC(this, channel ? DC_TXBI : DC_TXAI);
-    dccorrq = ReadAnalogDC(this, channel ? DC_TXBQ : DC_TXAQ);
+    dccorri = ReadAnalogDC(channel ? DC_TXBI.address : DC_TXAI.address);
+    dccorrq = ReadAnalogDC(channel ? DC_TXBQ.address : DC_TXAQ.address);
     gcorri = Get_SPI_Reg_bits(GCORRI_TXTSP, true);
     gcorrq = Get_SPI_Reg_bits(GCORRQ_TXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(IQCORR_TXTSP, true));
@@ -363,8 +379,8 @@ OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
         this->SPI_read(addr, true);
 
     //read back for cache input and print
-    dcoffi = ReadAnalogDC(this, channel ? DC_RXBI : DC_RXAI);
-    dcoffq = ReadAnalogDC(this, channel ? DC_RXBQ : DC_RXAQ);
+    dcoffi = ReadAnalogDC(channel ? DC_RXBI.address : DC_RXAI.address);
+    dcoffq = ReadAnalogDC(channel ? DC_RXBQ.address : DC_RXAQ.address);
     gcorri = Get_SPI_Reg_bits(GCORRI_RXTSP, true);
     gcorrq = Get_SPI_Reg_bits(GCORRQ_RXTSP, true);
     phaseOffset = signextIqCorr(Get_SPI_Reg_bits(IQCORR_RXTSP, true));
