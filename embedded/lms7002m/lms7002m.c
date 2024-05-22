@@ -1272,3 +1272,24 @@ lime_Result lms7002m_get_i_q_balance(
 
     return lime_Result_Success;
 }
+
+double lms7002m_get_temperature(lms7002m_context* self)
+{
+    if (lms7002m_calibrate_internal_adc(self, 32) != lime_Result_Success)
+        return 0;
+    lms7002m_spi_modify_csr(self, LMS7002M_RSSI_PD, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_RSSI_RSSIMODE, 0);
+    const uint16_t biasMux = lms7002m_spi_read_csr(self, LMS7002M_MUX_BIAS_OUT);
+    lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, 2);
+
+    lms7002m_sleep(250);
+
+    const uint16_t reg606 = lms7002m_spi_read(self, 0x0606);
+    const float Vtemp = ((reg606 >> 8) & 0xFF) * 1.84;
+    const float Vptat = (reg606 & 0xFF) * 1.84;
+    const float Vdiff = (Vptat - Vtemp) / 1.05;
+    const float temperature = 45.0 + Vdiff;
+    lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, biasMux);
+    LOG_D(self, "Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (reg606 >> 8) & 0xFF, reg606 & 0xFF, Vdiff, temperature);
+    return temperature;
+}

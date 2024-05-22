@@ -1922,25 +1922,7 @@ OpStatus LMS7002M::CalibrateRP_BIAS()
 
 float_type LMS7002M::GetTemperature()
 {
-    if (CalibrateInternalADC(32) != OpStatus::Success)
-        return 0;
-    Modify_SPI_Reg_bits(RSSI_PD, 0);
-    Modify_SPI_Reg_bits(RSSI_RSSIMODE, 0);
-    uint16_t biasMux = Get_SPI_Reg_bits(MUX_BIAS_OUT);
-    Modify_SPI_Reg_bits(MUX_BIAS_OUT, 2);
-
-    std::this_thread::sleep_for(std::chrono::microseconds(250));
-    const uint16_t reg606 = SPI_read(0x0606, true);
-    float Vtemp = (reg606 >> 8) & 0xFF;
-    Vtemp *= 1.84;
-    float Vptat = reg606 & 0xFF;
-    Vptat *= 1.84;
-    float Vdiff = Vptat - Vtemp;
-    Vdiff /= 1.05;
-    float temperature = 45.0 + Vdiff;
-    Modify_SPI_Reg_bits(MUX_BIAS_OUT, biasMux);
-    lime::debug("Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (reg606 >> 8) & 0xFF, reg606 & 0xFF, Vdiff, temperature);
-    return temperature;
+    return lms7002m_get_temperature(mC_impl);
 }
 
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)
