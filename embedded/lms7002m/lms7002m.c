@@ -1577,3 +1577,106 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
 
     return lime_Result_Success;
 }
+
+lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
+{
+    const double txLpfLowRange[2] = { 5e6, 33e6 };
+    const double txLpfHighRange[2] = { 56e6, 160e6 };
+
+    // common setup
+    lms7002m_spi_modify(self, 0x0106, 15, 0, 0x318C);
+    lms7002m_spi_modify(self, 0x0107, 15, 0, 0x318C);
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_FRP_TBB, 8);
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_GG_FRP_TBB, 12);
+    lms7002m_spi_modify_csr(self, LMS7002M_CCAL_LPFLAD_TBB, 31);
+    lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFS5_TBB, 255);
+    lms7002m_spi_modify_csr(self, LMS7002M_R5_LPF_BYP_TBB, 1);
+    lms7002m_spi_modify_csr(self, LMS7002M_BYPLADDER_TBB, 0);
+
+    uint16_t powerDowns = 0x15; // addr 0x0105[4:0]
+
+    if (rfBandwidth_Hz <= 0) // Bypass LPF
+    {
+        lms7002m_log(self, lime_LogLevel_Info, "TxLPF bypassed");
+        lms7002m_spi_modify(self, 0x0105, 4, 0, powerDowns);
+        lms7002m_spi_modify_csr(self, LMS7002M_BYPLADDER_TBB, 1);
+        return lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFS5_TBB, 0);
+    }
+    else if (rfBandwidth_Hz < txLpfLowRange[0] || txLpfHighRange[1] < rfBandwidth_Hz)
+    {
+        lms7002m_log(self,
+            lime_LogLevel_Warning,
+            "Requested TxLPF(%g) bandwidth is out of range [%g - %g]. Clamping to valid value.",
+            rfBandwidth_Hz,
+            txLpfLowRange[0],
+            txLpfHighRange[1]);
+        rfBandwidth_Hz = clamp_double(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
+    }
+
+    const double rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
+    int rcal_lpflad = 0;
+    int rcal_lpfh = 0;
+
+    if (rfBandwidth_Hz < 5.3e6)
+    {
+        lms7002m_log(self, lime_LogLevel_Warning, "TxLPF(%g) setting bandwidth to %g.", rfBandwidth_Hz, txLpfLowRange[0]);
+        powerDowns = 0x11;
+    }
+    else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
+    {
+        const double LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
+        double LADterm1 = 0.0;
+        {
+            double t1 = 1.92163e-15;
+            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            LADterm1 = t1 * pow(t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51, 1.0 / 3.0);
+        }
+
+        double LADterm2 = 0.0;
+        {
+            double t1 = 6.50934553014677e18;
+            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            double t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
+            LADterm2 = t1 / pow(t3, 1.0 / 3.0);
+        }
+        rcal_lpflad = clamp_double(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
+        powerDowns = 0x11;
+    }
+    else if (txLpfLowRange[1] <= rfBandwidth_Hz && rfBandwidth_Hz <= txLpfHighRange[0]) // 33-56 MHz gap
+    {
+        lms7002m_log(self,
+            lime_LogLevel_Warning,
+            "Requested TxLPF(%g) is in frequency gap [%g-%g], setting bandwidth to %g.",
+            rfBandwidth_Hz,
+            txLpfLowRange[1],
+            txLpfHighRange[0],
+            txLpfHighRange[0]);
+        powerDowns = 0x07;
+    }
+    else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
+    {
+        const double Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
+        double Hterm1;
+        {
+            double t1 = 5.66735e-16;
+            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            Hterm1 = t1 * t3;
+        }
+        double Hterm2;
+        {
+            double t1 = 2.12037432410767e019;
+            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            Hterm2 = t1 / t3;
+        }
+        rcal_lpfh = clamp_double(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
+        powerDowns = 0x07;
+    }
+
+    lms7002m_log(self, lime_LogLevel_Debug, "TxLPF(%g): LAD=%i, H=%i\n", rfBandwidth_Hz, rcal_lpflad, rcal_lpfh);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFLAD_TBB, rcal_lpflad);
+    lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFH_TBB, rcal_lpfh);
+    return lms7002m_spi_modify(self, 0x0105, 4, 0, powerDowns);
+}
