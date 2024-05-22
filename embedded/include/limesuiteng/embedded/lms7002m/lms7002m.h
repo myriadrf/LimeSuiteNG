@@ -13,6 +13,17 @@ extern "C" {
 struct lms7002m_context;
 
 enum lms7002m_vco_type { LMS7002M_VCO_CGEN, LMS7002M_VCO_SXR, LMS7002M_VCO_SXT };
+
+/// @brief The IDs of the clocks on the chip.
+enum lms7002m_clock_id {
+    LMS7002M_CLK_REFERENCE = 0, ///< Reference clock
+    LMS7002M_CLK_SXR = 1, ///< RX LO clock
+    LMS7002M_CLK_SXT = 2, ///< TX LO clock
+    LMS7002M_CLK_CGEN = 3, ///< Clock generator clock
+    LMS7002M_CLK_RXTSP = 4, ///< RXTSP reference clock (read-only)
+    LMS7002M_CLK_TXTSP = 5 ///< TXTSP reference clock (read-only)
+};
+
 enum lms7002m_path_rfe {
     LMS7002M_PATH_RFE_NONE,
     LMS7002M_PATH_RFE_LNAH,
@@ -130,6 +141,8 @@ lime_Result lms7002m_get_i_q_balance(
     struct lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ);
 
 double lms7002m_get_temperature(struct lms7002m_context* self);
+
+double lms7002m_get_clock_frequency(struct lms7002m_context* self, enum lms7002m_clock_id clk_id);
 
 // Calibrations
 

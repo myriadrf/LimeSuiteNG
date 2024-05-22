@@ -125,6 +125,30 @@ static OpStatus ResultToStatus(lime_Result result)
     return static_cast<lime::OpStatus>(result);
 }
 
+static_assert(LMS7002M::ClockID::CLK_REFERENCE == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_REFERENCE));
+static_assert(LMS7002M::ClockID::CLK_SXR == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXR));
+static_assert(LMS7002M::ClockID::CLK_SXT == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXT));
+static_assert(LMS7002M::ClockID::CLK_CGEN == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_CGEN));
+static_assert(LMS7002M::ClockID::CLK_RXTSP == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_RXTSP));
+static_assert(LMS7002M::ClockID::CLK_TXTSP == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_TXTSP));
+
+static_assert(LMS7002M::Channel::ChA == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_A));
+static_assert(LMS7002M::Channel::ChB == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_B));
+static_assert(LMS7002M::Channel::ChAB == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_AB));
+static_assert(LMS7002M::Channel::ChSXR == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_SXR));
+static_assert(LMS7002M::Channel::ChSXT == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_SXT));
+
+static_assert(LMS7002M::PathRFE::NONE == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_NONE));
+static_assert(LMS7002M::PathRFE::LNAH == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAH));
+static_assert(LMS7002M::PathRFE::LNAL == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAL));
+static_assert(LMS7002M::PathRFE::LNAW == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAW));
+static_assert(LMS7002M::PathRFE::LB1 == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LB1));
+static_assert(LMS7002M::PathRFE::LB2 == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LB2));
+
+static_assert(LMS7002M::VCO_Module::VCO_CGEN == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_CGEN));
+static_assert(LMS7002M::VCO_Module::VCO_SXR == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXR));
+static_assert(LMS7002M::VCO_Module::VCO_SXT == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXT));
+
 /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
 class ChannelScope
 {
@@ -1956,24 +1980,7 @@ OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
 
 double LMS7002M::GetClockFreq(ClockID clk_id)
 {
-    switch (clk_id)
-    {
-    case ClockID::CLK_REFERENCE:
-        return GetReferenceClk_SX(TRXDir::Rx);
-    case ClockID::CLK_SXR:
-        return GetFrequencySX(TRXDir::Rx);
-    case ClockID::CLK_SXT:
-        return GetFrequencySX(TRXDir::Tx);
-    case ClockID::CLK_CGEN:
-        return GetFrequencyCGEN();
-    case ClockID::CLK_RXTSP:
-        return GetReferenceClk_TSP(TRXDir::Rx);
-    case ClockID::CLK_TXTSP:
-        return GetReferenceClk_TSP(TRXDir::Tx);
-    default:
-        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID."s);
-        return 0;
-    }
+    return lms7002m_get_clock_frequency(mC_impl, static_cast<lms7002m_clock_id>(clk_id));
 }
 
 OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)

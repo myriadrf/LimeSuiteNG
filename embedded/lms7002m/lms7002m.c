@@ -1293,3 +1293,25 @@ double lms7002m_get_temperature(lms7002m_context* self)
     LOG_D(self, "Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (reg606 >> 8) & 0xFF, reg606 & 0xFF, Vdiff, temperature);
     return temperature;
 }
+
+double lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id)
+{
+    switch (clk_id)
+    {
+    case LMS7002M_CLK_REFERENCE:
+        return lms7002m_get_reference_clock(self);
+    case LMS7002M_CLK_SXR:
+        return lms7002m_get_frequency_sx(self, false);
+    case LMS7002M_CLK_SXT:
+        return lms7002m_get_frequency_sx(self, true);
+    case LMS7002M_CLK_CGEN:
+        return lms7002m_get_frequency_cgen(self);
+    case LMS7002M_CLK_RXTSP:
+        return lms7002m_get_reference_clock_tsp(self, false);
+    case LMS7002M_CLK_TXTSP:
+        return lms7002m_get_reference_clock_tsp(self, true);
+    default:
+        lms7002m_report_error(self, lime_Result_InvalidValue, "Invalid clock ID.");
+        return 0;
+    }
+}
