@@ -62,10 +62,11 @@ void lms7002m_destroy(struct lms7002m_context* context);
 double lms7002m_get_reference_clock(struct lms7002m_context* context);
 lime_Result lms7002m_set_reference_clock(struct lms7002m_context* context, double frequency_Hz);
 
-lime_Result lms7002m_enable_channel(struct lms7002m_context* self, const bool isTx, const uint8_t channel, const bool enable);
+lime_Result lms7002m_enable_channel(
+    struct lms7002m_context* self, const bool isTx, const enum lms7002m_channel channel, const bool enable);
 
-uint8_t lms7002m_get_active_channel(struct lms7002m_context* self);
-lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const uint8_t channel);
+enum lms7002m_channel lms7002m_get_active_channel(struct lms7002m_context* self);
+lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
 lime_Result lms7002m_soft_reset(struct lms7002m_context* self);
 lime_Result lms7002m_reset_logic_registers(struct lms7002m_context* self);
@@ -75,31 +76,31 @@ lime_Result lms7002m_tune_cgen_vco(struct lms7002m_context* self);
 lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, double frequency_Hz);
 double lms7002m_get_frequency_cgen(struct lms7002m_context* self);
 
-lime_Result lms7002m_set_rbbpga_db(struct lms7002m_context* self, const double value, const uint8_t channel);
-double lms7002m_get_rbbpga_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_rbbpga_db(struct lms7002m_context* self, const double value, const enum lms7002m_channel channel);
+double lms7002m_get_rbbpga_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_rfelna_db(struct lms7002m_context* self, const double value, const uint8_t channel);
-double lms7002m_get_rfelna_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_rfelna_db(struct lms7002m_context* self, const double value, const enum lms7002m_channel channel);
+double lms7002m_get_rfelna_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_rfe_loopback_lna_db(struct lms7002m_context* self, const double gain, const uint8_t channel);
-double lms7002m_get_rfe_loopback_lna_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_rfe_loopback_lna_db(struct lms7002m_context* self, const double gain, const enum lms7002m_channel channel);
+double lms7002m_get_rfe_loopback_lna_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_rfetia_db(struct lms7002m_context* self, const double value, const uint8_t channel);
-double lms7002m_get_rfetia_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_rfetia_db(struct lms7002m_context* self, const double value, const enum lms7002m_channel channel);
+double lms7002m_get_rfetia_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_trfpad_db(struct lms7002m_context* self, const double value, const uint8_t channel);
-double lms7002m_get_trfpad_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_trfpad_db(struct lms7002m_context* self, const double value, const enum lms7002m_channel channel);
+double lms7002m_get_trfpad_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_trf_loopback_pad_db(struct lms7002m_context* self, const double gain, const uint8_t channel);
-double lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const uint8_t channel);
+lime_Result lms7002m_set_trf_loopback_pad_db(struct lms7002m_context* self, const double gain, const enum lms7002m_channel channel);
+double lms7002m_get_trf_loopback_pad_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
-lime_Result lms7002m_set_path_rfe(struct lms7002m_context* self, const uint8_t path);
+lime_Result lms7002m_set_path_rfe(struct lms7002m_context* self, const enum lms7002m_path_rfe path);
 uint8_t lms7002m_get_path_rfe(struct lms7002m_context* self);
 
 lime_Result lms7002m_set_band_trf(struct lms7002m_context* self, const uint8_t band);
 uint8_t lms7002m_get_band_trf(struct lms7002m_context* self);
 
-lime_Result lms7002m_set_path(struct lms7002m_context* self, bool isTx, uint8_t channel, uint8_t path);
+lime_Result lms7002m_set_path(struct lms7002m_context* self, bool isTx, enum lms7002m_channel channel, uint8_t path);
 
 double lms7002m_get_reference_clock_tsp(struct lms7002m_context* self, bool isTx);
 bool lms7002m_get_cgen_locked(struct lms7002m_context* self);

@@ -29,7 +29,7 @@ void lms7002m_destroy(lms7002m_context* context)
         free(context);
 }
 
-lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, uint8_t channel, const bool enable)
+lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enum lms7002m_channel channel, const bool enable)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     channel = clamp_uint(channel, 0, 1) + 1;
@@ -168,12 +168,12 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, uin
     return lime_Result_Success;
 }
 
-uint8_t lms7002m_get_active_channel(lms7002m_context* self)
+enum lms7002m_channel lms7002m_get_active_channel(lms7002m_context* self)
 {
     return lms7002m_spi_read_csr(self, LMS7002M_MAC);
 }
 
-lime_Result lms7002m_set_active_channel(lms7002m_context* self, const uint8_t channel)
+lime_Result lms7002m_set_active_channel(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     if (channel == lms7002m_get_active_channel(self))
         return lime_Result_Success;
@@ -315,7 +315,7 @@ double lms7002m_get_frequency_cgen(lms7002m_context* self)
     return dMul * ((gINT >> 4) + 1 + gFRAC / 1048576.0);
 }
 
-lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, const uint8_t channel)
+lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -340,7 +340,7 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_rbbpga_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -351,7 +351,7 @@ double lms7002m_get_rbbpga_db(lms7002m_context* self, const uint8_t channel)
     return g_pga_rbb - 12;
 }
 
-lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const double value, const uint8_t channel)
+lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -394,7 +394,7 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_rfelna_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -414,7 +414,7 @@ double lms7002m_get_rfelna_db(lms7002m_context* self, const uint8_t channel)
     return retval;
 }
 
-lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const double gain, const uint8_t channel)
+lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const double gain, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -460,7 +460,7 @@ lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const doubl
     return ret;
 }
 
-double lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -480,7 +480,7 @@ double lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const uint8_t ch
     return retval;
 }
 
-lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const double value, const uint8_t channel)
+lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -500,7 +500,7 @@ lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_rfetia_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -520,7 +520,7 @@ double lms7002m_get_rfetia_db(lms7002m_context* self, const uint8_t channel)
     return retval;
 }
 
-lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, const uint8_t channel)
+lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -544,7 +544,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_trfpad_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -558,7 +558,7 @@ double lms7002m_get_trfpad_db(lms7002m_context* self, const uint8_t channel)
     return pmax - loss_int;
 }
 
-lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const double gain, const uint8_t channel)
+lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const double gain, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -577,7 +577,7 @@ lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const doubl
     return ret;
 }
 
-double lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const uint8_t channel)
+double lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -596,7 +596,7 @@ double lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const uint8_t ch
     return retval;
 }
 
-lime_Result lms7002m_set_path_rfe(lms7002m_context* self, const uint8_t path)
+lime_Result lms7002m_set_path_rfe(lms7002m_context* self, const enum lms7002m_path_rfe path)
 {
     int sel_path_rfe;
     int pd_lb1 = 1;
@@ -674,7 +674,7 @@ uint8_t lms7002m_get_band_trf(lms7002m_context* self)
     return 0;
 }
 
-lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, uint8_t channel, uint8_t path)
+lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, enum lms7002m_channel channel, uint8_t path)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);

@@ -320,7 +320,7 @@ LMS7002M::~LMS7002M()
 
 OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 {
-    lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<uint8_t>(ch));
+    lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<lms7002m_channel>(ch));
     return ResultToStatus(result);
 }
 
@@ -338,7 +338,7 @@ size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
 {
-    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, channel, enable);
+    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(channel), enable);
     return ResultToStatus(result);
 }
 
@@ -769,68 +769,68 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 
 OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, value, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 {
-    return lms7002m_get_rbbpga_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_rbbpga_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfelna_db(mC_impl, value, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_rfelna_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELNA_dB(const Channel channel)
 {
-    return lms7002m_get_rfelna_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_rfelna_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFELoopbackLNA_dB(const float_type gain, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfe_loopback_lna_db(mC_impl, gain, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_rfe_loopback_lna_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
 {
-    return lms7002m_get_rfe_loopback_lna_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_rfe_loopback_lna_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFETIA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfetia_db(mC_impl, value, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_rfetia_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFETIA_dB(const Channel channel)
 {
-    return lms7002m_get_rfetia_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_rfetia_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_trfpad_db(mC_impl, value, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_trfpad_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
 {
-    return lms7002m_get_trfpad_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_trfpad_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel channel)
 {
-    lime_Result result = lms7002m_set_trf_loopback_pad_db(mC_impl, gain, static_cast<uint8_t>(channel));
+    lime_Result result = lms7002m_set_trf_loopback_pad_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
 {
-    return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<uint8_t>(channel));
+    return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 // opt_gain_tbb
@@ -874,7 +874,7 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 
 OpStatus LMS7002M::SetPathRFE(PathRFE path)
 {
-    lime_Result result = lms7002m_set_path_rfe(mC_impl, static_cast<uint8_t>(path));
+    lime_Result result = lms7002m_set_path_rfe(mC_impl, static_cast<lms7002m_path_rfe>(path));
     return ResultToStatus(result);
 }
 
@@ -896,7 +896,7 @@ int LMS7002M::GetBandTRF()
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 {
-    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, channel, path);
+    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, static_cast<lms7002m_channel>(channel), path);
     return ResultToStatus(result);
 }
 
