@@ -94,3 +94,12 @@ uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max)
         return max;
     return value;
 }
+
+double clamp_double(double value, double min, double max)
+{
+    if (value < min)
+        return min;
+    if (value > max)
+        return max;
+    return value;
+}

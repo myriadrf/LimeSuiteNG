@@ -1440,3 +1440,140 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
     lms7002m_set_active_channel(self, savedChannel);
     return result;
 }
+
+lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
+{
+    const int tiaGain = lms7002m_spi_read_csr(self, LMS7002M_G_TIA_RFE);
+    if (tiaGain < 1 || tiaGain > 3)
+        return lms7002m_report_error(self, lime_Result_InvalidValue, "RxLPF: Invalid G_TIA gain value");
+
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_TIA_RFE, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_G_RFE, 1);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_TIAMAIN_RFE, 2);
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_TIAOUT_RFE, 2);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_LPF_IN_RBB, 0x0C);
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_LPF_OUT_RBB, 0x0C);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_PGA_OUT_RBB, 0x14);
+    lms7002m_spi_modify_csr(self, LMS7002M_ICT_PGA_IN_RBB, 0x14);
+
+    const int pgaGain = lms7002m_spi_read_csr(self, LMS7002M_G_PGA_RBB);
+    if (pgaGain != 12)
+    {
+        lms7002m_log(self, lime_LogLevel_Warning, "RxLPF modifying G_PGA_RBB %i -> 12", pgaGain);
+        lms7002m_spi_modify_csr(self, LMS7002M_G_PGA_RBB, 12);
+    }
+
+    lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_PGA_RBB, 0x18);
+    lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_PGA_RBB, 1);
+
+    const double rxLpfMin = (tiaGain == 1) ? 4e6 : 1.5e6;
+    const double rxLpfMax = 160e6;
+
+    if (rfBandwidth_Hz != 0 && (rfBandwidth_Hz < rxLpfMin || rfBandwidth_Hz > rxLpfMax))
+    {
+        lms7002m_log(self,
+            lime_LogLevel_Warning,
+            "Requested RxLPF(%g) is out of range [%g - %g]. Clamping to valid range.",
+            rfBandwidth_Hz,
+            rxLpfMin,
+            rxLpfMax);
+        rfBandwidth_Hz = clamp_double(rfBandwidth_Hz, rxLpfMin, rxLpfMax);
+    }
+
+    const double bandwidth_MHz = rfBandwidth_Hz / 1e6;
+
+    uint16_t cfb_tia_rfe = 0;
+    if (tiaGain == 1)
+        cfb_tia_rfe = 120 * 45 / (bandwidth_MHz / 2 / 1.5) - 15;
+    else
+        cfb_tia_rfe = 120 * 14 / (bandwidth_MHz / 2 / 1.5) - 10;
+    cfb_tia_rfe = clamp_uint(cfb_tia_rfe, 0, 4095);
+
+    uint16_t rcomp_tia_rfe = clamp_uint(15 - cfb_tia_rfe * 2 / 100, 0, 15);
+    uint16_t ccomp_tia_rfe = clamp_uint((cfb_tia_rfe / 100) + (tiaGain == 1 ? 1 : 0), 0, 15);
+
+    uint16_t c_ctl_lpfl_rbb = clamp_uint(120 * 18 / (bandwidth_MHz / 2 / 0.75) - 103, 0, 2047);
+    const uint16_t c_ctl_lpfh_rbb = clamp_uint(120 * 50 / (bandwidth_MHz / 2 / 0.75) - 50, 0, 255);
+
+    lms7002m_log(self,
+        lime_LogLevel_Debug,
+        "RxLPF(%g): TIA_C=%i, TIA_RCOMP=%i, TIA_CCOMP=%i, RX_L_C=%i, RX_H_C=%i\n",
+        rfBandwidth_Hz,
+        cfb_tia_rfe,
+        rcomp_tia_rfe,
+        ccomp_tia_rfe,
+        c_ctl_lpfl_rbb,
+        c_ctl_lpfh_rbb);
+
+    uint16_t input_ctl_pga_rbb = 4;
+    uint16_t powerDowns = 0xD; // 0x0115[3:0]
+
+    const double ifbw = bandwidth_MHz / 2 / 0.75;
+
+    uint16_t rcc_ctl_lpfl_rbb = 0;
+    if (ifbw >= 20)
+        rcc_ctl_lpfl_rbb = 5;
+    else if (ifbw >= 15)
+        rcc_ctl_lpfl_rbb = 4;
+    else if (ifbw >= 10)
+        rcc_ctl_lpfl_rbb = 3;
+    else if (ifbw >= 5)
+        rcc_ctl_lpfl_rbb = 2;
+    else if (ifbw >= 3)
+        rcc_ctl_lpfl_rbb = 1;
+
+    if (rfBandwidth_Hz <= 0) // LPF bypass
+    {
+        lms7002m_log(self, lime_LogLevel_Info, "RxLPF bypassed");
+        powerDowns = 0xD;
+        input_ctl_pga_rbb = 2;
+    }
+    else if (rfBandwidth_Hz < rxLpfMin)
+    {
+        lms7002m_log(
+            self, lime_LogLevel_Warning, "RxLPF(%g) frequency too low. Clamping to %g MHz.", rfBandwidth_Hz, rxLpfMin / 1e6);
+        if (tiaGain == 1)
+        {
+            cfb_tia_rfe = 4035;
+            rcc_ctl_lpfl_rbb = 1;
+            c_ctl_lpfl_rbb = 707;
+        }
+        else
+        {
+            cfb_tia_rfe = 3350;
+            rcc_ctl_lpfl_rbb = 0;
+            c_ctl_lpfl_rbb = 2047;
+        }
+        rcomp_tia_rfe = 0;
+        ccomp_tia_rfe = 15;
+        powerDowns = 0x9;
+        input_ctl_pga_rbb = 0;
+    }
+    else if (rxLpfMin <= rfBandwidth_Hz && rfBandwidth_Hz <= 30e6)
+    {
+        powerDowns = 0x9;
+        input_ctl_pga_rbb = 0;
+    }
+    else if (30e6 <= rfBandwidth_Hz && rfBandwidth_Hz <= rxLpfMax)
+    {
+        powerDowns = 0x5;
+        input_ctl_pga_rbb = 1;
+    }
+
+    lms7002m_spi_modify_csr(self, LMS7002M_CFB_TIA_RFE, cfb_tia_rfe);
+    lms7002m_spi_modify_csr(self, LMS7002M_RCOMP_TIA_RFE, rcomp_tia_rfe);
+    lms7002m_spi_modify_csr(self, LMS7002M_CCOMP_TIA_RFE, ccomp_tia_rfe);
+    lms7002m_spi_modify(self, 0x0115, 3, 0, powerDowns);
+    lms7002m_spi_modify_csr(self, LMS7002M_INPUT_CTL_PGA_RBB, input_ctl_pga_rbb);
+    lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_LPFL_RBB, c_ctl_lpfl_rbb);
+    lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_LPFH_RBB, c_ctl_lpfh_rbb);
+    lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_LPFL_RBB, rcc_ctl_lpfl_rbb);
+
+    const uint16_t rcc_ctl_lpfh_rbb = clamp_double(ifbw / 10 - 2, 0.0, 7.0);
+    lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_LPFH_RBB, rcc_ctl_lpfh_rbb);
+
+    return lime_Result_Success;
+}

@@ -150,6 +150,8 @@ double lms7002m_get_sample_rate(struct lms7002m_context* self, bool isTx, enum l
 lime_Result lms7002m_set_gfir_filter(
     struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, double bandwidth);
 
+lime_Result lms7002m_set_rx_lpf(struct lms7002m_context* self, double rfBandwidth_Hz);
+
 // Calibrations
 
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);
