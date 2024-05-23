@@ -934,7 +934,7 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
     return lms7002m_get_reference_clock_tsp(mC_impl, dir == TRXDir::Tx);
 }
 
-OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
+OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies)
 {
     lime_Result result = lms7002m_set_frequency_cgen(mC_impl, freq_Hz);
     return ResultToStatus(result);
@@ -1010,7 +1010,7 @@ const CSRegister& LMS7002M::GetParam(const std::string& name)
     throw std::logic_error("Parameter "s + name + " not found"s);
 }
 
-OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output)
+OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz)
 {
     static std::map<float_type, int8_t> tuning_cache_sel_vco;
     static std::map<float_type, int16_t> tuning_cache_csw_value;
@@ -1071,17 +1071,6 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         (VCOfreq > m_dThrF));
     lime::debug("Expected VCO %.2f MHz, RefClk %.2f MHz", VCOfreq / 1e6, refClk_Hz / 1e6);
 
-    if (output)
-    {
-        output->frequency = freq_Hz;
-        output->frequencyVCO = VCOfreq;
-        output->referenceClock = GetReferenceClk_SX(dir);
-        output->INT = integerPart;
-        output->FRAC = fractionalPart;
-        output->en_div2_divprog = (VCOfreq > m_dThrF);
-        output->div_loch = div_loch;
-    }
-
     // turn on VCO and comparator
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO, 0); //
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO_COMP, 0);
@@ -1099,12 +1088,6 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
         if (cmphl == 2)
         {
             lime::info("Fast Tune success; vco=%d value=%d", tuning_cache_sel_vco[freq_Hz], tuning_cache_csw_value[freq_Hz]);
-            if (output)
-            {
-                output->success = true;
-                output->sel_vco = sel_vco;
-                output->csw = csw_value;
-            }
             return OpStatus::Success;
         }
     }
@@ -1158,13 +1141,6 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* ou
     csw_value = tuneScore[sel_vco] + 128;
     lime::debug("Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], csw_value);
 
-    if (output)
-    {
-        if (canDeliverFrequency)
-            output->success = true;
-        output->sel_vco = sel_vco;
-        output->csw = csw_value;
-    }
     Modify_SPI_Reg_bits(LMS7002MCSR::SEL_VCO, sel_vco);
     Modify_SPI_Reg_bits(LMS7002MCSR::CSW_VCO, csw_value);
 
@@ -1991,13 +1967,13 @@ OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
         // TODO: recalculate CGEN,SXR/T
         break;
     case ClockID::CLK_CGEN:
-        return SetFrequencyCGEN(freq, true, nullptr);
+        return SetFrequencyCGEN(freq, true);
         break;
     case ClockID::CLK_SXR:
-        return SetFrequencySX(TRXDir::Rx, freq, nullptr);
+        return SetFrequencySX(TRXDir::Rx, freq);
         break;
     case ClockID::CLK_SXT:
-        return SetFrequencySX(TRXDir::Rx, freq, nullptr);
+        return SetFrequencySX(TRXDir::Rx, freq);
         break;
     case ClockID::CLK_RXTSP:
     case ClockID::CLK_TXTSP:

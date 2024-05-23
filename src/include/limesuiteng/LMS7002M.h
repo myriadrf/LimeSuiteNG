@@ -55,31 +55,6 @@ class LIME_API LMS7002M
         CLK_TXTSP = 5 ///< TXTSP reference clock (read-only)
     };
 
-    /** @brief LMS7002M's clock generator details */
-    struct CGEN_details {
-        float_type frequency;
-        float_type frequencyVCO;
-        float_type referenceClock;
-        uint32_t INT;
-        uint32_t FRAC;
-        uint8_t div_outch_cgen;
-        uint16_t csw;
-        bool success;
-    };
-
-    struct SX_details {
-        float_type frequency;
-        float_type frequencyVCO;
-        float_type referenceClock;
-        uint32_t INT;
-        uint32_t FRAC;
-        uint8_t div_loch;
-        bool en_div2_divprog;
-        uint16_t sel_vco;
-        uint16_t csw;
-        bool success;
-    };
-
     /*!
      * The constructor for the LMS7002M chip.
      * @param port The connection interface
@@ -538,10 +513,9 @@ class LIME_API LMS7002M
      * @brief Sets CLKGEN frequency, calculations use receiver'r reference clock
      * @param freq_Hz desired frequency in Hz
      * @param retainNCOfrequencies recalculate NCO coefficients to keep currently set frequencies
-     * @param output if not null outputs calculated CGEN parameters
      * @return The status of the operation
      */
-    OpStatus SetFrequencyCGEN(float_type freq_Hz, const bool retainNCOfrequencies = false, CGEN_details* output = nullptr);
+    OpStatus SetFrequencyCGEN(float_type freq_Hz, const bool retainNCOfrequencies = false);
 
     /*!
      * @brief Gets whether the VCO comparators of the clock generator are locked or not.
@@ -560,10 +534,9 @@ class LIME_API LMS7002M
      * @brief Sets SX frequency
      * @param dir Rx/Tx module selection
      * @param freq_Hz desired frequency in Hz
-     * @param output if not null outputs intermediate calculation values
      * @return The status of the operation
      */
-    OpStatus SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output = nullptr);
+    OpStatus SetFrequencySX(TRXDir dir, float_type freq_Hz);
 
     /*!
      * @brief Sets SX frequency with Reference clock spur cancelation
