@@ -731,7 +731,7 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
         return lms7002m_tune_cgen_vco(self);
 
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
-    lms7002m_set_active_channel(self, module);
+    lms7002m_set_active_channel(self, (enum lms7002m_channel)module);
 
     const char* const moduleName = (module == LMS7002M_VCO_SXR) ? "SXR" : "SXT";
     LOG_D(self, "TuneVCO(%s) ICT_VCO: %d", moduleName, lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO));
@@ -1337,9 +1337,9 @@ lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const doub
     else
     {
         lms7002m_spi_modify_csr(self, LMS7002M_EN_DCOFF_RXFE_RFE, bypass ? 0 : 1);
-        unsigned int val = lrint(abs(I * 63)) + (I < 0 ? 64 : 0);
+        unsigned int val = lrint(fabs(I * 63)) + (I < 0 ? 64 : 0);
         lms7002m_spi_modify_csr(self, LMS7002M_DCOFFI_RFE, val);
-        val = lrint(abs(Q * 63)) + (Q < 0 ? 64 : 0);
+        val = lrint(fabs(Q * 63)) + (Q < 0 ? 64 : 0);
         lms7002m_spi_modify_csr(self, LMS7002M_DCOFFQ_RFE, val);
     }
 
