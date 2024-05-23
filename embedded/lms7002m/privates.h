@@ -31,5 +31,4 @@ uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count);
 uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max);
 double clamp_double(double value, double min, double max);
 
-
 #endif // LMS7002M_PRIVATES_H
