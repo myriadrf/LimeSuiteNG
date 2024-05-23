@@ -17,9 +17,18 @@
 
 #define CGEN_MAX_FREQ 640e6
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846 /* pi */
+#endif
+
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
     lms7002m_context* self = malloc(sizeof(lms7002m_context));
+    if (self == NULL)
+    {
+        return self;
+    }
+
     memcpy(&self->hooks, hooks, sizeof(lms7002m_hooks));
     return self;
 }

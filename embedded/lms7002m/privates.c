@@ -7,7 +7,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+
+#ifdef _MSC_VER
+    #include <windows.h>
+#else
+    #include <time.h>
+#endif
 
 void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* format, ...)
 {
@@ -39,12 +44,16 @@ lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result,
 
 void lms7002m_sleep(long timeInMicroseconds)
 {
+#ifdef _MSC_VER
+    Sleep(timeInMicroseconds / 1000);
+#else
     struct timespec time;
     time.tv_sec = 0;
     time.tv_nsec = timeInMicroseconds * 1000;
 
     // POSIX function, non-standard C
     nanosleep(&time, NULL);
+#endif
 }
 
 void lms7002m_spi_write(lms7002m_context* self, uint16_t address, uint16_t value)
