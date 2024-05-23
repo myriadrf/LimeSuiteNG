@@ -890,6 +890,128 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     return lime_Result_Success;
 }
 
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, double freq_Hz)
+{
+    if (freq_Hz < 0)
+    {
+        return lime_Result_InvalidValue;
+    }
+
+    const double gVCO_frequency_table[2][2] = { { 3800e6, 5222e6 }, { 6306e6, 7714e6 } };
+    bool canDeliverFrequency = false;
+
+    const uint8_t sxVCO_N = 2; //number of entries in VCO frequencies
+    double VCOfreq = 0.0;
+    //find required VCO frequency
+    int8_t div_loch = 6; // needed for later
+    for (; div_loch >= 0; --div_loch)
+    {
+        VCOfreq = (1 << (div_loch + 1)) * freq_Hz;
+        if ((VCOfreq >= gVCO_frequency_table[0][0]) && (VCOfreq <= gVCO_frequency_table[1][sxVCO_N - 1]))
+        {
+            canDeliverFrequency = true;
+            break;
+        }
+    }
+
+    if (!canDeliverFrequency)
+    {
+        return lms7002m_report_error(self,
+            lime_Result_OutOfRange,
+            "SetFrequencySX%s(%g MHz) - required VCO frequencies are out of range [%g-%g] MHz",
+            isTx ? "T" : "R",
+            freq_Hz / 1e6,
+            gVCO_frequency_table[0][0] / 1e6,
+            gVCO_frequency_table[1][sxVCO_N - 1] / 1e6);
+    }
+
+    const double refClk_Hz = lms7002m_get_reference_clock(self);
+    assert(refClk_Hz > 0);
+
+    const double m_dThrF = 5500e6; //threshold to enable additional divider
+    const double divider = refClk_Hz * (1 + (VCOfreq > m_dThrF));
+
+    const uint16_t integerPart = (uint16_t)(VCOfreq / divider - 4);
+    const uint32_t fractionalPart = (uint32_t)((VCOfreq / divider - (uint32_t)(VCOfreq / divider)) * 1048576);
+
+    const uint8_t savedChannel = lms7002m_get_active_channel(self);
+    lms7002m_set_active_channel(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
+    lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
+    lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
+    lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq > m_dThrF)); //EN_DIV2_DIVPROG
+
+    lms7002m_log(self,
+        lime_LogLevel_Info,
+        "SetFrequencySX%s, (%.3f MHz)INT %d, FRAC %d, DIV_LOCH %d, EN_DIV2_DIVPROG %d",
+        isTx ? "T" : "R",
+        freq_Hz / 1e6,
+        integerPart,
+        fractionalPart,
+        div_loch,
+        (VCOfreq > m_dThrF));
+    lms7002m_log(self, lime_LogLevel_Debug, "Expected VCO %.2f MHz, RefClk %.2f MHz", VCOfreq / 1e6, refClk_Hz / 1e6);
+
+    // turn on VCO and comparator
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO, 0); //
+    lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO_COMP, 0);
+
+    canDeliverFrequency = false;
+    int tuneScore[] = { -128, -128, -128 }; //best is closest to 0
+
+    const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
+
+    for (int i = 0; i < 5; i++) //attempt tune multiple times
+    {
+        for (int8_t sel_vco = 0; sel_vco < 3; ++sel_vco)
+        {
+            lms7002m_log(self, lime_LogLevel_Debug, "Tuning %s :", vcoNames[sel_vco]);
+            lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
+            lime_Result status = lms7002m_tune_vco(self, isTx ? LMS7002M_VCO_SXT : LMS7002M_VCO_SXR);
+            if (status == lime_Result_Success)
+            {
+                tuneScore[sel_vco] = -128 + lms7002m_spi_read_csr(self, LMS7002M_CSW_VCO);
+                canDeliverFrequency = true;
+                lms7002m_log(self,
+                    lime_LogLevel_Debug,
+                    "%s : csw=%d %s",
+                    vcoNames[sel_vco],
+                    tuneScore[sel_vco] + 128,
+                    (status == lime_Result_Success ? "tune ok" : "tune fail"));
+            }
+            else
+            {
+                lms7002m_log(self, lime_LogLevel_Debug, "%s : failed to lock", vcoNames[sel_vco]);
+            }
+        }
+        if (canDeliverFrequency) //tune OK
+            break;
+        uint16_t bias = lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO);
+        if (bias == 255)
+            break;
+        bias = bias + 32 > 255 ? 255 : bias + 32; //retry with higher bias current
+        lms7002m_spi_modify_csr(self, LMS7002M_ICT_VCO, bias);
+    }
+
+    const int8_t sel_vco = lms7002m_minimum_tune_score_index(tuneScore, 3);
+
+    const int16_t csw_value = tuneScore[sel_vco] + 128;
+    lms7002m_log(self, lime_LogLevel_Debug, "Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], csw_value);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
+    lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO, csw_value);
+
+    lms7002m_set_active_channel(self, savedChannel);
+
+    if (canDeliverFrequency == false)
+        return lms7002m_report_error(
+            self, lime_Result_Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", isTx ? "T" : "R", freq_Hz / 1e6);
+    return lime_Result_Success;
+}
+
 double lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);

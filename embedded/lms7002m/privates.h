@@ -26,6 +26,8 @@ lime_Result lms7002m_spi_modify_csr(struct lms7002m_context* self, const lms7002
 uint16_t lms7002m_spi_read_bits(struct lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb);
 uint16_t lms7002m_spi_read_csr(struct lms7002m_context* self, const lms7002m_csr csr);
 
+uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count);
+
 uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max);
 double clamp_double(double value, double min, double max);
 

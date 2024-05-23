@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* format, ...)
@@ -84,6 +85,20 @@ uint16_t lms7002m_spi_read_bits(lms7002m_context* self, uint16_t address, uint8_
 uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
 {
     return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
+}
+
+uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count)
+{
+    int minimum_index = 0;
+    for (int i = 1; i < count; ++i)
+    {
+        if (abs(tuneScore[i]) < abs(tuneScore[minimum_index]))
+        {
+            minimum_index = i;
+        }
+    }
+
+    return minimum_index;
 }
 
 uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max)
