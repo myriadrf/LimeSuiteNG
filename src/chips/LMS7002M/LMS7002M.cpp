@@ -1816,27 +1816,8 @@ double LMS7002M::GetClockFreq(ClockID clk_id)
 
 OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
 {
-    switch (clk_id)
-    {
-    case ClockID::CLK_REFERENCE:
-        // TODO: recalculate CGEN,SXR/T
-        break;
-    case ClockID::CLK_CGEN:
-        return SetFrequencyCGEN(freq, true);
-        break;
-    case ClockID::CLK_SXR:
-        return SetFrequencySX(TRXDir::Rx, freq);
-        break;
-    case ClockID::CLK_SXT:
-        return SetFrequencySX(TRXDir::Rx, freq);
-        break;
-    case ClockID::CLK_RXTSP:
-    case ClockID::CLK_TXTSP:
-        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only"s);
-    default:
-        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id"s);
-    }
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_clock_frequency(mC_impl, static_cast<lms7002m_clock_id>(clk_id), freq);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetSampleRate(TRXDir dir, Channel ch)

@@ -1417,6 +1417,31 @@ double lms7002m_get_temperature(lms7002m_context* self)
     return temperature;
 }
 
+lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id, double freq)
+{
+    switch (clk_id)
+    {
+    case LMS7002M_CLK_REFERENCE:
+        // TODO: recalculate CGEN,SXR/T
+        break;
+    case LMS7002M_CLK_CGEN:
+        return lms7002m_set_frequency_cgen(self, freq);
+        break;
+    case LMS7002M_CLK_SXR:
+        return lms7002m_set_frequency_sx(self, false, freq);
+        break;
+    case LMS7002M_CLK_SXT:
+        return lms7002m_set_frequency_sx(self, true, freq);
+        break;
+    case LMS7002M_CLK_RXTSP:
+    case LMS7002M_CLK_TXTSP:
+        return lms7002m_report_error(self, lime_Result_InvalidValue, "RxTSP/TxTSP Clocks are read only");
+    default:
+        return lms7002m_report_error(self, lime_Result_InvalidValue, "LMS7002M::SetClockFreq Unknown clock id");
+    }
+    return lime_Result_Success;
+}
+
 double lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id)
 {
     switch (clk_id)
