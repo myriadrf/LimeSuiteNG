@@ -930,7 +930,7 @@ float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
     return lms7002m_get_reference_clock_tsp(mC_impl, dir == TRXDir::Tx);
 }
 
-OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies)
+OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz)
 {
     lime_Result result = lms7002m_set_frequency_cgen(mC_impl, freq_Hz);
     return ResultToStatus(result);

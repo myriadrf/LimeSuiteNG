@@ -11,7 +11,6 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/LMS7002MCSR.h"
-#include "limesuiteng/Register.h"
 
 #include <array>
 #include <cstdarg>
@@ -71,7 +70,7 @@ class LIME_API LMS7002M
      * @brief Get the current connection to the device.
      * @return The connection to the device.
      */
-    std::shared_ptr<ISPI> GetConnection(void) const { return controlPort; }
+    std::shared_ptr<ISPI> GetConnection() const { return controlPort; }
 
     virtual ~LMS7002M();
 
@@ -463,7 +462,7 @@ class LIME_API LMS7002M
      * @brief Gets the currently set RFE path
      * @return The enumerator value of the currently selected RFE path.
      */
-    PathRFE GetPathRFE(void);
+    PathRFE GetPathRFE();
 
     /*!
      * Set the TRF Band selection.
@@ -476,7 +475,7 @@ class LIME_API LMS7002M
      * Get the TRF Band selection.
      * @return the band 1 or 2
      */
-    int GetBandTRF(void);
+    int GetBandTRF();
 
     /*!
      * @brief Sets the antenna to use on the device
@@ -515,13 +514,13 @@ class LIME_API LMS7002M
      * @param retainNCOfrequencies recalculate NCO coefficients to keep currently set frequencies
      * @return The status of the operation
      */
-    OpStatus SetFrequencyCGEN(float_type freq_Hz, const bool retainNCOfrequencies = false);
+    OpStatus SetFrequencyCGEN(float_type freq_Hz);
 
     /*!
      * @brief Gets whether the VCO comparators of the clock generator are locked or not.
      * @return A value indicating whether the VCO comparators of the clock generator are locked or not.
      */
-    bool GetCGENLocked(void);
+    bool GetCGENLocked();
 
     /*!
      * @brief Returns currently set SXR/SXT frequency
@@ -870,7 +869,7 @@ class LIME_API LMS7002M
      */
     virtual OpStatus SetDefaults(MemorySection module);
 
-    LMS7002M_RegistersMap* BackupRegisterMap(void);
+    LMS7002M_RegistersMap* BackupRegisterMap();
     void RestoreRegisterMap(LMS7002M_RegistersMap* backup);
 
     CGENChangeCallbackType mCallback_onCGENChange;
