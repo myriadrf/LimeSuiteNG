@@ -972,7 +972,7 @@ OpStatus LMS7002M::TuneCGENVCO()
     return ResultToStatus(result);
 }
 
-OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
+OpStatus LMS7002M::TuneVCO(VCO_Module module)
 {
     lime_Result result = lms7002m_tune_vco(mC_impl, static_cast<lms7002m_vco_type>(module));
     return ResultToStatus(result);
@@ -1902,4 +1902,53 @@ OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
 {
     lime_Result result = lms7002m_set_tx_lpf(mC_impl, rfBandwidth_Hz);
     return ResultToStatus(result);
+}
+
+int16_t LMS7002M::ReadAnalogDC(const uint16_t addr)
+{
+    return lms7002m_read_analog_dc(mC_impl, addr);
+}
+
+uint32_t LMS7002M::GetRSSI()
+{
+    return lms7002m_get_rssi(mC_impl);
+}
+
+OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
+{
+    lime_Result result = lms7002m_calibrate_rx(mC_impl, bandwidth_Hz, useExtLoopback, false);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
+{
+    lime_Result result = lms7002m_calibrate_tx(mC_impl, bandwidth_Hz, useExtLoopback);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
+{
+    if (dir == TRXDir::Tx)
+    {
+        Modify_SPI_Reg_bits(DC_REG_TXTSP, I);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_TXTSP, Q);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
+    }
+    else
+    {
+        Modify_SPI_Reg_bits(DC_REG_RXTSP, I);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
+        Modify_SPI_Reg_bits(DC_REG_RXTSP, Q);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 1);
+        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
+    }
+    return OpStatus::Success;
 }

@@ -110,6 +110,15 @@ uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count)
     return minimum_index;
 }
 
+int16_t clamp_int(int16_t value, int16_t min, int16_t max)
+{
+    if (value < min)
+        return min;
+    if (value > max)
+        return max;
+    return value;
+}
+
 uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max)
 {
     if (value < min)

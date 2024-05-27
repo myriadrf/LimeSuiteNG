@@ -1846,3 +1846,26 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
     lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFH_TBB, rcal_lpfh);
     return lms7002m_spi_modify(self, 0x0105, 4, 0, powerDowns);
 }
+
+uint16_t lms7002m_get_rssi_delay(lms7002m_context* self)
+{
+    const uint16_t sampleCount = (2 << 7) << lms7002m_spi_read_csr(self, LMS7002M_AGC_AVG_RXTSP);
+    uint8_t decimation = lms7002m_spi_read_csr(self, LMS7002M_HBD_OVR_RXTSP);
+    if (decimation < 6)
+        decimation = (2 << decimation);
+    else
+        decimation = 1; //bypass
+
+    float waitTime = sampleCount / ((lms7002m_get_reference_clock_tsp(self, false) / 2) / decimation);
+    return (0xFFFF) - (uint16_t)(waitTime * lms7002m_get_reference_clock(self) / 12);
+}
+
+uint32_t lms7002m_get_rssi(lms7002m_context* self)
+{
+    uint32_t rssi;
+    int waitTime = 1000000.0 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
+    lms7002m_sleep(waitTime);
+    lms7002m_flip_rising_edge(self, &LMS7002M_CAPTURE);
+    rssi = lms7002m_spi_read(self, 0x040F);
+    return (rssi << 2 | (lms7002m_spi_read(self, 0x040E) & 0x3));
+}

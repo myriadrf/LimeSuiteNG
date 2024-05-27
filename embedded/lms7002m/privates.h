@@ -5,6 +5,7 @@
 #include "limesuiteng/embedded/loglevel.h"
 #include "limesuiteng/embedded/result.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 struct lms7002m_context;
@@ -28,6 +29,12 @@ uint16_t lms7002m_spi_read_csr(struct lms7002m_context* self, const lms7002m_csr
 
 uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count);
 
+// calibration
+void lms7002m_save_chip_state(struct lms7002m_context* self, bool wr);
+void lms7002m_flip_rising_edge(struct lms7002m_context* self, const lms7002m_csr* reg);
+
+// clamps
+int16_t clamp_int(int16_t value, int16_t min, int16_t max);
 uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max);
 float clamp_float(float value, float min, float max);
 

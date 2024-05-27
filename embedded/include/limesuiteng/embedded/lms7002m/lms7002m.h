@@ -155,8 +155,14 @@ lime_Result lms7002m_set_gfir_filter(
 lime_Result lms7002m_set_rx_lpf(struct lms7002m_context* self, float rfBandwidth_Hz);
 lime_Result lms7002m_set_tx_lpf(struct lms7002m_context* self, float rfBandwidth_Hz);
 
+int16_t lms7002m_read_analog_dc(struct lms7002m_context* self, const uint16_t addr);
+
+uint32_t lms7002m_get_rssi(struct lms7002m_context* self);
+
 // Calibrations
 
+lime_Result lms7002m_calibrate_rx(struct lms7002m_context* self, double bandwidthRF, bool extLoopback, bool dcOnly);
+lime_Result lms7002m_calibrate_tx(struct lms7002m_context* self, double bandwidthRF, bool extLoopback);
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);
 lime_Result lms7002m_calibrate_rp_bias(struct lms7002m_context* self);
 lime_Result lms7002m_calibrate_analog_rssi_dc_offset(struct lms7002m_context* self);

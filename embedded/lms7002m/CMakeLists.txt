@@ -1,4 +1,4 @@
-add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c)
+add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c save_state.c)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(lms7002m PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)

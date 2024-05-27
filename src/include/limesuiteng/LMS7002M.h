@@ -284,13 +284,6 @@ class LIME_API LMS7002M
     OpStatus CalibrateTx(float_type bandwidth_Hz, const bool useExtLoopback = false);
 
     /**
-     * @brief Tunes the Low Pass Filter for the TX direction.
-     * @param tx_lpf_freq_RF The frequency (in Hz) to tune the filter to.
-     * @return The status of the operation
-     */
-    OpStatus TuneTxFilter(const float_type tx_lpf_freq_RF);
-
-    /**
      * @brief Set transmitter analog Low Pass Filter.
      * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
      * @return The status of the operation

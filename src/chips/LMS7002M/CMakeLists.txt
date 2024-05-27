@@ -4,7 +4,6 @@ set(LMS7002M_SOURCES
     LMS7002MCSR_Data.cpp
     LMS7002MCSR_To_LMS7002MCSR_Data.cpp
     validation.cpp
-    RxTxCalibrations.cpp
     filtersCalibration.cpp
     gainCalibrations.cpp
     mcu_dc_iq_calibration.cpp
