@@ -735,3 +735,11 @@ OpStatus LimeSDR_Mini::CustomParameterRead(std::vector<CustomParameterIO>& param
 {
     return mfpgaPort->CustomParameterRead(parameters);
 }
+
+void LimeSDR_Mini::SetSerialNumber(const std::string& number)
+{
+
+    uint64_t sn = 0;
+    sscanf(number.c_str(), "%16lX", &sn);
+    mDeviceDescriptor.serialNumber = sn;
+}
