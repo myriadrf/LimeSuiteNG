@@ -1928,27 +1928,6 @@ OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
 
 OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
 {
-    if (dir == TRXDir::Tx)
-    {
-        Modify_SPI_Reg_bits(DC_REG_TXTSP, I);
-        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
-        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 1);
-        Modify_SPI_Reg_bits(TSGDCLDI_TXTSP, 0);
-        Modify_SPI_Reg_bits(DC_REG_TXTSP, Q);
-        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
-        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 1);
-        Modify_SPI_Reg_bits(TSGDCLDQ_TXTSP, 0);
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(DC_REG_RXTSP, I);
-        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
-        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 1);
-        Modify_SPI_Reg_bits(TSGDCLDI_RXTSP, 0);
-        Modify_SPI_Reg_bits(DC_REG_RXTSP, Q);
-        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
-        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 1);
-        Modify_SPI_Reg_bits(TSGDCLDQ_RXTSP, 0);
-    }
-    return OpStatus::Success;
+    lime_Result result = lms7002m_load_dc_reg_iq(mC_impl, dir == TRXDir::Tx, I, Q);
+    return ResultToStatus(result);
 }

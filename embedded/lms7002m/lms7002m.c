@@ -1869,3 +1869,30 @@ uint32_t lms7002m_get_rssi(lms7002m_context* self)
     rssi = lms7002m_spi_read(self, 0x040F);
     return (rssi << 2 | (lms7002m_spi_read(self, 0x040E) & 0x3));
 }
+
+lime_Result lms7002m_load_dc_reg_iq(lms7002m_context* self, bool isTx, int16_t I, int16_t Q)
+{
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_REG_TXTSP, I);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_TXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_TXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_TXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_REG_TXTSP, Q);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_TXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_TXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_TXTSP, 0);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_REG_RXTSP, I);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_RXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_RXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDI_RXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_DC_REG_RXTSP, Q);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_RXTSP, 0);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_RXTSP, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_TSGDCLDQ_RXTSP, 0);
+    }
+    return lime_Result_Success;
+}

@@ -159,6 +159,8 @@ int16_t lms7002m_read_analog_dc(struct lms7002m_context* self, const uint16_t ad
 
 uint32_t lms7002m_get_rssi(struct lms7002m_context* self);
 
+lime_Result lms7002m_load_dc_reg_iq(struct lms7002m_context* self, bool isTx, int16_t I, int16_t Q);
+
 // Calibrations
 
 lime_Result lms7002m_calibrate_rx(struct lms7002m_context* self, double bandwidthRF, bool extLoopback, bool dcOnly);
