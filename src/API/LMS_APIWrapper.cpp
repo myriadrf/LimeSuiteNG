@@ -1278,7 +1278,8 @@ API_EXPORT const lms_dev_info_t* CALL_CONV LMS_GetDeviceInfo(lms_device_t* devic
     CopyString(descriptor.hardwareVersion, apiDevice->deviceInfo->hardwareVersion, sizeof(apiDevice->deviceInfo->hardwareVersion));
     CopyString(descriptor.protocolVersion, apiDevice->deviceInfo->protocolVersion, sizeof(apiDevice->deviceInfo->protocolVersion));
     apiDevice->deviceInfo->boardSerialNumber = descriptor.serialNumber;
-    CopyString(descriptor.gatewareVersion, apiDevice->deviceInfo->gatewareVersion, sizeof(apiDevice->deviceInfo->gatewareVersion));
+    std::string combinedGatewareVersion = descriptor.gatewareVersion + "." + descriptor.gatewareRevision;
+    CopyString(combinedGatewareVersion, apiDevice->deviceInfo->gatewareVersion, sizeof(apiDevice->deviceInfo->gatewareVersion));
     CopyString(descriptor.gatewareTargetBoard,
         apiDevice->deviceInfo->gatewareTargetBoard,
         sizeof(apiDevice->deviceInfo->gatewareTargetBoard));
