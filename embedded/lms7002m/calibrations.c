@@ -523,7 +523,7 @@ lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const float ban
 
     lms7002m_spi_modify_csr(self, LMS7002M_CMIX_SC_RXTSP, 1);
     lms7002m_spi_modify_csr(self, LMS7002M_CMIX_BYP_RXTSP, 0);
-    lms7002m_set_nco_frequency(self, false, bandwidth_Hz / calibUserBwDivider - offsetNCO, 0);
+    lms7002m_set_nco_frequency(self, false, 0, bandwidth_Hz / calibUserBwDivider - offsetNCO);
 
     uint16_t rssi = 0;
     if (extLoopback)
