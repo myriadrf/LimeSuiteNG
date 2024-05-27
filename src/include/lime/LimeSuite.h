@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "LMS7002M_parameters.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -782,7 +783,7 @@ API_EXPORT int CALL_CONV LMS_WriteLMSReg(lms_device_t* device, uint32_t address,
  *
  * @return  0 on success, (-1) on failure
  */
-API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR param, uint16_t* val);
+API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t *device, struct LMS7Parameter param, uint16_t *val);
 
 /**
  * Write device parameter. Parameter defines specific bits in device register.
@@ -793,7 +794,7 @@ API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR 
  *
  * @return  0 on success, (-1) on failure
  */
-API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7002MCSR param, uint16_t val);
+API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t *device, struct LMS7Parameter param, uint16_t val);
 
 /**
  * Read device FPGA register

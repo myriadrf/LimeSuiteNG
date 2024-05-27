@@ -6,7 +6,9 @@ set(MAIN_LIBRARY_NAME limesuiteng)
 file(
     GLOB LIMESUITENG_PUBLIC_HEADERS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.hpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/lime/*.h")
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)

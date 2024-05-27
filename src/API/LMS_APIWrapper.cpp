@@ -1588,7 +1588,7 @@ API_EXPORT int CALL_CONV LMS_SetGFIR(lms_device_t* device, bool dir_tx, size_t c
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t* val)
+API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Parameter param, uint16_t* val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
@@ -1602,7 +1602,7 @@ API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR_
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t val)
+API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Parameter param, uint16_t val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
