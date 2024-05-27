@@ -909,15 +909,35 @@ float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
 
 OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
 {
-    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, freq_Hz, count, phaseOffset);
+    std::vector<float> converted(count);
+    for (uint8_t i = 0; i < count; ++i)
+    {
+        converted.at(i) = freq_Hz[i];
+    }
+
+    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, converted.data(), count, phaseOffset);
     return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset)
 {
-    std::vector<float_type> ncos(16);
-    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncos.data(), ncos.size(), phaseOffset);
-    return ncos;
+    std::vector<float> ncosFloat(16);
+
+    float phaseOffsetFloat = 0.0;
+    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosFloat.data(), ncosFloat.size(), &phaseOffsetFloat);
+
+    std::vector<float_type> ncosDouble(16);
+    for (std::size_t i = 0; i < ncosFloat.size(); ++i)
+    {
+        ncosDouble.at(i) = ncosFloat.at(i);
+    }
+
+    if (phaseOffset != nullptr)
+    {
+        *phaseOffset = phaseOffsetFloat;
+    }
+
+    return ncosDouble;
 }
 
 float_type LMS7002M::GetFrequencyCGEN()
@@ -1109,7 +1129,13 @@ OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
-    lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, angles_deg, count, frequencyOffset);
+    std::vector<float> converted(count);
+    for (uint8_t i = 0; i < count; ++i)
+    {
+        converted.at(i) = angles_deg[i];
+    }
+
+    lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, converted.data(), count, frequencyOffset);
     return ResultToStatus(result);
 }
 
@@ -1121,13 +1147,26 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
 
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
-    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, coef, coefCount);
+    std::vector<float> converted(coefCount);
+    for (uint8_t i = 0; i < coefCount; ++i)
+    {
+        converted.at(i) = coef[i];
+    }
+
+    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, coef, coefCount);
+    std::vector<float> converted(coefCount);
+
+    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
+    for (uint8_t i = 0; i < coefCount; ++i)
+    {
+        coef[i] = converted.at(i);
+    }
+
     return ResultToStatus(result);
 }
 
@@ -1737,7 +1776,11 @@ OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type 
 
 OpStatus LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 {
-    lime_Result result = lms7002m_get_dc_offset(mC_impl, dir == TRXDir::Tx, &I, &Q);
+    float Ifloat = 0.0;
+    float Qfloat = 0.0;
+    lime_Result result = lms7002m_get_dc_offset(mC_impl, dir == TRXDir::Tx, &Ifloat, &Qfloat);
+    I = Ifloat;
+    Q = Qfloat;
     return ResultToStatus(result);
 }
 
@@ -1749,7 +1792,13 @@ OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const 
 
 OpStatus LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
-    lime_Result result = lms7002m_get_i_q_balance(mC_impl, dir == TRXDir::Tx, &phase, &gainI, &gainQ);
+    float phaseFloat = 0.0;
+    float gainIFloat = 0.0;
+    float gainQFloat = 0.0;
+    lime_Result result = lms7002m_get_i_q_balance(mC_impl, dir == TRXDir::Tx, &phaseFloat, &gainIFloat, &gainQFloat);
+    phase = phaseFloat;
+    gainI = gainIFloat;
+    gainQ = gainQFloat;
     return ResultToStatus(result);
 }
 

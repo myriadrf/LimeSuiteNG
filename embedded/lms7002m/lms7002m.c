@@ -209,12 +209,12 @@ lime_Result lms7002m_reset_logic_registers(lms7002m_context* self)
     return lime_Result_Success;
 }
 
-double lms7002m_get_reference_clock(lms7002m_context* context)
+float lms7002m_get_reference_clock(lms7002m_context* context)
 {
     return context->reference_clock_hz;
 }
 
-lime_Result lms7002m_set_reference_clock(lms7002m_context* context, double frequency_Hz)
+lime_Result lms7002m_set_reference_clock(lms7002m_context* context, float frequency_Hz)
 {
     if (frequency_Hz <= 0)
         return lime_Result_InvalidValue;
@@ -267,8 +267,8 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
     return lime_Result_Error;
 }
 
-static const double gCGEN_VCO_frequencies[2] = { 1930e6, 2940e6 };
-lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, double freq_Hz)
+static const float gCGEN_VCO_frequencies[2] = { 1930e6, 2940e6 };
+lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
 {
     if (freq_Hz > CGEN_MAX_FREQ)
         return lms7002m_report_error(self, lime_Result_OutOfRange, "requested CGEN frequency too high");
@@ -277,19 +277,19 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, double freq_Hz)
     const uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;
     const uint16_t iHdiv_low = (gCGEN_VCO_frequencies[0] / 2 / freq_Hz);
     const uint16_t iHdiv = clamp_uint((iHdiv_low + iHdiv_high) / 2, 0, 255);
-    const double dFvco = 2 * (iHdiv + 1) * freq_Hz;
+    const float dFvco = 2 * (iHdiv + 1) * freq_Hz;
     if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
     {
         return lms7002m_report_error(
             self, lime_Result_Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
     }
 
-    const double refClk = lms7002m_get_reference_clock(self);
+    const float refClk = lms7002m_get_reference_clock(self);
     //Integer division
     const uint16_t gINT = (uint16_t)(dFvco / refClk - 1);
 
     //Fractional division
-    const double dFrac = dFvco / refClk - (uint32_t)(dFvco / refClk);
+    const float dFrac = dFvco / refClk - (uint32_t)(dFvco / refClk);
     const uint32_t gFRAC = (uint32_t)(dFrac * 1048576);
 
     lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM_CGEN, gINT); //INT_SDM_CGEN
@@ -312,11 +312,11 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, double freq_Hz)
     return lime_Result_Success;
 }
 
-double lms7002m_get_frequency_cgen(lms7002m_context* self)
+float lms7002m_get_frequency_cgen(lms7002m_context* self)
 {
-    const double ref_clock = lms7002m_get_reference_clock(self);
+    const float ref_clock = lms7002m_get_reference_clock(self);
     const uint16_t div_outch_cgen = lms7002m_spi_read_csr(self, LMS7002M_DIV_OUTCH_CGEN);
-    const double dMul = (ref_clock / 2.0) / (div_outch_cgen + 1);
+    const float dMul = (ref_clock / 2.0) / (div_outch_cgen + 1);
 
     const uint16_t gINT = lms7002m_spi_read_bits(self, 0x0088, 13, 0); //read whole register to reduce SPI transfers
     const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x0087, 15, 0);
@@ -325,7 +325,7 @@ double lms7002m_get_frequency_cgen(lms7002m_context* self)
     return dMul * ((gINT >> 4) + 1 + gFRAC / 1048576.0);
 }
 
-lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -350,7 +350,7 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rbbpga_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_rbbpga_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -361,13 +361,13 @@ double lms7002m_get_rbbpga_db(lms7002m_context* self, const enum lms7002m_channe
     return g_pga_rbb - 12;
 }
 
-lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const float value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 30;
-    double val = value - gmax;
+    const float gmax = 30;
+    float val = value - gmax;
 
     int g_lna_rfe = 1;
     if (val >= 0)
@@ -404,15 +404,15 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rfelna_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_rfelna_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 30;
+    const float gmax = 30;
     uint16_t g_lna_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_LNA_RFE);
 
-    double retval = 0.0;
+    float retval = 0.0;
     const int value_to_minus[16] = { 0, 30, 27, 24, 21, 18, 15, 12, 9, 6, 5, 4, 3, 2, 1, 0 };
 
     if (g_lna_rfe > 0 && g_lna_rfe < 16)
@@ -424,13 +424,13 @@ double lms7002m_get_rfelna_db(lms7002m_context* self, const enum lms7002m_channe
     return retval;
 }
 
-lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const double gain, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const float gain, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 40;
-    double val = gain - gmax;
+    const float gmax = 40;
+    float val = gain - gmax;
 
     int g_rxloopb_rfe = 0;
     if (val >= 0)
@@ -470,16 +470,16 @@ lime_Result lms7002m_set_rfe_loopback_lna_db(lms7002m_context* self, const doubl
     return ret;
 }
 
-double lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 40;
+    const float gmax = 40;
     uint16_t g_rxloopb_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_RXLOOPB_RFE);
 
-    double retval = 0.0;
-    const double value_to_minus[16] = { 0, 24, 17, 14, 11, 9, 7.5, 6.2, 5, 4, 3, 2.4, 1.6, 1, 0.5, 0 };
+    float retval = 0.0;
+    const float value_to_minus[16] = { 0, 24, 17, 14, 11, 9, 7.5, 6.2, 5, 4, 3, 2.4, 1.6, 1, 0.5, 0 };
 
     if (g_rxloopb_rfe > 0 && g_rxloopb_rfe < 16)
     {
@@ -490,13 +490,13 @@ double lms7002m_get_rfe_loopback_lna_db(lms7002m_context* self, const enum lms70
     return retval;
 }
 
-lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const float value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 12;
-    double val = value - gmax;
+    const float gmax = 12;
+    float val = value - gmax;
 
     int g_tia_rfe = 1;
 
@@ -510,16 +510,16 @@ lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_rfetia_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_rfetia_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double gmax = 12;
+    const float gmax = 12;
     uint8_t g_tia_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_TIA_RFE);
 
-    double retval = 0.0;
-    const double value_to_minus[4] = { 0, 12, 3, 0 };
+    float retval = 0.0;
+    const float value_to_minus[4] = { 0, 12, 3, 0 };
 
     if (g_tia_rfe > 0 && g_tia_rfe < 4)
     {
@@ -530,12 +530,12 @@ double lms7002m_get_rfetia_db(lms7002m_context* self, const enum lms7002m_channe
     return retval;
 }
 
-lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const float value, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double pmax = 52;
+    const float pmax = 52;
     uint16_t loss_int = lroundl(pmax - value);
 
     //different scaling realm
@@ -554,12 +554,12 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const double value, c
     return ret;
 }
 
-double lms7002m_get_trfpad_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_trfpad_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
-    const double pmax = 52;
+    const float pmax = 52;
     uint16_t loss_int = lms7002m_spi_read_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF);
     if (loss_int > 10)
         return pmax - 10 - 2 * (loss_int - 10);
@@ -568,7 +568,7 @@ double lms7002m_get_trfpad_db(lms7002m_context* self, const enum lms7002m_channe
     return pmax - loss_int;
 }
 
-lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const double gain, const enum lms7002m_channel channel)
+lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const float gain, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
@@ -587,15 +587,15 @@ lime_Result lms7002m_set_trf_loopback_pad_db(lms7002m_context* self, const doubl
     return ret;
 }
 
-double lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const enum lms7002m_channel channel)
+float lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, channel);
 
     uint16_t value = lms7002m_spi_read_csr(self, LMS7002M_L_LOOPB_TXPAD_TRF);
 
-    double retval = 0.0;
-    double value_table[] = { 0.0, -1.4, -3.3, -4.3 };
+    float retval = 0.0;
+    float value_table[] = { 0.0, -1.4, -3.3, -4.3 };
 
     if (value < 4)
     {
@@ -704,10 +704,10 @@ lime_Result lms7002m_set_path(lms7002m_context* self, bool isTx, enum lms7002m_c
     return ret;
 }
 
-double lms7002m_get_reference_clock_tsp(lms7002m_context* self, bool isTx)
+float lms7002m_get_reference_clock_tsp(lms7002m_context* self, bool isTx)
 {
-    const double cgenFreq = lms7002m_get_frequency_cgen(self);
-    const double clklfreq = cgenFreq / pow(2.0, lms7002m_spi_read_csr(self, LMS7002M_CLKH_OV_CLKL_CGEN));
+    const float cgenFreq = lms7002m_get_frequency_cgen(self);
+    const float clklfreq = cgenFreq / pow(2.0, lms7002m_spi_read_csr(self, LMS7002M_CLKH_OV_CLKL_CGEN));
     if (lms7002m_spi_read_csr(self, LMS7002M_EN_ADCCLKH_CLKGN) == 0)
         return isTx ? clklfreq : cgenFreq / 4.0;
 
@@ -899,18 +899,18 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, double freq_Hz)
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float freq_Hz)
 {
     if (freq_Hz < 0)
     {
         return lime_Result_InvalidValue;
     }
 
-    const double gVCO_frequency_table[2][2] = { { 3800e6, 5222e6 }, { 6306e6, 7714e6 } };
+    const float gVCO_frequency_table[2][2] = { { 3800e6, 5222e6 }, { 6306e6, 7714e6 } };
     bool canDeliverFrequency = false;
 
     const uint8_t sxVCO_N = 2; //number of entries in VCO frequencies
-    double VCOfreq = 0.0;
+    float VCOfreq = 0.0;
     //find required VCO frequency
     int8_t div_loch = 6; // needed for later
     for (; div_loch >= 0; --div_loch)
@@ -934,11 +934,11 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, double 
             gVCO_frequency_table[1][sxVCO_N - 1] / 1e6);
     }
 
-    const double refClk_Hz = lms7002m_get_reference_clock(self);
+    const float refClk_Hz = lms7002m_get_reference_clock(self);
     assert(refClk_Hz > 0);
 
-    const double m_dThrF = 5500e6; //threshold to enable additional divider
-    const double divider = refClk_Hz * (1 + (VCOfreq > m_dThrF));
+    const float m_dThrF = 5500e6; //threshold to enable additional divider
+    const float divider = refClk_Hz * (1 + (VCOfreq > m_dThrF));
 
     const uint16_t integerPart = (uint16_t)(VCOfreq / divider - 4);
     const uint32_t fractionalPart = (uint32_t)((VCOfreq / divider - (uint32_t)(VCOfreq / divider)) * 1048576);
@@ -1021,7 +1021,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, double 
     return lime_Result_Success;
 }
 
-double lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+float lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
@@ -1030,18 +1030,18 @@ double lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
     const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x011D, 15, 0);
     const uint32_t gFRAC = ((gINT & 0xF) << 16) | lowerRegister;
 
-    const double refClk_Hz = lms7002m_get_reference_clock(self);
+    const float refClk_Hz = lms7002m_get_reference_clock(self);
     const uint16_t div_loch = lms7002m_spi_read_csr(self, LMS7002M_DIV_LOCH);
     const uint16_t en_div2_divprog = lms7002m_spi_read_csr(self, LMS7002M_EN_DIV2_DIVPROG);
 
     // Calculate real frequency according to the calculated parameters
-    double dMul = (refClk_Hz / (1 << (div_loch + 1))) * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (en_div2_divprog + 1);
+    float dMul = (refClk_Hz / (1 << (div_loch + 1))) * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (en_div2_divprog + 1);
 
     lms7002m_set_active_channel(self, savedChannel);
     return dMul;
 }
 
-lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index, double freq_Hz)
+lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index, float freq_Hz)
 {
     if (index > 15)
     {
@@ -1049,7 +1049,7 @@ lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const 
             self, lime_Result_InvalidValue, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
     }
 
-    double refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    float refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
     if (freq_Hz < 0 || freq_Hz / refClk_Hz > 0.5)
     {
         return lms7002m_report_error(self,
@@ -1067,7 +1067,7 @@ lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const 
     return lime_Result_Success;
 }
 
-double lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index)
+float lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index)
 {
     if (index > 15)
     {
@@ -1076,7 +1076,7 @@ double lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8
         return 0.0f;
     }
 
-    const double refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    const float refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
     const uint16_t addr = isTx ? 0x0240 : 0x0440;
     uint32_t fcw = 0;
     fcw |= lms7002m_spi_read(self, addr + 2 + index * 2) << 16; //NCO frequency control word register MSB part.
@@ -1084,7 +1084,7 @@ double lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uint8
     return refClk_Hz * (fcw / 4294967296.0);
 }
 
-lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index, double angle_deg)
+lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index, float angle_deg)
 {
     if (index > 15)
     {
@@ -1098,7 +1098,7 @@ lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uin
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, double angle_deg)
+lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, float angle_deg)
 {
     const uint16_t addr = isTx ? 0x0241 : 0x0441;
     const uint16_t pho = 65536 * (angle_deg / 360);
@@ -1107,7 +1107,7 @@ lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, boo
 }
 
 lime_Result lms7002m_set_nco_phases(
-    lms7002m_context* self, bool isTx, const double* const angles_deg, uint8_t count, double frequencyOffset)
+    lms7002m_context* self, bool isTx, const float* const angles_deg, uint8_t count, float frequencyOffset)
 {
     lime_Result status = lms7002m_set_nco_frequency(self, isTx, 0, frequencyOffset);
     if (status != lime_Result_Success)
@@ -1131,7 +1131,7 @@ lime_Result lms7002m_set_nco_phases(
 }
 
 lime_Result lms7002m_set_nco_frequencies(
-    lms7002m_context* self, bool isTx, const double* const freq_Hz, uint8_t count, double phaseOffset)
+    lms7002m_context* self, bool isTx, const float* const freq_Hz, uint8_t count, float phaseOffset)
 {
     for (uint8_t i = 0; i < 16 && i < count; i++)
     {
@@ -1142,8 +1142,7 @@ lime_Result lms7002m_set_nco_frequencies(
     return lms7002m_set_nco_phase_offset_for_mode_0(self, isTx, phaseOffset);
 }
 
-lime_Result lms7002m_get_nco_frequencies(
-    lms7002m_context* self, bool isTx, double* const freq_Hz, uint8_t count, double* phaseOffset)
+lime_Result lms7002m_get_nco_frequencies(lms7002m_context* self, bool isTx, float* const freq_Hz, uint8_t count, float* phaseOffset)
 {
     if (freq_Hz == NULL)
     {
@@ -1165,7 +1164,7 @@ lime_Result lms7002m_get_nco_frequencies(
 }
 
 lime_Result lms7002m_set_gfir_coefficients(
-    lms7002m_context* self, bool isTx, uint8_t gfirIndex, const double* const coef, uint8_t coefCount)
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, const float* const coef, uint8_t coefCount)
 {
     if (gfirIndex > 2)
     {
@@ -1224,7 +1223,7 @@ lime_Result lms7002m_set_gfir_coefficients(
 }
 
 lime_Result lms7002m_get_gfir_coefficients(
-    lms7002m_context* self, bool isTx, uint8_t gfirIndex, double* const coef, uint8_t coefCount)
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, float* const coef, uint8_t coefCount)
 {
     if (gfirIndex > 2)
     {
@@ -1250,7 +1249,7 @@ lime_Result lms7002m_get_gfir_coefficients(
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, double cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
+lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, float cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
 {
     const lime_Result status = lms7002m_spi_modify_csr(self, LMS7002M_HBD_OVR_RXTSP, hbd);
     if (status != lime_Result_Success)
@@ -1325,7 +1324,7 @@ lime_Result lms7002m_enable_sxtdd(lms7002m_context* self, bool tdd)
     return ret;
 }
 
-lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const double I, const double Q)
+lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const float I, const float Q)
 {
     const bool bypass = I == 0.0 && Q == 0.0;
     if (isTx)
@@ -1346,7 +1345,7 @@ lime_Result lms7002m_set_dc_offset(lms7002m_context* self, bool isTx, const doub
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_get_dc_offset(lms7002m_context* self, bool isTx, double* const I, double* const Q)
+lime_Result lms7002m_get_dc_offset(lms7002m_context* self, bool isTx, float* const I, float* const Q)
 {
     if (I == NULL || Q == NULL)
     {
@@ -1367,7 +1366,7 @@ lime_Result lms7002m_get_dc_offset(lms7002m_context* self, bool isTx, double* co
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_i_q_balance(lms7002m_context* self, bool isTx, const double phase, const double gainI, const double gainQ)
+lime_Result lms7002m_set_i_q_balance(lms7002m_context* self, bool isTx, const float phase, const float gainI, const float gainQ)
 {
     const bool bypassPhase = phase == 0.0;
     const bool bypassGain = ((gainI == 1.0) && (gainQ == 1.0)) || ((gainI == 0.0) && (gainQ == 0.0));
@@ -1383,8 +1382,7 @@ lime_Result lms7002m_set_i_q_balance(lms7002m_context* self, bool isTx, const do
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_get_i_q_balance(
-    lms7002m_context* self, bool isTx, double* const phase, double* const gainI, double* const gainQ)
+lime_Result lms7002m_get_i_q_balance(lms7002m_context* self, bool isTx, float* const phase, float* const gainI, float* const gainQ)
 {
     if (phase == NULL || gainI == NULL || gainQ == NULL)
     {
@@ -1405,7 +1403,7 @@ lime_Result lms7002m_get_i_q_balance(
     return lime_Result_Success;
 }
 
-double lms7002m_get_temperature(lms7002m_context* self)
+float lms7002m_get_temperature(lms7002m_context* self)
 {
     if (lms7002m_calibrate_internal_adc(self, 32) != lime_Result_Success)
         return 0;
@@ -1426,7 +1424,7 @@ double lms7002m_get_temperature(lms7002m_context* self)
     return temperature;
 }
 
-lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id, double freq)
+lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id, float freq)
 {
     switch (clk_id)
     {
@@ -1451,7 +1449,7 @@ lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_c
     return lime_Result_Success;
 }
 
-double lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id)
+float lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id)
 {
     switch (clk_id)
     {
@@ -1473,14 +1471,14 @@ double lms7002m_get_clock_frequency(lms7002m_context* self, enum lms7002m_clock_
     }
 }
 
-double lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms7002m_channel ch)
+float lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms7002m_channel ch)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, ch);
 
     const uint16_t ratio = lms7002m_spi_read_csr(self, isTx ? LMS7002M_HBI_OVR_TXTSP : LMS7002M_HBD_OVR_RXTSP);
 
-    double interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    float interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
 
     // If decimation/interpolation is 0 (2^1) or 7 (bypass), interface clocks should not be divided
     if (ratio != 7)
@@ -1492,7 +1490,7 @@ double lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms7002m
     return interface_Hz;
 }
 
-lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, double bandwidth)
+lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, float bandwidth)
 {
     const uint8_t savedChannel = lms7002m_get_active_channel(self);
     lms7002m_set_active_channel(self, ch);
@@ -1544,13 +1542,13 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         div = (2 << (ratio));
 
     bandwidth /= 1e6;
-    const double interface_MHz = lms7002m_get_reference_clock_tsp(self, isTx) / 1e6;
-    const double w = (bandwidth / 2) / (interface_MHz / div);
+    const float interface_MHz = lms7002m_get_reference_clock_tsp(self, isTx) / 1e6;
+    const float w = (bandwidth / 2) / (interface_MHz / div);
 
     const int L = div > 8 ? 8 : div;
     div -= 1;
 
-    double w2 = w * 1.1;
+    float w2 = w * 1.1;
     if (w2 > 0.495)
     {
         w2 = w * 1.05;
@@ -1580,15 +1578,27 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, div);
     }
 
-    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2, L * 5);
+    float coefFloat[120];
+    for (uint8_t i = 0; i < 120; ++i)
+    {
+        coefFloat[i] = coef[i];
+    }
+
+    float coef2Float[40];
+    for (uint8_t i = 0; i < 40; ++i)
+    {
+        coef2Float[i] = coef2[i];
+    }
+
+    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2Float, L * 5);
     if (status != lime_Result_Success)
         return status;
 
-    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2, L * 5);
+    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2Float, L * 5);
     if (status != lime_Result_Success)
         return status;
 
-    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coef, L * 15);
+    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coefFloat, L * 15);
     if (status != lime_Result_Success)
         return status;
 
@@ -1597,7 +1607,7 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
     return result;
 }
 
-lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
+lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
 {
     const int tiaGain = lms7002m_spi_read_csr(self, LMS7002M_G_TIA_RFE);
     if (tiaGain < 1 || tiaGain > 3)
@@ -1625,8 +1635,8 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
     lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_PGA_RBB, 0x18);
     lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_PGA_RBB, 1);
 
-    const double rxLpfMin = (tiaGain == 1) ? 4e6 : 1.5e6;
-    const double rxLpfMax = 160e6;
+    const float rxLpfMin = (tiaGain == 1) ? 4e6 : 1.5e6;
+    const float rxLpfMax = 160e6;
 
     if (rfBandwidth_Hz != 0 && (rfBandwidth_Hz < rxLpfMin || rfBandwidth_Hz > rxLpfMax))
     {
@@ -1636,10 +1646,10 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
             rfBandwidth_Hz,
             rxLpfMin,
             rxLpfMax);
-        rfBandwidth_Hz = clamp_double(rfBandwidth_Hz, rxLpfMin, rxLpfMax);
+        rfBandwidth_Hz = clamp_float(rfBandwidth_Hz, rxLpfMin, rxLpfMax);
     }
 
-    const double bandwidth_MHz = rfBandwidth_Hz / 1e6;
+    const float bandwidth_MHz = rfBandwidth_Hz / 1e6;
 
     uint16_t cfb_tia_rfe = 0;
     if (tiaGain == 1)
@@ -1667,7 +1677,7 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
     uint16_t input_ctl_pga_rbb = 4;
     uint16_t powerDowns = 0xD; // 0x0115[3:0]
 
-    const double ifbw = bandwidth_MHz / 2 / 0.75;
+    const float ifbw = bandwidth_MHz / 2 / 0.75;
 
     uint16_t rcc_ctl_lpfl_rbb = 0;
     if (ifbw >= 20)
@@ -1728,16 +1738,16 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
     lms7002m_spi_modify_csr(self, LMS7002M_C_CTL_LPFH_RBB, c_ctl_lpfh_rbb);
     lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_LPFL_RBB, rcc_ctl_lpfl_rbb);
 
-    const uint16_t rcc_ctl_lpfh_rbb = clamp_double(ifbw / 10 - 2, 0.0, 7.0);
+    const uint16_t rcc_ctl_lpfh_rbb = clamp_float(ifbw / 10 - 2, 0.0, 7.0);
     lms7002m_spi_modify_csr(self, LMS7002M_RCC_CTL_LPFH_RBB, rcc_ctl_lpfh_rbb);
 
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
+lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
 {
-    const double txLpfLowRange[2] = { 5e6, 33e6 };
-    const double txLpfHighRange[2] = { 56e6, 160e6 };
+    const float txLpfLowRange[2] = { 5e6, 33e6 };
+    const float txLpfHighRange[2] = { 56e6, 160e6 };
 
     // common setup
     lms7002m_spi_modify(self, 0x0106, 15, 0, 0x318C);
@@ -1766,10 +1776,10 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
             rfBandwidth_Hz,
             txLpfLowRange[0],
             txLpfHighRange[1]);
-        rfBandwidth_Hz = clamp_double(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
+        rfBandwidth_Hz = clamp_float(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
     }
 
-    const double rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
+    const float rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
     int rcal_lpflad = 0;
     int rcal_lpfh = 0;
 
@@ -1780,22 +1790,22 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
     {
-        const double LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
-        double LADterm1 = 0.0;
+        const float LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
+        float LADterm1 = 0.0;
         {
-            double t1 = 1.92163e-15;
-            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            float t1 = 1.92163e-15;
+            float t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
             LADterm1 = t1 * pow(t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51, 1.0 / 3.0);
         }
 
-        double LADterm2 = 0.0;
+        float LADterm2 = 0.0;
         {
-            double t1 = 6.50934553014677e18;
-            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
-            double t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
+            float t1 = 6.50934553014677e18;
+            float t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            float t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
             LADterm2 = t1 / pow(t3, 1.0 / 3.0);
         }
-        rcal_lpflad = clamp_double(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
+        rcal_lpflad = clamp_float(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
         powerDowns = 0x11;
     }
     else if (txLpfLowRange[1] <= rfBandwidth_Hz && rfBandwidth_Hz <= txLpfHighRange[0]) // 33-56 MHz gap
@@ -1811,22 +1821,22 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, double rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
     {
-        const double Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
-        double Hterm1;
+        const float Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
+        float Hterm1;
         {
-            double t1 = 5.66735e-16;
-            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            float t1 = 5.66735e-16;
+            float t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            float t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
             Hterm1 = t1 * t3;
         }
-        double Hterm2;
+        float Hterm2;
         {
-            double t1 = 2.12037432410767e019;
-            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            float t1 = 2.12037432410767e019;
+            float t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            float t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
             Hterm2 = t1 / t3;
         }
-        rcal_lpfh = clamp_double(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
+        rcal_lpfh = clamp_float(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
         powerDowns = 0x07;
     }
 

@@ -119,7 +119,7 @@ uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max)
     return value;
 }
 
-double clamp_double(double value, double min, double max)
+float clamp_float(float value, float min, float max)
 {
     if (value < min)
         return min;
