@@ -2,6 +2,7 @@
 #include "comms/IComms.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
+#include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
@@ -1339,7 +1340,14 @@ API_EXPORT int CALL_CONV LMS_GetChipTemperature(lms_device_t* dev, size_t ind, f
     }
 
     if (temp)
-        *temp = apiDevice->device->GetTemperature(apiDevice->moduleIndex);
+    {
+        // TODO: replace with generic RFSOC interface
+        lime::LMS7002M* chip = reinterpret_cast<LMS7002M*>(apiDevice->device->GetInternalChip(apiDevice->moduleIndex));
+        if (!chip)
+            return -1;
+
+        *temp = chip->GetTemperature();
+    }
     return 0;
 }
 
