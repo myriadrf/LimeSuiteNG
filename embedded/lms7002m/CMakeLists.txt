@@ -1,8 +1,8 @@
 add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(lms7002m PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
-endif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+endif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 
 target_include_directories(lms7002m PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 set_property(TARGET lms7002m PROPERTY POSITION_INDEPENDENT_CODE TRUE)
