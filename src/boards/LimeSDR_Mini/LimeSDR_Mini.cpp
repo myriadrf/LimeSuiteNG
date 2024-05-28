@@ -395,104 +395,15 @@ OpStatus LimeSDR_Mini::Synchronize(bool toChip)
 
 OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
-    assert(mStreamPort);
-    assert(MOSI);
-    LMS64CPacket pkt;
-
-    size_t srcIndex = 0;
-    size_t destIndex = 0;
-    constexpr int maxBlocks = LMS64CPacket::payloadSize / (sizeof(uint32_t) / sizeof(uint8_t)); // = 14
-
-    while (srcIndex < count)
+    switch (chipSelect)
     {
-        pkt.status = CommandStatus::Undefined;
-        pkt.blockCount = 0;
-        pkt.periphID = chipSelect;
-
-        // fill packet with same direction operations
-        const bool willDoWrite = MOSI[srcIndex] & (1 << 31);
-
-        for (int i = 0; i < maxBlocks && srcIndex < count; ++i)
-        {
-            const bool isWrite = MOSI[srcIndex] & (1 << 31);
-
-            if (isWrite != willDoWrite)
-            {
-                break; // change between write/read, flush packet
-            }
-
-            if (isWrite)
-            {
-                switch (chipSelect)
-                {
-                case SPI_LMS7002M:
-                    pkt.cmd = Command::LMS7002_WR;
-                    break;
-                case SPI_FPGA:
-                    pkt.cmd = Command::BRDSPI_WR;
-                    break;
-                default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
-                }
-
-                int payloadOffset = pkt.blockCount * 4;
-                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 24;
-                pkt.payload[payloadOffset + 1] = MOSI[srcIndex] >> 16;
-                pkt.payload[payloadOffset + 2] = MOSI[srcIndex] >> 8;
-                pkt.payload[payloadOffset + 3] = MOSI[srcIndex];
-            }
-            else
-            {
-                switch (chipSelect)
-                {
-                case SPI_LMS7002M:
-                    pkt.cmd = Command::LMS7002_RD;
-                    break;
-                case SPI_FPGA:
-                    pkt.cmd = Command::BRDSPI_RD;
-                    break;
-                default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
-                }
-
-                int payloadOffset = pkt.blockCount * 2;
-                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 8;
-                pkt.payload[payloadOffset + 1] = MOSI[srcIndex];
-            }
-
-            ++pkt.blockCount;
-            ++srcIndex;
-        }
-
-        // flush packet
-        //printPacket(pkt, 4, "Wr:");
-        int sent = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-        {
-            throw std::runtime_error("SPI failed"s);
-        }
-
-        int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        //printPacket(pkt, 4, "Rd:");
-
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == CommandStatus::Completed)
-        {
-            for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
-            {
-                //MISO[destIndex] = 0;
-                //MISO[destIndex] = pkt.payload[0] << 24;
-                //MISO[destIndex] |= pkt.payload[1] << 16;
-                MISO[destIndex] = (pkt.payload[i * 4 + 2] << 8) | pkt.payload[i * 4 + 3];
-                ++destIndex;
-            }
-        }
-        else
-        {
-            throw std::runtime_error("SPI failed"s);
-        }
+    case SPI_LMS7002M:
+        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+    case SPI_FPGA:
+        return mfpgaPort->SPI(MOSI, MISO, count);
+    default:
+        throw std::logic_error("LimeSDR_Mini SPI invalid SPI chip select"s);
     }
-
-    return OpStatus::Success;
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
