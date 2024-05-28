@@ -448,16 +448,6 @@ OpStatus LimeSDR::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel
         mLMSChips[0]->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
     return status;
 }
-/*
-uint8_t LimeSDR::GetPath(SDRDevice::Dir dir, uint8_t channel) const
-{
-    ValidateChannel(channel);
-    mLMSChips[0]->SetActiveChannel(channel == 1 ? LMS7002M::ChB : LMS7002M::ChA);
-    if (dir == SDRDevice::Dir::Tx)
-        return mLMSChips[0]->GetBandTRF();
-    return mLMSChips[0]->GetPathRFE();
-}
-*/
 
 double LimeSDR::GetClockFreq(uint8_t clk_id, uint8_t channel)
 {
@@ -471,158 +461,18 @@ OpStatus LimeSDR::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
 
 OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
-    assert(mSerialPort);
-    assert(MOSI);
-    LMS64CPacket pkt;
-
-    size_t srcIndex = 0;
-    size_t destIndex = 0;
-    constexpr int maxBlocks = LMS64CPacket::payloadSize / (sizeof(uint32_t) / sizeof(uint8_t)); // = 14
-
-    while (srcIndex < count)
+    switch (chipSelect)
     {
-        pkt.status = CommandStatus::Undefined;
-        pkt.blockCount = 0;
-        pkt.periphID = chipSelect;
-
-        // fill packet with same direction operations
-        const bool willDoWrite = MOSI[srcIndex] & (1 << 31);
-        for (int i = 0; i < maxBlocks && srcIndex < count; ++i)
-        {
-            bool isWrite = MOSI[srcIndex] & (1 << 31);
-            if (isWrite != willDoWrite)
-                break; // change between write/read, flush packet
-
-            if (chipSelect == SPI_ADF4002)
-                isWrite = true;
-
-            if (isWrite)
-            {
-                switch (chipSelect)
-                {
-                case SPI_LMS7002M:
-                    pkt.cmd = Command::LMS7002_WR;
-                    break;
-                case SPI_FPGA:
-                    pkt.cmd = Command::BRDSPI_WR;
-                    break;
-                case SPI_ADF4002:
-                    pkt.cmd = Command::ADF4002_WR;
-                    break;
-                default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
-                }
-                int payloadOffset = pkt.blockCount * 4;
-                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 24;
-                pkt.payload[payloadOffset + 1] = MOSI[srcIndex] >> 16;
-                pkt.payload[payloadOffset + 2] = MOSI[srcIndex] >> 8;
-                pkt.payload[payloadOffset + 3] = MOSI[srcIndex];
-            }
-            else
-            {
-                switch (chipSelect)
-                {
-                case SPI_LMS7002M:
-                    pkt.cmd = Command::LMS7002_RD;
-                    break;
-                case SPI_FPGA:
-                    pkt.cmd = Command::BRDSPI_RD;
-                    break;
-                case SPI_ADF4002:
-                    throw std::logic_error("LimeSDR ADF4002 registers reading not supported"s);
-                default:
-                    throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
-                }
-                int payloadOffset = pkt.blockCount * 2;
-                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 8;
-                pkt.payload[payloadOffset + 1] = MOSI[srcIndex];
-            }
-            ++pkt.blockCount;
-            ++srcIndex;
-        }
-
-        // flush packet
-        //printPacket(pkt, 4, "Wr:");
-        int sent = mSerialPort->Write(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            throw std::runtime_error("SPI failed"s);
-
-        int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        //printPacket(pkt, 4, "Rd:");
-
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == CommandStatus::Completed)
-        {
-            for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
-            {
-                //MISO[destIndex] = 0;
-                //MISO[destIndex] = pkt.payload[0] << 24;
-                //MISO[destIndex] |= pkt.payload[1] << 16;
-                MISO[destIndex] = (pkt.payload[i * 4 + 2] << 8) | pkt.payload[i * 4 + 3];
-                ++destIndex;
-            }
-        }
-        else
-        {
-            throw std::runtime_error("SPI failed"s);
-        }
+    case SPI_LMS7002M:
+        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+    case SPI_FPGA:
+        return mfpgaPort->SPI(MOSI, MISO, count);
+    case SPI_ADF4002:
+        return LMS64CProtocol::ADF4002_SPI(*mSerialPort, MOSI, count);
+    default:
+        throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
     }
-
-    return OpStatus::Success;
 }
-
-/*int LimeSDR::I2CWrite(int address, const uint8_t *data, uint32_t length)
-{
-    assert(comms);
-    LMS64CPacket pkt;
-    int remainingBytes = length;
-    const uint8_t* src = data;
-    while (remainingBytes > 0)
-    {
-        pkt.cmd = LMS64CProtocol::CMD_I2C_WR;
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
-        pkt.blockCount = remainingBytes > pkt.payloadSize ? pkt.payloadSize : remainingBytes;
-        pkt.periphID = address;
-        memcpy(pkt.payload, src, pkt.blockCount);
-        src += pkt.blockCount;
-        remainingBytes -= pkt.blockCount;
-        int sent = comms->BulkTransfer(CONTROL_BULK_OUT_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            throw std::runtime_error("I2C write failed"s);
-        int recv = comms->BulkTransfer(CONTROL_BULK_IN_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-
-        if (recv < pkt.headerSize || pkt.status != LMS64CProtocol::STATUS_COMPLETED_CMD)
-            throw std::runtime_error("I2C write failed"s);
-    }
-    return 0;
-}*/
-
-/*int LimeSDR::I2CRead(int address, uint8_t *data, uint32_t length)
-{
-    assert(comms);
-    LMS64CPacket pkt;
-    int remainingBytes = length;
-    uint8_t* dest = data;
-    while (remainingBytes > 0)
-    {
-        pkt.cmd = LMS64CProtocol::CMD_I2C_RD;
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
-        pkt.blockCount = remainingBytes > pkt.payloadSize ? pkt.payloadSize : remainingBytes;
-        pkt.periphID = address;
-
-        int sent = comms->BulkTransfer(CONTROL_BULK_OUT_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-        if (sent != sizeof(pkt))
-            throw std::runtime_error("I2C read failed"s);
-        int recv = comms->BulkTransfer(CONTROL_BULK_IN_ADDRESS, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
-
-        memcpy(dest, pkt.payload, pkt.blockCount);
-        dest += pkt.blockCount;
-        remainingBytes -= pkt.blockCount;
-
-        if (recv <= pkt.headerSize || pkt.status != LMS64CProtocol::STATUS_COMPLETED_CMD)
-            throw std::runtime_error("I2C read failed"s);
-    }
-    return 0;
-}*/
 
 // There might be some leftover samples data still buffered in USB device
 // clear the USB buffers before streaming samples to avoid old data
