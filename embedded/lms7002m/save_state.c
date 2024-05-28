@@ -25,7 +25,7 @@ const uint16_t chipStateAddr[][2] = {
     { 0x05C0, 0x05C0 }, // DC Calibration Configuration
 };
 uint16_t x0020state;
-uint16_t chipStateData[339]; // UPDATE IF SOMETHING CHANGES
+uint16_t chipStateData[359]; // UPDATE IF SOMETHING CHANGES
 
 void lms7002m_save_chip_state(lms7002m_context* self, bool wr)
 {
