@@ -131,8 +131,6 @@ void free_matrix(float** m, int nrl, int nrh, int ncl, int nch)
 /*************************************************/
 void nrerror(char* error_text)
 {
-    void exit();
-
     fprintf(stderr, "Numerical Recipes run-time error...\n");
     fprintf(stderr, "%s\n", error_text);
     fprintf(stderr, "Forced to exit.\n");
