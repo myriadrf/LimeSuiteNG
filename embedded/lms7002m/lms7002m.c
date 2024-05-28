@@ -1559,8 +1559,8 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         }
     }
 
-    double coef[120];
-    double coef2[40];
+    float coef[120];
+    float coef2[40];
 
     GenerateFilter(L * 15, w, w2, 1.0, 0, coef);
     GenerateFilter(L * 5, w, w2, 1.0, 0, coef2);
@@ -1578,27 +1578,15 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, div);
     }
 
-    float coefFloat[120];
-    for (uint8_t i = 0; i < 120; ++i)
-    {
-        coefFloat[i] = coef[i];
-    }
-
-    float coef2Float[40];
-    for (uint8_t i = 0; i < 40; ++i)
-    {
-        coef2Float[i] = coef2[i];
-    }
-
-    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2Float, L * 5);
+    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2, L * 5);
     if (status != lime_Result_Success)
         return status;
 
-    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2Float, L * 5);
+    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2, L * 5);
     if (status != lime_Result_Success)
         return status;
 
-    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coefFloat, L * 15);
+    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coef, L * 15);
     if (status != lime_Result_Success)
         return status;
 

@@ -5,25 +5,25 @@ DESCRIPTION:	Routines for vector and matrix allocation/free.
 		All are from "Numerical Recipes in C".
 
 CONTAINTS:	
-		double  *vector(nl,nh)
+		float  *vector(nl,nh)
 		int    nl,nh;
 
 		int  *ivector(nl,nh)
 		int  nl,nh;
 
 		void free_vector(v,nl,nh)
-		double *v;
+		float *v;
 		int   nl,nh;
 
 		void free_ivector(v,nl,nh)
 		int *v;
 		int   nl,nh;
 
-		double  **matrix(nrl,nrh,ncl,nch)
+		float  **matrix(nrl,nrh,ncl,nch)
 		int  nrl,nrh,ncl,nch;
 
 		void free_matrix(m,nrl,nrh,ncl,nch)
-		double **m;
+		float **m;
 		int   nrl,nrh,ncl,nch;
 
 		nrerror(error_text)
@@ -31,10 +31,10 @@ CONTAINTS:
 
 		void ludcmp(a,n,indx,d)
 		int n, *indx;
-		double **a,*d;
+		float **a,*d;
 
 		void lubksb(a,n,indx,b)
-		double **a,b[];
+		float **a,b[];
 		int n,indx[];
 
 DATE:		
@@ -55,14 +55,11 @@ REVISIONS:	February 01, 1994: File created.
 void nrerror(char* error_text);
 
 /*****************************************************/
-/*** Allocates a double vector with range [nl..nh]. ***/
+/*** Allocates a float vector with range [nl..nh]. ***/
 /*****************************************************/
-double* vector(nl, nh)
-int nl, nh;
+float* vector(int nl, int nh)
 {
-    double* v;
-
-    v = (double*)malloc((unsigned)(nh - nl + 1) * sizeof(double));
+    float* const v = (float*)malloc((unsigned)(nh - nl + 1) * sizeof(float));
     if (!v)
         nrerror("Allocation failure in vector().\n");
     return (v - nl);
@@ -71,22 +68,18 @@ int nl, nh;
 /*****************************************************/
 /*** Allocates an int vector with range [nl..nh].  ***/
 /*****************************************************/
-int* ivector(nl, nh)
-int nl, nh;
+int* ivector(int nl, int nh)
 {
-    int* v;
-
-    v = (int*)calloc((unsigned)(nh - nl + 1), sizeof(int));
+    int* const v = (int*)calloc((unsigned)(nh - nl + 1), sizeof(int));
     if (!v)
         nrerror("Allocation failure in vector().\n");
     return (v - nl);
 }
 
 /****************************************************/
-/*** Frees a double vector allocated by vector().  ***/
+/*** Frees a float vector allocated by vector().  ***/
 /****************************************************/
-void free_vector(v, nl, nh) double* v;
-int nl, nh;
+void free_vector(float* v, int nl, int nh)
 {
     free((char*)(v + nl));
 }
@@ -94,32 +87,27 @@ int nl, nh;
 /****************************************************/
 /*** Frees an int vector allocated by ivector().  ***/
 /****************************************************/
-void free_ivector(v, nl, nh) int* v;
-int nl, nh;
+void free_ivector(int* v, int nl, int nh)
 {
     free((char*)(v + nl));
 }
 
 /*******************************************/
-/****  Allocates a double matrix with    ****/
+/****  Allocates a float matrix with    ****/
 /****  range [nrl..nrh] [ncl..nch].     ****/
 /*******************************************/
-double** matrix(nrl, nrh, ncl, nch)
-int nrl, nrh, ncl, nch;
+float** matrix(int nrl, int nrh, int ncl, int nch)
 {
-    int i;
-    double** m;
-
-    /*** Allocate pointers to rows.   ****/
-    m = (double**)calloc((unsigned)(nrh - nrl + 1), sizeof(double*));
+    /*** Allocate pointers to rows. ***/
+    float** m = (float**)calloc((unsigned)(nrh - nrl + 1), sizeof(float*));
     if (!m)
         nrerror("Allocation failure #1 in matrix().");
     m -= nrl;
 
-    /***  Allocate rows and pointers to them.  ***/
-    for (i = nrl; i <= nrh; i++)
+    /*** Allocate rows and pointers to them. ***/
+    for (int i = nrl; i <= nrh; i++)
     {
-        m[i] = (double*)malloc((unsigned)(nch - ncl + 1) * sizeof(double));
+        m[i] = (float*)malloc((unsigned)(nch - ncl + 1) * sizeof(float));
         if (!m[i])
             nrerror("Allocation failure #2 in matrix().");
         m[i] -= ncl;
@@ -131,12 +119,9 @@ int nrl, nrh, ncl, nch;
 /****   Frees a matrix allocated by ... ***/
 /****   matrix().                       ***/
 /******************************************/
-void free_matrix(m, nrl, nrh, ncl, nch) double** m;
-int nrl, nrh, ncl, nch;
+void free_matrix(float** m, int nrl, int nrh, int ncl, int nch)
 {
-    int i;
-
-    for (i = nrh; i >= nrl; i--)
+    for (int i = nrh; i >= nrl; i--)
         free((char*)(m[i] + ncl));
     free((char*)(m + nrl));
 }
@@ -144,7 +129,7 @@ int nrl, nrh, ncl, nch;
 /*************************************************/
 /*** Numerical Recipes standard error handler. ***/
 /*************************************************/
-void nrerror(error_text) char error_text[];
+void nrerror(char* error_text)
 {
     void exit();
 
@@ -161,46 +146,43 @@ void nrerror(error_text) char error_text[];
 /*	indx[1:n]		temporary storage,			*/
 /*	d			temporary storage.			*/
 /* ******************************************************************** */
-int ludcmp(a, n, indx, d)
-int n, *indx;
-double **a, *d;
+int ludcmp(float** a, int n, int* indx, float* d)
 {
-    int i, imax, j, k;
-    double big, dum, sum, temp;
-    double *vv, *vector();
-    void free_vector();
-
-    imax = 0;
-
-    vv = vector(1, n);
-    (*d) = 1.0;
-    for (i = 1; i <= n; i++)
+    float* const vv = vector(1, n);
+    for (int i = 1; i <= n; i++)
     {
-        big = 0.0;
-        for (j = 1; j <= n; j++)
-            if ((temp = fabs(a[i][j])) > big)
+        float big = 0.0;
+        for (int j = 1; j <= n; j++)
+        {
+            const float temp = fabs(a[i][j]);
+            if (temp > big)
                 big = temp;
+        }
         if (!big)
             nrerror("Singular matrix in routine LUDCMP");
         vv[i] = 1.0 / big;
     }
-    for (j = 1; j <= n; j++)
+
+    int imax = 0;
+    (*d) = 1.0;
+    for (int j = 1; j <= n; j++)
     {
-        for (i = 1; i < j; i++)
+        for (int i = 1; i < j; i++)
         {
-            sum = a[i][j];
-            for (k = 1; k < i; k++)
+            float sum = a[i][j];
+            for (int k = 1; k < i; k++)
                 sum -= a[i][k] * a[k][j];
             a[i][j] = sum;
         }
-        big = 0.0;
-        for (i = j; i <= n; i++)
+        float big = 0.0;
+        for (int i = j; i <= n; i++)
         {
-            sum = a[i][j];
-            for (k = 1; k < j; k++)
+            float sum = a[i][j];
+            for (int k = 1; k < j; k++)
                 sum -= a[i][k] * a[k][j];
             a[i][j] = sum;
-            if ((dum = vv[i] * fabs(sum)) >= big)
+            const float dum = vv[i] * fabs(sum);
+            if (dum >= big)
             {
                 big = dum;
                 imax = i;
@@ -208,9 +190,9 @@ double **a, *d;
         }
         if (j != imax)
         {
-            for (k = 1; k <= n; k++)
+            for (int k = 1; k <= n; k++)
             {
-                dum = a[imax][k];
+                const float dum = a[imax][k];
                 a[imax][k] = a[j][k];
                 a[j][k] = dum;
             }
@@ -224,8 +206,8 @@ double **a, *d;
         }
         if (j != n)
         {
-            dum = 1.0 / (a[j][j]);
-            for (i = j + 1; i <= n; i++)
+            const float dum = 1.0 / (a[j][j]);
+            for (int i = j + 1; i <= n; i++)
                 a[i][j] *= dum;
         }
     }
@@ -237,20 +219,17 @@ double **a, *d;
 /* ******************************************************************** */
 /* Solve system of equation						*/
 /* ******************************************************************** */
-void lubksb(a, n, indx, b) double **a, b[];
-int n, indx[];
+void lubksb(float** a, int n, int* indx, float* b)
 {
-    int i, ii = 0, ip, j;
-    double sum;
-
-    for (i = 1; i <= n; i++)
+    int ii = 0;
+    for (int i = 1; i <= n; i++)
     {
-        ip = indx[i];
-        sum = b[ip];
+        const int ip = indx[i];
+        float sum = b[ip];
         b[ip] = b[i];
         if (ii)
         {
-            for (j = ii; j <= i - 1; j++)
+            for (int j = ii; j <= i - 1; j++)
                 sum -= a[i][j] * b[j];
         }
         else if (sum)
@@ -259,10 +238,10 @@ int n, indx[];
         }
         b[i] = sum;
     }
-    for (i = n; i >= 1; i--)
+    for (int i = n; i >= 1; i--)
     {
-        sum = b[i];
-        for (j = i + 1; j <= n; j++)
+        float sum = b[i];
+        for (int j = i + 1; j <= n; j++)
             sum -= a[i][j] * b[j];
         b[i] = sum / a[i][i];
     }

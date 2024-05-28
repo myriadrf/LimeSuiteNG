@@ -29,7 +29,6 @@
     #pragma GCC diagnostic pop
 #endif
 
-#include "lms_gfir.h"
 #include "limesuiteng/types.h"
 #include "comms/IComms.h"
 #include "LMS7002M_RegistersMap.h"
