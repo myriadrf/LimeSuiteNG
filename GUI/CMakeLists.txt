@@ -99,7 +99,7 @@ add_subdirectory(chips)
 target_link_libraries(
     ${GUI_EXECUTABLE_NAME}
     PUBLIC limesuiteng oglGraph ${wxWidgets_LIBRARIES}
-    PRIVATE kissFFT)
+    PRIVATE kissfft)
 
 if(MSVC)
     set_property(

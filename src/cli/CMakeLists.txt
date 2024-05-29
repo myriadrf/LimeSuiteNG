@@ -34,7 +34,7 @@ target_link_libraries(limeFLASH PRIVATE cli-shared)
 add_executable(limeTRX limeTRX.cpp)
 set_target_properties(limeTRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_include_directories(limeTRX PRIVATE ${LIME_SUITE_INCLUDES})
-target_link_libraries(limeTRX PRIVATE cli-shared kissFFT)
+target_link_libraries(limeTRX PRIVATE cli-shared kissfft)
 
 add_executable(limeOEM limeOEM.cpp)
 set_target_properties(limeOEM PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

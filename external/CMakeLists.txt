@@ -23,7 +23,12 @@ endif()
 # kissFFT
 #########################################################################
 set(kissFFT_PATH "${PROJECT_SOURCE_DIR}/external/kissFFT")
+set(KISSFFT_OPENMP OFF)
+set(KISSFFT_PKGCONFIG OFF)
+set(KISSFFT_STATIC OFF)
+set(KISSFFT_TEST OFF)
+set(KISSFFT_TOOLS OFF)
+set(KISSFFT_USE_ALLOCA OFF)
+cmake_policy(SET CMP0077 NEW)
 
-add_library(kissFFT STATIC ${kissFFT_PATH}/kiss_fft.c)
-target_include_directories(kissFFT PUBLIC ${kissFFT_PATH})
-set_target_properties(kissFFT PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+add_subdirectory(kissFFT)

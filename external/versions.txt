@@ -2,4 +2,4 @@ args: https://github.com/Taywee/args commit: e3e6e46699f1ce487a42fd64838f53daeb5
 cpp-feather-ini-parser: https://github.com/c-ridgway/cpp-feather-ini-parser commit: 6f9650b36fc1b4a889cf831baeb4764b1ecb14ac
 FTD3XXLibrary: proprietary; v1.2.0.7
 GLEW: 1.13.0
-kissFFT: https://github.com/mborgerding/kissfft commit: a3a09b3946dde21a31d6f3965b63e57c37f7e5a0
+kissFFT: https://github.com/mborgerding/kissfft commit: f5f2a3b2f2cd02bf80639adb12cbeed125bdf420
