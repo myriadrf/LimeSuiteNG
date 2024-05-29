@@ -34,7 +34,7 @@ void lms7002m_save_chip_state(lms7002m_context* self, bool wr)
     if (!wr)
         x0020state = ch;
 
-    for (uint8_t i = 0; i < sizeof(chipStateAddr) / sizeof(uint16_t*); ++i)
+    for (uint8_t i = 0; i < sizeof(chipStateAddr) / sizeof(chipStateAddr[0]); ++i)
     {
         for (uint16_t addr = chipStateAddr[i][0]; addr <= chipStateAddr[i][1]; ++addr)
         {
