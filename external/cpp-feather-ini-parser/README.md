@@ -1,11 +1,24 @@
 feather-ini-parser
 ==================
 
-Simple like your girlfriend, fast, lightweight, header, portable INI parser for ANSI C++.
+Intuitive, fast, lightweight, header, portable INI parser for ANSI C++.
 
-Why use feather-ini-parser? It's a fast, intuitive, uses C++, supports native data types, wide char support (enable), converting to data types simply by setting a default value or providing the type as a template parameter.
+```
+INI<> ini("filename.ini", true); // Open and parse
+ini.get("section", "key", "value", "default"); // Get section -> key -> value, return "default" if not found
+ini.set("section", "key", "value"); // Set section -> key -> value
+ini.save(); // Save over initial file
 
-##Methods
+for(auto i: ini.sections) // Loop through all sections
+{
+   String section = i.first;
+
+   for(auto j: *i.second) // Loop through all key/values
+      String key = j.first, value = j.second;
+}
+```
+
+## Methods
 
 Statement     | Return Type
 ------------- | -------------
@@ -22,26 +35,46 @@ ini.clear()|bool
 ini[section][key]|value_t&
 ini[section]|keys_t&
 
-##Example
+## Example
 ```
+// Please view the complete list of examplex in 'example/example.cpp'
+
 #include <iostream>
+#include <String>
 #include "INI.h"
 
 using namespace std;
 ```
 ...
 ```
-typedef INI<> ini_t;
-//or
-//typedef INI<section_t, key_t, value_t> ini_t;
+INI<> ini("filename.ini", true); // Load file and parse
 
-ini_t ini("filename.ini", true);
-ini.create("section1"); //Create and select section1
+ini.create("section1"); //Create a section and select it (into the active context)
 ini.set("key", "value");
-cout << ini.get("keynumeric", -1) << endl;
-ini["section2"]["key"] = "value";
+// Set equivelant
+ini.set("section1", "key", "value");
+// Set equivelant (non-safe, performance)
+ini["section1"]["key"] = "value";
+
+cout << ini.get("keynumeric", "default") << endl;
+// Get equivelant
+cout << ini.get("section1", "keynumeric", "default") << endl;
+
 ini.save();
+
+// Loop through all sections and keys (CPP11)
+for(auto i: ini.sections)
+{
+   String section = i.first;
+   cout << "[" << section << "]" << endl;
+
+   for(auto j: *i.second)
+   {
+      String key = j.first, value = j.second;
+      cout << " " << key << "=" << value << endl;
+   }
+}
 ```
 
-##More
-Please see the example .cpp file and Code::Blocks .cbp project for a compilable GCC and VSC++ example. Additionally includes enabling wide char support and iterating through contents.
+## More
+Please see the example .cpp file and Code::Blocks .cbp project for a compilable GCC and VSC++ example. Further examples include enabling wide char support.

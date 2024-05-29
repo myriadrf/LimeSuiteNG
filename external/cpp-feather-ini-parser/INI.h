@@ -1,5 +1,5 @@
 /*
-   Feather INI Parser - 1.40
+   Feather INI Parser - 1.41
    You are free to use this however you wish.
 
    If you find a bug, please attept to debug the cause.
@@ -24,9 +24,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ostream>
 
 #define FINI_SAFE
-#define FINI_BUFFER_SIZE 128
+#define FINI_BUFFER_SIZE 256
 
 #if __cplusplus >= 201103L
   #include <unordered_map>
@@ -178,6 +179,31 @@ public:
       return true;
    }
 
+///Debug
+   friend std::ostream& operator<<(std::ostream& os, const ini_t& ini)
+   {
+#ifdef FINI_CPP11
+      for(auto i = ini.sections.begin(); i != ini.sections.end(); i++) //typename ini_t::sectionsit_t
+      {
+         //Section name as ini_t::section_t
+         os << '[' << i->first << ']' << std::endl;
+
+         if (i->second->size() == 0)  //No keys/values in section, skip to next
+            continue;
+
+         for(typename ini_t::keysit_t j = i->second->begin(); j != i->second->end(); j++)
+         {
+            //Name as ini_t::key_t & Value as ini_t::key_t
+            os << "  " << j->first << "=" << j->second << std::endl;
+         }
+      }
+#else
+      std::cout << "Error: FINI requires CPP11 when outputting to stream." << std::endl;
+#endif
+
+      return os;
+   }
+      
 ///Set
    //Assign a value for key under the selected section
    bool set(const key_t key, const value_t value)
@@ -226,7 +252,7 @@ public:
 
    template <typename W, typename X>
       fini_string_t get(const W section, const X key, const fini_char_t* def)  //Handle C string default value without casting
-         { return Converters::Convert<fini_string_t>(Converters::Convert<section_t>(section), get(Converters::Convert<key_t>(key), Converters::Convert<value_t>(def))); }
+         { return Converters::Convert<fini_string_t>(get(Converters::Convert<section_t>(section), Converters::Convert<key_t>(key), Converters::Convert<value_t>(def))); }
 
 ///Functions
    void parse(std::istream& file)
