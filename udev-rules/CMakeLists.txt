@@ -17,7 +17,7 @@ set(UDEV_RULES_INSTALL_PATH
     "/etc/udev/rules.d"
     CACHE STRING "Path where to install udev rules")
 
-install(FILES ${CMAKE_CURRENT_LIST_DIR}/64-limesuite.rules DESTINATION ${UDEV_RULES_INSTALL_PATH})
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/65-limesuiteng.rules DESTINATION ${UDEV_RULES_INSTALL_PATH})
 
 install(
     CODE "

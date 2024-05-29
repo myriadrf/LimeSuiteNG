@@ -25,6 +25,7 @@
 #include <linux/mutex.h>
 #include <linux/jiffies.h>
 #include <linux/wait.h>
+#include <linux/mutex.h>
 
 #include "limelitepcie.h"
 #include "csr.h"
@@ -49,9 +50,12 @@
 #define LIMELITEPCIE_NAME "limelitepcie"
 #define LIMELITEPCIE_MINOR_COUNT 32
 
+#define VERSION "1.0.0"
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 #define VERSION_PATCH 0
+
+MODULE_INFO(version, VERSION);
 
 #define MAX_DMA_BUFFER_COUNT 256
 #define MAX_DMA_CHANNEL_COUNT 16
@@ -101,6 +105,11 @@ struct limelitepcie_chan {
     int minor;
 };
 
+struct dev_attr {
+    uint32_t vendor;
+    uint32_t product;
+};
+
 struct limelitepcie_device {
     struct pci_dev *dev;
     struct platform_device *uart;
@@ -115,6 +124,8 @@ struct limelitepcie_device {
     struct cdev control_cdev; // non DMA channel for control packets
     struct deviceInfo info;
     struct semaphore control_semaphore;
+    spinlock_t device_spinlock;
+    struct dev_attr attr;
 };
 
 struct limelitepcie_chan_priv {
@@ -764,6 +775,7 @@ static int limelitepcie_mmap(struct file *file, struct vm_area_struct *vma)
     struct limelitepcie_chan_priv *chan_priv = file->private_data;
     struct limelitepcie_chan *chan = chan_priv->chan;
     struct limelitepcie_device *s = chan->limelitepcie_dev;
+
     unsigned long pfn;
     int is_tx, i;
 
@@ -828,8 +840,7 @@ static unsigned int limelitepcie_poll(struct file *file, poll_table *wait)
         mask |= POLLOUT | POLLWRNORM;
 
 #ifdef DEBUG_POLL
-    struct limelitepcie_device *s = chan->limelitepcie_dev;
-    dev_dbg(&s->dev->dev,
+    dev_dbg(&dev->dev->dev,
         "poll: writer sw: %10lld / hw: %10lld | reader sw: %10lld / hw: %10lld, IN:%i, OUT:%i\n",
         chan->dma.writer_sw_count,
         chan->dma.writer_hw_count,
@@ -1303,7 +1314,22 @@ static const struct file_operations limelitepcie_fops_control = {
     .write = limelitepcie_ctrl_write,
 };
 
-static int limelitepcie_alloc_chdev(struct limelitepcie_device *s)
+static ssize_t product_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+    struct limelitepcie_device *limeDev = dev_get_drvdata(dev);
+    return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.product);
+}
+
+static ssize_t vendor_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+    struct limelitepcie_device *limeDev = dev_get_drvdata(dev);
+    return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.vendor);
+}
+
+static DEVICE_ATTR(product, 0444, product_show, NULL);
+static DEVICE_ATTR(vendor, 0444, vendor_show, NULL);
+
+static int limelitepcie_alloc_chdev(struct limelitepcie_device *s, struct device *parent)
 {
     int ret;
 
@@ -1340,24 +1366,37 @@ static int limelitepcie_alloc_chdev(struct limelitepcie_device *s)
         char trxName[64];
         snprintf(trxName, sizeof(trxName) - 1, "trx%d", i);
         // when creating device linux replaces all '/' with a '!', so just use '!' directly
-        if (!device_create(limelitepcie_class, NULL, MKDEV(limelitepcie_major, index), NULL, "%s!%s", deviceName, trxName))
+        struct device *trxDev =
+            device_create(limelitepcie_class, parent, MKDEV(limelitepcie_major, index), NULL, "%s!%s", deviceName, trxName);
+        if (!trxDev)
         {
             ret = -EINVAL;
             dev_err(&s->dev->dev, "Failed to create device\n");
             goto fail_create;
         }
+
+        device_create_file(trxDev, &dev_attr_product);
+        device_create_file(trxDev, &dev_attr_vendor);
+
         index++;
     }
 
     // additionally alloc control channel
     dev_info(&s->dev->dev, "Creating /dev/%s/control0\n", deviceName);
     // // when creating device linux replaces all '/' with a '!', so just use '!' directly
-    if (!device_create(limelitepcie_class, NULL, MKDEV(limelitepcie_major, index), NULL, "%s!control0", deviceName))
+
+    struct device *ctrlDev =
+        device_create(limelitepcie_class, parent, MKDEV(limelitepcie_major, index), s, "%s!control0", deviceName);
+    if (!ctrlDev)
     {
         ret = -EINVAL;
         dev_err(&s->dev->dev, "Failed to create device\n");
         goto fail_create;
     }
+
+    device_create_file(ctrlDev, &dev_attr_product);
+    device_create_file(ctrlDev, &dev_attr_vendor);
+
     ++index;
 
     limelitepcie_minor_idx = index;
@@ -1561,8 +1600,12 @@ static void ParseIdentifier(const char *identifier, char *destination, const siz
             destination[i] = '-';
 }
 
+static struct mutex probe_lock;
+
 static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
+    mutex_lock(&probe_lock);
+
     int ret = 0;
     uint8_t rev_id;
     int i;
@@ -1579,6 +1622,10 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     }
 
     pci_set_drvdata(dev, limelitepcie_dev);
+
+    limelitepcie_dev->attr.vendor = id->vendor;
+    limelitepcie_dev->attr.product = id->device;
+
     limelitepcie_dev->dev = dev;
     spin_lock_init(&limelitepcie_dev->lock);
 
@@ -1682,7 +1729,7 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     limelitepcie_dev->channels = dmaChannels;
 
     /* create all chardev in /dev */
-    ret = limelitepcie_alloc_chdev(limelitepcie_dev);
+    ret = limelitepcie_alloc_chdev(limelitepcie_dev, &dev->dev);
     if (ret)
     {
         dev_err(&dev->dev, "Failed to allocate character device\n");
@@ -1741,7 +1788,10 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
 #ifdef CSR_UART_XOVER_RXTX_ADDR
     tty_res = devm_kzalloc(&dev->dev, sizeof(struct resource), GFP_KERNEL);
     if (!tty_res)
+    {
+        mutex_unlock(&probe_lock);
         return -ENOMEM;
+    }
     tty_res->start = (resource_size_t)litepcie_dev->bar0_addr + CSR_UART_XOVER_RXTX_ADDR - CSR_BASE;
     tty_res->flags = IORESOURCE_REG;
     limelitepcie_dev->uart = platform_device_register_simple("liteuart", limelitepcie_minor_idx, tty_res, 1);
@@ -1751,7 +1801,7 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
         goto fail3;
     }
 #endif
-
+    mutex_unlock(&probe_lock);
     return 0;
 
 fail3:
@@ -1759,6 +1809,7 @@ fail3:
 fail2:
     FreeIRQs(limelitepcie_dev);
 fail1:
+    mutex_unlock(&probe_lock);
     return ret;
 }
 
@@ -1824,6 +1875,8 @@ static int __init limelitepcie_module_init(void)
         pr_err(" Error while registering PCI driver\n");
         goto fail_register;
     }
+
+    mutex_init(&probe_lock);
     return 0;
 
 fail_register:

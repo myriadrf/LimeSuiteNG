@@ -19,11 +19,6 @@ if ! lsmod | grep -Eq "^$MODULE_NAME" ; then
     depmod
     modprobe -v $MODULE_NAME >> $LOG_FILE
 
-    # Configure /etc/modules to load it automatically
-    if ! grep -xq "$MODULE_NAME" /etc/modules ; then
-        echo "$MODULE_NAME" >> /etc/modules
-    fi
-
     if lsmod | grep -Eq "^$MODULE_NAME"; then
         echo "SUCCESS: $MODULE_NAME module loaded" >> $LOG_FILE
     else

@@ -146,18 +146,17 @@ if(ENABLE_LIBRARY)
     endif(MSVC)
 
     add_subdirectory(GFIR)
+
+    ########################################################################
+    ## Supported connections
+    ########################################################################
+    include(comms/USB/CMakeLists.txt)
+    include(comms/PCIe/CMakeLists.txt)
+    include(boards/CMakeLists.txt)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 endif()
-
-########################################################################
-## Supported connections
-########################################################################
-include(comms/USB/CMakeLists.txt)
-include(comms/PCIe/CMakeLists.txt)
-include(boards/CMakeLists.txt)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
 ########################################################################
 ## wx widgets dependency

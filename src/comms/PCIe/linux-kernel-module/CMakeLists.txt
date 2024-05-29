@@ -68,13 +68,14 @@ add_custom_command(
 
 add_custom_target(limelitepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
 
-cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LIMELITEPCIE_KERNEL_MODULE" OFF)
+cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LIMELITEPCIE_KERNEL_MODULE" ON)
 if(NOT INSTALL_KERNEL_MODULE)
     return()
 endif()
 
 # If module is already loaded, unload it
-install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/unload.sh ${MODULE_NAME})")
+install(SCRIPT ${CMAKE_CURRENT_LIST_DIR}/unload.cmake)
+
 set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
 install(FILES ${MODULE_OBJECT} DESTINATION ${KERNEL_MODULE_DESTINATION})
 # load installed module
