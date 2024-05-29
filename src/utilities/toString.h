@@ -17,7 +17,6 @@ LIME_API const std::string& ToString(TRXDir dir);
 /// @return The string representing the status.
 LIME_API const std::string& ToString(OpStatus value);
 
-LIME_API const std::string& ToString(eMemoryRegion value);
 LIME_API const std::string& ToString(eGainTypes value);
 LIME_API const std::string& ToString(eMemoryDevice value);
 

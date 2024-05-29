@@ -3,13 +3,13 @@
 #include "USBGeneric.h"
 #include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
-#include "Si5351C/Si5351C.h"
+#include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_common.h"
 #include "TRXLooper_USB.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
-#include "lms7002m/LMS7002M_validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/validation.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
@@ -36,6 +36,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
@@ -157,8 +158,8 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.socTree = std::make_shared<DeviceTreeNode>("SDR-USB"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
-    const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
     descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+    const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 0x0010, 1 } } };
     descriptor.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
@@ -480,7 +481,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 
     while (srcIndex < count)
     {
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+        pkt.status = CommandStatus::Undefined;
         pkt.blockCount = 0;
         pkt.periphID = chipSelect;
 
@@ -500,13 +501,13 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_WR;
+                    pkt.cmd = Command::LMS7002_WR;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
+                    pkt.cmd = Command::BRDSPI_WR;
                     break;
                 case SPI_ADF4002:
-                    pkt.cmd = LMS64CProtocol::CMD_ADF4002_WR;
+                    pkt.cmd = Command::ADF4002_WR;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -522,10 +523,10 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_RD;
+                    pkt.cmd = Command::LMS7002_RD;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
+                    pkt.cmd = Command::BRDSPI_RD;
                     break;
                 case SPI_ADF4002:
                     throw std::logic_error("LimeSDR ADF4002 registers reading not supported"s);
@@ -549,7 +550,7 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
 
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == LMS64CProtocol::STATUS_COMPLETED_CMD)
+        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == CommandStatus::Completed)
         {
             for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
             {
@@ -628,8 +629,8 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 void LimeSDR::ResetUSBFIFO()
 {
     LMS64CPacket pkt;
-    pkt.cmd = LMS64CProtocol::CMD_USB_FIFO_RST;
-    pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+    pkt.cmd = Command::USB_FIFO_RST;
+    pkt.status = CommandStatus::Undefined;
     pkt.blockCount = 1;
     pkt.payload[0] = 0;
 

@@ -38,15 +38,6 @@ const std::string& ToString(OpStatus value)
     return OP_STATUS_TEXT.at(value);
 }
 
-static const std::unordered_map<eMemoryRegion, const std::string> MEMORY_REGIONS_TEXT{
-    { eMemoryRegion::VCTCXO_DAC, "VCTCXO DAC (non-volatile)"s },
-};
-
-const std::string& ToString(eMemoryRegion value)
-{
-    return MEMORY_REGIONS_TEXT.at(value);
-}
-
 static const std::unordered_map<eGainTypes, const std::string> GAIN_TYPES_TEXT{
     { eGainTypes::LNA, "LNA"s },
     { eGainTypes::LoopbackLNA, "LB_LNA"s },

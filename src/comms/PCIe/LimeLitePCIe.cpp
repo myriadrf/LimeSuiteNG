@@ -235,7 +235,8 @@ int LimeLitePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - t1).count() < timeout_ms);
 
-    //if ((status & 0xFF00) == 0)
+    if ((status & 0xFF00) == 0)
+        ReportError(OpStatus::Timeout, "CMD %02X Read timeout", status & 0xFF);
     //throw std::runtime_error("LimeLitePCIe read status timeout"s);
     return read(mFileDescriptor, buffer, length);
 }

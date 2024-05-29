@@ -3,14 +3,14 @@
 #include "USBGeneric.h"
 #include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
-#include "Si5351C/Si5351C.h"
+#include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_Mini.h"
 #include "TRXLooper_USB.h"
-#include "lms7002m/LMS7002M_validation.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
-#include "DSP/EqualizerCSR.h"
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "DSP/Equalizer/EqualizerCSR.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
@@ -28,6 +28,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::LMS64CProtocol;
 using namespace lime::EqualizerCSR;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
@@ -404,7 +405,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
     while (srcIndex < count)
     {
-        pkt.status = LMS64CProtocol::STATUS_UNDEFINED;
+        pkt.status = CommandStatus::Undefined;
         pkt.blockCount = 0;
         pkt.periphID = chipSelect;
 
@@ -425,10 +426,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_WR;
+                    pkt.cmd = Command::LMS7002_WR;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_WR;
+                    pkt.cmd = Command::BRDSPI_WR;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -445,10 +446,10 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
                 switch (chipSelect)
                 {
                 case SPI_LMS7002M:
-                    pkt.cmd = LMS64CProtocol::CMD_LMS7002_RD;
+                    pkt.cmd = Command::LMS7002_RD;
                     break;
                 case SPI_FPGA:
-                    pkt.cmd = LMS64CProtocol::CMD_BRDSPI_RD;
+                    pkt.cmd = Command::BRDSPI_RD;
                     break;
                 default:
                     throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -474,7 +475,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
         int recv = mSerialPort->Read(reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 100);
         //printPacket(pkt, 4, "Rd:");
 
-        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == LMS64CProtocol::STATUS_COMPLETED_CMD)
+        if (recv >= pkt.headerSize + 4 * pkt.blockCount && pkt.status == CommandStatus::Completed)
         {
             for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
             {
@@ -733,4 +734,12 @@ OpStatus LimeSDR_Mini::CustomParameterWrite(const std::vector<CustomParameterIO>
 OpStatus LimeSDR_Mini::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
     return mfpgaPort->CustomParameterRead(parameters);
+}
+
+void LimeSDR_Mini::SetSerialNumber(const std::string& number)
+{
+
+    uint64_t sn = 0;
+    sscanf(number.c_str(), "%16lX", &sn);
+    mDeviceDescriptor.serialNumber = sn;
 }

@@ -1,8 +1,8 @@
 #ifndef LIME_LIMESDR_MMX8_H
 #define LIME_LIMESDR_MMX8_H
 
-#include "ADF4002/ADF4002.h"
-#include "CDCM6208/CDCM6208_Dev.h"
+#include "chips/ADF4002/ADF4002.h"
+#include "chips/CDCM6208/CDCM6208.h"
 #include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"

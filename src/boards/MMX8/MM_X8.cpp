@@ -6,9 +6,9 @@
 #include "limesuiteng/Logger.h"
 #include "LimeLitePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "lms7002m/LMS7002M_validation.h"
+#include "chips/LMS7002M/validation.h"
 #include "FPGA_common.h"
-#include "DSP/Equalizer.h"
+#include "DSP/Equalizer/Equalizer.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "DeviceTreeNode.h"
@@ -66,7 +66,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     mSubDevices.resize(8);
     desc.spiSlaveIds["FPGA"s] = 0;
 
-    const std::unordered_map<eMemoryRegion, Region> eepromMap = { { eMemoryRegion::VCTCXO_DAC, { 16, 2 } } };
+    const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
 
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);

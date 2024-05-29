@@ -109,7 +109,11 @@ SDRDevice* DeviceFactoryFTDI::make_LimeSDR_Mini(const DeviceHandle& handle, cons
     auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_USB>(usbPipe);
     auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
 
-    return new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
+    auto board = new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
+    // LimeSDR-Mini serial number is taken from USB chip's descriptor.
+    // TODO: add serial number getter into USBGeneric, and use it inside LimeSDR_mini
+    board->SetSerialNumber(handle.serial);
+    return board;
 }
 
 SDRDevice* DeviceFactoryFTDI::make(const DeviceHandle& handle)

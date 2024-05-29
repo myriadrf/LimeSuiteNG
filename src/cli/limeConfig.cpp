@@ -6,32 +6,18 @@
 #include <cstring>
 #include <getopt.h>
 #include <string_view>
+#include "args/args.hxx"
 
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
-static std::vector<int> ParseIntArray(const std::string& str)
+static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
 {
     std::vector<int> numbers;
-    size_t parsed = 0;
-    while (parsed < str.length())
-    {
-        try
-        {
-            int nr = stoi(&str[parsed]);
-            numbers.push_back(nr);
-            size_t next = str.find_first_of(',', parsed);
-            if (next == string::npos)
-                return numbers;
-            else
-                parsed = next + 1;
-        } catch (...)
-        {
-            return numbers;
-        }
-    }
+    for (const auto& number : args::get(flag))
+        numbers.push_back(number);
     return numbers;
 }
 
@@ -58,60 +44,6 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
     std::cout << msg << std::endl;
 }
 
-static int printHelp(void)
-{
-    cerr << "limeConfig [options]" << endl;
-    cerr << "    -h, --help\t\t\t This help" << endl;
-    cerr << "    -d, --device <name>\t\t Specifies which device to use" << endl;
-    cerr << "    -c, --chip <name>\t\t Selects destination chip" << endl;
-    cerr << "    -l, --log\t\t Log verbosity: info, warning, error, verbose, debug" << endl;
-    cerr << "    -i, --initialize\t\t Reset and initialize entire device" << endl;
-
-    cerr << "    --refclk\t\t Reference clock in Hz" << endl;
-    cerr << "    --samplerate\t Sampling rate in Hz" << endl;
-    cerr << "    --rxen=[0,1]\t Enable receiver" << endl;
-    cerr << "    --rxlo\t\t Receiver center frequency in Hz" << endl;
-    cerr << "    --rxpath\t\t Receiver antenna path" << endl;
-    cerr << "    --rxlpf\t\t Receiver low pass filter bandwidth in Hz" << endl;
-    cerr << "    --rxoversample\t Receiver decimation 1,2,4,8..." << endl;
-    cerr << "    --rxtestsignal=[0,1]\t Enables receiver test signal if available" << endl;
-
-    cerr << "    --txen=[0,1]\t\t Enable transmitter" << endl;
-    cerr << "    --txlo\t\t Transmitter center frequency in Hz" << endl;
-    cerr << "    --txpath\t\t Transmitter antenna path" << endl;
-    cerr << "    --txlpf\t\t Transmitter low pass filter bandwidth in Hz" << endl;
-    cerr << "    --txoversample\t Transmitter interpolation 1,2,4,8..." << endl;
-    cerr << "    --txtestsignal=[0,1]\t Enables transmitter test signal if available" << endl;
-
-    cerr << "    --ini\t Path to LMS7002M .ini configuration file to use as a base" << endl;
-
-    return EXIT_SUCCESS;
-}
-
-enum Args {
-    HELP = 'h',
-    DEVICE = 'd',
-    CHIP = 'c',
-    LOG = 'l',
-    INIT = 'i',
-
-    REFCLK = 200,
-    SAMPLERATE,
-    RXEN,
-    RXLO,
-    RXPATH,
-    RXLPF,
-    RXOVERSAMPLE,
-    RXTESTSIGNAL,
-    TXEN,
-    TXLO,
-    TXPATH,
-    TXLPF,
-    TXOVERSAMPLE,
-    TXTESTSIGNAL,
-    INIFILE
-};
-
 static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name)
 {
     if (name.empty())
@@ -130,123 +62,92 @@ static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, cons
 
 int main(int argc, char** argv)
 {
-    std::string_view devName{ ""sv };
-    bool initializeBoard = false;
-    std::string iniFilename;
-    std::string rxAntennaName;
-    std::string txAntennaName;
-    std::vector<int> chipIndexes;
+    // clang-format off
+    args::ArgumentParser            parser("limeConfig - SDR parameters configuring", "");
+    args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
+    args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
+    args::NargsValueFlag<int>       chipFlag(parser, "chip", "Selects destination chip/chips", {'c', "chips"}, {1, static_cast<size_t>(-1)});
+    args::ValueFlag<std::string>    logFlag(parser, "log level", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error");
+    args::Flag                      initializeFlag(parser, "", "Reset and initialize entire device", {'i', "initialize"});
+
+    args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
+    args::ValueFlag<double>         samplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"samplerate"});
+
+    args::Group                     rxGroup(parser, "Receiver");
+    args::ValueFlag<bool>           rxenFlag(parser, "rx enable", "Enable receiver [0, 1]", {"rxen"});
+    args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
+    args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
+    args::ValueFlag<double>         rxlpfFlag(parser, "Hz", "Receiver low pass filter bandwidth in Hz", {"rxlpf"});
+    args::ValueFlag<uint8_t>        rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
+    args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
+
+    args::Group                     txGroup(parser, "Transmitter");
+    args::ValueFlag<bool>           txenFlag(parser, "tx enable", "Enable transmitter", {"txen"});
+    args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
+    args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
+    args::ValueFlag<double>         txlpfFlag(parser, "Hz", "Transmitter low pass filter bandwidth in Hz", {"txlpf"});
+    args::ValueFlag<uint8_t>        txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
+    args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
+
+    args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
+    // clang-format on
+
+    try
+    {
+        parser.ParseCLI(argc, argv);
+    } catch (const args::Help&)
+    {
+        cout << parser;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    if (argc == 1)
+    {
+        std::cout << parser;
+        return EXIT_SUCCESS;
+    }
+
+    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
+                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag;
+
+    const std::string devName = args::get(deviceFlag);
+    const bool initializeBoard = initializeFlag;
+    const std::string iniFilename = args::get(iniFlag);
+    const std::string rxAntennaName = args::get(rxpathFlag);
+    ;
+    const std::string txAntennaName = args::get(txpathFlag);
+
+    logVerbosity = strToLogLevel(args::get(logFlag));
+    std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
     SDRConfig config;
     config.channel[0].rx.oversample = 2;
     config.channel[0].tx.oversample = 2;
 
-    static struct option long_options[] = { { "help", no_argument, 0, Args::HELP },
-        { "device", required_argument, 0, Args::DEVICE },
-        { "chip", required_argument, 0, Args::CHIP },
-        { "log", required_argument, 0, Args::LOG },
-        { "initialize", no_argument, 0, Args::INIT },
-        { "refclk", required_argument, 0, Args::REFCLK },
-        { "samplerate", required_argument, 0, Args::SAMPLERATE },
-        { "rxen", required_argument, 0, Args::RXEN },
-        { "rxlo", required_argument, 0, Args::RXLO },
-        { "rxpath", required_argument, 0, Args::RXPATH },
-        { "rxlpf", required_argument, 0, Args::RXLPF },
-        { "rxoversample", required_argument, 0, Args::RXOVERSAMPLE },
-        { "rxtestsignal", required_argument, 0, Args::RXTESTSIGNAL },
-        { "txen", required_argument, 0, Args::TXEN },
-        { "txlo", required_argument, 0, Args::TXLO },
-        { "txpath", required_argument, 0, Args::TXPATH },
-        { "txlpf", required_argument, 0, Args::TXLPF },
-        { "txoversample", required_argument, 0, Args::TXOVERSAMPLE },
-        { "txtestsignal", required_argument, 0, Args::TXTESTSIGNAL },
-        { "ini", required_argument, 0, Args::INIFILE },
-        { 0, 0, 0, 0 } };
-
-    int long_index = 0;
-    int option = 0;
-    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
+    if (samplerateFlag)
     {
-        switch (option)
-        {
-        case Args::HELP:
-            return printHelp();
-        case Args::DEVICE:
-            if (optarg != NULL)
-                devName = std::string(optarg);
-            break;
-        case Args::CHIP:
-            if (optarg != NULL)
-                chipIndexes = ParseIntArray(optarg);
-
-            if (chipIndexes.empty())
-            {
-                cerr << "Invalid chip index"sv << endl;
-                return -1;
-            }
-            else
-                cerr << "Chip count "sv << chipIndexes.size() << endl;
-            break;
-        case Args::LOG:
-            if (optarg != NULL)
-            {
-                logVerbosity = strToLogLevel(optarg);
-            }
-            break;
-        case Args::INIT:
-            initializeBoard = true;
-            break;
-        case REFCLK:
-            config.referenceClockFreq = stof(optarg);
-            break;
-        case SAMPLERATE:
-            config.channel[0].rx.sampleRate = stof(optarg);
-            config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate;
-            break;
-        case RXEN:
-            config.channel[0].rx.enabled = stoi(optarg) != 0;
-            break;
-        case RXLO:
-            config.channel[0].rx.centerFrequency = stof(optarg);
-            break;
-        case RXPATH:
-            if (optarg != NULL)
-                rxAntennaName = std::string(optarg);
-            break;
-        case RXLPF:
-            config.channel[0].rx.lpf = stof(optarg);
-            break;
-        case RXOVERSAMPLE:
-            config.channel[0].rx.oversample = stoi(optarg);
-            break;
-        case RXTESTSIGNAL:
-            config.channel[0].rx.testSignal.enabled = stoi(optarg) != 0;
-            break;
-        case TXEN:
-            config.channel[0].tx.enabled = stoi(optarg) != 0;
-            break;
-        case TXLO:
-            config.channel[0].tx.centerFrequency = stof(optarg);
-            break;
-        case TXPATH:
-            if (optarg != NULL)
-                txAntennaName = std::string(optarg);
-            break;
-        case TXLPF:
-            config.channel[0].tx.lpf = stof(optarg);
-            break;
-        case TXOVERSAMPLE:
-            config.channel[0].tx.oversample = stoi(optarg);
-            break;
-        case TXTESTSIGNAL:
-            config.channel[0].tx.testSignal.enabled = stoi(optarg) != 0;
-            break;
-        case INIFILE:
-            if (optarg != NULL)
-                iniFilename = std::string(optarg);
-            break;
-        }
+        double sampleRate = args::get(samplerateFlag);
+        config.channel[0].rx.sampleRate = sampleRate;
+        config.channel[0].tx.sampleRate = sampleRate;
     }
+    // clang-format off
+    if (refclkFlag)         config.referenceClockFreq = args::get(refclkFlag);
+    if (rxenFlag)           config.channel[0].rx.enabled = args::get(rxenFlag);
+    if (rxloFlag)           config.channel[0].rx.centerFrequency = args::get(rxloFlag);
+    if (rxlpfFlag)          config.channel[0].rx.lpf = args::get(rxlpfFlag);
+    if (rxoversampleFlag)   config.channel[0].rx.oversample = args::get(rxoversampleFlag);
+    if (rxtestsignalFlag)   config.channel[0].rx.testSignal.enabled = args::get(rxtestsignalFlag);
+
+    if (txenFlag)           config.channel[0].tx.enabled = args::get(txenFlag);
+    if (txloFlag)           config.channel[0].tx.centerFrequency = args::get(txloFlag);
+    if (txlpfFlag)          config.channel[0].tx.lpf = args::get(txlpfFlag);
+    if (txoversampleFlag)   config.channel[0].tx.oversample = args::get(txoversampleFlag);
+    if (txtestsignalFlag)   config.channel[0].tx.testSignal.enabled = args::get(txtestsignalFlag);
+    // clang-format on
 
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
@@ -270,16 +171,15 @@ int main(int argc, char** argv)
         if (initializeBoard)
             device->Init();
 
-        std::string configFilepath;
+        std::string configFilepath = ""s;
         if (!iniFilename.empty())
         {
-            std::string configFilepath = ""s;
             config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
             {
-                cwd = cwd.substr(0, slash0Pos - 1);
+                cwd = cwd.substr(0, slash0Pos);
             }
 
             if (iniFilename[0] != '/') // is not global path
@@ -302,6 +202,9 @@ int main(int argc, char** argv)
                 cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
+
+            if (!doConfigure)
+                continue;
 
             const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
 
