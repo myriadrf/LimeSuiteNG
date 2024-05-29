@@ -17,6 +17,9 @@ class SerialPortMock : public ISerialPort
 
     MOCK_METHOD(int, Write, (const uint8_t* data, size_t length, int timeout_ms), (override));
     MOCK_METHOD(int, Read, (uint8_t * data, size_t length, int timeout_ms), (override));
+
+    MOCK_METHOD(OpStatus, RunControlCommand, (uint8_t * data, size_t length, int timeout_ms), (override));
+    MOCK_METHOD(OpStatus, RunControlCommand, (uint8_t * request, uint8_t* response, size_t length, int timeout_ms), (override));
 };
 
 } // namespace lime::testing
