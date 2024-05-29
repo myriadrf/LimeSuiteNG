@@ -17,7 +17,7 @@ class LimeSDR_XTRX_Fixture : public LMS7002M_SDRDevice_Fixture
     }
 
   protected:
-    inline static const std::string deviceHandleHint{ "LimeXTRX0"s };
+    inline static const std::string deviceHandleHint{ "XTRX"s };
 };
 
 TEST_F(LimeSDR_XTRX_Fixture, ConnectToDevice)

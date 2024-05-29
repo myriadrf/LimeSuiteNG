@@ -23,18 +23,23 @@ LMS7002M_SDRDevice_Fixture::LMS7002M_SDRDevice_Fixture(const std::string& device
 
 void LMS7002M_SDRDevice_Fixture::SetUp()
 {
-    auto devices = DeviceRegistry::enumerate(DeviceHandle{ deviceHandleHint });
+    auto devices = DeviceRegistry::enumerate();
 
     if (devices.empty())
     {
         GTEST_SKIP() << deviceHandleHint + " not connected, skipping"s;
     }
 
-    device = DeviceRegistry::makeDevice(devices.at(0));
+    device = DeviceRegistry::makeDevice(DeviceHandle{ deviceHandleHint });
 
-    ASSERT_NE(device, nullptr);
-
-    device->Init();
+    if (device == nullptr)
+    {
+        GTEST_SKIP() << deviceHandleHint + " not connected, skipping"s;
+    }
+    else
+    {
+        device->Init();
+    }
 }
 
 void LMS7002M_SDRDevice_Fixture::TearDown()

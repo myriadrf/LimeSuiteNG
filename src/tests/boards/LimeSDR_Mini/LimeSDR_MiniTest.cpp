@@ -17,7 +17,7 @@ class LimeSDR_Mini_Fixture : public LMS7002M_SDRDevice_Fixture
     }
 
   protected:
-    inline static const std::string deviceHandleHint{ "LimeSDR Mini"s };
+    inline static const std::string deviceHandleHint{ "Mini"s };
 };
 
 TEST_F(LimeSDR_Mini_Fixture, ConnectToDevice)

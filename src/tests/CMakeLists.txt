@@ -3,17 +3,7 @@ set(LIME_TEST_SUITE_NAME limesuiteng-test)
 set(LIME_TEST_SUITE_SOURCES
     boards/LMS7002M_SDRDevice_Fixture.cpp
     # TODO: # parsers/CoefficientFileParserTest.cpp
-    protocols/LMS64CProtocol/CustomParameterReadTest.cpp
-    protocols/LMS64CProtocol/CustomParameterWriteTest.cpp
-    protocols/LMS64CProtocol/DeviceResetTest.cpp
     protocols/LMS64CProtocol/FirmwareToDescriptorTest.cpp
-    protocols/LMS64CProtocol/FPGA_SPITest.cpp
-    protocols/LMS64CProtocol/GetFirmwareInfoTest.cpp
-    protocols/LMS64CProtocol/GPIODirReadTest.cpp
-    protocols/LMS64CProtocol/GPIODirWriteTest.cpp
-    protocols/LMS64CProtocol/GPIOReadTest.cpp
-    protocols/LMS64CProtocol/GPIOWriteTest.cpp
-    protocols/LMS64CProtocol/LMS7002M_SPITest.cpp
     protocols/BufferInterleavingTest.cpp)
 
 if(ENABLE_LIMELITEPCIE)

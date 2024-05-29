@@ -17,7 +17,7 @@ class LimeSDR_Fixture : public LMS7002M_SDRDevice_Fixture
     }
 
   protected:
-    inline static const std::string deviceHandleHint{ "LimeSDR-USB"s };
+    inline static const std::string deviceHandleHint{ "USB"s };
 };
 
 TEST_F(LimeSDR_Fixture, ConnectToDevice)
