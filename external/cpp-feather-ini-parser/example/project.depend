@@ -800,3 +800,20 @@
 	<memory>
 	<stdexcept>
 
+1567641599 source:i:\projects\cpp-feather-ini-parser2\example\example.cpp
+	<iostream>
+	<cstring>
+	<stdint.h>
+	"../INI.h"
+
+1567642946 i:\projects\cpp-feather-ini-parser2\ini.h
+	<string>
+	<fstream>
+	<sstream>
+	<algorithm>
+	<stdint.h>
+	<stdio.h>
+	<stdlib.h>
+	<map>
+	<vector>
+

@@ -14,7 +14,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-Wall" />
-					<Add option="-std=c++0x" />
+					<Add option="-std=c++11" />
 				</Compiler>
 			</Target>
 			<Target title="vs_2013">
@@ -52,6 +52,7 @@
 			<code_completion />
 			<envvars />
 			<debugger />
+			<fortran_project />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
