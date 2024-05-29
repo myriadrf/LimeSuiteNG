@@ -315,7 +315,7 @@ int main(int argc, char** argv)
             linkFormat = DataFormat::I12;
         else
         {
-            cerr << "Invalid linkFormat "sv << optarg << std::endl;
+            cerr << "Invalid linkFormat "sv << val << std::endl;
             return EXIT_FAILURE;
         }
     }

@@ -15,11 +15,14 @@
 #include <fstream>
 #include <chrono>
 #include <cmath>
+#include <string_view>
 #include "args/args.hxx"
 
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
+
+namespace {
 
 bool ConfigureCGEN(SDRDevice* device, double freqMHz)
 {
@@ -56,7 +59,7 @@ bool ConfigureCGEN(SDRDevice* device, double freqMHz)
 }
 
 lime::LogLevel log_level = lime::LogLevel::Info;
-static LogLevel strToLogLevel(const std::string_view str)
+LogLevel strToLogLevel(const std::string_view str)
 {
     if ("debug"sv == str)
         return LogLevel::Debug;
@@ -78,6 +81,8 @@ void log_func(const lime::LogLevel level, const std::string& message)
     if (level <= log_level)
         std::cout << message << std::endl;
 }
+
+} // namespace
 
 int main(int argc, char** argv)
 {
@@ -155,7 +160,7 @@ int main(int argc, char** argv)
     std::cout << "\nConnected to: "sv << info.name << " FW: "sv << info.firmwareVersion << " HW: " << info.hardwareVersion
               << std::endl;
 
-    const auto configFilename = args::get(iniFlag);
+    const auto& configFilename = args::get(iniFlag);
     if (configFilename.length() > 0)
     {
         if (device->LoadConfig(0, configFilename) != OpStatus::Success)
