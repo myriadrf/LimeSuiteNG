@@ -1,5 +1,4 @@
 #include "cli/common.h"
-#include <getopt.h>
 #include <filesystem>
 #include "args/args.hxx"
 

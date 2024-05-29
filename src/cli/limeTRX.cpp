@@ -9,7 +9,6 @@
 #include "kissFFT/kiss_fft.h"
 #include <condition_variable>
 #include <mutex>
-#include <getopt.h>
 #include <filesystem>
 #include "args/args.hxx"
 

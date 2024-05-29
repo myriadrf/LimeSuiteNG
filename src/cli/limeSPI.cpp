@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <getopt.h>
 #include <filesystem>
 #include "args/args.hxx"
 

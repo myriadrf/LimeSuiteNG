@@ -9,7 +9,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <getopt.h>
 #include <string>
 #include <algorithm>
 #include <cctype>

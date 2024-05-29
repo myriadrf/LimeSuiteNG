@@ -4,7 +4,6 @@
 #include "limesuiteng/Logger.h"
 #include <cassert>
 #include <cstring>
-#include <getopt.h>
 #include <string_view>
 #include "args/args.hxx"
 

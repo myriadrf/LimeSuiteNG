@@ -1,5 +1,4 @@
 #include "cli/common.h"
-#include <getopt.h>
 #include "args/args.hxx"
 
 using namespace std;
