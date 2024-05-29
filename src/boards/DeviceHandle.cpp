@@ -125,7 +125,7 @@ std::string DeviceHandle::ToString(void) const
 
 bool DeviceHandle::IsEqualIgnoringEmpty(const DeviceHandle& hint) const
 {
-    if (!hint.media.empty() &&  media.find(hint.media) == std::string::npos)
+    if (!hint.media.empty() && media.find(hint.media) == std::string::npos)
     {
         return false;
     }
