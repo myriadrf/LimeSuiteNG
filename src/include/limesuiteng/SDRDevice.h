@@ -532,7 +532,7 @@ class LIME_API SDRDevice
     virtual void SetMessageLogCallback(LogCallbackType callback);
 
     /// @brief Gets the pointer to an internal chip of the device.
-    /// @param index The index of the device to retreive.
+    /// @param index The index of the device to retrieve.
     /// @return The pointer to the internal device.
     virtual void* GetInternalChip(uint32_t index) = 0;
 

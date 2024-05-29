@@ -1282,4 +1282,9 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
     return OpStatus::Success;
 }
 
+FPGA* LMS7002M_SDRDevice::GetFPGA()
+{
+    return mFPGA;
+}
+
 } // namespace lime

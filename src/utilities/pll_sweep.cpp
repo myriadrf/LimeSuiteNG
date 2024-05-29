@@ -1,4 +1,12 @@
-#include "lms7_device.h"
+#include "boards/LMS7002M_SDRDevice.h"
+#include "FPGA_common/FPGA_common.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
+
 #include <iostream>
 #include <iomanip>
 #include <getopt.h>
@@ -7,8 +15,7 @@
 #include <cctype>
 #include <fstream>
 #include <chrono>
-#include "FPGA_common.h"
-#include "limesuiteng/Logger.h"
+#include <cmath>
 
 using namespace std;
 using namespace lime;
@@ -16,11 +23,11 @@ using namespace lime;
 auto t1 = chrono::high_resolution_clock::now();
 auto t2 = chrono::high_resolution_clock::now();
 
-bool ConfigureCGEN(Device* device, double freqMHz);
+bool ConfigureCGEN(SDRDevice* device, double freqMHz);
 
 int printHelp(void);
 
-int log_level = 3;
+lime::LogLevel log_level = lime::LogLevel::Info;
 
 void log_func(const lime::LogLevel level, const std::string& message)
 {
@@ -77,7 +84,9 @@ int main(int argc, char** argv)
         case 'l': {
             stringstream ss;
             ss << optarg;
-            ss >> log_level;
+            int tempInt = 0;
+            ss >> tempInt;
+            log_level = static_cast<LogLevel>(tempInt);
             break;
         }
         case 'c': {
@@ -113,15 +122,15 @@ int main(int argc, char** argv)
     cout << "stepFreq  = " << stepFreq / 1e6 << " MHz" << endl;
     cout << "endFreq   = " << endFreq / 1e6 << " MHz" << endl;
 
-    LMS7_Device* device;
-    std::vector<lime::ConnectionHandle> handles = LMS7_Device::GetDeviceList();
+    SDRDevice* device;
+    std::vector<DeviceHandle> handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
         cout << "No devices found" << endl;
         return -1;
     }
     if (handles.size() == 1) //open the only available device
-        device = lime::LMS7_Device::CreateDevice(handles[0], nullptr);
+        device = DeviceRegistry::makeDevice(handles.at(0));
     else //display device selection
     {
         if (deviceIndex < 0)
@@ -133,22 +142,22 @@ int main(int argc, char** argv)
             int selection = 0;
             cin >> selection;
             selection = selection % handles.size();
-            device = lime::LMS7_Device::CreateDevice(handles[selection], nullptr);
+            device = DeviceRegistry::makeDevice(handles.at(selection));
         }
         else
-            device = lime::LMS7_Device::CreateDevice(handles[deviceIndex], nullptr);
+            device = DeviceRegistry::makeDevice(handles.at(deviceIndex));
     }
     if (device == nullptr)
     {
         cout << "Failed to connected to device" << endl;
         return -1;
     }
-    auto info = device->GetInfo();
-    cout << "\nConnected to: " << info->deviceName << " FW: " << info->firmwareVersion << " HW: " << info->hardwareVersion << endl;
+    auto& info = device->GetDescriptor();
+    cout << "\nConnected to: " << info.name << " FW: " << info.firmwareVersion << " HW: " << info.hardwareVersion << endl;
 
     if (configFilename.length() > 0)
     {
-        if (device->LoadConfig(configFilename) != 0)
+        if (device->LoadConfig(0, configFilename) != OpStatus::Success)
         {
             return -1;
         }
@@ -168,31 +177,31 @@ int main(int argc, char** argv)
     return 0;
 }
 
-bool ConfigureCGEN(Device* device, double freqMHz)
+bool ConfigureCGEN(SDRDevice* device, double freqMHz)
 {
     std::cout << "Set CGEN " << freqMHz / 1e6 << " MHz: ";
-    LMS7002M* lms = device->GetLMS();
+    LMS7002M* lms = static_cast<LMS7002M*>(device->GetInternalChip(0));
     lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1, true);
     int interp = lms->Get_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP);
     int decim = lms->Get_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP);
-    if (lms->SetInterfaceFrequency(freqMHz, interp, decim) != 0)
+    if (lms->SetInterfaceFrequency(freqMHz, interp, decim) != OpStatus::Success)
     {
         std::cout << "LMS VCO Fail" << endl;
         return false;
     }
 
-    auto chipInd = lms->GetActiveChannelIndex() / 2;
-    auto fpgaTxPLL = lms->GetReferenceClk_TSP(lime::LMS7002M::Tx);
+    auto fpgaTxPLL = lms->GetReferenceClk_TSP(TRXDir::Tx);
     if (interp != 7)
-        fpgaTxPLL /= pow(2.0, interp);
-    auto fpgaRxPLL = lms->GetReferenceClk_TSP(lime::LMS7002M::Rx);
+        fpgaTxPLL /= std::pow(2.0, interp);
+    auto fpgaRxPLL = lms->GetReferenceClk_TSP(TRXDir::Rx);
     if (decim != 7)
-        fpgaRxPLL /= pow(2.0, decim);
-    auto fpga = device->GetFPGA();
+        fpgaRxPLL /= std::pow(2.0, decim);
+    auto chipInd = lms->GetActiveChannelIndex() / 2;
+    auto fpga = static_cast<LMS7002M_SDRDevice*>(device)->GetFPGA();
     if (fpga)
     {
-        int status = fpga->SetInterfaceFreq(fpgaTxPLL, fpgaRxPLL, chipInd);
-        if (status != 0)
+        OpStatus status = fpga->SetInterfaceFreq(fpgaTxPLL, fpgaRxPLL, chipInd);
+        if (status != OpStatus::Success)
         {
             std::cout << "FPGA Fail" << endl;
             return false;

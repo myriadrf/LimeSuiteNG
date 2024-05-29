@@ -12,9 +12,9 @@
 #include <memory>
 #include <vector>
 
-#include "SamplesPacket.h"
-#include "DataPacket.h"
-#include "TRXLooper.h"
+#include "protocols/SamplesPacket.h"
+#include "protocols/DataPacket.h"
+#include "protocols/TRXLooper.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/OpStatus.h"
 
