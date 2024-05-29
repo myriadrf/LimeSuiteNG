@@ -1778,19 +1778,19 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
     {
-        const float LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
-        float LADterm1 = 0.0;
+        const double LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
+        double LADterm1 = 0.0;
         {
-            float t1 = 1.92163e-15;
-            float t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            double t1 = 1.92163e-15;
+            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
             LADterm1 = t1 * pow(t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51, 1.0 / 3.0);
         }
 
-        float LADterm2 = 0.0;
+        double LADterm2 = 0.0;
         {
-            float t1 = 6.50934553014677e18;
-            float t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
-            float t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
+            double t1 = 6.50934553014677e18;
+            double t2 = sqrt(5.9304678933309e99 * pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
+            double t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
             LADterm2 = t1 / pow(t3, 1.0 / 3.0);
         }
         rcal_lpflad = clamp_float(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
@@ -1809,19 +1809,19 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
     {
-        const float Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
-        float Hterm1;
+        const double Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
+        double Hterm1;
         {
-            float t1 = 5.66735e-16;
-            float t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            float t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            double t1 = 5.66735e-16;
+            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
             Hterm1 = t1 * t3;
         }
-        float Hterm2;
+        double Hterm2;
         {
-            float t1 = 2.12037432410767e019;
-            float t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            float t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
+            double t1 = 2.12037432410767e019;
+            double t2 = sqrt(1.21443429517649e103 * pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
+            double t3 = pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
             Hterm2 = t1 / t3;
         }
         rcal_lpfh = clamp_float(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
