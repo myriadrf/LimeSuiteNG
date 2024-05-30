@@ -65,7 +65,7 @@ typedef struct {
     const uint8_t wrOnlyDataCnt;
 } RegisterBatch;
 
-void lms7002m_write_masked_registers(lms7002m_context* self, const RegisterBatch* regs)
+static void lms7002m_write_masked_registers(lms7002m_context* self, const RegisterBatch* regs)
 {
     for (uint8_t i = regs->cnt; i; --i)
     {
@@ -80,7 +80,7 @@ void lms7002m_write_masked_registers(lms7002m_context* self, const RegisterBatch
     }
 }
 
-void lms7002m_set_defaults_sx(lms7002m_context* self)
+static void lms7002m_set_defaults_sx(lms7002m_context* self)
 {
     const uint16_t SXAddr[] = { 0x011C, 0x011D, 0x011E, 0x011F, 0x0121, 0x0122, 0x0123 };
     const uint16_t SXdefVals[] = { 0xAD43, 0x0400, 0x0780, 0x3640, 0x3404, 0x033F, 0x067B };
@@ -92,7 +92,7 @@ void lms7002m_set_defaults_sx(lms7002m_context* self)
     lms7002m_spi_modify_csr(self, LMS7002M_VDIV_VCO, 0xB9FF);
 }
 
-bool lms7002m_is_pll_tuned(lms7002m_context* self, const bool isTx)
+static bool lms7002m_is_pll_tuned(lms7002m_context* self, const bool isTx)
 {
     if (lms7002m_spi_read_bits(self, 0x0123, 13, 12) == 2)
         return true;
@@ -106,7 +106,7 @@ void lms7002m_flip_rising_edge(lms7002m_context* self, const lms7002m_csr* reg)
     lms7002m_spi_modify_csr(self, *reg, 1);
 }
 
-void lms7002m_load_dc_reg_tx_iq(lms7002m_context* self)
+static void lms7002m_load_dc_reg_tx_iq(lms7002m_context* self)
 {
     lms7002m_spi_write(self, 0x020C, 0x7FFF);
     lms7002m_flip_rising_edge(self, &LMS7002M_TSGDCLDI_TXTSP);
@@ -143,7 +143,7 @@ static lime_Result lms7002m_setup_cgen(lms7002m_context* self)
     return result;
 }
 
-void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
+static void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
 {
     //FIR coefficients symmetrical, storing only one half
     const int16_t firCoefs[] = {
@@ -215,7 +215,7 @@ void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
         lms7002m_spi_write(self, 0x0500 + index + 24 * (index / 40), firCoefs[119 - index]);
 }
 
-void lms7002m_enable_mimo_buffers_if_necessary(lms7002m_context* self)
+static void lms7002m_enable_mimo_buffers_if_necessary(lms7002m_context* self)
 {
     //modifications when calibrating channel B
     const uint16_t x0020val = lms7002m_spi_read(self, 0x0020);
@@ -228,7 +228,7 @@ void lms7002m_enable_mimo_buffers_if_necessary(lms7002m_context* self)
     }
 }
 
-void lms7002m_enable_channel_power_controls(lms7002m_context* self)
+static void lms7002m_enable_channel_power_controls(lms7002m_context* self)
 {
     uint16_t afe = lms7002m_spi_read(self, 0x0082);
     uint16_t value = lms7002m_spi_read(self, 0x0020);
@@ -246,7 +246,7 @@ void lms7002m_enable_channel_power_controls(lms7002m_context* self)
     lms7002m_spi_write(self, 0x0082, afe);
 }
 
-lime_Result lms7002m_calibrate_rx_setup(lms7002m_context* self, double bandwidthRF, bool extLoopback)
+static lime_Result lms7002m_calibrate_rx_setup(lms7002m_context* self, double bandwidthRF, bool extLoopback)
 {
     const uint16_t x0020val = lms7002m_spi_read(self, 0x0020);
     //rfe
@@ -429,7 +429,7 @@ int16_t lms7002m_read_analog_dc(lms7002m_context* self, const uint16_t addr)
     return result;
 }
 
-void lms7002m_write_analog_dc(lms7002m_context* self, const uint16_t addr, int16_t value)
+static void lms7002m_write_analog_dc(lms7002m_context* self, const uint16_t addr, int16_t value)
 {
     const uint16_t mask = addr < 0x05C7 ? 0x03FF : 0x003F;
     int16_t regValue = 0;
@@ -444,7 +444,7 @@ void lms7002m_write_analog_dc(lms7002m_context* self, const uint16_t addr, int16
     lms7002m_spi_write(self, addr, regValue | 0x8000);
 }
 
-void lms7002m_adjust_auto_dc(lms7002m_context* self, const uint16_t address, bool tx)
+static void lms7002m_adjust_auto_dc(lms7002m_context* self, const uint16_t address, bool tx)
 {
     int16_t initVal = lms7002m_read_analog_dc(self, address);
     int16_t minValue = initVal;
@@ -470,7 +470,7 @@ void lms7002m_adjust_auto_dc(lms7002m_context* self, const uint16_t address, boo
     lms7002m_write_analog_dc(self, address, minValue);
 }
 
-void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
+static void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
 {
     uint16_t dcRegAddr = 0x5C7;
     const uint8_t ch = lms7002m_spi_read_csr(self, LMS7002M_MAC);
@@ -522,7 +522,7 @@ void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
     lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, 1);
 }
 
-lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const float bandwidth_Hz, bool extLoopback)
+static lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const float bandwidth_Hz, bool extLoopback)
 {
     const uint16_t target_rssi = dbfs_to_chip_rssi(-10.0);
     uint8_t cg_iamp = (uint8_t)lms7002m_spi_read_csr(self, LMS7002M_CG_IAMP_TBB);
@@ -626,7 +626,7 @@ typedef struct {
     int16_t maxValue; ///< Maximum value of the search
 } BinSearchParam;
 
-void lms7002m_binary_search(lms7002m_context* self, BinSearchParam* args)
+static void lms7002m_binary_search(lms7002m_context* self, BinSearchParam* args)
 {
     int16_t left = args->minValue;
     int16_t right = args->maxValue;
@@ -663,7 +663,7 @@ void lms7002m_binary_search(lms7002m_context* self, BinSearchParam* args)
     lms7002m_spi_modify(self, addr, msb, lsb, args->result);
 }
 
-void lms7002m_calibrate_iq_imbalance(lms7002m_context* self, bool isTx)
+static void lms7002m_calibrate_iq_imbalance(lms7002m_context* self, bool isTx)
 {
     const char* const dirName = isTx ? "Tx" : "Rx";
 
@@ -816,7 +816,7 @@ RxCalibrationEndStage : {
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, double bandwidthRF, bool extLoopback)
+static lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, double bandwidthRF, bool extLoopback)
 {
     const uint16_t x0020val = lms7002m_spi_read(self, 0x0020); //remember used channel
 
@@ -966,7 +966,7 @@ lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, double bandwidth
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, double bandwidthRF, bool extLoopback)
+static lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, double bandwidthRF, bool extLoopback)
 {
     const uint16_t saturationLevel = dbfs_to_chip_rssi(-12.86);
 
@@ -1048,7 +1048,7 @@ lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, double bandw
     return lime_Result_Success;
 }
 
-void lms7002m_tx_dc_binary_search(lms7002m_context* self, BinSearchParam* args)
+static void lms7002m_tx_dc_binary_search(lms7002m_context* self, BinSearchParam* args)
 {
     int16_t left = args->minValue;
     int16_t right = args->maxValue;
@@ -1083,7 +1083,7 @@ void lms7002m_tx_dc_binary_search(lms7002m_context* self, BinSearchParam* args)
     lms7002m_write_analog_dc(self, args->param.address, args->result);
 }
 
-void lms7002m_calibrate_tx_dc_auto(lms7002m_context* self)
+static void lms7002m_calibrate_tx_dc_auto(lms7002m_context* self)
 {
     const uint8_t ch = lms7002m_spi_read_csr(self, LMS7002M_MAC);
     lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, 1);
