@@ -4,11 +4,11 @@
    COMMENT:     Functions to correct desired amplitude response
 		like inverse sinc, constant, ...
    CONTENT:
-		double InvSinc(x)
-		double x;
+		float InvSinc(x)
+		float x;
 
-		double One(x)
-		double x;
+		float One(x)
+		float x;
 
    AUTHOR:      Lime Microsystems
    DATE:        Feb 25, 2000
@@ -26,8 +26,7 @@
 /* ************************************************************ */
 /* Inverse sinc function to correct DAC sinc envelope 		*/
 /* ************************************************************ */
-double InvSinc(x)
-double x;
+float InvSinc(float x)
 {
     if (fpclassify(x) == FP_ZERO)
         return (1.0);
@@ -37,12 +36,9 @@ double x;
 /* ************************************************************ */
 /* Invsinc function shifted into lower frequency stage.		*/
 /* ************************************************************ */
-double InvSincS(x, k, x0)
-double x, k, x0;
+float InvSincS(float x, float k, float x0)
 {
-    double xin;
-
-    xin = (x + x0) / k;
+    const float xin = (x + x0) / k;
     if (fpclassify(xin) == FP_ZERO)
         return (1.0);
     return (fabs((M_PI * xin) / (sin(M_PI * xin) + DELTA)));
@@ -51,8 +47,7 @@ double x, k, x0;
 /* ************************************************************ */
 /* Unity function, no correction is envolved.			*/
 /* ************************************************************ */
-double One(x)
-double x;
+float One(float x)
 {
     return (1.0);
 }
