@@ -114,7 +114,7 @@ void lms7002m_load_dc_reg_tx_iq(lms7002m_context* self)
     lms7002m_flip_rising_edge(self, &LMS7002M_TSGDCLDQ_TXTSP);
 }
 
-lime_Result lms7002m_setup_cgen(lms7002m_context* self)
+static lime_Result lms7002m_setup_cgen(lms7002m_context* self)
 {
     const uint8_t cgenMultiplier = clamp_int((lms7002m_get_frequency_cgen(self) / 46.08e6) + 0.5, 2, 13);
     uint8_t gfir3n = 4 * cgenMultiplier;
@@ -134,7 +134,13 @@ lime_Result lms7002m_setup_cgen(lms7002m_context* self)
     lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, power);
 
     //CGEN VCO is powered up in SetFrequencyCGEN/Tune
-    return lms7002m_set_frequency_cgen(self, 46.08e6 * cgenMultiplier);
+
+    // disable CGEN callback during calibration, to avoid unnecessary dependencies configuration
+    lms7002m_on_cgen_frequency_changed_hook callbackStore = self->hooks.on_cgen_frequency_changed;
+    self->hooks.on_cgen_frequency_changed = NULL;
+    lime_Result result = lms7002m_set_frequency_cgen(self, 46.08e6 * cgenMultiplier);
+    self->hooks.on_cgen_frequency_changed = callbackStore;
+    return result;
 }
 
 void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
