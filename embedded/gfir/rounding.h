@@ -9,8 +9,8 @@
 #ifndef ROUND_GFIR_HDR
 #define ROUND_GFIR_HDR
 
-void round2int(double* a, double* b, int n, int cprec);
+void round2int(float* a, float* b, int n, int cprec);
 
-void round2csd(double* a, double* b, int n, int cprec, int csdprec, int** bincode, int** csdcode, int** csdcoder);
+void round2csd(float* a, float* b, int n, int cprec, int csdprec, int** bincode, int** csdcode, int** csdcoder);
 
 #endif

@@ -13,12 +13,12 @@
 struct dfilter {
     int m; ///< Polinomial order of the denominator
     int n; ///< Polinomial order of the nominator
-    double* a; ///< Array of denominator coefficients
-    double* b; ///< Array of nominator coefficients
-    double* w; ///< Points on a frequency grid
+    float* a; ///< Array of denominator coefficients
+    float* b; ///< Array of nominator coefficients
+    float* w; ///< Points on a frequency grid
     int nw; ///< Number of points in @ref w
-    double amplitude[POINTS]; ///< To store calculated data
-    double phase[POINTS]; ///< The phase of the data
-    double logamp[POINTS]; ///< Amplitude in log scale
-    double max; ///< Maximum of amplitude
+    float amplitude[POINTS]; ///< To store calculated data
+    float phase[POINTS]; ///< The phase of the data
+    float logamp[POINTS]; ///< Amplitude in log scale
+    float max; ///< Maximum of amplitude
 };

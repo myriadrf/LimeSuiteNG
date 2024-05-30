@@ -1,6 +1,7 @@
 #include "lms7002_pnlR3.h"
 #include "commonWxHeaders.h"
 #include <wx/spinctrl.h>
+#include <wx/msgdlg.h>
 #include "lms7002_gui_utilities.h"
 #include <chrono>
 #include <thread>
@@ -742,7 +743,8 @@ void lms7002_pnlR3_view::UpdateGUISlow()
 
 void lms7002_pnlR3_view::OnCalibrateAnalogRSSI(wxCommandEvent& event)
 {
-    // lime::LMS7002M* lms = ((lime::LMS7_Device*)lmsControl)->GetLMS();
-    // TODO: lms->CalibrateAnalogRSSI_DC_Offset();
+    OpStatus status = lmsControl->CalibrateAnalogRSSI_DC_Offset();
+    if (status != OpStatus::Success)
+        wxMessageBox(wxString::Format(_("Analog RSSI DC calibration failed.")));
     UpdateGUI();
 }

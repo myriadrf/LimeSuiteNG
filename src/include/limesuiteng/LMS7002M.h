@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+struct lms7002m_context;
+
 namespace lime {
 namespace LMS7002MCSR_Data {
 struct CSRegister;
@@ -52,31 +54,6 @@ class LIME_API LMS7002M
         CLK_TXTSP = 5 ///< TXTSP reference clock (read-only)
     };
 
-    /** @brief LMS7002M's clock generator details */
-    struct CGEN_details {
-        float_type frequency;
-        float_type frequencyVCO;
-        float_type referenceClock;
-        uint32_t INT;
-        uint32_t FRAC;
-        uint8_t div_outch_cgen;
-        uint16_t csw;
-        bool success;
-    };
-
-    struct SX_details {
-        float_type frequency;
-        float_type frequencyVCO;
-        float_type referenceClock;
-        uint32_t INT;
-        uint32_t FRAC;
-        uint8_t div_loch;
-        bool en_div2_divprog;
-        uint16_t sel_vco;
-        uint16_t csw;
-        bool success;
-    };
-
     /*!
      * The constructor for the LMS7002M chip.
      * @param port The connection interface
@@ -93,7 +70,7 @@ class LIME_API LMS7002M
      * @brief Get the current connection to the device.
      * @return The connection to the device.
      */
-    std::shared_ptr<ISPI> GetConnection(void) const { return controlPort; }
+    std::shared_ptr<ISPI> GetConnection() const { return controlPort; }
 
     virtual ~LMS7002M();
 
@@ -115,7 +92,7 @@ class LIME_API LMS7002M
      *
      * @param ch The channel to set the chip to.
      */
-    void SetActiveChannel(const Channel ch);
+    OpStatus SetActiveChannel(const Channel ch);
 
     /*!
      * Get the selected channel (MAC).
@@ -307,13 +284,6 @@ class LIME_API LMS7002M
     OpStatus CalibrateTx(float_type bandwidth_Hz, const bool useExtLoopback = false);
 
     /**
-     * @brief Tunes the Low Pass Filter for the TX direction.
-     * @param tx_lpf_freq_RF The frequency (in Hz) to tune the filter to.
-     * @return The status of the operation
-     */
-    OpStatus TuneTxFilter(const float_type tx_lpf_freq_RF);
-
-    /**
      * @brief Set transmitter analog Low Pass Filter.
      * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
      * @return The status of the operation
@@ -485,7 +455,7 @@ class LIME_API LMS7002M
      * @brief Gets the currently set RFE path
      * @return The enumerator value of the currently selected RFE path.
      */
-    PathRFE GetPathRFE(void);
+    PathRFE GetPathRFE();
 
     /*!
      * Set the TRF Band selection.
@@ -498,7 +468,7 @@ class LIME_API LMS7002M
      * Get the TRF Band selection.
      * @return the band 1 or 2
      */
-    int GetBandTRF(void);
+    int GetBandTRF();
 
     /*!
      * @brief Sets the antenna to use on the device
@@ -535,16 +505,15 @@ class LIME_API LMS7002M
      * @brief Sets CLKGEN frequency, calculations use receiver'r reference clock
      * @param freq_Hz desired frequency in Hz
      * @param retainNCOfrequencies recalculate NCO coefficients to keep currently set frequencies
-     * @param output if not null outputs calculated CGEN parameters
      * @return The status of the operation
      */
-    OpStatus SetFrequencyCGEN(float_type freq_Hz, const bool retainNCOfrequencies = false, CGEN_details* output = nullptr);
+    OpStatus SetFrequencyCGEN(float_type freq_Hz);
 
     /*!
      * @brief Gets whether the VCO comparators of the clock generator are locked or not.
      * @return A value indicating whether the VCO comparators of the clock generator are locked or not.
      */
-    bool GetCGENLocked(void);
+    bool GetCGENLocked();
 
     /*!
      * @brief Returns currently set SXR/SXT frequency
@@ -557,10 +526,9 @@ class LIME_API LMS7002M
      * @brief Sets SX frequency
      * @param dir Rx/Tx module selection
      * @param freq_Hz desired frequency in Hz
-     * @param output if not null outputs intermediate calculation values
      * @return The status of the operation
      */
-    OpStatus SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output = nullptr);
+    OpStatus SetFrequencySX(TRXDir dir, float_type freq_Hz);
 
     /*!
      * @brief Sets SX frequency with Reference clock spur cancelation
@@ -637,14 +605,6 @@ class LIME_API LMS7002M
      * @return The status of the operation
      */
     OpStatus SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg);
-
-    /*!
-     * @brief Returns chosen NCO's phase offset angle in radians
-     * @param dir transmitter or receiver selection
-     * @param index PHO index from 0 to 15
-     * @return phase offset angle in degrees
-     */
-    float_type GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index);
 
     /*!
      * @brief Returns TSP reference frequency
@@ -746,45 +706,6 @@ class LIME_API LMS7002M
      */
     float_type GetSampleRate(TRXDir dir);
 
-    /// @brief The sample source for the LML.
-    enum class LMLSampleSource : uint8_t {
-        AI,
-        AQ,
-        BI,
-        BQ,
-    };
-
-    /*!
-     * @brief Set the LML sample positions in the RF to baseband direction.
-     * @param s0
-     * @param s1
-     * @param s2
-     * @param s3
-     */
-    void ConfigureLML_RF2BB(const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3);
-
-    /*!
-     * @brief Set the LML sample positions in the baseband to RF direction.
-     * @param s0
-     * @param s1
-     * @param s2
-     * @param s3
-     */
-    void ConfigureLML_BB2RF(const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3);
-
-    /*!
-     * @brief Enables or disables the DC corrector bypass
-     * @param enable Enables or disables the
-     * @return The status of the operation
-     */
-    OpStatus SetRxDCRemoval(const bool enable);
-
-    /*!
-     * Get the RX DC removal filter enabled.
-     * @return Whether the DC corrector bypass is enabled or not.
-     */
-    bool GetRxDCRemoval(void);
-
     /*!
      * Enables/disables TDD mode
      * @param enable true - use same PLL for Tx and Rx, false - us seperate PLLs
@@ -806,8 +727,9 @@ class LIME_API LMS7002M
      * @param dir true for tx, false for rx
      * @param [out] I the real adjustment [+1.0, -1.0]
      * @param [out] Q the imaginary adjustment [+1.0, -1.0]
+     * @return The status of the operation
      */
-    void GetDCOffset(TRXDir dir, float_type& I, float_type& Q);
+    OpStatus GetDCOffset(TRXDir dir, float_type& I, float_type& Q);
 
     /*!
      * Set the IQ imbalance correction.
@@ -825,8 +747,9 @@ class LIME_API LMS7002M
      * @param [out] phase the phase adjustment [+pi, -pi]
      * @param [out] gainI the real gain adjustment [+1.0, 0.0]
      * @param [out] gainQ the imaginary gain adjustment [+1.0, 0.0]
+     * @return The status of the operation
      */
-    void GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ);
+    OpStatus GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ);
 
     /*!
      * @brief Gets the frequency of the selected clock.
@@ -854,12 +777,6 @@ class LIME_API LMS7002M
      * @param enabled Whether to enable the cache or not.
      */
     void EnableValuesCache(bool enabled = true);
-
-    /*!
-     * @brief Returns whether register value caching on the host is enabled or not.
-     * @return True - cache is being used, false - device values only.
-     */
-    bool IsValuesCacheEnabled() const;
 
     /*!
      * @brief Gets the class to control the MCU on the chip.
@@ -945,7 +862,7 @@ class LIME_API LMS7002M
      */
     virtual OpStatus SetDefaults(MemorySection module);
 
-    LMS7002M_RegistersMap* BackupRegisterMap(void);
+    LMS7002M_RegistersMap* BackupRegisterMap();
     void RestoreRegisterMap(LMS7002M_RegistersMap* backup);
 
     CGENChangeCallbackType mCallback_onCGENChange;
@@ -963,22 +880,21 @@ class LIME_API LMS7002M
     static const std::vector<ReadOnlyRegister> readOnlyRegisters;
 
     static const std::map<MemorySection, std::array<uint16_t, 2>> MemorySectionAddresses;
-    static const std::array<std::array<float_type, 2>, 3> gVCO_frequency_table;
-    static const std::array<float_type, 2> gCGEN_VCO_frequencies;
 
     uint32_t GetRSSI();
-    void SetRxDCOFF(int8_t offsetI, int8_t offsetQ);
 
     OpStatus CalibrateTxGainSetup();
 
     OpStatus RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, uint16_t pattern, std::stringstream& ss);
 
-    OpStatus Modify_SPI_Reg_mask(const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop);
-
     std::shared_ptr<ISPI> controlPort;
     std::array<int, 2> opt_gain_tbb;
-    double _cachedRefClockRate;
     OpStatus LoadConfigLegacyFile(const std::string& filename);
+
+    int16_t ReadAnalogDC(const uint16_t addr);
+    uint16_t GetRSSIDelayCounter();
+
+    lms7002m_context* mC_impl;
 };
 } // namespace lime
 #endif
