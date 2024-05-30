@@ -853,8 +853,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
     OpStatus status = OpStatus::Success;
 
     const uint32_t addr = 0x002A;
-    uint32_t val = (1 << 31) | (0x0020u << 16) | 0xFFFD; // msbit 1=SPI write
-    WriteLMS7002MSPI(&val, 1);
+    uint32_t val;
     ReadLMS7002MSPI(&addr, &val, 1);
     bool bypassTx = (val & 0xF0) == 0x00;
     bool bypassRx = (val & 0x0F) == 0x0D;
