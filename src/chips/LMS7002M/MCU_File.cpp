@@ -427,9 +427,9 @@ void MCU_File::ReadHex(unsigned long limit)
         throw std::runtime_error("No data in file!"s);
     }
 
-    m_top = std::accumulate(m_chunks.begin(), m_chunks.end(), 0, [](const size_t& acc, const MemBlock& value) {
-        return std::max(acc, (value.m_startAddress + value.m_bytes.size() - 1));
-    });
+    m_top = 0;
+    for (const auto& chunk : m_chunks)
+        m_top = std::max(m_top, chunk.GetEndAddress());
 }
 
 // Rather inefficient this one, fix sometime
