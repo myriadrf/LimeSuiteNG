@@ -64,24 +64,18 @@ void ILMS7002MTab::WriteParam(const LMS7002MCSR param, uint16_t val)
     lmsControl->Modify_SPI_Reg_bits(param, val);
 }
 
-int ILMS7002MTab::ReadParam(const LMS7002MCSR param)
+uint16_t ILMS7002MTab::ReadParam(const LMS7002MCSR param)
 {
     lmsControl->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
     return lmsControl->Get_SPI_Reg_bits(param);
 }
 
-int ILMS7002MTab::LMS_ReadLMSReg(LMS7002M* lms, uint16_t address, uint16_t* value)
+uint16_t ILMS7002MTab::ReadLMSReg(uint16_t address)
 {
-    *value = lms->SPI_read(address);
-    return 0;
-}
-int ILMS7002MTab::LMS_WriteLMSReg(LMS7002M* lms, uint16_t address, uint16_t value)
-{
-    return lms->SPI_write(address, value) == OpStatus::Success ? 0 : -1;
+    return lmsControl->SPI_read(address);
 }
 
-int ILMS7002MTab::LMS_ReadParam(LMS7002M* lmsControl, const LMS7002MCSR param, uint16_t* value)
+void ILMS7002MTab::WriteLMSReg(uint16_t address, uint16_t value)
 {
-    *value = ReadParam(param);
-    return 0;
+    lmsControl->SPI_write(address, value);
 }

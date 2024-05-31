@@ -870,14 +870,10 @@ void CDCM6208_panelgui::OnChange(wxCommandEvent& event)
 
 void CDCM6208_panelgui::OnRadio(wxCommandEvent& event)
 {
-    bool PrimarySel;
-    bool SecondarySel;
-    PrimarySel = m_PrimarySel->GetValue();
-    SecondarySel = m_SecondarySel->GetValue();
+    const bool PrimarySel{ m_PrimarySel->GetValue() };
+    const bool SecondarySel{ m_SecondarySel->GetValue() };
 
-    if (PrimarySel && !SecondarySel)
-        CDCM->SetVCOInput(1);
-    else if (!PrimarySel && SecondarySel)
+    if (!PrimarySel && SecondarySel)
         CDCM->SetVCOInput(2);
     else
         CDCM->SetVCOInput(1);

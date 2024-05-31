@@ -12,6 +12,7 @@
 struct MemBlock {
     size_t m_startAddress;
     std::vector<unsigned char> m_bytes;
+    size_t GetEndAddress() const { return m_startAddress + m_bytes.size() - 1; }
 };
 
 class LIME_API MCU_File
