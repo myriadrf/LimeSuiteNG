@@ -47,12 +47,10 @@ void realToFrac(const float real, int& A, int& B, int& C)
 struct Si5351C_Memory {
     unsigned char index;
     unsigned char value;
-
-    constexpr bool operator!=(const Si5351C_Memory& other) const { return index != other.index || value != other.value; }
 };
 
 /// Default configuration
-static constexpr std::array<Si5351C_Memory, 33> defaultConfiguration = { {
+static const std::vector<Si5351C_Memory> defaultConfiguration{
     { 2, 0x08 },
     { 15, 0x04 },
     { 16, 0x4F },
@@ -86,10 +84,7 @@ static constexpr std::array<Si5351C_Memory, 33> defaultConfiguration = { {
     { 185, 0x60 },
     { 187, 0xC0 },
     { 221, 0x0D },
-} };
-
-static_assert(defaultConfiguration.back() != Si5351C_Memory{ 0, 0 },
-    "Amount of elements in the defaultConfiguration does not match the specification");
+};
 
 // ---------------------------------------------------------------------------
 Si5351C::Si5351C(lime::II2C& i2c_comms)
