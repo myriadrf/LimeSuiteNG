@@ -147,11 +147,11 @@ struct LMS64CPacket {
     LMS64CPacket();
     LMS64CProtocol::Command cmd;
     LMS64CProtocol::CommandStatus status;
-    uint8_t blockCount;
-    uint8_t periphID;
-    uint8_t subDevice;
-    uint8_t reserved[3];
-    uint8_t payload[payloadSize];
+    uint8_t blockCount{};
+    uint8_t periphID{};
+    uint8_t subDevice{};
+    uint8_t reserved[3]{};
+    uint8_t payload[payloadSize]{};
 };
 
 /** @brief Class for interacting with the EEPROM management packets */

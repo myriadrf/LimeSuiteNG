@@ -880,7 +880,7 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     args.testName = name + " ChA";
     args.channelIndex = 0;
 
-    RFTestOutput output;
+    RFTestOutput output{};
     if (configPass)
         chAPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
     results[0].frequency = output.frequency;

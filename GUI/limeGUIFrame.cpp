@@ -69,15 +69,8 @@ struct DeviceTreeItemData : public wxTreeItemData {
             gui->Destroy();
     }
 
-    // delete copy constructors because soc is const
-    DeviceTreeItemData(const DeviceTreeItemData&) = delete;
-    DeviceTreeItemData& operator=(const DeviceTreeItemData&) = delete;
-
-    DeviceTreeItemData(DeviceTreeItemData&&) = default;
-    DeviceTreeItemData& operator=(DeviceTreeItemData&&) = delete;
-
     ISOCPanel* gui{ nullptr };
-    const std::shared_ptr<DeviceTreeNode> soc;
+    std::shared_ptr<DeviceTreeNode> soc;
 };
 
 static bool FoundDevice(const wxString& criteria, DeviceHandle& outHandle, uint32_t& outIndex)

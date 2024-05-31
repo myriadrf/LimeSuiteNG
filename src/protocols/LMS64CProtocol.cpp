@@ -33,9 +33,12 @@ using namespace lime::LMS64CProtocol;
 namespace lime {
 
 LMS64CPacket::LMS64CPacket()
+    : cmd(Command::GET_INFO)
+    , status(CommandStatus::Undefined)
 {
     static_assert(sizeof(LMS64CPacket) == 64);
-    std::memset(this, 0, sizeof(LMS64CPacket));
+    std::memset(reserved, 0, sizeof(reserved));
+    std::memset(payload, 0, sizeof(payload));
 }
 
 LMS64CPacketMemoryWriteView::LMS64CPacketMemoryWriteView(LMS64CPacket* pkt)

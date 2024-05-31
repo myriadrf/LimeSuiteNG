@@ -272,7 +272,8 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , controlPort(port)
     , mC_impl(nullptr)
 {
-    struct lms7002m_hooks hooks;
+    struct lms7002m_hooks hooks {
+    };
     memset(&hooks, 0, sizeof(hooks));
 
     hooks.spi16_userData = this;
