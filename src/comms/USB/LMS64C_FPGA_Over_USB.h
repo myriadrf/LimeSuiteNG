@@ -33,8 +33,6 @@ class LMS64C_FPGA_Over_USB : public IComms
     OpStatus MemoryWrite(uint32_t address, const void* data, uint32_t dataLength) override;
     OpStatus MemoryRead(uint32_t address, void* data, uint32_t dataLengt) override;
 
-    virtual OpStatus ResetDevice(int chipSelect) override;
-
   private:
     std::shared_ptr<USB_CSR_Pipe> pipe;
 };

@@ -45,28 +45,3 @@ OpStatus LMS64C_FPGA_Over_PCIe_MMX8::MemoryRead(uint32_t address, void* data, ui
 {
     return LMS64CProtocol::MemoryRead(pipe, address, data, dataLength, subdeviceIndex);
 }
-
-OpStatus LMS64C_FPGA_Over_PCIe_MMX8::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
-{
-    return OpStatus::NotImplemented;
-}
-
-OpStatus LMS64C_FPGA_Over_PCIe_MMX8::GPIORead(uint8_t* buffer, const size_t bufLength)
-{
-    return OpStatus::NotImplemented;
-}
-
-OpStatus LMS64C_FPGA_Over_PCIe_MMX8::GPIODirWrite(const uint8_t* buffer, const size_t bufLength)
-{
-    return OpStatus::NotImplemented;
-}
-
-OpStatus LMS64C_FPGA_Over_PCIe_MMX8::GPIODirRead(uint8_t* buffer, const size_t bufLength)
-{
-    return OpStatus::NotImplemented;
-}
-
-OpStatus LMS64C_FPGA_Over_PCIe_MMX8::ResetDevice(int chipSelect)
-{
-    return OpStatus::NotImplemented;
-}
