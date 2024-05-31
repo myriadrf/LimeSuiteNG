@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
-#include "lms7002m/LMS7002MCSR_Data.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include <ciso646>
 #include "limesuiteng/Logger.h"
 #include <complex>

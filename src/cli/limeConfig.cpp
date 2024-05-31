@@ -111,6 +111,9 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
+    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
+                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag;
+
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
     const std::string iniFilename = args::get(iniFlag);
@@ -168,16 +171,15 @@ int main(int argc, char** argv)
         if (initializeBoard)
             device->Init();
 
-        std::string configFilepath;
+        std::string configFilepath = ""s;
         if (!iniFilename.empty())
         {
-            std::string configFilepath = ""s;
             config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
             {
-                cwd = cwd.substr(0, slash0Pos - 1);
+                cwd = cwd.substr(0, slash0Pos);
             }
 
             if (iniFilename[0] != '/') // is not global path
@@ -200,6 +202,9 @@ int main(int argc, char** argv)
                 cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
+
+            if (!doConfigure)
+                continue;
 
             const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
 

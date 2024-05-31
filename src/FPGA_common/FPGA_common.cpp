@@ -853,8 +853,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
     OpStatus status = OpStatus::Success;
 
     const uint32_t addr = 0x002A;
-    uint32_t val = (1 << 31) | (0x0020u << 16) | 0xFFFD; // msbit 1=SPI write
-    WriteLMS7002MSPI(&val, 1);
+    uint32_t val;
     ReadLMS7002MSPI(&addr, &val, 1);
     bool bypassTx = (val & 0xF0) == 0x00;
     bool bypassRx = (val & 0x0F) == 0x0D;
@@ -1200,6 +1199,35 @@ void FPGA::GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& des
 OpStatus FPGA::SelectModule(uint8_t chipIndex)
 {
     return WriteRegister(0xFFFF, 1 << chipIndex);
+}
+
+OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
+{
+    uint16_t completed;
+    uint32_t addr[] = { 0x61, 0x63 };
+    uint32_t vals[] = { 0x0, 0x0 };
+    uint16_t test = static_cast<uint16_t>(testId);
+    if (WriteRegisters(addr, vals, 2) != OpStatus::Success)
+        return OpStatus::IOFailure;
+
+    auto start = std::chrono::steady_clock::now();
+    if (WriteRegister(0x61, test) != OpStatus::Success)
+        return OpStatus::IOFailure;
+
+    if (timeout < 0)
+        return OpStatus::Success;
+
+    while (1)
+    {
+        completed = ReadRegister(0x65);
+        if ((completed & test) == test)
+            return OpStatus::Success;
+
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        if (elapsed_seconds.count() > timeout)
+            return OpStatus::Error;
+    }
 }
 
 } //namespace lime

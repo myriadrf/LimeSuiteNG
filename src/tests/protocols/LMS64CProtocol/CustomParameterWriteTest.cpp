@@ -54,7 +54,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestEmptyDoesNothing)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
@@ -70,7 +70,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestOneParameter)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
@@ -79,7 +79,8 @@ TEST(LMS64CProtocol, CustomParameterWriteTestOneParameter)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1);
@@ -94,7 +95,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestSixteenParameters)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
@@ -112,13 +113,15 @@ TEST(LMS64CProtocol, CustomParameterWriteTestSixteenParameters)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(14), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(14), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1)
         .InSequence(writeSequence);
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(2), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(2), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1)
@@ -135,7 +138,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestLowValue)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
@@ -144,7 +147,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestLowValue)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR),
                   IsBlockCountCorrect(1),
                   IsSubdeviceCorrect(subdevice),
                   IsPayloadByteCorrect(1, static_cast<uint8_t>(-2))),
@@ -162,7 +165,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestHighValue)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
@@ -171,7 +174,7 @@ TEST(LMS64CProtocol, CustomParameterWriteTestHighValue)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR),
                   IsBlockCountCorrect(1),
                   IsSubdeviceCorrect(subdevice),
                   IsPayloadByteCorrect(1, static_cast<uint8_t>(1))),
@@ -194,13 +197,15 @@ TEST(LMS64CProtocol, CustomParameterWriteNotFullyWritten)
     ON_CALL(mockPort, Write(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(0);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_EQ(status, OpStatus::IOFailure);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteNotFullyRead)
@@ -212,20 +217,22 @@ TEST(LMS64CProtocol, CustomParameterWriteNotFullyRead)
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_NE(status, OpStatus::Success);
 }
 
 TEST(LMS64CProtocol, CustomParameterWriteWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_MANY_BLOCKS_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::TooManyBlocks;
 
     uint32_t subdevice = 1U;
 
@@ -234,11 +241,13 @@ TEST(LMS64CProtocol, CustomParameterWriteWrongStatus)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
+        Write(
+            AllOf(IsCommandCorrect(LMS64CProtocol::Command::ANALOG_VAL_WR), IsBlockCountCorrect(1), IsSubdeviceCorrect(subdevice)),
             PACKET_SIZE,
             _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
-    EXPECT_THROW(LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);, std::runtime_error);
+    OpStatus status = LMS64CProtocol::CustomParameterWrite(mockPort, { { 16, 127.0, "C"s } }, subdevice);
+    EXPECT_NE(status, OpStatus::Success);
 }

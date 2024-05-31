@@ -8,19 +8,19 @@
 
 using namespace lime;
 
-static const std::set<uint8_t> commandsToBulkTransfer = {
-    LMS64CProtocol::CMD_BRDSPI_WR,
-    LMS64CProtocol::CMD_BRDSPI_RD,
-    LMS64CProtocol::CMD_LMS7002_WR,
-    LMS64CProtocol::CMD_LMS7002_RD,
-    LMS64CProtocol::CMD_ANALOG_VAL_WR,
-    LMS64CProtocol::CMD_ANALOG_VAL_RD,
-    LMS64CProtocol::CMD_ADF4002_WR,
-    LMS64CProtocol::CMD_LMS7002_RST,
-    LMS64CProtocol::CMD_GPIO_DIR_WR,
-    LMS64CProtocol::CMD_GPIO_DIR_RD,
-    LMS64CProtocol::CMD_GPIO_WR,
-    LMS64CProtocol::CMD_GPIO_RD,
+static const std::set<LMS64CProtocol::Command> commandsToBulkTransfer = {
+    LMS64CProtocol::Command::BRDSPI_WR,
+    LMS64CProtocol::Command::BRDSPI_RD,
+    LMS64CProtocol::Command::LMS7002_WR,
+    LMS64CProtocol::Command::LMS7002_RD,
+    LMS64CProtocol::Command::ANALOG_VAL_WR,
+    LMS64CProtocol::Command::ANALOG_VAL_RD,
+    LMS64CProtocol::Command::ADF4002_WR,
+    LMS64CProtocol::Command::LMS7002_RST,
+    LMS64CProtocol::Command::GPIO_DIR_WR,
+    LMS64CProtocol::Command::GPIO_DIR_RD,
+    LMS64CProtocol::Command::GPIO_WR,
+    LMS64CProtocol::Command::GPIO_RD,
 };
 
 USB_CSR_Pipe_SDR::USB_CSR_Pipe_SDR(FX3& port)

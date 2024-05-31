@@ -1,0 +1,3 @@
+# Don't format these headers, they are from legacy project
+SortIncludes: false
+DisableFormat: true

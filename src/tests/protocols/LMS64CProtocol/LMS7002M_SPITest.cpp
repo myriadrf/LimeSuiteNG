@@ -61,13 +61,14 @@ TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueRead)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -82,13 +83,14 @@ TEST(LMS64CProtocol, LMS7002MSPIOneCountTestValueWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -103,7 +105,7 @@ TEST(LMS64CProtocol, LMS7002MSPIWriteReadReadWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -111,13 +113,16 @@ TEST(LMS64CProtocol, LMS7002MSPIWriteReadReadWrite)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -137,7 +142,7 @@ TEST(LMS64CProtocol, LMS7002MSPIReadWriteReadReadWrite)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -145,16 +150,20 @@ TEST(LMS64CProtocol, LMS7002MSPIReadWriteReadReadWrite)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -174,7 +183,7 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenWrites)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -182,10 +191,12 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenWrites)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(14)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(14)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_WR), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_WR), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -207,7 +218,7 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenReads)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     Sequence writeSequence;
 
@@ -215,10 +226,12 @@ TEST(LMS64CProtocol, LMS7002MSPISixteenReads)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(14)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(14)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1)
         .InSequence(writeSequence);
 
@@ -256,7 +269,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyRead)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -279,7 +292,7 @@ TEST(LMS64CProtocol, LMS7002MSPIWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_ERROR_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Error;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -302,7 +315,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyWrittenOnSecondCall)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
@@ -325,7 +338,7 @@ TEST(LMS64CProtocol, LMS7002MSPINotFullyReadOnSecondCall)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     EXPECT_CALL(mockPort, Write(_, PACKET_SIZE, _)).Times(2);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _))
@@ -348,7 +361,7 @@ TEST(LMS64CProtocol, LMS7002MSPIPassesThroughCorrectChip)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     const uint8_t chip = 1U;
 

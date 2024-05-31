@@ -51,7 +51,7 @@ TEST(LMS64CProtocol, DeviceResetTestCorrectCommand)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t socIndex = 6U;
     uint32_t subdevice = 1U;
@@ -61,7 +61,7 @@ TEST(LMS64CProtocol, DeviceResetTestCorrectCommand)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -85,7 +85,7 @@ TEST(LMS64CProtocol, DeviceResetTestNotFullyWritten)
     ON_CALL(mockPort, Write(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -107,7 +107,7 @@ TEST(LMS64CProtocol, DeviceResetTestNotFullyRead)
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -123,7 +123,7 @@ TEST(LMS64CProtocol, DeviceResetTestWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_BUSY_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Busy;
 
     uint32_t socIndex = 6U;
     uint32_t subdevice = 1U;
@@ -133,7 +133,7 @@ TEST(LMS64CProtocol, DeviceResetTestWrongStatus)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),

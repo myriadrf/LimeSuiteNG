@@ -27,7 +27,8 @@ enum class eGainTypes : uint8_t {
     LoopbackPAD,
     IAMP,
     PA, ///< On-board Power Amplifier
-    UNKNOWN
+    UNKNOWN,
+    GENERIC = UNKNOWN,
 };
 
 /// @brief Structure describing the range possible.
@@ -44,8 +45,6 @@ struct Range {
     double max; ///< The maximum value of the range
     double step; ///< The step of the range (or 0.0 for any step)
 };
-
-enum class eMemoryRegion : uint8_t { VCTCXO_DAC, COUNT };
 
 /// @brief Structure for storing the information of a memory region.
 struct Region {
