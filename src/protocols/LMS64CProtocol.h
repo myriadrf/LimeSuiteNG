@@ -144,15 +144,17 @@ struct LMS64CPacket {
     static constexpr int size = 64;
     static constexpr int payloadSize = 56;
     static constexpr int headerSize = size - payloadSize;
-    LMS64CPacket();
-    LMS64CProtocol::Command cmd;
-    LMS64CProtocol::CommandStatus status;
+
+    LMS64CProtocol::Command cmd{ LMS64CProtocol::Command::GET_INFO };
+    LMS64CProtocol::CommandStatus status{ LMS64CProtocol::CommandStatus::Undefined };
     uint8_t blockCount{};
     uint8_t periphID{};
     uint8_t subDevice{};
     uint8_t reserved[3]{};
     uint8_t payload[payloadSize]{};
 };
+
+static_assert(sizeof(LMS64CPacket) == 64);
 
 /** @brief Class for interacting with the EEPROM management packets */
 class LMS64CPacketMemoryWriteView
