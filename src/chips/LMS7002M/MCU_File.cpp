@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdint>
+#include <numeric>
 #include "limesuiteng/Logger.h"
 
 using namespace std;
@@ -423,21 +424,16 @@ void MCU_File::ReadHex(unsigned long limit)
 // Rather inefficient this one, fix sometime
 bool MCU_File::GetByte(const unsigned long address, unsigned char& chr)
 {
-    vector<MemBlock>::iterator vi;
-
-    for (vi = m_chunks.begin(); vi < m_chunks.end(); vi++)
+    for (const auto& chunk : m_chunks)
     {
-        if (vi->m_startAddress + vi->m_bytes.size() > address && vi->m_startAddress <= address)
+        if (chunk.m_startAddress + chunk.m_bytes.size() > address && chunk.m_startAddress <= address)
         {
-            break;
+            chr = chunk.m_bytes.at(address - chunk.m_startAddress);
+            return true;
         }
     }
-    if (vi == m_chunks.end())
-    {
-        return false;
-    }
-    chr = vi->m_bytes[address - vi->m_startAddress];
-    return true;
+
+    return false;
 }
 
 bool MCU_File::BitString(const unsigned long address, const unsigned char bits, const bool lEndian, string& str)
