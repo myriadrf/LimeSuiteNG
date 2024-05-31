@@ -33,6 +33,7 @@ int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
 
     if (commandsToBulkTransfer.find(pkt->cmd) != commandsToBulkTransfer.end())
     {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
         return port.BulkTransfer(FX3::CONTROL_BULK_OUT_ADDRESS, const_cast<uint8_t*>(data), length, timeout_ms);
     }
 
@@ -46,6 +47,7 @@ int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
         FX3::CTR_W_REQCODE,
         FX3::CTR_W_VALUE,
         FX3::CTR_W_INDEX,
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
         const_cast<uint8_t*>(data),
         length,
         timeout_ms);

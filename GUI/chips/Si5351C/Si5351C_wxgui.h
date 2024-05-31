@@ -143,8 +143,6 @@ class Si5351C_wxgui : public wxFrame
     //*)
 
   protected:
-    void BuildContent(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size);
-
     DECLARE_EVENT_TABLE()
 };
 

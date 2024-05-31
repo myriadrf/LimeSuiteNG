@@ -284,7 +284,7 @@ int FT601::GetUSBContextIndex()
 {
     std::unique_lock<std::mutex> lock{ contextsLock };
 
-    USBTransferContext_FT601* FT601contexts = static_cast<USBTransferContext_FT601*>(contexts);
+    USBTransferContext_FT601* FT601contexts = dynamic_cast<USBTransferContext_FT601*>(contexts);
 
     if (FT601contexts == nullptr)
     {

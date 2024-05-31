@@ -584,7 +584,7 @@ SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
     assert(mStreamPort);
     SDRDescriptor deviceDescriptor;
 
-    LMS64CProtocol::FirmwareInfo info;
+    LMS64CProtocol::FirmwareInfo info{};
     OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);
 
     if (returnCode != OpStatus::Success)

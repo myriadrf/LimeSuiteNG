@@ -888,7 +888,7 @@ class LIME_API LMS7002M
     OpStatus RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, uint16_t pattern, std::stringstream& ss);
 
     std::shared_ptr<ISPI> controlPort;
-    std::array<int, 2> opt_gain_tbb;
+    std::array<int, 2> opt_gain_tbb{};
     OpStatus LoadConfigLegacyFile(const std::string& filename);
 
     int16_t ReadAnalogDC(const uint16_t addr);

@@ -119,7 +119,7 @@ class LIME_API Si5351C
     Si5351_PLL PLL[2];
     Si5351_Channel CLK[8];
 
-    std::array<unsigned char, 255> m_newConfiguration;
+    std::array<unsigned char, 255> m_newConfiguration{};
 };
 
 } // namespace lime

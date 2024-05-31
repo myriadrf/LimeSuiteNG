@@ -128,7 +128,7 @@ int main(int argc, char** argv)
     auto t1 = startTime;
     auto t2 = t1;
 
-    StreamMeta txMeta;
+    StreamMeta txMeta{};
     txMeta.timestamp = 0;
     txMeta.waitForTimestamp = true;
     txMeta.flushPartialPacket = true;

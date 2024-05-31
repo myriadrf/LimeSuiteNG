@@ -13,7 +13,7 @@ std::thread USBGeneric::gUSBProcessingThread{};
 
 void USBGeneric::HandleLibusbEvents()
 {
-    struct timeval tv;
+    timeval tv{};
     tv.tv_sec = 0;
     tv.tv_usec = 100000;
 
@@ -32,11 +32,12 @@ void USBGeneric::HandleLibusbEvents()
 USBGeneric::USBGeneric(void* usbContext)
     : contexts(nullptr)
     , isConnected(false)
+#ifdef __unix__
+    , dev_handle(nullptr)
+    , ctx(reinterpret_cast<libusb_context*>(usbContext))
+#endif
 {
 #ifdef __unix__
-    dev_handle = nullptr;
-    ctx = reinterpret_cast<libusb_context*>(usbContext);
-
     if (ctx == nullptr)
     {
         return;
@@ -83,7 +84,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string_view seri
 
     for (int i = 0; i < usbDeviceCount; ++i)
     {
-        libusb_device_descriptor desc;
+        libusb_device_descriptor desc{};
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
 
         if (returnCode < 0)

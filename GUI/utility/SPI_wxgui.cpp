@@ -65,7 +65,7 @@ wxFlexGridSizer* SPI_wxgui::CreateSPIControls(wxWindow* parent, uint8_t rowCount
     szRows->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
     for (int i = 0; i < rowCount; ++i)
     {
-        SPI_wxgui::SPIFields controls;
+        SPI_wxgui::SPIFields controls{};
         wxWindowID lineID = wxNewId();
         InsertSPIControlsRow(parent, lineID, szRows, &controls);
         controls.devSelection = deviceSelector;

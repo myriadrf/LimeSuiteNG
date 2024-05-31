@@ -20,6 +20,7 @@ indexValueMap cmix_gain_txtsp_IndexValuePairs;
 
 lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
+    , sizerNCOgrid(new wxFlexGridSizer(0, 1, 0, 5))
 {
     const int flags = 0;
     wxFlexGridSizer* fgSizer215;
@@ -168,7 +169,6 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     fgSizer152->SetFlexibleDirection(wxBOTH);
     fgSizer152->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    sizerNCOgrid = new wxFlexGridSizer(0, 1, 0, 5);
     sizerNCOgrid->SetFlexibleDirection(wxBOTH);
     sizerNCOgrid->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 

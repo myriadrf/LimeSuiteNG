@@ -62,7 +62,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
-    bool mConfigInProgress;
+    bool mConfigInProgress{};
 };
 
 } // namespace lime

@@ -29,26 +29,24 @@ BEGIN_EVENT_TABLE(dlgMarkers, wxDialog)
 END_EVENT_TABLE()
 
 dlgMarkers::dlgMarkers(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
+    : parent_graph(dynamic_cast<OpenGLGraph*>(parent))
+    , sizerMarkerList(new wxFlexGridSizer(0, 1, 0, 0))
+    , sizerDeltasList(new wxFlexGridSizer(0, 1, 0, 0))
+    , FlexGridSizer1(new wxFlexGridSizer(0, 1, 0, 0))
+    , initialized(false)
 {
-    initialized = false;
-    BuildContent(parent, id, pos, size);
-}
-
-void dlgMarkers::BuildContent(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
-{
-    parent_graph = static_cast<OpenGLGraph*>(parent);
     //(*Initialize(dlgMarkers)
     Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER, _T("id"));
     SetClientSize(wxDefaultSize);
     Move(wxDefaultPosition);
-    FlexGridSizer1 = new wxFlexGridSizer(0, 1, 0, 0);
+
     FlexGridSizer1->AddGrowableCol(0);
     FlexGridSizer1->AddGrowableRow(1);
     FlexGridSizer1->AddGrowableRow(2);
-    sizerMarkerList = new wxFlexGridSizer(0, 1, 0, 0);
+
     sizerMarkerList->AddGrowableCol(0);
     FlexGridSizer1->Add(sizerMarkerList, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
-    sizerDeltasList = new wxFlexGridSizer(0, 1, 0, 0);
+
     FlexGridSizer1->Add(sizerDeltasList, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     btnClose =
         new wxButton(this, ID_BUTTON1, _T("Close"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON1"));
@@ -231,8 +229,4 @@ void dlgMarkers::UpdateValues()
         freqs[i]->SetValue(wxString::Format("%3.2f", freq));
     }
     refreshMarkFreq = false;
-}
-
-void dlgMarkers::OnButton1Click1(wxCommandEvent& event)
-{
 }

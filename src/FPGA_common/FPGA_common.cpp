@@ -19,7 +19,7 @@ namespace lime {
 // 0x000A
 const int RX_EN = 1; //controls both receiver and transmitter
 const int TX_EN = 1 << 1; //used for wfm playback from fpga
-const int STREAM_LOAD = 1 << 2;
+// const int STREAM_LOAD = 1 << 2;
 const int RX_PTRN_EN = 1 << 8;
 const int TX_PTRN_EN = 1 << 9;
 
@@ -1167,7 +1167,7 @@ double FPGA::DetectRefClk(double fx3Clk)
 /// @return The gateware information of the FPGA.
 FPGA::GatewareInfo FPGA::GetGatewareInfo()
 {
-    GatewareInfo info;
+    GatewareInfo info{};
     info.boardID = 0;
     info.version = 0;
     info.revision = 0;

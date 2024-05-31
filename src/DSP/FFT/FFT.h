@@ -40,12 +40,12 @@ class FFT
     std::vector<kiss_fft_cpx> m_fftCalcIn;
     std::vector<kiss_fft_cpx> m_fftCalcOut;
 
-    std::atomic<bool> doWork;
+    std::atomic<bool> doWork{};
     std::condition_variable inputAvailable;
     std::mutex inputMutex;
 
-    CallbackType resultsCallback;
-    void* mUserData;
+    CallbackType resultsCallback{};
+    void* mUserData{};
 
     int avgCount = 100;
 };

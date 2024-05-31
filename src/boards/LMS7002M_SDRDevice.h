@@ -142,7 +142,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
 
     SDRDescriptor mDeviceDescriptor;
     StreamConfig mStreamConfig;
-    FPGA* mFPGA;
+    FPGA* mFPGA{};
 
   private:
     OpStatus SetGenericRxGain(LMS7002M* device, LMS7002M::Channel channel, double value);

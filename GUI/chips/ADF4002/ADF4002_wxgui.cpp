@@ -82,7 +82,6 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     : ISOCPanel(parent, id, pos, size, styles)
     , m_pModule(nullptr)
 {
-    m_pModule = NULL;
     wxStaticBoxSizer* StaticBoxSizer2;
     wxFlexGridSizer* FlexGridSizer4;
     wxFlexGridSizer* FlexGridSizer16;

@@ -50,7 +50,7 @@ class CDCM6208_panelgui : public ISOCPanel
     void Update() override;
 
   protected:
-    lime::CDCM_Dev* CDCM;
+    lime::CDCM_Dev* CDCM{};
     void OnChange(wxCommandEvent& event);
     void OnRadio(wxCommandEvent& event);
     void OnChoice(wxCommandEvent& event);

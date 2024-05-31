@@ -24,12 +24,11 @@ class fftviewer_frFFTviewer : public frFFTviewer
     void Update() override;
 
   protected:
-    std::atomic<bool> enableTransmitter;
-    std::atomic<int> windowFunctionID;
-    std::atomic<bool> captureSamples;
-    std::atomic<int> averageCount;
-    std::atomic<bool> updateGUI;
-    std::atomic<bool> enableFFT;
+    std::atomic<int> windowFunctionID{};
+    std::atomic<bool> captureSamples{};
+    std::atomic<int> averageCount{};
+    std::atomic<bool> updateGUI{};
+    std::atomic<bool> enableFFT{};
     std::filesystem::path captureFilename;
     // Handlers for frFFTviewer events.
     void OnWindowFunctionChanged(wxCommandEvent& event);
@@ -94,13 +93,13 @@ class fftviewer_frFFTviewer : public frFFTviewer
     std::vector<float> fftFreqAxis;
     std::vector<float> timeXAxis;
     std::atomic<bool> mStreamRunning;
-    std::atomic<bool> stopProcessing;
+    std::atomic<bool> stopProcessing{};
     std::thread threadProcessing;
     wxString printDataRate(float dataRate);
 
     lime::SDRDevice* device;
     wxTimer* mGUIupdater;
-    unsigned lmsIndex;
+    unsigned lmsIndex{};
 };
 
 #endif // __fftviewer_frFFTviewer__

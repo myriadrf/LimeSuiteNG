@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     uint32_t totalSamplesSent = 0;
     float maxSignalAmplitude = 0;
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
         uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, samplesInBuffer, &rxMeta);
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                 maxSignalAmplitude = amplitude;
         }
 
-        StreamMeta txMeta;
+        StreamMeta txMeta{};
         txMeta.timestamp = rxMeta.timestamp + samplesInBuffer * 64;
         txMeta.waitForTimestamp = true;
         txMeta.flushPartialPacket = false;

@@ -24,6 +24,7 @@ static bool showRefClkSpurCancelation = true;
 lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
     , direction(TRXDir::Rx)
+    , sizerR3(new wxFlexGridSizer(0, 2, 0, 0))
 {
     const int flags = 0;
     wxFlexGridSizer* fgSizer92;
@@ -620,7 +621,6 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
 
     fgSizer103->Add(fgSizer193, 0, wxEXPAND, 0);
 
-    sizerR3 = new wxFlexGridSizer(0, 2, 0, 0);
     sizerR3->SetFlexibleDirection(wxBOTH);
     sizerR3->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 

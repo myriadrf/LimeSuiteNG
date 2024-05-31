@@ -59,18 +59,18 @@ void limeGUIFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::strin
 struct DeviceTreeItemData : public wxTreeItemData {
     DeviceTreeItemData(const std::shared_ptr<DeviceTreeNode> soc)
         : wxTreeItemData()
-        , gui(nullptr)
         , soc(soc)
     {
     }
 
-    ~DeviceTreeItemData()
+    ~DeviceTreeItemData() override
     {
         if (gui)
             gui->Destroy();
     }
-    ISOCPanel* gui;
-    const std::shared_ptr<DeviceTreeNode> soc;
+
+    ISOCPanel* gui{ nullptr };
+    std::shared_ptr<DeviceTreeNode> soc;
 };
 
 static bool FoundDevice(const wxString& criteria, DeviceHandle& outHandle, uint32_t& outIndex)
@@ -151,21 +151,26 @@ static bool GetTreeNode(wxTreeCtrl* treeControl, const wxString& branch, wxTreeI
 limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     : wxFrame(parent, wxNewId(), _("Lime Suite NG"))
     , lmsControl(nullptr)
+    , mMiniLog(new pnlMiniLog(this, wxNewId()))
+    , fftviewer(new fftviewer_frFFTviewer(this, wxNewId()))
+    , mbar(new wxMenuBar(0))
+    , fileMenu(new wxMenu())
+    , mnuModules(new wxMenu())
+    , helpMenu(new wxMenu())
+    , contentSizer(new wxFlexGridSizer(0, 2, 0, 0))
+    , mContent(nullptr)
+    , pnlDeviceConnection(new DeviceConnectionPanel(this, wxNewId()))
 {
     obj_ptr = this;
 
-    mbar = new wxMenuBar(0);
-    fileMenu = new wxMenu();
     wxMenuItem* menuFileQuit = new wxMenuItem(
         fileMenu, idMenuQuit, wxString(wxT("&Quit")) + wxT('\t') + wxT("Alt+F4"), wxT("Quit the application"), wxITEM_NORMAL);
     fileMenu->Append(menuFileQuit);
     Connect(menuFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnQuit));
     mbar->Append(fileMenu, wxT("&File"));
 
-    mnuModules = new wxMenu();
     mbar->Append(mnuModules, wxT("Modules"));
 
-    helpMenu = new wxMenu();
     wxMenuItem* menuHelpAbout = new wxMenuItem(helpMenu,
         idMenuAbout,
         wxString(wxT("&About")) + wxT('\t') + wxT("F1"),
@@ -185,18 +190,16 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     mainSizer->SetFlexibleDirection(wxBOTH);
     mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    pnlDeviceConnection = new DeviceConnectionPanel(this, wxNewId());
     mainSizer->Add(pnlDeviceConnection, 0, wxEXPAND, 0);
 
     m_scrolledWindow1 = new wxScrolledWindow(this, wxNewId(), wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow1->SetScrollRate(5, 5);
-    contentSizer = new wxFlexGridSizer(0, 2, 0, 0);
+
     contentSizer->AddGrowableCol(1);
     contentSizer->AddGrowableRow(0);
     contentSizer->SetFlexibleDirection(wxBOTH);
     contentSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    mContent = nullptr;
     deviceTree = new wxTreeCtrl(
         m_scrolledWindow1, wxNewId(), wxPoint(0, 0), wxSize(200, 385), wxTR_HAS_BUTTONS | wxTR_SINGLE | wxTR_ROW_LINES);
     contentSizer->Add(deviceTree, 0, wxEXPAND, 0);
@@ -204,7 +207,6 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     m_scrolledWindow1->SetSizerAndFit(contentSizer);
     mainSizer->Add(m_scrolledWindow1, 4, wxEXPAND, 5);
 
-    mMiniLog = new pnlMiniLog(this, wxNewId());
     mainSizer->Add(mMiniLog, 1, wxEXPAND, 5);
 
     //SetSizer( mainSizer );
@@ -216,7 +218,6 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     SetIcon(wxIcon(_("aaaaAPPicon")));
 #endif
 
-    fftviewer = new fftviewer_frFFTviewer(this, wxNewId());
     AddModule(fftviewer, "fftviewer"s);
 
     SPI_wxgui* spigui = new SPI_wxgui(this, wxNewId());
