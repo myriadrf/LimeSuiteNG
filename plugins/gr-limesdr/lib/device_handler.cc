@@ -608,21 +608,14 @@ void device_handler::set_nco(int device_number,
     const std::array<std::string, 2> s_cmix = { "UPCONVERT"s, "DOWNCONVERT"s };
 
     double pho_value_out{ NAN };
-    const auto freq_value_out{ [&] {
-        std::array<double, 16> array{};
-
-        for (int i = 0; i < 16; ++i) {
-            array[i] = device->GetNCOFrequency(0, direction, channel, i, pho_value_out);
-        }
-
-        return array;
-    }() };
+    const auto freq_value_out =
+        device->GetNCOFrequency(0, direction, channel, 0, pho_value_out);
 
     GR_LOG_INFO(d_logger,
                 fmt::format("NCO [{:s}] CH{:d}: {:f} MHz ({:f} deg.)({:s}).",
                             s_dir[direction == lime::TRXDir::Tx ? 1 : 0],
                             channel,
-                            freq_value_out[0] / 1e6,
+                            freq_value_out / 1e6,
                             pho_value_out,
                             s_cmix[cmix_mode]));
 }
