@@ -1602,6 +1602,58 @@ static void ParseIdentifier(const char *identifier, char *destination, const siz
 
 static struct mutex probe_lock;
 
+int PCIeSpeedToGen(int speed)
+{
+    switch (speed)
+    {
+    case PCIE_SPEED_2_5GT:
+        return 1;
+    case PCIE_SPEED_5_0GT:
+        return 2;
+    case PCIE_SPEED_8_0GT:
+        return 3;
+    case PCIE_SPEED_16_0GT:
+        return 4;
+    case PCIE_SPEED_32_0GT:
+        return 5;
+    case PCIE_SPEED_64_0GT:
+        return 6;
+    }
+    return 0;
+}
+
+static void pcie_max_link_cap(struct pci_dev *dev, enum pci_bus_speed *speed, enum pcie_link_width *width)
+{
+    *speed = dev->bus->max_bus_speed;
+    *width = pcie_get_width_cap(dev);
+}
+
+static void pcie_cur_link_sta(struct pci_dev *dev, enum pci_bus_speed *speed, enum pcie_link_width *width)
+{
+    uint16_t lnksta;
+    pcie_capability_read_word(dev, PCI_EXP_LNKSTA, &lnksta);
+    *speed = dev->bus->cur_bus_speed;
+    *width = (lnksta & PCI_EXP_LNKSTA_NLW) >> PCI_EXP_LNKSTA_NLW_SHIFT;
+}
+
+static void validate_pcie(struct pci_dev *dev)
+{
+    uint maxSpeed, maxWidth;
+    uint curSpeed, curWidth;
+
+    pcie_max_link_cap(dev, &maxSpeed, &maxWidth);
+    pcie_cur_link_sta(dev, &curSpeed, &curWidth);
+
+    uint maxGen = PCIeSpeedToGen(maxSpeed);
+    uint curGen = PCIeSpeedToGen(curSpeed);
+
+    if (maxSpeed != curSpeed)
+        dev_warn(&dev->dev, "PCIe Warning: Max PCIe Gen %u, but current is Gen %u\n", maxGen, curGen);
+
+    if (maxWidth != curWidth)
+        dev_warn(&dev->dev, "PCIe Warning: Max PCIe Width x%u, but current is x%u\n", maxWidth, curWidth);
+}
+
 static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
     mutex_lock(&probe_lock);
@@ -1625,6 +1677,8 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
 
     limelitepcie_dev->attr.vendor = id->vendor;
     limelitepcie_dev->attr.product = id->device;
+
+    validate_pcie(dev);
 
     limelitepcie_dev->dev = dev;
     spin_lock_init(&limelitepcie_dev->lock);
