@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
     args::ValueFlag<double>         samplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"samplerate"});
 
-    args::Group                     rxGroup(parser, "Receiver");
+    args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           rxenFlag(parser, "rx enable", "Enable receiver [0, 1]", {"rxen"});
     args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     args::ValueFlag<uint8_t>        rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
 
-    args::Group                     txGroup(parser, "Transmitter");
+    args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           txenFlag(parser, "tx enable", "Enable transmitter", {"txen"});
     args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
     args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
@@ -110,6 +110,9 @@ int main(int argc, char** argv)
         std::cout << parser;
         return EXIT_SUCCESS;
     }
+
+    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
+                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
@@ -168,16 +171,15 @@ int main(int argc, char** argv)
         if (initializeBoard)
             device->Init();
 
-        std::string configFilepath;
+        std::string configFilepath = ""s;
         if (!iniFilename.empty())
         {
-            std::string configFilepath = ""s;
             config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
             {
-                cwd = cwd.substr(0, slash0Pos - 1);
+                cwd = cwd.substr(0, slash0Pos);
             }
 
             if (iniFilename[0] != '/') // is not global path
@@ -200,6 +202,9 @@ int main(int argc, char** argv)
                 cerr << "Error loading file: "sv << configFilepath << endl;
                 return EXIT_FAILURE;
             }
+
+            if (!doConfigure)
+                continue;
 
             const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
 

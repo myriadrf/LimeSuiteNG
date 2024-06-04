@@ -75,14 +75,11 @@ class lms7002_pnlRFE_view : public ILMS7002MTab
         ID_CDC_Q_RFE
     };
 
-    wxComboBox* cmbSEL_PATH_RFE;
     wxComboBox* cmbCAP_RXMXO_RFE;
     wxComboBox* cmbCGSIN_LNA_RFE;
     wxComboBox* cmbRCOMP_TIA_RFE;
     wxComboBox* cmbRFB_TIA_RFE;
     wxCheckBox* chkEN_NEXTRX_RFE;
-    wxComboBox* cmbICT_LNACMO_RFE;
-    wxComboBox* cmbICT_LNA_RFE;
     NumericSlider* cmbDCOFFI_RFE;
     NumericSlider* cmbDCOFFQ_RFE;
     wxComboBox* cmbICT_LODC_RFE;

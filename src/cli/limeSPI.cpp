@@ -130,11 +130,11 @@ int main(int argc, char** argv)
     args::ArgumentParser                    parser("limeSPI - Control status registers I/O", "");
     args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
 
-    args::Group                             commands(parser, "commands");
+    args::Group                             commands(parser, "commands"); // NOLINT(cppcoreguidelines-slicing) 
     args::Command                           read(commands, "read", "Reading operation");
     args::Command                           write(commands, "write", "Do writing operation");
 
-    args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global);
+    args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {'d', "device"}, "");
     args::ValueFlag<std::string>            chipFlag(arguments, "name", "Selects destination chip", {'c', "chip"}, "");
     args::Group                             writeGroup(arguments, "Data options");

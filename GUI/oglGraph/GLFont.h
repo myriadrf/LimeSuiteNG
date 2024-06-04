@@ -58,8 +58,8 @@ class GLFont
      */
     unsigned int getTextureID() { return m_texID; };
 
-    int m_texwidth; ///< The width of one texel
-    int m_texheight; ///< The height of one texel
+    int m_texwidth{}; ///< The width of one texel
+    int m_texheight{}; ///< The height of one texel
     unsigned int m_texID; ///< The ID of the texel
     unsigned int m_vboID; ///< The ID of the vertex buffer object
     GLGlyph* m_glyphs; ///< The pointer to the font glyphs

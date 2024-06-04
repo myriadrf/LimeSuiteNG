@@ -46,16 +46,11 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
-    lime::MCU_BD* mcu;
+    lime::MCU_BD* mcu{};
 
     bool mThreadWorking;
     std::thread mWorkerThread;
     wxTimer* progressPooler;
-
-    int m_iTestResultFileLine;
-    int TestResultArray_code[256];
-    int TestResultArray_address[256];
-    int TestResultArray_value[256];
 
     int m_iDebug;
     int m_iMode0;

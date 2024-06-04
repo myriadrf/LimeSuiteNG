@@ -7,7 +7,7 @@
 #include "OpenGLGraph.h"
 #include "kissFFT/kiss_fft.h"
 #include "limesuiteng/LMS7002M.h"
-#include "windowFunction.h"
+#include "DSP/FFT/FFT.h"
 #include <fstream>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
@@ -82,12 +82,12 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     : frFFTviewer(parent, id)
     , mStreamRunning(false)
     , device(nullptr)
+    , mGUIupdater(new wxTimer(this, wxID_ANY))
 {
     captureSamples.store(false);
     averageCount.store(50);
     spinAvgCount->SetValue(averageCount);
     updateGUI.store(true);
-    enableTransmitter.store(false);
     windowFunctionID.store(false);
     enableFFT.store(false);
 #ifndef __unix__
@@ -140,7 +140,6 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mConstelationPanel->settings.gridYlines = 8;
     mConstelationPanel->settings.marginLeft = 48;
 
-    mGUIupdater = new wxTimer(this, wxID_ANY); //timer for updating plots
     Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
     Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
 
@@ -309,13 +308,11 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
             float f0 = (cFreq[c] - bw[c] / 2) * 1e6;
             float fn = (cFreq[c] + bw[c] / 2) * 1e6;
             float sum = 0;
-            int bins = 0;
             const int lmsch = mFFTpanel->series[0]->visible ? 0 : 1;
             for (int i = 0; i < fftSize; ++i)
                 if (f0 <= fftFreqAxis[i] && fftFreqAxis[i] <= fn)
                 {
                     sum += streamData.fftBins[lmsch][i];
-                    ++bins;
                 }
             chPwr[c] = sum;
         }
@@ -386,13 +383,13 @@ void fftviewer_frFFTviewer::StreamingLoop(
 {
     const bool runTx = pthis->chkEnTx->GetValue();
     int avgCount = pthis->spinAvgCount->GetValue();
-    int wndFunction = pthis->windowFunctionID.load();
+    auto wndFunction = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
     bool fftEnabled = true;
 
     bool syncTx = pthis->chkEnSync->GetValue();
 
     vector<float> wndCoef;
-    GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+    lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
 
     lime::complex32f_t** buffers;
 
@@ -488,12 +485,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     // }
 
     pthis->mStreamRunning.store(true);
-    StreamMeta txMeta;
+    StreamMeta txMeta{};
     txMeta.waitForTimestamp = syncTx;
     txMeta.flushPartialPacket = true;
     int fftCounter = 0;
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
 
     while (pthis->stopProcessing.load() == false)
     {
@@ -543,7 +540,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
                     }
                 if (fftEnabled)
                 {
-                    if (wndFunction == 0)
+                    if (wndFunction == lime::FFT::WindowFunctionType::NONE)
                     {
                         for (unsigned i = 0; i < fftSize; ++i)
                         {
@@ -599,11 +596,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
             fftCounter = 0;
             fftEnabled = pthis->enableFFT.load();
             avgCount = pthis->averageCount.load();
-            int wndFunctionSelection = pthis->windowFunctionID.load();
+            auto wndFunctionSelection = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
             if (wndFunctionSelection != wndFunction)
             {
                 wndFunction = wndFunctionSelection;
-                GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+                lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
             }
         }
     }

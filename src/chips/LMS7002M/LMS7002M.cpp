@@ -6,6 +6,7 @@
 
 #define _USE_MATH_DEFINES
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
 #include <algorithm>
 #include <cassert>
@@ -28,7 +29,6 @@
     #pragma GCC diagnostic pop
 #endif
 
-#include "DSP/GFIR/lms_gfir.h"
 #include "limesuiteng/types.h"
 #include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
@@ -43,11 +43,6 @@ using namespace lime;
 using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-constexpr std::array<std::array<float_type, 2>, 3> LMS7002M::gVCO_frequency_table{
-    { { 3800e6, 5222e6 }, { 4961e6, 6754e6 }, { 6306e6, 7714e6 } }
-};
-constexpr std::array<float_type, 2> LMS7002M::gCGEN_VCO_frequencies{ 1930e6, 2940e6 };
 
 constexpr LMS7002M::Channel IntToChannel(int channel)
 {
@@ -105,6 +100,49 @@ const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> LMS7002M::Memor
     { LMS7002M::MemorySection::RSSI_PDET_TEMP_CONFIG, { 0x0600, 0x0606 } },
     { LMS7002M::MemorySection::RSSI_DC_CONFIG, { 0x0640, 0x0641 } },
 };
+
+static_assert(OpStatus::Success == static_cast<lime::OpStatus>(lime_Result_Success));
+static_assert(OpStatus::Error == static_cast<lime::OpStatus>(lime_Result_Error));
+static_assert(OpStatus::NotImplemented == static_cast<lime::OpStatus>(lime_Result_NotImplemented));
+static_assert(OpStatus::IOFailure == static_cast<lime::OpStatus>(lime_Result_IOFailure));
+static_assert(OpStatus::InvalidValue == static_cast<lime::OpStatus>(lime_Result_InvalidValue));
+static_assert(OpStatus::FileNotFound == static_cast<lime::OpStatus>(lime_Result_FileNotFound));
+static_assert(OpStatus::OutOfRange == static_cast<lime::OpStatus>(lime_Result_OutOfRange));
+static_assert(OpStatus::NotSupported == static_cast<lime::OpStatus>(lime_Result_NotSupported));
+static_assert(OpStatus::Timeout == static_cast<lime::OpStatus>(lime_Result_Timeout));
+static_assert(OpStatus::Busy == static_cast<lime::OpStatus>(lime_Result_Busy));
+static_assert(OpStatus::Aborted == static_cast<lime::OpStatus>(lime_Result_Aborted));
+static_assert(OpStatus::PermissionDenied == static_cast<lime::OpStatus>(lime_Result_PermissionDenied));
+static_assert(OpStatus::NotConnected == static_cast<lime::OpStatus>(lime_Result_NotConnected));
+
+static OpStatus ResultToStatus(lime_Result result)
+{
+    return static_cast<lime::OpStatus>(result);
+}
+
+static_assert(LMS7002M::ClockID::CLK_REFERENCE == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_REFERENCE));
+static_assert(LMS7002M::ClockID::CLK_SXR == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXR));
+static_assert(LMS7002M::ClockID::CLK_SXT == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXT));
+static_assert(LMS7002M::ClockID::CLK_CGEN == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_CGEN));
+static_assert(LMS7002M::ClockID::CLK_RXTSP == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_RXTSP));
+static_assert(LMS7002M::ClockID::CLK_TXTSP == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_TXTSP));
+
+static_assert(LMS7002M::Channel::ChA == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_A));
+static_assert(LMS7002M::Channel::ChB == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_B));
+static_assert(LMS7002M::Channel::ChAB == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_AB));
+static_assert(LMS7002M::Channel::ChSXR == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_SXR));
+static_assert(LMS7002M::Channel::ChSXT == static_cast<LMS7002M::Channel>(LMS7002M_CHANNEL_SXT));
+
+static_assert(LMS7002M::PathRFE::NONE == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_NONE));
+static_assert(LMS7002M::PathRFE::LNAH == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAH));
+static_assert(LMS7002M::PathRFE::LNAL == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAL));
+static_assert(LMS7002M::PathRFE::LNAW == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LNAW));
+static_assert(LMS7002M::PathRFE::LB1 == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LB1));
+static_assert(LMS7002M::PathRFE::LB2 == static_cast<LMS7002M::PathRFE>(LMS7002M_PATH_RFE_LB2));
+
+static_assert(LMS7002M::VCO_Module::VCO_CGEN == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_CGEN));
+static_assert(LMS7002M::VCO_Module::VCO_SXR == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXR));
+static_assert(LMS7002M::VCO_Module::VCO_SXT == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXT));
 
 /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
 class ChannelScope
@@ -193,6 +231,36 @@ void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
     mcuControl->Initialize(port, byte_array_size);
 }
 
+static int spi16_transact(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData)
+{
+    LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        if (mosi[i] & (1 << 31))
+        {
+            uint16_t addr = mosi[i] >> 16;
+            addr &= 0x7FFF; // clear write bit for now
+            uint16_t value = mosi[i] & 0xFFFF;
+            chip->SPI_write(addr, value);
+        }
+        else
+        {
+            uint16_t addr = mosi[i] >> 16;
+            uint16_t value = 0;
+            value = chip->SPI_read(addr);
+            if (miso)
+                miso[i] = value;
+        }
+    }
+    return 0;
+}
+
+static void log_hook(int logLevel, const char* message, void* userData)
+{
+    LogLevel level = static_cast<lime::LogLevel>(logLevel);
+    log(level, std::string{ message });
+}
+
 /** @brief Creates LMS7002M main control object.
 It requires IConnection to be set by SetConnection() to communicate with chip
 */
@@ -202,8 +270,28 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , useCache(0)
     , mRegistersMap(new LMS7002M_RegistersMap())
     , controlPort(port)
-    , _cachedRefClockRate(30.72e6)
+    , mC_impl(nullptr)
 {
+    struct lms7002m_hooks hooks {
+    };
+    memset(&hooks, 0, sizeof(hooks));
+
+    hooks.spi16_userData = this;
+    hooks.spi16_transact = spi16_transact;
+    hooks.log = log_hook;
+    hooks.log_userData = this;
+    hooks.on_cgen_frequency_changed_userData = this;
+    hooks.on_cgen_frequency_changed = [](void* userData) -> void {
+        LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
+        if (chip->mCallback_onCGENChange)
+            chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData);
+    };
+
+    mC_impl = lms7002m_create(&hooks);
+    if (mC_impl == nullptr)
+        lime::error("Failed to initialize LMS7002M C implementation");
+    lms7002m_set_reference_clock(mC_impl, 30.72e6);
+
     opt_gain_tbb[0] = -1;
     opt_gain_tbb[1] = -1;
 
@@ -221,166 +309,33 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
 
 LMS7002M::~LMS7002M()
 {
+    lms7002m_destroy(mC_impl);
     delete mcuControl;
     delete mRegistersMap;
 }
 
-void LMS7002M::SetActiveChannel(const Channel ch)
+OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 {
-    if (ch == this->GetActiveChannel(false))
-        return;
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, static_cast<uint16_t>(ch));
+    lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<lms7002m_channel>(ch));
+    return ResultToStatus(result);
 }
 
 LMS7002M::Channel LMS7002M::GetActiveChannel(bool fromChip)
 {
-    auto ch = Get_SPI_Reg_bits(LMS7002MCSR::MAC, fromChip);
-    return static_cast<Channel>(ch);
+    auto result{ GetActiveChannelIndex(fromChip) };
+    return static_cast<Channel>(result);
 }
 
 size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 {
-    return this->GetActiveChannel(fromChip) == Channel::ChB ? 1 : 0;
+    uint8_t result = lms7002m_get_active_channel(mC_impl);
+    return result;
 }
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
 {
-    ChannelScope scope(this, channel, false);
-
-    const Channel ch = IntToChannel(channel);
-
-    const bool isTx = dir == TRXDir::Tx;
-    //--- LML ---
-    if (ch == Channel::ChA)
-    {
-        if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_A, enable ? 1 : 0);
-        else
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_A, enable ? 1 : 0);
-    }
-    else
-    {
-        if (isTx)
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_B, enable ? 1 : 0);
-        else
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_B, enable ? 1 : 0);
-    }
-
-    //--- ADC/DAC ---
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_AFE, 1);
-
-    if (!enable)
-    {
-        bool disable;
-        if (ch == Channel::ChA)
-            disable = Get_SPI_Reg_bits(isTx ? TXEN_B : RXEN_B) == 0;
-        else
-            disable = Get_SPI_Reg_bits(isTx ? TXEN_A : RXEN_A) == 0;
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, disable);
-    }
-    else
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, 0);
-
-    if (ch == Channel::ChB)
-        Modify_SPI_Reg_bits(isTx ? PD_TX_AFE2 : PD_RX_AFE2, enable ? 0 : 1);
-
-    int disabledChannels = (Get_SPI_Reg_bits(PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, disabledChannels == 0xF ? 1 : 0);
-
-    //--- digital ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_TXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_TXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_TXTSP, 1);
-
-        if (!enable)
-        {
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::GC_BYP_TXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::PH_BYP_TXTSP, 1);
-        }
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCLOOP_STOP, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 2); //bypass
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_RXTSP, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_RXTSP, 1);
-        if (!enable)
-        {
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_RXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::GC_BYP_RXTSP, 1);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::PH_BYP_RXTSP, 1);
-        }
-    }
-
-    //--- baseband ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TBB, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFIAMP_TBB, enable ? 0 : 1);
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RBB, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_PGA_RBB, enable ? 0 : 1);
-    }
-
-    //--- frontend ---
-    if (isTx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TRF, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, enable ? 0 : 1);
-    }
-    else
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RFE, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, enable ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_MXLOBUF_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, enable ? 0 : 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, enable ? 0 : 1);
-    }
-
-    //--- synthesizers ---
-    if (isTx)
-    {
-        this->SetActiveChannel(Channel::ChSXT);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels & 3) == 3 ? 0 : 1);
-        if (ch == Channel::ChB) //enable LO to channel B
-        {
-            this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTTX_TRF, enable ? 1 : 0);
-        }
-    }
-    else
-    {
-        this->SetActiveChannel(Channel::ChSXR);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels & 0xC) == 0xC ? 0 : 1);
-        if (ch == Channel::ChB) //enable LO to channel B
-        {
-            this->SetActiveChannel(Channel::ChA);
-            this->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTRX_RFE, enable ? 1 : 0);
-        }
-    }
-    this->SetActiveChannel(ch);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(channel), enable);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::ResetChip()
@@ -418,12 +373,14 @@ OpStatus LMS7002M::ResetChip()
 
 OpStatus LMS7002M::SoftReset()
 {
-    auto reg_0x0020 = this->SPI_read(0x0020, true);
-    auto reg_0x002E = this->SPI_read(0x002E, true);
-    this->SPI_write(0x0020, 0x0);
-    this->SPI_write(0x0020, reg_0x0020);
-    this->SPI_write(0x002E, reg_0x002E); //must write, enables/disabled MIMO channel B
-    return OpStatus::Success;
+    lime_Result result = lms7002m_soft_reset(mC_impl);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::ResetLogicRegisters()
+{
+    lime_Result result = lms7002m_reset_logic_registers(mC_impl);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
@@ -734,19 +691,6 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     return OpStatus::Success;
 }
 
-OpStatus LMS7002M::ResetLogicRegisters()
-{
-    const uint16_t x0020_value = SPI_read(0x0020); //reset logic registers
-    const uint16_t addr[] = { 0x0020, 0x0020 };
-    const uint16_t values[] = {
-        static_cast<uint16_t>(x0020_value & 0x553F),
-        static_cast<uint16_t>(x0020_value | 0xFFC0),
-    };
-    //const uint16_t values[] = {x0020_value & 0x55FF, x0020_value | 0xFF00};
-    // LRST_TX_B, LRST_TX_A, LRST_RX_B, LRST_RX_A
-    return SPI_write_batch(addr, values, 2);
-}
-
 OpStatus LMS7002M::SaveConfig(const std::string& filename)
 {
     std::ofstream fout;
@@ -821,310 +765,71 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 
 OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    int g_pga_rbb = std::clamp(static_cast<int>(std::round(value)) + 12, 0, 31);
-    OpStatus ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, g_pga_rbb);
-
-    int rcc_ctl_pga_rbb = (430.0 * pow(0.65, (g_pga_rbb / 10.0)) - 110.35) / 20.4516 + 16;
-
-    int c_ctl_pga_rbb = 0;
-    if (0 <= g_pga_rbb && g_pga_rbb < 8)
-        c_ctl_pga_rbb = 3;
-    if (8 <= g_pga_rbb && g_pga_rbb < 13)
-        c_ctl_pga_rbb = 2;
-    if (13 <= g_pga_rbb && g_pga_rbb < 21)
-        c_ctl_pga_rbb = 1;
-    if (21 <= g_pga_rbb)
-        c_ctl_pga_rbb = 0;
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb);
-    ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::C_CTL_PGA_RBB, c_ctl_pga_rbb);
-    return ret;
+    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    auto g_pga_rbb = this->Get_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB);
-    return g_pga_rbb - 12;
+    return lms7002m_get_rbbpga_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 30;
-    double val = value - gmax;
-
-    int g_lna_rfe = 0;
-    if (val >= 0)
-        g_lna_rfe = 15;
-    else if (val >= -1)
-        g_lna_rfe = 14;
-    else if (val >= -2)
-        g_lna_rfe = 13;
-    else if (val >= -3)
-        g_lna_rfe = 12;
-    else if (val >= -4)
-        g_lna_rfe = 11;
-    else if (val >= -5)
-        g_lna_rfe = 10;
-    else if (val >= -6)
-        g_lna_rfe = 9;
-    else if (val >= -9)
-        g_lna_rfe = 8;
-    else if (val >= -12)
-        g_lna_rfe = 7;
-    else if (val >= -15)
-        g_lna_rfe = 6;
-    else if (val >= -18)
-        g_lna_rfe = 5;
-    else if (val >= -21)
-        g_lna_rfe = 4;
-    else if (val >= -24)
-        g_lna_rfe = 3;
-    else if (val >= -27)
-        g_lna_rfe = 2;
-    else
-        g_lna_rfe = 1;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, g_lna_rfe);
+    lime_Result result = lms7002m_set_rfelna_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELNA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 30;
-    auto g_lna_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE);
-    switch (g_lna_rfe)
-    {
-    case 15:
-        return gmax - 0;
-    case 14:
-        return gmax - 1;
-    case 13:
-        return gmax - 2;
-    case 12:
-        return gmax - 3;
-    case 11:
-        return gmax - 4;
-    case 10:
-        return gmax - 5;
-    case 9:
-        return gmax - 6;
-    case 8:
-        return gmax - 9;
-    case 7:
-        return gmax - 12;
-    case 6:
-        return gmax - 15;
-    case 5:
-        return gmax - 18;
-    case 4:
-        return gmax - 21;
-    case 3:
-        return gmax - 24;
-    case 2:
-        return gmax - 27;
-    case 1:
-        return gmax - 30;
-    }
-    return 0.0;
+    return lms7002m_get_rfelna_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFELoopbackLNA_dB(const float_type gain, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 40;
-    double val = gain - gmax;
-
-    int g_rxloopb_rfe = 0;
-    if (val >= 0)
-        g_rxloopb_rfe = 15;
-    else if (val >= -0.5)
-        g_rxloopb_rfe = 14;
-    else if (val >= -1)
-        g_rxloopb_rfe = 13;
-    else if (val >= -1.6)
-        g_rxloopb_rfe = 12;
-    else if (val >= -2.4)
-        g_rxloopb_rfe = 11;
-    else if (val >= -3)
-        g_rxloopb_rfe = 10;
-    else if (val >= -4)
-        g_rxloopb_rfe = 9;
-    else if (val >= -5)
-        g_rxloopb_rfe = 8;
-    else if (val >= -6.2)
-        g_rxloopb_rfe = 7;
-    else if (val >= -7.5)
-        g_rxloopb_rfe = 6;
-    else if (val >= -9)
-        g_rxloopb_rfe = 5;
-    else if (val >= -11)
-        g_rxloopb_rfe = 4;
-    else if (val >= -14)
-        g_rxloopb_rfe = 3;
-    else if (val >= -17)
-        g_rxloopb_rfe = 2;
-    else if (val >= -24)
-        g_rxloopb_rfe = 1;
-    else
-        g_rxloopb_rfe = 0;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::G_RXLOOPB_RFE, g_rxloopb_rfe);
+    lime_Result result = lms7002m_set_rfe_loopback_lna_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 40;
-    auto g_rxloopb_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::G_RXLOOPB_RFE);
-    switch (g_rxloopb_rfe)
-    {
-    case 15:
-        return gmax - 0;
-    case 14:
-        return gmax - 0.5;
-    case 13:
-        return gmax - 1;
-    case 12:
-        return gmax - 1.6;
-    case 11:
-        return gmax - 2.4;
-    case 10:
-        return gmax - 3;
-    case 9:
-        return gmax - 4;
-    case 8:
-        return gmax - 5;
-    case 7:
-        return gmax - 6.2;
-    case 6:
-        return gmax - 7.5;
-    case 5:
-        return gmax - 9;
-    case 4:
-        return gmax - 11;
-    case 3:
-        return gmax - 14;
-    case 2:
-        return gmax - 17;
-    case 1:
-        return gmax - 24;
-    }
-    return 0.0;
+    return lms7002m_get_rfe_loopback_lna_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetRFETIA_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 12;
-    double val = value - gmax;
-
-    int g_tia_rfe = 0;
-    if (val >= 0)
-        g_tia_rfe = 3;
-    else if (val >= -3)
-        g_tia_rfe = 2;
-    else
-        g_tia_rfe = 1;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, g_tia_rfe);
+    lime_Result result = lms7002m_set_rfetia_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFETIA_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double gmax = 12;
-    auto g_tia_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE);
-    switch (g_tia_rfe)
-    {
-    case 3:
-        return gmax - 0;
-    case 2:
-        return gmax - 3;
-    case 1:
-        return gmax - 12;
-    }
-    return 0.0;
+    return lms7002m_get_rfetia_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double pmax = 52;
-    int loss_int = std::round(pmax - value);
-
-    //different scaling realm
-    if (loss_int > 10)
-    {
-        loss_int = (loss_int + 10) / 2;
-    }
-
-    loss_int = std::clamp(loss_int, 0, 31);
-
-    OpStatus ret;
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF, loss_int);
-    ret = this->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_MAIN_TXPAD_TRF, loss_int);
-    return ret;
+    lime_Result result = lms7002m_set_trfpad_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    const double pmax = 52;
-    auto loss_int = this->Get_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF);
-    if (loss_int > 10)
-        return pmax - 10 - 2 * (loss_int - 10);
-    return pmax - loss_int;
+    return lms7002m_get_trfpad_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
 OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    //there are 4 discrete gain values, use the midpoints
-    int val = 0;
-    if (gain >= (-1.4 - 0) / 2)
-        val = 0;
-    else if (gain >= (-1.4 - 3.3) / 2)
-        val = 1;
-    else if (gain >= (-3.3 - 4.3) / 2)
-        val = 2;
-    else
-        val = 3;
-
-    return this->Modify_SPI_Reg_bits(LMS7002MCSR::L_LOOPB_TXPAD_TRF, val);
+    lime_Result result = lms7002m_set_trf_loopback_pad_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
 {
-    ChannelScope scope(this, channel);
-
-    switch (this->Get_SPI_Reg_bits(LMS7002MCSR::L_LOOPB_TXPAD_TRF))
-    {
-    case 0:
-        return 0.0;
-    case 1:
-        return -1.4;
-    case 2:
-        return -3.3;
-    case 3:
-        return -4.3;
-    }
-    return 0.0;
+    return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<lms7002m_channel>(channel));
 }
 
+// opt_gain_tbb
 OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
 {
     OpStatus status;
@@ -1146,6 +851,7 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     return status;
 }
 
+// opt_gain_tbb
 float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 {
     ChannelScope scope(this, channel);
@@ -1164,457 +870,112 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
 
 OpStatus LMS7002M::SetPathRFE(PathRFE path)
 {
-    int sel_path_rfe;
-    int pd_lb1 = 1;
-    int pd_lb2 = 1;
-    switch (path)
-    {
-    case PathRFE::LNAH:
-        sel_path_rfe = 1;
-        break;
-    case PathRFE::LB2:
-        pd_lb2 = 0;
-    case PathRFE::LNAL:
-        sel_path_rfe = 2;
-        break;
-    case PathRFE::LB1:
-        pd_lb1 = 0;
-    case PathRFE::LNAW:
-        sel_path_rfe = 3;
-        break;
-    default:
-        sel_path_rfe = 0;
-        break;
-    }
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::SEL_PATH_RFE, sel_path_rfe);
-
-    int pd_lna_rfe = (path == PathRFE::LB2 || path == PathRFE::LB1 || sel_path_rfe == 0) ? 1 : 0;
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, pd_lna_rfe);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RLOOPB_1_RFE, pd_lb1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RLOOPB_2_RFE, pd_lb2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB1_RFE, pd_lb1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB2_RFE, pd_lb2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_L_RFE, (path == PathRFE::LNAL) ? 0 : 1);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_W_RFE, (path == PathRFE::LNAW) ? 0 : 1);
-
-    //enable/disable the loopback path
-    const bool loopback = (path == PathRFE::LB1) or (path == PathRFE::LB2);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_LOOPB_TXPAD_TRF, loopback ? 1 : 0);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_path_rfe(mC_impl, static_cast<lms7002m_path_rfe>(path));
+    return ResultToStatus(result);
 }
 
-LMS7002M::PathRFE LMS7002M::GetPathRFE(void)
+LMS7002M::PathRFE LMS7002M::GetPathRFE()
 {
-    const int sel_path_rfe = this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_PATH_RFE);
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB1_RFE) == 0 && sel_path_rfe == 3)
-        return PathRFE::LB1;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_LB2_RFE) == 0 && sel_path_rfe == 2)
-        return PathRFE::LB2;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_L_RFE) == 0 && sel_path_rfe == 2)
-        return PathRFE::LNAL;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::EN_INSHSW_W_RFE) == 0 && sel_path_rfe == 3)
-        return PathRFE::LNAW;
-    if (sel_path_rfe == 1)
-        return PathRFE::LNAH;
-    return PathRFE::NONE;
+    return static_cast<PathRFE>(lms7002m_get_path_rfe(mC_impl));
 }
 
 OpStatus LMS7002M::SetBandTRF(const int band)
 {
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::SEL_BAND1_TRF, (band == 1) ? 1 : 0);
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::SEL_BAND2_TRF, (band == 2) ? 1 : 0);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_band_trf(mC_impl, static_cast<uint8_t>(band));
+    return ResultToStatus(result);
 }
 
-int LMS7002M::GetBandTRF(void)
+int LMS7002M::GetBandTRF()
 {
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_BAND1_TRF) == 1)
-        return 1;
-    if (this->Get_SPI_Reg_bits(LMS7002MCSR::SEL_BAND2_TRF) == 1)
-        return 2;
-    return 0;
+    return lms7002m_get_band_trf(mC_impl);
 }
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 {
-    ChannelScope scope(this, channel, false);
-
-    if (direction == TRXDir::Tx)
-    {
-        return SetBandTRF(path);
-    }
-
-    return SetPathRFE(lime::LMS7002M::PathRFE(path));
+    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, static_cast<lms7002m_channel>(channel), path);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetReferenceClk_SX(TRXDir dir, float_type freq_Hz)
 {
-    _cachedRefClockRate = freq_Hz;
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_reference_clock(mC_impl, freq_Hz);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
 {
-    return _cachedRefClockRate;
+    return lms7002m_get_reference_clock(mC_impl);
 }
 
 OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
 {
-    for (uint8_t i = 0; i < 16 && i < count; i++)
+    std::vector<float> converted(count);
+    for (uint8_t i = 0; i < count; ++i)
     {
-        OpStatus status = SetNCOFrequency(dir, i, freq_Hz[i]);
-        if (status != OpStatus::Success)
-            return status;
+        converted.at(i) = freq_Hz[i];
     }
-    return SetNCOPhaseOffsetForMode0(dir, phaseOffset);
+
+    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, converted.data(), count, phaseOffset);
+    return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset)
 {
-    std::vector<float_type> ncos;
-    for (int i = 0; i < 16; ++i)
-        ncos.push_back(GetNCOFrequency(dir, i, !useCache));
+    std::vector<float> ncosFloat(16);
+
+    float phaseOffsetFloat = 0.0;
+    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosFloat.data(), ncosFloat.size(), &phaseOffsetFloat);
+
+    std::vector<float_type> ncosDouble(16);
+    for (std::size_t i = 0; i < ncosFloat.size(); ++i)
+    {
+        ncosDouble.at(i) = ncosFloat.at(i);
+    }
+
     if (phaseOffset != nullptr)
     {
-        uint16_t value = SPI_read(dir == TRXDir::Tx ? 0x0241 : 0x0441);
-        *phaseOffset = 360.0 * value / 65536.0;
+        *phaseOffset = phaseOffsetFloat;
     }
-    return ncos;
+
+    return ncosDouble;
 }
 
 float_type LMS7002M::GetFrequencyCGEN()
 {
-    float_type dMul =
-        (GetReferenceClk_SX(TRXDir::Rx) / 2.0) / (Get_SPI_Reg_bits(LMS7002MCSR::DIV_OUTCH_CGEN, true) + 1); //DIV_OUTCH_CGEN
-    uint16_t gINT = Get_SPI_Reg_bits(0x0088, 13, 0, true); //read whole register to reduce SPI transfers
-    uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x0087, 15, 0, true);
-    return dMul * (((gINT >> 4) + 1 + gFRAC / 1048576.0));
+    return lms7002m_get_frequency_cgen(mC_impl);
 }
 
 float_type LMS7002M::GetReferenceClk_TSP(TRXDir dir)
 {
-    float_type cgenFreq = GetFrequencyCGEN();
-    float_type clklfreq = cgenFreq / pow(2.0, Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, true));
-    if (Get_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, true) == 0)
-        return dir == TRXDir::Tx ? clklfreq : cgenFreq / 4.0;
-    else
-        return dir == TRXDir::Tx ? cgenFreq : clklfreq / 4.0;
+    return lms7002m_get_reference_clock_tsp(mC_impl, dir == TRXDir::Tx);
 }
 
-OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz, const bool retainNCOfrequencies, CGEN_details* output)
+OpStatus LMS7002M::SetFrequencyCGEN(const float_type freq_Hz)
 {
-    if (freq_Hz > CGEN_MAX_FREQ)
-        throw std::logic_error("requested CGEN frequency too high"s);
-    float_type dFvco;
-    float_type dFrac;
-
-    //remember NCO frequencies
-    Channel chBck = this->GetActiveChannel();
-    std::vector<std::vector<float_type>> rxNCO(2);
-    std::vector<std::vector<float_type>> txNCO(2);
-    bool rxModeNCO = false;
-    bool txModeNCO = false;
-    if (retainNCOfrequencies)
-    {
-        rxModeNCO = Get_SPI_Reg_bits(LMS7002MCSR::MODE_RX, true);
-        txModeNCO = Get_SPI_Reg_bits(LMS7002MCSR::MODE_TX, true);
-        for (int ch = 0; ch < 2; ++ch)
-        {
-            this->SetActiveChannel(IntToChannel(ch));
-            for (int i = 0; i < 16 && rxModeNCO == 0; ++i)
-                rxNCO[ch].push_back(GetNCOFrequency(TRXDir::Rx, i, false));
-            for (int i = 0; i < 16 && txModeNCO == 0; ++i)
-                txNCO[ch].push_back(GetNCOFrequency(TRXDir::Tx, i, false));
-        }
-    }
-    //VCO frequency selection according to F_CLKH
-    uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;
-    uint16_t iHdiv_low = (gCGEN_VCO_frequencies[0] / 2 / freq_Hz);
-    uint16_t iHdiv = (iHdiv_low + iHdiv_high) / 2;
-    iHdiv = iHdiv > 255 ? 255 : iHdiv;
-    dFvco = 2 * (iHdiv + 1) * freq_Hz;
-    if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
-        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
-    //Integer division
-    uint16_t gINT = static_cast<uint16_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx) - 1);
-
-    //Fractional division
-    dFrac = dFvco / GetReferenceClk_SX(TRXDir::Rx) - static_cast<uint32_t>(dFvco / GetReferenceClk_SX(TRXDir::Rx));
-    uint32_t gFRAC = static_cast<uint32_t>(dFrac * 1048576);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::INT_SDM_CGEN, gINT); //INT_SDM_CGEN
-    Modify_SPI_Reg_bits(0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
-    Modify_SPI_Reg_bits(0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
-    Modify_SPI_Reg_bits(LMS7002MCSR::DIV_OUTCH_CGEN, iHdiv); //DIV_OUTCH_CGEN
-
-    lime::debug("INT %d, FRAC %d, DIV_OUTCH_CGEN %d", gINT, gFRAC, iHdiv);
-    lime::debug("VCO %.2f MHz, RefClk %.2f MHz", dFvco / 1e6, GetReferenceClk_SX(TRXDir::Rx) / 1e6);
-
-    if (output)
-    {
-        output->frequency = freq_Hz;
-        output->frequencyVCO = dFvco;
-        output->referenceClock = GetReferenceClk_SX(TRXDir::Rx);
-        output->INT = gINT;
-        output->FRAC = gFRAC;
-        output->div_outch_cgen = iHdiv;
-        output->success = true;
-    }
-
-    //recalculate NCO
-    for (int ch = 0; ch < 2 && retainNCOfrequencies; ++ch)
-    {
-        this->SetActiveChannel(IntToChannel(ch));
-        for (int i = 0; i < 16 && rxModeNCO == 0; ++i)
-            SetNCOFrequency(TRXDir::Rx, i, rxNCO[ch][i]);
-        for (int i = 0; i < 16 && txModeNCO == 0; ++i)
-            SetNCOFrequency(TRXDir::Tx, i, txNCO[ch][i]);
-    }
-    this->SetActiveChannel(chBck);
-    if (TuneVCO(VCO_Module::VCO_CGEN) != OpStatus::Success)
-    {
-        if (output)
-        {
-            output->success = false;
-            output->csw = Get_SPI_Reg_bits(LMS7002MCSR::CSW_VCO_CGEN);
-        }
-        return ReportError(OpStatus::Error, "SetFrequencyCGEN(%g MHz) failed", freq_Hz / 1e6);
-    }
-    if (output)
-        output->csw = Get_SPI_Reg_bits(LMS7002MCSR::CSW_VCO_CGEN);
-
-    if (mCallback_onCGENChange)
-        return mCallback_onCGENChange(mCallback_onCGENChange_userData);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_frequency_cgen(mC_impl, freq_Hz);
+    return ResultToStatus(result);
 }
 
-bool LMS7002M::GetCGENLocked(void)
+bool LMS7002M::GetCGENLocked()
 {
-    return (Get_SPI_Reg_bits(VCO_CMPHO_CGEN.address, 13, 12, true) & 0x3) == 2;
+    return lms7002m_get_cgen_locked(mC_impl);
 }
 
 bool LMS7002M::GetSXLocked(TRXDir dir)
 {
-    SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-    return (Get_SPI_Reg_bits(VCO_CMPHO.address, 13, 12, true) & 0x3) == 2;
+    return lms7002m_get_sx_locked(mC_impl, dir == TRXDir::Tx);
 }
 
 OpStatus LMS7002M::TuneCGENVCO()
 {
-#ifndef NDEBUG
-    lime::debug("ICT_VCO_CGEN: %d", Get_SPI_Reg_bits(LMS7002MCSR::ICT_VCO_CGEN));
-#endif
-    // Initialization activate VCO and comparator
-    OpStatus status = Modify_SPI_Reg_bits(PD_VCO_CGEN.address, 2, 1, 0);
-    if (status != OpStatus::Success)
-        return status;
-
-    auto checkCSW = [this](int cswVal) {
-        Modify_SPI_Reg_bits(CSW_VCO_CGEN, cswVal); //write CSW value
-        std::this_thread::sleep_for(std::chrono::microseconds(50)); //comparator settling time
-        return Get_SPI_Reg_bits(VCO_CMPHO_CGEN.address, 13, 12, true); //read comparators
-    };
-    //find lock
-    int csw = 127;
-    for (int step = 64; step > 0; step >>= 1)
-    {
-        auto cmphl = checkCSW(csw);
-        if (cmphl == 0)
-            csw += step;
-        else if (cmphl == 3)
-            csw -= step;
-        else
-            break;
-    }
-    //search around (+/-7) to determine lock interval
-    //number of iterations could be reduced in some cases by narrowing down the search interval in find lock phase
-    int cswLow = csw, cswHigh = csw;
-    for (int step = 4; step > 0; step >>= 1)
-        if (checkCSW(cswLow - step) != 0)
-            cswLow = cswLow - step;
-    for (int step = 4; step > 0; step >>= 1)
-        if (checkCSW(cswHigh + step) == 2)
-            cswHigh = cswHigh + step;
-
-    lime::debug("csw %d; interval [%d, %d]", (cswHigh + cswLow) / 2, cswLow, cswHigh);
-    auto cmphl = checkCSW((cswHigh + cswLow) / 2);
-    if (cmphl == 2)
-        return OpStatus::Success;
-    lime::error("TuneVCO(CGEN) - failed to lock (cmphl!=%d)", cmphl);
-    return OpStatus::Error;
+    lime_Result result = lms7002m_tune_cgen_vco(mC_impl);
+    return ResultToStatus(result);
 }
 
-OpStatus LMS7002M::TuneVCO(VCO_Module module) // 0-cgen, 1-SXR, 2-SXT
+OpStatus LMS7002M::TuneVCO(VCO_Module module)
 {
-    if (module == VCO_Module::VCO_CGEN)
-        return TuneCGENVCO();
-    auto settlingTime = std::chrono::microseconds(50); //can be lower
-    struct CSWInteval {
-        int16_t high;
-        int16_t low;
-    };
-    CSWInteval cswSearch[2];
-    const char* moduleName = (module == VCO_Module::VCO_CGEN) ? "CGEN" : ((module == VCO_Module::VCO_SXR) ? "SXR" : "SXT");
-    uint8_t cmphl; //comparators
-    uint16_t addrVCOpd; // VCO power down address
-    uint16_t addrCSW_VCO;
-    uint16_t addrCMP; //comparator address
-    uint8_t lsb; //SWC lsb index
-    uint8_t msb; //SWC msb index
-
-    ChannelScope scope(this);
-
-    if (module != VCO_Module::VCO_CGEN) //set addresses to SX module
-    {
-        this->SetActiveChannel(Channel(module));
-        addrVCOpd = PD_VCO.address;
-        addrCSW_VCO = CSW_VCO.address;
-        lsb = CSW_VCO.lsb;
-        msb = CSW_VCO.msb;
-        addrCMP = VCO_CMPHO.address;
-        lime::debug("TuneVCO(%s) ICT_VCO: %d", moduleName, Get_SPI_Reg_bits(LMS7002MCSR::ICT_VCO));
-    }
-    else //set addresses to CGEN module
-    {
-        addrVCOpd = PD_VCO_CGEN.address;
-        addrCSW_VCO = CSW_VCO_CGEN.address;
-        lsb = CSW_VCO_CGEN.lsb;
-        msb = CSW_VCO_CGEN.msb;
-        addrCMP = VCO_CMPHO_CGEN.address;
-        lime::debug("TuneVCO(%s) ICT_VCO_CGEN: %d", moduleName, Get_SPI_Reg_bits(LMS7002MCSR::ICT_VCO_CGEN));
-    }
-    // Initialization activate VCO and comparator
-    OpStatus status = Modify_SPI_Reg_bits(addrVCOpd, 2, 1, 0);
-    if (status != OpStatus::Success)
-        return status;
-    if (Get_SPI_Reg_bits(addrVCOpd, 2, 1) != 0)
-        return ReportError(OpStatus::Error, "TuneVCO(%s) - VCO is powered down", moduleName);
-
-    //check if lock is within VCO range
-    {
-        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, 0);
-        std::this_thread::sleep_for(settlingTime);
-        cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(addrCMP, 13, 12, true));
-        if (cmphl == 3) //VCO too high
-        {
-            lime::debug("TuneVCO(%s) - attempted VCO too high", moduleName);
-            return OpStatus::Error;
-        }
-        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, 255);
-        std::this_thread::sleep_for(settlingTime);
-        cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(addrCMP, 13, 12, true));
-        if (cmphl == 0) //VCO too low
-        {
-            lime::debug("TuneVCO(%s) - attempted VCO too low", moduleName);
-            return OpStatus::Error;
-        }
-    }
-
-    //search intervals [0-127][128-255]
-    for (int t = 0; t < 2; ++t)
-    {
-        bool hadLock = false;
-        // initialize search range with invalid values
-        cswSearch[t].low = 128 * (t + 1); // set low to highest possible value
-        cswSearch[t].high = 128 * t; // set high to lowest possible value
-        lime::debug("TuneVCO(%s) - searching interval [%i:%i]", moduleName, cswSearch[t].high, cswSearch[t].low);
-        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].high);
-        //binary search for and high value, and on the way store approximate low value
-        lime::debug("binary search:"s);
-        for (int i = 6; i >= 0; --i)
-        {
-            cswSearch[t].high |= 1 << i; //CSW_VCO<i>=1
-            Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].high);
-            std::this_thread::sleep_for(settlingTime);
-            cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(addrCMP, 13, 12, true));
-            lime::debug("csw=%d\tcmphl=%d", cswSearch[t].high, cmphl);
-            if (cmphl & 0x01) // reduce CSW
-                cswSearch[t].high &= ~(1 << i); //CSW_VCO<i>=0
-            if (cmphl == 2 && cswSearch[t].high < cswSearch[t].low)
-            {
-                cswSearch[t].low = cswSearch[t].high;
-                hadLock = true;
-            }
-        }
-        //linear search to make sure there are no gaps, and move away from edge case
-        lime::debug("adjust with linear search:"s);
-        while (cswSearch[t].low <= cswSearch[t].high && cswSearch[t].low > t * 128)
-        {
-            --cswSearch[t].low;
-            Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswSearch[t].low);
-            std::this_thread::sleep_for(settlingTime);
-            const uint8_t tempCMPvalue = Get_SPI_Reg_bits(addrCMP, 13, 12, true);
-            lime::debug("csw=%d\tcmphl=%d", cswSearch[t].low, tempCMPvalue);
-            if (tempCMPvalue != 2)
-            {
-                ++cswSearch[t].low;
-                break;
-            }
-        }
-        if (hadLock)
-        {
-            lime::debug("CSW: lowest=%d, highest=%d, will use=%d",
-                cswSearch[t].low,
-                cswSearch[t].high,
-                cswSearch[t].low + (cswSearch[t].high - cswSearch[t].low) / 2);
-        }
-        else
-            lime::debug("CSW interval failed to lock"s);
-    }
-
-    //check if the intervals are joined
-    int16_t cswHigh, cswLow;
-    if (cswSearch[0].high == cswSearch[1].low - 1)
-    {
-        cswHigh = cswSearch[1].high;
-        cswLow = cswSearch[0].low;
-        lime::debug("CSW is locking in one continous range: low=%d, high=%d", cswLow, cswHigh);
-    }
-    //compare which interval is wider
-    else
-    {
-        uint8_t intervalIndex = (cswSearch[1].high - cswSearch[1].low > cswSearch[0].high - cswSearch[0].low);
-        cswHigh = cswSearch[intervalIndex].high;
-        cswLow = cswSearch[intervalIndex].low;
-        lime::debug("choosing wider CSW locking range: low=%d, high=%d", cswLow, cswHigh);
-    }
-
-    uint8_t finalCSW = 0;
-    if (cswHigh - cswLow == 1)
-    {
-        lime::debug("TuneVCO(%s) - narrow locking values range detected [%i:%i]. VCO lock status might change with temperature.",
-            moduleName,
-            cswLow,
-            cswHigh);
-        //check which of two values really locks
-        finalCSW = cswLow;
-        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswLow);
-        std::this_thread::sleep_for(settlingTime);
-        cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(addrCMP, 13, 12, true));
-        if (cmphl != 2)
-        {
-            finalCSW = cswHigh;
-            Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, cswHigh);
-        }
-    }
-    else
-    {
-        finalCSW = cswLow + (cswHigh - cswLow) / 2;
-        Modify_SPI_Reg_bits(addrCSW_VCO, msb, lsb, finalCSW);
-    }
-    std::this_thread::sleep_for(settlingTime);
-    cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(addrCMP, 13, 12, true));
-    if (cmphl == 2)
-    {
-        lime::debug("TuneVCO(%s) - confirmed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-        return OpStatus::Success;
-    }
-    lime::debug("TuneVCO(%s) - failed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-    return OpStatus::Error;
+    lime_Result result = lms7002m_tune_vco(mC_impl, static_cast<lms7002m_vco_type>(module));
+    return ResultToStatus(result);
 }
 
 uint16_t LMS7002M::Get_SPI_Reg_bits(const CSRegister& param, bool fromChip)
@@ -1653,35 +1014,6 @@ OpStatus LMS7002M::Modify_SPI_Reg_bits(const LMS7002MCSR param, const uint16_t v
     return Modify_SPI_Reg_bits(reg, value, fromChip);
 }
 
-/** @brief Modifies given registers with values applied using masks
-    @param addr array of register addresses
-    @param masks array of applied masks
-    @param values array of values to be written
-    @param start starting index of given arrays
-    @param stop end index of given arrays
-*/
-OpStatus LMS7002M::Modify_SPI_Reg_mask(
-    const uint16_t* addr, const uint16_t* masks, const uint16_t* values, uint8_t start, uint8_t stop)
-{
-    OpStatus status = OpStatus::Success;
-    uint16_t reg_data;
-    std::vector<uint16_t> addresses;
-    std::vector<uint16_t> data;
-    while (start <= stop)
-    {
-        reg_data = SPI_read(addr[start], true, &status); //read current SPI reg data
-        reg_data &= ~masks[start]; //clear bits
-        reg_data |= (values[start] & masks[start]);
-        addresses.push_back(addr[start]);
-        data.push_back(reg_data);
-        ++start;
-    }
-    if (status != OpStatus::Success)
-        return status;
-    status = SPI_write_batch(&addresses[0], &data[0], addresses.size());
-    return status;
-}
-
 const CSRegister& LMS7002M::GetParam(const std::string& name)
 {
     for (int i = 0; i < static_cast<int>(LMS7002MCSR::ENUM_COUNT); ++i)
@@ -1694,174 +1026,10 @@ const CSRegister& LMS7002M::GetParam(const std::string& name)
     throw std::logic_error("Parameter "s + name + " not found"s);
 }
 
-OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz, SX_details* output)
+OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz)
 {
-    static std::map<float_type, int8_t> tuning_cache_sel_vco;
-    static std::map<float_type, int16_t> tuning_cache_csw_value;
-
-    assert(freq_Hz > 0);
-
-    const char* vcoNames[] = { "VCOL", "VCOM", "VCOH" };
-    const uint8_t sxVCO_N = 2; //number of entries in VCO frequencies
-    const float_type m_dThrF = 5500e6; //threshold to enable additional divider
-    float_type VCOfreq;
-    int8_t div_loch;
-    int8_t sel_vco;
-    bool canDeliverFrequency = false;
-    uint16_t integerPart;
-    uint32_t fractionalPart;
-    int16_t csw_value;
-
-    //find required VCO frequency
-    for (div_loch = 6; div_loch >= 0; --div_loch)
-    {
-        VCOfreq = (1 << (div_loch + 1)) * freq_Hz;
-        if ((VCOfreq >= gVCO_frequency_table[0][0]) && (VCOfreq <= gVCO_frequency_table[2][sxVCO_N - 1]))
-        {
-            canDeliverFrequency = true;
-            break;
-        }
-    }
-    if (canDeliverFrequency == false)
-        return ReportError(OpStatus::OutOfRange,
-            "SetFrequencySX%s(%g MHz) - required VCO frequencies are out of range [%g-%g] MHz",
-            dir == TRXDir::Tx ? "T" : "R",
-            freq_Hz / 1e6,
-            gVCO_frequency_table[0][0] / 1e6,
-            gVCO_frequency_table[2][sxVCO_N - 1] / 1e6);
-
-    const float_type refClk_Hz = GetReferenceClk_SX(dir);
-    assert(refClk_Hz > 0);
-    double divider = refClk_Hz * (1 + (VCOfreq > m_dThrF));
-    integerPart = static_cast<uint16_t>(VCOfreq / divider - 4);
-    fractionalPart = static_cast<uint32_t>((VCOfreq / divider - static_cast<uint32_t>(VCOfreq / divider)) * 1048576);
-
-    ChannelScope scope(this);
-    this->SetActiveChannel(dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_INTONLY_SDM, 0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::INT_SDM, integerPart); //INT_SDM
-    Modify_SPI_Reg_bits(0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
-    Modify_SPI_Reg_bits(0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
-    Modify_SPI_Reg_bits(LMS7002MCSR::DIV_LOCH, div_loch); //DIV_LOCH
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIV2_DIVPROG, (VCOfreq > m_dThrF)); //EN_DIV2_DIVPROG
-
-    lime::info("SetFrequencySX%s, (%.3f MHz)INT %d, FRAC %d, DIV_LOCH %d, EN_DIV2_DIVPROG %d",
-        dir == TRXDir::Tx ? "T" : "R",
-        freq_Hz / 1e6,
-        integerPart,
-        fractionalPart,
-        div_loch,
-        (VCOfreq > m_dThrF));
-    lime::debug("Expected VCO %.2f MHz, RefClk %.2f MHz", VCOfreq / 1e6, refClk_Hz / 1e6);
-
-    if (output)
-    {
-        output->frequency = freq_Hz;
-        output->frequencyVCO = VCOfreq;
-        output->referenceClock = GetReferenceClk_SX(dir);
-        output->INT = integerPart;
-        output->FRAC = fractionalPart;
-        output->en_div2_divprog = (VCOfreq > m_dThrF);
-        output->div_loch = div_loch;
-    }
-
-    // turn on VCO and comparator
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO, 0); //
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO_COMP, 0);
-
-    // try setting tuning values from the cache, if it fails perform full tuning
-    if (useCache && tuning_cache_sel_vco.count(freq_Hz) > 0)
-    {
-        sel_vco = tuning_cache_sel_vco[freq_Hz];
-        csw_value = tuning_cache_csw_value[freq_Hz];
-        Modify_SPI_Reg_bits(LMS7002MCSR::SEL_VCO, sel_vco);
-        Modify_SPI_Reg_bits(CSW_VCO.address, CSW_VCO.msb, CSW_VCO.lsb, csw_value);
-        // probably no need for this as the interface is already very slow..
-        std::this_thread::sleep_for(std::chrono::microseconds(50));
-        auto cmphl = static_cast<uint8_t>(Get_SPI_Reg_bits(VCO_CMPHO.address, 13, 12, true));
-        if (cmphl == 2)
-        {
-            lime::info("Fast Tune success; vco=%d value=%d", tuning_cache_sel_vco[freq_Hz], tuning_cache_csw_value[freq_Hz]);
-            if (output)
-            {
-                output->success = true;
-                output->sel_vco = sel_vco;
-                output->csw = csw_value;
-            }
-            return OpStatus::Success;
-        }
-    }
-
-    canDeliverFrequency = false;
-    int tuneScore[] = { -128, -128, -128 }; //best is closest to 0
-    for (int i = 0; i < 5; i++) //attempt tune multiple times
-    {
-        for (sel_vco = 0; sel_vco < 3; ++sel_vco)
-        {
-            lime::debug("Tuning %s :", vcoNames[sel_vco]);
-            Modify_SPI_Reg_bits(LMS7002MCSR::SEL_VCO, sel_vco);
-            OpStatus status = TuneVCO(dir == TRXDir::Tx ? VCO_Module::VCO_SXT : VCO_Module::VCO_SXR);
-            if (status == OpStatus::Success)
-            {
-                tuneScore[sel_vco] = -128 + Get_SPI_Reg_bits(LMS7002MCSR::CSW_VCO, true);
-                canDeliverFrequency = true;
-                lime::debug("%s : csw=%d %s",
-                    vcoNames[sel_vco],
-                    tuneScore[sel_vco] + 128,
-                    (status == OpStatus::Success ? "tune ok" : "tune fail"));
-            }
-            else
-            {
-                lime::debug("%s : failed to lock", vcoNames[sel_vco]);
-            }
-        }
-        if (canDeliverFrequency) //tune OK
-            break;
-        auto bias = Get_SPI_Reg_bits(LMS7002MCSR::ICT_VCO);
-        if (bias == 255)
-            break;
-        bias = bias + 32 > 255 ? 255 : bias + 32; //retry with higher bias current
-        Modify_SPI_Reg_bits(LMS7002MCSR::ICT_VCO, bias);
-    }
-
-    if (abs(tuneScore[0]) < abs(tuneScore[1]))
-    {
-        if (abs(tuneScore[0]) < abs(tuneScore[2]))
-            sel_vco = 0;
-        else
-            sel_vco = 2;
-    }
-    else
-    {
-        if (abs(tuneScore[1]) < abs(tuneScore[2]))
-            sel_vco = 1;
-        else
-            sel_vco = 2;
-    }
-    csw_value = tuneScore[sel_vco] + 128;
-    lime::debug("Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], csw_value);
-
-    if (output)
-    {
-        if (canDeliverFrequency)
-            output->success = true;
-        output->sel_vco = sel_vco;
-        output->csw = csw_value;
-    }
-    Modify_SPI_Reg_bits(LMS7002MCSR::SEL_VCO, sel_vco);
-    Modify_SPI_Reg_bits(LMS7002MCSR::CSW_VCO, csw_value);
-
-    // save successful tuning results in cache
-    if (useCache && canDeliverFrequency)
-    {
-        tuning_cache_sel_vco[freq_Hz] = sel_vco;
-        tuning_cache_csw_value[freq_Hz] = csw_value;
-    }
-
-    if (canDeliverFrequency == false)
-        return ReportError(
-            OpStatus::Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", dir == TRXDir::Tx ? "T" : "R", freq_Hz / 1e6);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_frequency_sx(mC_impl, dir == TRXDir::Tx, freq_Hz);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq_Hz, float_type BW)
@@ -1933,88 +1101,42 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
 
 float_type LMS7002M::GetFrequencySX(TRXDir dir)
 {
-    ChannelScope(this, dir == TRXDir::Tx ? Channel::ChSXT : Channel::ChSXR);
-
-    float_type dMul;
-    uint16_t gINT = Get_SPI_Reg_bits(0x011E, 13, 0); // read whole register to reduce SPI transfers
-    uint32_t gFRAC = ((gINT & 0xF) * 65536) | Get_SPI_Reg_bits(0x011D, 15, 0);
-
-    const float_type refClk_Hz = GetReferenceClk_SX(dir);
-    dMul = refClk_Hz / (1 << (Get_SPI_Reg_bits(LMS7002MCSR::DIV_LOCH) + 1));
-    //Calculate real frequency according to the calculated parameters
-    dMul = dMul * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (Get_SPI_Reg_bits(LMS7002MCSR::EN_DIV2_DIVPROG) + 1);
-    return dMul;
+    return lms7002m_get_frequency_sx(mC_impl, dir == TRXDir::Tx);
 }
 
 OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz)
 {
-    if (index > 15)
-        return ReportError(OpStatus::InvalidValue, "SetNCOFrequency(index = %d) - index out of range [0, 15]", index);
-    float_type refClk_Hz = GetReferenceClk_TSP(dir);
-    if (freq_Hz < 0 || freq_Hz / refClk_Hz > 0.5)
-        return ReportError(OpStatus::OutOfRange,
-            "SetNCOFrequency(index = %d) - Frequency(%g MHz) out of range [0-%g) MHz",
-            index,
-            freq_Hz / 1e6,
-            refClk_Hz / 2e6);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
-    uint32_t fcw = static_cast<uint32_t>((freq_Hz / refClk_Hz) * 4294967296);
-    SPI_write(addr + 2 + index * 2, (fcw >> 16)); //NCO frequency control word register MSB part.
-    SPI_write(addr + 3 + index * 2, fcw); //NCO frequency control word register LSB part.
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_frequency(mC_impl, dir == TRXDir::Tx, index, freq_Hz);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 {
-    if (index > 15)
-    {
-        ReportError(OpStatus::InvalidValue, "GetNCOFrequency_MHz(index = %d) - index out of range [0, 15]", index);
-        return 0;
-    }
-    float_type refClk_Hz = GetReferenceClk_TSP(dir);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0240 : 0x0440;
-    uint32_t fcw = 0;
-    fcw |= SPI_read(addr + 2 + index * 2, fromChip) << 16; //NCO frequency control word register MSB part.
-    fcw |= SPI_read(addr + 3 + index * 2, fromChip); //NCO frequency control word register LSB part.
-    return refClk_Hz * (fcw / 4294967296.0);
+    return lms7002m_get_nco_frequency(mC_impl, dir == TRXDir::Tx, index);
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
 {
-    uint16_t addr = dir == TRXDir::Tx ? 0x0241 : 0x0441;
-    uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
-    SPI_write(addr, pho);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_phase_offset_for_mode_0(mC_impl, dir == TRXDir::Tx, angle_deg);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)
 {
-    if (index > 15)
-        return ReportError(OpStatus::InvalidValue, "SetNCOPhaseOffset(index = %d) - index out of range [0, 15]", index);
-    uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
-    uint16_t pho = static_cast<uint16_t>(65536 * (angle_deg / 360));
-    SPI_write(addr + index, pho);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_nco_phase_offset(mC_impl, dir == TRXDir::Tx, index, angle_deg);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
-    OpStatus status = SetNCOFrequency(dir, 0, frequencyOffset);
-    if (status != OpStatus::Success)
-        return status;
-
-    if (angles_deg == nullptr)
+    std::vector<float> converted(count);
+    for (uint8_t i = 0; i < count; ++i)
     {
-        return OpStatus::Success;
+        converted.at(i) = angles_deg[i];
     }
 
-    for (uint8_t i = 0; i < 16 && i < count; i++)
-    {
-        status = SetNCOPhaseOffset(dir, i, angles_deg[i]);
-        if (status != OpStatus::Success)
-            return status;
-    }
-    return Modify_SPI_Reg_bits(dir == TRXDir::Tx ? SEL_TX : SEL_RX, 0);
+    lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, converted.data(), count, frequencyOffset);
+    return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequencyOffset)
@@ -2023,122 +1145,29 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
     return angles_deg;
 }
 
-float_type LMS7002M::GetNCOPhaseOffset_Deg(TRXDir dir, uint8_t index)
-{
-    if (index > 15)
-    {
-        ReportError(OpStatus::InvalidValue, "GetNCOPhaseOffset_Deg(index = %d) - index out of range [0, 15]", index);
-        return 0;
-    }
-    uint16_t addr = dir == TRXDir::Tx ? 0x0244 : 0x0444;
-    uint16_t pho = SPI_read(addr + index);
-    float_type angle = 360 * pho / 65536.0;
-    return angle;
-}
-
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
-    if (gfirIndex > 2)
+    std::vector<float> converted(coefCount);
+    for (uint8_t i = 0; i < coefCount; ++i)
     {
-        lime::warning("SetGFIRCoefficients: Invalid GFIR index(%i). Will configure GFIR[2].", gfirIndex);
-        gfirIndex = 2;
+        converted.at(i) = coef[i];
     }
 
-    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (dir == TRXDir::Tx ? 0 : 0x0200);
-    const uint8_t maxCoefCount = gfirIndex < 2 ? 40 : 120;
-    const uint8_t bankCount = gfirIndex < 2 ? 5 : 15;
-
-    if (coefCount > maxCoefCount)
-    {
-        return ReportError(OpStatus::OutOfRange,
-            "SetGFIRCoefficients: too many coefficients(%i), GFIR[%i] can have only %i",
-            coefCount,
-            gfirIndex,
-            maxCoefCount);
-    }
-
-    uint16_t addrs[120];
-    int16_t words[120];
-    // actual used coefficients count is multiple of 'bankCount'
-    // if coefCount is not multiple, extra '0' coefficients will be written
-    const uint8_t bankLength = std::ceil(static_cast<float>(coefCount) / bankCount);
-    const int16_t actualCoefCount = bankLength * bankCount;
-    assert(actualCoefCount <= maxCoefCount);
-
-    for (int i = 0; i < actualCoefCount; ++i)
-    {
-        uint8_t bank = i / bankLength;
-        uint8_t bankRow = i % bankLength;
-        addrs[i] = startAddr + (bank * 8) + bankRow;
-        addrs[i] += 24 * (bank / 5);
-
-        if (i < coefCount)
-        {
-            words[i] = coef[i] * 32767;
-
-            if (coef[i] < -1 || coef[i] > 1)
-            {
-                lime::warning("Coefficient %f is outside of range [-1:1], incorrect value will be written.", coef[i]);
-            }
-        }
-        else
-        {
-            words[i] = 0;
-        }
-    }
-    CSRegister gfirL_param = GFIR1_L_TXTSP;
-    gfirL_param.address += gfirIndex + (dir == TRXDir::Tx ? 0 : 0x0200);
-    Modify_SPI_Reg_bits(gfirL_param, bankLength - 1);
-
-    return SPI_write_batch(addrs, reinterpret_cast<const uint16_t*>(words), actualCoefCount, true);
+    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    OpStatus status = OpStatus::Error;
+    std::vector<float> converted(coefCount);
 
-    if (gfirIndex > 2)
+    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
+    for (uint8_t i = 0; i < coefCount; ++i)
     {
-        lime::warning("GetGFIRCoefficients: Invalid GFIR index(%i). Will read GFIR[2].", gfirIndex);
-        gfirIndex = 2;
+        coef[i] = converted.at(i);
     }
 
-    const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (dir == TRXDir::Tx ? 0 : 0x0200);
-    const uint8_t coefLimit = gfirIndex < 2 ? 40 : 120;
-
-    if (coefCount > coefLimit)
-    {
-        return ReportError(OpStatus::OutOfRange, "GetGFIRCoefficients(coefCount=%d) - exceeds coefLimit=%d", coefCount, coefLimit);
-    }
-
-    std::vector<uint16_t> addresses;
-    for (uint8_t index = 0; index < coefCount; ++index)
-    {
-        addresses.push_back(startAddr + index + 24 * (index / 40));
-    }
-
-    int16_t spiData[120];
-    std::memset(spiData, 0, 120 * sizeof(int16_t));
-    if (controlPort)
-    {
-        status = SPI_read_batch(&addresses[0], reinterpret_cast<uint16_t*>(spiData), coefCount);
-        for (uint8_t index = 0; index < coefCount; ++index)
-        {
-            coef[index] = spiData[index] / 32768.0;
-        }
-    }
-    else
-    {
-        const int channel = Get_SPI_Reg_bits(LMS7002MCSR::MAC, false) > 1 ? 1 : 0;
-        for (uint8_t index = 0; index < coefCount; ++index)
-        {
-            uint16_t value = mRegistersMap->GetValue(channel, addresses[index]);
-            coef[index] = *reinterpret_cast<int16_t*>(&value) / 32768.0;
-        }
-        status = OpStatus::Success;
-    }
-
-    return status;
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
@@ -2541,21 +1570,6 @@ OpStatus LMS7002M::RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, u
     return ReportError(OpStatus::Error, "RegistersTestInterval(startAddr=0x%x, endAddr=0x%x) - failed", startAddr, endAddr);
 }
 
-/** @brief Sets Rx Dc offsets by converting two's complementary numbers to sign and magnitude
-*/
-void LMS7002M::SetRxDCOFF(int8_t offsetI, int8_t offsetQ)
-{
-    uint16_t valToSend = 0;
-    if (offsetI < 0)
-        valToSend |= 0x40;
-    valToSend |= labs(offsetI);
-    valToSend = valToSend << 7;
-    if (offsetQ < 0)
-        valToSend |= 0x40;
-    valToSend |= labs(offsetQ);
-    SPI_write(0x010E, valToSend);
-}
-
 OpStatus LMS7002M::SetDefaults(MemorySection module)
 {
     OpStatus status;
@@ -2744,209 +1758,48 @@ OpStatus LMS7002M::DownloadAll()
 
 OpStatus LMS7002M::SetInterfaceFrequency(float_type cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd)
 {
-    OpStatus status;
-    status = Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd);
-    if (status != OpStatus::Success)
-        return status;
-    Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi);
-
-    auto siso = Get_SPI_Reg_bits(LML2_SISODDR);
-    int mclk2src = Get_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC);
-    if (hbd == 7 || (hbd == 0 && siso == 0)) //bypass
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXDIVEN, false);
-        Modify_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC, (mclk2src & 1) | 0x2);
-    }
-    else
-    {
-        uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbd + siso));
-        if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, (divider / 2) - 1);
-        else
-            Modify_SPI_Reg_bits(LMS7002MCSR::RXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXDIVEN, true);
-        Modify_SPI_Reg_bits(LMS7002MCSR::MCLK2SRC, mclk2src & 1);
-    }
-
-    if (Get_SPI_Reg_bits(LMS7002MCSR::RX_MUX) == 0)
-    {
-        bool mimoBypass = (hbd == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXRDCLK_MUX, mimoBypass ? 3 : 1);
-        Modify_SPI_Reg_bits(LMS7002MCSR::RXWRCLK_MUX, mimoBypass ? 1 : 2);
-    }
-
-    siso = Get_SPI_Reg_bits(LML1_SISODDR);
-    int mclk1src = Get_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC);
-    if (hbi == 7 || (hbi == 0 && siso == 0)) //bypass
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXDIVEN, false);
-        status = Modify_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC, (mclk1src & 1) | 0x2);
-    }
-    else
-    {
-        uint8_t divider = static_cast<uint8_t>(std::pow(2.0, hbi + siso));
-        if (divider > 1)
-            Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, (divider / 2) - 1);
-        else
-            Modify_SPI_Reg_bits(LMS7002MCSR::TXTSPCLKA_DIV, 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXDIVEN, true);
-        status = Modify_SPI_Reg_bits(LMS7002MCSR::MCLK1SRC, mclk1src & 1);
-    }
-
-    if (Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX) == 0)
-    {
-        bool mimoBypass = (hbi == 7) && (siso == 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXRDCLK_MUX, mimoBypass ? 0 : 2);
-        Modify_SPI_Reg_bits(LMS7002MCSR::TXWRCLK_MUX, 0);
-    }
-
-    //clock rate already set because the readback frequency is pretty-close,
-    //dont set the cgen frequency again to save time due to VCO selection
-    // const auto freqDiff = std::abs(this->GetFrequencyCGEN() - cgen_freq_Hz);
-    // if (not this->GetCGENLocked() or freqDiff > 10.0)
-    {
-        status = SetFrequencyCGEN(cgen_freq_Hz);
-        if (status != OpStatus::Success)
-            return status;
-    }
-    return status;
-}
-
-void LMS7002M::ConfigureLML_RF2BB(
-    const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3)
-{
-    //map a sample source to a position
-    const std::map<LMLSampleSource, uint16_t> m{
-        { LMLSampleSource::AI, 1 },
-        { LMLSampleSource::AQ, 0 },
-        { LMLSampleSource::BI, 3 },
-        { LMLSampleSource::BQ, 2 },
-    };
-
-    //load the same config on both LMLs
-    //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S3S, m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S2S, m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S1S, m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_S0S, m.at(s0));
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S3S, m.at(s3));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S2S, m.at(s2));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S1S, m.at(s1));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_S0S, m.at(s0));
-}
-
-void LMS7002M::ConfigureLML_BB2RF(
-    const LMLSampleSource s0, const LMLSampleSource s1, const LMLSampleSource s2, const LMLSampleSource s3)
-{
-    //map a sample source to a position
-    const std::map<LMLSampleSource, uint16_t> m{
-        { s3, 2 },
-        { s2, 3 },
-        { s0, 1 },
-        { s1, 0 },
-    };
-
-    //load the same config on both LMLs
-    //only one will get used based on direction
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_BQP, m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_BIP, m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_AQP, m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_AIP, m.at(LMLSampleSource::AI));
-
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_BQP, m.at(LMLSampleSource::BQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_BIP, m.at(LMLSampleSource::BI));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_AQP, m.at(LMLSampleSource::AQ));
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_AIP, m.at(LMLSampleSource::AI));
-}
-
-OpStatus LMS7002M::SetRxDCRemoval(const bool enable)
-{
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, enable ? 0 : 1);
-    this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORR_AVG_RXTSP, 0x7);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_interface_frequency(mC_impl, cgen_freq_Hz, hbi, hbd);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::EnableSXTDD(bool tdd)
 {
-    ChannelScope scope(this, LMS7002M::Channel::ChSXT);
-    Modify_SPI_Reg_bits(PD_LOCH_T2RBUF, tdd ? 0 : 1);
-    Modify_SPI_Reg_bits(MAC, 1); // switch to SXR
-    return Modify_SPI_Reg_bits(PD_VCO, tdd ? 1 : 0);
-}
-
-bool LMS7002M::GetRxDCRemoval(void)
-{
-    return this->Get_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP) == 0;
+    lime_Result result = lms7002m_enable_sxtdd(mC_impl, tdd);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
 {
-    const bool bypass = I == 0.0 and Q == 0.0;
-    if (dir == TRXDir::Tx)
-    {
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_TXTSP, bypass ? 1 : 0);
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORRI_TXTSP, std::lrint(I * 127));
-        this->Modify_SPI_Reg_bits(LMS7002MCSR::DCCORRQ_TXTSP, std::lrint(Q * 127));
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::EN_DCOFF_RXFE_RFE, bypass ? 0 : 1);
-        unsigned val = std::lrint(std::abs(I * 63)) + (I < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::DCOFFI_RFE, val);
-        val = std::lrint(std::abs(Q * 63)) + (Q < 0 ? 64 : 0);
-        Modify_SPI_Reg_bits(LMS7002MCSR::DCOFFQ_RFE, val);
-    }
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_dc_offset(mC_impl, dir == TRXDir::Tx, I, Q);
+    return ResultToStatus(result);
 }
 
-void LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
+OpStatus LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 {
-    if (dir == TRXDir::Tx)
-    {
-        I = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7002MCSR::DCCORRI_TXTSP)) / 127.0; //signed 8-bit
-        Q = static_cast<int8_t>(this->Get_SPI_Reg_bits(LMS7002MCSR::DCCORRQ_TXTSP)) / 127.0; //signed 8-bit
-    }
-    else
-    {
-        auto i = Get_SPI_Reg_bits(LMS7002MCSR::DCOFFI_RFE);
-        I = ((i & 0x40) ? -1.0 : 1.0) * (i & 0x3F) / 63.0;
-        auto q = Get_SPI_Reg_bits(LMS7002MCSR::DCOFFQ_RFE);
-        Q = ((q & 0x40) ? -1.0 : 1.0) * (q & 0x3F) / 63.0;
-    }
+    float Ifloat = 0.0;
+    float Qfloat = 0.0;
+    lime_Result result = lms7002m_get_dc_offset(mC_impl, dir == TRXDir::Tx, &Ifloat, &Qfloat);
+    I = Ifloat;
+    Q = Qfloat;
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const float_type gainI, const float_type gainQ)
 {
-    const bool bypassPhase = (phase == 0.0);
-    const bool bypassGain = ((gainI == 1.0) and (gainQ == 1.0)) or ((gainI == 0.0) and (gainQ == 0.0));
-    int iqcorr = std::lrint(2047 * (phase / (M_PI / 2)));
-    int gcorri = std::lrint(2047 * gainI);
-    int gcorrq = std::lrint(2047 * gainQ);
-
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::PH_BYP_TXTSP : LMS7002MCSR::PH_BYP_RXTSP, bypassPhase ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GC_BYP_TXTSP : LMS7002MCSR::GC_BYP_RXTSP, bypassGain ? 1 : 0);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::IQCORR_TXTSP : LMS7002MCSR::IQCORR_RXTSP, iqcorr);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRI_TXTSP : LMS7002MCSR::GCORRI_RXTSP, gcorri);
-    this->Modify_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRQ_TXTSP : LMS7002MCSR::GCORRQ_RXTSP, gcorrq);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_i_q_balance(mC_impl, dir == TRXDir::Tx, phase, gainI, gainQ);
+    return ResultToStatus(result);
 }
 
-void LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
+OpStatus LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
-    int iqcorr = static_cast<int16_t>(
-                     this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::IQCORR_TXTSP : LMS7002MCSR::IQCORR_RXTSP) << 4) >>
-                 4; //sign extend 12-bit
-    int gcorri = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRI_TXTSP : LMS7002MCSR::GCORRI_RXTSP)); //unsigned 11-bit
-    int gcorrq = static_cast<int16_t>(
-        this->Get_SPI_Reg_bits(dir == TRXDir::Tx ? LMS7002MCSR::GCORRQ_TXTSP : LMS7002MCSR::GCORRQ_RXTSP)); //unsigned 11-bit
-
-    phase = (M_PI / 2) * iqcorr / 2047.0;
-    gainI = gcorri / 2047.0;
-    gainQ = gcorrq / 2047.0;
+    float phaseFloat = 0.0;
+    float gainIFloat = 0.0;
+    float gainQFloat = 0.0;
+    lime_Result result = lms7002m_get_i_q_balance(mC_impl, dir == TRXDir::Tx, &phaseFloat, &gainIFloat, &gainQFloat);
+    phase = phaseFloat;
+    gainI = gainIFloat;
+    gainQ = gainQFloat;
+    return ResultToStatus(result);
 }
 
 void LMS7002M::EnableValuesCache(bool enabled)
@@ -2954,37 +1807,26 @@ void LMS7002M::EnableValuesCache(bool enabled)
     useCache = enabled;
 }
 
-bool LMS7002M::IsValuesCacheEnabled() const
-{
-    return useCache;
-}
-
 MCU_BD* LMS7002M::GetMCUControls() const
 {
     return mcuControl;
 }
 
+OpStatus LMS7002M::CalibrateInternalADC(int clkDiv)
+{
+    lime_Result result = lms7002m_calibrate_internal_adc(mC_impl, clkDiv);
+    return ResultToStatus(result);
+}
+
+OpStatus LMS7002M::CalibrateRP_BIAS()
+{
+    lime_Result result = lms7002m_calibrate_rp_bias(mC_impl);
+    return ResultToStatus(result);
+}
+
 float_type LMS7002M::GetTemperature()
 {
-    if (CalibrateInternalADC(32) != OpStatus::Success)
-        return 0;
-    Modify_SPI_Reg_bits(RSSI_PD, 0);
-    Modify_SPI_Reg_bits(RSSI_RSSIMODE, 0);
-    uint16_t biasMux = Get_SPI_Reg_bits(MUX_BIAS_OUT);
-    Modify_SPI_Reg_bits(MUX_BIAS_OUT, 2);
-
-    std::this_thread::sleep_for(std::chrono::microseconds(250));
-    const uint16_t reg606 = SPI_read(0x0606, true);
-    float Vtemp = (reg606 >> 8) & 0xFF;
-    Vtemp *= 1.84;
-    float Vptat = reg606 & 0xFF;
-    Vptat *= 1.84;
-    float Vdiff = Vptat - Vtemp;
-    Vdiff /= 1.05;
-    float temperature = 45.0 + Vdiff;
-    Modify_SPI_Reg_bits(MUX_BIAS_OUT, biasMux);
-    lime::debug("Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (reg606 >> 8) & 0xFF, reg606 & 0xFF, Vdiff, temperature);
-    return temperature;
+    return lms7002m_get_temperature(mC_impl);
 }
 
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)
@@ -3012,236 +1854,36 @@ OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, c
 
 OpStatus LMS7002M::CalibrateAnalogRSSI_DC_Offset()
 {
-    Modify_SPI_Reg_bits(EN_INSHSW_W_RFE, 1);
-    CalibrateInternalADC(0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_RSSI_RFE, 0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, 0);
-
-    /*Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_RSEL, 22);
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_HYSCMP, 0);
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_PD, 0);*/
-    SPI_write(0x0640, 22 << 4);
-
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO2, 0);
-
-    int value = -63;
-    uint8_t wrValue = abs(value);
-    if (value < 0)
-        wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-    uint8_t cmp = Get_SPI_Reg_bits(LMS7002MCSR::RSSIDC_CMPSTATUS, true);
-    uint8_t cmpPrev = cmp;
-    std::vector<int8_t> edges;
-    for (value = -63; value < 64; ++value)
-    {
-        wrValue = abs(value);
-        if (value < 0)
-            wrValue |= 0x40;
-        Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-        std::this_thread::sleep_for(std::chrono::microseconds(5));
-        cmp = Get_SPI_Reg_bits(LMS7002MCSR::RSSIDC_CMPSTATUS, true);
-        if (cmp != cmpPrev)
-        {
-            edges.push_back(value);
-            cmpPrev = cmp;
-        }
-        if (edges.size() > 1)
-            break;
-    }
-    if (edges.size() != 2)
-    {
-        lime::debug("Not found"s);
-        return ReportError(OpStatus::InvalidValue, "Failed to find value"s);
-    }
-    int8_t found = (edges[0] + edges[1]) / 2;
-    wrValue = abs(found);
-    if (found < 0)
-        wrValue |= 0x40;
-    Modify_SPI_Reg_bits(LMS7002MCSR::RSSIDC_DCO1, wrValue, true);
-    lime::debug("Found %i", found);
-    Modify_SPI_Reg_bits(EN_INSHSW_W_RFE, 0);
-    return OpStatus::Success;
+    lime_Result result = lms7002m_calibrate_analog_rssi_dc_offset(mC_impl);
+    return ResultToStatus(result);
 }
 
 double LMS7002M::GetClockFreq(ClockID clk_id)
 {
-    switch (clk_id)
-    {
-    case ClockID::CLK_REFERENCE:
-        return GetReferenceClk_SX(TRXDir::Rx);
-    case ClockID::CLK_SXR:
-        return GetFrequencySX(TRXDir::Rx);
-    case ClockID::CLK_SXT:
-        return GetFrequencySX(TRXDir::Tx);
-    case ClockID::CLK_CGEN:
-        return GetFrequencyCGEN();
-    case ClockID::CLK_RXTSP:
-        return GetReferenceClk_TSP(TRXDir::Rx);
-    case ClockID::CLK_TXTSP:
-        return GetReferenceClk_TSP(TRXDir::Tx);
-    default:
-        lime::ReportError(OpStatus::InvalidValue, "Invalid clock ID."s);
-        return 0;
-    }
+    return lms7002m_get_clock_frequency(mC_impl, static_cast<lms7002m_clock_id>(clk_id));
 }
 
 OpStatus LMS7002M::SetClockFreq(ClockID clk_id, double freq)
 {
-    switch (clk_id)
-    {
-    case ClockID::CLK_REFERENCE:
-        // TODO: recalculate CGEN,SXR/T
-        break;
-    case ClockID::CLK_CGEN:
-        return SetFrequencyCGEN(freq, true, nullptr);
-        break;
-    case ClockID::CLK_SXR:
-        return SetFrequencySX(TRXDir::Rx, freq, nullptr);
-        break;
-    case ClockID::CLK_SXT:
-        return SetFrequencySX(TRXDir::Rx, freq, nullptr);
-        break;
-    case ClockID::CLK_RXTSP:
-    case ClockID::CLK_TXTSP:
-        return ReportError(OpStatus::InvalidValue, "RxTSP/TxTSP Clocks are read only"s);
-    default:
-        return ReportError(OpStatus::InvalidValue, "LMS7002M::SetClockFreq Unknown clock id"s);
-    }
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_clock_frequency(mC_impl, static_cast<lms7002m_clock_id>(clk_id), freq);
+    return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetSampleRate(TRXDir dir, Channel ch)
 {
-    ChannelScope scope(this, ch);
-    return GetSampleRate(dir);
+    return lms7002m_get_sample_rate(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(ch));
 }
 
 float_type LMS7002M::GetSampleRate(TRXDir dir)
 {
-    const auto& parameter = dir == TRXDir::Tx ? HBI_OVR_TXTSP : HBD_OVR_RXTSP;
-
-    uint16_t ratio = Get_SPI_Reg_bits(parameter);
-
-    double interface_Hz = GetReferenceClk_TSP(dir);
-
-    // If decimation/interpolation is 0 (2^1) or 7 (bypass), interface clocks should not be divided
-    if (ratio != 7)
-    {
-        interface_Hz /= 2 * pow(2.0, ratio);
-    }
-
-    return interface_Hz;
+    return lms7002m_get_sample_rate(mC_impl, dir == TRXDir::Tx, lms7002m_get_active_channel(mC_impl));
 }
 
 OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double bandwidth)
 {
-    ChannelScope scope(this, ch);
-    const bool bypassFIR = !enabled;
-    if (dir == TRXDir::Tx)
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_TXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_TXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_TXTSP, bypassFIR);
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_BYP_RXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_BYP_RXTSP, bypassFIR);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_BYP_RXTSP, bypassFIR);
-        const bool sisoDDR = Get_SPI_Reg_bits(LML1_SISODDR);
-        const bool clockIsNotInverted = !(enabled | sisoDDR);
-        if (ch == LMS7002M::Channel::ChB)
-        {
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXBLML, clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXBLML, enabled ? 3 : 0);
-        }
-        else
-        {
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXALML, clockIsNotInverted);
-            Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXALML, enabled ? 3 : 0);
-        }
-    }
-    if (!enabled)
-        return OpStatus::Success;
-
-    if (bandwidth <= 0)
-        return OpStatus::InvalidValue;
-
-    double w, w2;
-    int L;
-    int div = 1;
-
-    bandwidth /= 1e6;
-    double interface_MHz;
-    int ratio;
-    if (dir == TRXDir::Tx)
-    {
-        ratio = Get_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP);
-    }
-    else
-    {
-        ratio = Get_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP);
-    }
-
-    interface_MHz = GetReferenceClk_TSP(dir) / 1e6;
-    if (ratio != 7)
-        div = (2 << (ratio));
-
-    w = (bandwidth / 2) / (interface_MHz / div);
-    L = div > 8 ? 8 : div;
-    div -= 1;
-
-    w2 = w * 1.1;
-    if (w2 > 0.495)
-    {
-        w2 = w * 1.05;
-        if (w2 > 0.495)
-        {
-            lime::error("GFIR LPF cannot be set to the requested bandwidth (%f)", bandwidth);
-            return OpStatus::Error;
-        }
-    }
-
-    double coef[120];
-    double coef2[40];
-
-    GenerateFilter(L * 15, w, w2, 1.0, 0, coef);
-    GenerateFilter(L * 5, w, w2, 1.0, 0, coef2);
-
-    if (dir == TRXDir::Tx)
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_N_TXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_N_TXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_N_TXTSP, div);
-    }
-    else
-    {
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR1_N_RXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR2_N_RXTSP, div);
-        Modify_SPI_Reg_bits(LMS7002MCSR::GFIR3_N_RXTSP, div);
-    }
-
-    OpStatus status;
-    if ((status = SetGFIRCoefficients(dir, 0, coef2, L * 5)) != OpStatus::Success)
-        return status;
-    if ((status = SetGFIRCoefficients(dir, 1, coef2, L * 5)) != OpStatus::Success)
-        return status;
-    if ((status = SetGFIRCoefficients(dir, 2, coef, L * 15)) != OpStatus::Success)
-        return status;
-
-    std::stringstream ss;
-    ss << "LMS "sv << ToString(dir) << " GFIR coefficients (BW: "sv << bandwidth << " MHz):\n"sv;
-    ss << "GFIR1 = GFIR2:"sv;
-    for (int i = 0; i < L * 5; ++i)
-        ss << " " << coef2[i];
-    ss << std::endl;
-    ss << "GFIR3:"sv;
-    for (int i = 0; i < L * 15; ++i)
-        ss << " "sv << coef[i];
-    ss << std::endl;
-    lime::info(ss.str());
-
-    return ResetLogicRegisters();
+    lime_Result result =
+        lms7002m_set_gfir_filter(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(ch), enabled, bandwidth);
+    return ResultToStatus(result);
 }
 
 void LMS7002M::SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* userData)
@@ -3252,240 +1894,40 @@ void LMS7002M::SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* us
 
 OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
 {
-    const int tiaGain = Get_SPI_Reg_bits(G_TIA_RFE);
-    if (tiaGain < 1 || tiaGain > 3)
-        return ReportError(OpStatus::InvalidValue, "RxLPF: Invalid G_TIA gain value");
-
-    Modify_SPI_Reg_bits(PD_TIA_RFE, 0);
-    Modify_SPI_Reg_bits(EN_G_RFE, 1);
-
-    Modify_SPI_Reg_bits(ICT_TIAMAIN_RFE, 2);
-    Modify_SPI_Reg_bits(ICT_TIAOUT_RFE, 2);
-
-    Modify_SPI_Reg_bits(ICT_LPF_IN_RBB, 0x0C);
-    Modify_SPI_Reg_bits(ICT_LPF_OUT_RBB, 0x0C);
-
-    Modify_SPI_Reg_bits(ICT_PGA_OUT_RBB, 0x14);
-    Modify_SPI_Reg_bits(ICT_PGA_IN_RBB, 0x14);
-    const int pgaGain = Get_SPI_Reg_bits(G_PGA_RBB);
-    if (pgaGain != 12)
-    {
-        lime::warning("RxLPF modifying G_PGA_RBB %i -> 12", pgaGain);
-        Modify_SPI_Reg_bits(G_PGA_RBB, 12);
-    }
-
-    Modify_SPI_Reg_bits(RCC_CTL_PGA_RBB, 0x18);
-    Modify_SPI_Reg_bits(C_CTL_PGA_RBB, 1);
-
-    const double rxLpfMin = (tiaGain == 1) ? 4e6 : 1.5e6;
-    const double rxLpfMax = 160e6;
-    if (rfBandwidth_Hz != 0 && (rfBandwidth_Hz < rxLpfMin || rfBandwidth_Hz > rxLpfMax))
-    {
-        lime::warning(
-            "Requested RxLPF(%g) is out of range [%g - %g]. Clamping to valid range.", rfBandwidth_Hz, rxLpfMin, rxLpfMax);
-        rfBandwidth_Hz = std::clamp(rfBandwidth_Hz, rxLpfMin, rxLpfMax);
-    }
-
-    const double bandwidth_MHz = rfBandwidth_Hz / 1e6;
-
-    int TIA_C;
-    if (tiaGain == 1)
-        TIA_C = 120 * 45 / (bandwidth_MHz / 2 / 1.5) - 15;
-    else
-        TIA_C = 120 * 14 / (bandwidth_MHz / 2 / 1.5) - 10;
-    TIA_C = std::clamp(TIA_C, 0, 4095);
-
-    int TIA_RCOMP = std::clamp(15 - TIA_C * 2 / 100, 0, 15);
-
-    int TIA_CCOMP = (TIA_C / 100) + (tiaGain == 1 ? 1 : 0);
-    TIA_CCOMP = std::clamp(TIA_CCOMP, 0, 15);
-
-    int RX_L_C = 120 * 18 / (bandwidth_MHz / 2 / 0.75) - 103;
-    RX_L_C = std::clamp(RX_L_C, 0, 2047);
-
-    int RX_H_C = 120 * 50 / (bandwidth_MHz / 2 / 0.75) - 50;
-    RX_H_C = std::clamp(RX_H_C, 0, 255);
-
-    lime::debug("RxLPF(%g): TIA_C=%i, TIA_RCOMP=%i, TIA_CCOMP=%i, RX_L_C=%i, RX_H_C=%i\n",
-        rfBandwidth_Hz,
-        TIA_C,
-        TIA_RCOMP,
-        TIA_CCOMP,
-        RX_L_C,
-        RX_H_C);
-
-    uint16_t cfb_tia_rfe = TIA_C;
-    uint16_t rcomp_tia_rfe = TIA_RCOMP;
-    uint16_t ccomp_tia_rfe = TIA_CCOMP;
-    uint16_t input_ctl_pga_rbb = 4;
-    uint16_t c_ctl_lpfl_rbb = RX_L_C;
-    uint16_t c_ctl_lpfh_rbb = RX_H_C;
-    uint16_t powerDowns = 0xD; // 0x0115[3:0]
-
-    const double ifbw = bandwidth_MHz / 2 / 0.75;
-    const uint16_t rcc_ctl_lpfh_rbb = std::clamp(ifbw / 10 - 2, 0.0, 7.0);
-    uint16_t rcc_ctl_lpfl_rbb = 5;
-    if (ifbw >= 20)
-        rcc_ctl_lpfl_rbb = 5;
-    else if (ifbw >= 15)
-        rcc_ctl_lpfl_rbb = 4;
-    else if (ifbw >= 10)
-        rcc_ctl_lpfl_rbb = 3;
-    else if (ifbw >= 5)
-        rcc_ctl_lpfl_rbb = 2;
-    else if (ifbw >= 3)
-        rcc_ctl_lpfl_rbb = 1;
-    else // (bw>=1.5)
-        rcc_ctl_lpfl_rbb = 0;
-
-    if (rfBandwidth_Hz <= 0) // LPF bypass
-    {
-        lime::info("RxLPF bypassed");
-        powerDowns = 0xD;
-        input_ctl_pga_rbb = 2;
-    }
-    else if (rfBandwidth_Hz < rxLpfMin)
-    {
-        lime::warning("RxLPF(%g) frequency too low. Clamping to %g MHz.", rfBandwidth_Hz, rxLpfMin / 1e6);
-        if (tiaGain == 1)
-        {
-            cfb_tia_rfe = 4035;
-            rcc_ctl_lpfl_rbb = 1;
-            c_ctl_lpfl_rbb = 707;
-        }
-        else
-        {
-            cfb_tia_rfe = 3350;
-            rcc_ctl_lpfl_rbb = 0;
-            c_ctl_lpfl_rbb = 2047;
-        }
-        rcomp_tia_rfe = 0;
-        ccomp_tia_rfe = 15;
-        powerDowns = 0x9;
-        input_ctl_pga_rbb = 0;
-    }
-    else if (rxLpfMin <= rfBandwidth_Hz && rfBandwidth_Hz <= 30e6)
-    {
-        powerDowns = 0x9;
-        input_ctl_pga_rbb = 0;
-    }
-    else if (30e6 <= rfBandwidth_Hz && rfBandwidth_Hz <= rxLpfMax)
-    {
-        powerDowns = 0x5;
-        input_ctl_pga_rbb = 1;
-    }
-
-    Modify_SPI_Reg_bits(CFB_TIA_RFE, cfb_tia_rfe);
-    Modify_SPI_Reg_bits(RCOMP_TIA_RFE, rcomp_tia_rfe);
-    Modify_SPI_Reg_bits(CCOMP_TIA_RFE, ccomp_tia_rfe);
-    Modify_SPI_Reg_bits(0x0115, 3, 0, powerDowns);
-    Modify_SPI_Reg_bits(INPUT_CTL_PGA_RBB, input_ctl_pga_rbb);
-    Modify_SPI_Reg_bits(C_CTL_LPFL_RBB, c_ctl_lpfl_rbb);
-    Modify_SPI_Reg_bits(C_CTL_LPFH_RBB, c_ctl_lpfh_rbb);
-    Modify_SPI_Reg_bits(RCC_CTL_LPFL_RBB, rcc_ctl_lpfl_rbb);
-    Modify_SPI_Reg_bits(RCC_CTL_LPFH_RBB, rcc_ctl_lpfh_rbb);
-
-    return OpStatus::Success;
+    lime_Result result = lms7002m_set_rx_lpf(mC_impl, rfBandwidth_Hz);
+    return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
 {
-    const double txLpfLowRange[2] = { 5e6, 33e6 };
-    const double txLpfHighRange[2] = { 56e6, 160e6 };
+    lime_Result result = lms7002m_set_tx_lpf(mC_impl, rfBandwidth_Hz);
+    return ResultToStatus(result);
+}
 
-    // common setup
-    Modify_SPI_Reg_bits(0x0106, 15, 0, 0x318C);
-    Modify_SPI_Reg_bits(0x0107, 15, 0, 0x318C);
-    Modify_SPI_Reg_bits(ICT_IAMP_FRP_TBB, 8);
-    Modify_SPI_Reg_bits(ICT_IAMP_GG_FRP_TBB, 12);
-    Modify_SPI_Reg_bits(CCAL_LPFLAD_TBB, 31);
-    Modify_SPI_Reg_bits(RCAL_LPFS5_TBB, 255);
-    Modify_SPI_Reg_bits(R5_LPF_BYP_TBB, 1);
-    Modify_SPI_Reg_bits(BYPLADDER_TBB, 0);
+int16_t LMS7002M::ReadAnalogDC(const uint16_t addr)
+{
+    return lms7002m_read_analog_dc(mC_impl, addr);
+}
 
-    uint16_t powerDowns = 0x15; // addr 0x0105[4:0]
+uint32_t LMS7002M::GetRSSI()
+{
+    return lms7002m_get_rssi(mC_impl);
+}
 
-    if (rfBandwidth_Hz <= 0) // Bypass LPF
-    {
-        lime::info("TxLPF bypassed");
-        powerDowns = 0x15;
-        Modify_SPI_Reg_bits(0x0105, 4, 0, powerDowns);
-        Modify_SPI_Reg_bits(BYPLADDER_TBB, 1);
-        return Modify_SPI_Reg_bits(RCAL_LPFS5_TBB, 0);
-    }
-    else if (rfBandwidth_Hz < txLpfLowRange[0] || txLpfHighRange[1] < rfBandwidth_Hz)
-    {
-        lime::warning("Requested TxLPF(%g) bandwidth is out of range [%g - %g]. Clamping to valid value.",
-            rfBandwidth_Hz,
-            txLpfLowRange[0],
-            txLpfHighRange[1]);
-        rfBandwidth_Hz = std::clamp(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
-    }
+OpStatus LMS7002M::CalibrateRx(float_type bandwidth_Hz, bool useExtLoopback)
+{
+    lime_Result result = lms7002m_calibrate_rx(mC_impl, bandwidth_Hz, useExtLoopback, false);
+    return ResultToStatus(result);
+}
 
-    const double rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
-    int rcal_lpflad = 0;
-    int rcal_lpfh = 0;
+OpStatus LMS7002M::CalibrateTx(float_type bandwidth_Hz, bool useExtLoopback)
+{
+    lime_Result result = lms7002m_calibrate_tx(mC_impl, bandwidth_Hz, useExtLoopback);
+    return ResultToStatus(result);
+}
 
-    if (rfBandwidth_Hz < 5.3e6)
-    {
-        lime::warning("TxLPF(%g) setting bandwidth to %g.", rfBandwidth_Hz, txLpfLowRange[0]);
-        rcal_lpflad = 0;
-        powerDowns = 0x11;
-    }
-    else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
-    {
-        const double LADlog = 20.0 * std::log10(rfbandwidth_MHz / (2.6 * 2));
-        double LADterm1;
-        {
-            double t1 = 1.92163e-15;
-            double t2 = std::sqrt(5.9304678933309e99 * std::pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
-            LADterm1 = t1 * std::pow(t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51, 1.0 / 3.0);
-        }
-
-        double LADterm2;
-        {
-            double t1 = 6.50934553014677e18;
-            double t2 = std::sqrt(5.9304678933309e99 * std::pow(LADlog, 2) - 1.64373265875744e101 * LADlog + 1.17784161390406e102);
-            double t3 = t2 + 7.70095311849832e49 * LADlog - 1.0672267662616e51;
-            LADterm2 = t1 / std::pow(t3, 1.0 / 3.0);
-        }
-        rcal_lpflad = std::clamp(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
-        powerDowns = 0x11;
-    }
-    else if (txLpfLowRange[1] <= rfBandwidth_Hz && rfBandwidth_Hz <= txLpfHighRange[0]) // 33-56 MHz gap
-    {
-        lime::warning("Requested TxLPF(%g) is in frequency gap [%g-%g], setting bandwidth to %g.",
-            rfBandwidth_Hz,
-            txLpfLowRange[1],
-            txLpfHighRange[0],
-            txLpfHighRange[0]);
-        rcal_lpfh = 0;
-        powerDowns = 0x07;
-    }
-    else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
-    {
-        const double Hlog = 20 * std::log10(rfbandwidth_MHz / (28 * 2));
-        double Hterm1;
-        {
-            double t1 = 5.66735e-16;
-            double t2 = std::sqrt(1.21443429517649e103 * std::pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            double t3 = std::pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
-            Hterm1 = t1 * t3;
-        }
-        double Hterm2;
-        {
-            double t1 = 2.12037432410767e019;
-            double t2 = std::sqrt(1.21443429517649e103 * std::pow(Hlog, 2) - 2.85279160551735e104 * Hlog + 1.72772373636442e105);
-            double t3 = std::pow(t2 + 3.48487344845762e51 * Hlog - 4.09310646098208e052, 1.0 / 3.0);
-            Hterm2 = t1 / t3;
-        }
-        rcal_lpfh = std::clamp(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
-        powerDowns = 0x07;
-    }
-
-    lime::debug("TxLPF(%g): LAD=%i, H=%i\n", rfBandwidth_Hz, rcal_lpflad, rcal_lpfh);
-
-    Modify_SPI_Reg_bits(RCAL_LPFLAD_TBB, rcal_lpflad);
-    Modify_SPI_Reg_bits(RCAL_LPFH_TBB, rcal_lpfh);
-    return Modify_SPI_Reg_bits(0x0105, 4, 0, powerDowns);
+OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
+{
+    lime_Result result = lms7002m_load_dc_reg_iq(mC_impl, dir == TRXDir::Tx, I, Q);
+    return ResultToStatus(result);
 }

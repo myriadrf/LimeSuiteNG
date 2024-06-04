@@ -16,7 +16,6 @@
 #include "SlaveSelectShim.h"
 #include "utilities/toString.h"
 
-#include "chips/LMS7002M/calibrations.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
@@ -177,7 +176,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     /// could read back it's state for debugging purposes
     SDRDescriptor& desc = mDeviceDescriptor;
 
-    LMS64CProtocol::FirmwareInfo fw;
+    LMS64CProtocol::FirmwareInfo fw{};
     LMS64CProtocol::GetFirmwareInfo(*control, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
@@ -679,22 +678,19 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
 
     if (trx.calibrate && trx.enabled)
     {
-        SetupCalibrations(chip, trx.sampleRate);
-
-        int status;
+        OpStatus status = OpStatus::Success;
         if (dir == TRXDir::Rx)
         {
-            status = CalibrateRx(false, false);
+            status = chip->CalibrateRx(trx.sampleRate);
         }
         else
         {
-            status = CalibrateTx(false);
+            status = chip->CalibrateTx(trx.sampleRate);
         }
 
-        if (status != MCU_BD::MCU_NO_ERROR)
+        if (status != OpStatus::Success)
         {
-            throw std::runtime_error(strFormat(
-                "%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status).c_str()));
+            throw std::runtime_error("Calibration error");
         }
     }
 
@@ -1080,9 +1076,9 @@ void LimeSDR_X3::LMS2_PA_LNA_Enable(uint8_t chan, bool PAenabled, bool LNAenable
             value |= (!lms2LNA[1]) << 0;
             return value;
         }
-        bool lms1PA[2];
-        bool lms2PA[2];
-        bool lms2LNA[2];
+        bool lms1PA[2]{};
+        bool lms2PA[2]{};
+        bool lms2LNA[2]{};
     };
 
     RegPA pa(mFPGA->ReadRegister(pa_addr));

@@ -19,7 +19,7 @@ namespace lime {
 // 0x000A
 const int RX_EN = 1; //controls both receiver and transmitter
 const int TX_EN = 1 << 1; //used for wfm playback from fpga
-const int STREAM_LOAD = 1 << 2;
+// const int STREAM_LOAD = 1 << 2;
 const int RX_PTRN_EN = 1 << 8;
 const int TX_PTRN_EN = 1 << 9;
 
@@ -866,8 +866,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
     OpStatus status = OpStatus::Success;
 
     const uint32_t addr = 0x002A;
-    uint32_t val = (1 << 31) | (0x0020u << 16) | 0xFFFD; // msbit 1=SPI write
-    WriteLMS7002MSPI(&val, 1);
+    uint32_t val;
     ReadLMS7002MSPI(&addr, &val, 1);
     bool bypassTx = (val & 0xF0) == 0x00;
     bool bypassRx = (val & 0x0F) == 0x0D;
@@ -1181,7 +1180,7 @@ double FPGA::DetectRefClk(double fx3Clk)
 /// @return The gateware information of the FPGA.
 FPGA::GatewareInfo FPGA::GetGatewareInfo()
 {
-    GatewareInfo info;
+    GatewareInfo info{};
     info.boardID = 0;
     info.version = 0;
     info.revision = 0;

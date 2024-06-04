@@ -150,7 +150,7 @@ int source_impl::work(int noutput_items,
 
     // Receive stream for channel 0 (if channel_mode is SISO)
     lime::StreamStats status;
-    lime::StreamMeta rx_metadata;
+    lime::StreamMeta rx_metadata{};
 
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(stored.device_number);

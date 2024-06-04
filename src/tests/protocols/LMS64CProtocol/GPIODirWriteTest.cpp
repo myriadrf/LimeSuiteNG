@@ -16,6 +16,7 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -23,6 +24,7 @@ MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct comma
     return packet->cmd == command;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -30,6 +32,7 @@ MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct
     return packet->blockCount == blockCount;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);

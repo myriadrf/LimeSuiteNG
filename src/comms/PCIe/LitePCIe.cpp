@@ -20,7 +20,7 @@ using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 
-#define EXTRA_CHECKS 1
+constexpr bool EXTRA_CHECKS{ true };
 
 std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& regex)
 {
@@ -72,7 +72,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
         return OpStatus::FileNotFound;
     }
 
-    litepcie_ioctl_mmap_dma_info info;
+    litepcie_ioctl_mmap_dma_info info{};
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_INFO, &info);
     if (ret != 0)
     {
@@ -81,7 +81,7 @@ OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t fl
 
     mDMA.bufferCount = info.dma_rx_buf_count;
     mDMA.bufferSize = info.dma_rx_buf_size;
-    litepcie_ioctl_lock lockInfo;
+    litepcie_ioctl_lock lockInfo{};
     // O_RDONLY has value of 0, so cannot detect if file is being opened as read only when other flags are preset
     if ((flags & O_WRONLY) != O_WRONLY || (flags & O_RDWR) == O_RDWR)
     {
@@ -186,7 +186,7 @@ void LitePCIe::RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod)
 {
     if (!IsOpen())
         return;
-    litepcie_ioctl_dma_writer writer;
+    litepcie_ioctl_dma_writer writer{};
     memset(&writer, 0, sizeof(litepcie_ioctl_dma_writer));
     writer.enable = enabled ? 1 : 0;
     writer.hw_count = 0;
@@ -205,7 +205,7 @@ void LitePCIe::TxDMAEnable(bool enabled)
 {
     if (!IsOpen())
         return;
-    litepcie_ioctl_dma_reader reader;
+    litepcie_ioctl_dma_reader reader{};
     memset(&reader, 0, sizeof(litepcie_ioctl_dma_reader));
     reader.enable = enabled ? 1 : 0;
     reader.hw_count = 0;
@@ -217,7 +217,7 @@ void LitePCIe::TxDMAEnable(bool enabled)
 
 IDMA::DMAState LitePCIe::GetRxDMAState()
 {
-    litepcie_ioctl_dma_writer dma;
+    litepcie_ioctl_dma_writer dma{};
     memset(&dma, 0, sizeof(litepcie_ioctl_dma_writer));
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &dma);
@@ -232,7 +232,7 @@ IDMA::DMAState LitePCIe::GetRxDMAState()
 
 IDMA::DMAState LitePCIe::GetTxDMAState()
 {
-    litepcie_ioctl_dma_reader dma;
+    litepcie_ioctl_dma_reader dma{};
     memset(&dma, 0, sizeof(litepcie_ioctl_dma_reader));
     dma.enable = 1;
     int ret = ioctl(mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &dma);
@@ -247,11 +247,11 @@ IDMA::DMAState LitePCIe::GetTxDMAState()
 
 bool LitePCIe::WaitRx()
 {
-    pollfd desc;
+    pollfd desc{};
     desc.fd = mFileDescriptor;
     desc.events = POLLIN;
 
-    struct timespec timeout_ts;
+    timespec timeout_ts{};
     timeout_ts.tv_sec = 0;
     timeout_ts.tv_nsec = 10e6;
     int ret = ppoll(&desc, 1, &timeout_ts, NULL);
@@ -279,11 +279,11 @@ bool LitePCIe::WaitRx()
 
 bool LitePCIe::WaitTx()
 {
-    pollfd desc;
+    pollfd desc{};
     desc.fd = mFileDescriptor;
     desc.events = POLLOUT;
 
-    struct timespec timeout_ts;
+    timespec timeout_ts{};
     timeout_ts.tv_sec = 0;
     timeout_ts.tv_nsec = 1e8;
     int ret = ppoll(&desc, 1, &timeout_ts, NULL);
@@ -307,7 +307,7 @@ bool LitePCIe::WaitTx()
 
 int LitePCIe::SetRxDMAState(DMAState s)
 {
-    litepcie_ioctl_mmap_dma_update sub;
+    litepcie_ioctl_mmap_dma_update sub{};
     memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
     sub.sw_count = s.softwareIndex;
     sub.buffer_size = mDMA.bufferSize;
@@ -321,7 +321,7 @@ int LitePCIe::SetRxDMAState(DMAState s)
 
 int LitePCIe::SetTxDMAState(DMAState s)
 {
-    litepcie_ioctl_mmap_dma_update sub;
+    litepcie_ioctl_mmap_dma_update sub{};
     memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
     sub.sw_count = s.softwareIndex;
     sub.buffer_size = s.bufferSize;
@@ -336,7 +336,7 @@ int LitePCIe::SetTxDMAState(DMAState s)
 
 void LitePCIe::CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index)
 {
-    litepcie_cache_flush sub;
+    litepcie_cache_flush sub{};
     memset(&sub, 0, sizeof(litepcie_cache_flush));
     sub.isTx = samplesDirection == TRXDir::Tx;
     sub.toDevice = dataDirection == DataTransferDirection::HostToDevice;

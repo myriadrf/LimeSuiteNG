@@ -18,6 +18,7 @@ using namespace std::literals::string_literals;
 
 lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
+    , sizerR3(new wxFlexGridSizer(0, 2, 0, 0))
 {
     const int flags = 0;
     wxFlexGridSizer* fgSizer244;
@@ -599,7 +600,6 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
 
     fgSizer245->Add(sbSizer69, 1, wxEXPAND, 5);
 
-    sizerR3 = new wxFlexGridSizer(0, 2, 0, 0);
     sizerR3->SetFlexibleDirection(wxBOTH);
     sizerR3->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 

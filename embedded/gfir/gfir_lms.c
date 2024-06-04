@@ -17,61 +17,61 @@
 #include "lms.h"
 #include "dfilter.h"
 
-#define CPREC 16 /* Coefficients precision */
-#define CSDPREC 16 /* CSD Coefficients precision */
+enum {
+    CPREC = 16, /* Coefficients precision */
+    CSDPREC = 16 /* CSD Coefficients precision */
+};
 
 /* *********************************************************************** */
-int gfir_lms(hr, hi, hcsd, n, w1, w2, a1, a2, cprec, csdprec, correction)
-struct dfilter *hr, *hi, *hcsd;
-int n;
-double w1, w2, a1, a2;
-int cprec;
-int csdprec;
-double (*correction)();
+int gfir_lms(struct dfilter* hr,
+    struct dfilter* hi,
+    struct dfilter* hcsd,
+    int n,
+    float w1,
+    float w2,
+    float a1,
+    float a2,
+    int cprec,
+    int csdprec,
+    float (*correction)(float))
 {
-    double *weights, *desired, *w;
-    int i, points, p1, p2;
-    double deltaw;
-
-    int **bincode, **csdcode, **csdcoder, **xpx, **xmx, **x;
-
     /* Points on a frequency grid */
-    points = LMS_POINTS / 2;
+    const int points = LMS_POINTS / 2;
 
     /* Allocate memory */
-    weights = (double*)calloc(2 * points, sizeof(double));
-    desired = (double*)calloc(2 * points, sizeof(double));
-    w = (double*)calloc(2 * points, sizeof(double));
+    float* const weights = (float*)calloc(2 * points, sizeof(float));
+    float* const desired = (float*)calloc(2 * points, sizeof(float));
+    float* const w = (float*)calloc(2 * points, sizeof(float));
 
-    bincode = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const bincode = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         bincode[i] = (int*)calloc(cprec + 1, sizeof(int));
 
-    csdcode = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const csdcode = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         csdcode[i] = (int*)calloc(cprec + 1, sizeof(int));
 
-    csdcoder = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const csdcoder = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         csdcoder[i] = (int*)calloc(cprec + 1, sizeof(int));
 
-    xpx = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const xpx = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         xpx[i] = (int*)calloc(cprec + 1, sizeof(int));
 
-    xmx = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const xmx = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         xmx[i] = (int*)calloc(cprec + 1, sizeof(int));
 
-    x = (int**)calloc(n, sizeof(int*));
-    for (i = 0; i < n; i++)
+    int** const x = (int**)calloc(n, sizeof(int*));
+    for (int i = 0; i < n; i++)
         x[i] = (int*)calloc(cprec + 1, sizeof(int));
 
     /* Configure the filter with infinite precision coefficients */
     hr->m = n - 1;
     hr->n = 0;
-    hr->a = (double*)calloc(n, sizeof(double));
-    hr->b = (double*)calloc(1, sizeof(double));
+    hr->a = (float*)calloc(n, sizeof(float));
+    hr->b = (float*)calloc(1, sizeof(float));
     hr->b[0] = 1.0;
     hr->nw = 2 * points;
     hr->w = w;
@@ -79,8 +79,8 @@ double (*correction)();
     /* Configure the filter with integer coefficients */
     hi->m = n - 1;
     hi->n = 0;
-    hi->a = (double*)calloc(n, sizeof(double));
-    hi->b = (double*)calloc(1, sizeof(double));
+    hi->a = (float*)calloc(n, sizeof(float));
+    hi->b = (float*)calloc(1, sizeof(float));
     hi->b[0] = 1.0;
     hi->nw = 2 * points;
     hi->w = w;
@@ -88,28 +88,28 @@ double (*correction)();
     /* Configure the filter with CSD coefficients */
     hcsd->m = n - 1;
     hcsd->n = 0;
-    hcsd->a = (double*)calloc(n, sizeof(double));
-    hcsd->b = (double*)calloc(1, sizeof(double));
+    hcsd->a = (float*)calloc(n, sizeof(float));
+    hcsd->b = (float*)calloc(1, sizeof(float));
     hcsd->b[0] = 1.0;
     hcsd->nw = 2 * points;
     hcsd->w = w;
 
     /* Construct grid, desired response and weighting function */
     /* 0-w1 band */
-    p1 = points / 4;
-    deltaw = w1 / (double)(p1 - 1);
-    for (i = 0; i < p1; i++)
+    const int p1 = points / 4;
+    float deltaw = w1 / (float)(p1 - 1);
+    for (int i = 0; i < p1; i++)
     {
-        w[i] = (double)(i)*deltaw;
+        w[i] = (float)(i)*deltaw;
         desired[i] = a1 * (correction)(w[i]);
         weights[i] = 1.0; //0.003;
     }
     /* w2-0.5 band */
-    p2 = 2 * points - p1;
-    deltaw = (0.5 - w2) / (double)(p2 - 1);
-    for (i = 0; i < p2; i++)
+    const int p2 = 2 * points - p1;
+    deltaw = (0.5 - w2) / (float)(p2 - 1);
+    for (int i = 0; i < p2; i++)
     {
-        w[i + p1] = w2 + (double)(i)*deltaw;
+        w[i + p1] = w2 + (float)(i)*deltaw;
         desired[i + p1] = a2 * (correction)(w[i + p1]);
         weights[i + p1] = 0.0001; //1.0;
     }
@@ -138,32 +138,32 @@ double (*correction)();
     free(weights);
     free(desired);
     free(w);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(bincode[i]);
     }
     free(bincode);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(csdcode[i]);
     }
     free(csdcode);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(csdcoder[i]);
     }
     free(csdcoder);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(xpx[i]);
     }
     free(xpx);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(xmx[i]);
     }
     free(xmx);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         free(x[i]);
     }
@@ -172,12 +172,11 @@ double (*correction)();
     return 0;
 }
 
-void GenerateFilter(int n, double w1, double w2, double a1, double a2, double* coefs)
+void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coefs)
 {
-    int i;
     struct dfilter hr, hi, hcsd; /* Filter transfer functions */
     /* Find the filter coefficients */
     gfir_lms(&hr, &hi, &hcsd, n, w1, w2, a1, a2, CPREC, CSDPREC, NONE);
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
         coefs[i] = hi.a[i];
 }

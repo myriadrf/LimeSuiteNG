@@ -21,27 +21,27 @@
 #define LMS_POINTS 4000
 
 /* Amplitude correction functions */
-double InvSinc();
-double InvSincS();
-double One();
+float InvSinc(float);
+float InvSincS(float, float, float);
+float One(float);
 
 /* Amplitude correction functions we can support */
 #define NONE One /* Constant */
 #define ONE One /* as well */
-#define INVSINC InvSinc /* Iverse sinc */
+#define INVSINC InvSinc /* Inverse sinc */
 #define INVSINCS InvSincS /* Shifted Inverse Sinc */
 
 /* Cosine filter type selection */
 #define RAISEDCOSINE 1
 #define ROOTRAISEDCOSINE 2
 
-int lms(double* hr,
-    double* hi,
-    double* hcsd,
+int lms(float* hr,
+    float* hi,
+    float* hcsd,
     int n,
-    double* w,
-    double* des,
-    double* weight,
+    float* w,
+    float* des,
+    float* weight,
     int p,
     int cprec,
     int csdprec,

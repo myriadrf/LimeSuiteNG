@@ -23,7 +23,7 @@ class Equalizer
             uint8_t interpolation;
             uint16_t threshold;
             uint16_t thresholdGain;
-        } cfr[2];
+        } cfr[2]{};
 
         /** @brief Post-CFR Finite Impulse Response (FIR) information */
         struct FIR {
@@ -31,9 +31,9 @@ class Equalizer
             bool bypass;
             int16_t coefficients[32];
             uint8_t coefficientsCount;
-        } fir[2];
-        bool bypassRxEqualizer[2];
-        bool bypassTxEqualizer[2];
+        } fir[2]{};
+        bool bypassRxEqualizer[2]{};
+        bool bypassTxEqualizer[2]{};
 
         Config();
     };

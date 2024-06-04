@@ -8,8 +8,8 @@
 namespace lime {
 
 StreamComposite::StreamComposite(const std::vector<StreamAggregate>& aggregate)
+    : mAggregate(aggregate)
 {
-    mAggregate = aggregate;
 }
 
 OpStatus StreamComposite::StreamSetup(const StreamConfig& config)

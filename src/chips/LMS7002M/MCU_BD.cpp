@@ -24,21 +24,23 @@ using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
 MCU_BD::MCU_BD()
+    : m_iLoopTries(20)
+    , stepsDone(0)
+    , stepsTotal(0)
+    , aborted(false)
+    , m_bLoadedDebug(0)
+    , m_bLoadedProd(0)
+    , byte_array_size(MCU_PROGRAM_SIZE)
+    , m_callback(nullptr)
 {
     mLoadedProgramFilename = ""s;
-    m_bLoadedDebug = 0;
-    m_bLoadedProd = 0;
-    stepsTotal = 0;
-    stepsDone = 0;
-    aborted = false;
-    m_callback = nullptr;
+
     //ctor
     int i = 0;
     m_serPort = NULL;
     //default value,
     //must be verified during program exploatation
-    m_iLoopTries = 20;
-    byte_array_size = MCU_PROGRAM_SIZE;
+
     // array initiallization
     for (i = 0; i <= 255; i++)
     {
@@ -907,7 +909,7 @@ int MCU_BD::RunInstr_MCU(unsigned short* pPCVAL)
 */
 MCU_BD::ProgressInfo MCU_BD::GetProgressInfo() const
 {
-    ProgressInfo info;
+    ProgressInfo info{};
     info.stepsDone = stepsDone.load();
     info.stepsTotal = stepsTotal.load();
     info.aborted = aborted.load();

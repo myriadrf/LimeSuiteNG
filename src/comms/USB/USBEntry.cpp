@@ -70,7 +70,7 @@ std::vector<DeviceHandle> USBEntry::enumerate(const DeviceHandle& hint)
 
     for (int i = 0; i < usbDeviceCount; ++i)
     {
-        libusb_device_descriptor desc;
+        libusb_device_descriptor desc{};
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
         if (returnCode < 0)
         {

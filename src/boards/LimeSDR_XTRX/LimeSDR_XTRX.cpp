@@ -129,7 +129,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_XTRX);
 
-    LMS64CProtocol::FirmwareInfo fw;
+    LMS64CProtocol::FirmwareInfo fw{};
     LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
@@ -879,7 +879,7 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     args.testName = name + " ChA";
     args.channelIndex = 0;
 
-    RFTestOutput output;
+    RFTestOutput output{};
     if (configPass)
         chAPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
     results[0].frequency = output.frequency;

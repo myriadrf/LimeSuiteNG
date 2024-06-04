@@ -25,12 +25,6 @@ using namespace std::literals::string_literals;
 static const float_type RxLPF_RF_LimitLow = 1.4e6;
 static const float_type RxLPF_RF_LimitHigh = 130e6;
 
-//tx lpf range limits
-const float_type TxLPF_RF_LimitLow = 5e6;
-const float_type TxLPF_RF_LimitLowMid = 40e6;
-const float_type TxLPF_RF_LimitMidHigh = 50e6;
-const float_type TxLPF_RF_LimitHigh = 130e6;
-
 LMS7002M_RegistersMap* LMS7002M::BackupRegisterMap(void)
 {
     //BackupAllRegisters(); return NULL;
@@ -119,72 +113,5 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     for (const auto addr : regsToSync)
         this->SPI_read(addr, true);
 
-    return OpStatus::Success;
-}
-
-OpStatus LMS7002M::TuneTxFilter(const float_type tx_lpf_freq_RF)
-{
-    int status;
-
-    if (tx_lpf_freq_RF < TxLPF_RF_LimitLow || tx_lpf_freq_RF > TxLPF_RF_LimitHigh)
-        return ReportError(OpStatus::OutOfRange,
-            "Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz",
-            tx_lpf_freq_RF / 1e6,
-            TxLPF_RF_LimitLow / 1e6,
-            TxLPF_RF_LimitLowMid / 1e6,
-            TxLPF_RF_LimitMidHigh / 1e6,
-            TxLPF_RF_LimitHigh / 1e6);
-    //calculate intermediate frequency
-    float_type tx_lpf_IF = tx_lpf_freq_RF / 2;
-    if (tx_lpf_freq_RF > TxLPF_RF_LimitLowMid && tx_lpf_freq_RF < TxLPF_RF_LimitMidHigh)
-    {
-        lime::warning("Tx lpf(%g MHz) out of range %g-%g MHz and %g-%g MHz. Setting to %g MHz",
-            tx_lpf_freq_RF / 1e6,
-            TxLPF_RF_LimitLow / 1e6,
-            TxLPF_RF_LimitLowMid / 1e6,
-            TxLPF_RF_LimitMidHigh / 1e6,
-            TxLPF_RF_LimitHigh / 1e6,
-            TxLPF_RF_LimitMidHigh / 1e6);
-        tx_lpf_IF = TxLPF_RF_LimitMidHigh / 2;
-    }
-
-    if (!controlPort)
-        return ReportError(OpStatus::IOFailure, "Tune Tx Filter: No device connected"s);
-
-    if (mcuControl->ReadMCUProgramID() != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
-    {
-        OpStatus status = mcuControl->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        if (status != OpStatus::Success)
-            return ReportError(status, "Tune Tx Filter: failed to program MCU"s);
-    }
-
-    int ind = this->GetActiveChannelIndex() % 2;
-    opt_gain_tbb[ind] = -1;
-
-    //set reference clock parameter inside MCU
-    long refClk = GetReferenceClk_SX(TRXDir::Rx);
-    mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_REF_CLK, refClk);
-    lime::debug("MCU Ref. clock: %g MHz", refClk / 1e6);
-    //set bandwidth for MCU to read from register, value is integer stored in MHz
-    mcuControl->SetParameter(MCU_BD::MCU_Parameter::MCU_BW, tx_lpf_freq_RF);
-    mcuControl->RunProcedure(6);
-
-    status = mcuControl->WaitForMCU(1000);
-    if (status != MCU_BD::MCU_NO_ERROR)
-    {
-        lime::error("Tune Tx Filter: MCU error %i (%s)", status, MCU_BD::MCUStatusMessage(status).c_str());
-        return OpStatus::Error;
-    }
-    //sync registers to cache
-    std::vector<uint16_t> regsToSync = { 0x0105, 0x0106, 0x0109, 0x010A, 0x010B };
-    for (const auto addr : regsToSync)
-        this->SPI_read(addr, true);
-
-    if (tx_lpf_IF <= TxLPF_RF_LimitLowMid / 2)
-        lime::info("Filter calibrated. Filter order-4th, filter bandwidth set to %g MHz."
-                   "Real pole 1st order filter set to 2.5 MHz. Preemphasis filter not active",
-            tx_lpf_IF / 1e6 * 2);
-    else
-        lime::info("Filter calibrated. Filter order-2nd, set to %g MHz", tx_lpf_IF / 1e6 * 2);
     return OpStatus::Success;
 }

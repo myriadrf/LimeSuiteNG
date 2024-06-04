@@ -1,6 +1,7 @@
 #include "CommonFunctions.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
+#include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
@@ -452,9 +453,13 @@ API_EXPORT int CALL_CONV LMS_GetAntennaList(lms_device_t* device, bool dir_tx, s
 
     const auto& rfSOC = apiDevice->GetRFSOCDescriptor();
     const auto& strings = rfSOC.pathNames.at(dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
-    for (std::size_t i = 0; i < strings.size(); ++i)
+
+    if (list != nullptr)
     {
-        CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        for (std::size_t i = 0; i < strings.size(); ++i)
+        {
+            CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        }
     }
 
     return strings.size();
@@ -1277,7 +1282,8 @@ API_EXPORT const lms_dev_info_t* CALL_CONV LMS_GetDeviceInfo(lms_device_t* devic
     CopyString(descriptor.hardwareVersion, apiDevice->deviceInfo->hardwareVersion, sizeof(apiDevice->deviceInfo->hardwareVersion));
     CopyString(descriptor.protocolVersion, apiDevice->deviceInfo->protocolVersion, sizeof(apiDevice->deviceInfo->protocolVersion));
     apiDevice->deviceInfo->boardSerialNumber = descriptor.serialNumber;
-    CopyString(descriptor.gatewareVersion, apiDevice->deviceInfo->gatewareVersion, sizeof(apiDevice->deviceInfo->gatewareVersion));
+    std::string combinedGatewareVersion = descriptor.gatewareVersion + "." + descriptor.gatewareRevision;
+    CopyString(combinedGatewareVersion, apiDevice->deviceInfo->gatewareVersion, sizeof(apiDevice->deviceInfo->gatewareVersion));
     CopyString(descriptor.gatewareTargetBoard,
         apiDevice->deviceInfo->gatewareTargetBoard,
         sizeof(apiDevice->deviceInfo->gatewareTargetBoard));
@@ -1337,7 +1343,14 @@ API_EXPORT int CALL_CONV LMS_GetChipTemperature(lms_device_t* dev, size_t ind, f
     }
 
     if (temp)
-        *temp = apiDevice->device->GetTemperature(apiDevice->moduleIndex);
+    {
+        // TODO: replace with generic RFSOC interface
+        lime::LMS7002M* chip = reinterpret_cast<LMS7002M*>(apiDevice->device->GetInternalChip(apiDevice->moduleIndex));
+        if (!chip)
+            return -1;
+
+        *temp = chip->GetTemperature();
+    }
     return 0;
 }
 
@@ -1587,7 +1600,7 @@ API_EXPORT int CALL_CONV LMS_SetGFIR(lms_device_t* device, bool dir_tx, size_t c
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t* val)
+API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Parameter param, uint16_t* val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
@@ -1601,7 +1614,7 @@ API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7002MCSR_
     return 0;
 }
 
-API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7002MCSR_Data::CSRegister param, uint16_t val)
+API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Parameter param, uint16_t val)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr)
