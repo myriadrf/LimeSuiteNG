@@ -1735,10 +1735,14 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
 
     pci_set_master(dev);
 
+    ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(64));
+    if (ret)
+        dev_warn(&dev->dev, "Failed to set DMA mask 64bit. Falling back to 32bit\n");
+
     ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(32));
     if (ret)
     {
-        dev_err(&dev->dev, "Failed to set DMA mask 32bit\n");
+        dev_err(&dev->dev, "Failed to set DMA mask 32bit. Critical error.\n");
         goto fail1;
     };
 
