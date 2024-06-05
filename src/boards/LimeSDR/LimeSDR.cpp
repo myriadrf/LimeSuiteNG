@@ -467,6 +467,10 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 // clear the USB buffers before streaming samples to avoid old data
 void LimeSDR::ResetUSBFIFO()
 {
+    lime::debug("LimeSDR: resetting USB FIFO");
+    // Don't reset USB FIFO if stream is running, otherwise data will stop.
+    if (mStreamers.at(0) != nullptr)
+        assert(!mStreamers.at(0)->IsStreamRunning());
     LMS64CPacket pkt;
     pkt.cmd = Command::USB_FIFO_RST;
     pkt.status = CommandStatus::Undefined;
@@ -499,19 +503,18 @@ OpStatus LimeSDR::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
     auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
     auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
 
+    ResetUSBFIFO();
     mStreamers.at(moduleIndex) = new TRXLooper(
         std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA, mLMSChips.at(moduleIndex), 0);
     mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
-    return mStreamers.at(moduleIndex)->Setup(config);
+    OpStatus status = mStreamers.at(moduleIndex)->Setup(config);
+    return status;
 }
 
 void LimeSDR::StreamStart(uint8_t moduleIndex)
 {
     if (mStreamers[0])
-    {
-        ResetUSBFIFO();
         mStreamers[0]->Start();
-    }
     else
         throw std::runtime_error("Stream not setup"s);
 }

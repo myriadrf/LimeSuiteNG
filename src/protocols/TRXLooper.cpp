@@ -384,6 +384,7 @@ void TRXLooper::ReceivePacketsLoop()
     constexpr uint8_t irqPeriod{ 4 };
     // Rx DMA has to be enabled before the stream enable, otherwise some data
     // might be lost in the time frame between stream enable and then dma enable.
+    mRxArgs.dma->EnableContinous(true, readSize, irqPeriod);
 
     // thread ready for work, just wait for stream enable
     {
@@ -393,7 +394,6 @@ void TRXLooper::ReceivePacketsLoop()
         lk.unlock();
     }
 
-    mRxArgs.dma->EnableContinous(true, readSize, irqPeriod);
     auto t1{ std::chrono::steady_clock::now() };
     auto t2 = t1;
 
