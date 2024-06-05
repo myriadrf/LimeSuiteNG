@@ -38,12 +38,13 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     std::vector<std::shared_ptr<LimePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control,
     std::shared_ptr<ISPI> adfComms)
-    : mTRXStreamPorts(trxStreams)
+    : mMainFPGAcomms(spiFPGA[8])
+    , mTRXStreamPorts(trxStreams)
+    , mADF(new ADF4002())
 {
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes
 
-    mMainFPGAcomms = spiFPGA[8];
     SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MMX8);
 
@@ -58,7 +59,6 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
     desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
 
-    mADF = new ADF4002();
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF));

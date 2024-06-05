@@ -570,26 +570,13 @@ void lms7002_pnlMCU_BD_view::OnbtnLoadTestFileClick(wxCommandEvent& event)
         return;
     }
 
-    m_iTestResultFileLine = 0;
-    for (int i = 0; i < 256; i++)
-    {
-        TestResultArray_code[i] = 0;
-        TestResultArray_address[i] = 0;
-        TestResultArray_value[i] = 0;
-    }
-
-    m_iTestResultFileLine = 0;
     inFile >> test_code;
 
+    // Test reading the file?
     while (!inFile.eof() && !inFile.fail())
     {
         inFile >> address;
         inFile >> value;
-        TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
-        TestResultArray_address[m_iTestResultFileLine] = static_cast<unsigned char>(address);
-        TestResultArray_value[m_iTestResultFileLine] = static_cast<unsigned char>(value);
-
-        m_iTestResultFileLine++;
         inFile >> test_code;
     }
 
@@ -609,7 +596,10 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
         return;
     }
 
-    m_iTestResultFileLine = 0;
+    std::array<int, 256> TestResultArray_code{};
+    std::array<int, 256> TestResultArray_address{};
+    std::array<int, 256> TestResultArray_value{};
+
     for (int i = 0; i < 256; i++)
     {
         TestResultArray_code[i] = 0;
@@ -617,7 +607,7 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
         TestResultArray_value[i] = 0;
     }
 
-    m_iTestResultFileLine = 0;
+    int m_iTestResultFileLine{ 0 };
     int test_code = 0;
     int address = 0;
     int value = 0;
@@ -637,11 +627,6 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
 
     inFile.close();
 
-    unsigned char tempc1, tempc2, tempc3 = 0x00;
-    int retval = 0;
-    int m_iError = 0;
-    int i = 0;
-
     if ((m_iTestNo <= 0) || (m_iTestNo > 15))
     {
         m_iTestNo = 0;
@@ -656,40 +641,36 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
     if (m_iDebug == 0)
         mcu->DebugModeSet_MCU(m_iMode1, m_iMode0);
     // Go to Debug mode
-    m_iError = 0;
-    i = 0;
-    while ((i < m_iTestResultFileLine) && (m_iError == 0))
+
+    wxString temps{ _("OK") };
+
+    for (int i = 0; i < m_iTestResultFileLine; ++i)
     {
-        if (TestResultArray_code[i] == m_iTestNo)
+        if (TestResultArray_code[i] != m_iTestNo)
         {
-            retval = mcu->Three_byte_command(
-                0x78, static_cast<unsigned char>(TestResultArray_address[i]), 0x00, &tempc1, &tempc2, &tempc3);
-            if ((retval == -1) || (tempc3 != TestResultArray_value[i]))
-                m_iError = 1;
-            else
-                i++;
+            continue;
         }
-        else
-            i++;
-    };
+
+        unsigned char tempc1, tempc2, tempc3 = 0x00;
+        const int retval{ mcu->Three_byte_command(
+            0x78, static_cast<unsigned char>(TestResultArray_address[i]), 0x00, &tempc1, &tempc2, &tempc3) };
+        if ((retval == -1) || (tempc3 != TestResultArray_value[i]))
+        {
+            const wxString temps1{ wxString::Format(_("0x%02X"), TestResultArray_address[i]) };
+            const wxString temps2{ wxString::Format(_("0x%02X"), TestResultArray_value[i]) };
+            const wxString temps3{ wxString::Format(_("0x%02X"), tempc3) };
+
+            temps = _("Test failed. No.:");
+            temps = temps << TestResultArray_code[i];
+            temps = temps << _(", at address ") << temps1;
+            temps = temps << _(", should be ") << temps2;
+            temps = temps << _(", but is read ") << temps3;
+            break;
+        }
+    }
     //exit the debug mode
     mcu->DebugModeExit_MCU(m_iMode1, m_iMode0);
 
-    wxString temps, temps1, temps2, temps3;
-    if (m_iError == 1)
-    {
-        temps1 = wxString::Format(_("0x%02X"), TestResultArray_address[i]);
-        temps2 = wxString::Format(_("0x%02X"), TestResultArray_value[i]);
-        temps3 = wxString::Format(_("0x%02X"), tempc3);
-
-        temps = _("Test failed. No.:");
-        temps = temps << TestResultArray_code[i];
-        temps = temps << _(", at address ") << temps1;
-        temps = temps << _(", should be ") << temps2;
-        temps = temps << _(", but is read ") << temps3;
-    }
-    else
-        temps = _("OK");
     wxMessageBox(temps);
     return;
 }
@@ -853,13 +834,12 @@ void lms7002_pnlMCU_BD_view::OnSelDivSelect(wxCommandEvent& event)
 
 void lms7002_pnlMCU_BD_view::Onm_cCtrlBasebandSelect(wxCommandEvent& event)
 {
-    LMS_WriteLMSReg(lmsControl, 0x0006, 0x0000);
+    WriteLMSReg(0x0006, 0x0000);
 }
 
 void lms7002_pnlMCU_BD_view::Onm_cCtrlMCU_BDSelect(wxCommandEvent& event)
 {
-    LMS_WriteLMSReg(lmsControl, 0x0006, 0x0001);
-    ; //REG6 write
+    WriteLMSReg(0x0006, 0x0001); // REG6 write
 }
 
 void lms7002_pnlMCU_BD_view::OnRegWriteRead(wxCommandEvent& event)
@@ -871,11 +851,10 @@ void lms7002_pnlMCU_BD_view::OnRegWriteRead(wxCommandEvent& event)
         data = 0;
 
     if (rbtnRegWrite->GetValue() == 1)
-        LMS_WriteLMSReg(lmsControl, 0x8000 + addr, data); //REG write
+        WriteLMSReg(0x8000 + addr, data); //REG write
     else
     {
-        unsigned short retval = 0;
-        LMS_ReadLMSReg(lmsControl, addr, &retval); //REG read
+        unsigned short retval{ ReadLMSReg(addr) }; //REG read
         ReadResult->SetLabel(wxString::Format("Result is: 0x%02X", retval));
     }
 }

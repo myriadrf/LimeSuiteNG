@@ -333,6 +333,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
 
     // if chip index is not specified and device has only one, use it by default
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
@@ -450,8 +451,8 @@ int main(int argc, char** argv)
     FFTPlotter fftplot(sampleRate, fftSize, persistPlotWindows);
 #endif
 
-    StreamMeta rxMeta;
-    StreamMeta txMeta;
+    StreamMeta rxMeta{};
+    StreamMeta txMeta{};
     txMeta.waitForTimestamp = true;
     txMeta.timestamp = sampleRate / 100; // send tx samples 10ms after start
 

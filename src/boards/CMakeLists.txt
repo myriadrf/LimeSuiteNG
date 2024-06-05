@@ -12,6 +12,10 @@ if(ENABLE_LIMEPCIE)
     include(${CMAKE_CURRENT_LIST_DIR}/external/XSDR/CMakeLists.txt)
 endif()
 
+# if(ENABLE_USB_FX3 OR ENABLE_USB_FTDI)
+#     target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/USBEntry.cpp)
+# endif()
+
 if(ENABLE_USB_FX3)
     include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR/CMakeLists.txt)
     target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DeviceFactoryFX3.cpp)

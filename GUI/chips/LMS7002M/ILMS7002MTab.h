@@ -23,14 +23,13 @@ class ILMS7002MTab : public wxPanel
     void SetChannel(uint8_t channel);
 
   protected:
-    int LMS_ReadLMSReg(lime::LMS7002M* lms, uint16_t address, uint16_t* value);
-    int LMS_WriteLMSReg(lime::LMS7002M* lms, uint16_t address, uint16_t value);
+    uint16_t ReadLMSReg(uint16_t address);
+    void WriteLMSReg(uint16_t address, uint16_t value);
     virtual void ParameterChangeHandler(wxCommandEvent& event);
     virtual void SpinParameterChangeHandler(wxSpinEvent& event);
 
     virtual void WriteParam(const lime::LMS7002MCSR param, uint16_t val);
-    virtual int ReadParam(const lime::LMS7002MCSR param);
-    int LMS_ReadParam(lime::LMS7002M* lmsControl, const lime::LMS7002MCSR param, uint16_t* value);
+    virtual uint16_t ReadParam(const lime::LMS7002MCSR param);
 
     lime::LMS7002M* lmsControl;
     std::map<wxWindow*, lime::LMS7002MCSR> wndId2Enum;

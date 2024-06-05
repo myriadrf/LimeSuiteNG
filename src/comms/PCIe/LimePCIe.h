@@ -1,19 +1,23 @@
-#pragma once
-#include <string>
-#include <mutex>
-#include <atomic>
-#include <vector>
-#include <filesystem>
+#ifndef LIME_LIMEPCIE_H
+#define LIME_LIMEPCIE_H
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 
+#include <cstdint>
+#include <filesystem>
+#include <vector>
+#include <string>
+
 namespace lime {
 
-/** @brief Class for communicating with a PCIe device. */
+class LitePCIeDMA;
+
+/// @brief Class for communicating with a PCIe device.
 class LIME_API LimePCIe
 {
   public:
+    friend LitePCIeDMA;
     static std::vector<std::string> GetEndpointsWithPattern(const std::string& deviceAddr, const std::string& regex);
     static std::vector<std::string> GetPCIeDeviceList();
     LimePCIe();
@@ -21,7 +25,7 @@ class LIME_API LimePCIe
 
     OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
     void Close();
-    bool IsOpen();
+    bool IsOpen() const;
 
     // Write/Read for communicating to control end points (SPI, I2C...)
     virtual int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
@@ -29,58 +33,14 @@ class LIME_API LimePCIe
     virtual OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms = 100);
     virtual OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100);
 
-    // Write/Read for samples streaming
-    int WriteRaw(const uint8_t* buffer, int length, int timeout_ms = 100);
-    int ReadRaw(uint8_t* buffer, int length, int timeout_ms = 100);
-
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
 
-    int GetFd() const { return mFileDescriptor; };
-
-    void RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod);
-    void TxDMAEnable(bool enabled);
-
-    /** @brief Structure for holding the Direct Memory Access (DMA) information. */
-    struct DMAInfo {
-        DMAInfo()
-            : rxMemory(nullptr)
-            , txMemory(nullptr)
-            , bufferSize(0)
-            , bufferCount(0)
-        {
-        }
-        uint8_t* rxMemory;
-        uint8_t* txMemory;
-        int bufferSize;
-        int bufferCount;
-    };
-    DMAInfo GetDMAInfo() { return mDMA; };
-
-    /** @brief Structure for holding the current state of the Direct Memory Access (DMA). */
-    struct DMAState {
-        uint32_t hwIndex;
-        uint32_t swIndex;
-        uint32_t bufferSize;
-        bool enabled;
-        bool genIRQ;
-    };
-    DMAState GetRxDMAState();
-    DMAState GetTxDMAState();
-
-    int SetRxDMAState(DMAState s);
-    int SetTxDMAState(DMAState s);
-
-    bool WaitRx();
-    bool WaitTx();
-
-    void CacheFlush(bool isTx, bool toDevice, uint16_t index);
-
   protected:
     std::filesystem::path mFilePath;
-    DMAInfo mDMA;
     int mFileDescriptor;
-    bool isConnected;
 };
 
 } // namespace lime
+
+#endif // LIME_LIMEPCIE_H

@@ -37,8 +37,8 @@ class NumericSlider : public wxPanel
     void OnSpinnerChangeEnter(wxSpinEvent& event);
     void OnSpinnerChange(wxSpinEvent& event);
     void OnScrollChange(wxScrollEvent& event);
-    wxSpinCtrl* mSpinner;
-    wxScrollBar* mScroll;
+    wxSpinCtrl* mSpinner{};
+    wxScrollBar* mScroll{};
 
   private:
     DECLARE_DYNAMIC_CLASS(NumericSlider)

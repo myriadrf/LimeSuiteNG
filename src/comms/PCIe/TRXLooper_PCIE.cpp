@@ -236,7 +236,7 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
     auto t1 = perfClock::now();
     auto t2 = t1;
 
-    LimePCIe::DMAState state;
+    LimePCIe::DMAState state{};
     state.swIndex = 0;
 
     DeltaVariable<int32_t> underrun(0);
@@ -342,7 +342,7 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
         // send output buffer if possible
         if (outputReady && canSend)
         {
-            PendingWrite wrInfo;
+            PendingWrite wrInfo{};
             wrInfo.id = stagingBufferIndex;
             wrInfo.offset = 0;
             wrInfo.size = output.size();
@@ -582,7 +582,7 @@ int TRXLooper_PCIE::RxSetup()
 */
 void TRXLooper_PCIE::ReceivePacketsLoop()
 {
-    DataConversion conversion;
+    DataConversion conversion{};
     conversion.srcFormat = mConfig.linkFormat;
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
@@ -622,7 +622,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
 
     int32_t Bps = 0;
 
-    LimePCIe::DMAState dma;
+    LimePCIe::DMAState dma{};
     int64_t lastHwIndex = 0;
     int64_t expectedTS = 0;
     SamplesPacketType* outputPkt = nullptr;
@@ -824,7 +824,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
 
     uint32_t samplesRemaining = count;
     uint8_t dmaIndex = 0;
-    LimePCIe::DMAState state;
+    LimePCIe::DMAState state{};
     state.swIndex = 0;
 
     while (samplesRemaining > 0)

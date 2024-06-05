@@ -32,10 +32,10 @@ SoapyLMS7::SoapyLMS7(const DeviceHandle& handle, const SoapySDR::Kwargs& args)
     , sampleRate{ 0.0, 0.0 }
     , oversampling(0) // Auto
 {
-    // Connect
     SoapySDR::log(SOAPY_SDR_INFO, "Make connection: '" + handle.ToString() + "'");
-
+    //NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     sdrDevice = DeviceRegistry::makeDevice(handle);
+
     if (sdrDevice == nullptr)
     {
         throw std::runtime_error("Failed to make connection with '" + handle.Serialize() + "'");

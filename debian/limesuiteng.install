@@ -2,6 +2,7 @@ usr/bin/limeGUI
 usr/bin/limeConfig
 usr/bin/limeDevice
 usr/bin/limeFLASH
+usr/bin/limeOEM
 usr/bin/limeSPI
 usr/bin/limeTRX
 usr/share/Lime/Desktop/install

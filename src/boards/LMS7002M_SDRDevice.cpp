@@ -1,11 +1,9 @@
 #include "LMS7002M_SDRDevice.h"
 
-#include "DeviceExceptions.h"
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
-#include "chips/LMS7002M/calibrations.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "TRXLooper.h"
@@ -1226,25 +1224,19 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M* chip, const Cha
         chip->SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::Success)
         return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
 
-    int rxStatus = MCU_BD::MCU_NO_ERROR;
-    int txStatus = MCU_BD::MCU_NO_ERROR;
+    OpStatus rxStatus = OpStatus::Success;
     if (ch.rx.calibrate && ch.rx.enabled)
     {
-        SetupCalibrations(chip, ch.rx.sampleRate);
-        rxStatus = CalibrateRx(false, false);
-        if (rxStatus != MCU_BD::MCU_NO_ERROR)
-            lime::ReportError(
-                OpStatus::Error, "Rx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(rxStatus).c_str());
+        rxStatus = chip->CalibrateRx(ch.rx.sampleRate);
     }
+
+    OpStatus txStatus = OpStatus::Success;
     if (ch.tx.calibrate && ch.tx.enabled)
     {
-        SetupCalibrations(chip, ch.tx.sampleRate);
-        txStatus = CalibrateTx(false);
-        if (txStatus != MCU_BD::MCU_NO_ERROR)
-            lime::ReportError(
-                OpStatus::Error, "Tx ch%i DC/IQ calibration failed: %s", i, MCU_BD::MCUStatusMessage(txStatus).c_str());
+        txStatus = chip->CalibrateTx(ch.tx.sampleRate);
     }
-    if (rxStatus != MCU_BD::MCU_NO_ERROR || txStatus != MCU_BD::MCU_NO_ERROR)
+
+    if (rxStatus != OpStatus::Success || txStatus != OpStatus::Success)
         return OpStatus::Error;
     return OpStatus::Success;
 }

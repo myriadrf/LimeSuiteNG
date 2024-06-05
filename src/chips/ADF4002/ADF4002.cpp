@@ -5,7 +5,7 @@
 */
 
 #include "ADF4002.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 
 #include <cmath>
 #include <vector>

@@ -54,19 +54,12 @@ class dlgMarkers : public wxDialog
 
     //(*Handlers(dlgMarkers)
     void OnbtnCloseClick(wxCommandEvent& event);
-    void OnbtnAddMarkerClick(wxCommandEvent& event);
-    void OnbtnDeleteClick(wxCommandEvent& event);
     void OnMarkerChange(wxCommandEvent& event);
-    void OnButton1Click(wxCommandEvent& event);
-    void OnInit(wxInitDialogEvent& event);
-    void OnButton1Click1(wxCommandEvent& event);
     //*)
-    void OnEnableMarker(wxCommandEvent& event);
-    bool refreshMarkFreq;
+    bool refreshMarkFreq{};
 
   protected:
     bool initialized;
-    void BuildContent(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size);
 
     DECLARE_EVENT_TABLE()
 };

@@ -1,5 +1,4 @@
 #include "CommonFunctions.h"
-#include "comms/IComms.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
@@ -454,9 +453,13 @@ API_EXPORT int CALL_CONV LMS_GetAntennaList(lms_device_t* device, bool dir_tx, s
 
     const auto& rfSOC = apiDevice->GetRFSOCDescriptor();
     const auto& strings = rfSOC.pathNames.at(dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
-    for (std::size_t i = 0; i < strings.size(); ++i)
+
+    if (list != nullptr)
     {
-        CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        for (std::size_t i = 0; i < strings.size(); ++i)
+        {
+            CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        }
     }
 
     return strings.size();

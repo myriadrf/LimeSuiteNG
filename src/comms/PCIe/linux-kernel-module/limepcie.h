@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: BSD-2-Clause
  *
- * LitePCIe driver
+ * LimePCIe driver
  *
- * This file is part of LitePCIe.
+ * This file is part of LimePCIe.
  *
  * Copyright (C) 2018-2020 / EnjoyDigital  / florent@enjoy-digital.fr
  *

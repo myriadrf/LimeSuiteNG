@@ -60,20 +60,20 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     struct TestData {
         TestData();
-        uint32_t vctcxoMinCount;
-        uint32_t vctcxoMaxCount;
-        bool refClkPassed;
-        bool gnssPassed;
-        bool vctcxoPassed;
-        bool lmsChipPassed;
+        uint32_t vctcxoMinCount{};
+        uint32_t vctcxoMaxCount{};
+        bool refClkPassed{};
+        bool gnssPassed{};
+        bool vctcxoPassed{};
+        bool lmsChipPassed{};
         struct RFData {
             float frequency;
             float amplitude;
             bool passed;
         };
-        RFData lnal[2];
-        RFData lnaw[2];
-        RFData lnah[2];
+        RFData lnal[2]{};
+        RFData lnaw[2]{};
+        RFData lnah[2]{};
     };
 
     OpStatus ClkTest(OEMTestReporter& reporter, TestData& results);

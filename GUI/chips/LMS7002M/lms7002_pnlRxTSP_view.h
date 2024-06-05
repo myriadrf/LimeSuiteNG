@@ -208,7 +208,6 @@ class lms7002_pnlRXTSP_view : public ILMS7002MTab
     NumericSlider* cmbGCORRI_RXTSP;
     wxStaticText* ID_STATICTEXT4;
     NumericSlider* cmbGCORRQ_RXTSP;
-    wxButton* ID_BUTTON10;
     wxStaticText* ID_STATICTEXT91;
     wxComboBox* cmbAGC_MODE_RXTSP;
     wxStaticText* ID_STATICTEXT3;

@@ -80,8 +80,6 @@ class limeGUIFrame : public wxFrame
     wxTreeCtrl* deviceTree;
     wxMenuBar* mbar;
     wxMenu* fileMenu;
-    wxMenu* mnuOptions;
-    wxMenuItem* mnuCacheValues;
     wxMenu* mnuModules;
     wxMenu* helpMenu;
     wxStatusBar* statusBar;

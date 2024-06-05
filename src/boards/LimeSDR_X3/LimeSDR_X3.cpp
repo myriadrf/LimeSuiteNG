@@ -5,9 +5,9 @@
 
 #include "limesuiteng/Logger.h"
 #include "LimePCIe.h"
+#include "LitePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA_common.h"
-#include "TRXLooper_PCIE.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
 #include "DSP/Equalizer/Equalizer.h"
@@ -17,7 +17,6 @@
 #include "SlaveSelectShim.h"
 #include "utilities/toString.h"
 
-#include "chips/LMS7002M/calibrations.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
@@ -178,7 +177,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     /// could read back it's state for debugging purposes
     SDRDescriptor& desc = mDeviceDescriptor;
 
-    LMS64CProtocol::FirmwareInfo fw;
+    LMS64CProtocol::FirmwareInfo fw{};
     LMS64CProtocol::GetFirmwareInfo(*control, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
@@ -590,7 +589,11 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate = cfg.channel[0].GetDirection(rxUsed ? TRXDir::Rx : TRXDir::Tx).sampleRate;
+        double sampleRate{ 0 };
+        if (rxUsed)
+            sampleRate = cfg.channel[0].rx.sampleRate;
+        else if (txUsed)
+            sampleRate = cfg.channel[0].tx.sampleRate;
 
         if (socIndex == 0 && sampleRate > 0)
         {
@@ -680,22 +683,19 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
 
     if (trx.calibrate && trx.enabled)
     {
-        SetupCalibrations(chip, trx.sampleRate);
-
-        int status;
+        OpStatus status = OpStatus::Success;
         if (dir == TRXDir::Rx)
         {
-            status = CalibrateRx(false, false);
+            status = chip->CalibrateRx(trx.sampleRate);
         }
         else
         {
-            status = CalibrateTx(false);
+            status = chip->CalibrateTx(trx.sampleRate);
         }
 
-        if (status != MCU_BD::MCU_NO_ERROR)
+        if (status != OpStatus::Success)
         {
-            throw std::runtime_error(strFormat(
-                "%s ch%i DC/IQ calibration failed: %s", ToString(dir).c_str(), ch, MCU_BD::MCUStatusMessage(status).c_str()));
+            throw std::runtime_error("Calibration error");
         }
     }
 
@@ -873,10 +873,6 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) = new TRXLooper_PCIE(
-        mTRXStreamPorts.at(moduleIndex), mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
-    if (mCallback_logMessage)
-        mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
     std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
     if (!trxPort->IsOpen())
     {
@@ -893,6 +889,18 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
             return ReportError(OpStatus::Error, reason);
         }
     }
+
+    auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+    mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
+        std::static_pointer_cast<IDMA>(txdma),
+        mFPGA,
+        mLMSChips.at(moduleIndex),
+        moduleIndex);
+    if (mCallback_logMessage)
+        mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
+
     mStreamers[moduleIndex]->Setup(config);
     mStreamConfig = config;
     return OpStatus::Success;
@@ -1082,9 +1090,9 @@ void LimeSDR_X3::LMS2_PA_LNA_Enable(uint8_t chan, bool PAenabled, bool LNAenable
             value |= (!lms2LNA[1]) << 0;
             return value;
         }
-        bool lms1PA[2];
-        bool lms2PA[2];
-        bool lms2LNA[2];
+        bool lms1PA[2]{};
+        bool lms2PA[2]{};
+        bool lms2LNA[2]{};
     };
 
     RegPA pa(mFPGA->ReadRegister(pa_addr));
@@ -1278,7 +1286,8 @@ OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region reg
 
 OpStatus LimeSDR_X3::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
-    return TRXLooper_PCIE::UploadTxWaveform(mFPGA, mTRXStreamPorts[moduleIndex], config, moduleIndex, samples, count);
+    // TODO: return TRXLooper::UploadTxWaveform(mFPGA, txdma, config, moduleIndex, samples, count);
+    return OpStatus::Error;
 }
 
 } //namespace lime

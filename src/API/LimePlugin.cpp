@@ -63,7 +63,8 @@ static std::array<StreamStatus, LIME_TRX_MAX_RF_PORT> portStreamStates;
 static lime::SDRDevice::LogCallbackType hostCallback = nullptr;
 
 DevNode::DevNode()
-    : device(nullptr)
+    : chipIndex(0)
+    , device(nullptr)
 {
 }
 
@@ -256,7 +257,7 @@ static OpStatus MapChannelsToDevices(
                 remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
                 chipRelativeChannelIndex = 0;
             }
-            ChannelData lane;
+            ChannelData lane{};
             lane.chipChannel = chipRelativeChannelIndex;
             ++chipRelativeChannelIndex;
             lane.parent = assignedDevices.front();

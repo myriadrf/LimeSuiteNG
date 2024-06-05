@@ -1,8 +1,8 @@
 #ifndef LIME_LMS64C_ADF_OVER_PCIE_MMX8_H
 #define LIME_LMS64C_ADF_OVER_PCIE_MMX8_H
 
-#include "comms/IComms.h"
 #include "LimePCIe.h"
+#include "comms/ISPI.h"
 #include "PCIE_CSR_Pipe.h"
 
 #include <cstdint>

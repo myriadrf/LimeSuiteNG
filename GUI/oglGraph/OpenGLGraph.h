@@ -383,7 +383,6 @@ class OpenGLGraph : public wxGLCanvas
 
   private:
     bool oglOk;
-    bool glInitialized;
     void UpdateInfoDisplay();
     std::vector<std::string> info_msg;
     std::vector<std::string> info_msg_toDisplay;
@@ -393,15 +392,14 @@ class OpenGLGraph : public wxGLCanvas
     void ShowMenu(int x, int y);
     wxMenu m_popmenu;
     void setupViewport(int w, int h);
-    wxGLContext* m_DrawingContext;
     eOGLGActionState m_actionState;
 
-    bool viewChanged;
+    bool viewChanged{};
     bool initialized;
     sRect<float> initialDisplayArea;
     sRect<int> m_MouseCoord;
-    float m_lastSpanX;
-    float m_lastSpanY;
+    float m_lastSpanX{};
+    float m_lastSpanY{};
 
     bool isInsideDataView(int X, int Y);
     void dataViewPixelToValue(int x, int y, float& valX, float& valY);
@@ -427,7 +425,6 @@ class OpenGLGraph : public wxGLCanvas
     unsigned m_maxMarkers;
     int clickedOnMarker(int X, int Y);
 
-    bool m_currentlyDrawing;
     wxTimer* m_timer;
     wxGLContext* m_glContext;
 

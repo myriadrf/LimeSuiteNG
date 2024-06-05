@@ -40,18 +40,16 @@ class LMS_Programing_wxgui : public IModuleFrame
     wxGauge* progressBar;
     wxStaticText* lblFilename;
     wxStaticText* StaticText1;
-    wxStaticText* StaticText3;
     wxButton* btnStartStop;
     wxButton* btnOpen;
-    bool btnOpenEnb;
+    bool btnOpenEnb{};
 
     void DoProgramming();
     static bool OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg);
     std::vector<char> mProgramData;
-    lime::SDRDevice* lmsControl;
     std::vector<std::shared_ptr<lime::DataStorage>> dataStorageEntries;
-    std::atomic<bool> mProgrammingInProgress;
-    std::atomic<bool> mAbortProgramming;
+    std::atomic<bool> mProgrammingInProgress{};
+    std::atomic<bool> mAbortProgramming{};
     std::thread mWorkerThread;
     static LMS_Programing_wxgui* obj_ptr;
     static const long ID_PROGRAMING_FINISHED_EVENT;

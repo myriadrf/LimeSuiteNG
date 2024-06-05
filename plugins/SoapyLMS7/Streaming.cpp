@@ -22,17 +22,17 @@ using namespace lime;
  * Stream data structure
  ******************************************************************/
 struct IConnectionStream {
-    SDRDevice* ownerDevice;
-    int direction;
-    size_t elemSize;
-    size_t elemMTU;
-    bool skipCal;
+    SDRDevice* ownerDevice{};
+    int direction{};
+    size_t elemSize{};
+    size_t elemMTU{};
+    bool skipCal{};
 
     // Rx command requests
-    bool hasCmd;
-    int flags;
-    long long timeNs;
-    size_t numElems;
+    bool hasCmd{};
+    int flags{};
+    long long timeNs{};
+    size_t numElems{};
 
     StreamConfig streamConfig;
 };
@@ -339,7 +339,7 @@ int SoapyLMS7::readStream(
         numElems = std::min(numElems, icstream->elemMTU);
     }
 
-    StreamMeta metadata;
+    StreamMeta metadata{};
     const uint64_t cmdTicks =
         ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0) ? SoapySDR::timeNsToTicks(icstream->timeNs, sampleRate[SOAPY_SDR_RX]) : 0;
 
@@ -447,7 +447,7 @@ int SoapyLMS7::writeStream(SoapySDR::Stream* stream,
     const auto& ownerDevice = icstream->ownerDevice;
 
     // Input metadata
-    StreamMeta metadata;
+    StreamMeta metadata{};
     metadata.timestamp = SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX]);
     metadata.waitForTimestamp = (flags & SOAPY_SDR_HAS_TIME);
     metadata.flushPartialPacket = (flags & SOAPY_SDR_END_BURST);

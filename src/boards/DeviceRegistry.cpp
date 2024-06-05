@@ -6,7 +6,6 @@
 #include <map>
 #include <memory>
 #include <iostream>
-#include <iso646.h> // alternative operators for visual c++: not, and, or...
 
 using namespace lime;
 using namespace std::literals::string_literals;

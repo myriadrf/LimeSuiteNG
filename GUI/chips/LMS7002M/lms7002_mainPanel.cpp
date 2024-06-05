@@ -132,6 +132,7 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
     tab = new lms7002_pnlCalibrations_view(tabsNotebook, ID_TAB_CALIBRATIONS);
     tabsNotebook->AddPage(tab, _("Calibration"), false);
     mTabs[ID_TAB_CALIBRATIONS] = tab;
+    // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define CreatePage(tabClass, title) \
     { \
         tab = new lms7002_pnl##tabClass##_view(tabsNotebook, ID_TAB_##tabClass); \

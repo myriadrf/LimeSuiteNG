@@ -3,9 +3,9 @@
 #define DEBUG
 
 /*
- * LitePCIe driver
+ * LimePCIe driver
  *
- * This file is part of LitePCIe.
+ * This file is part of LimePCIe.
  *
  * Copyright (C) 2018-2020 / EnjoyDigital  / florent@enjoy-digital.fr
  */
@@ -613,7 +613,7 @@ static ssize_t limepcie_read(struct file *file, char __user *data, size_t size, 
         }
 
         ClearDMAWriterCounters(dmachan);
-        //litepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 1); // don't loop table
+        //limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 1); // don't loop table
         limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 1); // start DMA writing
         //dev_dbg(&s->dev->dev, "DMA writer enable for %i buffers\n", bufCount);
         dmachan->writer_enable = true;
@@ -1112,7 +1112,7 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
-            dev_dbg(&chan->limepcie_dev->dev->dev, "LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE copy_from_user fail");
+            dev_dbg(&chan->limepcie_dev->dev->dev, "LIMEPCIE_IOCTL_MMAP_DMA_READER_UPDATE copy_from_user fail");
             ret = -EFAULT;
             break;
         }
@@ -1128,7 +1128,7 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
-            dev_dbg(&chan->limepcie_dev->dev->dev, "LITEPCIE_IOCTL_CACHE_FLUSH copy_from_user fail");
+            dev_dbg(&chan->limepcie_dev->dev->dev, "LIMEPCIE_IOCTL_CACHE_FLUSH copy_from_user fail");
             ret = -EFAULT;
             break;
         }
@@ -1720,7 +1720,7 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
     }
     dev_info(&dev->dev, "BAR0 address=0x%p\n", limepcie_dev->bar0_addr);
 
-    /* Reset LitePCIe core */
+    /* Reset LimePCIe core */
 #ifdef CSR_CTRL_RESET_ADDR
     limepcie_writel(limepcie_dev, CSR_CTRL_RESET_ADDR, 1);
     msleep(10);
@@ -1849,7 +1849,7 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
         mutex_unlock(&probe_lock);
         return -ENOMEM;
     }
-    tty_res->start = (resource_size_t)litepcie_dev->bar0_addr + CSR_UART_XOVER_RXTX_ADDR - CSR_BASE;
+    tty_res->start = (resource_size_t)limepcie_dev->bar0_addr + CSR_UART_XOVER_RXTX_ADDR - CSR_BASE;
     tty_res->flags = IORESOURCE_REG;
     limepcie_dev->uart = platform_device_register_simple("liteuart", limepcie_minor_idx, tty_res, 1);
     if (IS_ERR(limepcie_dev->uart))

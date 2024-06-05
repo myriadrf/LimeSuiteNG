@@ -76,7 +76,7 @@ void LMS7002M_SDRDevice_Fixture::SetUpDeviceForTestPattern(
 
 void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 8;
+    constexpr int samplesToReceive = 8192;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div4);
@@ -85,16 +85,17 @@ void LMS7002M_SDRDevice_Fixture::Configure4HalfTestPatternAndReceiveIt()
     sampleBuffer.fill({ 0, 0 });
 
     complex16_t* const data = sampleBuffer.data();
-    device->StreamRx(0, &data, samplesToReceive, nullptr);
+    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, nullptr) };
 
     device->StreamStop(0);
 
+    EXPECT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div4));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 8;
+    constexpr int samplesToReceive = 8192;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div4);
@@ -103,16 +104,17 @@ void LMS7002M_SDRDevice_Fixture::Configure4FullTestPatternAndReceiveIt()
     sampleBuffer.fill({ 0, 0 });
 
     complex16_t* const data = sampleBuffer.data();
-    device->StreamRx(0, &data, samplesToReceive, nullptr);
+    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, nullptr) };
 
     device->StreamStop(0);
 
+    EXPECT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div4));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 16;
+    constexpr int samplesToReceive = 16384;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8);
@@ -121,16 +123,17 @@ void LMS7002M_SDRDevice_Fixture::Configure8HalfTestPatternAndReceiveIt()
     sampleBuffer.fill({ 0, 0 });
 
     complex16_t* const data = sampleBuffer.data();
-    device->StreamRx(0, &data, samplesToReceive, nullptr);
+    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, nullptr) };
 
     device->StreamStop(0);
 
+    EXPECT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));
 }
 
 void LMS7002M_SDRDevice_Fixture::Configure8FullTestPatternAndReceiveIt()
 {
-    constexpr int samplesToReceive = 16;
+    constexpr int samplesToReceive = 16384;
 
     SetUpDeviceForTestPattern(
         ChannelConfig::Direction::TestSignal::Scale::Full, ChannelConfig::Direction::TestSignal::Divide::Div8);
@@ -139,9 +142,10 @@ void LMS7002M_SDRDevice_Fixture::Configure8FullTestPatternAndReceiveIt()
     sampleBuffer.fill({ 0, 0 });
 
     complex16_t* const data = sampleBuffer.data();
-    device->StreamRx(0, &data, samplesToReceive, nullptr);
+    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, nullptr) };
 
     device->StreamStop(0);
 
+    EXPECT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));
 }
