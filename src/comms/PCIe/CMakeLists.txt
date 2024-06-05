@@ -7,7 +7,7 @@ set(COMMS_LIMEPCIE_SOURCES
     ${THIS_SOURCE_DIR}/LMS64C_FPGA_Over_PCIe.cpp
     ${THIS_SOURCE_DIR}/LMS64C_LMS7002M_Over_PCIe.cpp
     ${THIS_SOURCE_DIR}/LimePCIe.cpp
-    ${THIS_SOURCE_DIR}/LitePCIeDMA.cpp
+    ${THIS_SOURCE_DIR}/LimePCIeDMA.cpp
     ${THIS_SOURCE_DIR}/PCIE_CSR_Pipe.cpp)
 
 ########################################################################

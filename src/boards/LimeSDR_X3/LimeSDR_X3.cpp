@@ -5,7 +5,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "LimePCIe.h"
-#include "LitePCIeDMA.h"
+#include "LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA_common.h"
 #include "FPGA_X3.h"
@@ -890,8 +890,8 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         }
     }
 
-    auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-    auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+    auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
     mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
         std::static_pointer_cast<IDMA>(txdma),

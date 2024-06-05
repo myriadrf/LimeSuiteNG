@@ -11,13 +11,13 @@
 
 namespace lime {
 
-class LitePCIeDMA;
+class LimePCIeDMA;
 
 /// @brief Class for communicating with a PCIe device.
 class LIME_API LimePCIe
 {
   public:
-    friend LitePCIeDMA;
+    friend LimePCIeDMA;
     static std::vector<std::string> GetEndpointsWithPattern(const std::string& deviceAddr, const std::string& regex);
     static std::vector<std::string> GetPCIeDeviceList();
     LimePCIe();

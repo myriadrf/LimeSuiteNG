@@ -1,5 +1,5 @@
-#ifndef LIME_LITEPCIE_DMA_H
-#define LIME_LITEPCIE_DMA_H
+#ifndef LIME_LIMEPCIE_DMA_H
+#define LIME_LIMEPCIE_DMA_H
 
 #include "comms/IDMA.h"
 #include "limesuiteng/OpStatus.h"
@@ -12,11 +12,11 @@ namespace lime {
 class LimePCIe;
 
 /** @brief Class for communicating with a PCIe device. */
-class LitePCIeDMA : public IDMA
+class LimePCIeDMA : public IDMA
 {
   public:
-    LitePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir);
-    virtual ~LitePCIeDMA();
+    LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir);
+    virtual ~LimePCIeDMA();
 
     OpStatus Enable(bool enabled) override;
     OpStatus EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;
@@ -37,4 +37,4 @@ class LitePCIeDMA : public IDMA
 
 } // namespace lime
 
-#endif // LIME_LITEPCIE_DMA_H
+#endif // LIME_LIMEPCIE_DMA_H

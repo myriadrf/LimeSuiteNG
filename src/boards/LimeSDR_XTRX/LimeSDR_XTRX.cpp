@@ -5,7 +5,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "LimePCIe.h"
-#include "LitePCIeDMA.h"
+#include "LimePCIeDMA.h"
 #include "FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
@@ -390,8 +390,8 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 return ReportError(OpStatus::IOFailure, reason);
             }
         }
-        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
             std::static_pointer_cast<IDMA>(txdma),

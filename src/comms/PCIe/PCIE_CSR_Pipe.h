@@ -15,7 +15,7 @@ class PCIE_CSR_Pipe : public ISerialPort
     /**
     @brief Constructs a new PCIE_CSR_Pipe object.
     
-    @param port The LitePCIe port to use with this pipe.
+    @param port The LimePCIe port to use with this pipe.
    */
     explicit PCIE_CSR_Pipe(std::shared_ptr<LimePCIe> port);
 

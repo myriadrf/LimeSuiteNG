@@ -1,4 +1,4 @@
-#include "LitePCIeDMA.h"
+#include "LimePCIeDMA.h"
 
 #include <cassert>
 #include <cstdint>
@@ -21,7 +21,7 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
-LitePCIeDMA::LitePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir)
+LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir)
     : port(port)
     , dir(dir)
 {
@@ -83,7 +83,7 @@ LitePCIeDMA::LitePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
     }
 }
 
-LitePCIeDMA::~LitePCIeDMA()
+LimePCIeDMA::~LimePCIeDMA()
 {
     if (port->mFileDescriptor < 0)
         return;
@@ -103,7 +103,7 @@ LitePCIeDMA::~LitePCIeDMA()
     ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_LOCK, &lockInfo);
 }
 
-OpStatus LitePCIeDMA::Enable(bool enabled)
+OpStatus LimePCIeDMA::Enable(bool enabled)
 {
     if (dir == DataTransferDirection::DeviceToHost)
     {
@@ -135,7 +135,7 @@ OpStatus LitePCIeDMA::Enable(bool enabled)
     return OpStatus::Success;
 }
 
-OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
+OpStatus LimePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
 {
     assert(port->IsOpen());
     if (dir == DataTransferDirection::DeviceToHost)
@@ -168,7 +168,7 @@ OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, ui
     return OpStatus::Success;
 }
 
-IDMA::State LitePCIeDMA::GetCounters()
+IDMA::State LimePCIeDMA::GetCounters()
 {
     IDMA::State dma{};
 
@@ -197,7 +197,7 @@ IDMA::State LitePCIeDMA::GetCounters()
     return dma;
 }
 
-OpStatus LitePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection direction, bool generateIRQ)
+OpStatus LimePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection direction, bool generateIRQ)
 {
     assert(port->IsOpen());
     if (direction == DataTransferDirection::DeviceToHost)
@@ -224,7 +224,7 @@ OpStatus LitePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTra
     return OpStatus::Success;
 }
 
-OpStatus LitePCIeDMA::Wait()
+OpStatus LimePCIeDMA::Wait()
 {
     assert(port->IsOpen());
     int eventMask;
@@ -254,7 +254,7 @@ OpStatus LitePCIeDMA::Wait()
     return OpStatus::Timeout;
 }
 
-void LitePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDirection)
+void LimePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDirection)
 {
     limepcie_cache_flush sub{};
     memset(&sub, 0, sizeof(limepcie_cache_flush));
@@ -267,7 +267,7 @@ void LitePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDi
     // return OpStatus::Success;
 }
 
-std::vector<IDMA::Buffer> LitePCIeDMA::GetBuffers() const
+std::vector<IDMA::Buffer> LimePCIeDMA::GetBuffers() const
 {
     return mappings;
 }
