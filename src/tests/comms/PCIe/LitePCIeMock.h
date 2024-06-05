@@ -3,11 +3,11 @@
 
 #include <gmock/gmock.h>
 
-#include "comms/PCIe/LimeLitePCIe.h"
+#include "comms/PCIe/LimePCIe.h"
 
 namespace lime::testing {
 
-class LitePCIeMock : public LimeLitePCIe
+class LitePCIeMock : public LimePCIe
 {
   public:
     MOCK_METHOD(int, WriteControl, (const uint8_t* buffer, int length, int timeout_ms), (override));

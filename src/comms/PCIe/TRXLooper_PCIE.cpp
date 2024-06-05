@@ -15,7 +15,7 @@
 #include "BufferInterleaving.h"
 #include "DataPacket.h"
 #include "FPGA_common.h"
-#include "LimeLitePCIe.h"
+#include "LimePCIe.h"
 #include "limesuiteng/types.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/LMS7002M.h"
@@ -48,7 +48,7 @@ static constexpr int64_t ts_to_us(int64_t fs, int64_t ts)
 /// @param chip The LMS7002M chip to use in this stream.
 /// @param moduleIndex The ID of the chip to use.
 TRXLooper_PCIE::TRXLooper_PCIE(
-    std::shared_ptr<LimeLitePCIe> rxPort, std::shared_ptr<LimeLitePCIe> txPort, FPGA* f, LMS7002M* chip, uint8_t moduleIndex)
+    std::shared_ptr<LimePCIe> rxPort, std::shared_ptr<LimePCIe> txPort, FPGA* f, LMS7002M* chip, uint8_t moduleIndex)
     : TRXLooper(f, chip, moduleIndex)
 {
     mRx.packetsToBatch = 1;
@@ -144,7 +144,7 @@ int TRXLooper_PCIE::TxSetup()
 
     mTx.samplesInPkt = samplesInPkt;
 
-    LimeLitePCIe::DMAInfo dma = mTxArgs.port->GetDMAInfo();
+    LimePCIe::DMAInfo dma = mTxArgs.port->GetDMAInfo();
 
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
@@ -236,7 +236,7 @@ void TRXLooper_PCIE::TransmitPacketsLoop()
     auto t1 = perfClock::now();
     auto t2 = t1;
 
-    LimeLitePCIe::DMAState state;
+    LimePCIe::DMAState state;
     state.swIndex = 0;
 
     DeltaVariable<int32_t> underrun(0);
@@ -519,7 +519,7 @@ int TRXLooper_PCIE::RxSetup()
     uint32_t requestData[] = { packetSize, iqSamplesCount };
     fpga->WriteRegisters(requestAddr, requestData, 2);
 
-    LimeLitePCIe::DMAInfo dma = mRxArgs.port->GetDMAInfo();
+    LimePCIe::DMAInfo dma = mRxArgs.port->GetDMAInfo();
 
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
     {
@@ -622,7 +622,7 @@ void TRXLooper_PCIE::ReceivePacketsLoop()
 
     int32_t Bps = 0;
 
-    LimeLitePCIe::DMAState dma;
+    LimePCIe::DMAState dma;
     int64_t lastHwIndex = 0;
     int64_t expectedTS = 0;
     SamplesPacketType* outputPkt = nullptr;
@@ -796,7 +796,7 @@ void TRXLooper_PCIE::RxTeardown()
 /// @param fpga The FPGA device to use.
 /// @param port The PCIe communications port to use.
 OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
-    std::shared_ptr<LimeLitePCIe> port,
+    std::shared_ptr<LimePCIe> port,
     const lime::StreamConfig& config,
     uint8_t moduleIndex,
     const void** samples,
@@ -815,7 +815,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
 
     fpga->WriteRegister(0x000D, 0x4); // WFM_LOAD
 
-    LimeLitePCIe::DMAInfo dma = port->GetDMAInfo();
+    LimePCIe::DMAInfo dma = port->GetDMAInfo();
     std::vector<uint8_t*> dmaBuffers(dma.bufferCount);
     for (uint32_t i = 0; i < dmaBuffers.size(); ++i)
         dmaBuffers[i] = dma.txMemory + dma.bufferSize * i;
@@ -824,7 +824,7 @@ OpStatus TRXLooper_PCIE::UploadTxWaveform(FPGA* fpga,
 
     uint32_t samplesRemaining = count;
     uint8_t dmaIndex = 0;
-    LimeLitePCIe::DMAState state;
+    LimePCIe::DMAState state;
     state.swIndex = 0;
 
     while (samplesRemaining > 0)

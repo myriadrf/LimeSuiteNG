@@ -9,21 +9,21 @@
 
 namespace lime {
 
-class LimeLitePCIe;
+class LimePCIe;
 
 /** @brief Class responsible for receiving and transmitting continuous sample data from a PCIe device */
 class TRXLooper_PCIE : public TRXLooper
 {
   public:
     TRXLooper_PCIE(
-        std::shared_ptr<LimeLitePCIe> rxPort, std::shared_ptr<LimeLitePCIe> txPort, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
+        std::shared_ptr<LimePCIe> rxPort, std::shared_ptr<LimePCIe> txPort, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
     ~TRXLooper_PCIE();
 
     OpStatus Setup(const StreamConfig& config) override;
     void Start() override;
 
     static OpStatus UploadTxWaveform(FPGA* fpga,
-        std::shared_ptr<LimeLitePCIe> port,
+        std::shared_ptr<LimePCIe> port,
         const StreamConfig& config,
         uint8_t moduleIndex,
         const void** samples,
@@ -31,7 +31,7 @@ class TRXLooper_PCIE : public TRXLooper
 
     /** @brief The transfer arguments for the PCIe transfer. */
     struct TransferArgs {
-        std::shared_ptr<LimeLitePCIe> port;
+        std::shared_ptr<LimePCIe> port;
         std::vector<uint8_t*> buffers;
         int32_t bufferSize;
         int16_t packetSize;

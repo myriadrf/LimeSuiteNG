@@ -6,7 +6,7 @@ set(LIME_TEST_SUITE_SOURCES
     protocols/LMS64CProtocol/FirmwareToDescriptorTest.cpp
     protocols/BufferInterleavingTest.cpp)
 
-if(ENABLE_LIMELITEPCIE)
+if(ENABLE_LIMEPCIE)
     list(
         APPEND
         LIME_TEST_SUITE_SOURCES

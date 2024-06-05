@@ -5,7 +5,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
-#include "LimeLitePCIe.h"
+#include "LimePCIe.h"
 #include "LMSBoards.h"
 #include "LMS64C_FPGA_Over_PCIe.h"
 #include "LMS64C_LMS7002M_Over_PCIe.h"
@@ -26,7 +26,7 @@ void __loadDeviceFactoryPCIe(void) //TODO fixme replace with LoadLibrary/dlopen
 }
 
 DeviceFactoryPCIe::DeviceFactoryPCIe()
-    : DeviceRegistryEntry("LimeLitePCIe"s)
+    : DeviceRegistryEntry("LimePCIe"s)
 {
 }
 
@@ -40,7 +40,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
         return handles;
 
     // generate handles by probing devices
-    std::vector<std::string> nodes = LimeLitePCIe::GetPCIeDeviceList();
+    std::vector<std::string> nodes = LimePCIe::GetPCIeDeviceList();
     for (const std::string& nodeName : nodes)
     {
         // look for _control devices only, skip _trx*
@@ -50,7 +50,7 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
 
         handle.addr = "/dev/"s + nodeName.substr(0, nameEnd); // removed _control postfix
 
-        std::shared_ptr<LimeLitePCIe> pcidev = std::make_shared<LimeLitePCIe>();
+        std::shared_ptr<LimePCIe> pcidev = std::make_shared<LimePCIe>();
         if (pcidev->Open(handle.addr + "/control0", O_RDWR) != OpStatus::Success)
             continue;
 
@@ -73,8 +73,8 @@ std::vector<DeviceHandle> DeviceFactoryPCIe::enumerate(const DeviceHandle& hint)
 SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
 {
     // Data transmission layer
-    std::shared_ptr<LimeLitePCIe> controlPort = std::make_shared<LimeLitePCIe>();
-    std::vector<std::shared_ptr<LimeLitePCIe>> streamPorts;
+    std::shared_ptr<LimePCIe> controlPort = std::make_shared<LimePCIe>();
+    std::vector<std::shared_ptr<LimePCIe>> streamPorts;
 
     std::string controlFile(handle.addr + "/control0");
     OpStatus connectionStatus = controlPort->Open(controlFile, O_RDWR);
@@ -84,12 +84,12 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
         return nullptr;
     }
 
-    std::vector<std::string> streamEndpoints = LimeLitePCIe::GetEndpointsWithPattern(handle.addr, "trx*"s);
+    std::vector<std::string> streamEndpoints = LimePCIe::GetEndpointsWithPattern(handle.addr, "trx*"s);
     std::sort(
         streamEndpoints.begin(), streamEndpoints.end()); // TODO: Fix potential sorting problem if there would be trx1 and trx11
     for (const std::string& endpointPath : streamEndpoints)
     {
-        streamPorts.push_back(std::make_shared<LimeLitePCIe>());
+        streamPorts.push_back(std::make_shared<LimePCIe>());
         streamPorts.back()->SetPathName(endpointPath);
     }
 

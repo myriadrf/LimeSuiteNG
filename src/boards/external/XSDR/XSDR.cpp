@@ -13,7 +13,7 @@ namespace lime {
 /// @param refClk The reference clock of the device.
 XSDR::XSDR(std::shared_ptr<IComms> spiRFsoc,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<LimeLitePCIe> sampleStream,
+    std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
     : LimeSDR_XTRX(spiRFsoc, spiFPGA, sampleStream, control, refClk)

@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "limesuiteng/Logger.h"
-#include "LimeLitePCIe.h"
+#include "LimePCIe.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
 #include "FPGA_XTRX.h"
@@ -115,7 +115,7 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
 /// @param refClk The reference clock of the device.
 LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<LimeLitePCIe> sampleStream,
+    std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
     : LMS7002M_SDRDevice()
@@ -373,7 +373,7 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
         mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mStreamPort, mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
         if (mCallback_logMessage)
             mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
-        std::shared_ptr<LimeLitePCIe> trxPort{ mStreamPort };
+        std::shared_ptr<LimePCIe> trxPort{ mStreamPort };
         if (!trxPort->IsOpen())
         {
             int dirFlag = 0;
@@ -408,7 +408,7 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
 void LimeSDR_XTRX::StreamStop(uint8_t moduleIndex)
 {
     LMS7002M_SDRDevice::StreamStop(moduleIndex);
-    std::shared_ptr<LimeLitePCIe> trxPort{ mStreamPort };
+    std::shared_ptr<LimePCIe> trxPort{ mStreamPort };
     if (trxPort && trxPort->IsOpen())
         trxPort->Close();
 }

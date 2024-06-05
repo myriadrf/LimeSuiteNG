@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LimeLitePCIe.h"
+#include "LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA_common.h"
 #include "TRXLooper_PCIE.h"
@@ -167,7 +167,7 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
 /// @param control The serial port of the device for retrieving device firmware information.
 LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     std::shared_ptr<IComms> spiFPGA,
-    std::vector<std::shared_ptr<LimeLitePCIe>> trxStreams,
+    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control)
     : LMS7002M_SDRDevice()
     , mTRXStreamPorts(trxStreams)
@@ -877,7 +877,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         mTRXStreamPorts.at(moduleIndex), mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
     if (mCallback_logMessage)
         mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
-    std::shared_ptr<LimeLitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
+    std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
     if (!trxPort->IsOpen())
     {
         int dirFlag = 0;
@@ -901,7 +901,7 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
 void LimeSDR_X3::StreamStop(uint8_t moduleIndex)
 {
     LMS7002M_SDRDevice::StreamStop(moduleIndex);
-    std::shared_ptr<LimeLitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
+    std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
     if (trxPort && trxPort->IsOpen())
         trxPort->Close();
 }

@@ -27,7 +27,7 @@
 #include <linux/wait.h>
 #include <linux/mutex.h>
 
-#include "limelitepcie.h"
+#include "limepcie.h"
 #include "csr.h"
 #include "config.h"
 #include "boards.h"
@@ -47,8 +47,8 @@
 //#define DEBUG_WRITE
 //#define DEBUG_MEM
 
-#define LIMELITEPCIE_NAME "limelitepcie"
-#define LIMELITEPCIE_MINOR_COUNT 32
+#define LIMEPCIE_NAME "limepcie"
+#define LIMEPCIE_MINOR_COUNT 32
 
 #define VERSION "1.0.0"
 #define VERSION_MAJOR 1
@@ -56,11 +56,12 @@
 #define VERSION_PATCH 0
 
 MODULE_INFO(version, VERSION);
+MODULE_INFO(author, "Lime Microsystems");
 
 #define MAX_DMA_BUFFER_COUNT 256
 #define MAX_DMA_CHANNEL_COUNT 16
 
-struct limelitepcie_dma_chan {
+struct limepcie_dma_chan {
     uint32_t base;
     uint32_t writer_interrupt;
     uint32_t reader_interrupt;
@@ -92,9 +93,9 @@ struct deviceInfo {
     char devName[256];
 };
 
-struct limelitepcie_chan {
-    struct limelitepcie_device *limelitepcie_dev;
-    struct limelitepcie_dma_chan dma;
+struct limepcie_chan {
+    struct limepcie_device *limepcie_dev;
+    struct limepcie_dma_chan dma;
     struct cdev cdev;
     uint32_t block_size;
     uint32_t core_base;
@@ -110,13 +111,13 @@ struct dev_attr {
     uint32_t product;
 };
 
-struct limelitepcie_device {
+struct limepcie_device {
     struct pci_dev *dev;
     struct platform_device *uart;
     resource_size_t bar0_size;
     phys_addr_t bar0_phys_addr;
     uint8_t *bar0_addr; /* virtual address of BAR0 */
-    struct limelitepcie_chan chan[MAX_DMA_CHANNEL_COUNT];
+    struct limepcie_chan chan[MAX_DMA_CHANNEL_COUNT];
     spinlock_t lock;
     int minor_base;
     int irqs;
@@ -128,18 +129,18 @@ struct limelitepcie_device {
     struct dev_attr attr;
 };
 
-struct limelitepcie_chan_priv {
-    struct limelitepcie_chan *chan;
+struct limepcie_chan_priv {
+    struct limepcie_chan *chan;
     bool reader;
     bool writer;
 };
 
-static int limelitepcie_major;
-static int limelitepcie_minor_idx;
-static struct class *limelitepcie_class;
-static dev_t limelitepcie_dev_t;
+static int limepcie_major;
+static int limepcie_minor_idx;
+static struct class *limepcie_class;
+static dev_t limepcie_dev_t;
 
-static inline uint32_t limelitepcie_readl(struct limelitepcie_device *s, uint32_t addr)
+static inline uint32_t limepcie_readl(struct limepcie_device *s, uint32_t addr)
 {
     uint32_t val = readl(s->bar0_addr + addr - CSR_BASE);
 #ifdef DEBUG_CSR
@@ -148,7 +149,7 @@ static inline uint32_t limelitepcie_readl(struct limelitepcie_device *s, uint32_
     return val;
 }
 
-static inline void limelitepcie_writel(struct limelitepcie_device *s, uint32_t addr, uint32_t val)
+static inline void limepcie_writel(struct limepcie_device *s, uint32_t addr, uint32_t val)
 {
 #ifdef DEBUG_CSR
     dev_dbg(&s->dev->dev, "csr_write: 0x%08x @ 0x%08x", val, addr);
@@ -156,21 +157,21 @@ static inline void limelitepcie_writel(struct limelitepcie_device *s, uint32_t a
     return writel(val, s->bar0_addr + addr - CSR_BASE);
 }
 
-static void limelitepcie_enable_interrupt(struct limelitepcie_device *s, int irq_num)
+static void limepcie_enable_interrupt(struct limepcie_device *s, int irq_num)
 {
-    uint32_t v = limelitepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
+    uint32_t v = limepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
     v |= (1 << irq_num);
-    limelitepcie_writel(s, CSR_PCIE_MSI_ENABLE_ADDR, v);
+    limepcie_writel(s, CSR_PCIE_MSI_ENABLE_ADDR, v);
 }
 
-static void limelitepcie_disable_interrupt(struct limelitepcie_device *s, int irq_num)
+static void limepcie_disable_interrupt(struct limepcie_device *s, int irq_num)
 {
-    uint32_t v = limelitepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
+    uint32_t v = limepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
     v &= ~(1 << irq_num);
-    limelitepcie_writel(s, CSR_PCIE_MSI_ENABLE_ADDR, v);
+    limepcie_writel(s, CSR_PCIE_MSI_ENABLE_ADDR, v);
 }
 
-static int limelitepcie_dma_init(struct limelitepcie_device *s)
+static int limepcie_dma_init(struct limepcie_device *s)
 {
     if (!s)
         return -ENODEV;
@@ -178,7 +179,7 @@ static int limelitepcie_dma_init(struct limelitepcie_device *s)
     /* for each dma channel */
     for (int i = 0; i < s->channels; i++)
     {
-        struct limelitepcie_dma_chan *dmachan = &s->chan[i].dma;
+        struct limepcie_dma_chan *dmachan = &s->chan[i].dma;
         /* for each dma buffer */
         for (int j = 0; j < dmachan->bufferCount; j++)
         {
@@ -233,7 +234,7 @@ static int limelitepcie_dma_init(struct limelitepcie_device *s)
     return 0;
 }
 
-static int limelitepcie_dma_free(struct limelitepcie_device *s)
+static int limepcie_dma_free(struct limepcie_device *s)
 {
     if (!s)
         return -ENODEV;
@@ -241,7 +242,7 @@ static int limelitepcie_dma_free(struct limelitepcie_device *s)
     /* for each dma channel */
     for (int i = 0; i < s->channels; i++)
     {
-        struct limelitepcie_dma_chan *dmachan = &s->chan[i].dma;
+        struct limepcie_dma_chan *dmachan = &s->chan[i].dma;
         /* for each dma buffer */
         for (int j = 0; j < dmachan->bufferCount; j++)
         {
@@ -278,22 +279,22 @@ static int limelitepcie_dma_free(struct limelitepcie_device *s)
     return 0;
 }
 
-static void ClearDMAWriterCounters(struct limelitepcie_dma_chan *dmachan)
+static void ClearDMAWriterCounters(struct limepcie_dma_chan *dmachan)
 {
     dmachan->writer_hw_count = 0;
     dmachan->writer_hw_count_last = 0;
     dmachan->writer_sw_count = 0;
 }
 
-static void ClearDMAReaderCounters(struct limelitepcie_dma_chan *dmachan)
+static void ClearDMAReaderCounters(struct limepcie_dma_chan *dmachan)
 {
     dmachan->reader_hw_count = 0;
     dmachan->reader_hw_count_last = 0;
     dmachan->reader_sw_count = 0;
 }
 
-static int limelitepcie_dma_writer_request(
-    struct limelitepcie_device *s, struct limelitepcie_dma_chan *dmachan, dma_addr_t dmaBufAddr, uint32_t size, bool genIRQ)
+static int limepcie_dma_writer_request(
+    struct limepcie_device *s, struct limepcie_dma_chan *dmachan, dma_addr_t dmaBufAddr, uint32_t size, bool genIRQ)
 {
     if (size == 0 || size > dmachan->bufferSize)
     {
@@ -301,7 +302,7 @@ static int limelitepcie_dma_writer_request(
         return -EINVAL;
     }
     /* Fill DMA Writer descriptor, buffer size + parameters. */
-    limelitepcie_writel(s,
+    limepcie_writel(s,
         dmachan->base + PCIE_DMA_WRITER_TABLE_VALUE_OFFSET,
 #ifndef DMA_BUFFER_ALIGNED
         DMA_LAST_DISABLE |
@@ -309,17 +310,17 @@ static int limelitepcie_dma_writer_request(
             (!genIRQ) * DMA_IRQ_DISABLE | /* generate an msi */
             size);
     /* Fill 32-bit Address LSB. */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_VALUE_OFFSET + 4, (dmaBufAddr >> 0) & 0xffffffff);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_VALUE_OFFSET + 4, (dmaBufAddr >> 0) & 0xffffffff);
     /* Write descriptor (and fill 32-bit Address MSB for 64-bit mode). */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_WE_OFFSET, (dmaBufAddr >> 32) & 0xffffffff);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_WE_OFFSET, (dmaBufAddr >> 32) & 0xffffffff);
 #ifdef DEBUG_READ
     dev_dbg(&s->dev->dev, "DMA writer request - buf:x%llx size:%i irq:%i\n", dmaBufAddr, size, genIRQ ? 1 : 0);
 #endif
     return 0;
 }
 
-static int limelitepcie_dma_reader_request(
-    struct limelitepcie_device *s, struct limelitepcie_dma_chan *dmachan, dma_addr_t dmaBufAddr, uint32_t size, bool genIRQ)
+static int limepcie_dma_reader_request(
+    struct limepcie_device *s, struct limepcie_dma_chan *dmachan, dma_addr_t dmaBufAddr, uint32_t size, bool genIRQ)
 {
     if (size == 0 || size > dmachan->bufferSize)
     {
@@ -327,7 +328,7 @@ static int limelitepcie_dma_reader_request(
         return -EINVAL;
     }
     /* Fill DMA Reader descriptor, buffer size + parameters. */
-    limelitepcie_writel(s,
+    limepcie_writel(s,
         dmachan->base + PCIE_DMA_READER_TABLE_VALUE_OFFSET,
 #ifndef DMA_BUFFER_ALIGNED
         DMA_LAST_DISABLE |
@@ -335,18 +336,18 @@ static int limelitepcie_dma_reader_request(
             (!genIRQ) * DMA_IRQ_DISABLE | /* generate an msi */
             size);
     /* Fill 32-bit Address LSB. */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_VALUE_OFFSET + 4, (dmaBufAddr >> 0) & 0xffffffff);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_VALUE_OFFSET + 4, (dmaBufAddr >> 0) & 0xffffffff);
     /* Write descriptor (and fill 32-bit Address MSB for 64-bit mode). */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_WE_OFFSET, (dmaBufAddr >> 32) & 0xffffffff);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_WE_OFFSET, (dmaBufAddr >> 32) & 0xffffffff);
 #ifdef DEBUG_WRITE
     dev_dbg(&s->dev->dev, "DMA reader request - buf:x%llx size:%i irq:%i\n", dmaBufAddr, size, genIRQ ? 1 : 0);
 #endif
     return 0;
 }
 
-static void limelitepcie_dma_writer_start(struct limelitepcie_device *s, int chan_num, uint32_t write_size, uint8_t irqFreq)
+static void limepcie_dma_writer_start(struct limepcie_device *s, int chan_num, uint32_t write_size, uint8_t irqFreq)
 {
-    struct limelitepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
+    struct limepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
     if (write_size == 0 || write_size > dmachan->bufferSize)
     {
         dev_err(&s->dev->dev, "DMA writer start: invalid write size %i\n", write_size);
@@ -354,90 +355,90 @@ static void limelitepcie_dma_writer_start(struct limelitepcie_device *s, int cha
     }
 
     /* Fill DMA Writer descriptors. */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0);
     for (int i = 0; i < dmachan->bufferCount; i++)
     {
         const bool genIRQ = (i % irqFreq == 0);
-        if (limelitepcie_dma_writer_request(s, dmachan, dmachan->writer_handle[i], write_size, genIRQ) != 0)
+        if (limepcie_dma_writer_request(s, dmachan, dmachan->writer_handle[i], write_size, genIRQ) != 0)
         {
             dev_err(&s->dev->dev, "DMA%i writer start failed\n", chan_num);
             return;
         }
     }
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 1);
     ClearDMAWriterCounters(dmachan);
 
     /* Start DMA Writer. */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 1);
     dev_info(&s->dev->dev, "Rx%i DMA writer start, buffer size: %u, IRQ every: %i buffers", chan_num, write_size, irqFreq);
 }
 
-static void limelitepcie_dma_writer_stop(struct limelitepcie_device *s, int chan_num)
+static void limepcie_dma_writer_stop(struct limepcie_device *s, int chan_num)
 {
-    struct limelitepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
+    struct limepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
 
     /* Flush and stop DMA Writer. */
-    const int transfersDone = limelitepcie_readl(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_STATUS_OFFSET);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
+    const int transfersDone = limepcie_readl(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_STATUS_OFFSET);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
     udelay(1000);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
 
     dev_info(&s->dev->dev, "Rx%i DMA writer stop, DMA descriptors processed: %i\n", chan_num, transfersDone);
     ClearDMAWriterCounters(dmachan);
 }
 
-static void limelitepcie_dma_reader_start(struct limelitepcie_device *s, int chan_num)
+static void limepcie_dma_reader_start(struct limepcie_device *s, int chan_num)
 {
-    struct limelitepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
+    struct limepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
     /* Fill DMA Reader descriptors. */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0);
 
     ClearDMAReaderCounters(dmachan);
     /* start dma reader */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 1);
     dev_info(&s->dev->dev, "Tx%i DMA reader start", chan_num);
 }
 
-static void limelitepcie_dma_reader_stop(struct limelitepcie_device *s, int chan_num)
+static void limepcie_dma_reader_stop(struct limepcie_device *s, int chan_num)
 {
-    struct limelitepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
+    struct limepcie_dma_chan *dmachan = &s->chan[chan_num].dma;
 
-    const uint32_t loop_status = limelitepcie_readl(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
+    const uint32_t loop_status = limepcie_readl(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
     /* flush and stop dma reader */
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
     udelay(1000);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
     dev_info(&s->dev->dev, "Tx%i DMA reader stop, DMA descriptors processed: %i\n", chan_num, loop_status);
     ClearDMAReaderCounters(dmachan);
 }
 
-void limelitepcie_stop_dma(struct limelitepcie_device *s)
+void limepcie_stop_dma(struct limepcie_device *s)
 {
-    struct limelitepcie_dma_chan *dmachan;
+    struct limepcie_dma_chan *dmachan;
     for (int i = 0; i < s->channels; i++)
     {
         dmachan = &s->chan[i].dma;
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
     }
 }
 
-static irqreturn_t limelitepcie_interrupt(int irq, void *data)
+static irqreturn_t limepcie_interrupt(int irq, void *data)
 {
-    struct limelitepcie_device *s = (struct limelitepcie_device *)data;
-    uint32_t irq_enable = limelitepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
+    struct limepcie_device *s = (struct limepcie_device *)data;
+    uint32_t irq_enable = limepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
     uint32_t irq_vector;
 /* Single MSI */
 #ifdef CSR_PCIE_MSI_CLEAR_ADDR
-    irq_vector = limelitepcie_readl(s, CSR_PCIE_MSI_VECTOR_ADDR);
+    irq_vector = limepcie_readl(s, CSR_PCIE_MSI_VECTOR_ADDR);
 /* Multi-Vector MSI */
 #else
     irq_vector = 0;
@@ -463,11 +464,11 @@ static irqreturn_t limelitepcie_interrupt(int irq, void *data)
     uint32_t clear_mask = 0;
     for (int i = 0; i < s->channels; i++)
     {
-        struct limelitepcie_chan *chan = &s->chan[i];
+        struct limepcie_chan *chan = &s->chan[i];
         /* dma reader interrupt handling */
         if (irq_vector & (1 << chan->dma.reader_interrupt) && chan->dma.reader_enable)
         {
-            uint32_t readTransfers = limelitepcie_readl(s, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
+            uint32_t readTransfers = limepcie_readl(s, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
             chan->dma.reader_hw_count = readTransfers & 0xFFFF;
             const uint16_t pendingBuffersCount = (uint16_t)chan->dma.reader_sw_count - (uint16_t)chan->dma.reader_hw_count;
 #ifdef DEBUG_MSI
@@ -487,7 +488,7 @@ static irqreturn_t limelitepcie_interrupt(int irq, void *data)
         /* dma writer interrupt handling */
         if ((irq_vector & (1 << chan->dma.writer_interrupt) || forceWake) && chan->dma.writer_enable)
         {
-            uint32_t writeTransfers = limelitepcie_readl(s, chan->dma.base + PCIE_DMA_WRITER_TABLE_LOOP_STATUS_OFFSET);
+            uint32_t writeTransfers = limepcie_readl(s, chan->dma.base + PCIE_DMA_WRITER_TABLE_LOOP_STATUS_OFFSET);
             chan->dma.writer_hw_count = ((writeTransfers >> 8) | (writeTransfers & 0xFF)) & 0xFFFF;
             const uint16_t freeBuffers = (uint16_t)chan->dma.writer_hw_count - (uint16_t)chan->dma.writer_sw_count;
             if (freeBuffers > 0 || forceWake)
@@ -510,15 +511,15 @@ static irqreturn_t limelitepcie_interrupt(int irq, void *data)
 
 #ifdef CSR_PCIE_MSI_CLEAR_ADDR
     if (clear_mask != 0)
-        limelitepcie_writel(s, CSR_PCIE_MSI_CLEAR_ADDR, clear_mask);
+        limepcie_writel(s, CSR_PCIE_MSI_CLEAR_ADDR, clear_mask);
 #endif
     return IRQ_HANDLED;
 }
 
-static int limelitepcie_open(struct inode *inode, struct file *file)
+static int limepcie_open(struct inode *inode, struct file *file)
 {
-    struct limelitepcie_chan *chan = container_of(inode->i_cdev, struct limelitepcie_chan, cdev);
-    struct limelitepcie_chan_priv *chan_priv = kzalloc(sizeof(*chan_priv), GFP_KERNEL);
+    struct limepcie_chan *chan = container_of(inode->i_cdev, struct limepcie_chan, cdev);
+    struct limepcie_chan_priv *chan_priv = kzalloc(sizeof(*chan_priv), GFP_KERNEL);
     pr_info("Open %s\n", file->f_path.dentry->d_iname);
 
     if (!chan_priv)
@@ -539,18 +540,18 @@ static int limelitepcie_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-static int limelitepcie_release(struct inode *inode, struct file *file)
+static int limepcie_release(struct inode *inode, struct file *file)
 {
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
     pr_info("Release %s\n", file->f_path.dentry->d_iname);
 
     if (chan_priv->reader)
     {
         /* disable interrupt */
-        limelitepcie_disable_interrupt(chan->limelitepcie_dev, chan->dma.reader_interrupt);
+        limepcie_disable_interrupt(chan->limepcie_dev, chan->dma.reader_interrupt);
         /* disable DMA */
-        limelitepcie_dma_reader_stop(chan->limelitepcie_dev, chan->index);
+        limepcie_dma_reader_stop(chan->limepcie_dev, chan->index);
         chan->dma.reader_lock = 0;
         chan->dma.reader_enable = 0;
         wake_up_interruptible(&chan->wait_wr);
@@ -559,9 +560,9 @@ static int limelitepcie_release(struct inode *inode, struct file *file)
     if (chan_priv->writer)
     {
         /* disable interrupt */
-        limelitepcie_disable_interrupt(chan->limelitepcie_dev, chan->dma.writer_interrupt);
+        limepcie_disable_interrupt(chan->limepcie_dev, chan->dma.writer_interrupt);
         /* disable DMA */
-        limelitepcie_dma_writer_stop(chan->limelitepcie_dev, chan->index);
+        limepcie_dma_writer_stop(chan->limepcie_dev, chan->index);
         chan->dma.writer_lock = 0;
         chan->dma.writer_enable = 0;
         wake_up_interruptible(&chan->wait_rd);
@@ -570,12 +571,12 @@ static int limelitepcie_release(struct inode *inode, struct file *file)
     return 0;
 }
 
-static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t size, loff_t *offset)
+static ssize_t limepcie_read(struct file *file, char __user *data, size_t size, loff_t *offset)
 {
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *s = chan->limelitepcie_dev;
-    struct limelitepcie_dma_chan *dmachan = &chan->dma;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
+    struct limepcie_device *s = chan->limepcie_dev;
+    struct limepcie_dma_chan *dmachan = &chan->dma;
     int bufCount = 0;
     const size_t maxTransferSize = dmachan->bufferSize;
 
@@ -594,10 +595,10 @@ static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t si
         }
 
         // Fill DMA transactions table
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0); // don't loop table
-        limelitepcie_enable_interrupt(chan->limelitepcie_dev, chan->dma.writer_interrupt);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_FLUSH_OFFSET, 1);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 0); // don't loop table
+        limepcie_enable_interrupt(chan->limepcie_dev, chan->dma.writer_interrupt);
 
         size_t bytesRemaining = size;
         while (bytesRemaining > 0)
@@ -605,7 +606,7 @@ static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t si
             const int requestSize = min(bytesRemaining, maxTransferSize);
             bytesRemaining -= requestSize;
             bool genIRQ = bytesRemaining == 0; // generate IRQ on last transfer
-            int status = limelitepcie_dma_writer_request(s, dmachan, dmachan->writer_handle[bufCount], requestSize, genIRQ);
+            int status = limepcie_dma_writer_request(s, dmachan, dmachan->writer_handle[bufCount], requestSize, genIRQ);
             if (status != 0)
                 return status;
             ++bufCount;
@@ -613,7 +614,7 @@ static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t si
 
         ClearDMAWriterCounters(dmachan);
         //litepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_TABLE_LOOP_PROG_N_OFFSET, 1); // don't loop table
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 1); // start DMA writing
+        limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 1); // start DMA writing
         //dev_dbg(&s->dev->dev, "DMA writer enable for %i buffers\n", bufCount);
         dmachan->writer_enable = true;
     }
@@ -639,8 +640,8 @@ static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t si
         bytesReceived += bufSize;
         ++dmachan->writer_sw_count;
     }
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
-    limelitepcie_disable_interrupt(chan->limelitepcie_dev, chan->dma.writer_interrupt);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_WRITER_ENABLE_OFFSET, 0);
+    limepcie_disable_interrupt(chan->limepcie_dev, chan->dma.writer_interrupt);
     dmachan->writer_enable = false; // TODO: implement for non blocking
 
 #ifdef DEBUG_READ
@@ -652,9 +653,9 @@ static ssize_t limelitepcie_read(struct file *file, char __user *data, size_t si
 static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
 {
     int ret;
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *s = chan->limelitepcie_dev;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
+    struct limepcie_device *s = chan->limepcie_dev;
 
     if (bufSize > chan->dma.bufferSize || bufSize <= 0)
     {
@@ -662,7 +663,7 @@ static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
         return -EINVAL;
     }
 
-    chan->dma.reader_hw_count = limelitepcie_readl(s, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET) & 0xFFFF;
+    chan->dma.reader_hw_count = limepcie_readl(s, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET) & 0xFFFF;
 
     const uint8_t pendingBuffers = chan->dma.reader_sw_count - chan->dma.reader_hw_count;
     const uint8_t maxDMApending = chan->dma.bufferCount - 1;
@@ -692,10 +693,10 @@ static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
     if (ret < 0)
         return ret;
 
-    struct limelitepcie_dma_chan *dmachan = &chan->dma;
+    struct limepcie_dma_chan *dmachan = &chan->dma;
     const int bufIndex = chan->dma.reader_sw_count % chan->dma.bufferCount;
     ++chan->dma.reader_sw_count;
-    ret = limelitepcie_dma_reader_request(s, dmachan, dmachan->reader_handle[bufIndex], bufSize, genIRQ);
+    ret = limepcie_dma_reader_request(s, dmachan, dmachan->reader_handle[bufIndex], bufSize, genIRQ);
     if (ret != 0)
         return ret;
 
@@ -703,12 +704,12 @@ static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
     return 0;
 }
 
-static ssize_t limelitepcie_write(struct file *file, const char __user *data, size_t size, loff_t *offset)
+static ssize_t limepcie_write(struct file *file, const char __user *data, size_t size, loff_t *offset)
 {
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *s = chan->limelitepcie_dev;
-    struct limelitepcie_dma_chan *dmachan = &chan->dma;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
+    struct limepcie_device *s = chan->limepcie_dev;
+    struct limepcie_dma_chan *dmachan = &chan->dma;
     const int maxTransferSize = dmachan->bufferSize;
 #ifdef DEBUG_WRITE
     dev_dbg(&s->dev->dev, "write(%ld)\n", size);
@@ -724,10 +725,10 @@ static ssize_t limelitepcie_write(struct file *file, const char __user *data, si
         }
 
         // Fill DMA transactions table
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0); // don't loop table
-        limelitepcie_enable_interrupt(s, dmachan->reader_interrupt);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET, 1);
+        limepcie_writel(s, dmachan->base + PCIE_DMA_READER_TABLE_LOOP_PROG_N_OFFSET, 0); // don't loop table
+        limepcie_enable_interrupt(s, dmachan->reader_interrupt);
 
         /* Clear counters. */
         ClearDMAReaderCounters(dmachan);
@@ -743,7 +744,7 @@ static ssize_t limelitepcie_write(struct file *file, const char __user *data, si
             int ret = copy_from_user(dmachan->reader_addr[bufCount], data + maxTransferSize * bufCount, requestSize);
             if (ret)
                 return -EFAULT;
-            int status = limelitepcie_dma_reader_request(s, dmachan, dmachan->reader_handle[bufCount], requestSize, genIRQ);
+            int status = limepcie_dma_reader_request(s, dmachan, dmachan->reader_handle[bufCount], requestSize, genIRQ);
             if (status != 0)
             {
                 dev_dbg(&s->dev->dev, "DMA reader request failed %i\n", status);
@@ -752,7 +753,7 @@ static ssize_t limelitepcie_write(struct file *file, const char __user *data, si
             ++bufCount;
         }
 
-        limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 1); // start DMA reading
+        limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 1); // start DMA reading
         dev_dbg(&s->dev->dev, "DMA reader enable for %i buffers\n", bufCount);
         dmachan->reader_enable = true;
         ++dmachan->reader_sw_count;
@@ -761,8 +762,8 @@ static ssize_t limelitepcie_write(struct file *file, const char __user *data, si
     int ret = wait_event_interruptible(chan->wait_wr, dmachan->reader_sw_count - dmachan->reader_hw_count == 0);
     if (ret < 0)
         return ret;
-    limelitepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
-    limelitepcie_disable_interrupt(s, dmachan->reader_interrupt);
+    limepcie_writel(s, dmachan->base + PCIE_DMA_READER_ENABLE_OFFSET, 0);
+    limepcie_disable_interrupt(s, dmachan->reader_interrupt);
     dmachan->reader_enable = false;
 #ifdef DEBUG_WRITE
     dev_dbg(&s->dev->dev, "write(%ld) done\n", size);
@@ -770,11 +771,11 @@ static ssize_t limelitepcie_write(struct file *file, const char __user *data, si
     return size;
 }
 
-static int limelitepcie_mmap(struct file *file, struct vm_area_struct *vma)
+static int limepcie_mmap(struct file *file, struct vm_area_struct *vma)
 {
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *s = chan->limelitepcie_dev;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
+    struct limepcie_device *s = chan->limepcie_dev;
 
     unsigned long pfn;
     int is_tx, i;
@@ -822,10 +823,10 @@ static int limelitepcie_mmap(struct file *file, struct vm_area_struct *vma)
     return 0;
 }
 
-static unsigned int limelitepcie_poll(struct file *file, poll_table *wait)
+static unsigned int limepcie_poll(struct file *file, poll_table *wait)
 {
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
 
     poll_wait(file, &chan->wait_rd, wait);
     poll_wait(file, &chan->wait_wr, wait);
@@ -858,39 +859,38 @@ static unsigned int limelitepcie_poll(struct file *file, poll_table *wait)
 
     #define SPI_TIMEOUT 100000 /* in us */
 
-static int limelitepcie_flash_spi(struct limelitepcie_device *s, struct limelitepcie_ioctl_flash *m)
+static int limepcie_flash_spi(struct limepcie_device *s, struct limepcie_ioctl_flash *m)
 {
     int i;
 
     if (m->tx_len < 8 || m->tx_len > 40)
         return -EINVAL;
 
-    limelitepcie_writel(s, CSR_FLASH_SPI_MOSI_ADDR, m->tx_data >> 32);
-    limelitepcie_writel(s, CSR_FLASH_SPI_MOSI_ADDR + 4, m->tx_data);
-    limelitepcie_writel(s, CSR_FLASH_SPI_CONTROL_ADDR, SPI_CTRL_START | (m->tx_len * SPI_CTRL_LENGTH));
+    limepcie_writel(s, CSR_FLASH_SPI_MOSI_ADDR, m->tx_data >> 32);
+    limepcie_writel(s, CSR_FLASH_SPI_MOSI_ADDR + 4, m->tx_data);
+    limepcie_writel(s, CSR_FLASH_SPI_CONTROL_ADDR, SPI_CTRL_START | (m->tx_len * SPI_CTRL_LENGTH));
     udelay(16);
     for (i = 0; i < SPI_TIMEOUT; i++)
     {
-        if (limelitepcie_readl(s, CSR_FLASH_SPI_STATUS_ADDR) & SPI_STATUS_DONE)
+        if (limepcie_readl(s, CSR_FLASH_SPI_STATUS_ADDR) & SPI_STATUS_DONE)
             break;
         udelay(1);
     }
-    m->rx_data =
-        ((uint64_t)limelitepcie_readl(s, CSR_FLASH_SPI_MISO_ADDR) << 32) | limelitepcie_readl(s, CSR_FLASH_SPI_MISO_ADDR + 4);
+    m->rx_data = ((uint64_t)limepcie_readl(s, CSR_FLASH_SPI_MISO_ADDR) << 32) | limepcie_readl(s, CSR_FLASH_SPI_MISO_ADDR + 4);
     return 0;
 }
 #endif
 
-static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned long arg)
+static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
-    struct limelitepcie_device *dev = file->private_data;
+    struct limepcie_device *dev = file->private_data;
 
     switch (cmd)
     {
-    case LIMELITEPCIE_IOCTL_RUN_CONTROL_COMMAND: {
+    case LIMEPCIE_IOCTL_RUN_CONTROL_COMMAND: {
         struct semaphore *sem = &(dev->control_semaphore);
-        struct limelitepcie_control_packet m;
+        struct limepcie_control_packet m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
@@ -912,13 +912,13 @@ static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsi
         for (int i = 0; i < byteCount; i += sizeof(value))
         {
             memcpy(&value, m.request + i, sizeof(value));
-            limelitepcie_writel(dev, CSR_CNTRL_BASE + i, value);
+            limepcie_writel(dev, CSR_CNTRL_BASE + i, value);
         }
 
         success = false;
         while (ktime_get_raw_ns() < end_time)
         {
-            uint32_t status = limelitepcie_readl(dev, CSR_CNTRL_BASE);
+            uint32_t status = limepcie_readl(dev, CSR_CNTRL_BASE);
             if ((status & 0xFF00) != 0)
             {
                 success = true;
@@ -935,7 +935,7 @@ static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsi
 
         for (int i = 0; i < byteCount; i += sizeof(uint32_t))
         {
-            value = limelitepcie_readl(dev, CSR_CNTRL_BASE + i);
+            value = limepcie_readl(dev, CSR_CNTRL_BASE + i);
             memcpy(m.response + i, &value, sizeof(uint32_t));
         }
 
@@ -949,8 +949,8 @@ static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsi
         up(sem);
     }
     break;
-    case LIMELITEPCIE_IOCTL_VERSION: {
-        struct limelitepcie_version m;
+    case LIMEPCIE_IOCTL_VERSION: {
+        struct limepcie_version m;
 
         m.major = VERSION_MAJOR;
         m.minor = VERSION_MINOR;
@@ -970,18 +970,18 @@ static long limelitepcie_ioctl_control(struct file *file, unsigned int cmd, unsi
     return ret;
 }
 
-static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned long arg)
+static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
 
-    struct limelitepcie_chan_priv *chan_priv = file->private_data;
-    struct limelitepcie_chan *chan = chan_priv->chan;
-    struct limelitepcie_device *dev = chan->limelitepcie_dev;
+    struct limepcie_chan_priv *chan_priv = file->private_data;
+    struct limepcie_chan *chan = chan_priv->chan;
+    struct limepcie_device *dev = chan->limepcie_dev;
 
     switch (cmd)
     {
-    case LIMELITEPCIE_IOCTL_VERSION: {
-        struct limelitepcie_version m;
+    case LIMEPCIE_IOCTL_VERSION: {
+        struct limepcie_version m;
 
         m.major = VERSION_MAJOR;
         m.minor = VERSION_MINOR;
@@ -994,8 +994,8 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         }
     }
     break;
-    case LIMELITEPCIE_IOCTL_DMA_WRITER: {
-        struct limelitepcie_ioctl_dma_writer m;
+    case LIMEPCIE_IOCTL_DMA_WRITER: {
+        struct limepcie_ioctl_dma_writer m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
@@ -1014,14 +1014,14 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
                     ret = -EINVAL;
                     break;
                 }
-                limelitepcie_dma_writer_start(chan->limelitepcie_dev, chan->index, m.write_size, m.irqFreq);
-                limelitepcie_enable_interrupt(chan->limelitepcie_dev, chan->dma.writer_interrupt);
+                limepcie_dma_writer_start(chan->limepcie_dev, chan->index, m.write_size, m.irqFreq);
+                limepcie_enable_interrupt(chan->limepcie_dev, chan->dma.writer_interrupt);
             }
             else
             {
                 //dev_info(&dev->dev->dev, "%s DMA writer disable\n", file->f_path.dentry->d_iname);
-                limelitepcie_disable_interrupt(chan->limelitepcie_dev, chan->dma.writer_interrupt);
-                limelitepcie_dma_writer_stop(chan->limelitepcie_dev, chan->index);
+                limepcie_disable_interrupt(chan->limepcie_dev, chan->dma.writer_interrupt);
+                limepcie_dma_writer_stop(chan->limepcie_dev, chan->index);
             }
         }
 
@@ -1037,8 +1037,8 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         }
     }
     break;
-    case LIMELITEPCIE_IOCTL_DMA_READER: {
-        struct limelitepcie_ioctl_dma_reader m;
+    case LIMEPCIE_IOCTL_DMA_READER: {
+        struct limepcie_ioctl_dma_reader m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
@@ -1053,20 +1053,20 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
             {
                 chan->dma.reader_irqFreq = m.irqFreq;
                 //dev_info(&dev->dev->dev, "%s DMA reader enable\n", file->f_path.dentry->d_iname);
-                limelitepcie_dma_reader_start(chan->limelitepcie_dev, chan->index);
-                limelitepcie_enable_interrupt(chan->limelitepcie_dev, chan->dma.reader_interrupt);
+                limepcie_dma_reader_start(chan->limepcie_dev, chan->index);
+                limepcie_enable_interrupt(chan->limepcie_dev, chan->dma.reader_interrupt);
             }
             else
             {
                 //dev_info(&dev->dev->dev, "%s DMA reader disable\n", file->f_path.dentry->d_iname);
-                limelitepcie_disable_interrupt(chan->limelitepcie_dev, chan->dma.reader_interrupt);
-                limelitepcie_dma_reader_stop(chan->limelitepcie_dev, chan->index);
+                limepcie_disable_interrupt(chan->limepcie_dev, chan->dma.reader_interrupt);
+                limepcie_dma_reader_stop(chan->limepcie_dev, chan->index);
             }
         }
 
         chan->dma.reader_enable = m.enable;
 
-        uint32_t readTransfers = limelitepcie_readl(dev, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
+        uint32_t readTransfers = limepcie_readl(dev, chan->dma.base + PCIE_DMA_READER_TABLE_LOOP_STATUS_OFFSET);
         m.hw_count = readTransfers & 0xFFFF;
         m.sw_count = chan->dma.reader_sw_count & 0xFFFF;
 
@@ -1077,8 +1077,8 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         }
     }
     break;
-    case LIMELITEPCIE_IOCTL_MMAP_DMA_INFO: {
-        struct limelitepcie_ioctl_mmap_dma_info m;
+    case LIMEPCIE_IOCTL_MMAP_DMA_INFO: {
+        struct limepcie_ioctl_mmap_dma_info m;
 
         m.dma_tx_buf_offset = 0;
         m.dma_tx_buf_size = chan->dma.bufferSize;
@@ -1095,8 +1095,8 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         }
     }
     break;
-    case LIMELITEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE: {
-        struct limelitepcie_ioctl_mmap_dma_update m;
+    case LIMEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE: {
+        struct limepcie_ioctl_mmap_dma_update m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
@@ -1107,12 +1107,12 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         chan->dma.writer_sw_count = m.sw_count & 0xFFFF;
     }
     break;
-    case LIMELITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE: {
-        struct limelitepcie_ioctl_mmap_dma_update m;
+    case LIMEPCIE_IOCTL_MMAP_DMA_READER_UPDATE: {
+        struct limepcie_ioctl_mmap_dma_update m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
-            dev_dbg(&chan->limelitepcie_dev->dev->dev, "LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE copy_from_user fail");
+            dev_dbg(&chan->limepcie_dev->dev->dev, "LITEPCIE_IOCTL_MMAP_DMA_READER_UPDATE copy_from_user fail");
             ret = -EFAULT;
             break;
         }
@@ -1123,12 +1123,12 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
     }
     break;
 
-    case LIMELITEPCIE_IOCTL_CACHE_FLUSH: {
-        struct limelitepcie_cache_flush m;
+    case LIMEPCIE_IOCTL_CACHE_FLUSH: {
+        struct limepcie_cache_flush m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
-            dev_dbg(&chan->limelitepcie_dev->dev->dev, "LITEPCIE_IOCTL_CACHE_FLUSH copy_from_user fail");
+            dev_dbg(&chan->limepcie_dev->dev->dev, "LITEPCIE_IOCTL_CACHE_FLUSH copy_from_user fail");
             ret = -EFAULT;
             break;
         }
@@ -1151,8 +1151,8 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
         ret = 0;
     }
     break;
-    case LIMELITEPCIE_IOCTL_LOCK: {
-        struct limelitepcie_ioctl_lock m;
+    case LIMEPCIE_IOCTL_LOCK: {
+        struct limepcie_ioctl_lock m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {
@@ -1212,56 +1212,56 @@ static long limelitepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned
     return ret;
 }
 
-static int limelitepcie_ctrl_open(struct inode *inode, struct file *file)
+static int limepcie_ctrl_open(struct inode *inode, struct file *file)
 {
     pr_info("Open %s\n", file->f_path.dentry->d_iname);
-    struct limelitepcie_device *ctrlDevice = container_of(inode->i_cdev, struct limelitepcie_device, control_cdev);
+    struct limepcie_device *ctrlDevice = container_of(inode->i_cdev, struct limepcie_device, control_cdev);
     file->private_data = ctrlDevice;
 
-    limelitepcie_writel(ctrlDevice, CSR_CNTRL_TEST_ADDR, 0x55);
-    if (limelitepcie_readl(ctrlDevice, CSR_CNTRL_TEST_ADDR) != 0x55)
+    limepcie_writel(ctrlDevice, CSR_CNTRL_TEST_ADDR, 0x55);
+    if (limepcie_readl(ctrlDevice, CSR_CNTRL_TEST_ADDR) != 0x55)
     {
-        printk(KERN_ERR LIMELITEPCIE_NAME " CSR register test failed\n");
+        printk(KERN_ERR LIMEPCIE_NAME " CSR register test failed\n");
         return -EIO;
     }
     return 0;
 }
 
-static int limelitepcie_ctrl_release(struct inode *inode, struct file *file)
+static int limepcie_ctrl_release(struct inode *inode, struct file *file)
 {
     pr_info("Release %s\n", file->f_path.dentry->d_iname);
     return 0;
 }
 
-static ssize_t limelitepcie_ctrl_write(struct file *file, const char __user *userbuf, size_t count, loff_t *offset)
+static ssize_t limepcie_ctrl_write(struct file *file, const char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limelitepcie_device *s = file->private_data;
+    struct limepcie_device *s = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
         if (copy_from_user(&value, userbuf + i, sizeof(value)))
             return -EFAULT;
-        limelitepcie_writel(s, CSR_CNTRL_BASE + i, value);
+        limepcie_writel(s, CSR_CNTRL_BASE + i, value);
     }
     return count;
 }
 
-static ssize_t limelitepcie_ctrl_read(struct file *file, char __user *userbuf, size_t count, loff_t *offset)
+static ssize_t limepcie_ctrl_read(struct file *file, char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limelitepcie_device *s = file->private_data;
+    struct limepcie_device *s = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
-        value = limelitepcie_readl(s, CSR_CNTRL_BASE + i);
+        value = limepcie_readl(s, CSR_CNTRL_BASE + i);
         if (copy_to_user(userbuf + i, &value, sizeof(value)))
             return -EFAULT;
     }
     return count;
 }
 
-static pci_ers_result_t limelitepcie_error_detected(struct pci_dev *dev, pci_channel_state_t state)
+static pci_ers_result_t limepcie_error_detected(struct pci_dev *dev, pci_channel_state_t state)
 {
     switch (state)
     {
@@ -1280,7 +1280,7 @@ static pci_ers_result_t limelitepcie_error_detected(struct pci_dev *dev, pci_cha
     return PCI_ERS_RESULT_NONE;
 }
 // int (*mmio_enabled)(struct pci_dev *dev);
-static pci_ers_result_t limelitepcie_slot_reset(struct pci_dev *dev)
+static pci_ers_result_t limepcie_slot_reset(struct pci_dev *dev)
 {
     dev_err(&dev->dev, "PCI slot reset\n");
     return PCI_ERS_RESULT_NONE;
@@ -1288,61 +1288,61 @@ static pci_ers_result_t limelitepcie_slot_reset(struct pci_dev *dev)
 // void (*resume)(struct pci_dev *dev);
 
 static const struct pci_error_handlers pci_error_handlers_ops = {
-    .error_detected = limelitepcie_error_detected,
+    .error_detected = limepcie_error_detected,
     // .mmio_enabled = mmio_enabled,
-    .slot_reset = limelitepcie_slot_reset,
+    .slot_reset = limepcie_slot_reset,
     // .resume = resume
 };
 
-static const struct file_operations limelitepcie_fops = {
+static const struct file_operations limepcie_fops = {
     .owner = THIS_MODULE,
-    .unlocked_ioctl = limelitepcie_ioctl_trx,
-    .open = limelitepcie_open,
-    .release = limelitepcie_release,
-    .read = limelitepcie_read,
-    .poll = limelitepcie_poll,
-    .write = limelitepcie_write,
-    .mmap = limelitepcie_mmap,
+    .unlocked_ioctl = limepcie_ioctl_trx,
+    .open = limepcie_open,
+    .release = limepcie_release,
+    .read = limepcie_read,
+    .poll = limepcie_poll,
+    .write = limepcie_write,
+    .mmap = limepcie_mmap,
 };
 
-static const struct file_operations limelitepcie_fops_control = {
+static const struct file_operations limepcie_fops_control = {
     .owner = THIS_MODULE,
-    .unlocked_ioctl = limelitepcie_ioctl_control,
-    .open = limelitepcie_ctrl_open,
-    .release = limelitepcie_ctrl_release,
-    .read = limelitepcie_ctrl_read,
-    .write = limelitepcie_ctrl_write,
+    .unlocked_ioctl = limepcie_ioctl_control,
+    .open = limepcie_ctrl_open,
+    .release = limepcie_ctrl_release,
+    .read = limepcie_ctrl_read,
+    .write = limepcie_ctrl_write,
 };
 
 static ssize_t product_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    struct limelitepcie_device *limeDev = dev_get_drvdata(dev);
+    struct limepcie_device *limeDev = dev_get_drvdata(dev);
     return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.product);
 }
 
 static ssize_t vendor_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    struct limelitepcie_device *limeDev = dev_get_drvdata(dev);
+    struct limepcie_device *limeDev = dev_get_drvdata(dev);
     return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.vendor);
 }
 
 static DEVICE_ATTR(product, 0444, product_show, NULL);
 static DEVICE_ATTR(vendor, 0444, vendor_show, NULL);
 
-static int limelitepcie_alloc_chdev(struct limelitepcie_device *s, struct device *parent)
+static int limepcie_alloc_chdev(struct limepcie_device *s, struct device *parent)
 {
     int ret;
 
-    int index = limelitepcie_minor_idx;
+    int index = limepcie_minor_idx;
     char deviceName[64];
     static int suffix = 0;
-    snprintf(deviceName, sizeof(deviceName) - 1, "%s%i", "limelitepcie", suffix++);
+    snprintf(deviceName, sizeof(deviceName) - 1, "%s%i", "limepcie", suffix++);
 
-    s->minor_base = limelitepcie_minor_idx;
+    s->minor_base = limepcie_minor_idx;
     for (int i = 0; i < s->channels; i++)
     {
-        cdev_init(&s->chan[i].cdev, &limelitepcie_fops);
-        ret = cdev_add(&s->chan[i].cdev, MKDEV(limelitepcie_major, index), 1);
+        cdev_init(&s->chan[i].cdev, &limepcie_fops);
+        ret = cdev_add(&s->chan[i].cdev, MKDEV(limepcie_major, index), 1);
         if (ret < 0)
         {
             dev_err(&s->dev->dev, "Failed to allocate cdev\n");
@@ -1352,22 +1352,22 @@ static int limelitepcie_alloc_chdev(struct limelitepcie_device *s, struct device
     }
 
     // alloc control
-    cdev_init(&s->control_cdev, &limelitepcie_fops_control);
-    ret = cdev_add(&s->control_cdev, MKDEV(limelitepcie_major, index), 1);
+    cdev_init(&s->control_cdev, &limepcie_fops_control);
+    ret = cdev_add(&s->control_cdev, MKDEV(limepcie_major, index), 1);
     if (ret < 0)
     {
         dev_err(&s->dev->dev, "Failed to allocate control cdev\n");
         goto fail_alloc_control;
     }
 
-    index = limelitepcie_minor_idx;
+    index = limepcie_minor_idx;
     for (int i = 0; i < s->channels; i++)
     {
         char trxName[64];
         snprintf(trxName, sizeof(trxName) - 1, "trx%d", i);
         // when creating device linux replaces all '/' with a '!', so just use '!' directly
         struct device *trxDev =
-            device_create(limelitepcie_class, parent, MKDEV(limelitepcie_major, index), NULL, "%s!%s", deviceName, trxName);
+            device_create(limepcie_class, parent, MKDEV(limepcie_major, index), NULL, "%s!%s", deviceName, trxName);
         if (!trxDev)
         {
             ret = -EINVAL;
@@ -1385,8 +1385,7 @@ static int limelitepcie_alloc_chdev(struct limelitepcie_device *s, struct device
     dev_info(&s->dev->dev, "Creating /dev/%s/control0\n", deviceName);
     // // when creating device linux replaces all '/' with a '!', so just use '!' directly
 
-    struct device *ctrlDev =
-        device_create(limelitepcie_class, parent, MKDEV(limelitepcie_major, index), s, "%s!control0", deviceName);
+    struct device *ctrlDev = device_create(limepcie_class, parent, MKDEV(limepcie_major, index), s, "%s!control0", deviceName);
     if (!ctrlDev)
     {
         ret = -EINVAL;
@@ -1399,12 +1398,12 @@ static int limelitepcie_alloc_chdev(struct limelitepcie_device *s, struct device
 
     ++index;
 
-    limelitepcie_minor_idx = index;
+    limepcie_minor_idx = index;
     return 0;
 
 fail_create:
-    while (index >= limelitepcie_minor_idx)
-        device_destroy(limelitepcie_class, MKDEV(limelitepcie_major, index--));
+    while (index >= limepcie_minor_idx)
+        device_destroy(limepcie_class, MKDEV(limepcie_major, index--));
 
 fail_alloc_control:
     cdev_del(&s->control_cdev);
@@ -1416,13 +1415,13 @@ fail_alloc:
     return ret;
 }
 
-static void limelitepcie_free_chdev(struct limelitepcie_device *s)
+static void limepcie_free_chdev(struct limepcie_device *s)
 {
-    device_destroy(limelitepcie_class, MKDEV(limelitepcie_major, s->minor_base + s->channels));
+    device_destroy(limepcie_class, MKDEV(limepcie_major, s->minor_base + s->channels));
     cdev_del(&s->control_cdev);
     for (int i = 0; i < s->channels; i++)
     {
-        device_destroy(limelitepcie_class, MKDEV(limelitepcie_major, s->minor_base + i));
+        device_destroy(limepcie_class, MKDEV(limepcie_major, s->minor_base + i));
         cdev_del(&s->chan[i].cdev);
     }
 }
@@ -1463,7 +1462,7 @@ int compare_revisions(struct revision d1, struct revision d2)
 }
 /* from stackoverflow */
 
-void FreeIRQs(struct limelitepcie_device *device)
+void FreeIRQs(struct limepcie_device *device)
 {
     dev_info(&device->dev->dev, "FreeIRQs %i\n", device->irqs);
     if (device->irqs <= 0)
@@ -1478,7 +1477,7 @@ void FreeIRQs(struct limelitepcie_device *device)
     pci_free_irq_vectors(device->dev);
 }
 
-int AllocateIRQs(struct limelitepcie_device *device)
+int AllocateIRQs(struct limepcie_device *device)
 {
     struct pci_dev *dev = device->dev;
     int irqs = pci_alloc_irq_vectors(dev, 1, 32, PCI_IRQ_MSI);
@@ -1493,7 +1492,7 @@ int AllocateIRQs(struct limelitepcie_device *device)
     for (int i = 0; i < irqs; i++)
     {
         int irq = pci_irq_vector(dev, i);
-        int ret = request_irq(irq, limelitepcie_interrupt, IRQF_SHARED, LIMELITEPCIE_NAME, device);
+        int ret = request_irq(irq, limepcie_interrupt, IRQF_SHARED, LIMEPCIE_NAME, device);
         if (ret < 0)
         {
             dev_err(&dev->dev, " Failed to allocate IRQ %d\n", dev->irq);
@@ -1514,7 +1513,7 @@ struct LMS64CPacket {
     uint8_t payload[56];
 };
 
-static int ReadInfo(struct limelitepcie_device *s)
+static int ReadInfo(struct limepcie_device *s)
 {
     memset(&s->info, 0, sizeof(s->info));
 
@@ -1527,12 +1526,12 @@ static int ReadInfo(struct limelitepcie_device *s)
     for (int i = 0; i < count; i += sizeof(uint32_t))
     {
         memcpy(&value, buffer + i, sizeof(value));
-        limelitepcie_writel(s, CSR_CNTRL_BASE + i, value);
+        limepcie_writel(s, CSR_CNTRL_BASE + i, value);
     }
 
     for (int n = 0; n < 10; ++n)
     {
-        value = limelitepcie_readl(s, CSR_CNTRL_BASE);
+        value = limepcie_readl(s, CSR_CNTRL_BASE);
         memcpy(buffer, &value, sizeof(value));
         if (pkt.status != 0)
             break;
@@ -1543,7 +1542,7 @@ static int ReadInfo(struct limelitepcie_device *s)
 
     for (int i = 0; i < count; i += sizeof(uint32_t))
     {
-        value = limelitepcie_readl(s, CSR_CNTRL_BASE + i);
+        value = limepcie_readl(s, CSR_CNTRL_BASE + i);
         memcpy(buffer + i, &value, sizeof(value));
     }
 
@@ -1654,7 +1653,7 @@ static void validate_pcie(struct pci_dev *dev)
         dev_warn(&dev->dev, "PCIe Warning: Max PCIe Width x%u, but current is x%u\n", maxWidth, curWidth);
 }
 
-static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
     mutex_lock(&probe_lock);
 
@@ -1662,26 +1661,26 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     uint8_t rev_id;
     int i;
     char fpga_identifier[256];
-    struct limelitepcie_device *limelitepcie_dev = NULL;
+    struct limepcie_device *limepcie_dev = NULL;
 
     dev_info(&dev->dev, "[Probing device]\n");
 
-    limelitepcie_dev = devm_kzalloc(&dev->dev, sizeof(struct limelitepcie_device), GFP_KERNEL);
-    if (!limelitepcie_dev)
+    limepcie_dev = devm_kzalloc(&dev->dev, sizeof(struct limepcie_device), GFP_KERNEL);
+    if (!limepcie_dev)
     {
         ret = -ENOMEM;
         goto fail1;
     }
 
-    pci_set_drvdata(dev, limelitepcie_dev);
+    pci_set_drvdata(dev, limepcie_dev);
 
-    limelitepcie_dev->attr.vendor = id->vendor;
-    limelitepcie_dev->attr.product = id->device;
+    limepcie_dev->attr.vendor = id->vendor;
+    limepcie_dev->attr.product = id->device;
 
     validate_pcie(dev);
 
-    limelitepcie_dev->dev = dev;
-    spin_lock_init(&limelitepcie_dev->lock);
+    limepcie_dev->dev = dev;
+    spin_lock_init(&limepcie_dev->lock);
 
     ret = pcim_enable_device(dev);
     if (ret != 0)
@@ -1707,28 +1706,28 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
         goto fail1;
     }
 
-    if (pcim_iomap_regions(dev, BIT(0), LIMELITEPCIE_NAME) < 0)
+    if (pcim_iomap_regions(dev, BIT(0), LIMEPCIE_NAME) < 0)
     {
         dev_err(&dev->dev, "Could not request regions\n");
         goto fail1;
     }
 
-    limelitepcie_dev->bar0_addr = pcim_iomap_table(dev)[0];
-    if (!limelitepcie_dev->bar0_addr)
+    limepcie_dev->bar0_addr = pcim_iomap_table(dev)[0];
+    if (!limepcie_dev->bar0_addr)
     {
         dev_err(&dev->dev, "Could not map BAR0\n");
         goto fail1;
     }
-    dev_info(&dev->dev, "BAR0 address=0x%p\n", limelitepcie_dev->bar0_addr);
+    dev_info(&dev->dev, "BAR0 address=0x%p\n", limepcie_dev->bar0_addr);
 
     /* Reset LitePCIe core */
 #ifdef CSR_CTRL_RESET_ADDR
-    limelitepcie_writel(limelitepcie_dev, CSR_CTRL_RESET_ADDR, 1);
+    limepcie_writel(limepcie_dev, CSR_CTRL_RESET_ADDR, 1);
     msleep(10);
 #endif
     /* Show identifier */
     for (i = 0; i < 256; i++)
-        fpga_identifier[i] = limelitepcie_readl(limelitepcie_dev, CSR_IDENTIFIER_MEM_BASE + i * 4);
+        fpga_identifier[i] = limepcie_readl(limepcie_dev, CSR_IDENTIFIER_MEM_BASE + i * 4);
 
     fpga_identifier[255] = '\0';
     dev_info(&dev->dev, "Identifier %s\n", fpga_identifier);
@@ -1746,21 +1745,21 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
         goto fail1;
     };
 
-    ret = AllocateIRQs(limelitepcie_dev);
+    ret = AllocateIRQs(limepcie_dev);
     if (ret < 0)
         goto fail2;
 
     if (ValidIdentifier(fpga_identifier))
-        ParseIdentifier(fpga_identifier, limelitepcie_dev->info.devName, sizeof(limelitepcie_dev->info.devName));
-    else if (ReadInfo(limelitepcie_dev) != 0)
+        ParseIdentifier(fpga_identifier, limepcie_dev->info.devName, sizeof(limepcie_dev->info.devName));
+    else if (ReadInfo(limepcie_dev) != 0)
     {
-        dev_err(&dev->dev, "Failed to read limelitepcie device info\n");
+        dev_err(&dev->dev, "Failed to read limepcie device info\n");
         goto fail2;
     }
 
     uint32_t dmaBufferSize = 8192;
 
-    switch (limelitepcie_dev->info.boardId)
+    switch (limepcie_dev->info.boardId)
     {
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_QPCIE:
@@ -1777,42 +1776,42 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     }
 
     uint32_t dmaBufferCount = MAX_DMA_BUFFER_COUNT;
-    int32_t dmaChannels = limelitepcie_readl(limelitepcie_dev, CSR_CNTRL_NDMA_ADDR);
+    int32_t dmaChannels = limepcie_readl(limepcie_dev, CSR_CNTRL_NDMA_ADDR);
     if (dmaChannels > MAX_DMA_CHANNEL_COUNT || dmaChannels < 0)
     {
         dev_err(&dev->dev, "Invalid DMA channel count(%i)\n", dmaChannels);
         dmaChannels = 0;
     }
     dev_info(&dev->dev, "DMA channels: %i, buffer size: %i, buffers count: %i", dmaChannels, dmaBufferSize, dmaBufferCount);
-    limelitepcie_dev->channels = dmaChannels;
+    limepcie_dev->channels = dmaChannels;
 
     /* create all chardev in /dev */
-    ret = limelitepcie_alloc_chdev(limelitepcie_dev, &dev->dev);
+    ret = limepcie_alloc_chdev(limepcie_dev, &dev->dev);
     if (ret)
     {
         dev_err(&dev->dev, "Failed to allocate character device\n");
         goto fail2;
     }
 
-    for (i = 0; i < limelitepcie_dev->channels; i++)
+    for (i = 0; i < limepcie_dev->channels; i++)
     {
-        limelitepcie_dev->chan[i].dma.bufferCount = dmaBufferCount;
-        limelitepcie_dev->chan[i].dma.bufferSize = dmaBufferSize;
-        limelitepcie_dev->chan[i].index = i;
-        limelitepcie_dev->chan[i].block_size = dmaBufferSize;
-        limelitepcie_dev->chan[i].minor = limelitepcie_dev->minor_base + i;
-        limelitepcie_dev->chan[i].limelitepcie_dev = limelitepcie_dev;
-        limelitepcie_dev->chan[i].dma.writer_lock = 0;
-        limelitepcie_dev->chan[i].dma.reader_lock = 0;
-        init_waitqueue_head(&limelitepcie_dev->chan[i].wait_rd);
-        init_waitqueue_head(&limelitepcie_dev->chan[i].wait_wr);
+        limepcie_dev->chan[i].dma.bufferCount = dmaBufferCount;
+        limepcie_dev->chan[i].dma.bufferSize = dmaBufferSize;
+        limepcie_dev->chan[i].index = i;
+        limepcie_dev->chan[i].block_size = dmaBufferSize;
+        limepcie_dev->chan[i].minor = limepcie_dev->minor_base + i;
+        limepcie_dev->chan[i].limepcie_dev = limepcie_dev;
+        limepcie_dev->chan[i].dma.writer_lock = 0;
+        limepcie_dev->chan[i].dma.reader_lock = 0;
+        init_waitqueue_head(&limepcie_dev->chan[i].wait_rd);
+        init_waitqueue_head(&limepcie_dev->chan[i].wait_wr);
         switch (i)
         {
 #define CASE_DMA(x) \
     case x: { \
-        limelitepcie_dev->chan[i].dma.base = CSR_PCIE_DMA##x##_BASE; \
-        limelitepcie_dev->chan[i].dma.writer_interrupt = PCIE_DMA##x##_WRITER_INTERRUPT; \
-        limelitepcie_dev->chan[i].dma.reader_interrupt = PCIE_DMA##x##_READER_INTERRUPT; \
+        limepcie_dev->chan[i].dma.base = CSR_PCIE_DMA##x##_BASE; \
+        limepcie_dev->chan[i].dma.writer_interrupt = PCIE_DMA##x##_WRITER_INTERRUPT; \
+        limepcie_dev->chan[i].dma.reader_interrupt = PCIE_DMA##x##_READER_INTERRUPT; \
     } \
     break
 
@@ -1825,23 +1824,23 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
             CASE_DMA(1);
 #undef CASE_DMA
         default: {
-            limelitepcie_dev->chan[i].dma.base = CSR_PCIE_DMA0_BASE;
-            limelitepcie_dev->chan[i].dma.writer_interrupt = PCIE_DMA0_WRITER_INTERRUPT;
-            limelitepcie_dev->chan[i].dma.reader_interrupt = PCIE_DMA0_READER_INTERRUPT;
+            limepcie_dev->chan[i].dma.base = CSR_PCIE_DMA0_BASE;
+            limepcie_dev->chan[i].dma.writer_interrupt = PCIE_DMA0_WRITER_INTERRUPT;
+            limepcie_dev->chan[i].dma.reader_interrupt = PCIE_DMA0_READER_INTERRUPT;
         }
         break;
         }
     }
 
     /* allocate all dma buffers */
-    ret = limelitepcie_dma_init(limelitepcie_dev);
+    ret = limepcie_dma_init(limepcie_dev);
     if (ret)
     {
         dev_err(&dev->dev, "Failed to allocate DMA\n");
         goto fail3;
     }
 
-    sema_init(&limelitepcie_dev->control_semaphore, 1);
+    sema_init(&limepcie_dev->control_semaphore, 1);
 
 #ifdef CSR_UART_XOVER_RXTX_ADDR
     tty_res = devm_kzalloc(&dev->dev, sizeof(struct resource), GFP_KERNEL);
@@ -1852,10 +1851,10 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     }
     tty_res->start = (resource_size_t)litepcie_dev->bar0_addr + CSR_UART_XOVER_RXTX_ADDR - CSR_BASE;
     tty_res->flags = IORESOURCE_REG;
-    limelitepcie_dev->uart = platform_device_register_simple("liteuart", limelitepcie_minor_idx, tty_res, 1);
-    if (IS_ERR(limelitepcie_dev->uart))
+    limepcie_dev->uart = platform_device_register_simple("liteuart", limepcie_minor_idx, tty_res, 1);
+    if (IS_ERR(limepcie_dev->uart))
     {
-        ret = PTR_ERR(limelitepcie_dev->uart);
+        ret = PTR_ERR(limepcie_dev->uart);
         goto fail3;
     }
 #endif
@@ -1863,71 +1862,71 @@ static int limelitepcie_pci_probe(struct pci_dev *dev, const struct pci_device_i
     return 0;
 
 fail3:
-    limelitepcie_free_chdev(limelitepcie_dev);
+    limepcie_free_chdev(limepcie_dev);
 fail2:
-    FreeIRQs(limelitepcie_dev);
+    FreeIRQs(limepcie_dev);
 fail1:
     mutex_unlock(&probe_lock);
     return ret;
 }
 
-static void limelitepcie_pci_remove(struct pci_dev *dev)
+static void limepcie_pci_remove(struct pci_dev *dev)
 {
-    struct limelitepcie_device *limelitepcie_dev = pci_get_drvdata(dev);
+    struct limepcie_device *limepcie_dev = pci_get_drvdata(dev);
     dev_info(&dev->dev, "[Removing device]\n");
 
     /* Stop the DMAs */
-    limelitepcie_stop_dma(limelitepcie_dev);
+    limepcie_stop_dma(limepcie_dev);
 
     /* Disable all interrupts */
-    limelitepcie_writel(limelitepcie_dev, CSR_PCIE_MSI_ENABLE_ADDR, 0);
+    limepcie_writel(limepcie_dev, CSR_PCIE_MSI_ENABLE_ADDR, 0);
 
-    limelitepcie_dma_free(limelitepcie_dev);
+    limepcie_dma_free(limepcie_dev);
 
-    FreeIRQs(limelitepcie_dev);
-    platform_device_unregister(limelitepcie_dev->uart);
-    limelitepcie_free_chdev(limelitepcie_dev);
+    FreeIRQs(limepcie_dev);
+    platform_device_unregister(limepcie_dev->uart);
+    limepcie_free_chdev(limepcie_dev);
 }
 
-static const struct pci_device_id limelitepcie_pci_ids[] = {{PCI_DEVICE(XILINX_FPGA_VENDOR_ID, XILINX_FPGA_DEVICE_ID)},
+static const struct pci_device_id limepcie_pci_ids[] = {{PCI_DEVICE(XILINX_FPGA_VENDOR_ID, XILINX_FPGA_DEVICE_ID)},
     {PCI_DEVICE(XILINX_FPGA_VENDOR_ID, XTRX_FPGA_DEVICE_ID)},
     {PCI_DEVICE(ALTERA_FPGA_VENDOR_ID, ALTERA_FPGA_DEVICE_ID)},
     {0}};
-MODULE_DEVICE_TABLE(pci, limelitepcie_pci_ids);
+MODULE_DEVICE_TABLE(pci, limepcie_pci_ids);
 
-static struct pci_driver limelitepcie_pci_driver = {
-    .name = LIMELITEPCIE_NAME,
-    .id_table = limelitepcie_pci_ids,
-    .probe = limelitepcie_pci_probe,
-    .remove = limelitepcie_pci_remove,
+static struct pci_driver limepcie_pci_driver = {
+    .name = LIMEPCIE_NAME,
+    .id_table = limepcie_pci_ids,
+    .probe = limepcie_pci_probe,
+    .remove = limepcie_pci_remove,
     .err_handler = &pci_error_handlers_ops,
 };
 
-static int __init limelitepcie_module_init(void)
+static int __init limepcie_module_init(void)
 {
     int ret;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
-    limelitepcie_class = class_create(THIS_MODULE, LIMELITEPCIE_NAME);
+    limepcie_class = class_create(THIS_MODULE, LIMEPCIE_NAME);
 #else
-    limelitepcie_class = class_create(LIMELITEPCIE_NAME);
+    limepcie_class = class_create(LIMEPCIE_NAME);
 #endif
-    if (!limelitepcie_class)
+    if (!limepcie_class)
     {
         ret = -EEXIST;
         pr_err(" Failed to create class\n");
         goto fail_create_class;
     }
 
-    ret = alloc_chrdev_region(&limelitepcie_dev_t, 0, LIMELITEPCIE_MINOR_COUNT, LIMELITEPCIE_NAME);
+    ret = alloc_chrdev_region(&limepcie_dev_t, 0, LIMEPCIE_MINOR_COUNT, LIMEPCIE_NAME);
     if (ret < 0)
     {
         pr_err(" Could not allocate char device\n");
         goto fail_alloc_chrdev_region;
     }
-    limelitepcie_major = MAJOR(limelitepcie_dev_t);
-    limelitepcie_minor_idx = MINOR(limelitepcie_dev_t);
+    limepcie_major = MAJOR(limepcie_dev_t);
+    limepcie_minor_idx = MINOR(limepcie_dev_t);
 
-    ret = pci_register_driver(&limelitepcie_pci_driver);
+    ret = pci_register_driver(&limepcie_pci_driver);
     if (ret < 0)
     {
         pr_err(" Error while registering PCI driver\n");
@@ -1938,21 +1937,21 @@ static int __init limelitepcie_module_init(void)
     return 0;
 
 fail_register:
-    unregister_chrdev_region(limelitepcie_dev_t, LIMELITEPCIE_MINOR_COUNT);
+    unregister_chrdev_region(limepcie_dev_t, LIMEPCIE_MINOR_COUNT);
 fail_alloc_chrdev_region:
-    class_destroy(limelitepcie_class);
+    class_destroy(limepcie_class);
 fail_create_class:
     return ret;
 }
 
-static void __exit limelitepcie_module_exit(void)
+static void __exit limepcie_module_exit(void)
 {
-    pci_unregister_driver(&limelitepcie_pci_driver);
-    unregister_chrdev_region(limelitepcie_dev_t, LIMELITEPCIE_MINOR_COUNT);
-    class_destroy(limelitepcie_class);
+    pci_unregister_driver(&limepcie_pci_driver);
+    unregister_chrdev_region(limepcie_dev_t, LIMEPCIE_MINOR_COUNT);
+    class_destroy(limepcie_class);
 }
 
-module_init(limelitepcie_module_init);
-module_exit(limelitepcie_module_exit);
+module_init(limepcie_module_init);
+module_exit(limepcie_module_exit);
 
 MODULE_LICENSE("GPL");

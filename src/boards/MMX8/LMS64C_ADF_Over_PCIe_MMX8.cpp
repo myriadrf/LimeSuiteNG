@@ -3,7 +3,7 @@
 
 using namespace lime;
 
-LMS64C_ADF_Over_PCIe_MMX8::LMS64C_ADF_Over_PCIe_MMX8(std::shared_ptr<LimeLitePCIe> dataPort, uint32_t subdeviceIndex)
+LMS64C_ADF_Over_PCIe_MMX8::LMS64C_ADF_Over_PCIe_MMX8(std::shared_ptr<LimePCIe> dataPort, uint32_t subdeviceIndex)
     : pipe(dataPort)
     , subdeviceIndex(subdeviceIndex)
 {

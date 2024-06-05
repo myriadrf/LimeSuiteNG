@@ -2,7 +2,7 @@
 #define LIME_LMS64C_FPGA_OVER_PCIE_MMX8_H
 
 #include "comms/IComms.h"
-#include "LimeLitePCIe.h"
+#include "LimePCIe.h"
 #include "PCIE_CSR_Pipe.h"
 
 #include <cstdint>
@@ -19,7 +19,7 @@ class LMS64C_FPGA_Over_PCIe_MMX8 : public IComms
       @param dataPort The PCIe data bus to use.
       @param subdeviceIndex The subdevice index for which this class is created.
      */
-    LMS64C_FPGA_Over_PCIe_MMX8(std::shared_ptr<LimeLitePCIe> dataPort, uint32_t subdeviceIndex);
+    LMS64C_FPGA_Over_PCIe_MMX8(std::shared_ptr<LimePCIe> dataPort, uint32_t subdeviceIndex);
 
     OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
     OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;

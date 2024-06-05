@@ -1,18 +1,18 @@
 # LEGACY OWNERSHIP HANDLER
 ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x10ee", ATTR{device}=="0x7022",\
-RUN+="/sbin/modprobe limelitepcie",\
+RUN+="/sbin/modprobe limepcie",\
 RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind'",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limelitepcie/bind'"
+RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
 
 ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x10ee", ATTR{device}=="0x7023",\
-RUN+="/sbin/modprobe limelitepcie",\
+RUN+="/sbin/modprobe limepcie",\
 RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind',\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limelitepcie/bind'"
+RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
 
 ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x1172", ATTR{device}=="0xe001",\
-RUN+="/sbin/modprobe limelitepcie",\
+RUN+="/sbin/modprobe limepcie",\
 RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind'",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limelitepcie/bind'"
+RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
 
 # USB DEVICES - Set symlink, Set permissions
 # ???
@@ -24,7 +24,7 @@ ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="601f"
 # LimeSDR-USB
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="1d50", ATTR{idProduct}=="6108", MODE="666"
 
-ACTION=="add", SUBSYSTEM=="limelitepcie", MODE="666"
+ACTION=="add", SUBSYSTEM=="limepcie", MODE="666"
 
 #ATTR{vendor}=="0x10ee", ATTR{device}=="0x7022" LimeSDR X3
 #ATTR{vendor}=="0x10ee", ATTR{device}=="0x7023" LimeSDR XTRX
