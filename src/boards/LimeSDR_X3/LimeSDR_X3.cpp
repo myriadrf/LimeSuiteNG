@@ -5,6 +5,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
+#include "LitePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA_common.h"
 #include "FPGA_X3.h"
@@ -868,9 +869,6 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) = new TRXLooper(mTRXStreamPorts.at(moduleIndex), mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
-    if (mCallback_logMessage)
-        mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
     std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
     if (!trxPort->IsOpen())
     {
@@ -887,6 +885,18 @@ OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex
             return ReportError(OpStatus::Error, reason);
         }
     }
+
+    auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+    mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
+        std::static_pointer_cast<IDMA>(txdma),
+        mFPGA,
+        mLMSChips.at(moduleIndex),
+        moduleIndex);
+    if (mCallback_logMessage)
+        mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
+
     mStreamers[moduleIndex]->Setup(config);
     mStreamConfig = config;
     return OpStatus::Success;
@@ -1272,7 +1282,8 @@ OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region reg
 
 OpStatus LimeSDR_X3::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
-    return TRXLooper::UploadTxWaveform(mFPGA, mTRXStreamPorts[moduleIndex], config, moduleIndex, samples, count);
+    // TODO: return TRXLooper::UploadTxWaveform(mFPGA, txdma, config, moduleIndex, samples, count);
+    return OpStatus::Error;
 }
 
 } //namespace lime

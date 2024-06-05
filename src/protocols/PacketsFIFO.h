@@ -101,6 +101,8 @@ template<class T> class PacketsFIFO
                     lime::error("write fifo timeout"s);
                     return false;
                 }
+                if (newWritePosition == readPosition)
+                    return false;
             }
         }
 
@@ -130,6 +132,8 @@ template<class T> class PacketsFIFO
                 //lime::error("pop fifo timeout"s);
                 return false;
             }
+            if (empty())
+                return false;
         }
 
         const std::size_t readPosition = m_readPosition.load();

@@ -5,6 +5,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
+#include "LitePCIeDMA.h"
 #include "FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
@@ -369,9 +370,6 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
 
     try
     {
-        mStreamers.at(moduleIndex) = new TRXLooper(mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
-        if (mCallback_logMessage)
-            mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
         std::shared_ptr<LitePCIe> trxPort{ mStreamPort };
         if (!trxPort->IsOpen())
         {
@@ -388,6 +386,17 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 return ReportError(OpStatus::IOFailure, reason);
             }
         }
+        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+        mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
+            std::static_pointer_cast<IDMA>(txdma),
+            mFPGA,
+            mLMSChips.at(moduleIndex),
+            moduleIndex);
+        if (mCallback_logMessage)
+            mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
+
         OpStatus status = mStreamers[moduleIndex]->Setup(config);
         if (status != OpStatus::Success)
             return status;

@@ -21,22 +21,23 @@ class LMS7002M;
 class TRXLooper
 {
   public:
-    TRXLooper(std::shared_ptr<IDMA> comms, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
+    TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
     ~TRXLooper();
 
     uint64_t GetHardwareTimestamp() const;
     OpStatus SetHardwareTimestamp(const uint64_t now);
     OpStatus Setup(const lime::StreamConfig& cfg);
-    void Start();
+    OpStatus Start();
     void Stop();
+    void Teardown();
 
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
-    constexpr bool IsStreamRunning() const { return mStreamEnabled; }
+    constexpr inline bool IsStreamRunning() const { return mStreamEnabled; }
 
     /// @brief Gets the current configuration of the stream.
     /// @return The current configuration of the stream.
-    constexpr const lime::StreamConfig& GetConfig() const { return mConfig; }
+    constexpr inline const lime::StreamConfig& GetConfig() const { return mConfig; }
 
     uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
     uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
@@ -63,23 +64,20 @@ class TRXLooper
 
     /** @brief The transfer arguments. */
     struct TransferArgs {
-        std::shared_ptr<IDMA> port;
+        std::shared_ptr<IDMA> dma;
         std::vector<uint8_t*> buffers;
         int32_t bufferSize;
         int16_t packetSize;
         uint8_t packetsToBatch;
         int32_t samplesInPacket;
-        int64_t cnt;
-        int64_t sw;
-        int64_t hw;
     };
 
   protected:
-    int RxSetup();
+    OpStatus RxSetup();
     void ReceivePacketsLoop();
     void RxTeardown();
 
-    int TxSetup();
+    OpStatus TxSetup();
     void TransmitPacketsLoop();
     void TxTeardown();
 
@@ -92,8 +90,6 @@ class TRXLooper
     FPGA* fpga;
     LMS7002M* lms;
     uint8_t chipId;
-
-    std::chrono::time_point<std::chrono::steady_clock> streamClockStart;
 
     SDRDevice::LogCallbackType mCallback_logMessage;
     std::condition_variable streamActive;
@@ -123,19 +119,14 @@ class TRXLooper
         ~Stream()
         {
             if (fifo != nullptr)
-            {
                 delete fifo;
-            }
-
             DeleteMemoryPool();
         }
 
         void DeleteMemoryPool()
         {
             if (memPool == nullptr)
-            {
                 return;
-            }
 
             if (stagingPacket != nullptr)
             {

@@ -1,13 +1,13 @@
 #include "LimeSDR.h"
 
-#include "USBGeneric.h"
+#include "comms/USB/IUSB.h"
 #include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_common.h"
-#include "comms/USB/USBDMA.h"
+#include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
 #include "protocols/LMS64CProtocol.h"
@@ -23,17 +23,6 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
-
-#ifdef __unix__
-    #ifdef __GNUC__
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wpedantic"
-    #endif
-    #include <libusb.h>
-    #ifdef __GNUC__
-        #pragma GCC diagnostic pop
-    #endif
-#endif
 
 using namespace lime;
 using namespace lime::LMS64CProtocol;
@@ -103,7 +92,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param commsPort The communications port for direct communications with the device.
 LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<USBGeneric> streamPort,
+    std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
     , mSerialPort(commsPort)
@@ -505,11 +494,14 @@ OpStatus LimeSDR::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(std::make_shared<USBDMA>(
-                                                   mStreamPort, FX3::STREAM_BULK_IN_ADDRESS, FX3::STREAM_BULK_OUT_ADDRESS)),
-        mFPGA,
-        mLMSChips.at(moduleIndex),
-        0);
+    constexpr uint8_t rxBulkEndpoint = 0x81;
+    constexpr uint8_t txBulkEndpoint = 0x01;
+    auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
+
+    mStreamers.at(moduleIndex) = new TRXLooper(
+        std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA, mLMSChips.at(moduleIndex), 0);
+    mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
     return mStreamers.at(moduleIndex)->Setup(config);
 }
 

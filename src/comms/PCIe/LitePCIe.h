@@ -1,7 +1,6 @@
 #ifndef LIME_LITEPCIE_H
 #define LIME_LITEPCIE_H
 
-#include "comms/IDMA.h"
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 
@@ -12,10 +11,13 @@
 
 namespace lime {
 
-/** @brief Class for communicating with a PCIe device. */
-class LIME_API LitePCIe : public IDMA
+class LitePCIeDMA;
+
+/// @brief Class for communicating with a PCIe device.
+class LIME_API LitePCIe
 {
   public:
+    friend LitePCIeDMA;
     static std::vector<std::string> GetDevicesWithPattern(const std::string& regex);
     static std::vector<std::string> GetPCIeDeviceList();
     LitePCIe();
@@ -23,7 +25,7 @@ class LIME_API LitePCIe : public IDMA
 
     OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
     void Close();
-    bool IsOpen() const override;
+    bool IsOpen() const;
 
     // Write/Read for communicating to control end points (SPI, I2C...)
     virtual int WriteControl(const uint8_t* buffer, int length, int timeout_ms = 100);
@@ -32,51 +34,9 @@ class LIME_API LitePCIe : public IDMA
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
 
-    void RxEnable(uint32_t bufferSize, uint8_t irqPeriod) override;
-    void TxEnable() override;
-    void Disable(TRXDir direction) override;
-
-    /** @brief Structure for holding the Direct Memory Access (DMA) information. */
-    struct DMAInfo {
-        DMAInfo()
-            : rxMemory(nullptr)
-            , txMemory(nullptr)
-            , bufferSize(0)
-            , bufferCount(0)
-        {
-        }
-        uint8_t* rxMemory;
-        uint8_t* txMemory;
-        int bufferSize;
-        int bufferCount;
-    };
-    int GetBufferSize() const override;
-    int GetBufferCount() const override;
-    uint8_t* const GetMemoryAddress(TRXDir direction) const override;
-
-    DMAState GetState(TRXDir direction) override;
-    int SetState(TRXDir direction, DMAState state) override;
-
-    bool Wait(TRXDir direction) override;
-
-    void CacheFlush(TRXDir samplesDirection, DataTransferDirection dataDirection, uint16_t index) override;
-
-  private:
+  protected:
     std::filesystem::path mFilePath;
-    DMAInfo mDMA;
     int mFileDescriptor;
-
-    void RxDMAEnable(bool enabled, uint32_t bufferSize, uint8_t irqPeriod);
-    void TxDMAEnable(bool enabled);
-
-    DMAState GetRxDMAState();
-    DMAState GetTxDMAState();
-
-    int SetRxDMAState(DMAState s);
-    int SetTxDMAState(DMAState s);
-
-    bool WaitRx();
-    bool WaitTx();
 };
 
 } // namespace lime
