@@ -242,7 +242,7 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     const int statusWidths[] = { -1, -3, -3 };
     statusBar->SetStatusWidths(3, statusWidths);
     Bind(limeEVT_SDR_HANDLE_SELECTED, wxCommandEventHandler(limeGUIFrame::OnDeviceHandleChange), this);
-    Connect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), 0, this);
+    Connect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), nullptr, this);
     lime::registerLogHandler(&limeGUIFrame::OnGlobalLogEvent);
 
     deviceTree->Bind(
@@ -274,7 +274,7 @@ limeGUIFrame::~limeGUIFrame()
 
     Disconnect(idMenuQuit, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnQuit));
     Disconnect(idMenuAbout, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnAbout));
-    Disconnect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), 0, this);
+    Disconnect(LOG_MESSAGE, wxCommandEventHandler(limeGUIFrame::OnLogMessage), nullptr, this);
 
     obj_ptr = nullptr;
 }
@@ -421,7 +421,7 @@ void limeGUIFrame::AddModule(IModuleFrame* module, const std::string& title)
     mnuModules->Append(item);
 
     mModules[moduleId] = module;
-    module->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(limeGUIFrame::OnModuleClose), NULL, this);
+    module->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(limeGUIFrame::OnModuleClose), nullptr, this);
     Connect(item->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(limeGUIFrame::OnShowModule));
 }
 

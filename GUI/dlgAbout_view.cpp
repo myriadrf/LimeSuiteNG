@@ -101,12 +101,12 @@ dlgAbout_view::dlgAbout_view(
 
     // Connect Events
     this->Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
-    btnClose->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), NULL, this);
+    btnClose->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), nullptr, this);
 }
 
 dlgAbout_view::~dlgAbout_view()
 {
     // Disconnect Events
     this->Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
-    btnClose->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), NULL, this);
+    btnClose->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), nullptr, this);
 }

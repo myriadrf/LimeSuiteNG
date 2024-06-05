@@ -43,7 +43,7 @@ LitePCIeDMA::LitePCIeDMA(std::shared_ptr<LitePCIe> port, DataTransferDirection d
             const std::string msg = ": DMA writer request denied"s;
             throw std::runtime_error(msg);
         }
-        auto buf = static_cast<uint8_t*>(mmap(NULL,
+        auto buf = static_cast<uint8_t*>(mmap(nullptr,
             info.dma_rx_buf_size * info.dma_rx_buf_count,
             PROT_READ,
             MAP_SHARED,
@@ -67,7 +67,7 @@ LitePCIeDMA::LitePCIeDMA(std::shared_ptr<LitePCIe> port, DataTransferDirection d
             const std::string msg = ": DMA reader request denied"s;
             throw std::runtime_error(msg);
         }
-        auto buf = static_cast<uint8_t*>(mmap(NULL,
+        auto buf = static_cast<uint8_t*>(mmap(nullptr,
             info.dma_tx_buf_size * info.dma_tx_buf_count,
             PROT_WRITE,
             MAP_SHARED,
@@ -241,7 +241,7 @@ OpStatus LitePCIeDMA::Wait()
     timeout_ts.tv_sec = 0;
     timeout_ts.tv_nsec = 10e6;
 
-    int ret = ppoll(&desc, 1, &timeout_ts, NULL);
+    int ret = ppoll(&desc, 1, &timeout_ts, nullptr);
     if (ret < 0)
     {
         if (errno == EINTR)

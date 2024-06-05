@@ -37,7 +37,7 @@ MCU_BD::MCU_BD()
 
     //ctor
     int i = 0;
-    m_serPort = NULL;
+    m_serPort = nullptr;
     //default value,
     //must be verified during program exploatation
 

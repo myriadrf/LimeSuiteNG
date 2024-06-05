@@ -120,13 +120,13 @@ void dlgMarkers::AddDeltas()
             pnl, wxNewId(), "Delta" + std::to_string(i), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
         FlexGridSizer3->Add(StaticText1, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
         wxChoice* dsrc0 =
-            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICE1"));
+            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, nullptr, 0, wxDefaultValidator, _T("ID_CHOICE1"));
         dsrc0->Append(selections);
         dsrc0->SetSelection(0);
         deltaSrc.push_back(dsrc0);
         FlexGridSizer3->Add(dsrc0, 1, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
         wxChoice* dsrc1 =
-            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICE2"));
+            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, nullptr, 0, wxDefaultValidator, _T("ID_CHOICE2"));
         dsrc1->Append(selections);
         dsrc1->SetSelection(0);
         deltaSrc.push_back(dsrc1);
@@ -169,7 +169,7 @@ void dlgMarkers::UpdateValues()
 
     for (size_t i = 0; i < labels.size(); ++i)
     {
-        if (parent_graph == NULL)
+        if (parent_graph == nullptr)
             return;
         if (!parent_graph->markers[i].used)
             continue;

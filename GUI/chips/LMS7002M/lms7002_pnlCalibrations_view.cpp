@@ -300,38 +300,38 @@ lms7002_pnlCalibrations_view::lms7002_pnlCalibrations_view(
 
     // Connect Events
     cmbGCORRI_RXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbGCORRQ_RXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbIQCORR_RXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbDCOFFI_RFE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbDCOFFQ_RFE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     chkEN_DCOFF_RXFE_RFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     chkDCMODE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     btnCalibrateRx->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateRx), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateRx), nullptr, this);
     cmbGCORRI_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbGCORRQ_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbIQCORR_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbDCCORRI_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     cmbDCCORRQ_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCalibrations_view::ParameterChangeHandler), nullptr, this);
     btnCalibrateTx->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateTx), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateTx), nullptr, this);
     btnCalibrateAll->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateAll), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCalibrations_view::OnbtnCalibrateAll), nullptr, this);
     rgrCalibrationMethod->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
         wxCommandEventHandler(lms7002_pnlCalibrations_view::OnCalibrationMethodChange),
-        NULL,
+        nullptr,
         this);
 
     wndId2Enum[cmbIQCORR_TXTSP] = LMS7002MCSR::IQCORR_TXTSP;

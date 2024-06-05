@@ -425,7 +425,7 @@ int main(int argc, char** argv)
     int64_t totalSamplesReceived = 0;
 
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
     kiss_fft_cpx m_fftCalcIn[fftSize];
     kiss_fft_cpx m_fftCalcOut[fftSize];
     fftBins[0] = 0;

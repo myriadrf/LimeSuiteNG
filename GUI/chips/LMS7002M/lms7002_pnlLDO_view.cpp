@@ -241,7 +241,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     fgSizer251->Add(m_staticText349, 0, wxALIGN_CENTER_VERTICAL, 5);
 
     cmbISINK_SPIBUFF =
-        new wxComboBox(sbSizer54->GetStaticBox(), ID_RDIV_TXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer54->GetStaticBox(), ID_RDIV_TXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbISINK_SPIBUFF->Append(wxT("Off"));
     cmbISINK_SPIBUFF->Append(wxT("10 kOhm"));
     cmbISINK_SPIBUFF->Append(wxT("2.5 kOhm"));
@@ -697,7 +697,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT1->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_VCOSXR = new wxComboBox(ID_PANEL2, ID_RDIV_VCOSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_VCOSXR = new wxComboBox(ID_PANEL2, ID_RDIV_VCOSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_VCOSXR->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_VCOSXR, 0, flags, 0);
@@ -706,7 +706,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT2->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT2, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_VCOSXT = new wxComboBox(ID_PANEL2, ID_RDIV_VCOSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_VCOSXT = new wxComboBox(ID_PANEL2, ID_RDIV_VCOSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_VCOSXT->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_VCOSXT, 0, flags, 0);
@@ -715,7 +715,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT3->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT3, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TXBUF = new wxComboBox(ID_PANEL2, ID_RDIV_TXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TXBUF = new wxComboBox(ID_PANEL2, ID_RDIV_TXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TXBUF->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TXBUF, 0, flags, 0);
@@ -724,7 +724,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT4->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT4, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_VCOGN = new wxComboBox(ID_PANEL2, ID_RDIV_VCOGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_VCOGN = new wxComboBox(ID_PANEL2, ID_RDIV_VCOGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_VCOGN->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_VCOGN, 0, flags, 0);
@@ -733,7 +733,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT5->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT5, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TLOB = new wxComboBox(ID_PANEL2, ID_RDIV_TLOB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TLOB = new wxComboBox(ID_PANEL2, ID_RDIV_TLOB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TLOB->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TLOB, 0, flags, 0);
@@ -742,7 +742,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT6->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT6, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TPAD = new wxComboBox(ID_PANEL2, ID_RDIV_TPAD, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TPAD = new wxComboBox(ID_PANEL2, ID_RDIV_TPAD, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TPAD->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TPAD, 0, flags, 0);
@@ -751,7 +751,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT7->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TIA12 = new wxComboBox(ID_PANEL2, ID_RDIV_TIA12, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TIA12 = new wxComboBox(ID_PANEL2, ID_RDIV_TIA12, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TIA12->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TIA12, 0, flags, 0);
@@ -760,7 +760,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT8->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TIA14 = new wxComboBox(ID_PANEL2, ID_RDIV_TIA14, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TIA14 = new wxComboBox(ID_PANEL2, ID_RDIV_TIA14, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TIA14->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TIA14, 0, flags, 0);
@@ -769,7 +769,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT9->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_RXBUF = new wxComboBox(ID_PANEL2, ID_RDIV_RXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_RXBUF = new wxComboBox(ID_PANEL2, ID_RDIV_RXBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_RXBUF->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_RXBUF, 0, flags, 0);
@@ -778,7 +778,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT10->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT10, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_TBB = new wxComboBox(ID_PANEL2, ID_RDIV_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_TBB = new wxComboBox(ID_PANEL2, ID_RDIV_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_TBB->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_TBB, 0, flags, 0);
@@ -787,7 +787,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT11->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_MXRFE = new wxComboBox(ID_PANEL2, ID_RDIV_MXRFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_MXRFE = new wxComboBox(ID_PANEL2, ID_RDIV_MXRFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_MXRFE->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_MXRFE, 0, flags, 0);
@@ -796,7 +796,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT12->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT12, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_RBB = new wxComboBox(ID_PANEL2, ID_RDIV_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_RBB = new wxComboBox(ID_PANEL2, ID_RDIV_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_RBB->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_RBB, 0, flags, 0);
@@ -805,7 +805,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT13->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_LNA12 = new wxComboBox(ID_PANEL2, ID_RDIV_LNA12, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_LNA12 = new wxComboBox(ID_PANEL2, ID_RDIV_LNA12, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_LNA12->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_LNA12, 0, flags, 0);
@@ -814,7 +814,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT14->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT14, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_LNA14 = new wxComboBox(ID_PANEL2, ID_RDIV_LNA14, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_LNA14 = new wxComboBox(ID_PANEL2, ID_RDIV_LNA14, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_LNA14->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_LNA14, 0, flags, 0);
@@ -823,7 +823,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT15->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT15, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIVSXR = new wxComboBox(ID_PANEL2, ID_RDIV_DIVSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIVSXR = new wxComboBox(ID_PANEL2, ID_RDIV_DIVSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIVSXR->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIVSXR, 0, flags, 0);
@@ -832,7 +832,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT16->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT16, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIVSXT = new wxComboBox(ID_PANEL2, ID_RDIV_DIVSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIVSXT = new wxComboBox(ID_PANEL2, ID_RDIV_DIVSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIVSXT->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIVSXT, 0, flags, 0);
@@ -841,7 +841,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT17->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT17, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIGSXT = new wxComboBox(ID_PANEL2, ID_RDIV_DIGSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIGSXT = new wxComboBox(ID_PANEL2, ID_RDIV_DIGSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIGSXT->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIGSXT, 0, flags, 0);
@@ -850,7 +850,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT18->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT18, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIVGN = new wxComboBox(ID_PANEL2, ID_RDIV_DIVGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIVGN = new wxComboBox(ID_PANEL2, ID_RDIV_DIVGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIVGN->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIVGN, 0, flags, 0);
@@ -859,7 +859,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT19->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT19, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIGGN = new wxComboBox(ID_PANEL2, ID_RDIV_DIGGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIGGN = new wxComboBox(ID_PANEL2, ID_RDIV_DIGGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIGGN->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIGGN, 0, flags, 0);
@@ -868,7 +868,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT20->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT20, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIGSXR = new wxComboBox(ID_PANEL2, ID_RDIV_DIGSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIGSXR = new wxComboBox(ID_PANEL2, ID_RDIV_DIGSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIGSXR->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIGSXR, 0, flags, 0);
@@ -877,7 +877,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT21->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT21, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_CPSXT = new wxComboBox(ID_PANEL2, ID_RDIV_CPSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_CPSXT = new wxComboBox(ID_PANEL2, ID_RDIV_CPSXT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_CPSXT->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_CPSXT, 0, flags, 0);
@@ -886,7 +886,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT22->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT22, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIG = new wxComboBox(ID_PANEL2, ID_RDIV_DIG, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIG = new wxComboBox(ID_PANEL2, ID_RDIV_DIG, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIG->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIG, 0, flags, 0);
@@ -895,7 +895,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT23->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT23, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_CPGN = new wxComboBox(ID_PANEL2, ID_RDIV_CPGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_CPGN = new wxComboBox(ID_PANEL2, ID_RDIV_CPGN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_CPGN->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_CPGN, 0, flags, 0);
@@ -904,7 +904,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT24->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT24, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_CPSXR = new wxComboBox(ID_PANEL2, ID_RDIV_CPSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_CPSXR = new wxComboBox(ID_PANEL2, ID_RDIV_CPSXR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_CPSXR->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_CPSXR, 0, flags, 0);
@@ -913,7 +913,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT25->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT25, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_SPIBUF = new wxComboBox(ID_PANEL2, ID_RDIV_SPIBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_SPIBUF = new wxComboBox(ID_PANEL2, ID_RDIV_SPIBUF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_SPIBUF->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_SPIBUF, 0, flags, 0);
@@ -922,14 +922,14 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT26->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT26, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_AFE = new wxComboBox(ID_PANEL2, ID_RDIV_AFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_AFE = new wxComboBox(ID_PANEL2, ID_RDIV_AFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     fgSizer75->Add(cmbRDIV_AFE, 0, 0, 5);
 
     ID_STATICTEXT27 = new wxStaticText(ID_PANEL2, wxID_ANY, wxT("RDIV_DIGIp2"), wxDefaultPosition, wxDefaultSize, 0);
     ID_STATICTEXT27->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT27, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIGIp2 = new wxComboBox(ID_PANEL2, ID_RDIV_DIGIp2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIGIp2 = new wxComboBox(ID_PANEL2, ID_RDIV_DIGIp2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIGIp2->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIGIp2, 0, flags, 0);
@@ -938,7 +938,7 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT28->Wrap(0);
     fgSizer75->Add(ID_STATICTEXT28, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRDIV_DIGIp1 = new wxComboBox(ID_PANEL2, ID_RDIV_DIGIp1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRDIV_DIGIp1 = new wxComboBox(ID_PANEL2, ID_RDIV_DIGIp1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRDIV_DIGIp1->SetToolTip(wxT("Controls the output voltage of the LDO by setting the resistive voltage divider ratio"));
 
     fgSizer75->Add(cmbRDIV_DIGIp1, 0, flags, 0);
@@ -955,235 +955,235 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
 
     // Connect Events
     chkEN_G_LDOP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_LDO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIVGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIGGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_CPGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_VCOGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_MXRFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_LNA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_LNA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TIA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIVSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIGSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_CPSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_VCOSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIVSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIGSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_CPSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_VCOSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkPD_LDO_DIGIp1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkPD_LDO_DIGIp2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_RXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TPAD->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TLOB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkPD_LDO_SPIBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbISINK_SPIBUFF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_AFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_TIA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LDO_DIG->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TIA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TIA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TLOB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TPAD->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_TXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_VCOGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIVSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIVSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_AFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_CPGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_VCOSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_VCOSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIG->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIGGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIGSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIGSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIVGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_CPSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_CPSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_LNA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_LNA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_MXRFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_RXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_SPIBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIGIp2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_LDO_DIGIp1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TIA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TIA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TLOB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TPAD->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_TXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_VCOGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_VCOSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_VCOSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_AFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_CPGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIVSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIVSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIG->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIGGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIGSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIGSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIVGN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_CPSXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_CPSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_LNA12->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_LNA14->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_MXRFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_RXBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_SPIBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIGIp2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOADIMP_LDO_DIGIp1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_VCOSXR->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_VCOSXT->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TXBUF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_VCOGN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TLOB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TPAD->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TIA12->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TIA14->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_RXBUF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_MXRFE->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_LNA12->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_LNA14->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIVSXR->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIVSXT->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIGSXT->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIVGN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIGGN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIGSXR->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_CPSXT->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIG->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_CPGN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_CPSXR->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_SPIBUF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_AFE->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIGIp2->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
     cmbRDIV_DIGIp1->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLDO_view::ParameterChangeHandler), nullptr, this);
 
     /*wndId2Enum[chkBYP_LDO_AFE] = BYP_LDO_AFE;
     wndId2Enum[chkBYP_LDO_CPGN] = BYP_LDO_CPGN;

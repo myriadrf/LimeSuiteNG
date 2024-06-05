@@ -134,8 +134,7 @@ void LMS7002_WXGUI::UpdateTooltips(const std::map<wxWindow*, LMS7002MCSR>& wndId
     for (iter = wndId2param.begin(); iter != wndId2param.end(); ++iter)
     {
         const lime::LMS7002MCSR_Data::CSRegister& reg = GetRegister(iter->second);
-        wxToolTip* ttip = NULL;
-        ttip = iter->first->GetToolTip();
+        wxToolTip* ttip = iter->first->GetToolTip();
         if (ttip)
             sttip = ttip->GetTip();
         else
