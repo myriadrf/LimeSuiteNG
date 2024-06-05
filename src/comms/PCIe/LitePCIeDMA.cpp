@@ -25,13 +25,13 @@ LitePCIeDMA::LitePCIeDMA(std::shared_ptr<LitePCIe> port, DataTransferDirection d
     : port(port)
     , dir(dir)
 {
-    litepcie_ioctl_mmap_dma_info info;
+    litepcie_ioctl_mmap_dma_info info{};
     int ret = ioctl(port->mFileDescriptor, LITEPCIE_IOCTL_MMAP_DMA_INFO, &info);
     if (ret != 0)
         return;
 
     mappings.reserve(info.dma_rx_buf_count);
-    litepcie_ioctl_lock lockInfo;
+    litepcie_ioctl_lock lockInfo{};
 
     if (dir == DataTransferDirection::DeviceToHost)
     {
@@ -107,7 +107,7 @@ OpStatus LitePCIeDMA::Enable(bool enabled)
 {
     if (dir == DataTransferDirection::DeviceToHost)
     {
-        litepcie_ioctl_dma_writer writer;
+        litepcie_ioctl_dma_writer writer{};
         memset(&writer, 0, sizeof(litepcie_ioctl_dma_writer));
         writer.enable = enabled ? 1 : 0;
         writer.hw_count = 0;
@@ -123,7 +123,7 @@ OpStatus LitePCIeDMA::Enable(bool enabled)
     }
     else
     {
-        litepcie_ioctl_dma_reader reader;
+        litepcie_ioctl_dma_reader reader{};
         memset(&reader, 0, sizeof(litepcie_ioctl_dma_reader));
         reader.enable = enabled ? 1 : 0;
         reader.hw_count = 0;
@@ -140,7 +140,7 @@ OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, ui
     assert(port->IsOpen());
     if (dir == DataTransferDirection::DeviceToHost)
     {
-        litepcie_ioctl_dma_writer writer;
+        litepcie_ioctl_dma_writer writer{};
         memset(&writer, 0, sizeof(litepcie_ioctl_dma_writer));
         writer.enable = enabled ? 1 : 0;
         writer.hw_count = 0;
@@ -156,7 +156,7 @@ OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, ui
     }
     else
     {
-        litepcie_ioctl_dma_reader reader;
+        litepcie_ioctl_dma_reader reader{};
         memset(&reader, 0, sizeof(litepcie_ioctl_dma_reader));
         reader.enable = enabled ? 1 : 0;
         reader.hw_count = 0;
@@ -170,11 +170,11 @@ OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, ui
 
 IDMA::State LitePCIeDMA::GetCounters()
 {
-    IDMA::State dma;
+    IDMA::State dma{};
 
     if (dir == DataTransferDirection::DeviceToHost)
     {
-        litepcie_ioctl_dma_writer dmaWriter;
+        litepcie_ioctl_dma_writer dmaWriter{};
         memset(&dmaWriter, 0, sizeof(litepcie_ioctl_dma_writer));
         dmaWriter.enable = 1;
         int ret = ioctl(port->mFileDescriptor, LITEPCIE_IOCTL_DMA_WRITER, &dmaWriter);
@@ -185,7 +185,7 @@ IDMA::State LitePCIeDMA::GetCounters()
     }
     else
     {
-        litepcie_ioctl_dma_reader dmaReader;
+        litepcie_ioctl_dma_reader dmaReader{};
         memset(&dmaReader, 0, sizeof(litepcie_ioctl_dma_reader));
         dmaReader.enable = 1;
         int ret = ioctl(port->mFileDescriptor, LITEPCIE_IOCTL_DMA_READER, &dmaReader);
@@ -202,7 +202,7 @@ OpStatus LitePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTra
     assert(port->IsOpen());
     if (direction == DataTransferDirection::DeviceToHost)
     {
-        litepcie_ioctl_mmap_dma_update sub;
+        litepcie_ioctl_mmap_dma_update sub{};
         memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
         sub.sw_count = index;
         sub.buffer_size = bytesCount;
@@ -212,7 +212,7 @@ OpStatus LitePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTra
     }
     else
     {
-        litepcie_ioctl_mmap_dma_update sub;
+        litepcie_ioctl_mmap_dma_update sub{};
         memset(&sub, 0, sizeof(litepcie_ioctl_mmap_dma_update));
         sub.sw_count = index;
         sub.buffer_size = bytesCount;
@@ -233,11 +233,11 @@ OpStatus LitePCIeDMA::Wait()
     else
         eventMask = POLLOUT;
 
-    pollfd desc;
+    pollfd desc{};
     desc.fd = port->mFileDescriptor;
     desc.events = eventMask;
 
-    struct timespec timeout_ts;
+    timespec timeout_ts{};
     timeout_ts.tv_sec = 0;
     timeout_ts.tv_nsec = 10e6;
 
@@ -256,7 +256,7 @@ OpStatus LitePCIeDMA::Wait()
 
 void LitePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDirection)
 {
-    litepcie_cache_flush sub;
+    litepcie_cache_flush sub{};
     memset(&sub, 0, sizeof(litepcie_cache_flush));
     sub.isTx = dir == DataTransferDirection::HostToDevice;
     sub.toDevice = bufferDirection == DataTransferDirection::HostToDevice;

@@ -8,9 +8,11 @@ static constexpr int maxAsyncTransfers = 16;
 
 USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir)
     : port(port)
+    , counters{}
     , lastRequestIndex(0)
     , endpoint(endpoint)
     , dir(dir)
+    , continuos(false)
 {
     mappings.resize(256);
     for (auto& memoryBlock : mappings)
@@ -19,8 +21,6 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
         memoryBlock.buffer = new uint8_t[memoryBlock.size];
     }
 
-    counters.consumerIndex = 0;
-    counters.producerIndex = 0;
     for (int i = 0; i < maxAsyncTransfers; ++i)
     {
         AsyncXfer* async = new AsyncXfer();

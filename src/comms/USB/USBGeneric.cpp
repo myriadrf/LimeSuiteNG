@@ -113,8 +113,8 @@ static void process_libusbtransfer(libusb_transfer* trans)
 USBGeneric::AsyncContext::AsyncContext()
     : transfer(libusb_alloc_transfer(0))
     , bytesXfered(0)
+    , done{ false }
 {
-    done.store(false);
 }
 
 USBGeneric::AsyncContext::~AsyncContext()
@@ -174,7 +174,7 @@ std::vector<USBDescriptor> USBGeneric::enumerateDevices(const std::set<IUSB::Ven
 
     for (int i = 0; i < usbDeviceCount; ++i)
     {
-        libusb_device_descriptor desc;
+        libusb_device_descriptor desc{};
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
         if (returnCode < 0)
         {
@@ -218,7 +218,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
 
     for (int i = 0; i < usbDeviceCount; ++i)
     {
-        libusb_device_descriptor desc;
+        libusb_device_descriptor desc{};
         int returnCode = libusb_get_device_descriptor(devs[i], &desc);
 
         if (returnCode < 0)

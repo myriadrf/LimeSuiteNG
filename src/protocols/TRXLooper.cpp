@@ -58,7 +58,10 @@ template<class T> static uint32_t indexListToMask(const std::vector<T>& indexes)
 /// @param chip The LMS7002M chip to use in this stream.
 /// @param moduleIndex The ID of the chip to use.
 TRXLooper::TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f, LMS7002M* chip, uint8_t moduleIndex)
-    : mCallback_logMessage(nullptr)
+    : fpga(f)
+    , lms(chip)
+    , chipId(moduleIndex)
+    , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
 {
     mRx.packetsToBatch = 1;
@@ -72,10 +75,7 @@ TRXLooper::TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f
     mRxArgs.dma = rx;
     mTxArgs.dma = tx;
 
-    lms = chip;
-    fpga = f;
     assert(fpga);
-    chipId = moduleIndex;
     mTimestampOffset = 0;
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
     mRx.terminate.store(false, std::memory_order_relaxed);
@@ -362,7 +362,7 @@ void TRXLooper::ReceivePacketsLoop()
 {
     constexpr int headerSize{ sizeof(StreamHeader) };
 
-    DataConversion conversion;
+    DataConversion conversion{};
     conversion.srcFormat = mConfig.linkFormat;
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
@@ -1078,7 +1078,6 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
     fpga->WriteRegister(0x000D, 0x4); // WFM_LOAD
 
     const auto dmaChunks{ dma->GetBuffers() };
-    const auto dmaBufferSize = dmaChunks.front().size;
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
     for (uint32_t i = 0; i < dmaChunks.size(); ++i)
@@ -1126,7 +1125,7 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
         dma->BufferOwnership(stagingBufferIndex, DataTransferDirection::HostToDevice);
 
         size_t transferSize = 16 + payloadSize;
-        assert(transferSize <= dmaBufferSize);
+        assert(transferSize <= dmaChunks.front().size);
         bool requestIRQ = (stagingBufferIndex % 4) == 0;
 
         // DMA memory is write only, to read from the buffer will trigger Bus errors
