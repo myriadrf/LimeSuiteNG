@@ -18,4 +18,13 @@ if lsmod | grep -Eq "^$MODULE_NAME"; then
     rmmod $MODULE_NAME
 fi
 
+if lsmod | grep -Eq "^litepcie"; then
+    rmmod litepcie 2> /dev/null 1>&2
+
+    if [ $? -ne 0 ]
+    then
+        echo -e "\033[33mCould not unload legacy driver. Reboot device to finalize installation.\033[0m"
+    fi
+fi
+
 exit 0
