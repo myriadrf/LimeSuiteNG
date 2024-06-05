@@ -1056,15 +1056,14 @@ StreamStats TRXLooper::GetStats(TRXDir dir) const
 
 /// @copydoc SDRDevice::UploadTxWaveform()
 /// @param fpga The FPGA device to use.
-/// @param port The PCIe communications port to use.
+/// @param dma The data channel to use.
 OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
-    std::shared_ptr<IDMA> port,
+    std::shared_ptr<IDMA> dma,
     const lime::StreamConfig& config,
     uint8_t moduleIndex,
     const void** samples,
     uint32_t count)
 {
-    /*
     const int samplesInPkt = 256;
     const bool useChannelB = config.channels.at(lime::TRXDir::Tx).size() > 1;
     const bool mimo = config.channels.at(lime::TRXDir::Tx).size() == 2;
@@ -1078,27 +1077,29 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
 
     fpga->WriteRegister(0x000D, 0x4); // WFM_LOAD
 
-    std::vector<uint8_t*> dmaBuffers(port->GetBufferCount());
-    for (uint32_t i = 0; i < dmaBuffers.size(); ++i)
-    {
-        dmaBuffers[i] = port->GetMemoryAddress(TRXDir::Tx) + port->GetBufferSize() * i;
-    }
+    const auto dmaChunks{ dma->GetBuffers() };
+    const auto dmaBufferSize = dmaChunks.front().size;
 
-    port->TxEnable();
+    std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
+    for (uint32_t i = 0; i < dmaChunks.size(); ++i)
+        dmaBuffers[i] = dmaChunks[i].buffer;
+
+    dma->Enable(true);
 
     uint32_t samplesRemaining = count;
-    uint8_t dmaIndex = 0;
+    uint8_t stagingBufferIndex = 0;
 
     while (samplesRemaining > 0)
     {
-        IDMA::DMAState state{ port->GetState(TRXDir::Tx) };
-        port->Wait(TRXDir::Tx); // block until there is a free DMA buffer
+        // IDMA::State state{ dma->GetCounters() };
+        dma->Wait(); // block until there is a free DMA buffer
 
         int samplesToSend = samplesRemaining > samplesInPkt ? samplesInPkt : samplesRemaining;
         int samplesDataSize = 0;
 
-        port->CacheFlush(TRXDir::Tx, DataTransferDirection::DeviceToHost, dmaIndex);
-        FPGA_TxDataPacket* pkt = reinterpret_cast<FPGA_TxDataPacket*>(dmaBuffers[dmaIndex]);
+        dma->BufferOwnership(stagingBufferIndex, DataTransferDirection::DeviceToHost);
+
+        FPGA_TxDataPacket* pkt = reinterpret_cast<FPGA_TxDataPacket*>(dmaBuffers[stagingBufferIndex]);
         pkt->counter = 0;
         pkt->reserved[0] = 0;
 
@@ -1122,34 +1123,34 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
         pkt->reserved[1] = payloadSize & 0xFF; //WFM loading
         pkt->reserved[0] = 0x1 << 5; //WFM loading
 
-        port->CacheFlush(TRXDir::Tx, DataTransferDirection::HostToDevice, dmaIndex);
+        dma->BufferOwnership(stagingBufferIndex, DataTransferDirection::HostToDevice);
 
-        dma.producerIndex = dmaIndex;
-        state.bufferSize = 16 + payloadSize;
-        state.generateIRQ = (dmaIndex % 4) == 0;
+        size_t transferSize = 16 + payloadSize;
+        assert(transferSize <= dmaBufferSize);
+        bool requestIRQ = (stagingBufferIndex % 4) == 0;
 
         // DMA memory is write only, to read from the buffer will trigger Bus errors
-        const int ret{ port->SetState(TRXDir::Tx, state) };
-        if (ret && errno == EINVAL)
+        const OpStatus status{ dma->SubmitRequest(
+            stagingBufferIndex, transferSize, DataTransferDirection::HostToDevice, requestIRQ) };
+        if (status != OpStatus::Success)
         {
-            port->Disable(TRXDir::Tx);
+            dma->Enable(false);
             return ReportError(OpStatus::IOFailure, "Failed to submit dma write (%i) %s", errno, strerror(errno));
         }
 
         samplesRemaining -= samplesToSend;
-        dmaIndex = (dmaIndex + 1) % port->GetBufferCount();
+        stagingBufferIndex = (stagingBufferIndex + 1) % dmaBuffers.size();
     }
 
     // Give some time to load samples to FPGA
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    port->Disable(TRXDir::Tx);
+    dma->Enable(false);
 
     fpga->StopWaveformPlayback();
     if (samplesRemaining != 0)
         return ReportError(OpStatus::Error, "Failed to upload waveform"s);
 
-    return OpStatus::Success;*/
-    return OpStatus::Error;
+    return OpStatus::Success;
 }
 
 } // namespace lime
