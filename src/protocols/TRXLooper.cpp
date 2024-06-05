@@ -11,6 +11,7 @@
 #include "TxBufferManager.h"
 #include "utilities/DeltaVariable.h"
 
+#include <algorithm>
 #include <cassert>
 #include <ciso646>
 #include <complex>

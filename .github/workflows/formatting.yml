@@ -1,6 +1,7 @@
 name: Formatting
 
 on:
+  workflow_dispatch:
   push:
     branches: [develop]
   pull_request:
@@ -56,6 +57,7 @@ jobs:
           exit 0
 
   clang-tidy:
+    if: false # skip job until it's properly setup to be runnable locally
     runs-on: [ubuntu-24.04] # Change to ubuntu-latest when that changes over
 
     steps:
