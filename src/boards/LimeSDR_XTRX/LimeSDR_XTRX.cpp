@@ -271,7 +271,11 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate = cfg.channel[0].GetDirection(rxUsed ? TRXDir::Rx : TRXDir::Tx).sampleRate;
+        double sampleRate{0};
+        if (rxUsed)
+            sampleRate = cfg.channel[0].rx.sampleRate;
+        else if (txUsed)
+            sampleRate = cfg.channel[0].tx.sampleRate;
 
         if (sampleRate > 0)
             LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);

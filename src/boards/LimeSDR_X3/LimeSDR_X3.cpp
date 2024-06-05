@@ -589,7 +589,11 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate = cfg.channel[0].GetDirection(rxUsed ? TRXDir::Rx : TRXDir::Tx).sampleRate;
+        double sampleRate{0};
+        if (rxUsed)
+            sampleRate = cfg.channel[0].rx.sampleRate;
+        else if (txUsed)
+            sampleRate = cfg.channel[0].tx.sampleRate;
 
         if (socIndex == 0 && sampleRate > 0)
         {
