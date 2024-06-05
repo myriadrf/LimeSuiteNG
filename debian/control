@@ -19,8 +19,8 @@ Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: limesuite-udev, limesuite-images
-Description: Lime Suite - shared library
- Lime Suite application software.
+Description: Lime Suite NG - shared library
+ Lime Suite NG application software.
 
 Package: liblimesuiteng-dev
 Section: libdevel
@@ -28,8 +28,8 @@ Architecture: any
 Depends:
     liblimesuiteng (= ${binary:Version}),
     ${misc:Depends}
-Description: Lime Suite - development files
- Lime Suite application software.
+Description: Lime Suite NG - development files
+ Lime Suite NG application software.
 
 Package: limesuiteng
 Section: comm
@@ -39,24 +39,24 @@ Depends:
     ${shlibs:Depends},
     ${misc:Depends},
     xdg-utils
-Description: Lime Suite - Library applications
- Lime Suite application software.
+Description: Lime Suite NG - Library applications
+ Lime Suite NG application software.
 
 Package: limesuite-udev
 Section: libs
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}, udev
-Description: Lime Suite - USB rules for udev
- Lime Suite application software.
+Description: Lime Suite NG - USB rules for udev
+ Lime Suite NG application software.
 
 Package: limesuiteng-images
 Section: libs
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}, wget
-Description: Lime Suite - Install firmware and gateware images
- Lime Suite application software.
+Description: Lime Suite NG - Install firmware and gateware images
+ Lime Suite NG application software.
  .
  This is dummy package that downloads the images from the web.
 
@@ -65,11 +65,11 @@ Section: libs
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}, limesuiteng-images
-Description: Lime Suite - Install firmware and gateware images
- Lime Suite application software.
+Description: Lime Suite NG - Install firmware and gateware images
+ Lime Suite NG application software.
  .
  This is an empty dependency package that pulls in the images
- for the default version of Lime Suite.
+ for the default version of Lime Suite NG.
 
 Package: limesuiteng-litepcie-kernel-module
 Section: libs
