@@ -45,7 +45,7 @@ class frFFTviewer : public IModuleFrame
     wxSplitterWindow* mPlotsSplitter;
     wxPanel* mTimeConstellationPanel;
     OpenGLGraph* mTimeDomainPanel;
-    OpenGLGraph* mConstelationPanel;
+    OpenGLGraph* mConstellationPanel;
     OpenGLGraph* mFFTpanel;
     wxStaticText* m_staticText6;
     wxTextCtrl* txtNyquistFreqMHz;
