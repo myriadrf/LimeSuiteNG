@@ -16,6 +16,9 @@ class SDRDevice;
 class wxTextCtrl;
 class wxChoice;
 class wxStaticText;
+class wxSpinEvent;
+
+class NumericSlider;
 
 class SPI_wxgui : public IModuleFrame
 {
@@ -27,12 +30,23 @@ class SPI_wxgui : public IModuleFrame
         wxStaticText* status;
     };
 
+    struct QuickSPIFields {
+        wxChoice* devSelection;
+        wxTextCtrl* address;
+        wxTextCtrl* mask;
+        NumericSlider* value;
+        wxStaticText* status;
+    };
+
     // Handlers for SPI_view events.
     void onSPIwrite(wxCommandEvent& event);
     void onSPIread(wxCommandEvent& event);
 
+    void onQuickSPIwrite(wxSpinEvent& event);
+
     wxFlexGridSizer* CreateSPIControls(wxWindow* parent, uint8_t rowCount, wxChoice* outDeviceSelector);
     void InsertSPIControlsRow(wxWindow* parent, wxWindowID id, wxFlexGridSizer* row, SPI_wxgui::SPIFields* controls);
+    void InsertQuickSPIControlsRow(wxWindow* parent, wxWindowID id, wxFlexGridSizer* row, SPI_wxgui::QuickSPIFields* controls);
 
   public:
     SPI_wxgui(wxWindow* parent,
@@ -47,6 +61,7 @@ class SPI_wxgui : public IModuleFrame
   protected:
     std::vector<wxChoice*> mSPIselection;
     std::unordered_map<wxWindowID, SPIFields> mSPIElements;
+    std::unordered_map<wxWindowID, QuickSPIFields> mQuickSPIElements;
 };
 
 #endif // __SPI_wxgui__
