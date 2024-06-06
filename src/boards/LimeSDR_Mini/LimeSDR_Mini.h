@@ -11,6 +11,7 @@ namespace lime {
 
 class USBGeneric;
 class IComms;
+class IUSB;
 
 /** @brief Class for managing the LimeSDR Mini device. */
 class LimeSDR_Mini : public LMS7002M_SDRDevice
@@ -18,7 +19,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
   public:
     LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         std::shared_ptr<IComms> spiFPGA,
-        std::shared_ptr<USBGeneric> mStreamPort,
+        std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR_Mini();
 
@@ -58,7 +59,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     static OpStatus UpdateFPGAInterface(void* userData);
 
   private:
-    std::shared_ptr<USBGeneric> mStreamPort;
+    std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;

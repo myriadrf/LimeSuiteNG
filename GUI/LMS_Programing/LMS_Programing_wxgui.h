@@ -1,9 +1,9 @@
 /**
-@file   LMS_Programing_wxgui.h
+@file   LMS_Programming_wxgui.h
 @author Lime Microsystems
 */
-#ifndef LMS_Programing_wxgui_H
-#define LMS_Programing_wxgui_H
+#ifndef LMS_Programming_wxgui_H
+#define LMS_Programming_wxgui_H
 
 class wxGauge;
 class wxStaticText;
@@ -18,17 +18,17 @@ class wxChoice;
 #include "IModuleFrame.h"
 #include <wx/dialog.h>
 
-class LMS_Programing_wxgui : public IModuleFrame
+class LMS_Programming_wxgui : public IModuleFrame
 {
   public:
-    LMS_Programing_wxgui(wxWindow* parent,
+    LMS_Programming_wxgui(wxWindow* parent,
         wxWindowID id = wxID_ANY,
         const wxString& title = _("Programming"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         int style = wxDEFAULT_DIALOG_STYLE,
         wxString name = wxEmptyString);
-    ~LMS_Programing_wxgui();
+    ~LMS_Programming_wxgui();
 
     bool Initialize(lime::SDRDevice* device) override;
     void Update() override;
@@ -51,9 +51,9 @@ class LMS_Programing_wxgui : public IModuleFrame
     std::atomic<bool> mProgrammingInProgress{};
     std::atomic<bool> mAbortProgramming{};
     std::thread mWorkerThread;
-    static LMS_Programing_wxgui* obj_ptr;
-    static const long ID_PROGRAMING_FINISHED_EVENT;
-    static const long ID_PROGRAMING_STATUS_EVENT;
+    static LMS_Programming_wxgui* obj_ptr;
+    static const long ID_PROGRAMMING_FINISHED_EVENT;
+    static const long ID_PROGRAMMING_STATUS_EVENT;
     static const long ID_BUTTON1;
     static const long ID_BUTTON2;
     static const long ID_GAUGE1;
@@ -66,8 +66,8 @@ class LMS_Programing_wxgui : public IModuleFrame
     void OnAbortProgramming(wxCommandEvent& event);
     void OnbtnProgFPGAClick(wxCommandEvent& event);
     void OncmbDeviceSelect(wxCommandEvent& event);
-    void OnProgramingStatusUpdate(wxCommandEvent& event);
-    void OnProgramingFinished(wxCommandEvent& event);
+    void OnProgrammingStatusUpdate(wxCommandEvent& event);
+    void OnProgrammingFinished(wxCommandEvent& event);
 
   protected:
     DECLARE_EVENT_TABLE()

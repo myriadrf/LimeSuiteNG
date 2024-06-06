@@ -1,13 +1,13 @@
 #include "LimeSDR.h"
 
-#include "USBGeneric.h"
+#include "comms/USB/IUSB.h"
 #include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_common.h"
-#include "TRXLooper_USB.h"
+#include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
 #include "protocols/LMS64CProtocol.h"
@@ -23,17 +23,6 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
-
-#ifdef __unix__
-    #ifdef __GNUC__
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wpedantic"
-    #endif
-    #include <libusb.h>
-    #ifdef __GNUC__
-        #pragma GCC diagnostic pop
-    #endif
-#endif
 
 using namespace lime;
 using namespace lime::LMS64CProtocol;
@@ -103,7 +92,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param commsPort The communications port for direct communications with the device.
 LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<USBGeneric> streamPort,
+    std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
     , mSerialPort(commsPort)
@@ -248,11 +237,12 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate;
+        double sampleRate{ 0 };
         if (rxUsed)
             sampleRate = cfg.channel[0].rx.sampleRate;
-        else
+        else if (txUsed)
             sampleRate = cfg.channel[0].tx.sampleRate;
+
         if (sampleRate > 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
@@ -478,6 +468,10 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 // clear the USB buffers before streaming samples to avoid old data
 void LimeSDR::ResetUSBFIFO()
 {
+    lime::debug("LimeSDR: resetting USB FIFO");
+    // Don't reset USB FIFO if stream is running, otherwise data will stop.
+    if (mStreamers.at(0) != nullptr)
+        assert(!mStreamers.at(0)->IsStreamRunning());
     LMS64CPacket pkt;
     pkt.cmd = Command::USB_FIFO_RST;
     pkt.status = CommandStatus::Undefined;
@@ -505,18 +499,23 @@ OpStatus LimeSDR::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
         delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers.at(moduleIndex) =
-        new TRXLooper_USB(mStreamPort, mFPGA, mLMSChips.at(moduleIndex), FX3::STREAM_BULK_IN_ADDRESS, FX3::STREAM_BULK_OUT_ADDRESS);
-    return mStreamers.at(moduleIndex)->Setup(config);
+    constexpr uint8_t rxBulkEndpoint = 0x81;
+    constexpr uint8_t txBulkEndpoint = 0x01;
+    auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
+
+    ResetUSBFIFO();
+    mStreamers.at(moduleIndex) = new TRXLooper(
+        std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA, mLMSChips.at(moduleIndex), 0);
+    mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
+    OpStatus status = mStreamers.at(moduleIndex)->Setup(config);
+    return status;
 }
 
 void LimeSDR::StreamStart(uint8_t moduleIndex)
 {
     if (mStreamers[0])
-    {
-        ResetUSBFIFO();
         mStreamers[0]->Start();
-    }
     else
         throw std::runtime_error("Stream not setup"s);
 }

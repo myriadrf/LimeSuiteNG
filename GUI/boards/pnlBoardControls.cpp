@@ -21,7 +21,6 @@
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "comms/IComms.h"
 #include "utilities/toString.h"
 
 using namespace std;

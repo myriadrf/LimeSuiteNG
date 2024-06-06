@@ -4,6 +4,8 @@
 
 namespace lime {
 
+class DeviceHandle;
+
 /** @brief A class for enumerating and instantiating PCIe based devices. */
 class DeviceFactoryPCIe : public DeviceRegistryEntry
 {

@@ -1,5 +1,7 @@
 #include "USB_CSR_Pipe_Mini.h"
 
+#include "comms/USB/FT601/FT601.h"
+
 using namespace lime;
 
 static const int CONTROL_BULK_WRITE_ADDRESS = 0x02;

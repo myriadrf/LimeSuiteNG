@@ -41,8 +41,8 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
     mTimeDomainPanel = new OpenGLGraph(mTimeConstellationPanel, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), wxTAB_TRAVERSAL);
     bSizer2->Add(mTimeDomainPanel, 1, wxALL | wxEXPAND, 5);
 
-    mConstelationPanel = new OpenGLGraph(mTimeConstellationPanel, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), wxTAB_TRAVERSAL);
-    bSizer2->Add(mConstelationPanel, 0, wxALL | wxEXPAND | wxSHAPED, 5);
+    mConstellationPanel = new OpenGLGraph(mTimeConstellationPanel, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), wxTAB_TRAVERSAL);
+    bSizer2->Add(mConstellationPanel, 0, wxALL | wxEXPAND | wxSHAPED, 5);
 
     fgSizer9->Add(bSizer2, 1, wxEXPAND, 5);
 

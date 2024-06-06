@@ -333,6 +333,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
 
     // if chip index is not specified and device has only one, use it by default
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)

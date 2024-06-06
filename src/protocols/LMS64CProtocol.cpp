@@ -6,7 +6,6 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "comms/IComms.h"
 #include "ISerialPort.h"
 #include "LMS64CProtocol.h"
 #include <chrono>

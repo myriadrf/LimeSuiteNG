@@ -1030,7 +1030,7 @@ void Soapy_limesuiteng::writeSetting(const int direction, const size_t channel, 
     else if (key == "ENABLE_GFIR_LPF")
     {
         double bw = std::stof(value);
-        SoapySDR::logf(SOAPY_SDR_INFO, "Configurate GFIR LPF %f", bw);
+        SoapySDR::logf(SOAPY_SDR_INFO, "Configure GFIR LPF %f", bw);
         sdrDevice->ConfigureGFIR(0, dir, channel, { true, bw });
         settingsCache.at(direction).at(channel).GFIRBandwidth = bw;
     }

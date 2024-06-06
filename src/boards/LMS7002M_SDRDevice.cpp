@@ -1,6 +1,5 @@
 #include "LMS7002M_SDRDevice.h"
 
-#include "DeviceExceptions.h"
 #include "FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
@@ -555,7 +554,7 @@ OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::
         tia = 1;
     }
 #endif
-    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From datasheet
+    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From data sheet
 
     if ((device->Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, lna + 1) != OpStatus::Success) ||
         (device->Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, tia + 1) != OpStatus::Success) ||
@@ -1254,7 +1253,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_RXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_RXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_RXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_RXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Rx, signal.dcValue.real(), signal.dcValue.imag());
     }
@@ -1268,7 +1267,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_TXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_TXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_TXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_TXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
     }

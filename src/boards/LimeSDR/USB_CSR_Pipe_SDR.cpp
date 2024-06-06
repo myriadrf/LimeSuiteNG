@@ -25,7 +25,9 @@ static const std::set<LMS64CProtocol::Command> commandsToBulkTransfer = {
 
 USB_CSR_Pipe_SDR::USB_CSR_Pipe_SDR(FX3& port)
     : USB_CSR_Pipe()
-    , port(port){};
+    , port(port)
+{
+}
 
 int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
 {
@@ -37,16 +39,14 @@ int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
         return port.BulkTransfer(FX3::CONTROL_BULK_OUT_ADDRESS, const_cast<uint8_t*>(data), length, timeout_ms);
     }
 
-    return port.ControlTransfer(
-#ifdef __unix__
-        LIBUSB_REQUEST_TYPE_VENDOR
-#else
-        0
-#endif // __unix__
-        ,
-        FX3::CTR_W_REQCODE,
-        FX3::CTR_W_VALUE,
-        FX3::CTR_W_INDEX,
+    constexpr int CTR_W_REQCODE = 0xC1;
+    constexpr int CTR_W_VALUE = 0x0000;
+    constexpr int CTR_W_INDEX = 0x0000;
+
+    return port.ControlTransfer(FX3::CTR_WRITE_REQUEST_VALUE,
+        CTR_W_REQCODE,
+        CTR_W_VALUE,
+        CTR_W_INDEX,
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
         const_cast<uint8_t*>(data),
         length,
@@ -62,17 +62,9 @@ int USB_CSR_Pipe_SDR::Read(uint8_t* data, size_t length, int timeout_ms)
         return port.BulkTransfer(FX3::CONTROL_BULK_IN_ADDRESS, data, length, timeout_ms);
     }
 
-    return port.ControlTransfer(
-#ifdef __unix__
-        LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN
-#else
-        1
-#endif // __unix__
-        ,
-        FX3::CTR_R_REQCODE,
-        FX3::CTR_R_VALUE,
-        FX3::CTR_R_INDEX,
-        data,
-        length,
-        timeout_ms);
+    constexpr int CTR_R_REQCODE = 0xC0;
+    constexpr int CTR_R_VALUE = 0x0000;
+    constexpr int CTR_R_INDEX = 0x0000;
+
+    return port.ControlTransfer(FX3::CTR_READ_REQUEST_VALUE, CTR_R_REQCODE, CTR_R_VALUE, CTR_R_INDEX, data, length, timeout_ms);
 }

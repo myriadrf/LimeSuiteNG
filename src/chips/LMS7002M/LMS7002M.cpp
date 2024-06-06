@@ -30,7 +30,7 @@
 #endif
 
 #include "limesuiteng/types.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002MCSR.h"

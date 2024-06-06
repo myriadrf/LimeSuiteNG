@@ -71,7 +71,6 @@ template<class T> class TxBufferManager
     /// @return The sendability of the transfer (true to send it now).
     bool consume(T* src)
     {
-        bool sendBuffer = false;
         while (!src->empty())
         {
             if (payloadSize >= maxPayloadSize || payloadSize == maxSamplesInPkt * bytesForFrame)
@@ -90,8 +89,7 @@ template<class T> class TxBufferManager
                 bytesUsed += sizeof(StreamHeader);
             }
             const uint32_t freeSpace = std::min(maxPayloadSize - payloadSize, mCapacity - bytesUsed - 16);
-            uint32_t transferCount = std::min(freeSpace / bytesForFrame, src->size());
-            transferCount = std::min(transferCount, maxSamplesInPkt);
+            const uint32_t transferCount = std::min({ freeSpace / bytesForFrame, src->size(), maxSamplesInPkt });
             if (transferCount > 0)
             {
                 int samplesDataSize = Interleave(payloadPtr, src->front(), transferCount, conversion);
@@ -103,18 +101,9 @@ template<class T> class TxBufferManager
                 assert(payloadSize > 0);
                 assert(payloadSize <= maxPayloadSize);
             }
-            else
-                sendBuffer = true;
 
-            if (packetsCreated >= maxPacketsInBatch && !hasSpace())
-                sendBuffer = true;
-
-            if (bytesUsed >= mCapacity - sizeof(StreamHeader))
-                sendBuffer = true; // not enough space for more packets, need to flush
-            if (reinterpret_cast<uint64_t>(payloadPtr) & 0xF)
-                sendBuffer = true; // next packets payload memory is not suitably aligned for vectorized filling
-
-            if (sendBuffer)
+            if (transferCount <= 0 || (packetsCreated >= maxPacketsInBatch && !hasSpace()) ||
+                bytesUsed >= mCapacity - sizeof(StreamHeader) || (reinterpret_cast<uint64_t>(payloadPtr) & 0xF))
             {
                 const int busWidthBytes = 16;
                 int extraBytes = bytesUsed % busWidthBytes;
@@ -129,12 +118,11 @@ template<class T> class TxBufferManager
                     header->SetPayloadSize(payloadSize);
                     //printf("Patch buffer, bytes %i, last payload: %i\n", bytesUsed, payloadSize);
                 }
-                break;
+                return true;
             }
         }
-        if (!hasSpace())
-            return true;
-        return src->flush || sendBuffer;
+
+        return !hasSpace() || src->flush;
     }
 
     /// @brief Gets the current size of the transfer.

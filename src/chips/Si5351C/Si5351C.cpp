@@ -15,7 +15,7 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "comms/IComms.h"
+#include "comms/II2C.h"
 #include <string_view>
 
 using namespace std;

@@ -5,8 +5,8 @@
 
 #include "limesuiteng/Logger.h"
 #include "LitePCIe.h"
+#include "LitePCIeDMA.h"
 #include "FPGA_common.h"
-#include "TRXLooper_PCIE.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
 #include "CommonFunctions.h"
@@ -271,7 +271,11 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate = cfg.channel[0].GetDirection(rxUsed ? TRXDir::Rx : TRXDir::Tx).sampleRate;
+        double sampleRate{ 0 };
+        if (rxUsed)
+            sampleRate = cfg.channel[0].rx.sampleRate;
+        else if (txUsed)
+            sampleRate = cfg.channel[0].tx.sampleRate;
 
         if (sampleRate > 0)
             LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
@@ -370,9 +374,6 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
 
     try
     {
-        mStreamers.at(moduleIndex) = new TRXLooper_PCIE(mStreamPort, mStreamPort, mFPGA, mLMSChips.at(moduleIndex), moduleIndex);
-        if (mCallback_logMessage)
-            mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
         std::shared_ptr<LitePCIe> trxPort{ mStreamPort };
         if (!trxPort->IsOpen())
         {
@@ -389,6 +390,17 @@ OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleInd
                 return ReportError(OpStatus::IOFailure, reason);
             }
         }
+        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+        mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
+            std::static_pointer_cast<IDMA>(txdma),
+            mFPGA,
+            mLMSChips.at(moduleIndex),
+            moduleIndex);
+        if (mCallback_logMessage)
+            mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
+
         OpStatus status = mStreamers[moduleIndex]->Setup(config);
         if (status != OpStatus::Success)
             return status;

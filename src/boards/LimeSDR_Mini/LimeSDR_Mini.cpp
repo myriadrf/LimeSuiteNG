@@ -1,13 +1,13 @@
 #include "LimeSDR_Mini.h"
 
-#include "USBGeneric.h"
+#include "comms/USB/IUSB.h"
 #include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
 #include "FPGA_Mini.h"
-#include "TRXLooper_USB.h"
+#include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "DSP/Equalizer/EqualizerCSR.h"
@@ -22,10 +22,6 @@
 #include <set>
 #include <stdexcept>
 #include <cmath>
-
-#ifdef __unix__
-    #include "libusb.h"
-#endif
 
 using namespace lime;
 using namespace lime::LMS64CProtocol;
@@ -146,7 +142,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param commsPort The communications port for direct communications with the device.
 LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<USBGeneric> streamPort,
+    std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
     , mSerialPort(commsPort)
@@ -275,11 +271,12 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate;
+        double sampleRate{ 0 };
         if (rxUsed)
             sampleRate = cfg.channel[0].rx.sampleRate;
-        else
+        else if (txUsed)
             sampleRate = cfg.channel[0].tx.sampleRate;
+
         if (sampleRate > 0)
         {
             status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
@@ -492,7 +489,7 @@ OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
 
 SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
 {
-    assert(mStreamPort);
+    assert(mSerialPort);
     SDRDescriptor deviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo info{};
@@ -531,16 +528,24 @@ SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
 
 OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
+    if (moduleIndex != 0)
+        return ReportError(OpStatus::InvalidValue, "StreamSetup: invalid module index");
     // Allow multiple setup calls
     if (mStreamers.at(0) != nullptr)
     {
         delete mStreamers.at(0);
     }
 
+    assert(mStreamPort);
     auto connection = std::static_pointer_cast<FT601>(mStreamPort);
-    connection->ResetStreamBuffers();
 
-    mStreamers.at(0) = new TRXLooper_USB(mStreamPort, mFPGA, mLMSChips[0], STREAM_BULK_READ_ADDRESS, STREAM_BULK_WRITE_ADDRESS);
+    auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_READ_ADDRESS, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_WRITE_ADDRESS, DataTransferDirection::HostToDevice);
+
+    mStreamers.at(moduleIndex) = new TRXLooper(
+        std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA, mLMSChips.at(moduleIndex), 0);
+
+    mStreamers.at(moduleIndex)->SetMessageLogCallback(mCallback_logMessage);
     return mStreamers.at(0)->Setup(config);
 }
 
