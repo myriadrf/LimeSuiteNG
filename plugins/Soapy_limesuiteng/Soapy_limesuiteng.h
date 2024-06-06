@@ -1,5 +1,5 @@
 /**
-@file	SoapyLMS7.h
+@file	Soapy_limesuiteng.h
 @brief	Header for Soapy SDR + IConnection bindings.
 @author Lime Microsystems (www.limemicro.com)
 */
@@ -19,12 +19,12 @@
 
 struct IConnectionStream;
 
-class SoapyLMS7 : public SoapySDR::Device
+class Soapy_limesuiteng : public SoapySDR::Device
 {
   public:
-    SoapyLMS7(const lime::DeviceHandle& handle, const SoapySDR::Kwargs& args);
+    Soapy_limesuiteng(const lime::DeviceHandle& handle, const SoapySDR::Kwargs& args);
 
-    ~SoapyLMS7(void);
+    ~Soapy_limesuiteng(void);
 
     /*******************************************************************
      * Identification API

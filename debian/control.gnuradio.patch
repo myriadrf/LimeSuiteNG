@@ -1,5 +1,4 @@
 diff --git a/debian/control b/debian/control
-index 6d0f6351..16c04bad 100644
 --- a/debian/control
 +++ b/debian/control
 @@ -7,6 +7,7 @@ Build-Depends:
@@ -9,11 +8,11 @@ index 6d0f6351..16c04bad 100644
 +    gnuradio-dev,
  Standards-Version: 4.1.1
  Homepage: https://myriadrf.org/projects/lime-suite/
- Vcs-Git: https://github.com/myriadrf/LimeSuite.git
-@@ -89,3 +90,13 @@ Depends:
+ Vcs-Git: https://github.com/myriadrf/LimeSuiteNG.git
+@@ -96,3 +97,13 @@ Depends:
      ${misc:Depends}
- Description: Lime Suite - SoapySDR bindings
-  Lime Suite application software.
+ Description: Lime Suite NG - SoapySDR bindings
+  Lime Suite NG application software.
 +
 +Package: gr-limesdr
 +Architecture: any

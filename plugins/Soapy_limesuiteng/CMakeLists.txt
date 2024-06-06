@@ -14,7 +14,7 @@ set_package_properties(
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_SOAPYSDR "Enable LimeSuiteNG SoapySDR bindings" ON "ENABLE_LIBRARY;SoapySDR_FOUND" OFF)
-add_feature_info(SOAPYSDR ENABLE_SOAPYSDR "SoapySDR bindings for LimeSuite")
+add_feature_info(SOAPYSDR ENABLE_SOAPYSDR "SoapySDR bindings for LimeSuiteNG")
 if(NOT ENABLE_SOAPYSDR)
     return()
 endif()
@@ -22,9 +22,9 @@ endif()
 ########################################################################
 ## Build support module
 ########################################################################
-soapy_sdr_module_util(TARGET LMS7Support SOURCES Registration.cpp Settings.cpp Streaming.cpp LIBRARIES limesuiteng)
+soapy_sdr_module_util(TARGET Soapy_limesuiteng SOURCES Registration.cpp Settings.cpp Streaming.cpp LIBRARIES limesuiteng)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # Disable warnings for unused parameters
-    target_compile_options(LMS7Support PRIVATE -Wno-unused-parameter)
+    target_compile_options(Soapy_limesuiteng PRIVATE -Wno-unused-parameter)
 endif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

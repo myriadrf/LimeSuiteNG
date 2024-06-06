@@ -1,18 +1,17 @@
 diff --git a/debian/control b/debian/control
-index af50e28d..dfb3f39f 100644
 --- a/debian/control
 +++ b/debian/control
-@@ -75,11 +75,11 @@ Package: soapysdr-module-lms7
+@@ -82,11 +82,11 @@ Package: soapysdr-module-limesuiteng
  Section: libs
  Architecture: all
  Pre-Depends: ${misc:Pre-Depends}
--Depends: soapysdr0.8-module-lms7, ${misc:Depends}
-+Depends: soapysdr0.7-module-lms7, ${misc:Depends}
- Description: Lime Suite - SoapySDR bindings metapackage
-  Lime Suite application software.
+-Depends: soapysdr0.8-module-limesuiteng, ${misc:Depends}
++Depends: soapysdr0.7-module-limesuiteng, ${misc:Depends}
+ Description: Lime Suite NG - SoapySDR bindings metapackage
+  Lime Suite NG application software.
  
--Package: soapysdr0.8-module-lms7
-+Package: soapysdr0.7-module-lms7
+-Package: soapysdr0.8-module-limesuiteng
++Package: soapysdr0.7-module-limesuiteng
  Section: comm
  Architecture: any
  Multi-Arch: same

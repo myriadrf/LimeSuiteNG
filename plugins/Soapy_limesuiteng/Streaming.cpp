@@ -4,7 +4,7 @@
 @author Lime Microsystems (www.limemicro.com)
 */
 
-#include "SoapyLMS7.h"
+#include "Soapy_limesuiteng.h"
 #include <SoapySDR/Formats.hpp>
 #include <SoapySDR/Logger.hpp>
 #include <SoapySDR/Time.hpp>
@@ -40,20 +40,20 @@ struct IConnectionStream {
 /*******************************************************************
  * Stream information
  ******************************************************************/
-std::vector<std::string> SoapyLMS7::getStreamFormats(
+std::vector<std::string> Soapy_limesuiteng::getStreamFormats(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     return { SOAPY_SDR_CF32, SOAPY_SDR_CS12, SOAPY_SDR_CS16 };
 }
 
-std::string SoapyLMS7::getNativeStreamFormat(
+std::string Soapy_limesuiteng::getNativeStreamFormat(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel, double& fullScale) const
 {
     fullScale = 32767;
     return SOAPY_SDR_CS16;
 }
 
-SoapySDR::ArgInfoList SoapyLMS7::getStreamArgsInfo(
+SoapySDR::ArgInfoList Soapy_limesuiteng::getStreamArgsInfo(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     SoapySDR::ArgInfoList argInfos;
@@ -124,7 +124,7 @@ SoapySDR::ArgInfoList SoapyLMS7::getStreamArgsInfo(
 /*******************************************************************
  * Stream config
  ******************************************************************/
-SoapySDR::Stream* SoapyLMS7::setupStream(
+SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     const int direction, const std::string& format, const std::vector<size_t>& channels, const SoapySDR::Kwargs& args)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
@@ -160,7 +160,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
     }
     else
     {
-        throw std::runtime_error("SoapyLMS7::setupStream(format=" + format + ") unsupported stream format");
+        throw std::runtime_error("Soapy_limesuiteng::setupStream(format=" + format + ") unsupported stream format");
     }
 
     config.linkFormat = config.format == DataFormat::F32 ? DataFormat::I16 : config.format;
@@ -179,7 +179,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
         }
         else
         {
-            throw std::runtime_error("SoapyLMS7::setupStream(linkFormat=" + linkFormat + ") unsupported link format");
+            throw std::runtime_error("Soapy_limesuiteng::setupStream(linkFormat=" + linkFormat + ") unsupported link format");
         }
     }
 
@@ -220,7 +220,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
     auto returnValue = sdrDevice->StreamSetup(config, 0);
     if (returnValue != OpStatus::Success)
     {
-        throw std::runtime_error("SoapyLMS7::setupStream() failed: " + std::string(GetLastErrorMessage()));
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() failed: " + std::string(GetLastErrorMessage()));
     }
 
     auto samplesPerPacket = config.linkFormat == DataFormat::I16 ? 1020 : 1360;
@@ -242,7 +242,7 @@ SoapySDR::Stream* SoapyLMS7::setupStream(
     return reinterpret_cast<SoapySDR::Stream*>(stream);
 }
 
-void SoapyLMS7::closeStream(SoapySDR::Stream* stream)
+void Soapy_limesuiteng::closeStream(SoapySDR::Stream* stream)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
@@ -252,20 +252,20 @@ void SoapyLMS7::closeStream(SoapySDR::Stream* stream)
     delete icstream;
 }
 
-size_t SoapyLMS7::getStreamMTU(SoapySDR::Stream* stream) const
+size_t Soapy_limesuiteng::getStreamMTU(SoapySDR::Stream* stream) const
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     return icstream->elemMTU;
 }
 
-int SoapyLMS7::activateStream(SoapySDR::Stream* stream, const int flags, const long long timeNs, const size_t numElems)
+int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags, const long long timeNs, const size_t numElems)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     const auto& ownerDevice = icstream->ownerDevice;
     if (sampleRate[SOAPY_SDR_TX] == 0.0 && sampleRate[SOAPY_SDR_RX] == 0.0)
     {
-        throw std::runtime_error("SoapyLMS7::activateStream() - the sample rate has not been configured!");
+        throw std::runtime_error("Soapy_limesuiteng::activateStream() - the sample rate has not been configured!");
     }
 
     if (sampleRate[SOAPY_SDR_RX] <= 0.0)
@@ -300,7 +300,8 @@ int SoapyLMS7::activateStream(SoapySDR::Stream* stream, const int flags, const l
     return 0;
 }
 
-int SoapyLMS7::deactivateStream(SoapySDR::Stream* stream, [[maybe_unused]] const int flags, [[maybe_unused]] const long long timeNs)
+int Soapy_limesuiteng::deactivateStream(
+    SoapySDR::Stream* stream, [[maybe_unused]] const int flags, [[maybe_unused]] const long long timeNs)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
@@ -316,7 +317,7 @@ int SoapyLMS7::deactivateStream(SoapySDR::Stream* stream, [[maybe_unused]] const
 /*******************************************************************
  * Stream API
  ******************************************************************/
-int SoapyLMS7::readStream(
+int Soapy_limesuiteng::readStream(
     SoapySDR::Stream* stream, void* const* buffs, size_t numElems, int& flags, long long& timeNs, const long timeoutUs)
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
@@ -431,7 +432,7 @@ int SoapyLMS7::readStream(
     return (status >= 0) ? status : SOAPY_SDR_STREAM_ERROR;
 }
 
-int SoapyLMS7::writeStream(SoapySDR::Stream* stream,
+int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     const void* const* buffs,
     const size_t numElems,
     int& flags,
@@ -477,7 +478,7 @@ int SoapyLMS7::writeStream(SoapySDR::Stream* stream,
     return status;
 }
 
-int SoapyLMS7::readStreamStatus(
+int Soapy_limesuiteng::readStreamStatus(
     SoapySDR::Stream* stream, [[maybe_unused]] size_t& chanMask, int& flags, long long& timeNs, const long timeoutUs)
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
