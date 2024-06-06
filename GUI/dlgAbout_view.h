@@ -46,7 +46,7 @@ class dlgAbout_view : public wxDialog
     wxHyperlinkCtrl* ID_HYPERLINKCTRL1;
     wxButton* btnClose;
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     virtual void OnInit(wxInitDialogEvent& event) { event.Skip(); }
     virtual void OnbtnClose(wxCommandEvent& event) { event.Skip(); }
 

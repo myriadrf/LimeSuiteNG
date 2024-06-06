@@ -38,7 +38,7 @@
 class pnlMiniLog;
 class lms7002_mainPanel;
 class fftviewer_frFFTviewer;
-class LMS_Programing_wxgui;
+class LMS_Programming_wxgui;
 class pnlBoardControls;
 
 class limeGUIFrame : public wxFrame
@@ -87,7 +87,7 @@ class limeGUIFrame : public wxFrame
     wxScrolledWindow* m_scrolledWindow1;
     wxFlexGridSizer* contentSizer;
     ISOCPanel* mContent;
-    LMS_Programing_wxgui* programmer;
+    LMS_Programming_wxgui* programmer;
     pnlBoardControls* boardControlsGui;
     lime::DeviceConnectionPanel* pnlDeviceConnection;
 };

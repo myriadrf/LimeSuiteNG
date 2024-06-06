@@ -229,7 +229,7 @@ void print_cses_code(int** xpx, int** xmx, int** x, int n, int cprec)
 /* ************************************************************************ 
     int a; Input integer to be converted into CSD code 
     int cprec; Integer precision 
-    int csdprec; CSD precistion 
+    int csdprec; CSD precision 
     int* bincode; Binary code 
     int* csdcode; CSD code 
     int* csdcoder; CSD code rounded to 'csdprec' nonzero bits 

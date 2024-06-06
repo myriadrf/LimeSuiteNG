@@ -1,5 +1,5 @@
 /**
-@file   LMS_Programing_wxgui.cpp
+@file   LMS_Programming_wxgui.cpp
 @author Lime Microsystems
 @brief  panel for uploading data to FPGA
 */
@@ -20,20 +20,20 @@
 #include "protocols/LMSBoards.h"
 #include "limesuiteng/SDRDescriptor.h"
 
-const long LMS_Programing_wxgui::ID_PROGRAMING_FINISHED_EVENT = wxNewId();
-const long LMS_Programing_wxgui::ID_PROGRAMING_STATUS_EVENT = wxNewId();
-const long LMS_Programing_wxgui::ID_BUTTON1 = wxNewId();
-const long LMS_Programing_wxgui::ID_BUTTON2 = wxNewId();
-const long LMS_Programing_wxgui::ID_GAUGE1 = wxNewId();
-const long LMS_Programing_wxgui::ID_CHOICE2 = wxNewId();
-const long LMS_Programing_wxgui::ID_CHOICE1 = wxNewId();
+const long LMS_Programming_wxgui::ID_PROGRAMMING_FINISHED_EVENT = wxNewId();
+const long LMS_Programming_wxgui::ID_PROGRAMMING_STATUS_EVENT = wxNewId();
+const long LMS_Programming_wxgui::ID_BUTTON1 = wxNewId();
+const long LMS_Programming_wxgui::ID_BUTTON2 = wxNewId();
+const long LMS_Programming_wxgui::ID_GAUGE1 = wxNewId();
+const long LMS_Programming_wxgui::ID_CHOICE2 = wxNewId();
+const long LMS_Programming_wxgui::ID_CHOICE1 = wxNewId();
 
 using namespace lime;
 
-BEGIN_EVENT_TABLE(LMS_Programing_wxgui, wxFrame)
+BEGIN_EVENT_TABLE(LMS_Programming_wxgui, wxFrame)
 END_EVENT_TABLE()
 
-LMS_Programing_wxgui::LMS_Programing_wxgui(
+LMS_Programming_wxgui::LMS_Programming_wxgui(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, int styles, wxString idname)
     : IModuleFrame(parent, id, title, pos, size, styles)
 {
@@ -85,22 +85,22 @@ LMS_Programing_wxgui::LMS_Programing_wxgui(
     FlexGridSizer1->SetSizeHints(this);
 
     Connect(
-        ID_BUTTON1, wxEVT_COMMAND_BUTTON_CLICKED, reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnbtnOpenClick));
+        ID_BUTTON1, wxEVT_COMMAND_BUTTON_CLICKED, reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnbtnOpenClick));
     Connect(btnStartStop->GetId(),
         wxEVT_COMMAND_BUTTON_CLICKED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnbtnStartProgrammingClick));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnbtnStartProgrammingClick));
     Connect(ID_CHOICE2,
         wxEVT_COMMAND_CHOICE_SELECTED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OncmbDeviceSelect));
-    Connect(ID_PROGRAMING_FINISHED_EVENT,
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OncmbDeviceSelect));
+    Connect(ID_PROGRAMMING_FINISHED_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnProgramingFinished));
-    Connect(ID_PROGRAMING_STATUS_EVENT,
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnProgrammingFinished));
+    Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnProgrammingStatusUpdate));
 }
 
-LMS_Programing_wxgui::~LMS_Programing_wxgui()
+LMS_Programming_wxgui::~LMS_Programming_wxgui()
 {
     //make sure the thread has stopped before destroying data
     if (mProgrammingInProgress.load() == true)
@@ -110,7 +110,7 @@ LMS_Programing_wxgui::~LMS_Programing_wxgui()
     }
 }
 
-bool LMS_Programing_wxgui::Initialize(lime::SDRDevice* device)
+bool LMS_Programming_wxgui::Initialize(lime::SDRDevice* device)
 {
     mDevice = device;
     if (!mDevice)
@@ -135,11 +135,11 @@ bool LMS_Programing_wxgui::Initialize(lime::SDRDevice* device)
     return true;
 }
 
-void LMS_Programing_wxgui::Update()
+void LMS_Programming_wxgui::Update()
 {
 }
 
-void LMS_Programing_wxgui::OnbtnOpenClick(wxCommandEvent& event)
+void LMS_Programming_wxgui::OnbtnOpenClick(wxCommandEvent& event)
 {
     wxString wildcards;
     wxString deviceSelection = cmbDevice->GetStringSelection();
@@ -190,7 +190,7 @@ void LMS_Programing_wxgui::OnbtnOpenClick(wxCommandEvent& event)
     lblFilename->SetLabel(dlg.GetPath());
 }
 
-void LMS_Programing_wxgui::OnbtnStartProgrammingClick(wxCommandEvent& event)
+void LMS_Programming_wxgui::OnbtnStartProgrammingClick(wxCommandEvent& event)
 {
     //if needed load program data from file
     wxString deviceSelection = cmbDevice->GetStringSelection();
@@ -203,7 +203,7 @@ void LMS_Programing_wxgui::OnbtnStartProgrammingClick(wxCommandEvent& event)
             return;
         }
 
-        //using wxWidgets to read file, to support nonascii characters in path
+        //using wxWidgets to read file, to support non-ascii characters in path
         wxFFileInputStream fin(lblFilename->GetLabel());
 
         if (!fin.IsOk())
@@ -222,21 +222,21 @@ void LMS_Programing_wxgui::OnbtnStartProgrammingClick(wxCommandEvent& event)
 
     Disconnect(btnStartStop->GetId(),
         wxEVT_COMMAND_BUTTON_CLICKED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnbtnStartProgrammingClick));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnbtnStartProgrammingClick));
     btnOpen->Disable();
     btnStartStop->SetLabel(_("Abort"));
 
     mAbortProgramming.store(false);
     //run programming in separate thread, to prevent GUI freeze
-    mWorkerThread = std::thread(&LMS_Programing_wxgui::DoProgramming, this);
+    mWorkerThread = std::thread(&LMS_Programming_wxgui::DoProgramming, this);
     Connect(btnStartStop->GetId(),
         wxEVT_COMMAND_BUTTON_CLICKED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnAbortProgramming));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnAbortProgramming));
 }
 
 /** @brief Change programming modes according to selected device
 */
-void LMS_Programing_wxgui::OncmbDeviceSelect(wxCommandEvent& event)
+void LMS_Programming_wxgui::OncmbDeviceSelect(wxCommandEvent& event)
 {
     wxString deviceSelection = cmbDevice->GetStringSelection();
     if ((deviceSelection.find("Reset") == wxString::npos) && (deviceSelection.find("Auto") == wxString::npos))
@@ -248,39 +248,39 @@ void LMS_Programing_wxgui::OncmbDeviceSelect(wxCommandEvent& event)
     lblFilename->Enable(btnOpenEnb);
 }
 
-void LMS_Programing_wxgui::OnProgramingFinished(wxCommandEvent& event)
+void LMS_Programming_wxgui::OnProgrammingFinished(wxCommandEvent& event)
 {
     mWorkerThread.join();
     wxMessageBox(event.GetString(), _("INFO"), wxICON_INFORMATION | wxOK);
     btnOpen->Enable(btnOpenEnb);
     Disconnect(btnStartStop->GetId(),
         wxEVT_COMMAND_BUTTON_CLICKED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnAbortProgramming));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnAbortProgramming));
     Connect(btnStartStop->GetId(),
         wxEVT_COMMAND_BUTTON_CLICKED,
-        reinterpret_cast<wxObjectEventFunction>(&LMS_Programing_wxgui::OnbtnStartProgrammingClick));
+        reinterpret_cast<wxObjectEventFunction>(&LMS_Programming_wxgui::OnbtnStartProgrammingClick));
     btnStartStop->SetLabel(_("Program"));
 }
 
-void LMS_Programing_wxgui::OnAbortProgramming(wxCommandEvent& event)
+void LMS_Programming_wxgui::OnAbortProgramming(wxCommandEvent& event)
 {
     mAbortProgramming.store(true);
 }
 
-LMS_Programing_wxgui* LMS_Programing_wxgui::obj_ptr = nullptr;
-bool LMS_Programing_wxgui::OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)
+LMS_Programming_wxgui* LMS_Programming_wxgui::obj_ptr = nullptr;
+bool LMS_Programming_wxgui::OnProgrammingCallback(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)
 {
     wxCommandEvent evt;
     evt.SetEventObject(obj_ptr);
     evt.SetInt(100.0 * bsent / btotal); //round to int
     evt.SetString(progressMsg);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
-    evt.SetId(ID_PROGRAMING_STATUS_EVENT);
+    evt.SetId(ID_PROGRAMMING_STATUS_EVENT);
     wxPostEvent(obj_ptr, evt);
     return obj_ptr->mAbortProgramming.load();
 }
 
-void LMS_Programing_wxgui::DoProgramming()
+void LMS_Programming_wxgui::DoProgramming()
 {
     if (!mDevice)
         return;
@@ -296,7 +296,7 @@ void LMS_Programing_wxgui::DoProgramming()
 
     wxCommandEvent evt;
     evt.SetEventObject(this);
-    evt.SetId(ID_PROGRAMING_FINISHED_EVENT);
+    evt.SetId(ID_PROGRAMMING_FINISHED_EVENT);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
     evt.SetString(status == OpStatus::Success ? _("Programming Completed!") : _("Programming failed!"));
 
@@ -307,7 +307,7 @@ void LMS_Programing_wxgui::DoProgramming()
 
 /** Updates GUI elements with programming status
 */
-void LMS_Programing_wxgui::OnProgramingStatusUpdate(wxCommandEvent& event)
+void LMS_Programming_wxgui::OnProgrammingStatusUpdate(wxCommandEvent& event)
 {
     progressBar->SetValue(event.GetInt());
     lblProgressPercent->SetLabel(event.GetString());
