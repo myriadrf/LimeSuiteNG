@@ -161,8 +161,8 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         return OpStatus::Success;
 
     const bool use_trxiqpulse = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_TRXIQPULSE);
-    const bool use_ddr = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR);
-    status = fpga->ConfigureSamplesStream(channelEnables, cfg.linkFormat, use_ddr, use_trxiqpulse);
+    const bool sisoddr_on = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR);
+    status = fpga->ConfigureSamplesStream(channelEnables, cfg.linkFormat, sisoddr_on, use_trxiqpulse);
     if (status != OpStatus::Success)
         return status;
 

@@ -1278,7 +1278,7 @@ OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
     }
 }
 
-OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool ddr, bool trxiqpulse)
+OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool sisoddr, bool trxiqpulse)
 {
     int channelCount = 0;
     for (int i = 0; i < 8; ++i)
@@ -1286,11 +1286,21 @@ OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFor
         if (channelsEnableMask & (1 << i))
             ++channelCount;
     }
-    bool needMIMO = channelCount > 1;
+    bool MIMO_EN = 1; // channelCount > 1;
+    bool TRXIQ_PULSE_ON = trxiqpulse;
+    bool DDR_EN = 0;
+
+    if (sisoddr)
+    {
+        MIMO_EN = 0;
+        TRXIQ_PULSE_ON = 0;
+        DDR_EN = 1;
+    }
+
     uint16_t reg8 = 0;
-    reg8 |= needMIMO << 8; // MIMO_EN: 0-OFF, 1-ON
-    reg8 |= (trxiqpulse ? 1 : 0) << 7; // TRIQ_PULSE: 0-OFF, 1-ON
-    reg8 |= (ddr ? 1 : 0) << 6; // DDR_EN: 0-SDR, 1-DDR
+    reg8 |= MIMO_EN << 8; // MIMO_EN: 0-OFF, 1-ON
+    reg8 |= (TRXIQ_PULSE_ON ? 1 : 0) << 7; // TRIQ_PULSE: 0-OFF, 1-ON
+    reg8 |= (DDR_EN ? 1 : 0) << 6; // DDR_EN: 0-SDR, 1-DDR
     reg8 |= 0 << 5; // MODE: 0-TRXIQ, 1-JESD207 (not implemented)
 
     uint16_t smpl_width;
