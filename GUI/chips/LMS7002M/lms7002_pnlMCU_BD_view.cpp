@@ -777,7 +777,8 @@ void lms7002_pnlMCU_BD_view::OnViewIRAMClick(wxCommandEvent& event)
     Disable();
     progressBar->SetValue(0);
     progressPooler->Start(200);
-    Connect(ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
+    Connect(
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
     Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
         reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));

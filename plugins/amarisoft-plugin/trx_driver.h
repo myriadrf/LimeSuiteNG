@@ -332,7 +332,7 @@ struct TRXState {
      * For each message, a call to send API must be done
      */
     void (*trx_msg_recv_func)(TRXState *s, TRXMsg *msg);
-    TRXMsg* (*trx_msg_send_func)(TRXState *s); /* set by application, do not modify it */
+    TRXMsg* (*trx_msg_send_func)(TRXState* s); /* set by application, do not modify it */
 };
 
 /* return 0 if OK, < 0 if error. */
