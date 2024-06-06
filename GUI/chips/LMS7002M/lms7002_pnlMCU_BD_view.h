@@ -32,7 +32,7 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     void OnRegWriteRead(wxCommandEvent& event);
     void OnbtnRunProductionTestClicked(wxCommandEvent& event);
 
-    void OnProgramingStatusUpdate(wxCommandEvent& event);
+    void OnProgrammingStatusUpdate(wxCommandEvent& event);
     void OnReadIRAMfinished(wxThreadEvent& event);
     void OnEraseIRAMfinished(wxThreadEvent& event);
     void OnReadSFRfinished(wxThreadEvent& event);
@@ -62,8 +62,8 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     int m_iPCvalue;
 
     static lms7002_pnlMCU_BD_view* obj_ptr;
-    static const long ID_PROGRAMING_STATUS_EVENT;
-    static const long ID_PROGRAMING_FINISH_EVENT;
+    static const long ID_PROGRAMMING_STATUS_EVENT;
+    static const long ID_PROGRAMMING_FINISH_EVENT;
 
     enum {
         ID_CHECKBOX_RESETMCU = 2048,

@@ -15,8 +15,8 @@
 
 using namespace std::literals::string_literals;
 
-const long lms7002_pnlMCU_BD_view::ID_PROGRAMING_STATUS_EVENT = wxNewId();
-const long lms7002_pnlMCU_BD_view::ID_PROGRAMING_FINISH_EVENT = wxNewId();
+const long lms7002_pnlMCU_BD_view::ID_PROGRAMMING_STATUS_EVENT = wxNewId();
+const long lms7002_pnlMCU_BD_view::ID_PROGRAMMING_FINISH_EVENT = wxNewId();
 
 lms7002_pnlMCU_BD_view::lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id)
     : ILMS7002MTab(parent, id)
@@ -513,10 +513,10 @@ void lms7002_pnlMCU_BD_view::OnbtnStartProgrammingClick(wxCommandEvent& event)
     progressBar->SetValue(0);
     progressPooler->Start(200);
     Connect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnProgrammingfinished), NULL, this);
-    Connect(ID_PROGRAMING_STATUS_EVENT,
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnProgrammingfinished), NULL, this);
+    Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     obj_ptr = this;
     mThreadWorking = true;
     mWorkerThread = std::thread(
@@ -533,7 +533,7 @@ void lms7002_pnlMCU_BD_view::OnbtnStartProgrammingClick(wxCommandEvent& event)
 
             wxThreadEvent* evt = new wxThreadEvent();
             evt->SetInt(retval);
-            evt->SetId(ID_PROGRAMING_FINISH_EVENT);
+            evt->SetId(ID_PROGRAMMING_FINISH_EVENT);
             wxQueueEvent(pthis, evt);
         },
         this,
@@ -753,10 +753,10 @@ void lms7002_pnlMCU_BD_view::OnViewSFRsClick(wxCommandEvent& event)
     progressBar->SetValue(0);
     progressPooler->Start(200);
 
-    Connect(ID_PROGRAMING_STATUS_EVENT,
+    Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
-    Connect(ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadSFRfinished), NULL, this);
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
+    Connect(ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadSFRfinished), NULL, this);
 
     mThreadWorking = true;
     mWorkerThread = std::thread(
@@ -764,7 +764,7 @@ void lms7002_pnlMCU_BD_view::OnViewSFRsClick(wxCommandEvent& event)
             int retval = pthis->mcu->Read_SFR();
             wxThreadEvent* evt = new wxThreadEvent();
             evt->SetInt(retval);
-            evt->SetId(ID_PROGRAMING_FINISH_EVENT);
+            evt->SetId(ID_PROGRAMMING_FINISH_EVENT);
             wxQueueEvent(pthis, evt);
         },
         this);
@@ -777,10 +777,10 @@ void lms7002_pnlMCU_BD_view::OnViewIRAMClick(wxCommandEvent& event)
     Disable();
     progressBar->SetValue(0);
     progressPooler->Start(200);
-    Connect(ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
-    Connect(ID_PROGRAMING_STATUS_EVENT,
+    Connect(ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
+    Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
 
     mThreadWorking = true;
     mWorkerThread = std::thread(
@@ -788,7 +788,7 @@ void lms7002_pnlMCU_BD_view::OnViewIRAMClick(wxCommandEvent& event)
             int retval = pthis->mcu->Read_IRAM();
             wxThreadEvent* evt = new wxThreadEvent();
             evt->SetInt(retval);
-            evt->SetId(ID_PROGRAMING_FINISH_EVENT);
+            evt->SetId(ID_PROGRAMMING_FINISH_EVENT);
             wxQueueEvent(pthis, evt);
         },
         this);
@@ -801,11 +801,11 @@ void lms7002_pnlMCU_BD_view::OnEraseIRAMClick(wxCommandEvent& event)
     Disable();
     progressBar->SetValue(0);
     progressPooler->Start(200);
-    Connect(ID_PROGRAMING_STATUS_EVENT,
+    Connect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_COMMAND_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     Connect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnEraseIRAMfinished), NULL, this);
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnEraseIRAMfinished), NULL, this);
 
     mThreadWorking = true;
     mWorkerThread = std::thread(
@@ -813,7 +813,7 @@ void lms7002_pnlMCU_BD_view::OnEraseIRAMClick(wxCommandEvent& event)
             int retval = pthis->mcu->Erase_IRAM();
             wxThreadEvent* evt = new wxThreadEvent();
             evt->SetInt(retval);
-            evt->SetId(ID_PROGRAMING_FINISH_EVENT);
+            evt->SetId(ID_PROGRAMMING_FINISH_EVENT);
             wxQueueEvent(pthis, evt);
         },
         this);
@@ -867,12 +867,12 @@ bool lms7002_pnlMCU_BD_view::OnProgrammingCallback(std::size_t bsent, std::size_
     evt.SetInt(100.0 * bsent / btotal); //round to int
     evt.SetString(progressMsg);
     evt.SetEventType(wxEVT_COMMAND_THREAD);
-    evt.SetId(ID_PROGRAMING_STATUS_EVENT);
+    evt.SetId(ID_PROGRAMMING_STATUS_EVENT);
     wxPostEvent(obj_ptr, evt);
     return false;
 }
 
-void lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate(wxCommandEvent& event)
+void lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate(wxCommandEvent& event)
 {
     progressBar->SetValue(event.GetInt());
 }
@@ -883,11 +883,11 @@ void lms7002_pnlMCU_BD_view::OnReadIRAMfinished(wxThreadEvent& event)
         mWorkerThread.join();
     mThreadWorking = false;
     progressPooler->Stop();
-    Disconnect(ID_PROGRAMING_STATUS_EVENT,
+    Disconnect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     Disconnect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadIRAMfinished), NULL, this);
     progressBar->SetValue(100);
     Enable();
     if (event.GetInt() == -1)
@@ -906,11 +906,11 @@ void lms7002_pnlMCU_BD_view::OnEraseIRAMfinished(wxThreadEvent& event)
         mWorkerThread.join();
     mThreadWorking = false;
     progressPooler->Stop();
-    Disconnect(ID_PROGRAMING_STATUS_EVENT,
+    Disconnect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     Disconnect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnEraseIRAMfinished), NULL, this);
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnEraseIRAMfinished), NULL, this);
     progressBar->SetValue(100);
     Enable();
     if (event.GetInt() == -1)
@@ -923,11 +923,11 @@ void lms7002_pnlMCU_BD_view::OnReadSFRfinished(wxThreadEvent& event)
         mWorkerThread.join();
     mThreadWorking = false;
     progressPooler->Stop();
-    Disconnect(ID_PROGRAMING_STATUS_EVENT,
+    Disconnect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     Disconnect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadSFRfinished), NULL, this);
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnReadSFRfinished), NULL, this);
     progressBar->SetValue(100);
     Enable();
     if (event.GetInt() == -1)
@@ -946,11 +946,11 @@ void lms7002_pnlMCU_BD_view::OnProgrammingfinished(wxThreadEvent& event)
         mWorkerThread.join();
     mThreadWorking = false;
     progressPooler->Stop();
-    Disconnect(ID_PROGRAMING_STATUS_EVENT,
+    Disconnect(ID_PROGRAMMING_STATUS_EVENT,
         wxEVT_THREAD,
-        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgramingStatusUpdate));
+        reinterpret_cast<wxObjectEventFunction>(&lms7002_pnlMCU_BD_view::OnProgrammingStatusUpdate));
     Disconnect(
-        ID_PROGRAMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnProgrammingfinished), NULL, this);
+        ID_PROGRAMMING_FINISH_EVENT, wxEVT_THREAD, wxThreadEventHandler(lms7002_pnlMCU_BD_view::OnProgrammingfinished), NULL, this);
     progressBar->SetValue(100);
     Enable();
     if (event.GetInt() == -1)

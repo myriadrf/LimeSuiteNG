@@ -787,9 +787,9 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     typedef struct {
         int16_t high;
         int16_t low;
-    } CSWInteval;
+    } CSWInterval;
 
-    CSWInteval cswSearch[2];
+    CSWInterval cswSearch[2];
 
     //search intervals [0-127][128-255]
     for (int t = 0; t < 2; ++t)
