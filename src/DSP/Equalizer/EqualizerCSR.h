@@ -7,15 +7,15 @@ struct CSRegister : public lime::Register {
     constexpr CSRegister()
         : lime::Register(0, 15, 0)
         , defaultValue(0)
-        , twocomplement(false){};
+        , twoComplement(false){};
 
-    constexpr CSRegister(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t defaultValue, bool twocomplement)
+    constexpr CSRegister(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t defaultValue, bool twoComplement)
         : lime::Register(address, msb, lsb)
         , defaultValue(defaultValue)
-        , twocomplement(twocomplement){};
+        , twoComplement(twoComplement){};
 
     uint16_t defaultValue;
-    bool twocomplement;
+    bool twoComplement;
 };
 
 extern CSRegister EN_RXTSP;
