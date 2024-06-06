@@ -249,7 +249,7 @@ lms7002_pnlMCU_BD_view::lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id)
     fgSizer204->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     wxStaticBoxSizer* sbSizer131;
-    sbSizer131 = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("SPI switch tranceiver control")), wxVERTICAL);
+    sbSizer131 = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("SPI switch transceiver control")), wxVERTICAL);
 
     m_cCtrlBaseband = new wxRadioButton(sbSizer131->GetStaticBox(),
         ID_RADIOBUTTON4,
