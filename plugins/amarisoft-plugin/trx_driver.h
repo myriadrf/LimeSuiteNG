@@ -223,7 +223,7 @@ struct TRXState {
     /* set by the application - do not modify */
     void *reserved[127];
 
-    /* Path of the config file, not termnating by / */
+    /* Path of the config file, not terminating by / */
     const char *path;
 
     /* Can be set by the driver to point to internal data */
@@ -242,7 +242,7 @@ struct TRXState {
                                     int *psample_rate_num,
                                     int bandwidth);
 
-    /* Called to start the tranceiver. Return 0 if OK, < 0 if  */
+    /* Called to start the transceiver. Return 0 if OK, < 0 if  */
     int (*trx_start_func)(TRXState *s, const TRXDriverParams *p);
 
     /* Deprecated, use trx_write_func2 instead.
@@ -265,7 +265,7 @@ struct TRXState {
        first samples was received. Return the number of sample read
        (=count).
 
-       Note: It is explicitely allowed that the application calls
+       Note: It is explicitly allowed that the application calls
        trx_write_func, trx_read_func, trx_set_tx_gain_func and
        trx_set_rx_gain_func from different threads.
     */
@@ -275,7 +275,7 @@ struct TRXState {
        driver dependent.
 
        Note: this function is only used for user supplied dynamic
-       adjustements.
+       adjustments.
     */
     void (*trx_set_tx_gain_func)(TRXState *s, double gain, int channel_num);
 
@@ -283,7 +283,7 @@ struct TRXState {
        driver dependent.
 
        Note: this function is only used for user supplied dynamic
-       adjustements.
+       adjustments.
     */
     void (*trx_set_rx_gain_func)(TRXState *s, double gain, int channel_num);
 
@@ -332,7 +332,7 @@ struct TRXState {
      * For each message, a call to send API must be done
      */
     void (*trx_msg_recv_func)(TRXState *s, TRXMsg *msg);
-    TRXMsg* (*trx_msg_send_func)(TRXState *s); /* set by application, do notmodify it */
+    TRXMsg* (*trx_msg_send_func)(TRXState *s); /* set by application, do not modify it */
 };
 
 /* return 0 if OK, < 0 if error. */

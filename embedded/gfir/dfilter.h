@@ -11,8 +11,8 @@
 
 /** @brief Digital filter transfer function parameters */
 struct dfilter {
-    int m; ///< Polinomial order of the denominator
-    int n; ///< Polinomial order of the nominator
+    int m; ///< Polynomial order of the denominator
+    int n; ///< Polynomial order of the nominator
     float* a; ///< Array of denominator coefficients
     float* b; ///< Array of nominator coefficients
     float* w; ///< Points on a frequency grid
