@@ -22,7 +22,7 @@ class FFT
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
     enum class WindowFunctionType { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
-    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coefs);
+    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coeffs);
     static std::vector<float> Calc(const std::vector<complex32f_t>& samples, WindowFunctionType window = WindowFunctionType::NONE);
     static void ConvertToDBFS(std::vector<float>& bins);
 
@@ -36,7 +36,7 @@ class FFT
     std::thread mWorkerThread;
 
     kiss_fft_cfg m_fftCalcPlan;
-    std::vector<float> mWindowCoefs;
+    std::vector<float> mWindowCoeffs;
     std::vector<kiss_fft_cpx> m_fftCalcIn;
     std::vector<kiss_fft_cpx> m_fftCalcOut;
 

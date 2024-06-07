@@ -207,7 +207,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    // fill in register addresses for convenience and reusage as write input
+    // fill in register addresses for convenience and reuse as write input
     for (size_t i = 0; i < miso.size(); ++i)
         miso[i] |= mosi[i] << 16;
 

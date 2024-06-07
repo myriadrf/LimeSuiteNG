@@ -629,7 +629,7 @@ static ssize_t litepcie_read(struct file *file, char __user *data, size_t size, 
     return bytesReceived;
 }
 
-static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
+static ssize_t submitWrite(struct file *file, size_t bufSize, bool genIRQ)
 {
     int ret;
     struct litepcie_chan_priv *chan_priv = file->private_data;
@@ -1065,7 +1065,7 @@ static long litepcie_ioctl(struct file *file, unsigned int cmd, unsigned long ar
 
         chan->dma.reader_sw_count = m.sw_count & 0xFFFF;
 
-        ret = submiteWrite(file, m.buffer_size, m.genIRQ);
+        ret = submitWrite(file, m.buffer_size, m.genIRQ);
     }
     break;
 

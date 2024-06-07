@@ -87,7 +87,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     chkSPDUP_VCO_CGEN = new wxCheckBox(
         sbSizer65->GetStaticBox(), ID_SPDUP_VCO_CGEN, wxT("Bypass noise filter resistor"), wxDefaultPosition, wxDefaultSize, 0);
     chkSPDUP_VCO_CGEN->SetToolTip(
-        wxT("Bypasses the noise filter resistor for fast setlling time. It should be connected to a 1us pulse"));
+        wxT("Bypasses the noise filter resistor for fast settling time. It should be connected to a 1us pulse"));
 
     fgSizer81->Add(chkSPDUP_VCO_CGEN, 0, flags, 0);
 
