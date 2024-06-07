@@ -15,7 +15,7 @@
 #include "chips/ADF4002/ADF4002_wxgui.h"
 #include "chips/Si5351C/Si5351C_wxgui.h"
 #include "chips/CDCM6208/CDCM6208_wxgui.h"
-#include "LMS_Programing/LMS_Programing_wxgui.h"
+#include "LMS_Programming/LMS_Programming_wxgui.h"
 #include "utility/pnlMiniLog.h"
 #include "FPGAcontrols_wxgui.h"
 #include "utility/SPI_wxgui.h"

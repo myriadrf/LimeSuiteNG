@@ -59,7 +59,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
     desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
 
-    // TODO: readback board's reference clock
+    // TODO: read-back board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF.get()));
 

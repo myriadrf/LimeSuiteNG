@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coefs);
+void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coeffs);
 
 #ifdef __cplusplus
 }

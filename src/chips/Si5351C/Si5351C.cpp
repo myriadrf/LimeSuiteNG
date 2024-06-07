@@ -128,7 +128,7 @@ Si5351C::Status Si5351C::UploadConfiguration()
     //apply soft reset
     outBuffer.push_back(0XB1);
     outBuffer.push_back(0xAC);
-    //Enabe desired outputs
+    //Enable desired outputs
     outBuffer.push_back(3);
     outBuffer.push_back(m_newConfiguration[3]);
 

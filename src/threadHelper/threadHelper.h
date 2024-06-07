@@ -13,7 +13,7 @@ enum class ThreadPolicy : uint8_t {
     PREEMPTIVE, // FIFO
 };
 /**
- * Set priority of current or specificied thread
+ * Set priority of current or specified thread
  *
  * @param priority  Thread priority
  * @param policy    Thread scheduling policy, not used on Windows
@@ -24,7 +24,7 @@ enum class ThreadPolicy : uint8_t {
 int SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std::thread* thread);
 
 /**
- * Set priority of current or specificied thread
+ * Set priority of current or specified thread
  * @note On Windows systems, policy will be used to set either IDLE or TIME_CRITICAL thread priority
  *
  * @param priority  Thread priority

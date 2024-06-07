@@ -42,7 +42,7 @@ class dlgConnectionSettings_view : public wxDialog
     wxButton* btnCancel;
     wxButton* btnDisconnect;
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     virtual void GetDeviceList(wxInitDialogEvent& event) { event.Skip(); }
     virtual void OnConnect(wxCommandEvent& event) { event.Skip(); }
     virtual void OnCancel(wxCommandEvent& event) { event.Skip(); }
@@ -100,7 +100,7 @@ class dlgDeviceInfo_view : public wxDialog
     wxStaticText* m_staticText45;
     wxStaticText* lblGatewareTargetCtr;
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     virtual void OnGetInfo(wxCommandEvent& event) { event.Skip(); }
 
   public:

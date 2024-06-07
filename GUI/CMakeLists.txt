@@ -53,7 +53,7 @@ endif()
 set(GUI_SOURCES
     limeGUI.cpp
     limeGUIFrame.cpp
-    LMS_Programing/LMS_Programing_wxgui.cpp
+    LMS_Programming/LMS_Programming_wxgui.cpp
     utility/pnlMiniLog.cpp
     utility/SPI_wxgui.cpp
     utility/dlgFullMessageLog.cpp

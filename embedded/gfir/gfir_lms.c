@@ -172,11 +172,11 @@ int gfir_lms(struct dfilter* hr,
     return 0;
 }
 
-void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coefs)
+void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coeffs)
 {
     struct dfilter hr, hi, hcsd; /* Filter transfer functions */
     /* Find the filter coefficients */
     gfir_lms(&hr, &hi, &hcsd, n, w1, w2, a1, a2, CPREC, CSDPREC, NONE);
     for (int i = 0; i < n; i++)
-        coefs[i] = hi.a[i];
+        coeffs[i] = hi.a[i];
 }

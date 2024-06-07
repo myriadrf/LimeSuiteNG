@@ -38,10 +38,8 @@ MCU_BD::MCU_BD()
     //ctor
     int i = 0;
     m_serPort = NULL;
-    //default value,
-    //must be verified during program exploatation
 
-    // array initiallization
+    // array initialization
     for (i = 0; i <= 255; i++)
     {
         m_SFR[i] = 0x00;
@@ -185,7 +183,7 @@ int MCU_BD::WaitUntilWritten()
         countDown--;
     }
     if (countDown == 0)
-        return -1; // an error occured, timer elapsed
+        return -1; // an error occurred, timer elapsed
     else
         return 0; // Finished regularly
     // pass if WRITE_REQ is '0'
@@ -208,7 +206,7 @@ int MCU_BD::ReadOneByte(unsigned char* data)
     }
 
     if (countDown > 0)
-    { // Time out has not occured
+    { // Time out has not occurred
         tempi = mSPI_read(0x0005); // REG5 read
             // return the read byte
         (*data) = static_cast<unsigned char>(tempi);
@@ -218,7 +216,7 @@ int MCU_BD::ReadOneByte(unsigned char* data)
     // return the zero, default value
 
     if (countDown == 0)
-        return -1; // an error occured
+        return -1; // an error occurred
     else
         return 0; // finished regularly
 }
@@ -745,7 +743,7 @@ void MCU_BD::RunTest_MCU(int m_iMode1, int m_iMode0, unsigned short test_code, i
     else
         basei = 0x0000;
 
-    basei = basei & 0xFFF0; // not necessery
+    basei = basei & 0xFFF0; // not necessary
     // 4 LSBs are zeros
 
     // variable basei contains test no. value at bit positions 7-4
@@ -947,10 +945,10 @@ void MCU_BD::RunProcedure(uint8_t id)
     mSPI_write(0x0006, 1);
     mSPI_write(0x0000, id);
     uint8_t x0002reg = mSPI_read(0x0002);
-    const uint8_t interupt6 = 0x08;
-    mSPI_write(0x0002, x0002reg & ~interupt6);
-    mSPI_write(0x0002, x0002reg | interupt6);
-    mSPI_write(0x0002, x0002reg & ~interupt6);
+    const uint8_t interrupt6 = 0x08;
+    mSPI_write(0x0002, x0002reg & ~interrupt6);
+    mSPI_write(0x0002, x0002reg | interrupt6);
+    mSPI_write(0x0002, x0002reg & ~interrupt6);
     //MCU seems to be stuck at this point until any SPI operation is performed
     mSPI_read(0x0002); //random spi action
     std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -983,7 +981,7 @@ int MCU_BD::WaitForMCU(uint32_t timeout_ms)
 void MCU_BD::SetParameter(MCU_Parameter param, float value)
 {
     const uint8_t x0002reg = mSPI_read(0x0002);
-    const uint8_t interupt7 = 0x04;
+    const uint8_t interrupt7 = 0x04;
     if (param == MCU_Parameter::MCU_REF_CLK || param == MCU_Parameter::MCU_BW)
     {
         uint8_t inputRegs[3];
@@ -996,8 +994,8 @@ void MCU_BD::SetParameter(MCU_Parameter param, float value)
         for (uint8_t i = 0; i < 3; ++i)
         {
             mSPI_write(0, inputRegs[2 - i]);
-            mSPI_write(0x0002, x0002reg | interupt7);
-            mSPI_write(0x0002, x0002reg & ~interupt7);
+            mSPI_write(0x0002, x0002reg | interrupt7);
+            mSPI_write(0x0002, x0002reg & ~interrupt7);
             this_thread::sleep_for(chrono::microseconds(5));
         }
     }
@@ -1009,8 +1007,8 @@ void MCU_BD::SetParameter(MCU_Parameter param, float value)
     {
         uint8_t intVal = static_cast<uint8_t>(value);
         mSPI_write(0, intVal);
-        mSPI_write(0x0002, x0002reg | interupt7);
-        mSPI_write(0x0002, x0002reg & ~interupt7);
+        mSPI_write(0x0002, x0002reg | interrupt7);
+        mSPI_write(0x0002, x0002reg & ~interrupt7);
         int status = WaitForMCU(10);
         if (status != 0)
             lime::debug("MCU error status 0x%02X", status);

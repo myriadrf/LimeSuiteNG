@@ -208,8 +208,8 @@ const CSRegister PD_F_BIAS = { 0x0084, 3, 3, 0, "PD_F_BIAS", "Power down signal 
 const CSRegister PD_PTRP_BIAS = { 0x0084, 2, 2, 0, "PD_PTRP_BIAS", "Power down signal for PTAT/RP block" };
 const CSRegister PD_PT_BIAS = { 0x0084, 1, 1, 0, "PD_PT_BIAS", "Power down signal for PTAT block" };
 const CSRegister PD_BIAS_MASTER = { 0x0084, 0, 0, 0, "PD_BIAS_MASTER", "Enable signal for central bias block" };
-const CSRegister SLFB_XBUF_RX = { 0x0085, 8, 8, 0, "SLFB_XBUF_RX", "Self biasing digital contol SLFB_XBUF_RX" };
-const CSRegister SLFB_XBUF_TX = { 0x0085, 7, 7, 0, "SLFB_XBUF_TX", "Self biasing digital contol SLFB_XBUF_TX" };
+const CSRegister SLFB_XBUF_RX = { 0x0085, 8, 8, 0, "SLFB_XBUF_RX", "Self biasing digital control SLFB_XBUF_RX" };
+const CSRegister SLFB_XBUF_TX = { 0x0085, 7, 7, 0, "SLFB_XBUF_TX", "Self biasing digital control SLFB_XBUF_TX" };
 const CSRegister BYP_XBUF_RX = { 0x0085, 6, 6, 0, "BYP_XBUF_RX", "Shorts the Input 3.3V buffer in XBUF" };
 const CSRegister BYP_XBUF_TX = { 0x0085, 5, 5, 0, "BYP_XBUF_TX", "Shorts the Input 3.3V buffer in XBUF" };
 const CSRegister EN_OUT2_XBUF_TX = { 0x0085,
@@ -233,7 +233,7 @@ const CSRegister SPDUP_VCO_CGEN = { 0x0086,
     15,
     0,
     "SPDUP_VCO_CGEN",
-    "Bypasses the noise filter resistor for fast setlling time. It should be connected to a 1us pulse" };
+    "Bypasses the noise filter resistor for fast settling time. It should be connected to a 1us pulse" };
 const CSRegister RESET_N_CGEN = {
     0x0086, 14, 14, 1, "RESET_N_CGEN", "A pulse should be used in the start-up to reset ( 1-normal operation)"
 };
@@ -294,7 +294,7 @@ const CSRegister IOFFSET_CP_CGEN = { 0x008A,
     20,
     "IOFFSET_CP_CGEN",
     "Scales the offset current of the charge pump, 0-->63. This current is used in Fran-N mode to create an offset in the CP "
-    "response and avoide the non-linear section" };
+    "response and avoid the non-linear section" };
 const CSRegister IPULSE_CP_CGEN = { 0x008A, 5, 0, 20, "IPULSE_CP_CGEN", "Scales the pulse current of the charge pump" };
 const CSRegister ICT_VCO_CGEN = { 0x008B, 13, 9, 16, "ICT_VCO_CGEN", "Scales the VCO bias current from 0 to 2.5xInom" };
 const CSRegister CSW_VCO_CGEN = { 0x008B, 8, 1, 128, "CSW_VCO_CGEN", "" };
@@ -706,8 +706,8 @@ const CSRegister LOOPB_TBB = { 0x0105,
     12,
     0,
     "LOOPB_TBB",
-    "This controls which signal is connected to the loopback output pins. Note: when both the lowpass ladder and real pole are "
-    "powered down, the output of the active highband biquad is routed to the loopb output" };
+    "This controls which signal is connected to the loopback output pins. Note: when both the low-pass ladder and real pole are "
+    "powered down, the output of the active high-band biquad is routed to the loopb output" };
 const CSRegister PD_LPFH_TBB = { 0x0105, 4, 4, 0, "PD_LPFH_TBB", "This selectively powers down the LPFH_TBB biquad" };
 const CSRegister PD_LPFIAMP_TBB = {
     0x0105, 3, 3, 0, "PD_LPFIAMP_TBB", "selectively powers down the LPFIAMP_TBB front-end current amp of the transmitter baseband"
@@ -758,14 +758,14 @@ const CSRegister ICT_LPFLAD_F_TBB = { 0x0107,
     5,
     12,
     "ICT_LPFLAD_F_TBB",
-    "This controls the operational amplfiers' output stages bias reference current of the low band ladder filter of the "
-    "transmisster's baseband" };
+    "This controls the operational amplifiers' output stages bias reference current of the low band ladder filter of the "
+    "transmitter's baseband" };
 const CSRegister ICT_LPFLAD_PT_TBB = { 0x0107,
     4,
     0,
     12,
     "ICT_LPFLAD_PT_TBB",
-    "This controls the operational amplifers' input stages bias reference current of the low band ladder filter of the "
+    "This controls the operational amplifiers' input stages bias reference current of the low band ladder filter of the "
     "transmitter's baseband" };
 const CSRegister CG_IAMP_TBB = { 0x0108,
     15,
@@ -902,7 +902,7 @@ const CSRegister CFB_TIA_RFE = { 0x0112,
     0,
     230,
     "CFB_TIA_RFE",
-    "Feeback capacitor for TIA. Controls the 3dB BW of the TIA. Should be set with calibration through digital baseband" };
+    "Feedback capacitor for TIA. Controls the 3dB BW of the TIA. Should be set with calibration through digital baseband" };
 const CSRegister G_LNA_RFE = { 0x0113, 9, 6, 15, "G_LNA_RFE", "Controls the gain of the LNA" };
 const CSRegister G_RXLOOPB_RFE = { 0x0113, 5, 2, 0, "G_RXLOOPB_RFE", "Controls RXFE loopback gain" };
 const CSRegister G_TIA_RFE = { 0x0113, 1, 0, 3, "G_TIA_RFE", "Controls the Gain of the TIA" };

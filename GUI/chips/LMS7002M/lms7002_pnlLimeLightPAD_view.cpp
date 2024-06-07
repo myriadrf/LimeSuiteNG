@@ -1877,24 +1877,24 @@ void lms7002_pnlLimeLightPAD_view::onbtnReadVerRevMask(wxCommandEvent& event)
 
 void lms7002_pnlLimeLightPAD_view::UpdateGUI()
 {
-    wxArrayString padStrenghts;
+    wxArrayString padStrengths;
     uint16_t value = 0;
     value = ReadParam(LMS7002MCSR::MASK);
     if (value == 0)
     {
-        padStrenghts.push_back("4 mA");
-        padStrenghts.push_back("8 mA");
+        padStrengths.push_back("4 mA");
+        padStrengths.push_back("8 mA");
     }
     else
     {
-        padStrenghts.push_back("8 mA");
-        padStrenghts.push_back("12 mA");
+        padStrengths.push_back("8 mA");
+        padStrengths.push_back("12 mA");
     }
-    wxRadioBox* padStrenghtCtrl[] = { rgrSDA_DS, rgrSCL_DS, rgrSDIO_DS, rgrDIQ2_DS, rgrDIQ1_DS };
-    for (auto i : padStrenghtCtrl)
+    wxRadioBox* padStrengthCtrl[] = { rgrSDA_DS, rgrSCL_DS, rgrSDIO_DS, rgrDIQ2_DS, rgrDIQ1_DS };
+    for (auto i : padStrengthCtrl)
     {
-        i->SetString(0, padStrenghts[0]);
-        i->SetString(1, padStrenghts[1]);
+        i->SetString(0, padStrengths[0]);
+        i->SetString(1, padStrengths[1]);
     }
     ILMS7002MTab::UpdateGUI();
 }

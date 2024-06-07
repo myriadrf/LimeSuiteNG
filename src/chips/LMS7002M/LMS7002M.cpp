@@ -980,20 +980,20 @@ OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz)
     return ResultToStatus(result);
 }
 
-OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq_Hz, float_type BW)
+OpStatus LMS7002M::SetFrequencySXWithSpurCancellation(TRXDir dir, float_type freq_Hz, float_type BW)
 {
     const float BWOffset = 2e6;
     BW += BWOffset; //offset to avoid ref clock on BW edge
-    bool needCancelation = false;
+    bool needCancellation = false;
     float_type refClk = GetReferenceClk_SX(TRXDir::Rx);
     int low = (freq_Hz - BW / 2) / refClk;
     int high = (freq_Hz + BW / 2) / refClk;
     if (low != high)
-        needCancelation = true;
+        needCancellation = true;
 
     OpStatus status;
     float newFreq(0);
-    if (needCancelation)
+    if (needCancellation)
     {
         newFreq = static_cast<int>(freq_Hz / refClk + 0.5) * refClk;
         TuneRxFilter(BW - BWOffset + 2 * abs(freq_Hz - newFreq));
@@ -1009,7 +1009,7 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq
         Modify_SPI_Reg_bits(LMS7002MCSR::MAC, i + 1);
         SetNCOFrequency(TRXDir::Rx, 15, 0);
     }
-    if (needCancelation)
+    if (needCancellation)
     {
         Modify_SPI_Reg_bits(LMS7002MCSR::MAC, ch);
         Modify_SPI_Reg_bits(LMS7002MCSR::EN_INTONLY_SDM, 1);
@@ -1445,7 +1445,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
 
 /** @brief Performs registers test for given address interval by writing given pattern data
     @param startAddr first register address
-    @param endAddr last reigster address
+    @param endAddr last register address
     @param pattern data to be written into registers
     @param ss stringstream to use
     @return 0-register test passed, other-failure

@@ -409,7 +409,7 @@ void CDCM_Dev::SetVCOMultiplier(int value)
 /**
     @brief Sets CDCM version.
     @param version 0 - version 1; 1 - version 2.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::SetVersion(uint8_t version)
 {
@@ -450,7 +450,7 @@ bool CDCM_Dev::IsLocked()
 
 /**
     @brief Uploads current CDCM configuration to FPGA registers.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::UploadConfiguration()
 {
@@ -563,7 +563,7 @@ int CDCM_Dev::UploadConfiguration()
 
 /**
     @brief Downloads current CDCM configuration from FPGA registers.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::DownloadConfiguration()
 {
@@ -822,10 +822,10 @@ int CDCM_Dev::PrepareToReadRegs()
 }
 
 /**
-    @brief Calculates numerator and denumenator values from decimal.
+    @brief Calculates numerator and denominator values from decimal.
     @param decimal Decimal value.
     @param[out] num Numerator value.
-    @param[out] den Denumenator value.
+    @param[out] den Denominator value.
     @return Error value after conversion.
 */
 double CDCM_Dev::DecToFrac(double decimal, int* num, int* den)
