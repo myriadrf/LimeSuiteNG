@@ -970,43 +970,43 @@ void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
 
     if (mStreamers.at(moduleIndex) != nullptr)
     {
-        delete mStreamers[moduleIndex];
+        delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers[moduleIndex] = nullptr;
+    mStreamers.at(moduleIndex) = nullptr;
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)

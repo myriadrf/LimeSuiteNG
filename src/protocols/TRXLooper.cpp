@@ -572,6 +572,11 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 
     bool firstIteration = true;
 
+    assert(dest);
+    assert(dest[0]);
+    if (useChannelB)
+        assert(dest[1]);
+
     //auto start = high_resolution_clock::now();
     while (samplesProduced < count)
     {
@@ -596,6 +601,7 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 
         if (useChannelB)
         {
+            assert(dest[1]);
             std::memcpy(&dest[1][samplesProduced], src[1], samplesToCopy * sizeof(T));
         }
 
@@ -972,6 +978,10 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
         mTx.stagingPacket = nullptr;
     }
 
+    assert(samples);
+    assert(samples[0]);
+    if (useChannelB)
+        assert(samples[1]);
     const T* src[2] = { samples[0], useChannelB ? samples[1] : nullptr };
     while (samplesRemaining > 0)
     {
