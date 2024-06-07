@@ -22,6 +22,8 @@ cmake_dependent_option(ENABLE_GNURADIO_PREREQ "Build LimeSuiteNG plugin for GNU 
 
 if(ENABLE_GNURADIO_PREREQ)
     add_subdirectory(gr-limesdr)
+else()
+    add_feature_info(GNURADIO OFF "GNU Radio 3.9+ Plug-in")
 endif()
 
 ########################################################################
