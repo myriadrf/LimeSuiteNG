@@ -154,7 +154,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
     dest.underrun = s->underrun;
     dest.loss = s->loss;
     if (!isTx) // Tx dropped packets are reported from Rx received packet flags
-        status.tx.late = s->late;
+        status.tx.loss = s->late;
 
     // reporting every dropped packet can be quite spammy, so print info only periodically
     auto now = chrono::steady_clock::now();
@@ -164,7 +164,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
         stringstream ss;
         ss << "Rx| Loss: "sv << status.rx.loss << " overrun: "sv << status.rx.overrun << " rate: "sv << status.rx.dataRate_Bps / 1e6
            << " MB/s"sv
-           << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
+           << "\nTx| Late: "sv << status.tx.loss << " underrun: "sv << status.tx.underrun << " rate: "sv
            << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
         Log(LogLevel::Warning, ss.str().c_str());
         lastStreamUpdate = now;

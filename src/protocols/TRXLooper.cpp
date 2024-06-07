@@ -498,12 +498,12 @@ void TRXLooper::ReceivePacketsLoop()
                 //     pkt->counter - expectedTS);
                 ++stats.loss;
                 loss.add(1);
-                reportProblems = true;
+                // reportProblems = true;
             }
             if (pkt->txWasDropped())
             {
-                ++mTx.stats.loss;
-                reportProblems = true;
+                ++stats.late;
+                // reportProblems = true; // don't spam if tx continuously has late packets
             }
 
             const int payloadSize{ packetSize - headerSize };
@@ -777,6 +777,7 @@ void TRXLooper::TransmitPacketsLoop()
         {
             t1 = t2;
             double dataRate = 1000.0 * totalBytesSent / timePeriod;
+            mTx.stats.dataRate_Bps = dataRate;
 
             double avgTxAdvance = 0, rmsTxAdvance = 0;
             txTSAdvance.GetResult(avgTxAdvance, rmsTxAdvance);
@@ -786,13 +787,12 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li o:%i shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
                     chipId,
                     dataRate / 1000000.0,
                     lastTS,
                     stats.packets,
-                    stats.overrun,
                     counters.completed,
                     counters.requests,
                     counters.requests - counters.completed,
@@ -817,7 +817,6 @@ void TRXLooper::TransmitPacketsLoop()
             loss.checkpoint();
             underrun.checkpoint();
             totalBytesSent = 0;
-            mTx.stats.dataRate_Bps = dataRate;
         }
 
         // collect and transform samples data to output buffer
