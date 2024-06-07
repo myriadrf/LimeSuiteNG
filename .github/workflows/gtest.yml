@@ -8,7 +8,10 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+  # TODO: Revert back to Release once the issue is fixed
+  # https://github.com/actions/runner-images/issues/10004
+  # BUILD_TYPE: Release
+  BUILD_TYPE: Debug
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   INSTALL_PREFIX: ${{github.workspace}}/deps
 
