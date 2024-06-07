@@ -34,7 +34,7 @@ static void HandleLibusbEvents(libusb_context* context)
     {
         int returnCode = libusb_handle_events_timeout_completed(context, &tv, NULL);
         if (returnCode != 0)
-            lime::error("libusb_handle_events: %s", libusb_strerror(returnCode));
+            lime::error("libusb_handle_events: %s", libusb_strerror(static_cast<libusb_error>(returnCode)));
     }
 }
 
