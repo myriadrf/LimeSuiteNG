@@ -6,7 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "RingBuffer.h"
-#include "../external/kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 
 namespace lime {
 

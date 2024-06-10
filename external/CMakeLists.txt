@@ -19,20 +19,29 @@ if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
     set_target_properties(GLEW PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 endif()
 
+# Download and compile
+
+include(FetchContent)
+
 #########################################################################
 # kissFFT
 #########################################################################
-set(kissFFT_PATH "${PROJECT_SOURCE_DIR}/external/kissFFT")
-set(KISSFFT_OPENMP OFF)
-set(KISSFFT_PKGCONFIG OFF)
-set(KISSFFT_STATIC OFF)
-set(KISSFFT_TEST OFF)
-set(KISSFFT_TOOLS OFF)
-set(KISSFFT_USE_ALLOCA OFF)
+fetchcontent_declare(
+    kissFFT
+    GIT_REPOSITORY https://github.com/mborgerding/kissfft.git
+    GIT_TAG f5f2a3b2f2cd02bf80639adb12cbeed125bdf420 # latest main at the time of writing this
+)
+
+set(KISSFFT_OPENMP OFF CACHE INTERNAL "")
+set(KISSFFT_PKGCONFIG OFF CACHE INTERNAL "")
+set(KISSFFT_STATIC OFF CACHE INTERNAL "")
+set(KISSFFT_TEST OFF CACHE INTERNAL "")
+set(KISSFFT_TOOLS OFF CACHE INTERNAL "")
+set(KISSFFT_USE_ALLOCA OFF CACHE INTERNAL "")
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-add_subdirectory(kissFFT)
+fetchcontent_makeavailable(kissFFT)
 
 # Download easily downloadable header only ones
 
@@ -40,7 +49,6 @@ add_subdirectory(kissFFT)
 # args
 #########################################################################
 
-include(FetchContent)
 fetchcontent_declare(
     args
     GIT_REPOSITORY https://github.com/Taywee/args.git

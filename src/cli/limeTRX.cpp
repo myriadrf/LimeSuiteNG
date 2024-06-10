@@ -6,7 +6,7 @@
 #include <cmath>
 #include <signal.h>
 #include <thread>
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 #include <condition_variable>
 #include <mutex>
 #include <filesystem>
