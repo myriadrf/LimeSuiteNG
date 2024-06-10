@@ -33,7 +33,6 @@ set(LIME_SUITE_SOURCES
     FPGA_common/FPGA_common.cpp
     FPGA_common/WriteRegistersBatch.cpp
     threadHelper/threadHelper.cpp
-    EnumToString.cpp
     memory/MemoryPool.cpp
     API/LMS_APIWrapper.cpp
     API/LimePlugin.cpp

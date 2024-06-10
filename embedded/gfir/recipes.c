@@ -4,7 +4,7 @@ DESCRIPTION:	Routines for vector and matrix allocation/free.
 		Linear system solving by LU decomposition.
 		All are from "Numerical Recipes in C".
 
-CONTAINTS:	
+CONTENTS:	
 		float  *vector(nl,nh)
 		int    nl,nh;
 
@@ -40,7 +40,7 @@ CONTAINTS:
 DATE:		
 AUTHOR:		From "Numerical Recipes in C"
 REVISIONS:	February 01, 1994: File created.
-		Febryary 24, 2000:
+		February 24, 2000:
 			This file is taken out from my PhD sources, Srdjan.
 			Unnecessary functions are removed.
 			All floats are converted to doubles.

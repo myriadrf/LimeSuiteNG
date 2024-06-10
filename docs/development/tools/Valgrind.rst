@@ -46,8 +46,8 @@ To generate the suppressions for all the errors that Valgrind's tools find
 use the ``--gen-suppressions=all`` option in Valgrind
 (Valgrind options are passed into it *before* the call to the program).
 This will generate a suppression for each error the tool finds.
-By saving the supressions into a file one can then use those suppressions in the future
-by supplying the file it's saved in by using the ``--supressions=<filename>`` option.
+By saving the suppressions into a file one can then use those suppressions in the future
+by supplying the file it's saved in by using the ``--suppressions=<filename>`` option.
 
 More information about suppression
 """"""""""""""""""""""""""""""""""

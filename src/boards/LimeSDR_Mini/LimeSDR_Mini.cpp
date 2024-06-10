@@ -537,7 +537,8 @@ OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     }
 
     assert(mStreamPort);
-    auto connection = std::static_pointer_cast<FT601>(mStreamPort);
+    FT601* ftdi = dynamic_cast<FT601*>(mStreamPort.get());
+    ftdi->ResetStreamBuffers();
 
     auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_READ_ADDRESS, DataTransferDirection::DeviceToHost);
     auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_WRITE_ADDRESS, DataTransferDirection::HostToDevice);

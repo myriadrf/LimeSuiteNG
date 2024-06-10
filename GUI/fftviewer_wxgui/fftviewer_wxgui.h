@@ -45,7 +45,7 @@ class frFFTviewer : public IModuleFrame
     wxSplitterWindow* mPlotsSplitter;
     wxPanel* mTimeConstellationPanel;
     OpenGLGraph* mTimeDomainPanel;
-    OpenGLGraph* mConstelationPanel;
+    OpenGLGraph* mConstellationPanel;
     OpenGLGraph* mFFTpanel;
     wxStaticText* m_staticText6;
     wxTextCtrl* txtNyquistFreqMHz;
@@ -92,7 +92,7 @@ class frFFTviewer : public IModuleFrame
     wxStaticText* m_staticText20;
     wxStaticText* lbldBc;
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     virtual void OnFFTsamplesCountChanged(wxSpinEvent& event) { event.Skip(); }
     virtual void OnStreamChange(wxCommandEvent& event) { event.Skip(); }
     virtual void OnFmtChange(wxCommandEvent& event) { event.Skip(); }

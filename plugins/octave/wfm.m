@@ -19,7 +19,7 @@ LimeLoadConfig('rxTest.ini');
 %activate Tx and Rx streaming
 LimeStartStreaming(1000000);
 
-%Load waveform to be continuosly transmitted
+%Load waveform to be continuously transmitted
 LimeLoopWFMStart(src);
 
 %receive samples

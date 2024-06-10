@@ -23,9 +23,9 @@ LimeSuiteNG uses ``libusb-1.0`` library to communicate with the USB devices. It 
 PCIe
 ----
 
-LimeSuiteNG contains "litepcie" linux kernel module for communcating with PCIe based devices.
+LimeSuiteNG contains "litepcie" linux kernel module for communicating with PCIe based devices.
 If the PCIe devices are not detected by ``limeDevice``, inspect the system log for "litepcie" errors.
-For succesfully detected device the output should look like:
+For successfully detected device the output should look like:
 
 .. code-block:: bash
 

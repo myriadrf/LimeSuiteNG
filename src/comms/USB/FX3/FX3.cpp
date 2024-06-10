@@ -68,6 +68,12 @@ std::vector<USBDescriptor> FX3::enumerateDevices(const std::set<VendorProductId>
                 continue;
         }
 
+        if (!ids.empty() && ids.find({ device.VendorID, device.ProductID }) == ids.end())
+        {
+            device.Close();
+            continue;
+        }
+
         USBDescriptor desc;
         desc.vid = device.VendorID;
         desc.pid = device.ProductID;

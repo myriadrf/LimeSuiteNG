@@ -33,8 +33,8 @@ std::vector<USBDescriptor> FT601::enumerateDevices(const std::set<VendorProductI
         return devDescriptors;
 
     DWORD Flags = 0;
-    char SerialNumber[16] = { 0 };
-    char Description[32] = { 0 };
+    char SerialNumber[512] = { 0 };
+    char Description[512] = { 0 };
     for (DWORD i = 0; i < numDevs; i++)
     {
         DWORD deviceId = 0;
@@ -44,6 +44,10 @@ std::vector<USBDescriptor> FT601::enumerateDevices(const std::set<VendorProductI
             USBDescriptor desc;
             desc.vid = (deviceId >> 16);
             desc.pid = static_cast<WORD>(deviceId);
+
+            if (!ids.empty() && ids.find({ desc.vid, desc.pid }) == ids.end())
+                continue;
+
             desc.product = Description;
             desc.serial = SerialNumber;
             devDescriptors.push_back(desc);

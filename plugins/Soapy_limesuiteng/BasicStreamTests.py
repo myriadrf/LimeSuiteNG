@@ -4,7 +4,7 @@ import SoapySDR
 from SoapySDR import * #SOAPY_SDR_* constants
 import numpy as np
 
-SDR_ARGS = {'driver': 'lime'}
+SDR_ARGS = {'driver': 'limesuiteng'}
 
 class TestBasicStreaming(unittest.TestCase):
 

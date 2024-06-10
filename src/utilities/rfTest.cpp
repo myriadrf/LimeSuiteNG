@@ -162,7 +162,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     for (size_t i = 0; i < rxSamples.size(); ++i)
         rxSamples[i].resize(samplesToBuffer);
 
-    // precomputing tx samples here, the result might not be continous
+    // precomputing tx samples here, the result might not be continuous
     // each packet with different amplitude to distinguish them in time
     std::vector<std::vector<complex32f_t>> txPattern(2);
     const int txPacketCount = 4;
@@ -349,7 +349,7 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     for (size_t i = 0; i < rxSamples.size(); ++i)
         rxSamples[i].resize(samplesToBuffer);
 
-    // precomputing tx samples here, the result might not be continous
+    // precomputing tx samples here, the result might not be continuous
     // each packet with different amplitude to distinguish them in time
     std::vector<std::vector<complex32f_t>> txPattern(stream.channels.at(lime::TRXDir::Tx).size());
     const int txPacketCount = 1;

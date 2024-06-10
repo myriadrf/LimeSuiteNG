@@ -554,7 +554,7 @@ OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::
         tia = 1;
     }
 #endif
-    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From datasheet
+    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From data sheet
 
     if ((device->Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, lna + 1) != OpStatus::Success) ||
         (device->Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, tia + 1) != OpStatus::Success) ||
@@ -970,43 +970,43 @@ void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
 
     if (mStreamers.at(moduleIndex) != nullptr)
     {
-        delete mStreamers[moduleIndex];
+        delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers[moduleIndex] = nullptr;
+    mStreamers.at(moduleIndex) = nullptr;
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
@@ -1253,7 +1253,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_RXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_RXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_RXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_RXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Rx, signal.dcValue.real(), signal.dcValue.imag());
     }
@@ -1267,7 +1267,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_TXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_TXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_TXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_TXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
     }

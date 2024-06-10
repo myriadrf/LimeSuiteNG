@@ -161,8 +161,8 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         return OpStatus::Success;
 
     const bool use_trxiqpulse = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_TRXIQPULSE);
-    const bool use_ddr = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR);
-    status = fpga->ConfigureSamplesStream(channelEnables, cfg.linkFormat, use_ddr, use_trxiqpulse);
+    const bool sisoddr_on = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR);
+    status = fpga->ConfigureSamplesStream(channelEnables, cfg.linkFormat, sisoddr_on, use_trxiqpulse);
     if (status != OpStatus::Success)
         return status;
 
@@ -385,7 +385,7 @@ void TRXLooper::ReceivePacketsLoop()
     constexpr uint8_t irqPeriod{ 4 };
     // Rx DMA has to be enabled before the stream enable, otherwise some data
     // might be lost in the time frame between stream enable and then dma enable.
-    mRxArgs.dma->EnableContinous(true, readSize, irqPeriod);
+    mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
 
     // thread ready for work, just wait for stream enable
     {
@@ -498,12 +498,12 @@ void TRXLooper::ReceivePacketsLoop()
                 //     pkt->counter - expectedTS);
                 ++stats.loss;
                 loss.add(1);
-                reportProblems = true;
+                // reportProblems = true;
             }
             if (pkt->txWasDropped())
             {
-                ++mTx.stats.loss;
-                reportProblems = true;
+                ++stats.late;
+                // reportProblems = true; // don't spam if tx continuously has late packets
             }
 
             const int payloadSize{ packetSize - headerSize };
@@ -572,6 +572,11 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 
     bool firstIteration = true;
 
+    assert(dest);
+    assert(dest[0]);
+    if (useChannelB)
+        assert(dest[1]);
+
     //auto start = high_resolution_clock::now();
     while (samplesProduced < count)
     {
@@ -596,6 +601,7 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 
         if (useChannelB)
         {
+            assert(dest[1]);
             std::memcpy(&dest[1][samplesProduced], src[1], samplesToCopy * sizeof(T));
         }
 
@@ -777,6 +783,7 @@ void TRXLooper::TransmitPacketsLoop()
         {
             t1 = t2;
             double dataRate = 1000.0 * totalBytesSent / timePeriod;
+            mTx.stats.dataRate_Bps = dataRate;
 
             double avgTxAdvance = 0, rmsTxAdvance = 0;
             txTSAdvance.GetResult(avgTxAdvance, rmsTxAdvance);
@@ -786,13 +793,12 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li o:%i shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
                     chipId,
                     dataRate / 1000000.0,
                     lastTS,
                     stats.packets,
-                    stats.overrun,
                     counters.completed,
                     counters.requests,
                     counters.requests - counters.completed,
@@ -817,7 +823,6 @@ void TRXLooper::TransmitPacketsLoop()
             loss.checkpoint();
             underrun.checkpoint();
             totalBytesSent = 0;
-            mTx.stats.dataRate_Bps = dataRate;
         }
 
         // collect and transform samples data to output buffer
@@ -973,6 +978,10 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
         mTx.stagingPacket = nullptr;
     }
 
+    assert(samples);
+    assert(samples[0]);
+    if (useChannelB)
+        assert(samples[1]);
     const T* src[2] = { samples[0], useChannelB ? samples[1] : nullptr };
     while (samplesRemaining > 0)
     {
