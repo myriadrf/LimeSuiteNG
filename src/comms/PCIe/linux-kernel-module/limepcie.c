@@ -120,7 +120,7 @@ struct limepcie_device {
     struct limepcie_chan chan[MAX_DMA_CHANNEL_COUNT];
     spinlock_t lock;
     int minor_base;
-    int irqs;
+    int irq_count;
     int channels;
     struct cdev control_cdev; // non DMA channel for control packets
     struct deviceInfo info;
@@ -431,7 +431,7 @@ void limepcie_stop_dma(struct limepcie_device *s)
     }
 }
 
-static irqreturn_t limepcie_interrupt(int irq, void *data)
+static irqreturn_t limepcie_handle_interrupt(int irq, void *data)
 {
     struct limepcie_device *s = (struct limepcie_device *)data;
     uint32_t irq_enable = limepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
@@ -1361,13 +1361,15 @@ static int limepcie_alloc_chdev(struct limepcie_device *s, struct device *parent
     }
 
     index = limepcie_minor_idx;
-    for (int i = 0; i < s->channels; i++)
+    for (int channelIndex = 0; channelIndex < s->channels; channelIndex++)
     {
-        char trxName[64];
-        snprintf(trxName, sizeof(trxName) - 1, "trx%d", i);
-        // when creating device linux replaces all '/' with a '!', so just use '!' directly
-        struct device *trxDev =
-            device_create(limepcie_class, parent, MKDEV(limepcie_major, index), NULL, "%s!%s", deviceName, trxName);
+        char trxName[128];
+        // when attempting to create devices with subdirectories linux replaces '/' with a '!'
+        // it will be seen in the /dev file system as subdirectories, but accessing the files
+        // will need to use '!' instead of '/'
+        snprintf(trxName, sizeof(trxName), "%s/trx%d", deviceName, channelIndex);
+        dev_info(&s->dev->dev, "Creating /dev/%s\n", trxName);
+        struct device *trxDev = device_create(limepcie_class, parent, MKDEV(limepcie_major, index), NULL, "%s", trxName);
         if (!trxDev)
         {
             ret = -EINVAL;
@@ -1382,8 +1384,8 @@ static int limepcie_alloc_chdev(struct limepcie_device *s, struct device *parent
     }
 
     // additionally alloc control channel
+    // when creating device linux replaces all '/' with a '!'
     dev_info(&s->dev->dev, "Creating /dev/%s/control0\n", deviceName);
-    // // when creating device linux replaces all '/' with a '!', so just use '!' directly
 
     struct device *ctrlDev = device_create(limepcie_class, parent, MKDEV(limepcie_major, index), s, "%s!control0", deviceName);
     if (!ctrlDev)
@@ -1462,44 +1464,44 @@ int compare_revisions(struct revision d1, struct revision d2)
 }
 /* from stackoverflow */
 
-void FreeIRQs(struct limepcie_device *device)
+static void FreeIRQs(struct limepcie_device *device)
 {
-    dev_info(&device->dev->dev, "FreeIRQs %i\n", device->irqs);
-    if (device->irqs <= 0)
+    if (device->irq_count <= 0)
         return;
 
-    for (int i = device->irqs - 1; i >= 0; --i)
+    dev_dbg(&device->dev->dev, "FreeIRQs %i\n", device->irq_count);
+    for (int interrupt_vector_index = device->irq_count - 1; interrupt_vector_index >= 0; --interrupt_vector_index)
     {
-        int irq = pci_irq_vector(device->dev, i);
+        int irq = pci_irq_vector(device->dev, interrupt_vector_index);
         free_irq(irq, device);
     }
-    device->irqs = 0;
+    device->irq_count = 0;
     pci_free_irq_vectors(device->dev);
 }
 
-int AllocateIRQs(struct limepcie_device *device)
+static int AllocateIRQs(struct limepcie_device *device)
 {
     struct pci_dev *dev = device->dev;
-    int irqs = pci_alloc_irq_vectors(dev, 1, 32, PCI_IRQ_MSI);
-    if (irqs < 0)
+    int irq_count = pci_alloc_irq_vectors(dev, 1, 32, PCI_IRQ_MSI);
+    if (irq_count < 0)
     {
         dev_err(&dev->dev, "Failed to enable MSI\n");
-        return irqs;
+        return irq_count;
     }
-    dev_info(&dev->dev, "%d MSI IRQs allocated.\n", irqs);
+    dev_info(&dev->dev, "%d MSI IRQs allocated.\n", irq_count);
 
-    device->irqs = 0;
-    for (int i = 0; i < irqs; i++)
+    device->irq_count = 0;
+    for (int interrupt_vector_index = 0; interrupt_vector_index < irq_count; ++interrupt_vector_index)
     {
-        int irq = pci_irq_vector(dev, i);
-        int ret = request_irq(irq, limepcie_interrupt, IRQF_SHARED, LIMEPCIE_NAME, device);
+        int irq = pci_irq_vector(dev, interrupt_vector_index);
+        int ret = request_irq(irq, limepcie_handle_interrupt, IRQF_SHARED, LIMEPCIE_NAME, device);
         if (ret < 0)
         {
             dev_err(&dev->dev, " Failed to allocate IRQ %d\n", dev->irq);
             FreeIRQs(device);
             return ret;
         }
-        device->irqs += 1;
+        device->irq_count += 1;
     }
     return 0;
 }
@@ -1582,7 +1584,7 @@ static bool ValidChar(char c)
     return isalnum(c) || c == '-' || c == '_' || c == ' ';
 }
 
-static void ParseIdentifier(const char *identifier, char *destination, const size_t dstSize)
+static void SanitizeIdentifier(const char *identifier, char *destination, const size_t dstSize)
 {
     uint8_t size = 0;
     while (size < dstSize && ValidChar(identifier[size]))
@@ -1599,85 +1601,49 @@ static void ParseIdentifier(const char *identifier, char *destination, const siz
             destination[i] = '-';
 }
 
-static struct mutex probe_lock;
-
-int PCIeSpeedToGen(int speed)
+// Checks if the device provides human readable name
+static int IdentifyDevice(struct limepcie_device *limepcie_dev)
 {
-    switch (speed)
+    char fpga_identifier[256];
+    for (int i = 0; i < 256; i++)
+        fpga_identifier[i] = limepcie_readl(limepcie_dev, CSR_IDENTIFIER_MEM_BASE + i * 4);
+    fpga_identifier[255] = '\0';
+
+    if (fpga_identifier[0] != 0)
+        dev_info(&limepcie_dev->dev->dev, "Identifier: %s\n", fpga_identifier);
+    if (ValidIdentifier(fpga_identifier))
+        SanitizeIdentifier(fpga_identifier, limepcie_dev->info.devName, sizeof(limepcie_dev->info.devName));
+    else if (ReadInfo(limepcie_dev) != 0)
     {
-    case PCIE_SPEED_2_5GT:
-        return 1;
-    case PCIE_SPEED_5_0GT:
-        return 2;
-    case PCIE_SPEED_8_0GT:
-        return 3;
-    case PCIE_SPEED_16_0GT:
-        return 4;
-    case PCIE_SPEED_32_0GT:
-        return 5;
-    case PCIE_SPEED_64_0GT:
-        return 6;
+        dev_err(&limepcie_dev->dev->dev, "Failed to read device info from FPGA MCU\n");
+        return -EIO;
     }
     return 0;
 }
 
-static void pcie_max_link_cap(struct pci_dev *dev, enum pci_bus_speed *speed, enum pcie_link_width *width)
-{
-    *speed = dev->bus->max_bus_speed;
-    *width = pcie_get_width_cap(dev);
-}
-
-static void pcie_cur_link_sta(struct pci_dev *dev, enum pci_bus_speed *speed, enum pcie_link_width *width)
-{
-    uint16_t lnksta;
-    pcie_capability_read_word(dev, PCI_EXP_LNKSTA, &lnksta);
-    *speed = dev->bus->cur_bus_speed;
-    *width = (lnksta & PCI_EXP_LNKSTA_NLW) >> PCI_EXP_LNKSTA_NLW_SHIFT;
-}
-
-static void validate_pcie(struct pci_dev *dev)
-{
-    uint maxSpeed, maxWidth;
-    uint curSpeed, curWidth;
-
-    pcie_max_link_cap(dev, &maxSpeed, &maxWidth);
-    pcie_cur_link_sta(dev, &curSpeed, &curWidth);
-
-    uint maxGen = PCIeSpeedToGen(maxSpeed);
-    uint curGen = PCIeSpeedToGen(curSpeed);
-
-    if (maxSpeed != curSpeed)
-        dev_warn(&dev->dev, "PCIe Warning: Max PCIe Gen %u, but current is Gen %u\n", maxGen, curGen);
-
-    if (maxWidth != curWidth)
-        dev_warn(&dev->dev, "PCIe Warning: Max PCIe Width x%u, but current is x%u\n", maxWidth, curWidth);
-}
+static struct mutex probe_lock;
 
 static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
     mutex_lock(&probe_lock);
 
     int ret = 0;
-    uint8_t rev_id;
-    int i;
-    char fpga_identifier[256];
     struct limepcie_device *limepcie_dev = NULL;
 
-    dev_info(&dev->dev, "[Probing device]\n");
+    dev_info(&dev->dev, "[Probing device] vid:%04X pid:%04X\n", id->vendor, id->device);
 
     limepcie_dev = devm_kzalloc(&dev->dev, sizeof(struct limepcie_device), GFP_KERNEL);
     if (!limepcie_dev)
     {
+        dev_err(&dev->dev, "Failed to allocate memory for device");
         ret = -ENOMEM;
         goto fail1;
     }
-
-    pci_set_drvdata(dev, limepcie_dev);
-
     limepcie_dev->attr.vendor = id->vendor;
     limepcie_dev->attr.product = id->device;
 
-    validate_pcie(dev);
+    pci_set_drvdata(dev, limepcie_dev);
+    pcie_print_link_status(dev);
 
     limepcie_dev->dev = dev;
     spin_lock_init(&limepcie_dev->lock);
@@ -1691,15 +1657,18 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
 
     ret = -EIO;
 
-    /* Check device version */
-    pci_read_config_byte(dev, PCI_REVISION_ID, &rev_id);
-    if (rev_id != EXPECTED_PCI_REVISION_ID)
+    // Check device version
     {
-        dev_err(&dev->dev, "Unsupported device version %d\n", rev_id);
-        goto fail1;
+        uint8_t rev_id;
+        pci_read_config_byte(dev, PCI_REVISION_ID, &rev_id);
+        if (rev_id != EXPECTED_PCI_REVISION_ID)
+        {
+            dev_err(&dev->dev, "Unexpected device PCI revision %d\n", rev_id);
+            goto fail1;
+        }
     }
 
-    /* Check bar0 config */
+    // Check bar0 config
     if (!(pci_resource_flags(dev, 0) & IORESOURCE_MEM))
     {
         dev_err(&dev->dev, "Invalid BAR0 configuration\n");
@@ -1708,7 +1677,7 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
 
     if (pcim_iomap_regions(dev, BIT(0), LIMEPCIE_NAME) < 0)
     {
-        dev_err(&dev->dev, "Could not request regions\n");
+        dev_err(&dev->dev, "Could not request iomap regions\n");
         goto fail1;
     }
 
@@ -1718,47 +1687,17 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
         dev_err(&dev->dev, "Could not map BAR0\n");
         goto fail1;
     }
-    dev_info(&dev->dev, "BAR0 address=0x%p\n", limepcie_dev->bar0_addr);
+    dev_dbg(&dev->dev, "BAR0 address=0x%p\n", limepcie_dev->bar0_addr);
 
     /* Reset LimePCIe core */
 #ifdef CSR_CTRL_RESET_ADDR
     limepcie_writel(limepcie_dev, CSR_CTRL_RESET_ADDR, 1);
     msleep(10);
 #endif
-    /* Show identifier */
-    for (i = 0; i < 256; i++)
-        fpga_identifier[i] = limepcie_readl(limepcie_dev, CSR_IDENTIFIER_MEM_BASE + i * 4);
-
-    fpga_identifier[255] = '\0';
-    dev_info(&dev->dev, "Identifier %s\n", fpga_identifier);
-
-    pci_set_master(dev);
-
-    ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(64));
-    if (ret)
-        dev_warn(&dev->dev, "Failed to set DMA mask 64bit. Falling back to 32bit\n");
-
-    ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(32));
-    if (ret)
-    {
-        dev_err(&dev->dev, "Failed to set DMA mask 32bit. Critical error.\n");
-        goto fail1;
-    };
-
-    ret = AllocateIRQs(limepcie_dev);
-    if (ret < 0)
+    if ((ret = IdentifyDevice(limepcie_dev)))
         goto fail2;
-
-    if (ValidIdentifier(fpga_identifier))
-        ParseIdentifier(fpga_identifier, limepcie_dev->info.devName, sizeof(limepcie_dev->info.devName));
-    else if (ReadInfo(limepcie_dev) != 0)
-    {
-        dev_err(&dev->dev, "Failed to read limepcie device info\n");
-        goto fail2;
-    }
 
     uint32_t dmaBufferSize = 8192;
-
     switch (limepcie_dev->info.boardId)
     {
     case LMS_DEV_LIMESDR_X3:
@@ -1769,11 +1708,25 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
     case LMS_DEV_LIME_MM_X8:
         dmaBufferSize = 8192;
         break;
-    default: {
+    default:
         dmaBufferSize = 8192;
         dev_warn(&dev->dev, "DMA buffer size not specified, defaulting to %i", dmaBufferSize);
     }
+
+    pci_set_master(dev);
+    if ((ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(64))))
+    {
+        dev_warn(&dev->dev, "Failed to set DMA mask 64bit. Falling back to 32bit\n");
+        if ((ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(32))))
+        {
+            dev_err(&dev->dev, "Failed to set DMA mask 32bit. Critical error.\n");
+            goto fail1;
+        };
     }
+
+    ret = AllocateIRQs(limepcie_dev);
+    if (ret < 0)
+        goto fail2;
 
     uint32_t dmaBufferCount = MAX_DMA_BUFFER_COUNT;
     int32_t dmaChannels = limepcie_readl(limepcie_dev, CSR_CNTRL_NDMA_ADDR);
@@ -1782,7 +1735,8 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
         dev_err(&dev->dev, "Invalid DMA channel count(%i)\n", dmaChannels);
         dmaChannels = 0;
     }
-    dev_info(&dev->dev, "DMA channels: %i, buffer size: %i, buffers count: %i", dmaChannels, dmaBufferSize, dmaBufferCount);
+    else
+        dev_info(&dev->dev, "DMA channels: %i, buffer size: %i, buffers count: %i", dmaChannels, dmaBufferSize, dmaBufferCount);
     limepcie_dev->channels = dmaChannels;
 
     /* create all chardev in /dev */
@@ -1793,7 +1747,7 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
         goto fail2;
     }
 
-    for (i = 0; i < limepcie_dev->channels; i++)
+    for (int i = 0; i < limepcie_dev->channels; i++)
     {
         limepcie_dev->chan[i].dma.bufferCount = dmaBufferCount;
         limepcie_dev->chan[i].dma.bufferSize = dmaBufferSize;
@@ -1841,23 +1795,6 @@ static int limepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
     }
 
     sema_init(&limepcie_dev->control_semaphore, 1);
-
-#ifdef CSR_UART_XOVER_RXTX_ADDR
-    tty_res = devm_kzalloc(&dev->dev, sizeof(struct resource), GFP_KERNEL);
-    if (!tty_res)
-    {
-        mutex_unlock(&probe_lock);
-        return -ENOMEM;
-    }
-    tty_res->start = (resource_size_t)limepcie_dev->bar0_addr + CSR_UART_XOVER_RXTX_ADDR - CSR_BASE;
-    tty_res->flags = IORESOURCE_REG;
-    limepcie_dev->uart = platform_device_register_simple("liteuart", limepcie_minor_idx, tty_res, 1);
-    if (IS_ERR(limepcie_dev->uart))
-    {
-        ret = PTR_ERR(limepcie_dev->uart);
-        goto fail3;
-    }
-#endif
     mutex_unlock(&probe_lock);
     return 0;
 
@@ -1873,7 +1810,7 @@ fail1:
 static void limepcie_pci_remove(struct pci_dev *dev)
 {
     struct limepcie_device *limepcie_dev = pci_get_drvdata(dev);
-    dev_info(&dev->dev, "[Removing device]\n");
+    dev_info(&dev->dev, "[Removing device] vid:%04X pid:%04X\n", dev->vendor, dev->device);
 
     /* Stop the DMAs */
     limepcie_stop_dma(limepcie_dev);
@@ -1905,6 +1842,7 @@ static struct pci_driver limepcie_pci_driver = {
 static int __init limepcie_module_init(void)
 {
     int ret;
+    pr_info("limepcie : module init\n");
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
     limepcie_class = class_create(THIS_MODULE, LIMEPCIE_NAME);
 #else
@@ -1913,7 +1851,7 @@ static int __init limepcie_module_init(void)
     if (!limepcie_class)
     {
         ret = -EEXIST;
-        pr_err(" Failed to create class\n");
+        pr_err(" Failed to create class \"limepcie\"\n");
         goto fail_create_class;
     }
 
@@ -1949,6 +1887,7 @@ static void __exit limepcie_module_exit(void)
     pci_unregister_driver(&limepcie_pci_driver);
     unregister_chrdev_region(limepcie_dev_t, LIMEPCIE_MINOR_COUNT);
     class_destroy(limepcie_class);
+    pr_info("limepcie : module exit\n");
 }
 
 module_init(limepcie_module_init);
