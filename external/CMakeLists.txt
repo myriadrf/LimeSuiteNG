@@ -1,4 +1,6 @@
-# Compile needed externals
+# Download and compile needed externals
+
+include(FetchContent)
 
 #########################################################################
 # GLEW
@@ -6,9 +8,15 @@
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL QUIET)
 if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
-    set(GLEW_PATH "${PROJECT_SOURCE_DIR}/external/glew")
-    add_library(GLEW STATIC ${GLEW_PATH}/glew.c)
-    target_include_directories(GLEW PUBLIC ${GLEW_PATH} ${OPENGL_INCLUDE_DIR})
+    fetchcontent_declare(
+        GLEW_download
+        URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
+        URL_HASH SHA256=d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
+        CONFIGURE_COMMAND "" BUILD_COMMAND "")
+    fetchcontent_makeavailable(GLEW_download)
+    FetchContent_GetProperties(GLEW_download SOURCE_DIR GLEW_PATH)
+    add_library(GLEW STATIC ${GLEW_PATH}/src/glew.c)
+    target_include_directories(GLEW PUBLIC ${GLEW_PATH}/include ${OPENGL_INCLUDE_DIR})
     target_compile_definitions(GLEW PUBLIC GLEW_STATIC GLEW_NO_GLU)
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -18,10 +26,6 @@ if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
     # compile only when other targets link to it
     set_target_properties(GLEW PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 endif()
-
-# Download and compile
-
-include(FetchContent)
 
 #########################################################################
 # kissFFT
