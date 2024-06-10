@@ -19,7 +19,7 @@ if [ `  modinfo -F alias litepcie | \
                 -e v0*1172d0*e001 | \
         wc -l` -eq 3 ]
 then
-    echo "Deleting legacy driver"
+    echo "Deleting legacy driver \"litepcie\""
     sed -i '/^litepcie$/d' /etc/modules
     modinfo -F filename litepcie | xargs rm
 fi

@@ -14,11 +14,12 @@ if [ `id -u` != 0 ] ; then
 fi
 
 if lsmod | grep -Eq "^$MODULE_NAME"; then
-    echo "Removing module $MODULE_NAME"
+    echo "Unloading module: \"rmmod $MODULE_NAME\""
     rmmod $MODULE_NAME
 fi
 
 if lsmod | grep -Eq "^litepcie"; then
+    echo "Unloading module: \"rmmod litepcie\""
     rmmod litepcie 2> /dev/null 1>&2
 
     if [ $? -ne 0 ]

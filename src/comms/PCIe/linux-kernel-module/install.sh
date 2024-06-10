@@ -20,8 +20,10 @@ if ! lsmod | grep -Eq "^$MODULE_NAME" ; then
     modprobe -v $MODULE_NAME >> $LOG_FILE
 
     if lsmod | grep -Eq "^$MODULE_NAME"; then
+        echo "Loaded kernel module: \"modprobe $MODULE_NAME\""
         echo "SUCCESS: $MODULE_NAME module loaded" >> $LOG_FILE
     else
+        echo "Failed to load kernel module: \"modprobe $MODULE_NAME\""
         echo "FAILURE: $MODULE_NAME install failed" >> $LOG_FILE
         exit 1
     fi
