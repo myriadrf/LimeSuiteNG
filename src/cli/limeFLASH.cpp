@@ -1,6 +1,6 @@
 #include "cli/common.h"
 #include <filesystem>
-#include "args/args.hxx"
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;

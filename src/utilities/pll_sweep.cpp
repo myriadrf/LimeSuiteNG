@@ -16,7 +16,7 @@
 #include <chrono>
 #include <cmath>
 #include <string_view>
-#include "args/args.hxx"
+#include "args.hxx"
 
 using namespace lime;
 using namespace std::literals::string_literals;

@@ -10,7 +10,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <filesystem>
-#include "args/args.hxx"
+#include "args.hxx"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT

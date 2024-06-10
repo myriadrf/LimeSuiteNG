@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <filesystem>
-#include "args/args.hxx"
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;

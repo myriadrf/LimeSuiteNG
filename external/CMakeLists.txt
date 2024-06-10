@@ -33,3 +33,21 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 add_subdirectory(kissFFT)
+
+# Download easily downloadable header only ones
+
+#########################################################################
+# args
+#########################################################################
+
+include(FetchContent)
+fetchcontent_declare(
+    args
+    GIT_REPOSITORY https://github.com/Taywee/args.git
+    GIT_TAG cc2368ca0d8a962862c96c00fe919e1480050f51 # latest main at the time of writing this
+)
+set(ARGS_MAIN_PROJECT OFF CACHE INTERNAL "")
+set(ARGS_BUILD_EXAMPLE OFF CACHE INTERNAL "")
+set(ARGS_BUILD_UNITTESTS OFF CACHE INTERNAL "")
+
+fetchcontent_makeavailable(args)
