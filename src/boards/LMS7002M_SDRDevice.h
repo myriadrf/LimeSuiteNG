@@ -126,6 +126,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     virtual OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
 
     FPGA* GetFPGA();
+
   protected:
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);
     void SetGainInformationInDescriptor(RFSOCDescriptor& descriptor);
