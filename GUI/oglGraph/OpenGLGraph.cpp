@@ -701,10 +701,10 @@ void OpenGLGraph::Draw()
 
     if (settings.useVBO && IsGlew1_5())
     {
-        for (unsigned int i = 0; i < series.size(); i++)
+        for (std::size_t i = 0; i < series.size(); i++)
         {
             glColor3f(series[i]->color.red, series[i]->color.green, series[i]->color.blue);
-            if (series[i]->size > 0 && series[i]->visible)
+            if (!series[i]->values.empty() && series[i]->visible)
             {
                 if (series[i]->vboIndex == 0) //check if data series buffer is initialized
                 {
@@ -714,9 +714,12 @@ void OpenGLGraph::Draw()
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, series[i]->vboIndex);
                 if (series[i]->modified) //check if buffer needs to be modified
                 {
-                    glBufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(float) * series[i]->size * 2, NULL, GL_DYNAMIC_DRAW_ARB);
                     glBufferDataARB(
-                        GL_ARRAY_BUFFER_ARB, sizeof(float) * series[i]->size * 2, series[i]->values, GL_DYNAMIC_DRAW_ARB);
+                        GL_ARRAY_BUFFER_ARB, sizeof(cDataSerie::Coordinates) * series[i]->values.size(), NULL, GL_DYNAMIC_DRAW_ARB);
+                    glBufferDataARB(GL_ARRAY_BUFFER_ARB,
+                        sizeof(cDataSerie::Coordinates) * series[i]->values.size(),
+                        series[i]->values.data(),
+                        GL_DYNAMIC_DRAW_ARB);
                     series[i]->modified = false;
                 }
                 glEnableClientState(GL_VERTEX_ARRAY);
@@ -725,12 +728,12 @@ void OpenGLGraph::Draw()
                 if (settings.graphType == GLG_POINTS)
                 {
                     glPointSize(settings.pointsSize);
-                    glDrawArrays(GL_POINTS, 0, series[i]->size);
+                    glDrawArrays(GL_POINTS, 0, series[i]->values.size());
                 }
                 else
                 {
                     glPointSize(1);
-                    glDrawArrays(GL_LINE_STRIP, 0, series[i]->size);
+                    glDrawArrays(GL_LINE_STRIP, 0, series[i]->values.size());
                 }
                 glDisableClientState(GL_VERTEX_ARRAY);
                 glDisableClientState(GL_COLOR);
@@ -743,7 +746,7 @@ void OpenGLGraph::Draw()
         for (unsigned int i = 0; i < series.size(); i++)
         {
             glColor3f(series[i]->color.red, series[i]->color.green, series[i]->color.blue);
-            if (series[i]->size > 0 && series[i]->visible)
+            if (!series[i]->values.empty() && series[i]->visible)
             {
                 if (settings.graphType == GLG_POINTS)
                 {
@@ -755,9 +758,9 @@ void OpenGLGraph::Draw()
                     glPointSize(1);
                     glBegin(GL_LINE_STRIP);
                 }
-                for (unsigned int j = 0; j < series[i]->size; j++)
+                for (std::size_t j = 0; j < series[i]->values.size(); j++)
                 {
-                    glVertex3f(series[i]->values[2 * j], series[i]->values[2 * j + 1], 1.0);
+                    glVertex3f(series[i]->values[j].x, series[i]->values[j].y, 1.0);
                 }
                 glEnd();
             }
@@ -875,19 +878,19 @@ void OpenGLGraph::Fit()
     float valx, valy;
     for (unsigned i = 0; i < series.size() && series[i]->visible; ++i) //set boundary limits to first value
     {
-        if (series[i]->size > 0)
+        if (!series[i]->values.empty())
         {
-            minx = maxx = series[i]->values[0];
-            miny = maxy = series[i]->values[1];
+            minx = maxx = series[i]->values[0].x;
+            miny = maxy = series[i]->values[0].y;
             break;
         }
     }
     for (unsigned i = 0; i < series.size(); ++i)
     {
-        for (unsigned j = 0; j < series[i]->size && series[i]->visible; ++j)
+        for (std::size_t j = 0; j < series[i]->values.size() && series[i]->visible; ++j)
         {
-            valx = series[i]->values[2 * j];
-            valy = series[i]->values[2 * j + 1];
+            valx = series[i]->values[j].x;
+            valy = series[i]->values[j].y;
             if (valx < minx)
                 minx = valx;
             else if (valx > maxx)
@@ -1140,7 +1143,7 @@ int OpenGLGraph::AddMarker(int posX)
     bool found = false;
     //check if allowed to add more markers
     //check if series have any data to mark
-    if (series[0]->size > 0)
+    if (!series[0]->values.empty())
     {
         OGLMarker* mark = NULL;
         for (size_t i = 0; i < markers.size(); ++i)
@@ -1156,19 +1159,19 @@ int OpenGLGraph::AddMarker(int posX)
         mark->posX = settings.visibleArea.x1 + (posX - settings.marginLeft) * pixelXvalue;
 
         //find closest data point index
-        for (unsigned i = 0; i < series[0]->size; ++i)
+        for (std::size_t i = 1; i < series[0]->values.size(); ++i)
         {
-            if (series[0]->values[2 * i] > mark->posX)
+            if (series[0]->values[i].x > mark->posX)
             {
-                float toLeft = mark->posX - series[0]->values[2 * (i - 1)];
-                float toRight = series[0]->values[2 * i] - mark->posX;
+                float toLeft = mark->posX - series[0]->values[i - 1].x;
+                float toRight = series[0]->values[i].x - mark->posX;
                 if (toRight < toLeft)
                 {
-                    mark->dataValueIndex = 2 * i;
+                    mark->dataValueIndex = i;
                 }
                 else
                 {
-                    mark->dataValueIndex = 2 * (i - 1);
+                    mark->dataValueIndex = i - 1;
                 }
                 found = true;
                 break;
@@ -1176,12 +1179,12 @@ int OpenGLGraph::AddMarker(int posX)
         }
         if (!found) //if no closest point found, add marker to middle point
         {
-            mark->dataValueIndex = series[0]->size;
+            mark->dataValueIndex = series[0]->values.size() / 2;
         }
         mark->used = true;
         mark->show = true;
-        mark->posX = series[0]->values[mark->dataValueIndex];
-        mark->posY = series[0]->values[mark->dataValueIndex + 1];
+        mark->posX = series[0]->values[mark->dataValueIndex].x;
+        mark->posY = series[0]->values[mark->dataValueIndex].y;
         mark->color = mMarkerColors[markers.size()];
         return mark->id;
     }
@@ -1196,7 +1199,7 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
 {
     bool found = false;
     //check if series have any data to mark
-    if (series[0]->size > 0)
+    if (!series[0]->values.empty())
     {
         OGLMarker* mark = NULL;
         for (size_t i = 0; i < markers.size(); ++i)
@@ -1210,19 +1213,19 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
         mark->posX = xValue;
 
         //find closest data point index
-        for (unsigned i = 0; i < series[0]->size; ++i)
+        for (std::size_t i = 0; i < series[0]->values.size(); ++i)
         {
-            if (series[0]->values[2 * i] >= mark->posX)
+            if (series[0]->values[i].x >= mark->posX)
             {
-                float toLeft = mark->posX - series[0]->values[2 * (i - 1)];
-                float toRight = series[0]->values[2 * i] - mark->posX;
+                float toLeft = mark->posX - series[0]->values[i - 1].x;
+                float toRight = series[0]->values[i].x - mark->posX;
                 if (toRight < toLeft)
                 {
-                    mark->dataValueIndex = 2 * i;
+                    mark->dataValueIndex = i;
                 }
                 else
                 {
-                    mark->dataValueIndex = 2 * (i - 1);
+                    mark->dataValueIndex = i - 1;
                 }
                 found = true;
                 break;
@@ -1230,11 +1233,11 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
         }
         if (!found) //if no closest point found, add marker to middle point
         {
-            mark->dataValueIndex = series[0]->size;
+            mark->dataValueIndex = series[0]->values.size() / 2;
         }
         mark->used = true;
-        mark->posX = series[0]->values[mark->dataValueIndex];
-        mark->posY = series[0]->values[mark->dataValueIndex + 1];
+        mark->posX = series[0]->values[mark->dataValueIndex].x;
+        mark->posY = series[0]->values[mark->dataValueIndex].y;
         mark->color = mMarkerColors[markers.size()];
         mMarkersDlg->refreshMarkFreq = true;
         return mark->id;
@@ -1274,7 +1277,7 @@ void OpenGLGraph::RemoveMarker(int id)
 */
 void OpenGLGraph::DrawMarkers()
 {
-    if (series.size() <= 0 || !settings.markersEnabled || series[0] == nullptr || series[0]->size <= 0)
+    if (series.empty() || !settings.markersEnabled || series[0] == nullptr || series[0]->values.empty())
     {
         return;
     }
@@ -1292,15 +1295,15 @@ void OpenGLGraph::DrawMarkers()
             continue;
         for (unsigned int j = 0; j < series.size(); j++)
         {
-            if (series[j]->size <= 0 || !series[j]->visible)
+            if (series[j]->values.empty() || !series[j]->visible)
             {
                 continue;
             }
 
-            markers[i].posY = series[j]->values[markers[i].dataValueIndex + 1];
+            markers[i].posY = series[j]->values[markers[i].dataValueIndex].y;
             // X axis grid lines
-            posY = settings.marginBottom +
-                   ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+            posY =
+                settings.marginBottom + ((series[j]->values[markers[i].dataValueIndex].y - settings.visibleArea.y1) / pixelYvalue);
             posX = settings.marginLeft + ((markers[i].posX - settings.visibleArea.x1) / pixelXvalue);
             markers[i].iposX = posX;
             markers[i].iposY = posY;
@@ -1336,17 +1339,17 @@ void OpenGLGraph::DrawMarkers()
         if (markers[i].used == false)
             continue;
         glColor4f(markers[i].color.red, markers[i].color.green, markers[i].color.blue, markers[i].color.alpha);
-        int cnt = std::snprintf(text, sizeof(text), "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex] / 1000000);
+        int cnt = std::snprintf(text, sizeof(text), "M%i: % .3f MHz ", i, series[0]->values[markers[i].dataValueIndex].x / 1000000);
 
         for (unsigned int j = 0; j < series.size(); j++)
-            if (series[j]->size > 0 && series[j]->visible)
+            if (!series[j]->values.empty() && series[j]->visible)
                 cnt += std::snprintf(text + cnt,
                     std::max<int>(sizeof(text) - cnt, 0),
                     "/ Ch %c: %#+3.1f dBFS ",
                     65 + j,
-                    series[j]->values[markers[i].dataValueIndex + 1]);
+                    series[j]->values[markers[i].dataValueIndex].y);
 
-        markers[i].posY = series[0]->values[markers[i].dataValueIndex + 1];
+        markers[i].posY = series[0]->values[markers[i].dataValueIndex].y;
         posX = settings.marginLeft;
         posY = settings.windowHeight - settings.marginTop - hpos;
         //glPrint(posX, posY, 0, textScale, "%s", text);
@@ -1380,14 +1383,14 @@ int OpenGLGraph::clickedOnMarker(int X, int Y)
 
         for (unsigned int j = 0; j < series.size(); j++)
         {
-            if (series[j]->size <= 0 || !series[j]->visible)
+            if (series[j]->values.empty() || !series[j]->visible)
             {
                 continue;
             }
 
             float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
-            int posY = settings.marginBottom +
-                       ((series[j]->values[markers[i].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+            int posY =
+                settings.marginBottom + ((series[j]->values[markers[i].dataValueIndex].y - settings.visibleArea.y1) / pixelYvalue);
             if (Y > posY && Y < posY + markers[i].size)
             {
                 printf("selected %i marker\n", i);
@@ -1405,7 +1408,7 @@ int OpenGLGraph::clickedOnMarker(int X, int Y)
 */
 void OpenGLGraph::MoveMarker(int markerID, int posX)
 {
-    if (series[0]->size <= 0 || markerID < 0)
+    if (series[0]->values.empty() || markerID < 0)
     {
         mMarkersDlg->refreshMarkFreq = true;
         if constexpr (OGL_REDRAW_ENABLED)
@@ -1424,15 +1427,15 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
     //determine which way marker was moved, search for closest data point
     if (posX < markers[markerID].iposX)
     {
-        for (int i = markers[markerID].dataValueIndex; i > 0; i -= 2)
+        for (int i = markers[markerID].dataValueIndex; i > 0; --i)
         {
-            if (series[0]->values[i] > markers[markerID].posX)
+            if (series[0]->values[i].x > markers[markerID].posX)
             {
                 continue;
             }
 
-            float toLeft = markers[markerID].posX - series[0]->values[i - 2];
-            float toRight = series[0]->values[i] - markers[markerID].posX;
+            float toLeft = markers[markerID].posX - series[0]->values[i - 1].x;
+            float toRight = series[0]->values[i].x - markers[markerID].posX;
             if (toRight < toLeft)
             {
                 markers[markerID].dataValueIndex = i;
@@ -1446,15 +1449,15 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
     }
     else
     {
-        for (unsigned i = markers[markerID].dataValueIndex; i < series[0]->size * 2; i += 2)
+        for (std::size_t i = markers[markerID].dataValueIndex; i < series[0]->values.size(); ++i)
         {
-            if (series[0]->values[i] < markers[markerID].posX)
+            if (series[0]->values[i].x < markers[markerID].posX)
             {
                 continue;
             }
 
-            float toLeft = markers[markerID].posX - series[0]->values[i - 2];
-            float toRight = series[0]->values[i] - markers[markerID].posX;
+            float toLeft = markers[markerID].posX - series[0]->values[i - 1].x;
+            float toRight = series[0]->values[i].x - markers[markerID].posX;
             if (toRight < toLeft)
             {
                 markers[markerID].dataValueIndex = i;
@@ -1468,10 +1471,10 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
     }
     float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
     float pixelYvalue = (settings.visibleArea.y2 - settings.visibleArea.y1) / settings.dataViewHeight;
-    markers[markerID].posX = series[0]->values[markers[markerID].dataValueIndex];
-    markers[markerID].posY = series[0]->values[markers[markerID].dataValueIndex + 1];
+    markers[markerID].posX = series[0]->values[markers[markerID].dataValueIndex].x;
+    markers[markerID].posY = series[0]->values[markers[markerID].dataValueIndex].y;
     int posY =
-        settings.marginBottom + ((series[0]->values[markers[markerID].dataValueIndex + 1] - settings.visibleArea.y1) / pixelYvalue);
+        settings.marginBottom + ((series[0]->values[markers[markerID].dataValueIndex].y - settings.visibleArea.y1) / pixelYvalue);
     int newPosX = settings.marginLeft + ((markers[markerID].posX - settings.visibleArea.x1) / pixelXvalue);
     markers[markerID].iposX = newPosX;
     markers[markerID].iposY = posY;
@@ -1490,7 +1493,7 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
 */
 void OpenGLGraph::ChangeMarker(int markerID, float xValue)
 {
-    if (series[0]->size <= 0 || markerID < 0)
+    if (series[0]->values.empty() || markerID < 0)
     {
         Refresh();
         if constexpr (OGL_REDRAW_ENABLED)
@@ -1510,32 +1513,32 @@ void OpenGLGraph::ChangeMarker(int markerID, float xValue)
     mark->posX = xValue;
     bool found = false;
     //find closest data point index
-    for (unsigned i = 0; i < series[0]->size; ++i)
+    for (std::size_t i = 1; i < series[0]->values.size(); ++i)
     {
-        if (series[0]->values[2 * i] < mark->posX)
+        if (series[0]->values[i].x < mark->posX)
         {
             continue;
         }
 
-        float toLeft = mark->posX - series[0]->values[2 * (i - 1)];
-        float toRight = series[0]->values[2 * i] - mark->posX;
+        float toLeft = mark->posX - series[0]->values[i - 1].x;
+        float toRight = series[0]->values[i].x - mark->posX;
         if (toRight < toLeft)
         {
-            mark->dataValueIndex = 2 * i;
+            mark->dataValueIndex = i;
         }
         else
         {
-            mark->dataValueIndex = 2 * (i - 1);
+            mark->dataValueIndex = i - 1;
         }
         found = true;
         break;
     }
     if (!found) //if no closest point found, add marker to middle point
     {
-        mark->dataValueIndex = series[0]->size;
+        mark->dataValueIndex = series[0]->values.size() / 2;
     }
-    mark->posX = series[0]->values[mark->dataValueIndex];
-    mark->posY = series[0]->values[mark->dataValueIndex + 1];
+    mark->posX = series[0]->values[mark->dataValueIndex].x;
+    mark->posY = series[0]->values[mark->dataValueIndex].y;
 
     Refresh();
     if constexpr (OGL_REDRAW_ENABLED)
@@ -1674,7 +1677,6 @@ void OpenGLGraph::onSearchPeak(wxCommandEvent& event)
     SearchPeak();
     Refresh();
     mMarkersDlg->refreshMarkFreq = true;
-    ;
 }
 
 void OpenGLGraph::onReset(wxCommandEvent& event)
@@ -1685,45 +1687,35 @@ void OpenGLGraph::onReset(wxCommandEvent& event)
 
 bool OpenGLGraph::SearchPeak()
 {
-    bool found = false;
-    double maxValue(0.0);
-    unsigned maxPos(0);
-    //Init max value
-    for (unsigned int i = 0; i < series.size(); i++)
-    {
-        if (series[i]->size > 0 && series[i]->visible)
-        {
-            maxValue = series[i]->values[1];
-            found = true;
-            break;
-        }
-    }
+    float maxValue{ std::numeric_limits<float>::lowest() };
+    float maxX{ 0 };
+
     //Find max position
-    for (unsigned int i = 0; i < series.size(); i++)
+    for (const auto* const serie : series)
     {
-        if (series[i]->size > 0 && series[i]->visible)
+        if (!serie->values.empty() && serie->visible)
         {
-            for (unsigned j = 0; j < series[i]->size; ++j)
+            for (const auto& value : serie->values)
             {
-                if (maxValue < series[i]->values[2 * j + 1])
+                if (maxValue < value.y)
                 {
-                    maxValue = series[i]->values[2 * j + 1];
-                    maxPos = 2 * j + 1;
+                    maxX = value.x;
+                    maxValue = value.y;
                 }
             }
         }
     }
 
     //Mark max position
-    for (unsigned int i = 0; i < series.size(); i++)
+    for (const auto* const serie : series)
     {
-        if (series[i]->size > 0 && series[i]->visible)
+        if (!serie->values.empty() && serie->visible)
         {
-            AddMarkerAtValue(series[i]->values[maxPos - 1]);
-            break;
+            AddMarkerAtValue(maxX);
+            return true;
         }
     }
-    return found;
+    return false;
 }
 
 void OpenGLGraph::SetMarker(int id, float xValue, bool enabled, bool show)
