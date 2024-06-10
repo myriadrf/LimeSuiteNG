@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <thread>
 
-#include "cpp-feather-ini-parser/INI.h"
+#include "INI.h"
 #include "limesuiteng/types.h"
 #include "comms/IComms.h"
 #include "LMS7002M_RegistersMap.h"

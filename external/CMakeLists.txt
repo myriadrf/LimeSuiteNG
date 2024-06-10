@@ -48,7 +48,6 @@ fetchcontent_makeavailable(kissFFT)
 #########################################################################
 # args
 #########################################################################
-
 fetchcontent_declare(
     args
     GIT_REPOSITORY https://github.com/Taywee/args.git
@@ -59,3 +58,19 @@ set(ARGS_BUILD_EXAMPLE OFF CACHE INTERNAL "")
 set(ARGS_BUILD_UNITTESTS OFF CACHE INTERNAL "")
 
 fetchcontent_makeavailable(args)
+
+#########################################################################
+# cpp-feather-ini-parser
+#########################################################################
+fetchcontent_declare(
+    cpp-feather-ini-parser
+    GIT_REPOSITORY https://github.com/c-ridgway/cpp-feather-ini-parser.git
+    GIT_TAG c04a5e504f7b954548fbbd763ac0d4843d4d7c93 # latest main at the time of writing this
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+)
+
+fetchcontent_makeavailable(cpp-feather-ini-parser)
+
+add_library(cpp-feather-ini-parser INTERFACE)
+target_include_directories(cpp-feather-ini-parser INTERFACE ${cpp-feather-ini-parser_SOURCE_DIR})
