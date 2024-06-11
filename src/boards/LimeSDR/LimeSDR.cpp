@@ -155,6 +155,18 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
 
     mDeviceDescriptor = descriptor;
 
+    mStreamPort->AddOnHotplugDisconnectCallback(
+        [](void* userData) {
+            auto* const sdr = reinterpret_cast<LimeSDR*>(userData);
+
+            // Call in reverse order so that the "smaller" scoped callbacks run first.
+            for (auto iter = sdr->disconnectCallbacks.rbegin(); iter != sdr->disconnectCallbacks.rend(); ++iter)
+            {
+                (*iter)();
+            }
+        },
+        this);
+
     //must configure synthesizer before using LimeSDR
     /*if (info.device == LMS_DEV_LIMESDR && info.hardware < 4)
     {
@@ -499,19 +511,6 @@ OpStatus LimeSDR::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
     {
         delete mStreamers.at(moduleIndex);
     }
-
-    mStreamPort->AddOnHotplugDisconnectCallback(
-        [](void* userData) {
-            auto* const sdr = reinterpret_cast<LimeSDR*>(userData);
-
-            for (const auto& callback : sdr->disconnectCallbacks)
-            {
-                callback();
-            }
-
-            sdr->StreamStop(0);
-        },
-        this);
 
     constexpr uint8_t rxBulkEndpoint = 0x81;
     constexpr uint8_t txBulkEndpoint = 0x01;

@@ -110,13 +110,14 @@ static void process_libusbtransfer(libusb_transfer* trans)
     context->cv.notify_one();
 }
 
+// Runs within the gUSBProcessingThread thread
 int USBGeneric::HotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data)
 {
     auto* usb = reinterpret_cast<USBGeneric*>(user_data);
 
-    for (const auto& callback : usb->hotplugDisconnectCallbacks)
+    for (auto iter = usb->hotplugDisconnectCallbacks.rbegin(); iter != usb->hotplugDisconnectCallbacks.rend(); ++iter)
     {
-        callback.function(callback.userData);
+        iter->function(iter->userData);
     }
 
     usb->Disconnect();

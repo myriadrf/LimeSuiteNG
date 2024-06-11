@@ -206,6 +206,18 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     descriptor.socTree->children.push_back(fpgaNode);
 
     mDeviceDescriptor = descriptor;
+
+    mStreamPort->AddOnHotplugDisconnectCallback(
+        [](void* userData) {
+            auto* const mini = reinterpret_cast<LimeSDR_Mini*>(userData);
+
+            // Call in reverse order so that the "smaller" scoped callbacks run first.
+            for (auto iter = mini->disconnectCallbacks.rbegin(); iter != mini->disconnectCallbacks.rend(); ++iter)
+            {
+                (*iter)();
+            }
+        },
+        this);
 }
 
 LimeSDR_Mini::~LimeSDR_Mini()
@@ -540,19 +552,6 @@ OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     assert(mStreamPort);
     FT601* ftdi = dynamic_cast<FT601*>(mStreamPort.get());
     ftdi->ResetStreamBuffers();
-
-    mStreamPort->AddOnHotplugDisconnectCallback(
-        [](void* userData) {
-            auto* const mini = reinterpret_cast<LimeSDR_Mini*>(userData);
-
-            for (const auto& callback : mini->disconnectCallbacks)
-            {
-                callback();
-            }
-
-            mini->StreamStop(0);
-        },
-        this);
 
     auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_READ_ADDRESS, DataTransferDirection::DeviceToHost);
     auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_WRITE_ADDRESS, DataTransferDirection::HostToDevice);

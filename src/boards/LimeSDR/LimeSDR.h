@@ -82,6 +82,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     bool mConfigInProgress;
 
     std::vector<CallbackInfo<HotplugDisconnectCallbackType>> disconnectCallbacks;
+    std::size_t mStreamStopCallbackId;
 };
 
 } // namespace lime
