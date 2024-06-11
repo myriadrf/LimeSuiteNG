@@ -38,6 +38,8 @@ class FX3 : public IUSB
     int32_t ControlTransfer(
         int requestType, int request, int value, int index, uint8_t* data, size_t length, int32_t timeout_ms) override;
 
+    void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+
     static const int CTR_WRITE_REQUEST_VALUE;
     static const int CTR_READ_REQUEST_VALUE;
 

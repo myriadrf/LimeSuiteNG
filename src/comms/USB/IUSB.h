@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <functional>
 #include "limesuiteng/OpStatus.h"
 
 namespace lime {
@@ -116,6 +117,13 @@ class IUSB
       @param context Pointer to transfer context (retuned by AllocateAsyncContext).
      */
     virtual void FreeAsyncContext(void* context) = 0;
+
+    typedef std::function<void(void* userData)> HotplugDisconnectCallbackType;
+    template<typename T> struct CallbackInfo {
+        T function;
+        void* userData;
+    };
+    virtual void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) = 0;
 };
 
 } // namespace lime

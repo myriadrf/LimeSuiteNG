@@ -491,13 +491,22 @@ void LimeSDR::ResetUSBFIFO()
     }
 }
 
-OpStatus LimeSDR::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+OpStatus LimeSDR::StreamSetup(
+    const StreamConfig& config, uint8_t moduleIndex, const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
 {
     // Allow multiple setup calls
     if (mStreamers.at(moduleIndex) != nullptr)
     {
         delete mStreamers.at(moduleIndex);
     }
+
+    mStreamPort->AddOnHotplugDisconnectCallback(
+        [&hotplugDisconnectCallback](void* userData) {
+            hotplugDisconnectCallback.function(hotplugDisconnectCallback.userData);
+            auto* const sdr = reinterpret_cast<LimeSDR*>(userData);
+            sdr->StreamStop(0);
+        },
+        this);
 
     constexpr uint8_t rxBulkEndpoint = 0x81;
     constexpr uint8_t txBulkEndpoint = 0x01;

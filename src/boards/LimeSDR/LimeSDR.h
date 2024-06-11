@@ -36,7 +36,9 @@ class LimeSDR : public LMS7002M_SDRDevice
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
+    OpStatus StreamSetup(const StreamConfig& config,
+        uint8_t moduleIndex,
+        const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback) override;
 
     void StreamStart(uint8_t moduleIndex) override;
     void StreamStop(uint8_t moduleIndex) override;

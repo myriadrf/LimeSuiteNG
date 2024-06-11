@@ -611,7 +611,9 @@ ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleI
     return mSubDevices[moduleIndex]->GetTestSignal(0, direction, channel);
 }
 
-OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config,
+    uint8_t moduleIndex,
+    [[maybe_unused]] const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
 {
     OpStatus ret = mSubDevices[moduleIndex]->StreamSetup(config, 0);
     if (ret != OpStatus::Success)

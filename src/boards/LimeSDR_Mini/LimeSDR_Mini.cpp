@@ -526,7 +526,8 @@ SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
     return deviceDescriptor;
 }
 
-OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+OpStatus LimeSDR_Mini::StreamSetup(
+    const StreamConfig& config, uint8_t moduleIndex, const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
 {
     if (moduleIndex != 0)
         return ReportError(OpStatus::InvalidValue, "StreamSetup: invalid module index");
@@ -539,6 +540,14 @@ OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     assert(mStreamPort);
     FT601* ftdi = dynamic_cast<FT601*>(mStreamPort.get());
     ftdi->ResetStreamBuffers();
+
+    mStreamPort->AddOnHotplugDisconnectCallback(
+        [&hotplugDisconnectCallback](void* userData) {
+            hotplugDisconnectCallback.function(hotplugDisconnectCallback.userData);
+            auto* const mini = reinterpret_cast<LimeSDR_Mini*>(userData);
+            mini->StreamStop(0);
+        },
+        this);
 
     auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_READ_ADDRESS, DataTransferDirection::DeviceToHost);
     auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_WRITE_ADDRESS, DataTransferDirection::HostToDevice);

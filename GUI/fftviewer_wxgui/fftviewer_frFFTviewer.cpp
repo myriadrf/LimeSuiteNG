@@ -465,7 +465,14 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     try
     {
-        pthis->device->StreamSetup(config, chipIndex);
+        pthis->device->StreamSetup(config,
+            chipIndex,
+            { [](void* data) {
+                 lime::error("Testing how many times this gets called");
+                 auto* const viewer = reinterpret_cast<fftviewer_frFFTviewer*>(data);
+                 viewer->StopStreaming();
+             },
+                pthis });
         pthis->device->StreamStart(chipIndex);
     } catch (std::logic_error& e)
     {

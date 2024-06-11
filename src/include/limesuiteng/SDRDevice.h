@@ -425,11 +425,24 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) = 0;
 
+    /// @brief The type of the function to call when a disconnect event happens.
+    typedef std::function<void(void* userData)> HotplugDisconnectCallbackType;
+
+    /// @brief The structure to hold the information for the callback
+    /// @tparam T The type of function to call
+    template<typename T> struct CallbackInfo {
+        T function;
+        void* userData;
+    };
+
     /// @brief Sets up all the streams on a device.
     /// @param config The configuration to use for setting the streams up.
     /// @param moduleIndex The index of the device to set up.
+    /// @param hotplugDisconnectCallback The function to call if the device gets suddenly disconnected (USB only).
     /// @return The status code of the operation.
-    virtual OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) = 0;
+    virtual OpStatus StreamSetup(const StreamConfig& config,
+        uint8_t moduleIndex,
+        const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback = { 0, nullptr }) = 0;
 
     /// @brief Starts all the set up streams on the device.
     /// @param moduleIndex The index of the device to start the streams on.

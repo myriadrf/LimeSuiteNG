@@ -364,7 +364,9 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     }
 }
 
-OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+OpStatus LimeSDR_XTRX::StreamSetup(const StreamConfig& config,
+    uint8_t moduleIndex,
+    [[maybe_unused]] const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
 {
     // Allow multiple setup calls
     if (mStreamers.at(moduleIndex) != nullptr)

@@ -41,6 +41,8 @@ class FT601 : public IUSB
      */
     OpStatus ResetStreamBuffers();
 
+    void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+
   protected:
 #ifdef __unix__
     USBGeneric libusb_impl;

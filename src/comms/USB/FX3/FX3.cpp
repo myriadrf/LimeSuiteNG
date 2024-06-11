@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-using namespace lime;
 using namespace std::literals::string_literals;
 
 #ifdef __unix__
@@ -14,13 +13,18 @@ using namespace std::literals::string_literals;
     #ifdef __GNUC__
         #pragma GCC diagnostic pop
     #endif
-const int FX3::CTR_WRITE_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR;
-const int FX3::CTR_READ_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
 #else
     #include "windows.h"
     #include "CyAPI.h"
     #include <codecvt>
+#endif
 
+namespace lime {
+
+#ifdef __unix__
+const int FX3::CTR_WRITE_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR;
+const int FX3::CTR_READ_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
+#else
 class FX3AsyncContext
 {
   public:
@@ -250,3 +254,14 @@ void FX3::FreeAsyncContext(void* context)
     delete reinterpret_cast<FX3AsyncContext*>(context);
 #endif
 }
+
+void FX3::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+{
+#ifdef __unix__
+    libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
+#else
+    // TODO: IMPLEMENT
+#endif
+}
+
+} // namespace lime

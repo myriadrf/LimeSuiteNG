@@ -117,7 +117,9 @@ class LimeSDR_MMX8 : public SDRDevice
     uint64_t GetHardwareTimestamp(uint8_t moduleIndex) override;
     OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) override;
 
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
+    OpStatus StreamSetup(const StreamConfig& config,
+        uint8_t moduleIndex,
+        const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback) override;
     void StreamStart(uint8_t moduleIndex) override;
     void StreamStart(const std::vector<uint8_t> moduleIndexes) override;
     void StreamStop(uint8_t moduleIndex) override;
