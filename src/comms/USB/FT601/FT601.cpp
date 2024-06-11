@@ -378,7 +378,7 @@ void FT601::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallback
 #ifdef __unix__
     libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
 #else
-    // TODO: IMPLEMENT
+    // Hotplug events are not supported by the library
 #endif
 }
 
