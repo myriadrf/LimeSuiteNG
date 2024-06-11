@@ -117,7 +117,7 @@ int USBGeneric::HotplugCallback(libusb_context* ctx, libusb_device* device, libu
 
     for (auto iter = usb->hotplugDisconnectCallbacks.rbegin(); iter != usb->hotplugDisconnectCallbacks.rend(); ++iter)
     {
-        iter->function(iter->userData);
+        (*iter)();
     }
 
     usb->Disconnect();

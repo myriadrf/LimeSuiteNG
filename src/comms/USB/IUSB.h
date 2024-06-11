@@ -122,6 +122,8 @@ class IUSB
     template<typename T> struct CallbackInfo {
         T function;
         void* userData;
+
+        void operator()() { return function(userData); }
     };
     virtual void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) = 0;
 };
