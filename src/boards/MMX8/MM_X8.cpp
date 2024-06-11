@@ -611,9 +611,7 @@ ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleI
     return mSubDevices[moduleIndex]->GetTestSignal(0, direction, channel);
 }
 
-OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config,
-    uint8_t moduleIndex,
-    [[maybe_unused]] const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
+OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
     OpStatus ret = mSubDevices[moduleIndex]->StreamSetup(config, 0);
     if (ret != OpStatus::Success)
@@ -830,6 +828,16 @@ OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region r
 OpStatus LimeSDR_MMX8::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
     return mSubDevices[moduleIndex]->UploadTxWaveform(config, 0, samples, count);
+}
+
+std::size_t LimeSDR_MMX8::AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData)
+{
+    return 0;
+}
+
+void LimeSDR_MMX8::RemoveHotplugDisconnectCallback(std::size_t id)
+{
+    return;
 }
 
 } //namespace lime

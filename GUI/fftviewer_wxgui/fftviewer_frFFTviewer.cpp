@@ -463,16 +463,16 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     const lime::complex32f_t* src[2] = { txPattern[0].data(), txPattern[1].data() };*/
 
+    std::size_t callbackId = 0;
     try
     {
-        pthis->device->StreamSetup(config,
-            chipIndex,
-            { [](void* data) {
-                 lime::error("Testing how many times this gets called");
-                 auto* const viewer = reinterpret_cast<fftviewer_frFFTviewer*>(data);
-                 viewer->StopStreaming();
-             },
-                pthis });
+        pthis->device->StreamSetup(config, chipIndex);
+        callbackId = pthis->device->AddHotplugDisconnectCallback(
+            [](void* data) {
+                auto* const viewer = reinterpret_cast<fftviewer_frFFTviewer*>(data);
+                viewer->StopStreaming();
+            },
+            pthis);
         pthis->device->StreamStart(chipIndex);
     } catch (std::logic_error& e)
     {
@@ -653,6 +653,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     }*/
 
     kiss_fft_free(m_fftCalcPlan);
+    pthis->device->RemoveHotplugDisconnectCallback(callbackId);
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
 

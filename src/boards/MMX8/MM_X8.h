@@ -117,9 +117,7 @@ class LimeSDR_MMX8 : public SDRDevice
     uint64_t GetHardwareTimestamp(uint8_t moduleIndex) override;
     OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) override;
 
-    OpStatus StreamSetup(const StreamConfig& config,
-        uint8_t moduleIndex,
-        const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback) override;
+    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
     void StreamStart(uint8_t moduleIndex) override;
     void StreamStart(const std::vector<uint8_t> moduleIndexes) override;
     void StreamStop(uint8_t moduleIndex) override;
@@ -150,6 +148,9 @@ class LimeSDR_MMX8 : public SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
     OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
+
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
 
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;

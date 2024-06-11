@@ -38,9 +38,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    OpStatus StreamSetup(const StreamConfig& config,
-        uint8_t moduleIndex,
-        const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback) override;
+    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
 
     void StreamStart(uint8_t moduleIndex) override;
     void StreamStop(uint8_t moduleIndex) override;
@@ -55,6 +53,9 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     void SetSerialNumber(const std::string& number);
 
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
+
   protected:
     SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
@@ -65,6 +66,8 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
     bool mConfigInProgress{};
+
+    std::vector<CallbackInfo<HotplugDisconnectCallbackType>> disconnectCallbacks;
 };
 
 } // namespace lime

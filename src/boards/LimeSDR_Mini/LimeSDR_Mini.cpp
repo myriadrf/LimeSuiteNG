@@ -23,11 +23,12 @@
 #include <stdexcept>
 #include <cmath>
 
-using namespace lime;
 using namespace lime::LMS64CProtocol;
 using namespace lime::EqualizerCSR;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
+
+namespace lime {
 
 static const int STREAM_BULK_WRITE_ADDRESS = 0x03;
 static const int STREAM_BULK_READ_ADDRESS = 0x83;
@@ -526,8 +527,7 @@ SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
     return deviceDescriptor;
 }
 
-OpStatus LimeSDR_Mini::StreamSetup(
-    const StreamConfig& config, uint8_t moduleIndex, const CallbackInfo<HotplugDisconnectCallbackType>& hotplugDisconnectCallback)
+OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
     if (moduleIndex != 0)
         return ReportError(OpStatus::InvalidValue, "StreamSetup: invalid module index");
@@ -542,9 +542,14 @@ OpStatus LimeSDR_Mini::StreamSetup(
     ftdi->ResetStreamBuffers();
 
     mStreamPort->AddOnHotplugDisconnectCallback(
-        [&hotplugDisconnectCallback](void* userData) {
-            hotplugDisconnectCallback.function(hotplugDisconnectCallback.userData);
+        [](void* userData) {
             auto* const mini = reinterpret_cast<LimeSDR_Mini*>(userData);
+
+            for (const auto& callback : mini->disconnectCallbacks)
+            {
+                callback();
+            }
+
             mini->StreamStop(0);
         },
         this);
@@ -669,3 +674,28 @@ void LimeSDR_Mini::SetSerialNumber(const std::string& number)
     sscanf(number.c_str(), "%16lX", &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
+
+std::size_t LimeSDR_Mini::AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData)
+{
+    std::size_t id = 0;
+
+    if (!disconnectCallbacks.empty())
+    {
+        // As long as elements are not out of order this guarantees a unique ID in the array.
+        id = disconnectCallbacks.back().id + 1;
+    }
+
+    disconnectCallbacks.push_back({ function, userData, id });
+
+    return id;
+}
+
+void LimeSDR_Mini::RemoveHotplugDisconnectCallback(std::size_t id)
+{
+    disconnectCallbacks.erase(std::remove_if(disconnectCallbacks.begin(),
+                                  disconnectCallbacks.end(),
+                                  [&id](const CallbackInfo<HotplugDisconnectCallbackType>& info) { return id == info.id; }),
+        disconnectCallbacks.end());
+}
+
+} // namespace lime
