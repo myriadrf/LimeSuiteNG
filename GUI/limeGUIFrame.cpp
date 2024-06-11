@@ -34,6 +34,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/Logger.h"
+#include "DeviceConnectionPanel.h"
 
 using namespace std;
 using namespace lime;
@@ -42,8 +43,6 @@ using namespace std::literals::string_literals;
 static constexpr int controlColumn = 1;
 
 limeGUIFrame* limeGUIFrame::obj_ptr = nullptr;
-
-int limeGUIFrame::m_lmsSelection = 0;
 
 void limeGUIFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {

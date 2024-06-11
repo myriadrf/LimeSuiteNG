@@ -29,10 +29,6 @@
 #include <wx/choice.h>
 
 #include <map>
-#include "IModuleFrame.h"
-#include "ISOCPanel.h"
-#include "DeviceConnectionPanel.h"
-#include "dlgAbout.h"
 #include "limeGUI.h"
 
 class pnlMiniLog;
@@ -40,10 +36,21 @@ class lms7002_mainPanel;
 class fftviewer_frFFTviewer;
 class LMS_Programming_wxgui;
 class pnlBoardControls;
+class IModuleFrame;
+class ISOCPanel;
+
+namespace lime {
+class SDRDevice;
+class DeviceConnectionPanel;
+} // namespace lime
 
 class limeGUIFrame : public wxFrame
 {
-  protected:
+  public:
+    limeGUIFrame(wxWindow* parent, const AppArgs& appArgs);
+    ~limeGUIFrame();
+
+  private:
     void AddModule(IModuleFrame* module, const std::string& title);
     void RemoveModule(IModuleFrame* module);
     // Handlers for AppFrame events.
@@ -57,13 +64,6 @@ class limeGUIFrame : public wxFrame
 
     void DeviceTreeSelectionChanged(wxTreeEvent& event);
 
-  public:
-    limeGUIFrame(wxWindow* parent, const AppArgs& appArgs);
-
-    virtual ~limeGUIFrame();
-    static int m_lmsSelection;
-
-  protected:
     static void OnGlobalLogEvent(const lime::LogLevel level, const std::string& message);
     void OnLogMessage(wxCommandEvent& event);
     void UpdateConnections(lime::SDRDevice* port);
