@@ -260,7 +260,8 @@ void FX3::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackTy
 #ifdef __unix__
     libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
 #else
-    // TODO: IMPLEMENT
+    // TODO: figure out how to pass something to CCyUSBDevice constructor's first parameter
+    // that would be able to collect the Windows Plug and Play events that the library would send
 #endif
 }
 
