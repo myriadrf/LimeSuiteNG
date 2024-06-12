@@ -282,8 +282,7 @@ void TRXLooper::Stop()
                 fpgaTxPktDropCounter);
             mCallback_logMessage(LogLevel::Debug, msg);
         }
-    }
-    catch (const std::exception& e)
+    } catch (const std::exception& e)
     {
         lime::error("%s", e.what());
     }
