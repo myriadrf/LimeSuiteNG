@@ -1,0 +1,15 @@
+.debhelper/
+files
+*.substvars
+tmp
+*/usr/*
+*/lib/*
+*/DEBIAN
+*.log
+debhelper-build-stamp
+limesuite-images*.dirs
+limesuite-images*.postinst
+limesuite-images*.prerm
+limesuiteng-limepcie-kernel-module-dkms.postinst
+limesuiteng-limepcie-kernel-module-dkms.prerm
+*.debhelper
