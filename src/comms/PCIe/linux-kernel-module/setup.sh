@@ -2,7 +2,7 @@
 # Check root access
 SOURCE_LOC="/usr/src/litepcie"
 
-if [ `id -u` != 0 ] ; then
+if [ "$EUID" -ne 0 ]; then
     echo -e "\033[33mWarning, script must be run with root permissions\033[0m"
     exit 1
 fi
@@ -13,10 +13,9 @@ chmod +x $SOURCE_LOC/install_litepcie.sh
 
 #check if module is loaded
 if lsmod | grep -Eq "^litepcie"; then
-	rmmod litepcie
+    rmmod litepcie
 fi
 
 sh $SOURCE_LOC/litepcie_loader.sh
 
 exit 0
-
