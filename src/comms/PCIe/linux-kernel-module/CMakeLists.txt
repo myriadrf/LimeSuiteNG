@@ -75,7 +75,6 @@ endif()
 
 # If module is already loaded, unload it
 install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall-legacy-module.sh)")
-install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/unload.sh ${MODULE_NAME})")
 
 set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
 install(FILES ${MODULE_OBJECT} DESTINATION ${KERNEL_MODULE_DESTINATION})

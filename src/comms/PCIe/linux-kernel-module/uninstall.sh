@@ -1,29 +1,14 @@
 #!/bin/bash
-# uninstalls specified module from system directory
+KERNEL_DRIVER_VERSION="0.1.0"
 
-MODULE_NAME=$1
-if [ -z "$MODULE_NAME" ]
-then
-    echo "Kernel module name not specified"
-    exit 1
-fi
-
+# Check root access
 if [ "$EUID" -ne 0 ]; then
     echo -e "\033[33mWarning, script must be run with root permissions\033[0m"
     exit 1
 fi
 
-
-if ! output=$("$(dirname "$0")/unload.sh" "$MODULE_NAME"); then
-    exit $output
-fi
-
-# Disable auto loading of the module
-echo "Removing module $MODULE_NAME from /etc/modules"
-temp_file=$(mktemp)
-chown --reference=/etc/modules "$temp_file"
-chmod --reference=/etc/modules "$temp_file"
-grep -vx "^$MODULE_NAME" /etc/modules > "$temp_file"
-mv "$temp_file" /etc/modules
+dkms uninstall -m limepcie/$KERNEL_DRIVER_VERSION
+dkms remove -m limepcie/$KERNEL_DRIVER_VERSION
+rm -rf "/usr/src/limepcie-$KERNEL_DRIVER_VERSION"
 
 exit 0
