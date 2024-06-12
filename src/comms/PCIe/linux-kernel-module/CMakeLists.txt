@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
+file(READ version DRIVER_VERSION)
 project(
     limepcie-kernel
-    VERSION 0.1.0
+    VERSION ${DRIVER_VERSION}
     LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(MODULE_NAME limepcie)
@@ -76,12 +77,15 @@ endif()
 # If module is already loaded, unload it
 install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall-legacy-module.sh)")
 
-set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
-install(FILES ${MODULE_OBJECT} DESTINATION ${KERNEL_MODULE_DESTINATION})
+configure_file(dkms.conf.in dkms.conf)
+
+install(FILES limepcie.c limepcie.h boards.h Makefile ${CMAKE_CURRENT_BINARY_DIR}/dkms.conf DESTINATION /usr/src/limepcie-${DRIVER_VERSION})
+install(FILES bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h DESTINATION /usr/src/limepcie-${DRIVER_VERSION}/bsp)
 # load installed module
-install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh ${MODULE_NAME})")
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})")
 
 add_custom_target(
     uninstall-kernel-module
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall.sh ${MODULE_NAME}
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     COMMENT "Uninstalling Linux kernel module ${MODULE_NAME}")

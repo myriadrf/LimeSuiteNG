@@ -21,13 +21,27 @@ GENERATED_INSTALL_FILES := \
 debian/limesuite-images$(RELEASE_NUM)%: debian/limesuite-images%.in
 	sed 's/@RELEASE_NUM@/$(RELEASE_NUM)/g' $< > $@
 
+DRIVER_VERSION ?= $(shell cat src/comms/PCIe/linux-kernel-module/version)
+
+GENERATED_KERNEL_INSTALL_FILES := \
+	debian/limesuiteng-limepcie-kernel-module-dkms.postinst \
+	debian/limesuiteng-limepcie-kernel-module-dkms.prerm
+
+debian/limesuiteng-limepcie-kernel-module-dkms.postinst: debian/limesuiteng-limepcie-kernel-module-dkms.postinst.in
+	sed 's/@DRIVER_VERSION@/$(DRIVER_VERSION)/g' $< > $@
+
+debian/limesuiteng-limepcie-kernel-module-dkms.prerm: debian/limesuiteng-limepcie-kernel-module-dkms.prerm.in
+	sed 's/@DRIVER_VERSION@/$(DRIVER_VERSION)/g' $< > $@
+
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
 %:
 	dh $@ --with python3 --buildsystem=cmake --parallel --builddirectory=build
 
-override_dh_auto_configure: $(GENERATED_INSTALL_FILES)
+override_dh_auto_configure: \
+	$(GENERATED_INSTALL_FILES) \
+	$(GENERATED_KERNEL_INSTALL_FILES)
 	dh_auto_configure -- \
 		-DBUILD_SHARED_LIBS=ON \
 		-DCMAKE_AUTOSET_INSTALL_RPATH=FALSE \

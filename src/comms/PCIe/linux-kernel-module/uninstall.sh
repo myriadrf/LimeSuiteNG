@@ -1,5 +1,5 @@
 #!/bin/bash
-KERNEL_DRIVER_VERSION="0.1.0"
+KERNEL_DRIVER_VERSION="$(cat version)"
 
 # Check root access
 if [ "$EUID" -ne 0 ]; then

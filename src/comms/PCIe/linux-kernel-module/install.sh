@@ -1,5 +1,5 @@
 #!/bin/bash
-KERNEL_DRIVER_VERSION="0.1.0"
+KERNEL_DRIVER_VERSION="$(cat version)"
 
 # Check root access
 if [ "$EUID" -ne 0 ]; then
@@ -11,7 +11,10 @@ if [ -f uninstall-legacy-module.sh ]; then
     ./uninstall-legacy-module.sh
 fi
 
-cp -r . "/usr/src/limepcie-$KERNEL_DRIVER_VERSION"
+SOURCE_FILES="limepcie.c limepcie.h boards.h bsp/"
+cp -r $SOURCE_FILES "/usr/src/limepcie-$KERNEL_DRIVER_VERSION"
+sed -e "s/@DRIVER_VERSION@/$KERNEL_DRIVER_VERSION/" dkms.conf.in > "/usr/src/limepcie-$KERNEL_DRIVER_VERSION/dkms.conf"
+
 dkms add -m limepcie/$KERNEL_DRIVER_VERSION
 dkms install -m limepcie/$KERNEL_DRIVER_VERSION
 
