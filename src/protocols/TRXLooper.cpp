@@ -257,28 +257,36 @@ void TRXLooper::Stop()
     {
         lime::error("Failed to join TRXLooper threads"s);
     }
-    fpga->StopStreaming();
-
-    uint32_t fpgaTxPktIngressCount;
-    uint32_t fpgaTxPktDropCounter;
-    fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
-    if (mCallback_logMessage)
-    {
-        char msg[512];
-        std::snprintf(msg,
-            sizeof(msg),
-            "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
-            chipId,
-            mTx.stats.packets,
-            mTx.stats.packets,
-            fpgaTxPktIngressCount,
-            fpgaTxPktIngressCount,
-            (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
-            fpgaTxPktDropCounter);
-        mCallback_logMessage(LogLevel::Debug, msg);
-    }
 
     mStreamEnabled = false;
+
+    try
+    {
+        fpga->StopStreaming();
+
+        uint32_t fpgaTxPktIngressCount;
+        uint32_t fpgaTxPktDropCounter;
+        fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
+        if (mCallback_logMessage)
+        {
+            char msg[512];
+            std::snprintf(msg,
+                sizeof(msg),
+                "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
+                chipId,
+                mTx.stats.packets,
+                mTx.stats.packets,
+                fpgaTxPktIngressCount,
+                fpgaTxPktIngressCount,
+                (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
+                fpgaTxPktDropCounter);
+            mCallback_logMessage(LogLevel::Debug, msg);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        lime::error("%s", e.what());
+    }
 }
 
 void TRXLooper::Teardown()

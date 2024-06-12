@@ -366,6 +366,11 @@ OpStatus USBGeneric::BeginDataXfer(void* context, uint8_t* buffer, size_t length
     libusb_fill_bulk_transfer(tr, dev_handle, endPointAddr, buffer, length, process_libusbtransfer, xfer, 0);
     xfer->done.store(false);
     xfer->bytesXfered = 0;
+    if (tr->dev_handle == nullptr)
+    {
+        return OpStatus::Error;
+    }
+
     int status = libusb_submit_transfer(tr);
     if (status != 0)
     {
