@@ -15,6 +15,7 @@
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
 #include <array>
+#include <optional>
 
 using namespace std;
 using namespace lime;
@@ -463,7 +464,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     const lime::complex32f_t* src[2] = { txPattern[0].data(), txPattern[1].data() };*/
 
-    std::size_t callbackId = 0;
+    std::optional<std::size_t> callbackId{ std::nullopt };
     try
     {
         pthis->device->StreamSetup(config, chipIndex);
@@ -653,7 +654,10 @@ void fftviewer_frFFTviewer::StreamingLoop(
     }*/
 
     kiss_fft_free(m_fftCalcPlan);
-    pthis->device->RemoveHotplugDisconnectCallback(callbackId);
+    if (callbackId)
+    {
+        pthis->device->RemoveHotplugDisconnectCallback(callbackId.value());
+    }
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
 
