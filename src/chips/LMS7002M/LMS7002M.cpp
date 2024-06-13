@@ -314,6 +314,21 @@ LMS7002M::~LMS7002M()
     delete mRegistersMap;
 }
 
+lms7002m_channel IndexToChannelEnum(const uint8_t channel)
+{
+    switch (channel)
+    {
+    case 0:
+        return LMS7002M_CHANNEL_A;
+    case 1:
+        return LMS7002M_CHANNEL_B;
+    default:
+        break;
+    }
+    lime::error("Unrecognized channel. Falling back to Channel A");
+    return LMS7002M_CHANNEL_A;
+}
+
 OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 {
     lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<lms7002m_channel>(ch));
@@ -334,7 +349,7 @@ size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
 {
-    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(channel), enable);
+    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, IndexToChannelEnum(channel), enable);
     return ResultToStatus(result);
 }
 
@@ -892,7 +907,7 @@ int LMS7002M::GetBandTRF()
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 {
-    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, static_cast<lms7002m_channel>(channel), path);
+    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, IndexToChannelEnum(channel), path);
     return ResultToStatus(result);
 }
 
