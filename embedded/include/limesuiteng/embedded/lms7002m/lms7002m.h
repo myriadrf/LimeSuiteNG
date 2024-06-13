@@ -66,6 +66,7 @@ lime_Result lms7002m_enable_channel(
     struct lms7002m_context* self, const bool isTx, const enum lms7002m_channel channel, const bool enable);
 
 enum lms7002m_channel lms7002m_get_active_channel(struct lms7002m_context* self);
+enum lms7002m_channel lms7002m_set_active_channel_readback(struct lms7002m_context* self, const enum lms7002m_channel channel);
 lime_Result lms7002m_set_active_channel(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
 lime_Result lms7002m_soft_reset(struct lms7002m_context* self);
