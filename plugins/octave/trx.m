@@ -1,5 +1,5 @@
 clear all;
-LoadLimeSuite
+LoadLimeSuiteNG
 
 % generate test signal
 phase = pi/600;       % phase step

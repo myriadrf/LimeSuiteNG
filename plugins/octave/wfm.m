@@ -1,5 +1,5 @@
 %imports shared library functions
-LoadLimeSuite
+LoadLimeSuiteNG
 
 %Generate waveform
 phase = pi/8;

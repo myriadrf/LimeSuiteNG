@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "LimeSuite.h"
+#include "lime/LimeSuite.h"
 
 using namespace std;
 

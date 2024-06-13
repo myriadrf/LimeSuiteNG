@@ -1,6 +1,6 @@
 clear all;
 
-LoadLimeSuite
+LoadLimeSuiteNG
 
 LimeInitialize();               % open first device
 

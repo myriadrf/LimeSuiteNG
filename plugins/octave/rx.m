@@ -1,4 +1,4 @@
-LoadLimeSuite
+LoadLimeSuiteNG
 
 LimeInitialize()
 LimeLoadConfig('rxTest.ini');
