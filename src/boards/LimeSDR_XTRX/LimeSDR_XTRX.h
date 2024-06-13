@@ -86,7 +86,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         double LOFreq,
         int gain,
         int rxPath,
-        double expected_dBFS);
+        double expectChA_dBFS,
+        double expectChB_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
   private:
