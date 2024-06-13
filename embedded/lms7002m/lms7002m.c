@@ -1767,9 +1767,8 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
         rfBandwidth_Hz = clamp_float(rfBandwidth_Hz, txLpfLowRange[0], txLpfHighRange[1]);
     }
 
-    const float rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
-    int rcal_lpflad = 0;
-    int rcal_lpfh = 0;
+    uint8_t rcal_lpflad = 0;
+    uint8_t rcal_lpfh = 0;
 
     if (rfBandwidth_Hz < 5.3e6)
     {
@@ -1778,6 +1777,8 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfLowRange[1]) // 5.3-33 MHz
     {
+#if 0
+        const float rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
         const double LADlog = 20.0 * log10(rfbandwidth_MHz / (2.6 * 2));
         double LADterm1 = 0.0;
         {
@@ -1794,6 +1795,16 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
             LADterm2 = t1 / pow(t3, 1.0 / 3.0);
         }
         rcal_lpflad = clamp_float(196.916 + LADterm1 - LADterm2, 0.0, 255.0);
+#else
+        int x = rfBandwidth_Hz / 1e5;
+
+        if (x <= 85)
+            rcal_lpflad = 1.04 * x - 54.4;
+        else if (x <= 240)
+            rcal_lpflad = 0.941 * x - 47.8;
+        else
+            rcal_lpflad = 0.839 * x - 17.7;
+#endif
         powerDowns = 0x11;
     }
     else if (txLpfLowRange[1] <= rfBandwidth_Hz && rfBandwidth_Hz <= txLpfHighRange[0]) // 33-56 MHz gap
@@ -1809,6 +1820,8 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
     }
     else if (rfBandwidth_Hz <= txLpfHighRange[1]) // <160MHz
     {
+#if 0
+        const float rfbandwidth_MHz = rfBandwidth_Hz / 1e6;
         const double Hlog = 20 * log10(rfbandwidth_MHz / (28 * 2));
         double Hterm1;
         {
@@ -1825,6 +1838,10 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, float rfBandwidth_Hz)
             Hterm2 = t1 / t3;
         }
         rcal_lpfh = clamp_float(197.429 + Hterm1 - Hterm2, 0.0, 255.0);
+#else
+        int x = rfBandwidth_Hz / 1e6;
+        rcal_lpfh = x * 1.13 - 63.3;
+#endif
         powerDowns = 0x07;
     }
 
