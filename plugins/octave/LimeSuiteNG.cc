@@ -9,7 +9,7 @@
 const int maxChCnt = 2;
 const float scaleFactor = 32768.0f;
 
-lms_device_t* lmsDev = NULL;
+lms_device_t* lmsDev = nullptr;
 lms_stream_t streamRx[maxChCnt];
 lms_stream_t streamTx[maxChCnt];
 
@@ -19,12 +19,12 @@ struct complex16_t {
 };
 
 bool IsWFMRunning = false;
-complex16_t* rxBuffers = NULL;
-complex16_t* txBuffers = NULL;
+complex16_t* rxBuffers = nullptr;
+complex16_t* txBuffers = nullptr;
 
 void StopStream()
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
         return;
     for (int i = 0; i < maxChCnt; i++)
     {
@@ -47,26 +47,26 @@ void FreeResources()
             LMS_EnableTxWFM(lmsDev, 0, false);
         StopStream();
         LMS_Close(lmsDev);
-        lmsDev = NULL;
+        lmsDev = nullptr;
     }
     if (rxBuffers)
     {
         delete rxBuffers;
-        rxBuffers = NULL;
+        rxBuffers = nullptr;
     }
     if (txBuffers)
     {
         delete txBuffers;
-        txBuffers = NULL;
+        txBuffers = nullptr;
     }
 }
 
 void PrintDeviceInfo(lms_device_t* port)
 {
-    if (port == NULL || lmsDev == NULL)
+    if (port == nullptr || lmsDev == nullptr)
         return;
     const lms_dev_info_t* info = LMS_GetDeviceInfo(lmsDev);
-    if (info == NULL)
+    if (info == nullptr)
         octave_stdout << "Failed to get device info" << std::endl;
     else
     {
@@ -94,7 +94,7 @@ DEFUN_DLD(LimeGetDeviceList, args, nargout, "LIST = LimeGetDeviceList() - Return
         return octave_value(-1);
     }
     lms_info_str_t dev_list[64];
-    int devCount = LMS_GetDeviceList((lms_info_str_t*)&dev_list);
+    int devCount = LMS_GetDeviceList(dev_list);
     dim_vector dim(devCount, 1);
     Cell c;
     octave_value_list retval;
@@ -123,10 +123,10 @@ DEV [optional] - device name to connect, obtained via LimeGetDeviceList()")
     if (nargin > 0)
     {
         std::string deviceName = args(0).string_value();
-        status = LMS_Open(&lmsDev, deviceName.c_str(), NULL);
+        status = LMS_Open(&lmsDev, deviceName.c_str(), nullptr);
     }
     else
-        status = LMS_Open(&lmsDev, NULL, NULL);
+        status = LMS_Open(&lmsDev, nullptr, nullptr);
 
     LMS_RegisterLogHandler(LogHandler);
 
@@ -154,7 +154,7 @@ DEFUN_DLD(LimeDestroy, args, nargout, "LimeDestroy() - Stop all streams, dealloc
 
 DEFUN_DLD(LimeLoadConfig, args, nargout, "LimeLoadConfig(FILENAME) - Load configuration from file FILENAME")
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
@@ -198,7 +198,7 @@ DEFUN_DLD(
  CHANNELS [optional] - array of channels to be used [rx0 ; rx1 ; tx0 ; tx1] (default: rx0)")
 {
     int nargin = args.length();
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
@@ -286,7 +286,7 @@ DEFUN_DLD(
 
 DEFUN_DLD(LimeStopStreaming, args, nargout, "LimeStopStreaming() - Stop Receiver and Transmitter threads")
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
@@ -516,7 +516,7 @@ DEFUN_DLD(LimeTransceiveSamples,
 
 DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to device RAM for repeated transmitting")
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
@@ -552,7 +552,8 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
             wfmBuffers[ch][i].q = q_sample;
         }
 
-    LMS_UploadWFM(lmsDev, (const void**)wfmBuffers, chCount, samplesCount, 0);
+    //NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    LMS_UploadWFM(lmsDev, const_cast<const void**>(reinterpret_cast<void**>(wfmBuffers)), chCount, samplesCount, 0);
     LMS_EnableTxWFM(lmsDev, 0, true);
     for (int i = 0; i < chCount; ++i)
         delete wfmBuffers[i];
@@ -563,7 +564,7 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
 
 DEFUN_DLD(LimeLoopWFMStop, args, , "LimeTxLoopWFMStop() - stop transmitting samples from device RAM")
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
@@ -576,7 +577,7 @@ DEFUN_DLD(LimeLoopWFMStop, args, , "LimeTxLoopWFMStop() - stop transmitting samp
 
 DEFUN_DLD(LimeGetStreamStatus, args, nargout, "LimeGetStreamStatus() - Get Stream Status")
 {
-    if (lmsDev == NULL)
+    if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
