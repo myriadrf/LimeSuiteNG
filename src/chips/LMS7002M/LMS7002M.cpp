@@ -314,7 +314,7 @@ LMS7002M::~LMS7002M()
     delete mRegistersMap;
 }
 
-lms7002m_channel IndexToChannelEnum(const uint8_t channel)
+static lms7002m_channel IndexToChannelEnum(const uint8_t channel)
 {
     switch (channel)
     {

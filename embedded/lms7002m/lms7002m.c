@@ -39,6 +39,14 @@ void lms7002m_destroy(lms7002m_context* context)
         free(context);
 }
 
+static enum lms7002m_channel lms7002m_set_active_channel_readback(lms7002m_context* self, const enum lms7002m_channel channel)
+{
+    enum lms7002m_channel prev_ch = lms7002m_get_active_channel(self);
+    if (channel != prev_ch)
+        lms7002m_spi_modify_csr(self, LMS7002M_MAC, channel);
+    return prev_ch;
+}
+
 lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enum lms7002m_channel channel, const bool enable)
 {
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
@@ -179,14 +187,6 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enu
 enum lms7002m_channel lms7002m_get_active_channel(lms7002m_context* self)
 {
     return lms7002m_spi_read_csr(self, LMS7002M_MAC);
-}
-
-enum lms7002m_channel lms7002m_set_active_channel_readback(lms7002m_context* self, const enum lms7002m_channel channel)
-{
-    enum lms7002m_channel prev_ch = lms7002m_get_active_channel(self);
-    if (channel != prev_ch)
-        lms7002m_spi_modify_csr(self, LMS7002M_MAC, channel);
-    return prev_ch;
 }
 
 lime_Result lms7002m_set_active_channel(lms7002m_context* self, const enum lms7002m_channel channel)
