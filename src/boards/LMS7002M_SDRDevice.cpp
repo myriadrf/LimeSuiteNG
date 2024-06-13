@@ -432,10 +432,8 @@ uint8_t LMS7002M_SDRDevice::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t 
 
 OpStatus LMS7002M_SDRDevice::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
 {
-    if (path >= mDeviceDescriptor.rfSOC.at(0).pathNames.size())
-    {
-        path = trx == TRXDir::Tx ? 1 : 2; // Default settings: Rx: LNAL, Tx: Band1
-    }
+    if (path >= mDeviceDescriptor.rfSOC.at(moduleIndex).pathNames.size())
+        lime::error("Out of bounds antenna path");
 
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
