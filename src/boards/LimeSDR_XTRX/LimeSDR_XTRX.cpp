@@ -1009,4 +1009,13 @@ OpStatus LimeSDR_XTRX::WriteSerialNumber(uint64_t serialNumber)
     return status;
 }
 
+OpStatus LimeSDR_XTRX::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
+{
+    OpStatus status = LMS7002M_SDRDevice::SetAntenna(moduleIndex, trx, channel, path);
+    if (status != OpStatus::Success)
+        return status;
+    LMS1SetPath(trx == TRXDir::Tx, channel, path);
+    return OpStatus::Success;
+}
+
 } //namespace lime
