@@ -94,7 +94,7 @@ static void LogHandler(lime::LogLevel level, const std::string& msg)
 
 DEFUN_DLD(LimeGetDeviceList, args, nargout, "LIST = LimeGetDeviceList() - Returns available device list")
 {
-    if (args.length() != 0)
+    if (!args.empty())
     {
         print_usage();
         return octave_value(-1);
@@ -325,16 +325,16 @@ DEFUN_DLD(LimeStopStreaming, args, nargout, "LimeStopStreaming() - Stop Receiver
 
 octave_value ReceiveSamples(int samplesToReceive, int offset = 0)
 {
-    Complex val{ 0.0F, 0.0F };
+    const Complex val{ 0.0F, 0.0F };
     ComplexMatrix iqData{ { rxMaxChannel + 1, samplesToReceive }, val }; // index 0 to N-1
 
     int samplesCollected = 0;
     int retries = 5;
     while (samplesCollected < samplesToReceive && retries--)
     {
-        int samplesToRead = samplesToReceive - samplesCollected;
+        const int samplesToRead = samplesToReceive - samplesCollected;
 
-        int samplesRead = lmsDev->StreamRx(0, rxBuffers, samplesToReceive, nullptr);
+        const int samplesRead = lmsDev->StreamRx(0, rxBuffers, samplesToRead, nullptr);
         if (samplesRead <= 0)
         {
             octave_stdout << "Error receiving samples" << std::endl;
@@ -377,23 +377,23 @@ DEFUN_DLD(LimeReceiveSamples, args, , "SIGNAL = LimeReceiveSamples(N) - receive 
 
 uint32_t TransmitSamples(const ComplexMatrix& iqData)
 {
-    const dim_vector iqDataSize = iqData.dims();
+    const dim_vector& iqDataSize = iqData.dims();
     const int samplesCount = iqDataSize(1);
 
     for (uint8_t ch = 0; ch <= txMaxChannel; ++ch)
     {
         for (int i = 0; i < samplesCount; ++i)
         {
-            octave_value iqDatum = scaleFactor * iqData(ch, i);
-            Complex iqDatum2 = iqDatum.complex_value();
-            short i_sample = iqDatum2.real(); //
-            short q_sample = iqDatum2.imag(); //
+            const octave_value iqDatum = scaleFactor * iqData(ch, i);
+            const Complex iqDatum2 = iqDatum.complex_value();
+            const short i_sample = iqDatum2.real(); //
+            const short q_sample = iqDatum2.imag(); //
             txBuffers[ch][i].real(i_sample);
             txBuffers[ch][i].imag(q_sample);
         }
     }
 
-    lime::StreamMeta meta{ 0, false, false };
+    const lime::StreamMeta meta{ 0, false, false };
     return lmsDev->StreamTx(0, txBuffers, samplesCount, &meta);
 }
 
@@ -412,7 +412,7 @@ DEFUN_DLD(LimeTransmitSamples, args, , "LimeTransmitSamples(SIGNAL) - sends norm
         return octave_value(-1);
     }
 
-    ComplexMatrix iqData{ args(0).complex_matrix_value() };
+    const ComplexMatrix iqData{ args(0).complex_matrix_value() };
     return octave_value(TransmitSamples(iqData));
 }
 
@@ -442,7 +442,7 @@ DEFUN_DLD(LimeTransceiveSamples,
 
     //transmit part
     const ComplexMatrix iqDataTx = args(0).complex_matrix_value();
-    const dim_vector iqDataSize = iqDataTx.dims();
+    const dim_vector& iqDataSize = iqDataTx.dims();
     const int samplesCount = iqDataSize(1);
     const int samplesWrite = TransmitSamples(iqDataTx);
 
@@ -479,10 +479,9 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
 
     ComplexRowVector iqData = args(0).complex_row_vector_value();
     dim_vector iqDataSize = iqData.dims();
-    int samplesCount = iqDataSize(0) > iqDataSize(1) ? iqDataSize(0) : iqDataSize(1);
-    int wfmLength = samplesCount;
+    const int samplesCount = iqDataSize(0) > iqDataSize(1) ? iqDataSize(0) : iqDataSize(1);
 
-    lime::complex16_t** const wfmBuffers = new lime::complex16_t*[chCount];
+    auto** const wfmBuffers = new lime::complex16_t*[chCount];
     for (int i = 0; i < chCount; ++i)
         wfmBuffers[i] = new lime::complex16_t[samplesCount];
 
@@ -511,7 +510,7 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
     lmsDev->EnableTxWaveform(0, 0, true);
     for (int i = 0; i < chCount; ++i)
         delete wfmBuffers[i];
-    delete wfmBuffers;
+    delete[] wfmBuffers;
     IsWFMRunning = true;
     return octave_value_list();
 }
