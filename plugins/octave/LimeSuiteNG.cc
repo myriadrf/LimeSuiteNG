@@ -1,89 +1,95 @@
 #include <octave/oct.h>
 #include <octave/Cell.h>
 #include <octave/ov-struct.h>
-#include <vector>
+
+#include "limesuiteng/complex.h"
+#include "limesuiteng/DeviceHandle.h"
+#include "limesuiteng/DeviceRegistry.h"
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/StreamConfig.h"
+
+#include <algorithm>
+#include <sstream>
 #include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
 
-#include "lime/LimeSuite.h"
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
-const int maxChCnt = 2;
-const float scaleFactor = 32768.0f;
+constexpr uint8_t maxChCnt{ 2U };
+constexpr float scaleFactor{ 32768.0F };
 
-lms_device_t* lmsDev = nullptr;
-lms_stream_t streamRx[maxChCnt];
-lms_stream_t streamTx[maxChCnt];
-
-struct complex16_t {
-    int16_t i;
-    int16_t q;
-};
-
+lime::SDRDevice* lmsDev = nullptr;
 bool IsWFMRunning = false;
-complex16_t* rxBuffers = nullptr;
-complex16_t* txBuffers = nullptr;
 
-void StopStream()
-{
-    if (lmsDev == nullptr)
-        return;
-    for (int i = 0; i < maxChCnt; i++)
-    {
-        LMS_StopStream(&streamRx[i]);
-        LMS_StopStream(&streamTx[i]);
-        if (streamRx[i].handle)
-            LMS_DestroyStream(lmsDev, &streamRx[i]);
-        if (streamTx[i].handle)
-            LMS_DestroyStream(lmsDev, &streamTx[i]);
-        streamRx[i].handle = 0;
-        streamTx[i].handle = 0;
-    }
-}
+lime::complex16_t** rxBuffers = nullptr;
+uint8_t rxMaxChannel = 0;
+
+lime::complex16_t** txBuffers = nullptr;
+uint8_t txMaxChannel = 0;
 
 void FreeResources()
 {
     if (lmsDev)
     {
         if (IsWFMRunning)
-            LMS_EnableTxWFM(lmsDev, 0, false);
-        StopStream();
-        LMS_Close(lmsDev);
+            lmsDev->EnableTxWaveform(0, 0, false);
+        lmsDev->StreamStop(0);
+        lime::DeviceRegistry::freeDevice(lmsDev);
         lmsDev = nullptr;
     }
-    if (rxBuffers)
+
+    if (rxBuffers != nullptr)
     {
-        delete rxBuffers;
-        rxBuffers = nullptr;
+        for (uint8_t i = 0; i <= rxMaxChannel; ++i)
+        {
+            delete[] rxBuffers[i];
+        }
     }
-    if (txBuffers)
+
+    delete[] rxBuffers;
+    rxBuffers = nullptr;
+
+    if (txBuffers != nullptr)
     {
-        delete txBuffers;
-        txBuffers = nullptr;
+        for (uint8_t i = 0; i <= txMaxChannel; ++i)
+        {
+            delete[] txBuffers[i];
+        }
     }
+
+    delete[] txBuffers;
+    txBuffers = nullptr;
 }
 
-void PrintDeviceInfo(lms_device_t* port)
+void PrintDeviceInfo()
 {
-    if (port == nullptr || lmsDev == nullptr)
+    if (lmsDev == nullptr)
         return;
-    const lms_dev_info_t* info = LMS_GetDeviceInfo(lmsDev);
-    if (info == nullptr)
-        octave_stdout << "Failed to get device info" << std::endl;
-    else
-    {
-        octave_stdout << "Connected to device: " << info->deviceName << " FW: " << info->firmwareVersion
-                      << " HW: " << info->hardwareVersion << " Protocol: " << info->protocolVersion
-                      << " GW: " << info->gatewareVersion << std::endl;
-    }
+    const auto& descriptor{ lmsDev->GetDescriptor() };
+
+    octave_stdout << "Connected to device: " << descriptor.name << " FW: " << descriptor.firmwareVersion
+                  << " HW: " << descriptor.hardwareVersion << " Protocol: " << descriptor.protocolVersion
+                  << " GW: " << descriptor.gatewareVersion << std::endl;
 }
 
-static void LogHandler(int level, const char* msg)
+static void LogHandler(lime::LogLevel level, const std::string& msg)
 {
-    const char* levelText[] = { "CRITICAL: ", "ERROR: ", "WARNING: ", "INFO: ", "DEBUG: " };
-    if (level < 0)
-        level = 0;
-    else if (level >= 4)
+    const std::unordered_map<lime::LogLevel, std::string_view> levelText{
+        { lime::LogLevel::Critical, "CRITICAL: "sv },
+        { lime::LogLevel::Error, "ERROR: "sv },
+        { lime::LogLevel::Warning, "WARNING: "sv },
+        { lime::LogLevel::Info, "INFO: "sv },
+        { lime::LogLevel::Debug, "DEBUG: "sv },
+        { lime::LogLevel::Verbose, "VERBOSE: "sv },
+    };
+    if (level >= lime::LogLevel::Debug)
         return; //do not output debug messages
-    octave_stdout << levelText[level] << msg << std::endl;
+    octave_stdout << levelText.at(level) << msg << std::endl;
 }
 
 DEFUN_DLD(LimeGetDeviceList, args, nargout, "LIST = LimeGetDeviceList() - Returns available device list")
@@ -93,55 +99,48 @@ DEFUN_DLD(LimeGetDeviceList, args, nargout, "LIST = LimeGetDeviceList() - Return
         print_usage();
         return octave_value(-1);
     }
-    lms_info_str_t dev_list[64];
-    int devCount = LMS_GetDeviceList(dev_list);
-    dim_vector dim(devCount, 1);
+
+    const auto& devices = lime::DeviceRegistry::enumerate();
     Cell c;
-    octave_value_list retval;
-    //devNames.resize(devCount, 0, string(""));
-    for (int i = 0; i < devCount; ++i)
+    for (std::size_t i = 0; i < devices.size(); ++i)
     {
-        c.insert(octave_value(dev_list[i], '"'), i, 0);
-        //retval(i) =  octave_value (dev_list[i], '"');
+        c.insert(octave_value(devices[i].Serialize(), '"'), i, 0);
     }
-    return octave_value(c); //retval;
+    return octave_value(c);
 }
 
 DEFUN_DLD(LimeInitialize, args, nargout, "LimeInitialize(DEV) - connect to device and allocate buffer memory\n\
 DEV [optional] - device name to connect, obtained via LimeGetDeviceList()")
 {
     FreeResources();
-    int status;
-    int nargin = args.length();
 
+    const int nargin = args.length();
     if (args.length() > 1)
     {
         print_usage();
         return octave_value(-1);
     }
 
+    std::string deviceName = ""s;
     if (nargin > 0)
     {
-        std::string deviceName = args(0).string_value();
-        status = LMS_Open(&lmsDev, deviceName.c_str(), nullptr);
+        deviceName = args(0).string_value();
     }
-    else
-        status = LMS_Open(&lmsDev, nullptr, nullptr);
 
-    LMS_RegisterLogHandler(LogHandler);
-
-    LMS_Synchronize(lmsDev, false);
-    if (status != 0)
+    lmsDev = lime::DeviceRegistry::makeDevice({ deviceName });
+    if (lmsDev == nullptr)
     {
-        return octave_value(status);
+        return octave_value(-1);
     }
-    PrintDeviceInfo(lmsDev);
 
-    for (int i = 0; i < maxChCnt; i++)
+    lime::registerLogHandler(LogHandler);
+
+    const auto status = lmsDev->Synchronize(false);
+    if (status != lime::OpStatus::Success)
     {
-        streamRx[i].handle = 0;
-        streamTx[i].handle = 0;
+        return octave_value(static_cast<uint8_t>(status));
     }
+    PrintDeviceInfo();
 
     return octave_value(0);
 }
@@ -160,36 +159,69 @@ DEFUN_DLD(LimeLoadConfig, args, nargout, "LimeLoadConfig(FILENAME) - Load config
         return octave_value(-1);
     }
 
-    int nargin = args.length();
-
+    const int nargin = args.length();
     if (nargin != 1)
     {
         print_usage();
         return octave_value(-1);
     }
 
-    std::string filename = args(0).string_value();
+    const std::string filename = args(0).string_value();
     octave_stdout << "LimeLoadConfig loading: " << filename << std::endl;
-    if (LMS_LoadConfig(lmsDev, filename.c_str()) != 0)
+
+    if (auto status = lmsDev->LoadConfig(0, filename); status != lime::OpStatus::Success)
     {
         return octave_value(-1);
     }
 
-    int chCnt = LMS_GetNumChannels(lmsDev, LMS_CH_RX);
-    chCnt = chCnt > maxChCnt ? maxChCnt : chCnt;
-    for (int ch = 0; ch < chCnt; ++ch) //set antenna to update RF switches
+    const uint8_t chCnt = std::min(lmsDev->GetDescriptor().rfSOC.at(0).channelCount, maxChCnt);
+    for (uint8_t ch = 0; ch < chCnt; ++ch) //set antenna to update RF switches
     {
-        int ant = LMS_GetAntenna(lmsDev, LMS_CH_RX, ch);
-        if (ant < 0 || LMS_SetAntenna(lmsDev, LMS_CH_RX, ch, ant) < 0)
+        uint8_t ant = lmsDev->GetAntenna(0, lime::TRXDir::Rx, ch);
+        // int ant = LMS_GetAntenna(lmsDev, LMS_CH_RX, ch);
+        if (ant < 0 || lmsDev->SetAntenna(0, lime::TRXDir::Rx, ch, ant) != lime::OpStatus::Success)
             octave_stdout << "Error setting Rx antenna for ch: " << ch << std::endl;
-        ant = LMS_GetAntenna(lmsDev, LMS_CH_TX, ch);
-        if (ant < 0 || LMS_SetAntenna(lmsDev, LMS_CH_TX, ch, ant) < 0)
+
+        ant = lmsDev->GetAntenna(0, lime::TRXDir::Tx, ch);
+        if (ant < 0 || lmsDev->SetAntenna(0, lime::TRXDir::Tx, ch, ant) != lime::OpStatus::Success)
             octave_stdout << "Error setting Tx antenna for ch: " << ch << std::endl;
     }
 
-    octave_stdout << "Config loaded successfully: " << std::endl;
+    octave_stdout << "Config loaded successfully: " << filename << std::endl;
 
     return octave_value(0);
+}
+
+lime::TRXDir GetDirection(std::string_view input)
+{
+    if (input == "rx"sv)
+    {
+        return lime::TRXDir::Rx;
+    }
+    if (input == "tx"sv)
+    {
+        return lime::TRXDir::Tx;
+    }
+
+    throw std::runtime_error("Invalid direction");
+}
+
+uint8_t GetChannelNumber(const std::string& input)
+{
+    unsigned int ret = 0;
+
+    std::stringstream ss{ input };
+    ss >> ret;
+
+    return ret;
+}
+
+std::pair<lime::TRXDir, uint8_t> ParseDirectionAndChannel(const std::string& input)
+{
+    const std::string direction{ input.substr(0, 2) };
+    const std::string channel{ input.substr(2) };
+
+    return { GetDirection(direction), GetChannelNumber(channel) };
 }
 
 DEFUN_DLD(
@@ -197,43 +229,44 @@ DEFUN_DLD(
  FIFOSIZE [optional] - buffer size in samples to be used by library (default: 4 MSamples)\
  CHANNELS [optional] - array of channels to be used [rx0 ; rx1 ; tx0 ; tx1] (default: rx0)")
 {
-    int nargin = args.length();
     if (lmsDev == nullptr)
     {
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
     }
-    bool tx[maxChCnt] = { false };
-    bool rx[maxChCnt] = { false };
-    int fifoSize = 4 * 1024 * 1024; //4MS
-    int channels = 1;
 
-    if ((nargin > 2))
+    const int nargin = args.length();
+    if (nargin > 2)
     {
         print_usage();
         return octave_value(-1);
     }
 
+    int fifoSize = 4 * 1024 * 1024; //4MS
     if (nargin > 0 && args(0).int_value() > 0)
         fifoSize = args(0).int_value();
+
+    lime::StreamConfig streamConfig{};
+    streamConfig.format = lime::DataFormat::I16;
+    streamConfig.bufferSize = fifoSize;
 
     if (nargin == 2)
     {
         int rowCnt = args(1).char_matrix_value().rows();
-        ;
         rowCnt = rowCnt < maxChCnt * 2 ? rowCnt : maxChCnt * 2;
-        for (int i = 0; i < rowCnt; i++)
+        for (int i = 0; i < rowCnt; ++i)
         {
-            std::string entry = args(1).char_matrix_value().row_as_string(i);
-            if (entry == "rx0" || entry == "rx")
-                rx[0] = true;
-            else if (entry == "rx1")
-                rx[1] = true;
-            else if (entry == "tx0" || entry == "tx")
-                tx[0] = true;
-            else if (entry == "tx1")
-                tx[1] = true;
-            else
+            const std::string entry = args(1).char_matrix_value().row_as_string(i);
+
+            try
+            {
+                const auto [dir, ch] = ParseDirectionAndChannel(entry);
+                if (ch >= lmsDev->GetDescriptor().rfSOC.at(0).channelCount)
+                {
+                    throw std::runtime_error("Invalid channel number"s);
+                }
+                streamConfig.channels[dir].push_back(ch);
+            } catch (...)
             {
                 octave_stdout << "Invalid channel parameter" << std::endl;
                 return octave_value(-1);
@@ -241,45 +274,36 @@ DEFUN_DLD(
         }
     }
     else
-        rx[0] = true;
-
-    for (int i = 0; i < maxChCnt; i++)
     {
-        if (rx[i])
+        streamConfig.channels[lime::TRXDir::Rx].push_back(0);
+    }
+
+    if (!streamConfig.channels.at(lime::TRXDir::Rx).empty())
+    {
+        const auto& channels = streamConfig.channels.at(lime::TRXDir::Rx);
+        rxMaxChannel = *std::max_element(channels.begin(), channels.end());
+        rxBuffers = new lime::complex16_t*[rxMaxChannel + 1];
+
+        for (uint8_t i = 0; i <= rxMaxChannel; ++i)
         {
-            streamRx[i].channel = i;
-            streamRx[i].fifoSize = fifoSize;
-            streamRx[i].dataFmt = lms_stream_t::LMS_FMT_I16;
-            streamRx[i].isTx = false;
-            streamRx[i].throughputVsLatency = 0.5;
-            LMS_SetupStream(lmsDev, &streamRx[i]);
-        }
-        if (tx[i])
-        {
-            streamTx[i].channel = i;
-            streamTx[i].fifoSize = fifoSize;
-            streamTx[i].dataFmt = lms_stream_t::LMS_FMT_I16;
-            streamTx[i].isTx = true;
-            streamTx[i].throughputVsLatency = 0.5;
-            LMS_SetupStream(lmsDev, &streamTx[i]);
+            rxBuffers[i] = new lime::complex16_t[fifoSize];
         }
     }
 
-    for (int i = 0; i < maxChCnt; i++)
+    if (!streamConfig.channels.at(lime::TRXDir::Tx).empty())
     {
-        if (rx[i])
+        const auto& channels = streamConfig.channels.at(lime::TRXDir::Tx);
+        txMaxChannel = *std::max_element(channels.begin(), channels.end());
+        txBuffers = new lime::complex16_t*[txMaxChannel + 1];
+
+        for (uint8_t i = 0; i <= txMaxChannel; ++i)
         {
-            if (!rxBuffers)
-                rxBuffers = new complex16_t[fifoSize / 2];
-            LMS_StartStream(&streamRx[i]);
-        }
-        if (tx[i])
-        {
-            if (!txBuffers)
-                txBuffers = new complex16_t[fifoSize / 2];
-            LMS_StartStream(&streamTx[i]);
+            txBuffers[i] = new lime::complex16_t[fifoSize];
         }
     }
+
+    lmsDev->StreamSetup(streamConfig, 0);
+    lmsDev->StreamStart(0);
 
     return octave_value_list();
 }
@@ -292,77 +316,86 @@ DEFUN_DLD(LimeStopStreaming, args, nargout, "LimeStopStreaming() - Stop Receiver
         return octave_value(-1);
     }
     octave_stdout << "StopStreaming" << std::endl;
-    StopStream();
+    lmsDev->StreamStop(0);
     return octave_value_list();
 }
 
-DEFUN_DLD(LimeReceiveSamples, args, , "SIGNAL = LimeReceiveSamplesLarge( N, CH) - receive N samples from Rx channel CH.\n\
-CH parameter is optional, valid values are 0 and 1")
+octave_value ReceiveSamples(int samplesToReceive, int offset = 0)
 {
-    if (!rxBuffers)
-    {
-        octave_stdout << "Rx streaming not initialized" << std::endl;
-        return octave_value_list();
-        ;
-    }
+    Complex val{ 0.0F, 0.0F };
+    ComplexMatrix iqData{ { rxMaxChannel + 1, samplesToReceive }, val }; // index 0 to N-1
 
-    int nargin = args.length();
-    if (nargin != 2 && nargin != 1)
-    {
-        print_usage();
-        return octave_value_list();
-    }
-    const int samplesToReceive = args(0).int_value();
-
-    unsigned chIndex;
-    if (nargin == 2)
-    {
-        chIndex = args(1).int_value();
-        if (chIndex >= maxChCnt)
-        {
-            octave_stdout << "Invalid channel number" << std::endl;
-            return octave_value_list();
-            ;
-        }
-    }
-    else
-    {
-        for (chIndex = 0; chIndex < maxChCnt; chIndex++)
-            if (streamRx[chIndex].handle != 0)
-                break;
-    }
-
-    Complex val = Complex(0.0, 0.0);
-    ComplexRowVector iqData(samplesToReceive, val); // index 0 to N-1
-
-    const int timeout_ms = 1000;
-    lms_stream_meta_t meta;
     int samplesCollected = 0;
     int retries = 5;
     while (samplesCollected < samplesToReceive && retries--)
     {
-        int samplesToRead = 0;
-        if (samplesToReceive - samplesCollected > streamRx[chIndex].fifoSize / 2)
-            samplesToRead = streamRx[chIndex].fifoSize / 2;
-        else
-            samplesToRead = samplesToReceive - samplesCollected;
-        int samplesRead = LMS_RecvStream(&streamRx[chIndex], (void*)rxBuffers, samplesToRead, &meta, timeout_ms);
-        if (samplesRead < 0)
+        int samplesToRead = samplesToReceive - samplesCollected;
+
+        int samplesRead = lmsDev->StreamRx(0, rxBuffers, samplesToReceive, nullptr);
+        if (samplesRead <= 0)
         {
-            octave_stdout << "Error reading samples" << std::endl;
+            octave_stdout << "Error receiving samples" << std::endl;
             return octave_value(-1);
         }
-        for (int i = 0; i < samplesRead; ++i)
+
+        offset -= samplesRead;
+        offset = std::max(offset, 0);
+
+        for (uint8_t ch = 0; ch <= rxMaxChannel; ++ch)
         {
-            iqData(samplesCollected + i) = Complex(rxBuffers[i].i / scaleFactor, rxBuffers[i].q / scaleFactor);
+            for (int i = offset; i < samplesRead; ++i)
+            {
+                iqData(ch, samplesCollected + i) = { rxBuffers[ch][i].real() / scaleFactor,
+                    rxBuffers[ch][i].imag() / scaleFactor };
+            }
         }
         samplesCollected += samplesRead;
     }
     return octave_value(iqData);
 }
 
-DEFUN_DLD(LimeTransmitSamples, args, , "LimeTransmitSamples( SIGNAL, CH) - sends normalized complex SIGNAL to Tx channel CH\n\
-CH parameter is optional, valid values are 0 and 1")
+DEFUN_DLD(LimeReceiveSamples, args, , "SIGNAL = LimeReceiveSamples(N) - receive N samples from all active Rx channels.")
+{
+    if (!rxBuffers)
+    {
+        octave_stdout << "Rx streaming not initialized" << std::endl;
+        return octave_value_list();
+    }
+
+    const int nargin = args.length();
+    if (nargin != 1)
+    {
+        print_usage();
+        return octave_value_list();
+    }
+
+    const int samplesToReceive = args(0).int_value();
+    return ReceiveSamples(samplesToReceive);
+}
+
+uint32_t TransmitSamples(const ComplexMatrix& iqData)
+{
+    const dim_vector iqDataSize = iqData.dims();
+    const int samplesCount = iqDataSize(1);
+
+    for (uint8_t ch = 0; ch <= txMaxChannel; ++ch)
+    {
+        for (int i = 0; i < samplesCount; ++i)
+        {
+            octave_value iqDatum = scaleFactor * iqData(ch, i);
+            Complex iqDatum2 = iqDatum.complex_value();
+            short i_sample = iqDatum2.real(); //
+            short q_sample = iqDatum2.imag(); //
+            txBuffers[ch][i].real(i_sample);
+            txBuffers[ch][i].imag(q_sample);
+        }
+    }
+
+    lime::StreamMeta meta{ 0, false, false };
+    return lmsDev->StreamTx(0, txBuffers, samplesCount, &meta);
+}
+
+DEFUN_DLD(LimeTransmitSamples, args, , "LimeTransmitSamples(SIGNAL) - sends normalized complex SIGNAL to all active Tx channels.")
 {
     if (!txBuffers)
     {
@@ -370,61 +403,22 @@ CH parameter is optional, valid values are 0 and 1")
         return octave_value(-1);
     }
 
-    int nargin = args.length();
-    int check = 0;
-    if (nargin != 2 && nargin != 1)
+    const int nargin = args.length();
+    if (nargin != 1)
     {
         print_usage();
         return octave_value(-1);
     }
 
-    int chIndex = 0;
-    if (nargin == 2)
-    {
-        chIndex = args(1).int_value();
-        if (chIndex >= maxChCnt)
-        {
-            octave_stdout << "Invalid channel number" << std::endl;
-            return octave_value(-1);
-        }
-    }
-    else
-    {
-        for (chIndex = 0; chIndex < maxChCnt; chIndex++)
-            if (streamTx[chIndex].handle != 0)
-                break;
-    }
-
-    ComplexRowVector iqData = args(0).complex_row_vector_value();
-    dim_vector iqDataSize = iqData.dims();
-    int samplesCount = iqDataSize(0) > iqDataSize(1) ? iqDataSize(0) : iqDataSize(1);
-
-    for (int i = 0; i < samplesCount; ++i)
-    {
-        octave_value iqDatum = scaleFactor * iqData(i);
-        Complex iqDatum2 = iqDatum.complex_value();
-        short i_sample = iqDatum2.real(); //
-        short q_sample = iqDatum2.imag(); //
-        txBuffers[i].i = i_sample;
-        txBuffers[i].q = q_sample;
-    }
-
-    const int timeout_ms = 1000;
-    lms_stream_meta_t meta;
-    meta.waitForTimestamp = false;
-    meta.timestamp = 0;
-    int samplesWrite = samplesCount;
-    samplesWrite = LMS_SendStream(&streamTx[chIndex], (const void*)txBuffers, samplesCount, &meta, timeout_ms);
-
-    return octave_value(samplesWrite);
+    ComplexMatrix iqData{ args(0).complex_matrix_value() };
+    return octave_value(TransmitSamples(iqData));
 }
 
 DEFUN_DLD(LimeTransceiveSamples,
     args,
     ,
-    "RXSIGNAL = LimeTransceiveSamples( TXSIGNAL, RXOFFSET, CH) - transmit TXSIGNAL and receive RXSIGNAL (same length as TXSIGNAL).\n\
- RXOFFSET [optional] - number of samples to skip at the beginning of receive (default 0)\n\
- CH [optional] - channel to use for transmit and receive, valid values are 0 and 1 (default 0)")
+    "RXSIGNAL = LimeTransceiveSamples(TXSIGNAL, RXOFFSET) - transmit TXSIGNAL and receive RXSIGNAL (same length as TXSIGNAL).\n\
+ RXOFFSET [optional] - number of samples to skip at the beginning of receive (default 0)")
 {
     if (!rxBuffers)
     {
@@ -437,41 +431,19 @@ DEFUN_DLD(LimeTransceiveSamples,
         return octave_value_list();
     }
 
-    int nargin = args.length();
-    if (nargin == 0 || nargin > 3)
+    const int nargin = args.length();
+    if (nargin == 0 || nargin > 2)
     {
         print_usage();
         return octave_value_list();
     }
 
-    unsigned chIndex = 0;
-    if (nargin == 3)
-    {
-        chIndex = args(2).int_value();
-        if ((chIndex >= maxChCnt) || (streamRx[chIndex].handle == 0) || (streamTx[chIndex].handle == 0))
-        {
-            octave_stdout << "Invalid channel" << std::endl;
-            return octave_value_list();
-        }
-    }
-
     //transmit part
-    const int timeout_ms = 1000;
-    lms_stream_meta_t meta = { 0, false, false };
-    ComplexRowVector iqDataTx = args(0).complex_row_vector_value();
-    dim_vector iqDataSize = iqDataTx.dims();
-    const int samplesCount = iqDataSize(0) > iqDataSize(1) ? iqDataSize(0) : iqDataSize(1);
+    const ComplexMatrix iqDataTx = args(0).complex_matrix_value();
+    const dim_vector iqDataSize = iqDataTx.dims();
+    const int samplesCount = iqDataSize(1);
+    const int samplesWrite = TransmitSamples(iqDataTx);
 
-    for (int i = 0; i < samplesCount; ++i)
-    {
-        octave_value iqDatum = scaleFactor * iqDataTx(i);
-        Complex iqDatum2 = iqDatum.complex_value();
-        short i_sample = iqDatum2.real(); //
-        short q_sample = iqDatum2.imag(); //
-        txBuffers[i].i = i_sample;
-        txBuffers[i].q = q_sample;
-    }
-    const int samplesWrite = LMS_SendStream(&streamTx[chIndex], (const void*)txBuffers, samplesCount, &meta, timeout_ms);
     if (samplesWrite != samplesCount)
         octave_stdout << "Error transmitting samples: send " << samplesWrite + "/" + samplesCount << std::endl;
 
@@ -482,36 +454,8 @@ DEFUN_DLD(LimeTransceiveSamples,
         octave_stdout << "Invalid RXOFFSET value" << std::endl;
         offset = 0;
     }
-    Complex val = Complex(0.0, 0.0);
-    ComplexRowVector iqDataRx(samplesCount, val); // index 0 to N-1
 
-    int samplesCollected = 0;
-    int retries = 5;
-    while (samplesCollected < samplesCount && retries--)
-    {
-        int samplesToRead = 0;
-        if (samplesCount - samplesCollected > streamRx[chIndex].fifoSize / 2)
-            samplesToRead = streamRx[chIndex].fifoSize / 2;
-        else
-            samplesToRead = samplesCount - samplesCollected;
-        int samplesRead = LMS_RecvStream(&streamRx[chIndex], (void*)rxBuffers, samplesToRead, &meta, timeout_ms);
-        if (samplesRead < 0)
-        {
-            octave_stdout << "Error reading samples" << std::endl;
-            return octave_value(-1);
-        }
-
-        if (offset >= samplesRead)
-        {
-            offset -= samplesRead;
-            continue;
-        }
-
-        for (int i = offset; i < samplesRead; ++i)
-            iqDataRx(samplesCollected++) = Complex(rxBuffers[i].i / scaleFactor, rxBuffers[i].q / scaleFactor);
-        offset = 0;
-    }
-    return octave_value(iqDataRx);
+    return octave_value(ReceiveSamples(samplesCount, offset));
 }
 
 DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to device RAM for repeated transmitting")
@@ -521,8 +465,8 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
         octave_stdout << "LimeSuite not initialized" << std::endl;
         return octave_value(-1);
     }
-    int nargin = args.length();
-    int check = 0;
+
+    const int nargin = args.length();
     if (nargin != 2 && nargin != 1)
     {
         print_usage();
@@ -530,31 +474,39 @@ DEFUN_DLD(LimeLoopWFMStart, args, , "LimeLoopWFMStart(SIGNAL) - upload SIGNAL to
     }
 
     const int chCount = nargin;
-    const int timeout_ms = 1000;
 
     ComplexRowVector iqData = args(0).complex_row_vector_value();
     dim_vector iqDataSize = iqData.dims();
     int samplesCount = iqDataSize(0) > iqDataSize(1) ? iqDataSize(0) : iqDataSize(1);
     int wfmLength = samplesCount;
 
-    complex16_t** wfmBuffers = new complex16_t*[chCount];
+    lime::complex16_t** const wfmBuffers = new lime::complex16_t*[chCount];
     for (int i = 0; i < chCount; ++i)
-        wfmBuffers[i] = new complex16_t[samplesCount];
+        wfmBuffers[i] = new lime::complex16_t[samplesCount];
 
-    for (int ch = 0; ch < chCount; ch++)
+    for (int ch = 0; ch < chCount; ++ch)
         for (int i = 0; i < samplesCount; ++i)
         {
-            octave_value iqDatum = 2047 * iqData(i);
-            Complex iqDatum2 = iqDatum.complex_value();
-            float i_sample = iqDatum2.real(); //
-            float q_sample = iqDatum2.imag(); //
-            wfmBuffers[ch][i].i = i_sample;
-            wfmBuffers[ch][i].q = q_sample;
+            const octave_value iqDatum = 2047 * iqData(i);
+            const Complex iqDatum2 = iqDatum.complex_value();
+            const float i_sample = iqDatum2.real();
+            const float q_sample = iqDatum2.imag();
+            wfmBuffers[ch][i].real(i_sample);
+            wfmBuffers[ch][i].imag(q_sample);
         }
 
+    lime::StreamConfig streamConfig{};
+    streamConfig.format = lime::DataFormat::I16;
+    streamConfig.linkFormat = lime::DataFormat::I16;
+
+    for (int i = 0; i < chCount; ++i)
+    {
+        streamConfig.channels.at(lime::TRXDir::Tx).push_back(i);
+    }
+
     //NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-    LMS_UploadWFM(lmsDev, const_cast<const void**>(reinterpret_cast<void**>(wfmBuffers)), chCount, samplesCount, 0);
-    LMS_EnableTxWFM(lmsDev, 0, true);
+    lmsDev->UploadTxWaveform(streamConfig, 0, const_cast<const void**>(reinterpret_cast<void**>(wfmBuffers)), samplesCount);
+    lmsDev->EnableTxWaveform(0, 0, true);
     for (int i = 0; i < chCount; ++i)
         delete wfmBuffers[i];
     delete wfmBuffers;
@@ -570,7 +522,7 @@ DEFUN_DLD(LimeLoopWFMStop, args, , "LimeTxLoopWFMStop() - stop transmitting samp
         return octave_value(-1);
     }
     if (IsWFMRunning)
-        LMS_EnableTxWFM(lmsDev, 0, false);
+        lmsDev->EnableTxWaveform(0, 0, false);
     IsWFMRunning = false;
     return octave_value();
 }
@@ -584,26 +536,30 @@ DEFUN_DLD(LimeGetStreamStatus, args, nargout, "LimeGetStreamStatus() - Get Strea
     }
 
     octave_scalar_map st;
-    lms_stream_status_t status;
-    for (int i = 0; i < maxChCnt; i++)
+
+    if (rxBuffers != nullptr)
     {
-        if ((streamRx[i].handle) && (LMS_GetStreamStatus(&streamRx[i], &status) == 0))
-        {
-            st.assign("fifo_size", status.fifoSize);
-            st.assign("rx_data_rate", status.linkRate);
-            std::string ch = std::string("rx") + char('0' + i);
-            st.assign(ch + "_fifo_filled", status.fifoFilledCount);
-            st.assign(ch + "_fifo_overruns", status.overrun);
-            st.assign(ch + "_lost_packets", status.droppedPackets);
-        }
-        if ((streamTx[i].handle) && (LMS_GetStreamStatus(&streamTx[i], &status) == 0))
-        {
-            st.assign("fifo_size", status.fifoSize);
-            st.assign("tx_data_rate", status.linkRate);
-            std::string ch = std::string("tx") + char('0' + i);
-            st.assign(ch + "_fifo_filled", status.fifoFilledCount);
-            st.assign(ch + "_fifo_underrun", status.underrun);
-        }
+        lime::StreamStats status{};
+        lmsDev->StreamStatus(0, &status, nullptr);
+
+        st.assign("fifo_size", status.FIFO.totalCount);
+        st.assign("rx_data_rate", status.dataRate_Bps);
+        const std::string ch = "rx"s;
+        st.assign(ch + "_fifo_filled", status.FIFO.usedCount);
+        st.assign(ch + "_fifo_overruns", status.overrun);
+        st.assign(ch + "_lost_packets", status.loss);
+    }
+
+    if (txBuffers != nullptr)
+    {
+        lime::StreamStats status{};
+        lmsDev->StreamStatus(0, nullptr, &status);
+
+        st.assign("fifo_size", status.FIFO.totalCount);
+        st.assign("tx_data_rate", status.dataRate_Bps);
+        const std::string ch = "tx"s;
+        st.assign(ch + "_fifo_filled", status.FIFO.usedCount);
+        st.assign(ch + "_fifo_underrun", status.underrun);
     }
 
     return octave_value(st);
@@ -612,7 +568,7 @@ DEFUN_DLD(LimeGetStreamStatus, args, nargout, "LimeGetStreamStatus() - Get Strea
 class ResourceDeallocator
 {
   public:
-    ResourceDeallocator(){};
+    ResourceDeallocator() = default;
     ~ResourceDeallocator() { FreeResources(); };
 };
 

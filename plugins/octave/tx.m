@@ -15,15 +15,13 @@ LimeLoadConfig('trxTest.ini');  % load configuration from file
 fifoSize = 1024*1024        %set library FIFO size to 1 MSample
 LimeStartStreaming(fifoSize,"tx0"); % start TX to channel 0
 for i=1:100
-    LimeTransmitSamples(src,0); % send samples to TX channel 0
+    LimeTransmitSamples(src); % send samples to TX
 end
 LimeGetStreamStatus()     %must run at least 1s to get data rate (B/s)
-sleep(1);
 LimeStopStreaming();    % stop streaming
 
 %Waveform playback from device RAM
 LimeLoopWFMStart(src);  % Load samples to device RAM, for looping to TX
-sleep(10);
 LimeLoopWFMStop();      % stop looping TX samples from device RAM
 
 LimeDestroy();          % close device
