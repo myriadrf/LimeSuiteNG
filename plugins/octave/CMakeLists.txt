@@ -33,8 +33,8 @@ endif()
 add_custom_command(
     OUTPUT LimeSuiteNG.oct LimeSuiteNG.o ALL
     COMMAND
-        ${OCTAVE_MKOCTFILE_EXECUTABLE} ARGS -I${PROJECT_SOURCE_DIR}/include/limesuiteng ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuiteNG.cc
-        -llimesuiteng
+        ${OCTAVE_MKOCTFILE_EXECUTABLE} ARGS -std=c++17 -I${PROJECT_SOURCE_DIR}/src/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuiteNG.cc -L$<TARGET_FILE_DIR:limesuiteng> -llimesuiteng
     COMMENT "Building LimeSuiteNG Octave plugin"
     DEPENDS limesuiteng)
 add_custom_target(LimeSuiteNGOctave ALL DEPENDS LimeSuiteNG.oct)
