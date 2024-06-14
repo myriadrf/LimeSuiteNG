@@ -4,7 +4,7 @@
 ########################################################################
 find_program(OCTAVE_CONFIG_EXECUTABLE NAMES octave-config)
 if(NOT OCTAVE_CONFIG_EXECUTABLE)
-    message(STATUS "octave-config not found (need liboctave-dev), disabling LimeSuiteOctave")
+    message(STATUS "octave-config not found (need octave-dev), disabling LimeSuiteOctave")
 else()
     execute_process(
         COMMAND ${OCTAVE_CONFIG_EXECUTABLE} -p BINDIR

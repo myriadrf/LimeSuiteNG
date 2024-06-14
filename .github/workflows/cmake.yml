@@ -29,7 +29,7 @@ jobs:
           sudo add-apt-repository ppa:gnuradio/gnuradio-releases
           sudo apt-get update
           sudo apt-get install -qq gnuradio-dev python3-packaging
-          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev libsoapysdr-dev liboctave-dev
+          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev libsoapysdr-dev octave-dev
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cpp }} -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
