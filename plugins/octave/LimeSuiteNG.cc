@@ -256,7 +256,7 @@ DEFUN_DLD(
     if (nargin == 2)
     {
         int rowCnt = args(1).char_matrix_value().rows();
-        rowCnt = rowCnt < maxChCnt * 2 ? rowCnt : maxChCnt * 2;
+        rowCnt = std::min(rowCnt, maxChCnt * 2);
         for (int i = 0; i < rowCnt; ++i)
         {
             const std::string entry = args(1).char_matrix_value().row_as_string(i);
