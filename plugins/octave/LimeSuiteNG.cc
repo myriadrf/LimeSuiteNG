@@ -210,8 +210,11 @@ uint8_t GetChannelNumber(const std::string& input)
 {
     unsigned int ret = 0;
 
-    std::stringstream ss{ input };
-    ss >> ret;
+    if (!input.empty())
+    {
+        std::stringstream ss{ input };
+        ss >> ret;
+    }
 
     return ret;
 }
@@ -345,8 +348,7 @@ octave_value ReceiveSamples(int samplesToReceive, int offset = 0)
         {
             for (int i = offset; i < samplesRead; ++i)
             {
-                iqData(ch, samplesCollected + i) = { rxBuffers[ch][i].real() / scaleFactor,
-                    rxBuffers[ch][i].imag() / scaleFactor };
+                iqData(ch, samplesCollected + i) = { rxBuffers[ch][i].real() / scaleFactor, rxBuffers[ch][i].imag() / scaleFactor };
             }
         }
         samplesCollected += samplesRead;
