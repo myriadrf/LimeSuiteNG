@@ -79,7 +79,9 @@ install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall-legacy
 
 configure_file(dkms.conf.in dkms.conf)
 
-install(FILES limepcie.c limepcie.h boards.h Makefile ${CMAKE_CURRENT_BINARY_DIR}/dkms.conf DESTINATION /usr/src/limepcie-${DRIVER_VERSION})
+install(
+    FILES limepcie.c limepcie.h boards.h Makefile ${CMAKE_CURRENT_BINARY_DIR}/dkms.conf
+    DESTINATION /usr/src/limepcie-${DRIVER_VERSION})
 install(FILES bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h DESTINATION /usr/src/limepcie-${DRIVER_VERSION}/bsp)
 # load installed module
 install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})")
