@@ -233,14 +233,14 @@ double LimeSDR_MMX8::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t chann
     return mSubDevices[moduleIndex]->GetNCOOffset(0, trx, channel);
 }
 
-double LimeSDR_MMX8::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+double LimeSDR_MMX8::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
     if (moduleIndex >= 8)
     {
         moduleIndex = 0;
     }
 
-    return mSubDevices[moduleIndex]->GetSampleRate(0, trx, channel);
+    return mSubDevices[moduleIndex]->GetSampleRate(0, trx, channel, rf_samplerate);
 }
 
 OpStatus LimeSDR_MMX8::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)

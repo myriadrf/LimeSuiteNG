@@ -33,7 +33,7 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     OpStatus Init() override;
     OpStatus Reset() override;
 
-    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     double GetClockFreq(uint8_t clk_id, uint8_t channel) override;

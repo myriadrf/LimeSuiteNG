@@ -133,14 +133,23 @@ OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
     return OpStatus::Success;
 }
 
-double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
     if (moduleIndex >= mLMSChips.size())
     {
         ReportError(OpStatus::OutOfRange, "GetSample rate invalid module index (%i)", moduleIndex);
         return 0;
     }
-    return mLMSChips[moduleIndex]->GetSampleRate(trx, LMS7002M::Channel::ChA);
+    double sampleRate = mLMSChips[moduleIndex]->GetSampleRate(trx, LMS7002M::Channel::ChA);
+    if (rf_samplerate)
+    {
+        int oversample_control = mLMSChips[moduleIndex]->Get_SPI_Reg_bits(trx == TRXDir::Rx ? HBD_OVR_RXTSP : HBI_OVR_TXTSP);
+        if (oversample_control != 7)
+            *rf_samplerate = sampleRate * (2 << oversample_control);
+        else
+            *rf_samplerate = sampleRate;
+    }
+    return sampleRate;
 }
 
 double LMS7002M_SDRDevice::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
