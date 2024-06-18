@@ -30,6 +30,7 @@ static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static const CustomParameter cp_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
     { 0x0020, 0xFFFD },
@@ -130,7 +131,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
 
-    desc.customParameters.push_back(cp_vctcxo_dac);
+    desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
     mFPGA = new lime::FPGA_XTRX(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
