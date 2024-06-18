@@ -32,59 +32,53 @@ static const uint8_t SPI_FPGA = 1;
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
-    { 0x0022, 0x0FFF },
+    { 0x0020, 0xFFFD },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
     { 0x002C, 0x0000 },
-    { 0x002D, 0x0641 },
+    { 0x0081, 0x0001 },
     { 0x0086, 0x4101 },
-    { 0x0087, 0x5555 },
-    { 0x0088, 0x0525 },
-    { 0x0089, 0x1078 },
-    { 0x008B, 0x218C },
-    { 0x008C, 0x267B },
+    { 0x0089, 0x1040 },
+    { 0x008B, 0x2198 },
+    { 0x009B, 0x8C65 },
+    { 0x009E, 0x8C65 },
+    { 0x00A0, 0x658C },
     { 0x00A6, 0x000F },
-    { 0x00A9, 0x8000 },
-    { 0x00AC, 0x2000 },
-    { 0x0108, 0x218C },
-    { 0x0109, 0x57C1 },
-    { 0x010A, 0x154C },
+    { 0x0100, 0x7409 },
+    { 0x0101, 0x1800 },
+    { 0x0103, 0x0A50 },
+    { 0x0105, 0x0011 },
+    { 0x0108, 0x410C },
+    { 0x0109, 0x20C0 },
+    { 0x010A, 0x1FFF },
     { 0x010B, 0x0001 },
     { 0x010C, 0x8865 },
-    { 0x010D, 0x011A },
-    { 0x010E, 0x0000 },
-    { 0x010F, 0x3142 },
+    { 0x010D, 0x009F },
+    { 0x010F, 0x3042 },
     { 0x0110, 0x2B14 },
     { 0x0111, 0x0000 },
-    { 0x0112, 0x000C },
-    { 0x0113, 0x03C2 },
-    { 0x0114, 0x01F0 },
-    { 0x0115, 0x000D },
-    { 0x0118, 0x418C },
-    { 0x0119, 0x5292 },
+    { 0x0112, 0x2106 },
+    { 0x0113, 0x01C1 },
+    { 0x0114, 0x01B0 },
+    { 0x0117, 0x2044 },
+    { 0x0119, 0x528C },
     { 0x011A, 0x3001 },
-    { 0x011C, 0x8941 },
-    { 0x011D, 0x0000 },
-    { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
-    { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
-    { 0x0123, 0x200F },
-    { 0x0200, 0x00E1 },
+    { 0x011C, 0x8141 },
+    { 0x011F, 0x3602 },
+    { 0x0120, 0x35FF },
+    { 0x0121, 0x37F8 },
+    { 0x0122, 0x0654 },
+    { 0x0124, 0x001F },
+    { 0x0205, 0x070F },
+    { 0x0206, 0x070F },
+    { 0x0207, 0x070F },
     { 0x0208, 0x017B },
-    { 0x020B, 0x4000 },
-    { 0x020C, 0x8000 },
     { 0x0400, 0x8081 },
-    { 0x0404, 0x0006 },
-    { 0x040B, 0x1020 },
-    { 0x040C, 0x00FB },
-
-    // LDOs
-    { 0x0092, 0x0D15 },
-    { 0x0093, 0x01B1 },
-    { 0x00A6, 0x000F },
-    // XBUF
-    { 0x0085, 0x0019 },
+    { 0x0405, 0x0303 },
+    { 0x0406, 0x0303 },
+    { 0x0407, 0x0303 },
+    { 0x040A, 0x2000 },
+    { 0x040C, 0x01FF },
 };
 
 static inline void ValidateChannel(uint8_t channel)
@@ -197,19 +191,6 @@ static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
-    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(false, 2*i+1, false);
-    // EnableChannel(true, 2*i+1, false);
-
-    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     if (skipTune)
         return OpStatus::Success;
@@ -327,6 +308,10 @@ OpStatus LimeSDR_XTRX::Init()
     // CustomParameterWrite(&paramId,&dacVal,1,"");
     // paramId = 3;
     // CustomParameterWrite(&paramId,&dacVal,1,"");
+
+    OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+    if (status != OpStatus::Success)
+        return status;
 
     const bool skipTune = true;
     return InitLMS1(mLMSChips.at(0), skipTune);
