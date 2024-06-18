@@ -49,7 +49,6 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0103, 0x0A50 },
     { 0x0105, 0x0011 },
     { 0x0108, 0x410C },
-    { 0x0109, 0x20C0 },
     { 0x010A, 0x1FFF },
     { 0x010B, 0x0001 },
     { 0x010C, 0x8865 },
@@ -69,9 +68,6 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0121, 0x37F8 },
     { 0x0122, 0x0654 },
     { 0x0124, 0x001F },
-    { 0x0205, 0x070F },
-    { 0x0206, 0x070F },
-    { 0x0207, 0x070F },
     { 0x0208, 0x017B },
     { 0x0400, 0x8081 },
     { 0x0405, 0x0303 },
@@ -847,6 +843,8 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     config.channel[0].tx.enabled = true;
     config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
     config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
+    config.channel[0].tx.gain[eGainTypes::PAD] = 52;
+    config.channel[0].tx.gain[eGainTypes::IAMP] = -18;
 
     const double tx_offset = 5e6;
     config.channel[0].rx.centerFrequency = LOFreq;
