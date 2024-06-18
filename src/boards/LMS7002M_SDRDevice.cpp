@@ -146,114 +146,24 @@ double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_
 double LMS7002M_SDRDevice::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
-
-    // TODO:
-    // double offset = GetNCOOffset(moduleIndex, trx, channel);
-
     if (trx == TRXDir::Rx)
     {
-        lms->Modify_SPI_Reg_bits(MAC, 1); // Sets the current channel to channel A
-        if (lms->Get_SPI_Reg_bits(PD_VCO) == 1)
-        {
-            trx = TRXDir::Tx; // Assume that Tx PLL used for TX and RX
-        }
+        LMS7002M::ChannelScope scope(lms, LMS7002M::Channel::ChSXT);
+        if (lms->Get_SPI_Reg_bits(PD_LOCH_T2RBUF) == 0) // TDD mode, return SXT LO
+            trx = TRXDir::Tx;
     }
-    return lms->GetFrequencySX(trx); // - offset;
+    return lms->GetFrequencySX(trx);
 }
 
 OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
-
-    int chA = channel & (~1);
-    int chB = channel | 1;
-
-    auto channelAFrequency = GetFrequency(moduleIndex, trx, chA);
-    auto channelBFrequency = GetFrequency(moduleIndex, trx, chB);
-
-    double phaseOffset = 0.0;
-    auto channelANCOFrequency = GetNCOFrequency(moduleIndex, trx, chA, 0, phaseOffset);
-    auto channelBNCOFrequency = GetNCOFrequency(moduleIndex, trx, chB, 0, phaseOffset);
-
-    auto channelANCOOffset = channelAFrequency - channelANCOFrequency;
-    auto channelBNCOOffset = channelBFrequency - channelBNCOFrequency;
-
-    auto channelOffset = channel == chA ? channelANCOOffset : channelBNCOOffset;
-
-    auto setTDD = [&](double center) {
-        TRXDir otherDir = trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx;
-        auto otherFrequency = GetFrequency(moduleIndex, otherDir, chA);
-        auto otherOffset = GetNCOOffset(moduleIndex, otherDir, chA);
-
-        bool tdd = std::fabs(otherFrequency + otherOffset - center) > 0.1 ? false : true;
-        lms->EnableSXTDD(tdd);
-
-        if (trx == TRXDir::Tx || (!tdd))
-        {
-            if (lms->SetFrequencySX(trx, center) != OpStatus::Success)
-            {
-                throw std::runtime_error("Setting TDD failed (failed SetFrequencySX)"s);
-            }
-        }
-
-        return;
-    };
-
-    if (channel == chA)
-    {
-        channelAFrequency = frequency;
-    }
-    else
-    {
-        channelBFrequency = frequency;
-    }
-
-    if (channelAFrequency > 0 && channelBFrequency > 0)
-    {
-        double delta = std::fabs(channelAFrequency - channelBFrequency);
-        if (delta > 0.1)
-        {
-            double rate = GetSampleRate(moduleIndex, trx, channel);
-            if ((delta <= rate * 31) && (delta + rate <= 160e6))
-            {
-                double center = (channelAFrequency + channelBFrequency) / 2;
-                if (center < 30e6)
-                {
-                    center = 30e6;
-                }
-                channelANCOOffset = center - channelAFrequency;
-                channelBNCOOffset = center - channelBFrequency;
-
-                setTDD(center);
-
-                return SetSampleRate(moduleIndex, trx, channel, rate, 2);
-            }
-        }
-    }
-
-    if (frequency < 30e6)
-    {
-        setTDD(30e6);
-
-        channelOffset = 30e6 - frequency;
-        double rate = GetSampleRate(moduleIndex, trx, channel);
-        if (channelOffset + rate / 2.0 >= rate / 2.0)
-        {
-            return SetSampleRate(moduleIndex, trx, channel, rate, 2);
-        }
-        else
-        {
-            SetNCOFrequency(moduleIndex, trx, channel, 0, channelOffset * (trx == TRXDir::Tx ? -1.0 : 1.0));
-        }
-    }
-
-    if (channelOffset != 0)
-    {
-        SetNCOFrequency(moduleIndex, trx, channel, 0, 0.0);
-    }
-
-    setTDD(frequency);
-    return OpStatus::Success;
+    int64_t oppositeDirLO = lms->GetFrequencySX(trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx);
+    OpStatus status = lms->SetFrequencySX(trx, frequency);
+    // Readback of LO frequency might not exactly match what was requested, so compare with some margin
+    bool useTDD = (abs(oppositeDirLO - frequency) <= 20);
+    lms->EnableSXTDD(useTDD);
+    return status;
 }
 
 double LMS7002M_SDRDevice::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)

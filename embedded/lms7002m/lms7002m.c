@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CGEN_MAX_FREQ 640e6
-
 #ifndef M_PI
     #define M_PI 3.14159265358979323846 /* pi */
 #endif
@@ -273,38 +271,37 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
     return lime_Result_Error;
 }
 
-static const float gCGEN_VCO_frequencies[2] = { 1930e6, 2940e6 };
-lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
+lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz)
 {
-    if (freq_Hz > CGEN_MAX_FREQ)
+    const uint64_t cgen_vco_min = 1930000000;
+    const uint64_t cgen_vco_max = 2940000000;
+    if (freq_Hz > 640000000)
         return lms7002m_report_error(self, lime_Result_OutOfRange, "requested CGEN frequency too high");
 
     //VCO frequency selection according to F_CLKH
-    const uint16_t iHdiv_high = (gCGEN_VCO_frequencies[1] / 2 / freq_Hz) - 1;
-    const uint16_t iHdiv_low = (gCGEN_VCO_frequencies[0] / 2 / freq_Hz);
-    const uint16_t iHdiv = clamp_uint((iHdiv_low + iHdiv_high) / 2, 0, 255);
-    const float dFvco = 2 * (iHdiv + 1) * freq_Hz;
-    if (dFvco <= gCGEN_VCO_frequencies[0] || dFvco >= gCGEN_VCO_frequencies[1])
+    const uint16_t iHdiv_high = (cgen_vco_max / freq_Hz / 2) - 1;
+    const uint16_t iHdiv_low = (cgen_vco_min / freq_Hz / 2);
+    const uint16_t div_outch_cgen = ((iHdiv_low + iHdiv_high) / 2) & 0xFF;
+    const uint64_t vco = 2 * (div_outch_cgen + 1) * freq_Hz;
+    if (vco <= cgen_vco_min || vco >= cgen_vco_max)
     {
         return lms7002m_report_error(
             self, lime_Result_Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz / 1e6);
     }
 
-    const float refClk = lms7002m_get_reference_clock(self);
-    //Integer division
-    const uint16_t gINT = (uint16_t)(dFvco / refClk - 1);
+    const uint32_t refClk = lms7002m_get_reference_clock(self);
+    const uint16_t integerPart = vco / refClk - 1;
+    // "Fixed point number" division, take only the fraction part
+    uint32_t fractionalPart = (vco << 20) / refClk;
+    fractionalPart &= 0xFFFFF;
 
-    //Fractional division
-    const float dFrac = dFvco / refClk - (uint32_t)(dFvco / refClk);
-    const uint32_t gFRAC = (uint32_t)(dFrac * 1048576);
+    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM_CGEN, integerPart); //INT_SDM_CGEN
+    lms7002m_spi_modify(self, 0x0087, 15, 0, fractionalPart & 0xFFFF); //INT_SDM_CGEN[15:0]
+    lms7002m_spi_modify(self, 0x0088, 3, 0, fractionalPart >> 16); //INT_SDM_CGEN[19:16]
+    lms7002m_spi_modify_csr(self, LMS7002M_DIV_OUTCH_CGEN, div_outch_cgen); //DIV_OUTCH_CGEN
 
-    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM_CGEN, gINT); //INT_SDM_CGEN
-    lms7002m_spi_modify(self, 0x0087, 15, 0, gFRAC & 0xFFFF); //INT_SDM_CGEN[15:0]
-    lms7002m_spi_modify(self, 0x0088, 3, 0, gFRAC >> 16); //INT_SDM_CGEN[19:16]
-    lms7002m_spi_modify_csr(self, LMS7002M_DIV_OUTCH_CGEN, iHdiv); //DIV_OUTCH_CGEN
-
-    LOG_D(self, "INT %d, FRAC %d, DIV_OUTCH_CGEN %d", gINT, gFRAC, iHdiv);
-    LOG_D(self, "VCO %.2f MHz, RefClk %.2f MHz", dFvco / 1e6, refClk / 1e6);
+    LOG_D(self, "INT %d, FRAC %d, DIV_OUTCH_CGEN %d", integerPart, fractionalPart, div_outch_cgen);
+    LOG_D(self, "VCO %.2f MHz, RefClk %.2f MHz", vco / 1e6, refClk / 1e6);
 
     if (lms7002m_tune_cgen_vco(self) != lime_Result_Success)
     {
@@ -318,17 +315,28 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, float freq_Hz)
     return lime_Result_Success;
 }
 
-float lms7002m_get_frequency_cgen(lms7002m_context* self)
+uint32_t lms7002m_get_frequency_cgen(lms7002m_context* self)
 {
-    const float ref_clock = lms7002m_get_reference_clock(self);
     const uint16_t div_outch_cgen = lms7002m_spi_read_csr(self, LMS7002M_DIV_OUTCH_CGEN);
-    const float dMul = (ref_clock / 2.0) / (div_outch_cgen + 1);
-
     const uint16_t gINT = lms7002m_spi_read_bits(self, 0x0088, 13, 0); //read whole register to reduce SPI transfers
     const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x0087, 15, 0);
 
-    const uint32_t gFRAC = ((gINT & 0xF) << 16) | lowerRegister;
-    return dMul * ((gINT >> 4) + 1 + gFRAC / 1048576.0);
+    const uint32_t fractionalPart = ((gINT & 0xF) << 16) | lowerRegister;
+    const uint16_t integerPart = (gINT >> 4) + 1;
+
+    uint64_t cgenClk = lms7002m_get_reference_clock(self);
+
+    // fixed point number
+    uint64_t fp = ((integerPart << 20) | fractionalPart);
+    cgenClk *= fp;
+    cgenClk /= (div_outch_cgen + 1);
+    cgenClk >>= 1;
+
+    bool roundUp = cgenClk & 0x80000;
+    cgenClk >>= 20; // leave only integer part
+    if (roundUp)
+        cgenClk += 1;
+    return cgenClk;
 }
 
 lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const float value, const enum lms7002m_channel channel)
@@ -900,11 +908,13 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
 static lime_Result lms7002m_write_sx_registers(
     lms7002m_context* self, uint64_t VCOfreq_hz, uint64_t reference_clock_hz, uint8_t div_loch)
 {
-    const float m_dThrF = 5500e6; // VCO frequency threshold to enable additional divider
-    const float divider = reference_clock_hz * (1 + (VCOfreq_hz > m_dThrF));
+    const uint64_t m_dThrF = 5500000000; // VCO frequency threshold to enable additional divider
+    const double divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
 
-    const uint16_t integerPart = (uint16_t)(VCOfreq_hz / divider - 4);
-    const uint32_t fractionalPart = (uint32_t)((VCOfreq_hz / divider - (uint32_t)(VCOfreq_hz / divider)) * 1048576);
+    const uint16_t integerPart = VCOfreq_hz / divider - 4;
+    // "Fixed point number" division, take only the fraction part
+    uint32_t fractionalPart = (VCOfreq_hz << 20) / divider;
+    fractionalPart &= 0xFFFFF;
 
     lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
     lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
@@ -925,7 +935,7 @@ static lime_Result lms7002m_write_sx_registers(
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float LO_freq_hz)
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_t LO_freq_hz)
 {
     LOG_D(self, "Set %s LO frequency (%g MHz)", isTx ? "Tx" : "Rx", LO_freq_hz / 1e6);
 
@@ -951,7 +961,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float L
     // div_loch value 7 is not allowed
     for (int8_t div_loch = 6; div_loch >= 0; --div_loch)
     {
-        float VCOfreq = (1 << (div_loch + 1)) * LO_freq_hz;
+        uint64_t VCOfreq = (1 << (div_loch + 1)) * (uint64_t)LO_freq_hz;
         for (int i = 0; i < 3; ++i)
         {
             if (!vco[i].canDeliverFrequency && (VCOfreq >= VCO_min_frequency[i]) && (VCOfreq <= VCO_max_frequency[i]))
@@ -975,7 +985,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float L
             VCO_max_frequency[2] / 1e6);
     }
 
-    const float refClk_Hz = lms7002m_get_reference_clock(self);
+    const uint32_t refClk_Hz = lms7002m_get_reference_clock(self);
     assert(refClk_Hz > 0);
 
     enum lms7002m_channel savedChannel =
@@ -1044,24 +1054,32 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float L
     return lime_Result_Success;
 }
 
-float lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+uint32_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
 {
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
 
     const uint16_t gINT = lms7002m_spi_read_bits(self, 0x011E, 13, 0); // read whole register to reduce SPI transfers
     const uint16_t lowerRegister = lms7002m_spi_read_bits(self, 0x011D, 15, 0);
-    const uint32_t gFRAC = ((gINT & 0xF) << 16) | lowerRegister;
+    const uint32_t fractionalPart = ((gINT & 0xF) << 16) | lowerRegister;
+    const uint16_t integerPart = (gINT >> 4) + 4;
 
-    const float refClk_Hz = lms7002m_get_reference_clock(self);
+    uint32_t refClk_Hz = lms7002m_get_reference_clock(self);
     const uint16_t div_loch = lms7002m_spi_read_csr(self, LMS7002M_DIV_LOCH);
     const uint16_t en_div2_divprog = lms7002m_spi_read_csr(self, LMS7002M_EN_DIV2_DIVPROG);
 
-    // Calculate real frequency according to the calculated parameters
-    float dMul = (refClk_Hz / (1 << (div_loch + 1))) * ((gINT >> 4) + 4 + gFRAC / 1048576.0) * (en_div2_divprog + 1);
+    uint64_t vco = refClk_Hz << (en_div2_divprog);
+    // fixed point number
+    uint64_t fp = ((integerPart << 20) | fractionalPart);
+    vco *= fp;
+    vco >>= (div_loch + 1);
+    bool roundUp = vco & 0x80000;
+    vco >>= 20; // leave only integer part
+    if (roundUp)
+        vco += 1;
 
     lms7002m_set_active_channel(self, savedChannel);
-    return dMul;
+    return vco;
 }
 
 lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index, float freq_Hz)
