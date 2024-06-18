@@ -96,20 +96,6 @@ uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
     return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
 }
 
-uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count)
-{
-    int minimum_index = 0;
-    for (int i = 1; i < count; ++i)
-    {
-        if (abs(tuneScore[i]) < abs(tuneScore[minimum_index]))
-        {
-            minimum_index = i;
-        }
-    }
-
-    return minimum_index;
-}
-
 int16_t clamp_int(int16_t value, int16_t min, int16_t max)
 {
     if (value < min)

@@ -733,7 +733,6 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
         lms7002m_set_active_channel_readback(self, module == LMS7002M_VCO_SXR ? LMS7002M_CHANNEL_SXR : LMS7002M_CHANNEL_SXT);
 
     const char* const moduleName = (module == LMS7002M_VCO_SXR) ? "SXR" : "SXT";
-    LOG_D(self, "TuneVCO(%s) ICT_VCO: %d", moduleName, lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO));
 
     // Initialization activate VCO and comparator
     const uint16_t addrVCOpd = LMS7002M_PD_VCO.address; // VCO power down address
@@ -861,7 +860,7 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     }
 
     uint8_t finalCSW = 0;
-    if (cswHigh - cswLow == 1)
+    if (cswHigh - cswLow <= 1)
     {
         LOG_D(self,
             "TuneVCO(%s) - narrow locking values range detected [%i:%i]. VCO lock status might change with temperature.",
@@ -898,27 +897,68 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float freq_Hz)
+static lime_Result lms7002m_write_sx_registers(
+    lms7002m_context* self, uint64_t VCOfreq_hz, uint64_t reference_clock_hz, uint8_t div_loch)
 {
-    if (freq_Hz < 0)
-    {
-        return lime_Result_InvalidValue;
-    }
+    const float m_dThrF = 5500e6; // VCO frequency threshold to enable additional divider
+    const float divider = reference_clock_hz * (1 + (VCOfreq_hz > m_dThrF));
 
-    const float gVCO_frequency_table[2][2] = { { 3800e6, 5222e6 }, { 6306e6, 7714e6 } };
+    const uint16_t integerPart = (uint16_t)(VCOfreq_hz / divider - 4);
+    const uint32_t fractionalPart = (uint32_t)((VCOfreq_hz / divider - (uint32_t)(VCOfreq_hz / divider)) * 1048576);
+
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
+    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
+    lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
+    lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
+    lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
+
+    LOG_D(self,
+        "SX VCO:%.3f MHz, RefClk:%.3f MHz, INT:%d, FRAC:%d, DIV_LOCH:%d, EN_DIV2_DIVPROG:%d",
+        VCOfreq_hz / 1e6,
+        reference_clock_hz / 1e6,
+        integerPart,
+        fractionalPart,
+        div_loch,
+        (VCOfreq_hz > m_dThrF));
+
+    return lime_Result_Success;
+}
+
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float LO_freq_hz)
+{
+    LOG_D(self, "Set %s LO frequency (%g MHz)", isTx ? "Tx" : "Rx", LO_freq_hz / 1e6);
+
+    if (LO_freq_hz < 0)
+        return lime_Result_InvalidValue;
+
+    const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
+    const uint64_t VCO_min_frequency[3] = { 3800000000, 4961000000, 6306000000 };
+    const uint64_t VCO_max_frequency[3] = { 5222000000, 6754000000, 7714000000 };
+
+    struct VCOData {
+        uint64_t frequency;
+        uint8_t div_loch;
+        uint8_t csw;
+        bool canDeliverFrequency;
+    } vco[3];
+
     bool canDeliverFrequency = false;
 
-    const uint8_t sxVCO_N = 2; //number of entries in VCO frequencies
-    float VCOfreq = 0.0;
     //find required VCO frequency
-    int8_t div_loch = 6; // needed for later
-    for (; div_loch >= 0; --div_loch)
+    // div_loch value 7 is not allowed
+    for (int8_t div_loch = 6; div_loch >= 0; --div_loch)
     {
-        VCOfreq = (1 << (div_loch + 1)) * freq_Hz;
-        if ((VCOfreq >= gVCO_frequency_table[0][0]) && (VCOfreq <= gVCO_frequency_table[1][sxVCO_N - 1]))
+        float VCOfreq = (1 << (div_loch + 1)) * LO_freq_hz;
+        for (int i = 0; i < 3; ++i)
         {
-            canDeliverFrequency = true;
-            break;
+            if (!vco[i].canDeliverFrequency && (VCOfreq >= VCO_min_frequency[i]) && (VCOfreq <= VCO_max_frequency[i]))
+            {
+                vco[i].canDeliverFrequency = true;
+                vco[i].div_loch = div_loch;
+                vco[i].frequency = VCOfreq;
+                canDeliverFrequency = true;
+            }
         }
     }
 
@@ -928,95 +968,77 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float f
             lime_Result_OutOfRange,
             "SetFrequencySX%s(%g MHz) - required VCO frequencies are out of range [%g-%g] MHz",
             isTx ? "T" : "R",
-            freq_Hz / 1e6,
-            gVCO_frequency_table[0][0] / 1e6,
-            gVCO_frequency_table[1][sxVCO_N - 1] / 1e6);
+            LO_freq_hz / 1e6,
+            VCO_min_frequency[0] / 1e6,
+            VCO_max_frequency[2] / 1e6);
     }
 
     const float refClk_Hz = lms7002m_get_reference_clock(self);
     assert(refClk_Hz > 0);
 
-    const float m_dThrF = 5500e6; //threshold to enable additional divider
-    const float divider = refClk_Hz * (1 + (VCOfreq > m_dThrF));
-
-    const uint16_t integerPart = (uint16_t)(VCOfreq / divider - 4);
-    const uint32_t fractionalPart = (uint32_t)((VCOfreq / divider - (uint32_t)(VCOfreq / divider)) * 1048576);
-
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
-
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
-    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
-    lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
-    lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
-    lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq > m_dThrF)); //EN_DIV2_DIVPROG
-
-    lms7002m_log(self,
-        lime_LogLevel_Info,
-        "SetFrequencySX%s, (%.3f MHz)INT %d, FRAC %d, DIV_LOCH %d, EN_DIV2_DIVPROG %d",
-        isTx ? "T" : "R",
-        freq_Hz / 1e6,
-        integerPart,
-        fractionalPart,
-        div_loch,
-        (VCOfreq > m_dThrF));
-    lms7002m_log(self, lime_LogLevel_Debug, "Expected VCO %.2f MHz, RefClk %.2f MHz", VCOfreq / 1e6, refClk_Hz / 1e6);
 
     // turn on VCO and comparator
     lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO, 0); //
     lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO_COMP, 0);
 
+    const uint8_t preferred_vco_order[3] = { 2, 0, 1 };
+    uint8_t sel_vco;
     canDeliverFrequency = false;
-    int tuneScore[] = { -128, -128, -128 }; //best is closest to 0
-
-    const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
-
-    for (int i = 0; i < 5; i++) //attempt tune multiple times
+    uint8_t ict_vco = lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO);
+    do // if initial tune fails, attempt again with modified bias current
     {
-        for (int8_t sel_vco = 0; sel_vco < 3; ++sel_vco)
+        for (int i = 0; i < 3; ++i)
         {
-            lms7002m_log(self, lime_LogLevel_Debug, "Tuning %s :", vcoNames[sel_vco]);
+            sel_vco = preferred_vco_order[i];
+            if (!vco[sel_vco].canDeliverFrequency)
+            {
+                LOG_D(self, "%s skipped", vcoNames[sel_vco]);
+                continue;
+            }
+
+            lms7002m_write_sx_registers(self, vco[sel_vco].frequency, refClk_Hz, vco[sel_vco].div_loch);
+            lms7002m_log(self, lime_LogLevel_Debug, "Tuning %s %s (ICT_VCO:%d):", (isTx ? "Tx" : "Rx"), vcoNames[sel_vco], ict_vco);
+
             lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
             lime_Result status = lms7002m_tune_vco(self, isTx ? LMS7002M_VCO_SXT : LMS7002M_VCO_SXR);
             if (status == lime_Result_Success)
             {
-                tuneScore[sel_vco] = -128 + lms7002m_spi_read_csr(self, LMS7002M_CSW_VCO);
+                vco[sel_vco].csw = lms7002m_spi_read_csr(self, LMS7002M_CSW_VCO);
                 canDeliverFrequency = true;
-                lms7002m_log(self,
-                    lime_LogLevel_Debug,
+                LOG_D(self,
                     "%s : csw=%d %s",
                     vcoNames[sel_vco],
-                    tuneScore[sel_vco] + 128,
+                    vco[sel_vco].csw,
                     (status == lime_Result_Success ? "tune ok" : "tune fail"));
+                break;
             }
             else
-            {
-                lms7002m_log(self, lime_LogLevel_Debug, "%s : failed to lock", vcoNames[sel_vco]);
-            }
+                LOG_D(self, "%s : failed to lock", vcoNames[sel_vco]);
         }
-        if (canDeliverFrequency) //tune OK
+
+        if (canDeliverFrequency)
+        {
+            lms7002m_log(self, lime_LogLevel_Debug, "Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], vco[sel_vco].csw);
+            lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
+            lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO, vco[sel_vco].csw);
             break;
-        uint16_t bias = lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO);
-        if (bias == 255)
-            break;
-        bias = bias + 32 > 255 ? 255 : bias + 32; //retry with higher bias current
-        lms7002m_spi_modify_csr(self, LMS7002M_ICT_VCO, bias);
-    }
-
-    const int8_t sel_vco = lms7002m_minimum_tune_score_index(tuneScore, 3);
-
-    const int16_t csw_value = tuneScore[sel_vco] + 128;
-    lms7002m_log(self, lime_LogLevel_Debug, "Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], csw_value);
-
-    lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
-    lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO, csw_value);
+        }
+        else
+        {
+            if (ict_vco == 255)
+                break;
+            ict_vco = ict_vco + 32 > 255 ? 255 : ict_vco + 32; // retry with higher bias current
+            lms7002m_spi_modify_csr(self, LMS7002M_ICT_VCO, ict_vco);
+        }
+    } while (ict_vco <= 255);
 
     lms7002m_set_active_channel(self, savedChannel);
 
     if (canDeliverFrequency == false)
         return lms7002m_report_error(
-            self, lime_Result_Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", isTx ? "T" : "R", freq_Hz / 1e6);
+            self, lime_Result_Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", isTx ? "T" : "R", LO_freq_hz / 1e6);
     return lime_Result_Success;
 }
 
