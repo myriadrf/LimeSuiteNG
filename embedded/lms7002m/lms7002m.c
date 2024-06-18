@@ -943,6 +943,8 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float L
         bool canDeliverFrequency;
     } vco[3];
 
+    memset(vco, 0, sizeof(vco));
+
     bool canDeliverFrequency = false;
 
     //find required VCO frequency
@@ -999,7 +1001,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, float L
             }
 
             lms7002m_write_sx_registers(self, vco[sel_vco].frequency, refClk_Hz, vco[sel_vco].div_loch);
-            lms7002m_log(self, lime_LogLevel_Debug, "Tuning %s %s (ICT_VCO:%d):", (isTx ? "Tx" : "Rx"), vcoNames[sel_vco], ict_vco);
+            LOG_D(self, "Tuning %s %s (ICT_VCO:%d):", (isTx ? "Tx" : "Rx"), vcoNames[sel_vco], ict_vco);
 
             lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
             lime_Result status = lms7002m_tune_vco(self, isTx ? LMS7002M_VCO_SXT : LMS7002M_VCO_SXR);

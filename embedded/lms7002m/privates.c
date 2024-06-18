@@ -29,6 +29,16 @@ void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* fo
     context->hooks.log(level, buff, context->hooks.log_userData);
 }
 
+static void lms7002m_log_va(lms7002m_context* context, lime_LogLevel level, const char* format, va_list args)
+{
+    if (context->hooks.log == NULL)
+        return;
+
+    char buff[4096];
+    vsnprintf(buff, sizeof(buff), format, args);
+    context->hooks.log(level, buff, context->hooks.log_userData);
+}
+
 lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result, const char* format, ...)
 {
     if (context->hooks.log == NULL)
@@ -36,7 +46,7 @@ lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result,
 
     va_list args;
     va_start(args, format);
-    lms7002m_log(context, lime_LogLevel_Error, format, args);
+    lms7002m_log_va(context, lime_LogLevel_Error, format, args);
     va_end(args);
 
     return result;
