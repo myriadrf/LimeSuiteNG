@@ -165,6 +165,7 @@ int main(int argc, char** argv)
         chipIndexes.push_back(0);
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
 
     try
     {
