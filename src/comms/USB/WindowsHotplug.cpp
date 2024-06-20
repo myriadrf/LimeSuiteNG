@@ -121,7 +121,7 @@ void WindowsHotplug::AddDeviceToReceiveHotplugDisconnectEvents(uint16_t vid, uin
     }
 }
 
-DWORD WindowsHotplug::callback(
+DWORD CALLBACK WindowsHotplug::callback(
     HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
 {
     if (CM_NOTIFY_ACTION_DEVICEINSTANCEREMOVED == Action)

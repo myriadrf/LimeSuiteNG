@@ -25,7 +25,7 @@ class WindowsHotplug
     std::vector<IUSB::CallbackInfo<IUSB::HotplugDisconnectCallbackType>> hotplugDisconnectCallbacks{};
     HCMNOTIFICATION deviceDisconnectCallbackHandle{};
 
-    static DWORD callback(
+    static DWORD CALLBACK callback(
         HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize);
 };
 
