@@ -43,10 +43,11 @@ class FX3 : public IUSB
     static const int CTR_WRITE_REQUEST_VALUE;
     static const int CTR_READ_REQUEST_VALUE;
 
-    static constexpr uint8_t CONTROL_BULK_OUT_ADDRESS =
-        0x0F; ///< The memory address for writing information via the bulk transfer protocol.
-    static constexpr uint8_t CONTROL_BULK_IN_ADDRESS =
-        0x8F; ///< THe memory address for reading information via the bulk transfer protocol.
+    /// The memory address for writing information via the bulk transfer protocol.
+    static constexpr uint8_t CONTROL_BULK_OUT_ADDRESS = 0x0F;
+    /// The memory address for reading information via the bulk transfer protocol.
+    static constexpr uint8_t CONTROL_BULK_IN_ADDRESS = 0x8F;
+
   protected:
 #ifdef __unix__
     USBGeneric libusb_impl;
