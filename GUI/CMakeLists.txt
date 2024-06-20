@@ -11,24 +11,24 @@ if(NOT wxWidgets_FOUND AND WIN32)
     cmake_policy(SET CMP0135 NEW)
     message(STATUS "Downloading wxWidgets headers.")
     set(wxRoot ${PROJECT_BINARY_DIR}/_deps/wxWidgets)
-    if(CMAKE_CL_64)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         fetchcontent_declare(
             wxWidgets
-            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_x64_Dev.7z
-            URL_HASH SHA1=19cf62ade3c3fc55813ad9a2f1a49220574cb54a
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.5/wxMSW-3.2.5_vc14x_x64_Dev.7z
+            URL_HASH SHA1=f5941fea2d563531401edd32f85b195be01155e9
             SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
     else()
         fetchcontent_declare(
             wxWidgets
-            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxMSW-3.2.4_vc14x_Dev.7z
-            URL_HASH SHA1=29647b24e5120b62e588827c163f0fe660936002
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.5/wxMSW-3.2.5_vc14x_Dev.7z
+            URL_HASH SHA1=b5c526e3249edf8a9731e3ff36022794637668c3
             SOURCE_DIR ${wxRoot} EXCLUDE_FROM_ALL)
     endif()
 
     fetchcontent_declare(
         wxWidgetsHeaders
-        URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4-headers.7z
-        URL_HASH SHA1=86022483a0bfe81edf5aee38de07a0800f0a0602
+        URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.5/wxWidgets-3.2.5-headers.7z
+        URL_HASH SHA1=dd01f12371f4f320dfdc4d2e53b4514eb6f296e7
         SOURCE_DIR ${wxRoot}/include EXCLUDE_FROM_ALL)
 
     fetchcontent_makeavailable(wxWidgets wxWidgetsHeaders)
