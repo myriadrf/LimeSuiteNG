@@ -219,7 +219,7 @@ USBGeneric::~USBGeneric()
     SessionRefCountDecrement();
 }
 
-bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     libusb_device** devs; // Pointer to pointer of device, used to retrieve a list of devices
     int usbDeviceCount = libusb_get_device_list(gContextLibUsb, &devs);
@@ -271,7 +271,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
                 foundSerial = std::string(data, static_cast<size_t>(stringLength));
         }
 
-        if (std::string{ serial }.empty() || std::string{ serial } == foundSerial)
+        if (serial.empty() || serial == foundSerial)
         {
             libusb_hotplug_register_callback(gContextLibUsb,
                 LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,

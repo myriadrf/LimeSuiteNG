@@ -19,7 +19,7 @@ class FT601 : public IUSB
     FT601();
     virtual ~FT601();
 
-    bool Connect(uint16_t vid, uint16_t pid, const char* serial) override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string& serial) override;
     void Disconnect() override;
     bool IsConnected() override;
 

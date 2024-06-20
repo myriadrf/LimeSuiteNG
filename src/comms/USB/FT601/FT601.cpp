@@ -71,7 +71,7 @@ FT601::~FT601()
     Disconnect();
 }
 
-bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     Disconnect();
 #ifdef __unix__
@@ -95,7 +95,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
     FT_STATUS ftStatus = FT_OK;
     DWORD dwNumDevices = 0;
     // Open a device
-    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial)), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
+    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.c_str())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
 
     if (FT_FAILED(ftStatus))
         return false;

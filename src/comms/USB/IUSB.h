@@ -40,7 +40,7 @@ class IUSB
       @param serial The serial number of the device.
       @return The status of the operation (true on success).
      */
-    virtual bool Connect(uint16_t vid, uint16_t pid, const char* serial = nullptr) = 0;
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string& serial = "") = 0;
 
     /**
       @brief Returns whether this instance is connected to a device.

@@ -23,7 +23,7 @@ class FX3 : public IUSB
     FX3();
     virtual ~FX3();
 
-    bool Connect(uint16_t vid, uint16_t pid, const char* serial) override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string& serial) override;
     void Disconnect() override;
     bool IsConnected() override;
 

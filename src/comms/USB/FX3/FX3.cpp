@@ -102,7 +102,7 @@ FX3::~FX3()
     Disconnect();
 }
 
-bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     Disconnect();
 #ifdef __unix__

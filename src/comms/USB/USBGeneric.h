@@ -43,7 +43,7 @@ class USBGeneric : IUSB
     virtual ~USBGeneric();
     static constexpr int32_t defaultTimeout = 1000; ///< The default timeout to use if none is specified.
 
-    bool Connect(uint16_t vid, uint16_t pid, const char* serial) override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string& serial) override;
     bool IsConnected() override;
 
     void Disconnect() override;
