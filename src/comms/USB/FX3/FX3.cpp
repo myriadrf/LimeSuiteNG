@@ -14,9 +14,10 @@ using namespace std::literals::string_literals;
         #pragma GCC diagnostic pop
     #endif
 #else
-    #include "windows.h"
+    #include "Windows.h"
     #include "CyAPI.h"
     #include <codecvt>
+    #include "comms/USB/WindowsHotplug.h"
 #endif
 
 namespace lime {
@@ -138,6 +139,14 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
         ep->SetXferSize(len);
         endpoints[ep->Address] = ep;
     }
+
+    hotplug.AddDeviceToReceiveHotplugDisconnectEvents(vid, pid, serial);
+    hotplug.AddOnHotplugDisconnectCallback(
+        [](void* data) {
+            auto* fx3 = reinterpret_cast<FX3*>(data);
+            fx3->Disconnect();
+        },
+        this);
 #endif
     return true;
 }
@@ -277,8 +286,7 @@ void FX3::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackTy
 #ifdef __unix__
     libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
 #else
-    // TODO: figure out how to pass something to CCyUSBDevice constructor's first parameter
-    // that would be able to collect the Windows Plug and Play events that the library would send
+    hotplug.AddOnHotplugDisconnectCallback(function, userData);
 #endif
 }
 

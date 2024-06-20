@@ -19,9 +19,11 @@ set(COMMS_USB_SOURCES
 ########################################################################
 ## Add to library
 ########################################################################
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_USB_SOURCES})
 
 if(UNIX)
     target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/USBGeneric.cpp)
+else()
+    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/WindowsHotplug.cpp)
+    target_link_options(${MAIN_LIBRARY_NAME} PUBLIC "cfgmgr32.lib")
 endif()

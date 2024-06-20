@@ -7,10 +7,13 @@
 
 #ifdef __unix__
     #include "comms/USB/USBGeneric.h"
-#endif // !__unix__
+#else
+    #include "comms/USB/WindowsHotplug.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
+
+#endif // !__unix__
 
 namespace lime {
 
@@ -57,6 +60,8 @@ class FX3 : public IUSB
 
     //end points for samples reading and writing
     std::map<uint8_t, CCyUSBEndPoint*> endpoints{};
+
+    WindowsHotplug hotplug{};
 #endif
 };
 

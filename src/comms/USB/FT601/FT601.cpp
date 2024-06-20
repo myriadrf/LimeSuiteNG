@@ -110,6 +110,14 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     FT_SetPipeTimeout(mFTHandle, CONTROL_BULK_READ_ADDRESS, 500);
     FT_SetPipeTimeout(mFTHandle, STREAM_BULK_READ_ADDRESS, 100);
     FT_SetPipeTimeout(mFTHandle, STREAM_BULK_WRITE_ADDRESS, 100);
+
+    hotplug.AddDeviceToReceiveHotplugDisconnectEvents(vid, pid, serial);
+    hotplug.AddOnHotplugDisconnectCallback(
+        [](void* data) {
+            auto* ft601 = reinterpret_cast<FT601*>(data);
+            ft601->Disconnect();
+        },
+        this);
     return true;
 #endif
 }
@@ -378,7 +386,7 @@ void FT601::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallback
 #ifdef __unix__
     libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
 #else
-    // Hotplug events are not supported by the library
+    hotplug.AddOnHotplugDisconnectCallback(function, userData);
 #endif
 }
 
