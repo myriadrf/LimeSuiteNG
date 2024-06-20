@@ -111,8 +111,25 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
     if (fx3device->DeviceCount() == 0)
         return false;
 
-    if (fx3device->Open(0) == false)
+    for (UCHAR i = 0; i < fx3device->DeviceCount(); ++i)
+    {
+        if (fx3device->Open(i) == false)
+            continue;
+
+        if (fx3device->VendorID == vid && fx3device->ProductID == pid &&
+            (serial.empty() ||
+                std::string{ std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(fx3device->SerialNumber) } == serial))
+        {
+            break;
+        }
+
+        fx3device->Close();
+    }
+
+    if (!fx3device->IsOpen())
+    {
         return false;
+    }
 
     for (int i = 0; i < fx3device->EndPointCount(); ++i)
     {
