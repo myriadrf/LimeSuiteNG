@@ -23,8 +23,16 @@ class IUSB
     struct VendorProductId {
         uint16_t vendorId;
         uint16_t productId;
-        bool operator<(const VendorProductId& rhs) const { return vendorId < rhs.vendorId || productId < rhs.productId; }
+        bool operator<(const VendorProductId& rhs) const
+        {
+            if (vendorId == rhs.vendorId)
+            {
+                return productId < rhs.productId;
+            }
+            return vendorId < rhs.vendorId;
+        }
     };
+
     /**
      * @brief Returns list of detected devices descriptors used for connecting to device.
      * @param ids Set of vendor and product IDs to search for
