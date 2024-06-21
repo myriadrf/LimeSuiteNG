@@ -64,8 +64,7 @@ void GlobalHotplugEvents::RemoveGlobalHotplugDisconnectCallback(std::size_t id)
 }
 
 template<typename T>
-static std::size_t GlobalHotplugEvents::AddCallback(
-    std::vector<SDRDevice::CallbackInfo<T>>& vector, const T& function, void* userData)
+std::size_t GlobalHotplugEvents::AddCallback(std::vector<SDRDevice::CallbackInfo<T>>& vector, const T& function, void* userData)
 {
     std::size_t id = 0;
 
@@ -80,8 +79,7 @@ static std::size_t GlobalHotplugEvents::AddCallback(
     return id;
 }
 
-template<typename T>
-static void GlobalHotplugEvents::RemoveCallback(std::vector<SDRDevice::CallbackInfo<T>>& vector, std::size_t id)
+template<typename T> void GlobalHotplugEvents::RemoveCallback(std::vector<SDRDevice::CallbackInfo<T>>& vector, std::size_t id)
 {
     vector.erase(
         std::remove_if(vector.begin(), vector.end(), [&id](const SDRDevice::CallbackInfo<T>& info) { return id == info.id; }),
