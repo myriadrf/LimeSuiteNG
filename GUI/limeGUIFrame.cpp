@@ -5,9 +5,9 @@
 #endif //__BORLANDC__
 
 #include <wx/msgdlg.h>
+#include <wx/string.h>
 
 #include "chips/LMS7002M/lms7002_mainPanel.h"
-
 #include "limeGUIFrame.h"
 #include "dlgAbout.h"
 #include "lms7suiteEvents.h"
@@ -19,9 +19,7 @@
 #include "utility/pnlMiniLog.h"
 #include "FPGAcontrols_wxgui.h"
 #include "utility/SPI_wxgui.h"
-#include <wx/string.h>
 #include "utility/dlgDeviceInfo.h"
-#include <functional>
 #include "boards/pnlBoardControls.h"
 #include "protocols/LMSBoards.h"
 #include "utility/SPI_wxgui.h"
@@ -34,6 +32,9 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/Logger.h"
+#include "DeviceConnectionPanel.h"
+
+#include <functional>
 
 using namespace std;
 using namespace lime;
@@ -42,8 +43,6 @@ using namespace std::literals::string_literals;
 static constexpr int controlColumn = 1;
 
 limeGUIFrame* limeGUIFrame::obj_ptr = nullptr;
-
-int limeGUIFrame::m_lmsSelection = 0;
 
 void limeGUIFrame::OnGlobalLogEvent(const lime::LogLevel level, const std::string& message)
 {
@@ -398,6 +397,15 @@ void limeGUIFrame::OnDeviceHandleChange(wxCommandEvent& event)
         evt.SetString(_("Connected ") + controlDev);
         wxPostEvent(this, evt);
         UpdateConnections(lmsControl);
+
+        lmsControl->AddHotplugDisconnectCallback(
+            [&](void* data) {
+                auto* evt = new wxCommandEvent();
+                evt->SetEventType(limeEVT_SDR_HANDLE_SELECTED);
+                evt->SetString(wxEmptyString);
+                wxQueueEvent(this, evt);
+            },
+            this);
 
         Fit();
     } catch (std::runtime_error& e)

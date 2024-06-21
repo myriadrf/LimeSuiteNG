@@ -7,10 +7,13 @@
 
 #ifdef __unix__
     #include "comms/USB/USBGeneric.h"
-#endif // !__unix__
+#else
+    #include "comms/USB/WindowsHotplug.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
+
+#endif // !__unix__
 
 namespace lime {
 
@@ -23,7 +26,7 @@ class FX3 : public IUSB
     FX3();
     virtual ~FX3();
 
-    bool Connect(uint16_t vid, uint16_t pid, const char* serial) override;
+    bool Connect(uint16_t vid, uint16_t pid, const std::string& serial) override;
     void Disconnect() override;
     bool IsConnected() override;
 
@@ -38,13 +41,16 @@ class FX3 : public IUSB
     int32_t ControlTransfer(
         int requestType, int request, int value, int index, uint8_t* data, size_t length, int32_t timeout_ms) override;
 
+    void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+
     static const int CTR_WRITE_REQUEST_VALUE;
     static const int CTR_READ_REQUEST_VALUE;
 
-    static constexpr uint8_t CONTROL_BULK_OUT_ADDRESS =
-        0x0F; ///< The memory address for writing information via the bulk transfer protocol.
-    static constexpr uint8_t CONTROL_BULK_IN_ADDRESS =
-        0x8F; ///< THe memory address for reading information via the bulk transfer protocol.
+    /// The memory address for writing information via the bulk transfer protocol.
+    static constexpr uint8_t CONTROL_BULK_OUT_ADDRESS = 0x0F;
+    /// The memory address for reading information via the bulk transfer protocol.
+    static constexpr uint8_t CONTROL_BULK_IN_ADDRESS = 0x8F;
+
   protected:
 #ifdef __unix__
     USBGeneric libusb_impl;
@@ -54,6 +60,8 @@ class FX3 : public IUSB
 
     //end points for samples reading and writing
     std::map<uint8_t, CCyUSBEndPoint*> endpoints{};
+
+    WindowsHotplug hotplug{};
 #endif
 };
 

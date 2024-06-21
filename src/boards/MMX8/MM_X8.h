@@ -149,6 +149,9 @@ class LimeSDR_MMX8 : public SDRDevice
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
     OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
 
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
+
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;
     SDRDescriptor mDeviceDescriptor;

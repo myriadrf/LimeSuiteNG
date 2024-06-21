@@ -69,7 +69,7 @@ void lms7002m_sleep(long timeInMicroseconds)
 void lms7002m_spi_write(lms7002m_context* self, uint16_t address, uint16_t value)
 {
     uint32_t mosi = address << 16 | value;
-    mosi |= 1 << 31;
+    mosi |= 0x80000000;
     self->hooks.spi16_transact(&mosi, NULL, 1, self->hooks.spi16_userData);
 }
 

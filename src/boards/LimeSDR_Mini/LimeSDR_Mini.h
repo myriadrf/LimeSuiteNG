@@ -9,7 +9,6 @@
 
 namespace lime {
 
-class USBGeneric;
 class IComms;
 class IUSB;
 
@@ -54,6 +53,9 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     void SetSerialNumber(const std::string& number);
 
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
+
   protected:
     SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
@@ -64,6 +66,8 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
     bool mConfigInProgress{};
+
+    std::vector<CallbackInfo<HotplugDisconnectCallbackType>> disconnectCallbacks;
 };
 
 } // namespace lime

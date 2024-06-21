@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 
         device->StreamSetup(stream, chipIndex);
         device->StreamStart(chipIndex);
-
+        device->AddHotplugDisconnectCallback([](void* data) { *reinterpret_cast<bool*>(data) = true; }, &stopProgram);
     } catch (std::runtime_error& e)
     {
         std::cout << "Failed to configure settings: "sv << e.what() << std::endl;

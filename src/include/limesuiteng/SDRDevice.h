@@ -573,6 +573,29 @@ class LIME_API SDRDevice
     /// @param serialNumber Device's serial number
     /// @return The operation success state.
     virtual OpStatus WriteSerialNumber(uint64_t serialNumber);
+
+    /// @brief The type of the function to call when a disconnect event happens.
+    typedef std::function<void(void* userData)> HotplugDisconnectCallbackType;
+
+    /// @brief The structure to hold the information for the callback
+    /// @tparam T The type of function to call
+    template<typename T> struct CallbackInfo {
+        T function;
+        void* userData;
+        std::size_t id;
+
+        void operator()() const { return function(userData); }
+    };
+
+    /// @brief Adds a callback to run when a hotplug disconnect event happens (currently USB only).
+    /// @param function The function to run when a disconnect happens.
+    /// @param userData The data to pass into the function when it runs.
+    /// @return The ID of the callback for removal later.
+    virtual std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) = 0;
+
+    /// @brief Removes the given hotplug disconnect callback by ID.
+    /// @param id The ID of the callback to remove.
+    virtual void RemoveHotplugDisconnectCallback(std::size_t id) = 0;
 };
 
 } // namespace lime

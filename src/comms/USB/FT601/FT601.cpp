@@ -71,7 +71,7 @@ FT601::~FT601()
     Disconnect();
 }
 
-bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool FT601::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     Disconnect();
 #ifdef __unix__
@@ -95,7 +95,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
     FT_STATUS ftStatus = FT_OK;
     DWORD dwNumDevices = 0;
     // Open a device
-    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial)), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
+    ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial.c_str())), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
 
     if (FT_FAILED(ftStatus))
         return false;
@@ -110,6 +110,14 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
     FT_SetPipeTimeout(mFTHandle, CONTROL_BULK_READ_ADDRESS, 500);
     FT_SetPipeTimeout(mFTHandle, STREAM_BULK_READ_ADDRESS, 100);
     FT_SetPipeTimeout(mFTHandle, STREAM_BULK_WRITE_ADDRESS, 100);
+
+    hotplug.AddDeviceToReceiveHotplugDisconnectEvents(vid, pid, serial);
+    hotplug.AddOnHotplugDisconnectCallback(
+        [](void* data) {
+            auto* ft601 = reinterpret_cast<FT601*>(data);
+            ft601->Disconnect();
+        },
+        this);
     return true;
 #endif
 }
@@ -372,5 +380,14 @@ int FT601::FT_SetStreamPipe(unsigned char ep, size_t size)
     return 0;
 }
 #endif
+
+void FT601::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+{
+#ifdef __unix__
+    libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
+#else
+    hotplug.AddOnHotplugDisconnectCallback(function, userData);
+#endif
+}
 
 } // namespace lime

@@ -1191,4 +1191,14 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
     return OpStatus::Success;
 }
 
+std::size_t LMS7002M_SDRDevice::AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData)
+{
+    return 0;
+}
+
+void LMS7002M_SDRDevice::RemoveHotplugDisconnectCallback(std::size_t id)
+{
+    return;
+}
+
 } // namespace lime

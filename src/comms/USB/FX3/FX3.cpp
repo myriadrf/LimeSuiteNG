@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-using namespace lime;
 using namespace std::literals::string_literals;
 
 #ifdef __unix__
@@ -14,13 +13,19 @@ using namespace std::literals::string_literals;
     #ifdef __GNUC__
         #pragma GCC diagnostic pop
     #endif
+#else
+    #include "Windows.h"
+    #include "CyAPI.h"
+    #include <codecvt>
+    #include "comms/USB/WindowsHotplug.h"
+#endif
+
+namespace lime {
+
+#ifdef __unix__
 const int FX3::CTR_WRITE_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR;
 const int FX3::CTR_READ_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
 #else
-    #include "windows.h"
-    #include "CyAPI.h"
-    #include <codecvt>
-
 class FX3AsyncContext
 {
   public:
@@ -98,7 +103,7 @@ FX3::~FX3()
     Disconnect();
 }
 
-bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool FX3::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     Disconnect();
 #ifdef __unix__
@@ -107,8 +112,25 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
     if (fx3device->DeviceCount() == 0)
         return false;
 
-    if (fx3device->Open(0) == false)
+    for (UCHAR i = 0; i < fx3device->DeviceCount(); ++i)
+    {
+        if (fx3device->Open(i) == false)
+            continue;
+
+        if (fx3device->VendorID == vid && fx3device->ProductID == pid &&
+            (serial.empty() ||
+                std::string{ std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(fx3device->SerialNumber) } == serial))
+        {
+            break;
+        }
+
+        fx3device->Close();
+    }
+
+    if (!fx3device->IsOpen())
+    {
         return false;
+    }
 
     for (int i = 0; i < fx3device->EndPointCount(); ++i)
     {
@@ -117,6 +139,14 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
         ep->SetXferSize(len);
         endpoints[ep->Address] = ep;
     }
+
+    hotplug.AddDeviceToReceiveHotplugDisconnectEvents(vid, pid, serial);
+    hotplug.AddOnHotplugDisconnectCallback(
+        [](void* data) {
+            auto* fx3 = reinterpret_cast<FX3*>(data);
+            fx3->Disconnect();
+        },
+        this);
 #endif
     return true;
 }
@@ -250,3 +280,14 @@ void FX3::FreeAsyncContext(void* context)
     delete reinterpret_cast<FX3AsyncContext*>(context);
 #endif
 }
+
+void FX3::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+{
+#ifdef __unix__
+    libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
+#else
+    hotplug.AddOnHotplugDisconnectCallback(function, userData);
+#endif
+}
+
+} // namespace lime

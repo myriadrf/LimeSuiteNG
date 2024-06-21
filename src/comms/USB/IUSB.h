@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <functional>
 #include "limesuiteng/OpStatus.h"
 
 namespace lime {
@@ -22,8 +23,16 @@ class IUSB
     struct VendorProductId {
         uint16_t vendorId;
         uint16_t productId;
-        bool operator<(const VendorProductId& rhs) const { return vendorId < rhs.vendorId || productId < rhs.productId; }
+        bool operator<(const VendorProductId& rhs) const
+        {
+            if (vendorId == rhs.vendorId)
+            {
+                return productId < rhs.productId;
+            }
+            return vendorId < rhs.vendorId;
+        }
     };
+
     /**
      * @brief Returns list of detected devices descriptors used for connecting to device.
      * @param ids Set of vendor and product IDs to search for
@@ -39,7 +48,7 @@ class IUSB
       @param serial The serial number of the device.
       @return The status of the operation (true on success).
      */
-    virtual bool Connect(uint16_t vid, uint16_t pid, const char* serial = nullptr) = 0;
+    virtual bool Connect(uint16_t vid, uint16_t pid, const std::string& serial = "") = 0;
 
     /**
       @brief Returns whether this instance is connected to a device.
@@ -116,6 +125,15 @@ class IUSB
       @param context Pointer to transfer context (retuned by AllocateAsyncContext).
      */
     virtual void FreeAsyncContext(void* context) = 0;
+
+    typedef std::function<void(void* userData)> HotplugDisconnectCallbackType;
+    template<typename T> struct CallbackInfo {
+        T function;
+        void* userData;
+
+        void operator()() { return function(userData); }
+    };
+    virtual void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) = 0;
 };
 
 } // namespace lime
