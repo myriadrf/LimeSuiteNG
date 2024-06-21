@@ -74,20 +74,32 @@ if(NOT INSTALL_KERNEL_MODULE)
     return()
 endif()
 
+# 0 means success, so it's inverted
+execute_process(
+    COMMAND dkms --version
+    RESULT_VARIABLE IS_DKMS_NOT_PRESENT
+    OUTPUT_QUIET)
+
+cmake_dependent_option(USE_DKMS "Use DKMS when installing the kernel module" ON "NOT IS_DKMS_NOT_PRESENT" OFF)
+
+set(MODE_FLAG "--dkms")
+if(NOT USE_DKMS)
+    set(KERNEL_MODULE_DESTINATION /lib/modules/${KERNEL_RELEASE}/extra)
+    install(FILES ${MODULE_OBJECT} DESTINATION ${KERNEL_MODULE_DESTINATION})
+
+    set(MODE_FLAG "--legacy")
+endif()
+
 # If module is already loaded, unload it
 install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall-legacy-module.sh)")
-
-configure_file(dkms.conf.in dkms.conf)
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/unload.sh ${MODULE_NAME})")
 
 install(
-    FILES limepcie.c limepcie.h boards.h Makefile ${CMAKE_CURRENT_BINARY_DIR}/dkms.conf
-    DESTINATION /usr/src/limepcie-${DRIVER_VERSION})
-install(FILES bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h DESTINATION /usr/src/limepcie-${DRIVER_VERSION}/bsp)
-# load installed module
-install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})")
+    CODE "execute_process(COMMAND ${CMAKE_CURRENT_LIST_DIR}/install.sh ${MODE_FLAG} ${MODULE_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})"
+)
 
 add_custom_target(
     uninstall-kernel-module
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall.sh
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/uninstall.sh ${MODE_FLAG} ${MODULE_NAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     COMMENT "Uninstalling Linux kernel module ${MODULE_NAME}")
