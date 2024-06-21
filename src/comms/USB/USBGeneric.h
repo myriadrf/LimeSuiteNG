@@ -69,7 +69,7 @@ class USBGeneric : IUSB
 
     std::vector<IUSB::CallbackInfo<IUSB::HotplugDisconnectCallbackType>> hotplugDisconnectCallbacks{};
 
-    static int HotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data);
+    static int DeviceHotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data);
 };
 
 } // namespace lime

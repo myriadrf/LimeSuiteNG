@@ -15,6 +15,7 @@
 #endif
 
 #include "limesuiteng/Logger.h"
+#include "GlobalHotplugEvents.h"
 
 using namespace std::literals::string_literals;
 
@@ -23,6 +24,8 @@ namespace lime {
 static libusb_context* gContextLibUsb{ nullptr };
 static int activeUSBconnections = 0;
 static std::thread gUSBProcessingThread; // single thread for processing USB callbacks
+
+static libusb_hotplug_callback_handle globalCallbackHandle;
 
 static void HandleLibusbEvents(libusb_context* context)
 {
@@ -36,6 +39,46 @@ static void HandleLibusbEvents(libusb_context* context)
         if (returnCode != 0)
             lime::error("libusb_handle_events: %s", libusb_strerror(static_cast<libusb_error>(returnCode)));
     }
+}
+
+static int GlobalHotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data)
+{
+    libusb_device_descriptor desc{};
+    const auto returnCode = libusb_get_device_descriptor(device, &desc);
+    if (returnCode < 0)
+    {
+        lime::error("Failed to get device description"s);
+        return 0;
+    }
+
+    const IUSB::VendorProductId vidPid{ desc.idVendor, desc.idProduct };
+    const auto& matchTo = GlobalHotplugEvents::GetVidPids();
+
+    // Figure out if it's a device we care about
+    if (matchTo.find(vidPid) == matchTo.end())
+    {
+        // It's not something we care about, this is the only value we can return here though
+        return 0;
+    }
+
+    if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event)
+    {
+        const auto& callbacks = GlobalHotplugEvents::GetConnectCallbacks();
+        for (auto iter = callbacks.rbegin(); iter != callbacks.rend(); ++iter)
+        {
+            (*iter)();
+        }
+    }
+    else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event)
+    {
+        const auto& callbacks = GlobalHotplugEvents::GetDisconnectCallbacks();
+        for (auto iter = callbacks.rbegin(); iter != callbacks.rend(); ++iter)
+        {
+            (*iter)();
+        }
+    }
+
+    return 0;
 }
 
 static int SessionRefCountIncrement()
@@ -55,7 +98,19 @@ static int SessionRefCountIncrement()
             LIBUSB_LOG_LEVEL_INFO); // Set verbosity level to info, as suggested in the documentation
 #endif
         if (gContextLibUsb)
+        {
             gUSBProcessingThread = std::thread(HandleLibusbEvents, gContextLibUsb);
+
+            libusb_hotplug_register_callback(gContextLibUsb,
+                LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                0,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                GlobalHotplugCallback,
+                nullptr,
+                &globalCallbackHandle);
+        }
     }
     return activeUSBconnections;
 }
@@ -65,6 +120,7 @@ static int SessionRefCountDecrement()
     --activeUSBconnections;
     if (activeUSBconnections == 0 && gUSBProcessingThread.joinable())
     {
+        libusb_hotplug_deregister_callback(gContextLibUsb, globalCallbackHandle);
         gUSBProcessingThread.join();
         libusb_exit(gContextLibUsb);
         gContextLibUsb = nullptr;
@@ -111,7 +167,7 @@ static void process_libusbtransfer(libusb_transfer* trans)
 }
 
 // Runs within the gUSBProcessingThread thread
-int USBGeneric::HotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data)
+int USBGeneric::DeviceHotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data)
 {
     auto* usb = reinterpret_cast<USBGeneric*>(user_data);
 
@@ -279,7 +335,7 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const std::string& serial)
                 desc.idVendor,
                 desc.idProduct,
                 LIBUSB_HOTPLUG_MATCH_ANY,
-                HotplugCallback,
+                DeviceHotplugCallback,
                 this,
                 nullptr);
 
