@@ -1,10 +1,10 @@
-# SoapyLMS7 - SoapySDR bindings for LimeSuite
+# Soapy_limesuiteng - SoapySDR bindings for Lime Suite NG
 
-The SoapyLMS7 wrapper provides SoapySDR bindings for LimeSuite
-devices using the LMS7 API. The wrapper builds along side the LimeSuite
+The Soapy_limesuiteng wrapper provides Soapy_limesuiteng bindings for LimeSDR
+devices using the Lime Suite NG API. The wrapper builds along side the Lime Suite NG
 compilation when SoapySDR development files are detected.
 
-SoapyLMS7 allows LimeSuite devices to be used in applications
+Soapy_limesuiteng allows LimeSDR devices to be used in applications
 that use the SoapySDR API such as CubicSDR, Pothos, GNURadio, GrOsmosdr.
 In addition, the API supports Python and remote access bindings.
 

@@ -135,7 +135,7 @@ OpStatus LitePCIeDMA::Enable(bool enabled)
     return OpStatus::Success;
 }
 
-OpStatus LitePCIeDMA::EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
+OpStatus LitePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
 {
     assert(port->IsOpen());
     if (dir == DataTransferDirection::DeviceToHost)

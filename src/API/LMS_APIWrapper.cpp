@@ -357,12 +357,13 @@ API_EXPORT int CALL_CONV LMS_GetSampleRate(lms_device_t* device, bool dir_tx, si
     }
 
     lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    auto rate = apiDevice->device->GetSampleRate(apiDevice->moduleIndex, direction, 0);
+    uint32_t rf_rate;
+    auto rate = apiDevice->device->GetSampleRate(apiDevice->moduleIndex, direction, 0, &rf_rate);
 
     if (host_Hz)
         *host_Hz = rate;
     if (rf_Hz)
-        *rf_Hz = rate;
+        *rf_Hz = rf_rate;
 
     return 0;
 }

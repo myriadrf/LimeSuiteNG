@@ -35,10 +35,10 @@ class IDMA
       @param irqPeriod Number of transfers after which to trigger interrupt request
       @return The operation success state.
 
-      In continuos mode, the device automatically keeps looping over available buffers
+      In continuous mode, the device automatically keeps looping over available buffers
       and transfering data without explicit requests.
      */
-    virtual OpStatus EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) = 0;
+    virtual OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) = 0;
 
     /**
      * @brief Returns how many transactions have been completed, can overflow

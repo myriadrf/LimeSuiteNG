@@ -271,7 +271,7 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate{0};
+        double sampleRate{ 0 };
         if (rxUsed)
             sampleRate = cfg.channel[0].rx.sampleRate;
         else if (txUsed)
@@ -537,7 +537,8 @@ OpStatus LimeSDR_Mini::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     }
 
     assert(mStreamPort);
-    auto connection = std::static_pointer_cast<FT601>(mStreamPort);
+    FT601* ftdi = dynamic_cast<FT601*>(mStreamPort.get());
+    ftdi->ResetStreamBuffers();
 
     auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_READ_ADDRESS, DataTransferDirection::DeviceToHost);
     auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, STREAM_BULK_WRITE_ADDRESS, DataTransferDirection::HostToDevice);

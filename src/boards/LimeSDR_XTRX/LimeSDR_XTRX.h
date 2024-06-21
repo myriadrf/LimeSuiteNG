@@ -51,6 +51,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
     virtual OpStatus WriteSerialNumber(uint64_t serialNumber) override;
 
+    OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
+
   protected:
     void LMS1SetPath(bool tx, uint8_t chan, uint8_t path);
     OpStatus LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
@@ -86,7 +88,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         double LOFreq,
         int gain,
         int rxPath,
-        double expected_dBFS);
+        double expectChA_dBFS,
+        double expectChB_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
   private:

@@ -589,7 +589,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate{0};
+        double sampleRate{ 0 };
         if (rxUsed)
             sampleRate = cfg.channel[0].rx.sampleRate;
         else if (txUsed)
@@ -776,31 +776,40 @@ OpStatus LimeSDR_X3::Reset()
     return status;
 }
 
-double LimeSDR_X3::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+double LimeSDR_X3::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
     switch (moduleIndex)
     {
     case 1:
         if (trx == TRXDir::Rx)
         {
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y4); // Rx Ch. A
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y4); // Rx Ch. A
+            if (rf_samplerate)
+                *rf_samplerate = rate;
+            return rate;
         }
         else
         {
             const int oversample = mEqualizer->GetOversample();
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y0Y1) / oversample; // Tx Ch. A&B
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y0Y1) / oversample; // Tx Ch. A&B
+            if (rf_samplerate)
+                *rf_samplerate = rate * oversample;
+            return rate;
         }
     case 2:
         if (trx == TRXDir::Rx) // LMS3 Rx uses external ADC
         {
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y6); // Rx Ch. A
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y6); // Rx Ch. A
+            if (rf_samplerate)
+                *rf_samplerate = rate;
+            return rate;
         }
         else // LMS3 Tx uses internal ADC
         {
-            return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, TRXDir::Tx, channel);
+            return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, TRXDir::Tx, channel, rf_samplerate);
         }
     default:
-        return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, trx, channel);
+        return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, trx, channel, rf_samplerate);
     }
 }
 

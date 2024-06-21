@@ -30,61 +30,52 @@ static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static const CustomParameter cp_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
-    { 0x0022, 0x0FFF },
+    { 0x0020, 0xFFFD },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
     { 0x002C, 0x0000 },
-    { 0x002D, 0x0641 },
+    { 0x0081, 0x0001 },
     { 0x0086, 0x4101 },
-    { 0x0087, 0x5555 },
-    { 0x0088, 0x0525 },
-    { 0x0089, 0x1078 },
-    { 0x008B, 0x218C },
-    { 0x008C, 0x267B },
+    { 0x0089, 0x1040 },
+    { 0x008B, 0x2198 },
+    { 0x009B, 0x8C65 },
+    { 0x009E, 0x8C65 },
+    { 0x00A0, 0x658C },
     { 0x00A6, 0x000F },
-    { 0x00A9, 0x8000 },
-    { 0x00AC, 0x2000 },
-    { 0x0108, 0x218C },
-    { 0x0109, 0x57C1 },
-    { 0x010A, 0x154C },
+    { 0x0100, 0x7409 },
+    { 0x0101, 0x1800 },
+    { 0x0103, 0x0A50 },
+    { 0x0105, 0x0011 },
+    { 0x0108, 0x410C },
+    { 0x010A, 0x1FFF },
     { 0x010B, 0x0001 },
     { 0x010C, 0x8865 },
-    { 0x010D, 0x011A },
-    { 0x010E, 0x0000 },
-    { 0x010F, 0x3142 },
+    { 0x010D, 0x009F },
+    { 0x010F, 0x3042 },
     { 0x0110, 0x2B14 },
     { 0x0111, 0x0000 },
-    { 0x0112, 0x000C },
-    { 0x0113, 0x03C2 },
-    { 0x0114, 0x01F0 },
-    { 0x0115, 0x000D },
-    { 0x0118, 0x418C },
-    { 0x0119, 0x5292 },
+    { 0x0112, 0x2106 },
+    { 0x0113, 0x01C1 },
+    { 0x0114, 0x01B0 },
+    { 0x0117, 0x2044 },
+    { 0x0119, 0x528C },
     { 0x011A, 0x3001 },
-    { 0x011C, 0x8941 },
-    { 0x011D, 0x0000 },
-    { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
-    { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
-    { 0x0123, 0x200F },
-    { 0x0200, 0x00E1 },
+    { 0x011C, 0x8141 },
+    { 0x011F, 0x3602 },
+    { 0x0120, 0x35FF },
+    { 0x0121, 0x37F8 },
+    { 0x0122, 0x0654 },
+    { 0x0124, 0x001F },
     { 0x0208, 0x017B },
-    { 0x020B, 0x4000 },
-    { 0x020C, 0x8000 },
     { 0x0400, 0x8081 },
-    { 0x0404, 0x0006 },
-    { 0x040B, 0x1020 },
-    { 0x040C, 0x00FB },
-
-    // LDOs
-    { 0x0092, 0x0D15 },
-    { 0x0093, 0x01B1 },
-    { 0x00A6, 0x000F },
-    // XBUF
-    { 0x0085, 0x0019 },
+    { 0x0405, 0x0303 },
+    { 0x0406, 0x0303 },
+    { 0x0407, 0x0303 },
+    { 0x040A, 0x2000 },
+    { 0x040C, 0x01FF },
 };
 
 static inline void ValidateChannel(uint8_t channel)
@@ -140,7 +131,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
 
-    desc.customParameters.push_back(cp_vctcxo_dac);
+    desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
     mFPGA = new lime::FPGA_XTRX(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
@@ -197,19 +188,6 @@ static OpStatus InitLMS1(LMS7002M* lms, bool skipTune = false)
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
-    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(false, 2*i+1, false);
-    // EnableChannel(true, 2*i+1, false);
-
-    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
 
     if (skipTune)
         return OpStatus::Success;
@@ -271,7 +249,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
         chip->SetActiveChannel(LMS7002M::Channel::ChA);
 
-        double sampleRate{0};
+        double sampleRate{ 0 };
         if (rxUsed)
             sampleRate = cfg.channel[0].rx.sampleRate;
         else if (txUsed)
@@ -327,6 +305,10 @@ OpStatus LimeSDR_XTRX::Init()
     // CustomParameterWrite(&paramId,&dacVal,1,"");
     // paramId = 3;
     // CustomParameterWrite(&paramId,&dacVal,1,"");
+
+    OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+    if (status != OpStatus::Success)
+        return status;
 
     const bool skipTune = true;
     return InitLMS1(mLMSChips.at(0), skipTune);
@@ -853,7 +835,8 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     double LOFreq,
     int gain,
     int rxPath,
-    double expected_dBFS)
+    double expectChA_dBFS,
+    double expectChB_dBFS)
 {
     SDRConfig config;
     config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = 61.44e6;
@@ -861,6 +844,8 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     config.channel[0].tx.enabled = true;
     config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
     config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
+    config.channel[0].tx.gain[eGainTypes::PAD] = 52;
+    config.channel[0].tx.gain[eGainTypes::IAMP] = -18;
 
     const double tx_offset = 5e6;
     config.channel[0].rx.centerFrequency = LOFreq;
@@ -885,7 +870,7 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     args.rfTestTolerance_dB = 6;
     args.rfTestTolerance_Hz = 50e3;
     args.sampleRate = config.channel[0].rx.sampleRate;
-    args.expectedPeakval_dBFS = expected_dBFS;
+    args.expectedPeakval_dBFS = expectChA_dBFS;
     args.expectedPeakFrequency = tx_offset;
     args.moduleIndex = 0;
 
@@ -895,13 +880,17 @@ OpStatus LimeSDR_XTRX::RunTestConfig(OEMTestReporter& reporter,
     RFTestOutput output{};
     if (configPass)
         chAPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
+
     results[0].frequency = output.frequency;
     results[0].amplitude = output.amplitude_dBFS;
     results[0].passed = chAPass;
+
     args.testName = name + " ChB";
     args.channelIndex = 1;
+    args.expectedPeakval_dBFS = expectChB_dBFS;
     if (configPass)
         chBPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
+
     results[1].frequency = output.frequency;
     results[1].amplitude = output.amplitude_dBFS;
     results[1].passed = chBPass;
@@ -926,9 +915,9 @@ OpStatus LimeSDR_XTRX::RFTest(OEMTestReporter& reporter, TestData& results)
     reporter.OnStepUpdate(test, "->Init Done");
     std::vector<OpStatus> statuses(3);
 
-    statuses.push_back(RunTestConfig(reporter, results.lnal, "TX_2->LNA_L", 1000e6, 0, 2, -8));
-    statuses.push_back(RunTestConfig(reporter, results.lnaw, "TX_2->LNA_W", 2000e6, 14, 3, -8));
-    statuses.push_back(RunTestConfig(reporter, results.lnah, "TX_1->LNA_H", 3500e6, 35, 1, -15));
+    statuses.push_back(RunTestConfig(reporter, results.lnal, "TX_2->LNA_L", 1000e6, 0, 2, -8, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnaw, "TX_2->LNA_W", 2000e6, 14, 3, -8, -8));
+    statuses.push_back(RunTestConfig(reporter, results.lnah, "TX_1->LNA_H", 3500e6, 35, 1, -8, -15));
 
     for (OpStatus s : statuses)
     {
@@ -1002,6 +991,15 @@ OpStatus LimeSDR_XTRX::WriteSerialNumber(uint64_t serialNumber)
     if (status == OpStatus::Success)
         mDeviceDescriptor.serialNumber = serialNumber;
     return status;
+}
+
+OpStatus LimeSDR_XTRX::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
+{
+    OpStatus status = LMS7002M_SDRDevice::SetAntenna(moduleIndex, trx, channel, path);
+    if (status != OpStatus::Success)
+        return status;
+    LMS1SetPath(trx == TRXDir::Tx, channel, path);
+    return OpStatus::Success;
 }
 
 } //namespace lime

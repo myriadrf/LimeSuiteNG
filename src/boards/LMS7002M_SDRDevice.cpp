@@ -133,127 +133,46 @@ OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
     return OpStatus::Success;
 }
 
-double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+double LMS7002M_SDRDevice::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
     if (moduleIndex >= mLMSChips.size())
     {
         ReportError(OpStatus::OutOfRange, "GetSample rate invalid module index (%i)", moduleIndex);
         return 0;
     }
-    return mLMSChips[moduleIndex]->GetSampleRate(trx, LMS7002M::Channel::ChA);
+    double sampleRate = mLMSChips[moduleIndex]->GetSampleRate(trx, LMS7002M::Channel::ChA);
+    if (rf_samplerate)
+    {
+        int oversample_control = mLMSChips[moduleIndex]->Get_SPI_Reg_bits(trx == TRXDir::Rx ? HBD_OVR_RXTSP : HBI_OVR_TXTSP);
+        if (oversample_control != 7)
+            *rf_samplerate = sampleRate * (2 << oversample_control);
+        else
+            *rf_samplerate = sampleRate;
+    }
+    return sampleRate;
 }
 
 double LMS7002M_SDRDevice::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
-
-    // TODO:
-    // double offset = GetNCOOffset(moduleIndex, trx, channel);
-
     if (trx == TRXDir::Rx)
     {
-        lms->Modify_SPI_Reg_bits(MAC, 1); // Sets the current channel to channel A
-        if (lms->Get_SPI_Reg_bits(PD_VCO) == 1)
-        {
-            trx = TRXDir::Tx; // Assume that Tx PLL used for TX and RX
-        }
+        LMS7002M::ChannelScope scope(lms, LMS7002M::Channel::ChSXT);
+        if (lms->Get_SPI_Reg_bits(PD_LOCH_T2RBUF) == 0) // TDD mode, return SXT LO
+            trx = TRXDir::Tx;
     }
-    return lms->GetFrequencySX(trx); // - offset;
+    return lms->GetFrequencySX(trx);
 }
 
 OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
-
-    int chA = channel & (~1);
-    int chB = channel | 1;
-
-    auto channelAFrequency = GetFrequency(moduleIndex, trx, chA);
-    auto channelBFrequency = GetFrequency(moduleIndex, trx, chB);
-
-    double phaseOffset = 0.0;
-    auto channelANCOFrequency = GetNCOFrequency(moduleIndex, trx, chA, 0, phaseOffset);
-    auto channelBNCOFrequency = GetNCOFrequency(moduleIndex, trx, chB, 0, phaseOffset);
-
-    auto channelANCOOffset = channelAFrequency - channelANCOFrequency;
-    auto channelBNCOOffset = channelBFrequency - channelBNCOFrequency;
-
-    auto channelOffset = channel == chA ? channelANCOOffset : channelBNCOOffset;
-
-    auto setTDD = [&](double center) {
-        TRXDir otherDir = trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx;
-        auto otherFrequency = GetFrequency(moduleIndex, otherDir, chA);
-        auto otherOffset = GetNCOOffset(moduleIndex, otherDir, chA);
-
-        bool tdd = std::fabs(otherFrequency + otherOffset - center) > 0.1 ? false : true;
-        lms->EnableSXTDD(tdd);
-
-        if (trx == TRXDir::Tx || (!tdd))
-        {
-            if (lms->SetFrequencySX(trx, center) != OpStatus::Success)
-            {
-                throw std::runtime_error("Setting TDD failed (failed SetFrequencySX)"s);
-            }
-        }
-
-        return;
-    };
-
-    if (channel == chA)
-    {
-        channelAFrequency = frequency;
-    }
-    else
-    {
-        channelBFrequency = frequency;
-    }
-
-    if (channelAFrequency > 0 && channelBFrequency > 0)
-    {
-        double delta = std::fabs(channelAFrequency - channelBFrequency);
-        if (delta > 0.1)
-        {
-            double rate = GetSampleRate(moduleIndex, trx, channel);
-            if ((delta <= rate * 31) && (delta + rate <= 160e6))
-            {
-                double center = (channelAFrequency + channelBFrequency) / 2;
-                if (center < 30e6)
-                {
-                    center = 30e6;
-                }
-                channelANCOOffset = center - channelAFrequency;
-                channelBNCOOffset = center - channelBFrequency;
-
-                setTDD(center);
-
-                return SetSampleRate(moduleIndex, trx, channel, rate, 2);
-            }
-        }
-    }
-
-    if (frequency < 30e6)
-    {
-        setTDD(30e6);
-
-        channelOffset = 30e6 - frequency;
-        double rate = GetSampleRate(moduleIndex, trx, channel);
-        if (channelOffset + rate / 2.0 >= rate / 2.0)
-        {
-            return SetSampleRate(moduleIndex, trx, channel, rate, 2);
-        }
-        else
-        {
-            SetNCOFrequency(moduleIndex, trx, channel, 0, channelOffset * (trx == TRXDir::Tx ? -1.0 : 1.0));
-        }
-    }
-
-    if (channelOffset != 0)
-    {
-        SetNCOFrequency(moduleIndex, trx, channel, 0, 0.0);
-    }
-
-    setTDD(frequency);
-    return OpStatus::Success;
+    int64_t oppositeDirLO = lms->GetFrequencySX(trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx);
+    OpStatus status = lms->SetFrequencySX(trx, frequency);
+    // Readback of LO frequency might not exactly match what was requested, so compare with some margin
+    bool useTDD = (abs(oppositeDirLO - frequency) <= 20);
+    lms->EnableSXTDD(useTDD);
+    return status;
 }
 
 double LMS7002M_SDRDevice::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -432,10 +351,8 @@ uint8_t LMS7002M_SDRDevice::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t 
 
 OpStatus LMS7002M_SDRDevice::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
 {
-    if (path >= mDeviceDescriptor.rfSOC.at(0).pathNames.size())
-    {
-        path = trx == TRXDir::Tx ? 1 : 2; // Default settings: Rx: LNAL, Tx: Band1
-    }
+    if (path >= mDeviceDescriptor.rfSOC.at(moduleIndex).pathNames.at(trx).size())
+        lime::error("Out of bounds antenna path");
 
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex);
 
@@ -554,7 +471,7 @@ OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M* device, LMS7002M::
         tia = 1;
     }
 #endif
-    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From datasheet
+    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From data sheet
 
     if ((device->Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, lna + 1) != OpStatus::Success) ||
         (device->Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, tia + 1) != OpStatus::Success) ||
@@ -970,43 +887,43 @@ void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
 
     if (mStreamers.at(moduleIndex) != nullptr)
     {
-        delete mStreamers[moduleIndex];
+        delete mStreamers.at(moduleIndex);
     }
 
-    mStreamers[moduleIndex] = nullptr;
+    mStreamers.at(moduleIndex) = nullptr;
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
-    return mStreamers[moduleIndex]->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
@@ -1253,7 +1170,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_RXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_RXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_RXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_RXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Rx, signal.dcValue.real(), signal.dcValue.imag());
     }
@@ -1267,7 +1184,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M* chip, const Ch
         chip->Modify_SPI_Reg_bits(TSGFC_TXTSP, fullscale ? 1 : 0);
         chip->Modify_SPI_Reg_bits(TSGFCW_TXTSP, div4 ? 2 : 1);
         chip->Modify_SPI_Reg_bits(TSGMODE_TXTSP, signal.dcMode ? 1 : 0);
-        chip->SPI_write(0x040C, 0x01FF); // DC.. bypasss
+        chip->SPI_write(0x040C, 0x01FF); // DC.. bypass
         // TSGMODE_TXTSP change resets DC values
         return chip->LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
     }

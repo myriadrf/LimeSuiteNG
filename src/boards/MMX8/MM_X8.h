@@ -52,7 +52,7 @@ class LimeSDR_MMX8 : public SDRDevice
 
     double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
-    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;

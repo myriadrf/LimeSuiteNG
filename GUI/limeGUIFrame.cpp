@@ -226,7 +226,7 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     boardControlsGui = new pnlBoardControls(this, wxNewId());
     AddModule(boardControlsGui, "Board controls"s);
 
-    programmer = new LMS_Programing_wxgui(this, wxNewId());
+    programmer = new LMS_Programming_wxgui(this, wxNewId());
     AddModule(programmer, "Programming"s);
 
     int x, y1, y2;

@@ -110,19 +110,20 @@ else()
     set(RV64 FALSE)
 endif()
 
-if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
-    # Optional IPO. Do not use IPO if it's not supported by compiler.
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT result OUTPUT output)
-    if(result)
-        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            add_link_options(-flto=auto)
-        endif()
-    else()
-        message(WARNING "IPO is not supported: ${output}")
-    endif()
-endif()
+# Don't enable LTO/IPO, it generates bugs in PCIe DMA controls
+# if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+#     # Optional IPO. Do not use IPO if it's not supported by compiler.
+#     include(CheckIPOSupported)
+#     check_ipo_supported(RESULT result OUTPUT output)
+#     if(result)
+#         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+#         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#             add_link_options(-flto=auto)
+#         endif()
+#     else()
+#         message(WARNING "IPO is not supported: ${output}")
+#     endif()
+# endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #enable warnings

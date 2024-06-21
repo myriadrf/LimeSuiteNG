@@ -126,19 +126,19 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mTimeDomainPanel->series[2]->color = 0xFF00FFFF;
     mTimeDomainPanel->series[3]->color = 0x00FFFFFF;
     mTimeDomainPanel->settings.marginLeft = 48;
-    mConstelationPanel->settings.useVBO = true;
-    mConstelationPanel->AddSerie(new cDataSerie());
-    mConstelationPanel->AddSerie(new cDataSerie());
-    mConstelationPanel->series[0]->color = 0xFF0000FF;
-    mConstelationPanel->series[1]->color = 0x0000FFFF;
-    mConstelationPanel->SetInitialDisplayArea(-1, 1, -1, 1);
-    mConstelationPanel->SetDrawingMode(GLG_POINTS);
-    mConstelationPanel->settings.title = "I versus Q"s;
-    mConstelationPanel->settings.titleXaxis = "I"s;
-    mConstelationPanel->settings.titleYaxis = "Q"s;
-    mConstelationPanel->settings.gridXlines = 8;
-    mConstelationPanel->settings.gridYlines = 8;
-    mConstelationPanel->settings.marginLeft = 48;
+    mConstellationPanel->settings.useVBO = true;
+    mConstellationPanel->AddSerie(new cDataSerie());
+    mConstellationPanel->AddSerie(new cDataSerie());
+    mConstellationPanel->series[0]->color = 0xFF0000FF;
+    mConstellationPanel->series[1]->color = 0x0000FFFF;
+    mConstellationPanel->SetInitialDisplayArea(-1, 1, -1, 1);
+    mConstellationPanel->SetDrawingMode(GLG_POINTS);
+    mConstellationPanel->settings.title = "I versus Q"s;
+    mConstellationPanel->settings.titleXaxis = "I"s;
+    mConstellationPanel->settings.titleYaxis = "Q"s;
+    mConstellationPanel->settings.gridXlines = 8;
+    mConstellationPanel->settings.gridYlines = 8;
+    mConstellationPanel->settings.marginLeft = 48;
 
     Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), nullptr, this);
     Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), nullptr, this);
@@ -335,9 +335,9 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
         }
         if (chkFreezeConstellation->IsChecked() == false)
         {
-            mConstelationPanel->series[0]->AssignValues(
+            mConstellationPanel->series[0]->AssignValues(
                 &streamData.samplesI[0][0], &streamData.samplesQ[0][0], streamData.samplesQ[0].size());
-            mConstelationPanel->series[1]->AssignValues(
+            mConstellationPanel->series[1]->AssignValues(
                 &streamData.samplesI[1][0], &streamData.samplesQ[1][0], streamData.samplesQ[1].size());
         }
         if (chkFreezeFFT->IsChecked() == false)
@@ -362,8 +362,8 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
 
     if (chkFreezeConstellation->IsChecked() == false)
     {
-        mConstelationPanel->Refresh();
-        mConstelationPanel->Draw();
+        mConstellationPanel->Refresh();
+        mConstellationPanel->Draw();
     }
 
     if (chkFreezeFFT->IsChecked() == false)
@@ -703,7 +703,7 @@ void fftviewer_frFFTviewer::OnFmtChange(wxCommandEvent& event)
     if (val != cmbFmt->GetSelection())
         cmbFmt->SetSelection(val);
     mTimeDomainPanel->SetInitialDisplayArea(0, 1024, -max, max);
-    mConstelationPanel->SetInitialDisplayArea(-max, max, -max, max);
+    mConstellationPanel->SetInitialDisplayArea(-max, max, -max, max);
 }
 
 void fftviewer_frFFTviewer::OnEnPwr(wxCommandEvent& event)
@@ -743,8 +743,8 @@ void fftviewer_frFFTviewer::OnChannelVisibilityChange(wxCommandEvent& event)
     mTimeDomainPanel->series[1]->visible = visibilities[0];
     mTimeDomainPanel->series[2]->visible = visibilities[1];
     mTimeDomainPanel->series[3]->visible = visibilities[1];
-    mConstelationPanel->series[0]->visible = visibilities[0];
-    mConstelationPanel->series[1]->visible = visibilities[1];
+    mConstellationPanel->series[0]->visible = visibilities[0];
+    mConstellationPanel->series[1]->visible = visibilities[1];
     mFFTpanel->series[0]->visible = visibilities[0];
     mFFTpanel->series[1]->visible = visibilities[1];
 }

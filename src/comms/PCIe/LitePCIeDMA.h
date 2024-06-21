@@ -19,7 +19,7 @@ class LitePCIeDMA : public IDMA
     virtual ~LitePCIeDMA();
 
     OpStatus Enable(bool enabled) override;
-    OpStatus EnableContinous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;
+    OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;
 
     IDMA::State GetCounters() override;
     OpStatus SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection dir, bool irq) override;

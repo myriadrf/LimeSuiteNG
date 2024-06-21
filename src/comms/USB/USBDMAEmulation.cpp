@@ -12,7 +12,7 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
     , lastRequestIndex(0)
     , endpoint(endpoint)
     , dir(dir)
-    , continuos(false)
+    , continuous(false)
 {
     mappings.resize(256);
     for (auto& memoryBlock : mappings)
@@ -72,7 +72,7 @@ std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
 
 OpStatus USBDMAEmulation::Enable(bool enable)
 {
-    continuos = false;
+    continuous = false;
     if (!enable)
     {
         AbortAllTransfers();
@@ -87,17 +87,17 @@ OpStatus USBDMAEmulation::Enable(bool enable)
     return OpStatus::Success;
 }
 
-OpStatus USBDMAEmulation::EnableContinous(bool enable, uint32_t maxTransferSize, uint8_t irqPeriod)
+OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize, uint8_t irqPeriod)
 {
     OpStatus status = Enable(enable);
-    continuos = true;
+    continuous = true;
 
     if (!enable)
         return status;
 
     if (dir != DataTransferDirection::DeviceToHost)
         return OpStatus::Success;
-    // For continuos transfering, preemptively request data to be transferred
+    // For continuous transfering, preemptively request data to be transferred
     while (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();
@@ -130,7 +130,7 @@ void USBDMAEmulation::UpdateProducerStates()
         if (dir == DataTransferDirection::HostToDevice)
             ++counters.consumerIndex;
     }
-    if (!continuos)
+    if (!continuous)
         return;
 
     while (!transfers.empty())
