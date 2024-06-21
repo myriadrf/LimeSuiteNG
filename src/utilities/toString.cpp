@@ -56,9 +56,10 @@ const std::string& ToString(eGainTypes value)
 }
 
 static const std::unordered_map<eMemoryDevice, const std::string> MEMORY_DEVICES_TEXT{
-    { eMemoryDevice::FPGA_RAM, "FPGA RAM"s },
-    { eMemoryDevice::FPGA_FLASH, "FPGA FLASH"s },
+    { eMemoryDevice::FPGA_RAM, "FPGA/RAM"s },
+    { eMemoryDevice::FPGA_FLASH, "FPGA/FLASH"s },
     { eMemoryDevice::EEPROM, "EEPROM"s },
+    { eMemoryDevice::GATEWARE_SECONDARY, "FPGA/secondary-gateware"s },
 };
 
 const std::string& ToString(eMemoryDevice value)

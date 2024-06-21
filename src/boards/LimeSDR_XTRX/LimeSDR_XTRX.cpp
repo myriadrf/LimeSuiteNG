@@ -130,6 +130,8 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
+    desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_SECONDARY)] =
+        std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_SECONDARY);
 
     desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
@@ -588,6 +590,9 @@ OpStatus LimeSDR_XTRX::UploadMemory(
         break;
     case eMemoryDevice::FPGA_FLASH:
         progMode = 1;
+        break;
+    case eMemoryDevice::GATEWARE_SECONDARY:
+        progMode = 3;
         break;
     default:
         return OpStatus::InvalidValue;

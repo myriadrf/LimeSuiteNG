@@ -52,7 +52,7 @@ struct Region {
     int32_t size; ///< The size of the memory region
 };
 
-enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, COUNT };
+enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, GATEWARE_SECONDARY, COUNT };
 
 /// @brief The structure for writing and reading custom parameters
 struct CustomParameterIO {
