@@ -1,6 +1,8 @@
 #include "DeviceFactoryFX3.h"
 
 #include <memory>
+#include <set>
+#include <string>
 #include <string_view>
 
 #include "limesuiteng/DeviceHandle.h"
@@ -10,6 +12,7 @@
 #include "LMS64C_LMS7002M_Over_USB.h"
 #include "LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
+#include "comms/USB/GlobalHotplugEvents.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -26,6 +29,7 @@ static const std::set<IUSB::VendorProductId> ids{ { 0x04B4, 0x00F1 }, { 0x04B4, 
 DeviceFactoryFX3::DeviceFactoryFX3()
     : DeviceRegistryEntry("FX3"s)
 {
+    GlobalHotplugEvents::AddVidPids(ids);
 }
 
 std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)

@@ -1,5 +1,5 @@
-#ifndef LIME_WINDOWS_HOTPLUG_H
-#define LIME_WINDOWS_HOTPLUG_H
+#ifndef LIME_WINDOWS_DEVICE_HOTPLUG_H
+#define LIME_WINDOWS_DEVICE_HOTPLUG_H
 
 #include "Windows.h"
 #include "cfgmgr32.h"
@@ -12,10 +12,10 @@
 
 namespace lime {
 
-class WindowsHotplug
+class WindowsDeviceHotplug
 {
   public:
-    ~WindowsHotplug();
+    ~WindowsDeviceHotplug();
 
     void AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData);
 
@@ -25,10 +25,10 @@ class WindowsHotplug
     std::vector<IUSB::CallbackInfo<IUSB::HotplugDisconnectCallbackType>> hotplugDisconnectCallbacks{};
     HCMNOTIFICATION deviceDisconnectCallbackHandle{};
 
-    static DWORD CALLBACK callback(
+    static DWORD CALLBACK disconnectCallback(
         HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize);
 };
 
 } // namespace lime
 
-#endif // LIME_WINDOWS_HOTPLUG_H
+#endif // LIME_WINDOWS_DEVICE_HOTPLUG_H

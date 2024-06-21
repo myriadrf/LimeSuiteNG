@@ -17,7 +17,6 @@ using namespace std::literals::string_literals;
     #include "Windows.h"
     #include "CyAPI.h"
     #include <codecvt>
-    #include "comms/USB/WindowsHotplug.h"
 #endif
 
 namespace lime {

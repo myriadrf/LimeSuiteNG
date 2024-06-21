@@ -6,7 +6,7 @@
     #include "comms/USB/USBGeneric.h"
 #else
     #include "FTD3XXLibrary/FTD3XX.h"
-    #include "comms/USB/WindowsHotplug.h"
+    #include "comms/USB/WindowsDeviceHotplug.h"
 #endif
 
 namespace lime {
@@ -54,7 +54,7 @@ class FT601 : public IUSB
     FT_HANDLE mFTHandle;
     int ReinitPipe(unsigned char ep);
 
-    WindowsHotplug hotplug{};
+    WindowsDeviceHotplug hotplug{};
 #endif
 };
 

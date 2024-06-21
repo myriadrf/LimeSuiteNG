@@ -8,7 +8,7 @@
 #ifdef __unix__
     #include "comms/USB/USBGeneric.h"
 #else
-    #include "comms/USB/WindowsHotplug.h"
+    #include "comms/USB/WindowsDeviceHotplug.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
@@ -61,7 +61,7 @@ class FX3 : public IUSB
     //end points for samples reading and writing
     std::map<uint8_t, CCyUSBEndPoint*> endpoints{};
 
-    WindowsHotplug hotplug{};
+    WindowsDeviceHotplug hotplug{};
 #endif
 };
 

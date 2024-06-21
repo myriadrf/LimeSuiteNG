@@ -3,6 +3,7 @@
 #include <wx/panel.h>
 #include <cstdint>
 
+class wxBoxSizer;
 class wxButton;
 class wxChoice;
 
@@ -23,9 +24,14 @@ class DeviceConnectionPanel : public wxPanel
     void SendDisconnectEvent(wxCommandEvent& inEvent);
     void SendHandleChangeEvent(wxCommandEvent& inEvent);
 
-    void EnumerateDevicesToChoice();
+    std::size_t EnumerateDevicesToChoice();
+    void OnDeviceHotplug(wxCommandEvent& inEvent);
+
+    static void OnDeviceHotplugCallback(void* data);
+
     wxChoice* cmbDevHandle;
     wxButton* btnDisconnect;
+    wxBoxSizer* szBox;
 };
 
 } // namespace lime

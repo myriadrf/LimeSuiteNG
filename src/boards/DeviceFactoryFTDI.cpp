@@ -9,6 +9,7 @@
 #include "LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
 #include "FT601/FT601.h"
+#include "comms/USB/GlobalHotplugEvents.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -25,6 +26,7 @@ static const std::set<IUSB::VendorProductId> ids{ { 0x0403, 0x601F } };
 DeviceFactoryFTDI::DeviceFactoryFTDI()
     : DeviceRegistryEntry("FTDI"s)
 {
+    GlobalHotplugEvents::AddVidPids(ids);
 }
 
 std::vector<DeviceHandle> DeviceFactoryFTDI::enumerate(const DeviceHandle& hint)

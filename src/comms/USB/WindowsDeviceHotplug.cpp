@@ -1,4 +1,4 @@
-#include "WindowsHotplug.h"
+#include "WindowsDeviceHotplug.h"
 
 #include <Windows.h>
 #include <cfgmgr32.h>
@@ -19,30 +19,6 @@ using namespace std::literals::string_view_literals;
 namespace lime {
 
 namespace {
-
-template<typename strView> std::vector<strView> SplitString(strView string, strView delimiter)
-{
-    std::vector<strView> ret;
-
-    auto position{ string.find(delimiter) };
-
-    while (position != strView::npos)
-    {
-        if (position != 0)
-        {
-            ret.push_back(string.substr(0, position));
-        }
-
-        string = string.substr(position + delimiter.size());
-        position = string.find(delimiter);
-    }
-
-    if (string.size() > 0)
-    {
-        ret.push_back(string);
-    }
-    return ret;
-}
 
 std::string_view GetSpecificDeviceIDFromDeviceIDListBySerial(const std::vector<std::string_view>& list, const std::string& serial)
 {
@@ -92,17 +68,17 @@ std::string GetDeviceID(uint16_t vid, uint16_t pid, const std::string& serial)
 
 } // namespace
 
-WindowsHotplug ::~WindowsHotplug()
+WindowsDeviceHotplug::~WindowsDeviceHotplug()
 {
     CM_Unregister_Notification(deviceDisconnectCallbackHandle);
 }
 
-void WindowsHotplug::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+void WindowsDeviceHotplug::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
 {
     hotplugDisconnectCallbacks.push_back({ function, userData });
 }
 
-void WindowsHotplug::AddDeviceToReceiveHotplugDisconnectEvents(uint16_t vid, uint16_t pid, const std::string& serial)
+void WindowsDeviceHotplug::AddDeviceToReceiveHotplugDisconnectEvents(uint16_t vid, uint16_t pid, const std::string& serial)
 {
     const auto deviceID = GetDeviceID(vid, pid, serial);
     const auto wideDeviceID = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(deviceID);
@@ -114,19 +90,19 @@ void WindowsHotplug::AddDeviceToReceiveHotplugDisconnectEvents(uint16_t vid, uin
         wideDeviceID.c_str(),
         std::min(sizeof(filter.u.DeviceInstance.InstanceId), wideDeviceID.size()));
 
-    auto returnValue = CM_Register_Notification(&filter, this, callback, &deviceDisconnectCallbackHandle);
+    auto returnValue = CM_Register_Notification(&filter, this, disconnectCallback, &deviceDisconnectCallbackHandle);
     if (returnValue != CR_SUCCESS)
     {
         throw std::runtime_error("CM_Register_Notification failed with error code "s + intToHex(returnValue));
     }
 }
 
-DWORD CALLBACK WindowsHotplug::callback(
+DWORD CALLBACK WindowsDeviceHotplug::disconnectCallback(
     HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
 {
     if (CM_NOTIFY_ACTION_DEVICEINSTANCEREMOVED == Action)
     {
-        auto* hotplug = reinterpret_cast<WindowsHotplug*>(Context);
+        auto* hotplug = reinterpret_cast<WindowsDeviceHotplug*>(Context);
 
         for (auto iter = hotplug->hotplugDisconnectCallbacks.rbegin(); iter != hotplug->hotplugDisconnectCallbacks.rend(); ++iter)
         {

@@ -11,11 +11,13 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 
+#include "comms/USB/GlobalHotplugEvents.h"
+
 #include "events.h"
 
 namespace lime {
 
-void DeviceConnectionPanel::EnumerateDevicesToChoice()
+std::size_t DeviceConnectionPanel::EnumerateDevicesToChoice()
 {
     wxChoice* choice = cmbDevHandle;
     choice->Clear();
@@ -38,10 +40,16 @@ void DeviceConnectionPanel::EnumerateDevicesToChoice()
             choice->Enable();
             btnDisconnect->Enable();
         }
+
+        SetSizerAndFit(szBox);
+        return handles.size();
     } catch (std::runtime_error& e)
     {
         choice->Disable();
     }
+
+    SetSizerAndFit(szBox);
+    return 0;
 }
 
 void DeviceConnectionPanel::SetSelection(uint32_t index)
@@ -55,7 +63,7 @@ void DeviceConnectionPanel::SetSelection(uint32_t index)
 DeviceConnectionPanel::DeviceConnectionPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxPanel(parent, id, pos, size, style, "DeviceConnectionPanel")
 {
-    wxBoxSizer* szBox = new wxBoxSizer(wxHORIZONTAL);
+    szBox = new wxBoxSizer(wxHORIZONTAL);
 
     szBox->Add(new wxStaticText(this, wxID_ANY, _("Device:")), 0, wxALIGN_CENTER_VERTICAL, 0);
     cmbDevHandle = new wxChoice(this, wxNewId());
@@ -70,11 +78,14 @@ DeviceConnectionPanel::DeviceConnectionPanel(wxWindow* parent, wxWindowID id, co
 
     EnumerateDevicesToChoice();
 
-    this->SetSizerAndFit(szBox);
-
     // when device choice changes generate CONNECT_DEVICE
     cmbDevHandle->Bind(wxEVT_CHOICE, wxCommandEventHandler(DeviceConnectionPanel::SendHandleChangeEvent), this);
     btnDisconnect->Bind(wxEVT_BUTTON, wxCommandEventHandler(DeviceConnectionPanel::SendDisconnectEvent), this);
+
+    Bind(limeEVT_HOTPLUG, wxCommandEventHandler(DeviceConnectionPanel::OnDeviceHotplug), this);
+
+    GlobalHotplugEvents::AddGlobalHotplugConnectCallback(OnDeviceHotplugCallback, this);
+    GlobalHotplugEvents::AddGlobalHotplugDisconnectCallback(OnDeviceHotplugCallback, this);
 }
 
 DeviceConnectionPanel::~DeviceConnectionPanel()
@@ -94,6 +105,25 @@ void DeviceConnectionPanel::SendHandleChangeEvent(wxCommandEvent& inEvent)
     wxCommandEvent event(limeEVT_SDR_HANDLE_SELECTED, GetId());
     event.SetString(inEvent.GetString());
     ProcessWindowEvent(event);
+}
+
+void DeviceConnectionPanel::OnDeviceHotplug(wxCommandEvent& inEvent)
+{
+    const auto currentSelectionString{ cmbDevHandle->GetStringSelection() };
+
+    const auto count = EnumerateDevicesToChoice();
+    if (count > 0)
+    {
+        const auto newSelectionIndex{ cmbDevHandle->FindString(currentSelectionString) };
+        cmbDevHandle->Select(newSelectionIndex);
+    }
+}
+
+void DeviceConnectionPanel::OnDeviceHotplugCallback(void* data)
+{
+    auto* evt = new wxCommandEvent();
+    evt->SetEventType(limeEVT_HOTPLUG);
+    wxQueueEvent(reinterpret_cast<DeviceConnectionPanel*>(data), evt);
 }
 
 } // namespace lime
