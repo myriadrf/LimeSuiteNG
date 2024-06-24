@@ -40,7 +40,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     std::shared_ptr<ISPI> adfComms)
     : mMainFPGAcomms(spiFPGA[8])
     , mTRXStreamPorts(trxStreams)
-    , mADF(new ADF4002())
+    , mADF(std::make_unique<ADF4002>())
 {
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes
@@ -61,9 +61,9 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
     // TODO: readback board's reference clock
     mADF->Initialize(adfComms, 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF.get()));
 
-    mSubDevices.resize(8);
+    mSubDevices.reserve(8);
     desc.spiSlaveIds["FPGA"s] = 0;
 
     const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
@@ -72,10 +72,11 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
     desc.customParameters.push_back(cp_vctcxo_dac);
-    for (size_t i = 0; i < mSubDevices.size(); ++i)
+    for (size_t i = 0; i < 8; ++i)
     {
-        mSubDevices[i] = new LimeSDR_XTRX(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
-        const SDRDescriptor& subdeviceDescriptor = mSubDevices[i]->GetDescriptor();
+        std::unique_ptr<LimeSDR_XTRX> xtrx =
+            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
+        const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
         {
@@ -88,7 +89,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
         {
             const std::string slaveName = slaveId.first + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.spiSlaveIds[slaveName] = (i + 1) << 8 | slaveId.second;
-            chipSelectToDevice[desc.spiSlaveIds[slaveName]] = mSubDevices[i];
+            chipSelectToDevice[desc.spiSlaveIds[slaveName]] = xtrx.get();
         }
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
@@ -105,8 +106,10 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
             parameter.id |= (i + 1) << 8;
             parameter.name = customParameter.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.customParameters.push_back(parameter);
-            customParameterToDevice[parameter.id] = mSubDevices[i];
+            customParameterToDevice[parameter.id] = xtrx.get();
         }
+
+        mSubDevices.push_back(std::move(xtrx));
 
         const std::string treeName = subdeviceDescriptor.socTree->name + "#"s + std::to_string(i + 1);
         subdeviceDescriptor.socTree->name = treeName;
@@ -116,8 +119,6 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
 
 LimeSDR_MMX8::~LimeSDR_MMX8()
 {
-    for (size_t i = 0; i < mSubDevices.size(); ++i)
-        delete mSubDevices[i];
 }
 
 const SDRDescriptor& LimeSDR_MMX8::GetDescriptor() const
@@ -305,13 +306,13 @@ OpStatus LimeSDR_MMX8::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel
 
 OpStatus LimeSDR_MMX8::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
 {
-    auto device = mSubDevices.at(moduleIndex);
+    auto& device = mSubDevices.at(moduleIndex);
     return device->SetGain(0, direction, channel, gain, value);
 }
 
 OpStatus LimeSDR_MMX8::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
 {
-    auto device = mSubDevices.at(moduleIndex);
+    auto& device = mSubDevices.at(moduleIndex);
     return device->GetGain(0, direction, channel, gain, value);
 }
 
@@ -663,6 +664,11 @@ void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t> moduleIndexes)
         mSubDevices[moduleIndex]->StreamStop(0);
 }
 
+void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
+{
+    mSubDevices.at(moduleIndex)->StreamDestroy(0);
+}
+
 uint32_t LimeSDR_MMX8::StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
 {
     return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta);
@@ -788,7 +794,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
         return mMainFPGAcomms->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
     }
 
-    SDRDevice* dev = mSubDevices.at(moduleIndex);
+    auto& dev = mSubDevices.at(moduleIndex);
     if (!dev)
         return ReportError(OpStatus::InvalidValue, "Invalid id select"s);
 
