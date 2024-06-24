@@ -819,6 +819,7 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
         return -1;
     }
 
+    apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
     auto& streamHandle = streamHandles.at(stream->handle);
     if (streamHandle != nullptr)
     {

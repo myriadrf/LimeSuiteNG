@@ -448,6 +448,10 @@ class LIME_API SDRDevice
     /// @param moduleIndexes The indices of the devices to stop the streams on.
     virtual void StreamStop(const std::vector<uint8_t> moduleIndexes);
 
+    /// @brief Deallocate stream resources.
+    /// @param moduleIndex The index of the device to stop the streams on.
+    virtual void StreamDestroy(uint8_t moduleIndex) = 0;
+
     /// @brief Reveives samples from all the active streams in the device.
     /// @param moduleIndex The index of the device to receive the samples from.
     /// @param samples The buffer to put the received samples in.
