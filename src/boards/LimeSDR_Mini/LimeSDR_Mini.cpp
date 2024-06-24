@@ -187,7 +187,6 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
 
         mStreamers.push_back(std::make_unique<TRXLooper>(
             std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
-        mStreamers.at(0)->SetMessageLogCallback(mCallback_logMessage);
     }
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };

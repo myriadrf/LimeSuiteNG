@@ -153,10 +153,6 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
         auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
-
-        if (mCallback_logMessage)
-            streamer->SetMessageLogCallback(mCallback_logMessage);
-
         mStreamers.push_back(std::move(streamer));
     }
 

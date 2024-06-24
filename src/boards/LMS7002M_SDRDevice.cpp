@@ -78,6 +78,8 @@ OpStatus LMS7002M_SDRDevice::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint
 void LMS7002M_SDRDevice::SetMessageLogCallback(LogCallbackType callback)
 {
     mCallback_logMessage = callback;
+    for (auto& looper : mStreamers)
+        looper->SetMessageLogCallback(mCallback_logMessage);
 }
 
 const SDRDescriptor& LMS7002M_SDRDevice::GetDescriptor() const

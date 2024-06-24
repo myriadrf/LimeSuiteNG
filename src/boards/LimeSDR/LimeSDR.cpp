@@ -125,7 +125,6 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
         ResetUSBFIFO();
         mStreamers.push_back(std::make_unique<TRXLooper>(
             std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
-        mStreamers.at(0)->SetMessageLogCallback(mCallback_logMessage);
     }
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA, mFPGA.get());
