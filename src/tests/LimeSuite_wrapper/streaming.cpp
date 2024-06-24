@@ -127,12 +127,87 @@ TEST_F(LimeSuiteWrapper_streaming, RepeatedStartStopDontChangeSampleRate)
     for (auto& handle : channels)
         LMS_StartStream(&handle);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    for (auto& handle : channels)
+        LMS_StopStream(&handle);
+
+    for (auto& handle : channels)
+        LMS_StartStream(&handle);
+
+    auto t1 = chrono::high_resolution_clock::now();
+
+    int samplesReceived = 0;
+    int samplesRemaining = sampleRate;
+    while (samplesRemaining > 0)
+    {
+        int toRead = samplesRemaining < samplesBatchSize ? samplesRemaining : samplesBatchSize;
+        int samplesGot = 0;
+        for (auto& handle : channels)
+        {
+            samplesGot = LMS_RecvStream(&handle, buffer, toRead, NULL, 1000);
+            ASSERT_EQ(samplesGot, toRead);
+            if (samplesGot <= 0)
+                break;
+        }
+        if (samplesGot != toRead)
+            break;
+        samplesReceived += samplesGot;
+        samplesRemaining -= toRead;
+    }
+    auto t2 = chrono::high_resolution_clock::now();
+    ASSERT_EQ(samplesRemaining, 0);
+    ASSERT_EQ(samplesReceived, sampleRate);
+    const auto duration{ chrono::duration_cast<chrono::milliseconds>(t2 - t1) };
+    bool timeCorrect = chrono::milliseconds(980) < duration && duration < chrono::milliseconds(1020);
+    ASSERT_TRUE(timeCorrect);
+
+    //Stop streaming
+    for (auto& handle : channels)
+        LMS_StopStream(&handle);
+    for (auto& handle : channels)
+        LMS_DestroyStream(device, &handle);
+}
+
+TEST_F(LimeSuiteWrapper_streaming, RepeatedSetupDestroyDontChangeSampleRate)
+{
+    std::vector<lms_stream_t> channels;
+    channels.reserve(channelCount);
+
+    for (int i = 0; i < channelCount; ++i)
+    {
+        lms_stream_t streamId;
+        streamId.channel = 0;
+        streamId.fifoSize = 1024 * 1024;
+        streamId.throughputVsLatency = 1.0;
+        streamId.isTx = false;
+        streamId.dataFmt = lms_stream_t::LMS_FMT_I12;
+        ASSERT_EQ(LMS_SetupStream(device, &streamId), 0);
+        channels.push_back(streamId);
+    }
+
+    const int samplesBatchSize = 5000;
+    int16_t buffer[samplesBatchSize * 2]; //buffer to hold complex values (2*samples))
+
+    for (auto& handle : channels)
+        LMS_StartStream(&handle);
 
     for (auto& handle : channels)
         LMS_StopStream(&handle);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    for (auto& handle : channels)
+        LMS_DestroyStream(device, &handle);
+
+    channels.clear();
+    for (int i = 0; i < channelCount; ++i)
+    {
+        lms_stream_t streamId;
+        streamId.channel = 0;
+        streamId.fifoSize = 1024 * 1024;
+        streamId.throughputVsLatency = 1.0;
+        streamId.isTx = false;
+        streamId.dataFmt = lms_stream_t::LMS_FMT_I12;
+        ASSERT_EQ(LMS_SetupStream(device, &streamId), 0);
+        channels.push_back(streamId);
+    }
 
     for (auto& handle : channels)
         LMS_StartStream(&handle);
