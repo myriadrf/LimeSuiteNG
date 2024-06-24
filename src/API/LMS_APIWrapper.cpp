@@ -94,14 +94,12 @@ struct StreamHandle {
     static constexpr std::size_t MAX_ELEMENTS_IN_BUFFER = 4096;
 
     LMS_APIDevice* parent;
-    bool isStreamStartedFromAPI;
     bool isStreamActuallyStarted;
     lime::MemoryPool memoryPool;
 
     StreamHandle() = delete;
     StreamHandle(LMS_APIDevice* parent)
         : parent(parent)
-        , isStreamStartedFromAPI(false)
         , isStreamActuallyStarted(false)
         , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool"s)
     {
@@ -848,8 +846,6 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
         return -1;
     }
 
-    handle->isStreamStartedFromAPI = true;
-
     if (!handle->isStreamActuallyStarted)
     {
         handle->parent->device->StreamStart(handle->parent->moduleIndex);
@@ -880,8 +876,6 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
     {
         return -1;
     }
-
-    handle->isStreamStartedFromAPI = false;
 
     if (handle->isStreamActuallyStarted)
     {
@@ -1157,7 +1151,6 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         break;
     }
 
-    status->active = handle->isStreamStartedFromAPI;
     status->fifoFilledCount = stats.FIFO.usedCount;
     status->fifoSize = stats.FIFO.totalCount;
 
