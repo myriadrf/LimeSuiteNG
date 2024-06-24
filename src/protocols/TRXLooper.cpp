@@ -361,6 +361,7 @@ struct DMATransactionCounter {
 */
 void TRXLooper::ReceivePacketsLoop()
 {
+    printf("Starting thread\n");
     constexpr int headerSize{ sizeof(StreamHeader) };
 
     DataConversion conversion{};

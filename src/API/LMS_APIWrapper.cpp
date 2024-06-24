@@ -115,7 +115,7 @@ static inline int OpStatusToReturnCode(OpStatus value)
     return value == OpStatus::Success ? 0 : -1;
 }
 
-inline LMS_APIDevice* CheckDevice(lms_device_t* device)
+static inline LMS_APIDevice* CheckDevice(lms_device_t* device)
 {
     if (device == nullptr)
     {
@@ -126,7 +126,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device)
     return static_cast<LMS_APIDevice*>(device);
 }
 
-inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
+static inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr || apiDevice->device == nullptr)
@@ -143,7 +143,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
     return apiDevice;
 }
 
-inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
+static inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
 {
     for (std::size_t i = 0; i < streamHandles.size(); i++)
     {
@@ -158,14 +158,14 @@ inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
     return streamHandles.size() - 1;
 }
 
-inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
+static inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
 {
     std::size_t charsToCopy = std::min(destinationLength - 1, source.size());
     std::strncpy(destination, source.data(), charsToCopy);
     destination[charsToCopy] = 0;
 }
 
-inline lms_range_t RangeToLMS_Range(const lime::Range& range)
+static inline lms_range_t RangeToLMS_Range(const lime::Range& range)
 {
     return { range.min, range.max, range.step };
 }
