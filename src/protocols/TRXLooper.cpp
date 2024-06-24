@@ -731,6 +731,7 @@ OpStatus TRXLooper::TxSetup()
     mTx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 4096, name);
 
     mTx.terminate.store(false, std::memory_order_relaxed);
+    mTx.terminateWorker.store(false, std::memory_order_relaxed);
     auto TxLoopFunction = std::bind(&TRXLooper::TxWorkLoop, this);
 
     const auto schedulingPolicy = ThreadPolicy::REALTIME;
