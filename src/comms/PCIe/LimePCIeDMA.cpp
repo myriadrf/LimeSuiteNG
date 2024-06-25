@@ -25,6 +25,9 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
     : port(port)
     , dir(dir)
 {
+    // TODO: open the port only when actually need to use it.
+    if (!port->IsOpen())
+        port->Open(port->GetPathName(), O_RDWR | O_NOCTTY | O_CLOEXEC | O_NONBLOCK);
     limepcie_ioctl_mmap_dma_info info{};
     int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_MMAP_DMA_INFO, &info);
     if (ret != 0)

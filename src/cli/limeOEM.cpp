@@ -152,6 +152,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
     OpStatus result = OpStatus::Success;
 
     if (serialNumberFlag)

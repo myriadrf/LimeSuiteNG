@@ -596,20 +596,8 @@ static OpStatus TransferDeviceDirectionalSettings(
         }
     }
 
-    char loFreqStr[1024];
     if (settings.lo_override > 0)
-    {
-        //Log(LogLevel::Info, "dev%i chip%i ch%i %.2f", devIndex, rf.chipIndex, chipChannel, freqOverride);
-        std::snprintf(loFreqStr,
-            sizeof(loFreqStr),
-            "expectedLO: %.3f MHz [override: %.3f (diff:%+.3f) MHz]",
-            trx.centerFrequency / 1.0e6,
-            settings.lo_override / 1.0e6,
-            (trx.centerFrequency - settings.lo_override) / 1.0e6);
         trx.centerFrequency = settings.lo_override;
-    }
-    else
-        std::snprintf(loFreqStr, sizeof(loFreqStr), "LO: %.3f MHz", trx.centerFrequency / 1.0e6);
 
     int flag = CalibrateFlag::Filter; // by default calibrate only filters
     if (!settings.calibration.empty())
@@ -790,7 +778,22 @@ static void TransferRuntimeParametersToConfig(
         trxConfig.enabled = true;
         const int portIndex = channelMap[i].parent->portIndex;
         trxConfig.sampleRate = runtimeParams.rf_ports[portIndex].sample_rate;
-        trxConfig.centerFrequency = params.freq[i];
+        if (trxConfig.centerFrequency == 0)
+            trxConfig.centerFrequency = params.freq[i];
+        else
+        {
+            char loFreqStr[1024];
+            std::snprintf(loFreqStr,
+                sizeof(loFreqStr),
+                "%s channel%i expectedLO: %.3f MHz [override: %.3f (diff:%+.3f) MHz]",
+                (dir == TRXDir::Rx ? "Rx" : "Tx"),
+                static_cast<int>(i),
+                params.freq[i] / 1.0e6,
+                trxConfig.centerFrequency / 1.0e6,
+                (trxConfig.centerFrequency - params.freq[i]) / 1.0e6);
+            Log(LogLevel::Info, loFreqStr);
+        }
+
         if (trxConfig.gfir.bandwidth == 0) // update only if not set by settings file
             trxConfig.gfir.bandwidth = params.bandwidth[i];
         trxConfig.lpf = params.bandwidth[i];
@@ -859,10 +862,11 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             continue;
 
         Log(LogLevel::Debug,
-            "Port[%i] Stream samples format: %s , link: %s",
+            "Port[%i] Stream samples format: %s , link: %s %s",
             p,
             stream.format == DataFormat::F32 ? "F32" : "I16",
-            stream.linkFormat == DataFormat::I12 ? "I12" : "I16");
+            stream.linkFormat == DataFormat::I12 ? "I12" : "I16",
+            (stream.extraConfig.negateQ ? ", Negating Q samples" : ""));
 
         port.composite = new StreamComposite(aggregates);
         if (port.composite->StreamSetup(stream) != OpStatus::Success)

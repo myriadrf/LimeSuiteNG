@@ -37,9 +37,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-    void StreamStop(uint8_t moduleIndex) override;
-
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
@@ -50,6 +47,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
     virtual OpStatus WriteSerialNumber(uint64_t serialNumber) override;
+
+    OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
 
   protected:
     void LMS1SetPath(bool tx, uint8_t chan, uint8_t path);
@@ -86,7 +85,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         double LOFreq,
         int gain,
         int rxPath,
-        double expected_dBFS);
+        double expectChA_dBFS,
+        double expectChB_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
   private:
