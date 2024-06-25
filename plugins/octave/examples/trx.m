@@ -1,5 +1,5 @@
 clear all;
-LoadLimeSuite
+LoadLimeSuiteNG
 
 % generate test signal
 phase = pi/600;       % phase step
@@ -27,9 +27,5 @@ plot(real(rxSignal1));    %plot first rx
 figure 2
 plot(real(rxSignal2));    %plot last rx
 LimeGetStreamStatus()     %must run at least 1s to get data rate (B/s)
-sleep(1);
 LimeStopStreaming();      % stop streaming
 LimeDestroy();            % close device
-
-
-

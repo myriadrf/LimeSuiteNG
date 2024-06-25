@@ -493,6 +493,13 @@ class LIME_API SDRDevice
     /// @return Operation status.
     virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count);
 
+    /// @brief Enables or disables the transmission of the uploaded waveform
+    /// @param moduleIndex The index of the device to transmit the waveform from.
+    /// @param channel The channel to use for the waveform transmission.
+    /// @param enabled Whether to enable or disable the transmission.
+    /// @return Operation status.
+    virtual OpStatus EnableTxWaveform(uint8_t moduleIndex, uint8_t channel, bool enabled) = 0;
+
     /// @copydoc ISPI::SPI()
     /// @param spiBusAddress The SPI address of the device to use.
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);

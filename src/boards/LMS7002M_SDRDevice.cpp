@@ -1194,4 +1194,22 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M& chip, const Ch
     return OpStatus::Success;
 }
 
+OpStatus LMS7002M_SDRDevice::EnableTxWaveform(uint8_t moduleIndex, uint8_t channel, bool enabled)
+{
+    OpStatus status = WriteFPGARegister(0xFFFF, 1 << (channel / 2));
+    if (status != OpStatus::Success)
+    {
+        return status;
+    }
+
+    constexpr uint32_t regAddr{ 0x000D };
+
+    int regValue = ReadFPGARegister(regAddr);
+    regValue = regValue & ~0x6; //clear WFM_LOAD, WFM_PLAY
+    regValue |= enabled << 1;
+
+    status = WriteFPGARegister(regAddr, regValue);
+    return status;
+}
+
 } // namespace lime

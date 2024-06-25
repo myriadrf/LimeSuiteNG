@@ -2,7 +2,7 @@
 ## Octave plugin integration
 ########################################################################
 add_subdirectory(amarisoft-plugin)
-# add_subdirectory(octave)
+add_subdirectory(octave)
 
 ########################################################################
 ## freedesktop environment integration

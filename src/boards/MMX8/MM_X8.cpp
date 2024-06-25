@@ -836,4 +836,14 @@ OpStatus LimeSDR_MMX8::UploadTxWaveform(const StreamConfig& config, uint8_t modu
     return mSubDevices[moduleIndex]->UploadTxWaveform(config, 0, samples, count);
 }
 
+OpStatus LimeSDR_MMX8::EnableTxWaveform(uint8_t moduleIndex, uint8_t channel, bool enabled)
+{
+    if (moduleIndex >= 8)
+    {
+        moduleIndex = 0;
+    }
+
+    return mSubDevices[moduleIndex]->EnableTxWaveform(moduleIndex, channel, enabled);
+}
+
 } //namespace lime

@@ -4,7 +4,7 @@
 ########################################################################
 find_program(OCTAVE_CONFIG_EXECUTABLE NAMES octave-config)
 if(NOT OCTAVE_CONFIG_EXECUTABLE)
-    message(STATUS "octave-config not found (need liboctave-dev), disabling LimeSuiteOctave")
+    message(STATUS "octave-config not found (need octave-dev), disabling LimeSuiteOctave")
 else()
     execute_process(
         COMMAND ${OCTAVE_CONFIG_EXECUTABLE} -p BINDIR
@@ -33,9 +33,9 @@ endif()
 add_custom_command(
     OUTPUT LimeSuiteNG.oct LimeSuiteNG.o ALL
     COMMAND
-        ${OCTAVE_MKOCTFILE_EXECUTABLE} ARGS -I${PROJECT_SOURCE_DIR}/include/limesuiteng ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuiteNG.cc
-        -L$<TARGET_FILE_DIR:LimeSuiteNG> -llimesuiteng
-    COMMENT "Building LimeSuite Octave plugin"
+        ${OCTAVE_MKOCTFILE_EXECUTABLE} ARGS -std=c++17 -I${PROJECT_SOURCE_DIR}/src/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/LimeSuiteNG.cc -L$<TARGET_FILE_DIR:limesuiteng> -llimesuiteng
+    COMMENT "Building LimeSuiteNG Octave plugin"
     DEPENDS limesuiteng)
 add_custom_target(LimeSuiteNGOctave ALL DEPENDS LimeSuiteNG.oct)
 
@@ -44,7 +44,7 @@ execute_process(
     COMMAND ${OCTAVE_CONFIG_EXECUTABLE} --m-site-dir
     OUTPUT_VARIABLE OCTAVE_SCRIPTS_PATHS
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LoadLimeSuite.m DESTINATION ${OCTAVE_SCRIPTS_PATHS})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/loader/LoadLimeSuiteNG.m DESTINATION ${OCTAVE_SCRIPTS_PATHS})
 
 #install dynamic library
 execute_process(

@@ -1,4 +1,4 @@
-LoadLimeSuite
+LoadLimeSuiteNG
 
 LimeInitialize()
 LimeLoadConfig('rxTest.ini');
@@ -25,6 +25,6 @@ end
 LimeStopStreaming();
 LimeDestroy();
 
-plot(real(samplesBatch1));
-%plot(real(samplesBatch2));
-%plot(real(samplesBatch3));
+plot(samplesBatch1);
+%plot(samplesBatch2);
+%plot(samplesBatch3);

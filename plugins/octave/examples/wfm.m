@@ -1,5 +1,5 @@
 %imports shared library functions
-LoadLimeSuite
+LoadLimeSuiteNG
 
 %Generate waveform
 phase = pi/8;
@@ -7,7 +7,7 @@ src = 0.7*complex(sin(0:phase:1000*pi-phase), cos(0:phase:1000*pi-phase));
 
 %%initialize LimeSuite
 %if several boards are connected
-%deviceList = LimeGetDeviceList();
+deviceList = LimeGetDeviceList()
 %selectedDevice = 1;
 %LimeInitialize(deviceList(selectedDevice));
 %otherwise initialization uses first available device

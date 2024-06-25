@@ -149,6 +149,7 @@ class LimeSDR_MMX8 : public SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
     OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
+    OpStatus EnableTxWaveform(uint8_t moduleIndex, uint8_t channel, bool enabled) override;
 
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;

@@ -123,6 +123,8 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
 
+    OpStatus EnableTxWaveform(uint8_t moduleIndex, uint8_t channel, bool enabled) override;
+
     /// @copydoc FPGA::ReadRegister()
     virtual int ReadFPGARegister(uint32_t address);
     /// @copydoc FPGA::WriteRegister()

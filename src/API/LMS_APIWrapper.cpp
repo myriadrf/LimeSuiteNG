@@ -1876,25 +1876,14 @@ API_EXPORT int CALL_CONV LMS_UploadWFM(lms_device_t* device, const void** sample
 
 API_EXPORT int CALL_CONV LMS_EnableTxWFM(lms_device_t* device, unsigned ch, bool active)
 {
-    uint16_t regAddr = 0x000D;
-    uint16_t regValue = 0;
-
-    int status = LMS_WriteFPGAReg(device, 0xFFFF, 1 << (ch / 2));
-    if (status != 0)
+    LMS_APIDevice* apiDevice = CheckDevice(device);
+    if (apiDevice == nullptr)
     {
-        return status;
+        return -1;
     }
 
-    status = LMS_ReadFPGAReg(device, regAddr, &regValue);
-    if (status != 0)
-    {
-        return status;
-    }
-
-    regValue = regValue & ~0x6; //clear WFM_LOAD, WFM_PLAY
-    regValue |= active << 1;
-    status = LMS_WriteFPGAReg(device, regAddr, regValue);
-    return status;
+    OpStatus status = apiDevice->device->EnableTxWaveform(apiDevice->moduleIndex, ch, active);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetProgramModes(lms_device_t* device, lms_name_t* list)
