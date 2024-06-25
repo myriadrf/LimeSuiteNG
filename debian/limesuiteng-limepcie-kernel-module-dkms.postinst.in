@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+
+KERNEL_DRIVER_VERSION="@DRIVER_VERSION@"
+
+dkms add -m limepcie/$KERNEL_DRIVER_VERSION
+dkms install -m limepcie/$KERNEL_DRIVER_VERSION

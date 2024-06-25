@@ -28,8 +28,8 @@
 #include <linux/mutex.h>
 
 #include "limepcie.h"
-#include "csr.h"
-#include "config.h"
+#include "bsp/csr.h"
+#include "bsp/config.h"
 #include "boards.h"
 
 #define XILINX_FPGA_VENDOR_ID 0x10EE
