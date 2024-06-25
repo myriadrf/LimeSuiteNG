@@ -41,7 +41,7 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         memset(&lockInfo, 0, sizeof(lockInfo));
         lockInfo.dma_writer_request = 1;
         ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_LOCK, &lockInfo);
-        if (ret != 0 || lockInfo.dma_writer_status == 0)
+        if (ret != 0) //|| lockInfo.dma_writer_status == 0)
         {
             const std::string msg = ": DMA writer request denied"s;
             throw std::runtime_error(msg);
@@ -65,7 +65,7 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         memset(&lockInfo, 0, sizeof(lockInfo));
         lockInfo.dma_reader_request = 1;
         ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_LOCK, &lockInfo);
-        if (ret != 0 || lockInfo.dma_reader_status == 0)
+        if (ret != 0) // || lockInfo.dma_reader_status == 0)
         {
             const std::string msg = ": DMA reader request denied"s;
             throw std::runtime_error(msg);
@@ -108,66 +108,27 @@ LimePCIeDMA::~LimePCIeDMA()
 
 OpStatus LimePCIeDMA::Enable(bool enabled)
 {
-    if (dir == DataTransferDirection::DeviceToHost)
-    {
-        limepcie_ioctl_dma_writer writer{};
-        memset(&writer, 0, sizeof(limepcie_ioctl_dma_writer));
-        writer.enable = enabled ? 1 : 0;
-        writer.hw_count = 0;
-        writer.sw_count = 0;
-        if (enabled)
-        {
-            writer.write_size = 4096;
-            writer.irqFreq = 16;
-        }
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_WRITER, &writer);
-        if (ret < 0)
-            return ReportError(OpStatus::IOFailure, "Failed DMA writer ioctl. errno(%i) %s", errno, strerror(errno));
-    }
-    else
-    {
-        limepcie_ioctl_dma_reader reader{};
-        memset(&reader, 0, sizeof(limepcie_ioctl_dma_reader));
-        reader.enable = enabled ? 1 : 0;
-        reader.hw_count = 0;
-        reader.sw_count = 0;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_READER, &reader);
-        if (ret < 0)
-            return ReportError(OpStatus::IOFailure, "Failed DMA reader ioctl. err(%i) %s", errno, strerror(errno));
-    }
+    limepcie_ioctl_dma_control args{};
+    args.enabled = enabled;
+    args.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
+    int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_CONTROL, &args);
+    if (ret < 0)
+        return ReportError(OpStatus::IOFailure, "Failed DMA Enable ioctl. errno(%i) %s", errno, strerror(errno));
     return OpStatus::Success;
 }
 
 OpStatus LimePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
 {
     assert(port->IsOpen());
-    if (dir == DataTransferDirection::DeviceToHost)
-    {
-        limepcie_ioctl_dma_writer writer{};
-        memset(&writer, 0, sizeof(limepcie_ioctl_dma_writer));
-        writer.enable = enabled ? 1 : 0;
-        writer.hw_count = 0;
-        writer.sw_count = 0;
-        if (enabled)
-        {
-            writer.write_size = maxTransferSize;
-            writer.irqFreq = irqPeriod;
-        }
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_WRITER, &writer);
-        if (ret < 0)
-            return ReportError(OpStatus::IOFailure, "Failed DMA writer ioctl. errno(%i) %s", errno, strerror(errno));
-    }
-    else
-    {
-        limepcie_ioctl_dma_reader reader{};
-        memset(&reader, 0, sizeof(limepcie_ioctl_dma_reader));
-        reader.enable = enabled ? 1 : 0;
-        reader.hw_count = 0;
-        reader.sw_count = 0;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_READER, &reader);
-        if (ret < 0)
-            return ReportError(OpStatus::IOFailure, "Failed DMA reader ioctl. err(%i) %s", errno, strerror(errno));
-    }
+    limepcie_ioctl_dma_control_continiuous args{};
+    args.control.enabled = enabled;
+    args.control.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
+    args.transferSize = maxTransferSize;
+    args.irqPeriod = irqPeriod;
+
+    int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_CONTROL_CONTINUOUS, &args);
+    if (ret < 0)
+        return ReportError(OpStatus::IOFailure, "Failed DMA Enable continuous ioctl. errno(%i) %s", errno, strerror(errno));
     return OpStatus::Success;
 }
 
@@ -175,99 +136,52 @@ IDMA::State LimePCIeDMA::GetCounters()
 {
     IDMA::State dma{};
 
-    if (dir == DataTransferDirection::DeviceToHost)
-    {
-        limepcie_ioctl_dma_writer dmaWriter{};
-        memset(&dmaWriter, 0, sizeof(limepcie_ioctl_dma_writer));
-        dmaWriter.enable = 1;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_WRITER, &dmaWriter);
-        if (ret)
-            throw std::runtime_error("TransmitLoop IOCTL failed to get DMA reader counters");
-        dma.consumerIndex = dmaWriter.sw_count;
-        dma.producerIndex = dmaWriter.hw_count;
-    }
-    else
-    {
-        limepcie_ioctl_dma_reader dmaReader{};
-        memset(&dmaReader, 0, sizeof(limepcie_ioctl_dma_reader));
-        dmaReader.enable = 1;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_READER, &dmaReader);
-        if (ret)
-            throw std::runtime_error("TransmitLoop IOCTL failed to get DMA writer counters");
-        dma.consumerIndex = dmaReader.hw_count;
-        dma.producerIndex = dmaReader.sw_count;
-    }
+    limepcie_ioctl_dma_status status{};
+    status.wait_for_read = false;
+    status.wait_for_write = false;
+    int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_STATUS, &status);
+    if (ret)
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA counters");
+    dma.transfersCompleted = (dir == DataTransferDirection::DeviceToHost) ? status.fromDeviceCounter : status.toDeviceCounter;
     return dma;
 }
 
 OpStatus LimePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection direction, bool generateIRQ)
 {
     assert(port->IsOpen());
-    if (direction == DataTransferDirection::DeviceToHost)
-    {
-        limepcie_ioctl_mmap_dma_update sub{};
-        memset(&sub, 0, sizeof(limepcie_ioctl_mmap_dma_update));
-        sub.sw_count = index;
-        sub.buffer_size = bytesCount;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_MMAP_DMA_WRITER_UPDATE, &sub);
-        if (ret != 0)
-            return OpStatus::Error;
-    }
-    else
-    {
-        limepcie_ioctl_mmap_dma_update sub{};
-        memset(&sub, 0, sizeof(limepcie_ioctl_mmap_dma_update));
-        sub.sw_count = index;
-        sub.buffer_size = bytesCount;
-        sub.genIRQ = generateIRQ;
-        int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_MMAP_DMA_READER_UPDATE, &sub);
-        if (ret != 0)
-            return OpStatus::Error;
-    }
+    limepcie_ioctl_dma_request request{};
+    request.bufferIndex = index;
+    request.transferSize = bytesCount;
+    request.generateIRQ = generateIRQ;
+    request.directionFromDevice = (direction == DataTransferDirection::DeviceToHost);
+
+    int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_REQUEST, &request);
+    if (ret != 0)
+        return OpStatus::Error;
     return OpStatus::Success;
 }
 
 OpStatus LimePCIeDMA::Wait()
 {
     assert(port->IsOpen());
-    int eventMask;
-    if (dir == DataTransferDirection::DeviceToHost)
-        eventMask = POLLIN;
-    else
-        eventMask = POLLOUT;
 
-    pollfd desc{};
-    desc.fd = port->mFileDescriptor;
-    desc.events = eventMask;
+    limepcie_ioctl_dma_status status{};
+    status.wait_for_read = (dir == DataTransferDirection::DeviceToHost);
+    status.wait_for_write = (dir == DataTransferDirection::HostToDevice);
+    int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_STATUS, &status);
+    if (ret)
+        throw std::runtime_error("TransmitLoop IOCTL failed to get DMA counters");
 
-    timespec timeout_ts{};
-    timeout_ts.tv_sec = 0;
-    timeout_ts.tv_nsec = 10e6;
-
-    int ret = ppoll(&desc, 1, &timeout_ts, NULL);
-    if (ret < 0)
-    {
-        if (errno == EINTR)
-            return OpStatus::Timeout;
-        return ReportError(OpStatus::Error, "DMA poll errno("s + std::to_string(errno) + ") "s + strerror(errno));
-    }
-
-    if (ret != 0 && desc.revents & eventMask)
-        return OpStatus::Success;
-    return OpStatus::Timeout;
+    return OpStatus::Success;
 }
 
 void LimePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDirection)
 {
-    limepcie_cache_flush sub{};
-    memset(&sub, 0, sizeof(limepcie_cache_flush));
-    sub.isTx = dir == DataTransferDirection::HostToDevice;
-    sub.toDevice = bufferDirection == DataTransferDirection::HostToDevice;
-    sub.bufferIndex = index;
-    ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_CACHE_FLUSH, &sub);
-    // if (ret < 0)
-    //     return OpStatus::Error;
-    // return OpStatus::Success;
+    limepcie_cache_flush args{};
+    args.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
+    args.sync_to_cpu = (bufferDirection == DataTransferDirection::DeviceToHost);
+    args.bufferIndex = index;
+    ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_CACHE_FLUSH, &args);
 }
 
 std::vector<IDMA::Buffer> LimePCIeDMA::GetBuffers() const

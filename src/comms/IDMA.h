@@ -15,8 +15,7 @@ class IDMA
 {
   public:
     struct State {
-        uint16_t consumerIndex;
-        uint16_t producerIndex;
+        uint64_t transfersCompleted;
     };
 
     virtual ~IDMA(){};

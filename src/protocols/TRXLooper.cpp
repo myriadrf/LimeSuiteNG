@@ -222,6 +222,7 @@ void TRXLooper::Stop()
 {
     if (!mStreamEnabled)
         return;
+    lime::debug("TRXLooper::Stop()");
     mStreamEnabled = false;
     fpga->StopStreaming();
 
@@ -229,15 +230,16 @@ void TRXLooper::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
+        mRxArgs.dma->Enable(false);
+        lime::debug("TRXLooper: wait for Rx loop end.");
         while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
             ;
 
-        mRxArgs.dma->Enable(false);
         if (mCallback_logMessage)
         {
             char msg[256];
-            std::snprintf(msg, sizeof(msg), "Rx%i: packetsIn: %li", chipId, mRx.stats.packets);
-            mCallback_logMessage(LogLevel::Debug, msg);
+            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %li", chipId, mRx.stats.packets);
+            mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
 
@@ -245,9 +247,29 @@ void TRXLooper::Stop()
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
+        mTxArgs.dma->Enable(false);
+        lime::debug("TRXLooper: wait for Tx loop end.");
         while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
             ;
-        mTxArgs.dma->Enable(false);
+
+        uint32_t fpgaTxPktIngressCount;
+        uint32_t fpgaTxPktDropCounter;
+        fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
+        if (mCallback_logMessage)
+        {
+            char msg[512];
+            std::snprintf(msg,
+                sizeof(msg),
+                "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
+                chipId,
+                mTx.stats.packets,
+                mTx.stats.packets,
+                fpgaTxPktIngressCount,
+                fpgaTxPktIngressCount,
+                (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
+                fpgaTxPktDropCounter);
+            mCallback_logMessage(LogLevel::Verbose, msg);
+        }
     }
 }
 
@@ -293,13 +315,14 @@ OpStatus TRXLooper::RxSetup()
         char msg[256];
         std::snprintf(msg,
             sizeof(msg),
-            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i\n",
+            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s",
             chipId,
             usePoll ? 1 : 0,
             samplesInPkt,
             mRx.packetsToBatch,
-            mRx.packetsToBatch * packetSize);
-        mCallback_logMessage(LogLevel::Debug, msg);
+            mRx.packetsToBatch * packetSize,
+            (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"));
+        mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
@@ -339,6 +362,7 @@ OpStatus TRXLooper::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
+    lime::debug("RxSetup wait for Rx worker thread.");
     while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
         ;
 
@@ -352,6 +376,7 @@ struct DMATransactionCounter {
 
 void TRXLooper::RxWorkLoop()
 {
+    lime::debug("Rx worker thread ready.");
     // signal that thread is ready for work
     mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
 
@@ -372,6 +397,7 @@ void TRXLooper::RxWorkLoop()
         mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
     }
     mRx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
+    lime::debug("Rx worker thread shutdown.");
 }
 
 /** @brief Function dedicated for receiving data samples from board
@@ -379,6 +405,7 @@ void TRXLooper::RxWorkLoop()
 */
 void TRXLooper::ReceivePacketsLoop()
 {
+    lime::debug("Rx receive loop start.");
     constexpr int headerSize{ sizeof(StreamHeader) };
 
     DataConversion conversion{};
@@ -418,8 +445,8 @@ void TRXLooper::ReceivePacketsLoop()
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
         IDMA::State dma{ mRxArgs.dma->GetCounters() };
-        int64_t counterDiff = ReadySlots(dma.producerIndex, lastHwIndex, 65536);
-        lastHwIndex = dma.producerIndex;
+        int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
+        lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
 
         if (counterDiff > 0)
@@ -553,19 +580,21 @@ void TRXLooper::ReceivePacketsLoop()
         mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::HostToDevice);
         bool requestIRQ = (counters.requests % irqPeriod) == 0;
         ++counters.requests;
-        mRxArgs.dma->SubmitRequest(counters.requests, readSize, DataTransferDirection::DeviceToHost, requestIRQ);
+        mRxArgs.dma->SubmitRequest(currentBufferIndex, readSize, DataTransferDirection::DeviceToHost, requestIRQ);
 
         // one callback for the entire batch
         if (reportProblems && mConfig.statusCallback)
             mConfig.statusCallback(false, &stats, mConfig.userData);
         std::this_thread::yield();
     }
+    lime::debug("Rx receive loop end.");
 }
 
 void TRXLooper::RxTeardown()
 {
     if (mRx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
+        lime::debug("RxTeardown wait for Rx worker shutdown.");
         mRx.terminateWorker.store(true, std::memory_order_relaxed);
         mRx.terminate.store(true, std::memory_order_relaxed);
         try
@@ -717,12 +746,12 @@ OpStatus TRXLooper::TxSetup()
         char msg[256];
         std::snprintf(msg,
             sizeof(msg),
-            "Tx%i: samplesInTxPkt:%i maxTxPktInBatch:%i, batchSizeInTime:%gus",
+            "Tx%i Setup: samplesInTxPkt:%i maxTxPktInBatch:%i, batchSizeInTime:%gus",
             chipId,
             samplesInPkt,
             mTx.packetsToBatch,
             bufferTimeDuration * 1e6);
-        mCallback_logMessage(LogLevel::Debug, msg);
+        mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
     const std::string name = "MemPool_Tx"s + std::to_string(chipId);
@@ -746,7 +775,7 @@ OpStatus TRXLooper::TxSetup()
     // Initialize DMA
     mTxArgs.dma->Enable(true);
 
-    // wait for Tx thread to be ready
+    lime::debug("TxSetup wait for Tx worker.");
     while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
         ;
 
@@ -755,6 +784,7 @@ OpStatus TRXLooper::TxSetup()
 
 void TRXLooper::TxWorkLoop()
 {
+    lime::debug("Tx worker thread ready.");
     mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
     while (!mTx.terminateWorker.load(std::memory_order_relaxed))
     {
@@ -773,10 +803,12 @@ void TRXLooper::TxWorkLoop()
         mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
+    lime::debug("Tx worker thread shutdown.");
 }
 
 void TRXLooper::TransmitPacketsLoop()
 {
+    lime::debug("Tx transmit loop start.");
     const bool isRxActive = mConfig.channels.at(lime::TRXDir::Rx).size() > 0;
     const bool mimo = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size()) > 1;
     const bool compressed = mConfig.linkFormat == DataFormat::I12;
@@ -831,8 +863,8 @@ void TRXLooper::TransmitPacketsLoop()
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
         IDMA::State dma{ mTxArgs.dma->GetCounters() };
-        int64_t counterDiff = ReadySlots(dma.consumerIndex, lastHwIndex, 65536);
-        lastHwIndex = dma.consumerIndex;
+        int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
+        lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
 
         // process pending transactions
@@ -861,19 +893,19 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
                     chipId,
                     dataRate / 1000000.0,
                     lastTS,
                     stats.packets,
-                    counters.completed,
-                    counters.requests,
-                    counters.requests - counters.completed,
                     underrun.value(),
                     underrun.delta(),
                     loss.value(),
                     loss.delta(),
+                    counters.completed,
+                    counters.requests,
+                    counters.requests - counters.completed,
                     txTSAdvance.Min(),
                     avgTxAdvance,
                     txTSAdvance.Max(),
@@ -1003,7 +1035,7 @@ void TRXLooper::TransmitPacketsLoop()
             stagingBufferIndex, wrInfo.size, DataTransferDirection::HostToDevice, requestIRQ) };
         if (status != OpStatus::Success)
         {
-            // lime::error("Failed to submit dma write");
+            lime::error("Failed to submit dma write");
             ++stats.overrun;
             mTxArgs.dma->Wait();
             continue;
@@ -1018,12 +1050,14 @@ void TRXLooper::TransmitPacketsLoop()
         stats.timestamp = lastTS;
         output.Reset(dmaBuffers[stagingBufferIndex], mTxArgs.bufferSize);
     }
+    lime::debug("Tx transmit loop end.");
 }
 
 void TRXLooper::TxTeardown()
 {
     if (mTx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
+        lime::debug("TxTeardown wait for Tx worker shutdown.");
         mTx.terminateWorker.store(true, std::memory_order_relaxed);
         mTx.terminate.store(true, std::memory_order_relaxed);
         try
@@ -1034,25 +1068,6 @@ void TRXLooper::TxTeardown()
         {
             lime::error("Failed to join TRXLooper Tx thread"s);
         }
-    }
-
-    uint32_t fpgaTxPktIngressCount;
-    uint32_t fpgaTxPktDropCounter;
-    fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
-    if (mCallback_logMessage)
-    {
-        char msg[512];
-        std::snprintf(msg,
-            sizeof(msg),
-            "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
-            chipId,
-            mTx.stats.packets,
-            mTx.stats.packets,
-            fpgaTxPktIngressCount,
-            fpgaTxPktIngressCount,
-            (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
-            fpgaTxPktDropCounter);
-        mCallback_logMessage(LogLevel::Debug, msg);
     }
 
     if (mTx.stagingPacket)
