@@ -18,7 +18,7 @@
 #include "protocols/ADCUnits.h"
 #include <cassert>
 #include <vector>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "utilities/toString.h"

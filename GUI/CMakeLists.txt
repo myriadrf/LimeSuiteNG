@@ -63,7 +63,6 @@ set(GUI_SOURCES
     numericSlider/numericSlider.cpp
     fftviewer_wxgui/fftviewer_wxgui.cpp
     fftviewer_wxgui/fftviewer_frFFTviewer.cpp
-    lms7suiteEvents/lms7suiteEvents.cpp
     CommsToDevice.cpp
     DeviceConnectionPanel.cpp
     events.cpp

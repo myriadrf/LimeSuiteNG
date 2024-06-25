@@ -9,7 +9,7 @@
 #include <wx/checkbox.h>
 #include <wx/msgdlg.h>
 #include <wx/choice.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "pnlGPIO.h"
 #include "limesuiteng/SDRDescriptor.h"
 

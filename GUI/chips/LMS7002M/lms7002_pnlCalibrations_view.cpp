@@ -3,7 +3,7 @@
 #include "lms7002_gui_utilities.h"
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include <wx/busyinfo.h>
 #include <wx/spinctrl.h>
 #include "limesuiteng/LMS7002M.h"

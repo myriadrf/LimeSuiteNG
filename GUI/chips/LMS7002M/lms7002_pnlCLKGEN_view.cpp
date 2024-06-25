@@ -5,7 +5,7 @@
 #include <wx/spinctrl.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"

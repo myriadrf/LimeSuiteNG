@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include <string>
 #include "limesuiteng/SDRDevice.h"

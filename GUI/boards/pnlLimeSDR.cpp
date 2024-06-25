@@ -1,5 +1,5 @@
 #include "pnlLimeSDR.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
