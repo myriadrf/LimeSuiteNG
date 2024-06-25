@@ -552,11 +552,12 @@ static int limepcie_mmap(struct file *file, struct vm_area_struct *vma)
         return -EINVAL;
     }
 
+    vm_flags_set(vma, VM_IO | VM_DONTEXPAND | VM_DONTDUMP);
+
     for (i = 0; i < dma->bufferCount; i++)
     {
         void *va = dma->buffers[i];
         pfn = virt_to_phys((void *)va) >> PAGE_SHIFT;
-        //		vma->vm_flags |= VM_DONTDUMP | VM_DONTEXPAND;
         /*
 		 * Note: the memory is cached, so the user must explicitly
 		 * flush the CPU caches on architectures which require it.
