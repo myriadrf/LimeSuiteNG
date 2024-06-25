@@ -118,7 +118,7 @@ std::string DeviceHandle::ToString(void) const
 
     //backup condition if we are empty somehow
     if (out.empty())
-        out = this->Serialize();
+        out = Serialize();
 
     return out;
 }

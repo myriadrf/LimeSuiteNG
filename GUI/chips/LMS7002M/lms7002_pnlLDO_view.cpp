@@ -950,8 +950,8 @@ lms7002_pnlLDO_view::lms7002_pnlLDO_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer68->Add(ID_NOTEBOOK1, 1, wxEXPAND, 5);
 
-    this->SetSizerAndFit(fgSizer68);
-    //this->Layout();
+    SetSizerAndFit(fgSizer68);
+    //Layout();
 
     // Connect Events
     chkEN_G_LDOP->Connect(

@@ -630,8 +630,8 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
 
     fgSizer92->Add(pnlRefClkSpur, 1, 0, 5);
 
-    this->SetSizer(fgSizer92);
-    this->Layout();
+    SetSizer(fgSizer92);
+    Layout();
     fgSizer92->Fit(this);
 
     // Connect Events

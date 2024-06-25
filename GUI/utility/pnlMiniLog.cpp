@@ -49,11 +49,11 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     mainSizer->Add(szControls, 0, 0, 5);
 
     SetSizerAndFit(mainSizer);
-    //this->Layout();
+    //Layout();
     //mainSizer->Fit( this );
 
     // Connect Events
-    this->Connect(wxEVT_UPDATE_UI, wxUpdateUIEventHandler(pnlMiniLog::OnUpdateGUI));
+    Connect(wxEVT_UPDATE_UI, wxUpdateUIEventHandler(pnlMiniLog::OnUpdateGUI));
     btnClear->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnBtnClearClicked), NULL, this);
     btnFullLog->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnShowFullLog), NULL, this);
     choiceLogLvl->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlMiniLog::onLogLvlChange), NULL, this);

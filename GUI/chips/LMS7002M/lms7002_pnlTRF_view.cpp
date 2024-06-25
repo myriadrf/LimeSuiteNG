@@ -315,8 +315,8 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer33->Add(fgSizer34, 0, 0, 0);
 
-    this->SetSizer(fgSizer33);
-    this->Layout();
+    SetSizer(fgSizer33);
+    Layout();
     fgSizer33->Fit(this);
 
     // Connect Events

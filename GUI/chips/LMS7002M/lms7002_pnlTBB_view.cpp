@@ -444,8 +444,8 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer57->Add(sbSizerRxFilters, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer57);
-    this->Layout();
+    SetSizer(fgSizer57);
+    Layout();
     fgSizer57->Fit(this);
 
     // Connect Events

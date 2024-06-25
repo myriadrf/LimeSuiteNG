@@ -156,7 +156,7 @@ void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
     }
 
     unsigned byte_array_size = 0;
-    unsigned chipRev = this->Get_SPI_Reg_bits(MASK, true);
+    unsigned chipRev = Get_SPI_Reg_bits(MASK, true);
     if (chipRev >= 1)
         byte_array_size = 1024 * 16;
     else
@@ -373,8 +373,8 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
 
     if (parser.select("Reference clocks"s))
     {
-        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
-        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
     }
 
     if (parser.select("LMS7002 registers ch.A"s) == true)
@@ -382,7 +382,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
         ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
 
         uint16_t x0020_value = 0;
-        this->SetActiveChannel(Channel::ChA); //select A channel
+        SetActiveChannel(Channel::ChA); //select A channel
         for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
         {
             sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -447,7 +447,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             return status;
     }
 
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
 
     if (parser.select("LMS7002 registers ch.B"s) == true)
     {
@@ -461,7 +461,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             addrToWrite.push_back(addr);
             dataToWrite.push_back(value);
         }
-        this->SetActiveChannel(Channel::ChB); //select B channel
+        SetActiveChannel(Channel::ChB); //select B channel
         status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
         if (status != OpStatus::Success && controlPort != nullptr)
             return status;
@@ -533,7 +533,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     {
         //try loading as legacy format
         status = LoadConfigLegacyFile(filename);
-        this->SetActiveChannel(Channel::ChA);
+        SetActiveChannel(Channel::ChA);
         return status;
     }
     std::string type{};
@@ -559,7 +559,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a"s);
 
             uint16_t x0020_value = 0;
-            this->SetActiveChannel(Channel::ChA); //select A channel
+            SetActiveChannel(Channel::ChA); //select A channel
             for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
             {
                 sscanf(pairs->first.c_str(), "%hx", &addr);
@@ -590,7 +590,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             status = SPI_write(0x0020, x0020_value);
             if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
-            this->SetActiveChannel(Channel::ChB);
+            SetActiveChannel(Channel::ChB);
             if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
         }
@@ -607,15 +607,15 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 addrToWrite.push_back(addr);
                 dataToWrite.push_back(value);
             }
-            this->SetActiveChannel(Channel::ChB); //select B channel
+            SetActiveChannel(Channel::ChB); //select B channel
             status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
             if (status != OpStatus::Success && controlPort != nullptr)
                 return status;
         }
 
         parser.select("reference_clocks"s);
-        this->SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz"sv, 30.72) * 1e6);
-        this->SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz"sv, 30.72) * 1e6);
     }
 
     ResetLogicRegisters();
@@ -635,7 +635,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
                 return mCallback_onCGENChange(mCallback_onCGENChange_userData);
         }
     }
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     return OpStatus::Success;
 }
 
@@ -661,7 +661,7 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     dataReceived.resize(addrToRead.size(), 0);
 
     fout << "[lms7002_registers_a]"sv << std::endl;
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
         if (addrToRead[i] >= 0x5C3 && addrToRead[i] <= 0x5CA)
@@ -695,7 +695,7 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
                 if (addr >= 0x0100)
                     addrToRead.push_back(addr);
 
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
         dataReceived[i] = Get_SPI_Reg_bits(addrToRead[i], 15, 0, false);
@@ -705,8 +705,8 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
     }
 
     fout << "[reference_clocks]"sv << std::endl;
-    fout << "sxt_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
-    fout << "sxr_ref_clk_mhz="sv << this->GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
+    fout << "sxt_ref_clk_mhz="sv << GetReferenceClk_SX(TRXDir::Tx) / 1e6 << std::endl;
+    fout << "sxr_ref_clk_mhz="sv << GetReferenceClk_SX(TRXDir::Rx) / 1e6 << std::endl;
     fout.close();
     return OpStatus::Success;
 }
@@ -783,7 +783,7 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     OpStatus status;
     ChannelScope scope(this, channel);
 
-    int ind = this->GetActiveChannelIndex() % 2;
+    int ind = GetActiveChannelIndex() % 2;
     if (opt_gain_tbb[ind] <= 0)
     {
         status = CalibrateTxGain();
@@ -805,7 +805,7 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     int g_current = Get_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, true);
-    int ind = this->GetActiveChannelIndex() % 2;
+    int ind = GetActiveChannelIndex() % 2;
 
     if (opt_gain_tbb[ind] <= 0)
     {
@@ -1203,7 +1203,7 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
         return rdVal;
     }
     else
-        st = this->SPI_read_batch(&address, &data, 1);
+        st = SPI_read_batch(&address, &data, 1);
     if (status != nullptr)
         *status = st;
     return data;
@@ -1307,7 +1307,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     ch1Data.resize(ch1Addresses.size(), 0);
 
     //backup A channel
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     status = SPI_read_batch(&ch1Addresses[0], &ch1Data[0], ch1Addresses.size());
     if (status != OpStatus::Success)
         return status;
@@ -1320,7 +1320,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     std::vector<uint16_t> ch2Data;
     ch2Data.resize(ch2Addresses.size(), 0);
 
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
     status = SPI_read_batch(&ch2Addresses[0], &ch2Data[0], ch2Addresses.size());
     if (status != OpStatus::Success)
         return status;
@@ -1330,7 +1330,7 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     Modify_SPI_Reg_bits(LMS7002MCSR::MIMO_SISO, 0);
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE2, 0);
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE2, 0);
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
 
     std::stringstream ss;
 
@@ -1425,9 +1425,9 @@ OpStatus LMS7002M::RegistersTest(const std::string& fileName)
     }
 
     //restore register values
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     SPI_write_batch(&ch1Addresses[0], &ch1Data[0], ch1Addresses.size(), true);
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
     SPI_write_batch(&ch2Addresses[0], &ch2Data[0], ch2Addresses.size(), true);
 
     if (!fileName.empty())
@@ -1549,7 +1549,7 @@ bool LMS7002M::IsSynced()
     std::vector<uint16_t> dataReceived;
     dataReceived.resize(addrToRead.size(), 0);
 
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     std::vector<uint32_t> dataWr(addrToRead.size());
     std::vector<uint32_t> dataRd(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
@@ -1593,7 +1593,7 @@ bool LMS7002M::IsSynced()
     controlPort->SPI(dataWr.data(), dataRd.data(), dataWr.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
 
     //check if local copy matches chip
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
@@ -1636,7 +1636,7 @@ OpStatus LMS7002M::UploadAll()
     std::vector<uint16_t> dataToWrite;
 
     uint16_t x0020_value = mRegistersMap->GetValue(0, 0x0020);
-    this->SetActiveChannel(Channel::ChA); //select A channel
+    SetActiveChannel(Channel::ChA); //select A channel
 
     addrToWrite = mRegistersMap->GetUsedAddresses(0);
     //remove 0x0020 register from list, to not change MAC
@@ -1651,7 +1651,7 @@ OpStatus LMS7002M::UploadAll()
     status = SPI_write(0x0020, x0020_value);
     if (status != OpStatus::Success)
         return status;
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
     if (status != OpStatus::Success)
         return status;
 
@@ -1661,7 +1661,7 @@ OpStatus LMS7002M::UploadAll()
     {
         dataToWrite.push_back(mRegistersMap->GetValue(1, address));
     }
-    this->SetActiveChannel(Channel::ChB); //select B channel
+    SetActiveChannel(Channel::ChB); //select B channel
     status = SPI_write_batch(&addrToWrite[0], &dataToWrite[0], addrToWrite.size(), true);
     if (status != OpStatus::Success)
         return status;
@@ -1680,7 +1680,7 @@ OpStatus LMS7002M::DownloadAll()
     std::vector<uint16_t> addrToRead = mRegistersMap->GetUsedAddresses(0);
     std::vector<uint16_t> dataReceived;
     dataReceived.resize(addrToRead.size(), 0);
-    this->SetActiveChannel(Channel::ChA);
+    SetActiveChannel(Channel::ChA);
     status = SPI_read_batch(&addrToRead[0], &dataReceived[0], addrToRead.size());
     if (status != OpStatus::Success)
         return status;
@@ -1694,7 +1694,7 @@ OpStatus LMS7002M::DownloadAll()
     addrToRead = mRegistersMap->GetUsedAddresses(1);
     dataReceived.resize(addrToRead.size(), 0);
 
-    this->SetActiveChannel(Channel::ChB);
+    SetActiveChannel(Channel::ChB);
     status = SPI_read_batch(&addrToRead[0], &dataReceived[0], addrToRead.size());
     if (status != OpStatus::Success)
         return status;

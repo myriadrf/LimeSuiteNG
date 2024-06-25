@@ -397,8 +397,8 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
 
     fgMainSizer->Add(fgSizer191, 1, wxEXPAND, 5);
 
-    this->SetSizerAndFit(fgMainSizer);
-    // this->Layout();
+    SetSizerAndFit(fgMainSizer);
+    // Layout();
     // fgMainSizer->Fit( this );
 
     wxArrayString temp;

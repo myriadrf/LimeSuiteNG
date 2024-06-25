@@ -173,11 +173,11 @@ int CDCM_Dev::GetVCOInput()
 
 /**
     @brief Sets all CDCM outputs.
-    @param Outputs CDCM Outputs structure.
+    @param newOutputs CDCM Outputs structure.
 */
-void CDCM_Dev::SetOutputs(CDCM_Outputs Outputs)
+void CDCM_Dev::SetOutputs(CDCM_Outputs newOutputs)
 {
-    this->Outputs = Outputs;
+    Outputs = newOutputs;
 }
 
 /**
@@ -386,11 +386,11 @@ CDCM_VCO CDCM_Dev::GetVCO()
 
 /**
     @brief Sets CDCM VCO.
-    @param VCO The voltage-controlled oscillator to use.
+    @param newVCO The voltage-controlled oscillator to use.
 */
-void CDCM_Dev::SetVCO(CDCM_VCO VCO)
+void CDCM_Dev::SetVCO(CDCM_VCO newVCO)
 {
-    this->VCO = VCO;
+    VCO = newVCO;
     UpdateOutputFrequencies();
 }
 

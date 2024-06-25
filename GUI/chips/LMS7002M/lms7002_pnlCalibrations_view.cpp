@@ -294,8 +294,8 @@ lms7002_pnlCalibrations_view::lms7002_pnlCalibrations_view(
 
     mainSizer->Add(fullCalibrationSizer, 1, wxRIGHT, margins);
 
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 
     // Connect Events

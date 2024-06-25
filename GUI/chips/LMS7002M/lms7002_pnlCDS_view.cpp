@@ -257,8 +257,8 @@ lms7002_pnlCDS_view::lms7002_pnlCDS_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer190->Add(sbSizer122, 0, flags, 0);
 
-    this->SetSizer(fgSizer190);
-    this->Layout();
+    SetSizer(fgSizer190);
+    Layout();
     fgSizer190->Fit(this);
 
     // Connect Events

@@ -1513,8 +1513,8 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
 
     fgSizer105->Add(ID_NOTEBOOK1, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer105);
-    this->Layout();
+    SetSizer(fgSizer105);
+    Layout();
     fgSizer105->Fit(this);
 
     // Connect Events

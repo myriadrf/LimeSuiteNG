@@ -465,8 +465,8 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
         }
         mainSizer->Add(rowGroup);
     }
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
@@ -482,7 +482,7 @@ void lms7002_pnlR3_view::Initialize(LMS7002M* pControl)
     if (pControl == nullptr)
         return;
     uint16_t value = ReadParam(LMS7002MCSR::MASK);
-    this->Enable(value);
+    Enable(value);
 }
 
 void lms7002_pnlR3_view::UpdateGUI()

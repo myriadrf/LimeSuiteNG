@@ -82,8 +82,8 @@ lms7002_pnlXBUF_view::lms7002_pnlXBUF_view(wxWindow* parent, wxWindowID id, cons
 
     fgSizer76->Add(fgSizer77, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
 
-    this->SetSizer(fgSizer76);
-    this->Layout();
+    SetSizer(fgSizer76);
+    Layout();
     fgSizer76->Fit(this);
 
     // Connect Events

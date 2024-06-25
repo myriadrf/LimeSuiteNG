@@ -131,9 +131,9 @@ class LIME_API CDCM_Dev
 
     /**
       @brief Sets the base address of the SPI.
-      @param SPI_BASE_ADDR The new address of the SPI.
+      @param newSPIBaseAddress The new address of the SPI.
      */
-    void SetSPIBaseAddr(uint16_t SPI_BASE_ADDR) { this->SPI_BASE_ADDR = SPI_BASE_ADDR; }
+    void SetSPIBaseAddr(uint16_t newSPIBaseAddress) { SPI_BASE_ADDR = newSPIBaseAddress; }
 
     /**
       @brief Gets the base address of the SPI.
