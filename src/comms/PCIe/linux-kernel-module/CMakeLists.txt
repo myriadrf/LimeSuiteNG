@@ -81,6 +81,7 @@ execute_process(
     OUTPUT_QUIET)
 
 cmake_dependent_option(USE_DKMS "Use DKMS when installing the kernel module" ON "NOT IS_DKMS_NOT_PRESENT" OFF)
+add_feature_info(DKMS USE_DKMS "DKMS support for lime PCIe kernel module")
 
 set(MODE_FLAG "--dkms")
 if(NOT USE_DKMS)
