@@ -6,7 +6,6 @@
 #include <assert.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
 #include <tuple>
 #include "wx/spinctrl.h"
 #include "limesuiteng/SDRDevice.h"

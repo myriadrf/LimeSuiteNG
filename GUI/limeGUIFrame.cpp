@@ -10,7 +10,6 @@
 
 #include "limeGUIFrame.h"
 #include "dlgAbout.h"
-#include "lms7suiteEvents.h"
 #include "fftviewer_frFFTviewer.h"
 #include "chips/ADF4002/ADF4002_wxgui.h"
 #include "chips/Si5351C/Si5351C_wxgui.h"

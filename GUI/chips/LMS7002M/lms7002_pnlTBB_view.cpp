@@ -3,7 +3,6 @@
 #include <map>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"

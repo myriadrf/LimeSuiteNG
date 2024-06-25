@@ -11,7 +11,7 @@
 #include <wx/radiobut.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 

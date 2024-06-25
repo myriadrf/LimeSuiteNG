@@ -9,7 +9,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "DSP/FFT/FFT.h"
 #include <fstream>
-#include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
