@@ -273,7 +273,7 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
 
     StreamStats rxStats;
     StreamStats txStats;
-    const uint8_t chipIndex = this->lmsIndex;
+    const uint8_t chipIndex = lmsIndex;
     device->StreamStatus(chipIndex, &rxStats, &txStats);
 
     float RxFilled = 100.0 * rxStats.FIFO.ratio();

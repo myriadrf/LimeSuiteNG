@@ -53,8 +53,8 @@ pnlBuffers::pnlBuffers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
 
     fgSizer239->Add(sbSizer128, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer239);
-    this->Layout();
+    SetSizer(fgSizer239);
+    Layout();
     fgSizer239->Fit(this);
 
     // Connect Events
@@ -65,8 +65,8 @@ pnlBuffers::pnlBuffers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     chkIQ_SEL2_DIR->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
     chkG_PWR_DWN->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
 
-    Bind(READ_ALL_VALUES, &pnlBuffers::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlBuffers::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlBuffers::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlBuffers::OnWriteAll, this, GetId());
 }
 
 void pnlBuffers::Initialize(lms_device_t* pControl)

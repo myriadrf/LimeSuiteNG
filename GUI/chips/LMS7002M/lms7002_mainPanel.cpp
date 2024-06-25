@@ -183,7 +183,7 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
 #undef CreatePage
 
     mainSizer->Add(tabsNotebook, 0, wxEXPAND, 5);
-    this->SetSizerAndFit(mainSizer);
+    SetSizerAndFit(mainSizer);
 
     // Connect Events
     btnOpen->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnOpenProject), NULL, this);

@@ -153,7 +153,7 @@ int rfe::change_mode(int mode)
 
     if ((error = RFE_Mode(rfe_dev, mode)) != 0) {
         GR_LOG_ERROR(d_logger,
-                     fmt::format("Failed to change mode: {:s}", this->strerror(error)));
+                     fmt::format("Failed to change mode: {:s}", strerror(error)));
     }
     boardState.mode = mode;
     return error;
@@ -171,7 +171,7 @@ int rfe::set_fan(int enable)
     int error = 0;
     if ((error = RFE_Fan(rfe_dev, enable)) != 0) {
         GR_LOG_ERROR(d_logger,
-                     fmt::format("Failed to change mode: {:s}", this->strerror(error)));
+                     fmt::format("Failed to change mode: {:s}", strerror(error)));
     }
     return error;
 }
@@ -193,9 +193,8 @@ int rfe::set_attenuation(int attenuation)
 
     boardState.attValue = attenuation;
     if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
-        GR_LOG_ERROR(
-            d_logger,
-            fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
+        GR_LOG_ERROR(d_logger,
+                     fmt::format("Failed to change attenuation: {:s}", strerror(error)));
     }
     return error;
 }
@@ -217,9 +216,8 @@ int rfe::set_notch(int enable)
     std::array<std::string, 2> en_dis = { "Disabling"s, "Enabling"s };
     GR_LOG_INFO(d_logger, fmt::format("{:s} notch filter", en_dis[enable]));
     if ((error = RFE_ConfigureState(rfe_dev, boardState)) != 0) {
-        GR_LOG_ERROR(
-            d_logger,
-            fmt::format("Failed to change attenuation: {:s}", this->strerror(error)));
+        GR_LOG_ERROR(d_logger,
+                     fmt::format("Failed to change attenuation: {:s}", strerror(error)));
     }
     return error;
 }

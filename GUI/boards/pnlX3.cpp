@@ -355,8 +355,8 @@ pnlX3::pnlX3(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     SetSizer(mainBoxSizer);
     Layout();
 
-    Bind(READ_ALL_VALUES, &pnlX3::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlX3::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlX3::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlX3::OnWriteAll, this, GetId());
 }
 
 void pnlX3::Initialize(lime::SDRDevice* pControl)

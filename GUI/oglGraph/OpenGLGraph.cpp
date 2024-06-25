@@ -107,7 +107,7 @@ OpenGLGraph::OpenGLGraph(wxWindow* parent,
 {
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     int w, h;
-    this->GetSize(&w, &h);
+    GetSize(&w, &h);
     setupViewport(w, h);
 
     //Initialize(w, h);
@@ -663,7 +663,7 @@ void OpenGLGraph::Draw()
     if (!initialized)
     {
         int w, h;
-        this->GetSize(&w, &h);
+        GetSize(&w, &h);
         if (Initialize(w, h) == false)
             return;
     }

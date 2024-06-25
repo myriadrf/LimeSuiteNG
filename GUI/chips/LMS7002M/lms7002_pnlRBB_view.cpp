@@ -309,8 +309,8 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer52->Add(sbSizerOpAmp, 0, wxEXPAND, 0);
 
-    this->SetSizer(fgSizer52);
-    this->Layout();
+    SetSizer(fgSizer52);
+    Layout();
     fgSizer52->Fit(this);
 
     // Connect Events

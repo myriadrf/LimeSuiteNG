@@ -607,8 +607,8 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
 
     fgSizer244->Add(fgSizer245, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer244);
-    this->Layout();
+    SetSizer(fgSizer244);
+    Layout();
     fgSizer244->Fit(this);
 
     // Connect Events
@@ -821,9 +821,9 @@ void lms7002_pnlCLKGEN_view::ParameterChangeHandler(wxCommandEvent& event)
 
 void lms7002_pnlCLKGEN_view::OnAutoPhase(wxCommandEvent& event)
 {
-    bool disabled = this->chkAutoPhase->GetValue();
-    this->txPhase->Enable(!disabled);
-    this->rxPhase->Enable(!disabled);
+    bool disabled = chkAutoPhase->GetValue();
+    txPhase->Enable(!disabled);
+    rxPhase->Enable(!disabled);
 }
 
 void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)
