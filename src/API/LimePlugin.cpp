@@ -395,6 +395,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         }
 
         // Initialize device to default settings
+        lime::registerLogHandler(LogCallback);
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
