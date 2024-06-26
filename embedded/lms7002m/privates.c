@@ -29,6 +29,16 @@ void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* fo
     context->hooks.log(level, buff, context->hooks.log_userData);
 }
 
+static void lms7002m_log_va(lms7002m_context* context, lime_LogLevel level, const char* format, va_list args)
+{
+    if (context->hooks.log == NULL)
+        return;
+
+    char buff[4096];
+    vsnprintf(buff, sizeof(buff), format, args);
+    context->hooks.log(level, buff, context->hooks.log_userData);
+}
+
 lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result, const char* format, ...)
 {
     if (context->hooks.log == NULL)
@@ -36,7 +46,7 @@ lime_Result lms7002m_report_error(lms7002m_context* context, lime_Result result,
 
     va_list args;
     va_start(args, format);
-    lms7002m_log(context, lime_LogLevel_Error, format, args);
+    lms7002m_log_va(context, lime_LogLevel_Error, format, args);
     va_end(args);
 
     return result;
@@ -94,20 +104,6 @@ uint16_t lms7002m_spi_read_bits(lms7002m_context* self, uint16_t address, uint8_
 uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
 {
     return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
-}
-
-uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count)
-{
-    int minimum_index = 0;
-    for (int i = 1; i < count; ++i)
-    {
-        if (abs(tuneScore[i]) < abs(tuneScore[minimum_index]))
-        {
-            minimum_index = i;
-        }
-    }
-
-    return minimum_index;
 }
 
 int16_t clamp_int(int16_t value, int16_t min, int16_t max)

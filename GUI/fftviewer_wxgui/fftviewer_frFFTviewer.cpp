@@ -660,6 +660,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     }
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
+    pthis->device->StreamDestroy(chipIndex);
 
     for (int i = 0; i < channelsCount; ++i)
         delete[] buffers[i];

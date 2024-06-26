@@ -33,16 +33,13 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     OpStatus Init() override;
     OpStatus Reset() override;
 
-    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
     OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-    void StreamStop(uint8_t moduleIndex) override;
 
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
@@ -76,11 +73,11 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     enum class ePathLMS2_Tx : uint8_t { NONE, TDD, FDD };
 
   private:
-    void ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex);
+    void ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig& cfg, int ch, uint8_t socIndex);
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);
 
-    CDCM_Dev* mClockGeneratorCDCM;
-    Equalizer* mEqualizer;
+    std::unique_ptr<CDCM_Dev> mClockGeneratorCDCM;
+    std::unique_ptr<Equalizer> mEqualizer;
     std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
 
     std::array<std::shared_ptr<SlaveSelectShim>, 3> mLMS7002Mcomms;

@@ -156,8 +156,9 @@ class LIME_API SDRDevice
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
+    /// @param rf_samplerate [out] RF sampling rate.
     /// @return The currend device sample rate (in Hz)
-    virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
+    virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) = 0;
 
     /// @brief Sets the sample rate of the device.
     /// @param moduleIndex The device index to configure.
@@ -446,6 +447,10 @@ class LIME_API SDRDevice
     /// @brief Stops all the set up streams on the devices.
     /// @param moduleIndexes The indices of the devices to stop the streams on.
     virtual void StreamStop(const std::vector<uint8_t> moduleIndexes);
+
+    /// @brief Deallocate stream resources.
+    /// @param moduleIndex The index of the device to stop the streams on.
+    virtual void StreamDestroy(uint8_t moduleIndex) = 0;
 
     /// @brief Reveives samples from all the active streams in the device.
     /// @param moduleIndex The index of the device to receive the samples from.

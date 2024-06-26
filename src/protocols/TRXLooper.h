@@ -74,10 +74,12 @@ class TRXLooper
 
   protected:
     OpStatus RxSetup();
+    void RxWorkLoop();
     void ReceivePacketsLoop();
     void RxTeardown();
 
     OpStatus TxSetup();
+    void TxWorkLoop();
     void TransmitPacketsLoop();
     void TxTeardown();
 
@@ -97,13 +99,17 @@ class TRXLooper
     bool mStreamEnabled;
 
     struct Stream {
-        MemoryPool* memPool;
-        StreamStats stats;
-        PacketsFIFO<SamplesPacketType*>* fifo;
+        enum ReadyStage { Disabled = 0, WorkerReady = 1, Active = 2 };
+
+        std::unique_ptr<MemoryPool> memPool;
+        std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
         SamplesPacketType* stagingPacket;
+        StreamStats stats;
         std::thread thread;
         std::atomic<uint64_t> lastTimestamp;
         std::atomic<bool> terminate;
+        std::atomic<bool> terminateWorker;
+        std::atomic<ReadyStage> stage;
         // how many packets to batch in data transaction
         // lower count will give better latency, but can cause problems with really high data rates
         uint16_t samplesInPkt;
@@ -113,29 +119,21 @@ class TRXLooper
             : memPool(nullptr)
             , fifo(nullptr)
             , stagingPacket(nullptr)
+            , terminateWorker(false)
+            , stage(Disabled)
         {
         }
 
-        ~Stream()
-        {
-            if (fifo != nullptr)
-                delete fifo;
-            DeleteMemoryPool();
-        }
+        ~Stream() { DeleteMemoryPool(); }
 
         void DeleteMemoryPool()
         {
-            if (memPool == nullptr)
+            if (!stagingPacket)
                 return;
 
-            if (stagingPacket != nullptr)
-            {
+            if (memPool)
                 memPool->Free(stagingPacket);
-                stagingPacket = nullptr;
-            }
-
-            delete memPool;
-            memPool = nullptr;
+            stagingPacket = nullptr;
         }
     };
 

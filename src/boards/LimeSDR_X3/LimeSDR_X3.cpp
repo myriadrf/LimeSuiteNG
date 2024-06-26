@@ -154,8 +154,7 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
     // don't care about cgen changes while doing Config(), to avoid unnecessary fpga updates
     if (pthis->mConfigInProgress)
         return OpStatus::Success;
-    LMS7002M* soc = pthis->mLMSChips[chipIndex];
-    return UpdateFPGAInterfaceFrequency(*soc, *pthis->mFPGA, chipIndex);
+    return UpdateFPGAInterfaceFrequency(*pthis->mLMSChips.at(chipIndex), *pthis->mFPGA, chipIndex);
 }
 
 /// @brief Constructs a new LimeSDR_X3 object
@@ -181,6 +180,12 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     LMS64CProtocol::GetFirmwareInfo(*control, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
+    mLMS7002Mcomms[0] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_1);
+
+    mFPGA = std::make_unique<lime::FPGA_X3>(spiFPGA, mLMS7002Mcomms[0]);
+    FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
+    FPGA::GatewareToDescriptor(gw, desc);
+
     desc.spiSlaveIds = {
         { "LMS7002M_1"s, SPI_LMS7002M_1 },
         { "LMS7002M_2"s, SPI_LMS7002M_2 },
@@ -196,95 +201,75 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(cp_vctcxo_dac);
     desc.customParameters.push_back(cp_temperature);
 
-    mLMS7002Mcomms[0] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_1);
-
-    mFPGA = new lime::FPGA_X3(spiFPGA, mLMS7002Mcomms[0]);
-    FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
-    FPGA::GatewareToDescriptor(gw, desc);
-
-    mEqualizer = new Equalizer(spiFPGA, SPI_FPGA);
-
-    mClockGeneratorCDCM = new CDCM_Dev(spiFPGA, CDCM2_BASE_ADDR);
+    mEqualizer = std::make_unique<Equalizer>(spiFPGA, SPI_FPGA);
+    mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
-    RFSOCDescriptor soc;
-
     // LMS#1
-    soc.name = "LMS 1"s;
-    soc.channelCount = 2;
-    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "LNAL"s };
-    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s, "Band2"s };
+    {
+        RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
+        soc.name = "LMS 1"s;
+        desc.rfSOC.push_back(soc);
 
-    soc.samplingRateRange = { 100e3, 61.44e6, 0 };
-    soc.frequencyRange = { 100e3, 3.8e9, 0 };
-
-    soc.lowPassFilterRange[TRXDir::Rx] = { 1.4001e6, 130e6 };
-    soc.lowPassFilterRange[TRXDir::Tx] = { 5e6, 130e6 };
-
-    soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 700e6, 900e6 };
-    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
-
-    SetGainInformationInDescriptor(soc);
-
-    desc.rfSOC.push_back(soc);
-
-    LMS7002M* lms1 = new LMS7002M(mLMS7002Mcomms[0]);
-    lms1->ModifyRegistersDefaults(lms1defaultsOverride);
-    lms1->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
-    mLMSChips.push_back(lms1);
+        std::unique_ptr<LMS7002M> lms1 = std::make_unique<LMS7002M>(mLMS7002Mcomms[0]);
+        lms1->ModifyRegistersDefaults(lms1defaultsOverride);
+        lms1->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
+        mLMSChips.push_back(std::move(lms1));
+    }
 
     // LMS#2
-    soc.name = "LMS 2"s;
-    soc.pathNames[TRXDir::Rx] = { "None"s, "TDD"s, "FDD"s, "Calibration (LMS3)"s };
-    soc.pathNames[TRXDir::Tx] = { "None"s, "TDD"s, "FDD"s };
-    desc.rfSOC.push_back(soc);
-    mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_2);
-    LMS7002M* lms2 = new LMS7002M(mLMS7002Mcomms[1]);
-    lms2->ModifyRegistersDefaults(lms2and3defaultsOverride);
-    mLMSChips.push_back(lms2);
+    {
+        RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
+        soc.name = "LMS 2"s;
+        soc.pathNames[TRXDir::Rx] = { "None"s, "TDD"s, "FDD"s, "Calibration(LMS3)"s };
+        soc.pathNames[TRXDir::Tx] = { "None"s, "TDD"s, "FDD"s };
+
+        desc.rfSOC.push_back(soc);
+        mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_2);
+        std::unique_ptr<LMS7002M> lms2 = std::make_unique<LMS7002M>(mLMS7002Mcomms[1]);
+        lms2->ModifyRegistersDefaults(lms2and3defaultsOverride);
+        mLMSChips.push_back(std::move(lms2));
+    }
 
     // LMS#3
-    soc.name = "LMS 3"s;
-    soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "Calibration (LMS2)"s };
-    soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s };
-    desc.rfSOC.push_back(soc);
-    mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_3);
-    LMS7002M* lms3 = new LMS7002M(mLMS7002Mcomms[2]);
-    lms3->ModifyRegistersDefaults(lms2and3defaultsOverride);
-    mLMSChips.push_back(lms3);
+    {
+        RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
+        soc.name = "LMS 3"s;
+        soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "Calibration(LMS2)"s };
+        soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s };
+        desc.rfSOC.push_back(soc);
+        mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_3);
+        std::unique_ptr<LMS7002M> lms3 = std::make_unique<LMS7002M>(mLMS7002Mcomms[2]);
+        lms3->ModifyRegistersDefaults(lms2and3defaultsOverride);
+        mLMSChips.push_back(std::move(lms3));
+    }
 
+    mStreamers.reserve(mLMSChips.size());
     for (size_t i = 0; i < mLMSChips.size(); ++i)
     {
         mLMSChips[i]->SetConnection(mLMS7002Mcomms[i]);
-        //iter->SetReferenceClk_SX(false, 30.72e6);
+
+        std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(i) };
+        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+        std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(i).get(), i);
+        mStreamers.push_back(std::move(streamer));
     }
 
-    const int chipCount = mLMSChips.size();
-    mStreamers.resize(chipCount, nullptr);
-
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA);
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1"s, eDeviceTreeNodeClass::LMS7002M, lms1));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, lms2));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3"s, eDeviceTreeNodeClass::LMS7002M, lms3));
+    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA.get());
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(1).get()));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(2).get()));
     desc.socTree = std::make_shared<DeviceTreeNode>("X3"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
 
     desc.socTree->children.push_back(
-        std::make_shared<DeviceTreeNode>("CDCM6208"s, eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM));
+        std::make_shared<DeviceTreeNode>("CDCM6208"s, eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM.get()));
 }
 
 LimeSDR_X3::~LimeSDR_X3()
 {
-    delete mClockGeneratorCDCM;
-    delete mEqualizer;
-
-    for (size_t i = 0; i < mLMSChips.size(); ++i)
-    {
-        delete mLMSChips[i];
-        mLMSChips[i] = nullptr;
-    }
 }
 
 // Setup default register values specifically for onboard LMS1 chip
@@ -298,7 +283,7 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     CustomParameterWrite(params);
 
     OpStatus status;
-    LMS7002M* lms = mLMSChips[0];
+    auto& lms = mLMSChips.at(0);
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
@@ -331,113 +316,113 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     return OpStatus::Success;
 }
 
-static void EnableChannelLMS2(LMS7002M* chip, TRXDir dir, const uint8_t channel, const bool enable)
+static void EnableChannelLMS2(LMS7002M& chip, TRXDir dir, const uint8_t channel, const bool enable)
 {
     //ChannelScope scope(this, channel);
 
-    auto macBck = chip->GetActiveChannel();
+    auto macBck = chip.GetActiveChannel();
     const LMS7002M::Channel ch = channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
-    chip->SetActiveChannel(ch);
+    chip.SetActiveChannel(ch);
 
     const bool isTx = dir == TRXDir::Tx;
     //--- LML ---
     if (ch == LMS7002M::Channel::ChA)
     {
         if (isTx)
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_A, enable ? 1 : 0);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_A, enable ? 1 : 0);
         else
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_A, enable ? 1 : 0);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_A, enable ? 1 : 0);
     }
     else
     {
         if (isTx)
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_B, enable ? 1 : 0);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::TXEN_B, enable ? 1 : 0);
         else
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_B, enable ? 1 : 0);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::RXEN_B, enable ? 1 : 0);
     }
 
     //--- ADC/DAC ---
-    chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_AFE, 1);
-    chip->Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, 1);
-    chip->Modify_SPI_Reg_bits(isTx ? PD_TX_AFE2 : PD_RX_AFE2, 1);
+    chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_AFE, 1);
+    chip.Modify_SPI_Reg_bits(isTx ? PD_TX_AFE1 : PD_RX_AFE1, 1);
+    chip.Modify_SPI_Reg_bits(isTx ? PD_TX_AFE2 : PD_RX_AFE2, 1);
 
-    //int disabledChannels = (chip->Get_SPI_Reg_bits(PD_AFE.address,4,1)&0xF);//check if all channels are disabled
-    //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE,disabledChannels==0xF ? 0 : 1);
-    //chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, disabledChannels==0xF ? 1 : 0);
+    //int disabledChannels = (chip.Get_SPI_Reg_bits(PD_AFE.address,4,1)&0xF);//check if all channels are disabled
+    //chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE,disabledChannels==0xF ? 0 : 1);
+    //chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, disabledChannels==0xF ? 1 : 0);
 
     //--- digital --- not used for LMS2
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP, 0);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP, 0);
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP, 0);
-        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 2); //bypass
-        // chip->Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 1);
-        //chip->SPI_write(0x040C, 0x01FF) // bypass all RxTSP
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP, 0);
+        // chip.Modify_SPI_Reg_bits(LMS7002MCSR::AGC_MODE_RXTSP, 2); //bypass
+        // chip.Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 1);
+        //chip.SPI_write(0x040C, 0x01FF) // bypass all RxTSP
     }
 
     //--- baseband ---
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TBB, 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB, enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFIAMP_TBB, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 3); // switch to external DAC
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TBB, 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB, enable ? 1 : 0);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_LPFIAMP_TBB, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 3); // switch to external DAC
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RBB, 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB, enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_PGA_RBB, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 1); // switch external ADC
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RBB, 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB, enable ? 1 : 0);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_PGA_RBB, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 1); // switch external ADC
     }
 
     //--- frontend ---
     if (isTx)
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TRF, 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_TRF, 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, enable ? 1 : 0);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, enable ? 0 : 1);
     }
     else
     {
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RFE, 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, enable ? 1 : 0);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_MXLOBUF_RFE, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, enable ? 0 : 1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_RFE, 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, enable ? 1 : 0);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_MXLOBUF_RFE, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, enable ? 0 : 1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, enable ? 0 : 1);
     }
 
     //--- synthesizers ---
     if (isTx)
     {
-        chip->SetActiveChannel(LMS7002M::Channel::ChSXT);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&3) == 3?0:1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
+        chip.SetActiveChannel(LMS7002M::Channel::ChSXT);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
+        //chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&3) == 3?0:1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
         if (ch == LMS7002M::Channel::ChB) //enable LO to channel B
         {
-            chip->SetActiveChannel(LMS7002M::Channel::ChA);
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTTX_TRF, enable ? 1 : 0);
+            chip.SetActiveChannel(LMS7002M::Channel::ChA);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTTX_TRF, enable ? 1 : 0);
         }
     }
     else
     {
-        chip->SetActiveChannel(LMS7002M::Channel::ChSXR);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
-        //chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&0xC)==0xC?0:1);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
+        chip.SetActiveChannel(LMS7002M::Channel::ChSXR);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_DIR_SXRSXT, 1);
+        //chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, (disabledChannels&0xC)==0xC?0:1);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_G, 1);
         if (ch == LMS7002M::Channel::ChB) //enable LO to channel B
         {
-            chip->SetActiveChannel(LMS7002M::Channel::ChA);
-            chip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTRX_RFE, enable ? 1 : 0);
+            chip.SetActiveChannel(LMS7002M::Channel::ChA);
+            chip.Modify_SPI_Reg_bits(LMS7002MCSR::EN_NEXTRX_RFE, enable ? 1 : 0);
         }
     }
-    chip->SetActiveChannel(macBck);
+    chip.SetActiveChannel(macBck);
 }
 
 // Setup default register values specifically for onboard LMS2 chip
@@ -452,7 +437,7 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
     };
 
     OpStatus status;
-    LMS7002M* lms = mLMSChips[1];
+    auto& lms = mLMSChips.at(1);
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
@@ -482,7 +467,7 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
 // TODO: Setup default register values specifically for onboard LMS3 chip
 OpStatus LimeSDR_X3::InitLMS3(bool skipTune)
 {
-    LMS7002M* lms = mLMSChips[2];
+    auto& lms = mLMSChips.at(2);
     OpStatus status;
     status = lms->ResetChip();
     if (status != OpStatus::Success)
@@ -564,7 +549,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         PreConfigure(cfg, socIndex);
 
         // config validation complete, now do the actual configuration
-        LMS7002M* chip = mLMSChips.at(socIndex);
+        auto& chip = mLMSChips.at(socIndex);
         if (!cfg.skipDefaults)
         {
             const bool skipTune = true;
@@ -582,7 +567,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
             }
         }
 
-        LMS7002LOConfigure(chip, cfg);
+        LMS7002LOConfigure(*chip, cfg);
 
         if (socIndex == 0)
             chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0); // enabled DAC is required for FPGA to work
@@ -624,9 +609,9 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         for (int ch = 0; ch < 2; ++ch)
         {
             chip->SetActiveChannel((ch & 1) ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA);
-            ConfigureDirection(TRXDir::Rx, chip, cfg, ch, socIndex);
-            ConfigureDirection(TRXDir::Tx, chip, cfg, ch, socIndex);
-            LMS7002TestSignalConfigure(chip, cfg.channel[ch], ch);
+            ConfigureDirection(TRXDir::Rx, *chip, cfg, ch, socIndex);
+            ConfigureDirection(TRXDir::Tx, *chip, cfg, ch, socIndex);
+            LMS7002TestSignalConfigure(*chip, cfg.channel[ch], ch);
         }
 
         if (socIndex == 0)
@@ -655,7 +640,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
     return OpStatus::Success;
 }
 
-void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
+void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig& cfg, int ch, uint8_t socIndex)
 {
     ChannelConfig::Direction trx = cfg.channel[ch].GetDirection(dir);
 
@@ -665,14 +650,14 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
     }
     else
     {
-        chip->EnableChannel(dir, ch, trx.enabled);
+        chip.EnableChannel(dir, ch, trx.enabled);
     }
 
     SetLMSPath(dir, trx, ch, socIndex);
 
     if (socIndex == 0)
     {
-        if (trx.enabled && chip->SetGFIRFilter(dir,
+        if (trx.enabled && chip.SetGFIRFilter(dir,
                                ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB,
                                trx.gfir.enabled,
                                trx.gfir.bandwidth) != OpStatus::Success)
@@ -686,11 +671,11 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
         OpStatus status = OpStatus::Success;
         if (dir == TRXDir::Rx)
         {
-            status = chip->CalibrateRx(trx.sampleRate);
+            status = chip.CalibrateRx(trx.sampleRate);
         }
         else
         {
-            status = chip->CalibrateTx(trx.sampleRate);
+            status = chip.CalibrateTx(trx.sampleRate);
         }
 
         if (status != OpStatus::Success)
@@ -701,9 +686,9 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M* chip, const SDRConfig&
 
     OpStatus status = OpStatus::Success;
     if (trx.enabled && dir == TRXDir::Rx)
-        status = chip->SetRxLPF(trx.lpf);
+        status = chip.SetRxLPF(trx.lpf);
     else if (trx.enabled && dir == TRXDir::Tx)
-        status = chip->SetTxLPF(trx.lpf);
+        status = chip.SetTxLPF(trx.lpf);
 
     if (status != OpStatus::Success)
     {
@@ -776,31 +761,40 @@ OpStatus LimeSDR_X3::Reset()
     return status;
 }
 
-double LimeSDR_X3::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+double LimeSDR_X3::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
     switch (moduleIndex)
     {
     case 1:
         if (trx == TRXDir::Rx)
         {
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y4); // Rx Ch. A
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y4); // Rx Ch. A
+            if (rf_samplerate)
+                *rf_samplerate = rate;
+            return rate;
         }
         else
         {
             const int oversample = mEqualizer->GetOversample();
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y0Y1) / oversample; // Tx Ch. A&B
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y0Y1) / oversample; // Tx Ch. A&B
+            if (rf_samplerate)
+                *rf_samplerate = rate * oversample;
+            return rate;
         }
     case 2:
         if (trx == TRXDir::Rx) // LMS3 Rx uses external ADC
         {
-            return mClockGeneratorCDCM->GetFrequency(CDCM_Y6); // Rx Ch. A
+            double rate = mClockGeneratorCDCM->GetFrequency(CDCM_Y6); // Rx Ch. A
+            if (rf_samplerate)
+                *rf_samplerate = rate;
+            return rate;
         }
         else // LMS3 Tx uses internal ADC
         {
-            return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, TRXDir::Tx, channel);
+            return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, TRXDir::Tx, channel, rf_samplerate);
         }
     default:
-        return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, trx, channel);
+        return LMS7002M_SDRDevice::GetSampleRate(moduleIndex, trx, channel, rf_samplerate);
     }
 }
 
@@ -837,14 +831,14 @@ OpStatus LimeSDR_X3::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 double LimeSDR_X3::GetClockFreq(uint8_t clk_id, uint8_t channel)
 {
     ValidateChannel(channel);
-    LMS7002M* chip = mLMSChips[channel / 2];
+    auto& chip = mLMSChips.at(channel / 2);
     return chip->GetClockFreq(static_cast<LMS7002M::ClockID>(clk_id));
 }
 
 OpStatus LimeSDR_X3::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
 {
     ValidateChannel(channel);
-    LMS7002M* chip = mLMSChips[channel / 2];
+    auto& chip = mLMSChips.at(channel / 2);
     return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
 }
 
@@ -863,55 +857,6 @@ OpStatus LimeSDR_X3::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MI
     default:
         throw std::logic_error("invalid SPI chip select"s);
     }
-}
-
-OpStatus LimeSDR_X3::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
-{
-    // Allow multiple setup calls
-    if (mStreamers.at(moduleIndex) != nullptr)
-    {
-        delete mStreamers.at(moduleIndex);
-    }
-
-    std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
-    if (!trxPort->IsOpen())
-    {
-        int dirFlag = 0;
-        if (config.channels.at(lime::TRXDir::Rx).size() > 0 && config.channels.at(lime::TRXDir::Tx).size() > 0)
-            dirFlag = O_RDWR;
-        else if (config.channels.at(lime::TRXDir::Rx).size() > 0)
-            dirFlag = O_RDONLY;
-        else if (config.channels.at(lime::TRXDir::Tx).size() > 0)
-            dirFlag = O_WRONLY;
-        if (trxPort->Open(trxPort->GetPathName(), dirFlag | O_NOCTTY | O_CLOEXEC | O_NONBLOCK) != OpStatus::Success)
-        {
-            const std::string reason = "Failed to open device in stream start: "s + trxPort->GetPathName().string();
-            return ReportError(OpStatus::Error, reason);
-        }
-    }
-
-    auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-    auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
-
-    mStreamers.at(moduleIndex) = new TRXLooper(std::static_pointer_cast<IDMA>(rxdma),
-        std::static_pointer_cast<IDMA>(txdma),
-        mFPGA,
-        mLMSChips.at(moduleIndex),
-        moduleIndex);
-    if (mCallback_logMessage)
-        mStreamers[moduleIndex]->SetMessageLogCallback(mCallback_logMessage);
-
-    mStreamers[moduleIndex]->Setup(config);
-    mStreamConfig = config;
-    return OpStatus::Success;
-}
-
-void LimeSDR_X3::StreamStop(uint8_t moduleIndex)
-{
-    LMS7002M_SDRDevice::StreamStop(moduleIndex);
-    std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(moduleIndex) };
-    if (trxPort && trxPort->IsOpen())
-        trxPort->Close();
 }
 
 void LimeSDR_X3::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
@@ -965,7 +910,7 @@ void LimeSDR_X3::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t t
         cgenFreq / 1e6,
         1 + hbd_ovr,
         1 + hbi_ovr);
-    LMS7002M* mLMSChip = mLMSChips[0];
+    auto& mLMSChip = mLMSChips.at(0);
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
@@ -1006,7 +951,7 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
     const bool tx = dir == TRXDir::Tx;
     uint16_t sw_addr = 0x00D1;
     uint16_t sw_val = mFPGA->ReadRegister(sw_addr);
-    lime::LMS7002M* lms = mLMSChips.at(0);
+    auto& lms = mLMSChips.at(0);
 
     if (tx)
     {
@@ -1170,7 +1115,7 @@ void LimeSDR_X3::LMS2SetPath(TRXDir dir, uint8_t chan, uint8_t path)
     }
 
     mFPGA->WriteRegister(sw_addr, sw_val);
-    lime::LMS7002M* lms = mLMSChips.at(1);
+    auto& lms = mLMSChips.at(1);
     lms->SetBandTRF(1); // LMS2 uses only BAND1
     lms->SetPathRFE(LMS7002M::PathRFE::LNAH); // LMS2 only uses LNAH
 }
@@ -1179,7 +1124,7 @@ void LimeSDR_X3::LMS3SetPath(TRXDir dir, uint8_t chan, uint8_t path)
 {
     uint16_t sw_addr = 0x00D1;
     uint16_t sw_val = mFPGA->ReadRegister(sw_addr);
-    lime::LMS7002M* lms = mLMSChips.at(0);
+    auto& lms = mLMSChips.at(0);
 
     if (dir == TRXDir::Tx)
         lms->SetBandTRF(path);
