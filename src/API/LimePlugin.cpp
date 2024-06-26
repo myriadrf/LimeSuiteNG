@@ -1,6 +1,7 @@
 #include "limesuiteng/LimePlugin.h"
 #include "gainTable.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <chrono>
 #include <iostream>
