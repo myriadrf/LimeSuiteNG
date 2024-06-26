@@ -307,7 +307,7 @@ int32_t USBGeneric::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t len
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);
     if (status != 0)
     {
-        lime::error("USBGeneric::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %i",
+        lime::error("USBGeneric::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
             endPointAddr,
             libusb_error_name(status),
             actualTransferred,

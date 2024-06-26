@@ -29,7 +29,8 @@ void lms7002m_log(lms7002m_context* context, lime_LogLevel level, const char* fo
     context->hooks.log(level, buff, context->hooks.log_userData);
 }
 
-static void lms7002m_log_va(lms7002m_context* context, lime_LogLevel level, const char* format, va_list args)
+static void __attribute__((format(printf, 3, 0)))
+lms7002m_log_va(lms7002m_context* context, lime_LogLevel level, const char* format, va_list args)
 {
     if (context->hooks.log == NULL)
         return;

@@ -482,7 +482,7 @@ void TRXLooper::ReceivePacketsLoop()
                 mRx.memPool->Allocate(outputPktSize), samplesInPkt * mRxArgs.packetsToBatch, outputSampleSize);
             if (outputPkt == nullptr)
             {
-                lime::warning("Rx%i: packets fifo full.");
+                lime::warning("Rx%i: packets fifo full.", chipId);
                 continue;
             }
         }

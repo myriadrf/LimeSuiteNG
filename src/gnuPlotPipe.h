@@ -47,7 +47,7 @@ class GNUPlotPipe
     /// @brief Writes formatted data into the pipe.
     /// @param format The format string.
     /// @param ... The format arguments parameters.
-    void writef(const char* format, ...)
+    void writef [[gnu::format(printf, 2, 3)]] (const char* format, ...)
     {
         static char temp[512];
         va_list argList;
@@ -58,7 +58,10 @@ class GNUPlotPipe
     }
 
     /// @brief Flushes the pipe.
-    void flush() { fflush(pipeHandle); }
+    void flush()
+    {
+        fflush(pipeHandle);
+    }
 
   protected:
     FILE* pipeHandle;

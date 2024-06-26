@@ -16,8 +16,10 @@ struct lms7002m_context;
         lms7002m_log(context, lime_LogLevel_Debug, format, __VA_ARGS__); \
     } while (0)
 
-void lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
-lime_Result lms7002m_report_error(struct lms7002m_context* context, lime_Result result, const char* format, ...);
+void __attribute__((format(printf, 3, 4)))
+lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
+lime_Result __attribute__((format(printf, 3, 4)))
+lms7002m_report_error(struct lms7002m_context* context, lime_Result result, const char* format, ...);
 void lms7002m_sleep(long timeInMicroseconds);
 
 void lms7002m_spi_write(struct lms7002m_context* self, uint16_t address, uint16_t value);
