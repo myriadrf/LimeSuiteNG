@@ -11,13 +11,16 @@
 
 #include <cmath>
 #include <complex>
+#include <initializer_list>
 
 using namespace std::literals::string_view_literals;
 
 // Allow for a one or two bit offset (in 12-bit format) in calculation in the samples.
-constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, int16_t allowedExactDelta1, int16_t allowedExactDelta2)
+constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, std::initializer_list<int16_t> deltas)
 {
-    return target == actual || std::abs(target - actual) == allowedExactDelta1 || std::abs(target - actual) == allowedExactDelta2;
+    return target == actual || std::any_of(deltas.begin(), deltas.end(), [target, actual](const int16_t value) {
+        return std::abs(target - actual) == value;
+    });
 }
 
 MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples"sv)
@@ -27,8 +30,8 @@ MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correc
 
     for (const auto& sample : arg)
     {
-        if (!EqualOrOffsetBy(sample.real(), nextExpectedSample.real(), 16, 32) ||
-            !EqualOrOffsetBy(sample.imag(), nextExpectedSample.imag(), 16, 32))
+        if (!EqualOrOffsetBy(sample.real(), nextExpectedSample.real(), { 16, 32 }) ||
+            !EqualOrOffsetBy(sample.imag(), nextExpectedSample.imag(), { 16, 32 }))
         {
             return false;
         }

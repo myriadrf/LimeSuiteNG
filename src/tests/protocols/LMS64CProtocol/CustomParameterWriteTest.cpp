@@ -53,8 +53,6 @@ MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the corr
 TEST(LMS64CProtocol, CustomParameterWriteTestEmptyDoesNothing)
 {
     SerialPortMock mockPort{};
-    LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 

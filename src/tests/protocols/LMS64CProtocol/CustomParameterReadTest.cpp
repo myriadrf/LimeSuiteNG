@@ -45,8 +45,6 @@ MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct s
 TEST(LMS64CProtocol, CustomParameterReadTestEmptyDoesNothing)
 {
     SerialPortMock mockPort{};
-    LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t subdevice = 1U;
 
