@@ -59,7 +59,8 @@ static const std::unordered_map<eMemoryDevice, const std::string> MEMORY_DEVICES
     { eMemoryDevice::FPGA_RAM, "FPGA/RAM"s },
     { eMemoryDevice::FPGA_FLASH, "FPGA/FLASH"s },
     { eMemoryDevice::EEPROM, "EEPROM"s },
-    { eMemoryDevice::GATEWARE_SECONDARY, "FPGA/secondary-gateware"s },
+    { eMemoryDevice::GATEWARE_GOLD_IMAGE, "FPGA/gold-image"s },
+    { eMemoryDevice::GATEWARE_USER_IMAGE, "FPGA/user-image"s },
 };
 
 const std::string& ToString(eMemoryDevice value)
