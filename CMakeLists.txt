@@ -230,6 +230,7 @@ endif()
 ########################################################################
 include(CMakeDependentOption)
 include(FeatureSummary)
+option(ENABLE_TESTING "Use GoogleTest to test the library" ON)
 add_feature_info(TESTING ENABLE_TESTING "Build GoogleTest tests to test the library")
 cmake_dependent_option(ENABLE_CODE_COVERAGE "Use gcov/lcov to generate a code coverage report" ON "ENABLE_TESTING" OFF)
 
@@ -248,6 +249,12 @@ if(ENABLE_TESTING)
     if(MSVC)
         set(gtest_force_shared_crt
             ON
+            CACHE BOOL "" FORCE)
+    endif()
+
+    if(BUILD_SHARED_LIBS)
+        set(GTEST_CREATE_SHARED_LIBRARY
+            1
             CACHE BOOL "" FORCE)
     endif()
 

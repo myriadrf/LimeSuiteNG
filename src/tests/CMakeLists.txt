@@ -36,7 +36,13 @@ endif()
 add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
 
 target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
-target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME} GTest::gtest_main GTest::gmock_main)
+# Has to be in this specific order otherwise shared libs don't find the tests
+target_link_libraries(
+    ${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME} GTest::gtest GTest::gmock_main GTest::gtest_main GTest::gmock)
+
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(${LIME_TEST_SUITE_NAME} PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+endif()
 
 if(CMAKE_BINARY_DIR)
     set_target_properties(${LIME_TEST_SUITE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
