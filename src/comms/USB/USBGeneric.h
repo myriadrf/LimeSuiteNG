@@ -54,7 +54,7 @@ class USBGeneric : IUSB
 
     virtual OpStatus ClaimInterface(int32_t interface_number);
 
-  protected:
+  private:
     libusb_device_handle* dev_handle; //a device handle
 };
 

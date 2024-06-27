@@ -72,7 +72,7 @@ class TRXLooper
         int32_t samplesInPacket;
     };
 
-  protected:
+  private:
     OpStatus RxSetup();
     void RxWorkLoop();
     void ReceivePacketsLoop();
@@ -140,7 +140,6 @@ class TRXLooper
     Stream mRx;
     Stream mTx;
 
-  private:
     template<class T> uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta);
     template<class T> uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta);
 };

@@ -45,7 +45,7 @@ class FX3 : public IUSB
         0x0F; ///< The memory address for writing information via the bulk transfer protocol.
     static constexpr uint8_t CONTROL_BULK_IN_ADDRESS =
         0x8F; ///< THe memory address for reading information via the bulk transfer protocol.
-  protected:
+  private:
 #ifdef __unix__
     USBGeneric libusb_impl;
 #else

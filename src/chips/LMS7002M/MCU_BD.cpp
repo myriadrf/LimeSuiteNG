@@ -25,13 +25,13 @@ using namespace std::literals::string_view_literals;
 
 MCU_BD::MCU_BD()
     : m_iLoopTries(20)
+    , m_callback(nullptr)
     , stepsDone(0)
     , stepsTotal(0)
     , aborted(false)
     , m_bLoadedDebug(0)
     , m_bLoadedProd(0)
     , byte_array_size(MCU_PROGRAM_SIZE)
-    , m_callback(nullptr)
 {
     mLoadedProgramFilename = ""s;
 

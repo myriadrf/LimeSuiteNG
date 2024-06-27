@@ -16,7 +16,7 @@ class FPGA_X3 : public FPGA
     OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, double txPhase, double rxPhase, int chipIndex = 0) override;
     OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, int chipIndex = 0) override;
 
-  protected:
+  private:
     OpStatus SetPllFrequency(const uint8_t pllIndex, const double inputFreq, std::vector<FPGA_PLL_clock>& clocks) override;
 };
 

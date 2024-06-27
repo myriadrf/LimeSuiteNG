@@ -34,7 +34,7 @@ class LIME_API LitePCIe
     const std::filesystem::path& GetPathName() const { return mFilePath; };
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
 
-  protected:
+  private:
     std::filesystem::path mFilePath;
     int mFileDescriptor;
 };

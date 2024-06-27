@@ -60,7 +60,7 @@ class GNUPlotPipe
     /// @brief Flushes the pipe.
     void flush() { fflush(pipeHandle); }
 
-  protected:
+  private:
     FILE* pipeHandle;
 };
 

@@ -41,7 +41,7 @@ class FT601 : public IUSB
      */
     OpStatus ResetStreamBuffers();
 
-  protected:
+  private:
 #ifdef __unix__
     USBGeneric libusb_impl;
     int FT_SetStreamPipe(unsigned char ep, size_t size);
