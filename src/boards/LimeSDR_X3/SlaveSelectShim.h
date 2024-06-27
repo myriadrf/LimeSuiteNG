@@ -3,6 +3,7 @@
 
 #include "comms/IComms.h"
 #include "comms/ISPI.h"
+#include "limesuiteng/config.h"
 
 #include <cstdint>
 #include <memory>
@@ -10,7 +11,7 @@
 namespace lime {
 
 /** @brief Communications helper to divert data to specific device. */
-class SlaveSelectShim : public ISPI
+class LIME_API SlaveSelectShim : public ISPI
 {
   public:
     /**
