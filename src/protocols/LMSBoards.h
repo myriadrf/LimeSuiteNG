@@ -13,6 +13,7 @@ using namespace std::literals::string_view_literals;
 
 namespace lime {
 
+/// @brief The list of possible devices.
 enum eLMS_DEV {
     LMS_DEV_UNKNOWN = 0,
     LMS_DEV_EVB6 = 1,
@@ -49,6 +50,7 @@ enum eLMS_DEV {
     LMS_DEV_COUNT
 };
 
+/// The list of device names corresponding to the eLMS_DEV enumerator.
 constexpr std::array<const std::string_view, LMS_DEV_COUNT> LMS_DEV_NAMES = {
     "UNKNOWN"sv,
     "EVB6"sv,
@@ -93,6 +95,7 @@ static constexpr const std::string_view GetDeviceName(const eLMS_DEV device)
     return LMS_DEV_NAMES.at(LMS_DEV_UNKNOWN);
 }
 
+/// @brief The list of possible expansion boards.
 enum eEXP_BOARD {
     EXP_BOARD_UNKNOWN,
     EXP_BOARD_UNSUPPORTED,
@@ -108,6 +111,7 @@ enum eEXP_BOARD {
     EXP_BOARD_COUNT
 };
 
+/// The expansion board names corresponding to the eEXP_BOARD enumerator.
 constexpr std::array<const std::string_view, EXP_BOARD_COUNT> EXP_BOARD_NAMES = {
     "UNKNOWN"sv,
     "UNSUPPORTED"sv,

@@ -12,9 +12,14 @@ namespace lime {
 
 class IUSB;
 
+/// @brief Class for emulating a DMA interface via a USB connection.
 class USBDMAEmulation : public IDMA
 {
   public:
+    /// @brief Constructs the USB DMA emulation class.
+    /// @param port The USB communications port to use.
+    /// @param endpoint The endpoint to which to communicate.
+    /// @param dir The data transfer direction to make the DMA interface for.
     USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir);
     virtual ~USBDMAEmulation();
 

@@ -32,7 +32,7 @@ class ISPI;
 class LMS7002M_RegistersMap;
 class MCU_BD;
 
-typedef double float_type;
+typedef double float_type; ///< The type of the floating point number used in the code.
 
 /*! @brief Class for communicating with the LMS7002M chip.
  *

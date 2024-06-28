@@ -7,9 +7,16 @@
 
 namespace lime {
 namespace LMS7002MCSR_Data {
+
+/// @brief The structure defining an LMS7002M chip register.
 struct CSRegister : public lime::Register {
     constexpr CSRegister()
         : CSRegister(0, 0, 0, 0, 0, 0){};
+
+    /// @copydoc lime::Register::Register(uint16_t,uint8_t,uint8_t)
+    /// @param defaultValue The default value of the register.
+    /// @param name The name of the register.
+    /// @param tooltip The tooltip of the register.
     constexpr CSRegister(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t defaultValue, const char* name, const char* tooltip)
         : lime::Register(address, msb, lsb)
         , defaultValue(defaultValue)

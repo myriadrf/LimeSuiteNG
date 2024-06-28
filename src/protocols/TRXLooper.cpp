@@ -250,6 +250,7 @@ void TRXLooper::Stop()
     }
 }
 
+/// @brief Stops all the running streams and clears up the memory.
 void TRXLooper::Teardown()
 {
     RxTeardown();

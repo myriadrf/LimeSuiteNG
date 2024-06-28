@@ -101,7 +101,7 @@ void LMS64CPacketSerialCommandView::SetStorageType(Storage type)
 
 void LMS64CPacketSerialCommandView::SetUnlockKey(uint8_t key)
 {
-    packet->payload[2] = static_cast<uint8_t>(key);
+    packet->payload[2] = key;
 }
 
 void LMS64CPacketSerialCommandView::SetSerial(const std::vector<uint8_t>& bytes)
@@ -110,12 +110,14 @@ void LMS64CPacketSerialCommandView::SetSerial(const std::vector<uint8_t>& bytes)
     packet->payload[1] = bytes.size();
     memcpy(&packet->payload[24], bytes.data(), bytes.size());
 }
+
 void LMS64CPacketSerialCommandView::GetSerial(std::vector<uint8_t>& bytes) const
 {
     const uint8_t bytesCount = packet->payload[1];
     bytes.resize(bytesCount);
     memcpy(bytes.data(), &packet->payload[24], bytesCount);
 }
+
 constexpr size_t LMS64CPacketSerialCommandView::GetMaxSerialLength()
 {
     return 32;
@@ -218,6 +220,11 @@ static OpStatus SPI16(ISerialPort& port,
     return OpStatus::Success;
 }
 
+/// @brief Gets the firmware information of the device.
+/// @param port The communications port to use.
+/// @param info The structure to store the received information into.
+/// @param subDevice The index of the subdevice to use.
+/// @return The status of the operation.
 OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice)
 {
     info.deviceId = LMS_DEV_UNKNOWN;
@@ -258,6 +265,9 @@ OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevi
     return OpStatus::Success;
 }
 
+/// @brief Converts the given FirmwareInfo structure into a lime::SDRDescriptor structure,
+/// @param fw The FirmwareInfo structure to convert.
+/// @param descriptor The descriptor to output the information to.
 void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
 {
     if (fw.deviceId >= eLMS_DEV::LMS_DEV_COUNT)
@@ -282,16 +292,37 @@ void FirmwareToDescriptor(const FirmwareInfo& fw, SDRDescriptor& descriptor)
     descriptor.serialNumber = fw.boardSerialNumber;
 }
 
+/// @brief The wrapper function for communications with the LMS7002M chip via SPI.
+/// @param port The communications port to use.
+/// @param chipSelect The ID of the chip to use.
+/// @param MOSI The data to write to the chip.
+/// @param MISO The buffer to where to read the data from the chip.
+/// @param count Input/output data count.
+/// @param subDevice The ID of the subdevice to use,
+/// @return The operation status.
 OpStatus LMS7002M_SPI(ISerialPort& port, uint8_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, size_t count, uint32_t subDevice)
 {
     return SPI16(port, chipSelect, Command::LMS7002_WR, MOSI, Command::LMS7002_RD, MISO, count, subDevice);
 }
 
+/// @brief The wrapper function for communications with the FPGA via SPI.
+/// @param port The communications port to use.
+/// @param MOSI The data to write to the chip.
+/// @param MISO The buffer to where to read the data from the chip.
+/// @param count Input/output data count.
+/// @param subDevice The ID of the subdevice to use,
+/// @return The operation status.
 OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* MOSI, uint32_t* MISO, size_t count, uint32_t subDevice)
 {
     return SPI16(port, 0, Command::BRDSPI_WR, MOSI, Command::BRDSPI_RD, MISO, count, subDevice);
 }
 
+/// @brief The function for communications with the ADF4002 chip via SPI.
+/// @param port The communications port to use.
+/// @param MOSI The data to write to the chip.
+/// @param count Input data count.
+/// @param subDevice The ID of the subdevice to use,
+/// @return The operation status.
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint32_t subDevice)
 {
     // only writes are supported
@@ -333,15 +364,33 @@ OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint
     return OpStatus::Success;
 }
 
-OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* mosi, size_t count)
+/// @brief The function for reading data via Inter-Integrated Circuit.
+/// @param port The communications port to use.
+/// @param address The address to which to write the data.
+/// @param data The data to write to the chip.
+/// @param count Input data count.
+/// @return The operation status.
+OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count)
 {
     return OpStatus::NotImplemented;
 }
+
+/// @brief The function for reading data via Inter-Integrated Circuit.
+/// @param port The communications port to use.
+/// @param address The address to which to read the data.
+/// @param data The data buffer to read to from the chip.
+/// @param count Output buffer size.
+/// @return The operation status.
 OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count)
 {
     return OpStatus::NotImplemented;
 }
 
+/// @brief Writes the given custom parameters to the chip.
+/// @param port The communications port to use.
+/// @param parameters The information about the parameters to write.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice)
 {
     LMS64CPacket pkt;
@@ -391,6 +440,11 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
     return OpStatus::Success;
 }
 
+/// @brief Read the given custom parameters from the chip.
+/// @param port The communications port to use.
+/// @param parameters The information about the parameters to read and the place to store the values.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice)
 {
     LMS64CPacket pkt;
@@ -446,6 +500,15 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
     return OpStatus::Success;
 }
 
+/// @brief Writes the given program into the device.
+/// @param port The communications port to use.
+/// @param data The program to write to the device.
+/// @param length The length of the program to write.
+/// @param prog_mode The programming mode to use.
+/// @param device The memory to write the program to.
+/// @param callback The callback to use for program write progress updates.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus ProgramWrite(ISerialPort& port,
     const char* data,
     size_t length,
@@ -562,6 +625,11 @@ OpStatus ProgramWrite(ISerialPort& port,
     return OpStatus::Success;
 }
 
+/// @brief Sends the device reset command to the device.
+/// @param port The communications port to use.
+/// @param socIndex The index of the System-on-Chip to reset.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
 {
     LMS64CPacket pkt;
@@ -582,6 +650,11 @@ OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice)
     return OpStatus::Success;
 }
 
+/// @brief Gets the current direction of the GPIO pins
+/// @param port The communications port to use.
+/// @param buffer The buffer to store the status in.
+/// @param bufLength The length of the buffer.
+/// @return The operation status.
 OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
@@ -613,6 +686,11 @@ OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     return OpStatus::Success;
 }
 
+/// @brief Gets the current status of the GPIO pins.
+/// @param port The communications port to use.
+/// @param buffer The buffer to store the status in.
+/// @param bufLength The length of the buffer.
+/// @return The operation status.
 OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
@@ -644,6 +722,11 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     return OpStatus::Success;
 }
 
+/// @brief Sets the direction information of the GPIO pins.
+/// @param port The communications port to use.
+/// @param buffer The buffer of the status.
+/// @param bufLength The length of the buffer.
+/// @return The operation status.
 OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
@@ -675,6 +758,11 @@ OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t buf
     return OpStatus::Success;
 }
 
+/// @brief Sets the the GPIO pins.
+/// @param port The communications port to use.
+/// @param buffer The buffer of the status.
+/// @param bufLength The length of the buffer.
+/// @return The operation status.
 OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength)
 {
     if (bufLength > LMS64CPacket::payloadSize)
@@ -706,6 +794,13 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
     return OpStatus::Success;
 }
 
+/// @brief Writes the given data to a given memory address.
+/// @param port The communications port to use.
+/// @param address The address to start writing from.
+/// @param data The data to write to the specifed address.
+/// @param dataLen The length of the data.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice)
 {
     const int timeout_ms = 100;
@@ -750,6 +845,13 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
     return OpStatus::Success;
 }
 
+/// @brief Reads data from a given memory address.
+/// @param port The communications port to use.
+/// @param address The address to start reading from.
+/// @param data The buffer to store the data to.
+/// @param dataLen The length of the data to read.
+/// @param subDevice The ID of the subdevice to use.
+/// @return The operation status.
 OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice)
 {
     const int timeout_ms = 100;
@@ -792,6 +894,10 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
     return OpStatus::Success;
 }
 
+/// @brief Writes the serial number of the device.
+/// @param port The communications port to use.
+/// @param serialBytes The bytes of the serial to write.
+/// @return The operation status.
 OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serialBytes)
 {
     if (serialBytes.empty())
@@ -883,7 +989,11 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
     return OpStatus::Success;
 }
 
-OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data)
+/// @brief Reads the serial number of the device.
+/// @param port The communications port to use.
+/// @param serialBytes The memory to read the serial to.
+/// @return The operation status.
+OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& serialBytes)
 {
     const int timeout_ms = 100;
 
@@ -894,7 +1004,7 @@ OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data)
     packet.blockCount = 1;
     packet.subDevice = 0;
 
-    if (data.size() > LMS64CPacketSerialCommandView::GetMaxSerialLength())
+    if (serialBytes.size() > LMS64CPacketSerialCommandView::GetMaxSerialLength())
         return OpStatus::OutOfRange;
 
     LMS64CPacketSerialCommandView payloadView(&packet);
@@ -906,8 +1016,8 @@ OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data)
 
     if (packet.status != CommandStatus::Completed)
         return OpStatus::Error;
-    data.clear();
-    payloadView.GetSerial(data);
+    serialBytes.clear();
+    payloadView.GetSerial(serialBytes);
     return OpStatus::Success;
 }
 

@@ -44,6 +44,9 @@ using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
+/// @brief Converts the channel in integer form to enumerator form.
+/// @param channel The channel number to convert.
+/// @return The enumerator equivalent of the channel.
 constexpr LMS7002M::Channel IntToChannel(int channel)
 {
     return channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;

@@ -20,11 +20,11 @@ using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 
-std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& regex)
+std::vector<std::string> LitePCIe::GetDevicesWithPattern(const std::string& pattern)
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    std::string cmd = "find /dev -maxdepth 1 -readable -name "s + regex;
+    std::string cmd = "find /dev -maxdepth 1 -readable -name "s + pattern;
     lsPipe = popen(cmd.c_str(), "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
