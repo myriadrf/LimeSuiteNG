@@ -54,7 +54,8 @@ template<class T> static uint32_t indexListToMask(const std::vector<T>& indexes)
 }
 
 /// @brief Constructs a new TRXLooper object.
-/// @param comms The DMA communications interface to use.
+/// @param rx The DMA communications interface to receive the data from.
+/// @param tx The DMA communications interface to send the data to.
 /// @param f The FPGA to use in this stream.
 /// @param chip The LMS7002M chip to use in this stream.
 /// @param moduleIndex The ID of the chip to use.
@@ -372,9 +373,7 @@ void TRXLooper::RxWorkLoop()
     mRx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
 
-/** @brief Function dedicated for receiving data samples from board
-    @param stream a pointer to an active receiver stream
-*/
+/** @brief Function dedicated for receiving data samples from board */
 void TRXLooper::ReceivePacketsLoop()
 {
     constexpr int headerSize{ sizeof(StreamHeader) };

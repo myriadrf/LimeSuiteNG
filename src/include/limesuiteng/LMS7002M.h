@@ -504,7 +504,6 @@ class LIME_API LMS7002M
     /*!
      * @brief Sets CLKGEN frequency, calculations use receiver'r reference clock
      * @param freq_Hz desired frequency in Hz
-     * @param retainNCOfrequencies recalculate NCO coefficients to keep currently set frequencies
      * @return The status of the operation
      */
     OpStatus SetFrequencyCGEN(float_type freq_Hz);

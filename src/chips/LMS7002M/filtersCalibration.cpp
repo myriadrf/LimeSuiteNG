@@ -1,5 +1,5 @@
 /**
-@file	LMS7002M_filtersCalibration.cpp
+@file	filtersCalibration.cpp
 @author Lime Microsystems (www.limemicro.com)
 @brief	Implementation of LMS7002M transceiver filters calibration algorithms
 */
