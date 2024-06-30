@@ -169,15 +169,13 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         fpga->WriteRegister(0x000A, interface_ctrl_000A);
     }
 
+    RxTeardown();
     if (needRx)
         RxSetup();
-    else
-        RxTeardown();
 
+    TxTeardown();
     if (needTx)
         TxSetup();
-    else
-        TxTeardown();
 
     return OpStatus::Success;
 }

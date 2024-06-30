@@ -586,7 +586,10 @@ int main(int argc, char** argv)
     if (useComposite)
         composite->StreamStop();
     else
+    {
         device->StreamStop(chipIndex);
+        device->StreamDestroy(chipIndex);
+    }
 
     if (composite)
         delete composite;

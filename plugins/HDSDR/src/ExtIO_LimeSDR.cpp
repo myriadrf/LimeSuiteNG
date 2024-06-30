@@ -929,6 +929,7 @@ void EXTIO_API StopHW(void)
     threadHandle = INVALID_HANDLE_VALUE;
 
     device->StreamStop(0);
+    device->StreamDestroy(0);
 }
 //---------------------------------------------------------------------------
 void EXTIO_API CloseHW(void)
