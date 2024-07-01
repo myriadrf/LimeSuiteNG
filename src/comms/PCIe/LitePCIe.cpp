@@ -37,7 +37,7 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    lsPipe = popen("ls -1 -- /sys/class/litepcie", "r");
+    lsPipe = popen("ls -1 -- /sys/class/litepcie 2> /dev/null", "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
         devices.push_back(tempBuffer);
