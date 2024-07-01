@@ -383,10 +383,8 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
         done = state & doneMask;
         error = state & errorMask;
         if (error != 0)
-        {
-            lime::warning("%s error, reg:0x%04X=0x%04X, errorBits:0x%04X", title.c_str(), pollAddr, state, error);
-            //return OpStatus::Busy;
-        }
+            return ReportError(
+                OpStatus::Error, "%s error, reg:0x%04X=0x%04X, errorBits:0x%04X", title.c_str(), pollAddr, state, error);
 
         if (done)
         {

@@ -43,6 +43,34 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     return OpStatus::Success;
 }
 
+OpStatus FPGA_XTRX::UseDirectClocking(bool enabled)
+{
+    WriteRegister(0x0005, enabled ? 0x3 : 0);
+    if (!enabled)
+        return OpStatus::Success;
+
+    int nSteps = 31; // for all frequencies < 5MHz
+    bool waitForDone = true;
+    bool findPhase = true;
+    uint16_t reg23val = ReadRegister(0x0023);
+    OpStatus status;
+    status = SetPllClock(0, nSteps, waitForDone, findPhase, reg23val);
+    if (status != OpStatus::Success)
+        return status;
+    status = SetPllClock(1, nSteps, waitForDone, findPhase, reg23val);
+    return status;
+}
+
+OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipIndex)
+{
+    bool enableDirectClocking = rxRate_Hz < 5e6 && txRate_Hz < 5e6;
+    OpStatus status = UseDirectClocking(enableDirectClocking);
+    if (enableDirectClocking)
+        return status;
+
+    return FPGA::SetInterfaceFreq(txRate_Hz, rxRate_Hz, chipIndex);
+}
+
 OpStatus FPGA_XTRX::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, std::vector<FPGA_PLL_clock>& clocks)
 {
     //Xilinx boards have different phase control mechanism

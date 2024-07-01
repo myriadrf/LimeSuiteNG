@@ -120,6 +120,11 @@ static OpStatus ResultToStatus(lime_Result result)
     return static_cast<lime::OpStatus>(result);
 }
 
+static lime_Result StatusToResult(OpStatus status)
+{
+    return static_cast<lime_Result>(status);
+}
+
 static_assert(LMS7002M::ClockID::CLK_REFERENCE == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_REFERENCE));
 static_assert(LMS7002M::ClockID::CLK_SXR == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXR));
 static_assert(LMS7002M::ClockID::CLK_SXT == static_cast<LMS7002M::ClockID>(LMS7002M_CLK_SXT));
@@ -214,10 +219,11 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     hooks.log = log_hook;
     hooks.log_userData = this;
     hooks.on_cgen_frequency_changed_userData = this;
-    hooks.on_cgen_frequency_changed = [](void* userData) -> void {
+    hooks.on_cgen_frequency_changed = [](void* userData) -> lime_Result {
         LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
         if (chip->mCallback_onCGENChange)
-            chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData);
+            return StatusToResult(chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData));
+        return lime_Result_Success;
     };
 
     mC_impl = lms7002m_create(&hooks);

@@ -310,7 +310,7 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     }
 
     if (self->hooks.on_cgen_frequency_changed)
-        self->hooks.on_cgen_frequency_changed(self->hooks.on_cgen_frequency_changed_userData);
+        return self->hooks.on_cgen_frequency_changed(self->hooks.on_cgen_frequency_changed_userData);
 
     return lime_Result_Success;
 }
