@@ -70,6 +70,11 @@ std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
     return mappings;
 }
 
+std::string USBDMAEmulation::GetName() const
+{
+    return "usb";
+}
+
 OpStatus USBDMAEmulation::Enable(bool enable)
 {
     continuous = false;

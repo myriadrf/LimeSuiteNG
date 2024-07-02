@@ -73,6 +73,8 @@ class IDMA
      * @brief Returns a list of DMA buffers
      */
     virtual std::vector<Buffer> GetBuffers() const = 0;
+
+    virtual std::string GetName() const = 0;
 };
 
 } // namespace lime

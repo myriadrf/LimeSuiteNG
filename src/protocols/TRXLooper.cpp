@@ -439,7 +439,8 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                "%s Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
                 stats.timestamp,
@@ -859,8 +860,9 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "%s Tx%i: %3.3f MB/s | TS:%li pkt:%li shw:%lu/%lu(%+li) u:%i(%+i) l:%i(%+i) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
+                    mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,
                     lastTS,
