@@ -13,7 +13,7 @@ dlgConnectionSettings_view::dlgConnectionSettings_view(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : wxDialog(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     wxFlexGridSizer* fgSizer211;
     fgSizer211 = new wxFlexGridSizer(0, 1, 0, 0);
@@ -59,14 +59,14 @@ dlgConnectionSettings_view::dlgConnectionSettings_view(
 
     fgSizer211->Add(fgSizer213, 1, wxALIGN_CENTER_HORIZONTAL, 5);
 
-    this->SetSizer(fgSizer211);
-    this->Layout();
+    SetSizer(fgSizer211);
+    Layout();
     fgSizer211->Fit(this);
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 
     // Connect Events
-    this->Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
+    Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
     btnConnect->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), NULL, this);
     btnCancel->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), NULL, this);
     btnDisconnect->Connect(
@@ -76,7 +76,7 @@ dlgConnectionSettings_view::dlgConnectionSettings_view(
 dlgConnectionSettings_view::~dlgConnectionSettings_view()
 {
     // Disconnect Events
-    this->Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
+    Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
     btnConnect->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), NULL, this);
     btnCancel->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), NULL, this);
     btnDisconnect->Disconnect(
@@ -87,7 +87,7 @@ dlgFullMessageLog_view::dlgFullMessageLog_view(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : wxDialog(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxSize(500, 200), wxDefaultSize);
+    SetSizeHints(wxSize(500, 200), wxDefaultSize);
 
     wxFlexGridSizer* fgSizer19;
     fgSizer19 = new wxFlexGridSizer(0, 2, 0, 0);
@@ -110,11 +110,11 @@ dlgFullMessageLog_view::dlgFullMessageLog_view(
 
     fgSizer19->Add(txtMessageField, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer19);
-    this->Layout();
+    SetSizer(fgSizer19);
+    Layout();
     fgSizer19->Fit(this);
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 }
 
 dlgFullMessageLog_view::~dlgFullMessageLog_view()
@@ -125,7 +125,7 @@ dlgDeviceInfo_view::dlgDeviceInfo_view(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : wxDialog(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     wxFlexGridSizer* fgSizer12;
     fgSizer12 = new wxFlexGridSizer(0, 1, 0, 0);
@@ -198,11 +198,11 @@ dlgDeviceInfo_view::dlgDeviceInfo_view(
 
     fgSizer12->Add(fgSizer8, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer12);
-    this->Layout();
+    SetSizer(fgSizer12);
+    Layout();
     fgSizer12->Fit(this);
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 
     // Connect Events
     btnGetInfo->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgDeviceInfo_view::OnGetInfo), NULL, this);

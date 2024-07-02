@@ -107,7 +107,7 @@ OpenGLGraph::OpenGLGraph(wxWindow* parent,
 {
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     int w, h;
-    this->GetSize(&w, &h);
+    GetSize(&w, &h);
     setupViewport(w, h);
 
     //Initialize(w, h);
@@ -264,7 +264,7 @@ void OpenGLGraph::RemoveSeries(unsigned int i)
 }
 
 /**
-	@brief Sets initialy displayed data area, when resetting zoom it will be reset to this area
+	@brief Sets initially displayed data area, when resetting zoom it will be reset to this area
 	@param minx minimal x value
 	@param maxx maximum x value
 	@param miny minimum y value
@@ -663,7 +663,7 @@ void OpenGLGraph::Draw()
     if (!initialized)
     {
         int w, h;
-        this->GetSize(&w, &h);
+        GetSize(&w, &h);
         if (Initialize(w, h) == false)
             return;
     }

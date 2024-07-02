@@ -1,5 +1,5 @@
 #include "pnlLimeSDR.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -60,8 +60,8 @@ pnlLimeSDR::pnlLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     mainSizer->Add(groupSizer, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     pnl_gpio = new pnlGPIO(this, wxNewId());
     mainSizer->Add(pnl_gpio, 1, wxEXPAND | wxALL, 5);
-    Bind(READ_ALL_VALUES, &pnlLimeSDR::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlLimeSDR::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlLimeSDR::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlLimeSDR::OnWriteAll, this, GetId());
 }
 
 void pnlLimeSDR::Initialize(lime::SDRDevice* pControl)

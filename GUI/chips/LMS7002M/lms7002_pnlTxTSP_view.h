@@ -182,7 +182,7 @@ class lms7002_pnlTXTSP_view : public ILMS7002MTab
     wxStaticText* ID_STATICTEXT9;
     NumericSlider* cmbDCCORRQ_TXTSP;
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     void ParameterChangeHandler(wxCommandEvent& event) override;
     virtual void onbtnReadBISTSignature(wxCommandEvent& event);
     virtual void OnNCOSelectionChange(wxCommandEvent& event);

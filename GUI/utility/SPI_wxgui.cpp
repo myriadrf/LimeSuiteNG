@@ -136,11 +136,11 @@ SPI_wxgui::SPI_wxgui(wxWindow* parent, wxWindowID id, const wxString& title, con
     spiControls = CreateSPIControls(this, 4, mSPIselection.back());
     mainSizer->Add(spiControls, 0, wxALIGN_LEFT, 0);
 
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 }
 
 bool SPI_wxgui::Initialize(SDRDevice* pCtrPort)

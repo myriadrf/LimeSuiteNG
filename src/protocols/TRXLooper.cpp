@@ -169,15 +169,13 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         fpga->WriteRegister(0x000A, interface_ctrl_000A);
     }
 
+    RxTeardown();
     if (needRx)
         RxSetup();
-    else
-        RxTeardown();
 
+    TxTeardown();
     if (needTx)
         TxSetup();
-    else
-        TxTeardown();
 
     return OpStatus::Success;
 }
@@ -468,7 +466,8 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                "%s Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
                 stats.timestamp,
@@ -675,9 +674,9 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
     return samplesProduced;
 }
 
-/// @brief Reveives samples from this specific stream.
+/// @brief Receives samples from this specific stream.
 /// @param samples The buffer to put the received samples in.
-/// @param count The amount of samples to reveive.
+/// @param count The amount of samples to receive.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples received.
 uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta)
@@ -713,7 +712,7 @@ OpStatus TRXLooper::TxSetup()
     if (mConfig.extraConfig.tx.samplesInPacket != 0)
     {
         samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples overide %i", samplesInPkt);
+        lime::debug("Tx samples override %i", samplesInPkt);
     }
 
     mTx.samplesInPkt = samplesInPkt;
@@ -893,8 +892,9 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "Tx%i: %3.3f MB/s | TS:%li pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "%s Tx%i: %3.3f MB/s | TS:%li pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%li",
+                    mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,
                     lastTS,

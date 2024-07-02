@@ -189,4 +189,9 @@ std::vector<IDMA::Buffer> LimePCIeDMA::GetBuffers() const
     return mappings;
 }
 
+std::string LimePCIeDMA::GetName() const
+{
+    return port->GetPathName();
+}
+
 } // namespace lime

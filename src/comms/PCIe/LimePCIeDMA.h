@@ -28,6 +28,7 @@ class LimePCIeDMA : public IDMA
     void BufferOwnership(uint16_t index, DataTransferDirection dir) override;
 
     std::vector<IDMA::Buffer> GetBuffers() const override;
+    std::string GetName() const override;
 
   private:
     std::vector<Buffer> mappings;

@@ -70,6 +70,11 @@ std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
     return mappings;
 }
 
+std::string USBDMAEmulation::GetName() const
+{
+    return "usb";
+}
+
 OpStatus USBDMAEmulation::Enable(bool enable)
 {
     continuous = false;
@@ -96,7 +101,7 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
 
     if (dir != DataTransferDirection::DeviceToHost)
         return OpStatus::Success;
-    // For continuous transfering, preemptively request data to be transferred
+    // For continuous transferring, preemptively request data to be transferred
     while (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();

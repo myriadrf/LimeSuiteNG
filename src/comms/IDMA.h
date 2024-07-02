@@ -35,7 +35,7 @@ class IDMA
       @return The operation success state.
 
       In continuous mode, the device automatically keeps looping over available buffers
-      and transfering data without explicit requests.
+      and transferring data without explicit requests.
      */
     virtual OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) = 0;
 
@@ -72,6 +72,8 @@ class IDMA
      * @brief Returns a list of DMA buffers
      */
     virtual std::vector<Buffer> GetBuffers() const = 0;
+
+    virtual std::string GetName() const = 0;
 };
 
 } // namespace lime

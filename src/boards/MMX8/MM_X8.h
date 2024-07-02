@@ -72,8 +72,8 @@ class LimeSDR_MMX8 : public SDRDevice
     double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
     OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
-    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
     OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) override;
+    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
 
     bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic) override;

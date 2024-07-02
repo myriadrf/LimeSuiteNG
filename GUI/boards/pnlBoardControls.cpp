@@ -18,7 +18,7 @@
 #include "protocols/ADCUnits.h"
 #include <cassert>
 #include <vector>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "utilities/toString.h"
@@ -237,7 +237,7 @@ pnlBoardControls::pnlBoardControls(
 
     sizerAdditionalControls = new wxFlexGridSizer(0, 1, 0, 0);
     fgSizer247->Add(sizerAdditionalControls, 1, wxEXPAND, 5);
-    this->SetSizer(fgSizer247);
+    SetSizer(fgSizer247);
 
     // Connect Events
     cmbBoardSelection->Connect(
@@ -247,7 +247,7 @@ pnlBoardControls::pnlBoardControls(
 
     SetupControls(GetDeviceName(LMS_DEV_UNKNOWN));
 
-    this->Layout();
+    Layout();
     fgSizer247->Fit(this);
 }
 

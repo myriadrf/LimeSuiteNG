@@ -163,8 +163,8 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
 
     fgSizer309->Add(sbSizer135, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer309);
-    this->Layout();
+    SetSizer(fgSizer309);
+    Layout();
     fgSizer309->Fit(this);
 
     // Connect Events

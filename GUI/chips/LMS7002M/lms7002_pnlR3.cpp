@@ -465,8 +465,8 @@ lms7002_pnlR3_view::lms7002_pnlR3_view(wxWindow* parent, wxWindowID id, const wx
         }
         mainSizer->Add(rowGroup);
     }
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
@@ -482,7 +482,7 @@ void lms7002_pnlR3_view::Initialize(LMS7002M* pControl)
     if (pControl == nullptr)
         return;
     uint16_t value = ReadParam(LMS7002MCSR::MASK);
-    this->Enable(value);
+    Enable(value);
 }
 
 void lms7002_pnlR3_view::UpdateGUI()
@@ -532,14 +532,14 @@ void lms7002_pnlR3_view::MCU_RunProcedure(uint8_t id)
     temp = lmsControl->SPI_read(0x0002);
 
     const uint16_t x0002reg = temp & 0xFF;
-    const uint16_t interupt6 = 0x0008;
+    const uint16_t interrupt6 = 0x0008;
     const uint16_t addrs[5] = { 0x0006, 0x0, 0x0002, 0x0002, 0x0002 };
     const uint16_t values[5] = {
         static_cast<uint16_t>(id != 0),
         static_cast<uint16_t>(id),
-        static_cast<uint16_t>(x0002reg & ~interupt6),
-        static_cast<uint16_t>(x0002reg | interupt6),
-        static_cast<uint16_t>(x0002reg & ~interupt6),
+        static_cast<uint16_t>(x0002reg & ~interrupt6),
+        static_cast<uint16_t>(x0002reg | interrupt6),
+        static_cast<uint16_t>(x0002reg & ~interrupt6),
     };
     for (int i = 0; i < 5; ++i)
         lmsControl->SPI_write(addrs[i], values[i]);

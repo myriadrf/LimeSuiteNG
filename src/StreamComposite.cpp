@@ -80,6 +80,18 @@ void StreamComposite::StreamStop()
         g.first->StreamStop(g.second);
 }
 
+void StreamComposite::StreamDestroy()
+{
+    std::unordered_map<SDRDevice*, std::vector<uint8_t>> groups;
+    for (auto& a : mActiveAggregates)
+        groups[a.device].push_back(a.streamIndex);
+    for (auto& g : groups)
+    {
+        for (auto streamIndex : g.second)
+            g.first->StreamDestroy(streamIndex);
+    }
+}
+
 template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count, StreamMeta* meta)
 {
     T** dest = samples;
@@ -110,6 +122,13 @@ template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, ui
         src += a.channels.size();
     }
     return count;
+}
+
+uint64_t StreamComposite::GetHardwareTimestamp()
+{
+    if (mActiveAggregates.empty())
+        return 0;
+    return mActiveAggregates.front().device->GetHardwareTimestamp(0);
 }
 
 // force instantiate functions with these types

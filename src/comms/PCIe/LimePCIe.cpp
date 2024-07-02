@@ -107,8 +107,7 @@ OpStatus LimePCIe::RunControlCommand(uint8_t* data, size_t length, int timeout_m
 OpStatus LimePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
-
-    // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
+    // use O_RDWR for now, because MMAP PROT_WRITE implies PROT_READ and will fail if file is opened write only
     flags &= ~O_WRONLY;
     flags |= O_RDWR;
     mFileDescriptor = open(mFilePath.c_str(), flags);
