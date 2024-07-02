@@ -332,9 +332,8 @@ static int limepcie_dma_request(struct limepcie_dma *dma, dma_addr_t dmaAddrHand
     // Write descriptor (and fill 32-bit Address MSB for 64-bit mode).
     limepcie_writel(myDevice, dma->csr_addr.table_write_enable, (dmaAddrHandle >> 32) & 0xffffffff);
 #ifdef DEBUG_READ
+    dev_dbg(sysDev, "DMA request - buf:x%llx size:%i irq:%i\n", dmaAddrHandle, size, genIRQ ? 1 : 0);
 #endif
-    if (dma->id == 1)
-        dev_dbg(sysDev, "DMA request - buf:x%llx size:%i irq:%i\n", dmaAddrHandle, size, genIRQ ? 1 : 0);
     return 0;
 }
 
