@@ -26,7 +26,7 @@ std::vector<std::string> LimePCIe::GetEndpointsWithPattern(const std::string& de
     std::vector<std::string> devices;
     FILE* lsPipe;
 
-    std::string cmd = "find "s + deviceAddr + " -readable -name "s + regex;
+    std::string cmd = "ls -1 "s + deviceAddr + "/"s + regex;
     lsPipe = popen(cmd.c_str(), "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
