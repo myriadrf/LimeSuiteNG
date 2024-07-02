@@ -23,5 +23,5 @@ target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_USB_SOURCES})
 
 if(UNIX)
-    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/USBGeneric.cpp)
+    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/UnixUsb.cpp)
 endif()

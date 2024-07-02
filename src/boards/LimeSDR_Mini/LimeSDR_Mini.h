@@ -9,7 +9,6 @@
 
 namespace lime {
 
-class USBGeneric;
 class IComms;
 class IUSB;
 

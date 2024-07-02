@@ -10,29 +10,14 @@ struct libusb_transfer;
 
 namespace lime {
 
-/// @brief A generic class to communicate with a USB device. Implementation based on libusb.
-class USBGeneric : IUSB
+/// @brief Class to communicate with a USB device on UNIX. Implementation based on libusb.
+class UnixUsb : IUSB
 {
   public:
-    /// @brief Data context for tracking asynchronous transfers.
-    class AsyncContext
-    {
-      public:
-        AsyncContext();
-        ~AsyncContext();
-        void Reset();
-
-        libusb_transfer* transfer;
-        size_t bytesXfered;
-        std::atomic<bool> done;
-        std::mutex transferLock;
-        std::condition_variable cv;
-    };
-
     std::vector<USBDescriptor> enumerateDevices(const std::set<VendorProductId>& ids) override;
 
-    USBGeneric();
-    virtual ~USBGeneric();
+    UnixUsb();
+    virtual ~UnixUsb();
     static constexpr int32_t defaultTimeout = 1000; ///< The default timeout to use if none is specified.
 
     bool Connect(uint16_t vid, uint16_t pid, const char* serial) override;
@@ -52,10 +37,30 @@ class USBGeneric : IUSB
     OpStatus AbortXfer(void* context) override;
     void FreeAsyncContext(void* context) override;
 
+    /// @brief Claim the specified interface of the device.
+    /// @param interface_number The number of the interface to claim.
+    /// @return The status of the operation.
     virtual OpStatus ClaimInterface(int32_t interface_number);
 
   private:
     libusb_device_handle* dev_handle; //a device handle
+
+    static void process_libusbtransfer(libusb_transfer* trans);
+
+    /// @brief Data context for tracking asynchronous transfers.
+    class AsyncContext
+    {
+      public:
+        AsyncContext();
+        ~AsyncContext();
+        void Reset();
+
+        libusb_transfer* transfer;
+        std::size_t bytesXfered;
+        std::atomic<bool> done;
+        std::mutex transferLock;
+        std::condition_variable cv;
+    };
 };
 
 } // namespace lime

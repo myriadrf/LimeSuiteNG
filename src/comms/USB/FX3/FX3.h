@@ -6,7 +6,7 @@
 #include <memory>
 
 #ifdef __unix__
-    #include "comms/USB/USBGeneric.h"
+    #include "comms/USB/UnixUsb.h"
 #endif // !__unix__
 
 class CCyFX3Device;
@@ -47,7 +47,7 @@ class FX3 : public IUSB
         0x8F; ///< THe memory address for reading information via the bulk transfer protocol.
   private:
 #ifdef __unix__
-    USBGeneric libusb_impl;
+    UnixUsb libusb_impl;
 #else
     // using pointer so that windows.h header would only be needed inside cpp file
     std::shared_ptr<CCyFX3Device> fx3device;
