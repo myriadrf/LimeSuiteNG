@@ -128,6 +128,9 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     /// @copydoc FPGA::WriteRegister()
     virtual OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
 
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
+
   protected:
     static RFSOCDescriptor GetDefaultLMS7002MDescriptor();
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);

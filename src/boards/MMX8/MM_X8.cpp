@@ -836,4 +836,14 @@ OpStatus LimeSDR_MMX8::UploadTxWaveform(const StreamConfig& config, uint8_t modu
     return mSubDevices[moduleIndex]->UploadTxWaveform(config, 0, samples, count);
 }
 
+std::size_t LimeSDR_MMX8::AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData)
+{
+    return 0;
+}
+
+void LimeSDR_MMX8::RemoveHotplugDisconnectCallback(std::size_t id)
+{
+    return;
+}
+
 } //namespace lime

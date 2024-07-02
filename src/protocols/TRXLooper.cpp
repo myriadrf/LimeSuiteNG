@@ -1036,7 +1036,14 @@ void TRXLooper::TxTeardown()
 
     uint32_t fpgaTxPktIngressCount;
     uint32_t fpgaTxPktDropCounter;
-    fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
+    try
+    {
+        fpga->ReadTxPacketCounters(chipId, &fpgaTxPktIngressCount, &fpgaTxPktDropCounter);
+    } catch (const std::exception& e)
+    {
+        lime::error(e.what());
+    }
+
     if (mCallback_logMessage)
     {
         char msg[512];

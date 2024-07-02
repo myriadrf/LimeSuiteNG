@@ -373,4 +373,13 @@ int FT601::FT_SetStreamPipe(unsigned char ep, size_t size)
 }
 #endif
 
+void FT601::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+{
+#ifdef __unix__
+    libusb_impl.AddOnHotplugDisconnectCallback(function, userData);
+#else
+    // Hotplug events are not supported by the library
+#endif
+}
+
 } // namespace lime

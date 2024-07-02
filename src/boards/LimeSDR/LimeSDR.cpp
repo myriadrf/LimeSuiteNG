@@ -22,10 +22,11 @@
 #include <cmath>
 #include <memory>
 
-using namespace lime;
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
+
+namespace lime {
 
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
@@ -143,6 +144,18 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
     mDeviceDescriptor = descriptor;
+
+    mStreamPort->AddOnHotplugDisconnectCallback(
+        [](void* userData) {
+            auto* const sdr = reinterpret_cast<LimeSDR*>(userData);
+
+            // Call in reverse order so that the "smaller" scoped callbacks run first.
+            for (auto iter = sdr->disconnectCallbacks.rbegin(); iter != sdr->disconnectCallbacks.rend(); ++iter)
+            {
+                (*iter)();
+            }
+        },
+        this);
 
     //must configure synthesizer before using LimeSDR
     /*if (info.device == LMS_DEV_LIMESDR && info.hardware < 4)
@@ -539,3 +552,28 @@ OpStatus LimeSDR::MemoryRead(std::shared_ptr<DataStorage> storage, Region region
         return OpStatus::Error;
     return mfpgaPort->MemoryRead(region.address, data, region.size);
 }
+
+std::size_t LimeSDR::AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData)
+{
+    std::size_t id = 0;
+
+    if (!disconnectCallbacks.empty())
+    {
+        // As long as elements are not out of order this guarantees a unique ID in the array.
+        id = disconnectCallbacks.back().id + 1;
+    }
+
+    disconnectCallbacks.push_back({ function, userData, id });
+
+    return id;
+}
+
+void LimeSDR::RemoveHotplugDisconnectCallback(std::size_t id)
+{
+    disconnectCallbacks.erase(std::remove_if(disconnectCallbacks.begin(),
+                                  disconnectCallbacks.end(),
+                                  [&id](const CallbackInfo<HotplugDisconnectCallbackType>& info) { return id == info.id; }),
+        disconnectCallbacks.end());
+}
+
+} // namespace lime

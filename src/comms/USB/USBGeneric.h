@@ -5,8 +5,16 @@
 #include <condition_variable>
 #include <mutex>
 
-struct libusb_device_handle;
-struct libusb_transfer;
+#ifdef __unix__
+    #ifdef __GNUC__
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wpedantic"
+    #endif
+    #include <libusb.h>
+    #ifdef __GNUC__
+        #pragma GCC diagnostic pop
+    #endif
+#endif
 
 namespace lime {
 
@@ -52,10 +60,16 @@ class USBGeneric : IUSB
     OpStatus AbortXfer(void* context) override;
     void FreeAsyncContext(void* context) override;
 
-    virtual OpStatus ClaimInterface(int32_t interface_number);
+    OpStatus ClaimInterface(int32_t interface_number);
 
-  protected:
+    void AddOnHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+
+  private:
     libusb_device_handle* dev_handle; //a device handle
+
+    std::vector<IUSB::CallbackInfo<IUSB::HotplugDisconnectCallbackType>> hotplugDisconnectCallbacks{};
+
+    static int HotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data);
 };
 
 } // namespace lime

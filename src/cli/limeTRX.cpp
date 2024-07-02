@@ -467,6 +467,8 @@ int main(int argc, char** argv)
     else
         device->StreamStart(chipIndex);
 
+    device->AddHotplugDisconnectCallback([](void* data) { *reinterpret_cast<bool*>(data) = true; }, &stopProgram);
+
     auto startTime = std::chrono::high_resolution_clock::now();
     auto t1 = startTime - std::chrono::seconds(2); // rewind t1 to do update on first loop
     auto t2 = t1;

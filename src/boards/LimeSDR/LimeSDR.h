@@ -49,6 +49,9 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
+    std::size_t AddHotplugDisconnectCallback(const HotplugDisconnectCallbackType& function, void* userData) override;
+    void RemoveHotplugDisconnectCallback(std::size_t id) override;
+
   protected:
     SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
@@ -70,6 +73,9 @@ class LimeSDR : public LMS7002M_SDRDevice
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
     bool mConfigInProgress;
+
+    std::vector<CallbackInfo<HotplugDisconnectCallbackType>> disconnectCallbacks;
+    std::size_t mStreamStopCallbackId;
 };
 
 } // namespace lime

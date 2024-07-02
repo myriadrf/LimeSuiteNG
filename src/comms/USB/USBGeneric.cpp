@@ -110,6 +110,20 @@ static void process_libusbtransfer(libusb_transfer* trans)
     context->cv.notify_one();
 }
 
+// Runs within the gUSBProcessingThread thread
+int USBGeneric::HotplugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data)
+{
+    auto* usb = reinterpret_cast<USBGeneric*>(user_data);
+
+    for (auto iter = usb->hotplugDisconnectCallbacks.rbegin(); iter != usb->hotplugDisconnectCallbacks.rend(); ++iter)
+    {
+        (*iter)();
+    }
+
+    usb->Disconnect();
+    return 1;
+}
+
 USBGeneric::AsyncContext::AsyncContext()
     : transfer(libusb_alloc_transfer(0))
     , bytesXfered(0)
@@ -258,7 +272,19 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
         }
 
         if (std::string{ serial }.empty() || std::string{ serial } == foundSerial)
+        {
+            libusb_hotplug_register_callback(gContextLibUsb,
+                LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                0,
+                desc.idVendor,
+                desc.idProduct,
+                LIBUSB_HOTPLUG_MATCH_ANY,
+                HotplugCallback,
+                this,
+                nullptr);
+
             break; //found it
+        }
 
         libusb_close(dev_handle);
         dev_handle = nullptr;
@@ -340,6 +366,11 @@ OpStatus USBGeneric::BeginDataXfer(void* context, uint8_t* buffer, size_t length
     libusb_fill_bulk_transfer(tr, dev_handle, endPointAddr, buffer, length, process_libusbtransfer, xfer, 0);
     xfer->done.store(false);
     xfer->bytesXfered = 0;
+    if (tr->dev_handle == nullptr)
+    {
+        return OpStatus::Error;
+    }
+
     int status = libusb_submit_transfer(tr);
     if (status != 0)
     {
@@ -407,6 +438,11 @@ OpStatus USBGeneric::ClaimInterface(int32_t interface_number)
         return OpStatus::Error;
     }
     return OpStatus::Success;
+}
+
+void USBGeneric::AddOnHotplugDisconnectCallback(const IUSB::HotplugDisconnectCallbackType& function, void* userData)
+{
+    hotplugDisconnectCallbacks.push_back({ function, userData });
 }
 
 } // namespace lime
