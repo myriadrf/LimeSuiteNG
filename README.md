@@ -28,13 +28,19 @@ sudo ./install_dependencies.sh
 cmake -B build && cd build
 make
 sudo make install
+sudo ldconfig
 ```
 
 * Installing from packages:
 **TODO**
 
 ### Windows:
-**TODO**
+```
+git clone https://github.com/myriadrf/LimeSuiteNG
+cd LimeSuiteNG
+cmake -B build
+cmake --build build
+```
 
 ## Documentation
 Information about LimeSDR boards:

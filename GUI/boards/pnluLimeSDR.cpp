@@ -19,15 +19,14 @@ BEGIN_EVENT_TABLE(pnluLimeSDR, wxPanel)
 END_EVENT_TABLE()
 
 pnluLimeSDR::pnluLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
-    : fpgaSelect(-1)
+    : mainSizer(new wxFlexGridSizer(0, 2, 5, 5))
+    , device(nullptr)
+    , fpgaSelect(-1)
 {
-    device = nullptr;
-
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 #endif
-    mainSizer = new wxFlexGridSizer(0, 2, 5, 5);
 
     SetSizer(mainSizer);
     wxFlexGridSizer* lbSizer = new wxFlexGridSizer(0, 2, 5, 5);

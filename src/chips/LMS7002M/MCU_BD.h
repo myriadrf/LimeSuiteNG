@@ -87,9 +87,9 @@ class LIME_API MCU_BD
 
   protected:
     std::string mLoadedProgramFilename;
-    std::atomic_ushort stepsDone;
-    std::atomic_ushort stepsTotal;
-    std::atomic_bool aborted;
+    std::atomic_ushort stepsDone{};
+    std::atomic_ushort stepsTotal{};
+    std::atomic_bool aborted{};
     int WaitUntilWritten();
     int ReadOneByte(unsigned char* data);
     int One_byte_command(unsigned short data1, unsigned char* rdata1);
@@ -110,11 +110,11 @@ class LIME_API MCU_BD
 
     void Wait_CLK_Cycles(int data);
     /// The IRAM content
-    unsigned char m_IRAM[256];
+    unsigned char m_IRAM[256]{};
     /// The SFR content
-    unsigned char m_SFR[256];
+    unsigned char m_SFR[256]{};
     /// The program memory code
-    unsigned char byte_array[MCU_PROGRAM_SIZE];
+    unsigned char byte_array[MCU_PROGRAM_SIZE]{};
 
     void mSPI_write(unsigned short addr_reg, unsigned short data_reg);
     unsigned short mSPI_read(unsigned short addr_reg);

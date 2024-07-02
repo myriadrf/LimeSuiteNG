@@ -233,8 +233,6 @@ class lms7002_pnlLimeLightPAD_view : public ILMS7002MTab
     wxSpinCtrl* cmbTXTSPCLKA_DIV;
     wxCheckBox* chkRXDIVEN;
     wxSpinCtrl* cmbRXTSPCLKA_DIV;
-    wxStaticText* ID_STATICTEXT37;
-    wxStaticText* ID_STATICTEXT39;
     wxCheckBox* chkFCLK1_INV;
     wxCheckBox* chkFCLK2_INV;
     wxCheckBox* chkMCLK1_INV;

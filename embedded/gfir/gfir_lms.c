@@ -1,6 +1,6 @@
 /* ************************************************************************ 
    FILE:		gfir_lms.c
-   COMMENT:		Calculate the coeficients of general FIR filter
+   COMMENT:		Calculate the coefficients of general FIR filter
 			using LMS optimisation. Filter is defined by
 			pass band and stop band frequencies (w1, w2, a1, a2).
    CONTENT:
@@ -9,7 +9,7 @@
    DATE:		Feb 11, 2000
    REVISION:		Feb 25, 2000: Adapted for LMS
 			Nov 30, 2007: Tiger project
-			Apr 21, 2008: Asymethrical number of points in pass/stop bands
+			Apr 21, 2008: Asymmetrical number of points in pass/stop bands
    ************************************************************************ */
 
 #include <stdlib.h>
@@ -17,8 +17,10 @@
 #include "lms.h"
 #include "dfilter.h"
 
-#define CPREC 16 /* Coefficients precision */
-#define CSDPREC 16 /* CSD Coefficients precision */
+enum {
+    CPREC = 16, /* Coefficients precision */
+    CSDPREC = 16 /* CSD Coefficients precision */
+};
 
 /* *********************************************************************** */
 int gfir_lms(struct dfilter* hr,

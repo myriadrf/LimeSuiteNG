@@ -16,8 +16,9 @@
 #include <wx/timer.h>
 using namespace std;
 
-#define OGL_REDRAW_ENABLED 1
-#define OGL_INVERT_MOUSE_Y 1
+constexpr bool OGL_REDRAW_ENABLED{ true };
+constexpr bool OGL_INVERT_MOUSE_Y{ true };
+
 const unsigned int OpenGLGraph::mMarkerColors[] = {
     0x000000FF, 0x0000FFFF, 0xFF0000FF, 0xFF7F00FF, 0x007FFFFF, 0xFF00FFFF, 0x007F00FF, 0x00007FFF, 0x7F0000FF, 0x00FF00FF
 };
@@ -95,20 +96,20 @@ OpenGLGraph::OpenGLGraph(wxWindow* parent,
     const int* args)
     : wxGLCanvas(parent, id, args, pos, size, wxNO_FULL_REPAINT_ON_RESIZE)
     , oglOk(true)
+    , m_actionState(OGLG_IDLE)
+    , initialized(false)
     , initialDisplayArea(-100, 100, -100, 100)
     , m_MouseCoord(0, 0, 0, 0)
+    , m_font(nullptr)
+    , m_selectedMarker(-1)
+    , m_maxMarkers(10)
+    , m_glContext(new wxGLContext(this))
 {
-    m_font = NULL;
-    m_glContext = new wxGLContext(this);
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     int w, h;
     this->GetSize(&w, &h);
     setupViewport(w, h);
 
-    m_selectedMarker = -1;
-    m_maxMarkers = 10;
-    m_actionState = OGLG_IDLE;
-    initialized = false;
     //Initialize(w, h);
     m_popmenu.Append(OGLG_SHOW_MARKERS_MENU, _("Markers menu.."), _("Shows markers settings"));
     m_popmenu.Append(OGLG_SEARCH_PEAK, _("Add marker on peak value"), _("Adds marker to peak value"));
@@ -288,9 +289,10 @@ void OpenGLGraph::SetDisplayArea(float minx, float maxx, float miny, float maxy)
         return;
     settings.visibleArea.set(minx, maxx, miny, maxy);
     SettingsChanged();
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -301,9 +303,10 @@ void OpenGLGraph::SetDisplayArea(float minx, float maxx, float miny, float maxy)
 void OpenGLGraph::ZoomY(float centerY, float spanY)
 {
     SetDisplayArea(settings.visibleArea.x1, settings.visibleArea.x2, centerY - spanY / 2, centerY + spanY / 2);
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -314,9 +317,10 @@ void OpenGLGraph::ZoomY(float centerY, float spanY)
 void OpenGLGraph::ZoomX(float centerX, float spanX)
 {
     SetDisplayArea(centerX - spanX / 2, centerX + spanX / 2, settings.visibleArea.y1, settings.visibleArea.y2);
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -339,9 +343,10 @@ void OpenGLGraph::Zoom(float centerX, float centerY, float spanX, float spanY)
         }
         SetDisplayArea(centerX - spanX / 2, centerX + spanX / 2, centerY - spanY / 2, centerY + spanY / 2);
     }
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -376,9 +381,10 @@ void OpenGLGraph::ZoomRect(int x1, int x2, int y1, int y2)
         SetDisplayArea(minx, maxx, miny, maxy);
     }
 
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -394,9 +400,10 @@ void OpenGLGraph::Pan(float dx, float dy)
         settings.visibleArea.x2 + deltaX,
         settings.visibleArea.y1 + deltaY,
         settings.visibleArea.y2 + deltaY);
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -541,21 +548,17 @@ void OpenGLGraph::DrawStaticElements()
     glColor4f(settings.gridColor.red, settings.gridColor.green, settings.gridColor.blue, settings.gridColor.alpha);
 
     //draw x grid lines
-    float linePos = settings.gridXstart;
-    for (int i = 0; linePos <= settings.visibleArea.x2; ++i)
+    for (float linePos = settings.gridXstart; linePos <= settings.visibleArea.x2; linePos += settings.gridXspacing)
     {
         glVertex3d(linePos, settings.visibleArea.y1, -2);
         glVertex3d(linePos, settings.visibleArea.y2, -2);
-        linePos += settings.gridXspacing;
     }
 
     //draw y grid lines
-    linePos = settings.gridYstart;
-    for (int i = 0; linePos <= settings.visibleArea.y2; ++i)
+    for (float linePos = settings.gridYstart; linePos <= settings.visibleArea.y2; linePos += settings.gridYspacing)
     {
         glVertex3d(settings.visibleArea.x1, linePos, -2);
         glVertex3d(settings.visibleArea.x2, linePos, -2);
-        linePos += settings.gridYspacing;
     }
 
     glEnd();
@@ -860,9 +863,10 @@ GLvoid OpenGLGraph::glRenderText(float posx, float posy, float angle, float scal
 void OpenGLGraph::ResetView()
 {
     SetDisplayArea(initialDisplayArea.x1, initialDisplayArea.x2, initialDisplayArea.y1, initialDisplayArea.y2);
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 void OpenGLGraph::Fit()
@@ -907,9 +911,10 @@ void OpenGLGraph::Fit()
 */
 void OpenGLGraph::OnMouseDown(int mouseButton, int X, int Y)
 {
-#ifdef OGL_INVERT_MOUSE_Y
-    Y = settings.windowHeight - Y;
-#endif // OGL_INVERT_MOUSE_Y
+    if constexpr (OGL_INVERT_MOUSE_Y)
+    {
+        Y = settings.windowHeight - Y;
+    }
     m_MouseCoord.x1 = X;
     m_MouseCoord.y1 = Y;
 
@@ -965,16 +970,18 @@ void OpenGLGraph::OnMouseUp(int mouseButton, int X, int Y)
             if (isInsideDataView(X, Y)) //finish zooming in
             {
                 ZoomRect(m_MouseCoord.x1, m_MouseCoord.x2, m_MouseCoord.y1, m_MouseCoord.y2);
-#ifdef OGL_REDRAW_ENABLED
-                Refresh();
-#endif
+                if constexpr (OGL_REDRAW_ENABLED)
+                {
+                    Refresh();
+                }
             }
             else // if zoomed outside data view border, then reset to initial view
             {
                 ResetView();
-#ifdef OGL_REDRAW_ENABLED
-                Refresh();
-#endif
+                if constexpr (OGL_REDRAW_ENABLED)
+                {
+                    Refresh();
+                }
             }
         }
         break;
@@ -1000,9 +1007,10 @@ void OpenGLGraph::OnMouseUp(int mouseButton, int X, int Y)
 void OpenGLGraph::OnMouseMove(int X, int Y)
 {
     float spanx, spany, sx, sy;
-#ifdef OGL_INVERT_MOUSE_Y
-    Y = settings.windowHeight - Y;
-#endif // OGL_INVERT_MOUSE_Y
+    if constexpr (OGL_INVERT_MOUSE_Y)
+    {
+        Y = settings.windowHeight - Y;
+    }
     switch (m_actionState)
     {
     case OGLG_IDLE:
@@ -1028,9 +1036,10 @@ void OpenGLGraph::OnMouseMove(int X, int Y)
         //update coordinates for zoom in rectangle drawing
         m_MouseCoord.x2 = X;
         m_MouseCoord.y2 = Y;
-#ifdef OGL_REDRAW_ENABLED
-        Refresh();
-#endif
+        if constexpr (OGL_REDRAW_ENABLED)
+        {
+            Refresh();
+        }
         break;
     case OGLG_SCALE:
         //change axis span while mouse is inside data view
@@ -1399,9 +1408,10 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
     if (series[0]->size <= 0 || markerID < 0)
     {
         mMarkersDlg->refreshMarkFreq = true;
-#ifdef OGL_REDRAW_ENABLED
-        Refresh();
-#endif
+        if constexpr (OGL_REDRAW_ENABLED)
+        {
+            Refresh();
+        }
         return;
     }
 
@@ -1467,9 +1477,10 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
     markers[markerID].iposY = posY;
 
     mMarkersDlg->refreshMarkFreq = true;
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 /**
@@ -1482,9 +1493,10 @@ void OpenGLGraph::ChangeMarker(int markerID, float xValue)
     if (series[0]->size <= 0 || markerID < 0)
     {
         Refresh();
-#ifdef OGL_REDRAW_ENABLED
-        Refresh();
-#endif
+        if constexpr (OGL_REDRAW_ENABLED)
+        {
+            Refresh();
+        }
         return;
     }
 
@@ -1526,9 +1538,10 @@ void OpenGLGraph::ChangeMarker(int markerID, float xValue)
     mark->posY = series[0]->values[mark->dataValueIndex + 1];
 
     Refresh();
-#ifdef OGL_REDRAW_ENABLED
-    Refresh();
-#endif
+    if constexpr (OGL_REDRAW_ENABLED)
+    {
+        Refresh();
+    }
 }
 
 void OpenGLGraph::setupViewport(int w, int h)

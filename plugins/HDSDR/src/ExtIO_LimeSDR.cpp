@@ -156,7 +156,7 @@ static void error(lime::LogLevel lvl, const std::string& msg)
 //---------------------------------------------------------------------------
 static bool SetGain()
 {
-    int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From datasheet
+    int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From data sheet
 
     if (device->SetParameter(0, 0, "G_LNA_RFE"s, LNA) != lime::OpStatus::Success) {
         return false;
@@ -467,7 +467,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pga_value.append(" dB"sv);
             Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_PGA), pga_value.c_str());
 
-            int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From datasheet
+            int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From data sheet
 
             if (PGA <= 31) {
                 device->SetParameter(0, 0, "G_PGA_RBB"s, PGA);
@@ -929,6 +929,7 @@ void EXTIO_API StopHW(void)
     threadHandle = INVALID_HANDLE_VALUE;
 
     device->StreamStop(0);
+    device->StreamDestroy(0);
 }
 //---------------------------------------------------------------------------
 void EXTIO_API CloseHW(void)

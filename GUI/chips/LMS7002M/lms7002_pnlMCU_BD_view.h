@@ -32,7 +32,7 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     void OnRegWriteRead(wxCommandEvent& event);
     void OnbtnRunProductionTestClicked(wxCommandEvent& event);
 
-    void OnProgramingStatusUpdate(wxCommandEvent& event);
+    void OnProgrammingStatusUpdate(wxCommandEvent& event);
     void OnReadIRAMfinished(wxThreadEvent& event);
     void OnEraseIRAMfinished(wxThreadEvent& event);
     void OnReadSFRfinished(wxThreadEvent& event);
@@ -46,16 +46,11 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     void Initialize(lime::LMS7002M* pControl) override;
 
   protected:
-    lime::MCU_BD* mcu;
+    lime::MCU_BD* mcu{};
 
     bool mThreadWorking;
     std::thread mWorkerThread;
     wxTimer* progressPooler;
-
-    int m_iTestResultFileLine;
-    int TestResultArray_code[256];
-    int TestResultArray_address[256];
-    int TestResultArray_value[256];
 
     int m_iDebug;
     int m_iMode0;
@@ -67,8 +62,8 @@ class lms7002_pnlMCU_BD_view : public ILMS7002MTab
     int m_iPCvalue;
 
     static lms7002_pnlMCU_BD_view* obj_ptr;
-    static const long ID_PROGRAMING_STATUS_EVENT;
-    static const long ID_PROGRAMING_FINISH_EVENT;
+    static const long ID_PROGRAMMING_STATUS_EVENT;
+    static const long ID_PROGRAMMING_FINISH_EVENT;
 
     enum {
         ID_CHECKBOX_RESETMCU = 2048,

@@ -9,7 +9,7 @@
 
 namespace lime {
 
-class USBGeneric;
+class IUSB;
 class IComms;
 
 /** @brief Class for managing the LimeSDR-USB device. */
@@ -18,7 +18,7 @@ class LimeSDR : public LMS7002M_SDRDevice
   public:
     LimeSDR(std::shared_ptr<IComms> spiLMS,
         std::shared_ptr<IComms> spiFPGA,
-        std::shared_ptr<USBGeneric> mStreamPort,
+        std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR();
 
@@ -35,13 +35,6 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-
-    void StreamStart(uint8_t moduleIndex) override;
-    void StreamStop(uint8_t moduleIndex) override;
-
-    void* GetInternalChip(uint32_t index) override;
 
     OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
@@ -72,7 +65,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     int RFTest(OEMTestReporter& reporter);
 
   private:
-    std::shared_ptr<USBGeneric> mStreamPort;
+    std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;

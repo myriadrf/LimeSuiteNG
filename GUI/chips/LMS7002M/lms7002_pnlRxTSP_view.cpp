@@ -20,6 +20,7 @@ indexValueMap cmix_gain_rxtsp_IndexValuePairs;
 
 lms7002_pnlRXTSP_view::lms7002_pnlRXTSP_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
+    , sizerNCOgrid(new wxFlexGridSizer(0, 1, 0, 5))
 {
     const int flags = 0;
     wxFlexGridSizer* fgSizer223;
@@ -229,7 +230,6 @@ lms7002_pnlRXTSP_view::lms7002_pnlRXTSP_view(wxWindow* parent, wxWindowID id, co
     fgSizer152->SetFlexibleDirection(wxBOTH);
     fgSizer152->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    sizerNCOgrid = new wxFlexGridSizer(0, 1, 0, 5);
     sizerNCOgrid->SetFlexibleDirection(wxBOTH);
     sizerNCOgrid->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
@@ -1740,10 +1740,8 @@ void lms7002_pnlRXTSP_view::OnbtnReadBISTSignature(wxCommandEvent& event)
     WriteParam(LMS7002MCSR::CAPSEL, 2);
     WriteParam(LMS7002MCSR::CAPTURE, 1);
     WriteParam(LMS7002MCSR::CAPTURE, 0);
-    uint16_t value;
-    LMS_ReadLMSReg(lmsControl, 0x040E, &value);
-    uint16_t value2;
-    LMS_ReadLMSReg(lmsControl, 0x040F, &value2);
+    uint16_t value{ ReadLMSReg(0x040E) };
+    uint16_t value2{ ReadLMSReg(0x040F) };
     int valrez = ((value2 << 15) | (value >> 1)) & 0x7FFFFF;
     lblBISTI->SetLabel(wxString::Format("0x%0.6X", valrez));
     lblBSTATE_I->SetLabel(wxString::Format("0x%0.1X", value & 0x1));
@@ -1752,8 +1750,8 @@ void lms7002_pnlRXTSP_view::OnbtnReadBISTSignature(wxCommandEvent& event)
     WriteParam(LMS7002MCSR::CAPSEL, 3);
     WriteParam(LMS7002MCSR::CAPTURE, 1);
     WriteParam(LMS7002MCSR::CAPTURE, 0);
-    LMS_ReadLMSReg(lmsControl, 0x040E, &value);
-    LMS_ReadLMSReg(lmsControl, 0x040F, &value2);
+    value = ReadLMSReg(0x040E);
+    value2 = ReadLMSReg(0x040F);
     valrez = ((value2 << 15) | (value >> 1)) & 0x7FFFFF;
     lblBISTQ->SetLabel(wxString::Format("0x%0.6X", valrez));
     lblBSTATE_Q->SetLabel(wxString::Format("0x%0.1X", value & 0x1));
@@ -1761,17 +1759,13 @@ void lms7002_pnlRXTSP_view::OnbtnReadBISTSignature(wxCommandEvent& event)
 
 void lms7002_pnlRXTSP_view::OnbtnReadRSSI(wxCommandEvent& event)
 {
-    uint16_t value = 0;
-    uint16_t value2 = 0;
-    unsigned valrez = 0;
-
     //Read ADCI, ADCQ
     WriteParam(LMS7002MCSR::CAPSEL, 1);
     WriteParam(LMS7002MCSR::CAPTURE, 1);
     WriteParam(LMS7002MCSR::CAPTURE, 0);
 
-    LMS_ReadLMSReg(lmsControl, 0x040E, &value);
-    LMS_ReadLMSReg(lmsControl, 0x040F, &value2);
+    uint16_t value{ ReadLMSReg(0x040E) };
+    uint16_t value2{ ReadLMSReg(0x040F) };
 
     if (chkCAPSEL_ADC_RXTSP->GetValue())
     {
@@ -1789,9 +1783,9 @@ void lms7002_pnlRXTSP_view::OnbtnReadRSSI(wxCommandEvent& event)
         WriteParam(LMS7002MCSR::CAPTURE, 0);
         WriteParam(LMS7002MCSR::CAPTURE, 1);
         WriteParam(LMS7002MCSR::CAPTURE, 0);
-        LMS_ReadLMSReg(lmsControl, 0x040E, &value);
-        LMS_ReadLMSReg(lmsControl, 0x040F, &value2);
-        valrez = ((value & 0x3) | (value2 << 2)) & 0x3FFFF;
+        value = ReadLMSReg(0x040E);
+        value2 = ReadLMSReg(0x040F);
+        int valrez{ ((value & 0x3) | (value2 << 2)) & 0x3FFFF };
         lblRSSI->SetLabel(wxString::Format("0x%0.5X", valrez));
     }
 }

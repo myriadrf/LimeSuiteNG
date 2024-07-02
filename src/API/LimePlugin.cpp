@@ -1,6 +1,7 @@
 #include "limesuiteng/LimePlugin.h"
 #include "gainTable.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <chrono>
 #include <iostream>
@@ -63,7 +64,8 @@ static std::array<StreamStatus, LIME_TRX_MAX_RF_PORT> portStreamStates;
 static lime::SDRDevice::LogCallbackType hostCallback = nullptr;
 
 DevNode::DevNode()
-    : device(nullptr)
+    : chipIndex(0)
+    , device(nullptr)
 {
 }
 
@@ -153,7 +155,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
     dest.underrun = s->underrun;
     dest.loss = s->loss;
     if (!isTx) // Tx dropped packets are reported from Rx received packet flags
-        status.tx.late = s->late;
+        status.tx.loss = s->late;
 
     // reporting every dropped packet can be quite spammy, so print info only periodically
     auto now = chrono::steady_clock::now();
@@ -163,7 +165,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
         stringstream ss;
         ss << "Rx| Loss: "sv << status.rx.loss << " overrun: "sv << status.rx.overrun << " rate: "sv << status.rx.dataRate_Bps / 1e6
            << " MB/s"sv
-           << "\nTx| Late: "sv << status.tx.late << " underrun: "sv << status.tx.underrun << " rate: "sv
+           << "\nTx| Late: "sv << status.tx.loss << " underrun: "sv << status.tx.underrun << " rate: "sv
            << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
         Log(LogLevel::Warning, ss.str().c_str());
         lastStreamUpdate = now;
@@ -175,9 +177,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
 //max gain ~70-76 (higher will probably degrade signal quality to much)
 void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = gain;
-    if (row < 0 || row >= static_cast<int>(txGainTable.size()))
-        return;
+    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(txGainTable.size() - 1));
 
     std::lock_guard<std::mutex> lk(gainsMutex);
 
@@ -197,9 +197,7 @@ void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_n
 
 void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = gain;
-    if (row < 0 || row >= static_cast<int>(rxGainTable.size()))
-        return;
+    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(rxGainTable.size() - 1));
 
     std::lock_guard<std::mutex> lk(gainsMutex);
 
@@ -256,7 +254,7 @@ static OpStatus MapChannelsToDevices(
                 remainingChannels = assignedDevices.front()->configInputs.maxChannelsToUse;
                 chipRelativeChannelIndex = 0;
             }
-            ChannelData lane;
+            ChannelData lane{};
             lane.chipChannel = chipRelativeChannelIndex;
             ++chipRelativeChannelIndex;
             lane.parent = assignedDevices.front();
@@ -394,6 +392,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         }
 
         // Initialize device to default settings
+        lime::registerLogHandler(LogCallback);
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
@@ -595,20 +594,8 @@ static OpStatus TransferDeviceDirectionalSettings(
         }
     }
 
-    char loFreqStr[1024];
     if (settings.lo_override > 0)
-    {
-        //Log(LogLevel::Info, "dev%i chip%i ch%i %.2f", devIndex, rf.chipIndex, chipChannel, freqOverride);
-        std::snprintf(loFreqStr,
-            sizeof(loFreqStr),
-            "expectedLO: %.3f MHz [override: %.3f (diff:%+.3f) MHz]",
-            trx.centerFrequency / 1.0e6,
-            settings.lo_override / 1.0e6,
-            (trx.centerFrequency - settings.lo_override) / 1.0e6);
         trx.centerFrequency = settings.lo_override;
-    }
-    else
-        std::snprintf(loFreqStr, sizeof(loFreqStr), "LO: %.3f MHz", trx.centerFrequency / 1.0e6);
 
     int flag = CalibrateFlag::Filter; // by default calibrate only filters
     if (!settings.calibration.empty())
@@ -789,7 +776,22 @@ static void TransferRuntimeParametersToConfig(
         trxConfig.enabled = true;
         const int portIndex = channelMap[i].parent->portIndex;
         trxConfig.sampleRate = runtimeParams.rf_ports[portIndex].sample_rate;
-        trxConfig.centerFrequency = params.freq[i];
+        if (trxConfig.centerFrequency == 0)
+            trxConfig.centerFrequency = params.freq[i];
+        else
+        {
+            char loFreqStr[1024];
+            std::snprintf(loFreqStr,
+                sizeof(loFreqStr),
+                "%s channel%i expectedLO: %.3f MHz [override: %.3f (diff:%+.3f) MHz]",
+                (dir == TRXDir::Rx ? "Rx" : "Tx"),
+                static_cast<int>(i),
+                params.freq[i] / 1.0e6,
+                trxConfig.centerFrequency / 1.0e6,
+                (trxConfig.centerFrequency - params.freq[i]) / 1.0e6);
+            Log(LogLevel::Info, loFreqStr);
+        }
+
         if (trxConfig.gfir.bandwidth == 0) // update only if not set by settings file
             trxConfig.gfir.bandwidth = params.bandwidth[i];
         trxConfig.lpf = params.bandwidth[i];
@@ -858,10 +860,11 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             continue;
 
         Log(LogLevel::Debug,
-            "Port[%i] Stream samples format: %s , link: %s",
+            "Port[%i] Stream samples format: %s , link: %s %s",
             p,
             stream.format == DataFormat::F32 ? "F32" : "I16",
-            stream.linkFormat == DataFormat::I12 ? "I12" : "I16");
+            stream.linkFormat == DataFormat::I12 ? "I12" : "I16",
+            (stream.extraConfig.negateQ ? ", Negating Q samples" : ""));
 
         port.composite = new StreamComposite(aggregates);
         if (port.composite->StreamSetup(stream) != OpStatus::Success)

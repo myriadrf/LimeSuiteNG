@@ -7,7 +7,7 @@
 #include "OpenGLGraph.h"
 #include "kiss_fft.h"
 #include "limesuiteng/LMS7002M.h"
-#include "windowFunction.h"
+#include "DSP/FFT/FFT.h"
 #include <fstream>
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
@@ -82,12 +82,12 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     : frFFTviewer(parent, id)
     , mStreamRunning(false)
     , device(nullptr)
+    , mGUIupdater(new wxTimer(this, wxID_ANY))
 {
     captureSamples.store(false);
     averageCount.store(50);
     spinAvgCount->SetValue(averageCount);
     updateGUI.store(true);
-    enableTransmitter.store(false);
     windowFunctionID.store(false);
     enableFFT.store(false);
 #ifndef __unix__
@@ -126,21 +126,20 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mTimeDomainPanel->series[2]->color = 0xFF00FFFF;
     mTimeDomainPanel->series[3]->color = 0x00FFFFFF;
     mTimeDomainPanel->settings.marginLeft = 48;
-    mConstelationPanel->settings.useVBO = true;
-    mConstelationPanel->AddSerie(new cDataSerie());
-    mConstelationPanel->AddSerie(new cDataSerie());
-    mConstelationPanel->series[0]->color = 0xFF0000FF;
-    mConstelationPanel->series[1]->color = 0x0000FFFF;
-    mConstelationPanel->SetInitialDisplayArea(-1, 1, -1, 1);
-    mConstelationPanel->SetDrawingMode(GLG_POINTS);
-    mConstelationPanel->settings.title = "I versus Q"s;
-    mConstelationPanel->settings.titleXaxis = "I"s;
-    mConstelationPanel->settings.titleYaxis = "Q"s;
-    mConstelationPanel->settings.gridXlines = 8;
-    mConstelationPanel->settings.gridYlines = 8;
-    mConstelationPanel->settings.marginLeft = 48;
+    mConstellationPanel->settings.useVBO = true;
+    mConstellationPanel->AddSerie(new cDataSerie());
+    mConstellationPanel->AddSerie(new cDataSerie());
+    mConstellationPanel->series[0]->color = 0xFF0000FF;
+    mConstellationPanel->series[1]->color = 0x0000FFFF;
+    mConstellationPanel->SetInitialDisplayArea(-1, 1, -1, 1);
+    mConstellationPanel->SetDrawingMode(GLG_POINTS);
+    mConstellationPanel->settings.title = "I versus Q"s;
+    mConstellationPanel->settings.titleXaxis = "I"s;
+    mConstellationPanel->settings.titleYaxis = "Q"s;
+    mConstellationPanel->settings.gridXlines = 8;
+    mConstellationPanel->settings.gridYlines = 8;
+    mConstellationPanel->settings.marginLeft = 48;
 
-    mGUIupdater = new wxTimer(this, wxID_ANY); //timer for updating plots
     Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
     Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
 
@@ -309,13 +308,11 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
             float f0 = (cFreq[c] - bw[c] / 2) * 1e6;
             float fn = (cFreq[c] + bw[c] / 2) * 1e6;
             float sum = 0;
-            int bins = 0;
             const int lmsch = mFFTpanel->series[0]->visible ? 0 : 1;
             for (int i = 0; i < fftSize; ++i)
                 if (f0 <= fftFreqAxis[i] && fftFreqAxis[i] <= fn)
                 {
                     sum += streamData.fftBins[lmsch][i];
-                    ++bins;
                 }
             chPwr[c] = sum;
         }
@@ -338,9 +335,9 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
         }
         if (chkFreezeConstellation->IsChecked() == false)
         {
-            mConstelationPanel->series[0]->AssignValues(
+            mConstellationPanel->series[0]->AssignValues(
                 &streamData.samplesI[0][0], &streamData.samplesQ[0][0], streamData.samplesQ[0].size());
-            mConstelationPanel->series[1]->AssignValues(
+            mConstellationPanel->series[1]->AssignValues(
                 &streamData.samplesI[1][0], &streamData.samplesQ[1][0], streamData.samplesQ[1].size());
         }
         if (chkFreezeFFT->IsChecked() == false)
@@ -365,8 +362,8 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
 
     if (chkFreezeConstellation->IsChecked() == false)
     {
-        mConstelationPanel->Refresh();
-        mConstelationPanel->Draw();
+        mConstellationPanel->Refresh();
+        mConstellationPanel->Draw();
     }
 
     if (chkFreezeFFT->IsChecked() == false)
@@ -386,13 +383,13 @@ void fftviewer_frFFTviewer::StreamingLoop(
 {
     const bool runTx = pthis->chkEnTx->GetValue();
     int avgCount = pthis->spinAvgCount->GetValue();
-    int wndFunction = pthis->windowFunctionID.load();
+    auto wndFunction = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
     bool fftEnabled = true;
 
     bool syncTx = pthis->chkEnSync->GetValue();
 
     vector<float> wndCoef;
-    GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+    lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
 
     lime::complex32f_t** buffers;
 
@@ -488,12 +485,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     // }
 
     pthis->mStreamRunning.store(true);
-    StreamMeta txMeta;
+    StreamMeta txMeta{};
     txMeta.waitForTimestamp = syncTx;
     txMeta.flushPartialPacket = true;
     int fftCounter = 0;
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
 
     while (pthis->stopProcessing.load() == false)
     {
@@ -543,7 +540,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
                     }
                 if (fftEnabled)
                 {
-                    if (wndFunction == 0)
+                    if (wndFunction == lime::FFT::WindowFunctionType::NONE)
                     {
                         for (unsigned i = 0; i < fftSize; ++i)
                         {
@@ -599,11 +596,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
             fftCounter = 0;
             fftEnabled = pthis->enableFFT.load();
             avgCount = pthis->averageCount.load();
-            int wndFunctionSelection = pthis->windowFunctionID.load();
+            auto wndFunctionSelection = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
             if (wndFunctionSelection != wndFunction)
             {
                 wndFunction = wndFunctionSelection;
-                GenerateWindowCoefficients(wndFunction, fftSize, wndCoef, 1);
+                lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
             }
         }
     }
@@ -651,6 +648,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     kiss_fft_free(m_fftCalcPlan);
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
+    pthis->device->StreamDestroy(chipIndex);
 
     for (int i = 0; i < channelsCount; ++i)
         delete[] buffers[i];
@@ -706,7 +704,7 @@ void fftviewer_frFFTviewer::OnFmtChange(wxCommandEvent& event)
     if (val != cmbFmt->GetSelection())
         cmbFmt->SetSelection(val);
     mTimeDomainPanel->SetInitialDisplayArea(0, 1024, -max, max);
-    mConstelationPanel->SetInitialDisplayArea(-max, max, -max, max);
+    mConstellationPanel->SetInitialDisplayArea(-max, max, -max, max);
 }
 
 void fftviewer_frFFTviewer::OnEnPwr(wxCommandEvent& event)
@@ -746,8 +744,8 @@ void fftviewer_frFFTviewer::OnChannelVisibilityChange(wxCommandEvent& event)
     mTimeDomainPanel->series[1]->visible = visibilities[0];
     mTimeDomainPanel->series[2]->visible = visibilities[1];
     mTimeDomainPanel->series[3]->visible = visibilities[1];
-    mConstelationPanel->series[0]->visible = visibilities[0];
-    mConstelationPanel->series[1]->visible = visibilities[1];
+    mConstellationPanel->series[0]->visible = visibilities[0];
+    mConstellationPanel->series[1]->visible = visibilities[1];
     mFFTpanel->series[0]->visible = visibilities[0];
     mFFTpanel->series[1]->visible = visibilities[1];
 }

@@ -73,6 +73,8 @@ class FPGA
     OpStatus WriteLMS7002MSPI(const uint32_t* addr, uint32_t length);
     OpStatus ReadLMS7002MSPI(const uint32_t* addr, uint32_t* values, uint32_t length);
 
+    uint32_t SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId);
+
     /** @brief Structure containing the gateware information of the FPGA */
     struct GatewareInfo {
         int boardID;
@@ -92,8 +94,15 @@ class FPGA
     };
     virtual OpStatus OEMTestSetup(TestID test, double timeout);
 
-  protected:
+    OpStatus ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool ddr, bool trxiqpulse);
+    OpStatus ResetPacketCounters(uint16_t chipId);
+    OpStatus StopWaveformPlayback();
+    OpStatus ReadTxPacketCounters(uint16_t chipId, uint32_t* fpgaTxPktIngressCount, uint32_t* fpgaTxPktDropCounter);
+
     OpStatus SelectModule(uint8_t chipIndex);
+    OpStatus SubmoduleSPIEnableMask(uint16_t enableMask);
+
+  protected:
     OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = ""s);
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
     OpStatus SetDirectClocking(int clockIndex);

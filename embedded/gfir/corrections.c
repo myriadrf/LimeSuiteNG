@@ -45,7 +45,7 @@ float InvSincS(float x, float k, float x0)
 }
 
 /* ************************************************************ */
-/* Unity function, no correction is envolved.			*/
+/* Unity function, no correction is involved.			*/
 /* ************************************************************ */
 float One(float x)
 {

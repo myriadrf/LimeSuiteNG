@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "EqualizerCSR.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 
 using namespace lime;
 using namespace EqualizerCSR;

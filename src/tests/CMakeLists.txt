@@ -22,16 +22,15 @@ if(ENABLE_LITE_PCIE)
         LIME_TEST_SUITE_SOURCES
         boards/LimeSDR_X3/LimeSDR_X3Test.cpp
         boards/LimeSDR_X3/SlaveSelectShimTest.cpp
-        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp
-        comms/PCIe/PCIE_CSR_PipeTest.cpp)
+        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp)
 endif()
 
 if(ENABLE_USB_FX3)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR/LimeSDRTest.cpp boards/LimeSDR/USB_CSR_Pipe_SDRTest.cpp)
+    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR/LimeSDRTest.cpp)
 endif()
 
 if(ENABLE_USB_FTDI)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp boards/LimeSDR_Mini/USB_CSR_Pipe_MiniTest.cpp)
+    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp)
 endif()
 
 add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
@@ -42,6 +41,9 @@ target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME} GTest:
 if(CMAKE_BINARY_DIR)
     set_target_properties(${LIME_TEST_SUITE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
+
+add_subdirectory(streaming)
+add_subdirectory(LimeSuite_wrapper)
 
 include(GoogleTest)
 gtest_discover_tests(${LIME_TEST_SUITE_NAME})

@@ -1,5 +1,4 @@
 #include "CommonFunctions.h"
-#include "comms/IComms.h"
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
@@ -95,14 +94,12 @@ struct StreamHandle {
     static constexpr std::size_t MAX_ELEMENTS_IN_BUFFER = 4096;
 
     LMS_APIDevice* parent;
-    bool isStreamStartedFromAPI;
     bool isStreamActuallyStarted;
     lime::MemoryPool memoryPool;
 
     StreamHandle() = delete;
     StreamHandle(LMS_APIDevice* parent)
         : parent(parent)
-        , isStreamStartedFromAPI(false)
         , isStreamActuallyStarted(false)
         , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool"s)
     {
@@ -116,7 +113,7 @@ static inline int OpStatusToReturnCode(OpStatus value)
     return value == OpStatus::Success ? 0 : -1;
 }
 
-inline LMS_APIDevice* CheckDevice(lms_device_t* device)
+static inline LMS_APIDevice* CheckDevice(lms_device_t* device)
 {
     if (device == nullptr)
     {
@@ -127,7 +124,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device)
     return static_cast<LMS_APIDevice*>(device);
 }
 
-inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
+static inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
 {
     LMS_APIDevice* apiDevice = CheckDevice(device);
     if (apiDevice == nullptr || apiDevice->device == nullptr)
@@ -144,7 +141,7 @@ inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
     return apiDevice;
 }
 
-inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
+static inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
 {
     for (std::size_t i = 0; i < streamHandles.size(); i++)
     {
@@ -159,14 +156,14 @@ inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
     return streamHandles.size() - 1;
 }
 
-inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
+static inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
 {
     std::size_t charsToCopy = std::min(destinationLength - 1, source.size());
     std::strncpy(destination, source.data(), charsToCopy);
     destination[charsToCopy] = 0;
 }
 
-inline lms_range_t RangeToLMS_Range(const lime::Range& range)
+static inline lms_range_t RangeToLMS_Range(const lime::Range& range)
 {
     return { range.min, range.max, range.step };
 }
@@ -358,12 +355,13 @@ API_EXPORT int CALL_CONV LMS_GetSampleRate(lms_device_t* device, bool dir_tx, si
     }
 
     lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    auto rate = apiDevice->device->GetSampleRate(apiDevice->moduleIndex, direction, 0);
+    uint32_t rf_rate;
+    auto rate = apiDevice->device->GetSampleRate(apiDevice->moduleIndex, direction, 0, &rf_rate);
 
     if (host_Hz)
         *host_Hz = rate;
     if (rf_Hz)
-        *rf_Hz = rate;
+        *rf_Hz = rf_rate;
 
     return 0;
 }
@@ -454,9 +452,13 @@ API_EXPORT int CALL_CONV LMS_GetAntennaList(lms_device_t* device, bool dir_tx, s
 
     const auto& rfSOC = apiDevice->GetRFSOCDescriptor();
     const auto& strings = rfSOC.pathNames.at(dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
-    for (std::size_t i = 0; i < strings.size(); ++i)
+
+    if (list != nullptr)
     {
-        CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        for (std::size_t i = 0; i < strings.size(); ++i)
+        {
+            CopyString(strings.at(i), list[i], sizeof(lms_name_t));
+        }
     }
 
     return strings.size();
@@ -815,12 +817,18 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
         return -1;
     }
 
+    apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
     auto& streamHandle = streamHandles.at(stream->handle);
     if (streamHandle != nullptr)
     {
         delete streamHandle;
         streamHandle = nullptr;
     }
+
+    auto& channels = apiDevice->lastSavedStreamConfig.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
+    auto iter = std::find(channels.begin(), channels.end(), stream->channel);
+    if (iter != std::end(channels))
+        channels.erase(iter);
 
     return 0;
 }
@@ -837,8 +845,6 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
     {
         return -1;
     }
-
-    handle->isStreamStartedFromAPI = true;
 
     if (!handle->isStreamActuallyStarted)
     {
@@ -870,8 +876,6 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
     {
         return -1;
     }
-
-    handle->isStreamStartedFromAPI = false;
 
     if (handle->isStreamActuallyStarted)
     {
@@ -1147,7 +1151,6 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         break;
     }
 
-    status->active = handle->isStreamStartedFromAPI;
     status->fifoFilledCount = stats.FIFO.usedCount;
     status->fifoSize = stats.FIFO.totalCount;
 

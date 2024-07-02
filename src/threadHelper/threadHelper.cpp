@@ -46,7 +46,7 @@ int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std:
     }
 
     //scale values
-    sched_param sch;
+    sched_param sch{};
     sch.sched_priority =
         static_cast<int>(((prio_max - prio_min) / static_cast<float>(ThreadPriority::HIGHEST)) * static_cast<int>(priority)) +
         prio_min;
@@ -91,7 +91,7 @@ int lime::SetOSCurrentThreadPriority(ThreadPriority priority, ThreadPolicy polic
     }
 
     //scale values
-    sched_param sch;
+    sched_param sch{};
     sch.sched_priority =
         static_cast<int>(((prio_max - prio_min) / static_cast<float>(ThreadPriority::HIGHEST)) * static_cast<int>(priority)) +
         prio_min;

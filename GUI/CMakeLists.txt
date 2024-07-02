@@ -64,7 +64,6 @@ set(GUI_SOURCES
     fftviewer_wxgui/fftviewer_wxgui.cpp
     fftviewer_wxgui/fftviewer_frFFTviewer.cpp
     lms7suiteEvents/lms7suiteEvents.cpp
-    windowFunction.cpp
     CommsToDevice.cpp
     DeviceConnectionPanel.cpp
     events.cpp

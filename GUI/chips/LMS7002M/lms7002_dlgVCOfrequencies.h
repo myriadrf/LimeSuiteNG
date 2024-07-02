@@ -25,7 +25,6 @@ class lms7002_dlgVCOfrequencies : public wxDialog
     lms7002_dlgVCOfrequencies(wxWindow* parent, lime::LMS7002M* plmsControl);
     //// end generated class members
   protected:
-    lime::LMS7002M* lmsControl;
     wxStaticText* m_staticText341;
     wxTextCtrl* txtVCOH_low;
     wxStaticText* m_staticText342;

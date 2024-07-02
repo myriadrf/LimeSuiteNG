@@ -42,7 +42,7 @@ void PrintDeviceDetails(SDRDevice* device)
         cout << "\t\t\t\t  " << mem.first << endl;
     cout << "\t"
          << "GPS Lock:" << endl;
-    SDRDevice::GPS_Lock gpsStatus;
+    SDRDevice::GPS_Lock gpsStatus{};
     device->GetGPSLock(&gpsStatus);
     cout << "\t\t"
          << "GPS - " << GPSLockToString(gpsStatus.gps) << endl;

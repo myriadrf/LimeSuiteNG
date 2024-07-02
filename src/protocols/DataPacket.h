@@ -4,6 +4,7 @@
 #include "BufferInterleaving.h"
 
 #include <cassert>
+#include <cstddef>
 #include <cstring>
 
 namespace lime {
@@ -78,6 +79,9 @@ struct FPGA_TxDataPacket {
     uint8_t data[4080];
 };
 
+static_assert(sizeof(FPGA_TxDataPacket) == 4096);
+static_assert(sizeof(FPGA_TxDataPacket) == sizeof(FPGA_RxDataPacket));
+
 /** @brief Data structure used for interacting with the header of sample stream packets. */
 struct StreamHeader {
     StreamHeader() { Clear(); }
@@ -118,6 +122,10 @@ struct StreamHeader {
     int64_t
         counter; // should be unsigned, but that's prone to underflow during arithmetic and would choke FPGA, packets would not be sent
 };
+
+static_assert(sizeof(StreamHeader) == 16);
+static_assert(sizeof(FPGA_RxDataPacket::data) == sizeof(FPGA_RxDataPacket) - sizeof(StreamHeader));
+static_assert(sizeof(FPGA_TxDataPacket::data) == sizeof(FPGA_TxDataPacket) - sizeof(StreamHeader));
 
 } // namespace lime
 

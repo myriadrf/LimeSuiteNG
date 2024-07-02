@@ -44,12 +44,11 @@ class PrintOEMTestReporter : public OEMTestReporter
 {
   public:
     PrintOEMTestReporter(uint64_t serialNumber, const std::filesystem::path& reportFilename)
-        : indentLevel(0)
     {
         if (!reportFilename.empty())
             fileOutput.open(reportFilename, std::fstream::out | std::fstream::app);
     };
-    ~PrintOEMTestReporter()
+    ~PrintOEMTestReporter() override
     {
         if (fileOutput.is_open())
         {
@@ -66,23 +65,23 @@ class PrintOEMTestReporter : public OEMTestReporter
         }
         fileOutput.close();
     }
-    virtual void OnStart(OEMTestData& test, const std::string& testName = std::string()) override
+    void OnStart(OEMTestData& test, const std::string& testName = std::string()) override
     {
         std::cerr << Indent() << "=== " << test.name << " ===" << std::endl;
         ++indentLevel;
     }
-    virtual void OnStepUpdate(OEMTestData& test, const std::string& text = std::string()) override
+    void OnStepUpdate(OEMTestData& test, const std::string& text = std::string()) override
     {
         std::cerr << Indent() << text << std::endl;
     }
-    virtual void OnSuccess(OEMTestData& test) override
+    void OnSuccess(OEMTestData& test) override
     {
         --indentLevel;
         std::cerr << Indent() << "=== " << test.name << " - PASSED"
                   << " ===" << std::endl
                   << std::endl;
     }
-    virtual void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) override
+    void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) override
     {
         assert(!test.passed);
         --indentLevel;
@@ -92,13 +91,13 @@ class PrintOEMTestReporter : public OEMTestReporter
             std::cerr << " (" << reasonText << ")";
         std::cerr << " ===" << std::endl << std::endl;
     }
-    virtual void ReportColumn(const std::string& header, const std::string& value)
+    void ReportColumn(const std::string& header, const std::string& value) override
     {
         headers.push_back(header);
         values.push_back(value);
     }
 
-  protected:
+  private:
     std::string Indent()
     {
         std::stringstream ss;
@@ -106,7 +105,7 @@ class PrintOEMTestReporter : public OEMTestReporter
             ss << "  ";
         return ss.str();
     }
-    int indentLevel;
+    int indentLevel{ 0 };
     std::fstream fileOutput;
     std::vector<std::string> headers;
     std::vector<std::string> values;
@@ -153,6 +152,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
     OpStatus result = OpStatus::Success;
 
     if (serialNumberFlag)

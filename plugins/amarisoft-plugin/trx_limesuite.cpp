@@ -17,11 +17,7 @@ using namespace lime;
 class AmarisoftParamProvider : public LimeSettingsProvider
 {
   public:
-    AmarisoftParamProvider()
-        : state(nullptr)
-        , blockAccess(false)
-    {
-    }
+    AmarisoftParamProvider() {}
 
     void Init(TRXState* s) { state = s; }
 
@@ -53,8 +49,8 @@ class AmarisoftParamProvider : public LimeSettingsProvider
     }
 
   private:
-    TRXState* state;
-    bool blockAccess;
+    TRXState* state{ nullptr };
+    bool blockAccess{ false };
 };
 
 static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
@@ -128,7 +124,7 @@ static void trx_lms7002m_write(
     if (!samples) // Nothing to transmit
         return;
 
-    StreamMeta meta;
+    StreamMeta meta{};
     meta.timestamp = timestamp;
     meta.waitForTimestamp = true;
     meta.flushPartialPacket = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
@@ -144,7 +140,7 @@ static void trx_lms7002m_write(
 // return number of samples produced
 static int trx_lms7002m_read(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
 {
-    StreamMeta meta;
+    StreamMeta meta{};
     meta.waitForTimestamp = false;
     meta.flushPartialPacket = false;
     md->flags = 0;

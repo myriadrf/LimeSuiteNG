@@ -14,7 +14,6 @@
 #include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "comms/IComms.h"
 
 #include <ciso646>
 
@@ -93,10 +92,12 @@ int pnlX3::LMS_ReadCustomBoardParam(lime::SDRDevice* device, std::vector<CustomP
 }
 
 pnlX3::pnlX3(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
+    : m_bLMS1LowFreq(1)
+    , m_bLMS1DownLink(1)
+    , m_bLMS2DownLink(1)
+    , chipSelect(-1)
+    , device(nullptr)
 {
-    chipSelect = -1;
-    device = nullptr;
-
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
@@ -177,8 +178,6 @@ pnlX3::pnlX3(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     rbLMS1HighFreq->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(pnlX3::OnLMS1HighFreq), NULL, this);
     mainSizer->Add(rbLMS1HighFreq, 0, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
-    m_bLMS1LowFreq = 1;
-
     rbLMS1DownLink = new wxRadioButton(this, wxNewId(), wxT("DL"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
     rbLMS1DownLink->SetValue(true);
     rbLMS1DownLink->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(pnlX3::OnLMS1DownLink), NULL, this);
@@ -188,8 +187,6 @@ pnlX3::pnlX3(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     rbLMS1UpLink->SetValue(false);
     rbLMS1UpLink->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(pnlX3::OnLMS1UpLink), NULL, this);
     mainSizer->Add(rbLMS1UpLink, 0, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
-
-    m_bLMS1DownLink = 1;
 
     cbLMS1ChA = new wxCheckBox(this, wxNewId(), _("ChA"));
     mainSizer->Add(cbLMS1ChA, 1, wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -309,8 +306,6 @@ pnlX3::pnlX3(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     rbLMS2UpLink->SetValue(false);
     rbLMS2UpLink->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(pnlX3::OnLMS2UpLink), NULL, this);
     mainSizer2->Add(rbLMS2UpLink, 0, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
-
-    m_bLMS2DownLink = 1;
 
     cbLMS2ChA = new wxCheckBox(this, wxNewId(), _("ChA"));
     mainSizer2->Add(cbLMS2ChA, 1, wxALIGN_LEFT | wxALIGN_TOP, 5);

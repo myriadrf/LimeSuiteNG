@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
     args::ValueFlag<double>         samplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"samplerate"});
 
-    args::Group                     rxGroup(parser, "Receiver");
+    args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           rxenFlag(parser, "rx enable", "Enable receiver [0, 1]", {"rxen"});
     args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
     args::ValueFlag<uint8_t>        rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
 
-    args::Group                     txGroup(parser, "Transmitter");
+    args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           txenFlag(parser, "tx enable", "Enable transmitter", {"txen"});
     args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
     args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
@@ -164,6 +164,7 @@ int main(int argc, char** argv)
         chipIndexes.push_back(0);
 
     device->SetMessageLogCallback(LogCallback);
+    lime::registerLogHandler(LogCallback);
 
     try
     {

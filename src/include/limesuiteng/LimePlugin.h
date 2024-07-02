@@ -66,9 +66,9 @@ struct LIME_API DevNode {
     std::vector<uint32_t> fpgaRegisterWrites;
     lime::SDRDevice* device; // chip owner
     lime::SDRConfig config;
-    int portIndex;
-    int devIndex;
-    bool assignedToPort;
+    int portIndex{};
+    int devIndex{};
+    bool assignedToPort{};
 };
 
 struct LIME_API ChannelData {

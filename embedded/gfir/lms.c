@@ -20,8 +20,7 @@
 #include "rounding.h"
 
 /* Filter parity constants */
-#define EVEN 0
-#define ODD 1
+enum { EVEN = 0, ODD = 1 };
 
 /* Declare functions from Numerical Recipes that are used here */
 float* vector(int, int);

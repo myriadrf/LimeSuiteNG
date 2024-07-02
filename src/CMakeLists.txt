@@ -29,10 +29,10 @@ set(LIME_SUITE_SOURCES
     protocols/LMS64CProtocol.cpp
     protocols/TRXLooper.cpp
     protocols/BufferInterleaving.cpp
+    protocols/AvgRmsCounter.cpp
     FPGA_common/FPGA_common.cpp
     FPGA_common/WriteRegistersBatch.cpp
     threadHelper/threadHelper.cpp
-    EnumToString.cpp
     memory/MemoryPool.cpp
     API/LMS_APIWrapper.cpp
     API/LimePlugin.cpp

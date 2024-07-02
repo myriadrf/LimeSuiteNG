@@ -1,6 +1,7 @@
 name: Formatting
 
 on:
+  workflow_dispatch:
   push:
     branches: [develop]
   pull_request:
@@ -54,3 +55,28 @@ jobs:
               exit 1
           fi
           exit 0
+
+  clang-tidy:
+    if: false # skip job until it's properly setup to be runnable locally
+    runs-on: [ubuntu-24.04] # Change to ubuntu-latest when that changes over
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq gnuradio-dev python3-packaging libusb-1.0-0-dev libwxgtk3.2-dev libsoapysdr-dev clang-tidy
+
+      - name: Run clang-tidy (everything but GTest tests)
+        run: |
+          cmake -B build -S . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          for file in $(find plugins/gr-limesdr/python/bindings -name "*.cc"); do echo "" > "$file"; done # Fail due to missing headers which get generated when compiling; replacing instead of deleting because missing files error out
+          run-clang-tidy -warnings-as-errors '*' -p build/ -j $(nproc)
+  
+      - name: Run clang-tidy (only library and GTest tests)
+        run: |
+          cmake -B build -S . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBUILD_SHARED_LIBS=0 -DENABLE_HEADERS=0 -DENABLE_USB_FTDI=0 -DENABLE_USB_FX3=0 -DENABLE_LITE_PCIE=0 -DENABLE_CLI=0 -DENABLE_GUI=0 -DENABLE_AMARISOFT_PLUGIN=0 -DENABLE_SOAPYSDR=0 -DENABLE_EXAMPLES=0 -DENABLE_UDEV_RULES=0 
+          run-clang-tidy -warnings-as-errors '*' -p build/ -j $(nproc)

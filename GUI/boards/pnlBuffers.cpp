@@ -17,9 +17,8 @@ BEGIN_EVENT_TABLE(pnlBuffers, wxPanel)
 END_EVENT_TABLE()
 
 pnlBuffers::pnlBuffers(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int style, wxString name)
+    : lmsControl(nullptr)
 {
-    lmsControl = nullptr;
-
     Create(parent, id, pos, size, style, name);
 #ifdef WIN32
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));

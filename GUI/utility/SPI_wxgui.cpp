@@ -5,17 +5,15 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
 
+#include "numericSlider/numericSlider.h"
+
+#include <wx/spinctrl.h>
+
 using namespace lime;
 using namespace std::literals::string_literals;
 
 void SPI_wxgui::InsertSPIControlsRow(wxWindow* parent, wxWindowID id, wxFlexGridSizer* row, SPI_wxgui::SPIFields* controls)
 {
-    // This sizer appears unused?
-    // wxFlexGridSizer* fgSizer306;
-    // fgSizer306 = new wxFlexGridSizer(0, 8, 5, 5);
-    // fgSizer306->SetFlexibleDirection(wxBOTH);
-    // fgSizer306->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-
     wxStaticText* addrText = new wxStaticText(parent, wxID_ANY, wxT("Address(Hex):"));
     row->Add(addrText, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
@@ -51,6 +49,38 @@ void SPI_wxgui::InsertSPIControlsRow(wxWindow* parent, wxWindowID id, wxFlexGrid
     controls->status = lblLMSwriteStatus;
 }
 
+void SPI_wxgui::InsertQuickSPIControlsRow(
+    wxWindow* parent, wxWindowID id, wxFlexGridSizer* row, SPI_wxgui::QuickSPIFields* controls)
+{
+    wxStaticText* addrText = new wxStaticText(parent, wxID_ANY, wxT("Address(Hex):"));
+    row->Add(addrText, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+
+    wxTextCtrl* txtLMSwriteAddr = new wxTextCtrl(parent, wxID_ANY, wxT("FFFF"));
+    //txtLMSwriteAddr->SetMinSize( wxSize( 48,-1 ) );
+    controls->address = txtLMSwriteAddr;
+    row->Add(txtLMSwriteAddr, 1, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
+
+    wxStaticText* maskText = new wxStaticText(parent, wxID_ANY, wxT("Mask(Hex):"));
+    row->Add(maskText, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+
+    wxTextCtrl* txtMask = new wxTextCtrl(parent, wxID_ANY, wxT("FFFF"));
+    row->Add(txtMask, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+    controls->mask = txtMask;
+
+    NumericSlider* ctrlValue =
+        new NumericSlider(parent, id, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), wxSP_ARROW_KEYS, -32768, 32767, 0);
+    ctrlValue->Bind(wxEVT_COMMAND_SPINCTRL_UPDATED, &SPI_wxgui::onQuickSPIwrite, this, id);
+    controls->value = ctrlValue;
+    row->Add(ctrlValue, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+
+    wxStaticText* statusText = new wxStaticText(parent, wxID_ANY, wxT("Written:"));
+    row->Add(statusText, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+
+    wxStaticText* lblLMSwriteStatus = new wxStaticText(parent, wxID_ANY, wxT("???"), wxDefaultPosition, wxSize(134, 13));
+    row->Add(lblLMSwriteStatus, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
+    controls->status = lblLMSwriteStatus;
+}
+
 wxFlexGridSizer* SPI_wxgui::CreateSPIControls(wxWindow* parent, uint8_t rowCount, wxChoice* deviceSelector)
 {
     wxFlexGridSizer* mainSizer;
@@ -65,11 +95,24 @@ wxFlexGridSizer* SPI_wxgui::CreateSPIControls(wxWindow* parent, uint8_t rowCount
     szRows->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
     for (int i = 0; i < rowCount; ++i)
     {
-        SPI_wxgui::SPIFields controls;
+        SPI_wxgui::SPIFields controls{};
         wxWindowID lineID = wxNewId();
         InsertSPIControlsRow(parent, lineID, szRows, &controls);
         controls.devSelection = deviceSelector;
         mSPIElements[lineID] = controls;
+    }
+    mainSizer->Add(szRows, 0, wxEXPAND, 0);
+
+    szRows = new wxFlexGridSizer(0, 7, 0, 0);
+    szRows->SetFlexibleDirection(wxBOTH);
+    szRows->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
+    for (int i = 0; i < 2; ++i)
+    {
+        SPI_wxgui::QuickSPIFields controls{};
+        wxWindowID lineID = wxNewId();
+        InsertQuickSPIControlsRow(parent, lineID, szRows, &controls);
+        controls.devSelection = deviceSelector;
+        mQuickSPIElements[lineID] = controls;
     }
     mainSizer->Add(szRows, 0, wxEXPAND, 0);
     return mainSizer;
@@ -179,6 +222,74 @@ void SPI_wxgui::onSPIwrite(wxCommandEvent& event)
         {
             mDevice->SPI(devAddr, &mosi, nullptr, 1);
             fields.status->SetLabel("OK");
+        } catch (std::runtime_error& e)
+        {
+            fields.status->SetLabel(e.what());
+        }
+    } catch (...)
+    {
+        lime::error("No spi controls created for event id: %i", event.GetId());
+    }
+}
+
+void SPI_wxgui::onQuickSPIwrite(wxSpinEvent& event)
+{
+    try
+    {
+        QuickSPIFields& fields = mQuickSPIElements.at(event.GetId());
+        if (!mDevice)
+        {
+            fields.status->SetLabel("Not connected");
+            return;
+        }
+
+        const wxString strAddress = fields.address->GetValue();
+        long addr = 0;
+        strAddress.ToLong(&addr, 16);
+
+        const wxString strMask = fields.mask->GetValue();
+        long mask = 0;
+        strMask.ToLong(&mask, 16);
+
+        int lsb = 0;
+        for (int i = 0; i < 15; ++i)
+        {
+            if (mask & (1 << i))
+            {
+                lsb = i;
+                break;
+            }
+        }
+
+        long value = fields.value->GetValue();
+
+        uint32_t devAddr = 0;
+        int listSelection = fields.devSelection->GetSelection();
+        if (listSelection < 0)
+            return;
+        const wxString strDevAddr = fields.devSelection->GetString(listSelection);
+        const SDRDescriptor& desc = mDevice->GetDescriptor();
+        auto iter = desc.spiSlaveIds.find(std::string(strDevAddr.mb_str()));
+        if (iter == desc.spiSlaveIds.end())
+        {
+            lime::warning("Connected device does not have SPI for "s + strDevAddr.mb_str().data());
+            return;
+        }
+        devAddr = iter->second;
+
+        try
+        {
+            uint32_t read_mosi = addr;
+            uint32_t regValue = 0;
+            mDevice->SPI(devAddr, &read_mosi, &regValue, 1);
+
+            regValue &= 0xFFFF;
+            regValue &= ~mask;
+            regValue |= ((value << lsb) & mask);
+
+            const uint32_t mosi = (1 << 31) | addr << 16 | regValue;
+            mDevice->SPI(devAddr, &mosi, nullptr, 1);
+            fields.status->SetLabel(wxString::Format("%04X", regValue));
         } catch (std::runtime_error& e)
         {
             fields.status->SetLabel(e.what());

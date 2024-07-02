@@ -23,7 +23,7 @@
 
 #include "INI.h"
 #include "limesuiteng/types.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002MCSR.h"
@@ -137,73 +137,6 @@ static_assert(LMS7002M::VCO_Module::VCO_CGEN == static_cast<LMS7002M::VCO_Module
 static_assert(LMS7002M::VCO_Module::VCO_SXR == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXR));
 static_assert(LMS7002M::VCO_Module::VCO_SXT == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXT));
 
-/** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
-class ChannelScope
-{
-  public:
-    /**
-   * @brief Saves the current channel and restores it at scope exit.
-   * @param chip The chip to use.
-   * @param useCache Whether to use caching or not.
-   */
-    ChannelScope(LMS7002M* chip, bool useCache = false)
-        : mChip(chip)
-        , mStoredValue(chip->GetActiveChannel(!useCache))
-        , mNeedsRestore(true)
-    {
-    }
-
-    /**
-      @brief Convenient constructor when using explicit MAC value.
-      @param chip The chip to use.
-      @param mac The channel to use.
-      @param useCache Whether to use caching or not.
-     */
-    ChannelScope(LMS7002M* chip, LMS7002M::Channel mac, bool useCache = false)
-        : mChip(chip)
-        , mStoredValue(chip->GetActiveChannel(!useCache))
-        , mNeedsRestore(false)
-    {
-        if (mStoredValue == mac)
-            return;
-
-        mChip->SetActiveChannel(mac);
-        mNeedsRestore = true;
-    }
-
-    /**
-      @brief Convenient constructor when using channel index starting from 0.
-      @param chip The chip to use.
-      @param index The channel index.
-      @param useCache Whether to use caching or not.
-     */
-    ChannelScope(LMS7002M* chip, uint8_t index, bool useCache = false)
-        : mChip(chip)
-        , mNeedsRestore(false)
-    {
-        assert(index < 2);
-        mStoredValue = chip->GetActiveChannel(!useCache);
-        auto expectedChannel = IntToChannel(index);
-        if (mStoredValue == expectedChannel)
-            return;
-
-        mChip->SetActiveChannel(expectedChannel);
-        mNeedsRestore = true;
-    }
-
-    /** @brief Destroy the Channel Scope object and reset the active channel. */
-    ~ChannelScope()
-    {
-        if (mNeedsRestore)
-            mChip->SetActiveChannel(mStoredValue);
-    }
-
-  private:
-    LMS7002M* mChip; ///< The chip to modify
-    LMS7002M::Channel mStoredValue; ///< The channel to restore to
-    bool mNeedsRestore; ///< Whether the channel needs restoring or not
-};
-
 /** @brief Sets connection which is used for data communication with chip
 */
 void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
@@ -265,7 +198,8 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , controlPort(port)
     , mC_impl(nullptr)
 {
-    struct lms7002m_hooks hooks;
+    struct lms7002m_hooks hooks {
+    };
     memset(&hooks, 0, sizeof(hooks));
 
     hooks.spi16_userData = this;
@@ -306,6 +240,21 @@ LMS7002M::~LMS7002M()
     delete mRegistersMap;
 }
 
+static lms7002m_channel IndexToChannelEnum(const uint8_t channel)
+{
+    switch (channel)
+    {
+    case 0:
+        return LMS7002M_CHANNEL_A;
+    case 1:
+        return LMS7002M_CHANNEL_B;
+    default:
+        break;
+    }
+    lime::error("Unrecognized channel. Falling back to Channel A");
+    return LMS7002M_CHANNEL_A;
+}
+
 OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 {
     lime_Result result = lms7002m_set_active_channel(mC_impl, static_cast<lms7002m_channel>(ch));
@@ -326,7 +275,7 @@ size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 
 OpStatus LMS7002M::EnableChannel(TRXDir dir, const uint8_t channel, const bool enable)
 {
-    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, static_cast<lms7002m_channel>(channel), enable);
+    lime_Result result = lms7002m_enable_channel(mC_impl, dir == TRXDir::Tx, IndexToChannelEnum(channel), enable);
     return ResultToStatus(result);
 }
 
@@ -874,7 +823,7 @@ int LMS7002M::GetBandTRF()
 
 OpStatus LMS7002M::SetPath(TRXDir direction, uint8_t channel, uint8_t path)
 {
-    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, static_cast<lms7002m_channel>(channel), path);
+    lime_Result result = lms7002m_set_path(mC_impl, direction == TRXDir::Tx, IndexToChannelEnum(channel), path);
     return ResultToStatus(result);
 }
 
@@ -1912,4 +1861,43 @@ OpStatus LMS7002M::LoadDC_REG_IQ(TRXDir dir, int16_t I, int16_t Q)
 {
     lime_Result result = lms7002m_load_dc_reg_iq(mC_impl, dir == TRXDir::Tx, I, Q);
     return ResultToStatus(result);
+}
+
+LMS7002M::ChannelScope::ChannelScope(LMS7002M* chip, bool useCache)
+    : mChip(chip)
+    , mStoredValue(chip->GetActiveChannel(!useCache))
+    , mNeedsRestore(true)
+{
+}
+
+LMS7002M::ChannelScope::ChannelScope(LMS7002M* chip, LMS7002M::Channel mac, bool useCache)
+    : mChip(chip)
+    , mStoredValue(chip->GetActiveChannel(!useCache))
+    , mNeedsRestore(false)
+{
+    if (mStoredValue == mac)
+        return;
+
+    mChip->SetActiveChannel(mac);
+    mNeedsRestore = true;
+}
+
+LMS7002M::ChannelScope::ChannelScope(LMS7002M* chip, uint8_t index, bool useCache)
+    : mChip(chip)
+    , mNeedsRestore(false)
+{
+    assert(index < 2);
+    mStoredValue = chip->GetActiveChannel(!useCache);
+    auto expectedChannel = IntToChannel(index);
+    if (mStoredValue == expectedChannel)
+        return;
+
+    mChip->SetActiveChannel(expectedChannel);
+    mNeedsRestore = true;
+}
+
+LMS7002M::ChannelScope::~ChannelScope()
+{
+    if (mNeedsRestore)
+        mChip->SetActiveChannel(mStoredValue);
 }

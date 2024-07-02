@@ -73,8 +73,8 @@ lime_Result lms7002m_reset_logic_registers(struct lms7002m_context* self);
 
 lime_Result lms7002m_tune_cgen_vco(struct lms7002m_context* self);
 
-lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, float frequency_Hz);
-float lms7002m_get_frequency_cgen(struct lms7002m_context* self);
+lime_Result lms7002m_set_frequency_cgen(struct lms7002m_context* context, uint32_t frequency_Hz);
+uint32_t lms7002m_get_frequency_cgen(struct lms7002m_context* self);
 
 lime_Result lms7002m_set_rbbpga_db(struct lms7002m_context* self, const float value, const enum lms7002m_channel channel);
 float lms7002m_get_rbbpga_db(struct lms7002m_context* self, const enum lms7002m_channel channel);
@@ -108,8 +108,8 @@ bool lms7002m_get_sx_locked(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_tune_vco(struct lms7002m_context* self, enum lms7002m_vco_type module);
 
-lime_Result lms7002m_set_frequency_sx(struct lms7002m_context* self, bool isTx, float freq_Hz);
-float lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
+lime_Result lms7002m_set_frequency_sx(struct lms7002m_context* self, bool isTx, uint32_t freq_Hz);
+uint32_t lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_set_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index, float freq_Hz);
 float lms7002m_get_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index);

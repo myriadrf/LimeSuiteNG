@@ -7,10 +7,10 @@ namespace lime {
 
 FFT::FFT(uint32_t size)
     : samplesFIFO(size * 128)
+    , m_fftCalcPlan(kiss_fft_alloc(size, 0, 0, 0))
 {
     m_fftCalcIn.resize(size);
     m_fftCalcOut.resize(size);
-    m_fftCalcPlan = kiss_fft_alloc(size, 0, 0, 0);
 
     doWork.store(true, std::memory_order_relaxed);
     mWorkerThread = std::thread(&FFT::ProcessLoop, this);

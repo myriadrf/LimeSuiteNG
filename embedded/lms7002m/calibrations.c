@@ -347,7 +347,7 @@ static lime_Result lms7002m_calibrate_rx_setup(lms7002m_context* self, double ba
     else
         lms7002m_spi_modify_csr(self, LMS7002M_PD_TX_AFE2, 0);
 
-    if (extLoopback) // external looback
+    if (extLoopback) // external loopback
     {
         const uint8_t band1_band2 = 2;
         lms7002m_spi_modify(self, 0x0103, 11, 10, band1_band2);

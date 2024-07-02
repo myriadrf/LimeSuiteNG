@@ -331,8 +331,8 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
 SDRConfiguration_view::SDRConfiguration_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ISOCPanel(parent, id, pos, size, style)
     , sdrDevice(nullptr)
+    , mainSizer(new wxFlexGridSizer(0, 1, 0, 0))
 {
-    mainSizer = new wxFlexGridSizer(0, 1, 0, 0);
     mainSizer->AddGrowableCol(0);
     mainSizer->SetFlexibleDirection(wxBOTH);
     mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);

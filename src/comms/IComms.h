@@ -1,71 +1,18 @@
 #pragma once
 
+#include "ISPI.h"
+#include "limesuiteng/config.h"
+#include "limesuiteng/OpStatus.h"
+
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
-#include "limesuiteng/config.h"
-#include "limesuiteng/OpStatus.h"
 
 namespace lime {
 
 /// @brief The structure for writing and reading custom parameters
 struct CustomParameterIO;
-
-/** @brief An interface for Serial Peripheral Interface communications */
-class LIME_API ISPI
-{
-  public:
-    /** @brief Destroys the interfaced object. */
-    virtual ~ISPI() {}
-    /**
-      @brief Default path for writing/reading registers.
-      @param MOSI Main Out Sub In (data output from main).
-      @param MISO Main In Sub Out (data output from sub).
-      @param count Input/output data length.
-      @returns The operation status.
-     */
-    virtual OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) = 0;
-
-    /**
-      @brief Writing/reading registers for specific slave.
-      @param spiBusAddress The address of the SPI device.
-      @param MOSI Main Out Sub In (data output from main).
-      @param MISO Main In Sub Out (data output from sub).
-      @param count Input/output data length.
-      @returns The operation status.
-     */
-    virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) = 0;
-};
-
-/** @brief An interface for Inter-Integrated Circuit communications */
-class LIME_API II2C
-{
-  public:
-    /** @brief Destroys the interfaced object. */
-    virtual ~II2C() {}
-    /**
-      @brief Write to an available Inter-Integrated Circuit slave.
-      @param address Inter-Integrated Circuit slave address.
-      @param data Output buffer.
-      @param length Output data length.
-      @return The operation status.
-     */
-    virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length) = 0;
-
-    /**
-      @brief Read from an available Inter-Integrated Circuit slave.
-
-      Some implementations can combine a write + read transaction.
-      If the device contains multiple I2C masters,
-      the address bits can encode which master.
-      @param address The address of the slave.
-      @param [out] dest Buffer to store read data from the slave.
-      @param length Number of bytes to read.
-      @return The operation status.
-     */
-    virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length) = 0;
-};
 
 /** @brief An interface for general device communications */
 class IComms : public ISPI

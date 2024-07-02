@@ -5,7 +5,7 @@
 #include <cmath>
 #include <thread>
 #include <map>
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 
 namespace lime {
 

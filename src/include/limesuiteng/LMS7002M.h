@@ -819,6 +819,42 @@ class LIME_API LMS7002M
      */
     void SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* userData = nullptr);
 
+    /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
+    class ChannelScope
+    {
+      public:
+        /**
+       * @brief Saves the current channel and restores it at scope exit.
+       * @param chip The chip to use.
+       * @param useCache Whether to use caching or not.
+       */
+        ChannelScope(LMS7002M* chip, bool useCache = false);
+
+        /**
+          @brief Convenient constructor when using explicit MAC value.
+          @param chip The chip to use.
+          @param mac The channel to use.
+          @param useCache Whether to use caching or not.
+         */
+        ChannelScope(LMS7002M* chip, LMS7002M::Channel mac, bool useCache = false);
+
+        /**
+          @brief Convenient constructor when using channel index starting from 0.
+          @param chip The chip to use.
+          @param index The channel index.
+          @param useCache Whether to use caching or not.
+         */
+        ChannelScope(LMS7002M* chip, uint8_t index, bool useCache = false);
+
+        /** @brief Destroy the Channel Scope object and reset the active channel. */
+        ~ChannelScope();
+
+      private:
+        LMS7002M* mChip; ///< The chip to modify
+        LMS7002M::Channel mStoredValue; ///< The channel to restore to
+        bool mNeedsRestore; ///< Whether the channel needs restoring or not
+    };
+
   private:
     ///enumeration to indicate module registers intervals
     enum class MemorySection : uint8_t {
@@ -888,7 +924,7 @@ class LIME_API LMS7002M
     OpStatus RegistersTestInterval(uint16_t startAddr, uint16_t endAddr, uint16_t pattern, std::stringstream& ss);
 
     std::shared_ptr<ISPI> controlPort;
-    std::array<int, 2> opt_gain_tbb;
+    std::array<int, 2> opt_gain_tbb{};
     OpStatus LoadConfigLegacyFile(const std::string& filename);
 
     int16_t ReadAnalogDC(const uint16_t addr);

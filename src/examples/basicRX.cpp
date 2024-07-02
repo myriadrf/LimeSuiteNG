@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     kiss_fft_cpx m_fftCalcIn[fftSize];
     kiss_fft_cpx m_fftCalcOut[fftSize];
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
         uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, fftSize, &rxMeta);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "limesuiteng/complex.h"
+#include "limesuiteng/config.h"
 #include <atomic>
 #include <thread>
 #include <mutex>
@@ -21,7 +22,7 @@ class FFT
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
     enum class WindowFunctionType { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
-    static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coefs);
+    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coefs);
     static std::vector<float> Calc(const std::vector<complex32f_t>& samples, WindowFunctionType window = WindowFunctionType::NONE);
     static void ConvertToDBFS(std::vector<float>& bins);
 
@@ -39,12 +40,12 @@ class FFT
     std::vector<kiss_fft_cpx> m_fftCalcIn;
     std::vector<kiss_fft_cpx> m_fftCalcOut;
 
-    std::atomic<bool> doWork;
+    std::atomic<bool> doWork{};
     std::condition_variable inputAvailable;
     std::mutex inputMutex;
 
-    CallbackType resultsCallback;
-    void* mUserData;
+    CallbackType resultsCallback{};
+    void* mUserData{};
 
     int avgCount = 100;
 };

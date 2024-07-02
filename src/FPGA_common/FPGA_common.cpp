@@ -1,5 +1,5 @@
 #include "FPGA_common.h"
-#include "comms/IComms.h"
+#include "comms/ISPI.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -19,7 +19,7 @@ namespace lime {
 // 0x000A
 const int RX_EN = 1; //controls both receiver and transmitter
 const int TX_EN = 1 << 1; //used for wfm playback from fpga
-const int STREAM_LOAD = 1 << 2;
+// const int STREAM_LOAD = 1 << 2;
 const int RX_PTRN_EN = 1 << 8;
 const int TX_PTRN_EN = 1 << 9;
 
@@ -68,6 +68,19 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
     case LMS_DEV_LIMESDRMINI_V2:
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
+{
+    switch (static_cast<eLMS_DEV>(targetDevice))
+    {
+    case LMS_DEV_LIMESDR_X3:
+    case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_LIMESDR_MMX8:
         return true;
     default:
         return false;
@@ -305,7 +318,7 @@ OpStatus FPGA::ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt
 /// @return The operation status.
 OpStatus FPGA::StartStreaming()
 {
-    lime::debug("%s", __func__);
+    lime::debug("FPGA: %s", __func__);
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
         return OpStatus::IOFailure;
@@ -323,7 +336,7 @@ OpStatus FPGA::StartStreaming()
 /// @return The operation status.
 OpStatus FPGA::StopStreaming()
 {
-    lime::debug("%s", __func__);
+    lime::debug("FPGA: %s", __func__);
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
         return OpStatus::IOFailure;
@@ -335,7 +348,7 @@ OpStatus FPGA::StopStreaming()
 /// @return The operation status.
 OpStatus FPGA::ResetTimestamp()
 {
-    lime::debug("%s", __func__);
+    lime::debug("FPGA: %s", __func__);
 #ifndef NDEBUG
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
@@ -1167,7 +1180,7 @@ double FPGA::DetectRefClk(double fx3Clk)
 /// @return The gateware information of the FPGA.
 FPGA::GatewareInfo FPGA::GetGatewareInfo()
 {
-    GatewareInfo info;
+    GatewareInfo info{};
     info.boardID = 0;
     info.version = 0;
     info.revision = 0;
@@ -1201,6 +1214,41 @@ OpStatus FPGA::SelectModule(uint8_t chipIndex)
     return WriteRegister(0xFFFF, 1 << chipIndex);
 }
 
+/// @brief Enables which submodules SPI should be written to.
+/// @param enableMask bit mask of which module SPI should be active.
+/// If multiple submodules are enabled, reading operations are undefined.
+OpStatus FPGA::SubmoduleSPIEnableMask(uint16_t enableMask)
+{
+    return WriteRegister(0xFFFF, enableMask);
+}
+
+/// @brief Sets up the variable receive packet size (if the device supports it)
+/// @param packetSize The target size of the packet
+/// @param payloadSize The side of the whole payload
+/// @param sampleSize The size of a single sample
+/// @param chipId The ID of the chip to set up
+/// @return The packet size after the changes (returns @p packetSize if not supported)
+uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId)
+{
+    if (!HasVariableRxPacketSize(ReadRegister(0)))
+    {
+        return packetSize;
+    }
+
+    // iqSamplesCount must be N*16, or N*8 depending on device BUS width
+    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
+    packetSize = (iqSamplesCount * sampleSize * 2) + sizeof(StreamHeader);
+
+    // Request fpga to provide Rx packets with desired payloadSize
+    // Two writes are needed
+    SelectModule(chipId);
+    uint32_t requestAddr[] = { 0x0019, 0x000E };
+    uint32_t requestData[] = { packetSize, iqSamplesCount };
+    WriteRegisters(requestAddr, requestData, 2);
+
+    return packetSize;
+}
+
 OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
 {
     uint16_t completed;
@@ -1228,6 +1276,83 @@ OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
         if (elapsed_seconds.count() > timeout)
             return OpStatus::Error;
     }
+}
+
+OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool sisoddr, bool trxiqpulse)
+{
+    int channelCount = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        if (channelsEnableMask & (1 << i))
+            ++channelCount;
+    }
+    bool MIMO_EN = 1; // channelCount > 1;
+    bool TRXIQ_PULSE_ON = trxiqpulse;
+    bool DDR_EN = 0;
+
+    if (sisoddr)
+    {
+        MIMO_EN = 0;
+        TRXIQ_PULSE_ON = 0;
+        DDR_EN = 1;
+    }
+
+    uint16_t reg8 = 0;
+    reg8 |= MIMO_EN << 8; // MIMO_EN: 0-OFF, 1-ON
+    reg8 |= (TRXIQ_PULSE_ON ? 1 : 0) << 7; // TRIQ_PULSE: 0-OFF, 1-ON
+    reg8 |= (DDR_EN ? 1 : 0) << 6; // DDR_EN: 0-SDR, 1-DDR
+    reg8 |= 0 << 5; // MODE: 0-TRXIQ, 1-JESD207 (not implemented)
+
+    uint16_t smpl_width;
+    switch (samplesFormat)
+    {
+    case DataFormat::I12:
+        smpl_width = 2;
+        break;
+    case DataFormat::I16:
+    default:
+        smpl_width = 0;
+        break;
+    }
+    reg8 |= smpl_width;
+
+    uint32_t addrs[] = { 0x0008, 0x0007 };
+    uint32_t values[] = { reg8, channelsEnableMask };
+    WriteRegisters(addrs, values, 2);
+
+    return OpStatus::Success;
+}
+
+OpStatus FPGA::ResetPacketCounters(uint16_t chipId)
+{
+    lime::debug("FPGA: %s", __func__);
+    // reset Tx received/dropped packets counters
+    const uint16_t startAddress = 0x7FE1 + (chipId * 5);
+    uint32_t addrs[] = { startAddress, startAddress, startAddress };
+    uint32_t values[] = { 0, 3, 0 };
+    return WriteRegisters(addrs, values, 3);
+}
+
+OpStatus FPGA::StopWaveformPlayback()
+{
+    lime::debug("FPGA: %s", __func__);
+    return WriteRegister(0x000D, 0); //stop WFM
+}
+
+OpStatus FPGA::ReadTxPacketCounters(uint16_t chipId, uint32_t* fpgaTxPktIngressCount, uint32_t* fpgaTxPktDropCounter)
+{
+    SubmoduleSPIEnableMask(1 << chipId);
+    const uint16_t addr = 0x7FE1 + chipId * 5;
+    const uint32_t addrs[] = { addr + 1u, addr + 2u, addr + 3u, addr + 4u };
+    uint32_t values[4];
+    OpStatus status = ReadRegisters(addrs, values, 4);
+    if (status != OpStatus::Success)
+        return status;
+    if (fpgaTxPktIngressCount)
+        *fpgaTxPktIngressCount = (values[0] << 16) | values[1];
+    if (fpgaTxPktDropCounter)
+        *fpgaTxPktDropCounter = (values[2] << 16) | values[3];
+    return status;
 }
 
 } //namespace lime
