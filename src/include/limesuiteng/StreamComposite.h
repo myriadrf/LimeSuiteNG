@@ -47,6 +47,9 @@ class LIME_API StreamComposite
     /// @tparam T The type of streams to receive.
     template<class T> uint32_t StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta);
 
+    /// @return Current timestamp of the receiver.
+    uint64_t GetHardwareTimestamp();
+
   private:
     std::vector<StreamConfig> SplitAggregateStreamSetup(const StreamConfig& cfg);
     std::vector<StreamAggregate> mAggregate;

@@ -112,6 +112,13 @@ template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, ui
     return count;
 }
 
+uint64_t StreamComposite::GetHardwareTimestamp()
+{
+    if (mActiveAggregates.empty())
+        return 0;
+    return mActiveAggregates.front().device->GetHardwareTimestamp(0);
+}
+
 // force instantiate functions with these types
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex16_t>(
     lime::complex16_t** samples, uint32_t count, StreamMeta* meta);
