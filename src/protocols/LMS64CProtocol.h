@@ -10,7 +10,6 @@
 #include <thread>
 #include <vector>
 
-#include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include "LMSBoards.h"
 
@@ -103,24 +102,24 @@ struct FirmwareInfo {
     int protocol;
     uint64_t boardSerialNumber;
 };
-LIME_API OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice = 0);
-LIME_API void FirmwareToDescriptor(const FirmwareInfo& info, SDRDescriptor& descriptor);
+OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice = 0);
+void FirmwareToDescriptor(const FirmwareInfo& info, SDRDescriptor& descriptor);
 
-LIME_API OpStatus LMS7002M_SPI(
+OpStatus LMS7002M_SPI(
     ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);
-LIME_API OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);
+OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* mosi, size_t count, uint32_t subDevice = 0);
 
 OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count);
 OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count);
 
-LIME_API OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
-LIME_API OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
-LIME_API OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
-LIME_API OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
+OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
+OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
+OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
+OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
 
-LIME_API OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
-LIME_API OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
+OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
+OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
 
 typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
 
@@ -132,7 +131,7 @@ OpStatus ProgramWrite(ISerialPort& port,
     ProgressCallback callback = nullptr,
     uint32_t subDevice = 0);
 
-LIME_API OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice = 0);
+OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice = 0);
 OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice = 0);
 OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
 
