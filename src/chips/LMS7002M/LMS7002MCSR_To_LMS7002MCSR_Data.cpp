@@ -9,7 +9,7 @@ namespace lime {
 static const LMS7002MCSR_Data::CSRegister InvalidReg;
 LIME_API const lime::LMS7002MCSR_Data::CSRegister& GetRegister(lime::LMS7002MCSR csr_enum)
 {
-    static const std::unordered_map<LMS7002MCSR, LMS7002MCSR_Data::CSRegister&> LMS7002MCSR_map = {
+    static const std::unordered_map<LMS7002MCSR, const LMS7002MCSR_Data::CSRegister&> LMS7002MCSR_map = {
         { LMS7002MCSR::LRST_TX_B, LMS7002MCSR_Data::LRST_TX_B },
         { LMS7002MCSR::MRST_TX_B, LMS7002MCSR_Data::MRST_TX_B },
         { LMS7002MCSR::LRST_TX_A, LMS7002MCSR_Data::LRST_TX_A },

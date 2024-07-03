@@ -53,7 +53,7 @@ endif()
 set(GUI_SOURCES
     limeGUI.cpp
     limeGUIFrame.cpp
-    LMS_Programing/LMS_Programing_wxgui.cpp
+    LMS_Programming/LMS_Programming_wxgui.cpp
     utility/pnlMiniLog.cpp
     utility/SPI_wxgui.cpp
     utility/dlgFullMessageLog.cpp
@@ -63,7 +63,6 @@ set(GUI_SOURCES
     numericSlider/numericSlider.cpp
     fftviewer_wxgui/fftviewer_wxgui.cpp
     fftviewer_wxgui/fftviewer_frFFTviewer.cpp
-    lms7suiteEvents/lms7suiteEvents.cpp
     CommsToDevice.cpp
     DeviceConnectionPanel.cpp
     events.cpp

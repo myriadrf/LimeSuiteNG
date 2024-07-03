@@ -25,7 +25,7 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n"sv;
+    std::cout << "Stopping\n"sv;
     stopProgram = true;
 }
 

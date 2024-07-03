@@ -53,7 +53,7 @@ int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std:
 
     if (int ret = pthread_setschedparam(thread->native_handle(), sched_policy, &sch))
     {
-        lime::debug("SetOSThreadPriority: Failed to set priority(%d), schec_prio(%d), policy(%d), ret(%d)",
+        lime::debug("SetOSThreadPriority: Failed to set priority(%d), sched_prio(%d), policy(%d), ret(%d)",
             priority,
             sched_policy,
             ret,
@@ -98,7 +98,7 @@ int lime::SetOSCurrentThreadPriority(ThreadPriority priority, ThreadPolicy polic
 
     if (int ret = pthread_setschedparam(pthread_self(), sched_policy, &sch) != 0)
     {
-        lime::debug("SetOSCurrentThreadPriority: Failed to set priority(%d), schec_prio(%d), policy(%d), ret(%d)",
+        lime::debug("SetOSCurrentThreadPriority: Failed to set priority(%d), sched_prio(%d), policy(%d), ret(%d)",
             priority,
             sched_policy,
             ret,

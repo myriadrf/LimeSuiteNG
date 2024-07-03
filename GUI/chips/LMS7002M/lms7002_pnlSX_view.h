@@ -17,7 +17,7 @@ class lms7002_pnlSX_view : public ILMS7002MTab
     void OnbtnCalculateClick(wxCommandEvent& event);
     void OnbtnTuneClick(wxCommandEvent& event);
     void OnShowVCOclicked(wxCommandEvent& event);
-    void OnEnableRefSpurCancelation(wxCommandEvent& event);
+    void OnEnableRefSpurCancellation(wxCommandEvent& event);
 
     wxComboBox* cmbRZ_CTRL;
     wxComboBox* cmbCMPLO_CTRL;
@@ -115,7 +115,7 @@ class lms7002_pnlSX_view : public ILMS7002MTab
     wxButton* ID_BUTTON5;
     wxPanel* pnlRefClkSpur;
     wxStaticBoxSizer* RefClkSpurSizer;
-    wxCheckBox* chkEnableRefSpurCancelation;
+    wxCheckBox* chkEnableRefSpurCancellation;
     wxStaticText* m_staticText359;
     wxTextCtrl* txtRefSpurBW;
     wxStaticText* ID_STATICTEXT2;

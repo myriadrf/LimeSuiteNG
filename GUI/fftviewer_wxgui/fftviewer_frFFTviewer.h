@@ -79,12 +79,12 @@ class fftviewer_frFFTviewer : public frFFTviewer
         {
             for (int ch = 0; ch < cMaxChCount; ++ch)
             {
-                this->samplesI[ch].swap(src.samplesI[ch]);
-                this->samplesQ[ch].swap(src.samplesQ[ch]);
-                this->fftBins[ch].swap(src.fftBins[ch]);
-                this->nyquist_Hz = src.nyquist_Hz;
-                this->rxDataRate_Bps = src.rxDataRate_Bps;
-                this->txDataRate_Bps = src.txDataRate_Bps;
+                samplesI[ch].swap(src.samplesI[ch]);
+                samplesQ[ch].swap(src.samplesQ[ch]);
+                fftBins[ch].swap(src.fftBins[ch]);
+                nyquist_Hz = src.nyquist_Hz;
+                rxDataRate_Bps = src.rxDataRate_Bps;
+                txDataRate_Bps = src.txDataRate_Bps;
             }
             return *this;
         }

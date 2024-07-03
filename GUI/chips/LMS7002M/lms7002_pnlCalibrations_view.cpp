@@ -3,7 +3,7 @@
 #include "lms7002_gui_utilities.h"
 #include <wx/msgdlg.h>
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include <wx/busyinfo.h>
 #include <wx/spinctrl.h>
 #include "limesuiteng/LMS7002M.h"
@@ -294,8 +294,8 @@ lms7002_pnlCalibrations_view::lms7002_pnlCalibrations_view(
 
     mainSizer->Add(fullCalibrationSizer, 1, wxRIGHT, margins);
 
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 
     // Connect Events

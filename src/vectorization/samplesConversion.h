@@ -44,7 +44,7 @@ template<class D, class S> constexpr void Rescale(D& dest, const S& src)
     dest.imag(src.imag() * ratio);
 }
 
-// Specialized cases to utilize bitshifting or direct copy
+// Specialized cases to utilize bit-shifting or direct copy
 template<> constexpr void Rescale(complex12_t& dest, const complex16_t& src)
 {
     dest.real(src.real() >> 4);
@@ -88,7 +88,7 @@ template<uint32_t srcCount, class DestT, class SrcT> static void fastPath_conver
         Rescale(dest[i], src[i]);
 }
 
-// dynamic iteration count, will generate extra SIMD instuctions for various last iteration counts
+// dynamic iteration count, will generate extra SIMD instructions for various last iteration counts
 template<class DestT, class SrcT> static void slowPath_convert(DestT* dest, const SrcT* src, uint32_t srcCount)
 {
     for (uint16_t i = 0; i < srcCount; ++i)

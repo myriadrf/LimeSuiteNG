@@ -58,7 +58,7 @@ public:
      */
     int change_mode(int mode);
     /**
-     * Enable or disbale fan
+     * Enable or disable fan
      *
      * @param   enable  fan state: 0 - disable; 1 - enable.
      *

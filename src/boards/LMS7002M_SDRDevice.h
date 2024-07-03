@@ -44,8 +44,8 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
 
     double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
 
-    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
     OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) override;
+    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
 
     double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf) override;
@@ -123,11 +123,6 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
 
-    /// @copydoc FPGA::ReadRegister()
-    virtual int ReadFPGARegister(uint32_t address);
-    /// @copydoc FPGA::WriteRegister()
-    virtual OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
-
     FPGA* GetFPGA();
 
   protected:
@@ -152,6 +147,11 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     OpStatus SetGenericTxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
 
     std::unordered_map<TRXDir, std::unordered_map<uint8_t, double>> lowPassFilterCache;
+
+    /// @copydoc FPGA::ReadRegister()
+    int ReadFPGARegister(uint32_t address);
+    /// @copydoc FPGA::WriteRegister()
+    OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
 };
 
 } // namespace lime

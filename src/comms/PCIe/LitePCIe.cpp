@@ -59,7 +59,7 @@ LitePCIe::~LitePCIe()
 OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
-    // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
+    // use O_RDWR for now, because MMAP PROT_WRITE implies PROT_READ and will fail if file is opened write only
     flags &= ~O_WRONLY;
     flags |= O_RDWR;
     mFileDescriptor = open(mFilePath.c_str(), flags);

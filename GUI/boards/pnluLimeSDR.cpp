@@ -9,7 +9,7 @@
 #include <wx/checkbox.h>
 #include <wx/msgdlg.h>
 #include <wx/choice.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "pnlGPIO.h"
 #include "limesuiteng/SDRDescriptor.h"
 
@@ -60,8 +60,8 @@ pnluLimeSDR::pnluLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, co
     mainSizer->Add(lbSizer, 1, wxEXPAND | wxALL, 5);
     pnl_gpio = new pnlGPIO(this, wxNewId());
     mainSizer->Add(pnl_gpio, 1, wxEXPAND | wxALL, 5);
-    Bind(READ_ALL_VALUES, &pnluLimeSDR::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnluLimeSDR::OnLoopbackChange, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnluLimeSDR::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnluLimeSDR::OnLoopbackChange, this, GetId());
 }
 
 void pnluLimeSDR::Initialize(lime::SDRDevice* newDevice)

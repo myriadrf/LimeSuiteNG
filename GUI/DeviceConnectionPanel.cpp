@@ -70,7 +70,7 @@ DeviceConnectionPanel::DeviceConnectionPanel(wxWindow* parent, wxWindowID id, co
 
     EnumerateDevicesToChoice();
 
-    this->SetSizerAndFit(szBox);
+    SetSizerAndFit(szBox);
 
     // when device choice changes generate CONNECT_DEVICE
     cmbDevHandle->Bind(wxEVT_CHOICE, wxCommandEventHandler(DeviceConnectionPanel::SendHandleChangeEvent), this);

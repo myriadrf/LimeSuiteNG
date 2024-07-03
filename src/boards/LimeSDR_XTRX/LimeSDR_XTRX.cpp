@@ -826,7 +826,7 @@ OpStatus LimeSDR_XTRX::RFTest(OEMTestReporter& reporter, TestData& results)
     //reporter.OnStepUpdate(test, "Note: The test should be run with loop connected between RF ports");
     reporter.OnStepUpdate(test, "->Configure LMS");
 
-    if (this->Init() != OpStatus::Success)
+    if (Init() != OpStatus::Success)
     {
         test.passed = false;
         reporter.OnFail(test, "Failed to initialize device");
