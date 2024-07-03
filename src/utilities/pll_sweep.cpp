@@ -44,7 +44,7 @@ bool ConfigureCGEN(SDRDevice* device, double freqMHz)
     if (decim != 7)
         fpgaRxPLL /= std::pow(2.0, decim);
     auto chipInd = lms->GetActiveChannelIndex() / 2;
-    auto fpga = static_cast<LMS7002M_SDRDevice*>(device)->GetFPGA();
+    auto fpga = dynamic_cast<LMS7002M_SDRDevice*>(device)->GetFPGA();
     if (fpga)
     {
         OpStatus status = fpga->SetInterfaceFreq(fpgaTxPLL, fpgaRxPLL, chipInd);
