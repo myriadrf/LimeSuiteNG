@@ -227,8 +227,11 @@ void TRXLooper::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
-            ;
+        {
+            std::unique_lock lck{ mRx.mutex };
+            while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
+                mRx.cv.wait(lck);
+        }
 
         mRxArgs.dma->Enable(false);
         if (mCallback_logMessage)
@@ -243,9 +246,9 @@ void TRXLooper::Stop()
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
+        std::unique_lock lck{ mTx.mutex };
         while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
-            ;
-        mTxArgs.dma->Enable(false);
+            mTx.cv.wait(lck);
     }
 }
 
@@ -337,8 +340,9 @@ OpStatus TRXLooper::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
+    std::unique_lock lck{ mTx.mutex };
     while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        ;
+        mTx.cv.wait(lck);
 
     return OpStatus::Success;
 }
@@ -350,24 +354,31 @@ struct DMATransactionCounter {
 
 void TRXLooper::RxWorkLoop()
 {
-    // signal that thread is ready for work
-    mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+    {
+        std::unique_lock lck{ mRx.mutex };
+
+        // signal that thread is ready for work
+        mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mRx.cv.notify_all();
+    }
 
     while (!mRx.terminateWorker.load(std::memory_order_relaxed))
     {
         // thread ready for work, just wait for stream enable
         {
-            std::unique_lock<std::mutex> lk(streamMutex);
+            std::unique_lock lk{ streamMutex };
             while (!mStreamEnabled && !mRx.terminateWorker.load(std::memory_order_relaxed))
                 streamActive.wait_for(lk, std::chrono::milliseconds(100));
-            lk.unlock();
         }
         if (!mStreamEnabled)
             continue;
 
         mRx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         ReceivePacketsLoop();
+
+        std::unique_lock lck{ mRx.mutex };
         mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mRx.cv.notify_all();
     }
     mRx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
@@ -564,7 +575,12 @@ void TRXLooper::RxTeardown()
 {
     if (mRx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        mRx.terminateWorker.store(true, std::memory_order_relaxed);
+        {
+            std::unique_lock lck{ streamMutex };
+            mRx.terminateWorker.store(true, std::memory_order_relaxed);
+            streamActive.notify_all();
+        }
+
         mRx.terminate.store(true, std::memory_order_relaxed);
         try
         {
@@ -745,8 +761,9 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.dma->Enable(true);
 
     // wait for Tx thread to be ready
+    std::unique_lock lck{ mTx.mutex };
     while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        ;
+        mTx.cv.wait(lck);
 
     return OpStatus::Success;
 }
@@ -758,10 +775,9 @@ void TRXLooper::TxWorkLoop()
     {
         // thread ready for work, just wait for stream enable
         {
-            std::unique_lock<std::mutex> lk(streamMutex);
+            std::unique_lock lk{ streamMutex };
             while (!mStreamEnabled && !mTx.terminateWorker.load(std::memory_order_relaxed))
                 streamActive.wait_for(lk, std::chrono::milliseconds(100));
-            lk.unlock();
         }
         if (!mStreamEnabled)
             continue;
@@ -769,6 +785,7 @@ void TRXLooper::TxWorkLoop()
         mTx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         TransmitPacketsLoop();
         mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mTx.cv.notify_all();
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
@@ -1022,7 +1039,11 @@ void TRXLooper::TxTeardown()
 {
     if (mTx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        mTx.terminateWorker.store(true, std::memory_order_relaxed);
+        {
+            std::unique_lock lck{ streamMutex };
+            mTx.terminateWorker.store(true, std::memory_order_relaxed);
+            streamActive.notify_all();
+        }
         mTx.terminate.store(true, std::memory_order_relaxed);
         try
         {

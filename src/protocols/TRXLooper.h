@@ -4,6 +4,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
@@ -99,7 +101,7 @@ class TRXLooper
     bool mStreamEnabled;
 
     struct Stream {
-        enum ReadyStage { Disabled = 0, WorkerReady = 1, Active = 2 };
+        enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
 
         std::unique_ptr<MemoryPool> memPool;
         std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
@@ -110,6 +112,8 @@ class TRXLooper
         std::atomic<bool> terminate;
         std::atomic<bool> terminateWorker;
         std::atomic<ReadyStage> stage;
+        std::mutex mutex;
+        std::condition_variable cv;
         // how many packets to batch in data transaction
         // lower count will give better latency, but can cause problems with really high data rates
         uint16_t samplesInPkt;
@@ -120,7 +124,7 @@ class TRXLooper
             , fifo(nullptr)
             , stagingPacket(nullptr)
             , terminateWorker(false)
-            , stage(Disabled)
+            , stage(ReadyStage::Disabled)
         {
         }
 
