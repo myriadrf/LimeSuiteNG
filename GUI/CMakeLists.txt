@@ -12,10 +12,9 @@ if(NOT wxWidgets_FOUND AND WIN32)
     message(STATUS "Downloading wxWidgets headers.")
     set(wxRoot ${PROJECT_BINARY_DIR}/_deps/wxWidgets)
 
-    # If 2017 or 2019
+    # VS2017 and VS2019 create an additional folder for storing the binaries, we need to copy the DLLs there.
     if(MSVC_TOOLSET_VERSION LESS 143)
-        set(additional_folder "/${CMAKE_BUILD_TYPE_INIT}")
-        set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_INIT})
+        set(additional_folder "/${CMAKE_BUILD_TYPE}")
     endif()
 
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
