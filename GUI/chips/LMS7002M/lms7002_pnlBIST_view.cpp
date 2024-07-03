@@ -109,21 +109,21 @@ lms7002_pnlBIST_view::lms7002_pnlBIST_view(wxWindow* parent, wxWindowID id, cons
 
     // Connect Events
     chkBENC->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkSDM_TSTO_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkBENR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkSDM_TSTO_SXR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkBENT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkSDM_TSTO_SXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     chkBSTART->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::ParameterChangeHandler), nullptr, this);
     btnReadSignature->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::onbtnReadSignature), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIST_view::onbtnReadSignature), nullptr, this);
 
     wndId2Enum[chkBENC] = LMS7002MCSR::BENC;
     wndId2Enum[chkBENR] = LMS7002MCSR::BENR;

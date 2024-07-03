@@ -32,7 +32,7 @@ static void HandleLibusbEvents(libusb_context* context)
 
     while (activeUSBconnections > 0)
     {
-        int returnCode = libusb_handle_events_timeout_completed(context, &tv, NULL);
+        int returnCode = libusb_handle_events_timeout_completed(context, &tv, nullptr);
         if (returnCode != 0)
             lime::error("libusb_handle_events: %s", libusb_strerror(static_cast<libusb_error>(returnCode)));
     }

@@ -37,7 +37,7 @@ MCU_BD::MCU_BD()
 
     //ctor
     int i = 0;
-    m_serPort = NULL;
+    m_serPort = nullptr;
 
     // array initialization
     for (i = 0; i <= 255; i++)

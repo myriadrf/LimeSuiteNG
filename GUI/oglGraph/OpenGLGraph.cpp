@@ -249,7 +249,7 @@ void OpenGLGraph::Resize(int w, int h)
 */
 void OpenGLGraph::AddSerie(cDataSerie* serie)
 {
-    if (serie != NULL)
+    if (serie != nullptr)
         series.push_back(serie);
 }
 
@@ -715,8 +715,10 @@ void OpenGLGraph::Draw()
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, series[i]->vboIndex);
                 if (series[i]->modified) //check if buffer needs to be modified
                 {
-                    glBufferDataARB(
-                        GL_ARRAY_BUFFER_ARB, sizeof(cDataSerie::Coordinates) * series[i]->values.size(), NULL, GL_DYNAMIC_DRAW_ARB);
+                    glBufferDataARB(GL_ARRAY_BUFFER_ARB,
+                        sizeof(cDataSerie::Coordinates) * series[i]->values.size(),
+                        nullptr,
+                        GL_DYNAMIC_DRAW_ARB);
                     glBufferDataARB(GL_ARRAY_BUFFER_ARB,
                         sizeof(cDataSerie::Coordinates) * series[i]->values.size(),
                         series[i]->values.data(),
@@ -725,7 +727,7 @@ void OpenGLGraph::Draw()
                 }
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glEnableClientState(GL_COLOR);
-                glVertexPointer(2, GL_FLOAT, 0, 0);
+                glVertexPointer(2, GL_FLOAT, 0, nullptr);
                 if (settings.graphType == GLG_POINTS)
                 {
                     glPointSize(settings.pointsSize);
@@ -841,7 +843,7 @@ GLvoid OpenGLGraph::glRenderText(float posx, float posy, float angle, float scal
     char text[256]; // Holds our string
     va_list ap; // Pointer to list of arguments
 
-    if (fmt == NULL) // If there's no text
+    if (fmt == nullptr) // If there's no text
         return; // Do nothing
 
     va_start(ap, fmt); // Parses the string for variables
@@ -854,7 +856,7 @@ GLvoid OpenGLGraph::glRenderText(float posx, float posy, float angle, float scal
 
     //if font has been loaded
     glEnable(GL_TEXTURE_2D);
-    if (m_font != NULL)
+    if (m_font != nullptr)
         m_font->render_textWorldSpace(text, 0, 0, scale, rgba);
 
     glPopMatrix();
@@ -1146,14 +1148,14 @@ int OpenGLGraph::AddMarker(int posX)
     //check if series have any data to mark
     if (!series[0]->values.empty())
     {
-        OGLMarker* mark = NULL;
+        OGLMarker* mark = nullptr;
         for (size_t i = 0; i < markers.size(); ++i)
             if (markers[i].used == false)
             {
                 mark = &markers[i];
                 break;
             }
-        if (mark == NULL)
+        if (mark == nullptr)
             return -1;
         //calculate marker position in data view
         float pixelXvalue = (settings.visibleArea.x2 - settings.visibleArea.x1) / settings.dataViewWidth;
@@ -1202,14 +1204,14 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
     //check if series have any data to mark
     if (!series[0]->values.empty())
     {
-        OGLMarker* mark = NULL;
+        OGLMarker* mark = nullptr;
         for (size_t i = 0; i < markers.size(); ++i)
             if (markers[i].used == false)
             {
                 mark = &markers[i];
                 break;
             }
-        if (mark == NULL)
+        if (mark == nullptr)
             return -1;
         mark->posX = xValue;
 
@@ -1504,11 +1506,11 @@ void OpenGLGraph::ChangeMarker(int markerID, float xValue)
         return;
     }
 
-    OGLMarker* mark = NULL;
+    OGLMarker* mark = nullptr;
     for (size_t i = 0; i < markers.size(); ++i)
         if (markers[i].id == markerID)
             mark = &markers[i];
-    if (mark == NULL)
+    if (mark == nullptr)
         return;
 
     mark->posX = xValue;
@@ -1658,7 +1660,7 @@ void OpenGLGraph::onLockAspect(wxCommandEvent& event)
 void OpenGLGraph::ShowMenu(int x, int y)
 {
     //modify menu
-    wxMenuItem* item = NULL;
+    wxMenuItem* item = nullptr;
     if (settings.markersEnabled == false)
     {
         item = m_popmenu.FindItem(OGLG_ADD_MARK);

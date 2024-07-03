@@ -194,7 +194,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     ID_STATICTEXT4->Wrap(-1);
     fgSizer246->Add(ID_STATICTEXT4, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbTST_CGEN = new wxComboBox(this, ID_TST_CGEN, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+    cmbTST_CGEN = new wxComboBox(this, ID_TST_CGEN, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     fgSizer246->Add(cmbTST_CGEN, 0, wxEXPAND, 0);
 
     fgSizer245->Add(fgSizer246, 1, wxEXPAND, 5);
@@ -218,7 +218,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     fgSizer86->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbCP2_CGEN =
-        new wxComboBox(sbSizer68->GetStaticBox(), ID_CP2_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer68->GetStaticBox(), ID_CP2_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCP2_CGEN->SetToolTip(wxT("Controls the value of CP2 (cap from CP output to GND) in the PLL filter"));
 
     fgSizer86->Add(cmbCP2_CGEN, 0, wxEXPAND, 0);
@@ -228,7 +228,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     fgSizer86->Add(ID_STATICTEXT14, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbCP3_CGEN =
-        new wxComboBox(sbSizer68->GetStaticBox(), ID_CP3_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer68->GetStaticBox(), ID_CP3_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCP3_CGEN->SetToolTip(wxT("Controls the value of CP3 (cap from VCO Vtune input to GND) in the PLL filter"));
 
     fgSizer86->Add(cmbCP3_CGEN, 0, wxEXPAND, 0);
@@ -237,7 +237,8 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     ID_STATICTEXT15->Wrap(-1);
     fgSizer86->Add(ID_STATICTEXT15, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbCZ_CGEN = new wxComboBox(sbSizer68->GetStaticBox(), ID_CZ_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCZ_CGEN =
+        new wxComboBox(sbSizer68->GetStaticBox(), ID_CZ_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCZ_CGEN->SetToolTip(wxT("Controls the value of CZ (Zero capacitor) in the PLL filter"));
 
     fgSizer86->Add(cmbCZ_CGEN, 0, wxEXPAND, 0);
@@ -326,7 +327,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     fgSizer89->Add(txtFrequency, 1, wxEXPAND, 5);
 
     cmbCLKH_OV_CLKL_CGEN = new wxComboBox(
-        sbSizer70->GetStaticBox(), ID_CLKH_OV_CLKL_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizer70->GetStaticBox(), ID_CLKH_OV_CLKL_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCLKH_OV_CLKL_CGEN->SetToolTip(
         wxT("FCLKL here is ADC clock. FCLKH is the clock to the DAC and if no division is added to the ADC as well"));
 
@@ -613,81 +614,85 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
 
     // Connect Events
     chkPD_CP_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkPD_FDIV_FB_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkPD_FDIV_O_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkPD_SDM_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkPD_VCO_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkPD_VCO_COMP_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_VCO_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkRESET_N_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkEN_COARSE_CKLGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkEN_INTONLY_SDM_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkEN_SDM_CLK_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkREV_SDMCLK_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkSX_DITHER_EN_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkREV_CLKDAC_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkREV_CLKADC_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkREVPH_PFD_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     chkCOARSE_START_CGEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     rgrSEL_SDMCLK_CGEN->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbTST_CGEN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbCP2_CGEN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbCP3_CGEN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbCZ_CGEN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbEN_ADCCLKH_CLKGN->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbCLKH_OV_CLKL_CGEN->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
-    rxPhase->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), NULL, this);
-    txPhase->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), NULL, this);
-    chkAutoPhase->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnAutoPhase), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
+    rxPhase->Connect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), nullptr, this);
+    txPhase->Connect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), nullptr, this);
+    chkAutoPhase->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnAutoPhase), nullptr, this);
     btnCalculate->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), NULL, this);
-    btnTune->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::onbtnTuneClick), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::onbtnCalculateClick), nullptr, this);
+    btnTune->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::onbtnTuneClick), nullptr, this);
     btnUpdateValues1->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnbtnReadComparators), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnbtnReadComparators), nullptr, this);
     btnUpdateCoarse->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnbtnUpdateCoarse), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnbtnUpdateCoarse), nullptr, this);
     cmbCSW_VCO_CGEN->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbICT_VCO_CGEN->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
-    btnShowVCO->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnShowVCOclicked), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
+    btnShowVCO->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnShowVCOclicked), nullptr, this);
     cmbIOFFSET_CP_CGEN->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbIPULSE_CP_CGEN->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
 
     sizerR3->Add(new wxStaticText(this, wxID_ANY, _("CMPLO_CTRL:")), 1, wxALIGN_CENTER_VERTICAL, 0);
     cmbCMPLO_CTRL = new wxComboBox(this, wxID_ANY);
     cmbCMPLO_CTRL->Append(_("Low threshold is set to 0.18V"));
     cmbCMPLO_CTRL->Append(_("Low threshold is set to 0.1V"));
     cmbCMPLO_CTRL->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     sizerR3->Add(cmbCMPLO_CTRL, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5);
     wndId2Enum[cmbCMPLO_CTRL] = LMS7002MCSR::CMPLO_CTRL_CGEN;
 

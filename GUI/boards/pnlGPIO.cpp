@@ -57,7 +57,7 @@ void pnlGPIO::Initialize(lime::SDRDevice* pControl)
     {
         gpioDir[i] = new wxCheckBox(this, wxNewId(), _(""));
         gpioDir[i]->SetToolTip(_("Check to set GPIO to output"));
-        Connect(gpioDir[i]->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlGPIO::OnUsrGPIODirChange), NULL, this);
+        Connect(gpioDir[i]->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlGPIO::OnUsrGPIODirChange), nullptr, this);
         gpioSizer->Add(gpioDir[i]);
     }
     text = new wxStaticText(this, wxID_ANY, _("OUT"));
@@ -68,7 +68,7 @@ void pnlGPIO::Initialize(lime::SDRDevice* pControl)
         gpioOut[i] = new wxCheckBox(this, wxNewId(), _(""));
         gpioOut[i]->SetToolTip(_("GPIO output value (checked - High)"));
         gpioOut[i]->Disable();
-        Connect(gpioOut[i]->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlGPIO::OnUsrGPIOChange), NULL, this);
+        Connect(gpioOut[i]->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlGPIO::OnUsrGPIOChange), nullptr, this);
         gpioSizer->Add(gpioOut[i]);
     }
     text = new wxStaticText(this, wxID_ANY, _("IN"));
@@ -93,8 +93,9 @@ pnlGPIO::~pnlGPIO()
 {
     for (int i = 0; i < 8; i++)
     {
-        gpioOut[i]->Disconnect(wxEVT_CHECKBOX, gpioOut[i]->GetId(), wxCommandEventHandler(pnlGPIO::OnUsrGPIOChange), 0, this);
-        gpioDir[i]->Disconnect(wxEVT_CHECKBOX, gpioDir[i]->GetId(), wxCommandEventHandler(pnlGPIO::OnUsrGPIODirChange), 0, this);
+        gpioOut[i]->Disconnect(wxEVT_CHECKBOX, gpioOut[i]->GetId(), wxCommandEventHandler(pnlGPIO::OnUsrGPIOChange), nullptr, this);
+        gpioDir[i]->Disconnect(
+            wxEVT_CHECKBOX, gpioDir[i]->GetId(), wxCommandEventHandler(pnlGPIO::OnUsrGPIODirChange), nullptr, this);
     }
 }
 

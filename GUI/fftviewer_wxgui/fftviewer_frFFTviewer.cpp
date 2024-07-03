@@ -139,8 +139,8 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mConstellationPanel->settings.gridYlines = 8;
     mConstellationPanel->settings.marginLeft = 48;
 
-    Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
-    Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+    Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), nullptr, this);
+    Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), nullptr, this);
 
     wxCommandEvent evt;
     //show only A channel at startup
@@ -150,8 +150,8 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
 
 fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
 {
-    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
-    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), nullptr, this);
+    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), nullptr, this);
 
     if (mStreamRunning == true)
     {
@@ -433,7 +433,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
         }
     }
 
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
     kiss_fft_cpx* m_fftCalcIn = new kiss_fft_cpx[fftSize];
     kiss_fft_cpx* m_fftCalcOut = new kiss_fft_cpx[fftSize];
 

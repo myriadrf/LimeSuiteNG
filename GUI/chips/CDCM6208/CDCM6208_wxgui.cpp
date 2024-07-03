@@ -663,65 +663,66 @@ CDCM6208_panelgui::CDCM6208_panelgui(wxWindow* parent, wxWindowID id, const wxPo
     Master->Fit(this);
 
     // Connect Events
-    m_PrimaryFreq->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_SecondaryFreq->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_RDivider->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_PrimarySel->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), NULL, this);
-    m_SecondarySel->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), NULL, this);
-    m_MDivider->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_NMultiplier->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_PSB->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_PSA->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_CDCM_VER->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_Baseaddr->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_WriteAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_ReadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_Reset->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_Y0Y1_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y2Y3_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y4_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y5_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y6_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y7_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_button4->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnFreqEntry), NULL, this);
-    m_Y2Y3_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y6_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y7_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y0Y1_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y4_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y5_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
+    m_PrimaryFreq->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_SecondaryFreq->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_RDivider->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_PrimarySel->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), nullptr, this);
+    m_SecondarySel->Connect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), nullptr, this);
+    m_MDivider->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_NMultiplier->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_PSB->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_PSA->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_CDCM_VER->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_Baseaddr->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_WriteAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_ReadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_Reset->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_Y0Y1_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y2Y3_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y4_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y5_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y6_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y7_chk->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_button4->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnFreqEntry), nullptr, this);
+    m_Y2Y3_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y6_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y7_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y0Y1_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y4_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y5_DIV->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
 }
 
 CDCM6208_panelgui::~CDCM6208_panelgui()
 {
     // Disconnect Events
-    m_PrimaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_SecondaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_RDivider->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_PrimarySel->Disconnect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), NULL, this);
-    m_SecondarySel->Disconnect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), NULL, this);
-    m_MDivider->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_NMultiplier->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_PSB->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_PSA->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_CDCM_VER->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), NULL, this);
-    m_Baseaddr->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_WriteAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_ReadAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_Reset->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), NULL, this);
-    m_Y0Y1_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y2Y3_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y4_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y5_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y6_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_Y7_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), NULL, this);
-    m_button4->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnFreqEntry), NULL, this);
-    m_Y2Y3_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y6_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y7_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y0Y1_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y4_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
-    m_Y5_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), NULL, this);
+    m_PrimaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_SecondaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_RDivider->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_PrimarySel->Disconnect(wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), nullptr, this);
+    m_SecondarySel->Disconnect(
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnRadio), nullptr, this);
+    m_MDivider->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_NMultiplier->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_PSB->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_PSA->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_CDCM_VER->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(CDCM6208_panelgui::OnChoice), nullptr, this);
+    m_Baseaddr->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_WriteAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_ReadAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_Reset->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnButton), nullptr, this);
+    m_Y0Y1_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y2Y3_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y4_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y5_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y6_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_Y7_chk->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::onFP_chk), nullptr, this);
+    m_button4->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CDCM6208_panelgui::OnFreqEntry), nullptr, this);
+    m_Y2Y3_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y6_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y7_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y0Y1_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y4_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
+    m_Y5_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
 }
 
 void CDCM6208_panelgui::Initialize(CDCM_Dev* cdcm)

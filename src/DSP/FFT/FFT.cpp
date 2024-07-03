@@ -7,7 +7,7 @@ namespace lime {
 
 FFT::FFT(uint32_t size)
     : samplesFIFO(size * 128)
-    , m_fftCalcPlan(kiss_fft_alloc(size, 0, 0, 0))
+    , m_fftCalcPlan(kiss_fft_alloc(size, 0, nullptr, nullptr))
 {
     m_fftCalcIn.resize(size);
     m_fftCalcOut.resize(size);
@@ -49,7 +49,7 @@ std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFun
     std::vector<kiss_fft_cpx> fftIn(fftSize);
     std::vector<kiss_fft_cpx> fftOut(fftSize);
     std::vector<float> bins(fftSize);
-    kiss_fft_cfg plan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg plan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
 
     for (int i = 0; i < fftSize; ++i)
     {

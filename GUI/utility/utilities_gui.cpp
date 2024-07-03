@@ -33,7 +33,7 @@ dlgConnectionSettings_view::dlgConnectionSettings_view(
     m_staticText472->Wrap(-1);
     fgSizer212->Add(m_staticText472, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 5);
 
-    mListLMS7ports = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+    mListLMS7ports = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     mListLMS7ports->SetMinSize(wxSize(400, 150));
 
     fgSizer212->Add(mListLMS7ports, 0, wxALL | wxEXPAND, 5);
@@ -67,20 +67,21 @@ dlgConnectionSettings_view::dlgConnectionSettings_view(
 
     // Connect Events
     Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
-    btnConnect->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), NULL, this);
-    btnCancel->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), NULL, this);
+    btnConnect->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), nullptr, this);
+    btnCancel->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), nullptr, this);
     btnDisconnect->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnDisconnect), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnDisconnect), nullptr, this);
 }
 
 dlgConnectionSettings_view::~dlgConnectionSettings_view()
 {
     // Disconnect Events
     Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgConnectionSettings_view::GetDeviceList));
-    btnConnect->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), NULL, this);
-    btnCancel->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), NULL, this);
+    btnConnect->Disconnect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnConnect), nullptr, this);
+    btnCancel->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnCancel), nullptr, this);
     btnDisconnect->Disconnect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnDisconnect), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgConnectionSettings_view::OnDisconnect), nullptr, this);
 }
 
 dlgFullMessageLog_view::dlgFullMessageLog_view(
@@ -205,11 +206,11 @@ dlgDeviceInfo_view::dlgDeviceInfo_view(
     Centre(wxBOTH);
 
     // Connect Events
-    btnGetInfo->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgDeviceInfo_view::OnGetInfo), NULL, this);
+    btnGetInfo->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgDeviceInfo_view::OnGetInfo), nullptr, this);
 }
 
 dlgDeviceInfo_view::~dlgDeviceInfo_view()
 {
     // Disconnect Events
-    btnGetInfo->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgDeviceInfo_view::OnGetInfo), NULL, this);
+    btnGetInfo->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgDeviceInfo_view::OnGetInfo), nullptr, this);
 }

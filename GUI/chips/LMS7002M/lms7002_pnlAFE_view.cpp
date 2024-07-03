@@ -74,7 +74,7 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT1->Wrap(-1);
     fgSizer63->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbISEL_DAC_AFE = new wxComboBox(this, ID_ISEL_DAC_AFE, wxEmptyString, wxDefaultPosition, wxSize(162, -1), 0, NULL, 0);
+    cmbISEL_DAC_AFE = new wxComboBox(this, ID_ISEL_DAC_AFE, wxEmptyString, wxDefaultPosition, wxSize(162, -1), 0, nullptr, 0);
     cmbISEL_DAC_AFE->SetToolTip(wxT("Controls the peak current of the DAC output current"));
 
     fgSizer63->Add(cmbISEL_DAC_AFE, 0, wxEXPAND, 0);
@@ -83,7 +83,7 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT2->Wrap(-1);
     fgSizer63->Add(ID_STATICTEXT2, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbMUX_AFE_1 = new wxComboBox(this, ID_MUX_AFE_1, wxEmptyString, wxDefaultPosition, wxSize(315, -1), 0, NULL, 0);
+    cmbMUX_AFE_1 = new wxComboBox(this, ID_MUX_AFE_1, wxEmptyString, wxDefaultPosition, wxSize(315, -1), 0, nullptr, 0);
     cmbMUX_AFE_1->SetToolTip(wxT("Controls the MUX at the input of the ADC channel 1"));
 
     fgSizer63->Add(cmbMUX_AFE_1, 0, wxEXPAND, 0);
@@ -92,7 +92,7 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT3->Wrap(-1);
     fgSizer63->Add(ID_STATICTEXT3, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbMUX_AFE_2 = new wxComboBox(this, ID_MUX_AFE_2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbMUX_AFE_2 = new wxComboBox(this, ID_MUX_AFE_2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbMUX_AFE_2->SetToolTip(wxT("Controls the MUX at the input of the ADC channel 2"));
 
     fgSizer63->Add(cmbMUX_AFE_2, 0, wxEXPAND, 0);
@@ -123,25 +123,25 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
 
     // Connect Events
     chkPD_AFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     chkPD_RX_AFE1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     chkPD_RX_AFE2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     chkPD_TX_AFE1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     chkPD_TX_AFE2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_AFE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     cmbISEL_DAC_AFE->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     cmbMUX_AFE_1->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     cmbMUX_AFE_2->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
     rgrMODE_INTERLEAVE_AFE->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlAFE_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[chkEN_G_AFE] = LMS7002MCSR::EN_G_AFE;
     wndId2Enum[cmbISEL_DAC_AFE] = LMS7002MCSR::ISEL_DAC_AFE;

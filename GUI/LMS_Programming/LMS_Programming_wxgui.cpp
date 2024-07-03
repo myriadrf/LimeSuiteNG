@@ -76,7 +76,8 @@ LMS_Programming_wxgui::LMS_Programming_wxgui(
     StaticText2 =
         new wxStaticText(this, wxID_ANY, _T("Programming mode:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT3"));
     FlexGridSizer7->Add(StaticText2, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-    cmbDevice = new wxChoice(this, ID_CHOICE2, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_CHOICE2"));
+    cmbDevice =
+        new wxChoice(this, ID_CHOICE2, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_CHOICE2"));
     FlexGridSizer7->Add(cmbDevice, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     FlexGridSizer3->Add(FlexGridSizer7, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     FlexGridSizer1->Add(FlexGridSizer3, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
