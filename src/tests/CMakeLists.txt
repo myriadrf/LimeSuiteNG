@@ -39,6 +39,7 @@ if(BUILD_SHARED_LIBS)
     # Build the tests in and use a wrapper to execute the tests.
     target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LIME_TEST_SUITE_SOURCES} TestEntry.cpp)
     target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:GTest::gtest> $<BUILD_INTERFACE:GTest::gmock>)
+    target_compile_definitions(${MAIN_LIBRARY_NAME} PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=1)
 
     add_executable(${LIME_TEST_SUITE_NAME} main.cpp)
 else()

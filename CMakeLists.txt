@@ -252,12 +252,6 @@ if(ENABLE_TESTING)
             CACHE BOOL "" FORCE)
     endif()
 
-    if(BUILD_SHARED_LIBS)
-        set(GTEST_CREATE_SHARED_LIBRARY
-            1
-            CACHE BOOL "" FORCE)
-    endif()
-
     fetchcontent_makeavailable(googletest)
     enable_testing()
 endif()
