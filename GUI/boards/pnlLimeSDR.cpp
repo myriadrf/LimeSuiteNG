@@ -1,5 +1,5 @@
 #include "pnlLimeSDR.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -31,28 +31,28 @@ pnlLimeSDR::pnlLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     SetSizer(mainSizer);
     chkRFLB_A_EN = new wxCheckBox(this, wxNewId(), _("RF loopback ch.A"));
     chkRFLB_A_EN->SetToolTip(_("[RFLB_A_EN] External RF loopback TxBAND2->RxLNAH channel A"));
-    Connect(chkRFLB_A_EN->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkRFLB_A_EN->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkRFLB_A_EN, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     chkRFLB_B_EN = new wxCheckBox(this, wxNewId(), _("RF loopback ch.B"));
     chkRFLB_B_EN->SetToolTip(_("[RFLB_B_EN] External RF loopback TxBAND2->RxLNAH channel B"));
-    Connect(chkRFLB_B_EN->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkRFLB_B_EN->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkRFLB_B_EN, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     chkTX1_2_LB_SH = new wxCheckBox(this, wxNewId(), _("Ch.A shunt"));
     chkTX1_2_LB_SH->SetToolTip(_("[TX1_2_LB_SH]"));
-    Connect(chkTX1_2_LB_SH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkTX1_2_LB_SH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkTX1_2_LB_SH, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     chkTX2_2_LB_SH = new wxCheckBox(this, wxNewId(), _("Ch.B shunt"));
     chkTX2_2_LB_SH->SetToolTip(_("[TX2_2_LB_SH]"));
-    Connect(chkTX2_2_LB_SH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkTX2_2_LB_SH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkTX2_2_LB_SH, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     chkTX1_2_LB_AT = new wxCheckBox(this, wxNewId(), _("Ch.A attenuator"));
     chkTX1_2_LB_AT->SetToolTip(_("[TX1_2_LB_AT]"));
-    Connect(chkTX1_2_LB_AT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkTX1_2_LB_AT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkTX1_2_LB_AT, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     chkTX2_2_LB_AT = new wxCheckBox(this, wxNewId(), _("Ch.B attenuator"));
     chkTX2_2_LB_AT->SetToolTip(_("[TX2_2_LB_AT]"));
-    Connect(chkTX2_2_LB_AT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), NULL, this);
+    Connect(chkTX2_2_LB_AT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
     controlsSizer->Add(chkTX2_2_LB_AT, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     auto groupSizer = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("External loopback controls")), wxVERTICAL);
@@ -60,8 +60,8 @@ pnlLimeSDR::pnlLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     mainSizer->Add(groupSizer, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     pnl_gpio = new pnlGPIO(this, wxNewId());
     mainSizer->Add(pnl_gpio, 1, wxEXPAND | wxALL, 5);
-    Bind(READ_ALL_VALUES, &pnlLimeSDR::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlLimeSDR::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlLimeSDR::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlLimeSDR::OnWriteAll, this, GetId());
 }
 
 void pnlLimeSDR::Initialize(lime::SDRDevice* pControl)
@@ -118,16 +118,16 @@ void pnlLimeSDR::OnGPIOChange(wxCommandEvent& event)
 
 pnlLimeSDR::~pnlLimeSDR()
 {
-    chkRFLB_A_EN->Disconnect(wxEVT_CHECKBOX, chkRFLB_A_EN->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    chkRFLB_B_EN->Disconnect(wxEVT_CHECKBOX, chkRFLB_B_EN->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    chkTX1_2_LB_SH->Disconnect(wxEVT_CHECKBOX, chkTX1_2_LB_SH->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    ;
-    chkTX1_2_LB_AT->Disconnect(wxEVT_CHECKBOX, chkTX1_2_LB_AT->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    ;
-    chkTX2_2_LB_SH->Disconnect(wxEVT_CHECKBOX, chkTX2_2_LB_SH->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    ;
-    chkTX2_2_LB_AT->Disconnect(wxEVT_CHECKBOX, chkTX2_2_LB_AT->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), 0, this);
-    ;
+    chkRFLB_A_EN->Disconnect(wxEVT_CHECKBOX, chkRFLB_A_EN->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
+    chkRFLB_B_EN->Disconnect(wxEVT_CHECKBOX, chkRFLB_B_EN->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
+    chkTX1_2_LB_SH->Disconnect(
+        wxEVT_CHECKBOX, chkTX1_2_LB_SH->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
+    chkTX1_2_LB_AT->Disconnect(
+        wxEVT_CHECKBOX, chkTX1_2_LB_AT->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
+    chkTX2_2_LB_SH->Disconnect(
+        wxEVT_CHECKBOX, chkTX2_2_LB_SH->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
+    chkTX2_2_LB_AT->Disconnect(
+        wxEVT_CHECKBOX, chkTX2_2_LB_AT->GetId(), wxCommandEventHandler(pnlLimeSDR::OnGPIOChange), nullptr, this);
 }
 
 void pnlLimeSDR::UpdatePanel()

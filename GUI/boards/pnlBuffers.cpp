@@ -7,7 +7,7 @@
 #include <wx/checkbox.h>
 #include <wx/msgdlg.h>
 #include <wx/statbox.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 
 #include <ciso646>
 
@@ -53,20 +53,20 @@ pnlBuffers::pnlBuffers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
 
     fgSizer239->Add(sbSizer128, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer239);
-    this->Layout();
+    SetSizer(fgSizer239);
+    Layout();
     fgSizer239->Fit(this);
 
     // Connect Events
-    chkDIO_DIR_CTRL1->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkDIO_DIR_CTRL2->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkDIO_BUFF_OE->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkIQ_SEL1_DIR->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkIQ_SEL2_DIR->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkG_PWR_DWN->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
+    chkDIO_DIR_CTRL1->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkDIO_DIR_CTRL2->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkDIO_BUFF_OE->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkIQ_SEL1_DIR->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkIQ_SEL2_DIR->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkG_PWR_DWN->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
 
-    Bind(READ_ALL_VALUES, &pnlBuffers::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlBuffers::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlBuffers::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlBuffers::OnWriteAll, this, GetId());
 }
 
 void pnlBuffers::Initialize(lms_device_t* pControl)
@@ -77,12 +77,12 @@ void pnlBuffers::Initialize(lms_device_t* pControl)
 pnlBuffers::~pnlBuffers()
 {
     // Disconnect Events
-    chkDIO_DIR_CTRL1->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkDIO_DIR_CTRL2->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkDIO_BUFF_OE->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkIQ_SEL1_DIR->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkIQ_SEL2_DIR->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
-    chkG_PWR_DWN->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), NULL, this);
+    chkDIO_DIR_CTRL1->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkDIO_DIR_CTRL2->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkDIO_BUFF_OE->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkIQ_SEL1_DIR->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkIQ_SEL2_DIR->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
+    chkG_PWR_DWN->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(pnlBuffers::OnGPIOchanged), nullptr, this);
 }
 
 static unsigned char setbit(const unsigned char src, const int pos, const bool value)

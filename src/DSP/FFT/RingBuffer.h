@@ -10,7 +10,6 @@
 template<class T> class RingBuffer
 {
   public:
-
     /// @brief Constructs the ring buffer with the given capacity.
     /// @param count The maximum capacity of the buffer.
     RingBuffer(int32_t count)

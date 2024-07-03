@@ -36,7 +36,7 @@ dlgMarkers::dlgMarkers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     , initialized(false)
 {
     //(*Initialize(dlgMarkers)
-    Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER, _T("id"));
+    Create(parent, id, "Markers information", wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER, _T("id"));
     SetClientSize(wxDefaultSize);
     Move(wxDefaultPosition);
 
@@ -120,13 +120,13 @@ void dlgMarkers::AddDeltas()
             pnl, wxNewId(), "Delta" + std::to_string(i), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
         FlexGridSizer3->Add(StaticText1, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
         wxChoice* dsrc0 =
-            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICE1"));
+            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, nullptr, 0, wxDefaultValidator, _T("ID_CHOICE1"));
         dsrc0->Append(selections);
         dsrc0->SetSelection(0);
         deltaSrc.push_back(dsrc0);
         FlexGridSizer3->Add(dsrc0, 1, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
         wxChoice* dsrc1 =
-            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, 0, 0, wxDefaultValidator, _T("ID_CHOICE2"));
+            new wxChoice(pnl, wxNewId(), wxDefaultPosition, wxSize(64, -1), 0, nullptr, 0, wxDefaultValidator, _T("ID_CHOICE2"));
         dsrc1->Append(selections);
         dsrc1->SetSelection(0);
         deltaSrc.push_back(dsrc1);
@@ -169,7 +169,7 @@ void dlgMarkers::UpdateValues()
 
     for (size_t i = 0; i < labels.size(); ++i)
     {
-        if (parent_graph == NULL)
+        if (parent_graph == nullptr)
             return;
         if (!parent_graph->markers[i].used)
             continue;
@@ -178,15 +178,15 @@ void dlgMarkers::UpdateValues()
         double valueB = 0;
         int cnt = 0;
 
-        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        if (!parent_graph->series[0]->values.empty() && parent_graph->series[0]->visible)
         {
-            valueA = parent_graph->series[0]->values[parent_graph->markers[i].dataValueIndex + 1];
+            valueA = parent_graph->series[0]->values.at(parent_graph->markers[i].dataValueIndex).y;
             cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
         }
 
-        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        if (!parent_graph->series[1]->values.empty() && parent_graph->series[1]->visible)
         {
-            valueB = parent_graph->series[1]->values[parent_graph->markers[i].dataValueIndex + 1];
+            valueB = parent_graph->series[1]->values.at(parent_graph->markers[i].dataValueIndex).y;
             std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
         }
 
@@ -204,13 +204,13 @@ void dlgMarkers::UpdateValues()
         char text[128] = { 0 };
         int cnt = 0;
 
-        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        if (!parent_graph->series[0]->values.empty() && parent_graph->series[0]->visible)
         {
             float deltaValue = marker_valuesA[src1] - marker_valuesA[src2];
             cnt = std::snprintf(text, sizeof(text), "%.3f (ChA) ; ", deltaValue);
         }
 
-        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        if (!parent_graph->series[1]->values.empty() && parent_graph->series[1]->visible)
         {
             float deltaValue = marker_valuesB[src1] - marker_valuesB[src2];
             std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%.3f (ChB)", deltaValue);

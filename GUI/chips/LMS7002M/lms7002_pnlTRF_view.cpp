@@ -4,7 +4,6 @@
 #include <vector>
 #include "lms7002_gui_utilities.h"
 #include "wx/msgdlg.h"
-#include "lms7suiteEvents.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002MCSR.h"
 
@@ -91,7 +90,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer36->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLOADR_PDET_TRF = new wxComboBox(
-        sbSizerPowerDetector->GetStaticBox(), ID_LOADR_PDET_TRF, wxEmptyString, wxDefaultPosition, wxSize(160, -1), 0, NULL, 0);
+        sbSizerPowerDetector->GetStaticBox(), ID_LOADR_PDET_TRF, wxEmptyString, wxDefaultPosition, wxSize(160, -1), 0, nullptr, 0);
     cmbLOADR_PDET_TRF->Append(wxT("R_DIFF 5K||2.5K||1.25K"));
     cmbLOADR_PDET_TRF->Append(wxT("R_DIFF 5K||1.25K"));
     cmbLOADR_PDET_TRF->Append(wxT("R_DIFF 5K||2.5K"));
@@ -120,7 +119,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer37->Add(ID_STATICTEXT12, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LIN_TXPAD_TRF = new wxComboBox(
-        sbSizerBiasCurrent->GetStaticBox(), ID_ICT_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerBiasCurrent->GetStaticBox(), ID_ICT_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LIN_TXPAD_TRF->SetToolTip(wxT("Control the bias current of the linearization section of the TXPAD"));
 
     fgSizer37->Add(cmbICT_LIN_TXPAD_TRF, 0, wxEXPAND, 0);
@@ -131,7 +130,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer37->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_MAIN_TXPAD_TRF = new wxComboBox(
-        sbSizerBiasCurrent->GetStaticBox(), ID_ICT_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerBiasCurrent->GetStaticBox(), ID_ICT_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_MAIN_TXPAD_TRF->SetToolTip(wxT("Control the bias current of the main gm section of the TXPAD"));
 
     fgSizer37->Add(cmbICT_MAIN_TXPAD_TRF, 0, wxEXPAND, 0);
@@ -154,8 +153,8 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT14->Wrap(-1);
     fgSizer39->Add(ID_STATICTEXT14, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbCDC_I_TRF =
-        new wxComboBox(sbSizerTrimDuty->GetStaticBox(), ID_CDC_I_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCDC_I_TRF = new wxComboBox(
+        sbSizerTrimDuty->GetStaticBox(), ID_CDC_I_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     fgSizer39->Add(cmbCDC_I_TRF, 1, wxEXPAND, 5);
 
     ID_STATICTEXT15 =
@@ -163,8 +162,8 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT15->Wrap(-1);
     fgSizer39->Add(ID_STATICTEXT15, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbCDC_Q_TRF =
-        new wxComboBox(sbSizerTrimDuty->GetStaticBox(), ID_CDC_Q_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCDC_Q_TRF = new wxComboBox(
+        sbSizerTrimDuty->GetStaticBox(), ID_CDC_Q_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     fgSizer39->Add(cmbCDC_Q_TRF, 1, wxEXPAND, 5);
 
     sbSizerTrimDuty->Add(fgSizer39, 1, wxEXPAND, 5);
@@ -207,7 +206,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT16->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT16, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbTXFEoutput = new wxComboBox(this, ID_TXFEoutput, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbTXFEoutput = new wxComboBox(this, ID_TXFEoutput, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbTXFEoutput->Append(wxT("Band1"));
     cmbTXFEoutput->Append(wxT("Band2"));
     cmbTXFEoutput->Append(wxT("Disable"));
@@ -222,7 +221,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer34->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbEN_LOWBWLOMX_TMX_TRF =
-        new wxComboBox(this, ID_EN_LOWBWLOMX_TMX_TRF, wxEmptyString, wxDefaultPosition, wxSize(201, -1), 0, NULL, 0);
+        new wxComboBox(this, ID_EN_LOWBWLOMX_TMX_TRF, wxEmptyString, wxDefaultPosition, wxSize(201, -1), 0, nullptr, 0);
     cmbEN_LOWBWLOMX_TMX_TRF->Append(wxT("High band - bias resistor 3K"));
     cmbEN_LOWBWLOMX_TMX_TRF->Append(wxT("Low band -bias resistor 30K"));
     cmbEN_LOWBWLOMX_TMX_TRF->SetToolTip(
@@ -235,7 +234,8 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT3->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT3, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbEN_AMPHF_PDET_TRF = new wxComboBox(this, ID_EN_AMPHF_PDET_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbEN_AMPHF_PDET_TRF =
+        new wxComboBox(this, ID_EN_AMPHF_PDET_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbEN_AMPHF_PDET_TRF->SetToolTip(wxT("Enables the TXPAD power detector preamplifier"));
 
     fgSizer34->Add(cmbEN_AMPHF_PDET_TRF, 0, wxEXPAND, 0);
@@ -245,7 +245,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT4->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT4, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbF_TXPAD_TRF = new wxComboBox(this, ID_F_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbF_TXPAD_TRF = new wxComboBox(this, ID_F_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbF_TXPAD_TRF->SetToolTip(
         wxT("Controls the switched capacitor at the TXPAD output. Is used for fine tuning of the TXPAD output"));
 
@@ -256,7 +256,8 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT5->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT5, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbL_LOOPB_TXPAD_TRF = new wxComboBox(this, ID_L_LOOPB_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbL_LOOPB_TXPAD_TRF =
+        new wxComboBox(this, ID_L_LOOPB_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbL_LOOPB_TXPAD_TRF->Append(wxT("0 dB"));
     cmbL_LOOPB_TXPAD_TRF->Append(wxT("13.9 dB"));
     cmbL_LOOPB_TXPAD_TRF->Append(wxT("20.8 dB"));
@@ -270,7 +271,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer34->Add(ID_STATICTEXT6, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLOSS_LIN_TXPAD_TRF =
-        new wxComboBox(this, ID_LOSS_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(this, ID_LOSS_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOSS_LIN_TXPAD_TRF->SetToolTip(wxT("Controls the gain of the linearizing part of of the TXPAD"));
 
     fgSizer34->Add(cmbLOSS_LIN_TXPAD_TRF, 0, wxEXPAND, 0);
@@ -280,7 +281,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     fgSizer34->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLOSS_MAIN_TXPAD_TRF =
-        new wxComboBox(this, ID_LOSS_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(this, ID_LOSS_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOSS_MAIN_TXPAD_TRF->SetToolTip(wxT("Controls the gain output power of the TXPAD"));
 
     fgSizer34->Add(cmbLOSS_MAIN_TXPAD_TRF, 0, wxEXPAND, 0);
@@ -290,7 +291,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT8->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbVGCAS_TXPAD_TRF = new wxComboBox(this, ID_VGCAS_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbVGCAS_TXPAD_TRF = new wxComboBox(this, ID_VGCAS_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbVGCAS_TXPAD_TRF->SetToolTip(wxT("Controls the bias voltage at the gate of TXPAD cascade"));
 
     fgSizer34->Add(cmbVGCAS_TXPAD_TRF, 0, wxEXPAND, 0);
@@ -299,7 +300,7 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT9->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbLOBIASN_TXM_TRF = new wxComboBox(this, ID_LOBIASN_TXM_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbLOBIASN_TXM_TRF = new wxComboBox(this, ID_LOBIASN_TXM_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOBIASN_TXM_TRF->SetToolTip(wxT("Controls the bias at the gate of the mixer NMOS"));
 
     fgSizer34->Add(cmbLOBIASN_TXM_TRF, 0, wxEXPAND, 0);
@@ -308,63 +309,64 @@ lms7002_pnlTRF_view::lms7002_pnlTRF_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT10->Wrap(-1);
     fgSizer34->Add(ID_STATICTEXT10, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbLOBIASP_TXX_TRF = new wxComboBox(this, ID_LOBIASP_TXX_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbLOBIASP_TXX_TRF = new wxComboBox(this, ID_LOBIASP_TXX_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOBIASP_TXX_TRF->SetToolTip(wxT("Controls the bias at the gate of the mixer PMOS"));
 
     fgSizer34->Add(cmbLOBIASP_TXX_TRF, 0, wxEXPAND, 0);
 
     fgSizer33->Add(fgSizer34, 0, 0, 0);
 
-    this->SetSizer(fgSizer33);
-    this->Layout();
+    SetSizer(fgSizer33);
+    Layout();
     fgSizer33->Fit(this);
 
     // Connect Events
     chkPD_PDET_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkPD_TLOBUF_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkPD_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkEN_DIR_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbLOADR_PDET_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbICT_MAIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbCDC_I_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbCDC_Q_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     rgrGCAS_GNDREF_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkEN_NEXTTX_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     chkEN_LOOPB_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
-    cmbTXFEoutput->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::OnBandChange), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
+    cmbTXFEoutput->Connect(
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::OnBandChange), nullptr, this);
     cmbEN_LOWBWLOMX_TMX_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbEN_AMPHF_PDET_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbF_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbL_LOOPB_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbLOSS_LIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbLOSS_MAIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbVGCAS_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbLOBIASN_TXM_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
     cmbLOBIASP_TXX_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTRF_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[cmbEN_AMPHF_PDET_TRF] = LMS7002MCSR::EN_AMPHF_PDET_TRF;
     wndId2Enum[chkEN_G_TRF] = LMS7002MCSR::EN_G_TRF;

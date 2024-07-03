@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.12)
 project(gr-limesdr CXX C)
 enable_testing()
 
-find_package(Gnuradio QUIET) # precheck if any gnuradio package is available
+find_package(Gnuradio QUIET) # pre-check if any gnuradio package is available
 include(CMakeDependentOption)
 include(FeatureSummary)
 cmake_dependent_option(ENABLE_GNURADIO "Build LimeSuiteNG plugin for GNU Radio" ON "Gnuradio_FOUND" OFF)

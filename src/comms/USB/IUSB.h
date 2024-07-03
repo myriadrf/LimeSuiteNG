@@ -41,7 +41,7 @@ class IUSB
     /**
       @brief Connects to a given USB device.
       @param vid The vendor ID of the device.
-      @param pid The prduct ID of the device.
+      @param pid The product ID of the device.
       @param serial The serial number of the device.
       @return The status of the operation (true on success).
      */

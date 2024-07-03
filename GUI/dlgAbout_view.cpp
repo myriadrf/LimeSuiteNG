@@ -17,8 +17,8 @@ dlgAbout_view::dlgAbout_view(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : wxDialog(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-    this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
 
     wxFlexGridSizer* fgSizer2;
     fgSizer2 = new wxFlexGridSizer(0, 1, 0, 0);
@@ -95,18 +95,18 @@ dlgAbout_view::dlgAbout_view(
     btnClose->SetDefault();
     fgSizer2->Add(btnClose, 1, wxBOTTOM | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
 
-    this->SetSizer(fgSizer2);
-    this->Layout();
+    SetSizer(fgSizer2);
+    Layout();
     fgSizer2->Fit(this);
 
     // Connect Events
-    this->Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
-    btnClose->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), NULL, this);
+    Connect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
+    btnClose->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), nullptr, this);
 }
 
 dlgAbout_view::~dlgAbout_view()
 {
     // Disconnect Events
-    this->Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
-    btnClose->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), NULL, this);
+    Disconnect(wxEVT_INIT_DIALOG, wxInitDialogEventHandler(dlgAbout_view::OnInit));
+    btnClose->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(dlgAbout_view::OnbtnClose), nullptr, this);
 }

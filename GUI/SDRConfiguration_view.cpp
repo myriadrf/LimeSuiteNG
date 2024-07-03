@@ -343,7 +343,7 @@ SDRConfiguration_view::SDRConfiguration_view(wxWindow* parent, wxWindowID id, co
     mainSizer->Add(row, ctrlFlags);
     socGUI.push_back(row);
 
-    this->SetSizerAndFit(mainSizer);
+    SetSizerAndFit(mainSizer);
 }
 
 void SDRConfiguration_view::Setup(lime::SDRDevice* device)
@@ -380,5 +380,5 @@ void SDRConfiguration_view::Setup(lime::SDRDevice* device)
         else
             socGUI[i]->Hide();
     }
-    this->SetSizerAndFit(mainSizer);
+    SetSizerAndFit(mainSizer);
 }

@@ -94,7 +94,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     std::shared_ptr<LitePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 
-    std::mutex mCommsMutex;
     bool mConfigInProgress;
 };
 

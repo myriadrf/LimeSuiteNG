@@ -45,13 +45,13 @@ lms7002_pnlXBUF_view::lms7002_pnlXBUF_view(wxWindow* parent, wxWindowID id, cons
 
     chkSLFB_XBUF_RX = new wxCheckBox(
         this, ID_SLFB_XBUF_RX, wxT("Rx Enable biasing the input's DC voltage "), wxDefaultPosition, wxDefaultSize, 0);
-    chkSLFB_XBUF_RX->SetToolTip(wxT("Self biasing digital contol SLFB_XBUF_RX"));
+    chkSLFB_XBUF_RX->SetToolTip(wxT("Self biasing digital control SLFB_XBUF_RX"));
 
     fgSizer77->Add(chkSLFB_XBUF_RX, 0, flags, 0);
 
     chkSLFB_XBUF_TX = new wxCheckBox(
         this, ID_SLFB_XBUF_TX, wxT("Tx Enable biasing the input's DC voltage "), wxDefaultPosition, wxDefaultSize, 0);
-    chkSLFB_XBUF_TX->SetToolTip(wxT("Self biasing digital contol SLFB_XBUF_TX"));
+    chkSLFB_XBUF_TX->SetToolTip(wxT("Self biasing digital control SLFB_XBUF_TX"));
 
     fgSizer77->Add(chkSLFB_XBUF_TX, 0, flags, 0);
 
@@ -82,29 +82,29 @@ lms7002_pnlXBUF_view::lms7002_pnlXBUF_view(wxWindow* parent, wxWindowID id, cons
 
     fgSizer76->Add(fgSizer77, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
 
-    this->SetSizer(fgSizer76);
-    this->Layout();
+    SetSizer(fgSizer76);
+    Layout();
     fgSizer76->Fit(this);
 
     // Connect Events
     chkPD_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkPD_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_XBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkSLFB_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkSLFB_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkBYP_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkBYP_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_OUT2_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_TBUFIN_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[chkBYP_XBUF_RX] = LMS7002MCSR::BYP_XBUF_RX;
     wndId2Enum[chkBYP_XBUF_TX] = LMS7002MCSR::BYP_XBUF_TX;

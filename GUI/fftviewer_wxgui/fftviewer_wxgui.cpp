@@ -14,8 +14,8 @@
 frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : IModuleFrame(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-    this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
     wxFlexGridSizer* fgSizer7;
     fgSizer7 = new wxFlexGridSizer(0, 2, 0, 0);
@@ -25,7 +25,7 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
     fgSizer7->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     mPlotsSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D);
-    mPlotsSplitter->Connect(wxEVT_IDLE, wxIdleEventHandler(frFFTviewer::mPlotsSplitterOnIdle), NULL, this);
+    mPlotsSplitter->Connect(wxEVT_IDLE, wxIdleEventHandler(frFFTviewer::mPlotsSplitterOnIdle), nullptr, this);
 
     mTimeConstellationPanel = new wxPanel(mPlotsSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxFlexGridSizer* fgSizer9;
@@ -422,38 +422,40 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
 
     fgSizer7->Add(fgSizer10, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer7);
-    this->Layout();
+    SetSizer(fgSizer7);
+    Layout();
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 
     // Connect Events
-    spinFFTsize->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnFFTsamplesCountChanged), NULL, this);
-    cmbRFSOC->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnStreamChange), NULL, this);
-    cmbFmt->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnFmtChange), NULL, this);
-    chkEnTx->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnTx), NULL, this);
-    btnStartStop->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(frFFTviewer::OnbtnStartStop), NULL, this);
-    cmbWindowFunc->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnWindowFunctionChange), NULL, this);
+    spinFFTsize->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnFFTsamplesCountChanged), nullptr, this);
+    cmbRFSOC->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnStreamChange), nullptr, this);
+    cmbFmt->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnFmtChange), nullptr, this);
+    chkEnTx->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnTx), nullptr, this);
+    btnStartStop->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(frFFTviewer::OnbtnStartStop), nullptr, this);
+    cmbWindowFunc->Connect(
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnWindowFunctionChange), nullptr, this);
     cmbChannelVisibility->Connect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnChannelVisibilityChange), NULL, this);
-    spinAvgCount->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnAvgChange), NULL, this);
-    spinAvgCount->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(frFFTviewer::OnAvgChangeEnter), NULL, this);
-    chkEnPwr->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnPwr), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnChannelVisibilityChange), nullptr, this);
+    spinAvgCount->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnAvgChange), nullptr, this);
+    spinAvgCount->Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(frFFTviewer::OnAvgChangeEnter), nullptr, this);
+    chkEnPwr->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnPwr), nullptr, this);
 }
 
 frFFTviewer::~frFFTviewer()
 {
     // Disconnect Events
-    spinFFTsize->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnFFTsamplesCountChanged), NULL, this);
-    cmbRFSOC->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnStreamChange), NULL, this);
-    cmbFmt->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnFmtChange), NULL, this);
-    chkEnTx->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnTx), NULL, this);
-    btnStartStop->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(frFFTviewer::OnbtnStartStop), NULL, this);
+    spinFFTsize->Disconnect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnFFTsamplesCountChanged), nullptr, this);
+    cmbRFSOC->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnStreamChange), nullptr, this);
+    cmbFmt->Disconnect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnFmtChange), nullptr, this);
+    chkEnTx->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnTx), nullptr, this);
+    btnStartStop->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(frFFTviewer::OnbtnStartStop), nullptr, this);
     cmbWindowFunc->Disconnect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnWindowFunctionChange), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnWindowFunctionChange), nullptr, this);
     cmbChannelVisibility->Disconnect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnChannelVisibilityChange), NULL, this);
-    spinAvgCount->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnAvgChange), NULL, this);
-    spinAvgCount->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(frFFTviewer::OnAvgChangeEnter), NULL, this);
-    chkEnPwr->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnPwr), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(frFFTviewer::OnChannelVisibilityChange), nullptr, this);
+    spinAvgCount->Disconnect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnAvgChange), nullptr, this);
+    spinAvgCount->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(frFFTviewer::OnAvgChangeEnter), nullptr, this);
+    chkEnPwr->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(frFFTviewer::OnEnPwr), nullptr, this);
 }

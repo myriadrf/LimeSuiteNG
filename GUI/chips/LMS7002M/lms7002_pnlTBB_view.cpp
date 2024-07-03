@@ -3,7 +3,6 @@
 #include <map>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
@@ -125,10 +124,10 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT1->Wrap(-1);
     fgSizer58->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbLOOPB_TBB = new wxComboBox(this, ID_LOOPB_TBB, wxEmptyString, wxDefaultPosition, wxSize(197, -1), 0, NULL, 0);
-    cmbLOOPB_TBB->SetToolTip(
-        wxT("This controls which signal is connected to the loopback output pins. Note: when both the lowpass ladder and real pole "
-            "are powered down, the output of the active highband biquad is routed to the loopb output"));
+    cmbLOOPB_TBB = new wxComboBox(this, ID_LOOPB_TBB, wxEmptyString, wxDefaultPosition, wxSize(197, -1), 0, nullptr, 0);
+    cmbLOOPB_TBB->SetToolTip(wxT(
+        "This controls which signal is connected to the loopback output pins. Note: when both the low-pass ladder and real pole "
+        "are powered down, the output of the active high-band biquad is routed to the loopb output"));
 
     fgSizer58->Add(cmbLOOPB_TBB, 0, wxEXPAND, 0);
 
@@ -136,7 +135,7 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT5->Wrap(-1);
     fgSizer58->Add(ID_STATICTEXT5, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbTSTIN_TBB = new wxComboBox(this, ID_TSTIN_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbTSTIN_TBB = new wxComboBox(this, ID_TSTIN_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbTSTIN_TBB->SetToolTip(
         wxT("This control selects where the input test signal (vinp/n_aux_bbq/i) is routed to as well as disabling the route."));
 
@@ -226,7 +225,7 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT6, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPFS5_F_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFS5_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFS5_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPFS5_F_TBB->SetToolTip(wxT("This controls the operational amplifier's output stage bias current of the low band real "
                                        "pole filter of the transmitter's baseband"));
 
@@ -242,7 +241,7 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPFS5_PT_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFS5_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFS5_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPFS5_PT_TBB->SetToolTip(wxT("This controls the operational amplifier's input stage bias current of the low band real "
                                         "pole filter of the transmitter's baseband"));
 
@@ -258,7 +257,7 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPF_H_PT_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPF_H_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPF_H_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPF_H_PT_TBB->SetToolTip(wxT("This controls the operational amplifiers input stage bias reference current of the high "
                                         "band low pass filter of the transmitter's baseband "));
 
@@ -274,7 +273,7 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPFH_F_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFH_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFH_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPFH_F_TBB->SetToolTip(wxT("controls the operational amplifiers output stage bias reference current of the high band "
                                       "low pass filter of the transmitter's baseband (LPFH_TBB)"));
 
@@ -290,9 +289,9 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT10, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPFLAD_F_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFLAD_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
-    cmbICT_LPFLAD_F_TBB->SetToolTip(wxT("This controls the operational amplfiers' output stages bias referene current of the low "
-                                        "band ladder filter of the transmisster's baseband"));
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFLAD_F_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
+    cmbICT_LPFLAD_F_TBB->SetToolTip(wxT("This controls the operational amplifiers' output stages bias reference current of the low "
+                                        "band ladder filter of the transmitter's baseband"));
 
     fgSizer60->Add(cmbICT_LPFLAD_F_TBB, 0, wxEXPAND, 0);
 
@@ -306,8 +305,8 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer60->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPFLAD_PT_TBB = new wxComboBox(
-        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFLAD_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
-    cmbICT_LPFLAD_PT_TBB->SetToolTip(wxT("This controls the operational amplifers' input stages bias reference current of the low "
+        sbSizerOpamp->GetStaticBox(), ID_ICT_LPFLAD_PT_TBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
+    cmbICT_LPFLAD_PT_TBB->SetToolTip(wxT("This controls the operational amplifiers' input stages bias reference current of the low "
                                          "band ladder filter of the transmitter's baseband"));
 
     fgSizer60->Add(cmbICT_LPFLAD_PT_TBB, 0, wxEXPAND, 0);
@@ -444,59 +443,61 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer57->Add(sbSizerRxFilters, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer57);
-    this->Layout();
+    SetSizer(fgSizer57);
+    Layout();
     fgSizer57->Fit(this);
 
     // Connect Events
     chkPD_LPFH_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkPD_LPFIAMP_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkPD_LPFLAD_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkPD_LPFS5_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkEN_DIR_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkBYPLADDER_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     chkR5_LPF_BYP_TBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbLOOPB_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbTSTIN_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbCG_IAMP_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_IAMP_FRP_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_IAMP_GG_FRP_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPFS5_F_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPFS5_PT_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPF_H_PT_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPFH_F_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPFLAD_F_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPFLAD_PT_TBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbRCAL_LPFH_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbRCAL_LPFLAD_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbRCAL_LPFS5_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
     cmbCCAL_LPFLAD_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), NULL, this);
-    btnTuneFilter->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneFilter), NULL, this);
-    btnTuneTxGain->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneTxGain), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTBB_view::ParameterChangeHandler), nullptr, this);
+    btnTuneFilter->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneFilter), nullptr, this);
+    btnTuneTxGain->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTBB_view::OnbtnTuneTxGain), nullptr, this);
 
     wndId2Enum[chkBYPLADDER_TBB] = LMS7002MCSR::BYPLADDER_TBB;
     wndId2Enum[cmbCCAL_LPFLAD_TBB] = LMS7002MCSR::CCAL_LPFLAD_TBB;
@@ -547,8 +548,8 @@ lms7002_pnlTBB_view::lms7002_pnlTBB_view(wxWindow* parent, wxWindowID id, const 
 
     temp.clear();
     temp.push_back("Disabled");
-    temp.push_back("to Highband filter");
-    temp.push_back("to Lowband filter");
+    temp.push_back("to High-band filter");
+    temp.push_back("to Low-band filter");
     temp.push_back("to current amplifier");
     cmbTSTIN_TBB->Set(temp);
 

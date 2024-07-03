@@ -32,7 +32,7 @@ static void HandleLibusbEvents(libusb_context* context)
 
     while (activeUSBconnections > 0)
     {
-        int returnCode = libusb_handle_events_timeout_completed(context, &tv, NULL);
+        int returnCode = libusb_handle_events_timeout_completed(context, &tv, nullptr);
         if (returnCode != 0)
             lime::error("libusb_handle_events: %s", libusb_strerror(static_cast<libusb_error>(returnCode)));
     }
@@ -307,7 +307,7 @@ int32_t UnixUsb::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);
     if (status != 0)
     {
-        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %i",
+        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
             endPointAddr,
             libusb_error_name(status),
             actualTransferred,

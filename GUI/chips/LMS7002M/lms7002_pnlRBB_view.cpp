@@ -5,7 +5,7 @@
 #include <wx/spinctrl.h>
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
-#include "lms7suiteEvents.h"
+
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
@@ -75,7 +75,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT14->Wrap(-1);
     fgSizer53->Add(ID_STATICTEXT14, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbBBLoopback = new wxComboBox(this, ID_BBLoopback, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbBBLoopback = new wxComboBox(this, ID_BBLoopback, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbBBLoopback->Append(wxT("LPFH & RBB"));
     cmbBBLoopback->Append(wxT("LPFL & RBB"));
     cmbBBLoopback->Append(wxT("Disabled"));
@@ -89,7 +89,8 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT1->Wrap(-1);
     fgSizer53->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbINPUT_CTL_PGA_RBB = new wxComboBox(this, ID_INPUT_CTL_PGA_RBB, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+    cmbINPUT_CTL_PGA_RBB =
+        new wxComboBox(this, ID_INPUT_CTL_PGA_RBB, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     cmbINPUT_CTL_PGA_RBB->SetToolTip(
         wxT("There are a total of four different differential inputs to the PGA. Only one of them is active at a time"));
 
@@ -99,7 +100,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     ID_STATICTEXT2->Wrap(-1);
     fgSizer53->Add(ID_STATICTEXT2, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbG_PGA_RBB = new wxComboBox(this, ID_G_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbG_PGA_RBB = new wxComboBox(this, ID_G_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbG_PGA_RBB->SetToolTip(wxT("This is the gain of the PGA"));
 
     fgSizer53->Add(cmbG_PGA_RBB, 0, wxEXPAND, 0);
@@ -148,7 +149,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer54->Add(ID_STATICTEXT4, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbR_CTL_LPF_RBB = new wxComboBox(
-        sbSizerRCtimeConstants->GetStaticBox(), ID_R_CTL_LPF_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerRCtimeConstants->GetStaticBox(), ID_R_CTL_LPF_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbR_CTL_LPF_RBB->SetToolTip(
         wxT("Controls the absolute value of the resistance of the RC time constant of the RBB_LPF blocks (both Low and High)"));
 
@@ -235,7 +236,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbRCC_CTL_LPFH_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_LPFH_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_LPFH_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRCC_CTL_LPFH_RBB->SetToolTip(wxT("Controls the stability passive compensation of the LPFH_RBB operational amplifier"));
 
     fgSizer56->Add(cmbRCC_CTL_LPFH_RBB, 0, wxEXPAND, 0);
@@ -245,7 +246,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbRCC_CTL_LPFL_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_LPFL_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_LPFL_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRCC_CTL_LPFL_RBB->SetToolTip(wxT("Controls the stability passive compensation of the LPFL_RBB operational amplifier"));
 
     fgSizer56->Add(cmbRCC_CTL_LPFL_RBB, 0, wxEXPAND, 0);
@@ -255,7 +256,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPF_IN_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_ICT_LPF_IN_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_ICT_LPF_IN_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPF_IN_RBB->SetToolTip(wxT("Controls the reference bias current of the input stage of the operational amplifier used in "
                                       "RBB_LPF blocks (Low or High). "));
 
@@ -267,7 +268,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT10, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_LPF_OUT_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_ICT_LPF_OUT_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_ICT_LPF_OUT_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_LPF_OUT_RBB->SetToolTip(
         wxT("The reference bias current of the output stage of the operational amplifier used in RBB_LPF blocks (low or High)"));
 
@@ -278,7 +279,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_PGA_OUT_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_ICT_PGA_OUT_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_ICT_PGA_OUT_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_PGA_OUT_RBB->SetToolTip(
         wxT("Controls the output stage reference bias current of the operational amplifier used in the PGA circuit"));
 
@@ -289,7 +290,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT12, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbICT_PGA_IN_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_ICT_PGA_IN_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_ICT_PGA_IN_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbICT_PGA_IN_RBB->SetToolTip(
         wxT("Controls the input stage reference bias current of the operational amplifier used in the PGA circuit"));
 
@@ -300,7 +301,7 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
     fgSizer56->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbRCC_CTL_PGA_RBB = new wxComboBox(
-        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerOpAmp->GetStaticBox(), ID_RCC_CTL_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRCC_CTL_PGA_RBB->SetToolTip(wxT("Controls the stability passive compensation of the PGA_RBB operational amplifier"));
 
     fgSizer56->Add(cmbRCC_CTL_PGA_RBB, 0, wxEXPAND, 0);
@@ -309,52 +310,53 @@ lms7002_pnlRBB_view::lms7002_pnlRBB_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer52->Add(sbSizerOpAmp, 0, wxEXPAND, 0);
 
-    this->SetSizer(fgSizer52);
-    this->Layout();
+    SetSizer(fgSizer52);
+    Layout();
     fgSizer52->Fit(this);
 
     // Connect Events
     chkPD_LPFH_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     chkPD_LPFL_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     chkPD_PGA_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     chkEN_DIR_RBB->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbBBLoopback->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::OncmbBBLoopbackSelected), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::OncmbBBLoopbackSelected), nullptr, this);
     cmbINPUT_CTL_PGA_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbG_PGA_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbC_CTL_PGA_RBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     rgrOSW_PGA_RBB->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbR_CTL_LPF_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbC_CTL_LPFH_RBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbC_CTL_LPFL_RBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
-    btnTuneFilter->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::OnbtnTuneFilter), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
+    btnTuneFilter->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlRBB_view::OnbtnTuneFilter), nullptr, this);
     cmbRCC_CTL_LPFH_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbRCC_CTL_LPFL_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPF_IN_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_LPF_OUT_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_PGA_OUT_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbICT_PGA_IN_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
     cmbRCC_CTL_PGA_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlRBB_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[cmbC_CTL_LPFH_RBB] = LMS7002MCSR::C_CTL_LPFH_RBB;
     wndId2Enum[cmbC_CTL_LPFL_RBB] = LMS7002MCSR::C_CTL_LPFL_RBB;

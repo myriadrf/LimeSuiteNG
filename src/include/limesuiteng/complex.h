@@ -13,7 +13,7 @@
 namespace lime {
 
 /** @brief Structure to hold a 12 bit packed integer complex number.
-    Used only for data transfering to hardware.
+    Used only for data transferring to hardware.
 */
 struct complex12packed_t {
     constexpr complex12packed_t()

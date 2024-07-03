@@ -40,8 +40,8 @@ class FFT
     /// @brief Generates the coefficients for a given window function
     /// @param type The type of the window function to generate the coefficients for.
     /// @param coefCount The amount of coefficients to generate.
-    /// @param coefs The buffer to which to store the coefficients.
-    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coefs);
+    /// @param coeffs The buffer to which to store the coefficients.
+    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coeffs);
 
     /// @brief Calculates the FFT bins from the provided samples.
     /// @param samples The samples to calculate from.
@@ -63,7 +63,7 @@ class FFT
     std::thread mWorkerThread;
 
     kiss_fft_cfg m_fftCalcPlan;
-    std::vector<float> mWindowCoefs;
+    std::vector<float> mWindowCoeffs;
     std::vector<kiss_fft_cpx> m_fftCalcIn;
     std::vector<kiss_fft_cpx> m_fftCalcOut;
 

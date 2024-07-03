@@ -327,13 +327,13 @@ int FPGAcontrols_wxgui::UploadFile(std::vector<int16_t> isamples, std::vector<in
         {
             evt = new wxCommandEvent(UPDATE_STATUS);
             evt->SetString("Status: Failure");
-            this->QueueEvent(evt);
+            QueueEvent(evt);
             return;
         }
         LMS_StartStream(&tx_stream);
         int ind = 0;
         evt->SetString("Status: Running");
-        this->QueueEvent(evt);
+        QueueEvent(evt);
         while (!terminateStream.load(std::memory_order_relaxed))
         {
             int cnt = (send_cnt > buffer.size() - ind) ? buffer.size() - ind : send_cnt;
@@ -346,7 +346,7 @@ int FPGAcontrols_wxgui::UploadFile(std::vector<int16_t> isamples, std::vector<in
         LMS_DestroyStream(lmsControl, &tx_stream);
         evt = new wxCommandEvent(UPDATE_STATUS);
         evt->SetString("Status: Stopped");
-        this->QueueEvent(evt);
+        QueueEvent(evt);
     };
 
     if (mode->GetSelection())
