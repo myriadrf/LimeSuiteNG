@@ -24,13 +24,6 @@ option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 #include modules for finding CyAPI
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
-# It seems like VS/CMake using VS2017 or VS2019 only sets the `CMAKE_BUILD_TYPE_INIT` variable to the correct value on build
-# leaving `CMAKE_BUILD_TYPE` unset leading to the default being Release mode settings.
-# This workaround is not required with VS2022
-if(MSVC_TOOLSET_VERSION LESS 143)
-    set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_INIT})
-endif()
-
 list(FIND CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" index)
 if(${index} EQUAL -1)
     set(CMAKE_BUILD_TYPE "Release")
@@ -145,10 +138,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
-    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
-            add_compile_options(-fno-caller-saves)
-        endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
+        add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fno-caller-saves>)
     endif()
 
     #default SIMD configuration uses native build flags

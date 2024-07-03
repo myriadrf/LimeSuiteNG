@@ -12,11 +12,6 @@ if(NOT wxWidgets_FOUND AND WIN32)
     message(STATUS "Downloading wxWidgets headers.")
     set(wxRoot ${PROJECT_BINARY_DIR}/_deps/wxWidgets)
 
-    # VS2017 and VS2019 create an additional folder for storing the binaries, we need to copy the DLLs there.
-    if(MSVC_TOOLSET_VERSION LESS 143)
-        set(additional_folder "/${CMAKE_BUILD_TYPE}")
-    endif()
-
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         fetchcontent_declare(
             wxWidgets
@@ -136,11 +131,13 @@ if(WIN32)
         set(x64_postfix "_x64")
     endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(debug_flag "d")
-    else()
-        set(release_dir "/ReleaseDLLs/lib/vc14x${x64_postfix}_dll")
+    get_cmake_property(IS_MULTI_CONF GENERATOR_IS_MULTI_CONFIG)
+    if(${IS_MULTI_CONF})
+        set(additional_folder "/$<CONFIG>")
     endif()
+
+    set(debug_flag "$<$<CONFIG:Debug>:d>")
+    set(release_dir "$<$<NOT:$<CONFIG:Debug>>:/ReleaseDLLs/lib/vc14x${x64_postfix}_dll>")
 
     add_custom_command(
         TARGET ${GUI_EXECUTABLE_NAME}
