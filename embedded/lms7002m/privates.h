@@ -34,8 +34,7 @@ void lms7002m_save_chip_state(struct lms7002m_context* self, bool wr);
 void lms7002m_flip_rising_edge(struct lms7002m_context* self, const lms7002m_csr* reg);
 
 // clamps
-int16_t clamp_int(int16_t value, int16_t min, int16_t max);
-uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max);
-float clamp_float(float value, float min, float max);
+int32_t clamp_int(int32_t value, int32_t min, int32_t max);
+uint32_t clamp_uint(uint32_t value, uint32_t min, uint32_t max);
 
 #endif // LMS7002M_PRIVATES_H

@@ -29,6 +29,10 @@
     #pragma GCC diagnostic pop
 #endif
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846 /* pi */
+#endif
+
 #include "limesuiteng/types.h"
 #include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
@@ -143,6 +147,34 @@ static_assert(LMS7002M::PathRFE::LB2 == static_cast<LMS7002M::PathRFE>(LMS7002M_
 static_assert(LMS7002M::VCO_Module::VCO_CGEN == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_CGEN));
 static_assert(LMS7002M::VCO_Module::VCO_SXR == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXR));
 static_assert(LMS7002M::VCO_Module::VCO_SXT == static_cast<LMS7002M::VCO_Module>(LMS7002M_VCO_SXT));
+
+struct Decibel : public lms7002m_decibel {
+    Decibel(const float& f);
+    Decibel(const lms7002m_decibel& f);
+    Decibel& operator=(const float& other);
+    operator float() const;
+};
+
+Decibel::Decibel(const float& f)
+{
+    data = f * 65536;
+}
+
+Decibel::Decibel(const lms7002m_decibel& f)
+{
+    data = f.data;
+}
+
+Decibel& Decibel::operator=(const float& other)
+{
+    data = other * 65536;
+    return *this;
+}
+
+Decibel::operator float() const
+{
+    return data / 65536;
+}
 
 /** @brief Sets connection which is used for data communication with chip
 */
@@ -713,68 +745,70 @@ OpStatus LMS7002M::SaveConfig(const std::string& filename)
 
 OpStatus LMS7002M::SetRBBPGA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    lime_Result result = lms7002m_set_rbbpga_db(mC_impl, static_cast<Decibel>(value), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRBBPGA_dB(const Channel channel)
 {
-    return lms7002m_get_rbbpga_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_rbbpga_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 OpStatus LMS7002M::SetRFELNA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfelna_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    lime_Result result = lms7002m_set_rfelna_db(mC_impl, static_cast<Decibel>(value), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELNA_dB(const Channel channel)
 {
-    return lms7002m_get_rfelna_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_rfelna_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 OpStatus LMS7002M::SetRFELoopbackLNA_dB(const float_type gain, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfe_loopback_lna_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
+    lime_Result result =
+        lms7002m_set_rfe_loopback_lna_db(mC_impl, static_cast<Decibel>(gain), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFELoopbackLNA_dB(const Channel channel)
 {
-    return lms7002m_get_rfe_loopback_lna_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_rfe_loopback_lna_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 OpStatus LMS7002M::SetRFETIA_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_rfetia_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    lime_Result result = lms7002m_set_rfetia_db(mC_impl, static_cast<Decibel>(value), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetRFETIA_dB(const Channel channel)
 {
-    return lms7002m_get_rfetia_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_rfetia_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 OpStatus LMS7002M::SetTRFPAD_dB(const float_type value, const Channel channel)
 {
-    lime_Result result = lms7002m_set_trfpad_db(mC_impl, value, static_cast<lms7002m_channel>(channel));
+    lime_Result result = lms7002m_set_trfpad_db(mC_impl, static_cast<Decibel>(value), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFPAD_dB(const Channel channel)
 {
-    return lms7002m_get_trfpad_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_trfpad_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 OpStatus LMS7002M::SetTRFLoopbackPAD_dB(const float_type gain, const Channel channel)
 {
-    lime_Result result = lms7002m_set_trf_loopback_pad_db(mC_impl, gain, static_cast<lms7002m_channel>(channel));
+    lime_Result result =
+        lms7002m_set_trf_loopback_pad_db(mC_impl, static_cast<Decibel>(gain), static_cast<lms7002m_channel>(channel));
     return ResultToStatus(result);
 }
 
 float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
 {
-    return lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<lms7002m_channel>(channel));
+    return static_cast<Decibel>(lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
 // opt_gain_tbb
@@ -857,32 +891,33 @@ float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
 
 OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
 {
-    std::vector<float> converted(count);
+    std::vector<uint32_t> converted(count);
     for (uint8_t i = 0; i < count; ++i)
     {
         converted.at(i) = freq_Hz[i];
     }
 
-    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, converted.data(), count, phaseOffset);
+    const uint16_t pho = 65536 * (phaseOffset / 360);
+    lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, converted.data(), count, pho);
     return ResultToStatus(result);
 }
 
 std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset)
 {
-    std::vector<float> ncosFloat(16);
+    std::vector<uint32_t> ncosHZ(16);
 
-    float phaseOffsetFloat = 0.0;
-    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosFloat.data(), ncosFloat.size(), &phaseOffsetFloat);
+    uint16_t phaseOffsetUint16 = 0;
+    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosHZ.data(), ncosHZ.size(), &phaseOffsetUint16);
 
     std::vector<float_type> ncosDouble(16);
-    for (std::size_t i = 0; i < ncosFloat.size(); ++i)
+    for (std::size_t i = 0; i < ncosHZ.size(); ++i)
     {
-        ncosDouble.at(i) = ncosFloat.at(i);
+        ncosDouble.at(i) = ncosHZ.at(i);
     }
 
     if (phaseOffset != nullptr)
     {
-        *phaseOffset = phaseOffsetFloat;
+        *phaseOffset = 360.0 * phaseOffsetUint16 / 65536.0;
     }
 
     return ncosDouble;
@@ -1065,22 +1100,24 @@ float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
 
 OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
 {
-    lime_Result result = lms7002m_set_nco_phase_offset_for_mode_0(mC_impl, dir == TRXDir::Tx, angle_deg);
+    const uint16_t pho = 65536 * (angle_deg / 360);
+    lime_Result result = lms7002m_set_nco_phase_offset_for_mode_0(mC_impl, dir == TRXDir::Tx, pho);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)
 {
-    lime_Result result = lms7002m_set_nco_phase_offset(mC_impl, dir == TRXDir::Tx, index, angle_deg);
+    const uint16_t pho = 65536 * (angle_deg / 360);
+    lime_Result result = lms7002m_set_nco_phase_offset(mC_impl, dir == TRXDir::Tx, index, pho);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
-    std::vector<float> converted(count);
+    std::vector<uint16_t> converted(count);
     for (uint8_t i = 0; i < count; ++i)
     {
-        converted.at(i) = angles_deg[i];
+        converted.at(i) = 65536 * (angles_deg[i] / 360);
     }
 
     lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, converted.data(), count, frequencyOffset);
@@ -1095,10 +1132,15 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
 
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
-    std::vector<float> converted(coefCount);
+    std::vector<uint16_t> converted(coefCount);
     for (uint8_t i = 0; i < coefCount; ++i)
     {
-        converted.at(i) = coef[i];
+        if (coef[i] < -1 || coef[i] > 1)
+        {
+            lime::warning("Coefficient %f is outside of range [-1:1], incorrect value will be written.", coef[i]);
+        }
+
+        converted.at(i) = coef[i] * 32767;
     }
 
     lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
@@ -1107,12 +1149,12 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    std::vector<float> converted(coefCount);
+    std::vector<uint16_t> converted(coefCount);
 
     lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
     for (uint8_t i = 0; i < coefCount; ++i)
     {
-        coef[i] = converted.at(i);
+        coef[i] = static_cast<int16_t>(converted.at(i)) / 32768.0;
     }
 
     return ResultToStatus(result);
@@ -1718,35 +1760,66 @@ OpStatus LMS7002M::EnableSXTDD(bool tdd)
 
 OpStatus LMS7002M::SetDCOffset(TRXDir dir, const float_type I, const float_type Q)
 {
-    lime_Result result = lms7002m_set_dc_offset(mC_impl, dir == TRXDir::Tx, I, Q);
+    const bool isTx = dir == TRXDir::Tx;
+    uint8_t translatedI;
+    uint8_t translatedQ;
+
+    if (isTx)
+    {
+        translatedI = lrint(I * 127);
+        translatedQ = lrint(Q * 127);
+    }
+    else
+    {
+        translatedI = lrint(fabs(I * 63)) + (I < 0 ? 64 : 0);
+        translatedQ = lrint(fabs(Q * 63)) + (Q < 0 ? 64 : 0);
+    }
+
+    lime_Result result = lms7002m_set_dc_offset(mC_impl, isTx, translatedI, translatedQ);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetDCOffset(TRXDir dir, float_type& I, float_type& Q)
 {
-    float Ifloat = 0.0;
-    float Qfloat = 0.0;
-    lime_Result result = lms7002m_get_dc_offset(mC_impl, dir == TRXDir::Tx, &Ifloat, &Qfloat);
-    I = Ifloat;
-    Q = Qfloat;
+    const bool isTx = dir == TRXDir::Tx;
+    uint8_t Iuint8 = 0;
+    uint8_t Quint8 = 0;
+    lime_Result result = lms7002m_get_dc_offset(mC_impl, isTx, &Iuint8, &Quint8);
+    if (isTx)
+    {
+        I = static_cast<int8_t>(Iuint8) / 127.0; //signed 8-bit
+        Q = static_cast<int8_t>(Quint8) / 127.0; //signed 8-bit
+    }
+    else
+    {
+        I = ((Iuint8 & 0x40) ? -1.0 : 1.0) * (Iuint8 & 0x3F) / 63.0;
+        Q = ((Quint8 & 0x40) ? -1.0 : 1.0) * (Quint8 & 0x3F) / 63.0;
+    }
+
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetIQBalance(const TRXDir dir, const float_type phase, const float_type gainI, const float_type gainQ)
 {
-    lime_Result result = lms7002m_set_i_q_balance(mC_impl, dir == TRXDir::Tx, phase, gainI, gainQ);
+    const int iqcorr = lrint(2047 * (phase / (M_PI / 2)));
+    const int gcorri = lrint(2047 * gainI);
+    const int gcorrq = lrint(2047 * gainQ);
+    lime_Result result = lms7002m_set_i_q_balance(mC_impl, dir == TRXDir::Tx, iqcorr, gcorri, gcorrq);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetIQBalance(const TRXDir dir, float_type& phase, float_type& gainI, float_type& gainQ)
 {
-    float phaseFloat = 0.0;
-    float gainIFloat = 0.0;
-    float gainQFloat = 0.0;
-    lime_Result result = lms7002m_get_i_q_balance(mC_impl, dir == TRXDir::Tx, &phaseFloat, &gainIFloat, &gainQFloat);
-    phase = phaseFloat;
-    gainI = gainIFloat;
-    gainQ = gainQFloat;
+    const bool isTx = dir == TRXDir::Tx;
+    int16_t phaseInt16 = 0;
+    uint16_t gainIUint16 = 0;
+    uint16_t gainQUint16 = 0;
+    lime_Result result = lms7002m_get_i_q_balance(mC_impl, isTx, &phaseInt16, &gainIUint16, &gainQUint16);
+
+    phase = (M_PI / 2) * phaseInt16 / 2047.0;
+    gainI = gainIUint16 / 2047.0;
+    gainQ = gainQUint16 / 2047.0;
+
     return ResultToStatus(result);
 }
 
@@ -1774,7 +1847,15 @@ OpStatus LMS7002M::CalibrateRP_BIAS()
 
 float_type LMS7002M::GetTemperature()
 {
-    return lms7002m_get_temperature(mC_impl);
+    uint16_t tempUint16 = lms7002m_get_temperature(mC_impl);
+    const float Vtemp = ((tempUint16 >> 8) & 0xFF) * 1.84;
+    const float Vptat = (tempUint16 & 0xFF) * 1.84;
+    const float Vdiff = (Vptat - Vtemp) / 1.05;
+    const float temperature = 45.0 + Vdiff;
+    lime::debug(
+        "Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (tempUint16 >> 8) & 0xFF, tempUint16 & 0xFF, Vdiff, temperature);
+
+    return temperature;
 }
 
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)

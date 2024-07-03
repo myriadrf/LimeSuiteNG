@@ -106,7 +106,7 @@ uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const lms7002m_csr csr)
     return lms7002m_spi_read_bits(self, csr.address, csr.msb, csr.lsb);
 }
 
-int16_t clamp_int(int16_t value, int16_t min, int16_t max)
+int32_t clamp_int(int32_t value, int32_t min, int32_t max)
 {
     if (value < min)
         return min;
@@ -115,16 +115,7 @@ int16_t clamp_int(int16_t value, int16_t min, int16_t max)
     return value;
 }
 
-uint16_t clamp_uint(uint16_t value, uint16_t min, uint16_t max)
-{
-    if (value < min)
-        return min;
-    if (value > max)
-        return max;
-    return value;
-}
-
-float clamp_float(float value, float min, float max)
+uint32_t clamp_uint(uint32_t value, uint32_t min, uint32_t max)
 {
     if (value < min)
         return min;
