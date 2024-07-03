@@ -340,9 +340,9 @@ OpStatus TRXLooper::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
-    std::unique_lock lck{ mTx.mutex };
+    std::unique_lock lck{ mRx.mutex };
     while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        mTx.cv.wait(lck);
+        mRx.cv.wait(lck);
 
     return OpStatus::Success;
 }
