@@ -787,6 +787,7 @@ void TRXLooper::TxWorkLoop()
         mTx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         TransmitPacketsLoop();
         mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mTx.cv.notify_all();
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
