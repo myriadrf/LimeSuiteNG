@@ -5,7 +5,7 @@
 #include <wx/spinctrl.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
@@ -87,7 +87,7 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     chkSPDUP_VCO_CGEN = new wxCheckBox(
         sbSizer65->GetStaticBox(), ID_SPDUP_VCO_CGEN, wxT("Bypass noise filter resistor"), wxDefaultPosition, wxDefaultSize, 0);
     chkSPDUP_VCO_CGEN->SetToolTip(
-        wxT("Bypasses the noise filter resistor for fast setlling time. It should be connected to a 1us pulse"));
+        wxT("Bypasses the noise filter resistor for fast settling time. It should be connected to a 1us pulse"));
 
     fgSizer81->Add(chkSPDUP_VCO_CGEN, 0, flags, 0);
 
@@ -607,8 +607,8 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
 
     fgSizer244->Add(fgSizer245, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer244);
-    this->Layout();
+    SetSizer(fgSizer244);
+    Layout();
     fgSizer244->Fit(this);
 
     // Connect Events
@@ -821,9 +821,9 @@ void lms7002_pnlCLKGEN_view::ParameterChangeHandler(wxCommandEvent& event)
 
 void lms7002_pnlCLKGEN_view::OnAutoPhase(wxCommandEvent& event)
 {
-    bool disabled = this->chkAutoPhase->GetValue();
-    this->txPhase->Enable(!disabled);
-    this->rxPhase->Enable(!disabled);
+    bool disabled = chkAutoPhase->GetValue();
+    txPhase->Enable(!disabled);
+    rxPhase->Enable(!disabled);
 }
 
 void lms7002_pnlCLKGEN_view::onbtnCalculateClick(wxSpinEvent& event)

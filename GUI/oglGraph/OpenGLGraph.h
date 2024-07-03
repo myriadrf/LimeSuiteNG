@@ -99,29 +99,14 @@ class cDataSerie
 {
   public:
     /// @brief Constructor for the class.
-    /// Initializes it with the color #000000FF and an initial allocation size of 10.
+    /// Initializes it with the color #000000FF.
     cDataSerie()
-        : size(0)
-        , allocatedSize(0)
-        , vboIndex(0)
+        : vboIndex(0)
         , color(0x000000FF)
         , visible(true)
         , modified(true)
-        , values(nullptr)
     {
-        Initialize(10);
-    };
-
-    /// @brief Destructor for the class.
-    /// Frees up @ref values upon being called.
-    ~cDataSerie()
-    {
-        if (values != nullptr)
-        {
-            delete[] values;
-            values = nullptr;
-        }
-    };
+    }
 
     /// @brief Assigns the given values into the series.
     /// @param xserie The x values to assign.
@@ -129,21 +114,19 @@ class cDataSerie
     /// @param count The amount of values to assign.
     void AssignValues(float* xserie, float* yserie, unsigned int count)
     {
-        if (2 * count > allocatedSize && count > 0)
-            Initialize(2 * count);
-        if (xserie && yserie)
-        {
-            int index = 0;
-            for (unsigned i = 0; i < count; ++i)
-            {
-                values[index] = xserie[i];
-                ++index;
-                values[index] = yserie[i];
-                ++index;
-            }
-        }
+        values.clear();
+        values.reserve(count);
         modified = true;
-        size = count;
+
+        if (!xserie || !yserie)
+        {
+            return;
+        }
+
+        for (unsigned i = 0; i < count; ++i)
+        {
+            values.emplace_back(xserie[i], yserie[i]);
+        }
     }
 
     /// @brief Assigns the given values into the series.
@@ -151,36 +134,19 @@ class cDataSerie
     /// @param length The length of the memory array to assign.
     void AssignValues(float* valuesXY, unsigned int length)
     {
-        if (length > allocatedSize && length > 0)
-            Initialize(length);
-        if (valuesXY)
-            memcpy(values, valuesXY, (length) * sizeof(float));
+        values.clear();
+        values.reserve(length);
         modified = true;
-        size = length / 2;
-    }
 
-    /// @brief Clears the series.
-    void Clear()
-    {
-        if (values != nullptr)
+        if (!valuesXY)
         {
-            delete[] values;
-            values = nullptr;
+            return;
         }
-        size = 0;
-        allocatedSize = 0;
-        modified = true;
-    }
 
-    /// @brief Sets up the series, capable of holding @p count elements.
-    /// @param count The amount of elements to allocate memory for.
-    void Initialize(unsigned int count)
-    {
-        Clear();
-        size = count;
-        values = new float[2 * count];
-        memset(values, 0, sizeof(float) * 2 * count);
-        allocatedSize = count;
+        for (unsigned int i = 0; i < length; i += 2)
+        {
+            values.emplace_back(valuesXY[i], valuesXY[i + 1]);
+        }
     }
 
     /// @brief Adds a single X and Y value into the series.
@@ -188,34 +154,27 @@ class cDataSerie
     /// @param y The Y value to add.
     void AddXY(float x, float y)
     {
-        if (size < allocatedSize)
-        {
-            values[2 * size] = x;
-            values[2 * size + 1] = y;
-            ++size;
-        }
-        else
-        {
-            float* newVal = new float[size * 2];
-            allocatedSize = size * 2;
-            memcpy(newVal, values, sizeof(float) * size * 2);
-            delete[] values;
-            values = newVal;
-            values[2 * size] = x;
-            values[2 * size + 1] = y;
-            ++size;
-        }
+        values.emplace_back(x, y);
         modified = true;
     }
 
-    unsigned int size; ///< The currently used size.
-    unsigned int allocatedSize; ///< The currently allocated size.
     unsigned int vboIndex; ///< The vertex buffer object index.
     GLG_color color; ///< The color to be used.
     bool visible; ///< Whether the series is visible or not.
     bool modified; ///< Whether the series has been modified since it was last checked.
 
-    float* values; ///< The value array.
+    struct Coordinates {
+        float x;
+        float y;
+        Coordinates(float x, float y)
+            : x(x)
+            , y(y)
+        {
+        }
+    };
+    static_assert(sizeof(Coordinates) == sizeof(float) * 2);
+
+    std::vector<Coordinates> values; ///< The value array.
 };
 
 struct GLG_settings {

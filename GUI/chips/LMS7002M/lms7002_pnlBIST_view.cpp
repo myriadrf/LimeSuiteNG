@@ -103,8 +103,8 @@ lms7002_pnlBIST_view::lms7002_pnlBIST_view(wxWindow* parent, wxWindowID id, cons
 
     fgSizer193->Add(sbSizer123, 0, flags, 0);
 
-    this->SetSizer(fgSizer193);
-    this->Layout();
+    SetSizer(fgSizer193);
+    Layout();
     fgSizer193->Fit(this);
 
     // Connect Events

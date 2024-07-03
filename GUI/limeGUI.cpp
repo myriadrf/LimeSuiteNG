@@ -18,7 +18,6 @@ IMPLEMENT_APP(limeGUI)
 
 #include "resources/splash.h"
 #include "resources/LMS_ICO.xpm"
-#include "events.h"
 
 using namespace std::literals::string_literals;
 

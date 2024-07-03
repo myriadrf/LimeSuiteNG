@@ -117,8 +117,8 @@ lms7002_pnlAFE_view::lms7002_pnlAFE_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer62->Add(fgSizer63, 0, wxALL | wxALIGN_LEFT | wxALIGN_TOP, 0);
 
-    this->SetSizer(fgSizer62);
-    this->Layout();
+    SetSizer(fgSizer62);
+    Layout();
     fgSizer62->Fit(this);
 
     // Connect Events

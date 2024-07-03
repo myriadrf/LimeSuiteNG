@@ -1,6 +1,7 @@
 #include "limesuiteng/LimePlugin.h"
 #include "gainTable.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <chrono>
 #include <iostream>
@@ -179,9 +180,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
 //max gain ~70-76 (higher will probably degrade signal quality to much)
 void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = gain;
-    if (row < 0 || row >= static_cast<int>(txGainTable.size()))
-        return;
+    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(txGainTable.size() - 1));
 
     std::lock_guard<std::mutex> lk(gainsMutex);
 
@@ -201,9 +200,7 @@ void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_n
 
 void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = gain;
-    if (row < 0 || row >= static_cast<int>(rxGainTable.size()))
-        return;
+    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(rxGainTable.size() - 1));
 
     std::lock_guard<std::mutex> lk(gainsMutex);
 
@@ -398,6 +395,7 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
         }
 
         // Initialize device to default settings
+        lime::registerLogHandler(LogCallback);
         device->SetMessageLogCallback(LogCallback);
         device->EnableCache(false);
         device->Init();
