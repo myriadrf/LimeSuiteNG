@@ -87,8 +87,8 @@ lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, cons
 
     fgSizer65->Add(fgSizer67, 0, flags, 0);
 
-    this->SetSizer(fgSizer65);
-    this->Layout();
+    SetSizer(fgSizer65);
+    Layout();
     fgSizer65->Fit(this);
 
     // Connect Events

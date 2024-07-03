@@ -350,8 +350,8 @@ lms7002_pnlMCU_BD_view::lms7002_pnlMCU_BD_view(wxWindow* parent, wxWindowID id)
 
     fgSizer195->Add(gSizer1, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer195);
-    this->Layout();
+    SetSizer(fgSizer195);
+    Layout();
     fgSizer195->Fit(this);
 
     // Connect Events

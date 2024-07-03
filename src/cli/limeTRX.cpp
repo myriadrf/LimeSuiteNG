@@ -150,7 +150,7 @@ class ConstellationPlotter
   public:
     /**
     @brief Construct a new Constellation Plotter object.
-    @param range The half sidelength of the square to render.
+    @param range The half side-length of the square to render.
     @param persistent Whether the plot is persistent or not.
    */
     ConstellationPlotter(int range, bool persistent)
@@ -285,7 +285,7 @@ int main(int argc, char** argv)
     const bool tx = inputFlag || repeaterFlag;
     const bool showFFT = fftFlag;
 #ifdef USE_GNU_PLOT
-    const bool showConstelation = constellationFlag;
+    const bool showConstellation = constellationFlag;
 #endif
     const bool loopTx = looptxFlag;
     const int64_t samplesToCollect = args::get(samplesCountFlag);
@@ -441,14 +441,14 @@ int main(int argc, char** argv)
     float peakFrequency = 0;
     float sampleRate = device->GetSampleRate(chipIndex, TRXDir::Rx, 0);
     if (sampleRate <= 0)
-        sampleRate = 1; // sample rate readback not available, assign default value
+        sampleRate = 1; // sample rate read-back not available, assign default value
     float frequencyLO = 0;
 
 #ifdef USE_GNU_PLOT
     bool persistPlotWindows = false;
     int range = 32768;
-    ConstellationPlotter constellationplot(range, persistPlotWindows);
-    FFTPlotter fftplot(sampleRate, fftSize, persistPlotWindows);
+    ConstellationPlotter constellationPlot(range, persistPlotWindows);
+    FFTPlotter fftPlot(sampleRate, fftSize, persistPlotWindows);
 #endif
 
     StreamMeta rxMeta{};
@@ -458,9 +458,9 @@ int main(int argc, char** argv)
 
 #ifdef USE_GNU_PLOT
     if (showFFT)
-        fftplot.Start();
-    if (showConstelation)
-        constellationplot.Start();
+        fftPlot.Start();
+    if (showConstellation)
+        constellationPlot.Start();
 #endif
     if (useComposite)
         composite->StreamStart();
@@ -550,7 +550,7 @@ int main(int argc, char** argv)
 
                     float output = amplitude > 0 ? 10 * log10(amplitude) : -150;
                     fftBins[i] = output;
-                    // exlude DC from amplitude comparison, the 0 bin
+                    // exclude DC from amplitude comparison, the 0 bin
                     if (output > peakAmplitude && i > 0)
                     {
                         peakAmplitude = output;
@@ -565,7 +565,7 @@ int main(int argc, char** argv)
                           << (frequencyLO + peakFrequency) / 1e6 << " MHz" << endl;
                 peakAmplitude = -1000;
 #ifdef USE_GNU_PLOT
-                fftplot.SubmitData(fftBins);
+                fftPlot.SubmitData(fftBins);
 #endif
             }
             else
@@ -575,8 +575,8 @@ int main(int argc, char** argv)
         }
 
 #ifdef USE_GNU_PLOT
-        if (showConstelation && doUpdate)
-            constellationplot.SubmitData(rxData[0]);
+        if (showConstellation && doUpdate)
+            constellationPlot.SubmitData(rxData[0]);
 #endif
     }
 #ifdef USE_GNU_PLOT
@@ -586,7 +586,10 @@ int main(int argc, char** argv)
     if (useComposite)
         composite->StreamStop();
     else
+    {
         device->StreamStop(chipIndex);
+        device->StreamDestroy(chipIndex);
+    }
 
     if (composite)
         delete composite;

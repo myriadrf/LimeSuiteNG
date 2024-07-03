@@ -8,7 +8,7 @@
 #include <wx/statbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 
@@ -61,8 +61,8 @@ pnlXTRX::pnlXTRX(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSi
     mainBoxSizer->SetSizeHints(this);
     SetSizer(mainBoxSizer);
     Layout();
-    Bind(READ_ALL_VALUES, &pnlXTRX::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlXTRX::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlXTRX::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlXTRX::OnWriteAll, this, GetId());
 }
 
 void pnlXTRX::Initialize(lime::SDRDevice* dev, const string& spiSlaveName)

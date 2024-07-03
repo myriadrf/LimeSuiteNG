@@ -26,7 +26,7 @@ class lms7002_pnlR3_view : public ILMS7002MTab
     wxStaticText* rssiCMPSTATUS[6]{};
     wxCheckBox* rssiCMPCFG[6]{};
 
-    // Virtual event handlers, overide them in your derived class
+    // Virtual event handlers, override them in your derived class
     void ParameterChangeHandler(wxSpinEvent& event);
     void ParameterChangeHandler(wxCommandEvent& event) override;
     void OnRSSICMPCFGChanged(wxCommandEvent& event);

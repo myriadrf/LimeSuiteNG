@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include <string>
 #include "limesuiteng/SDRDevice.h"
@@ -19,7 +19,7 @@ using namespace std;
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
 
-static bool showRefClkSpurCancelation = true;
+static bool showRefClkSpurCancellation = true;
 
 lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
@@ -371,11 +371,11 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     pnlRefClkSpur->Hide();
 
     RefClkSpurSizer =
-        new wxStaticBoxSizer(new wxStaticBox(pnlRefClkSpur, wxID_ANY, wxT("Receiver Ref Clk \nSpur Cancelation")), wxVERTICAL);
+        new wxStaticBoxSizer(new wxStaticBox(pnlRefClkSpur, wxID_ANY, wxT("Receiver Ref Clk \nSpur Cancellation")), wxVERTICAL);
 
-    chkEnableRefSpurCancelation =
+    chkEnableRefSpurCancellation =
         new wxCheckBox(RefClkSpurSizer->GetStaticBox(), wxID_ANY, wxT("Enable"), wxDefaultPosition, wxDefaultSize, 0);
-    RefClkSpurSizer->Add(chkEnableRefSpurCancelation, 0, 0, 5);
+    RefClkSpurSizer->Add(chkEnableRefSpurCancellation, 0, 0, 5);
 
     m_staticText359 = new wxStaticText(
         RefClkSpurSizer->GetStaticBox(), wxID_ANY, wxT("RF Bandwidth (MHz):"), wxDefaultPosition, wxDefaultSize, 0);
@@ -632,8 +632,8 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
 
     fgSizer92->Add(pnlRefClkSpur, 1, 0, 5);
 
-    this->SetSizer(fgSizer92);
-    this->Layout();
+    SetSizer(fgSizer92);
+    Layout();
     fgSizer92->Fit(this);
 
     // Connect Events
@@ -695,8 +695,8 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     btnCalculate->Connect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnCalculateClick), nullptr, this);
     btnTune->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnTuneClick), nullptr, this);
-    chkEnableRefSpurCancelation->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnEnableRefSpurCancelation), nullptr, this);
+    chkEnableRefSpurCancellation->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnEnableRefSpurCancellation), nullptr, this);
     btnChangeRefClk->Connect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnChangeRefClkClick), nullptr, this);
     btnUpdateValues->Connect(
@@ -861,10 +861,10 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     txtRefSpurBW->SetValue(_("5"));
 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
-    if (showRefClkSpurCancelation)
+    if (showRefClkSpurCancellation)
     {
         pnlRefClkSpur->Show();
-        showRefClkSpurCancelation = false;
+        showRefClkSpurCancellation = false;
     }
 }
 
@@ -942,8 +942,8 @@ void lms7002_pnlSX_view::OnbtnCalculateClick(wxCommandEvent& event)
     txtRefSpurBW->GetValue().ToDouble(&BWMHz);
     OpStatus status;
 
-    if (chkEnableRefSpurCancelation->IsChecked())
-        status = lmsControl->SetFrequencySXWithSpurCancelation(direction, freqMHz * 1e6, BWMHz * 1e6);
+    if (chkEnableRefSpurCancellation->IsChecked())
+        status = lmsControl->SetFrequencySXWithSpurCancellation(direction, freqMHz * 1e6, BWMHz * 1e6);
     else
         status = lmsControl->SetFrequencySX(direction, freqMHz * 1e6);
 
@@ -981,7 +981,7 @@ void lms7002_pnlSX_view::UpdateGUI()
     lblRefClk_MHz->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
     freq = lmsControl->GetFrequencySX(direction);
     lblRealOutFrequency->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
-    // TODO: if(chkEnableRefSpurCancelation->IsChecked())
+    // TODO: if(chkEnableRefSpurCancellation->IsChecked())
     // {
     //     uint16_t downconvert = 0;
     //     downconvert = ReadParam(LMS7002MCSR::CMIX_SC_RXTSP);
@@ -1022,10 +1022,10 @@ void lms7002_pnlSX_view::OnShowVCOclicked(wxCommandEvent& event)
     dlg->Destroy();
 }
 
-void lms7002_pnlSX_view::OnEnableRefSpurCancelation(wxCommandEvent& event)
+void lms7002_pnlSX_view::OnEnableRefSpurCancellation(wxCommandEvent& event)
 {
     // TODO:
-    // txtRefSpurBW->Enable(chkEnableRefSpurCancelation->IsChecked());
+    // txtRefSpurBW->Enable(chkEnableRefSpurCancellation->IsChecked());
     // uint16_t ch = 0;
     // ReadParam( LMS7002MCSR::MAC, &ch);
     // for(int i=0; i<2; ++i)
@@ -1033,7 +1033,7 @@ void lms7002_pnlSX_view::OnEnableRefSpurCancelation(wxCommandEvent& event)
     //     WriteParam( LMS7002MCSR::MAC, i+1);
     //     WriteParam( LMS7002MCSR::CMIX_GAIN_RXTSP, 1);
     //     WriteParam( LMS7002MCSR::CMIX_BYP_RXTSP, 0);
-    //     if(chkEnableRefSpurCancelation->IsChecked())
+    //     if(chkEnableRefSpurCancellation->IsChecked())
     //     {
     //         WriteParam( LMS7002MCSR::SEL_RX, 15);
     //     }

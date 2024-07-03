@@ -9,7 +9,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "DSP/FFT/FFT.h"
 #include <fstream>
-#include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
@@ -273,7 +272,7 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
 
     StreamStats rxStats;
     StreamStats txStats;
-    const uint8_t chipIndex = this->lmsIndex;
+    const uint8_t chipIndex = lmsIndex;
     device->StreamStatus(chipIndex, &rxStats, &txStats);
 
     float RxFilled = 100.0 * rxStats.FIFO.ratio();
@@ -648,6 +647,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     kiss_fft_free(m_fftCalcPlan);
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
+    pthis->device->StreamDestroy(chipIndex);
 
     for (int i = 0; i < channelsCount; ++i)
         delete[] buffers[i];

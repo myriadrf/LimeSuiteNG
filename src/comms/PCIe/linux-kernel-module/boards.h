@@ -20,7 +20,7 @@ enum eLMS_DEV {
     LMS_DEV_LIMESDR_PCIE = 15,
     LMS_DEV_LIMESDR_QPCIE = 16, //2x LMS, 14 bit ADC and DAC
     LMS_DEV_LIMESDRMINI = 17, //FTDI + MAX10 + LMS
-    LMS_DEV_USTREAM = 18, //with expansion booards (uMyriad)
+    LMS_DEV_USTREAM = 18, //with expansion boards (uMyriad)
     LMS_DEV_LIMESDR_SONY_PA = 19, //stand alone board with Sony PAs, tuners
     LMS_DEV_LIMESDR_USB_SP = 20,
     LMS_DEV_LMS7002M_ULTIMATE_EVB = 21,

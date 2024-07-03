@@ -131,9 +131,9 @@ class LIME_API CDCM_Dev
 
     /**
       @brief Sets the base address of the SPI.
-      @param SPI_BASE_ADDR The new address of the SPI.
+      @param newSPIBaseAddress The new address of the SPI.
      */
-    void SetSPIBaseAddr(uint16_t SPI_BASE_ADDR) { this->SPI_BASE_ADDR = SPI_BASE_ADDR; }
+    void SetSPIBaseAddr(uint16_t newSPIBaseAddress) { SPI_BASE_ADDR = newSPIBaseAddress; }
 
     /**
       @brief Gets the base address of the SPI.
@@ -157,9 +157,7 @@ class LIME_API CDCM_Dev
     bool IsInteger(double var) { return var == static_cast<int64_t>(var); }
     std::vector<CDCM_VCO> FindValidVCOFreqs(double lcm, int version);
     uint64_t FindGCD(uint64_t a, uint64_t b);
-    int GetLowestFreqErr(std::vector<CDCM_VCO> input);
-    int FindLowestPSAOutput(std::vector<CDCM_VCO> input);
-    int FindBestVCOConfigIndex(std::vector<CDCM_VCO>& input, int num_errors);
+    CDCM_VCO FindBestVCOConfig(std::vector<CDCM_VCO>& input);
     CDCM_VCO FindVCOConfig();
     int PrepareToReadRegs();
 

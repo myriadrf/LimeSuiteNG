@@ -49,11 +49,11 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     mainSizer->Add(szControls, 0, 0, 5);
 
     SetSizerAndFit(mainSizer);
-    //this->Layout();
+    //Layout();
     //mainSizer->Fit( this );
 
     // Connect Events
-    this->Connect(wxEVT_UPDATE_UI, wxUpdateUIEventHandler(pnlMiniLog::OnUpdateGUI));
+    Connect(wxEVT_UPDATE_UI, wxUpdateUIEventHandler(pnlMiniLog::OnUpdateGUI));
     btnClear->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnBtnClearClicked), nullptr, this);
     btnFullLog->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlMiniLog::OnShowFullLog), nullptr, this);
     choiceLogLvl->Connect(wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlMiniLog::onLogLvlChange), nullptr, this);
@@ -87,13 +87,13 @@ void pnlMiniLog::HandleMessage(wxCommandEvent& event)
     auto level = lime::LogLevel(event.GetInt());
     if (static_cast<int>(level) > log_level)
         return;
-    time_t rawtime;
-    struct tm* timeinfo;
+    time_t rawTime;
+    struct tm* timeInfo;
     char buffer[80];
     //add time stamp
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(buffer, 80, "%H:%M:%S", timeinfo);
+    time(&rawTime);
+    timeInfo = localtime(&rawTime);
+    strftime(buffer, 80, "%H:%M:%S", timeInfo);
     wxString line(wxString::Format("[%s] %s: %s", buffer, logLevelToName(level), event.GetString()));
 
     mAllMessages.push_back(line);

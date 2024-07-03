@@ -6,7 +6,6 @@
 #include <assert.h>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
-#include "lms7suiteEvents.h"
 #include <tuple>
 #include "wx/spinctrl.h"
 #include "limesuiteng/SDRDevice.h"
@@ -168,7 +167,7 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
 
         cmbCGSIN_LNA_RFE = NewComboBox(this, LMS7002MCSR::CGSIN_LNA_RFE);
         cmbCGSIN_LNA_RFE->SetToolTip(
-            wxT("Controls the cap parallel with the LNA input input NMOS CGS to control the Q of the maching circuit and provides "
+            wxT("Controls the cap parallel with the LNA input input NMOS CGS to control the Q of the matching circuit and provides "
                 "trade off between gain/NF and IIP. The higher the frequency, the lower CGSIN_LNA_RFE should be. Also, the higher "
                 "CGSIN, the lower the Q, The lower the gain, the higher the NF, and the higher the IIP3"));
         SizerAddTextAndControl(fgSizer43, wxT("Controls cap parallel with the LNA input"), cmbCGSIN_LNA_RFE);
@@ -397,8 +396,8 @@ lms7002_pnlRFE_view::lms7002_pnlRFE_view(wxWindow* parent, wxWindowID id, const 
 
     fgMainSizer->Add(fgSizer191, 1, wxEXPAND, 5);
 
-    this->SetSizerAndFit(fgMainSizer);
-    // this->Layout();
+    SetSizerAndFit(fgMainSizer);
+    // Layout();
     // fgMainSizer->Fit( this );
 
     wxArrayString temp;

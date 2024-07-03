@@ -14,8 +14,8 @@
 frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : IModuleFrame(parent, id, title, pos, size, style)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-    this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
     wxFlexGridSizer* fgSizer7;
     fgSizer7 = new wxFlexGridSizer(0, 2, 0, 0);
@@ -422,10 +422,10 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
 
     fgSizer7->Add(fgSizer10, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer7);
-    this->Layout();
+    SetSizer(fgSizer7);
+    Layout();
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 
     // Connect Events
     spinFFTsize->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(frFFTviewer::OnFFTsamplesCountChanged), nullptr, this);

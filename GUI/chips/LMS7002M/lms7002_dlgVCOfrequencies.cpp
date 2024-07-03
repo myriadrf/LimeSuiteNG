@@ -10,7 +10,7 @@ using namespace lime;
 lms7002_dlgVCOfrequencies::lms7002_dlgVCOfrequencies(wxWindow* parent, LMS7002M* plmsControl)
     : wxDialog(parent, wxID_ANY, wxT("VCO frequencies"))
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     wxFlexGridSizer* fgSizer247;
     fgSizer247 = new wxFlexGridSizer(0, 1, 5, 5);
@@ -234,11 +234,11 @@ lms7002_dlgVCOfrequencies::lms7002_dlgVCOfrequencies(wxWindow* parent, LMS7002M*
 
     fgSizer247->Add(fgSizer249, 0, wxALIGN_CENTER_HORIZONTAL, 5);
 
-    this->SetSizer(fgSizer247);
-    this->Layout();
+    SetSizer(fgSizer247);
+    Layout();
     fgSizer247->Fit(this);
 
-    this->Centre(wxBOTH);
+    Centre(wxBOTH);
 
     // Connect Events
     btnOk->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgVCOfrequencies::OnBtnOkClick), nullptr, this);

@@ -658,8 +658,8 @@ CDCM6208_panelgui::CDCM6208_panelgui(wxWindow* parent, wxWindowID id, const wxPo
 
     Master->Add(Right_Column, 1, wxEXPAND, 5);
 
-    this->SetSizer(Master);
-    this->Layout();
+    SetSizer(Master);
+    Layout();
     Master->Fit(this);
 
     // Connect Events
@@ -728,7 +728,7 @@ CDCM6208_panelgui::~CDCM6208_panelgui()
 void CDCM6208_panelgui::Initialize(CDCM_Dev* cdcm)
 {
     assert(cdcm);
-    this->CDCM = cdcm;
+    CDCM = cdcm;
     CDCM->DownloadConfiguration();
     UpdateGUI();
 

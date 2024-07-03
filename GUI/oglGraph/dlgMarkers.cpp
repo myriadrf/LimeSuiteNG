@@ -36,7 +36,7 @@ dlgMarkers::dlgMarkers(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     , initialized(false)
 {
     //(*Initialize(dlgMarkers)
-    Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER, _T("id"));
+    Create(parent, id, "Markers information", wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER, _T("id"));
     SetClientSize(wxDefaultSize);
     Move(wxDefaultPosition);
 
@@ -178,15 +178,15 @@ void dlgMarkers::UpdateValues()
         double valueB = 0;
         int cnt = 0;
 
-        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        if (!parent_graph->series[0]->values.empty() && parent_graph->series[0]->visible)
         {
-            valueA = parent_graph->series[0]->values[parent_graph->markers[i].dataValueIndex + 1];
+            valueA = parent_graph->series[0]->values.at(parent_graph->markers[i].dataValueIndex).y;
             cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
         }
 
-        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        if (!parent_graph->series[1]->values.empty() && parent_graph->series[1]->visible)
         {
-            valueB = parent_graph->series[1]->values[parent_graph->markers[i].dataValueIndex + 1];
+            valueB = parent_graph->series[1]->values.at(parent_graph->markers[i].dataValueIndex).y;
             std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
         }
 
@@ -204,13 +204,13 @@ void dlgMarkers::UpdateValues()
         char text[128] = { 0 };
         int cnt = 0;
 
-        if (parent_graph->series[0]->size > 0 && parent_graph->series[0]->visible)
+        if (!parent_graph->series[0]->values.empty() && parent_graph->series[0]->visible)
         {
             float deltaValue = marker_valuesA[src1] - marker_valuesA[src2];
             cnt = std::snprintf(text, sizeof(text), "%.3f (ChA) ; ", deltaValue);
         }
 
-        if (parent_graph->series[1]->size > 0 && parent_graph->series[1]->visible)
+        if (!parent_graph->series[1]->values.empty() && parent_graph->series[1]->visible)
         {
             float deltaValue = marker_valuesB[src1] - marker_valuesB[src2];
             std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%.3f (ChB)", deltaValue);

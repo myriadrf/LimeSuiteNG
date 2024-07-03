@@ -173,11 +173,11 @@ int CDCM_Dev::GetVCOInput()
 
 /**
     @brief Sets all CDCM outputs.
-    @param Outputs CDCM Outputs structure.
+    @param newOutputs CDCM Outputs structure.
 */
-void CDCM_Dev::SetOutputs(CDCM_Outputs Outputs)
+void CDCM_Dev::SetOutputs(CDCM_Outputs newOutputs)
 {
-    this->Outputs = Outputs;
+    Outputs = newOutputs;
 }
 
 /**
@@ -386,11 +386,11 @@ CDCM_VCO CDCM_Dev::GetVCO()
 
 /**
     @brief Sets CDCM VCO.
-    @param VCO The voltage-controlled oscillator to use.
+    @param newVCO The voltage-controlled oscillator to use.
 */
-void CDCM_Dev::SetVCO(CDCM_VCO VCO)
+void CDCM_Dev::SetVCO(CDCM_VCO newVCO)
 {
-    this->VCO = VCO;
+    VCO = newVCO;
     UpdateOutputFrequencies();
 }
 
@@ -409,7 +409,7 @@ void CDCM_Dev::SetVCOMultiplier(int value)
 /**
     @brief Sets CDCM version.
     @param version 0 - version 1; 1 - version 2.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::SetVersion(uint8_t version)
 {
@@ -450,7 +450,7 @@ bool CDCM_Dev::IsLocked()
 
 /**
     @brief Uploads current CDCM configuration to FPGA registers.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::UploadConfiguration()
 {
@@ -563,7 +563,7 @@ int CDCM_Dev::UploadConfiguration()
 
 /**
     @brief Downloads current CDCM configuration from FPGA registers.
-    @return 0 on sucesss; -1 on error.
+    @return 0 on success; -1 on error.
 */
 int CDCM_Dev::DownloadConfiguration()
 {
@@ -822,10 +822,10 @@ int CDCM_Dev::PrepareToReadRegs()
 }
 
 /**
-    @brief Calculates numerator and denumenator values from decimal.
+    @brief Calculates numerator and denominator values from decimal.
     @param decimal Decimal value.
     @param[out] num Numerator value.
-    @param[out] den Denumenator value.
+    @param[out] den Denominator value.
     @return Error value after conversion.
 */
 double CDCM_Dev::DecToFrac(double decimal, int* num, int* den)
@@ -934,75 +934,21 @@ uint64_t CDCM_Dev::FindGCD(uint64_t a, uint64_t b)
 }
 
 /**
-    @brief Finds the index of VCO input vector which has lowest Prescaler A value.
-    @param input Vector of VCO configurations.
-    @return Index of lowest input.
-*/
-int CDCM_Dev::FindLowestPSAOutput(std::vector<CDCM_VCO> input)
-{
-    int min_nom = 0xFFFFFFF;
-    int index = 0;
-    int curr_val;
-    for (size_t i = 0; i < input.size(); i++)
-    {
-        curr_val = input[i].N_mul_full * input[i].prescaler_A;
-        if (curr_val < min_nom)
-        {
-            min_nom = curr_val;
-            index = i;
-        }
-    }
-    return index;
-}
-
-/**
-    @brief Finds the index of VCO input vector which has lowest frequency error.
-    @param input Vector of VCO configurations.
-    @return Index of lowest input.
-*/
-int CDCM_Dev::GetLowestFreqErr(std::vector<CDCM_VCO> input)
-{
-    double min_err = 100e6;
-    int index = 0;
-    for (size_t i = 0; i < input.size(); i++)
-    {
-        if (input[i].freq_err < min_err)
-        {
-            min_err = input[i].freq_err;
-            index = i;
-        }
-    }
-    return index;
-}
-
-/**
     @brief Finds best VCO configuration index.
     @param input Vector of VCO configurations.
-    @param num_errors How many errors there are in all configurations.
-    @return Index of best VCO configuration.
+    @return Best VCO configuration.
 */
-int CDCM_Dev::FindBestVCOConfigIndex(std::vector<CDCM_VCO>& input, int num_errors)
+CDCM_VCO CDCM_Dev::FindBestVCOConfig(std::vector<CDCM_VCO>& input)
 {
-    int no_error = input.size() - num_errors;
-    // All configs have freq. errors
-    if (no_error == 0)
-    {
-        return GetLowestFreqErr(input);
-    }
-    // No configs have freq. errors
-    else if (num_errors == 0)
-    {
-        return FindLowestPSAOutput(input);
-    }
-    else
-    {
-        for (int i = (input.size() - 1); i >= 0; i--)
+    return *std::min_element(input.begin(), input.end(), [](const CDCM_VCO& left, const CDCM_VCO& right) {
+        if (left.freq_err != right.freq_err) // Find lowest error
         {
-            if (input[i].freq_err > 0)
-                input.erase(input.begin() + i);
+            return left.freq_err < right.freq_err;
         }
-        return FindLowestPSAOutput(input);
-    }
+
+        // If equal error (ideally 0), find lowest PSA output
+        return left.N_mul_full * left.prescaler_A < right.N_mul_full * right.prescaler_A;
+    });
 }
 
 /**
@@ -1044,36 +990,31 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
     }
 
     // Find number of valid VCO freqs for each prescaler
-    std::vector<CDCM_VCO> Config_vector;
-    Config_vector = FindValidVCOFreqs(int_lcm, VCO.version);
+    std::vector<CDCM_VCO> Config_vector{ FindValidVCOFreqs(int_lcm, VCO.version) };
 
-    int have_error = 0;
-    int max_r_div = GetVCOInput() ? 16 : 1;
+    const uint8_t max_r_div = GetVCOInput() ? 16 : 1;
 
-    for (size_t i = 0; i < Config_vector.size(); i++)
+    for (auto& config : Config_vector)
     {
-        Config_vector[i].prim_freq = VCO.prim_freq;
-        Config_vector[i].sec_freq = VCO.sec_freq;
+        config.prim_freq = VCO.prim_freq;
+        config.sec_freq = VCO.sec_freq;
         double min_err = std::numeric_limits<double>::max();
 
-        for (int r_div = 1; r_div <= max_r_div; r_div++)
+        for (uint8_t r_div = 1; r_div <= max_r_div; r_div++)
         {
             double input_freq = ((GetVCOInput() == 1 ? VCO.prim_freq : VCO.sec_freq) / r_div) * input_shift;
             int n_mul = 1, m_div = 1;
 
-            Config_vector[i].freq_err = DecToFrac(Config_vector[i].output_freq / input_freq, &n_mul, &m_div);
+            config.freq_err = DecToFrac(config.output_freq / input_freq, &n_mul, &m_div);
 
-            if (min_err > Config_vector[i].freq_err)
+            if (min_err > config.freq_err)
             {
-                min_err = Config_vector[i].freq_err;
-                Config_vector[i].R_div = r_div;
-                Config_vector[i].N_mul_full = n_mul;
-                Config_vector[i].M_div = m_div;
+                min_err = config.freq_err;
+                config.R_div = r_div;
+                config.N_mul_full = n_mul;
+                config.M_div = m_div;
             }
         }
-
-        if (Config_vector[i].freq_err > 0)
-            have_error++;
     }
 
     if (Config_vector.empty())
@@ -1083,11 +1024,10 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
         return vco_config;
     }
 
-    // Find index of best config
-    int best_index = FindBestVCOConfigIndex(Config_vector, have_error);
-    Config_vector[best_index].valid = true;
-    Config_vector[best_index].input_mux = GetVCOInput();
-    return Config_vector[best_index];
+    auto best_vco{ FindBestVCOConfig(Config_vector) };
+    best_vco.valid = true;
+    best_vco.input_mux = GetVCOInput();
+    return best_vco;
 }
 
 /**

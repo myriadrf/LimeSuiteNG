@@ -37,9 +37,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-    void StreamStop(uint8_t moduleIndex) override;
-
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
@@ -98,7 +95,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     std::shared_ptr<LitePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 
-    std::mutex mCommsMutex;
     bool mConfigInProgress;
 };
 

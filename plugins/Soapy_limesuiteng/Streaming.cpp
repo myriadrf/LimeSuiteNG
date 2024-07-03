@@ -249,6 +249,7 @@ void Soapy_limesuiteng::closeStream(SoapySDR::Stream* stream)
 
     const auto& ownerDevice = icstream->ownerDevice;
     ownerDevice->StreamStop(0);
+    ownerDevice->StreamDestroy(0);
     delete icstream;
 }
 

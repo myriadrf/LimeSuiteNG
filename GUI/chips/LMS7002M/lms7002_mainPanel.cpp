@@ -25,7 +25,6 @@
 #include <wx/filedlg.h>
 #include <wx/notebook.h>
 #include <wx/bookctrl.h>
-#include "lms7suiteEvents.h"
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"
 
@@ -183,7 +182,7 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
 #undef CreatePage
 
     mainSizer->Add(tabsNotebook, 0, wxEXPAND, 5);
-    this->SetSizerAndFit(mainSizer);
+    SetSizerAndFit(mainSizer);
 
     // Connect Events
     btnOpen->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnOpenProject), nullptr, this);

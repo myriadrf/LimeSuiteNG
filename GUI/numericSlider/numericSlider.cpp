@@ -54,8 +54,8 @@ NumericSlider::NumericSlider(wxWindow* parent,
 
     mScroll->SetThumbPosition(mSpinner->GetValue() - mSpinner->GetMin());
 
-    this->SetSizer(mainSizer);
-    this->Layout();
+    SetSizer(mainSizer);
+    Layout();
     mainSizer->Fit(this);
 }
 
@@ -66,7 +66,7 @@ NumericSlider::~NumericSlider()
 void NumericSlider::OnSpinnerChangeEnter(wxSpinEvent& event)
 {
     wxCommandEvent evt(wxEVT_COMMAND_SPINCTRL_UPDATED);
-    evt.SetId(this->GetId());
+    evt.SetId(GetId());
     long value = 0;
     event.GetString().ToLong(&value);
     evt.SetInt(value);
@@ -78,7 +78,7 @@ void NumericSlider::OnSpinnerChangeEnter(wxSpinEvent& event)
 void NumericSlider::OnSpinnerChange(wxSpinEvent& event)
 {
     wxCommandEvent evt(wxEVT_COMMAND_SPINCTRL_UPDATED);
-    evt.SetId(this->GetId());
+    evt.SetId(GetId());
     evt.SetInt(event.GetInt());
     evt.SetEventObject(this);
     mScroll->SetThumbPosition(event.GetInt() - mSpinner->GetMin());
@@ -88,7 +88,7 @@ void NumericSlider::OnSpinnerChange(wxSpinEvent& event)
 void NumericSlider::OnScrollChange(wxScrollEvent& event)
 {
     wxCommandEvent evt(wxEVT_COMMAND_SPINCTRL_UPDATED);
-    evt.SetId(this->GetId());
+    evt.SetId(GetId());
     evt.SetEventObject(this);
     mSpinner->SetValue(event.GetInt() + mSpinner->GetMin());
     evt.SetInt(event.GetInt() + mSpinner->GetMin());

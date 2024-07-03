@@ -1318,8 +1318,8 @@ lms7002_pnlRXTSP_view::lms7002_pnlRXTSP_view(wxWindow* parent, wxWindowID id, co
 
     fgSizer223->Add(fgSizer218, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer223);
-    this->Layout();
+    SetSizer(fgSizer223);
+    Layout();
 
     // Connect Events
     chkEN_RXTSP->Connect(

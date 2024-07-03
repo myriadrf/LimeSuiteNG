@@ -15,7 +15,7 @@ FFT::FFT(uint32_t size)
     doWork.store(true, std::memory_order_relaxed);
     mWorkerThread = std::thread(&FFT::ProcessLoop, this);
 
-    GenerateWindowCoefficients(WindowFunctionType::BLACKMAN_HARRIS, m_fftCalcIn.size(), mWindowCoefs);
+    GenerateWindowCoefficients(WindowFunctionType::BLACKMAN_HARRIS, m_fftCalcIn.size(), mWindowCoeffs);
 }
 
 FFT::~FFT()
@@ -43,8 +43,8 @@ void FFT::SetResultsCallback(FFT::CallbackType fptr, void* userData)
 std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFunctionType window)
 {
     const int fftSize = samples.size();
-    std::vector<float> coefs;
-    GenerateWindowCoefficients(window, fftSize, coefs);
+    std::vector<float> coeffs;
+    GenerateWindowCoefficients(window, fftSize, coeffs);
 
     std::vector<kiss_fft_cpx> fftIn(fftSize);
     std::vector<kiss_fft_cpx> fftOut(fftSize);
@@ -53,8 +53,8 @@ std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFun
 
     for (int i = 0; i < fftSize; ++i)
     {
-        fftIn[i].r = samples[i].real() * coefs[i];
-        fftIn[i].i = samples[i].imag() * coefs[i];
+        fftIn[i].r = samples[i].real() * coeffs[i];
+        fftIn[i].i = samples[i].imag() * coeffs[i];
     }
     kiss_fft(plan, fftIn.data(), fftOut.data());
     for (int i = 0; i < fftSize; ++i)
@@ -76,8 +76,8 @@ void FFT::Calculate(const complex16_t* src, uint32_t count, std::vector<float>& 
     assert(count == m_fftCalcIn.size());
     for (uint32_t i = 0; i < count; ++i)
     {
-        m_fftCalcIn[i].r = src[i].real() / 32768.0 * mWindowCoefs[i];
-        m_fftCalcIn[i].i = src[i].imag() / 32768.0 * mWindowCoefs[i];
+        m_fftCalcIn[i].r = src[i].real() / 32768.0 * mWindowCoeffs[i];
+        m_fftCalcIn[i].i = src[i].imag() / 32768.0 * mWindowCoeffs[i];
     }
     kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
     outputBins.resize(count);
@@ -93,8 +93,8 @@ void FFT::Calculate(const complex32f_t* src, uint32_t count, std::vector<float>&
     assert(count == m_fftCalcIn.size());
     for (uint32_t i = 0; i < count; ++i)
     {
-        m_fftCalcIn[i].r = src[i].real() * mWindowCoefs[i];
-        m_fftCalcIn[i].i = src[i].imag() * mWindowCoefs[i];
+        m_fftCalcIn[i].r = src[i].real() * mWindowCoeffs[i];
+        m_fftCalcIn[i].i = src[i].imag() * mWindowCoeffs[i];
     }
     kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
     outputBins.resize(count);

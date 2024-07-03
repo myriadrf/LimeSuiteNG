@@ -1190,8 +1190,8 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
 
     fgSizer215->Add(fgSizer218, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer215);
-    this->Layout();
+    SetSizer(fgSizer215);
+    Layout();
     fgSizer215->Fit(this);
 
     // Connect Events

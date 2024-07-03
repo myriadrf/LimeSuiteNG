@@ -37,7 +37,7 @@ std::vector<std::string> LitePCIe::GetPCIeDeviceList()
 {
     std::vector<std::string> devices;
     FILE* lsPipe;
-    lsPipe = popen("ls -1 -- /sys/class/litepcie", "r");
+    lsPipe = popen("ls -1 -- /sys/class/litepcie 2> /dev/null", "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
         devices.push_back(tempBuffer);
@@ -59,7 +59,7 @@ LitePCIe::~LitePCIe()
 OpStatus LitePCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
-    // use O_RDWR for now, because MMAP PROT_WRITE imples PROT_READ and will fail if file is opened write only
+    // use O_RDWR for now, because MMAP PROT_WRITE implies PROT_READ and will fail if file is opened write only
     flags &= ~O_WRONLY;
     flags |= O_RDWR;
     mFileDescriptor = open(mFilePath.c_str(), flags);

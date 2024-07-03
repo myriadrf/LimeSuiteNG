@@ -3,7 +3,7 @@
 @author Lime Microsystems
 @brief  panel for uploading data to FPGA
 */
-#include "LMS_Programing_wxgui.h"
+#include "LMS_Programming_wxgui.h"
 
 #include <wx/sizer.h>
 #include <wx/stattext.h>

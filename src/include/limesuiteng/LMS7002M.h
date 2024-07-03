@@ -254,7 +254,7 @@ class LIME_API LMS7002M
     uint16_t SPI_read(uint16_t address, bool fromChip = false, OpStatus* status = 0);
 
     /*!
-     * @brief Performs registers test by writing known data and confirming readback data
+     * @brief Performs registers test by writing known data and confirming read-back data
      * @param fileName The name of the file to write the test output to.
      * @return The operation status.
      */
@@ -495,7 +495,7 @@ class LIME_API LMS7002M
     float_type GetReferenceClk_SX(TRXDir dir);
 
     /*!
-     * Returns the curernt frequency of the clock generator.
+     * Returns the current frequency of the clock generator.
      * @return Current CLKGEN frequency in Hz.
      * Returned frequency depends on reference clock used for Receiver.
     */
@@ -531,13 +531,13 @@ class LIME_API LMS7002M
     OpStatus SetFrequencySX(TRXDir dir, float_type freq_Hz);
 
     /*!
-     * @brief Sets SX frequency with Reference clock spur cancelation
+     * @brief Sets SX frequency with Reference clock spur cancellation
      * @param dir Rx/Tx module selection
      * @param freq_Hz desired frequency in Hz
      * @param BW The bandwidth (in Hz)
      * @return The status of the operation
      */
-    OpStatus SetFrequencySXWithSpurCancelation(TRXDir dir, float_type freq_Hz, float_type BW);
+    OpStatus SetFrequencySXWithSpurCancellation(TRXDir dir, float_type freq_Hz, float_type BW);
 
     /*!
      * @brief Gets whether the VCO comparators of the LO synthesizer are locked or not.
@@ -708,7 +708,7 @@ class LIME_API LMS7002M
 
     /*!
      * Enables/disables TDD mode
-     * @param enable true - use same PLL for Tx and Rx, false - us seperate PLLs
+     * @param enable true - use same PLL for Tx and Rx, false - us separate PLLs
      * @return The status of the operation
      */
     OpStatus EnableSXTDD(bool enable);
@@ -723,7 +723,7 @@ class LIME_API LMS7002M
     OpStatus SetDCOffset(TRXDir dir, const float_type I, const float_type Q);
 
     /*!
-     * Readback the TX DC offset adjustment.
+     * Read-back the TX DC offset adjustment.
      * @param dir true for tx, false for rx
      * @param [out] I the real adjustment [+1.0, -1.0]
      * @param [out] Q the imaginary adjustment [+1.0, -1.0]
