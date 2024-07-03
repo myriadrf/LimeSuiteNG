@@ -15,14 +15,26 @@ namespace lime {
 class FFT
 {
   public:
-    /// @brief Enumeration for selecting the window coefficient function to use
+    /// @brief The type of the callback which gets called on a calculations update.
     typedef void (*CallbackType)(const std::vector<float>& bins, void* userData);
+
+    /// @brief Constructs the FFT object.
+    /// @param size The amount of bins to use.
     FFT(uint32_t size);
     ~FFT();
 
+    /// @brief Adds the given samples to the FFT calculation.
+    /// @param samples The samples to add to the calculation.
+    /// @param count The amount of samples to add to the calculation.
+    /// @return The amount of samples actually added to the buffer.
     int PushSamples(const complex32f_t* samples, uint32_t count);
+
+    /// @brief Sets the function to call when a calculations update happens.
+    /// @param fptr The pointer to the function to call.
+    /// @param userData The data to pass to the function.
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
+    /// @brief Enumeration for selecting the window coefficient function to use
     enum class WindowFunctionType { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
 
     /// @brief Generates the coefficients for a given window function
