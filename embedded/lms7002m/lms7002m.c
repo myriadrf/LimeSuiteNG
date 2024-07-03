@@ -291,7 +291,7 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     if (vco <= cgen_vco_min || vco >= cgen_vco_max)
     {
         return lms7002m_report_error(
-            self, lime_Result_Error, "SetFrequencyCGEN(%g MHz) - cannot deliver requested frequency", freq_Hz);
+            self, lime_Result_Error, "SetFrequencyCGEN(%u Hz) - cannot deliver requested frequency", freq_Hz);
     }
 
     const uint32_t refClk = lms7002m_get_reference_clock(self);
@@ -306,7 +306,7 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     lms7002m_spi_modify_csr(self, LMS7002M_DIV_OUTCH_CGEN, div_outch_cgen); //DIV_OUTCH_CGEN
 
     LOG_D(self, "INT %d, FRAC %d, DIV_OUTCH_CGEN %d", integerPart, fractionalPart, div_outch_cgen);
-    LOG_D(self, "VCO %.2f MHz, RefClk %u MHz", vco, refClk);
+    LOG_D(self, "VCO %u Hz, RefClk %u Hz", vco, refClk);
 
     if (lms7002m_tune_cgen_vco(self) != lime_Result_Success)
     {
@@ -471,7 +471,7 @@ struct lms7002m_decibel lms7002m_get_rfelna_db(lms7002m_context* self, const enu
 }
 
 lime_Result lms7002m_set_rfe_loopback_lna_db(
-    lms7002m_context* self, const struct lms7002m_decibel gain, const enum lms7002m_channel channel) // TODO
+    lms7002m_context* self, const struct lms7002m_decibel gain, const enum lms7002m_channel channel)
 {
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
@@ -628,7 +628,7 @@ struct lms7002m_decibel lms7002m_get_trfpad_db(lms7002m_context* self, const enu
 }
 
 lime_Result lms7002m_set_trf_loopback_pad_db(
-    lms7002m_context* self, const struct lms7002m_decibel gain, const enum lms7002m_channel channel) // TODO
+    lms7002m_context* self, const struct lms7002m_decibel gain, const enum lms7002m_channel channel)
 {
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
@@ -646,7 +646,7 @@ lime_Result lms7002m_set_trf_loopback_pad_db(
     return ret;
 }
 
-struct lms7002m_decibel lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const enum lms7002m_channel channel) // TODO
+struct lms7002m_decibel lms7002m_get_trf_loopback_pad_db(lms7002m_context* self, const enum lms7002m_channel channel)
 {
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
@@ -982,7 +982,7 @@ static lime_Result lms7002m_write_sx_registers(
     lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
 
     LOG_D(self,
-        "SX VCO:%.3f MHz, RefClk:%.3f MHz, INT:%d, FRAC:%d, DIV_LOCH:%d, EN_DIV2_DIVPROG:%d",
+        "SX VCO:% Hz, RefClk:%u Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
         VCOfreq_hz,
         reference_clock_hz,
         integerPart,
@@ -995,7 +995,7 @@ static lime_Result lms7002m_write_sx_registers(
 
 lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_t LO_freq_hz)
 {
-    LOG_D(self, "Set %s LO frequency (%g MHz)", isTx ? "Tx" : "Rx", LO_freq_hz);
+    LOG_D(self, "Set %s LO frequency (%u Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
 
     if (LO_freq_hz < 0)
         return lime_Result_InvalidValue;
@@ -1036,7 +1036,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_
     {
         return lms7002m_report_error(self,
             lime_Result_OutOfRange,
-            "SetFrequencySX%s(%g MHz) - required VCO frequencies are out of range [%g-%g] MHz",
+            "SetFrequencySX%s(%u Hz) - required VCO frequencies are out of range [%g-%g] Hz",
             isTx ? "T" : "R",
             LO_freq_hz,
             VCO_min_frequency[0],
@@ -1108,7 +1108,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_
 
     if (canDeliverFrequency == false)
         return lms7002m_report_error(
-            self, lime_Result_Error, "SetFrequencySX%s(%g MHz) - cannot deliver frequency", isTx ? "T" : "R", LO_freq_hz);
+            self, lime_Result_Error, "SetFrequencySX%s(%u Hz) - cannot deliver frequency", isTx ? "T" : "R", LO_freq_hz);
     return lime_Result_Success;
 }
 
