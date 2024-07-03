@@ -370,7 +370,8 @@ class OpenGLGraph : public wxGLCanvas
     void switchToWindowView();
     void switchToDataView();
 
-    GLvoid glRenderText(float posx, float posy, float angle, float scale, unsigned int rgba, const char* fmt, ...);
+    GLvoid glRenderText
+        [[gnu::format(printf, 7, 8)]] (float posx, float posy, float angle, float scale, unsigned int rgba, const char* fmt, ...);
     int TextWidthInPixels(const char* str);
     int NumberWidthInPixels(float num, unsigned int prec = 0);
     int LineHeight();

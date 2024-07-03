@@ -54,7 +54,7 @@ class AmarisoftParamProvider : public LimeSettingsProvider
 };
 
 static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
-static void Log(LogLevel lvl, const char* format, ...)
+static void Log [[gnu::format(printf, 2, 3)]] (LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
         return;
@@ -235,7 +235,7 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
 
     if (rate < bandwidth)
     {
-        Log(LogLevel::Error, "Port[%i] Manually specified sample rate %i is less than LTE bandwidth %i", p, rate, bandwidth);
+        Log(LogLevel::Error, "Port[%i] Manually specified sample rate %f is less than LTE bandwidth %i", p, rate, bandwidth);
         return -1;
     }
     Log(LogLevel::Info, "Port[%i] Manually specified sample rate: %f MSps", p, rate / 1e6);

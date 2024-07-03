@@ -455,9 +455,10 @@ void OpenGLGraph::DrawStaticElements()
         0,
         fheight,
         0,
+        "%s",
         settings.titleXaxis.c_str());
     m_font->getTextSize(settings.titleYaxis.c_str(), tw, th, fheight);
-    glRenderText(settings.marginLeft + 1, settings.windowHeight - th - 1, 0, fheight, 0, settings.titleYaxis.c_str());
+    glRenderText(settings.marginLeft + 1, settings.windowHeight - th - 1, 0, fheight, 0, "%s", settings.titleYaxis.c_str());
 
     double pixelXvalue = 0;
     double pixelYvalue = 0;

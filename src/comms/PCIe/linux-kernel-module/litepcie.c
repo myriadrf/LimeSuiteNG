@@ -1344,7 +1344,7 @@ static void litepcie_free_chdev(struct litepcie_device *s)
 }
 
 /* from stackoverflow */
-void sfind(char *string, char *format, ...)
+void __attribute__((format(scanf, 2, 3))) sfind(char *string, char *format, ...)
 {
     va_list arglist;
 

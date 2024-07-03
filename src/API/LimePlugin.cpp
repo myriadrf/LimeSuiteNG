@@ -79,7 +79,8 @@ LimePluginContext::LimePluginContext()
 
 enum CalibrateFlag { None = 0, DCIQ = 1, Filter = 2 };
 
-template<class T> static bool GetSetting(LimeSettingsProvider* settings, T* pval, const char* prop_name_format, ...)
+template<class T>
+static bool GetSetting [[gnu::format(printf, 3, 4)]] (LimeSettingsProvider* settings, T* pval, const char* prop_name_format, ...)
 {
     char name[256];
     va_list args;
@@ -94,7 +95,8 @@ template<class T> static bool GetSetting(LimeSettingsProvider* settings, T* pval
     return true;
 }
 
-template<> bool GetSetting(LimeSettingsProvider* settings, std::string* pval, const char* prop_name_format, ...)
+template<>
+bool GetSetting [[gnu::format(printf, 3, 4)]] (LimeSettingsProvider* settings, std::string* pval, const char* prop_name_format, ...)
 {
     char name[256];
     va_list args;
@@ -105,7 +107,8 @@ template<> bool GetSetting(LimeSettingsProvider* settings, std::string* pval, co
     return settings->GetString(*pval, name);
 }
 
-template<class T> static bool GetParam(LimePluginContext* context, T& pval, const char* prop_name_format, ...)
+template<class T>
+static bool GetParam [[gnu::format(printf, 3, 4)]] (LimePluginContext* context, T& pval, const char* prop_name_format, ...)
 {
     char name[256];
     va_list args;
@@ -122,7 +125,7 @@ template<class T> static bool GetParam(LimePluginContext* context, T& pval, cons
 
 static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
 
-static void Log(LogLevel lvl, const char* format, ...)
+static void Log [[gnu::format(printf, 2, 3)]] (LogLevel lvl, const char* format, ...)
 {
     if (lvl > logVerbosity)
         return;
@@ -167,7 +170,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
            << " MB/s"sv
            << "\nTx| Late: "sv << status.tx.loss << " underrun: "sv << status.tx.underrun << " rate: "sv
            << status.tx.dataRate_Bps / 1e6 << " MB/s"sv;
-        Log(LogLevel::Warning, ss.str().c_str());
+        Log(LogLevel::Warning, "%s", ss.str().c_str());
         lastStreamUpdate = now;
     }
     return false;
@@ -413,7 +416,7 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         const auto& desc = node.device->GetDescriptor();
         if (node.chipIndex >= desc.rfSOC.size())
         {
-            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%i has only %i chips.", node.chipIndex, i, desc.rfSOC.size());
+            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%li has only %li chips.", node.chipIndex, i, desc.rfSOC.size());
             return OpStatus::OutOfRange;
         }
 
@@ -430,12 +433,12 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
 
         if (chip->LoadConfig(configFilepath, false) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "dev%s chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
+            Log(LogLevel::Error, "dev%li chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
             return OpStatus::Error;
         }
 
         node.config.skipDefaults = true;
-        Log(LogLevel::Info, "dev%i chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
+        Log(LogLevel::Info, "dev%li chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
     }
     return OpStatus::Success;
 }
@@ -527,7 +530,7 @@ static void GatherDeviceTreeNodeSettings(LimePluginContext* context, LimeSetting
         DevNode& dev = context->rfdev.at(i);
         char devPrefix[16];
         std::snprintf(devPrefix, sizeof(devPrefix), "dev%i", i);
-        GetSetting(settings, &dev.handleString, devPrefix);
+        GetSetting(settings, &dev.handleString, "%s", devPrefix);
         GetSetting(settings, &dev.chipIndex, "%s_chip_index", devPrefix);
 
         GatherConfigSettings(&dev.configInputs, settings, devPrefix);
@@ -544,7 +547,7 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
         char portPrefix[16];
         std::snprintf(portPrefix, sizeof(portPrefix), "port%i", i);
         GatherConfigSettings(&port.configInputs, settings, portPrefix);
-        if (GetSetting(settings, &port.deviceNames, portPrefix))
+        if (GetSetting(settings, &port.deviceNames, "%s", portPrefix))
         {
             ++specifiedPortsCount;
             OpStatus status = AssignDevicesToPorts(context);
@@ -789,7 +792,7 @@ static void TransferRuntimeParametersToConfig(
                 params.freq[i] / 1.0e6,
                 trxConfig.centerFrequency / 1.0e6,
                 (trxConfig.centerFrequency - params.freq[i]) / 1.0e6);
-            Log(LogLevel::Info, loFreqStr);
+            Log(LogLevel::Info, "%s", loFreqStr);
         }
 
         if (trxConfig.gfir.bandwidth == 0) // update only if not set by settings file
@@ -802,7 +805,7 @@ static void TransferRuntimeParametersToConfig(
         const auto& paths = desc.pathNames.at(isTx ? TRXDir::Tx : TRXDir::Rx);
 
         Log(LogLevel::Verbose,
-            "%s channel%i: dev%i chip%i ch%i , LO: %.3f MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
+            "%s channel%li: dev%i chip%i ch%i , LO: %.3f MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
             isTx ? "Tx" : "Rx",
             i,
             channelMap[i].parent->devIndex,
@@ -860,7 +863,7 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             continue;
 
         Log(LogLevel::Debug,
-            "Port[%i] Stream samples format: %s , link: %s %s",
+            "Port[%li] Stream samples format: %s , link: %s %s",
             p,
             stream.format == DataFormat::F32 ? "F32" : "I16",
             stream.linkFormat == DataFormat::I12 ? "I12" : "I16",
@@ -869,7 +872,7 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         port.composite = new StreamComposite(aggregates);
         if (port.composite->StreamSetup(stream) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "Port%i stream setup failed.", p);
+            Log(LogLevel::Error, "Port%li stream setup failed.", p);
             return OpStatus::Error;
         }
     }
@@ -898,12 +901,12 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                 continue;
             else if (node.device != nullptr && !node.assignedToPort)
             {
-                Log(LogLevel::Warning, "dev%i is not assigned to any port.", i);
+                Log(LogLevel::Warning, "dev%li is not assigned to any port.", i);
                 continue;
             }
             try
             {
-                Log(LogLevel::Debug, "dev%i configure.", i);
+                Log(LogLevel::Debug, "dev%li configure.", i);
                 OpStatus status = node.device->Configure(node.config, node.chipIndex);
                 if (status != OpStatus::Success)
                     return -1;

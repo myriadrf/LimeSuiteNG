@@ -670,7 +670,7 @@ API_EXPORT int CALL_CONV LMS_Calibrate(lms_device_t* device, bool dir_tx, size_t
         apiDevice->device->Calibrate(apiDevice->moduleIndex, direction, chan, bw);
     } catch (...)
     {
-        lime::error("Failed to calibrate %s channel %i.", ToString(direction).c_str(), chan);
+        lime::error("Failed to calibrate %s channel %li.", ToString(direction).c_str(), chan);
 
         return -1;
     }
@@ -732,7 +732,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
         apiDevice->device->SetTestSignal(apiDevice->moduleIndex, direction, chan, enumToTestStruct(sig), dc_i, dc_q);
     } catch (...)
     {
-        lime::error("Failed to set %s channel %i test signal.", ToString(direction).c_str(), chan);
+        lime::error("Failed to set %s channel %li test signal.", ToString(direction).c_str(), chan);
     }
 
     return 0;
