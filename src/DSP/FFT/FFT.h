@@ -6,21 +6,26 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 #include "RingBuffer.h"
 #include "../external/kissFFT/kiss_fft.h"
 
 namespace lime {
 
 /// @brief Class for calculating Fast Fourier Transforms.
-class FFT
+class LIME_API FFT
 {
   public:
     /// @brief The type of the callback which gets called on a calculations update.
-    typedef void (*CallbackType)(const std::vector<float>& bins, void* userData);
+    typedef std::function<void(const std::vector<float>& bins, void* userData)> CallbackType;
+
+        /// @brief Enumeration for selecting the window coefficient function to use
+    enum class WindowFunctionType : uint8_t { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
 
     /// @brief Constructs the FFT object.
     /// @param size The amount of bins to use.
-    FFT(uint32_t size);
+    /// @param windowType The Window function to initially initialize the FFT transform with.
+    FFT(uint32_t size, WindowFunctionType windowType = WindowFunctionType::BLACKMAN_HARRIS);
     ~FFT();
 
     /// @brief Adds the given samples to the FFT calculation.
@@ -34,14 +39,14 @@ class FFT
     /// @param userData The data to pass to the function.
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
-    /// @brief Enumeration for selecting the window coefficient function to use
-    enum class WindowFunctionType { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
+    void SetWindowFunction(WindowFunctionType windowType);
+    void SetAverageCount(int count);
 
     /// @brief Generates the coefficients for a given window function
     /// @param type The type of the window function to generate the coefficients for.
     /// @param coefCount The amount of coefficients to generate.
     /// @param coeffs The buffer to which to store the coefficients.
-    LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coeffs);
+    static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coeffs);
 
     /// @brief Calculates the FFT bins from the provided samples.
     /// @param samples The samples to calculate from.
@@ -61,6 +66,8 @@ class FFT
     RingBuffer<complex32f_t> samplesFIFO;
 
     std::thread mWorkerThread;
+
+    WindowFunctionType currentWindowType;
 
     kiss_fft_cfg m_fftCalcPlan;
     std::vector<float> mWindowCoeffs;

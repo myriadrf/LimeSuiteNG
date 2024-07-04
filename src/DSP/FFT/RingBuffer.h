@@ -75,6 +75,8 @@ template<class T> class RingBuffer
         return produced;
     }
 
+    int Size() const { return size; }
+
   private:
     std::mutex mMutex;
     std::vector<T> buffer;

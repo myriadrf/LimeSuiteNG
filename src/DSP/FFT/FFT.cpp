@@ -1,12 +1,14 @@
 #include "FFT.h"
 
-#include <assert.h>
+#include <cassert>
+#include <cstring>
 #include <chrono>
 
 namespace lime {
 
-FFT::FFT(uint32_t size)
+FFT::FFT(uint32_t size, WindowFunctionType windowType)
     : samplesFIFO(size * 128)
+    , currentWindowType(windowType)
     , m_fftCalcPlan(kiss_fft_alloc(size, 0, nullptr, nullptr))
 {
     m_fftCalcIn.resize(size);
@@ -21,7 +23,7 @@ FFT::FFT(uint32_t size)
 FFT::~FFT()
 {
     doWork.store(false, std::memory_order_relaxed);
-    inputAvailable.notify_one();
+    inputAvailable.notify_all();
     if (mWorkerThread.joinable())
         mWorkerThread.join();
     kiss_fft_free(m_fftCalcPlan);
@@ -30,7 +32,7 @@ FFT::~FFT()
 int FFT::PushSamples(const complex32f_t* samples, uint32_t count)
 {
     int produced = samplesFIFO.Produce(samples, count);
-    inputAvailable.notify_one();
+    inputAvailable.notify_all();
     return produced;
 }
 
@@ -38,6 +40,20 @@ void FFT::SetResultsCallback(FFT::CallbackType fptr, void* userData)
 {
     resultsCallback = fptr;
     mUserData = userData;
+}
+
+void FFT::SetWindowFunction(WindowFunctionType windowFunction)
+{
+    if (currentWindowType != windowFunction)
+    {
+        currentWindowType = windowFunction;
+        GenerateWindowCoefficients(windowFunction, m_fftCalcIn.size(), mWindowCoeffs);
+    }
+}
+
+void FFT::SetAverageCount(int count)
+{
+    avgCount = count;
 }
 
 std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFunctionType window)
@@ -83,8 +99,7 @@ void FFT::Calculate(const complex16_t* src, uint32_t count, std::vector<float>& 
     outputBins.resize(count);
     for (uint32_t i = 0; i < count; ++i)
     {
-        float amplitude = (m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (count * count);
-        outputBins[i] = amplitude > 0 ? 10 * log10(amplitude) : -150;
+        outputBins[i] = m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
     }
 }
 
@@ -98,11 +113,12 @@ void FFT::Calculate(const complex32f_t* src, uint32_t count, std::vector<float>&
     }
     kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
     outputBins.resize(count);
-    for (uint32_t i = 0; i < count; ++i)
-    {
-        float amplitude = (m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (count * count);
-        outputBins[i] = amplitude > 0 ? 10 * log10(amplitude) : -150;
-    }
+
+    std::size_t output_index = 0;
+    for (std::size_t i = m_fftCalcIn.size() / 2 + 1; i < m_fftCalcIn.size(); ++i)
+        outputBins[output_index++] += m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
+    for (std::size_t i = 0; i < m_fftCalcIn.size() / 2 + 1; ++i)
+        outputBins[output_index++] += m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
 }
 
 void FFT::ProcessLoop()
@@ -117,11 +133,7 @@ void FFT::ProcessLoop()
     int resultsDone = 0;
     while (doWork.load(std::memory_order_relaxed) == true)
     {
-        if (inputAvailable.wait_for(lk, std::chrono::milliseconds(2000)) == std::cv_status::timeout)
-        {
-            printf("plot timeout\n");
-            continue;
-        }
+        inputAvailable.wait(lk, [&]() { return samplesFIFO.Size() != 0 || !doWork.load(); });
 
         int samplesNeeded = samples.size() - samplesReady;
         int ret = samplesFIFO.Consume(samples.data() + samplesReady, samplesNeeded);
@@ -140,34 +152,33 @@ void FFT::ProcessLoop()
         for (uint32_t i = 0; i < fftBins.size(); ++i)
             avgOutput[i] += fftBins[i] * fftBins[i];
 
-        if (resultsDone != avgCount)
+        if (resultsDone < avgCount)
         {
             continue;
         }
 
         if (resultsCallback)
         {
-            // to log scale
-            for (size_t i = 0; i < fftBins.size(); ++i)
-                avgOutput[i] = sqrt(avgOutput[i] / avgCount);
-            for (size_t i = 0; i < fftBins.size(); ++i)
+            for (std::size_t s = 0; s < fftBins.size(); ++s)
             {
-                fftBins[i] = avgOutput[i] > 0 ? 10 * log10(avgOutput[i]) : -150;
+                const float div = static_cast<float>(resultsDone) * fftBins.size() * fftBins.size();
+                fftBins.at(s) /= div;
             }
+
             resultsCallback(fftBins, mUserData);
         }
         resultsDone = 0;
-        memset(avgOutput.data(), 0, avgOutput.size() * sizeof(float));
+        std::memset(avgOutput.data(), 0, avgOutput.size() * sizeof(float));
         // auto t2 = std::chrono::high_resolution_clock::now();
         // auto timePeriod = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
         //printf("FFT update %lius\n", timePeriod);
     }
 }
 
-void FFT::GenerateWindowCoefficients(WindowFunctionType func, uint32_t N /*coef count*/, std::vector<float>& windowFcoefs)
+void FFT::GenerateWindowCoefficients(WindowFunctionType func, uint32_t coefCount, std::vector<float>& windowFcoefs)
 {
     float amplitudeCorrection = 1;
-    windowFcoefs.resize(N);
+    windowFcoefs.resize(coefCount);
     float a0 = 0.35875;
     float a1 = 0.48829;
     float a2 = 0.14128;
@@ -176,31 +187,31 @@ void FFT::GenerateWindowCoefficients(WindowFunctionType func, uint32_t N /*coef 
     switch (func)
     {
     case WindowFunctionType::BLACKMAN_HARRIS:
-        for (uint32_t i = 0; i < N; ++i)
-            windowFcoefs[i] =
-                a0 - a1 * cos((2 * PI * i) / (N - 1)) + a2 * cos((4 * PI * i) / (N - 1)) - a3 * cos((6 * PI * i) / (N - 1));
+        for (uint32_t i = 0; i < coefCount; ++i)
+            windowFcoefs[i] = a0 - a1 * cos((2 * PI * i) / (coefCount - 1)) + a2 * cos((4 * PI * i) / (coefCount - 1)) -
+                              a3 * cos((6 * PI * i) / (coefCount - 1));
         break;
     case WindowFunctionType::HAMMING:
         amplitudeCorrection = 0;
         a0 = 0.54;
-        for (uint32_t i = 0; i < N; ++i)
-            windowFcoefs[i] = a0 - (1 - a0) * cos((2 * PI * i) / (N));
+        for (uint32_t i = 0; i < coefCount; ++i)
+            windowFcoefs[i] = a0 - (1 - a0) * cos((2 * PI * i) / (coefCount));
         break;
     case WindowFunctionType::HANNING:
         amplitudeCorrection = 0;
-        for (uint32_t i = 0; i < N; ++i)
-            windowFcoefs[i] = 0.5 * (1 - cos((2 * PI * i) / (N)));
+        for (uint32_t i = 0; i < coefCount; ++i)
+            windowFcoefs[i] = 0.5 * (1 - cos((2 * PI * i) / (coefCount)));
         break;
     case WindowFunctionType::NONE:
     default:
-        for (uint32_t i = 0; i < N; ++i)
+        for (uint32_t i = 0; i < coefCount; ++i)
             windowFcoefs[i] = 1;
         return;
     }
-    for (uint32_t i = 0; i < N; ++i)
+    for (uint32_t i = 0; i < coefCount; ++i)
         amplitudeCorrection += windowFcoefs[i];
-    amplitudeCorrection = 1.0 / (amplitudeCorrection / N);
-    for (uint32_t i = 0; i < N; ++i)
+    amplitudeCorrection = 1.0 / (amplitudeCorrection / coefCount);
+    for (uint32_t i = 0; i < coefCount; ++i)
         windowFcoefs[i] *= amplitudeCorrection;
 }
 
