@@ -138,10 +138,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
-    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
-            add_compile_options(-fno-caller-saves)
-        endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
+        add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fno-caller-saves>)
     endif()
 
     #default SIMD configuration uses native build flags
