@@ -7,7 +7,7 @@
 namespace lime {
 
 FFT::FFT(uint32_t size, WindowFunctionType windowType)
-    : samplesFIFO(size * 128)
+    : samplesFIFO(size * 4) // give a little bit of headroom, multiplier CAN be below 1x if extremely memory constrained.
     , currentWindowType(windowType)
     , m_fftCalcPlan(kiss_fft_alloc(size, 0, nullptr, nullptr))
 {

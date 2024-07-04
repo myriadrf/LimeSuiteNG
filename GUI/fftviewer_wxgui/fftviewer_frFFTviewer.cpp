@@ -540,9 +540,9 @@ void fftviewer_frFFTviewer::StreamingLoop(
             if (fftEnabled)
             {
                 int samplesRemaining = samplesPopped;
-                while (samplesRemaining > 0)
+                while (samplesRemaining > 0 && !pthis->stopProcessing.load())
                 {
-                    samplesRemaining -= ffts[ch]->PushSamples(buffers[ch], samplesRemaining);
+                    samplesRemaining -= ffts[ch]->PushSamples(&buffers[ch][samplesPopped - samplesRemaining], samplesRemaining);
                 }
             }
         }
