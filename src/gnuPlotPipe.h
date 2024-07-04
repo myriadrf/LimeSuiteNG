@@ -63,7 +63,7 @@ class GNUPlotPipe
         fflush(pipeHandle);
     }
 
-  protected:
+  private:
     FILE* pipeHandle;
 };
 

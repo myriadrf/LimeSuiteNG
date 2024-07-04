@@ -11,19 +11,46 @@
 
 namespace lime {
 
+/// @brief Class for calculating Fast Fourier Transforms.
 class FFT
 {
   public:
+    /// @brief The type of the callback which gets called on a calculations update.
     typedef void (*CallbackType)(const std::vector<float>& bins, void* userData);
+
+    /// @brief Constructs the FFT object.
+    /// @param size The amount of bins to use.
     FFT(uint32_t size);
     ~FFT();
 
+    /// @brief Adds the given samples to the FFT calculation.
+    /// @param samples The samples to add to the calculation.
+    /// @param count The amount of samples to add to the calculation.
+    /// @return The amount of samples actually added to the buffer.
     int PushSamples(const complex32f_t* samples, uint32_t count);
+
+    /// @brief Sets the function to call when a calculations update happens.
+    /// @param fptr The pointer to the function to call.
+    /// @param userData The data to pass to the function.
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
+    /// @brief Enumeration for selecting the window coefficient function to use
     enum class WindowFunctionType { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
+
+    /// @brief Generates the coefficients for a given window function
+    /// @param type The type of the window function to generate the coefficients for.
+    /// @param coefCount The amount of coefficients to generate.
+    /// @param coeffs The buffer to which to store the coefficients.
     LIME_API static void GenerateWindowCoefficients(WindowFunctionType type, uint32_t coefCount, std::vector<float>& coeffs);
+
+    /// @brief Calculates the FFT bins from the provided samples.
+    /// @param samples The samples to calculate from.
+    /// @param window The window function to apply to the samples before calculating the bins.
+    /// @return The array of computed bins, the same width as the amount of samples.
     static std::vector<float> Calc(const std::vector<complex32f_t>& samples, WindowFunctionType window = WindowFunctionType::NONE);
+
+    /// @brief Convert the amplitude in the bins to a Decibels relative to full scale.
+    /// @param bins The bins to convert.
     static void ConvertToDBFS(std::vector<float>& bins);
 
   private:

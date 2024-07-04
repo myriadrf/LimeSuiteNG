@@ -85,24 +85,6 @@ class LIME_API MCU_BD
     typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string& progressMsg)> ProgrammingCallback;
     void SetCallback(ProgrammingCallback callback);
 
-  protected:
-    std::string mLoadedProgramFilename;
-    std::atomic_ushort stepsDone{};
-    std::atomic_ushort stepsTotal{};
-    std::atomic_bool aborted{};
-    int WaitUntilWritten();
-    int ReadOneByte(unsigned char* data);
-    int One_byte_command(unsigned short data1, unsigned char* rdata1);
-    unsigned int formREG2command(int m_iExt5, int m_iExt4, int m_iExt3, int m_iExt2, int m_iMode1, int m_iMode0);
-    std::shared_ptr<ISPI> m_serPort;
-    int m_bLoadedDebug;
-    int m_bLoadedProd;
-    int byte_array_size;
-
-    void IncrementStepsDone(unsigned short amount = 1, const std::string& message = ""s);
-    void SetStepsDone(unsigned short amount, const std::string& message = ""s);
-
-  public:
     uint8_t ReadMCUProgramID();
     OperationStatus SetDebugMode(bool enabled, MCU_PROG_MODE mode);
     OperationStatus readIRAM(const uint8_t* addr, uint8_t* values, const uint8_t count);
@@ -142,6 +124,24 @@ class LIME_API MCU_BD
     int RunInstr_MCU(unsigned short* pPCVAL);
     void Initialize(std::shared_ptr<ISPI> pSerPort, unsigned rom_size = 0);
     ProgrammingCallback m_callback;
+
+  private:
+    std::string mLoadedProgramFilename;
+    std::atomic_ushort stepsDone{};
+    std::atomic_ushort stepsTotal{};
+    std::atomic_bool aborted{};
+    int WaitUntilWritten();
+    int ReadOneByte(unsigned char* data);
+    int One_byte_command(unsigned short data1, unsigned char* rdata1);
+    unsigned int formREG2command(int m_iExt5, int m_iExt4, int m_iExt3, int m_iExt2, int m_iMode1, int m_iMode0);
+    std::shared_ptr<ISPI> m_serPort;
+    int m_bLoadedDebug;
+    int m_bLoadedProd;
+    int byte_array_size;
+
+    void IncrementStepsDone(unsigned short amount = 1, const std::string& message = ""s);
+    void SetStepsDone(unsigned short amount, const std::string& message = ""s);
 };
+
 } // namespace lime
 #endif // MCU_BD_H

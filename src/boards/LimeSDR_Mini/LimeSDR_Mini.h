@@ -9,7 +9,6 @@
 
 namespace lime {
 
-class USBGeneric;
 class IComms;
 class IUSB;
 
@@ -49,11 +48,10 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     void SetSerialNumber(const std::string& number);
 
-  protected:
+  private:
     SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
 
-  private:
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;

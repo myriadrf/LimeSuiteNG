@@ -66,15 +66,15 @@ class TRXLooper
 
     /** @brief The transfer arguments. */
     struct TransferArgs {
-        std::shared_ptr<IDMA> dma;
-        std::vector<uint8_t*> buffers;
-        int32_t bufferSize;
-        int16_t packetSize;
-        uint8_t packetsToBatch;
-        int32_t samplesInPacket;
+        std::shared_ptr<IDMA> dma; ///< The DMA interface to use.
+        std::vector<uint8_t*> buffers; ///< The memory buffers to use.
+        int32_t bufferSize; ///< The size of a single buffer.
+        int16_t packetSize; ///< The size of a single packet.
+        uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
+        int32_t samplesInPacket; ///< The amount of samples in a single packet.
     };
 
-  protected:
+  private:
     OpStatus RxSetup();
     void RxWorkLoop();
     void ReceivePacketsLoop();
@@ -144,7 +144,6 @@ class TRXLooper
     Stream mRx;
     Stream mTx;
 
-  private:
     template<class T> uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta);
     template<class T> uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta);
 };

@@ -32,7 +32,7 @@ class ISPI;
 class LMS7002M_RegistersMap;
 class MCU_BD;
 
-typedef double float_type;
+typedef double float_type; ///< The type of the floating point number used in the code.
 
 /*! @brief Class for communicating with the LMS7002M chip.
  *
@@ -504,7 +504,6 @@ class LIME_API LMS7002M
     /*!
      * @brief Sets CLKGEN frequency, calculations use receiver'r reference clock
      * @param freq_Hz desired frequency in Hz
-     * @param retainNCOfrequencies recalculate NCO coefficients to keep currently set frequencies
      * @return The status of the operation
      */
     OpStatus SetFrequencyCGEN(float_type freq_Hz);

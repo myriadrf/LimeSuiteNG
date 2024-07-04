@@ -8,20 +8,26 @@
 
 namespace lime {
 
+/// @brief The description of a given USB device.
 struct USBDescriptor {
-    std::string product;
-    std::string serial;
-    uint16_t vid;
-    uint16_t pid;
+    std::string product; ///< The Product Name of the device.
+    std::string serial; ///< The serial number of the device.
+    uint16_t vid; ///< The Vendor ID of the device.
+    uint16_t pid; ///< The Product ID of the device.
 };
 
 /// @brief A generic class to communicate with a USB devices.
 class IUSB
 {
   public:
+    /// @brief Structure holding a vendor/product ID combo.
     struct VendorProductId {
-        uint16_t vendorId;
-        uint16_t productId;
+        uint16_t vendorId; ///< The Vendor ID of the device.
+        uint16_t productId; ///< The Product ID of the device.
+
+        /// @brief The comparison operator (needed for use in std::set)
+        /// @param rhs The other VID/PID pair to compare to.
+        /// @return True if this element is "smaller" than the other one.
         bool operator<(const VendorProductId& rhs) const { return vendorId < rhs.vendorId || productId < rhs.productId; }
     };
     /**

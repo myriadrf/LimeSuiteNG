@@ -12,6 +12,7 @@ using namespace std::literals::string_view_literals;
 
 namespace lime {
 
+/// @brief The available units to store the information as.
 enum eADC_UNITS { RAW, VOLTAGE, CURRENT, RESISTANCE, POWER, TEMPERATURE, ADC_UNITS_COUNT };
 
 static constexpr std::array<const std::string_view, ADC_UNITS_COUNT> ADC_UNITS_TEXT{ ""sv, "V"sv, "A"sv, "Ohm"sv, "W"sv, "C"sv };

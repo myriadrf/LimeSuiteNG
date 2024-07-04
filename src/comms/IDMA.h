@@ -11,12 +11,14 @@ namespace lime {
 
 enum class DataTransferDirection : bool { DeviceToHost, HostToDevice };
 
+/// @brief The interface for receiving and sending data in a DMA fashion.
 class IDMA
 {
   public:
+    /// @brief The structure for state of the DMA process.
     struct State {
-        uint16_t consumerIndex;
-        uint16_t producerIndex;
+        uint16_t consumerIndex; ///< The index the reading side is reading from now.
+        uint16_t producerIndex; ///< The index the writing side is writing to now.
     };
 
     virtual ~IDMA(){};
@@ -64,9 +66,10 @@ class IDMA
      */
     virtual void BufferOwnership(uint16_t index, DataTransferDirection dir) = 0;
 
+    /// @brief Structure of the information of the buffer.
     struct Buffer {
-        uint8_t* buffer;
-        size_t size;
+        uint8_t* buffer; ///< The pointer to the start of the buffer.
+        size_t size; ///< The size of the buffer.
     };
 
     /**

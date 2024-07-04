@@ -22,7 +22,7 @@ class PCIE_CSR_Pipe : public ISerialPort
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
 
-  protected:
+  private:
     std::shared_ptr<LitePCIe> port;
 };
 

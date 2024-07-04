@@ -77,10 +77,10 @@ class FPGA
 
     /** @brief Structure containing the gateware information of the FPGA */
     struct GatewareInfo {
-        int boardID;
-        int version;
-        int revision;
-        int hardwareVersion;
+        int boardID; ///< The ID of the board.
+        int version; ///< The version of the gateware.
+        int revision; ///< The revision of the gateware.
+        int hardwareVersion; ///< The version of the hardware of the device.
     };
     GatewareInfo GetGatewareInfo();
     static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc);

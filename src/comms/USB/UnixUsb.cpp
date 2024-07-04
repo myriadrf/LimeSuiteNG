@@ -1,4 +1,4 @@
-#include "USBGeneric.h"
+#include "UnixUsb.h"
 
 #include <thread>
 #include <cassert>
@@ -45,7 +45,7 @@ static int SessionRefCountIncrement()
     {
         int returnCode = libusb_init(&gContextLibUsb); // Initialize the library for the session we just declared
         if (returnCode < 0)
-            lime::error("USBGeneric::libusb_init Error %i", returnCode); // There was an error
+            lime::error("UnixUsb::libusb_init Error %i", returnCode); // There was an error
 
 #if LIBUSBX_API_VERSION < 0x01000106
         libusb_set_debug(gContextLibUsb, 3); // Set verbosity level to 3, as suggested in the documentation
@@ -72,9 +72,9 @@ static int SessionRefCountDecrement()
     return activeUSBconnections;
 }
 
-static void process_libusbtransfer(libusb_transfer* trans)
+void UnixUsb::process_libusbtransfer(libusb_transfer* trans)
 {
-    USBGeneric::AsyncContext* context = static_cast<USBGeneric::AsyncContext*>(trans->user_data);
+    UnixUsb::AsyncContext* context = static_cast<UnixUsb::AsyncContext*>(trans->user_data);
     std::unique_lock<std::mutex> lck(context->transferLock);
     switch (trans->status)
     {
@@ -110,19 +110,19 @@ static void process_libusbtransfer(libusb_transfer* trans)
     context->cv.notify_one();
 }
 
-USBGeneric::AsyncContext::AsyncContext()
+UnixUsb::AsyncContext::AsyncContext()
     : transfer(libusb_alloc_transfer(0))
     , bytesXfered(0)
     , done{ false }
 {
 }
 
-USBGeneric::AsyncContext::~AsyncContext()
+UnixUsb::AsyncContext::~AsyncContext()
 {
     libusb_free_transfer(transfer);
 }
 
-void USBGeneric::AsyncContext::Reset()
+void UnixUsb::AsyncContext::Reset()
 {
     done.store(false);
     bytesXfered = 0;
@@ -160,7 +160,7 @@ static void TransferUSBDescriptor(libusb_device* device, USBDescriptor& dest, co
     libusb_close(handle);
 }
 
-std::vector<USBDescriptor> USBGeneric::enumerateDevices(const std::set<IUSB::VendorProductId>& ids)
+std::vector<USBDescriptor> UnixUsb::enumerateDevices(const std::set<IUSB::VendorProductId>& ids)
 {
     std::vector<USBDescriptor> devDescriptors;
 
@@ -168,7 +168,7 @@ std::vector<USBDescriptor> USBGeneric::enumerateDevices(const std::set<IUSB::Ven
     int usbDeviceCount = libusb_get_device_list(gContextLibUsb, &devs);
     if (usbDeviceCount < 0)
     {
-        lime::error("USBGeneric: Failed to get libusb device list: %s", libusb_strerror(libusb_error(usbDeviceCount)));
+        lime::error("UnixUsb: Failed to get libusb device list: %s", libusb_strerror(libusb_error(usbDeviceCount)));
         return devDescriptors;
     }
 
@@ -193,19 +193,19 @@ std::vector<USBDescriptor> USBGeneric::enumerateDevices(const std::set<IUSB::Ven
     return devDescriptors;
 }
 
-USBGeneric::USBGeneric()
+UnixUsb::UnixUsb()
     : dev_handle(nullptr)
 {
     SessionRefCountIncrement();
 }
 
-USBGeneric::~USBGeneric()
+UnixUsb::~UnixUsb()
 {
     Disconnect();
     SessionRefCountDecrement();
 }
 
-bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
+bool UnixUsb::Connect(uint16_t vid, uint16_t pid, const char* serial)
 {
     libusb_device** devs; // Pointer to pointer of device, used to retrieve a list of devices
     int usbDeviceCount = libusb_get_device_list(gContextLibUsb, &devs);
@@ -281,12 +281,12 @@ bool USBGeneric::Connect(uint16_t vid, uint16_t pid, const char* serial)
     return true;
 }
 
-bool USBGeneric::IsConnected()
+bool UnixUsb::IsConnected()
 {
     return dev_handle != nullptr;
 }
 
-void USBGeneric::Disconnect()
+void UnixUsb::Disconnect()
 {
     if (dev_handle)
     {
@@ -297,7 +297,7 @@ void USBGeneric::Disconnect()
     dev_handle = nullptr;
 }
 
-int32_t USBGeneric::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length, int32_t timeout_ms)
+int32_t UnixUsb::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length, int32_t timeout_ms)
 {
     assert(data);
     if (!IsConnected())
@@ -307,7 +307,7 @@ int32_t USBGeneric::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t len
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);
     if (status != 0)
     {
-        lime::error("USBGeneric::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
+        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
             endPointAddr,
             libusb_error_name(status),
             actualTransferred,
@@ -316,7 +316,7 @@ int32_t USBGeneric::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t len
     return actualTransferred;
 }
 
-int32_t USBGeneric::ControlTransfer(
+int32_t UnixUsb::ControlTransfer(
     int requestType, int request, int value, int index, uint8_t* data, size_t length, int32_t timeout_ms)
 {
     assert(data);
@@ -325,12 +325,12 @@ int32_t USBGeneric::ControlTransfer(
     return libusb_control_transfer(dev_handle, requestType, request, value, index, data, length, timeout_ms);
 }
 
-void* USBGeneric::AllocateAsyncContext()
+void* UnixUsb::AllocateAsyncContext()
 {
     return new AsyncContext();
 }
 
-OpStatus USBGeneric::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8_t endPointAddr)
+OpStatus UnixUsb::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8_t endPointAddr)
 {
     assert(context);
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
@@ -343,13 +343,13 @@ OpStatus USBGeneric::BeginDataXfer(void* context, uint8_t* buffer, size_t length
     int status = libusb_submit_transfer(tr);
     if (status != 0)
     {
-        lime::error("USBGeneric::BeginDataXfer error: %s", libusb_error_name(status));
+        lime::error("UnixUsb::BeginDataXfer error: %s", libusb_error_name(status));
         return OpStatus::Error;
     }
     return OpStatus::Success;
 }
 
-OpStatus USBGeneric::WaitForXfer(void* context, int32_t timeout_ms)
+OpStatus UnixUsb::WaitForXfer(void* context, int32_t timeout_ms)
 {
     assert(context);
 
@@ -361,7 +361,7 @@ OpStatus USBGeneric::WaitForXfer(void* context, int32_t timeout_ms)
     return value ? OpStatus::Success : OpStatus::Timeout;
 }
 
-size_t USBGeneric::FinishDataXfer(void* context)
+size_t UnixUsb::FinishDataXfer(void* context)
 {
     assert(context);
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
@@ -370,7 +370,7 @@ size_t USBGeneric::FinishDataXfer(void* context)
     return length;
 }
 
-OpStatus USBGeneric::AbortXfer(void* context)
+OpStatus UnixUsb::AbortXfer(void* context)
 {
     assert(context);
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
@@ -378,13 +378,13 @@ OpStatus USBGeneric::AbortXfer(void* context)
     return OpStatus::Success;
 }
 
-void USBGeneric::FreeAsyncContext(void* context)
+void UnixUsb::FreeAsyncContext(void* context)
 {
     assert(context);
     delete reinterpret_cast<AsyncContext*>(context);
 }
 
-OpStatus USBGeneric::ClaimInterface(int32_t interface_number)
+OpStatus UnixUsb::ClaimInterface(int32_t interface_number)
 {
     assert(dev_handle);
     if (libusb_kernel_driver_active(dev_handle, interface_number) == 1) // Find out if kernel driver is attached
@@ -400,7 +400,7 @@ OpStatus USBGeneric::ClaimInterface(int32_t interface_number)
         }
     }
 
-    int returnCode = libusb_claim_interface(dev_handle, interface_number); // Claim interface 0 (the first) of device
+    int returnCode = libusb_claim_interface(dev_handle, interface_number); // Claim interface of device
     if (returnCode != LIBUSB_SUCCESS)
     {
         lime::error("libusb: cannot claim USB interface: %s", libusb_strerror(libusb_error(returnCode)));
