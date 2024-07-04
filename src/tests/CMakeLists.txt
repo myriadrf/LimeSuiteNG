@@ -2,6 +2,8 @@ set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
     boards/LMS7002M_SDRDevice_Fixture.cpp
+    LimeSuite_wrapper/streaming.cpp
+    streaming/streaming.cpp
     # TODO: # parsers/CoefficientFileParserTest.cpp
     protocols/LMS64CProtocol/CustomParameterReadTest.cpp
     protocols/LMS64CProtocol/CustomParameterWriteTest.cpp
@@ -33,17 +35,25 @@ if(ENABLE_USB_FTDI)
     list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp)
 endif()
 
-add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
+if(BUILD_SHARED_LIBS)
+    # Build the tests in and use a wrapper to execute the tests.
+    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LIME_TEST_SUITE_SOURCES} TestEntry.cpp)
+    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:GTest::gtest> $<BUILD_INTERFACE:GTest::gmock>)
+    target_compile_definitions(${MAIN_LIBRARY_NAME} PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=1)
 
-target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
-target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME} GTest::gtest_main GTest::gmock_main)
+    add_executable(${LIME_TEST_SUITE_NAME} main.cpp)
+else()
+    add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
+
+    target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
+    target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC GTest::gtest_main GTest::gmock_main)
+endif()
+
+target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME})
 
 if(CMAKE_BINARY_DIR)
     set_target_properties(${LIME_TEST_SUITE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
-
-add_subdirectory(streaming)
-add_subdirectory(LimeSuite_wrapper)
 
 include(GoogleTest)
 gtest_discover_tests(${LIME_TEST_SUITE_NAME})
