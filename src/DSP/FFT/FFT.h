@@ -39,7 +39,12 @@ class LIME_API FFT
     /// @param userData The data to pass to the function.
     void SetResultsCallback(FFT::CallbackType fptr, void* userData);
 
+    /// @brief Sets the window function to use in the next calculations.
+    /// @param windowType The window type to use for the FFT calculations.
     void SetWindowFunction(WindowFunctionType windowType);
+
+    /// @brief Sets the amount of samples sampled and averaged before giving the bin values.
+    /// @param count The amount of samples to average out with.
     void SetAverageCount(int count);
 
     /// @brief Generates the coefficients for a given window function

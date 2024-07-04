@@ -75,6 +75,8 @@ template<class T> class RingBuffer
         return produced;
     }
 
+    /// @brief Gets the amount of items in the buffer.
+    /// @return The amount of items currently in the buffer.
     int Size() const { return size; }
 
   private:
