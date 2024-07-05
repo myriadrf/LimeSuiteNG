@@ -21,7 +21,7 @@ set_target_properties(basicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutp
 target_link_libraries(
     basicRX
     PUBLIC ${MAIN_LIBRARY_NAME}
-    PRIVATE kissfft)
+    PRIVATE kissfft taywee::args)
 
 add_executable(dualRXTX dualRXTX.cpp)
 set_target_properties(dualRXTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
