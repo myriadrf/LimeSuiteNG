@@ -19,7 +19,7 @@ class LIME_API FFT
     /// @brief The type of the callback which gets called on a calculations update.
     typedef std::function<void(const std::vector<float>& bins, void* userData)> CallbackType;
 
-        /// @brief Enumeration for selecting the window coefficient function to use
+    /// @brief Enumeration for selecting the window coefficient function to use
     enum class WindowFunctionType : uint8_t { NONE = 0, BLACKMAN_HARRIS, HAMMING, HANNING };
 
     /// @brief Constructs the FFT object.
