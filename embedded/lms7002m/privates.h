@@ -10,11 +10,16 @@
 
 struct lms7002m_context;
 
-#define LOG_D(context, format, ...) \
-    do \
-    { \
-        lms7002m_log(context, lime_LogLevel_Debug, format, __VA_ARGS__); \
-    } while (0)
+#define LMS7002M_LOG_ENABLE 1
+#if LMS7002M_LOG_ENABLE
+    #define LMS7002M_LOG(context, lime_LogLevel, format, ...) \
+        do \
+        { \
+            lms7002m_log(context, lime_LogLevel, format, __VA_ARGS__); \
+        } while (0)
+#else
+    #define LMS7002M_LOG(context, lime_LogLevel, format, ...)
+#endif
 
 void lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
 lime_Result lms7002m_report_error(struct lms7002m_context* context, lime_Result result, const char* format, ...);
