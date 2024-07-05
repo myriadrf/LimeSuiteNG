@@ -1132,7 +1132,7 @@ std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequency
 
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
 {
-    std::vector<uint16_t> converted(coefCount);
+    std::vector<int16_t> integers(coefCount);
     for (uint8_t i = 0; i < coefCount; ++i)
     {
         if (coef[i] < -1 || coef[i] > 1)
@@ -1140,21 +1140,21 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
             lime::warning("Coefficient %f is outside of range [-1:1], incorrect value will be written.", coef[i]);
         }
 
-        converted.at(i) = coef[i] * 32767;
+        integers[i] = coef[i] * 32767;
     }
 
-    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
+    lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, integers.data(), coefCount);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type* coef, uint8_t coefCount)
 {
-    std::vector<uint16_t> converted(coefCount);
+    std::vector<int16_t> integers(coefCount);
 
-    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, converted.data(), coefCount);
+    lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, integers.data(), coefCount);
     for (uint8_t i = 0; i < coefCount; ++i)
     {
-        coef[i] = static_cast<int16_t>(converted.at(i)) / 32768.0;
+        coef[i] = integers[i] / 32768.0;
     }
 
     return ResultToStatus(result);

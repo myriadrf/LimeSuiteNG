@@ -3,8 +3,11 @@
 #include "csr.h"
 #include "limesuiteng/embedded/loglevel.h"
 #include "lms7002m_context.h"
-#include "lms_gfir.h"
 #include "privates.h"
+
+#ifdef FLOATING_POINT_AVAILABLE
+    #include "lms_gfir.h"
+#endif
 
 #include <assert.h>
 #include <math.h>
@@ -14,9 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// Uses a lot of floating point calculations
-#define ENABLE_GFIR_COEF_MATH 0
 
 #define TO_DECIBEL(R) \
     (struct lms7002m_decibel) \
@@ -959,7 +959,7 @@ static lime_Result lms7002m_write_sx_registers(
     lms7002m_context* self, uint64_t VCOfreq_hz, uint64_t reference_clock_hz, uint8_t div_loch)
 {
     const uint64_t m_dThrF = 5500000000; // VCO frequency threshold to enable additional divider
-    const double divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
+    const uint32_t divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
 
     const uint16_t integerPart = VCOfreq_hz / divider - 4;
     // "Fixed point number" division, take only the fraction part
@@ -975,7 +975,7 @@ static lime_Result lms7002m_write_sx_registers(
 
     LMS7002M_LOG(self,
         lime_LogLevel_Debug,
-        "SX VCO:% Hz, RefClk:%u Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
+        "SX VCO:%lu Hz, RefClk:%lu Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
         VCOfreq_hz,
         reference_clock_hz,
         integerPart,
@@ -986,7 +986,7 @@ static lime_Result lms7002m_write_sx_registers(
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_t LO_freq_hz)
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_t LO_freq_hz)
 {
     LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%u Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
 
@@ -1104,7 +1104,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint32_
     return lime_Result_Success;
 }
 
-uint32_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
 {
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
@@ -1256,7 +1256,7 @@ lime_Result lms7002m_get_nco_frequencies(
 }
 
 lime_Result lms7002m_set_gfir_coefficients(
-    lms7002m_context* self, bool isTx, uint8_t gfirIndex, const uint16_t* const coef, uint8_t coefCount)
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, const int16_t* const coef, uint8_t coefCount)
 {
     assert(coef);
     if (gfirIndex > 2)
@@ -1304,7 +1304,7 @@ lime_Result lms7002m_set_gfir_coefficients(
 }
 
 lime_Result lms7002m_get_gfir_coefficients(
-    lms7002m_context* self, bool isTx, uint8_t gfirIndex, uint16_t* const coef, uint8_t coefCount)
+    lms7002m_context* self, bool isTx, uint8_t gfirIndex, int16_t* const coef, uint8_t coefCount)
 {
     assert(coef);
 
@@ -1561,7 +1561,7 @@ uint32_t lms7002m_get_sample_rate(lms7002m_context* self, bool isTx, enum lms700
 
 lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, uint32_t bandwidth)
 {
-#if ENABLE_GFIR_COEF_MATH
+#ifdef FLOATING_POINT_AVAILABLE
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, ch);
 
     const bool bypassFIR = !enabled;
@@ -1610,9 +1610,8 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
     if (ratio != 7)
         div = (2 << (ratio));
 
-    bandwidth /= 1e6;
     const uint32_t interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
-    const float w = (div / 2) * (bandwidth / interface_MHz);
+    const float w = (div / 2) * ((float)bandwidth / interface_Hz);
 
     const int L = div > 8 ? 8 : div;
     div -= 1;
@@ -1629,11 +1628,20 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         }
     }
 
-    float coef[120];
-    float coef2[40];
+    int16_t coef[120];
+    int16_t coef2[40];
+    {
+        float f_coef[120];
+        float f_coef2[40];
 
-    GenerateFilter(L * 15, w, w2, 1.0, 0, coef);
-    GenerateFilter(L * 5, w, w2, 1.0, 0, coef2);
+        GenerateFilter(L * 15, w, w2, 1.0, 0, f_coef);
+        GenerateFilter(L * 5, w, w2, 1.0, 0, f_coef2);
+
+        for (int i = 0; i < 120; ++i)
+            coef[i] = f_coef[i] * 32767;
+        for (int i = 0; i < 40; ++i)
+            coef2[i] = f_coef2[i] * 32767;
+    }
 
     if (isTx)
     {

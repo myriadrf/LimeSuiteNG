@@ -118,8 +118,8 @@ bool lms7002m_get_sx_locked(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_tune_vco(struct lms7002m_context* self, enum lms7002m_vco_type module);
 
-lime_Result lms7002m_set_frequency_sx(struct lms7002m_context* self, bool isTx, uint32_t freq_Hz);
-uint32_t lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
+lime_Result lms7002m_set_frequency_sx(struct lms7002m_context* self, bool isTx, uint64_t freq_Hz);
+uint64_t lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_set_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index, uint32_t freq_Hz);
 uint32_t lms7002m_get_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index);
@@ -135,9 +135,9 @@ lime_Result lms7002m_get_nco_frequencies(
     struct lms7002m_context* self, bool isTx, uint32_t* const freq_Hz, uint8_t count, uint16_t* phaseOffset);
 
 lime_Result lms7002m_set_gfir_coefficients(
-    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, const uint16_t* const coef, uint8_t coefCount);
+    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, const int16_t* const coef, uint8_t coefCount);
 lime_Result lms7002m_get_gfir_coefficients(
-    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, uint16_t* const coef, uint8_t coefCount);
+    struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, int16_t* const coef, uint8_t coefCount);
 
 lime_Result lms7002m_set_interface_frequency(
     struct lms7002m_context* self, uint32_t cgen_freq_Hz, const uint8_t hbi, const uint8_t hbd);
@@ -173,8 +173,8 @@ lime_Result lms7002m_load_dc_reg_iq(struct lms7002m_context* self, bool isTx, in
 
 // Calibrations
 
-lime_Result lms7002m_calibrate_rx(struct lms7002m_context* self, double bandwidthRF, bool extLoopback, bool dcOnly);
-lime_Result lms7002m_calibrate_tx(struct lms7002m_context* self, double bandwidthRF, bool extLoopback);
+lime_Result lms7002m_calibrate_rx(struct lms7002m_context* self, uint32_t bandwidthRF, bool extLoopback, bool dcOnly);
+lime_Result lms7002m_calibrate_tx(struct lms7002m_context* self, uint32_t bandwidthRF, bool extLoopback);
 lime_Result lms7002m_calibrate_internal_adc(struct lms7002m_context* self, int clkDiv);
 lime_Result lms7002m_calibrate_rp_bias(struct lms7002m_context* self);
 lime_Result lms7002m_calibrate_analog_rssi_dc_offset(struct lms7002m_context* self);
