@@ -553,8 +553,11 @@ void fftviewer_frFFTviewer::StreamingLoop(
         {
             if (pthis->stopProcessing.load() == false)
             {
-                auto scopedLock =
+                auto scopedLockThis =
+                    std::apply([](auto&... mutexes) { return std::scoped_lock{ mutexes... }; }, pthis->streamData.mutexes);
+                auto scopedLockLocal =
                     std::apply([](auto&... mutexes) { return std::scoped_lock{ mutexes... }; }, localDataResults.mutexes);
+
                 pthis->streamData = localDataResults;
                 wxThreadEvent* evt = new wxThreadEvent();
                 evt->SetEventObject(pthis);
