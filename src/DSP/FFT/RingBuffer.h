@@ -79,6 +79,10 @@ template<class T> class RingBuffer
     /// @return The amount of items currently in the buffer.
     int Size() const { return size; }
 
+    /// @brief Gets the total possible capacity of the buffer.
+    /// @return The total possible capacity of the buffer.
+    int Capacity() const { return capacity; }
+
   private:
     std::mutex mMutex;
     std::vector<T> buffer;

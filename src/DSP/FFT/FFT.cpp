@@ -31,7 +31,13 @@ FFT::~FFT()
 
 int FFT::PushSamples(const complex32f_t* samples, uint32_t count)
 {
-    int produced = samplesFIFO.Produce(samples, count);
+    int produced = 0;
+    {
+        std::unique_lock lk{ inputMutex };
+        inputAvailable.wait(lk, [&]() { return samplesFIFO.Capacity() != samplesFIFO.Size() || !doWork.load(); });
+        produced = samplesFIFO.Produce(samples, count);
+    }
+
     inputAvailable.notify_all();
     return produced;
 }
@@ -128,16 +134,18 @@ void FFT::ProcessLoop()
     std::vector<float> avgOutput(m_fftCalcOut.size());
     uint32_t samplesReady = 0;
 
-    std::unique_lock<std::mutex> lk(inputMutex);
-
     int resultsDone = 0;
     while (doWork.load(std::memory_order_relaxed) == true)
     {
-        inputAvailable.wait(lk, [&]() { return samplesFIFO.Size() != 0 || !doWork.load(); });
+        {
+            std::unique_lock lk{ inputMutex };
+            inputAvailable.wait(lk, [&]() { return samplesFIFO.Size() != 0 || !doWork.load(); });
 
-        int samplesNeeded = samples.size() - samplesReady;
-        int ret = samplesFIFO.Consume(samples.data() + samplesReady, samplesNeeded);
-        samplesReady += ret;
+            int samplesNeeded = samples.size() - samplesReady;
+            int ret = samplesFIFO.Consume(samples.data() + samplesReady, samplesNeeded);
+            samplesReady += ret;
+        }
+        inputAvailable.notify_all();
 
         if (samplesReady != samples.size())
         {
