@@ -34,8 +34,11 @@ fetchcontent_declare(
     kissFFT
     GIT_REPOSITORY https://github.com/mborgerding/kissfft.git
     GIT_TAG f5f2a3b2f2cd02bf80639adb12cbeed125bdf420 # latest main at the time of writing this
+    EXCLUDE_FROM_ALL # from CMake 3.28+
 )
 
+set(BUILD_SHARED_LIBS_ORIG ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
 set(KISSFFT_OPENMP
     OFF
     CACHE INTERNAL "")
@@ -43,7 +46,7 @@ set(KISSFFT_PKGCONFIG
     OFF
     CACHE INTERNAL "")
 set(KISSFFT_STATIC
-    OFF
+    ON
     CACHE INTERNAL "")
 set(KISSFFT_TEST
     OFF
@@ -57,7 +60,13 @@ set(KISSFFT_USE_ALLOCA
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-fetchcontent_makeavailable(kissFFT)
+# Exclude from all for pre-CMake 3.28
+fetchcontent_getproperties(kissFFT)
+if(NOT kissfft_POPULATED)
+    fetchcontent_populate(kissFFT)
+    add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
 
 # Download easily downloadable header only ones
 
@@ -68,6 +77,7 @@ fetchcontent_declare(
     args
     GIT_REPOSITORY https://github.com/Taywee/args.git
     GIT_TAG cc2368ca0d8a962862c96c00fe919e1480050f51 # latest main at the time of writing this
+    EXCLUDE_FROM_ALL # CMake 3.28+
 )
 set(ARGS_MAIN_PROJECT
     OFF
@@ -79,7 +89,12 @@ set(ARGS_BUILD_UNITTESTS
     OFF
     CACHE INTERNAL "")
 
-fetchcontent_makeavailable(args)
+# Exclude from all for pre-CMake 3.28
+fetchcontent_getproperties(args)
+if(NOT args_POPULATED)
+    fetchcontent_populate(args)
+    add_subdirectory(${args_SOURCE_DIR} ${args_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 #########################################################################
 # cpp-feather-ini-parser
