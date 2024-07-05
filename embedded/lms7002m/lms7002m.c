@@ -1474,10 +1474,11 @@ lime_Result lms7002m_get_i_q_balance(
     return lime_Result_Success;
 }
 
-uint16_t lms7002m_get_temperature(lms7002m_context* self)
+lime_Result lms7002m_get_temperature(lms7002m_context* self, int32_t* milliCelsius)
 {
-    if (lms7002m_calibrate_internal_adc(self, 32) != lime_Result_Success)
-        return 0;
+    lime_Result ret = lms7002m_calibrate_internal_adc(self, 32);
+    if (ret != lime_Result_Success)
+        return ret;
     lms7002m_spi_modify_csr(self, LMS7002M_RSSI_PD, 0);
     lms7002m_spi_modify_csr(self, LMS7002M_RSSI_RSSIMODE, 0);
     const uint16_t biasMux = lms7002m_spi_read_csr(self, LMS7002M_MUX_BIAS_OUT);
@@ -1487,7 +1488,16 @@ uint16_t lms7002m_get_temperature(lms7002m_context* self)
 
     const uint16_t reg606 = lms7002m_spi_read(self, 0x0606);
     lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, biasMux);
-    return reg606;
+
+    const int32_t Vtemp = ((reg606 >> 8) & 0xFF);
+    const int32_t Vptat = (reg606 & 0xFF);
+    const int32_t Vdiff = (Vptat - Vtemp) * 1752; // * 1840 / 1050;
+    const int32_t temperature_mC = 45000 + Vdiff;
+    LMS7002M_LOG(self, lime_LogLevel_Debug, "Vtemp(0x%02X), Vptat(0x%02X), temp=%d mC", Vtemp, Vptat, temperature_mC);
+
+    if (milliCelsius != NULL)
+        *milliCelsius = temperature_mC;
+    return lime_Result_Success;
 }
 
 lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_clock_id clk_id, uint32_t freq)

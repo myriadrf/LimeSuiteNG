@@ -152,7 +152,8 @@ lime_Result lms7002m_set_i_q_balance(
 lime_Result lms7002m_get_i_q_balance(
     struct lms7002m_context* self, bool isTx, int16_t* const iqcorr, uint16_t* const gcorri, uint16_t* const gcorrq);
 
-uint16_t lms7002m_get_temperature(struct lms7002m_context* self);
+/// @param temperature_mC Chip temperature in millidegree Celsius
+lime_Result lms7002m_get_temperature(struct lms7002m_context* self, int32_t* temperature_mC);
 
 lime_Result lms7002m_set_clock_frequency(struct lms7002m_context* self, enum lms7002m_clock_id clk_id, uint32_t freq);
 uint32_t lms7002m_get_clock_frequency(struct lms7002m_context* self, enum lms7002m_clock_id clk_id);

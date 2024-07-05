@@ -1833,15 +1833,9 @@ OpStatus LMS7002M::CalibrateRP_BIAS()
 
 float_type LMS7002M::GetTemperature()
 {
-    uint16_t tempUint16 = lms7002m_get_temperature(mC_impl);
-    const float Vtemp = ((tempUint16 >> 8) & 0xFF) * 1.84;
-    const float Vptat = (tempUint16 & 0xFF) * 1.84;
-    const float Vdiff = (Vptat - Vtemp) / 1.05;
-    const float temperature = 45.0 + Vdiff;
-    lime::debug(
-        "Vtemp 0x%04X, Vptat 0x%04X, Vdiff = %.2f, temp= %.3f", (tempUint16 >> 8) & 0xFF, tempUint16 & 0xFF, Vdiff, temperature);
-
-    return temperature;
+    int32_t milliCelsius{ 0 };
+    lms7002m_get_temperature(mC_impl, &milliCelsius);
+    return milliCelsius / 1e3;
 }
 
 OpStatus LMS7002M::CopyChannelRegisters(const Channel src, const Channel dest, const bool copySX)
