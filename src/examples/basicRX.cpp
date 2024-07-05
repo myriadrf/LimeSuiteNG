@@ -10,7 +10,7 @@
 #include <string_view>
 #include <cmath>
 #include <signal.h>
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif

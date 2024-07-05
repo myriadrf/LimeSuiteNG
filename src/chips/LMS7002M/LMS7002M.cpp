@@ -14,21 +14,14 @@
 #include <cmath>
 #include <ciso646>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string_view>
 #include <unordered_set>
 #include <thread>
 
-#ifdef __GNUC__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wold-style-cast"
-#endif
-#include "cpp-feather-ini-parser/INI.h"
-#ifdef __GNUC__
-    #pragma GCC diagnostic pop
-#endif
-
+#include "INI.h"
 #include "limesuiteng/types.h"
 #include "comms/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
@@ -347,8 +340,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     uint16_t addr = 0;
     uint16_t value = 0;
     OpStatus status;
-    typedef INI<std::string, std::string, std::string> ini_t;
-    ini_t parser(filename, true);
+    INI parser(filename, true);
     if (parser.select("FILE INFO"s) == false)
         return ReportError(
             OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing FILE INFO section", filename.c_str());
@@ -362,8 +354,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             OpStatus::InvalidValue, "LoadConfigLegacyFile(%s) - invalid format, missing LMS7002 configuration", filename.c_str());
     }
 
-    int fileVersion = 0;
-    fileVersion = parser.get("version"sv, 0);
+    const int fileVersion = parser.getAs("version"s, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -376,20 +367,18 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
 
     if (parser.select("Reference clocks"s))
     {
-        SetReferenceClk_SX(TRXDir::Rx, parser.get("SXR reference frequency MHz"sv, 30.72) * 1e6);
-        SetReferenceClk_SX(TRXDir::Tx, parser.get("SXT reference frequency MHz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Rx, parser.getAs("SXR reference frequency MHz"s, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Tx, parser.getAs("SXT reference frequency MHz"s, 30.72) * 1e6);
     }
 
     if (parser.select("LMS7002 registers ch.A"s) == true)
     {
-        ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.A"s);
-
         uint16_t x0020_value = 0;
         SetActiveChannel(Channel::ChA); //select A channel
-        for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+        for (const auto& pair : parser["LMS7002 registers ch.A"s])
         {
-            sscanf(pairs->first.c_str(), "%hx", &addr);
-            sscanf(pairs->second.c_str(), "%hx", &value);
+            sscanf(pair.first.c_str(), "%hx", &addr);
+            sscanf(pair.second.c_str(), "%hx", &value);
             if (addr == MAC.address) //skip register containing channel selection
             {
                 x0020_value = value;
@@ -412,7 +401,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "FCW%02i", i);
-                    SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
+                    SetNCOFrequency(TRXDir::Rx, i, parser.getAs(varname, 0.0));
                 }
             }
             else
@@ -420,7 +409,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "PHO%02i", i);
-                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
+                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.getAs(varname, 0.0));
                 }
             }
         }
@@ -433,7 +422,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "FCW%02i", i);
-                    SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
+                    SetNCOFrequency(TRXDir::Tx, i, parser.getAs(varname, 0.0));
                 }
             }
             else
@@ -441,7 +430,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "PHO%02i", i);
-                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
+                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.getAs(varname, 0.0));
                 }
             }
         }
@@ -456,11 +445,10 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
     {
         addrToWrite.clear();
         dataToWrite.clear();
-        ini_t::sectionsit_t section = parser.sections.find("LMS7002 registers ch.B"s);
-        for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+        for (const auto& pair : parser["LMS7002 registers ch.B"s])
         {
-            sscanf(pairs->first.c_str(), "%hx", &addr);
-            sscanf(pairs->second.c_str(), "%hx", &value);
+            sscanf(pair.first.c_str(), "%hx", &addr);
+            sscanf(pair.second.c_str(), "%hx", &value);
             addrToWrite.push_back(addr);
             dataToWrite.push_back(value);
         }
@@ -479,7 +467,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "FCW%02i", i);
-                    SetNCOFrequency(TRXDir::Rx, i, parser.get(varname, 0.0));
+                    SetNCOFrequency(TRXDir::Rx, i, parser.getAs(varname, 0.0));
                 }
             }
             else
@@ -487,7 +475,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "PHO%02i", i);
-                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.get(varname, 0.0));
+                    SetNCOPhaseOffset(TRXDir::Rx, i, parser.getAs(varname, 0.0));
                 }
             }
         }
@@ -500,7 +488,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "FCW%02i", i);
-                    SetNCOFrequency(TRXDir::Tx, i, parser.get(varname, 0.0));
+                    SetNCOFrequency(TRXDir::Tx, i, parser.getAs(varname, 0.0));
                 }
             }
             else
@@ -508,7 +496,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 for (int i = 0; i < 16; ++i)
                 {
                     std::snprintf(varname, sizeof(varname), "PHO%02i", i);
-                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.get(varname, 0.0));
+                    SetNCOPhaseOffset(TRXDir::Tx, i, parser.getAs(varname, 0.0));
                 }
             }
         }
@@ -530,8 +518,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     uint16_t value = 0;
 
     OpStatus status;
-    typedef INI<std::string, std::string, std::string> ini_t;
-    ini_t parser(filename, true);
+    INI parser(filename, true);
     if (parser.select("file_info"s) == false)
     {
         //try loading as legacy format
@@ -548,8 +535,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
             OpStatus::InvalidValue, "LoadConfig(%s) - invalid format, missing lms7002m_minimal_config", filename.c_str());
     }
 
-    int fileVersion = 0;
-    fileVersion = parser.get("version"sv, 0);
+    const int fileVersion = parser.getAs("version"s, 0);
 
     std::vector<uint16_t> addrToWrite;
     std::vector<uint16_t> dataToWrite;
@@ -559,14 +545,12 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
         ChannelScope scope(this);
         if (parser.select("lms7002_registers_a"s) == true)
         {
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_a"s);
-
             uint16_t x0020_value = 0;
             SetActiveChannel(Channel::ChA); //select A channel
-            for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+            for (const auto& pair : parser["lms7002_registers_a"s])
             {
-                sscanf(pairs->first.c_str(), "%hx", &addr);
-                sscanf(pairs->second.c_str(), "%hx", &value);
+                sscanf(pair.first.c_str(), "%hx", &addr);
+                sscanf(pair.second.c_str(), "%hx", &value);
                 if (addr == MAC.address) //skip register containing channel selection
                 {
                     x0020_value = value;
@@ -602,11 +586,10 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
         {
             addrToWrite.clear();
             dataToWrite.clear();
-            ini_t::sectionsit_t section = parser.sections.find("lms7002_registers_b"s);
-            for (ini_t::keysit_t pairs = section->second->begin(); pairs != section->second->end(); pairs++)
+            for (const auto& pair : parser["lms7002_registers_b"s])
             {
-                sscanf(pairs->first.c_str(), "%hx", &addr);
-                sscanf(pairs->second.c_str(), "%hx", &value);
+                sscanf(pair.first.c_str(), "%hx", &addr);
+                sscanf(pair.second.c_str(), "%hx", &value);
                 addrToWrite.push_back(addr);
                 dataToWrite.push_back(value);
             }
@@ -617,8 +600,8 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
         }
 
         parser.select("reference_clocks"s);
-        SetReferenceClk_SX(TRXDir::Rx, parser.get("sxr_ref_clk_mhz"sv, 30.72) * 1e6);
-        SetReferenceClk_SX(TRXDir::Tx, parser.get("sxt_ref_clk_mhz"sv, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Rx, parser.getAs("sxr_ref_clk_mhz"s, 30.72) * 1e6);
+        SetReferenceClk_SX(TRXDir::Tx, parser.getAs("sxt_ref_clk_mhz"s, 30.72) * 1e6);
     }
 
     ResetLogicRegisters();

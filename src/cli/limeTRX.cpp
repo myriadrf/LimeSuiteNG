@@ -6,12 +6,11 @@
 #include <cmath>
 #include <signal.h>
 #include <thread>
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 #include <condition_variable>
 #include <mutex>
-#include <getopt.h>
 #include <filesystem>
-#include "args/args.hxx"
+#include "args.hxx"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -316,7 +315,7 @@ int main(int argc, char** argv)
             linkFormat = DataFormat::I12;
         else
         {
-            cerr << "Invalid linkFormat "sv << optarg << std::endl;
+            cerr << "Invalid linkFormat "sv << val << std::endl;
             return EXIT_FAILURE;
         }
     }
