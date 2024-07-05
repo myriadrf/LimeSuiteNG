@@ -125,15 +125,26 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 
     desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
-    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
+    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
-
     desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
+
+    // revision 1.13 introduced "dual boot" images
+    if (gw.version >= 1 && gw.revision >= 13)
+    {
+        desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_GOLD_IMAGE)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_GOLD_IMAGE);
+        desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_USER_IMAGE)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_USER_IMAGE);
+    }
+
+    if (static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD)
+        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
 
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
@@ -508,6 +519,12 @@ OpStatus LimeSDR_XTRX::UploadMemory(
         break;
     case eMemoryDevice::FPGA_FLASH:
         progMode = 1;
+        break;
+    case eMemoryDevice::GATEWARE_GOLD_IMAGE:
+        progMode = 3;
+        break;
+    case eMemoryDevice::GATEWARE_USER_IMAGE:
+        progMode = 4;
         break;
     default:
         return OpStatus::InvalidValue;
