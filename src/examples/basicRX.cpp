@@ -136,7 +136,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.enabled = false;
     config.channel[0].tx.sampleRate = sampleRate;
     config.channel[0].tx.oversample = 2;
-    config.channel[0].tx.path = rxPath;
+    config.channel[0].tx.path = 0;
     config.channel[0].tx.centerFrequency = frequencyLO - 1e6;
     config.channel[0].tx.testSignal.enabled = false;
 
