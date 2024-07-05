@@ -72,7 +72,7 @@ SDRDevice* DeviceFactoryFTDI::make_LimeSDR_Mini(const DeviceHandle& handle, uint
 
     auto board = new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
     // LimeSDR-Mini serial number is taken from USB chip's descriptor.
-    // TODO: add serial number getter into USBGeneric, and use it inside LimeSDR_mini
+    // TODO: add serial number getter into UnixUsb, and use it inside LimeSDR_mini
     board->SetSerialNumber(handle.serial);
     return board;
 }

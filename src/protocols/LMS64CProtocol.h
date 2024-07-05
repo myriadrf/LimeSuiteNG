@@ -21,6 +21,7 @@ struct CustomParameterIO;
 
 namespace LMS64CProtocol {
 
+/// @brief The available commands in the LMS64C protocol.
 enum class Command : uint8_t {
     GET_INFO = 0x00,
     SERIAL_WR = 0x03, // Write device serial number
@@ -86,21 +87,24 @@ enum class Command : uint8_t {
     MEMORY_RD = 0x8D
 };
 
+/// @brief The command statuses the device can send back.
 enum class CommandStatus : uint8_t { Undefined, Completed, Unknown, Busy, TooManyBlocks, Error, WrongOrder, ResourceDenied, Count };
 
+/// @brief The available targets for programming.
 enum class ProgramWriteTarget : uint8_t {
     HPM,
     FX3,
     FPGA = 3u,
 };
 
+/// @brief Structure denoting the information about the firmware of the device.
 struct FirmwareInfo {
-    int deviceId;
-    int expansionBoardId;
-    int firmware;
-    int hardware;
-    int protocol;
-    uint64_t boardSerialNumber;
+    int deviceId; ///< The ID of the device.
+    int expansionBoardId; ///< The ID of the expansion board of the device.
+    int firmware; ///< The firmware version of the device.
+    int hardware; ///< The hardware version of the device.
+    int protocol; ///< The protocol version of the device.
+    uint64_t boardSerialNumber; ///< The serial number of the device.
 };
 OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice = 0);
 void FirmwareToDescriptor(const FirmwareInfo& info, SDRDescriptor& descriptor);
@@ -121,6 +125,7 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
 OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
 OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
 
+/// @brief The function to call on programming progress updates.
 typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
 
 OpStatus ProgramWrite(ISerialPort& port,
@@ -140,18 +145,19 @@ OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data);
 
 } // namespace LMS64CProtocol
 
+/// @brief The LMS64C protocol packet structure
 struct LMS64CPacket {
-    static constexpr int size = 64;
-    static constexpr int payloadSize = 56;
-    static constexpr int headerSize = size - payloadSize;
+    static constexpr int size = 64; ///< The size of the packet.
+    static constexpr int payloadSize = 56; ///< The size of the payload in the packet.
+    static constexpr int headerSize = size - payloadSize; ///< The size of the header.
 
-    LMS64CProtocol::Command cmd{ LMS64CProtocol::Command::GET_INFO };
-    LMS64CProtocol::CommandStatus status{ LMS64CProtocol::CommandStatus::Undefined };
-    uint8_t blockCount{};
-    uint8_t periphID{};
-    uint8_t subDevice{};
-    uint8_t reserved[3]{};
-    uint8_t payload[payloadSize]{};
+    LMS64CProtocol::Command cmd{ LMS64CProtocol::Command::GET_INFO }; ///< The command of the packet.
+    LMS64CProtocol::CommandStatus status{ LMS64CProtocol::CommandStatus::Undefined }; ///< The completion status of the packet.
+    uint8_t blockCount{}; ///< The count of blocks in the payload.
+    uint8_t periphID{}; ///< The ID of the peripheral to use.
+    uint8_t subDevice{}; ///< The ID of the subdevice to use.
+    uint8_t reserved[3]{}; ///< Currently unused
+    uint8_t payload[payloadSize]{}; ///< The information of the payload.
 };
 
 static_assert(sizeof(LMS64CPacket) == 64);
@@ -160,15 +166,42 @@ static_assert(sizeof(LMS64CPacket) == 64);
 class LMS64CPacketMemoryWriteView
 {
   public:
+    /// @brief Constructs the LMS64CPacketMemoryWriteView.
+    /// @param pkt The packet to use for the operations.
     LMS64CPacketMemoryWriteView(LMS64CPacket* pkt);
+
+    /// @brief Sets the mode of the programming.
+    /// @param mode The mode to set.
     void SetMode(int mode);
+
+    /// @brief Sets the index of the chunk to use.
+    /// @param index The index of the chunk.
     void SetChunkIndex(int index);
+
+    /// @brief Sets the size of the chunk.
+    /// @param size The size of the chunk.
     void SetChunkSize(int size);
-    void SetAddress(int size);
+
+    /// @brief Sets the address of the memory to use.
+    /// @param addr The address of the memory.
+    void SetAddress(int addr);
+
+    /// @brief Sets the memory device to use.
+    /// @param device The memory device to use.
     void SetDevice(LMS64CProtocol::ProgramWriteTarget device);
+
+    /// @brief Sets the data of the packet.
+    /// @param src The data to set in the packet.
+    /// @param len The length of the data to set.
     void SetData(const uint8_t* src, size_t len);
 
+    /// @brief Gets the data of the packet.
+    /// @param dest The buffer to put the packet data in.
+    /// @param len The length of the data to read.
     void GetData(uint8_t* dest, size_t len) const;
+
+    /// @brief Gets the maximum amount of data possible to store in a single packet.
+    /// @return The maximum amount of data in a packet.
     static constexpr size_t GetMaxDataSize();
 
   private:
@@ -180,14 +213,31 @@ class LMS64CPacketMemoryWriteView
 class LMS64CPacketSerialCommandView
 {
   public:
+    /// @brief The storage to write the information to.
     enum class Storage : uint8_t { Default = 0, Volatile = 1, NonVolatile = 2, OneTimeProgramable = 3 };
 
+    /// @brief Constructs the LMS64CPacketSerialCommandView.
+    /// @param pkt The packet to use for the operations.
     LMS64CPacketSerialCommandView(LMS64CPacket* pkt);
 
+    /// @brief Sets the storage type to use with this packet.
+    /// @param type The storage type to use.
     void SetStorageType(Storage type);
+
+    /// @brief Sets the key to unlock the serial key writing functionality.
+    /// @param key The key to unlock the serial key writer.
     void SetUnlockKey(uint8_t key);
+
+    /// @brief Sets the serial to set the device to.
+    /// @param bytes The bytes of serial to set.
     void SetSerial(const std::vector<uint8_t>& bytes);
+
+    /// @brief Gets the current serial of the device.
+    /// @param bytes The array to read the serial bytes of the device to.
     void GetSerial(std::vector<uint8_t>& bytes) const;
+
+    /// @brief Gets the maximum possible length of the serial.
+    /// @return The maximum length of the serial.
     static constexpr size_t GetMaxSerialLength();
 
   private:

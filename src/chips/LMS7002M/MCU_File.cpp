@@ -25,7 +25,7 @@ MCU_File::~MCU_File()
 
 bool MCU_File::FileOpened()
 {
-    return m_file != NULL;
+    return m_file != nullptr;
 }
 
 // Read binary file
@@ -73,7 +73,7 @@ void MCU_File::ReadHex(unsigned long limit)
     unsigned long dataRecords = 0; // Only used for s-record
     while (!feof(m_file))
     {
-        if (fgets(szLine, 1024, m_file) == 0)
+        if (fgets(szLine, 1024, m_file) == nullptr)
         {
             if (ferror(m_file))
             {

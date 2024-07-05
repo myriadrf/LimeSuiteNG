@@ -21,8 +21,15 @@ struct lms7002m_context;
     #define LMS7002M_LOG(context, lime_LogLevel, format, ...)
 #endif
 
-void lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
-lime_Result lms7002m_report_error(struct lms7002m_context* context, lime_Result result, const char* format, ...);
+#ifdef __unix__
+    #define FORMAT_ATTR(type, fmt_str, fmt_param) __attribute__((format(type, fmt_str, fmt_param)))
+#else
+    #define FORMAT_ATTR(type, fmt_str, fmt_param)
+#endif
+
+void FORMAT_ATTR(printf, 3, 4) lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
+lime_Result FORMAT_ATTR(printf, 3, 4)
+    lms7002m_report_error(struct lms7002m_context* context, lime_Result result, const char* format, ...);
 void lms7002m_sleep(long timeInMicroseconds);
 
 void lms7002m_spi_write(struct lms7002m_context* self, uint16_t address, uint16_t value);

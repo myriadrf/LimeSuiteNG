@@ -40,7 +40,7 @@ class LMS7002M_RegistersMap
         return *this;
     }
 
-  protected:
+  private:
     std::map<const uint16_t, Register> mChannelA;
     std::map<const uint16_t, Register> mChannelB;
 };

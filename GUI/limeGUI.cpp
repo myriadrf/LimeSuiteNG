@@ -18,7 +18,6 @@ IMPLEMENT_APP(limeGUI)
 
 #include "resources/splash.h"
 #include "resources/LMS_ICO.xpm"
-#include "events.h"
 
 using namespace std::literals::string_literals;
 
@@ -29,10 +28,16 @@ bool limeGUI::OnInit()
 
     wxInitAllImageHandlers();
     wxBitmap splashBitmap = wxBITMAP_PNG_FROM_DATA(splash);
-    wxSplashScreen* splash = new wxSplashScreen(
-        splashBitmap, wxSPLASH_CENTRE_ON_SCREEN, 6000, NULL, -1, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxSTAY_ON_TOP);
+    wxSplashScreen* splash = new wxSplashScreen(splashBitmap,
+        wxSPLASH_CENTRE_ON_SCREEN,
+        6000,
+        nullptr,
+        -1,
+        wxDefaultPosition,
+        wxDefaultSize,
+        wxSIMPLE_BORDER | wxSTAY_ON_TOP);
     wxYield(); //linux needs this to load splash image
-    limeGUIFrame* frame = new limeGUIFrame(0L, appArgs);
+    limeGUIFrame* frame = new limeGUIFrame(nullptr, appArgs);
     frame->SetIcon(wxICON(LMS_ICO));
     splash->Destroy();
     frame->Show();

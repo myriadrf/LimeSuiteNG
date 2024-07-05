@@ -25,7 +25,6 @@
 #include <wx/filedlg.h>
 #include <wx/notebook.h>
 #include <wx/bookctrl.h>
-#include "lms7suiteEvents.h"
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"
 
@@ -183,24 +182,24 @@ lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPo
 #undef CreatePage
 
     mainSizer->Add(tabsNotebook, 0, wxEXPAND, 5);
-    this->SetSizerAndFit(mainSizer);
+    SetSizerAndFit(mainSizer);
 
     // Connect Events
-    btnOpen->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnOpenProject), NULL, this);
-    btnSave->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnSaveProject), NULL, this);
+    btnOpen->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnOpenProject), nullptr, this);
+    btnSave->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnSaveProject), nullptr, this);
     cmbLmsDevice->Connect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), nullptr, this);
     rbChannelA->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), nullptr, this);
     rbChannelB->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_mainPanel::OnChannelOrSOCChange), nullptr, this);
     chkEnableMIMO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnEnableMIMOchecked), NULL, this);
-    btnDownloadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnDownloadAll), NULL, this);
-    btnUploadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnUploadAll), NULL, this);
-    btnResetChip->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnResetChip), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnEnableMIMOchecked), nullptr, this);
+    btnDownloadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnDownloadAll), nullptr, this);
+    btnUploadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnUploadAll), nullptr, this);
+    btnResetChip->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnResetChip), nullptr, this);
     btnReadTemperature->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnReadTemperature), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_mainPanel::OnReadTemperature), nullptr, this);
     tabsNotebook->Bind(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, &lms7002_mainPanel::Onnotebook_modulesPageChanged, this);
 }
 
@@ -245,7 +244,7 @@ void lms7002_mainPanel::UpdateVisiblePanel()
         currentTab->second->UpdateGUI();
     t2 = wxGetUTCTimeMillis();
 #ifndef NDEBUG
-    lime::debug("Visible GUI update time: "s + (t2 - t1).ToString());
+    lime::debug("Visible GUI update time: %li", (t2 - t1).ToLong());
 #endif
 }
 

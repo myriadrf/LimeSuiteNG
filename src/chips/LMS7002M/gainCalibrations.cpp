@@ -124,7 +124,7 @@ OpStatus LMS7002M::CalibrateTxGain()
     }
     RestoreRegisterMap(registersBackup);
 
-    int ind = this->GetActiveChannelIndex() % 2;
+    int ind = GetActiveChannelIndex() % 2;
     opt_gain_tbb[ind] = cg_iamp > 1 ? cg_iamp - 1 : 1;
 
     if (status == OpStatus::Success)

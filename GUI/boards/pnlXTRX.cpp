@@ -8,7 +8,7 @@
 #include <wx/statbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 
@@ -36,7 +36,7 @@ pnlXTRX::pnlXTRX(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSi
     cmbTxPath->Append("Band 2");
     cmbTxPath->Append("Band 1");
     cmbTxPath->SetSelection(0);
-    Connect(cmbTxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnlXTRX::OnInputChange), NULL, this);
+    Connect(cmbTxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnlXTRX::OnInputChange), nullptr, this);
     mainSizer->Add(cmbTxPath, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     mainSizer->Add(new wxStaticText(this, wxID_ANY, _("RFSW_RX ")), 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
@@ -46,12 +46,12 @@ pnlXTRX::pnlXTRX(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSi
     cmbRxPath->Append("H Band");
     cmbRxPath->Append("-unconnected-");
     cmbRxPath->SetSelection(0);
-    Connect(cmbRxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnlXTRX::OnInputChange), NULL, this);
+    Connect(cmbRxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnlXTRX::OnInputChange), nullptr, this);
     mainSizer->Add(cmbRxPath, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     TDDCntrl = new wxCheckBox(this, wxNewId(), _("TDD controls switches"));
     mainSizer->Add(TDDCntrl, 1, wxEXPAND | wxALIGN_RIGHT | wxALIGN_TOP, 5);
-    Connect(TDDCntrl->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlXTRX::OnInputChange), NULL, this);
+    Connect(TDDCntrl->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnlXTRX::OnInputChange), nullptr, this);
 
     wxStaticBoxSizer* mainBoxSizer;
     mainBoxSizer = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, "RF controls " + name), wxHORIZONTAL);
@@ -61,8 +61,8 @@ pnlXTRX::pnlXTRX(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSi
     mainBoxSizer->SetSizeHints(this);
     SetSizer(mainBoxSizer);
     Layout();
-    Bind(READ_ALL_VALUES, &pnlXTRX::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlXTRX::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlXTRX::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlXTRX::OnWriteAll, this, GetId());
 }
 
 void pnlXTRX::Initialize(lime::SDRDevice* dev, const string& spiSlaveName)

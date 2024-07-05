@@ -50,7 +50,7 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
     OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
 
-  protected:
+  private:
     OpStatus InitLMS1(bool skipTune = false);
     OpStatus InitLMS2(bool skipTune = false);
     OpStatus InitLMS3(bool skipTune = false);
@@ -72,7 +72,6 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     enum class ePathLMS2_Rx : uint8_t { NONE, TDD, FDD, CALIBRATION };
     enum class ePathLMS2_Tx : uint8_t { NONE, TDD, FDD };
 
-  private:
     void ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig& cfg, int ch, uint8_t socIndex);
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);
 
@@ -82,7 +81,6 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     std::array<std::shared_ptr<SlaveSelectShim>, 3> mLMS7002Mcomms;
     std::shared_ptr<IComms> mfpgaPort;
-    std::mutex mCommsMutex;
     bool mConfigInProgress;
 };
 

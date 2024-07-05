@@ -43,23 +43,23 @@ LIME_API const char* GetLastErrorMessageCString(void);
 LIME_API const std::string& GetLastErrorMessage(void);
 
 // C-string versions
-LIME_API void critical(const char* format, ...); //!< Log a critical error message with formatting
+LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a critical error message with formatting
 LIME_API void critical(const std::string& text); //!< Log a critical error message
 
-LIME_API int error(const char* format, ...); //!< Log an error message with formatting
+LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an error message with formatting
 LIME_API int error(const std::string& text); //!< Log an error message
 
-LIME_API void warning(const char* format, ...); //!< Log a warning message with formatting
+LIME_API void warning [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a warning message with formatting
 LIME_API void warning(const std::string& text); //!< Log a warning message
 
-LIME_API void info(const char* format, ...); //!< Log an information message with formatting
+LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an information message with formatting
 LIME_API void info(const std::string& text); //!< Log an information message
 
-LIME_API void debug(const char* format, ...); //!< Log a debug message with formatting
+LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting
 LIME_API void debug(const std::string& text); //!< Log a debug message
 
 //! Log a message with formatting and specified logging level
-LIME_API void log(const LogLevel level, const char* format, ...);
+LIME_API void log [[gnu::format(printf, 2, 3)]] (const LogLevel level, const char* format, ...);
 //! Log a message with specified logging level
 LIME_API void log(const LogLevel level, const std::string& text);
 
@@ -77,10 +77,10 @@ LIME_API OpStatus ReportError(const OpStatus errnum);
  * \param format a format string followed by args
  * \return passthrough errnum
  */
-LIME_API OpStatus ReportError(const OpStatus errnum, const char* format, ...);
+LIME_API OpStatus ReportError [[gnu::format(printf, 2, 3)]] (const OpStatus errnum, const char* format, ...);
 LIME_API OpStatus ReportError(const OpStatus errnum, const std::string& text);
 
-LIME_API int ReportError(const int errnum, const char* format, ...);
+LIME_API int ReportError [[gnu::format(printf, 2, 3)]] (const int errnum, const char* format, ...);
 LIME_API int ReportError(const int errnum, const std::string& text);
 
 } // namespace lime

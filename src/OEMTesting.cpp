@@ -30,6 +30,7 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
     device.StreamRx(input.moduleIndex, reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
 
     device.StreamStop(input.moduleIndex);
+    device.StreamDestroy(input.moduleIndex);
 
     std::vector<float> bins = FFT::Calc(samples);
     FFT::ConvertToDBFS(bins);

@@ -54,7 +54,8 @@ template<class T> static uint32_t indexListToMask(const std::vector<T>& indexes)
 }
 
 /// @brief Constructs a new TRXLooper object.
-/// @param comms The DMA communications interface to use.
+/// @param rx The DMA communications interface to receive the data from.
+/// @param tx The DMA communications interface to send the data to.
 /// @param f The FPGA to use in this stream.
 /// @param chip The LMS7002M chip to use in this stream.
 /// @param moduleIndex The ID of the chip to use.
@@ -169,15 +170,13 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         fpga->WriteRegister(0x000A, interface_ctrl_000A);
     }
 
+    RxTeardown();
     if (needRx)
         RxSetup();
-    else
-        RxTeardown();
 
+    TxTeardown();
     if (needTx)
         TxSetup();
-    else
-        TxTeardown();
 
     return OpStatus::Success;
 }
@@ -229,8 +228,11 @@ void TRXLooper::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
-            ;
+        {
+            std::unique_lock lck{ mRx.mutex };
+            while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
+                mRx.cv.wait(lck);
+        }
 
         mRxArgs.dma->Enable(false);
         if (mCallback_logMessage)
@@ -245,12 +247,13 @@ void TRXLooper::Stop()
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
+        std::unique_lock lck{ mTx.mutex };
         while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
-            ;
-        mTxArgs.dma->Enable(false);
+            mTx.cv.wait(lck);
     }
 }
 
+/// @brief Stops all the running streams and clears up the memory.
 void TRXLooper::Teardown()
 {
     RxTeardown();
@@ -339,8 +342,9 @@ OpStatus TRXLooper::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
+    std::unique_lock lck{ mRx.mutex };
     while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        ;
+        mRx.cv.wait(lck);
 
     return OpStatus::Success;
 }
@@ -352,31 +356,36 @@ struct DMATransactionCounter {
 
 void TRXLooper::RxWorkLoop()
 {
-    // signal that thread is ready for work
-    mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+    {
+        std::unique_lock lck{ mRx.mutex };
+
+        // signal that thread is ready for work
+        mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mRx.cv.notify_all();
+    }
 
     while (!mRx.terminateWorker.load(std::memory_order_relaxed))
     {
         // thread ready for work, just wait for stream enable
         {
-            std::unique_lock<std::mutex> lk(streamMutex);
+            std::unique_lock lk{ streamMutex };
             while (!mStreamEnabled && !mRx.terminateWorker.load(std::memory_order_relaxed))
                 streamActive.wait_for(lk, std::chrono::milliseconds(100));
-            lk.unlock();
         }
         if (!mStreamEnabled)
             continue;
 
         mRx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         ReceivePacketsLoop();
+
+        std::unique_lock lck{ mRx.mutex };
         mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mRx.cv.notify_all();
     }
     mRx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
 
-/** @brief Function dedicated for receiving data samples from board
-    @param stream a pointer to an active receiver stream
-*/
+/** @brief Function dedicated for receiving data samples from board */
 void TRXLooper::ReceivePacketsLoop()
 {
     constexpr int headerSize{ sizeof(StreamHeader) };
@@ -482,7 +491,7 @@ void TRXLooper::ReceivePacketsLoop()
                 mRx.memPool->Allocate(outputPktSize), samplesInPkt * mRxArgs.packetsToBatch, outputSampleSize);
             if (outputPkt == nullptr)
             {
-                lime::warning("Rx%i: packets fifo full.");
+                lime::warning("Rx%i: packets fifo full.", chipId);
                 continue;
             }
         }
@@ -566,7 +575,12 @@ void TRXLooper::RxTeardown()
 {
     if (mRx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        mRx.terminateWorker.store(true, std::memory_order_relaxed);
+        {
+            std::unique_lock lck{ streamMutex };
+            mRx.terminateWorker.store(true, std::memory_order_relaxed);
+            streamActive.notify_all();
+        }
+
         mRx.terminate.store(true, std::memory_order_relaxed);
         try
         {
@@ -646,9 +660,9 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
     return samplesProduced;
 }
 
-/// @brief Reveives samples from this specific stream.
+/// @brief Receives samples from this specific stream.
 /// @param samples The buffer to put the received samples in.
-/// @param count The amount of samples to reveive.
+/// @param count The amount of samples to receive.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples received.
 uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta)
@@ -684,7 +698,7 @@ OpStatus TRXLooper::TxSetup()
     if (mConfig.extraConfig.tx.samplesInPacket != 0)
     {
         samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples overide %i", samplesInPkt);
+        lime::debug("Tx samples override %i", samplesInPkt);
     }
 
     mTx.samplesInPkt = samplesInPkt;
@@ -747,8 +761,9 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.dma->Enable(true);
 
     // wait for Tx thread to be ready
+    std::unique_lock lck{ mTx.mutex };
     while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        ;
+        mTx.cv.wait(lck);
 
     return OpStatus::Success;
 }
@@ -760,10 +775,9 @@ void TRXLooper::TxWorkLoop()
     {
         // thread ready for work, just wait for stream enable
         {
-            std::unique_lock<std::mutex> lk(streamMutex);
+            std::unique_lock lk{ streamMutex };
             while (!mStreamEnabled && !mTx.terminateWorker.load(std::memory_order_relaxed))
                 streamActive.wait_for(lk, std::chrono::milliseconds(100));
-            lk.unlock();
         }
         if (!mStreamEnabled)
             continue;
@@ -771,6 +785,7 @@ void TRXLooper::TxWorkLoop()
         mTx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         TransmitPacketsLoop();
         mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mTx.cv.notify_all();
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
@@ -1024,7 +1039,11 @@ void TRXLooper::TxTeardown()
 {
     if (mTx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        mTx.terminateWorker.store(true, std::memory_order_relaxed);
+        {
+            std::unique_lock lck{ streamMutex };
+            mTx.terminateWorker.store(true, std::memory_order_relaxed);
+            streamActive.notify_all();
+        }
         mTx.terminate.store(true, std::memory_order_relaxed);
         try
         {

@@ -9,7 +9,7 @@
 #include <wx/checkbox.h>
 #include <wx/msgdlg.h>
 #include <wx/choice.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "pnlGPIO.h"
 #include "limesuiteng/SDRDescriptor.h"
 
@@ -36,7 +36,7 @@ pnluLimeSDR::pnluLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, co
     rxChoices.push_back(_("LNAW"));
     cmbRxPath = new wxChoice(this, wxNewId(), wxDefaultPosition, wxDefaultSize, rxChoices, 1);
     cmbRxPath->SetSelection(0);
-    Connect(cmbRxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), NULL, this);
+    Connect(cmbRxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
     lbSizer->Add(cmbRxPath, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 
     lbSizer->Add(new wxStaticText(this, wxID_ANY, _("TX RF port path:")), 1, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
@@ -45,23 +45,23 @@ pnluLimeSDR::pnluLimeSDR(wxWindow* parent, wxWindowID id, const wxPoint& pos, co
     txChoices.push_back(_("Band 2"));
     cmbTxPath = new wxChoice(this, wxNewId(), wxDefaultPosition, wxDefaultSize, txChoices, 1);
     cmbTxPath->SetSelection(0);
-    Connect(cmbTxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), NULL, this);
+    Connect(cmbTxPath->GetId(), wxEVT_CHOICE, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
     lbSizer->Add(cmbTxPath, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     lbSizer->Add(new wxStaticText(this, wxID_ANY, _("Loopback:")), 1, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
     txtLB = new wxStaticText(this, wxNewId(), _("TX Band 1 -> RX LNAH"));
     lbSizer->Add(txtLB, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
     chkTxLBSH = new wxCheckBox(this, wxNewId(), _("Loopback shunt"));
-    Connect(chkTxLBSH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), NULL, this);
+    Connect(chkTxLBSH->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
     lbSizer->Add(chkTxLBSH, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     chkTxLBAT = new wxCheckBox(this, wxNewId(), _("Loopback attenuator"));
-    Connect(chkTxLBAT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), NULL, this);
+    Connect(chkTxLBAT->GetId(), wxEVT_CHECKBOX, wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
     lbSizer->Add(chkTxLBAT, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
     mainSizer->Add(lbSizer, 1, wxEXPAND | wxALL, 5);
     pnl_gpio = new pnlGPIO(this, wxNewId());
     mainSizer->Add(pnl_gpio, 1, wxEXPAND | wxALL, 5);
-    Bind(READ_ALL_VALUES, &pnluLimeSDR::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnluLimeSDR::OnLoopbackChange, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnluLimeSDR::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnluLimeSDR::OnLoopbackChange, this, GetId());
 }
 
 void pnluLimeSDR::Initialize(lime::SDRDevice* newDevice)
@@ -90,10 +90,10 @@ void pnluLimeSDR::Initialize(lime::SDRDevice* newDevice)
 
 pnluLimeSDR::~pnluLimeSDR()
 {
-    chkTxLBSH->Disconnect(wxEVT_CHECKBOX, chkTxLBSH->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), 0, this);
-    chkTxLBAT->Disconnect(wxEVT_CHECKBOX, chkTxLBAT->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), 0, this);
-    cmbRxPath->Disconnect(wxEVT_CHOICE, cmbRxPath->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), 0, this);
-    cmbTxPath->Disconnect(wxEVT_CHOICE, cmbTxPath->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), 0, this);
+    chkTxLBSH->Disconnect(wxEVT_CHECKBOX, chkTxLBSH->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
+    chkTxLBAT->Disconnect(wxEVT_CHECKBOX, chkTxLBAT->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
+    cmbRxPath->Disconnect(wxEVT_CHOICE, cmbRxPath->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
+    cmbTxPath->Disconnect(wxEVT_CHOICE, cmbTxPath->GetId(), wxCommandEventHandler(pnluLimeSDR::OnLoopbackChange), nullptr, this);
 }
 
 void pnluLimeSDR::OnLoopbackChange(wxCommandEvent& event)

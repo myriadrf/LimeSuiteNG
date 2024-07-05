@@ -18,7 +18,7 @@
 #include "protocols/ADCUnits.h"
 #include <cassert>
 #include <vector>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "utilities/toString.h"
@@ -168,7 +168,7 @@ pnlBoardControls::pnlBoardControls(
     txtCustomUnitsRd = new wxStaticText(pnlCustomControls, wxID_ANY, _(""));
     sizerCustomControls->Add(txtCustomUnitsRd, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
     btnCustomRd = new wxButton(pnlCustomControls, wxNewId(), _("Read"));
-    btnCustomRd->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnCustomRead), NULL, this);
+    btnCustomRd->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnCustomRead), nullptr, this);
     sizerCustomControls->Add(btnCustomRd, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
 
     //writing
@@ -178,7 +178,7 @@ pnlBoardControls::pnlBoardControls(
     spinCustomValueWr = new wxSpinCtrl(
         pnlCustomControls, wxNewId(), _(""), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, 0, 65535, 0);
     sizerCustomControls->Add(spinCustomValueWr, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-    spinCustomValueWr->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(pnlBoardControls::OnSetDACvalues), NULL, this);
+    spinCustomValueWr->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(pnlBoardControls::OnSetDACvalues), nullptr, this);
 
     wxArrayString powerChoices;
     for (int i = -8; i <= 7; ++i)
@@ -197,7 +197,7 @@ pnlBoardControls::pnlBoardControls(
     sizerCustomControls->Add(cmbCustomUnitsWr, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
 
     btnCustomWr = new wxButton(pnlCustomControls, wxNewId(), _("Write"));
-    btnCustomWr->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnCustomWrite), NULL, this);
+    btnCustomWr->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnCustomWrite), nullptr, this);
     sizerCustomControls->Add(btnCustomWr, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
 
     pnlCustomControls->SetSizer(sizerCustomControls);
@@ -237,27 +237,27 @@ pnlBoardControls::pnlBoardControls(
 
     sizerAdditionalControls = new wxFlexGridSizer(0, 1, 0, 0);
     fgSizer247->Add(sizerAdditionalControls, 1, wxEXPAND, 5);
-    this->SetSizer(fgSizer247);
+    SetSizer(fgSizer247);
 
     // Connect Events
     cmbBoardSelection->Connect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlBoardControls::OnUserChangedBoardType), NULL, this);
-    btnReadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnReadAll), NULL, this);
-    btnWriteAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnWriteAll), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlBoardControls::OnUserChangedBoardType), nullptr, this);
+    btnReadAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnReadAll), nullptr, this);
+    btnWriteAll->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnWriteAll), nullptr, this);
 
     SetupControls(GetDeviceName(LMS_DEV_UNKNOWN));
 
-    this->Layout();
+    Layout();
     fgSizer247->Fit(this);
 }
 
 pnlBoardControls::~pnlBoardControls()
 {
     // Disconnect Events
-    btnReadAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnReadAll), NULL, this);
-    btnWriteAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnWriteAll), NULL, this);
+    btnReadAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnReadAll), nullptr, this);
+    btnWriteAll->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(pnlBoardControls::OnWriteAll), nullptr, this);
     cmbBoardSelection->Disconnect(
-        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlBoardControls::OnUserChangedBoardType), NULL, this);
+        wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler(pnlBoardControls::OnUserChangedBoardType), nullptr, this);
 
     for (auto& widget : mGUI_widgets)
     {
@@ -525,8 +525,8 @@ void pnlBoardControls::SetupControls(const std::string_view boardID)
                     mParameters[i].maxValue,
                     mParameters[i].minValue);
                 gui->wValue->Connect(
-                    wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(pnlBoardControls::OnSetDACvalues), NULL, this);
-                gui->wValue->Connect(wxEVT_TEXT_ENTER, wxCommandEventHandler(pnlBoardControls::OnSetDACvaluesENTER), NULL, this);
+                    wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(pnlBoardControls::OnSetDACvalues), nullptr, this);
+                gui->wValue->Connect(wxEVT_TEXT_ENTER, wxCommandEventHandler(pnlBoardControls::OnSetDACvaluesENTER), nullptr, this);
             }
             else
                 gui->rValue = new wxStaticText(pnlReadControls, wxID_ANY, _(""));

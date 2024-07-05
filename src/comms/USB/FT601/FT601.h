@@ -3,7 +3,7 @@
 #include "comms/USB/IUSB.h"
 
 #ifdef __unix__
-    #include "comms/USB/USBGeneric.h"
+    #include "comms/USB/UnixUsb.h"
 #else
     #include "FTD3XXLibrary/FTD3XX.h"
 #endif
@@ -41,9 +41,9 @@ class FT601 : public IUSB
      */
     OpStatus ResetStreamBuffers();
 
-  protected:
+  private:
 #ifdef __unix__
-    USBGeneric libusb_impl;
+    UnixUsb libusb_impl;
     int FT_SetStreamPipe(unsigned char ep, size_t size);
     int FT_FlushPipe(unsigned char ep);
     uint32_t mUsbCounter;

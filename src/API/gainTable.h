@@ -2,9 +2,10 @@
 
 #include <array>
 
+/// @brief The stucture for storing the data of device Rx gain values for a specific gain value.
 struct RxGainRow {
-    int lna;
-    int pga;
+    int lna; ///< The value of the Low Noise Amplifier.
+    int pga; ///< The value of the Programmable Gain Amplifier.
 };
 
 static std::array<RxGainRow, 51> rxGainTable{ {
@@ -61,9 +62,10 @@ static std::array<RxGainRow, 51> rxGainTable{ {
     { 15, 31 },
 } };
 
+/// @brief The stucture for storing the data of device Tx gain values for a specific gain value.
 struct TxGainRow {
-    int main;
-    int lin;
+    int main; ///< The gain output power of the TXPAD.
+    int lin; ///< The gain of the linearizing part of of the TXPAD
 };
 
 static std::array<TxGainRow, 51> txGainTable{ {

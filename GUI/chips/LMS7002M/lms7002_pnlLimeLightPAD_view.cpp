@@ -665,7 +665,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer118->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_S3S =
-        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S3S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S3S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML1_S3S->Append(wxT("AI"));
     cmbLML1_S3S->Append(wxT("AQ"));
     cmbLML1_S3S->Append(wxT("BI"));
@@ -680,7 +680,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer118->Add(ID_STATICTEXT2, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_S2S =
-        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S2S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S2S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML1_S2S->Append(wxT("AI"));
     cmbLML1_S2S->Append(wxT("AQ"));
     cmbLML1_S2S->Append(wxT("BI"));
@@ -695,7 +695,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer118->Add(ID_STATICTEXT3, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_S1S =
-        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S1S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S1S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML1_S1S->Append(wxT("AI"));
     cmbLML1_S1S->Append(wxT("AQ"));
     cmbLML1_S1S->Append(wxT("BI"));
@@ -710,7 +710,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer118->Add(ID_STATICTEXT4, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_S0S =
-        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S0S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer87->GetStaticBox(), ID_LML1_S0S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML1_S0S->Append(wxT("AI"));
     cmbLML1_S0S->Append(wxT("AQ"));
     cmbLML1_S0S->Append(wxT("BI"));
@@ -739,7 +739,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer120->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_S3S =
-        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S3S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S3S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML2_S3S->Append(wxT("AI"));
     cmbLML2_S3S->Append(wxT("AQ"));
     cmbLML2_S3S->Append(wxT("BI"));
@@ -754,7 +754,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer120->Add(ID_STATICTEXT10, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_S2S =
-        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S2S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S2S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML2_S2S->Append(wxT("AI"));
     cmbLML2_S2S->Append(wxT("AQ"));
     cmbLML2_S2S->Append(wxT("BI"));
@@ -769,7 +769,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer120->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_S1S =
-        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S1S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S1S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML2_S1S->Append(wxT("AI"));
     cmbLML2_S1S->Append(wxT("AQ"));
     cmbLML2_S1S->Append(wxT("BI"));
@@ -784,7 +784,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer120->Add(ID_STATICTEXT12, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_S0S =
-        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S0S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer89->GetStaticBox(), ID_LML2_S0S, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML2_S0S->Append(wxT("AI"));
     cmbLML2_S0S->Append(wxT("AQ"));
     cmbLML2_S0S->Append(wxT("BI"));
@@ -818,7 +818,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer119->Add(ID_STATICTEXT5, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_BQP =
-        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_BQP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_BQP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML1_BQP->Append(wxT("position 0"));
     cmbLML1_BQP->Append(wxT("position 1"));
     cmbLML1_BQP->Append(wxT("position 2"));
@@ -833,7 +833,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer119->Add(ID_STATICTEXT6, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_BIP =
-        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_BIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_BIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML1_BIP->Append(wxT("position 0"));
     cmbLML1_BIP->Append(wxT("position 1"));
     cmbLML1_BIP->Append(wxT("position 2"));
@@ -848,7 +848,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer119->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_AQP =
-        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_AQP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_AQP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML1_AQP->Append(wxT("position 0"));
     cmbLML1_AQP->Append(wxT("position 1"));
     cmbLML1_AQP->Append(wxT("position 2"));
@@ -863,7 +863,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer119->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML1_AIP =
-        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_AIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer88->GetStaticBox(), ID_LML1_AIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML1_AIP->Append(wxT("position 0"));
     cmbLML1_AIP->Append(wxT("position 1"));
     cmbLML1_AIP->Append(wxT("position 2"));
@@ -891,7 +891,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer121->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_BQP =
-        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_BQP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_BQP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLML2_BQP->Append(wxT("position 0"));
     cmbLML2_BQP->Append(wxT("position 1"));
     cmbLML2_BQP->Append(wxT("position 2"));
@@ -906,7 +906,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer121->Add(ID_STATICTEXT14, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_BIP =
-        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_BIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_BIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML2_BIP->Append(wxT("position 0"));
     cmbLML2_BIP->Append(wxT("position 1"));
     cmbLML2_BIP->Append(wxT("position 2"));
@@ -921,7 +921,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer121->Add(ID_STATICTEXT15, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_AQP =
-        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_AQP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_AQP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML2_AQP->Append(wxT("position 0"));
     cmbLML2_AQP->Append(wxT("position 1"));
     cmbLML2_AQP->Append(wxT("position 2"));
@@ -936,7 +936,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer121->Add(ID_STATICTEXT16, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLML2_AIP =
-        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_AIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer90->GetStaticBox(), ID_LML2_AIP, wxEmptyString, wxDefaultPosition, wxSize(85, -1), 0, nullptr, 0);
     cmbLML2_AIP->Append(wxT("position 0"));
     cmbLML2_AIP->Append(wxT("position 1"));
     cmbLML2_AIP->Append(wxT("position 2"));
@@ -967,7 +967,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT25, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbTXRDCLK_MUX = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_TXRDCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_TXRDCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbTXRDCLK_MUX->Append(wxT("FCLK1"));
     cmbTXRDCLK_MUX->Append(wxT("FCLK2"));
     cmbTXRDCLK_MUX->Append(wxT("TxTSPCLK"));
@@ -981,7 +981,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT26, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbTXWRCLK_MUX = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_TXWRCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_TXWRCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbTXWRCLK_MUX->Append(wxT("FCLK1"));
     cmbTXWRCLK_MUX->Append(wxT("FCLK2"));
     cmbTXWRCLK_MUX->Append(wxT("RxTSPCLK"));
@@ -995,7 +995,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT27, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbRXRDCLK_MUX = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_RXRDCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_RXRDCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRXRDCLK_MUX->Append(wxT("MCLK1"));
     cmbRXRDCLK_MUX->Append(wxT("MCLK2"));
     cmbRXRDCLK_MUX->Append(wxT("FCLK1"));
@@ -1010,7 +1010,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT28, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbRXWRCLK_MUX = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_RXWRCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_RXWRCLK_MUX, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRXWRCLK_MUX->Append(wxT("FCLK1"));
     cmbRXWRCLK_MUX->Append(wxT("FCLK2"));
     cmbRXWRCLK_MUX->Append(wxT("RxTSPCLK"));
@@ -1024,7 +1024,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT29, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbMCLK2SRC = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_MCLK2SRC, wxEmptyString, wxDefaultPosition, wxSize(154, -1), 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_MCLK2SRC, wxEmptyString, wxDefaultPosition, wxSize(154, -1), 0, nullptr, 0);
     cmbMCLK2SRC->Append(wxT("TxTSPCLKA after divider"));
     cmbMCLK2SRC->Append(wxT("RxTSPCLKA after divider"));
     cmbMCLK2SRC->Append(wxT("TxTSPCLKA"));
@@ -1039,7 +1039,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer122->Add(ID_STATICTEXT30, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbMCLK1SRC = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_MCLK1SRC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_MCLK1SRC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbMCLK1SRC->Append(wxT("TxTSPCLKA after divider"));
     cmbMCLK1SRC->Append(wxT("RxTSPCLKA after divider"));
     cmbMCLK1SRC->Append(wxT("TxTSPCLKA"));
@@ -1119,7 +1119,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer251->Add(ID_STATICTEXT301, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
     cmbFCLK1_DLY = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_FCLK1DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_FCLK1DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbFCLK1_DLY->Append(wxT("No delay"));
     cmbFCLK1_DLY->Append(wxT("1x delay"));
     cmbFCLK1_DLY->Append(wxT("2x delay"));
@@ -1134,7 +1134,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer251->Add(ID_STATICTEXT302, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
     cmbFCLK2_DLY = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_FCLK2DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_FCLK2DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbFCLK2_DLY->Append(wxT("No delay"));
     cmbFCLK2_DLY->Append(wxT("1x delay"));
     cmbFCLK2_DLY->Append(wxT("2x delay"));
@@ -1149,7 +1149,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer251->Add(ID_STATICTEXT303, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
     cmbMCLK1_DLY = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_MCLK1DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_MCLK1DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbMCLK1_DLY->Append(wxT("No delay"));
     cmbMCLK1_DLY->Append(wxT("1x delay"));
     cmbMCLK1_DLY->Append(wxT("2x delay"));
@@ -1164,7 +1164,7 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
     fgSizer251->Add(ID_STATICTEXT304, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
     cmbMCLK2_DLY = new wxComboBox(
-        sbSizerClockControls->GetStaticBox(), ID_MCLK2DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerClockControls->GetStaticBox(), ID_MCLK2DLY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbMCLK2_DLY->Append(wxT("No delay"));
     cmbMCLK2_DLY->Append(wxT("1x delay"));
     cmbMCLK2_DLY->Append(wxT("2x delay"));
@@ -1513,217 +1513,333 @@ lms7002_pnlLimeLightPAD_view::lms7002_pnlLimeLightPAD_view(
 
     fgSizer105->Add(ID_NOTEBOOK1, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer105);
-    this->Layout();
+    SetSizer(fgSizer105);
+    Layout();
     fgSizer105->Fit(this);
 
     // Connect Events
     chkSDA_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSCL_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkRX_CLK_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSDIO_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSDO_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkTX_CLK_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSEN_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkDIQ1_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkTXNRX1_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSCLK_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkDIQ2_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkTXNRX2_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkIQ_SEL_EN_1_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkFCLK1_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMCLK1_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkIQ_SEL_EN_2_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkFCLK2_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMCLK2_PE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSRST_RXFIFO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkSRST_TXFIFO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLRST_TX_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLRST_TX_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLRST_RX_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLRST_RX_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMRST_TX_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMRST_TX_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMRST_RX_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMRST_RX_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkRXEN_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkTXEN_A->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkRXEN_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkTXEN_B->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMIMO_SISO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMOD_EN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_FIDM1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_FIDM2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_MODE1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_MODE2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_TXNRXIQ1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrLML_TXNRXIQ2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
+    rgrLML_FIDM1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrLML_FIDM2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrLML_MODE1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrLML_MODE2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrLML_TXNRXIQ1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrLML_TXNRXIQ2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
     chkLML1_TRXIQPULSE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLML2_TRXIQPULSE->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLML1_SISODDR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkLML2_SISODDR->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrSDA_DS->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrSCL_DS->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrSDIO_DS->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrDIQ2_DS->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrDIQ1_DS->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrRX_MUX->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrTX_MUX->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrSPIMODE->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
+    rgrSDA_DS->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrSCL_DS->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrSDIO_DS->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQ2_DS->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQ1_DS->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrRX_MUX->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrTX_MUX->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrSPIMODE->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
     btnReadVerRevMask->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::onbtnReadVerRevMask), NULL, this);
-    cmbLML1_S3S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_S2S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_S1S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_S0S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_S3S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_S2S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_S1S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_S0S->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_BQP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_BIP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_AQP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_AIP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_BQP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_BIP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_AQP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML2_AIP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbTXRDCLK_MUX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbTXWRCLK_MUX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbRXRDCLK_MUX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbRXWRCLK_MUX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbMCLK2SRC->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbMCLK1SRC->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::onbtnReadVerRevMask), nullptr, this);
+    cmbLML1_S3S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_S2S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_S1S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_S0S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_S3S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_S2S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_S1S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_S0S->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_BQP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_BIP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_AQP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_AIP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_BQP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_BIP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_AQP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_AIP->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbTXRDCLK_MUX->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbTXWRCLK_MUX->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbRXRDCLK_MUX->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbRXWRCLK_MUX->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbMCLK2SRC->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbMCLK1SRC->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
     chkTXDIVEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbTXTSPCLKA_DIV->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
+    cmbTXTSPCLKA_DIV->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
     chkRXDIVEN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbRXTSPCLKA_DIV->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
+    cmbRXTSPCLKA_DIV->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
     chkFCLK1_INV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkFCLK2_INV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMCLK1_INV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
     chkMCLK2_INV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbFCLK1_DLY->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbFCLK2_DLY->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbMCLK1_DLY->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbMCLK2_DLY->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    cmbLML1_TX_PST->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML1_TX_PRE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML1_RX_PST->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML1_RX_PRE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML2_TX_PST->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML2_TX_PRE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML2_RX_PST->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    cmbLML2_RX_PRE->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler), NULL, this);
-    rgrDIQDIRCTR1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrDIQDIR1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrENABLEDIRCTR1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrENABLEDIR1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrDIQDIRCTR2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrDIQDIR2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrENABLEDIRCTR2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
-    rgrENABLEDIR2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler), nullptr, this);
+    cmbFCLK1_DLY->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbFCLK2_DLY->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbMCLK1_DLY->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbMCLK2_DLY->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_TX_PST->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_TX_PRE->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_RX_PST->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML1_RX_PRE->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_TX_PST->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_TX_PRE->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_RX_PST->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    cmbLML2_RX_PRE->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED,
+        wxSpinEventHandler(lms7002_pnlLimeLightPAD_view::SpinParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQDIRCTR1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQDIR1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrENABLEDIRCTR1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrENABLEDIR1->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQDIRCTR2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrDIQDIR2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrENABLEDIRCTR2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
+    rgrENABLEDIR2->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(lms7002_pnlLimeLightPAD_view::ParameterChangeHandler),
+        nullptr,
+        this);
 
     //ids for updating from chip
     wndId2Enum[rgrDIQ1_DS] = LMS7002MCSR::DIQ1_DS;
@@ -1877,24 +1993,24 @@ void lms7002_pnlLimeLightPAD_view::onbtnReadVerRevMask(wxCommandEvent& event)
 
 void lms7002_pnlLimeLightPAD_view::UpdateGUI()
 {
-    wxArrayString padStrenghts;
+    wxArrayString padStrengths;
     uint16_t value = 0;
     value = ReadParam(LMS7002MCSR::MASK);
     if (value == 0)
     {
-        padStrenghts.push_back("4 mA");
-        padStrenghts.push_back("8 mA");
+        padStrengths.push_back("4 mA");
+        padStrengths.push_back("8 mA");
     }
     else
     {
-        padStrenghts.push_back("8 mA");
-        padStrenghts.push_back("12 mA");
+        padStrengths.push_back("8 mA");
+        padStrengths.push_back("12 mA");
     }
-    wxRadioBox* padStrenghtCtrl[] = { rgrSDA_DS, rgrSCL_DS, rgrSDIO_DS, rgrDIQ2_DS, rgrDIQ1_DS };
-    for (auto i : padStrenghtCtrl)
+    wxRadioBox* padStrengthCtrl[] = { rgrSDA_DS, rgrSCL_DS, rgrSDIO_DS, rgrDIQ2_DS, rgrDIQ1_DS };
+    for (auto i : padStrengthCtrl)
     {
-        i->SetString(0, padStrenghts[0]);
-        i->SetString(1, padStrenghts[1]);
+        i->SetString(0, padStrengths[0]);
+        i->SetString(1, padStrengths[1]);
     }
     ILMS7002MTab::UpdateGUI();
 }

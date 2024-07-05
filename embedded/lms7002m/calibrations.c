@@ -155,7 +155,7 @@ static lime_Result lms7002m_setup_cgen(lms7002m_context* self)
 static void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
 {
     //FIR coefficients symmetrical, storing only one half
-    const int16_t firCoefs[] = {
+    const int16_t firCoeffs[] = {
         8,
         4,
         0,
@@ -218,10 +218,10 @@ static void lms7002m_set_rx_gfir3_coefficients(lms7002m_context* self)
         3401,
     };
     uint8_t index = 0;
-    for (; index < sizeof(firCoefs) / sizeof(int16_t); ++index)
-        lms7002m_spi_write(self, 0x0500 + index + 24 * (index / 40), firCoefs[index]);
-    for (; index < sizeof(firCoefs) / sizeof(int16_t) * 2; ++index)
-        lms7002m_spi_write(self, 0x0500 + index + 24 * (index / 40), firCoefs[119 - index]);
+    for (; index < sizeof(firCoeffs) / sizeof(int16_t); ++index)
+        lms7002m_spi_write(self, 0x0500 + index + 24 * (index / 40), firCoeffs[index]);
+    for (; index < sizeof(firCoeffs) / sizeof(int16_t) * 2; ++index)
+        lms7002m_spi_write(self, 0x0500 + index + 24 * (index / 40), firCoeffs[119 - index]);
 }
 
 static void lms7002m_enable_mimo_buffers_if_necessary(lms7002m_context* self)

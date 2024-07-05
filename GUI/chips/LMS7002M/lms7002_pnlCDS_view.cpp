@@ -257,51 +257,51 @@ lms7002_pnlCDS_view::lms7002_pnlCDS_view(wxWindow* parent, wxWindowID id, const 
 
     fgSizer190->Add(sbSizer122, 0, flags, 0);
 
-    this->SetSizer(fgSizer190);
-    this->Layout();
+    SetSizer(fgSizer190);
+    Layout();
     fgSizer190->Fit(this);
 
     // Connect Events
     chkCDSN_TXBTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_TXATSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_RXBTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_RXATSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_TXBLML->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_TXALML->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_RXBLML->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_RXALML->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_MCLK2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     chkCDSN_MCLK1->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_MCLK2->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_MCLK1->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_TXBTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_TXATSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_RXBTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_RXATSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_TXBLML->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_TXALML->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_RXBLML->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
     rgrCDS_RXALML->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlCDS_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[chkCDSN_MCLK1] = LMS7002MCSR::CDSN_MCLK1;
     wndId2Enum[chkCDSN_MCLK2] = LMS7002MCSR::CDSN_MCLK2;

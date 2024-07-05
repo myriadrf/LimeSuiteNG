@@ -5,11 +5,10 @@
 #include <vector>
 #include "limesuiteng/Logger.h"
 #include "OpenGLGraph.h"
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 #include "limesuiteng/LMS7002M.h"
 #include "DSP/FFT/FFT.h"
 #include <fstream>
-#include "lms7suiteEvents.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
@@ -140,8 +139,8 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     mConstellationPanel->settings.gridYlines = 8;
     mConstellationPanel->settings.marginLeft = 48;
 
-    Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
-    Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+    Connect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), nullptr, this);
+    Connect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), nullptr, this);
 
     wxCommandEvent evt;
     //show only A channel at startup
@@ -151,8 +150,8 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
 
 fftviewer_frFFTviewer::~fftviewer_frFFTviewer()
 {
-    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), NULL, this);
-    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), NULL, this);
+    Disconnect(wxEVT_THREAD, wxThreadEventHandler(fftviewer_frFFTviewer::OnUpdatePlots), nullptr, this);
+    Disconnect(wxEVT_TIMER, wxTimerEventHandler(fftviewer_frFFTviewer::OnUpdateStats), nullptr, this);
 
     if (mStreamRunning == true)
     {
@@ -273,7 +272,7 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
 
     StreamStats rxStats;
     StreamStats txStats;
-    const uint8_t chipIndex = this->lmsIndex;
+    const uint8_t chipIndex = lmsIndex;
     device->StreamStatus(chipIndex, &rxStats, &txStats);
 
     float RxFilled = 100.0 * rxStats.FIFO.ratio();
@@ -434,7 +433,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
         }
     }
 
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
     kiss_fft_cpx* m_fftCalcIn = new kiss_fft_cpx[fftSize];
     kiss_fft_cpx* m_fftCalcOut = new kiss_fft_cpx[fftSize];
 

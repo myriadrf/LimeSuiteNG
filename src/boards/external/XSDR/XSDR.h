@@ -7,8 +7,7 @@ namespace lime {
 
 static const float XSDR_DEFAULT_REFERENCE_CLOCK = 26e6;
 
-// Non LimeSDR board, but with compatible gateware similar to XTRX
-
+/// @brief Non LimeSDR board, but with compatible gateware similar to XTRX
 class XSDR : public LimeSDR_XTRX
 {
   public:

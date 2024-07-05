@@ -29,7 +29,7 @@ flowchart LR
 
     subgraph Communication libraries
         subgraph USB
-            subgraph Linux
+            subgraph UNIX
                 libusb["libusb library"]
             end
             subgraph Windows
@@ -68,7 +68,7 @@ flowchart LR
 
     FX3-->|On Windows|Cypress-->SDR
     FT601-->|On Windows|FTD3XX-->SDRMini
-    FX3 & FT601-->|On Linux|libusb
+    FX3 & FT601-->|On UNIX|libusb
 
     libusb-->|Using FT601|SDRMini 
     libusb-->|Using FX3|SDR

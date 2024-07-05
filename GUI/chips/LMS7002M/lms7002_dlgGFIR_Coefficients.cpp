@@ -10,7 +10,7 @@ using namespace lime;
 lms7002_dlgGFIR_Coefficients::lms7002_dlgGFIR_Coefficients(wxWindow* parent, wxWindowID id, const wxString& title)
     : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize, 0)
 {
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
+    SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     wxFlexGridSizer* fgSizer235;
     fgSizer235 = new wxFlexGridSizer(0, 1, 0, 0);
@@ -95,22 +95,22 @@ lms7002_dlgGFIR_Coefficients::lms7002_dlgGFIR_Coefficients(wxWindow* parent, wxW
 
     fgSizer235->Add(fgSizer239, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
 
-    this->SetSizer(fgSizer235);
-    this->Layout();
+    SetSizer(fgSizer235);
+    Layout();
     fgSizer235->Fit(this);
 
     // Connect Events
     btnLoadFromFile->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnLoadFromFile), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnLoadFromFile), nullptr, this);
     btnSaveToFile->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnSaveToFile), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnSaveToFile), nullptr, this);
     btnClearTable->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnClearTable), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnClearTable), nullptr, this);
     spinCoefCount->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_dlgGFIR_Coefficients::OnspinCoefCountChange), NULL, this);
-    btnOk->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnOkClick), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_dlgGFIR_Coefficients::OnspinCoefCountChange), nullptr, this);
+    btnOk->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnOkClick), nullptr, this);
     btnCancel->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnCancelClick), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnCancelClick), nullptr, this);
 }
 
 void lms7002_dlgGFIR_Coefficients::OnLoadFromFile(wxCommandEvent& event)

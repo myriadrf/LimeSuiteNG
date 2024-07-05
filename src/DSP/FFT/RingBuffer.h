@@ -5,9 +5,13 @@
 #include <vector>
 #include <mutex>
 
+/// @brief A buffer for manipulating many elements at a time in a queue-like fashion.
+/// @tparam T The type of object to hold.
 template<class T> class RingBuffer
 {
   public:
+    /// @brief Constructs the ring buffer with the given capacity.
+    /// @param count The maximum capacity of the buffer.
     RingBuffer(int32_t count)
         : headIndex(0)
         , tailIndex(0)
@@ -17,6 +21,10 @@ template<class T> class RingBuffer
         buffer.resize(count);
     }
 
+    /// @brief Removes the items from the queue and puts them into the given destination.
+    /// @param dest The buffer to store the items in.
+    /// @param count The maximum amount of items to retrieve.
+    /// @return The amount of items actually retrieved.
     int Consume(T* dest, int32_t count)
     {
         std::lock_guard<std::mutex> lck(mMutex);
@@ -40,6 +48,10 @@ template<class T> class RingBuffer
         return consumed;
     }
 
+    /// @brief Adds items into the buffer.
+    /// @param src The array of items to add to the buffer.
+    /// @param count The amount of items to add to the buffer.
+    /// @return The amount of items actually added to the buffer.
     int Produce(const T* src, int32_t count)
     {
         std::lock_guard<std::mutex> lck(mMutex);

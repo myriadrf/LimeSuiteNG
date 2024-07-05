@@ -1,7 +1,6 @@
 #include "cli/common.h"
-#include <getopt.h>
 #include <filesystem>
-#include "args/args.hxx"
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;
@@ -9,7 +8,7 @@ using namespace lime;
 SDRDevice* device = nullptr;
 bool terminateProgress(false);
 
-void inthandler(int sig)
+void intHandler(int sig)
 {
     if (terminateProgress == true)
     {
@@ -44,7 +43,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
             return memoryDevices.begin()->second;
         }
 
-        cerr << "Multiple targets found. Specify memory device target, -t, --target\nAvailible targets:"sv << endl;
+        cerr << "Multiple targets found. Specify memory device target, -t, --target\nAvailable targets:"sv << endl;
         PrintMemoryDevices(descriptor);
         return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
@@ -53,7 +52,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
     {
         return memoryDevices.at(std::string{ targetName });
     } catch (const std::out_of_range& e)
-    { /*Handled outsided catch block*/
+    { /*Handled outside catch block*/
     }
 
     cerr << "Device does not contain target device ("sv << targetName << "). Available list:"sv << endl;
@@ -82,7 +81,7 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
         return false;
     }
 
-    printf("\nAborting programing will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
+    printf("\nAborting programming will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
     fflush(stdout);
     std::string answer;
     while (1)
@@ -114,7 +113,7 @@ int main(int argc, char** argv)
     args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
     args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
     args::ValueFlag<std::string>    targetFlag(parser, "TARGET", "Specifies which target to use", {'t', "target"}, "");
-    args::Flag                      listFlag(parser, "list", "list availible device's targets", {'l', "list"});
+    args::Flag                      listFlag(parser, "list", "list available device's targets", {'l', "list"});
     args::Positional<std::string>   fileFlag(parser, "file path", "Input file path", args::Options::Required);
     // clang-format on
 
@@ -148,7 +147,7 @@ int main(int argc, char** argv)
     const std::string filePath = args::get(fileFlag);
     std::string devName = args::get(deviceFlag);
     std::string targetName = args::get(targetFlag);
-    signal(SIGINT, inthandler);
+    signal(SIGINT, intHandler);
 
     SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
@@ -156,7 +155,7 @@ int main(int argc, char** argv)
 
     if (listFlag)
     {
-        cerr << "Availible targets:" << endl;
+        cerr << "Available targets:" << endl;
         PrintMemoryDevices(device->GetDescriptor());
         return EXIT_SUCCESS;
     }

@@ -1,5 +1,5 @@
 /**
-@file	LMS7002M_filtersCalibration.cpp
+@file	filtersCalibration.cpp
 @author Lime Microsystems (www.limemicro.com)
 @brief	Implementation of LMS7002M transceiver filters calibration algorithms
 */
@@ -29,17 +29,17 @@ LMS7002M_RegistersMap* LMS7002M::BackupRegisterMap(void)
 {
     //BackupAllRegisters(); return NULL;
     auto backup = new LMS7002M_RegistersMap();
-    Channel chBck = this->GetActiveChannel();
-    this->SetActiveChannel(Channel::ChA);
+    Channel chBck = GetActiveChannel();
+    SetActiveChannel(Channel::ChA);
     *backup = *mRegistersMap;
-    this->SetActiveChannel(chBck);
+    SetActiveChannel(chBck);
     return backup;
 }
 
 void LMS7002M::RestoreRegisterMap(LMS7002M_RegistersMap* backup)
 {
     //RestoreAllRegisters(); return;
-    Channel chBck = this->GetActiveChannel();
+    Channel chBck = GetActiveChannel();
 
     for (int ch = 0; ch < 2; ch++)
     {
@@ -61,14 +61,14 @@ void LMS7002M::RestoreRegisterMap(LMS7002M_RegistersMap* backup)
         }
 
         //bulk write the original register values from backup
-        this->SetActiveChannel((ch == 0) ? Channel::ChA : Channel::ChB);
+        SetActiveChannel((ch == 0) ? Channel::ChA : Channel::ChB);
         SPI_write_batch(restoreAddrs.data(), restoreData.data(), restoreData.size(), true);
     }
 
     //cleanup
     delete backup;
     backup = nullptr;
-    this->SetActiveChannel(chBck);
+    SetActiveChannel(chBck);
 }
 
 OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
@@ -111,7 +111,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
     //sync registers to cache
     std::vector<uint16_t> regsToSync = { 0x0112, 0x0117, 0x011A, 0x0116, 0x0118, 0x0114, 0x0019, 0x0115 };
     for (const auto addr : regsToSync)
-        this->SPI_read(addr, true);
+        SPI_read(addr, true);
 
     return OpStatus::Success;
 }

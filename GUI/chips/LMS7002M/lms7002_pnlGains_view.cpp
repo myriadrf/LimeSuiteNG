@@ -51,7 +51,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     rxSizer->Add(ID_STATICTEXT16, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbG_LNA_RFE =
-        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_LNA_RFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_LNA_RFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbG_LNA_RFE->SetToolTip(wxT("Controls the gain of the LNA"));
 
     rxSizer->Add(cmbG_LNA_RFE, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -62,7 +62,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     rxSizer->Add(ID_STATICTEXT18, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbG_TIA_RFE =
-        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_TIA_RFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_TIA_RFE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbG_TIA_RFE->SetToolTip(wxT("Controls the Gain of the TIA"));
 
     rxSizer->Add(cmbG_TIA_RFE, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -73,7 +73,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     rxSizer->Add(ID_STATICTEXT2, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbG_PGA_RBB =
-        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer159->GetStaticBox(), ID_G_PGA_RBB, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbG_PGA_RBB->SetToolTip(wxT("This is the gain of the PGA"));
 
     rxSizer->Add(cmbG_PGA_RBB, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -107,7 +107,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     txSizer->Add(ID_STATICTEXT6, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLOSS_LIN_TXPAD_TRF = new wxComboBox(
-        sbSizer148->GetStaticBox(), ID_LOSS_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizer148->GetStaticBox(), ID_LOSS_LIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOSS_LIN_TXPAD_TRF->SetToolTip(wxT("Controls the gain of the linearizing part of of the TXPAD"));
 
     txSizer->Add(cmbLOSS_LIN_TXPAD_TRF, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -119,7 +119,7 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
     txSizer->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbLOSS_MAIN_TXPAD_TRF = new wxComboBox(
-        sbSizer148->GetStaticBox(), ID_LOSS_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizer148->GetStaticBox(), ID_LOSS_MAIN_TXPAD_TRF, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbLOSS_MAIN_TXPAD_TRF->SetToolTip(wxT("Controls the gain output power of the TXPAD"));
 
     txSizer->Add(cmbLOSS_MAIN_TXPAD_TRF, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -163,28 +163,28 @@ lms7002_pnlGains_view::lms7002_pnlGains_view(wxWindow* parent, wxWindowID id, co
 
     fgSizer309->Add(sbSizer135, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer309);
-    this->Layout();
+    SetSizer(fgSizer309);
+    Layout();
     fgSizer309->Fit(this);
 
     // Connect Events
     chkTRX_GAIN_SRC->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbG_LNA_RFE->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbG_TIA_RFE->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbG_PGA_RBB->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbC_CTL_PGA_RBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbLOSS_LIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbLOSS_MAIN_TXPAD_TRF->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
     cmbCG_IAMP_TBB->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), NULL, this);
-    chkAGC->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlGains_view::OnAGCStateChange), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlGains_view::ParameterChangeHandler), nullptr, this);
+    chkAGC->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlGains_view::OnAGCStateChange), nullptr, this);
 
     wndId2Enum[chkTRX_GAIN_SRC] = LMS7002MCSR::TRX_GAIN_SRC;
     wndId2Enum[cmbG_PGA_RBB] = LMS7002MCSR::G_PGA_RBB_R3;

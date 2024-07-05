@@ -664,7 +664,7 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     fgSizer153->Add(ID_STATICTEXT25, 1, wxALIGN_CENTER_VERTICAL, 5);
 
     cmbDTHBIT_TX =
-        new wxComboBox(sbSizer106->GetStaticBox(), ID_DTHBIT_TX, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+        new wxComboBox(sbSizer106->GetStaticBox(), ID_DTHBIT_TX, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     cmbDTHBIT_TX->SetToolTip(wxT("NCO bits to dither"));
 
     fgSizer153->Add(cmbDTHBIT_TX, 1, wxEXPAND, 5);
@@ -817,7 +817,7 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     fgSizer132->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     cmbCMIX_SC_TXTSP =
-        new wxComboBox(sbSizer98->GetStaticBox(), ID_CMIX_SC_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer98->GetStaticBox(), ID_CMIX_SC_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCMIX_SC_TXTSP->Append(wxT("Upconvert"));
     cmbCMIX_SC_TXTSP->Append(wxT("Downconvert"));
     fgSizer132->Add(cmbCMIX_SC_TXTSP, 1, wxEXPAND | wxALL, 5);
@@ -832,8 +832,8 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     ID_STATICTEXT24->Wrap(-1);
     fgSizer133->Add(ID_STATICTEXT24, 1, wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbCMIX_GAIN_TXTSP =
-        new wxComboBox(sbSizer98->GetStaticBox(), ID_CMIX_GAIN_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCMIX_GAIN_TXTSP = new wxComboBox(
+        sbSizer98->GetStaticBox(), ID_CMIX_GAIN_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCMIX_GAIN_TXTSP->Append(wxT("-6 dB"));
     cmbCMIX_GAIN_TXTSP->Append(wxT("-3 dB"));
     cmbCMIX_GAIN_TXTSP->Append(wxT("0 dB"));
@@ -857,7 +857,7 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     sbSizer99->Add(ID_STATICTEXT7, 0, wxALL, 5);
 
     cmbHBI_OVR_TXTSP =
-        new wxComboBox(sbSizer99->GetStaticBox(), ID_HBI_OVR_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        new wxComboBox(sbSizer99->GetStaticBox(), ID_HBI_OVR_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbHBI_OVR_TXTSP->SetToolTip(wxT("HBI interpolation ratio"));
 
     sbSizer99->Add(cmbHBI_OVR_TXTSP, 0, wxLEFT | wxEXPAND, 5);
@@ -892,8 +892,8 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     ID_STATICTEXT10->Wrap(-1);
     fgSizer137->Add(ID_STATICTEXT10, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbGFIR1_L_TXTSP =
-        new wxComboBox(sbSizer100->GetStaticBox(), ID_GFIR1_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbGFIR1_L_TXTSP = new wxComboBox(
+        sbSizer100->GetStaticBox(), ID_GFIR1_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbGFIR1_L_TXTSP->SetToolTip(wxT("Parameter l of GFIR1 (l = roundUp(CoeffN/5)-1). Unsigned integer"));
 
     fgSizer137->Add(cmbGFIR1_L_TXTSP, 0, wxEXPAND, 0);
@@ -937,8 +937,8 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     ID_STATICTEXT12->Wrap(-1);
     fgSizer139->Add(ID_STATICTEXT12, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbGFIR2_L_TXTSP =
-        new wxComboBox(sbSizer101->GetStaticBox(), ID_GFIR2_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbGFIR2_L_TXTSP = new wxComboBox(
+        sbSizer101->GetStaticBox(), ID_GFIR2_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbGFIR2_L_TXTSP->SetToolTip(wxT("Parameter l of GFIR2 (l = roundUp(CoeffN/5)-1). Unsigned integer"));
 
     fgSizer139->Add(cmbGFIR2_L_TXTSP, 0, wxEXPAND, 0);
@@ -982,8 +982,8 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
     ID_STATICTEXT14->Wrap(-1);
     fgSizer141->Add(ID_STATICTEXT14, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbGFIR3_L_TXTSP =
-        new wxComboBox(sbSizer102->GetStaticBox(), ID_GFIR3_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbGFIR3_L_TXTSP = new wxComboBox(
+        sbSizer102->GetStaticBox(), ID_GFIR3_L_TXTSP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbGFIR3_L_TXTSP->SetToolTip(wxT("Parameter l of GFIR3 (l = roundUp(CoeffN/5)-1). Unsigned integer"));
 
     fgSizer141->Add(cmbGFIR3_L_TXTSP, 0, wxEXPAND, 0);
@@ -1190,137 +1190,142 @@ lms7002_pnlTXTSP_view::lms7002_pnlTXTSP_view(wxWindow* parent, wxWindowID id, co
 
     fgSizer215->Add(fgSizer218, 1, wxEXPAND, 5);
 
-    this->SetSizer(fgSizer215);
-    this->Layout();
+    SetSizer(fgSizer215);
+    Layout();
     fgSizer215->Fit(this);
 
     // Connect Events
     chkEN_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkDC_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkGC_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkPH_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkCMIX_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkISINC_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkGFIR1_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkGFIR2_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkGFIR3_BYP_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkBSTART_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     btnReadBIST->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnReadBISTSignature), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnReadBISTSignature), nullptr, this);
     rgrSEL0->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO0->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO0->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL01->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO01->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO01->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL02->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO02->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO02->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL03->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO03->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO03->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL04->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO04->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO04->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL05->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO05->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO05->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL06->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO06->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO06->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL07->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO07->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO07->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL08->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO08->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO08->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL09->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO09->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO09->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL10->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO10->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO10->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL11->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO11->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO11->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL12->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO12->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO12->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL13->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO13->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO13->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL14->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO14->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO14->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     rgrSEL15->Connect(
-        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), NULL, this);
-    txtFCWPHO15->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnNCOSelectionChange), nullptr, this);
+    txtFCWPHO15->Connect(wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     btnUploadNCO->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnUploadNCOClick), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnUploadNCOClick), nullptr, this);
     rgrMODE_TX->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     txtFCWPHOmodeAdditional->Connect(
-        wxEVT_MOUSEWHEEL, wxMouseEventHandler(lms7002_pnlTXTSP_view::txtFCWPHOmodeAdditional_OnMouseWheel), NULL, this);
+        wxEVT_MOUSEWHEEL, wxMouseEventHandler(lms7002_pnlTXTSP_view::txtFCWPHOmodeAdditional_OnMouseWheel), nullptr, this);
     txtFCWPHOmodeAdditional->Connect(
-        wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), NULL, this);
+        wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler(lms7002_pnlTXTSP_view::PHOinputChanged), nullptr, this);
     cmbDTHBIT_TX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     chkTSGSWAPIQ_TXTSP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     rgrTSGFCW_TXTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     rgrTSGMODE_TXTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     rgrINSEL_TXTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     rgrTSGFC_TXTSP->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
-    btnLoadDCI->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnLoadDCIClick), NULL, this);
-    btnLoadDCQ->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnLoadDCQClick), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
+    btnLoadDCI->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnLoadDCIClick), nullptr, this);
+    btnLoadDCQ->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnLoadDCQClick), nullptr, this);
     cmbCMIX_SC_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbCMIX_GAIN_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbHBI_OVR_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGFIR1_L_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGFIR1_N_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
-    btnGFIR1Coef->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR1Coef), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
+    btnGFIR1Coef->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR1Coef), nullptr, this);
     cmbGFIR2_L_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGFIR2_N_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
-    btnGFIR2Coef->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR2Coef), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
+    btnGFIR2Coef->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR2Coef), nullptr, this);
     cmbGFIR3_L_TXTSP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGFIR3_N_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
-    btnGFIR3Coef->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR3Coef), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
+    btnGFIR3Coef->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::onbtnGFIR3Coef), nullptr, this);
     txtLPFBW->Connect(
-        wxEVT_MOUSEWHEEL, wxMouseEventHandler(lms7002_pnlTXTSP_view::txtFCWPHOmodeAdditional_OnMouseWheel), NULL, this);
-    btnSetLPF->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnSetLPFClick), NULL, this);
+        wxEVT_MOUSEWHEEL, wxMouseEventHandler(lms7002_pnlTXTSP_view::txtFCWPHOmodeAdditional_OnMouseWheel), nullptr, this);
+    btnSetLPF->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlTXTSP_view::OnbtnSetLPFClick), nullptr, this);
     cmbIQCORR_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGCORRI_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbGCORRQ_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbDCCORRI_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
     cmbDCCORRQ_TXTSP->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlTXTSP_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[rgrMODE_TX] = LMS7002MCSR::MODE_TX;
     wndId2Enum[chkBSTART_TXTSP] = LMS7002MCSR::BSTART_TXTSP;

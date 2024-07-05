@@ -10,7 +10,7 @@
 #include <string_view>
 #include <cmath>
 #include <signal.h>
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif
@@ -25,7 +25,7 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n"sv;
+    std::cout << "Stopping\n"sv;
     stopProgram = true;
 }
 
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
     uint64_t totalSamplesReceived = 0;
 
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
     kiss_fft_cpx m_fftCalcIn[fftSize];
     kiss_fft_cpx m_fftCalcOut[fftSize];
 

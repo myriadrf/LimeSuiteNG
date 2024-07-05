@@ -50,7 +50,7 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
 
-  protected:
+  private:
     void LMS1SetPath(bool tx, uint8_t chan, uint8_t path);
     OpStatus LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     static OpStatus LMS1_UpdateFPGAInterface(void* userData);
@@ -89,13 +89,11 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         double expectChB_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
-  private:
     std::shared_ptr<IComms> lms7002mPort;
     std::shared_ptr<IComms> fpgaPort;
     std::shared_ptr<LitePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 
-    std::mutex mCommsMutex;
     bool mConfigInProgress;
 };
 

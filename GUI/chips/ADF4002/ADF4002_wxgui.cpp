@@ -127,12 +127,12 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
         new wxStaticText(this, ID_STATICTEXT3, _("Reference Counter:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT3"));
     FlexGridSizer5->Add(StaticText3, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     cmbLDP = new wxComboBox(
-        this, ID_COMBOBOX1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX1"));
+        this, ID_COMBOBOX1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX1"));
     cmbLDP->SetSelection(cmbLDP->Append(_("Three Cycles")));
     cmbLDP->Append(_("Five Cycles"));
     FlexGridSizer5->Add(cmbLDP, 1, wxEXPAND, 5);
     cmbABW = new wxComboBox(
-        this, ID_COMBOBOX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX2"));
+        this, ID_COMBOBOX2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX2"));
     cmbABW->SetSelection(cmbABW->Append(_("2.9ns")));
     cmbABW->Append(_("6.0ns"));
     cmbABW->Append(_("2.9ns"));
@@ -152,8 +152,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     StaticText5 =
         new wxStaticText(this, ID_STATICTEXT5, _("N Counter:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT5"));
     FlexGridSizer6->Add(StaticText5, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-    cmbCPG = new wxComboBox(
-        this, ID_COMBOBOX3, wxEmptyString, wxDefaultPosition, wxSize(65, -1), 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX3"));
+    cmbCPG = new wxComboBox(this,
+        ID_COMBOBOX3,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxSize(65, -1),
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX3"));
     cmbCPG->SetSelection(cmbCPG->Append(_("0")));
     cmbCPG->Append(_("1"));
     FlexGridSizer6->Add(cmbCPG, 1, wxEXPAND, 5);
@@ -173,7 +181,7 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
         new wxStaticText(this, ID_STATICTEXT7, _("Timer Counter:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT7"));
     FlexGridSizer8->Add(StaticText7, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     cmbCS1_f = new wxComboBox(
-        this, ID_COMBOBOX4, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX4"));
+        this, ID_COMBOBOX4, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX4"));
     cmbCS1_f->Append(_("0"));
     cmbCS1_f->Append(_("1"));
     cmbCS1_f->Append(_("2"));
@@ -184,7 +192,7 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     cmbCS1_f->SetSelection(cmbCS1_f->Append(_("7")));
     FlexGridSizer8->Add(cmbCS1_f, 1, wxEXPAND, 5);
     cmbTC_f = new wxComboBox(
-        this, ID_COMBOBOX5, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX5"));
+        this, ID_COMBOBOX5, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX5"));
     cmbTC_f->SetSelection(cmbTC_f->Append(_("3")));
     cmbTC_f->Append(_("7"));
     cmbTC_f->Append(_("11"));
@@ -208,7 +216,7 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     StaticText9 = new wxStaticText(this, ID_STATICTEXT9, _("Fastlock:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT9"));
     FlexGridSizer8->Add(StaticText9, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     cmbCS2_f = new wxComboBox(
-        this, ID_COMBOBOX6, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX6"));
+        this, ID_COMBOBOX6, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX6"));
     cmbCS2_f->Append(_("0"));
     cmbCS2_f->Append(_("1"));
     cmbCS2_f->Append(_("2"));
@@ -219,7 +227,7 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     cmbCS2_f->SetSelection(cmbCS2_f->Append(_("7")));
     FlexGridSizer8->Add(cmbCS2_f, 1, wxEXPAND, 5);
     cmbFL_f = new wxComboBox(
-        this, ID_COMBOBOX7, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX7"));
+        this, ID_COMBOBOX7, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX7"));
     cmbFL_f->SetSelection(cmbFL_f->Append(_("Disabled")));
     cmbFL_f->Append(_("Mode 1"));
     cmbFL_f->Append(_("Mode 2"));
@@ -229,8 +237,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     StaticText10 =
         new wxStaticText(this, ID_STATICTEXT10, _("Muxout Control"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT10"));
     FlexGridSizer9->Add(StaticText10, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-    cmbMOC_f = new wxComboBox(
-        this, ID_COMBOBOX8, wxEmptyString, wxDefaultPosition, wxSize(160, -1), 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX8"));
+    cmbMOC_f = new wxComboBox(this,
+        ID_COMBOBOX8,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxSize(160, -1),
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX8"));
     cmbMOC_f->Append(_("Three-State Output"));
     cmbMOC_f->SetSelection(cmbMOC_f->Append(_("Digital Lock Detect")));
     cmbMOC_f->Append(_("N Divider Output"));
@@ -325,7 +341,7 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
         new wxStaticText(this, ID_STATICTEXT18, _("Timer Counter:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT18"));
     FlexGridSizer14->Add(StaticText16, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     cmbCS1_i = new wxComboBox(
-        this, ID_COMBOBOX9, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX9"));
+        this, ID_COMBOBOX9, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0, wxDefaultValidator, _T("ID_COMBOBOX9"));
     cmbCS1_i->Append(_("0"));
     cmbCS1_i->Append(_("1"));
     cmbCS1_i->Append(_("2"));
@@ -335,8 +351,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     cmbCS1_i->Append(_("6"));
     cmbCS1_i->SetSelection(cmbCS1_i->Append(_("7")));
     FlexGridSizer14->Add(cmbCS1_i, 1, wxEXPAND, 5);
-    cmbTC_i = new wxComboBox(
-        this, ID_COMBOBOX10, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX10"));
+    cmbTC_i = new wxComboBox(this,
+        ID_COMBOBOX10,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxDefaultSize,
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX10"));
     cmbTC_i->SetSelection(cmbTC_i->Append(_("3")));
     cmbTC_i->Append(_("7"));
     cmbTC_i->Append(_("11"));
@@ -360,8 +384,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     StaticText18 =
         new wxStaticText(this, ID_STATICTEXT20, _("Fastlock:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT20"));
     FlexGridSizer14->Add(StaticText18, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-    cmbCS2_i = new wxComboBox(
-        this, ID_COMBOBOX11, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX11"));
+    cmbCS2_i = new wxComboBox(this,
+        ID_COMBOBOX11,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxDefaultSize,
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX11"));
     cmbCS2_i->Append(_("0"));
     cmbCS2_i->Append(_("1"));
     cmbCS2_i->Append(_("2"));
@@ -371,8 +403,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     cmbCS2_i->Append(_("6"));
     cmbCS2_i->SetSelection(cmbCS2_i->Append(_("7")));
     FlexGridSizer14->Add(cmbCS2_i, 1, wxEXPAND, 5);
-    cmbFL_i = new wxComboBox(
-        this, ID_COMBOBOX12, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX12"));
+    cmbFL_i = new wxComboBox(this,
+        ID_COMBOBOX12,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxDefaultSize,
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX12"));
     cmbFL_i->SetSelection(cmbFL_i->Append(_("Disabled")));
     cmbFL_i->Append(_("Mode 1"));
     cmbFL_i->Append(_("Mode 2"));
@@ -382,8 +422,16 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     StaticText19 =
         new wxStaticText(this, ID_STATICTEXT21, _("Muxout Control"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT21"));
     FlexGridSizer15->Add(StaticText19, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-    cmbMOC_i = new wxComboBox(
-        this, ID_COMBOBOX13, wxEmptyString, wxDefaultPosition, wxSize(160, -1), 0, 0, 0, wxDefaultValidator, _T("ID_COMBOBOX13"));
+    cmbMOC_i = new wxComboBox(this,
+        ID_COMBOBOX13,
+        wxEmptyString,
+        wxDefaultPosition,
+        wxSize(160, -1),
+        0,
+        nullptr,
+        0,
+        wxDefaultValidator,
+        _T("ID_COMBOBOX13"));
     cmbMOC_i->Append(_("Three-State Output"));
     cmbMOC_i->SetSelection(cmbMOC_i->Append(_("Digital Lock Detect")));
     cmbMOC_i->Append(_("N Divider Output"));

@@ -7,7 +7,7 @@
 #include <wx/checkbox.h>
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "limesuiteng/SDRDevice.h"
 
 #include "pnlXTRX.h"
@@ -38,8 +38,8 @@ pnlX8::pnlX8(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& 
     Layout();
     SetSizer(submodulesSizer);
 
-    Bind(READ_ALL_VALUES, &pnlX8::OnReadAll, this, this->GetId());
-    Bind(WRITE_ALL_VALUES, &pnlX8::OnWriteAll, this, this->GetId());
+    Bind(READ_ALL_VALUES, &pnlX8::OnReadAll, this, GetId());
+    Bind(WRITE_ALL_VALUES, &pnlX8::OnWriteAll, this, GetId());
 }
 
 void pnlX8::Initialize(lime::SDRDevice* pControl)
@@ -55,8 +55,8 @@ void pnlX8::Initialize(lime::SDRDevice* pControl)
 
 pnlX8::~pnlX8()
 {
-    Unbind(READ_ALL_VALUES, &pnlX8::OnReadAll, this, this->GetId());
-    Unbind(WRITE_ALL_VALUES, &pnlX8::OnWriteAll, this, this->GetId());
+    Unbind(READ_ALL_VALUES, &pnlX8::OnReadAll, this, GetId());
+    Unbind(WRITE_ALL_VALUES, &pnlX8::OnWriteAll, this, GetId());
 }
 
 void pnlX8::UpdatePanel()

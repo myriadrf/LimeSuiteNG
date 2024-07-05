@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
-#include "lms7suiteEvents.h"
+#include "events.h"
 #include "lms7002_dlgVCOfrequencies.h"
 #include <string>
 #include "limesuiteng/SDRDevice.h"
@@ -19,7 +19,7 @@ using namespace std;
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
 
-static bool showRefClkSpurCancelation = true;
+static bool showRefClkSpurCancellation = true;
 
 lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
@@ -211,7 +211,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT7->Wrap(-1);
     fgSizer203->Add(ID_STATICTEXT7, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbTST_SX = new wxComboBox(this, ID_TST_SX, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+    cmbTST_SX = new wxComboBox(this, ID_TST_SX, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     fgSizer203->Add(cmbTST_SX, 0, 0, 0);
 
     fgSizer103->Add(fgSizer203, 0, wxEXPAND, 5);
@@ -303,7 +303,8 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT18->Wrap(-1);
     fgSizer102->Add(ID_STATICTEXT18, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbCP2_PLL = new wxComboBox(sbSizer78->GetStaticBox(), ID_CP2_PLL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCP2_PLL =
+        new wxComboBox(sbSizer78->GetStaticBox(), ID_CP2_PLL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCP2_PLL->SetToolTip(wxT("Controls the value of CP2 (cap from CP output to GND) in the PLL filter"));
 
     fgSizer102->Add(cmbCP2_PLL, 0, wxEXPAND, 0);
@@ -312,7 +313,8 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT19->Wrap(-1);
     fgSizer102->Add(ID_STATICTEXT19, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbCP3_PLL = new wxComboBox(sbSizer78->GetStaticBox(), ID_CP3_PLL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCP3_PLL =
+        new wxComboBox(sbSizer78->GetStaticBox(), ID_CP3_PLL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCP3_PLL->SetToolTip(wxT("Controls the value of CP3 (cap from VCO Vtune input to GND) in the PLL filter"));
 
     fgSizer102->Add(cmbCP3_PLL, 0, wxEXPAND, 0);
@@ -321,7 +323,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT20->Wrap(-1);
     fgSizer102->Add(ID_STATICTEXT20, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbCZ = new wxComboBox(sbSizer78->GetStaticBox(), ID_CZ, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbCZ = new wxComboBox(sbSizer78->GetStaticBox(), ID_CZ, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbCZ->SetToolTip(wxT("Controls the value of CZ (Zero capacitor) in the PLL filter"));
 
     fgSizer102->Add(cmbCZ, 0, wxEXPAND, 0);
@@ -369,11 +371,11 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     pnlRefClkSpur->Hide();
 
     RefClkSpurSizer =
-        new wxStaticBoxSizer(new wxStaticBox(pnlRefClkSpur, wxID_ANY, wxT("Receiver Ref Clk \nSpur Cancelation")), wxVERTICAL);
+        new wxStaticBoxSizer(new wxStaticBox(pnlRefClkSpur, wxID_ANY, wxT("Receiver Ref Clk \nSpur Cancellation")), wxVERTICAL);
 
-    chkEnableRefSpurCancelation =
+    chkEnableRefSpurCancellation =
         new wxCheckBox(RefClkSpurSizer->GetStaticBox(), wxID_ANY, wxT("Enable"), wxDefaultPosition, wxDefaultSize, 0);
-    RefClkSpurSizer->Add(chkEnableRefSpurCancelation, 0, 0, 5);
+    RefClkSpurSizer->Add(chkEnableRefSpurCancellation, 0, 0, 5);
 
     m_staticText359 = new wxStaticText(
         RefClkSpurSizer->GetStaticBox(), wxID_ANY, wxT("RF Bandwidth (MHz):"), wxDefaultPosition, wxDefaultSize, 0);
@@ -564,7 +566,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     fgSizer98->Add(ID_STATICTEXT9, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
     cmbVDIV_VCO = new wxComboBox(
-        sbSizerFrequencyControls->GetStaticBox(), ID_VDIV_VCO, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+        sbSizerFrequencyControls->GetStaticBox(), ID_VDIV_VCO, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbVDIV_VCO->SetToolTip(wxT("Controls VCO LDO output voltage"));
 
     fgSizer98->Add(cmbVDIV_VCO, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -586,7 +588,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT13->Wrap(-1);
     fgSizer193->Add(ID_STATICTEXT13, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbIPULSE_CP = new wxComboBox(this, ID_IPULSE_CP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbIPULSE_CP = new wxComboBox(this, ID_IPULSE_CP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbIPULSE_CP->SetToolTip(wxT("Scales the pulse current of the charge pump"));
 
     fgSizer193->Add(cmbIPULSE_CP, 0, wxEXPAND, 0);
@@ -595,7 +597,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT8->Wrap(-1);
     fgSizer193->Add(ID_STATICTEXT8, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbSEL_SDMCLK = new wxComboBox(this, ID_SEL_SDMCLK, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbSEL_SDMCLK = new wxComboBox(this, ID_SEL_SDMCLK, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbSEL_SDMCLK->SetToolTip(wxT("Selects between the feedback divider output and Fref for SDM"));
 
     fgSizer193->Add(cmbSEL_SDMCLK, 0, wxEXPAND, 0);
@@ -604,7 +606,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT11->Wrap(-1);
     fgSizer193->Add(ID_STATICTEXT11, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbRSEL_LDO_VCO = new wxComboBox(this, ID_RSEL_LDO_VCO, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRSEL_LDO_VCO = new wxComboBox(this, ID_RSEL_LDO_VCO, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRSEL_LDO_VCO->SetToolTip(wxT("Set the reference voltage that supplies bias voltage of switch-cap array and varactor"));
 
     fgSizer193->Add(cmbRSEL_LDO_VCO, 0, wxEXPAND, 0);
@@ -613,7 +615,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     ID_STATICTEXT12->Wrap(-1);
     fgSizer193->Add(ID_STATICTEXT12, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbIOFFSET_CP = new wxComboBox(this, ID_IOFFSET_CP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbIOFFSET_CP = new wxComboBox(this, ID_IOFFSET_CP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbIOFFSET_CP->SetToolTip(wxT("Scales the offset current of the charge pump, 0-->63. This current is used in Fran-N mode to "
                                   "create an offset in the CP response and avoid the non-linear section"));
 
@@ -630,88 +632,91 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
 
     fgSizer92->Add(pnlRefClkSpur, 1, 0, 5);
 
-    this->SetSizer(fgSizer92);
-    this->Layout();
+    SetSizer(fgSizer92);
+    Layout();
     fgSizer92->Fit(this);
 
     // Connect Events
     chkPD_FBDIV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_LOCH_T2RBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_CP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_FDIV->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_SDM->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_VCO_COMP->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkPD_VCO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
-    chkEN_G->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
+    chkEN_G->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkEN_DIR_SXRSXT->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkRESET_N->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkSPDUP_VCO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkBYPLDO_VCO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkEN_COARSEPLL->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkCURLIM_VCO->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkREVPH_PFD->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkEN_INTONLY_SDM->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkEN_SDM_CLK->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkREV_SDMCLK->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     chkSX_DITHER_EN->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     //chkEN_DIV2_DIVPROGenabled->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( lms7002_pnlSX_view::OnDIV2PrescalerChange ), NULL, this );
     cmbTST_SX->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     ctrPW_DIV2_LOCH->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     ctrPW_DIV4_LOCH->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     ctrDIV_LOCH->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     cmbCP2_PLL->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbCP3_PLL->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
-    cmbCZ->Connect(wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
+    cmbCZ->Connect(
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     rgrSEL_VCO->Connect(
-        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
-    btnCalculate->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnCalculateClick), NULL, this);
-    btnTune->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnTuneClick), NULL, this);
-    chkEnableRefSpurCancelation->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnEnableRefSpurCancelation), NULL, this);
+        wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
+    btnCalculate->Connect(
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnCalculateClick), nullptr, this);
+    btnTune->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnTuneClick), nullptr, this);
+    chkEnableRefSpurCancellation->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnEnableRefSpurCancellation), nullptr, this);
     btnChangeRefClk->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnChangeRefClkClick), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnChangeRefClkClick), nullptr, this);
     btnUpdateValues->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnReadComparators), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnbtnReadComparators), nullptr, this);
     ctrCSW_VCO->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     cmbICT_VCO->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     btnShowVCOparams->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnShowVCOclicked), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnShowVCOclicked), nullptr, this);
     cmbVDIV_VCO->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbIPULSE_CP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbSEL_SDMCLK->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbRSEL_LDO_VCO->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbIOFFSET_CP->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
 
     sizerR3->Add(new wxStaticText(this, wxID_ANY, _("PLL LPF zero resistor:")), 1, wxALIGN_CENTER_VERTICAL, 0);
     cmbRZ_CTRL = new wxComboBox(this, wxID_ANY);
@@ -720,7 +725,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     cmbRZ_CTRL->Append(_("Rzero = 4 kOhm"));
     cmbRZ_CTRL->Append(_("LPF resistors are in bypass mode (<100 Ohm)"));
     cmbRZ_CTRL->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     wndId2Enum[cmbRZ_CTRL] = LMS7002MCSR::RZ_CTRL;
     sizerR3->Add(cmbRZ_CTRL, 0, wxLEFT | wxEXPAND, 5);
 
@@ -729,7 +734,7 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     cmbCMPLO_CTRL->Append(_("Low threshold is set to 0.18V"));
     cmbCMPLO_CTRL->Append(_("Low threshold is set to 0.1V"));
     cmbCMPLO_CTRL->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     sizerR3->Add(cmbCMPLO_CTRL, 0, wxLEFT | wxEXPAND, 5);
     wndId2Enum[cmbCMPLO_CTRL] = LMS7002MCSR::CMPLO_CTRL_SX;
 
@@ -856,10 +861,10 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     txtRefSpurBW->SetValue(_("5"));
 
     LMS7002_WXGUI::UpdateTooltips(wndId2Enum, true);
-    if (showRefClkSpurCancelation)
+    if (showRefClkSpurCancellation)
     {
         pnlRefClkSpur->Show();
-        showRefClkSpurCancelation = false;
+        showRefClkSpurCancellation = false;
     }
 }
 
@@ -937,8 +942,8 @@ void lms7002_pnlSX_view::OnbtnCalculateClick(wxCommandEvent& event)
     txtRefSpurBW->GetValue().ToDouble(&BWMHz);
     OpStatus status;
 
-    if (chkEnableRefSpurCancelation->IsChecked())
-        status = lmsControl->SetFrequencySXWithSpurCancelation(direction, freqMHz * 1e6, BWMHz * 1e6);
+    if (chkEnableRefSpurCancellation->IsChecked())
+        status = lmsControl->SetFrequencySXWithSpurCancellation(direction, freqMHz * 1e6, BWMHz * 1e6);
     else
         status = lmsControl->SetFrequencySX(direction, freqMHz * 1e6);
 
@@ -976,7 +981,7 @@ void lms7002_pnlSX_view::UpdateGUI()
     lblRefClk_MHz->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
     freq = lmsControl->GetFrequencySX(direction);
     lblRealOutFrequency->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
-    // TODO: if(chkEnableRefSpurCancelation->IsChecked())
+    // TODO: if(chkEnableRefSpurCancellation->IsChecked())
     // {
     //     uint16_t downconvert = 0;
     //     downconvert = ReadParam(LMS7002MCSR::CMIX_SC_RXTSP);
@@ -1017,10 +1022,10 @@ void lms7002_pnlSX_view::OnShowVCOclicked(wxCommandEvent& event)
     dlg->Destroy();
 }
 
-void lms7002_pnlSX_view::OnEnableRefSpurCancelation(wxCommandEvent& event)
+void lms7002_pnlSX_view::OnEnableRefSpurCancellation(wxCommandEvent& event)
 {
     // TODO:
-    // txtRefSpurBW->Enable(chkEnableRefSpurCancelation->IsChecked());
+    // txtRefSpurBW->Enable(chkEnableRefSpurCancellation->IsChecked());
     // uint16_t ch = 0;
     // ReadParam( LMS7002MCSR::MAC, &ch);
     // for(int i=0; i<2; ++i)
@@ -1028,7 +1033,7 @@ void lms7002_pnlSX_view::OnEnableRefSpurCancelation(wxCommandEvent& event)
     //     WriteParam( LMS7002MCSR::MAC, i+1);
     //     WriteParam( LMS7002MCSR::CMIX_GAIN_RXTSP, 1);
     //     WriteParam( LMS7002MCSR::CMIX_BYP_RXTSP, 0);
-    //     if(chkEnableRefSpurCancelation->IsChecked())
+    //     if(chkEnableRefSpurCancellation->IsChecked())
     //     {
     //         WriteParam( LMS7002MCSR::SEL_RX, 15);
     //     }
