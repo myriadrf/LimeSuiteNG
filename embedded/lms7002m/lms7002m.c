@@ -310,11 +310,11 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     lms7002m_spi_modify_csr(self, LMS7002M_DIV_OUTCH_CGEN, div_outch_cgen); //DIV_OUTCH_CGEN
 
     LMS7002M_LOG(self, lime_LogLevel_Debug, "INT %d, FRAC %d, DIV_OUTCH_CGEN %d", integerPart, fractionalPart, div_outch_cgen);
-    LMS7002M_LOG(self, lime_LogLevel_Debug, "CGEN_VCO %u Hz, RefClk %u Hz", vco, refClk);
+    LMS7002M_LOG(self, lime_LogLevel_Debug, "CGEN_VCO %lu Hz, RefClk %u Hz", vco, refClk);
 
     if (lms7002m_tune_cgen_vco(self) != lime_Result_Success)
     {
-        LMS7002M_LOG(self, lime_LogLevel_Error, "%s:(%u Hz) failed", freq_Hz);
+        LMS7002M_LOG(self, lime_LogLevel_Error, "%s:(%u Hz) failed", __func__, freq_Hz);
         return lime_Result_Error;
     }
 
@@ -988,7 +988,7 @@ static lime_Result lms7002m_write_sx_registers(
 
 lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_t LO_freq_hz)
 {
-    LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%u Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
+    LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%lu Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
 
     const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
     const uint64_t VCO_min_frequency[3] = { 3800000000, 4961000000, 6306000000 };
@@ -1026,7 +1026,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
     {
         LMS7002M_LOG(self,
             lime_LogLevel_Error,
-            "%s: %s LO(%u Hz) - VCO cannot deliver frequency.",
+            "%s: %s LO(%lu Hz) - VCO cannot deliver frequency.",
             __func__,
             isTx ? "Tx" : "Rx",
             LO_freq_hz);
@@ -1098,7 +1098,8 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
 
     if (canDeliverFrequency == false)
     {
-        LMS7002M_LOG(self, lime_LogLevel_Error, "%s: %s LO(%u Hz) - cannot deliver frequency", isTx ? "Tx" : "Rx", LO_freq_hz);
+        LMS7002M_LOG(
+            self, lime_LogLevel_Error, "%s: %s LO(%lu Hz) - cannot deliver frequency", __func__, isTx ? "Tx" : "Rx", LO_freq_hz);
         return lime_Result_Error;
     }
     return lime_Result_Success;
@@ -1318,6 +1319,7 @@ lime_Result lms7002m_get_gfir_coefficients(
         LMS7002M_LOG(self,
             lime_LogLevel_Error,
             "lms7002m_get_gfir_coefficients: GFIR%i has %d coefficients, requested(%d)",
+            gfirIndex + 1,
             coefLimit,
             coefCount);
         return lime_Result_OutOfRange;
@@ -1734,6 +1736,7 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
         LMS7002M_LOG(self,
             lime_LogLevel_Warning,
             "%s: Requested bandwidth(%u). Clamping to valid range [%u - %u]",
+            __func__,
             rfBandwidth_Hz,
             rxLpfMin,
             rxLpfMax);
@@ -1783,8 +1786,12 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
 
     if (rfBandwidth_Hz < rxLpfMin)
     {
-        LMS7002M_LOG(
-            self, lime_LogLevel_Warning, "%s: bandwidth(%u) frequency too low. Clamping to %u Hz.", rfBandwidth_Hz, rxLpfMin);
+        LMS7002M_LOG(self,
+            lime_LogLevel_Warning,
+            "%s: bandwidth(%u) frequency too low. Clamping to %u Hz.",
+            __func__,
+            rfBandwidth_Hz,
+            rxLpfMin);
         if (tiaGain == 1)
         {
             cfb_tia_rfe = 4035;
@@ -1945,7 +1952,7 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
         powerDowns = 0x07;
     }
 
-    LMS7002M_LOG(self, lime_LogLevel_Debug, "%s: bandwidth(%u): LAD=%i, H=%i\n", rfBandwidth_Hz, rcal_lpflad, rcal_lpfh);
+    LMS7002M_LOG(self, lime_LogLevel_Debug, "%s: bandwidth(%u): LAD=%i, H=%i\n", __func__, rfBandwidth_Hz, rcal_lpflad, rcal_lpfh);
 
     lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFLAD_TBB, rcal_lpflad);
     lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFH_TBB, rcal_lpfh);

@@ -762,7 +762,7 @@ lime_Result lms7002m_calibrate_rx(lms7002m_context* self, uint32_t bandwidthRF, 
 
     LMS7002M_LOG(self,
         lime_LogLevel_Debug,
-        "Rx calibrate ch.%s @ %u Hz, BW: %u Hz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
+        "Rx calibrate ch.%s @ %lu Hz, BW: %u Hz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         (x0020val & 0x3) == 1 ? "A" : "B",
         rxFreq,
         bandwidthRF,
