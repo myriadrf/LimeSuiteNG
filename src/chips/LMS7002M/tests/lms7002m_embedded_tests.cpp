@@ -3,6 +3,7 @@
 #include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
 #include "lms7002m/csr_data.h"
+#include "lms7002m/spi.h"
 
 using namespace lime::testing;
 
@@ -25,6 +26,31 @@ void lms7002m_embedded::SetUp()
 void lms7002m_embedded::TearDown()
 {
     lms7002m_destroy(chip);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_spi_write_ValueIsCorrect)
+{
+    const uint16_t writeAddr = 0x0020;
+    const uint16_t writeValue = 0xABCD;
+    spi_stub.registers[0][writeAddr] = 0xFFFF;
+    lms7002m_spi_write(chip, writeAddr, writeValue);
+    ASSERT_EQ(spi_stub.registers[0][writeAddr], writeValue);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_spi_read_ValueIsCorrect)
+{
+    const uint16_t readAddr = 0x0020;
+    spi_stub.registers[0][readAddr] = 0xFFFD;
+    const uint16_t readValue = lms7002m_spi_read(chip, readAddr);
+    ASSERT_EQ(readValue, spi_stub.registers[0][readAddr]);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_spi_modify_ValueIsCorrect)
+{
+    const uint16_t addr = 0x0020;
+    spi_stub.registers[0][addr] = 0x00FD;
+    lms7002m_spi_modify(chip, addr, 12, 8, 0xA);
+    ASSERT_EQ(spi_stub.registers[0][addr], 0x0AFD);
 }
 
 TEST_F(lms7002m_embedded, lms7002m_create_DoesNotModifyRegisters)
