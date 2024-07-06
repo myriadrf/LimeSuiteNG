@@ -300,6 +300,13 @@ lime_Result lms7002m_tune_cgen_vco(lms7002m_context* self)
 
 lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz)
 {
+    if (freq_Hz == 0)
+        return lime_Result_InvalidValue;
+
+    const uint32_t refClk = lms7002m_get_reference_clock(self);
+    if (refClk == 0)
+        return lime_Result_Error;
+
     const uint64_t cgen_vco_min = 1930000000;
     const uint64_t cgen_vco_max = 2940000000;
     if (freq_Hz > 640000000)
@@ -319,7 +326,6 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
         return lime_Result_Error;
     }
 
-    const uint32_t refClk = lms7002m_get_reference_clock(self);
     const uint16_t integerPart = vco / refClk - 1;
     // "Fixed point number" division, take only the fraction part
     uint32_t fractionalPart = (vco << 20) / refClk;
