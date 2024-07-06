@@ -114,3 +114,59 @@ TEST_F(lms7002m_embedded, lms7002m_set_frequency_cgen_SetValidFreq_TuneFails_Rep
     spi_stub.Set(0, { 0x008C, 13, 12 }, 0); // force tune failure
     ASSERT_EQ(lms7002m_set_frequency_cgen(chip, 122.88e6), lime_Result_Error);
 }
+
+TEST_F(lms7002m_embedded, lms7002m_set_nco_frequencies_SetGet_ValuesMatch)
+{
+    std::array<uint32_t, 16> freqs;
+    for (size_t i = 0; i < freqs.size(); ++i)
+        freqs[i] = i * 1e3;
+
+    bool isTx = true;
+    const int16_t phaseOffset = 123;
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
+    ASSERT_EQ(lms7002m_set_nco_frequencies(chip, isTx, freqs.data(), freqs.size(), phaseOffset), lime_Result_Success);
+
+    std::array<uint32_t, 16> freqs_readback{};
+    int16_t phaseOffset_readback{ 0 };
+    ASSERT_EQ(lms7002m_get_nco_frequencies(chip, isTx, freqs_readback.data(), freqs_readback.size(), &phaseOffset_readback),
+        lime_Result_Success);
+
+    ASSERT_EQ(freqs_readback, freqs);
+    ASSERT_EQ(phaseOffset_readback, phaseOffset);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_set_nco_phases_SetGet_ValuesMatch)
+{
+    std::array<int16_t, 16> pho;
+    for (size_t i = 0; i < pho.size(); ++i)
+        pho[i] = -32768 + i * (65535 / 16);
+
+    bool isTx = true;
+    const uint32_t freqOffset = 123456;
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
+    ASSERT_EQ(lms7002m_set_nco_phases(chip, isTx, pho.data(), pho.size(), freqOffset), lime_Result_Success);
+
+    std::array<int16_t, 16> pho_readback{};
+    uint32_t freqOffset_readback{ 0 };
+    ASSERT_EQ(lms7002m_get_nco_phases(chip, isTx, pho_readback.data(), pho_readback.size(), &freqOffset_readback),
+        lime_Result_Success);
+
+    ASSERT_EQ(pho_readback, pho);
+    ASSERT_EQ(freqOffset, freqOffset);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_set_gfir_coefficients_SetGet_ValuesMatch)
+{
+    std::array<int16_t, 120> coefs;
+    for (size_t i = 0; i < coefs.size(); ++i)
+        coefs[i] = -32768 + i * (65536 / 120);
+
+    bool isTx = true;
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
+    ASSERT_EQ(lms7002m_set_gfir_coefficients(chip, isTx, 2, coefs.data(), coefs.size()), lime_Result_Success);
+
+    std::array<int16_t, 120> coefs_readback{};
+    ASSERT_EQ(lms7002m_get_gfir_coefficients(chip, isTx, 2, coefs_readback.data(), coefs_readback.size()), lime_Result_Success);
+
+    ASSERT_EQ(coefs_readback, coefs);
+}

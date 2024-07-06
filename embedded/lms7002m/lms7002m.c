@@ -39,6 +39,20 @@ static inline void lms7002m_free(void* ptr)
 #endif
 }
 
+// convert frequency control word register value into Hz
+static inline uint32_t nco_fcw_to_freq(uint32_t fcw, uint32_t tsp_ref_clk)
+{
+    // Add "0.5"(2147483648) in fixed point calculation for rounding purposes
+    return ((uint64_t)tsp_ref_clk * fcw + 2147483648u) / 4294967295u;
+}
+
+// convert Hz into frequency control word
+static inline uint32_t freq_to_nco_fcw(uint32_t freqOffset, uint32_t tsp_ref_clk)
+{
+    assert(tsp_ref_clk > 0);
+    return (uint64_t)freqOffset * 4294967295u / tsp_ref_clk;
+}
+
 #define TO_DECIBEL(R) \
     (struct lms7002m_decibel) \
     { \
@@ -1162,6 +1176,9 @@ lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const 
     }
 
     const uint32_t tsp_ref_clk = lms7002m_get_reference_clock_tsp(self, isTx);
+    if (tsp_ref_clk == 0)
+        return lime_Result_Error;
+
     if (2 * freq_Hz > tsp_ref_clk)
     {
         LMS7002M_LOG(
@@ -1170,7 +1187,7 @@ lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const 
     }
 
     const uint16_t addr = isTx ? 0x0240 : 0x0440;
-    const uint32_t fcw = (uint64_t)freq_Hz * 4294967295 / tsp_ref_clk;
+    const uint32_t fcw = freq_to_nco_fcw(freq_Hz, tsp_ref_clk);
     lms7002m_spi_write(self, addr + 2 + index * 2, (fcw >> 16)); //NCO frequency control word register MSB part.
     lms7002m_spi_write(self, addr + 3 + index * 2, fcw); //NCO frequency control word register LSB part.
     return lime_Result_Success;
@@ -1190,11 +1207,10 @@ uint32_t lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uin
     fcw |= lms7002m_spi_read(self, addr + 2 + index * 2) << 16; //NCO frequency control word register MSB part.
     fcw |= lms7002m_spi_read(self, addr + 3 + index * 2); //NCO frequency control word register LSB part.
 
-    // Add "0.5"(2147483648) in fixed point calculation for rounding purposes
-    return ((uint64_t)refClk_Hz * fcw + 2147483648u) / 4294967295u;
+    return nco_fcw_to_freq(fcw, refClk_Hz);
 }
 
-lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index, uint16_t pho_calculated)
+lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index, int16_t pho_calculated)
 {
     if (index > 15)
     {
@@ -1207,7 +1223,19 @@ lime_Result lms7002m_set_nco_phase_offset(lms7002m_context* self, bool isTx, uin
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, uint16_t pho_calculated)
+static int16_t lms7002m_get_nco_phase_offset(lms7002m_context* self, bool isTx, uint8_t index)
+{
+    if (index > 15)
+    {
+        LMS7002M_LOG(self, lime_LogLevel_Error, "%s: invalid NCO index %d.", __func__, index);
+        return lime_Result_InvalidValue;
+    }
+
+    const uint16_t addr = isTx ? 0x0244 : 0x0444;
+    return lms7002m_spi_read(self, addr + index);
+}
+
+lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, bool isTx, int16_t pho_calculated)
 {
     const uint16_t addr = isTx ? 0x0241 : 0x0441;
     lms7002m_spi_write(self, addr, pho_calculated);
@@ -1215,7 +1243,7 @@ lime_Result lms7002m_set_nco_phase_offset_for_mode_0(lms7002m_context* self, boo
 }
 
 lime_Result lms7002m_set_nco_phases(
-    lms7002m_context* self, bool isTx, const uint16_t* const angles_deg, uint8_t count, uint32_t frequencyOffset)
+    lms7002m_context* self, bool isTx, const int16_t* const angles_deg, uint8_t count, uint32_t frequencyOffset)
 {
     assert(angles_deg);
     if (count > 16)
@@ -1238,8 +1266,27 @@ lime_Result lms7002m_set_nco_phases(
     return lms7002m_spi_modify_csr(self, isTx ? LMS7002M_SEL_TX : LMS7002M_SEL_RX, 0);
 }
 
+lime_Result lms7002m_get_nco_phases(
+    lms7002m_context* self, bool isTx, int16_t* const phoValues, uint8_t count, uint32_t* frequencyOffset)
+{
+    assert(phoValues);
+    if (count > 16)
+    {
+        LMS7002M_LOG(self, lime_LogLevel_Error, "%s: invalid NCO count %d.", __func__, count);
+        return lime_Result_OutOfRange;
+    }
+
+    for (int i = 0; i < count; ++i)
+        phoValues[i] = lms7002m_get_nco_phase_offset(self, isTx, i);
+
+    if (frequencyOffset != NULL)
+        *frequencyOffset = lms7002m_get_nco_frequency(self, isTx, 0);
+
+    return lime_Result_Success;
+}
+
 lime_Result lms7002m_set_nco_frequencies(
-    lms7002m_context* self, bool isTx, const uint32_t* const freq_Hz, uint8_t count, uint16_t phaseOffset)
+    lms7002m_context* self, bool isTx, const uint32_t* const freq_Hz, uint8_t count, int16_t phaseOffset)
 {
     assert(freq_Hz);
     if (count > 16)
@@ -1258,7 +1305,7 @@ lime_Result lms7002m_set_nco_frequencies(
 }
 
 lime_Result lms7002m_get_nco_frequencies(
-    lms7002m_context* self, bool isTx, uint32_t* const freq_Hz, uint8_t count, uint16_t* phaseOffset)
+    lms7002m_context* self, bool isTx, uint32_t* const freq_Hz, uint8_t count, int16_t* phaseOffset)
 {
     assert(freq_Hz);
     if (count > 16)

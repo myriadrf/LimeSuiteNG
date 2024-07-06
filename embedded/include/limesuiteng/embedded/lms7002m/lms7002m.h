@@ -122,15 +122,18 @@ uint64_t lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
 lime_Result lms7002m_set_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index, uint32_t freq_Hz);
 uint32_t lms7002m_get_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index);
 
-lime_Result lms7002m_set_nco_phase_offset(struct lms7002m_context* self, bool isTx, uint8_t index, uint16_t pho_calculated);
-lime_Result lms7002m_set_nco_phase_offset_for_mode_0(struct lms7002m_context* self, bool isTx, uint16_t pho_calculated);
+lime_Result lms7002m_set_nco_phase_offset(struct lms7002m_context* self, bool isTx, uint8_t index, int16_t pho_calculated);
+
+lime_Result lms7002m_set_nco_phase_offset_for_mode_0(struct lms7002m_context* self, bool isTx, int16_t pho_calculated);
 lime_Result lms7002m_set_nco_phases(
-    struct lms7002m_context* self, bool isTx, const uint16_t* const angles_deg, uint8_t count, uint32_t frequencyOffset);
+    struct lms7002m_context* self, bool isTx, const int16_t* const angles_deg, uint8_t count, uint32_t frequencyOffset);
+lime_Result lms7002m_get_nco_phases(
+    struct lms7002m_context* self, bool isTx, int16_t* angles_deg, uint8_t count, uint32_t* frequencyOffset);
 
 lime_Result lms7002m_set_nco_frequencies(
-    struct lms7002m_context* self, bool isTx, const uint32_t* const freq_Hz, uint8_t count, uint16_t phaseOffset);
+    struct lms7002m_context* self, bool isTx, const uint32_t* const freq_Hz, uint8_t count, int16_t phaseOffset);
 lime_Result lms7002m_get_nco_frequencies(
-    struct lms7002m_context* self, bool isTx, uint32_t* const freq_Hz, uint8_t count, uint16_t* phaseOffset);
+    struct lms7002m_context* self, bool isTx, uint32_t* const freq_Hz, uint8_t count, int16_t* phaseOffset);
 
 lime_Result lms7002m_set_gfir_coefficients(
     struct lms7002m_context* self, bool isTx, uint8_t gfirIndex, const int16_t* const coef, uint8_t coefCount);

@@ -176,6 +176,16 @@ Decibel::operator float() const
     return data / 65536;
 }
 
+static int16_t DegreesToPhaseOffsetValue(float_type degrees)
+{
+    return 32767 * (degrees / 45.0);
+}
+
+static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
+{
+    return 45.0 * (phoValue / 32768.0);
+}
+
 /** @brief Sets connection which is used for data communication with chip
 */
 void LMS7002M::SetConnection(std::shared_ptr<ISPI> port)
@@ -879,7 +889,7 @@ float_type LMS7002M::GetReferenceClk_SX(TRXDir dir)
     return lms7002m_get_reference_clock(mC_impl);
 }
 
-OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset)
+OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint8_t count, float_type phaseOffset_deg)
 {
     std::vector<uint32_t> converted(count);
     for (uint8_t i = 0; i < count; ++i)
@@ -887,17 +897,17 @@ OpStatus LMS7002M::SetNCOFrequencies(TRXDir dir, const float_type* freq_Hz, uint
         converted.at(i) = freq_Hz[i];
     }
 
-    const uint16_t pho = 65536 * (phaseOffset / 360);
+    const int16_t pho = DegreesToPhaseOffsetValue(phaseOffset_deg);
     lime_Result result = lms7002m_set_nco_frequencies(mC_impl, dir == TRXDir::Tx, converted.data(), count, pho);
     return ResultToStatus(result);
 }
 
-std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset)
+std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phaseOffset_deg)
 {
     std::vector<uint32_t> ncosHZ(16);
 
-    uint16_t phaseOffsetUint16 = 0;
-    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosHZ.data(), ncosHZ.size(), &phaseOffsetUint16);
+    int16_t phaseOffsetValue = 0;
+    lms7002m_get_nco_frequencies(mC_impl, dir == TRXDir::Tx, ncosHZ.data(), ncosHZ.size(), &phaseOffsetValue);
 
     std::vector<float_type> ncosDouble(16);
     for (std::size_t i = 0; i < ncosHZ.size(); ++i)
@@ -905,9 +915,9 @@ std::vector<float_type> LMS7002M::GetNCOFrequencies(TRXDir dir, float_type* phas
         ncosDouble.at(i) = ncosHZ.at(i);
     }
 
-    if (phaseOffset != nullptr)
+    if (phaseOffset_deg != nullptr)
     {
-        *phaseOffset = 360.0 * phaseOffsetUint16 / 65536.0;
+        *phaseOffset_deg = PhaseOffsetValueToDegrees(phaseOffsetValue);
     }
 
     return ncosDouble;
@@ -1088,27 +1098,25 @@ float_type LMS7002M::GetNCOFrequency(TRXDir dir, uint8_t index, bool fromChip)
     return lms7002m_get_nco_frequency(mC_impl, dir == TRXDir::Tx, index);
 }
 
-OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type angle_deg)
+OpStatus LMS7002M::SetNCOPhaseOffsetForMode0(TRXDir dir, float_type phaseOffset_deg)
 {
-    const uint16_t pho = 65536 * (angle_deg / 360);
+    const uint16_t pho = DegreesToPhaseOffsetValue(phaseOffset_deg);
     lime_Result result = lms7002m_set_nco_phase_offset_for_mode_0(mC_impl, dir == TRXDir::Tx, pho);
     return ResultToStatus(result);
 }
 
-OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type angle_deg)
+OpStatus LMS7002M::SetNCOPhaseOffset(TRXDir dir, uint8_t index, float_type phaseOffset_deg)
 {
-    const uint16_t pho = 65536 * (angle_deg / 360);
+    const uint16_t pho = DegreesToPhaseOffsetValue(phaseOffset_deg);
     lime_Result result = lms7002m_set_nco_phase_offset(mC_impl, dir == TRXDir::Tx, index, pho);
     return ResultToStatus(result);
 }
 
 OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_t count, float_type frequencyOffset)
 {
-    std::vector<uint16_t> converted(count);
+    std::vector<int16_t> converted(count);
     for (uint8_t i = 0; i < count; ++i)
-    {
-        converted.at(i) = 65536 * (angles_deg[i] / 360);
-    }
+        converted.at(i) = DegreesToPhaseOffsetValue(angles_deg[i]);
 
     lime_Result result = lms7002m_set_nco_phases(mC_impl, dir == TRXDir::Tx, converted.data(), count, frequencyOffset);
     return ResultToStatus(result);
@@ -1116,8 +1124,20 @@ OpStatus LMS7002M::SetNCOPhases(TRXDir dir, const float_type* angles_deg, uint8_
 
 std::vector<float_type> LMS7002M::GetNCOPhases(TRXDir dir, float_type* frequencyOffset)
 {
-    std::vector<float_type> angles_deg;
-    return angles_deg;
+    std::vector<float_type> phases_deg(16);
+
+    uint32_t freqOffset = 0;
+    std::array<int16_t, 16> phoValues{};
+    lms7002m_get_nco_phases(mC_impl, dir == TRXDir::Tx, phoValues.data(), phoValues.size(), &freqOffset);
+
+    std::vector<float_type> ncosDouble(16);
+    for (std::size_t i = 0; i < phoValues.size(); ++i)
+        phases_deg.at(i) = PhaseOffsetValueToDegrees(phoValues.at(i));
+
+    if (frequencyOffset != nullptr)
+        *frequencyOffset = freqOffset;
+
+    return phases_deg;
 }
 
 OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const float_type* coef, uint8_t coefCount)
