@@ -1,7 +1,8 @@
 #include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
-#include "csr.h"
 #include "limesuiteng/embedded/loglevel.h"
+
+#include "csr_data.h"
 #include "lms7002m_context.h"
 #include "privates.h"
 
@@ -9,14 +10,33 @@
     #include "lms_gfir.h"
 #endif
 
-#include <assert.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef __KERNEL__
+// TODO: fill linux kernel necessary headers
+    #include <linux/kernel.h>
+    #include <linux/slab.h>
+#else
+    #include <assert.h>
+    #include <stdlib.h>
+    #include <string.h>
+#endif // __KERNEL__
+
+static inline void* lms7002m_malloc(size_t size)
+{
+#ifdef __KERNEL__
+    return kmalloc(size, GFP_KERNEL);
+#else
+    return malloc(size);
+#endif
+}
+
+static inline void lms7002m_free(void* ptr)
+{
+#ifdef __KERNEL__
+    kfree(ptr);
+#else
+    free(ptr);
+#endif
+}
 
 #define TO_DECIBEL(R) \
     (struct lms7002m_decibel) \
@@ -26,7 +46,7 @@
 
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
-    lms7002m_context* self = malloc(sizeof(lms7002m_context));
+    lms7002m_context* self = lms7002m_malloc(sizeof(lms7002m_context));
     if (self == NULL)
     {
         return self;
@@ -39,7 +59,7 @@ struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 void lms7002m_destroy(lms7002m_context* context)
 {
     if (context)
-        free(context);
+        lms7002m_free(context);
 }
 
 static enum lms7002m_channel lms7002m_set_active_channel_readback(lms7002m_context* self, const enum lms7002m_channel channel)
@@ -233,7 +253,7 @@ lime_Result lms7002m_set_reference_clock(lms7002m_context* context, uint32_t fre
     return lime_Result_Success;
 }
 
-static uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
+static inline uint8_t check_cgen_csw(lms7002m_context* self, uint8_t csw)
 {
     lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO_CGEN, csw); //write CSW value
     lms7002m_sleep(50);
@@ -348,21 +368,12 @@ uint32_t lms7002m_get_frequency_cgen(lms7002m_context* self)
     return cgenClk;
 }
 
-int16_t decibel_round(struct lms7002m_decibel a)
-{
-    assert(sizeof(int32_t) == sizeof(struct lms7002m_decibel));
-
-    int32_t temp = a.data >> 16;
-
-    return temp + (a.data & (1 << 15));
-}
-
-int16_t decibel_whole(struct lms7002m_decibel a)
+static inline int16_t decibel_int(struct lms7002m_decibel a)
 {
     return a.data >> 16;
 }
 
-bool decibel_ge(struct lms7002m_decibel a, struct lms7002m_decibel b)
+static inline bool decibel_ge(struct lms7002m_decibel a, struct lms7002m_decibel b)
 {
     return a.data >= b.data;
 }
@@ -379,7 +390,7 @@ lime_Result lms7002m_set_rbbpga_db(lms7002m_context* self, const struct lms7002m
     // clang-format on
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
-    uint16_t g_pga_rbb = clamp_int(decibel_whole(value) + 12, 0, 31);
+    uint16_t g_pga_rbb = clamp_int(decibel_int(value) + 12, 0, 31);
     lime_Result ret = lms7002m_spi_modify_csr(self, LMS7002M_G_PGA_RBB, g_pga_rbb);
 
     // This function was replaced with lookup table
@@ -418,7 +429,7 @@ lime_Result lms7002m_set_rfelna_db(lms7002m_context* self, const struct lms7002m
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
     const int32_t gmax = 30;
-    int32_t val = decibel_whole(value) - gmax;
+    int32_t val = decibel_int(value) - gmax;
 
     int g_lna_rfe = 1;
     if (val >= 0)
@@ -559,7 +570,7 @@ lime_Result lms7002m_set_rfetia_db(lms7002m_context* self, const struct lms7002m
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
     const int32_t gmax = 12;
-    int32_t val = decibel_whole(value) - gmax;
+    int32_t val = decibel_int(value) - gmax;
 
     int g_tia_rfe = 1;
 
@@ -591,7 +602,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const struct lms7002m
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
     const int32_t pmax = 52;
-    uint16_t loss_int = pmax - decibel_whole(value);
+    uint16_t loss_int = pmax - decibel_int(value);
 
     //different scaling realm
     if (loss_int > 10)
@@ -761,11 +772,13 @@ uint32_t lms7002m_get_reference_clock_tsp(lms7002m_context* self, bool isTx)
     return isTx ? cgenFreq : clklfreq / 4;
 }
 
+// TODO: static
 bool lms7002m_get_cgen_locked(lms7002m_context* self)
 {
     return (lms7002m_spi_read_bits(self, LMS7002M_VCO_CMPHO_CGEN.address, 13, 12) & 0x3) == 0x2;
 }
 
+// TODO: static
 bool lms7002m_get_sx_locked(lms7002m_context* self, bool isTx)
 {
     enum lms7002m_channel savedChannel =
@@ -798,7 +811,7 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
 
     if (lms7002m_spi_read_bits(self, addrVCOpd, 2, 1) != 0)
     {
-        lms7002m_log(self, lime_LogLevel_Error, "TuneVCO(%s) - VCO is powered down", moduleName);
+        LMS7002M_LOG(self, lime_LogLevel_Error, "TuneVCO(%s) - VCO is powered down", moduleName);
 
         lms7002m_set_active_channel(self, savedChannel);
         return lime_Result_Error;
@@ -1283,7 +1296,7 @@ lime_Result lms7002m_set_gfir_coefficients(
     const int16_t actualCoefCount = bankLength * bankCount;
     assert(actualCoefCount <= maxCoefCount);
 
-    lms7002m_csr gfirL_param = LMS7002M_GFIR1_L_TXTSP;
+    struct lms7002m_csr gfirL_param = LMS7002M_GFIR1_L_TXTSP;
     gfirL_param.address += gfirIndex + (isTx ? 0 : 0x0200);
     lms7002m_spi_modify_csr(self, gfirL_param, bankLength - 1);
 
@@ -1634,7 +1647,7 @@ lime_Result lms7002m_set_gfir_filter(lms7002m_context* self, bool isTx, enum lms
         w2 = w * 1.05;
         if (w2 > 0.495)
         {
-            lms7002m_log(self, lime_LogLevel_Error, "GFIR LPF cannot be set to the requested bandwidth (%u)", bandwidth);
+            LMS7002M_LOG(self, lime_LogLevel_Error, "GFIR LPF cannot be set to the requested bandwidth (%u)", bandwidth);
             lms7002m_set_active_channel(self, savedChannel);
             return lime_Result_Error;
         }
@@ -1991,7 +2004,7 @@ uint32_t lms7002m_get_rssi(lms7002m_context* self)
     uint32_t rssi;
     int waitTime = 1000000 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
     lms7002m_sleep(waitTime);
-    lms7002m_flip_rising_edge(self, &LMS7002M_CAPTURE);
+    lms7002m_trigger_rising_edge(self, &LMS7002M_CAPTURE);
     rssi = lms7002m_spi_read(self, 0x040F);
     return (rssi << 2 | (lms7002m_spi_read(self, 0x040E) & 0x3));
 }

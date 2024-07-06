@@ -2,9 +2,7 @@
 #define LIME_LMS7002M_H
 
 #include "limesuiteng/embedded/result.h"
-
-#include <stdbool.h>
-#include <stdint.h>
+#include "limesuiteng/embedded/types.h"
 
 #ifdef __cplusplus
 extern "C" {
