@@ -30,7 +30,7 @@ class LMS7002M_SPI_STUB
                 uint16_t value = mosi[i] & 0xFFFF;
 
                 uint8_t mac = self->registers[0].at(0x0020) & 0x3;
-                if (mac & 0x1)
+                if (mac & 0x1 || addr < 0x0100)
                     self->registers[0][addr] = value;
                 if (mac & 0x2 && addr >= 0x0100)
                     self->registers[1][addr] = value;
@@ -43,10 +43,17 @@ class LMS7002M_SPI_STUB
 
                 uint8_t mac = self->registers[0].at(0x0020) & 0x3;
 
-                if (mac == 0x3)
-                    throw std::runtime_error("Reading from both channels simultaneously is undefined");
+                if (addr >= 0x0100)
+                {
+                    if (mac == 0x3)
+                        throw std::runtime_error("Reading from both channels simultaneously is undefined");
 
-                value = self->registers[mac & 0x2 ? 1 : 0][addr];
+                    if (mac != 0)
+                        value = self->registers[mac - 1][addr];
+                }
+                else
+                    value = self->registers[0][addr];
+
                 if (miso)
                     miso[i] = value;
                 ++self->readCount;

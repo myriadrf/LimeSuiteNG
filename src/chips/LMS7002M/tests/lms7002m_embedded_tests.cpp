@@ -47,3 +47,31 @@ TEST_F(lms7002m_embedded, ReferenceClock_SetGet_Matches)
     uint64_t getValue = lms7002m_get_reference_clock(chip);
     ASSERT_EQ(getValue, testValue);
 }
+
+TEST_F(lms7002m_embedded, SetActiveChannel_IsCorrectValue)
+{
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
+    ASSERT_EQ(spi_stub.registers[0].at(0x0020) & 0x3, 1);
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_B), lime_Result_Success);
+    ASSERT_EQ(spi_stub.registers[0].at(0x0020) & 0x3, 2);
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_AB), lime_Result_Success);
+    ASSERT_EQ(spi_stub.registers[0].at(0x0020) & 0x3, 3);
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_SXR), lime_Result_Success);
+    ASSERT_EQ(spi_stub.registers[0].at(0x0020) & 0x3, 1);
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_SXT), lime_Result_Success);
+    ASSERT_EQ(spi_stub.registers[0].at(0x0020) & 0x3, 2);
+}
+
+TEST_F(lms7002m_embedded, GetActiveChannel_IsCorrectValue)
+{
+    spi_stub.registers[0].at(0x0020) = 0x0001;
+    ASSERT_EQ(lms7002m_get_active_channel(chip), LMS7002M_CHANNEL_A);
+    spi_stub.registers[0].at(0x0020) = 0x0002;
+    ASSERT_EQ(lms7002m_get_active_channel(chip), LMS7002M_CHANNEL_B);
+    spi_stub.registers[0].at(0x0020) = 0x0003;
+    ASSERT_EQ(lms7002m_get_active_channel(chip), LMS7002M_CHANNEL_AB);
+    spi_stub.registers[0].at(0x0020) = 0x0001;
+    ASSERT_EQ(lms7002m_get_active_channel(chip), LMS7002M_CHANNEL_SXR);
+    spi_stub.registers[0].at(0x0020) = 0x0002;
+    ASSERT_EQ(lms7002m_get_active_channel(chip), LMS7002M_CHANNEL_SXT);
+}
