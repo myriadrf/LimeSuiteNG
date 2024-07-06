@@ -1,4 +1,5 @@
 #include "privates.h"
+#include "spi.h"
 
 struct lms7002m_context;
 

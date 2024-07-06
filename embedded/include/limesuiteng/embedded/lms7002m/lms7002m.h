@@ -158,9 +158,6 @@ uint32_t lms7002m_get_clock_frequency(struct lms7002m_context* self, enum lms700
 
 uint32_t lms7002m_get_sample_rate(struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch);
 
-lime_Result lms7002m_set_gfir_filter(
-    struct lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, uint32_t bandwidth);
-
 lime_Result lms7002m_set_rx_lpf(struct lms7002m_context* self, uint32_t rfBandwidth_Hz);
 lime_Result lms7002m_set_tx_lpf(struct lms7002m_context* self, uint32_t rfBandwidth_Hz);
 

@@ -4,6 +4,7 @@
 #include "csr_data.h"
 #include "lms7002m_context.h"
 #include "privates.h"
+#include "spi.h"
 
 #ifdef __KERNEL__
 // TODO: add linux kernel headers

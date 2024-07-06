@@ -36,6 +36,10 @@
 #include "MCU_BD.h"
 #include "utilities/toString.h"
 
+#include "lms7002m/csr_data.h"
+#include "lms7002m/spi.h"
+#include "gfir/lms_gfir.h"
+
 using namespace lime;
 using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
@@ -1886,6 +1890,125 @@ float_type LMS7002M::GetSampleRate(TRXDir dir, Channel ch)
 float_type LMS7002M::GetSampleRate(TRXDir dir)
 {
     return lms7002m_get_sample_rate(mC_impl, dir == TRXDir::Tx, lms7002m_get_active_channel(mC_impl));
+}
+
+// this needs floating point operations so for now keepint it in C++
+static lime_Result lms7002m_set_gfir_filter(
+    lms7002m_context* self, bool isTx, enum lms7002m_channel ch, bool enabled, uint32_t bandwidth)
+{
+    //enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, ch);
+    enum lms7002m_channel savedChannel = lms7002m_get_active_channel(self);
+    if (ch != savedChannel)
+        lms7002m_spi_modify_csr(self, LMS7002M_MAC, ch);
+
+    const bool bypassFIR = !enabled;
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_TXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_TXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_TXTSP, bypassFIR);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_BYP_RXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_BYP_RXTSP, bypassFIR);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_BYP_RXTSP, bypassFIR);
+
+        const bool sisoDDR = lms7002m_spi_read_csr(self, LMS7002M_LML1_SISODDR);
+        const bool clockIsNotInverted = !(enabled | sisoDDR);
+        if (ch == LMS7002M_CHANNEL_B)
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CDSN_RXBLML, clockIsNotInverted);
+            lms7002m_spi_modify_csr(self, LMS7002M_CDS_RXBLML, enabled ? 3 : 0);
+        }
+        else
+        {
+            lms7002m_spi_modify_csr(self, LMS7002M_CDSN_RXALML, clockIsNotInverted);
+            lms7002m_spi_modify_csr(self, LMS7002M_CDS_RXALML, enabled ? 3 : 0);
+        }
+    }
+    if (!enabled)
+    {
+        lms7002m_set_active_channel(self, savedChannel);
+        return lime_Result_Success;
+    }
+
+    const int ratio = lms7002m_spi_read_csr(self, isTx ? LMS7002M_HBI_OVR_TXTSP : LMS7002M_HBD_OVR_RXTSP);
+    int div = 1;
+    if (ratio != 7)
+        div = (2 << (ratio));
+
+    const uint32_t interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
+    const float w = (div / 2) * (static_cast<float>(bandwidth) / interface_Hz);
+
+    const int L = div > 8 ? 8 : div;
+    div -= 1;
+
+    float w2 = w * 1.1;
+    if (w2 > 0.495)
+    {
+        w2 = w * 1.05;
+        if (w2 > 0.495)
+        {
+            lms7002m_set_active_channel(self, savedChannel);
+            return lime_Result_Error;
+        }
+    }
+
+    int16_t coef[120];
+    int16_t coef2[40];
+    {
+        float f_coef[120];
+        float f_coef2[40];
+        memset(f_coef, 0, sizeof(f_coef));
+        memset(f_coef2, 0, sizeof(f_coef2));
+
+        GenerateFilter(L * 15, w, w2, 1.0, 0, f_coef);
+        GenerateFilter(L * 5, w, w2, 1.0, 0, f_coef2);
+
+        for (int i = 0; i < 120; ++i)
+            coef[i] = f_coef[i] * 32767;
+        for (int i = 0; i < 40; ++i)
+            coef2[i] = f_coef2[i] * 32767;
+    }
+
+    if (isTx)
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, div);
+    }
+    else
+    {
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, div);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, div);
+    }
+
+    lime_Result status = lms7002m_set_gfir_coefficients(self, isTx, 0, coef2, L * 5);
+    if (status != lime_Result_Success)
+    {
+        lms7002m_set_active_channel(self, savedChannel);
+        return status;
+    }
+
+    status = lms7002m_set_gfir_coefficients(self, isTx, 1, coef2, L * 5);
+    if (status != lime_Result_Success)
+    {
+        lms7002m_set_active_channel(self, savedChannel);
+        return status;
+    }
+
+    status = lms7002m_set_gfir_coefficients(self, isTx, 2, coef, L * 15);
+    if (status != lime_Result_Success)
+    {
+        lms7002m_set_active_channel(self, savedChannel);
+        return status;
+    }
+    const lime_Result result = lms7002m_reset_logic_registers(self);
+    lms7002m_set_active_channel(self, savedChannel);
+
+    return result;
 }
 
 OpStatus LMS7002M::SetGFIRFilter(TRXDir dir, Channel ch, bool enabled, double bandwidth)

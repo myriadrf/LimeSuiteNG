@@ -8,6 +8,10 @@
 struct lms7002m_context;
 struct lms7002m_csr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __unix__
     #define FORMAT_ATTR(type, fmt_str, fmt_param) __attribute__((format(type, fmt_str, fmt_param)))
 #else
@@ -30,13 +34,6 @@ void FORMAT_ATTR(printf, 3, 4) lms7002m_log(struct lms7002m_context* context, li
 
 void lms7002m_sleep(long timeInMicroseconds);
 
-void lms7002m_spi_write(struct lms7002m_context* self, uint16_t address, uint16_t value);
-uint16_t lms7002m_spi_read(struct lms7002m_context* self, uint16_t address);
-lime_Result lms7002m_spi_modify(struct lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value);
-lime_Result lms7002m_spi_modify_csr(struct lms7002m_context* self, const struct lms7002m_csr csr, uint16_t value);
-uint16_t lms7002m_spi_read_bits(struct lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb);
-uint16_t lms7002m_spi_read_csr(struct lms7002m_context* self, const struct lms7002m_csr csr);
-
 uint8_t lms7002m_minimum_tune_score_index(int tuneScore[], int count);
 
 // calibration
@@ -46,5 +43,9 @@ void lms7002m_trigger_rising_edge(struct lms7002m_context* self, const struct lm
 // clamps
 int32_t clamp_int(int32_t value, int32_t min, int32_t max);
 uint32_t clamp_uint(uint32_t value, uint32_t min, uint32_t max);
+
+#ifdef __cplusplus
+} // extern C
+#endif
 
 #endif // LMS7002M_PRIVATES_H
