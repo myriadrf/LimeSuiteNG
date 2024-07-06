@@ -16,3 +16,7 @@ target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE lms_gfir)
 
 target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include)
 target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded)
+
+if(ENABLE_TESTING)
+    add_subdirectory(tests)
+endif()
