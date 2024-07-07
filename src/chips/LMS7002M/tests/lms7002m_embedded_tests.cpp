@@ -141,6 +141,14 @@ TEST_F(lms7002m_embedded, lms7002m_set_frequency_cgen_SetValidFreq_TuneFails_Rep
     ASSERT_EQ(lms7002m_set_frequency_cgen(chip, 122.88e6), lime_Result_Error);
 }
 
+TEST_F(lms7002m_embedded, lms7002m_set_frequency_cgen_SetGet_ValueMatch)
+{
+    spi_stub.Set(0, { 0x008C, 13, 12 }, 2); // force tune success
+    uint64_t expectedFreq = 122880000;
+    ASSERT_EQ(lms7002m_set_frequency_cgen(chip, expectedFreq), lime_Result_Success);
+    EXPECT_NEAR(lms7002m_get_frequency_cgen(chip), expectedFreq, 10);
+}
+
 TEST_F(lms7002m_embedded, lms7002m_set_nco_frequencies_SetGet_ValuesMatch)
 {
     std::array<uint32_t, 16> freqs;
@@ -195,4 +203,13 @@ TEST_F(lms7002m_embedded, lms7002m_set_gfir_coefficients_SetGet_ValuesMatch)
     ASSERT_EQ(lms7002m_get_gfir_coefficients(chip, isTx, 2, coefs_readback.data(), coefs_readback.size()), lime_Result_Success);
 
     ASSERT_EQ(coefs_readback, coefs);
+}
+
+TEST_F(lms7002m_embedded, lms7002m_set_frequency_sx_SetGet_ValueMatch)
+{
+    spi_stub.Set(0, { 0x0123, 13, 12 }, 2); // force tune success
+    uint64_t expectedFreq = 1400000000;
+    bool isTx = false;
+    ASSERT_EQ(lms7002m_set_frequency_sx(chip, isTx, expectedFreq), lime_Result_Success);
+    EXPECT_NEAR(lms7002m_get_frequency_sx(chip, isTx), expectedFreq, 10);
 }

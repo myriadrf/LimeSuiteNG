@@ -1,7 +1,6 @@
 set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
-    boards/LMS7002M_SDRDevice_Fixture.cpp
     LimeSuite_wrapper/streaming.cpp
     streaming/streaming.cpp
     # TODO: # parsers/CoefficientFileParserTest.cpp
@@ -17,23 +16,6 @@ set(LIME_TEST_SUITE_SOURCES
     protocols/LMS64CProtocol/GPIOWriteTest.cpp
     protocols/LMS64CProtocol/LMS7002M_SPITest.cpp
     protocols/BufferInterleavingTest.cpp)
-
-if(ENABLE_LITE_PCIE)
-    list(
-        APPEND
-        LIME_TEST_SUITE_SOURCES
-        boards/LimeSDR_X3/LimeSDR_X3Test.cpp
-        boards/LimeSDR_X3/SlaveSelectShimTest.cpp
-        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp)
-endif()
-
-if(ENABLE_USB_FX3)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR/LimeSDRTest.cpp)
-endif()
-
-if(ENABLE_USB_FTDI)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp)
-endif()
 
 if(BUILD_SHARED_LIBS)
     # Build the tests in and use a wrapper to execute the tests.

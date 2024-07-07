@@ -66,6 +66,8 @@ struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
     {
         return self;
     }
+    memset(self, 0, sizeof(lms7002m_context));
+    self->reference_clock_hz = 30720000;
 
     memcpy(&self->hooks, hooks, sizeof(lms7002m_hooks));
     return self;
@@ -333,17 +335,20 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     const uint16_t iHdiv_high = (cgen_vco_max / freq_Hz / 2) - 1;
     const uint16_t iHdiv_low = (cgen_vco_min / freq_Hz / 2);
     const uint16_t div_outch_cgen = ((iHdiv_low + iHdiv_high) / 2) & 0xFF;
-    const uint64_t vco = 2 * (div_outch_cgen + 1) * freq_Hz;
+    uint64_t vco = 2 * (div_outch_cgen + 1) * freq_Hz;
     if (vco <= cgen_vco_min || vco >= cgen_vco_max)
     {
         LMS7002M_LOG(self, lime_LogLevel_Error, "%s: cannot deliver requested frequency (%u Hz)", __func__, freq_Hz);
         return lime_Result_Error;
     }
 
-    const uint16_t integerPart = vco / refClk - 1;
+    uint16_t integerPart = vco / refClk;
+    vco -= integerPart * refClk;
     // "Fixed point number" division, take only the fraction part
     uint32_t fractionalPart = (vco << 20) / refClk;
     fractionalPart &= 0xFFFFF;
+
+    integerPart -= 1;
 
     lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM_CGEN, integerPart); //INT_SDM_CGEN
     lms7002m_spi_modify(self, 0x0087, 15, 0, fractionalPart & 0xFFFF); //INT_SDM_CGEN[15:0]
@@ -990,15 +995,15 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
 }
 
 static lime_Result lms7002m_write_sx_registers(
-    lms7002m_context* self, uint64_t VCOfreq_hz, uint64_t reference_clock_hz, uint8_t div_loch)
+    lms7002m_context* self, const uint64_t VCOfreq_hz, uint32_t reference_clock_hz, uint8_t div_loch)
 {
     const uint64_t m_dThrF = 5500000000; // VCO frequency threshold to enable additional divider
-    const uint32_t divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
+    const uint64_t divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
 
-    const uint16_t integerPart = VCOfreq_hz / divider - 4;
+    uint16_t integerPart = VCOfreq_hz / divider;
     // "Fixed point number" division, take only the fraction part
-    uint32_t fractionalPart = (VCOfreq_hz << 20) / divider;
-    fractionalPart &= 0xFFFFF;
+    uint32_t fractionalPart = ((VCOfreq_hz - integerPart * divider) << 20) / divider;
+    integerPart -= 4;
 
     lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
     lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
@@ -1009,7 +1014,7 @@ static lime_Result lms7002m_write_sx_registers(
 
     LMS7002M_LOG(self,
         lime_LogLevel_Debug,
-        "SX VCO:%lu Hz, RefClk:%lu Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
+        "SX VCO:%lu Hz, RefClk:%u Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
         VCOfreq_hz,
         reference_clock_hz,
         integerPart,
@@ -1068,6 +1073,8 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
     }
 
     const uint32_t refClk_Hz = lms7002m_get_reference_clock(self);
+    if (refClk_Hz == 0)
+        return lime_Result_Error;
 
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
@@ -1149,7 +1156,7 @@ uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
     const uint32_t fractionalPart = ((gINT & 0xF) << 16) | lowerRegister;
     const uint16_t integerPart = (gINT >> 4) + 4;
 
-    uint32_t refClk_Hz = lms7002m_get_reference_clock(self);
+    uint64_t refClk_Hz = lms7002m_get_reference_clock(self);
     const uint16_t div_loch = lms7002m_spi_read_csr(self, LMS7002M_DIV_LOCH);
     const uint16_t en_div2_divprog = lms7002m_spi_read_csr(self, LMS7002M_EN_DIV2_DIVPROG);
 

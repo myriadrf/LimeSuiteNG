@@ -59,22 +59,28 @@ namespace lime::testing {
 class LMS7002M_SDRDevice_Fixture : public ::testing::Test
 {
   protected:
+    LMS7002M_SDRDevice_Fixture();
     LMS7002M_SDRDevice_Fixture(const std::string& deviceHandleHint);
 
     void SetUp() override;
 
     void TearDown() override;
 
-    void SetUpDeviceForTestPattern(
+    OpStatus SetUpDeviceForRxTestPattern(
         ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide);
+
+    OpStatus SetupStream();
+    void DestroySteam();
 
     void Configure4HalfTestPatternAndReceiveIt();
     void Configure4FullTestPatternAndReceiveIt();
     void Configure8HalfTestPatternAndReceiveIt();
     void Configure8FullTestPatternAndReceiveIt();
 
-  private:
+  protected:
     std::string deviceHandleHint;
+    uint8_t moduleIndex{ 0 };
+    bool configValid{ false };
 
     SDRDevice* device = nullptr;
 };
