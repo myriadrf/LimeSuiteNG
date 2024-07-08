@@ -182,8 +182,8 @@ TEST_F(lms7002m_embedded, lms7002m_set_nco_phases_SetGet_ValuesMatch)
 
     std::array<int16_t, 16> pho_readback{};
     uint32_t freqOffset_readback{ 0 };
-    ASSERT_EQ(lms7002m_get_nco_phases(chip, isTx, pho_readback.data(), pho_readback.size(), &freqOffset_readback),
-        lime_Result_Success);
+    ASSERT_EQ(
+        lms7002m_get_nco_phases(chip, isTx, pho_readback.data(), pho_readback.size(), &freqOffset_readback), lime_Result_Success);
 
     ASSERT_EQ(pho_readback, pho);
     ASSERT_EQ(freqOffset, freqOffset);

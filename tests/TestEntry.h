@@ -3,7 +3,7 @@
 
 #include "limesuiteng/config.h"
 
-namespace lime::testing {
+namespace lime::tests {
 
 int LIME_API TestEntry(int argc, char** argv);
 

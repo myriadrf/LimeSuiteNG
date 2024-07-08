@@ -25,7 +25,3 @@ if(ENABLE_USB_FTDI)
     include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR_Mini/CMakeLists.txt)
     target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DeviceFactoryFTDI.cpp)
 endif()
-
-if(ENABLE_TESTING)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
-endif()

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "tests/protocols/SerialPortMock.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 #include <array>
 
 using namespace lime;

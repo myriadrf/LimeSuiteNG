@@ -12,11 +12,4 @@ set(LMS7002M_SOURCES
 
 target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LMS7002M_SOURCES})
 target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:lms7002m>)
-target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE lms_gfir)
-
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include)
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded)
-
-if(ENABLE_TESTING)
-    add_subdirectory(tests)
-endif()
+target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE $<TARGET_OBJECTS:lms_gfir>)

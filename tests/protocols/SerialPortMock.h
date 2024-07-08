@@ -2,7 +2,7 @@
 #define LIME_SERIALPORTMOCK_H
 
 #include "protocols/ISerialPort.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 
 namespace lime::testing {
 
