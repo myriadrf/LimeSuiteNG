@@ -10,6 +10,16 @@
 template<class T> class RingBuffer
 {
   public:
+    /// @brief Constructs the ring buffer with the default capacity.
+    RingBuffer()
+        : headIndex(0)
+        , tailIndex(0)
+        , size(0)
+        , capacity(64)
+    {
+        buffer.resize(64);
+    }
+
     /// @brief Constructs the ring buffer with the given capacity.
     /// @param count The maximum capacity of the buffer.
     RingBuffer(std::size_t count)
@@ -34,14 +44,20 @@ template<class T> class RingBuffer
         if (headIndex + count >= capacity)
         {
             std::size_t toCopy = capacity - headIndex;
-            memcpy(dest, &buffer[headIndex], toCopy * sizeof(T));
+            for (std::size_t i = 0; i < toCopy; ++i)
+            {
+                dest[i] = buffer.at(i + headIndex);
+            }
             dest += toCopy;
             headIndex = 0;
             size -= toCopy;
             count -= toCopy;
             consumed += toCopy;
         }
-        memcpy(dest, &buffer[headIndex], count * sizeof(T));
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            dest[i] = buffer.at(i + headIndex);
+        }
         headIndex += count;
         size -= count;
         consumed += count;
@@ -61,14 +77,21 @@ template<class T> class RingBuffer
         if (tailIndex + count >= capacity)
         {
             std::size_t toCopy = capacity - tailIndex;
-            memcpy(&buffer[tailIndex], src, toCopy * sizeof(T));
+            for (std::size_t i = 0; i < toCopy; ++i)
+            {
+                buffer.at(i + tailIndex) = src[i];
+            }
+
             src += toCopy;
             count -= toCopy;
             size += toCopy;
             produced += toCopy;
             tailIndex = 0;
         }
-        memcpy(&buffer[tailIndex], src, count * sizeof(T));
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            buffer.at(i + tailIndex) = src[i];
+        }
         tailIndex += count;
         size += count;
         produced += count;
@@ -82,6 +105,18 @@ template<class T> class RingBuffer
     /// @brief Gets the total possible capacity of the buffer.
     /// @return The total possible capacity of the buffer.
     std::size_t Capacity() const { return capacity; }
+
+    /// @brief Resize the ring buffer. WARNING: all previous data will be lost.
+    /// @param count The new size of the ring buffer.
+    void Resize(std::size_t count)
+    {
+        std::unique_lock lk{ mMutex };
+        headIndex = 0;
+        tailIndex = 0;
+        size = 0;
+        capacity = count;
+        buffer.resize(count);
+    }
 
   private:
     std::mutex mMutex;

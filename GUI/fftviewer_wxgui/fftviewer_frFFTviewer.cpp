@@ -341,9 +341,9 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
         }
         if (chkFreezeFFT->IsChecked() == false)
         {
+            std::unique_lock lk{ streamData.mutex };
             for (int ch = 0; ch < 2; ++ch)
             {
-                std::unique_lock lk{ streamData.mutexes[ch] };
                 for (int s = 0; s < fftSize; ++s)
                 {
                     streamData.fftBins[ch][s] = (streamData.fftBins[ch][s] != 0 ? (10 * log10(streamData.fftBins[ch][s])) : -300);
@@ -375,18 +375,6 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
         enableFFT.store(false);
 
     updateGUI.store(true);
-}
-
-bool fftviewer_frFFTviewer::IsAllDataReady(const std::array<std::atomic<bool>, cMaxChCount>& isDataReady, uint8_t channelsCount)
-{
-    for (uint8_t ch = 0; ch < channelsCount; ++ch)
-    {
-        if (!isDataReady.at(ch).load())
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 void fftviewer_frFFTviewer::StreamingLoop(
@@ -469,28 +457,27 @@ void fftviewer_frFFTviewer::StreamingLoop(
     StreamMeta rxMeta{};
 
     lime::complex32f_t** buffers = new lime::complex32f_t*[channelsCount];
-    FFT** ffts = new FFT*[channelsCount];
+    FFT fft{ channelsCount, fftSize, wndFunction };
+
+    fft.SetAverageCount(avgCount);
+    fft.SetResultsCallback(
+        [](const std::vector<std::vector<float>>& bins, void* userData) {
+            auto* pthis = reinterpret_cast<DataToGUI*>(userData);
+            std::unique_lock lk{ pthis->mutex };
+
+            for (std::size_t ch = 0; ch < bins.size(); ++ch)
+            {
+                pthis->fftBins[ch] = bins[ch];
+            }
+
+            pthis->isDataReady.store(true);
+            pthis->cv.notify_all();
+        },
+        &localDataResults);
 
     for (uint8_t i = 0; i < channelsCount; ++i)
     {
         buffers[i] = new complex32f_t[fftSize];
-
-        ffts[i] = new FFT(fftSize, wndFunction);
-        ffts[i]->SetAverageCount(avgCount);
-        ffts[i]->SetResultsCallback(
-            [channel = i](const std::vector<float>& bins, void* userData) {
-                auto* pthis = reinterpret_cast<DataToGUI*>(userData);
-                std::unique_lock lk{ pthis->mutexes[channel] };
-
-                for (std::size_t i = 0; i < bins.size(); ++i)
-                {
-                    pthis->fftBins[channel][i] = bins[i];
-                }
-
-                pthis->isDataReady[channel].store(true);
-                pthis->cv.notify_all();
-            },
-            &localDataResults);
     }
 
     while (pthis->stopProcessing.load() == false)
@@ -542,21 +529,18 @@ void fftviewer_frFFTviewer::StreamingLoop(
                 int samplesRemaining = samplesPopped;
                 while (samplesRemaining > 0 && !pthis->stopProcessing.load())
                 {
-                    samplesRemaining -= ffts[ch]->PushSamples(&buffers[ch][samplesPopped - samplesRemaining], samplesRemaining);
+                    samplesRemaining -= fft.PushSamples(buffers, samplesRemaining, samplesPopped - samplesRemaining);
                 }
             }
         }
         ++fftCounter;
         fftEnabled = pthis->enableFFT.load();
 
-        if (pthis->updateGUI.load() == true && (!fftEnabled || IsAllDataReady(localDataResults.isDataReady, channelsCount)))
+        if (pthis->updateGUI.load() == true && (!fftEnabled || localDataResults.isDataReady.load()))
         {
             if (pthis->stopProcessing.load() == false)
             {
-                auto scopedLockThis =
-                    std::apply([](auto&... mutexes) { return std::scoped_lock{ mutexes... }; }, pthis->streamData.mutexes);
-                auto scopedLockLocal =
-                    std::apply([](auto&... mutexes) { return std::scoped_lock{ mutexes... }; }, localDataResults.mutexes);
+                std::scoped_lock lk{ pthis->streamData.mutex, localDataResults.mutex };
 
                 pthis->streamData = localDataResults;
                 wxThreadEvent* evt = new wxThreadEvent();
@@ -569,8 +553,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
             auto wndFunctionSelection = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
             for (uint8_t ch = 0; ch < channelsCount; ++ch)
             {
-                ffts[ch]->SetAverageCount(avgCount);
-                ffts[ch]->SetWindowFunction(wndFunctionSelection);
+                fft.SetAverageCount(avgCount);
+                fft.SetWindowFunction(wndFunctionSelection);
             }
         }
     }
@@ -580,14 +564,9 @@ void fftviewer_frFFTviewer::StreamingLoop(
     pthis->device->StreamDestroy(chipIndex);
 
     for (uint8_t i = 0; i < channelsCount; ++i)
-    {
         delete[] buffers[i];
-        delete ffts[i];
-    }
 
     delete[] buffers;
-    delete[] ffts;
-
     pthis->mStreamRunning.store(false);
 }
 

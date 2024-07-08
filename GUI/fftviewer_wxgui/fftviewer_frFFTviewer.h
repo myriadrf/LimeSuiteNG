@@ -72,8 +72,8 @@ class fftviewer_frFFTviewer : public frFFTviewer
         float rxDataRate_Bps; ///< The input data speed, in bytes per second
         float txDataRate_Bps; ///< The output data speed, in bytes per second
 
-        std::array<std::mutex, cMaxChCount> mutexes;
-        std::array<std::atomic<bool>, cMaxChCount> isDataReady;
+        std::mutex mutex;
+        std::atomic<bool> isDataReady;
         std::condition_variable cv;
 
         /**
@@ -91,7 +91,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
                 nyquist_Hz = src.nyquist_Hz;
                 rxDataRate_Bps = src.rxDataRate_Bps;
                 txDataRate_Bps = src.txDataRate_Bps;
-                src.isDataReady.at(ch).store(false);
+                src.isDataReady.store(false);
             }
             return *this;
         }
@@ -107,9 +107,6 @@ class fftviewer_frFFTviewer : public frFFTviewer
     lime::SDRDevice* device;
     wxTimer* mGUIupdater;
     unsigned lmsIndex{};
-
-  private:
-    static bool IsAllDataReady(const std::array<std::atomic<bool>, cMaxChCount>& isDataReady, uint8_t channelsCount);
 };
 
 #endif // __fftviewer_frFFTviewer__
