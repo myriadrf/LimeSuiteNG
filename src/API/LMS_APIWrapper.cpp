@@ -852,7 +852,7 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
 
         for (auto& streamHandle : streamHandles)
         {
-            if (streamHandle->parent != handle->parent)
+            if (!streamHandle || streamHandle->parent != handle->parent)
             {
                 continue;
             }
@@ -883,7 +883,7 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
 
         for (auto& streamHandle : streamHandles)
         {
-            if (streamHandle->parent != handle->parent)
+            if (!streamHandle || streamHandle->parent != handle->parent)
             {
                 continue;
             }
