@@ -1,4 +1,5 @@
 #include "CDCM6208.h"
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <chrono>
