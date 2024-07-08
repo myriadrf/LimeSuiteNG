@@ -39,7 +39,7 @@ template<class T> class RingBuffer
     {
         std::lock_guard<std::mutex> lck(mMutex);
         std::size_t consumed = 0;
-        count = std::min(count, size);
+        count = std::min(count, size.load());
 
         if (headIndex + count >= capacity)
         {
@@ -100,7 +100,7 @@ template<class T> class RingBuffer
 
     /// @brief Gets the amount of items in the buffer.
     /// @return The amount of items currently in the buffer.
-    std::size_t Size() const { return size; }
+    std::size_t Size() const { return size.load(); }
 
     /// @brief Gets the total possible capacity of the buffer.
     /// @return The total possible capacity of the buffer.
@@ -113,7 +113,7 @@ template<class T> class RingBuffer
         std::unique_lock lk{ mMutex };
         headIndex = 0;
         tailIndex = 0;
-        size = 0;
+        size.store(0);
         capacity = count;
         buffer.resize(count);
     }
@@ -123,6 +123,6 @@ template<class T> class RingBuffer
     std::vector<T> buffer;
     std::size_t headIndex;
     std::size_t tailIndex;
-    std::size_t size;
+    std::atomic<std::size_t> size;
     std::size_t capacity;
 };
