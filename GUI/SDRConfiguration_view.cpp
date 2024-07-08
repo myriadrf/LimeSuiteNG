@@ -316,8 +316,20 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
 
     try
     {
-        sdrDevice->Init();
-        sdrDevice->Configure(config, socIndex);
+        OpStatus status = sdrDevice->Init();
+        if (status != OpStatus::Success)
+        {
+            wxMessageBox("SDR initialization failed."s, _("Error"));
+            return;
+        }
+
+        status = sdrDevice->Configure(config, socIndex);
+        if (status != OpStatus::Success)
+        {
+            wxMessageBox("SDR configuration failed."s, _("Error"));
+            return;
+        }
+
     } catch (std::logic_error& e) // settings problem
     {
         wxMessageBox("Configure failed: "s + e.what(), _("Warning"));

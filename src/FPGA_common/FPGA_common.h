@@ -109,6 +109,8 @@ class FPGA
     OpStatus SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val);
     std::shared_ptr<ISPI> fpgaPort;
     std::shared_ptr<ISPI> lms7002mPort;
+    int32_t mGatewareVersion;
+    int16_t mGatewareRevision;
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);

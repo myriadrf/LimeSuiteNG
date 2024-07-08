@@ -15,7 +15,7 @@ class FPGA_XTRX : public FPGA
     OpStatus SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipIndex = 0) override;
 
   protected:
-    OpStatus UseDirectClocking(bool enabled);
+    OpStatus EnableDirectClocking(bool enabled);
     OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, double txPhase, double rxPhase, int chipIndex = 0) override;
     OpStatus SetPllFrequency(const uint8_t pllIndex, const double inputFreq, std::vector<FPGA_PLL_clock>& clocks) override;
 };

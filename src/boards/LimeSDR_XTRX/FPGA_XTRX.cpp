@@ -43,16 +43,21 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
     return OpStatus::Success;
 }
 
-OpStatus FPGA_XTRX::UseDirectClocking(bool enabled)
+OpStatus FPGA_XTRX::EnableDirectClocking(bool enabled)
 {
+    if (enabled && (mGatewareVersion <= 1 && mGatewareRevision < 15))
+    {
+        return ReportError(
+            OpStatus::NotSupported, "FPGA_XTRX: current gateware does not support sample rates <5 MHz, please update gateware."s);
+    }
     return WriteRegister(0x0005, enabled ? 0x3 : 0);
 }
 
 OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipIndex)
 {
-    bool enableDirectClocking = rxRate_Hz < 5e6 && txRate_Hz < 5e6;
-    OpStatus status = UseDirectClocking(enableDirectClocking);
-    if (enableDirectClocking)
+    const bool useDirectClocking = rxRate_Hz < 5e6 && txRate_Hz < 5e6;
+    OpStatus status = EnableDirectClocking(useDirectClocking);
+    if (useDirectClocking)
         return status;
 
     return FPGA::SetInterfaceFreq(txRate_Hz, rxRate_Hz, chipIndex);
