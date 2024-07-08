@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <vector>
 #include <mutex>
@@ -43,10 +43,18 @@ template<class T> class RingBuffer
 
         if (headIndex + count >= capacity)
         {
-            std::size_t toCopy = capacity - headIndex;
-            for (std::size_t i = 0; i < toCopy; ++i)
+            const std::size_t toCopy = capacity - headIndex;
+
+            if constexpr (std::is_trivially_copyable_v<T>)
             {
-                dest[i] = buffer.at(i + headIndex);
+                std::memcpy(dest, buffer.data() + headIndex, toCopy * sizeof(T));
+            }
+            else
+            {
+                for (std::size_t i = 0; i < toCopy; ++i)
+                {
+                    dest[i] = buffer.at(i + headIndex);
+                }
             }
             dest += toCopy;
             headIndex = 0;
@@ -54,9 +62,17 @@ template<class T> class RingBuffer
             count -= toCopy;
             consumed += toCopy;
         }
-        for (std::size_t i = 0; i < count; ++i)
+
+        if constexpr (std::is_trivially_copyable_v<T>)
         {
-            dest[i] = buffer.at(i + headIndex);
+            std::memcpy(dest, buffer.data() + headIndex, count * sizeof(T));
+        }
+        else
+        {
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                dest[i] = buffer.at(i + headIndex);
+            }
         }
         headIndex += count;
         size -= count;
@@ -76,21 +92,35 @@ template<class T> class RingBuffer
 
         if (tailIndex + count >= capacity)
         {
-            std::size_t toCopy = capacity - tailIndex;
-            for (std::size_t i = 0; i < toCopy; ++i)
-            {
-                buffer.at(i + tailIndex) = src[i];
-            }
+            const std::size_t toCopy = capacity - tailIndex;
 
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(buffer.data() + tailIndex, src, toCopy * sizeof(T));
+            }
+            else
+            {
+                for (std::size_t i = 0; i < toCopy; ++i)
+                {
+                    buffer.at(i + tailIndex) = src[i];
+                }
+            }
             src += toCopy;
             count -= toCopy;
             size += toCopy;
             produced += toCopy;
             tailIndex = 0;
         }
-        for (std::size_t i = 0; i < count; ++i)
+        if constexpr (std::is_trivially_copyable_v<T>)
         {
-            buffer.at(i + tailIndex) = src[i];
+            std::memcpy(buffer.data() + tailIndex, src, count * sizeof(T));
+        }
+        else
+        {
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                buffer.at(i + tailIndex) = src[i];
+            }
         }
         tailIndex += count;
         size += count;
