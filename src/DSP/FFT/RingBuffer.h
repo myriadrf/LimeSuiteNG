@@ -12,7 +12,7 @@ template<class T> class RingBuffer
   public:
     /// @brief Constructs the ring buffer with the given capacity.
     /// @param count The maximum capacity of the buffer.
-    RingBuffer(int32_t count)
+    RingBuffer(std::size_t count)
         : headIndex(0)
         , tailIndex(0)
         , size(0)
@@ -25,15 +25,15 @@ template<class T> class RingBuffer
     /// @param dest The buffer to store the items in.
     /// @param count The maximum amount of items to retrieve.
     /// @return The amount of items actually retrieved.
-    int Consume(T* dest, int32_t count)
+    std::size_t Consume(T* dest, std::size_t count)
     {
         std::lock_guard<std::mutex> lck(mMutex);
-        int consumed = 0;
+        std::size_t consumed = 0;
         count = std::min(count, size);
 
         if (headIndex + count >= capacity)
         {
-            int toCopy = capacity - headIndex;
+            std::size_t toCopy = capacity - headIndex;
             memcpy(dest, &buffer[headIndex], toCopy * sizeof(T));
             dest += toCopy;
             headIndex = 0;
@@ -52,15 +52,15 @@ template<class T> class RingBuffer
     /// @param src The array of items to add to the buffer.
     /// @param count The amount of items to add to the buffer.
     /// @return The amount of items actually added to the buffer.
-    int Produce(const T* src, int32_t count)
+    std::size_t Produce(const T* src, std::size_t count)
     {
         std::lock_guard<std::mutex> lck(mMutex);
         count = std::min(count, capacity - size);
-        int produced = 0;
+        std::size_t produced = 0;
 
         if (tailIndex + count >= capacity)
         {
-            int toCopy = capacity - tailIndex;
+            std::size_t toCopy = capacity - tailIndex;
             memcpy(&buffer[tailIndex], src, toCopy * sizeof(T));
             src += toCopy;
             count -= toCopy;
@@ -77,17 +77,17 @@ template<class T> class RingBuffer
 
     /// @brief Gets the amount of items in the buffer.
     /// @return The amount of items currently in the buffer.
-    int Size() const { return size; }
+    std::size_t Size() const { return size; }
 
     /// @brief Gets the total possible capacity of the buffer.
     /// @return The total possible capacity of the buffer.
-    int Capacity() const { return capacity; }
+    std::size_t Capacity() const { return capacity; }
 
   private:
     std::mutex mMutex;
     std::vector<T> buffer;
-    int headIndex;
-    int tailIndex;
-    int size;
-    int capacity;
+    std::size_t headIndex;
+    std::size_t tailIndex;
+    std::size_t size;
+    std::size_t capacity;
 };
