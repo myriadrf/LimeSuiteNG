@@ -84,8 +84,9 @@ SOCConfig_view::SOCConfig_view(wxWindow* parent, wxWindowID id, const wxPoint& p
         oversamplingGrid->Add(new wxStaticText(base, wxID_ANY, "Decimate:"), titleFlags);
         wxArrayString oversampleNames;
         oversampleNames.Add(wxT("max"));
-        for (int i = 0; i < 5; ++i)
-            oversampleNames.Add(std::to_string(1 << i));
+        oversampleNames.Add(wxT("bypass"));
+        for (int i = 1; i < 6; ++i)
+            oversampleNames.Add("2^" + std::to_string(i));
         gui.decimation = new wxChoice(base, wxNewId(), wxDefaultPosition, wxDefaultSize, oversampleNames);
         gui.decimation->SetSelection(2);
         oversamplingGrid->Add(gui.decimation, ctrlFlags);
