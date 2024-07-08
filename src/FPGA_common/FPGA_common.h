@@ -106,12 +106,14 @@ class FPGA
     OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = ""s);
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
     OpStatus SetDirectClocking(int clockIndex);
+    OpStatus SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val);
     std::shared_ptr<ISPI> fpgaPort;
     std::shared_ptr<ISPI> lms7002mPort;
+    int32_t mGatewareVersion;
+    int16_t mGatewareRevision;
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);
-    OpStatus SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val);
     bool useCache;
     std::map<uint16_t, uint16_t> regsCache;
 };

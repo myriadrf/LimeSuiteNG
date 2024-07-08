@@ -266,7 +266,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         mConfigInProgress = false;
         if (sampleRate > 0)
-            LMS1_UpdateFPGAInterface(this);
+            return LMS1_UpdateFPGAInterface(this);
     } //try
     catch (std::logic_error& e)
     {

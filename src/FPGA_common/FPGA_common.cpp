@@ -95,6 +95,11 @@ FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     , lms7002mPort(lms7002mSPI)
     , useCache(false)
 {
+    uint32_t addr[2] = { 0x0001, 0x0002 }; // version, revision
+    uint32_t vals[2];
+    ReadRegisters(addr, vals, 2);
+    mGatewareVersion = vals[0];
+    mGatewareRevision = vals[1];
 }
 
 /// @brief Enables caching of registers on the hosts' end.
@@ -383,10 +388,8 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
         done = state & doneMask;
         error = state & errorMask;
         if (error != 0)
-        {
-            lime::warning("%s error, reg:0x%04X=0x%04X, errorBits:0x%04X", title.c_str(), pollAddr, state, error);
-            //return OpStatus::Busy;
-        }
+            return ReportError(
+                OpStatus::Error, "%s error, reg:0x%04X=0x%04X, errorBits:0x%04X", title.c_str(), pollAddr, state, error);
 
         if (done)
         {
