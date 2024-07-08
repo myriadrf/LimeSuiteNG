@@ -59,13 +59,13 @@ set(KISSFFT_USE_ALLOCA
     CACHE INTERNAL "")
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-
 # Exclude from all for pre-CMake 3.28
 fetchcontent_getproperties(kissFFT)
 if(NOT kissfft_POPULATED)
     fetchcontent_populate(kissFFT)
     add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
+set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
 
 # Download easily downloadable header only ones
