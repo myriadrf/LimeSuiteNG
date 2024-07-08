@@ -38,8 +38,9 @@ void LMS7002M_SDRDevice_Fixture::SetUp()
     device = DeviceRegistry::makeDevice(devices.at(0));
 
     ASSERT_NE(device, nullptr);
+    // std::cout << "Run on device: " << devices.at(0).Serialize() << "\n";
 
-    device->Init();
+    ASSERT_EQ(device->Init(), OpStatus::Success);
 }
 
 void LMS7002M_SDRDevice_Fixture::TearDown()
@@ -56,7 +57,7 @@ OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
     directionConfiguration.enabled = true;
     directionConfiguration.centerFrequency = 1.4e9;
-    directionConfiguration.sampleRate = 50e6;
+    directionConfiguration.sampleRate = 30.72e6;
     directionConfiguration.path = 2;
     directionConfiguration.oversample = 2;
     directionConfiguration.lpf = 130e6;
@@ -103,6 +104,6 @@ TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
     StreamMeta meta{};
     const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, &meta) };
     EXPECT_EQ(meta.timestamp, 0);
-    EXPECT_EQ(samplesToReceive, actualSamplesReceived);
+    ASSERT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));
 }

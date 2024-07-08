@@ -43,6 +43,8 @@ MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correc
         auto magnitude = std::abs(complex);
 
         EXPECT_NE(magnitude, 0);
+        if (magnitude == 0.0)
+            return false;
 
         complex = std::polar(magnitude, angle);
 

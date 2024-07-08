@@ -36,7 +36,6 @@ TEST_F(LimeSuiteWrapper_device, GetChipTemperatureIsInValidRange)
 {
     double temp{0};
     ASSERT_EQ(LMS_GetChipTemperature(device, 0, &temp), 0);
-    std::cout << "Chip temperature: " << temp << "C\n";
     ASSERT_GE(temp, -40);
     ASSERT_LE(temp, 85);
 }
