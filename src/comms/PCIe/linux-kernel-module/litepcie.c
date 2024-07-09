@@ -415,7 +415,7 @@ static void litepcie_dma_reader_stop(struct litepcie_device *s, int chan_num)
     ClearDMAReaderCounters(dmachan);
 }
 
-void litepcie_stop_dma(struct litepcie_device *s)
+static void litepcie_stop_dma(struct litepcie_device *s)
 {
     struct litepcie_dma_chan *dmachan;
     for (int i = 0; i < s->channels; i++)
@@ -1364,43 +1364,7 @@ static void litepcie_free_chdev(struct litepcie_device *s)
     }
 }
 
-/* from stackoverflow */
-void __attribute__((format(scanf, 2, 3))) sfind(char *string, char *format, ...)
-{
-    va_list arglist;
-
-    va_start(arglist, format);
-    vsscanf(string, format, arglist);
-    va_end(arglist);
-}
-
-struct revision {
-    int yy;
-    int mm;
-    int dd;
-};
-
-int compare_revisions(struct revision d1, struct revision d2)
-{
-    if (d1.yy < d2.yy)
-        return -1;
-    else if (d1.yy > d2.yy)
-        return 1;
-
-    if (d1.mm < d2.mm)
-        return -1;
-    else if (d1.mm > d2.mm)
-        return 1;
-    else if (d1.dd < d2.dd)
-        return -1;
-    else if (d1.dd > d2.dd)
-        return 1;
-
-    return 0;
-}
-/* from stackoverflow */
-
-void FreeIRQs(struct litepcie_device *device)
+static void FreeIRQs(struct litepcie_device *device)
 {
     dev_info(&device->dev->dev, "FreeIRQs %i\n", device->irqs);
     if (device->irqs <= 0)
@@ -1415,7 +1379,7 @@ void FreeIRQs(struct litepcie_device *device)
     pci_free_irq_vectors(device->dev);
 }
 
-int AllocateIRQs(struct litepcie_device *device)
+static int AllocateIRQs(struct litepcie_device *device)
 {
     struct pci_dev *dev = device->dev;
     int irqs = pci_alloc_irq_vectors(dev, 1, 32, PCI_IRQ_MSI);

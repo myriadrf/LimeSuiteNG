@@ -248,7 +248,7 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
         wxEVT_TREE_SEL_CHANGED, wxTreeEventHandler(limeGUIFrame::DeviceTreeSelectionChanged), this, deviceTree->GetId());
 
     DeviceHandle handle;
-    uint32_t initialIndex;
+    uint32_t initialIndex{ 0 };
     if (!appArgs.device.IsEmpty() && FoundDevice(appArgs.device, handle, initialIndex))
     {
         pnlDeviceConnection->SetSelection(initialIndex);

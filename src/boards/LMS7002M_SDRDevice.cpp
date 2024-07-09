@@ -147,7 +147,7 @@ OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8
     int64_t oppositeDirLO = lms->GetFrequencySX(trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx);
     OpStatus status = lms->SetFrequencySX(trx, frequency);
     // Readback of LO frequency might not exactly match what was requested, so compare with some margin
-    bool useTDD = (abs(oppositeDirLO - frequency) <= 20);
+    bool useTDD = (std::abs(oppositeDirLO - frequency) <= 20);
     lms->EnableSXTDD(useTDD);
     return status;
 }

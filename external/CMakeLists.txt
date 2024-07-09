@@ -20,7 +20,7 @@ if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
     target_compile_definitions(GLEW PUBLIC GLEW_STATIC GLEW_NO_GLU)
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(GLEW PRIVATE -Wno-address)
+        target_compile_options(GLEW PRIVATE -Wno-address -Wno-strict-prototypes)
     endif()
 
     # compile only when other targets link to it
@@ -66,6 +66,10 @@ if(NOT kissfft_POPULATED)
     add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+# disable warnings spam
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(kissfft PRIVATE -Wno-strict-prototypes -Wno-newline-eof -Wno-cast-align)
+endif()
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
 
 # Download easily downloadable header only ones

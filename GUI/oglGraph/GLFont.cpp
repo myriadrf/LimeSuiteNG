@@ -268,8 +268,8 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
     }
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(nullptr));
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(nullptr) + 2 * sizeof(float));
+    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<void*>(nullptr));
+    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
     const char* p;
     for (p = text; *p; ++p)
     {
@@ -361,7 +361,7 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), nullptr);
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(nullptr) + 2 * sizeof(float));
+    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
     const char* p;
     for (p = text; *p; ++p)
     {
