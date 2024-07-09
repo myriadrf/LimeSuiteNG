@@ -20,7 +20,7 @@ FFT::FFT(uint8_t channelCount, uint32_t size, WindowFunctionType windowType)
     doWork.store(true, std::memory_order_relaxed);
     mWorkerThread = std::thread(&FFT::ProcessLoop, this);
 
-    GenerateWindowCoefficients(WindowFunctionType::BLACKMAN_HARRIS, m_fftCalcIn.size(), mWindowCoeffs);
+    GenerateWindowCoefficients(windowType, m_fftCalcIn.size(), mWindowCoeffs);
 }
 
 FFT::~FFT()
