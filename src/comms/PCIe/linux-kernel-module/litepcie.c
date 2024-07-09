@@ -21,7 +21,6 @@
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/version.h>
-#include <linux/mm.h>
 
 #include "litepcie.h"
 #include "csr.h"
@@ -798,7 +797,15 @@ static int litepcie_mmap(struct file *file, struct vm_area_struct *vma)
     else
         va = chan->dma.writer_mem;
     pfn = virt_to_phys((void *)va) >> PAGE_SHIFT;
-    vm_flags_set(vma, VM_DONTDUMP | VM_DONTEXPAND | VM_IO);
+
+    const vm_flags_t add_flags = VM_DONTDUMP | VM_DONTEXPAND | VM_IO;
+
+// https://github.com/torvalds/linux/commit/bc292ab00f6c7a661a8a605c714e8a148f629ef6
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+    vma->vm_flags |= add_flags;
+#else
+    vm_flags_set(vma, add_flags);
+#endif
     /*
 	 * Note: the memory is cached, so the user must explicitly
 	 * flush the CPU caches on architectures which require it.
