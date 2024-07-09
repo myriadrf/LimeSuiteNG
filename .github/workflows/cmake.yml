@@ -16,20 +16,27 @@ env:
 jobs:
   build-Linux:
     name: Linux build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-20.04]
         compiler: [ {cpp: g++, c: gcc}, {cpp: clang++, c: clang} ]
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
+
+      - name: Install GNURadio
+        if: ${{ matrix.os == 'ubuntu-22.04'}}
         run: |
           sudo add-apt-repository ppa:gnuradio/gnuradio-releases
           sudo apt-get update
           sudo apt-get install -qq gnuradio-dev python3-packaging
-          sudo apt-get install -qq libusb-1.0-0-dev libwxbase3.0-dev libwxgtk3.0-gtk3-dev libsoapysdr-dev
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo ${{github.workspace}}/install_dependencies.sh
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cpp }} -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
