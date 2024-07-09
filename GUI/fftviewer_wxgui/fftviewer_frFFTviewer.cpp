@@ -341,15 +341,15 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
         }
         if (chkFreezeFFT->IsChecked() == false)
         {
+            std::unique_lock lk{ streamData.mutex };
             for (int ch = 0; ch < 2; ++ch)
             {
                 for (int s = 0; s < fftSize; ++s)
                 {
                     streamData.fftBins[ch][s] = (streamData.fftBins[ch][s] != 0 ? (10 * log10(streamData.fftBins[ch][s])) : -300);
                 }
+                mFFTpanel->series[ch]->AssignValues(&fftFreqAxis[0], &streamData.fftBins[ch][0], fftSize);
             }
-            mFFTpanel->series[0]->AssignValues(&fftFreqAxis[0], &streamData.fftBins[0][0], fftSize);
-            mFFTpanel->series[1]->AssignValues(&fftFreqAxis[0], &streamData.fftBins[1][0], fftSize);
         }
     }
 
@@ -378,23 +378,19 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
 }
 
 void fftviewer_frFFTviewer::StreamingLoop(
-    fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const int channelsCount, const uint32_t format)
+    fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const uint8_t channelsCount, const uint32_t format)
 {
     const bool runTx = pthis->chkEnTx->GetValue();
     int avgCount = pthis->spinAvgCount->GetValue();
     auto wndFunction = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
     bool fftEnabled = true;
+    pthis->enableFFT.store(true);
 
     bool syncTx = pthis->chkEnSync->GetValue();
 
-    vector<float> wndCoef;
-    lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
-
-    lime::complex32f_t** buffers;
-
     DataToGUI localDataResults;
     localDataResults.nyquist_Hz = 7.68e6;
-    for (unsigned i = 0; i < cMaxChCount; i++)
+    for (uint8_t i = 0; i < cMaxChCount; i++)
     {
         localDataResults.samplesI[i].resize(fftSize, 0);
         localDataResults.samplesQ[i].resize(fftSize, 0);
@@ -403,19 +399,15 @@ void fftviewer_frFFTviewer::StreamingLoop(
         pthis->streamData.samplesQ[i].resize(fftSize);
         pthis->streamData.fftBins[i].resize(fftSize);
     }
-    buffers = new lime::complex32f_t*[channelsCount];
-    for (int i = 0; i < channelsCount; ++i)
-        buffers[i] = new complex32f_t[fftSize];
 
-    vector<complex32f_t> captureBuffer[cMaxChCount];
+    std::vector<complex32f_t> captureBuffer[cMaxChCount];
     uint32_t samplesToCapture = 0;
     uint32_t samplesCaptured = 0;
     if (pthis->captureSamples.load() == true)
-        for (int ch = 0; ch < channelsCount; ++ch)
+        for (uint8_t ch = 0; ch < channelsCount; ++ch)
         {
             samplesToCapture = pthis->spinCaptureCount->GetValue();
             captureBuffer[ch].resize(samplesToCapture);
-            samplesCaptured = 0;
         }
 
     auto fmt = pthis->cmbFmt->GetSelection() == 1 ? DataFormat::I16 : DataFormat::I12;
@@ -424,7 +416,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     config.format = DataFormat::F32;
     config.linkFormat = fmt;
-    for (int i = 0; i < channelsCount; ++i)
+    for (uint8_t i = 0; i < channelsCount; ++i)
     {
         config.channels.at(TRXDir::Rx).push_back(i);
         if (runTx)
@@ -433,34 +425,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
         }
     }
 
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
-    kiss_fft_cpx* m_fftCalcIn = new kiss_fft_cpx[fftSize];
-    kiss_fft_cpx* m_fftCalcOut = new kiss_fft_cpx[fftSize];
-
     const uint8_t chipIndex = pthis->lmsIndex;
-
-    // TODO: check if actually needed
-    /*std::vector<std::vector<complex32f_t>> txPattern(2);
-    for (uint32_t i = 0; i < txPattern.size(); ++i)
-    {
-        txPattern[i].resize(fftSize);
-        float srcI[8]; // = {1.0, 0.0, -1.0, 0.0};
-        float srcQ[8]; // = {-1.0, 0.0, 1.0, 0.0};
-        for (int j = 0; j < 8; ++j)
-        {
-            srcI[j] = cos(j * 2 * 3.141592 / 8); // = {1.0, 0.0, -1.0, 0.0};
-            srcQ[j] = sin(j * 2 * 3.141592 / 8); // = {-1.0, 0.0, 1.0, 0.0};
-        }
-
-        float ampl = 1.0; //(j+1)*(1.0/(txPacketCount+1));
-        for (uint32_t k = 0; k < fftSize; ++k)
-        {
-            txPattern[i][k].q = srcQ[k & 7] * ampl;
-            txPattern[i][k].i = srcI[k & 7] * ampl;
-        }
-    }
-
-    const lime::complex32f_t* src[2] = { txPattern[0].data(), txPattern[1].data() };*/
 
     try
     {
@@ -491,101 +456,92 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     StreamMeta rxMeta{};
 
+    lime::complex32f_t** buffers = new lime::complex32f_t*[channelsCount];
+    FFT fft{ channelsCount, fftSize, wndFunction };
+
+    fft.SetAverageCount(avgCount);
+    fft.SetResultsCallback(
+        [](const std::vector<std::vector<float>>& bins, void* userData) {
+            auto* pthis = reinterpret_cast<DataToGUI*>(userData);
+            std::unique_lock lk{ pthis->mutex };
+
+            for (std::size_t ch = 0; ch < bins.size(); ++ch)
+            {
+                pthis->fftBins[ch] = bins[ch];
+            }
+
+            pthis->isDataReady.store(true);
+            pthis->cv.notify_all();
+        },
+        &localDataResults);
+
+    for (uint8_t i = 0; i < channelsCount; ++i)
+    {
+        buffers[i] = new complex32f_t[fftSize];
+    }
+
     while (pthis->stopProcessing.load() == false)
     {
-        do
+        uint32_t samplesPopped;
+        samplesPopped = pthis->device->StreamRx(chipIndex, buffers, fftSize, &rxMeta);
+        if (samplesPopped <= 0)
+            continue;
+
+        int64_t rxTS = rxMeta.timestamp;
+
+        if (runTx)
         {
-            uint32_t samplesPopped;
-            samplesPopped = pthis->device->StreamRx(chipIndex, buffers, fftSize, &rxMeta);
-            if (samplesPopped <= 0)
-                continue;
+            txMeta.timestamp = rxTS + 1020 * 128;
+            pthis->device->StreamTx(chipIndex, buffers, fftSize, &txMeta);
+        }
 
-            int64_t rxTS = rxMeta.timestamp;
-
-            if (runTx)
-            {
-                txMeta.timestamp = rxTS + 1020 * 128;
-                pthis->device->StreamTx(chipIndex, buffers, fftSize, &txMeta);
-            }
-
-            if (pthis->captureSamples.load())
-            {
-                for (int ch = 0; ch < channelsCount; ++ch)
-                {
-                    uint32_t samplesToCopy = min(samplesPopped, samplesToCapture);
-                    if (samplesToCopy <= 0)
-                        break;
-                    for (uint32_t i = 0; i < samplesToCopy; ++i)
-                    {
-                        captureBuffer[ch][samplesCaptured + i].real(buffers[ch][i].real() * 32767);
-                        captureBuffer[ch][samplesCaptured + i].imag(buffers[ch][i].imag() * 32767);
-                    }
-                    samplesToCapture -= samplesToCopy;
-                    samplesCaptured += samplesToCopy;
-                }
-            }
-
+        if (pthis->captureSamples.load())
+        {
             for (int ch = 0; ch < channelsCount; ++ch)
             {
-                //take only first buffer for time domain display
-                //reset fftBins for accumulation
-                if (fftCounter == 0)
-                    for (unsigned i = 0; i < fftSize; ++i)
-                    {
-                        if (fftEnabled)
-                            localDataResults.fftBins[ch][i] = 0;
-                        localDataResults.samplesI[ch][i] = buffers[ch][i].real();
-                        localDataResults.samplesQ[ch][i] = buffers[ch][i].imag();
-                    }
-                if (fftEnabled)
+                uint32_t samplesToCopy = min(samplesPopped, samplesToCapture);
+                if (samplesToCopy <= 0)
+                    break;
+                for (uint32_t i = 0; i < samplesToCopy; ++i)
                 {
-                    if (wndFunction == lime::FFT::WindowFunctionType::NONE)
-                    {
-                        for (unsigned i = 0; i < fftSize; ++i)
-                        {
-                            m_fftCalcIn[i].r = buffers[ch][i].real();
-                            m_fftCalcIn[i].i = buffers[ch][i].imag();
-                        }
-                    }
-                    else
-                    {
-                        for (unsigned i = 0; i < fftSize; ++i)
-                        {
-                            m_fftCalcIn[i].r = buffers[ch][i].real() * wndCoef[i];
-                            m_fftCalcIn[i].i = buffers[ch][i].imag() * wndCoef[i];
-                        }
-                    }
-
-                    kiss_fft(m_fftCalcPlan, m_fftCalcIn, m_fftCalcOut);
-
-                    int output_index = 0;
-                    for (unsigned i = fftSize / 2 + 1; i < fftSize; ++i)
-                        localDataResults.fftBins[ch][output_index++] +=
-                            m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
-                    for (unsigned i = 0; i < fftSize / 2 + 1; ++i)
-                        localDataResults.fftBins[ch][output_index++] +=
-                            m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
+                    captureBuffer[ch][samplesCaptured + i].real(buffers[ch][i].real() * 32767);
+                    captureBuffer[ch][samplesCaptured + i].imag(buffers[ch][i].imag() * 32767);
                 }
+                samplesToCapture -= samplesToCopy;
+                samplesCaptured += samplesToCopy;
             }
-            ++fftCounter;
-        } while (fftCounter < avgCount && pthis->stopProcessing.load() == false);
+        }
 
-        if (fftCounter >= avgCount && pthis->updateGUI.load() == true)
+        for (int ch = 0; ch < channelsCount; ++ch)
         {
-            //shift fft
+            //take only first buffer for time domain display
+            //reset fftBins for accumulation
+            if (fftCounter == 0)
+                for (unsigned i = 0; i < fftSize; ++i)
+                {
+                    if (fftEnabled)
+                        localDataResults.fftBins[ch][i] = 0;
+                    localDataResults.samplesI[ch][i] = buffers[ch][i].real();
+                    localDataResults.samplesQ[ch][i] = buffers[ch][i].imag();
+                }
             if (fftEnabled)
             {
-                for (int ch = 0; ch < channelsCount; ++ch)
+                int samplesRemaining = samplesPopped;
+                while (samplesRemaining > 0 && !pthis->stopProcessing.load())
                 {
-                    for (unsigned s = 0; s < fftSize; ++s)
-                    {
-                        const float div = static_cast<float>(fftCounter) * fftSize * fftSize;
-                        localDataResults.fftBins[ch][s] /= div;
-                    }
+                    samplesRemaining -= fft.PushSamples(buffers, samplesRemaining, samplesPopped - samplesRemaining);
                 }
             }
+        }
+        ++fftCounter;
+        fftEnabled = pthis->enableFFT.load();
+
+        if (pthis->updateGUI.load() == true && (!fftEnabled || localDataResults.isDataReady.load()))
+        {
             if (pthis->stopProcessing.load() == false)
             {
+                std::scoped_lock lk{ pthis->streamData.mutex, localDataResults.mutex };
+
                 pthis->streamData = localDataResults;
                 wxThreadEvent* evt = new wxThreadEvent();
                 evt->SetEventObject(pthis);
@@ -593,67 +549,24 @@ void fftviewer_frFFTviewer::StreamingLoop(
                 pthis->QueueEvent(evt);
             }
             fftCounter = 0;
-            fftEnabled = pthis->enableFFT.load();
             avgCount = pthis->averageCount.load();
             auto wndFunctionSelection = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
-            if (wndFunctionSelection != wndFunction)
+            for (uint8_t ch = 0; ch < channelsCount; ++ch)
             {
-                wndFunction = wndFunctionSelection;
-                lime::FFT::GenerateWindowCoefficients(wndFunction, fftSize, wndCoef);
+                fft.SetAverageCount(avgCount);
+                fft.SetWindowFunction(wndFunctionSelection);
             }
         }
     }
 
-    /*  if(pthis->captureSamples.load() == true)
-    {
-        ofstream fout;
-        fout.open(pthis->captureFilename);
-        fout << "AI\tAQ";
-        if(channelsCount > 1)
-            fout << "\tBI\tBQ";
-        fout << endl;
-
-        int samplesCnt = captureBuffer[0].size();
-        for(int i=0; i<samplesCnt; ++i)
-        {
-            for(int ch=0; ch<channelsCount; ++ch)
-            {
-                fout << captureBuffer[ch][i].i << "\t" << captureBuffer[ch][i].q << "\t";
-            }
-            fout << endl;
-        }
-        fout.close();
-
-        string filename = pthis->captureFilename+".absdbfs";
-        fout.open(filename);
-        fout << "AI\tAQ";
-        if(channelsCount > 1)
-            fout << "\tBI\tBQ";
-        fout << endl;
-
-        for(int i=0; i<samplesCnt; ++i)
-        {
-            for(int ch=0; ch<channelsCount; ++ch)
-            {
-                fout
-                << (captureBuffer[ch][i].i == 0 ? -67 : 20*log10(abs(captureBuffer[ch][i].i)/2048))<< "\t"
-                << (captureBuffer[ch][i].q == 0 ? -67 : 20*log10(abs(captureBuffer[ch][i].q)/2048))<< "\t";
-            }
-            fout << endl;
-        }
-        fout.close();
-    }*/
-
-    kiss_fft_free(m_fftCalcPlan);
     pthis->stopProcessing.store(true);
     pthis->device->StreamStop(chipIndex);
     pthis->device->StreamDestroy(chipIndex);
 
-    for (int i = 0; i < channelsCount; ++i)
+    for (uint8_t i = 0; i < channelsCount; ++i)
         delete[] buffers[i];
+
     delete[] buffers;
-    delete[] m_fftCalcIn;
-    delete[] m_fftCalcOut;
     pthis->mStreamRunning.store(false);
 }
 
