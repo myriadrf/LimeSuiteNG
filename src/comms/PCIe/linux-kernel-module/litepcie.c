@@ -21,6 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/version.h>
+#include <linux/mm.h>
 
 #include "litepcie.h"
 #include "csr.h"
