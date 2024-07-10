@@ -279,6 +279,10 @@ void TRXLooper::Teardown()
 
 OpStatus TRXLooper::RxSetup()
 {
+    OpStatus status = mRxArgs.dma->Initialize();
+    if (status != OpStatus::Success)
+        return status;
+
     mRx.samplesInPkt = defaultSamplesInPkt;
     mRx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
@@ -698,6 +702,10 @@ uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, 
 
 OpStatus TRXLooper::TxSetup()
 {
+    OpStatus status = mTxArgs.dma->Initialize();
+    if (status != OpStatus::Success)
+        return status;
+
     mTx.samplesInPkt = defaultSamplesInPkt;
     mTx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
     mTx.terminate.store(false, std::memory_order_relaxed);

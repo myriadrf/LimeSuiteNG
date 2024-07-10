@@ -18,6 +18,8 @@ class LimePCIeDMA : public IDMA
     LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir);
     virtual ~LimePCIeDMA();
 
+    OpStatus Initialize() override;
+
     OpStatus Enable(bool enabled) override;
     OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;
 
@@ -34,6 +36,7 @@ class LimePCIeDMA : public IDMA
     std::vector<Buffer> mappings;
     std::shared_ptr<LimePCIe> port;
     DataTransferDirection dir;
+    bool isInitialized;
 };
 
 } // namespace lime

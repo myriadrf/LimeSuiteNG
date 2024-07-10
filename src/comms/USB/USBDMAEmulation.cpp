@@ -32,6 +32,11 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
     }
 }
 
+OpStatus USBDMAEmulation::Initialize()
+{
+    return OpStatus::Success;
+}
+
 USBDMAEmulation::~USBDMAEmulation()
 {
     AbortAllTransfers();

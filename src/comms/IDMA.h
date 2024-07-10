@@ -19,6 +19,7 @@ class IDMA
     };
 
     virtual ~IDMA(){};
+    virtual OpStatus Initialize() = 0;
 
     /**
       @brief Enables or disabled DMA memory access.

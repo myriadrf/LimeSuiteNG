@@ -17,6 +17,7 @@ class USBDMAEmulation : public IDMA
   public:
     USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir);
     virtual ~USBDMAEmulation();
+    OpStatus Initialize() override;
 
     OpStatus Enable(bool enabled) override;
     OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;

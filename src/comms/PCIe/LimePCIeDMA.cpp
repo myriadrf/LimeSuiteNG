@@ -24,14 +24,21 @@ namespace lime {
 LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir)
     : port(port)
     , dir(dir)
+    , isInitialized(false)
 {
-    // TODO: open the port only when actually need to use it.
+}
+
+OpStatus LimePCIeDMA::Initialize()
+{
+    if (isInitialized)
+        return OpStatus::Success;
+
     if (!port->IsOpen())
         port->Open(port->GetPathName(), O_RDWR | O_NOCTTY | O_CLOEXEC | O_NONBLOCK);
     limepcie_ioctl_mmap_dma_info info{};
     int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_MMAP_DMA_INFO, &info);
     if (ret != 0)
-        return;
+        return OpStatus::Error;
 
     mappings.reserve(info.dma_rx_buf_count);
     limepcie_ioctl_lock lockInfo{};
@@ -44,7 +51,7 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         if (ret != 0) //|| lockInfo.dma_writer_status == 0)
         {
             const std::string msg = ": DMA writer request denied"s;
-            throw std::runtime_error(msg);
+            return OpStatus::PermissionDenied;
         }
         auto buf = static_cast<uint8_t*>(mmap(NULL,
             info.dma_rx_buf_size * info.dma_rx_buf_count,
@@ -55,7 +62,7 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         if (buf == MAP_FAILED || buf == nullptr)
         {
             const std::string msg = ": failed to MMAP Rx DMA buffer"s;
-            throw std::runtime_error(msg);
+            return OpStatus::Error;
         }
         for (size_t i = 0; i < info.dma_rx_buf_count; ++i)
             mappings.push_back({ buf + info.dma_rx_buf_size * i, info.dma_rx_buf_size });
@@ -68,7 +75,7 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         if (ret != 0) // || lockInfo.dma_reader_status == 0)
         {
             const std::string msg = ": DMA reader request denied"s;
-            throw std::runtime_error(msg);
+            return OpStatus::PermissionDenied;
         }
         auto buf = static_cast<uint8_t*>(mmap(NULL,
             info.dma_tx_buf_size * info.dma_tx_buf_count,
@@ -79,16 +86,18 @@ LimePCIeDMA::LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection d
         if (buf == MAP_FAILED || buf == nullptr)
         {
             const std::string msg = ": failed to MMAP Tx DMA buffer"s;
-            throw std::runtime_error(msg);
+            return OpStatus::Error;
         }
         for (size_t i = 0; i < info.dma_tx_buf_count; ++i)
             mappings.push_back({ buf + info.dma_tx_buf_size * i, info.dma_tx_buf_size });
     }
+    isInitialized = true;
+    return OpStatus::Success;
 }
 
 LimePCIeDMA::~LimePCIeDMA()
 {
-    if (port->mFileDescriptor < 0)
+    if (!port->IsOpen() || !isInitialized)
         return;
 
     Enable(false);
@@ -108,6 +117,8 @@ LimePCIeDMA::~LimePCIeDMA()
 
 OpStatus LimePCIeDMA::Enable(bool enabled)
 {
+    if (!isInitialized)
+        return OpStatus::Error;
     limepcie_ioctl_dma_control args{};
     args.enabled = enabled;
     args.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
@@ -119,7 +130,10 @@ OpStatus LimePCIeDMA::Enable(bool enabled)
 
 OpStatus LimePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod)
 {
+    if (!isInitialized)
+        return OpStatus::Error;
     assert(port->IsOpen());
+
     limepcie_ioctl_dma_control_continiuous args{};
     args.control.enabled = enabled;
     args.control.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
@@ -135,6 +149,8 @@ OpStatus LimePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, u
 IDMA::State LimePCIeDMA::GetCounters()
 {
     IDMA::State dma{};
+    if (!isInitialized)
+        return dma;
 
     limepcie_ioctl_dma_status status{};
     status.wait_for_read = false;
@@ -148,7 +164,10 @@ IDMA::State LimePCIeDMA::GetCounters()
 
 OpStatus LimePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection direction, bool generateIRQ)
 {
+    if (!isInitialized)
+        return OpStatus::Error;
     assert(port->IsOpen());
+
     limepcie_ioctl_dma_request request{};
     request.bufferIndex = index;
     request.transferSize = bytesCount;
@@ -163,6 +182,8 @@ OpStatus LimePCIeDMA::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTra
 
 OpStatus LimePCIeDMA::Wait()
 {
+    if (!isInitialized)
+        return OpStatus::Error;
     assert(port->IsOpen());
 
     limepcie_ioctl_dma_status status{};
@@ -177,6 +198,9 @@ OpStatus LimePCIeDMA::Wait()
 
 void LimePCIeDMA::BufferOwnership(uint16_t index, DataTransferDirection bufferDirection)
 {
+    if (!isInitialized)
+        return;
+
     limepcie_cache_flush args{};
     args.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
     args.sync_to_cpu = (bufferDirection == DataTransferDirection::DeviceToHost);
