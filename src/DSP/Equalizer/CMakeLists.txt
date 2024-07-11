@@ -1,1 +1,1 @@
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE Equalizer.cpp EqualizerCSR.cpp)
+target_sources(limesuiteng PRIVATE Equalizer.cpp EqualizerCSR.cpp)

@@ -78,40 +78,40 @@ include(CMakeDependentOption)
 option(ENABLE_LIBRARY "Enable build library" ON)
 add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
 if(ENABLE_LIBRARY)
-    add_library(${MAIN_LIBRARY_NAME} ${LIME_SUITE_SOURCES})
+    add_library(limesuiteng ${LIME_SUITE_SOURCES})
     target_link_libraries(
-        ${MAIN_LIBRARY_NAME}
+        limesuiteng
         PUBLIC ${LIME_SUITE_LIBRARIES}
         PRIVATE $<BUILD_INTERFACE:kissfft> $<BUILD_INTERFACE:samplesConversion> $<BUILD_INTERFACE:cpp-feather-ini-parser>)
-    set_property(TARGET ${MAIN_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-    set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
-    set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES VERSION ${LIME_SUITE_LIBVER})
-    set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "LIME_DLL_EXPORTS")
-    target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${LIME_SUITE_INCLUDES})
+    set_property(TARGET limesuiteng PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+    set_target_properties(limesuiteng PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
+    set_target_properties(limesuiteng PROPERTIES VERSION ${LIME_SUITE_LIBVER})
+    set_target_properties(limesuiteng PROPERTIES DEFINE_SYMBOL "LIME_DLL_EXPORTS")
+    target_include_directories(limesuiteng PRIVATE ${LIME_SUITE_INCLUDES})
     target_include_directories(
-        ${MAIN_LIBRARY_NAME}
+        limesuiteng
         INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
                   $<INSTALL_INTERFACE:include>)
 
     if(BUILD_SHARED_LIBS)
-        target_compile_definitions(${MAIN_LIBRARY_NAME} PUBLIC "LIME_DLL")
+        target_compile_definitions(limesuiteng PUBLIC "LIME_DLL")
     endif()
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug"
        AND ENABLE_CODE_COVERAGE
        AND (NOT MSVC))
         include(CodeCoverage)
-        append_coverage_compiler_flags_to_target(${MAIN_LIBRARY_NAME})
+        append_coverage_compiler_flags_to_target(limesuiteng)
 
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            target_link_options(${MAIN_LIBRARY_NAME} PUBLIC --coverage)
+            target_link_options(limesuiteng PUBLIC --coverage)
         endif()
     endif()
 
     install(
-        TARGETS ${MAIN_LIBRARY_NAME}
+        TARGETS limesuiteng
         EXPORT limesuiteng
         LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
         ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
@@ -119,7 +119,7 @@ if(ENABLE_LIBRARY)
     )
 
     if(MSVC)
-        set_target_properties(${MAIN_LIBRARY_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+        set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     endif(MSVC)
 endif()
 
@@ -132,7 +132,7 @@ include(boards/CMakeLists.txt)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
 add_subdirectory(chips)
 add_subdirectory(DSP)

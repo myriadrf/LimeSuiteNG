@@ -1,1 +1,1 @@
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE CDCM6208.cpp)
+target_sources(limesuiteng PRIVATE CDCM6208.cpp)

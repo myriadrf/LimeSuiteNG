@@ -9,5 +9,5 @@ set(LIMESDR_X3_SOURCES ${THIS_SOURCE_DIR}/FPGA_X3.cpp ${THIS_SOURCE_DIR}/LimeSDR
 ########################################################################
 ## Add to library
 ########################################################################
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LIMESDR_X3_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${LIMESDR_X3_SOURCES})

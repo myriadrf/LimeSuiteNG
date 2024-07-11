@@ -19,9 +19,9 @@ set(COMMS_USB_SOURCES
 ########################################################################
 ## Add to library
 ########################################################################
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_USB_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${COMMS_USB_SOURCES})
 
 if(UNIX)
-    target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/UnixUsb.cpp)
+    target_sources(limesuiteng PRIVATE ${THIS_SOURCE_DIR}/UnixUsb.cpp)
 endif()
