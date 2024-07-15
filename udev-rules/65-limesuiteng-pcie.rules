@@ -2,20 +2,5 @@
 #ATTR{vendor}=="0x10ee", ATTR{device}=="0x7023" LimeSDR XTRX
 #ATTR{vendor}=="0x1172", ATTR{device}=="0xe001" X8
 
-# LEGACY OWNERSHIP HANDLER
-ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x10ee", ATTR{device}=="0x7022",\
-RUN+="/sbin/modprobe limepcie",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind'",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
-
-ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x10ee", ATTR{device}=="0x7023",\
-RUN+="/sbin/modprobe limepcie",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind',\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
-
-ACTION=="add", DRIVER=="litepcie", ATTR{vendor}=="0x1172", ATTR{device}=="0xe001",\
-RUN+="/sbin/modprobe limepcie",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/litepcie/unbind'",\
-RUN+="/bin/bash -c 'echo %k > /sys/bus/pci/drivers/limepcie/bind'"
 
 ACTION=="add", SUBSYSTEM=="limepcie", MODE="666"
