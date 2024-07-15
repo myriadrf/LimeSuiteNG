@@ -54,12 +54,6 @@ struct limepcie_ioctl_mmap_dma_info {
     uint64_t dma_rx_buf_count;
 };
 
-struct limepcie_version {
-    int major;
-    int minor;
-    int patch;
-};
-
 struct limepcie_control_packet {
     uint8_t request[64];
     uint8_t response[64];
@@ -78,7 +72,6 @@ struct limepcie_control_packet {
 #define LIMEPCIE_IOCTL_MMAP_DMA_INFO _IOR(LIMEPCIE_IOCTL, 24, struct limepcie_ioctl_mmap_dma_info)
 #define LIMEPCIE_IOCTL_LOCK _IOWR(LIMEPCIE_IOCTL, 25, struct limepcie_ioctl_lock)
 
-#define LIMEPCIE_IOCTL_VERSION _IOWR(LIMEPCIE_IOCTL, 29, struct limepcie_version)
 #define LIMEPCIE_IOCTL_RUN_CONTROL_COMMAND _IOWR(LIMEPCIE_IOCTL, 30, struct limepcie_control_packet)
 
 #endif /* _LINUX_LIMEPCIE_H */

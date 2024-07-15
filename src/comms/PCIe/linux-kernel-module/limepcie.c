@@ -643,20 +643,6 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
         // up(sem);
     }
     break;
-    case LIMEPCIE_IOCTL_VERSION: {
-        struct limepcie_version m;
-
-        m.major = VERSION_MAJOR;
-        m.minor = VERSION_MINOR;
-        m.patch = VERSION_PATCH;
-
-        if (copy_to_user((void *)arg, &m, sizeof(m)))
-        {
-            ret = -EFAULT;
-            break;
-        }
-    }
-    break;
     default:
         ret = -ENOIOCTLCMD;
         break;
@@ -674,20 +660,6 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
 
     switch (cmd)
     {
-    case LIMEPCIE_IOCTL_VERSION: {
-        struct limepcie_version m;
-
-        m.major = VERSION_MAJOR;
-        m.minor = VERSION_MINOR;
-        m.patch = VERSION_PATCH;
-
-        if (copy_to_user((void *)arg, &m, sizeof(m)))
-        {
-            ret = -EFAULT;
-            break;
-        }
-    }
-    break;
     case LIMEPCIE_IOCTL_DMA_CONTROL: {
         struct limepcie_ioctl_dma_control m;
 
