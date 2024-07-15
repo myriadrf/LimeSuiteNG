@@ -3,4 +3,4 @@
 #ATTR{vendor}=="0x1172", ATTR{device}=="0xe001" X8
 
 
-ACTION=="add", SUBSYSTEM=="limepcie", MODE="666"
+ACTION=="add|change", SUBSYSTEM=="limepcie", MODE="666"
