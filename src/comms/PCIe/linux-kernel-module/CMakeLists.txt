@@ -69,7 +69,7 @@ add_custom_command(
 
 add_custom_target(limepcie-kernel ALL DEPENDS ${MODULE_OBJECT})
 
-cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LitePCIe kernel module" ON "LIMEPCIE_KERNEL_MODULE" ON)
+cmake_dependent_option(INSTALL_KERNEL_MODULE "Install Linux LimePCIe kernel module" ON "LIMEPCIE_KERNEL_MODULE" ON)
 if(NOT INSTALL_KERNEL_MODULE)
     return()
 endif()

@@ -38,7 +38,7 @@ flowchart LR
             end
         end
         subgraph PCIe
-            litepcie["litepcie library"]
+            limepcie["limepcie library"]
         end
     end
 
@@ -52,11 +52,11 @@ flowchart LR
     LMS64C_LMS7002M_Over_PCIe_MMX8 & LMS64C_ADF_Over_PCIe_MMX8 & LMS64C_FPGA_Over_PCIe_MMX8-->|MMX8|PCIE_CSR_Pipe
 
     ISerialPort-.->PCIE_CSR_Pipe
-    PCIE_CSR_Pipe-->LitePCIe-->litepcie
+    PCIE_CSR_Pipe-->LimePCIe-->limepcie
 
-    litepcie-->|XTRX|XTRX
-    litepcie-->|X3|X3
-    litepcie-->|MMX8|MMX8
+    limepcie-->|XTRX|XTRX
+    limepcie-->|X3|X3
+    limepcie-->|MMX8|MMX8
 
     %% USB
     IComms-.->LMS64C_FPGA_Over_USB & LMS64C_LMS7002M_Over_USB-->USB_CSR_Pipe

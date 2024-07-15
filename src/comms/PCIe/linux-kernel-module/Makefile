@@ -6,7 +6,7 @@ KERNEL_PATH?=/lib/modules/$(KERNEL_VERSION)/build
 ARCH?=$(shell if [ "$(shell uname -m)" = "aarch64" ] && [ ! -d $(KERNEL_PATH)/arch/$(shell uname -m) ]; then echo "arm64"; else echo $(shell uname -m); fi)
 
 obj-m = limepcie.o
-litepcie-objs = limepcie.ko
+limepcie-objs = limepcie.ko
 
 all: limepcie.ko
 
