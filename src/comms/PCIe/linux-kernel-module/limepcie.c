@@ -707,7 +707,7 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
     }
     break;
     case LIMEPCIE_IOCTL_DMA_CONTROL_CONTINUOUS: {
-        struct limepcie_ioctl_dma_control_continiuous m;
+        struct limepcie_ioctl_dma_control_continuous m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
         {

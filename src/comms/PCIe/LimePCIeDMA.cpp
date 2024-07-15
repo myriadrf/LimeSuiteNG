@@ -134,7 +134,7 @@ OpStatus LimePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, u
         return OpStatus::Error;
     assert(port->IsOpen());
 
-    limepcie_ioctl_dma_control_continiuous args{};
+    limepcie_ioctl_dma_control_continuous args{};
     args.control.enabled = enabled;
     args.control.directionFromDevice = (dir == DataTransferDirection::DeviceToHost);
     args.transferSize = maxTransferSize;

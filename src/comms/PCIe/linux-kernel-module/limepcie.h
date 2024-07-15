@@ -9,7 +9,7 @@ struct limepcie_ioctl_dma_control {
     bool enabled;
 };
 
-struct limepcie_ioctl_dma_control_continiuous {
+struct limepcie_ioctl_dma_control_continuous {
     uint32_t transferSize;
     uint8_t irqPeriod;
     struct limepcie_ioctl_dma_control control;
@@ -70,7 +70,7 @@ struct limepcie_control_packet {
 #define LIMEPCIE_IOCTL 'S'
 
 #define LIMEPCIE_IOCTL_DMA_CONTROL _IOWR(LIMEPCIE_IOCTL, 21, struct limepcie_ioctl_dma_control)
-#define LIMEPCIE_IOCTL_DMA_CONTROL_CONTINUOUS _IOWR(LIMEPCIE_IOCTL, 22, struct limepcie_ioctl_dma_control_continiuous)
+#define LIMEPCIE_IOCTL_DMA_CONTROL_CONTINUOUS _IOWR(LIMEPCIE_IOCTL, 22, struct limepcie_ioctl_dma_control_continuous)
 #define LIMEPCIE_IOCTL_DMA_STATUS _IOR(LIMEPCIE_IOCTL, 23, struct limepcie_ioctl_dma_status)
 #define LIMEPCIE_IOCTL_DMA_REQUEST _IOW(LIMEPCIE_IOCTL, 26, struct limepcie_ioctl_dma_request)
 #define LIMEPCIE_IOCTL_CACHE_FLUSH _IOW(LIMEPCIE_IOCTL, 28, struct limepcie_cache_flush)
