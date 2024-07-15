@@ -105,8 +105,8 @@ endif()
 #########################################################################
 fetchcontent_declare(
     cpp-feather-ini-parser
-    GIT_REPOSITORY https://github.com/c-ridgway/cpp-feather-ini-parser.git
-    GIT_TAG c04a5e504f7b954548fbbd763ac0d4843d4d7c93 # latest main at the time of writing this
+    GIT_REPOSITORY https://github.com/rjonaitis/cpp-feather-ini-parser
+    GIT_TAG 85a7d3a89dd0e179587a87b8d12ea58a896e7881 # latest main at the time of writing this
     CONFIGURE_COMMAND "" BUILD_COMMAND "")
 
 fetchcontent_makeavailable(cpp-feather-ini-parser)
