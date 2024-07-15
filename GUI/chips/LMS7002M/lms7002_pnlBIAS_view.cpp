@@ -67,7 +67,7 @@ lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, cons
     ID_STATICTEXT1->Wrap(-1);
     fgSizer67->Add(ID_STATICTEXT1, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 
-    cmbMUX_BIAS_OUT = new wxComboBox(this, ID_MUX_BIAS_OUT, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, NULL, 0);
+    cmbMUX_BIAS_OUT = new wxComboBox(this, ID_MUX_BIAS_OUT, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), 0, nullptr, 0);
     cmbMUX_BIAS_OUT->SetToolTip(wxT("Test mode of the BIAS_TOP"));
 
     fgSizer67->Add(cmbMUX_BIAS_OUT, 0, flags, 0);
@@ -76,7 +76,7 @@ lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, cons
     ID_STATICTEXT2->Wrap(-1);
     fgSizer67->Add(ID_STATICTEXT2, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
 
-    cmbRP_CALIB_BIAS = new wxComboBox(this, ID_RP_CALIB_BIAS, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+    cmbRP_CALIB_BIAS = new wxComboBox(this, ID_RP_CALIB_BIAS, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, 0);
     cmbRP_CALIB_BIAS->SetToolTip(
         wxT("Calibration code for rppolywo. This code is set by the calibration algorithm: BIAS_RPPOLY_calibration"));
 
@@ -93,21 +93,21 @@ lms7002_pnlBIAS_view::lms7002_pnlBIAS_view(wxWindow* parent, wxWindowID id, cons
 
     // Connect Events
     chkPD_FRP_BIAS->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     chkPD_F_BIAS->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     chkPD_PTRP_BIAS->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     chkPD_PT_BIAS->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     chkPD_BIAS_MASTER->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     cmbMUX_BIAS_OUT->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     cmbRP_CALIB_BIAS->Connect(
-        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlBIAS_view::ParameterChangeHandler), nullptr, this);
     btnCalibrateRP_BIAS->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::OnCalibrateRP_BIAS), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlBIAS_view::OnCalibrateRP_BIAS), nullptr, this);
 
     wndId2Enum[chkPD_BIAS_MASTER] = LMS7002MCSR::PD_BIAS_MASTER;
     wndId2Enum[cmbMUX_BIAS_OUT] = LMS7002MCSR::MUX_BIAS_OUT;

@@ -88,23 +88,23 @@ lms7002_pnlXBUF_view::lms7002_pnlXBUF_view(wxWindow* parent, wxWindowID id, cons
 
     // Connect Events
     chkPD_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkPD_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_G_XBUF->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkSLFB_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkSLFB_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkBYP_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkBYP_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_OUT2_XBUF_TX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
     chkEN_TBUFIN_XBUF_RX->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), NULL, this);
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(lms7002_pnlXBUF_view::ParameterChangeHandler), nullptr, this);
 
     wndId2Enum[chkBYP_XBUF_RX] = LMS7002MCSR::BYP_XBUF_RX;
     wndId2Enum[chkBYP_XBUF_TX] = LMS7002MCSR::BYP_XBUF_TX;

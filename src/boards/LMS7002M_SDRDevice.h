@@ -123,6 +123,8 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
 
+    FPGA* GetFPGA();
+
   protected:
     static RFSOCDescriptor GetDefaultLMS7002MDescriptor();
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);

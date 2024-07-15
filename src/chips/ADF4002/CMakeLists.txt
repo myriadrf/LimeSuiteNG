@@ -1,1 +1,1 @@
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ADF4002.cpp)
+target_sources(limesuiteng PRIVATE ADF4002.cpp)

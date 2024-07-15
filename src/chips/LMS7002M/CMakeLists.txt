@@ -10,7 +10,7 @@ set(LMS7002M_SOURCES
     MCU_BD.cpp
     MCU_File.cpp)
 
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${LMS7002M_SOURCES})
-target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:lms7002m>)
+target_sources(limesuiteng PRIVATE ${LMS7002M_SOURCES})
+target_link_libraries(limesuiteng PRIVATE $<BUILD_INTERFACE:lms7002m>)
 
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include)
+target_include_directories(limesuiteng PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include)

@@ -24,12 +24,12 @@ endif()
 ########################################################################
 ## Add to library
 ########################################################################
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_LIMEPCIE_SOURCES})
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${COMMS_LIMEPCIE_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
 
 # build kernel module only on Linux
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/linux-kernel-module)
+    target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR}/linux-kernel-module)
 
     cmake_dependent_option(LIMEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module" ON "UNIX; NOT APPLE" OFF)
     add_feature_info(LIMEPCIE_KERNEL_MODULE LIMEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module")

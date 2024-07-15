@@ -89,7 +89,7 @@ template<class T> class TxBufferManager
                 bytesUsed += sizeof(StreamHeader);
             }
             const uint32_t freeSpace = std::min(maxPayloadSize - payloadSize, mCapacity - bytesUsed - 16);
-            const uint32_t transferCount = std::min({ freeSpace / bytesForFrame, src->size(), maxSamplesInPkt });
+            const uint32_t transferCount = std::min(freeSpace / bytesForFrame, std::min(src->size(), maxSamplesInPkt));
             if (transferCount > 0)
             {
                 int samplesDataSize = Interleave(payloadPtr, src->front(), transferCount, conversion);

@@ -49,7 +49,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
-  protected:
+  private:
     SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
     static OpStatus UpdateFPGAInterface(void* userData);
@@ -64,7 +64,6 @@ class LimeSDR : public LMS7002M_SDRDevice
     int RunTestConfig(OEMTestReporter& reporter, const std::string& name, double LOFreq, int gain, int rxPath);
     int RFTest(OEMTestReporter& reporter);
 
-  private:
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;

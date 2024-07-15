@@ -12,7 +12,12 @@ class GNUPlotPipe
     /// @param persistent Whether the pipe is persistent or not.
     GNUPlotPipe(bool persistent = true)
     {
-#ifdef __unix__
+#if defined(__APPLE__)
+        if (persistent)
+            pipeHandle = popen("gnuplot -persistent -noraise", "w");
+        else
+            pipeHandle = popen("gnuplot -noraise", "w");
+#elif defined(__unix__)
         if (persistent)
             pipeHandle = popen("gnuplot -persistent -noraise", "we");
         else
@@ -47,7 +52,7 @@ class GNUPlotPipe
     /// @brief Writes formatted data into the pipe.
     /// @param format The format string.
     /// @param ... The format arguments parameters.
-    void writef(const char* format, ...)
+    void writef [[gnu::format(printf, 2, 3)]] (const char* format, ...)
     {
         static char temp[512];
         va_list argList;
@@ -58,9 +63,12 @@ class GNUPlotPipe
     }
 
     /// @brief Flushes the pipe.
-    void flush() { fflush(pipeHandle); }
+    void flush()
+    {
+        fflush(pipeHandle);
+    }
 
-  protected:
+  private:
     FILE* pipeHandle;
 };
 

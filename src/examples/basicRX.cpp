@@ -10,7 +10,8 @@
 #include <string_view>
 #include <cmath>
 #include <signal.h>
-#include "kissFFT/kiss_fft.h"
+#include "kiss_fft.h"
+#include "args.hxx"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif
@@ -37,8 +38,44 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
     std::cout << msg << std::endl;
 }
 
+static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name)
+{
+    if (name.empty())
+        return -1;
+
+    for (size_t j = 0; j < antennaNames.size(); ++j)
+    {
+        if (antennaNames[j] == name)
+            return j;
+    }
+    std::cerr << "Antenna "sv << name << " not found. Available:"sv << std::endl;
+    for (const auto& iter : antennaNames)
+        std::cerr << "\t\""sv << iter << "\""sv << std::endl;
+    return -1;
+}
+
 int main(int argc, char** argv)
 {
+    // clang-format off
+    args::ArgumentParser            parser("basicRX - minimal RX example", "");
+
+    args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
+    args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
+    // clang-format on
+
+    try
+    {
+        parser.ParseCLI(argc, argv);
+    } catch (const args::Help&)
+    {
+        std::cout << parser;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
     lime::registerLogHandler(LogCallback);
     auto handles = DeviceRegistry::enumerate();
     float peakAmplitude = -1000, peakFrequency = 0;
@@ -63,6 +100,28 @@ int main(int argc, char** argv)
     device->SetMessageLogCallback(LogCallback);
     device->Init();
 
+    const auto& chipDescriptor = device->GetDescriptor().rfSOC[chipIndex];
+
+    // Default RX path when none is provided via the command lime.
+    //
+    // TODO: Choose antenna which makes sense for the device.
+    // For example, rxPath=2 is LNAL_NC for LimeSDR Mini, which will result in
+    // effectively no signal in the received samples.
+    int rxPath = 2;
+
+    const std::string rxAntennaName = args::get(rxpathFlag);
+    if (!rxAntennaName.empty())
+    {
+        rxPath = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
+        if (rxPath < 0)
+        {
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+    }
+
+    std::cout << "Using antenna "sv << chipDescriptor.pathNames.at(TRXDir::Rx).at(rxPath) << std::endl;
+
     // RF parameters
     SDRConfig config;
     config.channel[0].rx.enabled = true;
@@ -70,14 +129,14 @@ int main(int argc, char** argv)
     config.channel[0].rx.sampleRate = sampleRate;
     config.channel[0].rx.oversample = 2;
     config.channel[0].rx.lpf = 0;
-    config.channel[0].rx.path = 2; // TODO: replace with string names
+    config.channel[0].rx.path = rxPath;
     config.channel[0].rx.calibrate = false;
     config.channel[0].rx.testSignal.enabled = false;
 
     config.channel[0].tx.enabled = false;
     config.channel[0].tx.sampleRate = sampleRate;
     config.channel[0].tx.oversample = 2;
-    config.channel[0].tx.path = 2; // TODO: replace with string names
+    config.channel[0].tx.path = 0;
     config.channel[0].tx.centerFrequency = frequencyLO - 1e6;
     config.channel[0].tx.testSignal.enabled = false;
 
@@ -128,7 +187,7 @@ int main(int argc, char** argv)
     uint64_t totalSamplesReceived = 0;
 
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, 0, 0);
+    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
     kiss_fft_cpx m_fftCalcIn[fftSize];
     kiss_fft_cpx m_fftCalcOut[fftSize];
 

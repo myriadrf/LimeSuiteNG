@@ -140,7 +140,7 @@ bool GLFont::load(const char* file)
     {
         glGenBuffers(1, &m_vboID);
         glBindBuffer(GL_ARRAY_BUFFER, m_vboID);
-        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -230,7 +230,7 @@ bool GLFont::loadFromArray(const char* array, unsigned int size)
     {
         glGenBuffers(1, &m_vboID);
         glBindBuffer(GL_ARRAY_BUFFER, m_vboID);
-        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -260,7 +260,6 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
 
     float scale = fontSize / m_fontSize;
     float startx = x;
-    GLGlyph* g = NULL;
     glBindTexture(GL_TEXTURE_2D, m_texID);
 
     if (IsGlew1_5())
@@ -269,12 +268,12 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
     }
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(0));
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(0) + 2 * sizeof(float));
+    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<void*>(nullptr));
+    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
     const char* p;
     for (p = text; *p; ++p)
     {
-        g = &m_glyphs[static_cast<unsigned char>(*p)];
+        GLGlyph* g = &m_glyphs[static_cast<unsigned char>(*p)];
         if (*p == '\n')
         {
             x = startx;
@@ -305,7 +304,7 @@ void GLFont::render_textWorldSpace(const char* text, float x, float y, float fon
 
         if (IsGlew1_5())
         {
-            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
             glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             glFlush();
@@ -353,7 +352,6 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
 
     float scale = fontSize / m_fontSize;
     float startx = x;
-    GLGlyph* g = NULL;
     glBindTexture(GL_TEXTURE_2D, m_texID);
 
     if (IsGlew1_5())
@@ -362,12 +360,12 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
     }
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), 0);
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), static_cast<char*>(0) + 2 * sizeof(float));
+    glVertexPointer(2, GL_FLOAT, 4 * sizeof(float), nullptr);
+    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
     const char* p;
     for (p = text; *p; ++p)
     {
-        g = &m_glyphs[static_cast<unsigned char>(*p)];
+        GLGlyph* g = &m_glyphs[static_cast<unsigned char>(*p)];
         if (*p == '\n')
         {
             x = startx;
@@ -399,7 +397,7 @@ void GLFont::render_textScreenSpace(const char* text, float x, float y, float fo
 
         if (IsGlew1_5())
         {
-            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), static_cast<char*>(0), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), static_cast<char*>(nullptr), GL_DYNAMIC_DRAW);
             glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(float), vbodata, GL_DYNAMIC_DRAW);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             glFlush();

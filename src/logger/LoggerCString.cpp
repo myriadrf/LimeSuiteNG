@@ -28,7 +28,7 @@ const char* GetLastErrorMessageCString(void)
     return Logger::_reportedErrorMessage.c_str();
 }
 
-void log(const LogLevel level, const char* format, va_list argList)
+void log [[gnu::format(printf, 2, 0)]] (const LogLevel level, const char* format, va_list argList)
 {
     char buff[4096];
     int ret = std::vsnprintf(buff, sizeof(buff), format, argList);
@@ -87,7 +87,7 @@ void log(const LogLevel level, const char* format, ...)
 
 static constexpr std::size_t MAX_MSG_LEN = 1024;
 thread_local char _reportedErrorMessageCStringBuffer[MAX_MSG_LEN];
-template<class T> inline T ReportErrorTemplate(const T errnum, const char* format, va_list argList)
+template<class T> inline T ReportErrorTemplate [[gnu::format(printf, 2, 0)]] (const T errnum, const char* format, va_list argList)
 {
     Logger::_reportedErrorCode = static_cast<int>(errnum);
 
@@ -101,12 +101,12 @@ template<class T> inline T ReportErrorTemplate(const T errnum, const char* forma
     return errnum;
 }
 
-int ReportError(const int errnum, const char* format, va_list argList)
+int ReportError [[gnu::format(printf, 2, 0)]] (const int errnum, const char* format, va_list argList)
 {
     return ReportErrorTemplate(errnum, format, argList);
 }
 
-OpStatus ReportError(const OpStatus errnum, const char* format, va_list argList)
+OpStatus ReportError [[gnu::format(printf, 2, 0)]] (const OpStatus errnum, const char* format, va_list argList)
 {
     return ReportErrorTemplate(errnum, format, argList);
 }

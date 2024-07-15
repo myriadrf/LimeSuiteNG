@@ -17,6 +17,7 @@ Checks:          '-*,
                   -cppcoreguidelines-pro-type-reinterpret-cast,
                   -cppcoreguidelines-pro-type-vararg,
                   -cppcoreguidelines-special-member-functions,
+                  modernize-use-nullptr
                     '
 WarningsAsErrors: ''
 HeaderFilterRegex: ''

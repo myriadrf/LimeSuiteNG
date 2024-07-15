@@ -24,7 +24,7 @@ class PCIE_CSR_Pipe : public ISerialPort
     OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms) override;
     OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms) override;
 
-  protected:
+  private:
     std::shared_ptr<LimePCIe> port;
 };
 

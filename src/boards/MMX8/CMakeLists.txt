@@ -13,5 +13,5 @@ set(MM_X8_SOURCES
 ########################################################################
 ## Add to library
 ########################################################################
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${MM_X8_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${MM_X8_SOURCES})

@@ -4,11 +4,13 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
 #include "PacketsFIFO.h"
-#include "MemoryPool.h"
+#include "memory/MemoryPool.h"
 #include "SamplesPacket.h"
 
 namespace lime {
@@ -64,15 +66,15 @@ class TRXLooper
 
     /** @brief The transfer arguments. */
     struct TransferArgs {
-        std::shared_ptr<IDMA> dma;
-        std::vector<uint8_t*> buffers;
-        int32_t bufferSize;
-        int16_t packetSize;
-        uint8_t packetsToBatch;
-        int32_t samplesInPacket;
+        std::shared_ptr<IDMA> dma; ///< The DMA interface to use.
+        std::vector<uint8_t*> buffers; ///< The memory buffers to use.
+        int32_t bufferSize; ///< The size of a single buffer.
+        int16_t packetSize; ///< The size of a single packet.
+        uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
+        int32_t samplesInPacket; ///< The amount of samples in a single packet.
     };
 
-  protected:
+  private:
     OpStatus RxSetup();
     void RxWorkLoop();
     void ReceivePacketsLoop();
@@ -99,7 +101,7 @@ class TRXLooper
     bool mStreamEnabled;
 
     struct Stream {
-        enum ReadyStage { Disabled = 0, WorkerReady = 1, Active = 2 };
+        enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
 
         std::unique_ptr<MemoryPool> memPool;
         std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
@@ -110,6 +112,8 @@ class TRXLooper
         std::atomic<bool> terminate;
         std::atomic<bool> terminateWorker;
         std::atomic<ReadyStage> stage;
+        std::mutex mutex;
+        std::condition_variable cv;
         // how many packets to batch in data transaction
         // lower count will give better latency, but can cause problems with really high data rates
         uint16_t samplesInPkt;
@@ -120,7 +124,7 @@ class TRXLooper
             , fifo(nullptr)
             , stagingPacket(nullptr)
             , terminateWorker(false)
-            , stage(Disabled)
+            , stage(ReadyStage::Disabled)
         {
         }
 
@@ -140,7 +144,6 @@ class TRXLooper
     Stream mRx;
     Stream mTx;
 
-  private:
     template<class T> uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta);
     template<class T> uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta);
 };

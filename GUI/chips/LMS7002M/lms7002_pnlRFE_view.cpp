@@ -41,7 +41,7 @@ wxComboBox* lms7002_pnlRFE_view::NewComboBox(wxWindow* parent,
     const wxSize& size = wxDefaultSize)
 {
     int id = wxNewId();
-    wxComboBox* item = new wxComboBox(parent, id, wxEmptyString, pos, size, 0, NULL, 0);
+    wxComboBox* item = new wxComboBox(parent, id, wxEmptyString, pos, size, 0, nullptr, 0);
     wndId2Enum[item] = param;
     item->SetToolTip(tooltip);
     item->Bind(wxEVT_COMMAND_COMBOBOX_SELECTED, &lms7002_pnlRFE_view::ParameterChangeHandler, this);

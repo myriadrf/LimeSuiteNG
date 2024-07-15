@@ -125,15 +125,26 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 
     desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
-    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
+    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
-
     desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
+
+    // revision 1.13 introduced "dual boot" images
+    if (gw.version >= 1 && gw.revision >= 13)
+    {
+        desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_GOLD_IMAGE)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_GOLD_IMAGE);
+        desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_USER_IMAGE)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_USER_IMAGE);
+    }
+
+    if (static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD)
+        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
 
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
@@ -255,7 +266,7 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
         mConfigInProgress = false;
         if (sampleRate > 0)
-            LMS1_UpdateFPGAInterface(this);
+            return LMS1_UpdateFPGAInterface(this);
     } //try
     catch (std::logic_error& e)
     {
@@ -436,6 +447,11 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
     uint16_t sw_val = mFPGA->ReadRegister(sw_addr);
     auto& lms = mLMSChips.at(0);
 
+    // Set active channel for configuring TRF and RFE registers to match the
+    // requested channel index.
+    const LMS7002M::Channel old_channel = lms->GetActiveChannel();
+    lms->SetActiveChannel(chan == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
+
     if (tx)
     {
         uint8_t path;
@@ -483,6 +499,8 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
     // RF switch controls are toggled for both channels, use channel 0 as the deciding source.
     if (chan == 0)
         mFPGA->WriteRegister(sw_addr, sw_val);
+
+    lms->SetActiveChannel(old_channel);
 }
 
 OpStatus LimeSDR_XTRX::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
@@ -508,6 +526,12 @@ OpStatus LimeSDR_XTRX::UploadMemory(
         break;
     case eMemoryDevice::FPGA_FLASH:
         progMode = 1;
+        break;
+    case eMemoryDevice::GATEWARE_GOLD_IMAGE:
+        progMode = 3;
+        break;
+    case eMemoryDevice::GATEWARE_USER_IMAGE:
+        progMode = 4;
         break;
     default:
         return OpStatus::InvalidValue;

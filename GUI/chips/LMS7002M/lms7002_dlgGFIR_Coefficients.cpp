@@ -101,16 +101,16 @@ lms7002_dlgGFIR_Coefficients::lms7002_dlgGFIR_Coefficients(wxWindow* parent, wxW
 
     // Connect Events
     btnLoadFromFile->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnLoadFromFile), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnLoadFromFile), nullptr, this);
     btnSaveToFile->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnSaveToFile), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnSaveToFile), nullptr, this);
     btnClearTable->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnClearTable), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnClearTable), nullptr, this);
     spinCoefCount->Connect(
-        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_dlgGFIR_Coefficients::OnspinCoefCountChange), NULL, this);
-    btnOk->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnOkClick), NULL, this);
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_dlgGFIR_Coefficients::OnspinCoefCountChange), nullptr, this);
+    btnOk->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnOkClick), nullptr, this);
     btnCancel->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnCancelClick), NULL, this);
+        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_dlgGFIR_Coefficients::OnBtnCancelClick), nullptr, this);
 }
 
 void lms7002_dlgGFIR_Coefficients::OnLoadFromFile(wxCommandEvent& event)

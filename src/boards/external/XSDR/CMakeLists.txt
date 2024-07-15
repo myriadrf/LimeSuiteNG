@@ -1,1 +1,1 @@
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/XSDR.cpp)
+target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_LIST_DIR}/XSDR.cpp)

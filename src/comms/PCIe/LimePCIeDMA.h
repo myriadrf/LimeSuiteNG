@@ -15,6 +15,9 @@ class LimePCIe;
 class LimePCIeDMA : public IDMA
 {
   public:
+    /// @brief Constructs the DMA wrapper based on a PCIe interface.
+    /// @param port The communications port to use.
+    /// @param dir The direction of communications to build the class for.
     LimePCIeDMA(std::shared_ptr<LimePCIe> port, DataTransferDirection dir);
     virtual ~LimePCIeDMA();
 

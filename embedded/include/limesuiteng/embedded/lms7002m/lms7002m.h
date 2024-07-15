@@ -43,7 +43,7 @@ enum lms7002m_channel {
 
 typedef int (*lms7002m_spi16_transact_hook)(const uint32_t* mosi, uint32_t* miso, uint32_t count, void* userData);
 typedef void (*lms7002m_log_hook)(int level, const char* message, void* userData);
-typedef void (*lms7002m_on_cgen_frequency_changed_hook)(void* userData);
+typedef lime_Result (*lms7002m_on_cgen_frequency_changed_hook)(void* userData);
 
 typedef struct lms7002m_hooks {
     lms7002m_log_hook log;
