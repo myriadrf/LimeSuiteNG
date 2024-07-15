@@ -1,6 +1,6 @@
 #include "BufferInterleaving.h"
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "samplesConversion.h"
 
 namespace lime {

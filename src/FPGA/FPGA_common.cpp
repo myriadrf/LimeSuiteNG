@@ -1,4 +1,4 @@
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "comms/ISPI.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"

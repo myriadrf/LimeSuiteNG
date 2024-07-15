@@ -30,8 +30,8 @@ set(LIME_SUITE_SOURCES
     protocols/TRXLooper.cpp
     protocols/BufferInterleaving.cpp
     protocols/AvgRmsCounter.cpp
-    FPGA_common/FPGA_common.cpp
-    FPGA_common/WriteRegistersBatch.cpp
+    FPGA/FPGA_common.cpp
+    FPGA/WriteRegistersBatch.cpp
     threadHelper/threadHelper.cpp
     memory/MemoryPool.cpp
     API/LMS_APIWrapper.cpp
@@ -47,7 +47,6 @@ set(LIME_SUITE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/boards
     ${CMAKE_CURRENT_SOURCE_DIR}/protocols
     ${CMAKE_CURRENT_SOURCE_DIR}/lms7002m
-    ${CMAKE_CURRENT_SOURCE_DIR}/FPGA_common
     ${PROJECT_SOURCE_DIR}/external
     ${CMAKE_CURRENT_SOURCE_DIR}/threadHelper
     ${CMAKE_CURRENT_SOURCE_DIR}/memory

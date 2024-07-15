@@ -6,7 +6,7 @@
 #include "chips/Si5351C/Si5351C.h"
 #include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"

@@ -1,6 +1,6 @@
 #include "LMS7002M_SDRDevice.h"
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 
 namespace lime {
 

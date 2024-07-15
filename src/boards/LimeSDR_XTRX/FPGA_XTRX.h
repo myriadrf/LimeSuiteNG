@@ -1,7 +1,7 @@
 #ifndef FPGA_5G_H
 #define FPGA_5G_H
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 
 namespace lime {
 

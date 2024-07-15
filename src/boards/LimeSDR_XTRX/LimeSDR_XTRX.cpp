@@ -6,7 +6,7 @@
 #include "limesuiteng/Logger.h"
 #include "LimePCIe.h"
 #include "LimePCIeDMA.h"
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
 #include "CommonFunctions.h"
