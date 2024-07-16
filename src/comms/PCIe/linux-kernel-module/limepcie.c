@@ -223,10 +223,12 @@ static int limepcie_dma_init(
         dma->csr_addr.table_flush = base + PCIE_DMA_READER_TABLE_FLUSH_OFFSET;
     }
 
-    dma->bufferSize = bufferSize;
+    // buffer has to be at least PAGE_SIZE, otherwise mmap will fail
+    const int sizeToAllocate = bufferSize > PAGE_SIZE ? bufferSize : PAGE_SIZE;
+    dma->bufferSize = sizeToAllocate;
     for (int i = 0; i < bufferCount; ++i)
     {
-        void *memoryBuffer = limepcie_dma_buffer_alloc(dma, bufferSize, &dma->dmaAddrHandles[i]);
+        void *memoryBuffer = limepcie_dma_buffer_alloc(dma, sizeToAllocate, &dma->dmaAddrHandles[i]);
         if (!memoryBuffer)
         {
             dev_err(sysDev, "Failed to allocate dma buffer\n");
