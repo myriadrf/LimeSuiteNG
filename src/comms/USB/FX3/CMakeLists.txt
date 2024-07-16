@@ -46,8 +46,7 @@ elseif(UNIX)
     target_link_libraries(limesuiteng PUBLIC ${LIBUSB_1_LIBRARIES})
 
     if(LIBUSB_1_INCLUDE_DIR)
-        target_include_directories(
-            limesuiteng PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
+        target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
     endif()
 endif()
 
