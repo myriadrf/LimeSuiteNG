@@ -1277,23 +1277,32 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     pcie_print_link_status(pciContext);
     pci_set_master(pciContext);
 
-    uint64_t required_dma_mask = dma_get_required_mask(sysDev);
+    const uint64_t required_dma_mask = dma_get_required_mask(sysDev);
+    // Raspberry Pi requires 36 bits. Attempting to set mask to 32bits does not generate errors, but DMA does not work.
     if (required_dma_mask > DMA_BIT_MASK(32))
     {
-        dev_warn(sysDev,
-            "System required DMA MASK: 0x%llX. Raspberry Pi needs to have dtoverlay=pcie-32bi-dma, to allow 32bit dma addressing. "
-            "Data streaming might not work correctly.\n",
-            required_dma_mask);
-    }
-
-    if ((ret = dma_set_mask(sysDev, DMA_BIT_MASK(32))))
-    {
-        dev_warn(sysDev, "Failed to set DMA mask 32bit. Falling back to 64bit\n");
-        if ((ret = dma_set_mask(sysDev, DMA_BIT_MASK(64))))
+        dev_info(sysDev, "Required DMA mask %llx. Attempting 64bit mask.\n", required_dma_mask);
+        ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(64));
+        if (ret)
         {
-            dev_err(sysDev, "Failed to set DMA mask 64bit. Critical error.\n");
+            dev_err(sysDev, "Failed to set DMA mask 64bit\n");
             return -1;
         }
+    }
+    else
+    {
+        // start with 32bit, upgrade to 64bit only if necessary
+        ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(32));
+        if (ret)
+        {
+            dev_err(sysDev, "Failed to set DMA mask 32bit\n");
+            ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(64));
+            if (ret)
+            {
+                dev_err(sysDev, "Failed to set DMA mask 64bit\n");
+                return -1;
+            };
+        };
     }
 
     ret = AllocateIRQs(myDevice);
