@@ -548,7 +548,13 @@ static int limepcie_mmap(struct file *file, struct vm_area_struct *vma)
         return -EINVAL;
     }
 
-    vm_flags_set(vma, VM_IO | VM_DONTEXPAND | VM_DONTDUMP);
+    const vm_flags_t add_flags = VM_DONTDUMP | VM_DONTEXPAND | VM_IO;
+// https://github.com/torvalds/linux/commit/bc292ab00f6c7a661a8a605c714e8a148f629ef6
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+    vma->vm_flags |= add_flags;
+#else
+    vm_flags_set(vma, add_flags);
+#endif
 
     for (i = 0; i < dma->bufferCount; i++)
     {
