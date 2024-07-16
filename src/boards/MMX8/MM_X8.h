@@ -1,8 +1,8 @@
 #ifndef LIME_LIMESDR_MMX8_H
 #define LIME_LIMESDR_MMX8_H
 
-#include "ADF4002/ADF4002.h"
-#include "CDCM6208/CDCM6208_Dev.h"
+#include "chips/ADF4002/ADF4002.h"
+#include "chips/CDCM6208/CDCM6208.h"
 #include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -52,7 +52,7 @@ class LimeSDR_MMX8 : public SDRDevice
 
     double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
-    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
@@ -72,8 +72,8 @@ class LimeSDR_MMX8 : public SDRDevice
     double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
     OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
-    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
     OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) override;
+    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
 
     bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic) override;
@@ -122,6 +122,7 @@ class LimeSDR_MMX8 : public SDRDevice
     void StreamStart(const std::vector<uint8_t> moduleIndexes) override;
     void StreamStop(uint8_t moduleIndex) override;
     void StreamStop(const std::vector<uint8_t> moduleIndexes) override;
+    void StreamDestroy(uint8_t moduleIndex) override;
 
     uint32_t StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
     uint32_t StreamRx(uint8_t moduleIndex, lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta) override;
@@ -153,10 +154,10 @@ class LimeSDR_MMX8 : public SDRDevice
     std::shared_ptr<IComms> mMainFPGAcomms;
     SDRDescriptor mDeviceDescriptor;
     std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
-    std::vector<LimeSDR_XTRX*> mSubDevices;
+    std::vector<std::unique_ptr<LimeSDR_XTRX>> mSubDevices;
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;
     std::map<uint32_t, LimeSDR_XTRX*> customParameterToDevice;
-    lime::ADF4002* mADF;
+    std::unique_ptr<lime::ADF4002> mADF;
 };
 
 } // namespace lime

@@ -23,7 +23,7 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n"sv;
+    std::cout << "Stopping\n"sv;
     stopProgram = true;
 }
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     uint32_t totalSamplesSent = 0;
     float maxSignalAmplitude = 0;
 
-    StreamMeta rxMeta;
+    StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
         uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, samplesInBuffer, &rxMeta);
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                 maxSignalAmplitude = amplitude;
         }
 
-        StreamMeta txMeta;
+        StreamMeta txMeta{};
         txMeta.timestamp = rxMeta.timestamp + samplesInBuffer * 64;
         txMeta.waitForTimestamp = true;
         txMeta.flushPartialPacket = false;
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 #ifdef USE_GNU_PLOT
             gp.write("plot '-' with points title 'ch 0'");
             for (std::size_t c = 1; c < stream.channels.at(TRXDir::Rx).size(); ++c)
-                gp.writef(", '-' with points title 'ch %i'\n", c);
+                gp.writef(", '-' with points title 'ch %lu'\n", c);
             for (std::size_t c = 0; c < stream.channels.at(TRXDir::Rx).size(); ++c)
             {
                 for (uint32_t n = 0; n < samplesInBuffer; ++n)

@@ -1,10 +1,9 @@
 diff --git a/debian/control b/debian/control
-index 2eecbf7b..af50e28d 100644
 --- a/debian/control
 +++ b/debian/control
-@@ -71,13 +71,6 @@ Description: Lime Suite - Install firmware and gateware images
+@@ -72,13 +72,6 @@ Description: Lime Suite NG - Install firmware and gateware images
   This is an empty dependency package that pulls in the images
-  for the default version of Lime Suite.
+  for the default version of Lime Suite NG.
  
 -Package: limesuiteng-litepcie-kernel-module
 -Section: libs
@@ -13,6 +12,6 @@ index 2eecbf7b..af50e28d 100644
 -Depends: ${shlibs:Depends}, ${misc:Depends}
 -Description: Lime Suite NG LitePCIe kernel driver.
 -
- Package: soapysdr-module-lms7
+ Package: soapysdr-module-limesuiteng
  Section: libs
  Architecture: all

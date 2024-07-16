@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -15,7 +16,7 @@ class TRXLooper;
 class FPGA;
 struct RFSOCDescriptor;
 
-/** @brief Base class for device with multiple LMS7002M chips and FPGA */
+/// @brief Base class for device with one or more LMS7002M chips and a FPGA.
 class LIME_API LMS7002M_SDRDevice : public SDRDevice
 {
   public:
@@ -41,10 +42,10 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
 
     double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
-    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
+    double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
 
-    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
     OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) override;
+    OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
 
     double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf) override;
@@ -102,8 +103,10 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     uint64_t GetHardwareTimestamp(uint8_t moduleIndex) override;
     OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) override;
 
+    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
     void StreamStart(uint8_t moduleIndex) override;
     void StreamStop(uint8_t moduleIndex) override;
+    void StreamDestroy(uint8_t moduleIndex) override;
 
     uint32_t StreamRx(uint8_t moduleIndex, complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
     uint32_t StreamRx(uint8_t moduleIndex, complex16_t* const* samples, uint32_t count, StreamMeta* meta) override;
@@ -120,35 +123,35 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
 
-    /// @copydoc FPGA::ReadRegister()
-    virtual int ReadFPGARegister(uint32_t address);
-    /// @copydoc FPGA::WriteRegister()
-    virtual OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
+    FPGA* GetFPGA();
 
   protected:
+    static RFSOCDescriptor GetDefaultLMS7002MDescriptor();
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);
-    void SetGainInformationInDescriptor(RFSOCDescriptor& descriptor);
+    static void SetGainInformationInDescriptor(RFSOCDescriptor& descriptor);
 
-    OpStatus LMS7002LOConfigure(LMS7002M* chip, const SDRConfig& config);
-    OpStatus LMS7002ChannelConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
-    OpStatus LMS7002ChannelCalibration(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
-    OpStatus LMS7002TestSignalConfigure(LMS7002M* chip, const ChannelConfig& config, uint8_t channelIndex);
-
-    static constexpr uint8_t NCOValueCount = 16;
+    OpStatus LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& config);
+    OpStatus LMS7002ChannelConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
+    OpStatus LMS7002ChannelCalibration(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
+    OpStatus LMS7002TestSignalConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
 
     LogCallbackType mCallback_logMessage;
-    std::vector<LMS7002M*> mLMSChips;
-    std::vector<TRXLooper*> mStreamers;
+    std::vector<std::unique_ptr<LMS7002M>> mLMSChips;
+    std::unique_ptr<FPGA> mFPGA;
+    std::vector<std::unique_ptr<TRXLooper>> mStreamers;
 
     SDRDescriptor mDeviceDescriptor;
-    StreamConfig mStreamConfig;
-    FPGA* mFPGA;
 
   private:
-    OpStatus SetGenericRxGain(LMS7002M* device, LMS7002M::Channel channel, double value);
-    OpStatus SetGenericTxGain(LMS7002M* device, LMS7002M::Channel channel, double value);
+    OpStatus SetGenericRxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
+    OpStatus SetGenericTxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
 
     std::unordered_map<TRXDir, std::unordered_map<uint8_t, double>> lowPassFilterCache;
+
+    /// @copydoc FPGA::ReadRegister()
+    int ReadFPGARegister(uint32_t address);
+    /// @copydoc FPGA::WriteRegister()
+    OpStatus WriteFPGARegister(uint32_t address, uint32_t value);
 };
 
 } // namespace lime

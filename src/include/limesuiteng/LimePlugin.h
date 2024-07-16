@@ -17,25 +17,33 @@ class LIME_API LimeSettingsProvider
   public:
     virtual ~LimeSettingsProvider(){};
 
-    // return true if variable was found
+    /// @brief Gets the given parameter as a string.
+    /// @param dest The variable to store the result to.
+    /// @param varname The parameter to search for.
+    /// @return The success status of the operation (true if found).
     virtual bool GetString(std::string& dest, const char* varname) = 0;
 
-    // return true if variable was found
+    /// @brief Gets the given parameter as a double-precision floating point number.
+    /// @param dest The variable to store the result to.
+    /// @param varname The parameter to search for.
+    /// @return The success status of the operation (true if found).
     virtual bool GetDouble(double& dest, const char* varname) = 0;
 };
 
 // Tx/Rx settings from configuration file
+/// @brief Settings for a single direction
 struct LIME_API DirectionalSettings {
-    std::string antenna;
-    std::string calibration;
-    double lo_override;
-    double gfir_bandwidth;
-    int oversample;
-    int power_dBm;
-    bool powerAvailable;
-    bool gfir_enable;
+    std::string antenna; ///< The name of the antenna to use.
+    std::string calibration; ///< The mode of calibration to use.
+    double lo_override; ///< The overridden frequency of the direction.
+    double gfir_bandwidth; ///< The width of the General Finite Impulse Response filter
+    int oversample; ///< Oversampling ratio.
+    int power_dBm; ///< The maximum power level of the direction.
+    bool powerAvailable; ///< Whether the maximum power level value #power_dBm is available
+    bool gfir_enable; ///< Whether the General Finite Impulse Response filter is enabled.
 };
 
+/// @brief Configuration settings for a device
 struct LIME_API ConfigSettings {
     ConfigSettings()
         : lpfBandwidthScale(1.0)
@@ -45,79 +53,86 @@ struct LIME_API ConfigSettings {
         , syncPPS(false)
     {
     }
-    DirectionalSettings rx;
-    DirectionalSettings tx;
-    std::string iniFilename;
-    float lpfBandwidthScale; // for adjusting initially requested LPF bandwidth
-    int maxChannelsToUse; // how many channels can be used from this chip
-    lime::DataFormat linkFormat;
-    bool double_freq_conversion_to_lower_side;
-    bool syncPPS;
+    DirectionalSettings rx; ///< The settings for the receive direction.
+    DirectionalSettings tx; ///< The settings for the transmit direction.
+    std::string iniFilename; ///< The filename of the configuration file to load.
+
+    // For adjusting initially requested LPF bandwidth
+    float lpfBandwidthScale; ///< The bandwidth scale for the Low Pass Filter
+    int maxChannelsToUse; ///< Maximum amount of channels that can be used from this chip.
+    lime::DataFormat linkFormat; ///< The data format to communicate to the device with.
+    bool double_freq_conversion_to_lower_side; ///< Denotes whether to invert the Q value or not.
+    bool syncPPS; ///< Denotes whether to wait for the next Pulse Per Second impulse before sending the data on supported devices.
 };
 
-// Individual RF SOC device configuration
+/// @brief Individual RF SoC device configuration
 struct LIME_API DevNode {
   public:
     DevNode();
-    ConfigSettings configInputs;
-    // settings from file
-    std::string handleString;
-    uint8_t chipIndex;
-    std::vector<uint32_t> fpgaRegisterWrites;
-    lime::SDRDevice* device; // chip owner
-    lime::SDRConfig config;
-    int portIndex;
-    int devIndex;
-    bool assignedToPort;
+    ConfigSettings configInputs; ///< The configuration of the device node as retrieved by the configuration file.
+    std::string handleString; ///< The handle of the device.
+    uint8_t chipIndex; ///< The chip index to use of the device.
+    std::vector<uint32_t> fpgaRegisterWrites; ///< The values to write to the FPGA upon initialization.
+    lime::SDRDevice* device; ///< The device that owns the chip.
+    lime::SDRConfig config; ///< The configuration of the device.
+    int portIndex{}; ///< The index of the port to use.
+    int devIndex{}; ///< The index of the device.
+    bool assignedToPort{}; ///< Whether this device is assigned to a port or not.
 };
 
+/// @brief The data for a channel
 struct LIME_API ChannelData {
-    DevNode* parent;
-    int chipChannel;
+    DevNode* parent; ///< The owner of this ChannelData.
+    int chipChannel; ///< The channel the chip is using with this data.
 };
 
 // Ports/Cells that can have combined multiple RF devices to act as one
+/// @brief The information about the connection to the devices.
 struct LIME_API PortData {
     // settings from file
-    std::string deviceNames;
+    std::string deviceNames; ///< The names of the devices to connect to.
 
-    std::vector<DevNode*> nodes;
-    lime::StreamComposite* composite;
-    ConfigSettings configInputs;
+    std::vector<DevNode*> nodes; ///< The devices connected to.
+    lime::StreamComposite* composite; ///< The composite sample stream streamer.
+    ConfigSettings configInputs; ///< The configuration settings for the devices.
 };
 
+/// @brief The structure to hold all required information for the plug-in to work.
 struct LIME_API LimePluginContext {
     LimePluginContext();
-    std::vector<ChannelData> rxChannels;
-    std::vector<ChannelData> txChannels;
-    std::vector<PortData> ports;
-    std::vector<DevNode> rfdev;
-    std::map<std::string, lime::SDRDevice*> uniqueDevices;
-    LimeSettingsProvider* config;
-    lime::DataFormat samplesFormat;
+    std::vector<ChannelData> rxChannels; ///< The list of receive channels
+    std::vector<ChannelData> txChannels; ///< The list of transmit channels
+    std::vector<PortData> ports; ///< The port information of the devices to connect to.
+    std::vector<DevNode> rfdev; ///< The Radio-frequency device to use.
+    std::map<std::string, lime::SDRDevice*> uniqueDevices; ///< The mapping of device handles to actual devices.
+    LimeSettingsProvider* config; ///< The interface to get the settings from.
+    lime::DataFormat samplesFormat; ///< The format in which to the samples should be presented to the API.
 
     /* Path of the config file, not terminating by / */
-    std::string currentWorkingDirectory;
-    lime::SDRDevice::LogCallbackType hostLog;
+    std::string currentWorkingDirectory; ///< The directory to look for the configuration file.
+    lime::SDRDevice::LogCallbackType hostLog; ///< The callback function to call on when a message is getting logged
 };
 
+/// @brief The structure holding the current settings of the streams.
 struct LIME_API LimeRuntimeParameters {
+    /// @brief The structure for storing current settings for the stream of a direction.
     struct LIME_API ChannelParams {
-        std::vector<int64_t> freq;
-        std::vector<double> gain;
-        std::vector<int> bandwidth;
+        std::vector<int64_t> freq; ///< The frequencies of the channels (in Hz).
+        std::vector<double> gain; ///< The gains of the channels (in dB).
+        std::vector<int> bandwidth; ///< The bandwidth of the filters (in Hz).
     };
 
-    ChannelParams rx;
-    ChannelParams tx;
+    ChannelParams rx; ///< Parameters for all the receive channels.
+    ChannelParams tx; ///< Parameters for all the transmit channels.
 
+    /// @brief The parameters of the ports.
     struct LIME_API PortParams {
-        double sample_rate;
-        int rx_channel_count;
-        int tx_channel_count;
+        double sample_rate; ///< The sample rate of the transmissions (in Hz).
+        int rx_channel_count; ///< The count of the receive channels.
+        int tx_channel_count; ///< The count of the transmit channels.
     };
 
-    std::vector<PortParams> rf_ports;
+    std::vector<PortParams> rf_ports; ///< The parameters for each of the devices.
 };
 
 LIME_API void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num);

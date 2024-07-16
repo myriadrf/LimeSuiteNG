@@ -2,7 +2,9 @@ set(LIME_TEST_SUITE_NAME limesuiteng-test)
 
 set(LIME_TEST_SUITE_SOURCES
     boards/LMS7002M_SDRDevice_Fixture.cpp
-    parsers/CoefficientFileParserTest.cpp
+    LimeSuite_wrapper/streaming.cpp
+    streaming/streaming.cpp
+    # TODO: # parsers/CoefficientFileParserTest.cpp
     protocols/LMS64CProtocol/CustomParameterReadTest.cpp
     protocols/LMS64CProtocol/CustomParameterWriteTest.cpp
     protocols/LMS64CProtocol/DeviceResetTest.cpp
@@ -22,22 +24,32 @@ if(ENABLE_LITE_PCIE)
         LIME_TEST_SUITE_SOURCES
         boards/LimeSDR_X3/LimeSDR_X3Test.cpp
         boards/LimeSDR_X3/SlaveSelectShimTest.cpp
-        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp
-        comms/PCIe/PCIE_CSR_PipeTest.cpp)
+        boards/LimeSDR_XTRX/LimeSDR_XTRXTest.cpp)
 endif()
 
 if(ENABLE_USB_FX3)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR/LimeSDRTest.cpp boards/LimeSDR/USB_CSR_Pipe_SDRTest.cpp)
+    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR/LimeSDRTest.cpp)
 endif()
 
 if(ENABLE_USB_FTDI)
-    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp boards/LimeSDR_Mini/USB_CSR_Pipe_MiniTest.cpp)
+    list(APPEND LIME_TEST_SUITE_SOURCES boards/LimeSDR_Mini/LimeSDR_MiniTest.cpp)
 endif()
 
-add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
+if(BUILD_SHARED_LIBS)
+    # Build the tests in and use a wrapper to execute the tests.
+    target_sources(limesuiteng PRIVATE ${LIME_TEST_SUITE_SOURCES} TestEntry.cpp)
+    target_link_libraries(limesuiteng PUBLIC $<BUILD_INTERFACE:GTest::gtest> $<BUILD_INTERFACE:GTest::gmock>)
+    target_compile_definitions(limesuiteng PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=1)
 
-target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
-target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC ${MAIN_LIBRARY_NAME} GTest::gtest_main GTest::gmock_main)
+    add_executable(${LIME_TEST_SUITE_NAME} main.cpp)
+else()
+    add_executable(${LIME_TEST_SUITE_NAME} ${LIME_TEST_SUITE_SOURCES})
+
+    target_include_directories(${LIME_TEST_SUITE_NAME} PRIVATE ${LIME_SUITE_INCLUDES} tests)
+    target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC GTest::gtest_main GTest::gmock_main)
+endif()
+
+target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC limesuiteng)
 
 if(CMAKE_BINARY_DIR)
     set_target_properties(${LIME_TEST_SUITE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

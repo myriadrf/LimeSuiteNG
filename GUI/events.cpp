@@ -1,0 +1,7 @@
+#include "events.h"
+
+wxDEFINE_EVENT(limeEVT_SDR_HANDLE_SELECTED, wxCommandEvent);
+wxDEFINE_EVENT(CGEN_FREQUENCY_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(LOG_MESSAGE, wxCommandEvent);
+wxDEFINE_EVENT(READ_ALL_VALUES, wxCommandEvent);
+wxDEFINE_EVENT(WRITE_ALL_VALUES, wxCommandEvent);

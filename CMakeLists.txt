@@ -110,19 +110,20 @@ else()
     set(RV64 FALSE)
 endif()
 
-if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
-    # Optional IPO. Do not use IPO if it's not supported by compiler.
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT result OUTPUT output)
-    if(result)
-        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            add_link_options(-flto=auto)
-        endif()
-    else()
-        message(WARNING "IPO is not supported: ${output}")
-    endif()
-endif()
+# Don't enable LTO/IPO, it generates bugs in PCIe DMA controls
+# if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+#     # Optional IPO. Do not use IPO if it's not supported by compiler.
+#     include(CheckIPOSupported)
+#     check_ipo_supported(RESULT result OUTPUT output)
+#     if(result)
+#         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+#         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#             add_link_options(-flto=auto)
+#         endif()
+#     else()
+#         message(WARNING "IPO is not supported: ${output}")
+#     endif()
+# endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #enable warnings
@@ -137,10 +138,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     #disable gcc caller-saves flag for O2-O3 optimizations
     #workaround fix for gcc 9.3+
-    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
-            add_compile_options(-fno-caller-saves)
-        endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 9.9)
+        add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fno-caller-saves>)
     endif()
 
     #default SIMD configuration uses native build flags
@@ -229,7 +228,7 @@ endif()
 ########################################################################
 include(CMakeDependentOption)
 include(FeatureSummary)
-cmake_dependent_option(ENABLE_TESTING "Use GoogleTest to test the library" ON "NOT BUILD_SHARED_LIBS" OFF)
+option(ENABLE_TESTING "Use GoogleTest to test the library" OFF)
 add_feature_info(TESTING ENABLE_TESTING "Build GoogleTest tests to test the library")
 cmake_dependent_option(ENABLE_CODE_COVERAGE "Use gcov/lcov to generate a code coverage report" ON "ENABLE_TESTING" OFF)
 
@@ -239,7 +238,7 @@ if(ENABLE_TESTING)
     fetchcontent_declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG eff443c6ef5eb6ab598bfaae27f9427fdb4f6af7 # latest main at the time of writing this
+        GIT_TAG a7f443b80b105f940225332ed3c31f2790092f47 # latest main at the time of writing this
     )
 
     set(INSTALL_GMOCK OFF) # Don't install the GMock headers
@@ -290,7 +289,13 @@ add_subdirectory(external)
 ########################################################################
 ## lime suite ng build
 ########################################################################
+add_subdirectory(embedded)
 add_subdirectory(src)
+
+########################################################################
+## graphical interface
+########################################################################
+add_subdirectory(GUI)
 
 ########################################################################
 ## plugins for external programs

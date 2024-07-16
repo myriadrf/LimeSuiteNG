@@ -1,6 +1,6 @@
 #include "cli/common.h"
-#include <getopt.h>
 #include <filesystem>
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;
@@ -8,7 +8,7 @@ using namespace lime;
 SDRDevice* device = nullptr;
 bool terminateProgress(false);
 
-void inthandler(int sig)
+void intHandler(int sig)
 {
     if (terminateProgress == true)
     {
@@ -43,9 +43,8 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
             return memoryDevices.begin()->second;
         }
 
-        cerr << "specify memory device target, -t, --target :"sv << endl;
+        cerr << "Multiple targets found. Specify memory device target, -t, --target\nAvailable targets:"sv << endl;
         PrintMemoryDevices(descriptor);
-
         return std::make_shared<DataStorage>(nullptr, eMemoryDevice::COUNT);
     }
 
@@ -53,8 +52,7 @@ static const std::shared_ptr<DataStorage> FindMemoryDeviceByName(SDRDevice* devi
     {
         return memoryDevices.at(std::string{ targetName });
     } catch (const std::out_of_range& e)
-    {
-        std::cerr << e.what() << '\n';
+    { /*Handled outside catch block*/
     }
 
     cerr << "Device does not contain target device ("sv << targetName << "). Available list:"sv << endl;
@@ -83,7 +81,7 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
         return false;
     }
 
-    printf("\nAborting programing will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
+    printf("\nAborting programming will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
     fflush(stdout);
     std::string answer;
     while (1)
@@ -108,61 +106,35 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
     return false;
 }
 
-static int printHelp(void)
-{
-    cerr << "Usage: LimeFLASH [OPTIONS] [FILE]" << endl;
-    cerr << "  OPTIONS:" << endl;
-    cerr << "    -h, --help\t\t\t This help" << endl;
-    cerr << "    -d, --device <name>\t\t\t Specifies which device to use" << endl;
-    cerr << "    -t, --target <TARGET>\t <TARGET> programming. \"-\" to list targets" << endl;
-    cerr << endl;
-    cerr << "  FILE: input file path." << endl;
-
-    return EXIT_SUCCESS;
-}
-
 int main(int argc, char** argv)
 {
-    std::filesystem::path filePath{ ""sv };
-    std::string_view devName{ ""sv };
-    std::string_view targetName{ ""sv };
-    signal(SIGINT, inthandler);
+    // clang-format off
+    args::ArgumentParser            parser("limeFLASH - Program gateware file to device flash memory", "");
+    args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
+    args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
+    args::ValueFlag<std::string>    targetFlag(parser, "TARGET", "Specifies which target to use", {'t', "target"}, "");
+    args::Flag                      listFlag(parser, "list", "list available device's targets", {'l', "list"});
+    args::Positional<std::string>   fileFlag(parser, "file path", "Input file path", args::Options::Required);
+    // clang-format on
 
-    static struct option long_options[] = { { "help", no_argument, 0, 'h' },
-        { "device", required_argument, 0, 'd' },
-        { "target", required_argument, 0, 't' },
-        { 0, 0, 0, 0 } };
-
-    int long_index = 0;
-    int option = 0;
-    std::string target;
-
-    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
+    try
     {
-        switch (option)
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&)
+    {
+        cout << parser << endl;
+        return EXIT_SUCCESS;
+    } catch (const args::RequiredError& e)
+    {
+        if (!listFlag)
         {
-        case 'h':
-            return printHelp();
-        case 'd':
-            if (optarg != NULL)
-                devName = std::string(optarg);
-            break;
-        case 't':
-            if (optarg != NULL)
-            {
-                targetName = optarg;
-            }
-            break;
+            cerr << e.what() << std::endl;
+            return EXIT_FAILURE;
         }
-    }
-
-    if (optind < argc)
-        filePath = argv[optind];
-    else
+    } catch (const std::exception& e)
     {
-        cerr << "File path not specified."sv << endl;
-        printHelp();
-        return -1;
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
     }
 
     auto handles = DeviceRegistry::enumerate();
@@ -172,9 +144,21 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    const std::string filePath = args::get(fileFlag);
+    std::string devName = args::get(deviceFlag);
+    std::string targetName = args::get(targetFlag);
+    signal(SIGINT, intHandler);
+
     SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
         return EXIT_FAILURE;
+
+    if (listFlag)
+    {
+        cerr << "Available targets:" << endl;
+        PrintMemoryDevices(device->GetDescriptor());
+        return EXIT_SUCCESS;
+    }
 
     auto memorySelect = FindMemoryDeviceByName(device, targetName);
     if (memorySelect->ownerDevice == nullptr)

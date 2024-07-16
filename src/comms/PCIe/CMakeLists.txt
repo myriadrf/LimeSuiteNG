@@ -4,12 +4,11 @@
 set(THIS_SOURCE_DIR comms/PCIe)
 
 set(COMMS_LITE_PCIE_SOURCES
-    ${THIS_SOURCE_DIR}/AvgRmsCounter.cpp
     ${THIS_SOURCE_DIR}/LMS64C_FPGA_Over_PCIe.cpp
     ${THIS_SOURCE_DIR}/LMS64C_LMS7002M_Over_PCIe.cpp
     ${THIS_SOURCE_DIR}/LitePCIe.cpp
-    ${THIS_SOURCE_DIR}/PCIE_CSR_Pipe.cpp
-    ${THIS_SOURCE_DIR}/TRXLooper_PCIE.cpp)
+    ${THIS_SOURCE_DIR}/LitePCIeDMA.cpp
+    ${THIS_SOURCE_DIR}/PCIE_CSR_Pipe.cpp)
 
 ########################################################################
 ## Feature registration
@@ -25,12 +24,12 @@ endif()
 ########################################################################
 ## Add to library
 ########################################################################
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${COMMS_LITE_PCIE_SOURCES})
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${COMMS_LITE_PCIE_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
 
 # build kernel module only on Linux
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR}/linux-kernel-module)
+    target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR}/linux-kernel-module)
 
     cmake_dependent_option(LITEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module" ON "UNIX; NOT APPLE" OFF)
     add_feature_info(LITEPCIE_KERNEL_MODULE LITEPCIE_KERNEL_MODULE "Build Linux LitePCIe kernel module")

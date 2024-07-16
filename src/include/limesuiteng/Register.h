@@ -31,8 +31,6 @@ struct Register {
     /// @param address The memory address of the register.
     /// @param msb The index of the most significant bit of the register.
     /// @param lsb The index of the least significant bit of the register.
-    /// @param defaultValue The default value of the register.
-    /// @param twocomplement Whether the register is represented in a Two's Complement way.
     constexpr Register(uint16_t address, uint8_t msb, uint8_t lsb)
         : address(address)
         , msb(msb)

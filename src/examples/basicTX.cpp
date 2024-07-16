@@ -21,7 +21,7 @@ static uint8_t chipIndex = 0; // device might have several RF chips
 bool stopProgram(false);
 void intHandler(int dummy)
 {
-    std::cout << "Stoppping\n"sv;
+    std::cout << "Stopping\n"sv;
     stopProgram = true;
 }
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     std::cout << std::endl;
 
     // Use first available device
-    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(1));
+    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
     auto t1 = startTime;
     auto t2 = t1;
 
-    StreamMeta txMeta;
+    StreamMeta txMeta{};
     txMeta.timestamp = 0;
     txMeta.waitForTimestamp = true;
     txMeta.flushPartialPacket = true;

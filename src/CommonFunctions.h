@@ -8,7 +8,7 @@
 
 namespace lime {
 
-const std::string strFormat(const char* format, ...);
+const std::string strFormat [[gnu::format(printf, 1, 2)]] (const char* format, ...);
 
 template<typename T> std::string intToHex(T i)
 {

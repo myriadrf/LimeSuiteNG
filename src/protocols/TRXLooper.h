@@ -4,44 +4,49 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
 #include "PacketsFIFO.h"
-#include "MemoryPool.h"
+#include "memory/MemoryPool.h"
 #include "SamplesPacket.h"
 
 namespace lime {
+
 class FPGA;
+class IDMA;
 class LMS7002M;
 
 /** @brief Class responsible for receiving and transmitting continuous sample data */
 class TRXLooper
 {
   public:
-    TRXLooper(FPGA* f, LMS7002M* chip, int id);
-    virtual ~TRXLooper();
+    TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
+    ~TRXLooper();
 
     uint64_t GetHardwareTimestamp() const;
     OpStatus SetHardwareTimestamp(const uint64_t now);
-    virtual OpStatus Setup(const lime::StreamConfig& cfg);
-    virtual void Start();
-    virtual void Stop();
+    OpStatus Setup(const lime::StreamConfig& cfg);
+    OpStatus Start();
+    void Stop();
+    void Teardown();
 
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
-    constexpr bool IsStreamRunning() const { return mStreamEnabled; }
+    constexpr inline bool IsStreamRunning() const { return mStreamEnabled; }
 
     /// @brief Gets the current configuration of the stream.
     /// @return The current configuration of the stream.
-    constexpr const lime::StreamConfig& GetConfig() const { return mConfig; }
+    constexpr inline const lime::StreamConfig& GetConfig() const { return mConfig; }
 
-    virtual uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
-    virtual uint32_t StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta);
 
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.
@@ -52,23 +57,43 @@ class TRXLooper
     /// @brief The type of a sample packet.
     typedef SamplesPacket<2> SamplesPacketType;
 
-  protected:
-    virtual int RxSetup() { return 0; };
-    virtual void ReceivePacketsLoop() = 0;
-    virtual void RxTeardown(){};
+    static OpStatus UploadTxWaveform(FPGA* fpga,
+        std::shared_ptr<IDMA> port,
+        const StreamConfig& config,
+        uint8_t moduleIndex,
+        const void** samples,
+        uint32_t count);
 
-    virtual int TxSetup() { return 0; };
-    virtual void TransmitPacketsLoop() = 0;
-    virtual void TxTeardown(){};
+    /** @brief The transfer arguments. */
+    struct TransferArgs {
+        std::shared_ptr<IDMA> dma; ///< The DMA interface to use.
+        std::vector<uint8_t*> buffers; ///< The memory buffers to use.
+        int32_t bufferSize; ///< The size of a single buffer.
+        int16_t packetSize; ///< The size of a single packet.
+        uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
+        int32_t samplesInPacket; ///< The amount of samples in a single packet.
+    };
+
+  private:
+    OpStatus RxSetup();
+    void RxWorkLoop();
+    void ReceivePacketsLoop();
+    void RxTeardown();
+
+    OpStatus TxSetup();
+    void TxWorkLoop();
+    void TransmitPacketsLoop();
+    void TxTeardown();
 
     uint64_t mTimestampOffset;
     lime::StreamConfig mConfig;
 
+    TransferArgs mRxArgs;
+    TransferArgs mTxArgs;
+
     FPGA* fpga;
     LMS7002M* lms;
-    int chipId;
-
-    std::chrono::time_point<std::chrono::steady_clock> streamClockStart;
+    uint8_t chipId;
 
     SDRDevice::LogCallbackType mCallback_logMessage;
     std::condition_variable streamActive;
@@ -76,13 +101,19 @@ class TRXLooper
     bool mStreamEnabled;
 
     struct Stream {
-        MemoryPool* memPool;
-        StreamStats stats;
-        PacketsFIFO<SamplesPacketType*>* fifo;
+        enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
+
+        std::unique_ptr<MemoryPool> memPool;
+        std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
         SamplesPacketType* stagingPacket;
+        StreamStats stats;
         std::thread thread;
         std::atomic<uint64_t> lastTimestamp;
         std::atomic<bool> terminate;
+        std::atomic<bool> terminateWorker;
+        std::atomic<ReadyStage> stage;
+        std::mutex mutex;
+        std::condition_variable cv;
         // how many packets to batch in data transaction
         // lower count will give better latency, but can cause problems with really high data rates
         uint16_t samplesInPkt;
@@ -92,41 +123,27 @@ class TRXLooper
             : memPool(nullptr)
             , fifo(nullptr)
             , stagingPacket(nullptr)
+            , terminateWorker(false)
+            , stage(ReadyStage::Disabled)
         {
         }
 
-        ~Stream()
-        {
-            if (fifo != nullptr)
-            {
-                delete fifo;
-            }
-
-            DeleteMemoryPool();
-        }
+        ~Stream() { DeleteMemoryPool(); }
 
         void DeleteMemoryPool()
         {
-            if (memPool == nullptr)
-            {
+            if (!stagingPacket)
                 return;
-            }
 
-            if (stagingPacket != nullptr)
-            {
+            if (memPool)
                 memPool->Free(stagingPacket);
-                stagingPacket = nullptr;
-            }
-
-            delete memPool;
-            memPool = nullptr;
+            stagingPacket = nullptr;
         }
     };
 
     Stream mRx;
     Stream mTx;
 
-  private:
     template<class T> uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta);
     template<class T> uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta);
 };

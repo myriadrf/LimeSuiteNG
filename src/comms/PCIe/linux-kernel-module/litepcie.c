@@ -58,6 +58,8 @@ struct litepcie_dma_chan {
     dma_addr_t writer_handle[MAX_DMA_BUFFER_COUNT];
     void *reader_addr[MAX_DMA_BUFFER_COUNT];
     void *writer_addr[MAX_DMA_BUFFER_COUNT];
+    void *reader_mem;
+    void *writer_mem;
     int64_t reader_hw_count;
     int64_t reader_hw_count_last;
     int64_t reader_sw_count;
@@ -160,9 +162,17 @@ static int litepcie_dma_init(struct litepcie_device *s)
     {
         struct litepcie_dma_chan *dmachan = &s->chan[i].dma;
         /* for each dma buffer */
+        int sizeToAlloc = dmachan->bufferSize * dmachan->bufferCount;
+        dmachan->writer_mem = kmalloc(sizeToAlloc, GFP_KERNEL);
+        if (!dmachan->writer_mem)
+        {
+            dev_err(&s->dev->dev, "Failed to allocate writer memory\n");
+            return -ENOMEM;
+        }
+
         for (int j = 0; j < dmachan->bufferCount; j++)
         {
-            dmachan->writer_addr[j] = kmalloc(dmachan->bufferSize, GFP_KERNEL);
+            dmachan->writer_addr[j] = dmachan->writer_mem + (j * dmachan->bufferSize);
             dmachan->writer_handle[j] = dma_map_single(&s->dev->dev, dmachan->writer_addr[j], dmachan->bufferSize, DMA_FROM_DEVICE);
 #ifdef DEBUG_MEM
             dev_dbg(&s->dev->dev,
@@ -184,10 +194,16 @@ static int litepcie_dma_init(struct litepcie_device *s)
             }
         }
 
+        dmachan->reader_mem = kmalloc(sizeToAlloc, GFP_KERNEL);
+        if (!dmachan->reader_mem)
+        {
+            dev_err(&s->dev->dev, "Failed to allocate reader memory\n");
+            return -ENOMEM;
+        }
         for (int j = 0; j < dmachan->bufferCount; j++)
         {
             /* allocate rd */
-            dmachan->reader_addr[j] = kmalloc(dmachan->bufferSize, GFP_KERNEL);
+            dmachan->reader_addr[j] = dmachan->reader_mem + (j * dmachan->bufferSize);
             dmachan->reader_handle[j] = dma_map_single(&s->dev->dev, dmachan->reader_addr[j], dmachan->bufferSize, DMA_TO_DEVICE);
 #ifdef DEBUG_MEM
             dev_dbg(&s->dev->dev,
@@ -237,7 +253,6 @@ static int litepcie_dma_free(struct litepcie_device *s)
                     dmachan->reader_handle[j]);
 #endif
                 dma_unmap_single(&s->dev->dev, dmachan->reader_handle[j], dmachan->bufferSize, DMA_TO_DEVICE);
-                kfree(dmachan->reader_addr[j]);
             }
 
             if (dmachan->writer_addr[j])
@@ -251,9 +266,10 @@ static int litepcie_dma_free(struct litepcie_device *s)
                     dmachan->writer_handle[j]);
 #endif
                 dma_unmap_single(&s->dev->dev, dmachan->writer_handle[j], dmachan->bufferSize, DMA_FROM_DEVICE);
-                kfree(dmachan->writer_addr[j]);
             }
         }
+        kfree(dmachan->reader_mem);
+        kfree(dmachan->writer_mem);
     }
     return 0;
 }
@@ -399,7 +415,7 @@ static void litepcie_dma_reader_stop(struct litepcie_device *s, int chan_num)
     ClearDMAReaderCounters(dmachan);
 }
 
-void litepcie_stop_dma(struct litepcie_device *s)
+static void litepcie_stop_dma(struct litepcie_device *s)
 {
     struct litepcie_dma_chan *dmachan;
     for (int i = 0; i < s->channels; i++)
@@ -629,7 +645,7 @@ static ssize_t litepcie_read(struct file *file, char __user *data, size_t size, 
     return bytesReceived;
 }
 
-static ssize_t submiteWrite(struct file *file, size_t bufSize, bool genIRQ)
+static ssize_t submitWrite(struct file *file, size_t bufSize, bool genIRQ)
 {
     int ret;
     struct litepcie_chan_priv *chan_priv = file->private_data;
@@ -756,7 +772,7 @@ static int litepcie_mmap(struct file *file, struct vm_area_struct *vma)
     struct litepcie_chan *chan = chan_priv->chan;
     struct litepcie_device *s = chan->litepcie_dev;
     unsigned long pfn;
-    int is_tx, i;
+    int is_tx;
 
     const int totalBufferSize = chan->dma.bufferCount * chan->dma.bufferSize;
     if (vma->vm_end - vma->vm_start != totalBufferSize)
@@ -775,27 +791,32 @@ static int litepcie_mmap(struct file *file, struct vm_area_struct *vma)
         return -EINVAL;
     }
 
-    for (i = 0; i < chan->dma.bufferCount; i++)
-    {
-        void *va;
-        if (is_tx)
-            va = chan->dma.reader_addr[i];
-        else
-            va = chan->dma.writer_addr[i];
-        pfn = virt_to_phys((void *)va) >> PAGE_SHIFT;
-        //		vma->vm_flags |= VM_DONTDUMP | VM_DONTEXPAND;
-        /*
-		 * Note: the memory is cached, so the user must explicitly
-		 * flush the CPU caches on architectures which require it.
-		 */
+    void *va;
+    if (is_tx)
+        va = chan->dma.reader_mem;
+    else
+        va = chan->dma.writer_mem;
+    pfn = virt_to_phys((void *)va) >> PAGE_SHIFT;
 
-        size_t usrPtr = vma->vm_start + i * chan->dma.bufferSize;
-        int remapRet = remap_pfn_range(vma, usrPtr, pfn, chan->dma.bufferSize, vma->vm_page_prot);
-        if (remapRet)
-        {
-            dev_err(&s->dev->dev, "mmap io_remap_pfn_range failed %i\n", remapRet);
-            return -EAGAIN;
-        }
+    const vm_flags_t add_flags = VM_DONTDUMP | VM_DONTEXPAND | VM_IO;
+
+// https://github.com/torvalds/linux/commit/bc292ab00f6c7a661a8a605c714e8a148f629ef6
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+    vma->vm_flags |= add_flags;
+#else
+    vm_flags_set(vma, add_flags);
+#endif
+    /*
+	 * Note: the memory is cached, so the user must explicitly
+	 * flush the CPU caches on architectures which require it.
+	 */
+
+    size_t usrPtr = vma->vm_start;
+    int remapRet = remap_pfn_range(vma, usrPtr, pfn, chan->dma.bufferSize * chan->dma.bufferCount, vma->vm_page_prot);
+    if (remapRet)
+    {
+        dev_err(&s->dev->dev, "mmap io_remap_pfn_range failed %i\n", remapRet);
+        return -EAGAIN;
     }
 
     return 0;
@@ -1065,7 +1086,7 @@ static long litepcie_ioctl(struct file *file, unsigned int cmd, unsigned long ar
 
         chan->dma.reader_sw_count = m.sw_count & 0xFFFF;
 
-        ret = submiteWrite(file, m.buffer_size, m.genIRQ);
+        ret = submitWrite(file, m.buffer_size, m.genIRQ);
     }
     break;
 
@@ -1343,43 +1364,7 @@ static void litepcie_free_chdev(struct litepcie_device *s)
     }
 }
 
-/* from stackoverflow */
-void sfind(char *string, char *format, ...)
-{
-    va_list arglist;
-
-    va_start(arglist, format);
-    vsscanf(string, format, arglist);
-    va_end(arglist);
-}
-
-struct revision {
-    int yy;
-    int mm;
-    int dd;
-};
-
-int compare_revisions(struct revision d1, struct revision d2)
-{
-    if (d1.yy < d2.yy)
-        return -1;
-    else if (d1.yy > d2.yy)
-        return 1;
-
-    if (d1.mm < d2.mm)
-        return -1;
-    else if (d1.mm > d2.mm)
-        return 1;
-    else if (d1.dd < d2.dd)
-        return -1;
-    else if (d1.dd > d2.dd)
-        return 1;
-
-    return 0;
-}
-/* from stackoverflow */
-
-void FreeIRQs(struct litepcie_device *device)
+static void FreeIRQs(struct litepcie_device *device)
 {
     dev_info(&device->dev->dev, "FreeIRQs %i\n", device->irqs);
     if (device->irqs <= 0)
@@ -1394,7 +1379,7 @@ void FreeIRQs(struct litepcie_device *device)
     pci_free_irq_vectors(device->dev);
 }
 
-int AllocateIRQs(struct litepcie_device *device)
+static int AllocateIRQs(struct litepcie_device *device)
 {
     struct pci_dev *dev = device->dev;
     int irqs = pci_alloc_irq_vectors(dev, 1, 32, PCI_IRQ_MSI);
@@ -1558,12 +1543,33 @@ static int litepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
 
     pci_set_master(dev);
 
-    ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(32));
-    if (ret)
+    uint64_t required_dma_mask = dma_get_required_mask(&dev->dev);
+    // Raspberry Pi requires 36 bits. Attempting to set mask to 32bits does not generate errors, but DMA does not work.
+    if (required_dma_mask > DMA_BIT_MASK(32))
     {
-        dev_err(&dev->dev, "Failed to set DMA mask 32bit\n");
-        goto fail1;
-    };
+        dev_info(&dev->dev, "Required DMA mask %llx. Attempting 64bit mask.\n", required_dma_mask);
+        ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(64));
+        if (ret)
+        {
+            dev_err(&dev->dev, "Failed to set DMA mask 64bit\n");
+            goto fail1;
+        }
+    }
+    else
+    {
+        // start with 32bit, upgrade to 64bit only if necessary
+        ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(32));
+        if (ret)
+        {
+            dev_err(&dev->dev, "Failed to set DMA mask 32bit\n");
+            ret = dma_set_mask_and_coherent(&dev->dev, DMA_BIT_MASK(64));
+            if (ret)
+            {
+                dev_err(&dev->dev, "Failed to set DMA mask 64bit\n");
+                goto fail1;
+            };
+        };
+    }
 
     ret = AllocateIRQs(litepcie_dev);
     if (ret < 0)
@@ -1578,8 +1584,6 @@ static int litepcie_pci_probe(struct pci_dev *dev, const struct pci_device_id *i
     {
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_QPCIE:
-        dmaBufferSize = 32768;
-        break;
     case LMS_DEV_LIMESDR_XTRX:
     case LMS_DEV_LIME_MM_X8:
         dmaBufferSize = 8192;

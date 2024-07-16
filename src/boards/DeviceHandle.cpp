@@ -2,7 +2,7 @@
 #include <cctype>
 #include <string>
 #include <map>
-#include <iso646.h> // alternative operators for visual c++: not, and, or...
+
 using namespace lime;
 using namespace std::literals::string_literals;
 
@@ -12,9 +12,9 @@ using namespace std::literals::string_literals;
 static std::string_view trim(const std::string_view s)
 {
     std::string_view out = s;
-    while (not out.empty() and std::isspace(out[0]))
+    while (!out.empty() && std::isspace(out[0]))
         out = out.substr(1);
-    while (not out.empty() and std::isspace(out[out.size() - 1]))
+    while (!out.empty() && std::isspace(out[out.size() - 1]))
         out = out.substr(0, out.size() - 1);
     return out;
 }
@@ -44,11 +44,11 @@ static std::map<std::string, std::string> argsToMap(const std::string_view args)
             else
                 val += ch;
         }
-        if ((inKey and not val.empty()) or ((i + 1) == args.size()))
+        if ((inKey && !val.empty()) || ((i + 1) == args.size()))
         {
             key = trim(key);
             val = trim(val);
-            if (not key.empty())
+            if (!key.empty())
                 kwmap[key] = val;
             key = ""s;
             val = ""s;
@@ -89,13 +89,13 @@ DeviceHandle::DeviceHandle(const std::string& args)
 std::string DeviceHandle::Serialize(void) const
 {
     std::string out = ""s;
-    if (not name.empty())
+    if (!name.empty())
         out += name;
-    if (not media.empty())
+    if (!media.empty())
         out += ", media="s + media;
-    if (not addr.empty())
+    if (!addr.empty())
         out += ", addr="s + addr;
-    if (not serial.empty())
+    if (!serial.empty())
         out += ", serial="s + serial;
 
     return out;
@@ -105,20 +105,20 @@ std::string DeviceHandle::ToString(void) const
 {
     //name and media format
     std::string out(name);
-    if (not media.empty())
+    if (!media.empty())
         out += " ["s + media + "]"s;
 
     // Remove leading zeros for a displayable serial
     std::string_view trimmedSerial{ serial };
-    while (not trimmedSerial.empty() and trimmedSerial.at(0) == '0')
+    while (!trimmedSerial.empty() && trimmedSerial.at(0) == '0')
         trimmedSerial = trimmedSerial.substr(1);
 
-    if (not trimmedSerial.empty())
+    if (!trimmedSerial.empty())
         out += " "s + std::string{ trimmedSerial };
 
     //backup condition if we are empty somehow
     if (out.empty())
-        out = this->Serialize();
+        out = Serialize();
 
     return out;
 }

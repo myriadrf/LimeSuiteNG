@@ -29,9 +29,9 @@ if(WIN32)
     else()
         message(WARNING "CYAPI SDK not found. Omitting Cypress FX3 USB support")
     endif()
-    target_link_libraries(${MAIN_LIBRARY_NAME} PRIVATE ${FX3_LIBRARIES})
-    target_link_options(${MAIN_LIBRARY_NAME} PUBLIC "legacy_stdio_definitions.lib")
-    target_include_directories(${MAIN_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${FX3_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
+    target_link_libraries(limesuiteng PRIVATE ${FX3_LIBRARIES})
+    target_link_options(limesuiteng PUBLIC "legacy_stdio_definitions.lib")
+    target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${FX3_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
 elseif(UNIX)
     find_package(libusb-1.0)
     set_package_properties(
@@ -43,11 +43,10 @@ elseif(UNIX)
         message(WARNING "libusb-1.0 libraries not found. Omitting Cypress FX3 USB support")
     endif()
 
-    target_link_libraries(${MAIN_LIBRARY_NAME} PUBLIC ${LIBUSB_1_LIBRARIES})
+    target_link_libraries(limesuiteng PUBLIC ${LIBUSB_1_LIBRARIES})
 
     if(LIBUSB_1_INCLUDE_DIR)
-        target_include_directories(
-            ${MAIN_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
+        target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
     endif()
 endif()
 
@@ -59,7 +58,7 @@ if(NOT ENABLE_USB_FX3)
     return()
 endif()
 
-set(CONNECTION_FX3_SOURCES ${CMAKE_CURRENT_LIST_DIR}/FX3.cpp ${CMAKE_CURRENT_LIST_DIR}/USBTransferContext_FX3.cpp)
+set(CONNECTION_FX3_SOURCES ${CMAKE_CURRENT_LIST_DIR}/FX3.cpp)
 
-target_include_directories(${MAIN_LIBRARY_NAME} PRIVATE ${THIS_SOURCE_DIR})
-target_sources(${MAIN_LIBRARY_NAME} PRIVATE ${CONNECTION_FX3_SOURCES})
+target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
+target_sources(limesuiteng PRIVATE ${CONNECTION_FX3_SOURCES})

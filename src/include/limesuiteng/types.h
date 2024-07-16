@@ -27,7 +27,8 @@ enum class eGainTypes : uint8_t {
     LoopbackPAD,
     IAMP,
     PA, ///< On-board Power Amplifier
-    UNKNOWN
+    UNKNOWN,
+    GENERIC = UNKNOWN,
 };
 
 /// @brief Structure describing the range possible.
@@ -45,15 +46,13 @@ struct Range {
     double step; ///< The step of the range (or 0.0 for any step)
 };
 
-enum class eMemoryRegion : uint8_t { VCTCXO_DAC, COUNT };
-
 /// @brief Structure for storing the information of a memory region.
 struct Region {
     int32_t address; ///< Starting address of the memory region
     int32_t size; ///< The size of the memory region
 };
 
-enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, COUNT };
+enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, GATEWARE_GOLD_IMAGE, GATEWARE_USER_IMAGE, COUNT };
 
 /// @brief The structure for writing and reading custom parameters
 struct CustomParameterIO {

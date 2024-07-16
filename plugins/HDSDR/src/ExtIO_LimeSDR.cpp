@@ -65,7 +65,7 @@ THE SOFTWARE
 #define DbgPrintf(Message) std::printf("%s", Message)
 #else
 /* Debug Trace Disabled */
-#define DbgPrintf(Message) MessageBox(NULL, Message, NULL, MB_OK | MB_ICONERROR)
+#define DbgPrintf(Message) MessageBox(nullptr, Message, nullptr, MB_OK | MB_ICONERROR)
 #endif
 
 using namespace std::literals::string_literals;
@@ -147,7 +147,7 @@ static void error(lime::LogLevel lvl, const std::string& msg)
     }
 
     if (lvl == lime::LogLevel::Critical) {
-        ExtIOCallback(-1, extHw_Stop, 0, NULL);
+        ExtIOCallback(-1, extHw_Stop, 0, nullptr);
     }
 
     DbgPrintf(msg.c_str());
@@ -156,7 +156,7 @@ static void error(lime::LogLevel lvl, const std::string& msg)
 //---------------------------------------------------------------------------
 static bool SetGain()
 {
-    int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From datasheet
+    int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From data sheet
 
     if (device->SetParameter(0, 0, "G_LNA_RFE"s, LNA) != lime::OpStatus::Success) {
         return false;
@@ -422,7 +422,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     /* LNA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_LNA) == reinterpret_cast<HWND>(lParam)) {
-        auto newLNA = 16 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_LNA, TBM_GETPOS, 0, NULL);
+        auto newLNA = 16 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_LNA, TBM_GETPOS, 0, 0);
         if (LNA != newLNA) {
             LNA = newLNA;
             std::string lna_value = std::to_string(LNA > 8 ? (LNA - 15) : (LNA - 11) * 3); // Calculate from index to dB
@@ -433,7 +433,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 device->SetParameter(0, 0, "G_LNA_RFE"s, LNA);
             }
 
-            ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+            ExtIOCallback(-1, extHw_Changed_ATT, 0, nullptr);
             isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
@@ -441,7 +441,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     /* TIA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_TIA) == reinterpret_cast<HWND>(lParam)) {
-        auto newTIA = 4 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_TIA, TBM_GETPOS, 0, NULL);
+        auto newTIA = 4 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_TIA, TBM_GETPOS, 0, 0);
         if (TIA != newTIA) {
             TIA = newTIA;
             std::string tia_value = std::to_string((TIA == 3) ? 0 : (TIA == 2) ? -3 : -12); // Calculate from index to dB
@@ -452,7 +452,7 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 device->SetParameter(0, 0, "G_TIA_RFE"s, TIA);
             }
 
-            ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+            ExtIOCallback(-1, extHw_Changed_ATT, 0, nullptr);
             isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
@@ -460,21 +460,21 @@ static int UpdateScroll(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     /* PGA slider moved */
     if (GetDlgItem(hwndDlg, IDC_SLIDER_PGA) == reinterpret_cast<HWND>(lParam)) {
-        auto newPGA = 31 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_PGA, TBM_GETPOS, 0, NULL);
+        auto newPGA = 31 - SendDlgItemMessage(hwndDlg, IDC_SLIDER_PGA, TBM_GETPOS, 0, 0);
         if (PGA != newPGA) {
             PGA = newPGA;
             std::string pga_value = std::to_string(PGA - 12); // Calculate from index to dB
             pga_value.append(" dB"sv);
             Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_PGA), pga_value.c_str());
 
-            int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From datasheet
+            int rcc_ctl_pga_rbb = (430 * std::pow(0.65, PGA / 10.0) - 110.35) / 20.4516 + 16; //From data sheet
 
             if (PGA <= 31) {
                 device->SetParameter(0, 0, "G_PGA_RBB"s, PGA);
                 device->SetParameter(0, 0, "RCC_CTL_PGA_RBB"s, rcc_ctl_pga_rbb);
             }
 
-            ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+            ExtIOCallback(-1, extHw_Changed_ATT, 0, nullptr);
             isCalibrated = CalibrationStatus::NotCalibrated;
             UpdateDialog();
             return TRUE;
@@ -579,8 +579,8 @@ static int OnDeviceChange(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     /* Change last used device name */
     lastUsedDeviceName = descriptor.name;
 
-    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
-    ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, nullptr);
+    ExtIOCallback(-1, extHw_Changed_ATT, 0, nullptr);
 
     if (freq != -1) {
         StartHW64(freq);
@@ -735,8 +735,8 @@ static int OnReset(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     device = nullptr;
     InitializeLMS();
 
-    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
-    ExtIOCallback(-1, extHw_Changed_ATT, 0, NULL);
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, nullptr);
+    ExtIOCallback(-1, extHw_Changed_ATT, 0, nullptr);
 
     if (freq != -1) {
         StartHW64(freq);
@@ -819,7 +819,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
     /* Destroy dialog window */
     case WM_DESTROY:
         ShowWindow(dialogWindowHandle, SW_HIDE);
-        dialogWindowHandle = NULL;
+        dialogWindowHandle = nullptr;
         return TRUE;
 
     default: return FALSE;
@@ -880,7 +880,7 @@ bool EXTIO_API OpenHW(void)
     }
 
     dialogWindowHandle = CreateDialog(
-        reinterpret_cast<HINSTANCE>(&__ImageBase), MAKEINTRESOURCE(ExtioDialog), NULL, static_cast<DLGPROC>(MainDlgProc));
+        reinterpret_cast<HINSTANCE>(&__ImageBase), MAKEINTRESOURCE(ExtioDialog), nullptr, static_cast<DLGPROC>(MainDlgProc));
     ShowWindow(dialogWindowHandle, SW_HIDE);
 
     return true;
@@ -911,7 +911,7 @@ int EXTIO_API StartHW64(int64_t LOfreq)
 
     isRunning = true;
 
-    threadHandle = reinterpret_cast<HANDLE>(_beginthread(RecvThread, 0, NULL));
+    threadHandle = reinterpret_cast<HANDLE>(_beginthread(RecvThread, 0, nullptr));
     SetThreadPriority(threadHandle, THREAD_PRIORITY_TIME_CRITICAL);
 
     return EXT_BLOCKLEN;
@@ -929,6 +929,7 @@ void EXTIO_API StopHW(void)
     threadHandle = INVALID_HANDLE_VALUE;
 
     device->StreamStop(0);
+    device->StreamDestroy(0);
 }
 //---------------------------------------------------------------------------
 void EXTIO_API CloseHW(void)
@@ -966,7 +967,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
             device->SetFrequency(0, lime::TRXDir::Rx, channel, freq);
 
             UpdateDialog();
-            ExtIOCallback(-1, extHw_Changed_LO, 0, NULL);
+            ExtIOCallback(-1, extHw_Changed_LO, 0, nullptr);
         }
     }
 
@@ -1089,7 +1090,7 @@ int EXTIO_API ExtIoSetSrate(int srate_idx)
     }
 
     sampleRateIndex = srate_idx;
-    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, NULL);
+    ExtIOCallback(-1, extHw_Changed_SampleRate, 0, nullptr);
 
     UpdateDialog();
     return 0;

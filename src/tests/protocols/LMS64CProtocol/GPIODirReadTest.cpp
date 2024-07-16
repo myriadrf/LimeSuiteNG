@@ -16,6 +16,7 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -23,6 +24,7 @@ MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct comma
     return packet->cmd == command;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsBlockCountCorrect, blockCount, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -34,7 +36,7 @@ TEST(LMS64CProtocol, GPIODirReadTestOneBlock)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     const uint8_t value = 0b01010101;
     packet.payload[0] = value;
@@ -43,7 +45,8 @@ TEST(LMS64CProtocol, GPIODirReadTestOneBlock)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -58,7 +61,7 @@ TEST(LMS64CProtocol, GPIODirReadTestTwoBlocks)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     const uint8_t value1 = 0b01010101;
     const uint8_t value2 = 0b10101010;
@@ -70,7 +73,8 @@ TEST(LMS64CProtocol, GPIODirReadTestTwoBlocks)
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_GPIO_DIR_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::GPIO_DIR_RD), IsBlockCountCorrect(2)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -88,7 +92,8 @@ TEST(LMS64CProtocol, GPIODirReadTestNotFullyWritten)
 
     ON_CALL(mockPort, Write(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(0);
 
@@ -102,7 +107,8 @@ TEST(LMS64CProtocol, GPIODirReadTestNotFullyRead)
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 
@@ -114,13 +120,14 @@ TEST(LMS64CProtocol, GPIODirReadTestWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_BUSY_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Busy;
 
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _))
         .WillByDefault(DoAll(
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
-    EXPECT_CALL(mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
+    EXPECT_CALL(
+        mockPort, Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::GPIO_DIR_RD), IsBlockCountCorrect(1)), PACKET_SIZE, _))
         .Times(1);
     EXPECT_CALL(mockPort, Read(_, PACKET_SIZE, _)).Times(1);
 

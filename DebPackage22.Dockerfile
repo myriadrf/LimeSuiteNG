@@ -16,6 +16,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY cmake/ cmake/
+COPY docs/doxygen docs/doxygen
 COPY debian/ debian/
 COPY external/ external/
 COPY udev-rules/ udev-rules/
@@ -23,6 +24,8 @@ COPY plugins/ plugins/
 COPY Changelog.txt Changelog.txt
 COPY CMakeLists.txt CMakeLists.txt
 COPY README.md README.md
+COPY GUI/ GUI/
+COPY embedded/ embedded/
 COPY src/ src/
 
 RUN patch debian/control < debian/control.soapy0.7.patch

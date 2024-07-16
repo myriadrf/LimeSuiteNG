@@ -156,8 +156,9 @@ class LIME_API SDRDevice
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
-    /// @return The currend device sample rate (in Hz)
-    virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
+    /// @param rf_samplerate [out] RF sampling rate.
+    /// @return The current device sample rate (in Hz)
+    virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) = 0;
 
     /// @brief Sets the sample rate of the device.
     /// @param moduleIndex The device index to configure.
@@ -242,7 +243,7 @@ class LIME_API SDRDevice
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
-    /// @return Whether the DC corrector bypassis enabled or not (false = bypass the corrector, true = use the corrector)
+    /// @return Whether the DC corrector bypass is enabled or not (false = bypass the corrector, true = use the corrector)
     virtual bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Enables or disables the DC corrector bypass.
@@ -329,14 +330,14 @@ class LIME_API SDRDevice
     /// @brief Gets the given parameter from the device.
     /// @param moduleIndex The device index to configure.
     /// @param channel The channel to configure.
-    /// @param parameterKey The key of the paremeter to read from.
+    /// @param parameterKey The key of the parameter to read from.
     /// @return The value read from the parameter.
     virtual uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey) = 0;
 
     /// @brief Sets the given parameter in the device.
     /// @param moduleIndex The device index to configure.
     /// @param channel The channel to configure.
-    /// @param parameterKey The key of the paremeter to write to.
+    /// @param parameterKey The key of the parameter to write to.
     /// @param value The value to write to the address.
     /// @return The status of the operation.
     virtual OpStatus SetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey, uint16_t value) = 0;
@@ -447,10 +448,14 @@ class LIME_API SDRDevice
     /// @param moduleIndexes The indices of the devices to stop the streams on.
     virtual void StreamStop(const std::vector<uint8_t> moduleIndexes);
 
-    /// @brief Reveives samples from all the active streams in the device.
+    /// @brief Deallocate stream resources.
+    /// @param moduleIndex The index of the device to stop the streams on.
+    virtual void StreamDestroy(uint8_t moduleIndex) = 0;
+
+    /// @brief Receives samples from all the active streams in the device.
     /// @param moduleIndex The index of the device to receive the samples from.
     /// @param samples The buffer to put the received samples in.
-    /// @param count The amount of samples to reveive.
+    /// @param count The amount of samples to receive.
     /// @param meta The metadata of the packets of the stream.
     /// @return The amount of samples received.
     virtual uint32_t StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta) = 0;
@@ -515,7 +520,7 @@ class LIME_API SDRDevice
     virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength);
 
     /***********************************************************************
-     * Aribtrary settings API
+     * Arbitrary settings API
      **********************************************************************/
 
     /// @copydoc IComms::CustomParameterWrite()
@@ -532,7 +537,7 @@ class LIME_API SDRDevice
     virtual void SetMessageLogCallback(LogCallbackType callback);
 
     /// @brief Gets the pointer to an internal chip of the device.
-    /// @param index The index of the device to retreive.
+    /// @param index The index of the device to retrieve.
     /// @return The pointer to the internal device.
     virtual void* GetInternalChip(uint32_t index) = 0;
 
@@ -562,6 +567,16 @@ class LIME_API SDRDevice
     /// @param data The storage buffer for the data being read.
     /// @return The operation success state.
     virtual OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data);
+
+    /// @brief Runs various device specific tests to check functionality
+    /// @param reporter Object for handling test results callbacks
+    /// @return The operation success state.
+    virtual OpStatus OEMTest(OEMTestReporter* reporter);
+
+    /// @brief Writes one time programmable serial number of the device
+    /// @param serialNumber Device's serial number
+    /// @return The operation success state.
+    virtual OpStatus WriteSerialNumber(uint64_t serialNumber);
 };
 
 } // namespace lime

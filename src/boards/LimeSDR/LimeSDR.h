@@ -9,7 +9,7 @@
 
 namespace lime {
 
-class USBGeneric;
+class IUSB;
 class IComms;
 
 /** @brief Class for managing the LimeSDR-USB device. */
@@ -18,7 +18,7 @@ class LimeSDR : public LMS7002M_SDRDevice
   public:
     LimeSDR(std::shared_ptr<IComms> spiLMS,
         std::shared_ptr<IComms> spiFPGA,
-        std::shared_ptr<USBGeneric> mStreamPort,
+        std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR();
 
@@ -36,13 +36,6 @@ class LimeSDR : public LMS7002M_SDRDevice
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
 
-    OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
-
-    void StreamStart(uint8_t moduleIndex) override;
-    void StreamStop(uint8_t moduleIndex) override;
-
-    void* GetInternalChip(uint32_t index) override;
-
     OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
@@ -56,13 +49,22 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
-  protected:
+  private:
     SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
     static OpStatus UpdateFPGAInterface(void* userData);
 
-  private:
-    std::shared_ptr<USBGeneric> mStreamPort;
+    int GPIFClkTest(OEMTestReporter& reporter);
+    int Si5351CTest(OEMTestReporter& reporter);
+    int ADF4002Test(OEMTestReporter& reporter);
+    int ClockNetworkTest(OEMTestReporter& reporter);
+    int VCTCXOTest(OEMTestReporter& reporter);
+    int FPGA_EEPROM_Test(OEMTestReporter& reporter);
+    int LMS7002_Test(OEMTestReporter& reporter);
+    int RunTestConfig(OEMTestReporter& reporter, const std::string& name, double LOFreq, int gain, int rxPath);
+    int RFTest(OEMTestReporter& reporter);
+
+    std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;

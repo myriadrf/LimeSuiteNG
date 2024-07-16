@@ -2,8 +2,8 @@
 
 #include <cassert>
 #include <cstring>
-#include <getopt.h>
 #include <filesystem>
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;
@@ -103,75 +103,70 @@ static int parseReadInput(std::string_view hexstr, std::vector<uint32_t>& mosi)
     return tokenCount;
 }
 
-static int printHelp(void)
+static std::string ReadFile(const std::string& fileName)
 {
-    cerr << "limeSPI [options]" << endl;
-    cerr << "    -h, --help\t\t\t This help" << endl;
-    cerr << "    -d, --device <name>\t\t\t Specifies which device to use" << endl;
-    cerr << "    -c, --chip <name>\t\t Selects destination chip" << endl;
-    cerr << "    -r, --read \"data or filepath\"\t\t space/newline/comma delimited 16bit hexadecimal addresses for reading" << endl;
-    cerr << "    -w, --write \"data or filepath\"\t\t space/newline/comma delimited 32bit hexadecimal values for writing" << endl;
-    cerr << "    -f, --file\t\t Use --read/--write argument as filename" << endl;
+    std::vector<char> buffer;
+    std::ifstream inputFile(fileName);
+    if (!inputFile.is_open())
+    {
+        cerr << "Failed to open file: "sv << fileName << endl;
+        exit(EXIT_FAILURE);
+    }
+    inputFile.seekg(0, std::ios::end);
+    long fileSize = inputFile.tellg();
+    inputFile.seekg(0, std::ios::beg);
 
-    return EXIT_SUCCESS;
+    buffer.resize(fileSize);
+    inputFile.read(&buffer[0], fileSize);
+    inputFile.close();
+    buffer[fileSize] = 0;
+    return buffer.data();
 }
 
 int main(int argc, char** argv)
 {
-    std::string_view devName{ ""sv };
-    std::string_view chipName{ ""sv };
-    std::string_view hexInput{ ""sv };
-    bool hexInputIsFilename = false;
-    bool isWrite = false;
-    bool isRead = false;
+    // clang-format off
+    args::ArgumentParser                    parser("limeSPI - Control status registers I/O", "");
+    args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
 
-    static struct option long_options[] = { { "help", no_argument, 0, 'h' },
-        { "device", required_argument, 0, 'd' },
-        { "chip", required_argument, 0, 'c' },
-        { "read", required_argument, 0, 'r' },
-        { "write", required_argument, 0, 'w' },
-        { "file", optional_argument, 0, 'f' },
-        { 0, 0, 0, 0 } };
+    args::Group                             commands(parser, "commands"); // NOLINT(cppcoreguidelines-slicing) 
+    args::Command                           read(commands, "read", "Reading operation");
+    args::Command                           write(commands, "write", "Do writing operation");
 
-    int long_index = 0;
-    int option = 0;
-    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
+    args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
+    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {'d', "device"}, "");
+    args::ValueFlag<std::string>            chipFlag(arguments, "name", "Selects destination chip", {'c', "chip"}, "");
+    args::Group                             writeGroup(arguments, "Data options");
+    args::ValueFlag<std::string>            fileFlag(arguments, "file", "File", {'f', "file"});
+    args::ValueFlag<std::string>            streamFlag(arguments, "stream", "Stream", {'s', "stream"});
+    // clang-format on
+
+    try
     {
-        switch (option)
-        {
-        case 'h':
-            return printHelp();
-        case 'd':
-            if (optarg != NULL)
-                devName = std::string(optarg);
-            break;
-        case 'c':
-            if (optarg != NULL)
-                chipName = optarg;
-            break;
-        case 'r':
-            if (optarg != NULL)
-            {
-                isRead = true;
-                hexInput = optarg;
-            }
-            break;
-        case 'w':
-            if (optarg != NULL)
-            {
-                isWrite = true;
-                hexInput = optarg;
-            }
-            break;
-        case 'f':
-            hexInputIsFilename = true;
-            break;
-        }
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&)
+    {
+        cout << parser << endl;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
-    if (isRead && isWrite)
+    if (fileFlag == streamFlag)
     {
-        cerr << "use --read, OR --write, can't do both at the same time"sv << endl;
+        cerr << "Either -s or -f must be provided ONCE" << endl;
+        return EXIT_FAILURE;
+    }
+
+    const std::string devName = args::get(deviceFlag);
+    const std::string chipName = args::get(chipFlag);
+    const std::string hexInput = streamFlag ? args::get(streamFlag) : ReadFile(args::get(fileFlag));
+
+    if (hexInput.empty())
+    {
+        cerr << "No input provided"sv << endl;
         return EXIT_FAILURE;
     }
 
@@ -193,38 +188,10 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::vector<char> buffer;
-    if (hexInputIsFilename)
-    {
-        //read file
-        const std::filesystem::path filename(hexInput);
-        std::ifstream inputFile(filename);
-        if (!inputFile.is_open())
-        {
-            cerr << "Failed to open file: "sv << filename << endl;
-            return EXIT_FAILURE;
-        }
-        inputFile.seekg(0, std::ios::end);
-        long fileSize = inputFile.tellg();
-        inputFile.seekg(0, std::ios::beg);
-
-        buffer.resize(fileSize + 1); // +1 to add null termination
-        inputFile.read(&buffer[0], fileSize);
-        buffer[fileSize] = 0;
-        hexInput = buffer.data();
-    }
-
-    if (hexInput.empty())
-    {
-        DeviceRegistry::freeDevice(device);
-        cerr << "No input provided"sv << endl;
-        return EXIT_FAILURE;
-    }
-
     std::vector<uint32_t> mosi;
-    if (isWrite)
+    if (write)
         parseWriteInput(hexInput, mosi);
-    else if (isRead)
+    else if (read)
         parseReadInput(hexInput, mosi);
 
     std::vector<uint32_t> miso(mosi.size());
@@ -239,11 +206,11 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    // fill in register addresses for convenience and reusage as write input
+    // fill in register addresses for convenience and reuse as write input
     for (size_t i = 0; i < miso.size(); ++i)
         miso[i] |= mosi[i] << 16;
 
-    if (isRead)
+    if (read)
         PrintMISO(cout, miso);
 
     DeviceRegistry::freeDevice(device);

@@ -114,3 +114,13 @@ void SDRDevice::StreamStop(const std::vector<uint8_t> moduleIndexes)
     for (uint8_t i : moduleIndexes)
         StreamStop(i);
 };
+
+OpStatus SDRDevice::OEMTest(OEMTestReporter* reporter)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus SDRDevice::WriteSerialNumber(uint64_t serialNumber)
+{
+    return OpStatus::NotImplemented;
+}

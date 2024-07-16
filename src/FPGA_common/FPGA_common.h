@@ -12,10 +12,11 @@
 #include <memory>
 #include <vector>
 
-#include "SamplesPacket.h"
-#include "DataPacket.h"
-#include "TRXLooper.h"
+#include "protocols/SamplesPacket.h"
+#include "protocols/DataPacket.h"
+#include "protocols/TRXLooper.h"
 #include "limesuiteng/complex.h"
+#include "limesuiteng/OpStatus.h"
 
 using namespace std::literals::string_literals;
 
@@ -72,27 +73,47 @@ class FPGA
     OpStatus WriteLMS7002MSPI(const uint32_t* addr, uint32_t length);
     OpStatus ReadLMS7002MSPI(const uint32_t* addr, uint32_t* values, uint32_t length);
 
+    uint32_t SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId);
+
     /** @brief Structure containing the gateware information of the FPGA */
     struct GatewareInfo {
-        int boardID;
-        int version;
-        int revision;
-        int hardwareVersion;
+        int boardID; ///< The ID of the board.
+        int version; ///< The version of the gateware.
+        int revision; ///< The revision of the gateware.
+        int hardwareVersion; ///< The version of the hardware of the device.
     };
     GatewareInfo GetGatewareInfo();
     static void GatewareToDescriptor(const FPGA::GatewareInfo& gw, SDRDescriptor& desc);
 
-  protected:
+    enum class TestID {
+        HostReferenceClock = 1 << 0,
+        Si5351C = 1 << 1,
+        VCTCXO = 1 << 2,
+        ADF4002 = 1 << 3,
+        GNSS = 1 << 4,
+    };
+    virtual OpStatus OEMTestSetup(TestID test, double timeout);
+
+    OpStatus ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool ddr, bool trxiqpulse);
+    OpStatus ResetPacketCounters(uint16_t chipId);
+    OpStatus StopWaveformPlayback();
+    OpStatus ReadTxPacketCounters(uint16_t chipId, uint32_t* fpgaTxPktIngressCount, uint32_t* fpgaTxPktDropCounter);
+
     OpStatus SelectModule(uint8_t chipIndex);
+    OpStatus SubmoduleSPIEnableMask(uint16_t enableMask);
+
+  protected:
     OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = ""s);
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
     OpStatus SetDirectClocking(int clockIndex);
+    OpStatus SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val);
     std::shared_ptr<ISPI> fpgaPort;
     std::shared_ptr<ISPI> lms7002mPort;
+    int32_t mGatewareVersion;
+    int16_t mGatewareRevision;
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);
-    OpStatus SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool doPhaseSearch, uint16_t& reg23val);
     bool useCache;
     std::map<uint16_t, uint16_t> regsCache;
 };

@@ -26,7 +26,7 @@ endif()
 
 # Check if using correct Visual Studio version
 if(MSVC_TOOLSET_VERSION LESS 141)
-    message(FATAL_ERROR "MSVC version should be atleast v141 (Visual Studio 2017)")
+    message(FATAL_ERROR "MSVC version should be at least v141 (Visual Studio 2017)")
 endif()
 
 project(ExtIO_LimeSDR)

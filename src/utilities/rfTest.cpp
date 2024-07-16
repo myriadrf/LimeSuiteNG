@@ -31,7 +31,7 @@ std::string_view iniArg{ ""sv };
 std::atomic<bool> runForever;
 void intHandler(int dummy)
 {
-    printf("Stoppping\n");
+    printf("Stopping\n");
     runForever.store(false);
 }
 
@@ -93,7 +93,7 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
     //  s->loss,
     //  s->late);
 
-    // s->isTx, don't care now if it's comming from Rx or Tx
+    // s->isTx, don't care now if it's coming from Rx or Tx
     bool streamIssues = s->late | s->loss | s->overrun;
     if (userData)
         *static_cast<bool*>(userData) = streamIssues; // report that there were issues with stream
@@ -162,7 +162,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     for (size_t i = 0; i < rxSamples.size(); ++i)
         rxSamples[i].resize(samplesToBuffer);
 
-    // precomputing tx samples here, the result might not be continous
+    // precomputing tx samples here, the result might not be continuous
     // each packet with different amplitude to distinguish them in time
     std::vector<std::vector<complex32f_t>> txPattern(2);
     const int txPacketCount = 4;
@@ -187,7 +187,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
     //Initialize stream
     bool streamHadIssues = false;
     stream.statusCallback = OnStreamStatusChange;
-    stream.userData = &streamHadIssues; // gets set to true if problems occour
+    stream.userData = &streamHadIssues; // gets set to true if problems occur
     device->StreamSetup(stream, chipIndex);
 
     //device->StreamSetup(stream2, 0);
@@ -256,7 +256,7 @@ bool FullStreamTxRx(SDRDevice& dev, bool MIMO)
             int64_t rxNow = rxMeta.timestamp + samplesInPkt;
             txMeta.timestamp = rxNow + txDeltaTS;
             txMeta.waitForTimestamp = true;
-            txMeta.flushPartialPacket = false; // not really matters because of continuous trasmitting
+            txMeta.flushPartialPacket = false; // not really matters because of continuous transmitting
 
             auto tt1 = std::chrono::high_resolution_clock::now();
             uint32_t samplesSent = dev.StreamTx(testStreamIndex, src, samplesInPkt * txPacketCount, &txMeta);
@@ -349,7 +349,7 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     for (size_t i = 0; i < rxSamples.size(); ++i)
         rxSamples[i].resize(samplesToBuffer);
 
-    // precomputing tx samples here, the result might not be continous
+    // precomputing tx samples here, the result might not be continuous
     // each packet with different amplitude to distinguish them in time
     std::vector<std::vector<complex32f_t>> txPattern(stream.channels.at(lime::TRXDir::Tx).size());
     const int txPacketCount = 1;
@@ -375,7 +375,7 @@ bool TxTiming(SDRDevice& dev, bool MIMO, float tsDelay_ms)
     //Initialize stream
     bool streamHadIssues = false;
     stream.statusCallback = OnStreamStatusChange;
-    stream.userData = &streamHadIssues; // gets set to true if problems occour
+    stream.userData = &streamHadIssues; // gets set to true if problems occur
     device->StreamSetup(stream, chipIndex);
 
     // simple pointers for stream functions, can't just pass vector of vectors

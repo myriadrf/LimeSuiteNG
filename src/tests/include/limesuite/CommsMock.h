@@ -24,6 +24,8 @@ class CommsMock : public IComms
         (const char* data, size_t length, int prog_mode, int target, ProgressCallback callback),
         (override));
     MOCK_METHOD(OpStatus, ResetDevice, (int chipSelect), (override));
+    MOCK_METHOD(OpStatus, MemoryWrite, (uint32_t address, const void* data, uint32_t dataLength), (override));
+    MOCK_METHOD(OpStatus, MemoryRead, (uint32_t address, void* data, uint32_t dataLength), (override));
 };
 
 } // namespace lime::testing

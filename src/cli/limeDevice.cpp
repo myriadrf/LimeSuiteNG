@@ -1,18 +1,10 @@
 #include "cli/common.h"
-#include <getopt.h>
+#include "args.hxx"
 
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-static int printHelp(void)
-{
-    cout << "limeDevice [options]" << endl;
-    cout << "    -h, --help\t This help" << endl;
-    cout << "    -f, --full\t Force print detailed device(s) info" << endl;
-    return EXIT_SUCCESS;
-}
 
 static const std::string_view GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
 {
@@ -50,7 +42,7 @@ void PrintDeviceDetails(SDRDevice* device)
         cout << "\t\t\t\t  " << mem.first << endl;
     cout << "\t"
          << "GPS Lock:" << endl;
-    SDRDevice::GPS_Lock gpsStatus;
+    SDRDevice::GPS_Lock gpsStatus{};
     device->GetGPSLock(&gpsStatus);
     cout << "\t\t"
          << "GPS - " << GPSLockToString(gpsStatus.gps) << endl;
@@ -64,44 +56,44 @@ void PrintDeviceDetails(SDRDevice* device)
 
 int main(int argc, char* argv[])
 {
-    static struct option long_options[] = { { "help", no_argument, 0, 'h' }, { "full", no_argument, 0, 'f' }, { 0, 0, 0, 0 } };
+    args::ArgumentParser parser("limeDevice - Device operations", "");
+    args::HelpFlag help(parser, "help", "Display this help menu", { 'h', "help" });
+    args::Flag fullFlag(parser, "full", "Force print detailed device(s) info", { 'f', "full" });
 
-    bool full(false);
-    int long_index = 0;
-    int option = 0;
-
-    while ((option = getopt_long(argc, argv, "", long_options, &long_index)) != -1)
+    try
     {
-        switch (option)
-        {
-        case 'h':
-            return printHelp();
-        case 'f':
-            full = true;
-        }
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&)
+    {
+        cout << parser << endl;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
     }
+
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
-        printf("No devices found\n");
+        cerr << "No devices found"sv << endl;
         return -1;
     }
-    cout << "Found "sv << handles.size() << " device(s) :"sv << endl;
+    cerr << "Found "sv << handles.size() << " device(s) :"sv << endl;
     for (uint32_t i = 0; i < handles.size(); i++)
     {
         cout << i << ": "sv << handles[i].Serialize() << endl;
-        if (full)
+        if (fullFlag)
         {
             SDRDevice* device = DeviceRegistry::makeDevice(handles.at(i));
             if (!device)
             {
-                cout << "\tFailed to connect"sv << endl;
+                cerr << "\tFailed to connect"sv << endl;
                 continue;
             }
             PrintDeviceDetails(device);
             DeviceRegistry::freeDevice(device);
         }
     }
-    cout << endl;
     return EXIT_SUCCESS;
 }

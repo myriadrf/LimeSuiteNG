@@ -1,7 +1,6 @@
 #ifndef PCIE_CSR_PIPE_H
 #define PCIE_CSR_PIPE_H
 
-#include "comms/IComms.h"
 #include "ISerialPort.h"
 #include "LitePCIe.h"
 
@@ -23,7 +22,7 @@ class PCIE_CSR_Pipe : public ISerialPort
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
 
-  protected:
+  private:
     std::shared_ptr<LitePCIe> port;
 };
 

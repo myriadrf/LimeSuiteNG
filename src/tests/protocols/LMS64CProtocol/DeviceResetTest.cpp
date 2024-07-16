@@ -15,6 +15,7 @@ using ::testing::SetArrayArgument;
 
 static constexpr std::size_t PACKET_SIZE = sizeof(LMS64CPacket);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct command"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -22,6 +23,7 @@ MATCHER_P(IsCommandCorrect, command, "Checks if the packet has the correct comma
     return packet->cmd == command;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct subdevice"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -29,6 +31,7 @@ MATCHER_P(IsSubdeviceCorrect, subDevice, "Checks if the packet has the correct s
     return packet->subDevice == subDevice;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P(IsPeripheralIDCorrect, periphID, "Checks if the packet has the correct peripheral ID"sv)
 {
     const LMS64CPacket* packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -36,6 +39,7 @@ MATCHER_P(IsPeripheralIDCorrect, periphID, "Checks if the packet has the correct
     return packet->periphID == periphID;
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
 MATCHER_P2(IsPayloadByteCorrect, index, byte, "Checks if the packet has the correct block count"sv)
 {
     auto packet = reinterpret_cast<const LMS64CPacket*>(arg);
@@ -47,7 +51,7 @@ TEST(LMS64CProtocol, DeviceResetTestCorrectCommand)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_COMPLETED_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Completed;
 
     uint32_t socIndex = 6U;
     uint32_t subdevice = 1U;
@@ -57,7 +61,7 @@ TEST(LMS64CProtocol, DeviceResetTestCorrectCommand)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -81,7 +85,7 @@ TEST(LMS64CProtocol, DeviceResetTestNotFullyWritten)
     ON_CALL(mockPort, Write(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -103,7 +107,7 @@ TEST(LMS64CProtocol, DeviceResetTestNotFullyRead)
     ON_CALL(mockPort, Read(_, PACKET_SIZE, _)).WillByDefault(Return(0));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
@@ -119,7 +123,7 @@ TEST(LMS64CProtocol, DeviceResetTestWrongStatus)
 {
     SerialPortMock mockPort{};
     LMS64CPacket packet{};
-    packet.status = LMS64CProtocol::STATUS_BUSY_CMD;
+    packet.status = LMS64CProtocol::CommandStatus::Busy;
 
     uint32_t socIndex = 6U;
     uint32_t subdevice = 1U;
@@ -129,7 +133,7 @@ TEST(LMS64CProtocol, DeviceResetTestWrongStatus)
             SetArrayArgument<0>(reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&packet + 1)), ReturnArg<1>()));
 
     EXPECT_CALL(mockPort,
-        Write(AllOf(IsCommandCorrect(LMS64CProtocol::CMD_LMS7002_RST),
+        Write(AllOf(IsCommandCorrect(LMS64CProtocol::Command::LMS7002_RST),
                   IsSubdeviceCorrect(subdevice),
                   IsPeripheralIDCorrect(socIndex),
                   IsPayloadByteCorrect(0, 2)),
