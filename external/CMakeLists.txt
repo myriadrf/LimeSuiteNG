@@ -64,6 +64,7 @@ fetchcontent_getproperties(kissFFT)
 if(NOT kissfft_POPULATED)
     fetchcontent_populate(kissFFT)
     add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
+    set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 endif()
 set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 # disable warnings spam

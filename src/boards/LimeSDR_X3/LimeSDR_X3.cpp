@@ -657,12 +657,15 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig&
 
     if (socIndex == 0)
     {
-        if (trx.enabled && chip.SetGFIRFilter(dir,
-                               ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB,
-                               trx.gfir.enabled,
-                               trx.gfir.bandwidth) != OpStatus::Success)
+        if (trx.enabled)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
+            OpStatus status = chip.SetGFIRFilter(
+                dir, ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB, trx.gfir.enabled, trx.gfir.bandwidth);
+
+            if (status == OpStatus::NotImplemented)
+                lime::warning("%s ch%i GFIR config not implemented", ToString(dir).c_str(), ch);
+            else if (status != OpStatus::Success)
+                throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
         }
     }
 

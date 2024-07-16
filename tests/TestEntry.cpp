@@ -3,7 +3,7 @@
 
 using ::testing::InitGoogleTest;
 
-int lime::testing::TestEntry(int argc, char** argv)
+int lime::tests::TestEntry(int argc, char** argv)
 {
     InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

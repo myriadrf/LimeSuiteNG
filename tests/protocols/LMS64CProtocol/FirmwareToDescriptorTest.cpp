@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 #include "limesuiteng/SDRDescriptor.h"
 
 using namespace lime;

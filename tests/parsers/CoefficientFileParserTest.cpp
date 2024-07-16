@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "parsers/CoefficientFileParser.h"
+#include "GUI/parsers/CoefficientFileParser.h"
 
 #include <fstream>
 #include <filesystem>

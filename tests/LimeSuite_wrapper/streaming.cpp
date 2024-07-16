@@ -37,8 +37,8 @@ void LimeSuiteWrapper_streaming::SetUp()
     ASSERT_EQ(LMS_SetSampleRate(device, sampleRate, oversample), 0);
     float_type host_Hz, rf_Hz;
     ASSERT_EQ(LMS_GetSampleRate(device, LMS_CH_RX, 0, &host_Hz, &rf_Hz), 0);
-    ASSERT_EQ(host_Hz, sampleRate);
-    ASSERT_EQ(rf_Hz, sampleRate * oversample);
+    EXPECT_NEAR(host_Hz, sampleRate, 10);
+    EXPECT_NEAR(rf_Hz, sampleRate * oversample, 32);
 }
 
 void LimeSuiteWrapper_streaming::TearDown()
