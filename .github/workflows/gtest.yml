@@ -37,13 +37,6 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: brew install libusb
 
-      - name: Download windows dependencies
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir ${{github.workspace}}/deps
-          curl -o ${{github.workspace}}/deps/FX3SDK.zip -L https://downloads.myriadrf.org/project/limesuite/appveyor/FX3SDK.zip
-          7z x ${{github.workspace}}/deps/FX3SDK.zip -o${{github.workspace}}/deps/FX3SDK
-
       - name: Configure CMake (windows)
         if: matrix.os == 'windows-latest'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DFX3_SDK_RELATIVE_PATH=deps/FX3SDK -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTING=on
@@ -53,12 +46,12 @@ jobs:
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_PREFIX}} -DBUILD_SHARED_LIBS=OFF -DBINARY_OUTPUT_DIR=${{github.workspace}}/build/bin/ -DENABLE_CODE_COVERAGE=0 -DENABLE_TESTING=on
 
       - name: Build tests
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target limesuiteng-test
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target gtest-runner
 
       - name: Run tests (Linux)
         if: matrix.os != 'windows-latest'
-        run: ${{github.workspace}}/build/bin/limesuiteng-test
+        run: ${{github.workspace}}/build/bin/gtest-runner
 
       - name: Run tests (Windows)
         if: matrix.os == 'windows-latest'
-        run: ${{github.workspace}}/build/bin/${{env.BUILD_TYPE}}/limesuiteng-test.exe
+        run: ${{github.workspace}}/build/bin/${{env.BUILD_TYPE}}/gtest-runner.exe

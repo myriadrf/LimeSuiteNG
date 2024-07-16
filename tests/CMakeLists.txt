@@ -51,6 +51,7 @@ target_sources(${TESTS_CONTAINER_TARGET} PRIVATE TestEntry.cpp)
 target_sources(
     ${TESTS_CONTAINER_TARGET}
     PRIVATE LimeSuite_wrapper/streaming.cpp
+            LimeSuite_wrapper/device.cpp
             streaming/streaming.cpp
             # parsers/CoefficientFileParserTest.cpp
             boards/LMS7002M_SDRDevice_Fixture.cpp
