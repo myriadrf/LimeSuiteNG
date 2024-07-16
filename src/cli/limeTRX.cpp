@@ -382,7 +382,12 @@ int main(int argc, char** argv)
         else
         {
             chipIndex = chipIndexes.empty() ? 0 : chipIndexes[0];
-            device->StreamSetup(stream, chipIndex);
+            OpStatus status = device->StreamSetup(stream, chipIndex);
+            if (status != OpStatus::Success)
+            {
+                cerr << "Failed to setup data stream.\n";
+                return EXIT_FAILURE;
+            }
         }
     } catch (std::runtime_error& e)
     {

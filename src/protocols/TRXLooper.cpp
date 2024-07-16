@@ -172,11 +172,17 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
 
     RxTeardown();
     if (needRx)
-        RxSetup();
+        status = RxSetup();
+
+    if (status != OpStatus::Success)
+        return status;
 
     TxTeardown();
     if (needTx)
-        TxSetup();
+        status = TxSetup();
+
+    if (status != OpStatus::Success)
+        return status;
 
     return OpStatus::Success;
 }
