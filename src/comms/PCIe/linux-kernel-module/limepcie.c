@@ -42,12 +42,9 @@
 #define DRIVER_NAME "limepcie"
 #define LIMEPCIE_MINOR_COUNT 32
 
-#define VERSION "1.0.0"
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 0
-#define VERSION_PATCH 0
+#include "version.h"
 
-MODULE_INFO(version, VERSION);
+MODULE_INFO(version, LIMEPCIE_VERSION);
 MODULE_INFO(author, "Lime Microsystems");
 
 #define MAX_DMA_BUFFER_COUNT 256

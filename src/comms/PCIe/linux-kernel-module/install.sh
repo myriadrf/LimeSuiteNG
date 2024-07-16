@@ -1,8 +1,9 @@
 #!/bin/bash
 
 function dkms_install {
-    SOURCE_FILES="Makefile limepcie.c limepcie.h boards.h bsp/"
-    KERNEL_DRIVER_VERSION="$(cat version)"
+    SOURCE_FILES="Makefile version.h limepcie.c limepcie.h boards.h bsp/"
+    # KERNEL_DRIVER_VERSION="$(cat version)"
+    KERNEL_DRIVER_VERSION="$(sed -nr 's/.*LIMEPCIE_VERSION \"([0-9]+\.[0-9]+\.[0-9]+)\"/\1/p' version.h)"
 
     mkdir -p "/usr/src/limepcie-$KERNEL_DRIVER_VERSION"
     cp -r $SOURCE_FILES "/usr/src/limepcie-$KERNEL_DRIVER_VERSION"
@@ -17,6 +18,9 @@ function dkms_install {
     fi
 
     dkms install -m "limepcie/$KERNEL_DRIVER_VERSION"
+
+    # dkms only installs, but does not load the driver, load it manually
+    modprobe limepcie
 }
 
 function legacy_install {

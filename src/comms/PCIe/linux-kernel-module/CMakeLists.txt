@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 
-file(READ version DRIVER_VERSION)
+# Get the version number from header file
+file(READ version.h VERSION_HEADER_CONTENT)
+string(REGEX MATCH "LIMEPCIE_VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" DRIVER_VERSION "${VERSION_HEADER_CONTENT}")
+
+if(NOT DRIVER_VERSION)
+    message(FATAL_ERROR "Failed to extract version number from version.h")
+endif(NOT DRIVER_VERSION)
+set(DRIVER_VERSION "${CMAKE_MATCH_1}")
+
 project(
     limepcie-kernel
     VERSION ${DRIVER_VERSION}
@@ -51,7 +59,7 @@ set(KBUILD_CMD
 
 set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} ARCH=${ARCH} M=${KBUILD_FILE_DIR} clean)
 
-set(KERNEL_SOURCE_RELATIVE_PATHS limepcie.c limepcie.h boards.h bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h)
+set(KERNEL_SOURCE_RELATIVE_PATHS version.h limepcie.c limepcie.h boards.h bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h)
 
 # Copy all source files into build directory and compile there, as the Kbuild produces artifacts in tree
 foreach(SRC_FILENAME ${KERNEL_SOURCE_RELATIVE_PATHS})
