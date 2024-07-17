@@ -1,3 +1,7 @@
+Release 0.2.0 ()
+
+- Switched to new PCIe driver
+
 Release 0.1.0 ()
 
 - Rename LimeSuite to LimeSuiteNG
