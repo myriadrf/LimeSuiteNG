@@ -39,6 +39,9 @@ class LIME_API StreamComposite
     /// @brief Ends all of the aggregated streams.
     void StreamStop();
 
+    /// @brief Releases resources of all of the aggregated streams.
+    void StreamDestroy();
+
     /// @copydoc TRXLooper::StreamRx()
     /// @tparam T The type of streams to send.
     template<class T> uint32_t StreamRx(T** samples, uint32_t count, StreamMeta* meta);
@@ -46,6 +49,9 @@ class LIME_API StreamComposite
     /// @copydoc TRXLooper::StreamTx()
     /// @tparam T The type of streams to receive.
     template<class T> uint32_t StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta);
+
+    /// @return Current timestamp of the receiver.
+    uint64_t GetHardwareTimestamp();
 
   private:
     std::vector<StreamConfig> SplitAggregateStreamSetup(const StreamConfig& cfg);

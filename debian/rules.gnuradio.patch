@@ -1,8 +1,7 @@
 diff --git a/debian/rules b/debian/rules
-index 13ea715f..8b114b71 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -34,7 +34,8 @@ override_dh_auto_configure: $(GENERATED_INSTALL_FILES)
+@@ -47,7 +47,8 @@ override_dh_auto_configure: \
 		-DCMAKE_AUTOSET_INSTALL_RPATH=FALSE \
  		-DUDEV_RULES_INSTALL_PATH=/lib/udev/rules.d \
  		-DLIB_SUFFIX="/$(DEB_HOST_MULTIARCH)" \

@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
+#include "LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/validation.h"
 #include "FPGA_common.h"
@@ -35,7 +35,7 @@ static double X8ReferenceClock = 30.72e6;
 /// @param adfComms The communications port to the device's ADF4002 chip.
 LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     std::vector<std::shared_ptr<IComms>>& spiFPGA,
-    std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control,
     std::shared_ptr<ISPI> adfComms)
     : mMainFPGAcomms(spiFPGA[8])
@@ -133,6 +133,8 @@ OpStatus LimeSDR_MMX8::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 OpStatus LimeSDR_MMX8::Init()
 {
+    FPGA tempFPGA(mMainFPGAcomms, nullptr);
+    tempFPGA.WriteRegister(0x000A, 0); // stop all data streams
     OpStatus status = OpStatus::Success;
     for (size_t i = 0; i < mSubDevices.size(); ++i)
     {
@@ -614,13 +616,7 @@ ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleI
 
 OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
-    OpStatus ret = mSubDevices[moduleIndex]->StreamSetup(config, 0);
-    if (ret != OpStatus::Success)
-        return ret;
-    // X8 board has two stage stream start.
-    // start stream for expected subdevices, they will wait for secondary enable from main fpga register
-    mSubDevices[moduleIndex]->StreamStart(0);
-    return ret;
+    return mSubDevices[moduleIndex]->StreamSetup(config, 0);
 }
 
 void LimeSDR_MMX8::StreamStart(uint8_t moduleIndex)
@@ -632,12 +628,15 @@ void LimeSDR_MMX8::StreamStart(uint8_t moduleIndex)
 
 void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t> moduleIndexes)
 {
+    // X8 board has two stage stream start.
+    // start stream for expected subdevices, they will wait for secondary enable from main fpga register
     FPGA tempFPGA(mMainFPGAcomms, nullptr);
     int interface_ctrl_000A = tempFPGA.ReadRegister(0x000A);
     uint16_t mask = 0;
     for (uint8_t moduleIndex : moduleIndexes)
     {
         mask |= (1 << (2 * moduleIndex));
+        mSubDevices[moduleIndex]->StreamStart(0);
     }
     tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
     tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | mask);
@@ -659,9 +658,9 @@ void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t> moduleIndexes)
     {
         mask |= (1 << (2 * moduleIndex));
     }
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
     for (uint8_t moduleIndex : moduleIndexes)
         mSubDevices[moduleIndex]->StreamStop(0);
+    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
 }
 
 void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)

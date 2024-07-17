@@ -2,7 +2,7 @@
 #define PCIE_CSR_PIPE_H
 
 #include "ISerialPort.h"
-#include "LitePCIe.h"
+#include "LimePCIe.h"
 
 #include <memory>
 
@@ -15,15 +15,17 @@ class PCIE_CSR_Pipe : public ISerialPort
     /**
     @brief Constructs a new PCIE_CSR_Pipe object.
     
-    @param port The LitePCIe port to use with this pipe.
+    @param port The LimePCIe port to use with this pipe.
    */
-    explicit PCIE_CSR_Pipe(std::shared_ptr<LitePCIe> port);
+    explicit PCIE_CSR_Pipe(std::shared_ptr<LimePCIe> port);
 
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
+    OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms) override;
+    OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms) override;
 
   private:
-    std::shared_ptr<LitePCIe> port;
+    std::shared_ptr<LimePCIe> port;
 };
 
 } // namespace lime

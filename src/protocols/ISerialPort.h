@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "limesuiteng/OpStatus.h"
 
 namespace lime {
 
@@ -31,6 +32,9 @@ class ISerialPort
       @return The amount of bytes read.
      */
     virtual int Read(uint8_t* data, std::size_t length, int timeout_ms) = 0;
+
+    virtual OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms = 100) = 0;
+    virtual OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100) = 0;
 };
 
 } // namespace lime

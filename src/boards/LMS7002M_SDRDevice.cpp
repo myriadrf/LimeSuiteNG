@@ -1139,10 +1139,25 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M& chip, const Cha
     const ChannelConfig& ch = config;
 
     // TODO: Don't configure GFIR when external ADC/DAC is used
-    if (ch.rx.enabled && chip.SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth) != OpStatus::Success)
-        return lime::ReportError(OpStatus::Error, "Rx ch%i GFIR config failed", i);
-    if (ch.tx.enabled && chip.SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::Success)
-        return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
+    if (ch.rx.enabled)
+    {
+        OpStatus status = chip.SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth);
+
+        if (status == OpStatus::NotImplemented)
+            lime::warning("Rx ch%i GFIR config not implemented", i);
+        else if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Rx ch%i GFIR config failed", i);
+    }
+
+    if (ch.tx.enabled)
+    {
+        OpStatus status = chip.SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth);
+
+        if (status == OpStatus::NotImplemented)
+            lime::warning("Tx ch%i GFIR config not implemented", i);
+        else if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
+    }
 
     OpStatus rxStatus = OpStatus::Success;
     if (ch.rx.calibrate && ch.rx.enabled)

@@ -1,0 +1,6 @@
+#ATTR{vendor}=="0x10ee", ATTR{device}=="0x7022" LimeSDR X3
+#ATTR{vendor}=="0x10ee", ATTR{device}=="0x7023" LimeSDR XTRX
+#ATTR{vendor}=="0x1172", ATTR{device}=="0xe001" X8
+
+
+ACTION=="add|change", SUBSYSTEM=="limepcie", MODE="666"

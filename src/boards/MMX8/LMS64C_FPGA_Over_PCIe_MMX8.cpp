@@ -3,7 +3,7 @@
 
 using namespace lime;
 
-LMS64C_FPGA_Over_PCIe_MMX8::LMS64C_FPGA_Over_PCIe_MMX8(std::shared_ptr<LitePCIe> dataPort, uint32_t subdeviceIndex)
+LMS64C_FPGA_Over_PCIe_MMX8::LMS64C_FPGA_Over_PCIe_MMX8(std::shared_ptr<LimePCIe> dataPort, uint32_t subdeviceIndex)
     : pipe(dataPort)
     , subdeviceIndex(subdeviceIndex)
 {

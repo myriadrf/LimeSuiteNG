@@ -20,6 +20,8 @@ class USB_CSR_Pipe_SDR : public USB_CSR_Pipe
 
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
+    OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms) override;
+    OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms) override;
 
   private:
     FX3& port;

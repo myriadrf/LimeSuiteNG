@@ -22,13 +22,13 @@ flowchart LR
             end
         end
         subgraph PCIe
-            litepcie["litepcie library"]
+            limepcie["limepcie library"]
         end
     end
 
     TRXLooper-->IDMA
 
-    IDMA-.->LitePCIeDMA-->LitePCIe-->litepcie-->X3 & XTRX & MMX8
+    IDMA-.->LimePCIeDMA-->LimePCIe-->limepcie-->X3 & XTRX & MMX8
     IDMA-.->USBDMAEmulation-->IUSB-.->FX3 & FT601
 
     FX3-->|On Windows|Cypress-->SDR

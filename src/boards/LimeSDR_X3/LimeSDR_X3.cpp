@@ -4,8 +4,8 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
-#include "LitePCIeDMA.h"
+#include "LimePCIe.h"
+#include "LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA_common.h"
 #include "FPGA_X3.h"
@@ -165,7 +165,7 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
 /// @param control The serial port of the device for retrieving device firmware information.
 LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     std::shared_ptr<IComms> spiFPGA,
-    std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control)
     : LMS7002M_SDRDevice()
     , mTRXStreamPorts(trxStreams)
@@ -249,9 +249,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     {
         mLMSChips[i]->SetConnection(mLMS7002Mcomms[i]);
 
-        std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(i) };
-        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(i) };
+        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(i).get(), i);
         mStreamers.push_back(std::move(streamer));
@@ -657,12 +657,15 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig&
 
     if (socIndex == 0)
     {
-        if (trx.enabled && chip.SetGFIRFilter(dir,
-                               ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB,
-                               trx.gfir.enabled,
-                               trx.gfir.bandwidth) != OpStatus::Success)
+        if (trx.enabled)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
+            OpStatus status = chip.SetGFIRFilter(
+                dir, ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB, trx.gfir.enabled, trx.gfir.bandwidth);
+
+            if (status == OpStatus::NotImplemented)
+                lime::warning("%s ch%i GFIR config not implemented", ToString(dir).c_str(), ch);
+            else if (status != OpStatus::Success)
+                throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
         }
     }
 

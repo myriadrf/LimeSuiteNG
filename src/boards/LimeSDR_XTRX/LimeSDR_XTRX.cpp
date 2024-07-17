@@ -4,8 +4,8 @@
 #include <cmath>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
-#include "LitePCIeDMA.h"
+#include "LimePCIe.h"
+#include "LimePCIeDMA.h"
 #include "FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
@@ -104,7 +104,7 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
 /// @param refClk The reference clock of the device.
 LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<LitePCIe> sampleStream,
+    std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
     : LMS7002M_SDRDevice()
@@ -159,9 +159,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     }
     {
         mStreamers.reserve(mLMSChips.size());
-        std::shared_ptr<LitePCIe> trxPort{ sampleStream };
-        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        std::shared_ptr<LimePCIe> trxPort{ sampleStream };
+        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
         mStreamers.push_back(std::move(streamer));

@@ -21,3 +21,23 @@ int USB_CSR_Pipe_Mini::Read(uint8_t* data, size_t length, int timeout_ms)
 {
     return port.BulkTransfer(CONTROL_BULK_READ_ADDRESS, data, length, timeout_ms);
 }
+
+OpStatus USB_CSR_Pipe_Mini::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
+{
+    return RunControlCommand(data, data, length, timeout_ms);
+}
+
+OpStatus USB_CSR_Pipe_Mini::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
+{
+    size_t len = Write(request, length, timeout_ms);
+
+    if (len != length)
+        return OpStatus::IOFailure;
+
+    len = Read(response, length, timeout_ms);
+
+    if (len != length)
+        return OpStatus::IOFailure;
+
+    return OpStatus::Success;
+}

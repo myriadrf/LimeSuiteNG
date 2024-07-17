@@ -5,17 +5,16 @@ KERNEL_PATH?=/lib/modules/$(KERNEL_VERSION)/build
 # ARCH might be 'aarch64', but the linux lib directories might be named 'arm64'
 ARCH?=$(shell if [ "$(shell uname -m)" = "aarch64" ] && [ ! -d $(KERNEL_PATH)/arch/$(shell uname -m) ]; then echo "arm64"; else echo $(shell uname -m); fi)
 
-obj-m = litepcie.o
-litepcie-objs = main.o
+obj-m = limepcie.o
 
-all: litepcie.ko
+all: limepcie.ko
 
-export EXTRA_CFLAGS := -std=gnu99 -Wno-declaration-after-statement
+export EXTRA_CFLAGS := -std=gnu11 -Wno-declaration-after-statement
 
-litepcie.ko: main.c
+limepcie.ko: limepcie.c
 	make -C $(KERNEL_PATH) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(shell pwd) modules
 
-litepcie.ko: litepcie.h config.h flags.h csr.h soc.h
+limepcie.ko: version.h limepcie.h bsp/config.h bsp/flags.h bsp/csr.h bsp/soc.h
 
 clean:
 	make -C $(KERNEL_PATH) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(shell pwd) clean

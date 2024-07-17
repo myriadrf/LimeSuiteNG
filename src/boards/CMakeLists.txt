@@ -4,7 +4,7 @@ target_sources(
             ${CMAKE_CURRENT_LIST_DIR}/DeviceHandle.cpp
             ${CMAKE_CURRENT_LIST_DIR}/LMS7002M_SDRDevice.cpp)
 
-if(ENABLE_LITE_PCIE)
+if(ENABLE_LIMEPCIE)
     target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DeviceFactoryPCIe.cpp)
     include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR_X3/CMakeLists.txt)
     include(${CMAKE_CURRENT_LIST_DIR}/LimeSDR_XTRX/CMakeLists.txt)

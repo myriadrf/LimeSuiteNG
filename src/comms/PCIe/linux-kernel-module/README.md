@@ -1,6 +1,6 @@
-# Linux litepcie driver
+# Linux limepcie driver
 
-Linux Litepcie kernel module for communicating with LimeSDR devices using PCIe interface.
+Linux LimePCIe kernel module for communicating with LimeSDR devices using PCIe interface.
 
 ## Installation
 <pre>

@@ -17,11 +17,11 @@ class IDMA
   public:
     /// @brief The structure for state of the DMA process.
     struct State {
-        uint16_t consumerIndex; ///< The index the reading side is reading from now.
-        uint16_t producerIndex; ///< The index the writing side is writing to now.
+        uint64_t transfersCompleted;
     };
 
     virtual ~IDMA(){};
+    virtual OpStatus Initialize() = 0;
 
     /**
       @brief Enables or disabled DMA memory access.
@@ -76,6 +76,8 @@ class IDMA
      * @brief Returns a list of DMA buffers
      */
     virtual std::vector<Buffer> GetBuffers() const = 0;
+
+    virtual std::string GetName() const = 0;
 };
 
 } // namespace lime
