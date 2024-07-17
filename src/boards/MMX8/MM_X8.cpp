@@ -8,7 +8,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/validation.h"
 #include "FPGA_common.h"
-#include "DSP/Equalizer/Equalizer.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "DeviceTreeNode.h"

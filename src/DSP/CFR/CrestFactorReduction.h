@@ -2,17 +2,17 @@
 
 #include <stdint.h>
 #include <memory>
-#include "EqualizerCSR.h"
+#include "registers.h"
 
 namespace lime {
 
 class ISPI;
 
-/** @brief Class for interfacing with the equalizer. */
-class Equalizer
+/// @brief Class for interfacing with the CrestFactorReduction module.
+class CrestFactorReduction
 {
   public:
-    /** @brief Structure containing the configuration of the equalizer. */
+    /** @brief Structure containing the configuration of the CrestFactorReduction. */
     struct Config {
         /** @brief Crest Factor Reduction (CFR) controls. */
         struct CFR {
@@ -38,9 +38,9 @@ class Equalizer
         Config();
     };
 
-    Equalizer(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr);
-    ~Equalizer();
-    void Configure(const Equalizer::Config& cfg);
+    CrestFactorReduction(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr);
+    ~CrestFactorReduction();
+    void Configure(const CrestFactorReduction::Config& cfg);
 
     void SetOversample(uint8_t oversample);
     uint8_t GetOversample();

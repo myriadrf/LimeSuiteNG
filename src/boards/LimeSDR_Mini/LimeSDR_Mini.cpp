@@ -10,7 +10,6 @@
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "DSP/Equalizer/EqualizerCSR.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
@@ -25,7 +24,6 @@
 
 using namespace lime;
 using namespace lime::LMS64CProtocol;
-using namespace lime::EqualizerCSR;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 

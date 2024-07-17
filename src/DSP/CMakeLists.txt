@@ -1,2 +1,2 @@
-add_subdirectory(Equalizer)
+add_subdirectory(CFR)
 add_subdirectory(FFT)

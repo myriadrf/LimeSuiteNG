@@ -1,36 +1,34 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
-
-#include "Equalizer.h"
-#include "EqualizerCSR.h"
 #include <assert.h>
 #include <algorithm>
 #include <vector>
 #include <string.h>
 #include <memory>
 
-#include "EqualizerCSR.h"
 #include "comms/ISPI.h"
+#include "CrestFactorReduction.h"
+#include "registers.h"
 
 using namespace lime;
-using namespace EqualizerCSR;
+using namespace CFR;
 
-Equalizer::Config::Config()
+CrestFactorReduction::Config::Config()
 {
     memset(this, 0, sizeof(Config));
 }
 
-Equalizer::Equalizer(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr)
+CrestFactorReduction::CrestFactorReduction(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr)
     : m_Comms(comms)
     , mSPIbusAddr(spiBusAddr)
 {
 }
 
-Equalizer::~Equalizer()
+CrestFactorReduction::~CrestFactorReduction()
 {
 }
 
-void Equalizer::WriteRegister(const Register& reg, uint16_t value)
+void CrestFactorReduction::WriteRegister(const Register& reg, uint16_t value)
 {
     uint32_t mosi = reg.address;
     uint32_t miso = 0;
@@ -43,7 +41,7 @@ void Equalizer::WriteRegister(const Register& reg, uint16_t value)
     m_Comms->SPI(mSPIbusAddr, &mosi, nullptr, 1);
 }
 
-uint16_t Equalizer::ReadRegister(const Register& reg)
+uint16_t CrestFactorReduction::ReadRegister(const Register& reg)
 {
     uint32_t mosi = reg.address;
     uint32_t miso = 0;
@@ -52,7 +50,7 @@ uint16_t Equalizer::ReadRegister(const Register& reg)
     return (miso & regMask) >> reg.lsb;
 }
 
-void Equalizer::Configure(const Equalizer::Config& state)
+void CrestFactorReduction::Configure(const CrestFactorReduction::Config& state)
 {
     // TODO: batch writes
     for (uint8_t ch = 0; ch < 2; ++ch)
@@ -90,7 +88,7 @@ void Equalizer::Configure(const Equalizer::Config& state)
 }
 
 // Generates coefficients based on CFR order
-void Equalizer::UpdateHannCoeff(uint16_t Filt_N)
+void CrestFactorReduction::UpdateHannCoeff(uint16_t Filt_N)
 {
     uint16_t msb, lsb = 0;
     uint16_t data = 0;
@@ -201,7 +199,7 @@ void Equalizer::UpdateHannCoeff(uint16_t Filt_N)
     //WriteRegister(RESET_N, 1);
 }
 
-void Equalizer::SetFIRCoefficients(const int16_t* coefficients, uint16_t count)
+void CrestFactorReduction::SetFIRCoefficients(const int16_t* coefficients, uint16_t count)
 {
     const int maxCoefCount = 32;
     assert(count <= 32);
@@ -284,7 +282,7 @@ void Equalizer::SetFIRCoefficients(const int16_t* coefficients, uint16_t count)
     WriteRegister(SLEEP_FIR, 0);
 }
 
-void Equalizer::SetOversample(uint8_t oversample)
+void CrestFactorReduction::SetOversample(uint8_t oversample)
 {
     // treat oversample 0 as "auto", maximum available oversample
     const uint8_t maxOversample = 2;
@@ -300,7 +298,7 @@ void Equalizer::SetOversample(uint8_t oversample)
     }
 }
 
-uint8_t Equalizer::GetOversample()
+uint8_t CrestFactorReduction::GetOversample()
 {
     const int ch = 0;
     WriteRegister(MAC, ch + 1);

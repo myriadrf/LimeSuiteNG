@@ -2,7 +2,7 @@
 #include "limesuiteng/CSRegister.h"
 
 namespace lime {
-namespace EqualizerCSR {
+namespace CFR {
 
 constexpr CSRegister EN_RXTSP = { 0x00A0, 0, 0, 0, 0 };
 constexpr CSRegister EN_TXTSP = { 0x0080, 0, 0, 0, 0 };
@@ -50,5 +50,5 @@ constexpr CSRegister cmbInsel = { 0x0080, 2, 2, 0, 0 };
 
 constexpr CSRegister MAC = { 0xFFFF, 1, 0, 0, 0 };
 
-} // namespace EqualizerCSR
+} // namespace CFR
 } // namespace lime

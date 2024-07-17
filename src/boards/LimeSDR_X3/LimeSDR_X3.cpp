@@ -10,7 +10,7 @@
 #include "FPGA_common.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
-#include "DSP/Equalizer/Equalizer.h"
+#include "DSP/CFR/CrestFactorReduction.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
@@ -201,7 +201,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(cp_vctcxo_dac);
     desc.customParameters.push_back(cp_temperature);
 
-    mEqualizer = std::make_unique<Equalizer>(spiFPGA, SPI_FPGA);
+    mEqualizer = std::make_unique<CrestFactorReduction>(spiFPGA, SPI_FPGA);
     mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
@@ -586,7 +586,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         }
         else if (socIndex == 1 && sampleRate > 0)
         {
-            Equalizer::Config eqCfg;
+            CrestFactorReduction::Config eqCfg;
             for (int i = 0; i < 2; ++i)
             {
                 eqCfg.bypassRxEqualizer[i] = true;
@@ -809,7 +809,7 @@ OpStatus LimeSDR_X3::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t chan
     }
     else if (moduleIndex == 1 && sampleRate > 0)
     {
-        Equalizer::Config eqCfg;
+        CrestFactorReduction::Config eqCfg;
         for (int i = 0; i < 2; ++i)
         {
             eqCfg.bypassRxEqualizer[i] = true;
