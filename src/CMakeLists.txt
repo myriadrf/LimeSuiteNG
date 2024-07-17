@@ -1,5 +1,3 @@
-set(MAIN_LIBRARY_NAME limesuiteng)
-
 ########################################################################
 ## public headers
 ########################################################################
@@ -120,22 +118,23 @@ if(ENABLE_LIBRARY)
     if(MSVC)
         set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     endif(MSVC)
+
+    ########################################################################
+    ## Supported connections
+    ########################################################################
+    include(comms/USB/CMakeLists.txt)
+    include(comms/PCIe/CMakeLists.txt)
+    include(boards/CMakeLists.txt)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+
+    target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+
+    add_subdirectory(chips)
+    add_subdirectory(DSP)
+    add_subdirectory(vectorization)
+
 endif()
-
-########################################################################
-## Supported connections
-########################################################################
-include(comms/USB/CMakeLists.txt)
-include(comms/PCIe/CMakeLists.txt)
-include(boards/CMakeLists.txt)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-add_subdirectory(chips)
-add_subdirectory(DSP)
-add_subdirectory(vectorization)
 
 ########################################################################
 # Build pkg config file
