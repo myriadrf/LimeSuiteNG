@@ -1,3 +1,6 @@
+#ifndef LIMESUITENG_CONFIG_H
+#define LIMESUITENG_CONFIG_H
+
 /**
 @file limesuiteng/config.h
 @author Lime Microsystems
@@ -35,3 +38,5 @@
     #define LIME_API
     #define LIME_LOCAL
 #endif // LIME_DLL
+
+#endif
