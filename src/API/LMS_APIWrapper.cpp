@@ -163,7 +163,7 @@ static inline void CopyString(const std::string_view source, char* destination, 
     destination[charsToCopy] = 0;
 }
 
-static inline lms_range_t RangeToLMS_Range(const lime::Range& range)
+template<class T> static inline lms_range_t RangeToLMS_Range(const lime::Range<T>& range)
 {
     return { range.min, range.max, range.step };
 }

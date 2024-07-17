@@ -22,14 +22,14 @@ struct RFSOCDescriptor {
     uint8_t channelCount; ///< The available channel count of the system
     std::unordered_map<TRXDir, std::vector<std::string>> pathNames; ///< The available antenna names
 
-    Range frequencyRange; ///< Deliverable frequency capabilities of the device
-    Range samplingRateRange; ///< Sampling rate capabilities of the device
+    Range<double> frequencyRange; ///< Deliverable frequency capabilities of the device
+    Range<double> samplingRateRange; ///< Sampling rate capabilities of the device
 
-    std::unordered_map<TRXDir, std::unordered_map<std::string, Range>> antennaRange; ///< Antenna recommended bandwidths
-    std::unordered_map<TRXDir, Range> lowPassFilterRange; ///< The ranges of the low pass filter
+    std::unordered_map<TRXDir, std::unordered_map<std::string, Range<double>>> antennaRange; ///< Antenna recommended bandwidths
+    std::unordered_map<TRXDir, Range<double>> lowPassFilterRange; ///< The ranges of the low pass filter
 
     std::unordered_map<TRXDir, std::set<eGainTypes>> gains; ///< The types of gains available
-    std::unordered_map<TRXDir, std::unordered_map<eGainTypes, Range>> gainRange; ///< The available ranges of each gain
+    std::unordered_map<TRXDir, std::unordered_map<eGainTypes, Range<double>>> gainRange; ///< The available ranges of each gain
     std::unordered_map<TRXDir, std::unordered_map<eGainTypes, std::vector<GainValue>>> gainValues; ///< The possible gain values
 };
 

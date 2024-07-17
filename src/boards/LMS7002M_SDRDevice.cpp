@@ -1036,20 +1036,20 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
         eGainTypes::IAMP,
     };
 
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::LNA] = Range(0, 30);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::LoopbackLNA] = Range(0, 40);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::TIA] = Range(0, 12);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::PGA] = Range(-12, 19);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD] = Range(0, 52);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::LoopbackPAD] = Range(-4.3, 0);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::IAMP] = Range(-12, 12);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::LNA] = Range<double>(0, 30);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::LoopbackLNA] = Range<double>(0, 40);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::TIA] = Range<double>(0, 12);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::PGA] = Range<double>(-12, 19);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD] = Range<double>(0, 52);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::LoopbackPAD] = Range<double>(-4.3, 0);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::IAMP] = Range<double>(-12, 12);
 
 #ifdef NEW_GAIN_BEHAVIOUR
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range(-12, 49);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range(0, 52);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 49);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(0, 52);
 #else
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range(-12, 61);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range(-12, 64);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 61);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(-12, 64);
 #endif
 }
 
