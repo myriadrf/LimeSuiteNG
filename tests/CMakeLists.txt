@@ -28,7 +28,12 @@ if(MSVC)
         CACHE BOOL "" FORCE)
 endif()
 
+set(BUILD_SHARED_LIBS_ORIG ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
+
 fetchcontent_makeavailable(googletest)
+
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
 
 add_executable(gtest-runner TestRunner.cpp)
 if(CMAKE_BINARY_DIR)
@@ -38,8 +43,10 @@ target_link_libraries(gtest-runner PUBLIC limesuiteng)
 
 # When building shared libs, the tests have to be built into the library to be able to access non exported symbols
 if(BUILD_SHARED_LIBS)
+    set_property(TARGET gtest PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+    set_property(TARGET gmock PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     set(TESTS_CONTAINER_TARGET limesuiteng)
-    target_compile_definitions(${TESTS_CONTAINER_TARGET} PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+    target_compile_definitions(${TESTS_CONTAINER_TARGET} PRIVATE GTEST_LINKED_AS_SHARED_LIBRARY=0)
 else()
     set(TESTS_CONTAINER_TARGET gtest-runner)
 endif()
