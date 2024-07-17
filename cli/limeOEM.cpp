@@ -1,4 +1,4 @@
-#include "cli/common.h"
+#include "common.h"
 #include "limesuiteng/OpStatus.h"
 #include "OEMTesting.h"
 #include <assert.h>

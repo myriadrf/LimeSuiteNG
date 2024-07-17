@@ -1,4 +1,4 @@
-#include "cli/common.h"
+#include "common.h"
 #include "args.hxx"
 
 using namespace std;

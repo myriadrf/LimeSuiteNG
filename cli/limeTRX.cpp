@@ -1,4 +1,4 @@
-#include "cli/common.h"
+#include "common.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/StreamComposite.h"
 #include <iostream>

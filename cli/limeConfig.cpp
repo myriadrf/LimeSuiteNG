@@ -1,4 +1,4 @@
-#include "cli/common.h"
+#include "common.h"
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"

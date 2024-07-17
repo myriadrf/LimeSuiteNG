@@ -261,6 +261,9 @@ add_subdirectory(external)
 add_subdirectory(embedded)
 add_subdirectory(src)
 
+# Lime command line tools
+add_subdirectory(cli)
+
 ########################################################################
 ## graphical interface
 ########################################################################
