@@ -201,7 +201,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(cp_vctcxo_dac);
     desc.customParameters.push_back(cp_temperature);
 
-    mEqualizer = std::make_unique<CrestFactorReduction>(spiFPGA, SPI_FPGA);
+    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA));
     mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 

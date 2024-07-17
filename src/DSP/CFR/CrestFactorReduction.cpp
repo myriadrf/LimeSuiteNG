@@ -18,9 +18,8 @@ CrestFactorReduction::Config::Config()
     memset(this, 0, sizeof(Config));
 }
 
-CrestFactorReduction::CrestFactorReduction(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr)
+CrestFactorReduction::CrestFactorReduction(std::shared_ptr<ISPI> comms)
     : m_Comms(comms)
-    , mSPIbusAddr(spiBusAddr)
 {
 }
 
@@ -32,20 +31,20 @@ void CrestFactorReduction::WriteRegister(const Register& reg, uint16_t value)
 {
     uint32_t mosi = reg.address;
     uint32_t miso = 0;
-    m_Comms->SPI(mSPIbusAddr, &mosi, &miso, 1);
+    m_Comms->SPI(&mosi, &miso, 1);
     const uint16_t regMask = bitMask(reg.msb, reg.lsb);
 
     uint32_t regValue = (miso & ~regMask);
     regValue |= ((value << reg.lsb) & regMask);
     mosi = (1 << 31) | reg.address << 16 | regValue;
-    m_Comms->SPI(mSPIbusAddr, &mosi, nullptr, 1);
+    m_Comms->SPI(&mosi, nullptr, 1);
 }
 
 uint16_t CrestFactorReduction::ReadRegister(const Register& reg)
 {
     uint32_t mosi = reg.address;
     uint32_t miso = 0;
-    m_Comms->SPI(mSPIbusAddr, &mosi, &miso, 1);
+    m_Comms->SPI(&mosi, &miso, 1);
     const uint16_t regMask = bitMask(reg.msb, reg.lsb);
     return (miso & regMask) >> reg.lsb;
 }
@@ -134,7 +133,7 @@ void CrestFactorReduction::UpdateHannCoeff(uint16_t Filt_N)
             lsb++;
         i++;
     }
-    m_Comms->SPI(mSPIbusAddr, mosi.data(), nullptr, mosi.size());
+    m_Comms->SPI(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
     msb = lsb = 0;
@@ -160,7 +159,7 @@ void CrestFactorReduction::UpdateHannCoeff(uint16_t Filt_N)
             i++;
         j++;
     }
-    m_Comms->SPI(mSPIbusAddr, mosi.data(), nullptr, mosi.size());
+    m_Comms->SPI(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
     msb = lsb = 0;
@@ -188,7 +187,7 @@ void CrestFactorReduction::UpdateHannCoeff(uint16_t Filt_N)
             i++;
         j++;
     }
-    m_Comms->SPI(mSPIbusAddr, mosi.data(), nullptr, mosi.size());
+    m_Comms->SPI(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
     WriteRegister(ODD_CFR, Filt_N % 2);
@@ -231,7 +230,7 @@ void CrestFactorReduction::SetFIRCoefficients(const int16_t* coefficients, uint1
     //     addr = (maddressf0 << 6) + (msb << 4) + lsb;
     //     uint32_t mosi = addr;
     //     uint32_t miso = 0;
-    //     m_Comms->SPI(mSPIbusAddr, &mosi, &miso, 1);
+    //     m_Comms->SPI(&mosi, &miso, 1);
     //     coefficients[i] = (double)(miso & 0xFFFF);
     //     if (lsb >= NN) // 15
     //     {
@@ -253,7 +252,7 @@ void CrestFactorReduction::SetFIRCoefficients(const int16_t* coefficients, uint1
         addr = (maddressf1 << 6) + i;
         mosi.push_back((1 << 31) | addr << 16 | 0);
     }
-    m_Comms->SPI(mSPIbusAddr, mosi.data(), nullptr, mosi.size());
+    m_Comms->SPI(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
     msb = lsb = i = 0;
@@ -275,7 +274,7 @@ void CrestFactorReduction::SetFIRCoefficients(const int16_t* coefficients, uint1
             lsb++;
         i++;
     }
-    m_Comms->SPI(mSPIbusAddr, mosi.data(), nullptr, mosi.size());
+    m_Comms->SPI(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
     WriteRegister(ODD_FIR, Filt_N % 2);

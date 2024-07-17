@@ -38,7 +38,7 @@ class CrestFactorReduction
         Config();
     };
 
-    CrestFactorReduction(std::shared_ptr<ISPI> comms, uint32_t spiBusAddr);
+    CrestFactorReduction(std::shared_ptr<ISPI> comms);
     ~CrestFactorReduction();
     void Configure(const CrestFactorReduction::Config& cfg);
 
@@ -47,7 +47,6 @@ class CrestFactorReduction
 
   private:
     std::shared_ptr<ISPI> m_Comms;
-    uint32_t mSPIbusAddr;
     void WriteRegister(const Register& reg, uint16_t value);
     uint16_t ReadRegister(const Register& reg);
 
