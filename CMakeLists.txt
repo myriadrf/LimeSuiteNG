@@ -127,7 +127,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #enable warnings
-    add_compile_options(-Wall -Wpedantic)
+    add_compile_options(-Wall -Wpedantic -fmax-errors=5)
 
     #symbols are only exported from libraries/modules explicitly
     add_compile_options(-fvisibility=hidden)
