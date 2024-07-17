@@ -99,8 +99,7 @@ set_target_properties(${GUI_EXECUTABLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
 target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
 target_include_directories(
     ${GUI_EXECUTABLE_NAME}
-    PRIVATE ${LIME_SUITE_INCLUDES}
-            ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             lms7002_wxgui
             utilities_gui
             FPGAcontrols_wxgui
@@ -108,8 +107,10 @@ target_include_directories(
             fftviewer_wxgui
             lms7suiteEvents
             boards_wxgui
-            GUI)
+            GUI
+            ${PROJECT_SOURCE_DIR}/src)
 
+add_subdirectory(DSP)
 add_subdirectory(boards)
 add_subdirectory(chips)
 

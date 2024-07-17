@@ -21,12 +21,6 @@ constexpr uint32_t bitMask(uint8_t msb, uint8_t lsb)
  * @brief A structure for holding information about a register.
  */
 struct Register {
-    /// @brief Constructs the register with default values.
-    constexpr Register()
-        : address(0)
-        , msb(15)
-        , lsb(0){};
-
     /// @brief Constructs the register with the given values.
     /// @param address The memory address of the register.
     /// @param msb The index of the most significant bit of the register.
@@ -35,6 +29,13 @@ struct Register {
         : address(address)
         , msb(msb)
         , lsb(lsb){};
+
+    constexpr Register(uint16_t address)
+        : Register(address, 15, 0){};
+
+    /// @brief Constructs the register with default values.
+    constexpr Register()
+        : Register(0){};
 
     uint16_t address; ///< The memory address.
     uint8_t msb; ///< The index of the most significant bit of the register.

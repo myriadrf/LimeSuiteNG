@@ -15,6 +15,7 @@ enum class eDeviceTreeNodeClass {
     FPGA_XTRX,
     LMS7002M,
     SDRDevice,
+    Equalizer,
 };
 
 /// @brief Structure describing a device node in the device node tree.

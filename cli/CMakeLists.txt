@@ -8,7 +8,7 @@ endif()
 
 # common functionality among cli tools
 add_library(cli-shared STATIC common.cpp)
-target_include_directories(cli-shared PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(cli-shared PUBLIC ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(cli-shared PUBLIC limesuiteng)
 
 add_executable(limeDevice limeDevice.cpp)

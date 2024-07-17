@@ -33,6 +33,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/Logger.h"
+#include "DSP/CFR/pnlEqualizer.h"
 
 using namespace std;
 using namespace lime;
@@ -476,6 +477,11 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
         sdrPanel->Setup(reinterpret_cast<SDRDevice*>(socPtr));
         sdrPanel->Hide();
         return sdrPanel;
+    }
+    case eDeviceTreeNodeClass::Equalizer: {
+        EqualiserTest* equalizerPanel = new EqualiserTest(parent, wxNewId());
+        equalizerPanel->Initialize(reinterpret_cast<CrestFactorReduction*>(socPtr));
+        return equalizerPanel;
     }
     default:
         lime::warning("Unrecognized device class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));

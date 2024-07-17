@@ -201,7 +201,6 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(cp_vctcxo_dac);
     desc.customParameters.push_back(cp_temperature);
 
-    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA));
     mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
@@ -244,6 +243,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         mLMSChips.push_back(std::move(lms3));
     }
 
+    mEqualizer =
+        std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA), mLMSChips.at(1).get());
+
     mStreamers.reserve(mLMSChips.size());
     for (size_t i = 0; i < mLMSChips.size(); ++i)
     {
@@ -259,7 +261,12 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA.get());
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(1).get()));
+
+    auto equalizerNode = std::make_shared<DeviceTreeNode>("Equalizer"s, eDeviceTreeNodeClass::Equalizer, mEqualizer.get());
+    auto lms2node = std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(1).get());
+    lms2node->children.push_back(equalizerNode);
+
+    fpgaNode->children.push_back(lms2node);
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(2).get()));
     desc.socTree = std::make_shared<DeviceTreeNode>("X3"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);

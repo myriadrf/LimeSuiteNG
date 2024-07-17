@@ -40,7 +40,7 @@ constexpr CSRegister TX_DCCORRI = { 0x0084, 15, 0, 0, 0 };
 constexpr CSRegister TX_DCCORRQ = { 0x0085, 15, 0, 0, 0 };
 constexpr CSRegister thresholdSpin = { 0x0086, 15, 0, 0, 0 };
 constexpr CSRegister thresholdGain = { 0x0087, 15, 0, 0, 0 };
-constexpr CSRegister CFR_ORDER = { 0x008C, 7, 0, 0, 0 }; // dummy CSRegister
+constexpr CSRegister CFR_ORDER = { 0x008C, 7, 0, 0, 0 };
 
 constexpr CSRegister RX_GCORRQ = { 0x00A1, 11, 0, 2047, 0 };
 constexpr CSRegister RX_GCORRI = { 0x00A2, 11, 0, 2047, 0 };
