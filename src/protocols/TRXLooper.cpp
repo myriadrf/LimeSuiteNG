@@ -820,7 +820,10 @@ OpStatus TRXLooper::TxSetup()
 void TRXLooper::TxWorkLoop()
 {
     lime::debug("Tx worker thread ready.");
+    // signal that thread is ready for work
     mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+    mTx.cv.notify_all();
+
     while (!mTx.terminateWorker.load(std::memory_order_relaxed))
     {
         // thread ready for work, just wait for stream enable
