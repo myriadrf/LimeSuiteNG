@@ -1,5 +1,7 @@
 #include "lms7002m_embedded_tests.h"
 
+#include <array>
+
 #include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
 #include "lms7002m/csr_data.h"
