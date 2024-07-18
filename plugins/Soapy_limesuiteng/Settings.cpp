@@ -539,7 +539,7 @@ double Soapy_limesuiteng::getSampleRate(const int direction, [[maybe_unused]] co
 SoapySDR::RangeList Soapy_limesuiteng::getSampleRateRange(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
-    Range range = sdrDevice->GetDescriptor().rfSOC.at(0).samplingRateRange;
+    auto range = sdrDevice->GetDescriptor().rfSOC.at(0).samplingRateRange;
 
     return { SoapySDR::Range(range.min, range.max, range.step) };
 }
