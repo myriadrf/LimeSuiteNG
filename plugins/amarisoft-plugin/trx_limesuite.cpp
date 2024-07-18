@@ -131,11 +131,11 @@ static void trx_lms7002m_write(
 
     // samples format conversion is done internally
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
-    if (md->flags & TRX_WRITE_MD_FLAG_CUR_TIMESTAMP_REQ)
-    {
-        md->cur_timestamp = lime->ports[port].composite->GetHardwareTimestamp();
-        md->cur_timestamp_set = 1;
-    }
+    // if (md->flags & TRX_WRITE_MD_FLAG_CUR_TIMESTAMP_REQ)
+    // {
+    //     md->cur_timestamp = lime->ports[port].composite->GetHardwareTimestamp();
+    //     md->cur_timestamp_set = 1;
+    // }
     LimePlugin_Write_complex32f(lime, reinterpret_cast<const lime::complex32f_t* const*>(samples), count, port, meta);
 }
 
