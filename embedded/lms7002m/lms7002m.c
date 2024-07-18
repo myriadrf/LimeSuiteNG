@@ -17,7 +17,11 @@
     #include <linux/slab.h>
 #else
     #include <assert.h>
-    #include <stdlib.h>
+    #include <stddef.h>
+//#include <stdlib.h> // might have inlined functions with floats, and would fail to compile with SSE disabled
+void* malloc(size_t size);
+void free(void* ptr);
+
     #include <string.h>
 #endif // __KERNEL__
 
