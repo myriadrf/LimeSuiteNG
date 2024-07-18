@@ -585,7 +585,7 @@ SoapySDR::RangeList Soapy_limesuiteng::getBandwidthRange(const int direction, [[
     SoapySDR::RangeList bws;
 
     TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
-    Range range = sdrDevice->GetDescriptor().rfSOC.at(0).lowPassFilterRange.at(dir);
+    auto range = sdrDevice->GetDescriptor().rfSOC.at(0).lowPassFilterRange.at(dir);
     bws.push_back(SoapySDR::Range(range.min, range.max));
 
     return bws;
