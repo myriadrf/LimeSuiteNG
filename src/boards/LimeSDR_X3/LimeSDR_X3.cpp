@@ -243,8 +243,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         mLMSChips.push_back(std::move(lms3));
     }
 
-    mEqualizer =
-        std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA), mLMSChips.at(1).get());
+    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA));
 
     mStreamers.reserve(mLMSChips.size());
     for (size_t i = 0; i < mLMSChips.size(); ++i)

@@ -35,5 +35,10 @@ double brent(double ax, double bx, double cx, double (*f)(double), double tol, d
 void mnbrak(double* ax, double* bx, double* cx, double* fa, double* fb, double* fc, double (*func)(double));
 double f1dim(double x);
 
+double cost(double*);
+void grad(double*, double*);
+
+void amphgd(int mode);
+
 } // namespace nrc
 } // namespace lime

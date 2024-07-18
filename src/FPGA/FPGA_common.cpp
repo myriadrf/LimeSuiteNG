@@ -130,6 +130,30 @@ int FPGA::ReadRegister(uint32_t address)
     return ReadRegisters(&address, &val, 1) != OpStatus::Success ? -1 : val;
 }
 
+OpStatus FPGA::WriteRegister(const Register& reg, uint16_t value)
+{
+    uint32_t mosi = reg.address;
+    uint32_t miso = 0;
+    OpStatus status = fpgaPort->SPI(&mosi, &miso, 1);
+    if (status != OpStatus::Success)
+        return status;
+    const uint16_t regMask = bitMask(reg.msb, reg.lsb);
+
+    uint32_t regValue = (miso & ~regMask);
+    regValue |= ((value << reg.lsb) & regMask);
+    mosi = (1 << 31) | reg.address << 16 | regValue;
+    return fpgaPort->SPI(&mosi, nullptr, 1);
+}
+
+uint16_t FPGA::ReadRegister(const Register& reg)
+{
+    uint32_t mosi = reg.address;
+    uint32_t miso = 0;
+    fpgaPort->SPI(&mosi, &miso, 1);
+    const uint16_t regMask = bitMask(reg.msb, reg.lsb);
+    return (miso & regMask) >> reg.lsb;
+}
+
 /// @brief Writes the given registers into the FPGA's memory.
 /// @param addrs The addresses to write to.
 /// @param data The values to write into the memory.

@@ -47,7 +47,7 @@ class LIME_API CrestFactorReduction
         Config();
     };
 
-    CrestFactorReduction(std::shared_ptr<ISPI> comms, LMS7002M* rfsoc);
+    CrestFactorReduction(std::shared_ptr<ISPI> comms);
     ~CrestFactorReduction();
     void Configure(const CrestFactorReduction::Config& cfg);
 
@@ -58,23 +58,9 @@ class LIME_API CrestFactorReduction
     uint16_t ReadRegister(const Register& reg);
 
   public: // code ported from GUI
-    void SaveRegisterRangesToIni(INI* m_options, uint8_t chipId, const std::vector<Range<uint16_t>>& ranges);
-    void FDQIE_SaveEqualiser(int Ntaps, const std::string& m_sConfigFilename);
-    void FDQIE_LoadEqualiser(const std::string& m_sConfigFilename);
-    void FDQIE_ResetEqualiser(int kk);
     void UpdateHannCoeff(uint16_t Filt_N);
 
-    //private:
-    void LoadCFRFIR(const std::string& m_sConfigFilename);
-    void SaveCFRFIR(const std::string& m_sConfigFilename);
-    void FDQIE_SaveDC(double RefClk, const std::string& m_sConfigFilename);
-    void FDQIE_LoadDC(const std::string& m_sConfigFilename);
-    void FDQIE_SetupTransmitterDC(int16_t codeI, int16_t codeQ, int kk);
-    void FDQIE_SetupReceiverDC(lime::LMS7002M* rfsoc, int16_t codeI, int16_t codeQ, int kk);
-
-  private:
     std::shared_ptr<ISPI> m_Comms;
-    lime::LMS7002M* lms2;
 
     void SetFIRCoefficients(const int16_t* coefficients, uint16_t count);
 };

@@ -10,6 +10,7 @@
 #include "limesuiteng/LMS7002MCSR.h"
 
 #include "chips/LMS7002M/lms7002_dlgGFIR_Coefficients.h"
+#include "FDQIdesign.h"
 
 using namespace lime;
 using namespace std;
@@ -763,7 +764,7 @@ void EqualiserTest::SaveEqualizerSettings(wxCommandEvent& event)
     const char* config_filename2 = m_sConfigFilename.mb_str();
     std::string config_filename3 = config_filename2;
 
-    equalizer->FDQIE_SaveEqualiser(15, config_filename3);
+    FDQIE_SaveEqualiser(equalizer->m_Comms.get(), 15, config_filename3);
 
     wxCommandEvent evt;
     OnbtnUpdateAll(evt);
@@ -780,7 +781,7 @@ void EqualiserTest::LoadEqualizerSettings(wxCommandEvent& event)
     const char* config_filename2 = m_sConfigFilename.mb_str();
     std::string config_filename3 = config_filename2;
 
-    equalizer->FDQIE_LoadEqualiser(config_filename3);
+    FDQIE_LoadEqualiser(equalizer->m_Comms.get(), config_filename3);
 
     wxCommandEvent evt;
     OnbtnUpdateAll(evt);
@@ -794,7 +795,7 @@ void EqualiserTest::ResetEqualizer(wxCommandEvent& event)
     else
         kk = 2;
 
-    equalizer->FDQIE_ResetEqualiser(kk);
+    FDQIE_ResetEqualiser(equalizer->m_Comms.get(), kk);
 
     wxCommandEvent evt;
     OnbtnUpdateAll(evt);

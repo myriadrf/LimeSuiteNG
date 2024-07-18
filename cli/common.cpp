@@ -94,3 +94,15 @@ SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument)
     }
     return device;
 }
+
+int32_t GetChipSelectByName(SDRDevice* device, const std::string_view chipName)
+{
+    if (!device)
+        return -1;
+    const auto chipMap = device->GetDescriptor().spiSlaveIds;
+
+    auto iter = chipMap.find(std::string{ chipName });
+    if (iter == chipMap.end())
+        return -1;
+    return iter->second;
+}

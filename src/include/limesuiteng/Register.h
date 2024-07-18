@@ -30,12 +30,12 @@ struct Register {
         , msb(msb)
         , lsb(lsb){};
 
-    constexpr Register(uint16_t address)
-        : Register(address, 15, 0){};
+    // constexpr Register(uint16_t address)
+    //     : Register(address, 15, 0){};
 
     /// @brief Constructs the register with default values.
     constexpr Register()
-        : Register(0){};
+        : Register(0, 15, 0){};
 
     uint16_t address; ///< The memory address.
     uint8_t msb; ///< The index of the most significant bit of the register.

@@ -35,4 +35,6 @@ add_executable(limeOEM limeOEM.cpp)
 set_target_properties(limeOEM PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries(limeOEM PRIVATE cli-shared taywee::args)
 
+add_subdirectory(equalizer)
+
 install(TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM DESTINATION bin)

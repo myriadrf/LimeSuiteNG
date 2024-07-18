@@ -12,11 +12,14 @@
 #include <memory>
 #include <vector>
 
+#include "limesuiteng/config.h"
+
 #include "protocols/SamplesPacket.h"
 #include "protocols/DataPacket.h"
 #include "protocols/TRXLooper.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/OpStatus.h"
+#include "limesuiteng/Register.h"
 
 using namespace std::literals::string_literals;
 
@@ -70,6 +73,9 @@ class FPGA
     virtual OpStatus ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt);
     OpStatus WriteRegister(uint32_t addr, uint32_t val);
     int ReadRegister(uint32_t addr);
+    lime::OpStatus WriteRegister(const Register& reg, uint16_t value);
+    uint16_t ReadRegister(const Register& reg);
+
     OpStatus WriteLMS7002MSPI(const uint32_t* addr, uint32_t length);
     OpStatus ReadLMS7002MSPI(const uint32_t* addr, uint32_t* values, uint32_t length);
 
