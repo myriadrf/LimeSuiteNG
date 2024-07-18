@@ -269,6 +269,14 @@ add_subdirectory(cli)
 ########################################################################
 add_subdirectory(GUI)
 
+#########################################################################
+# GTest tests
+#########################################################################
+if(ENABLE_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
 ########################################################################
 ## plugins for external programs
 ########################################################################
@@ -300,14 +308,6 @@ if(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
     install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
-
-#########################################################################
-# GTest tests
-#########################################################################
-if(ENABLE_TESTING)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
 
 #########################################################################
 # summary
