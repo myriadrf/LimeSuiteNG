@@ -125,6 +125,7 @@ if(ENABLE_LIBRARY)
     include(comms/USB/CMakeLists.txt)
     include(comms/PCIe/CMakeLists.txt)
     include(boards/CMakeLists.txt)
+    add_subdirectory(comms)
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
