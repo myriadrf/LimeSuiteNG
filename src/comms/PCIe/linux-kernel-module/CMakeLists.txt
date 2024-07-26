@@ -82,11 +82,16 @@ if(NOT INSTALL_KERNEL_MODULE)
     return()
 endif()
 
-# 0 means success, so it's inverted
-execute_process(
-    COMMAND dkms --version
-    RESULT_VARIABLE IS_DKMS_NOT_PRESENT
-    OUTPUT_QUIET)
+find_program(DKMS_EXECUTABLE NAMES dkms)
+if(NOT DKMS_EXECUTABLE)
+  set(IS_DKMS_NOT_PRESENT True)
+else()
+  # 0 means success, so it's inverted
+  execute_process(
+      COMMAND ${DKMS_EXECUTABLE} --version
+      RESULT_VARIABLE IS_DKMS_NOT_PRESENT
+      OUTPUT_QUIET)
+endif()
 
 cmake_dependent_option(USE_DKMS "Use DKMS when installing the kernel module" ON "NOT IS_DKMS_NOT_PRESENT" OFF)
 add_feature_info(DKMS USE_DKMS "DKMS support for lime PCIe kernel module")
