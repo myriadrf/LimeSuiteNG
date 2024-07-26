@@ -109,7 +109,7 @@ if(ENABLE_LIBRARY)
 
     install(
         TARGETS limesuiteng
-        EXPORT limesuiteng
+        EXPORT limesuitengTarget
         LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
         ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
         RUNTIME DESTINATION bin # .dll file
@@ -141,9 +141,9 @@ endif()
 # Build pkg config file
 ########################################################################
 if(ENABLE_HEADERS AND ENABLE_LIBRARY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LimeSuite.pc.in ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng.pc.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc @ONLY)
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LimeSuite.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
 #########################################################################

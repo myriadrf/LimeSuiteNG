@@ -296,17 +296,19 @@ add_subdirectory(docs/doxygen)
 # CMake Project config files
 ########################################################################
 if(ENABLE_HEADERS AND ENABLE_LIBRARY)
-    configure_file(
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfigVersion.in.cmake
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-        @ONLY)
+        VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+        COMPATIBILITY SameMinorVersion)
+    install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 
     install(
-        EXPORT limesuiteng
+        EXPORT limesuitengTarget
+        NAMESPACE limesuiteng::
         FILE limesuitengConfig.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 
-    install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
 #########################################################################

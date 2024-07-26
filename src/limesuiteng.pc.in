@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: LimeSuiteNG
 Description: Driver and GUI for Lime Microsystems SDR devices.
-URL: https://myriadrf.org/projects/lime-suite/
+URL: https://limesuiteng.myriadrf.org/
 Version: @LIME_SUITE_VERSION@
 Requires:
 Requires.private:
