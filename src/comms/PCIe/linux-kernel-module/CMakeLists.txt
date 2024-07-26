@@ -84,13 +84,13 @@ endif()
 
 find_program(DKMS_EXECUTABLE NAMES dkms)
 if(NOT DKMS_EXECUTABLE)
-  set(IS_DKMS_NOT_PRESENT True)
+    set(IS_DKMS_NOT_PRESENT True)
 else()
-  # 0 means success, so it's inverted
-  execute_process(
-      COMMAND ${DKMS_EXECUTABLE} --version
-      RESULT_VARIABLE IS_DKMS_NOT_PRESENT
-      OUTPUT_QUIET)
+    # 0 means success, so it's inverted
+    execute_process(
+        COMMAND ${DKMS_EXECUTABLE} --version
+        RESULT_VARIABLE IS_DKMS_NOT_PRESENT
+        OUTPUT_QUIET)
 endif()
 
 cmake_dependent_option(USE_DKMS "Use DKMS when installing the kernel module" ON "NOT IS_DKMS_NOT_PRESENT" OFF)
