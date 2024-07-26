@@ -22,7 +22,7 @@ thread_local std::string Logger::_reportedErrorMessage{ ""s };
 
 void Logger::defaultLogHandler(const LogLevel level, const std::string& message)
 {
-    if (level > LogLevel::Error)
+    if (level > LogLevel::Warning)
         return;
     std::cerr << message << std::endl;
 }

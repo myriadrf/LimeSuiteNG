@@ -7,7 +7,7 @@ LogHandlerCString Logger::logHandlerCString{ &defaultLogHandlerCString };
 
 void Logger::defaultLogHandlerCString(const LogLevel level, const char* message)
 {
-    if (level > LogLevel::Error)
+    if (level > LogLevel::Warning)
         return;
     std::fprintf(stderr, "%s\n", message);
 }

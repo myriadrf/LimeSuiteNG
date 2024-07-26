@@ -134,6 +134,20 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
+    // Initial XTRX gateware supported only 32bit DMA, it worked fine on x86 with the PCIe driver
+    // limiting the address mask to 32bit, but some systems require at least 35bits,
+    // like Raspberry Pi, or other Arm systems. If host requires more than 32bit DMA mask
+    // the driver starts using 64bit mask, in that case it's a matter of luck if the system
+    // provided DMA addresses will be in 32bit zone, and could work, otherwise, data will be
+    // seen as transferred, but the values will be undefined.
+    // XTRX gateware added 64bit DMA support in 1.13
+    if (gw.version == 1 && gw.revision < 13)
+    {
+        lime::warning("Current XTRX gateware does not support 64bit DMA addressing. "
+                      "RF data streaming might not work. "
+                      "Please update gateware.");
+    }
+
     // revision 1.13 introduced "dual boot" images
     if (gw.version >= 1 && gw.revision >= 13)
     {
