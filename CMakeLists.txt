@@ -272,7 +272,7 @@ add_subdirectory(GUI)
 #########################################################################
 # GTest tests
 #########################################################################
-if(ENABLE_TESTING)
+if(ENABLE_UNIT_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
