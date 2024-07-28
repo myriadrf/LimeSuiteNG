@@ -326,16 +326,23 @@ OpStatus TRXLooper::RxSetup()
 
     if (mCallback_logMessage)
     {
+        float bufferTimeDuration;
+        if (mConfig.hintSampleRate)
+            bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
+        else
+            bufferTimeDuration = 0;
         char msg[256];
         std::snprintf(msg,
             sizeof(msg),
-            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s",
+            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus",
             chipId,
             usePoll ? 1 : 0,
             samplesInPkt,
             mRx.packetsToBatch,
             mRx.packetsToBatch * packetSize,
-            (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"));
+            (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
+            bufferTimeDuration * 1e6
+            );
         mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
@@ -773,9 +780,13 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.packetsToBatch = mTx.packetsToBatch;
     mTxArgs.samplesInPacket = samplesInPkt;
 
-    float bufferTimeDuration = samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
     if (mCallback_logMessage)
     {
+        float bufferTimeDuration;
+        if (mConfig.hintSampleRate)
+            bufferTimeDuration = samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
+        else
+            bufferTimeDuration = 0;
         char msg[256];
         std::snprintf(msg,
             sizeof(msg),
