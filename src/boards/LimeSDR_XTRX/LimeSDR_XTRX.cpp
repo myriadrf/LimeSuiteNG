@@ -145,7 +145,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     {
         lime::warning("Current XTRX gateware does not support 64bit DMA addressing. "
                       "RF data streaming might not work. "
-                      "Please update gateware.");
+                      "Please update gateware."s);
     }
 
     // revision 1.13 introduced "dual boot" images

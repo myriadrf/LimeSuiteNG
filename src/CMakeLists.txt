@@ -79,7 +79,8 @@ if(ENABLE_LIBRARY)
     target_link_libraries(
         limesuiteng
         PUBLIC ${LIME_SUITE_LIBRARIES}
-        PRIVATE $<BUILD_INTERFACE:kissfft> $<BUILD_INTERFACE:samplesConversion> $<BUILD_INTERFACE:cpp-feather-ini-parser>)
+        PRIVATE $<BUILD_INTERFACE:kissfft> $<BUILD_INTERFACE:samplesConversion> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>
+          )
     set_property(TARGET limesuiteng PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     set_target_properties(limesuiteng PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
     set_target_properties(limesuiteng PROPERTIES VERSION ${LIME_SUITE_LIBVER})
