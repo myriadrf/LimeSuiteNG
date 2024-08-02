@@ -948,12 +948,18 @@ static const struct file_operations limepcie_fops_control = {
 static ssize_t product_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct limepcie_device *limeDev = dev_get_drvdata(dev);
+    WARN_ON_ONCE(limeDev == NULL);
+    if (limeDev == NULL)
+        return 0;
     return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.product);
 }
 
 static ssize_t vendor_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct limepcie_device *limeDev = dev_get_drvdata(dev);
+    WARN_ON_ONCE(limeDev == NULL);
+    if (limeDev == NULL)
+        return 0;
     return snprintf(buf, PAGE_SIZE, "0x%4x\n", limeDev->attr.vendor);
 }
 
@@ -977,7 +983,7 @@ static int limepcie_cdev_create(
     }
 
     dev_info(sysDev, "Creating /dev/%s\n", name);
-    struct device *trxDev = device_create(limepcie_class, parentSysDev, MKDEV(limepcie_major, index), NULL, "%s", name);
+    struct device *trxDev = device_create(limepcie_class, parentSysDev, MKDEV(limepcie_major, index), cdev->owner, "%s", name);
     if (!trxDev)
     {
         dev_err(sysDev, "Failed to create device\n");
