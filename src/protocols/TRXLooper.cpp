@@ -256,10 +256,12 @@ void TRXLooper::Stop()
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
         mTxArgs.dma->Enable(false);
-        lime::debug("TRXLooper: wait for Tx loop end.");
-        std::unique_lock lck{ mTx.mutex };
-        while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
-            mTx.cv.wait(lck);
+        lime::debug("TRXLooper: wait for Tx loop end."s);
+        {
+            std::unique_lock lck{ mTx.mutex };
+            while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
+                mTx.cv.wait(lck);
+        }
 
         uint32_t fpgaTxPktIngressCount;
         uint32_t fpgaTxPktDropCounter;
@@ -341,8 +343,7 @@ OpStatus TRXLooper::RxSetup()
             mRx.packetsToBatch,
             mRx.packetsToBatch * packetSize,
             (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
-            bufferTimeDuration * 1e6
-            );
+            bufferTimeDuration * 1e6);
         mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
@@ -383,10 +384,12 @@ OpStatus TRXLooper::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
-    lime::debug("RxSetup wait for Rx worker thread.");
-    std::unique_lock lck{ mRx.mutex };
-    while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        mRx.cv.wait(lck);
+    lime::debug("RxSetup wait for Rx worker thread."s);
+    {
+        std::unique_lock lck{ mRx.mutex };
+        while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
+            mRx.cv.wait(lck);
+    }
 
     return OpStatus::Success;
 }
@@ -400,7 +403,6 @@ void TRXLooper::RxWorkLoop()
 {
     lime::debug("Rx worker thread ready.");
     // signal that thread is ready for work
-    mRx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
     {
         std::unique_lock lck{ mRx.mutex };
 
@@ -821,10 +823,11 @@ OpStatus TRXLooper::TxSetup()
 
     lime::debug("TxSetup wait for Tx worker.");
     // wait for Tx thread to be ready
-    std::unique_lock lck{ mTx.mutex };
-    while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
-        mTx.cv.wait(lck);
-
+    {
+        std::unique_lock lck{ mTx.mutex };
+        while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
+            mTx.cv.wait(lck);
+    }
     return OpStatus::Success;
 }
 
@@ -832,8 +835,11 @@ void TRXLooper::TxWorkLoop()
 {
     lime::debug("Tx worker thread ready.");
     // signal that thread is ready for work
-    mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
-    mTx.cv.notify_all();
+    {
+        std::unique_lock lck{ mTx.mutex };
+        mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+        mTx.cv.notify_all();
+    }
 
     while (!mTx.terminateWorker.load(std::memory_order_relaxed))
     {
@@ -848,8 +854,11 @@ void TRXLooper::TxWorkLoop()
 
         mTx.stage.store(Stream::ReadyStage::Active, std::memory_order_relaxed);
         TransmitPacketsLoop();
-        mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
-        mTx.cv.notify_all();
+        {
+            std::unique_lock lk{ mTx.mutex };
+            mTx.stage.store(Stream::ReadyStage::WorkerReady, std::memory_order_relaxed);
+            mTx.cv.notify_all();
+        }
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
     lime::debug("Tx worker thread shutdown.");
@@ -891,14 +900,6 @@ void TRXLooper::TransmitPacketsLoop()
     bool outputReady = false;
 
     AvgRmsCounter txTSAdvance;
-
-    // thread ready for work, just wait for stream enable
-    {
-        std::unique_lock<std::mutex> lk(streamMutex);
-        while (!mStreamEnabled && !mTx.terminate.load(std::memory_order_relaxed))
-            streamActive.wait_for(lk, std::chrono::milliseconds(100));
-        lk.unlock();
-    }
 
     auto t1{ std::chrono::steady_clock::now() };
     auto t2 = t1;
