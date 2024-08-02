@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Get the version number from header file
-file(READ version.h VERSION_HEADER_CONTENT)
+file(READ version.in.h VERSION_HEADER_CONTENT)
 string(REGEX MATCH "LIMEPCIE_VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" DRIVER_VERSION "${VERSION_HEADER_CONTENT}")
 
 if(NOT DRIVER_VERSION)
@@ -17,6 +17,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(MODULE_NAME limepcie)
 
 find_package(LinuxKernelHeaders REQUIRED)
+
+# Get Git changeset
+if(get_git_head_revision)
+    get_git_head_revision(GITREFSPEC GITHASH)
+    if(GITHASH)
+        string(SUBSTRING "${GITHASH}" 0 8 GITHASH)
+    else(GITHASH)
+        set(GITHASH "123")
+    endif(GITHASH)
+endif(get_git_head_revision)
 
 # Get kernel version
 execute_process(
@@ -61,6 +71,8 @@ set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} ARCH=${ARCH} M=${KBUILD_FIL
 
 set(KERNEL_SOURCE_RELATIVE_PATHS version.h limepcie.c limepcie.h boards.h bsp/config.h bsp/csr.h bsp/flags.h bsp/mem.h bsp/soc.h)
 
+# configure the version.h header in-tree, as the DKMS shell scripts are not aware of cmake build directory, and they copy all sources into system directory
+configure_file(${CMAKE_CURRENT_LIST_DIR}/version.in.h ${CMAKE_CURRENT_LIST_DIR}/version.h @ONLY)
 # Copy all source files into build directory and compile there, as the Kbuild produces artifacts in tree
 foreach(SRC_FILENAME ${KERNEL_SOURCE_RELATIVE_PATHS})
     configure_file(${CMAKE_CURRENT_LIST_DIR}/${SRC_FILENAME} ${KBUILD_FILE_DIR}/${SRC_FILENAME} COPYONLY)

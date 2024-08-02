@@ -1428,7 +1428,7 @@ static struct pci_driver limepcie_pci_driver = {
 static int __init limepcie_module_init(void)
 {
     int ret;
-    pr_info("limepcie : module init\n");
+    pr_info("limepcie : module init v%s-g%s\n", LIMEPCIE_VERSION, LIMEPCIE_GIT_HASH);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
     limepcie_class = class_create(THIS_MODULE, DRIVER_NAME);
 #else
