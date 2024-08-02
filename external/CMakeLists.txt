@@ -108,8 +108,7 @@ fetchcontent_declare(
     cpp-feather-ini-parser
     GIT_REPOSITORY https://github.com/rjonaitis/cpp-feather-ini-parser
     GIT_TAG 85a7d3a89dd0e179587a87b8d12ea58a896e7881 # latest main at the time of writing this
-    CONFIGURE_COMMAND "" BUILD_COMMAND ""
-    EXCLUDE_FROM_ALL)
+    CONFIGURE_COMMAND "" BUILD_COMMAND "" EXCLUDE_FROM_ALL)
 
 fetchcontent_makeavailable(cpp-feather-ini-parser)
 
@@ -123,7 +122,6 @@ fetchcontent_declare(
     rang
     GIT_REPOSITORY https://github.com/agauniyal/rang
     GIT_TAG 22345aa4c468db3bd4a0e64a47722aad3518cc81
-    EXCLUDE_FROM_ALL
-    CONFIGURE_COMMAND "" BUILD_COMMAND "")
+    EXCLUDE_FROM_ALL CONFIGURE_COMMAND "" BUILD_COMMAND "")
 
 fetchcontent_makeavailable(rang)
