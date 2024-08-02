@@ -286,6 +286,20 @@ static inline void limepcie_writel(struct limepcie_device *s, uint32_t addr, uin
     return writel(val, s->bar0_addr + addr - CSR_BASE);
 }
 
+static int TestCSR(struct limepcie_device *myDevice)
+{
+    struct device *sysDev = &myDevice->pciContext->dev;
+    uint32_t testValue = 0xC0DEAA55;
+    limepcie_writel(myDevice, CSR_CNTRL_TEST_ADDR, testValue);
+    uint32_t testReadback = limepcie_readl(myDevice, CSR_CNTRL_TEST_ADDR);
+    if (testReadback != testValue)
+    {
+        dev_err(sysDev, "Test register failed. Written (0x%08X), read (0x%08X).\n", testValue, testReadback);
+        return -EIO;
+    }
+    return 0;
+}
+
 static void limepcie_enable_interrupt(struct limepcie_device *s, int irq_num)
 {
     uint32_t v = limepcie_readl(s, CSR_PCIE_MSI_ENABLE_ADDR);
@@ -855,12 +869,8 @@ static int limepcie_ctrl_open(struct inode *inode, struct file *file)
     file->private_data = ctrlDevice;
     dev_dbg(&ctrlDevice->owner->pciContext->dev, "Open %s\n", file->f_path.dentry->d_iname);
 
-    limepcie_writel(ctrlDevice->owner, CSR_CNTRL_TEST_ADDR, 0x55);
-    if (limepcie_readl(ctrlDevice->owner, CSR_CNTRL_TEST_ADDR) != 0x55)
-    {
-        printk(KERN_ERR DRIVER_NAME " CSR register test failed\n");
+    if (TestCSR(ctrlDevice->owner) != 0)
         return -EIO;
-    }
     return 0;
 }
 
@@ -999,7 +1009,7 @@ static int limepcie_cdev_create(
 
 static void limepcie_cdev_destroy(struct limepcie_data_cdev *cdev)
 {
-    if (!cdev)
+    if (!cdev || !cdev->owner)
         return;
     device_destroy(limepcie_class, MKDEV(limepcie_major, cdev->minor));
     cdev_del(&cdev->cdevNode);
@@ -1279,6 +1289,10 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     limepcie_writel(myDevice, CSR_CTRL_RESET_ADDR, 1);
     msleep(10);
 #endif
+
+    if (TestCSR(myDevice) != 0)
+        return -EIO;
+
     if ((ret = IdentifyDevice(myDevice)))
         return ret;
 
