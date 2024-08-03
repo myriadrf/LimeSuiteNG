@@ -8,7 +8,9 @@ set(CMAKE_CONFIGURATION_TYPES
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_AMARISOFT_PLUGIN "Build LimeSuite integration to Amarisoft" ON "UNIX;ENABLE_LIBRARY" OFF)
-add_feature_info(AMARISOFT_PLUGIN ENABLE_AMARISOFT_PLUGIN "LimeSuite Amarisoft integration plugin")
+if(UNIX) # show feature only on Linux
+    add_feature_info(AMARISOFT_PLUGIN ENABLE_AMARISOFT_PLUGIN "LimeSuite Amarisoft integration plugin")
+endif()
 
 if(NOT ENABLE_AMARISOFT_PLUGIN)
     return()

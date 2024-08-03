@@ -1,7 +1,11 @@
 include(FeatureSummary)
 include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_LIMEPCIE "Enable Lite PCIe" ON "UNIX; NOT APPLE" OFF)
-add_feature_info(LIMEPCIE ENABLE_LIMEPCIE "PCIe support")
+
+if(UNIX)
+    add_feature_info(LIMEPCIE ENABLE_LIMEPCIE "PCIe support")
+endif()
+
 if(NOT ENABLE_LIMEPCIE)
     return()
 endif()
