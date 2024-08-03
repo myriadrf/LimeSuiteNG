@@ -69,38 +69,36 @@ if(NOT ENABLE_GUI)
     return()
 endif()
 
-set(GUI_SOURCES
-    limeGUI.cpp
-    limeGUIFrame.cpp
-    LMS_Programming/LMS_Programming_wxgui.cpp
-    utility/pnlMiniLog.cpp
-    utility/SPI_wxgui.cpp
-    utility/dlgFullMessageLog.cpp
-    utility/utilities_gui.cpp
-    dlgAbout_view.cpp
-    dlgAbout.cpp
-    numericSlider/numericSlider.cpp
-    fftviewer_wxgui/fftviewer_wxgui.cpp
-    fftviewer_wxgui/fftviewer_frFFTviewer.cpp
-    CommsToDevice.cpp
-    DeviceConnectionPanel.cpp
-    events.cpp
-    SDRConfiguration_view.cpp
-    parsers/CoefficientFileParser.cpp)
-
 include(${wxWidgets_USE_FILE})
-add_subdirectory(oglGraph)
+
+add_executable(limeGUI resources/resource.rc)
 
 set(BINARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin")
-set(GUI_EXECUTABLE_NAME limeGUI)
+set_target_properties(limeGUI PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
 
-add_executable(${GUI_EXECUTABLE_NAME} ${GUI_SOURCES} resources/resource.rc)
-set_target_properties(${GUI_EXECUTABLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
-target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
+target_sources(
+    limeGUI
+    PRIVATE limeGUI.cpp
+            limeGUIFrame.cpp
+            LMS_Programming/LMS_Programming_wxgui.cpp
+            utility/pnlMiniLog.cpp
+            utility/SPI_wxgui.cpp
+            utility/dlgFullMessageLog.cpp
+            utility/utilities_gui.cpp
+            dlgAbout_view.cpp
+            dlgAbout.cpp
+            numericSlider/numericSlider.cpp
+            fftviewer_wxgui/fftviewer_wxgui.cpp
+            fftviewer_wxgui/fftviewer_frFFTviewer.cpp
+            CommsToDevice.cpp
+            DeviceConnectionPanel.cpp
+            events.cpp
+            SDRConfiguration_view.cpp
+            parsers/CoefficientFileParser.cpp)
+
 target_include_directories(
-    ${GUI_EXECUTABLE_NAME}
-    PRIVATE ${LIME_SUITE_INCLUDES}
-            ${CMAKE_CURRENT_SOURCE_DIR}
+    limeGUI
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             lms7002_wxgui
             utilities_gui
             FPGAcontrols_wxgui
@@ -112,15 +110,17 @@ target_include_directories(
 
 add_subdirectory(boards)
 add_subdirectory(chips)
+add_subdirectory(oglGraph)
 
 target_link_libraries(
-    ${GUI_EXECUTABLE_NAME}
-    PUBLIC limesuiteng oglGraph ${wxWidgets_LIBRARIES}
-    PRIVATE kissfft)
+    limeGUI
+    PUBLIC limesuiteng ${wxWidgets_LIBRARIES}
+    PRIVATE kissfft oglGraph)
 
 if(MSVC)
+    target_compile_definitions(limeGUI PRIVATE WIN32_LEAN_AND_MEAN)
     set_property(
-        TARGET ${GUI_EXECUTABLE_NAME}
+        TARGET limeGUI
         APPEND
         PROPERTY LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif(MSVC)
@@ -139,7 +139,7 @@ if(WIN32)
     set(release_dir "$<$<NOT:$<CONFIG:Debug>>:/ReleaseDLLs/lib/vc14x${x64_postfix}_dll>")
 
     add_custom_command(
-        TARGET ${GUI_EXECUTABLE_NAME}
+        TARGET limeGUI
         POST_BUILD
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
@@ -149,4 +149,4 @@ if(WIN32)
             ${BINARY_OUTPUT_DIR}${additional_folder})
 endif(WIN32)
 
-install(TARGETS ${GUI_EXECUTABLE_NAME} DESTINATION bin)
+install(TARGETS limeGUI DESTINATION bin)

@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LimePCIe.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/validation.h"
 #include "FPGA/FPGA_common.h"

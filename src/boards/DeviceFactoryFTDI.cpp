@@ -8,7 +8,7 @@
 #include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
 #include "comms/USB/LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
-#include "FT601/FT601.h"
+#include "comms/USB/FT601/FT601.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

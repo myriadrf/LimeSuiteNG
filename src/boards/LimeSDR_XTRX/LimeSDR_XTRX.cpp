@@ -4,8 +4,8 @@
 #include <cmath>
 
 #include "limesuiteng/Logger.h"
-#include "LimePCIe.h"
-#include "LimePCIeDMA.h"
+#include "comms/PCIe/LimePCIe.h"
+#include "comms/PCIe/LimePCIeDMA.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"

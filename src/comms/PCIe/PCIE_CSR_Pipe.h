@@ -2,7 +2,7 @@
 #define PCIE_CSR_PIPE_H
 
 #include "ISerialPort.h"
-#include "LimePCIe.h"
+#include "comms/PCIe/LimePCIe.h"
 
 #include <memory>
 

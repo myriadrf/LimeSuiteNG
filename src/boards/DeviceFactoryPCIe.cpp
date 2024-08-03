@@ -5,7 +5,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
-#include "LimePCIe.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "LMSBoards.h"
 #include "comms/PCIe/LMS64C_FPGA_Over_PCIe.h"
 #include "comms/PCIe/LMS64C_LMS7002M_Over_PCIe.h"

@@ -5,7 +5,7 @@
 
 #include "limesuiteng/DeviceHandle.h"
 #include "LimeSDR/LimeSDR.h"
-#include "FX3/FX3.h"
+#include "comms/USB/FX3/FX3.h"
 #include "LimeSDR/USB_CSR_Pipe_SDR.h"
 #include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
 #include "comms/USB/LMS64C_FPGA_Over_USB.h"

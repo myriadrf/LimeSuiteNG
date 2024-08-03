@@ -1,4 +1,4 @@
-#include "LimePCIeDMA.h"
+#include "comms/PCIe/LimePCIeDMA.h"
 
 #include <cassert>
 #include <cstdint>
@@ -6,7 +6,7 @@
 #include <string>
 #include <cstring>
 
-#include "LimePCIe.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "limesuiteng/Logger.h"
 #ifdef __unix__
     #include <unistd.h>

@@ -37,12 +37,8 @@ elseif(UNIX)
     if(NOT ${FTDI_FOUND})
         message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
     endif()
-
-    target_link_libraries(limesuiteng PRIVATE ${LIBUSB_1_LIBRARIES})
-
-    if(LIBUSB_1_INCLUDE_DIR)
-        target_include_directories(limesuiteng PRIVATE $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
-    endif()
+    set(FTDI_LIBRARIES ${LIBUSB_1_LIBRARIES})
+    set(FTDI_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIRS})
 endif()
 
 include(FeatureSummary)
@@ -53,7 +49,6 @@ if(NOT ENABLE_USB_FTDI)
     return()
 endif()
 
-set(CONNECTION_FT601_SOURCES ${CMAKE_CURRENT_LIST_DIR}/FT601.cpp)
-
-target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
-target_sources(limesuiteng PRIVATE ${CONNECTION_FT601_SOURCES})
+target_sources(limesuiteng PRIVATE FT601.cpp)
+target_link_libraries(limesuiteng PRIVATE ${FTDI_LIBRARIES})
+target_include_directories(limesuiteng PRIVATE ${FTDI_INCLUDE_DIRS})
