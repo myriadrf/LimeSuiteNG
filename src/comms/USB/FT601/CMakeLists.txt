@@ -26,29 +26,14 @@ if(WIN32)
     message(STATUS "FTDI_LIBRARIES: ${FTDI_LIBRARIES}")
     target_link_libraries(limesuiteng PRIVATE ${FTDI_LIBRARIES})
     target_include_directories(limesuiteng PRIVATE ${FTDI_INCLUDE_DIRS})
-elseif(UNIX)
-    find_package(libusb-1.0)
-    set_package_properties(
-        libusb-1.0 PROPERTIES
-        TYPE RECOMMENDED
-        PURPOSE "Adds USB communication support for FT601 chip")
-
-    set(FTDI_FOUND ${LIBUSB_1_FOUND})
-    if(NOT ${FTDI_FOUND})
-        message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
-    endif()
-    set(FTDI_LIBRARIES ${LIBUSB_1_LIBRARIES})
-    set(FTDI_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIRS})
 endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_USB_FTDI "Enable FT601" ON "FTDI_FOUND" OFF)
+cmake_dependent_option(ENABLE_USB_FTDI "Enable FT601" ON "FTDI_FOUND OR LIBUSB_1_FOUND" OFF)
 add_feature_info(USB_FTDI ENABLE_USB_FTDI "USB support for FTDI")
 if(NOT ENABLE_USB_FTDI)
     return()
 endif()
 
 target_sources(limesuiteng PRIVATE FT601.cpp)
-target_link_libraries(limesuiteng PRIVATE ${FTDI_LIBRARIES})
-target_include_directories(limesuiteng PRIVATE ${FTDI_INCLUDE_DIRS})
