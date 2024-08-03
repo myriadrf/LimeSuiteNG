@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <set>
 
-#include "FX3/FX3.h"
+#include "comms/USB/FX3/FX3.h"
 #include "LMS64CProtocol.h"
 
 using namespace lime;

@@ -1,27 +1,21 @@
-########################################################################
-## Support for USB STREAM connection
-########################################################################
-set(THIS_SOURCE_DIR comms/USB)
-
-include(${THIS_SOURCE_DIR}/FT601/CMakeLists.txt)
-include(${THIS_SOURCE_DIR}/FX3/CMakeLists.txt)
-
-if(NOT ENABLE_USB_FX3 AND NOT ENABLE_USB_FTDI)
-    return()
-endif()
-
-set(COMMS_USB_SOURCES
-    ${THIS_SOURCE_DIR}/LMS64C_FPGA_Over_USB.cpp
-    ${THIS_SOURCE_DIR}/LMS64C_LMS7002M_Over_USB.cpp
-    ${THIS_SOURCE_DIR}/LMS64C_ADF4002_Over_USB.cpp
-    ${THIS_SOURCE_DIR}/USBDMAEmulation.cpp)
-
-########################################################################
-## Add to library
-########################################################################
-target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
-target_sources(limesuiteng PRIVATE ${COMMS_USB_SOURCES})
-
 if(UNIX)
-    target_sources(limesuiteng PRIVATE ${THIS_SOURCE_DIR}/UnixUsb.cpp)
+    find_package(libusb-1.0)
+    set_package_properties(
+        libusb-1.0 PROPERTIES
+        TYPE RECOMMENDED
+        PURPOSE "Adds USB communication support")
+
+    if(${LIBUSB_1_FOUND})
+        target_sources(limesuiteng PRIVATE UnixUsb.cpp)
+        target_include_directories(limesuiteng PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
+        target_link_libraries(limesuiteng PUBLIC ${LIBUSB_1_LIBRARIES})
+    else()
+        message(WARNING "libusb-1.0 libraries not found. Omitting USB devices support")
+    endif()
 endif()
+
+add_subdirectory(FT601)
+add_subdirectory(FX3)
+
+target_sources(
+    limesuiteng PRIVATE LMS64C_FPGA_Over_USB.cpp LMS64C_LMS7002M_Over_USB.cpp LMS64C_ADF4002_Over_USB.cpp USBDMAEmulation.cpp)

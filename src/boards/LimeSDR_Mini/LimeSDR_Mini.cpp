@@ -14,7 +14,7 @@
 #include "DeviceTreeNode.h"
 #include "comms/IComms.h"
 #include "ISerialPort.h"
-#include "FT601/FT601.h"
+#include "comms/USB/FT601/FT601.h"
 
 #include <assert.h>
 #include <memory>

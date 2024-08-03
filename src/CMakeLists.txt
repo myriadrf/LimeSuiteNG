@@ -39,16 +39,7 @@ set(LIME_SUITE_SOURCES
 
 set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
-set(LIME_SUITE_INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/boards
-    ${CMAKE_CURRENT_SOURCE_DIR}/protocols
-    ${CMAKE_CURRENT_SOURCE_DIR}/lms7002m
-    ${PROJECT_SOURCE_DIR}/external
-    ${CMAKE_CURRENT_SOURCE_DIR}/threadHelper
-    ${CMAKE_CURRENT_SOURCE_DIR}/memory
-    ${CMAKE_CURRENT_SOURCE_DIR}/vectorization)
+set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards protocols lms7002m external threadHelper memory vectorization)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
@@ -61,81 +52,76 @@ list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-find_package(Threads REQUIRED)
-list(APPEND LIME_SUITE_LIBRARIES Threads::Threads)
-
-include(CheckAtomic)
-if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-    list(APPEND LIME_SUITE_LIBRARIES atomic)
-endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
 
 option(ENABLE_LIBRARY "Enable build library" ON)
 add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
-if(ENABLE_LIBRARY)
-    add_library(limesuiteng ${LIME_SUITE_SOURCES})
-    target_link_libraries(
-        limesuiteng
-        PUBLIC ${LIME_SUITE_LIBRARIES}
-        PRIVATE $<BUILD_INTERFACE:kissfft> $<BUILD_INTERFACE:samplesConversion> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>)
-    set_property(TARGET limesuiteng PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-    set_target_properties(limesuiteng PROPERTIES SOVERSION ${LIME_SUITE_SOVER})
-    set_target_properties(limesuiteng PROPERTIES VERSION ${LIME_SUITE_LIBVER})
-    set_target_properties(limesuiteng PROPERTIES DEFINE_SYMBOL "LIME_DLL_EXPORTS")
-    target_include_directories(limesuiteng PRIVATE ${LIME_SUITE_INCLUDES})
-    target_include_directories(
-        limesuiteng
-        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
-                  $<INSTALL_INTERFACE:include>)
+if(NOT ENABLE_LIBRARY)
+    return()
+endif(NOT ENABLE_LIBRARY)
 
-    if(BUILD_SHARED_LIBS)
-        target_compile_definitions(limesuiteng PUBLIC "LIME_DLL")
-    endif()
+add_library(limesuiteng ${LIME_SUITE_SOURCES})
+set_target_properties(
+    limesuiteng
+    PROPERTIES POSITION_INDEPENDENT_CODE TRUE
+               SOVERSION ${LIME_SUITE_SOVER}
+               VERSION ${LIME_SUITE_LIBVER}
+               DEFINE_SYMBOL "LIME_DLL_EXPORTS")
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug"
-       AND ENABLE_CODE_COVERAGE
-       AND (NOT MSVC))
-        include(CodeCoverage)
-        append_coverage_compiler_flags_to_target(limesuiteng)
-
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            target_link_options(limesuiteng PUBLIC --coverage)
-        endif()
-    endif()
-
-    install(
-        TARGETS limesuiteng
-        EXPORT limesuitengTarget
-        LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
-        ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-        RUNTIME DESTINATION bin # .dll file
-    )
-
-    if(MSVC)
-        set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-    endif(MSVC)
-
-    ########################################################################
-    ## Supported connections
-    ########################################################################
-    include(comms/USB/CMakeLists.txt)
-    include(comms/PCIe/CMakeLists.txt)
-    include(boards/CMakeLists.txt)
-    add_subdirectory(comms)
-
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-    target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-    add_subdirectory(chips)
-    add_subdirectory(DSP)
-    add_subdirectory(vectorization)
-
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(limesuiteng PUBLIC "LIME_DLL")
 endif()
+
+include(CheckAtomic)
+if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+    target_link_libraries(limesuiteng PUBLIC atomic)
+endif()
+
+find_package(Threads REQUIRED)
+target_link_libraries(
+    limesuiteng
+    PUBLIC Threads::Threads
+    PRIVATE $<BUILD_INTERFACE:kissfft> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>)
+
+target_include_directories(
+    limesuiteng
+    PRIVATE ${LIME_SUITE_INCLUDES}
+    INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
+              $<INSTALL_INTERFACE:include>)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+   AND ENABLE_CODE_COVERAGE
+   AND (NOT MSVC))
+    include(CodeCoverage)
+    append_coverage_compiler_flags_to_target(limesuiteng)
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_link_options(limesuiteng PUBLIC --coverage)
+    endif()
+endif()
+
+install(
+    TARGETS limesuiteng
+    EXPORT limesuitengTarget
+    LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
+    RUNTIME DESTINATION bin # .dll file
+)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+
+add_subdirectory(boards)
+add_subdirectory(comms)
+add_subdirectory(chips)
+add_subdirectory(DSP)
+add_subdirectory(examples)
+add_subdirectory(utilities)
+add_subdirectory(vectorization)
 
 ########################################################################
 # Build pkg config file
@@ -145,13 +131,3 @@ if(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
-
-#########################################################################
-# utilities
-#########################################################################
-add_subdirectory(utilities)
-
-#########################################################################
-# examples
-#########################################################################
-add_subdirectory(examples)
