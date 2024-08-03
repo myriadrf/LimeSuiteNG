@@ -83,7 +83,7 @@ find_package(Threads REQUIRED)
 target_link_libraries(
     limesuiteng
     PUBLIC Threads::Threads
-    PRIVATE $<BUILD_INTERFACE:kissfft> $<BUILD_INTERFACE:samplesConversion> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>)
+    PRIVATE $<BUILD_INTERFACE:kissfft> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>)
 
 target_include_directories(
     limesuiteng

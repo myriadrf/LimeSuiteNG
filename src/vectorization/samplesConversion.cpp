@@ -1,6 +1,4 @@
 #include "samplesConversion.h"
-#include "string.h"
-#include <assert.h>
 
 namespace lime {
 

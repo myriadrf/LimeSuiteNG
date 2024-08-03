@@ -1,11 +1,7 @@
+target_sources(limesuiteng PRIVATE samplesConversion.cpp)
+
+add_executable(samplesConversionPerfTest main.cpp samplesConversion.cpp)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-Wall -Wpedantic)
-    add_compile_options(-O3 -march=native)
-    #add_compile_options(-O3 -march=native -fopt-info-vec-all)
+    target_compile_options(samplesConversionPerfTest PUBLIC -Wall -Wpedantic -O3 -march=native)
+    #target_compile_options(samplesConversionPerfTest PUBLIC -fopt-info-vec-all)
 endif()
-
-add_library(samplesConversion STATIC samplesConversion.cpp)
-target_include_directories(samplesConversion PUBLIC ${LIME_SUITE_INCLUDES})
-
-add_executable(samplesConversionPerfTest main.cpp)
-target_link_libraries(samplesConversionPerfTest samplesConversion)
