@@ -14,12 +14,12 @@ if(WIN32)
 
     #when using static libs specify FTD3XX_STATIC
     if(FTD3XX_STATIC)
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static/FTD3XX.lib SetupAPI)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static_Lib/FTD3XX.lib SetupAPI)
         target_compile_definitions(limesuiteng PRIVATE FTD3XX_STATIC)
     else()
         #when using dynamic libs install the dll to bin/
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/FTD3XX.lib SetupAPI)
-        install(FILES ${FTD3XX_LIB_DIR}/FTD3XX.dll DESTINATION bin)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.lib SetupAPI)
+        install(FILES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.dll DESTINATION bin)
     endif()
 
     message(STATUS "FTDI_INCLUDE_DIRS: ${FTDI_INCLUDE_DIRS}")
