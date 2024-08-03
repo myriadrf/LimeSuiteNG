@@ -2,11 +2,11 @@
 
 #include <string_view>
 
-#include "LimeSDR_Mini.h"
+#include "LimeSDR_Mini/LimeSDR_Mini.h"
 #include "limesuiteng/DeviceHandle.h"
-#include "USB_CSR_Pipe_Mini.h"
-#include "LMS64C_LMS7002M_Over_USB.h"
-#include "LMS64C_FPGA_Over_USB.h"
+#include "LimeSDR_Mini/USB_CSR_Pipe_Mini.h"
+#include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
+#include "comms/USB/LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
 #include "FT601/FT601.h"
 

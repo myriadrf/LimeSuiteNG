@@ -1,13 +1,1 @@
-########################################################################
-## Support for LimeSDR Mini v1 board
-########################################################################
-set(THIS_SOURCE_DIR boards/LimeSDR_Mini)
-
-set(LIMESDR_MINI_SOURCES
-    ${THIS_SOURCE_DIR}/LimeSDR_Mini.cpp ${THIS_SOURCE_DIR}/FPGA_Mini.cpp ${THIS_SOURCE_DIR}/USB_CSR_Pipe_Mini.cpp)
-
-########################################################################
-## Add to library
-########################################################################
-target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
-target_sources(limesuiteng PRIVATE ${LIMESDR_MINI_SOURCES})
+target_sources(limesuiteng PRIVATE LimeSDR_Mini.cpp FPGA_Mini.cpp USB_CSR_Pipe_Mini.cpp)

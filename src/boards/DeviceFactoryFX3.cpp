@@ -4,11 +4,11 @@
 #include <string_view>
 
 #include "limesuiteng/DeviceHandle.h"
-#include "LimeSDR.h"
+#include "LimeSDR/LimeSDR.h"
 #include "FX3/FX3.h"
-#include "USB_CSR_Pipe_SDR.h"
-#include "LMS64C_LMS7002M_Over_USB.h"
-#include "LMS64C_FPGA_Over_USB.h"
+#include "LimeSDR/USB_CSR_Pipe_SDR.h"
+#include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
+#include "comms/USB/LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
 
 using namespace lime;
