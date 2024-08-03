@@ -5,7 +5,7 @@
 #ifdef __unix__
     #include "comms/USB/UnixUsb.h"
 #else
-    #include "FTD3XXLibrary/FTD3XX.h"
+    #include "FTD3XX.h"
 #endif
 
 namespace lime {
