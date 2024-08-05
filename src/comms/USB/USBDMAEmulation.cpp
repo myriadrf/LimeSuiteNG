@@ -134,6 +134,7 @@ void USBDMAEmulation::UpdateProducerStates()
         pendingXfers.pop();
         transfers.push(async);
         ++counters.transfersCompleted;
+        counters.transfersCompleted &= 0xFFFF;
     }
     if (!continuous)
         return;
