@@ -39,6 +39,8 @@ fetchcontent_declare(
 
 set(BUILD_SHARED_LIBS_ORIG ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_BUILD_TYPE_ORIG ${CMAKE_BUILD_TYPE})
+set(CMAKE_BUILD_TYPE "Release") # always build kissFFT in release mode, for better performance.
 set(KISSFFT_OPENMP
     OFF
     CACHE INTERNAL "")
@@ -72,6 +74,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
     target_compile_options(kissfft PRIVATE -Wno-strict-prototypes -Wno-newline-eof -Wno-cast-align)
 endif()
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
+set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_ORIG})
 
 # Download easily downloadable header only ones
 
