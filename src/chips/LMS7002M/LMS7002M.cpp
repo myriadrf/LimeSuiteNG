@@ -318,13 +318,24 @@ OpStatus LMS7002M::SetActiveChannel(const Channel ch)
 
 LMS7002M::Channel LMS7002M::GetActiveChannel(bool fromChip)
 {
-    auto result{ GetActiveChannelIndex(fromChip) };
-    return static_cast<Channel>(result);
+    size_t index{ GetActiveChannelIndex(fromChip) };
+    return index == 0 ? Channel::ChA : Channel::ChB;
 }
 
 size_t LMS7002M::GetActiveChannelIndex(bool fromChip)
 {
     uint8_t result = lms7002m_get_active_channel(mC_impl);
+    switch (result)
+    {
+    case LMS7002M_CHANNEL_A:
+        return 0;
+    case LMS7002M_CHANNEL_B:
+        return 1;
+    case LMS7002M_CHANNEL_AB:
+        lime::warning("LMS7002M: current MAC value is 3, forcing to 1 to allow reads from all registers");
+        lms7002m_set_active_channel(mC_impl, LMS7002M_CHANNEL_A);
+        return 0;
+    }
     return result;
 }
 
