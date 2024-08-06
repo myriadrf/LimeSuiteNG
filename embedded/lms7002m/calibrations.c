@@ -747,6 +747,9 @@ static void lms7002m_calibrate_iq_imbalance(lms7002m_context* self, bool isTx)
 
 lime_Result lms7002m_calibrate_rx(lms7002m_context* self, uint32_t bandwidthRF, bool extLoopback, bool dcOnly)
 {
+    if (bandwidthRF < offsetNCO * calibUserBwDivider)
+        bandwidthRF = offsetNCO * calibUserBwDivider;
+
     const uint16_t x0020val = lms7002m_spi_read(self, 0x0020); //remember used channel
 
     LMS7002M_LOG(self,
