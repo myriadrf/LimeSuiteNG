@@ -45,6 +45,25 @@ using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
+// converts [-1:1] into [-32768:32767]
+static constexpr int16_t NormalFloatToInt16(const float value)
+{
+    return (value > 0) ? value * 32767 : value * -32768;
+}
+
+static constexpr float Int16ToNormalFloat(int16_t value)
+{
+    return (value > 0) ? value / 32767.0 : value / 32768.0;
+}
+
+static_assert(NormalFloatToInt16(1.0) == 32767);
+//static_assert(NormalFloatToInt16(-1.0) == -32768);
+static_assert(NormalFloatToInt16(0) == 0.0);
+
+static_assert(Int16ToNormalFloat(32767) == 1.0);
+static_assert(Int16ToNormalFloat(-32768) == -1.0);
+static_assert(Int16ToNormalFloat(0) == 0.0);
+
 /// @brief Converts the channel in integer form to enumerator form.
 /// @param channel The channel number to convert.
 /// @return The enumerator equivalent of the channel.
@@ -1164,10 +1183,10 @@ OpStatus LMS7002M::SetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, const floa
     {
         if (coef[i] < -1 || coef[i] > 1)
         {
-            lime::warning("Coefficient %f is outside of range [-1:1], incorrect value will be written.", coef[i]);
+            lime::error("Coefficient[%i] = %f is outside of range [-1:1], incorrect value will be written.", i, coef[i]);
+            return OpStatus::InvalidValue;
         }
-
-        integers[i] = coef[i] * 32767;
+        integers[i] = NormalFloatToInt16(coef[i]);
     }
 
     lime_Result result = lms7002m_set_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, integers.data(), coefCount);
@@ -1180,9 +1199,7 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
 
     lime_Result result = lms7002m_get_gfir_coefficients(mC_impl, dir == TRXDir::Tx, gfirIndex, integers.data(), coefCount);
     for (uint8_t i = 0; i < coefCount; ++i)
-    {
-        coef[i] = integers[i] / 32768.0;
-    }
+        coef[i] = Int16ToNormalFloat(integers[i]);
 
     return ResultToStatus(result);
 }
