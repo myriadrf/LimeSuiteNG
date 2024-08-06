@@ -1341,32 +1341,48 @@ lime_Result lms7002m_set_gfir_coefficients(
     if (gfirIndex > 2)
         return lime_Result_OutOfRange;
 
-    const uint8_t maxCoefCount = gfirIndex < 2 ? 40 : 120;
+    // [dependency] GFIR clock divider and coefficients count depends on TSP oversampling.
+    // So sampling rate should be already configured, or has to update GFIR*_N.
+    // TODO: But if coefficients max count is affected, what to do with coefficients?
+    // If count is increased, coefficients could be reshuffled into expected bank rows and append extra 0
+    // If count is decreased, some coefficients would be unused and would not produce the same output.
+    const uint8_t ovr = lms7002m_spi_read_csr(self, isTx ? LMS7002M_HBI_OVR_TXTSP : LMS7002M_HBD_OVR_RXTSP);
+    const uint8_t oversample = (ovr != 7) ? (2 << ovr) : 1; // 7 is bypass, otherwise 2**(ovr+1)
+
+    const uint8_t bankCount = gfirIndex < 2 ? 5 : 15;
+    const uint8_t bankLength = oversample > 8 ? 8 : oversample;
+
+    const uint8_t maxCoefCount = bankCount * bankLength;
+    // if coefCount is less than maxCoefCount, extra '0' coefficients will be written
     if (coefCount > maxCoefCount)
     {
         LMS7002M_LOG(self,
             lime_LogLevel_Error,
-            "lms7002m_set_gfir_coefficients: GFIR%i supports up to %i coefficients, given(%i)",
+            "%s: given(%i) coefficients, but %s GFIR%i is limited to %i coefficients, by oversample(%i). "
+            "Max coefficients count is equal to oversampling*%i, up to max of %i.",
+            __func__,
+            coefCount,
+            (isTx ? "Tx" : "Rx"),
             gfirIndex + 1,
             maxCoefCount,
-            coefCount);
+            oversample,
+            bankCount,
+            bankCount * 8);
         return lime_Result_OutOfRange;
     }
 
-    // actual used coefficients count is multiple of 'bankCount'
-    // if coefCount is not multiple, extra '0' coefficients will be written
-    const uint8_t bankCount = gfirIndex < 2 ? 5 : 15;
-    const bool isPartialFill = (coefCount % bankCount != 0);
-    const uint8_t bankLength = coefCount / bankCount + isPartialFill;
-    const int16_t actualCoefCount = bankLength * bankCount;
-    assert(actualCoefCount <= maxCoefCount);
-
     struct lms7002m_csr gfirL_param = LMS7002M_GFIR1_L_TXTSP;
     gfirL_param.address += gfirIndex + (isTx ? 0 : 0x0200);
+    // L = ceil(coefCount/bankCount) - 1
     lms7002m_spi_modify_csr(self, gfirL_param, bankLength - 1);
 
+    struct lms7002m_csr gfirN_param = LMS7002M_GFIR1_N_TXTSP;
+    gfirN_param.address += gfirIndex + (isTx ? 0 : 0x0200);
+    // actual clock division ratio is gfirN + 1
+    lms7002m_spi_modify_csr(self, gfirN_param, oversample - 1);
+
     const uint16_t startAddr = 0x0280 + (gfirIndex * 0x40) + (isTx ? 0 : 0x0200);
-    for (int i = 0; i < actualCoefCount; ++i)
+    for (int i = 0; i < maxCoefCount; ++i)
     {
         const uint8_t bank = i / bankLength;
         const uint8_t bankRow = i % bankLength;
@@ -1390,6 +1406,9 @@ lime_Result lms7002m_get_gfir_coefficients(
     if (gfirIndex > 2)
         return lime_Result_OutOfRange;
 
+    // TODO: Readback coefficients in the order that they are used?
+    // Actual used coefficients count and their addresses depends on oversampling
+    // Coefficients readback won't match what was set, unless the maximum coefficients count was actually used.
     const uint8_t coefLimit = gfirIndex < 2 ? 40 : 120;
 
     if (coefCount > coefLimit)
@@ -1470,6 +1489,21 @@ lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, uint32_t cg
         const bool mimoBypass = (hbi == 7) && (siso == 0);
         lms7002m_spi_modify_csr(self, LMS7002M_TXRDCLK_MUX, mimoBypass ? 0 : 2);
         lms7002m_spi_modify_csr(self, LMS7002M_TXWRCLK_MUX, 0);
+    }
+
+    // [dependency] GFIR*_N clock dividers depend on HBI, HBD
+    // TODO: also affects GFIR*L, which affects coefficients ordering, see: lms7002m_set_gfir_coefficients
+    {
+        uint8_t gfirN = (hbi == 7) ? 0 : (2 << hbi) - 1;
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, gfirN);
+    }
+    {
+        uint8_t gfirN = (hbd == 7) ? 0 : (2 << hbd) - 1;
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, gfirN);
     }
 
     return lms7002m_set_frequency_cgen(self, cgen_freq_Hz);
