@@ -112,6 +112,7 @@ install(
     RUNTIME DESTINATION bin # .dll file
 )
 
+# comms has to be processed before boards, to set up cmake variables needed for board support
 add_subdirectory(comms)
 add_subdirectory(boards)
 add_subdirectory(chips)
