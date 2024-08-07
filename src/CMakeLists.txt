@@ -112,16 +112,16 @@ install(
     RUNTIME DESTINATION bin # .dll file
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-
-add_subdirectory(boards)
 add_subdirectory(comms)
+add_subdirectory(boards)
 add_subdirectory(chips)
 add_subdirectory(DSP)
 add_subdirectory(examples)
 add_subdirectory(utilities)
 add_subdirectory(vectorization)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 
 ########################################################################
 # Build pkg config file
