@@ -115,6 +115,22 @@ static void limesuiteng_trx_dump_info(TRXState* s, trx_printf_cb cb, void* opaqu
     // cb(buffer, "%s\n", ss.str().c_str());
 }
 
+static void limesuiteng_trx_write_func(
+    TRXState* s, trx_timestamp_t timestamp, const void** samples, int count, int flags, int tx_port_index)
+{
+    if (!samples) // Nothing to transmit
+        return;
+
+    StreamMeta meta{};
+    meta.timestamp = timestamp;
+    meta.waitForTimestamp = true;
+    meta.flushPartialPacket = (flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
+
+    // samples format conversion is done internally
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
+    LimePlugin_Write_complex32f(lime, reinterpret_cast<const lime::complex32f_t* const*>(samples), count, tx_port_index, meta);
+}
+
 // count - can be configured by 'trx_get_tx_samples_per_packet_func' callback
 // if samples==NULL, Tx has to be disabled
 // samples are ranged [-1.0 : +1.0]
@@ -137,6 +153,18 @@ static void limesuiteng_trx_write_func2(
     //     md->cur_timestamp_set = 1;
     // }
     LimePlugin_Write_complex32f(lime, reinterpret_cast<const lime::complex32f_t* const*>(samples), count, port, meta);
+}
+
+static int limesuiteng_trx_read_func(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int rx_port_index)
+{
+    StreamMeta meta{};
+    meta.waitForTimestamp = false;
+    meta.flushPartialPacket = false;
+
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
+    int samplesGot = LimePlugin_Read_complex32f(lime, reinterpret_cast<lime::complex32f_t**>(samples), count, rx_port_index, meta);
+    *ptimestamp = meta.timestamp; // if timestamp is not updated, amarisoft will freeze
+    return samplesGot;
 }
 
 // Read has to block until at least 1 sample is available and must return at most 'count' samples
@@ -325,6 +353,35 @@ static int limesuiteng_trx_set_start_params(TRXState* s1, const TRXDriverParams2
     return LimePlugin_Setup(lime, &state);
 }
 
+static int limesuiteng_trx_start_func(TRXState* s1, const TRXDriverParams* params)
+{
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
+    LimeRuntimeParameters state;
+
+    int rxCount = params->rx_channel_count;
+    int txCount = params->tx_channel_count;
+
+    CopyCArrayToVector(state.rx.freq, params->rx_freq, rxCount);
+    CopyCArrayToVector(state.tx.freq, params->tx_freq, txCount);
+
+    CopyCArrayToVector(state.rx.gain, params->rx_gain, rxCount);
+    CopyCArrayToVector(state.tx.gain, params->tx_gain, txCount);
+
+    CopyCArrayToVector(state.rx.bandwidth, params->rx_bandwidth, rxCount);
+    CopyCArrayToVector(state.tx.bandwidth, params->tx_bandwidth, txCount);
+
+    for (int i = 0; i < params->rf_port_count; ++i)
+    {
+        double sample_rate = static_cast<double>(params->sample_rate[i].num) / params->sample_rate[i].den;
+        state.rf_ports.push_back({ sample_rate, params->rx_port_channel_count[i], params->tx_port_channel_count[i] });
+    }
+
+    int status = LimePlugin_Setup(lime, &state);
+    if (status != 0)
+        return status;
+    return LimePlugin_Start(lime);
+}
+
 static int limesuiteng_trx_start_func2(TRXState* s1, const TRXDriverParams2* params)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
@@ -368,9 +425,9 @@ int __attribute__((visibility("default"))) trx_driver_init(TRXState* hostState)
 
     // Set callbacks
     hostState->opaque = lime;
-    // hostState->trx_start_func = // Obsolete;
-    // hostState->trx_write_func = // Deprecated
-    // hostState->trx_read_func = // Deprecated
+    hostState->trx_start_func = limesuiteng_trx_start_func; // Obsolete
+    hostState->trx_write_func = limesuiteng_trx_write_func; // Deprecated
+    hostState->trx_read_func = limesuiteng_trx_read_func; // Deprecated
     hostState->trx_set_tx_gain_func = limesuiteng_trx_set_tx_gain_func;
     hostState->trx_set_rx_gain_func = limesuiteng_trx_set_rx_gain_func;
 
