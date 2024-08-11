@@ -93,9 +93,9 @@ void StreamComposite::StreamDestroy()
     }
 }
 
-template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count, StreamMeta* meta)
+template<class T> uint32_t StreamComposite::StreamRx(T* const* samples, uint32_t count, StreamMeta* meta)
 {
-    T** dest = samples;
+    T* const* dest = samples;
     StreamMeta subDeviceMeta[8]{};
     int8_t i = 0;
     for (auto& a : mActiveAggregates)
@@ -151,9 +151,9 @@ uint64_t StreamComposite::GetHardwareTimestamp()
 
 // force instantiate functions with these types
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex16_t>(
-    lime::complex16_t** samples, uint32_t count, StreamMeta* meta);
+    lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex32f_t>(
-    lime::complex32f_t** samples, uint32_t count, StreamMeta* meta);
+    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex16_t>(
     const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex32f_t>(

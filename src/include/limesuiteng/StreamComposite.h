@@ -44,7 +44,7 @@ class LIME_API StreamComposite
 
     /// @copydoc TRXLooper::StreamRx()
     /// @tparam T The type of streams to send.
-    template<class T> uint32_t StreamRx(T** samples, uint32_t count, StreamMeta* meta);
+    template<class T> uint32_t StreamRx(T* const* samples, uint32_t count, StreamMeta* meta);
 
     /// @copydoc TRXLooper::StreamTx()
     /// @tparam T The type of streams to receive.

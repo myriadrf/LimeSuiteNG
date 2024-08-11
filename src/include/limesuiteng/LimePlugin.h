@@ -151,9 +151,9 @@ LIME_API int LimePlugin_Write_complex32f(
 LIME_API int LimePlugin_Write_complex16(
     LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 LIME_API int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t** samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 LIME_API int LimePlugin_Read_complex16(
-    LimePluginContext* context, lime::complex16_t** samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
 {
