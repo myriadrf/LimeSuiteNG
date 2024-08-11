@@ -251,16 +251,13 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
 }
 
 // return expected number of samples in Tx packet
-// !!! sometimes trx_lms7002m_write gets calls with samples count more than returned here
-static int trx_lms7002m_get_tx_samples_per_packet_func(TRXState* s1)
+static int limesuiteng_trx_get_tx_samples_per_packet_func(TRXState* s1)
 {
-    // LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    int txExpectedSamples = 256; //lime->samplesInPacket[0];
-    // if (lime->streamExtras[0] && lime->streamExtras[0]->tx.samplesInPacket > 0)
-    // {
-    //     txExpectedSamples = lime->streamExtras[0]->tx.samplesInPacket;
-    // }
-    // Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
+    // This impacts host processing performance at high sampling rates.
+    // The limesuiteng API can accept any number of samples, and splits them into
+    // multiple packets internally. So this can be any number.
+    const int txExpectedSamples = 8192;
+    Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
     return txExpectedSamples;
 }
 
@@ -378,7 +375,7 @@ int __attribute__((visibility("default"))) trx_driver_init(TRXState* hostState)
     hostState->trx_set_rx_gain_func = trx_lms7002m_set_rx_gain_func;
 
     hostState->trx_end_func = trx_lms7002m_end;
-    hostState->trx_get_tx_samples_per_packet_func = trx_lms7002m_get_tx_samples_per_packet_func;
+    hostState->trx_get_tx_samples_per_packet_func = limesuiteng_trx_get_tx_samples_per_packet_func;
     hostState->trx_get_stats = trx_lms7002m_get_stats;
     hostState->trx_dump_info = trx_lms7002m_dump_info;
     hostState->trx_get_abs_tx_power_func = trx_lms7002m_get_abs_tx_power_func;
