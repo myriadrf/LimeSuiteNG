@@ -625,7 +625,7 @@ void LimeSDR_MMX8::StreamStart(uint8_t moduleIndex)
     StreamStart(index);
 }
 
-void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t> moduleIndexes)
+void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t>& moduleIndexes)
 {
     // X8 board has two stage stream start.
     // start stream for expected subdevices, they will wait for secondary enable from main fpga register
@@ -648,7 +648,7 @@ void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
     StreamStop(index);
 }
 
-void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t> moduleIndexes)
+void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t>& moduleIndexes)
 {
     FPGA tempFPGA(mMainFPGAcomms, nullptr);
     int interface_ctrl_000A = tempFPGA.ReadRegister(0x000A);
