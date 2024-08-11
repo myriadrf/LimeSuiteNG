@@ -4,6 +4,7 @@
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/RFSOCDescriptor.h"
+#include "limesuiteng/Logger.h"
 #include <assert.h>
 namespace lime {
 
@@ -95,9 +96,11 @@ void StreamComposite::StreamDestroy()
 template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count, StreamMeta* meta)
 {
     T** dest = samples;
+    StreamMeta subDeviceMeta[8]{};
+    int8_t i = 0;
     for (auto& a : mActiveAggregates)
     {
-        uint32_t ret = a.device->StreamRx(a.streamIndex, dest, count, meta);
+        uint32_t ret = a.device->StreamRx(a.streamIndex, dest, count, &subDeviceMeta[i]);
         if (ret != count)
         {
             return ret;
@@ -105,6 +108,21 @@ template<class T> uint32_t StreamComposite::StreamRx(T** samples, uint32_t count
 
         dest += a.channels.size();
     }
+
+    bool misalignedTimestamps{ false };
+    for (; i >= 0; --i)
+    {
+        if (subDeviceMeta[i].timestamp != subDeviceMeta[0].timestamp)
+        {
+            misalignedTimestamps = true;
+            break;
+        }
+    }
+    if (misalignedTimestamps)
+        lime::error("StreamComposite: misaligned timestamps among channels.");
+
+    if (meta)
+        meta->timestamp = subDeviceMeta[0].timestamp;
     return count;
 }
 
