@@ -834,10 +834,10 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         stream.format = context->samplesFormat;
         stream.extraConfig.negateQ = port.configInputs.double_freq_conversion_to_lower_side;
         stream.extraConfig.waitPPS = port.configInputs.syncPPS;
-        stream.extraConfig.rx.samplesInPacket = 256;
-        stream.extraConfig.rx.packetsInBatch = 4;
-        stream.extraConfig.tx.packetsInBatch = 8;
-        stream.extraConfig.tx.samplesInPacket = 256;
+        stream.extraConfig.rx.samplesInPacket = 0;
+        stream.extraConfig.rx.packetsInBatch = 0;
+        stream.extraConfig.tx.packetsInBatch = 0;
+        stream.extraConfig.tx.samplesInPacket = 0;
 
         // Initialize streams and map channels
         for (size_t ch = 0; ch < stream.channels[TRXDir::Rx].size(); ++ch)
