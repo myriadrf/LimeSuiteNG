@@ -316,6 +316,7 @@ OpStatus TRXLooper::RxSetup()
     uint32_t packetSize = payloadSize + headerSize;
     packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
 
+    mRx.packetsToBatch = 4; // TODO: adjust according to sampling rate to guarantee low latency
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
@@ -759,7 +760,7 @@ OpStatus TRXLooper::TxSetup()
     }
 
     mTx.samplesInPkt = samplesInPkt;
-
+    mTx.packetsToBatch = 32; // Tx packets can be flushed early without filling whole batch
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
         mTx.packetsToBatch = mConfig.extraConfig.tx.packetsInBatch;
@@ -802,7 +803,7 @@ OpStatus TRXLooper::TxSetup()
 
     const std::string name = "MemPool_Tx"s + std::to_string(chipId);
     const int upperAllocationLimit =
-        65536; //sizeof(complex32f_t) * mTx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
+        sizeof(complex32f_t) * mTx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mTx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 4096, name);
 
     mTx.terminate.store(false, std::memory_order_relaxed);

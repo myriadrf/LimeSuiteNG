@@ -1331,22 +1331,7 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     if (ret < 0)
         return -1;
 
-    uint32_t dmaBufferSize = 8192;
-    switch (myDevice->info.boardId)
-    {
-    case LMS_DEV_LIMESDR_X3:
-    case LMS_DEV_LIMESDR_QPCIE:
-        dmaBufferSize = 32768;
-        break;
-    case LMS_DEV_LIMESDR_XTRX:
-    case LMS_DEV_LIME_MM_X8:
-        dmaBufferSize = 8192;
-        break;
-    default:
-        dmaBufferSize = 8192;
-        dev_warn(sysDev, "DMA buffer size not specified, defaulting to %i", dmaBufferSize);
-    }
-
+    const uint32_t dmaBufferSize = 65536; // actual buffer on device can be smaller, but they support scatter/gather
     int32_t dmaFullDuplexChannels = limepcie_readl(myDevice, CSR_CNTRL_NDMA_ADDR);
     if (dmaFullDuplexChannels > MAX_DMA_CHANNEL_COUNT || dmaFullDuplexChannels < 0)
     {
