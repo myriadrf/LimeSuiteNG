@@ -44,7 +44,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
     void OnWindowFunctionChange(wxCommandEvent& event) override;
     bool Show(bool show) override;
     static void StreamingLoop(
-        fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const uint8_t channelsCount, const uint32_t format);
+        fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const uint8_t channelEnablesMask, const uint32_t format);
 
     void OnUpdateStats(wxTimerEvent& event);
     void OnUpdatePlots(wxThreadEvent& event);
