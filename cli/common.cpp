@@ -94,3 +94,19 @@ SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument)
     }
     return device;
 }
+
+int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name)
+{
+    if (name.empty())
+        return -1;
+
+    for (size_t j = 0; j < antennaNames.size(); ++j)
+    {
+        if (antennaNames[j] == name)
+            return j;
+    }
+    std::cerr << "Antenna "sv << name << " not found. Available:"sv << std::endl;
+    for (const auto& iter : antennaNames)
+        std::cerr << "\t\""sv << iter << "\""sv << std::endl;
+    return -1;
+}
