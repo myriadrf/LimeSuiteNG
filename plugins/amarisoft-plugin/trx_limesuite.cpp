@@ -385,6 +385,13 @@ static int limesuiteng_trx_start_func(TRXState* s1, const TRXDriverParams* param
 static int limesuiteng_trx_start_func2(TRXState* s1, const TRXDriverParams2* params)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
+    // params can be NULL if trx_set_start_params() was called before.
+    if (params != NULL)
+    {
+        int ret = limesuiteng_trx_set_start_params(s1, params);
+        if (ret != 0)
+            return ret;
+    }
     return LimePlugin_Start(lime);
 }
 
