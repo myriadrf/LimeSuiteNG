@@ -16,7 +16,7 @@
 
 namespace lime {
 
-class LitePCIe;
+class LimePCIe;
 class LimeSDR_XTRX;
 
 /** @brief Class for managing the LimeSDR-MMX8 device and its subdevices. */
@@ -26,7 +26,7 @@ class LimeSDR_MMX8 : public SDRDevice
     LimeSDR_MMX8() = delete;
     LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
         std::vector<std::shared_ptr<IComms>>& spiFPGA,
-        std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+        std::vector<std::shared_ptr<LimePCIe>> trxStreams,
         std::shared_ptr<ISerialPort> control,
         std::shared_ptr<ISPI> adfComms);
     ~LimeSDR_MMX8();
@@ -119,9 +119,9 @@ class LimeSDR_MMX8 : public SDRDevice
 
     OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) override;
     void StreamStart(uint8_t moduleIndex) override;
-    void StreamStart(const std::vector<uint8_t> moduleIndexes) override;
+    void StreamStart(const std::vector<uint8_t>& moduleIndexes) override;
     void StreamStop(uint8_t moduleIndex) override;
-    void StreamStop(const std::vector<uint8_t> moduleIndexes) override;
+    void StreamStop(const std::vector<uint8_t>& moduleIndexes) override;
     void StreamDestroy(uint8_t moduleIndex) override;
 
     uint32_t StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
@@ -153,7 +153,7 @@ class LimeSDR_MMX8 : public SDRDevice
   private:
     std::shared_ptr<IComms> mMainFPGAcomms;
     SDRDescriptor mDeviceDescriptor;
-    std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
+    std::vector<std::shared_ptr<LimePCIe>> mTRXStreamPorts;
     std::vector<std::unique_ptr<LimeSDR_XTRX>> mSubDevices;
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;
     std::map<uint32_t, LimeSDR_XTRX*> customParameterToDevice;

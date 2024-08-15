@@ -32,6 +32,11 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
     }
 }
 
+OpStatus USBDMAEmulation::Initialize()
+{
+    return OpStatus::Success;
+}
+
 USBDMAEmulation::~USBDMAEmulation()
 {
     AbortAllTransfers();
@@ -70,6 +75,11 @@ std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
     return mappings;
 }
 
+std::string USBDMAEmulation::GetName() const
+{
+    return "usb";
+}
+
 OpStatus USBDMAEmulation::Enable(bool enable)
 {
     continuous = false;
@@ -79,8 +89,7 @@ OpStatus USBDMAEmulation::Enable(bool enable)
         return OpStatus::Success;
     }
 
-    counters.consumerIndex = 0;
-    counters.producerIndex = 0;
+    counters.transfersCompleted = 0;
     lastRequestIndex = 0;
 
     // for USB nothing is needed to be done to just enable DMA
@@ -124,25 +133,11 @@ void USBDMAEmulation::UpdateProducerStates()
         port->FinishDataXfer(async->xfer);
         pendingXfers.pop();
         transfers.push(async);
-
-        ++counters.producerIndex;
-
-        if (dir == DataTransferDirection::HostToDevice)
-            ++counters.consumerIndex;
+        ++counters.transfersCompleted;
+        counters.transfersCompleted &= 0xFFFF;
     }
     if (!continuous)
         return;
-
-    while (!transfers.empty())
-    {
-        AsyncXfer* async = transfers.front();
-        OpStatus status = port->BeginDataXfer(async->xfer, mappings[lastRequestIndex].buffer, async->requestedSize, endpoint);
-        lastRequestIndex = (lastRequestIndex + 1) % mappings.size();
-        if (status != OpStatus::Success)
-            return;
-        transfers.pop();
-        pendingXfers.push(async);
-    }
 }
 
 USBDMAEmulation::State USBDMAEmulation::GetCounters()
@@ -153,17 +148,7 @@ USBDMAEmulation::State USBDMAEmulation::GetCounters()
 
 OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection dir, bool irq)
 {
-    int count = 0;
-    if (dir == DataTransferDirection::HostToDevice)
-    {
-        counters.producerIndex = index;
-        count = maxAsyncTransfers - (counters.consumerIndex - counters.producerIndex);
-    }
-    else
-    {
-        counters.producerIndex = index;
-        count = counters.producerIndex - counters.consumerIndex;
-    }
+    int count = 1;
 
     count = std::min(size_t(count), transfers.size());
     if (!transfers.empty() && count > 0)
@@ -184,8 +169,7 @@ OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, Dat
 
 OpStatus USBDMAEmulation::Wait()
 {
-    int count = counters.producerIndex - counters.consumerIndex;
-    if (count > 0 || pendingXfers.empty())
+    if (pendingXfers.empty())
         return OpStatus::Success;
 
     AsyncXfer* async = pendingXfers.front();

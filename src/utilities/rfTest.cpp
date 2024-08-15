@@ -510,7 +510,7 @@ int main(int argc, char** argv)
     bool okStreamSISO = FullStreamTxRx(*device, true);
     return 0;
     // !!!need to close device entirely to clear PCIE data buffers between runs, otherwise FPGA gets stuck with packets from previous run and waits for their timestamps
-    // might be LitePCIE Kernel driver issue, because closing individual write/read endpoints does not clear buffers
+    // might be LimePCIE Kernel driver issue, because closing individual write/read endpoints does not clear buffers
     DeviceRegistry::freeDevice(device);
     device = DeviceRegistry::makeDevice(handles[0]);
 

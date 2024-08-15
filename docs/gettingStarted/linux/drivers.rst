@@ -23,31 +23,31 @@ LimeSuiteNG uses ``libusb-1.0`` library to communicate with the USB devices. It 
 PCIe
 ----
 
-LimeSuiteNG contains "litepcie" linux kernel module for communicating with PCIe based devices.
-If the PCIe devices are not detected by ``limeDevice``, inspect the system log for "litepcie" errors.
+LimeSuiteNG contains "limepcie" linux kernel module for communicating with PCIe based devices.
+If the PCIe devices are not detected by ``limeDevice``, inspect the system log for "limepcie" errors.
 For successfully detected device the output should look like:
 
 .. code-block:: bash
 
-	user@computer:~$ sudo dmesg | grep litepcie
-	[    3.907729] litepcie 0000:04:00.0: [Probing device]
-	[    3.907766] litepcie 0000:04:00.0: enabling device (0000 -> 0002)
-	[    3.907795] litepcie 0000:04:00.0: BAR0 address=0x000000008d46aa6e
-	[    3.928825] litepcie 0000:04:00.0: 1 MSI IRQs allocated.
-	[    3.938803] litepcie 0000:04:00.0: [device info] LimeXTRX FW:1 HW:0 PROTOCOL:1 S/N:0x0000000000000000
-	[    3.938808] litepcie 0000:04:00.0: DMA channels: 1, buffer size: 8192, buffers count: 256
-	[    3.938812] litepcie 0000:04:00.0: Creating /dev/LimeXTRX0_trx0
-	[    3.938877] litepcie 0000:04:00.0: Creating /dev/LimeXTRX0_control
+	user@computer:~$ sudo dmesg | grep limepcie
+	[    3.907729] limepcie 0000:04:00.0: [Probing device]
+	[    3.907766] limepcie 0000:04:00.0: enabling device (0000 -> 0002)
+	[    3.907795] limepcie 0000:04:00.0: BAR0 address=0x000000008d46aa6e
+	[    3.928825] limepcie 0000:04:00.0: 1 MSI IRQs allocated.
+	[    3.938803] limepcie 0000:04:00.0: [device info] LimeXTRX FW:1 HW:0 PROTOCOL:1 S/N:0x0000000000000000
+	[    3.938808] limepcie 0000:04:00.0: DMA channels: 1, buffer size: 8192, buffers count: 256
+	[    3.938812] limepcie 0000:04:00.0: Creating /dev/LimeXTRX0_trx0
+	[    3.938877] limepcie 0000:04:00.0: Creating /dev/LimeXTRX0_control
 
-If the system log does not contain errors or does not show any messages from the "litepcie" module, check if the kernel module is actually loaded:
+If the system log does not contain errors or does not show any messages from the "limepcie" module, check if the kernel module is actually loaded:
 
 .. code-block:: bash
 
-	user@computer:~$ lsmod | grep litepcie
-	litepcie               45056  0
+	user@computer:~$ lsmod | grep limepcie
+	limepcie               45056  0
 
 If the module is not in the loaded modules list, it can be loaded manually by:
 
 .. code-block:: bash
 
-	user@computer:~$ sudo modprobe litepcie
+	user@computer:~$ sudo modprobe limepcie

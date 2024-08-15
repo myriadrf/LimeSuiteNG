@@ -11,8 +11,8 @@
 
 namespace lime {
 
-class LitePCIe;
-class Equalizer;
+class LimePCIe;
+class CrestFactorReduction;
 class SlaveSelectShim;
 class ISerialPort;
 class IComms;
@@ -24,7 +24,7 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     LimeSDR_X3() = delete;
     LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         std::shared_ptr<IComms> spiFPGA,
-        std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+        std::vector<std::shared_ptr<LimePCIe>> trxStreams,
         std::shared_ptr<ISerialPort> control);
     ~LimeSDR_X3();
 
@@ -76,8 +76,8 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);
 
     std::unique_ptr<CDCM_Dev> mClockGeneratorCDCM;
-    std::unique_ptr<Equalizer> mEqualizer;
-    std::vector<std::shared_ptr<LitePCIe>> mTRXStreamPorts;
+    std::vector<std::shared_ptr<LimePCIe>> mTRXStreamPorts;
+    std::unique_ptr<CrestFactorReduction> mEqualizer;
 
     std::array<std::shared_ptr<SlaveSelectShim>, 3> mLMS7002Mcomms;
     std::shared_ptr<IComms> mfpgaPort;

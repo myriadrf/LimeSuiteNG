@@ -12,6 +12,7 @@
 #include <signal.h>
 #include "kiss_fft.h"
 #include "args.hxx"
+#include "common.h"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif
@@ -19,7 +20,7 @@
 using namespace lime;
 using namespace std::literals::string_view_literals;
 
-static const double frequencyLO = 1.9e9;
+double frequencyLO = 1.9e9;
 float sampleRate = 10e6;
 static uint8_t chipIndex = 0; // device might have several RF chips
 
@@ -38,28 +39,14 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
     std::cout << msg << std::endl;
 }
 
-static int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name)
-{
-    if (name.empty())
-        return -1;
-
-    for (size_t j = 0; j < antennaNames.size(); ++j)
-    {
-        if (antennaNames[j] == name)
-            return j;
-    }
-    std::cerr << "Antenna "sv << name << " not found. Available:"sv << std::endl;
-    for (const auto& iter : antennaNames)
-        std::cerr << "\t\""sv << iter << "\""sv << std::endl;
-    return -1;
-}
-
 int main(int argc, char** argv)
 {
     // clang-format off
     args::ArgumentParser            parser("basicRX - minimal RX example", "");
+    args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
 
     args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
+    args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
     // clang-format on
 
@@ -77,26 +64,17 @@ int main(int argc, char** argv)
     }
 
     lime::registerLogHandler(LogCallback);
-    auto handles = DeviceRegistry::enumerate();
     float peakAmplitude = -1000, peakFrequency = 0;
 
-    if (handles.size() == 0)
-    {
-        printf("No devices found\n");
-        return -1;
-    }
-    std::cout << "Devices found :"sv << std::endl;
-    for (size_t i = 0; i < handles.size(); i++)
-        std::cout << i << ": "sv << handles[i].Serialize() << std::endl;
-    std::cout << std::endl;
-
-    // Use first available device
-    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
+    const std::string devName = args::get(deviceFlag);
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
         return -1;
     }
+    std::cout << "Connected to device: " << device->GetDescriptor().name << std::endl;
+
     device->SetMessageLogCallback(LogCallback);
     device->Init();
 
@@ -121,6 +99,12 @@ int main(int argc, char** argv)
     }
 
     std::cout << "Using antenna "sv << chipDescriptor.pathNames.at(TRXDir::Rx).at(rxPath) << std::endl;
+
+    if (rxloFlag)
+    {
+        frequencyLO = args::get(rxloFlag);
+    }
+    std::cout << "Receiver center frequency: " << std::fixed << std::setprecision(3) << frequencyLO / 1e6 << " MHz" << std::endl;
 
     // RF parameters
     SDRConfig config;

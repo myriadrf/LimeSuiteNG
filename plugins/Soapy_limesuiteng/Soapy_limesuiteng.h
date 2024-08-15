@@ -264,20 +264,15 @@ class Soapy_limesuiteng : public SoapySDR::Device
         double GFIRBandwidth;
         int DCTestAmplitude;
     };
-
-    const std::string _moduleName;
     lime::SDRDevice* sdrDevice;
-    std::set<SoapySDR::Stream*> activeStreams;
 
     lime::StreamConfig streamConfig;
+    bool isStreamRunning;
 
     mutable std::recursive_mutex _accessMutex;
 
     std::array<double, 2> sampleRate; // sampleRate[direction]
     int oversampling;
-
-    std::map<std::size_t, int> _interps;
-    std::map<std::size_t, int> _decims;
 
     std::array<std::vector<SettingsCache>, 2> settingsCache; // settingsCache[direction]
 };

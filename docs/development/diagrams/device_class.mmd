@@ -407,7 +407,7 @@ classDiagram
 
             -CDCM_Dev mClockGeneratorCDCM
             -Equalizer mEqualizer
-            -LitePCIe mTRXStreamPorts[]
+            -LimePCIe mTRXStreamPorts[]
             -SlaveSelectShim mLMS7002Mcomms[3]
             -IComms fpgaPort
         }
@@ -440,7 +440,7 @@ classDiagram
 
             -IComms lms7002mPort
             -IComms fpgaPort
-            -LitePCIe mStreamPort
+            -LimePCIe mStreamPort
             -ISerialPort mSerialPort
         }
 
@@ -543,7 +543,7 @@ classDiagram
             +UploadTxWaveform(...)
             
             -IComms mMainFPGAcomms
-            -LitePCIe mTRXStreamPorts[]
+            -LimePCIe mTRXStreamPorts[]
             -LimeSDR_XTRX mSubDevices[]
             -ADF4002 mADF
         }
@@ -589,7 +589,7 @@ classDiagram
     %%}
 
     %%namespace PCIeCommunications {
-        class LitePCIeDMA {
+        class LimePCIeDMA {
             +Enable(bool)
             +EnableContinuous(...)
             +GetCounters() State
@@ -599,7 +599,7 @@ classDiagram
             +GetBuffers() Buffer[]
         }
 
-        class LitePCIe {
+        class LimePCIe {
             +Device communication functions()
         }
 
@@ -607,7 +607,7 @@ classDiagram
             +SPI(...)
             +ResetDevice(...)
 
-            -LitePCIe port
+            -LimePCIe port
         }
 
         class LMS64C_FPGA_Over_PCIe {
@@ -616,14 +616,14 @@ classDiagram
             +CustomParameterRead(...)
             +ProgramWrite(...)
 
-            -LitePCIe port
+            -LimePCIe port
         }
 
         class LMS64C_LMS7002M_Over_PCIe_MMX8 {
             +SPI(...)
             +ResetDevice(...)
 
-            -LitePCIe port
+            -LimePCIe port
         }
 
         class LMS64C_FPGA_Over_PCIe_MMX8 {
@@ -632,19 +632,19 @@ classDiagram
             +CustomParameterRead(...)
             +ProgramWrite(...)
 
-            -LitePCIe port
+            -LimePCIe port
         }
 
         class LMS64C_ADF_Over_PCIe_MMX8 {
             +SPI(...)
-            -LitePCIe port
+            -LimePCIe port
         }
 
         class PCIE_CSR_Pipe {
             +Write(...) int
             +Read(...) int
 
-            #LitePCIe port
+            #LimePCIe port
         }
     %%}
 
@@ -833,7 +833,7 @@ classDiagram
     LMS64C_LMS7002M_Over_PCIe_MMX8 ..|> IComms
 
     USBDMAEmulation ..|> IDMA
-    LitePCIeDMA ..|> IDMA
+    LimePCIeDMA ..|> IDMA
 
     %% SDRDevice implementations
     SDRDevice <|-- LMS7002M_SDRDevice
@@ -883,7 +883,7 @@ classDiagram
     USBDMAEmulation ..> IUSB
 
     %% PCIe connections
-    PCIE_CSR_Pipe ..> LitePCIe
+    PCIE_CSR_Pipe ..> LimePCIe
     SlaveSelectShim ..> IComms
 
     LMS64C_FPGA_Over_PCIe ..> PCIE_CSR_Pipe
@@ -893,10 +893,10 @@ classDiagram
     LMS64C_FPGA_Over_PCIe_MMX8 ..> PCIE_CSR_Pipe
     LMS64C_LMS7002M_Over_PCIe_MMX8 ..> PCIE_CSR_Pipe
 
-    LitePCIeDMA ..> LitePCIe
+    LimePCIeDMA ..> LimePCIe
 
     %% PCIe entry connections
-    DeviceFactoryPCIe ..> LitePCIe
+    DeviceFactoryPCIe ..> LimePCIe
     DeviceFactoryPCIe ..> LMS64C_LMS7002M_Over_PCIe
     DeviceFactoryPCIe ..> LMS64C_FPGA_Over_PCIe
     DeviceFactoryPCIe ..> LMS64C_LMS7002M_Over_PCIe_MMX8
@@ -906,17 +906,17 @@ classDiagram
     %% PCIe devices
     LimeSDR_X3 ..> CDCM_Dev
     LimeSDR_X3 ..> Equalizer
-    LimeSDR_X3 ..> LitePCIe
+    LimeSDR_X3 ..> LimePCIe
     LimeSDR_X3 ..> SlaveSelectShim
     LimeSDR_X3 ..> IComms
     FPGA_X3 <.. LimeSDR_X3 
 
     LimeSDR_XTRX ..> IComms
-    LimeSDR_XTRX ..> LitePCIe
+    LimeSDR_XTRX ..> LimePCIe
     LimeSDR_XTRX ..> FPGA_XTRX
 
     LimeSDR_MMX8 ..> IComms
-    LimeSDR_MMX8 ..> LitePCIe
+    LimeSDR_MMX8 ..> LimePCIe
     LimeSDR_MMX8 ..> LimeSDR_XTRX
     LimeSDR_MMX8 ..> ADF4002
 

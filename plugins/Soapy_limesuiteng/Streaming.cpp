@@ -26,13 +26,12 @@ struct IConnectionStream {
     int direction{};
     size_t elemSize{};
     size_t elemMTU{};
-    bool skipCal{};
 
     // Rx command requests
-    bool hasCmd{};
+    bool rxBurstRequest{};
     int flags{};
-    long long timeNs{};
-    size_t numElems{};
+    long long rxBurstStart_timeNs{};
+    size_t rxBurstSamples{};
 
     StreamConfig streamConfig;
 };
@@ -49,6 +48,8 @@ std::vector<std::string> Soapy_limesuiteng::getStreamFormats(
 std::string Soapy_limesuiteng::getNativeStreamFormat(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel, double& fullScale) const
 {
+    // LimeSDR native format can be CS16 or CS12, it's selected during StreamSetup
+    // but getNativeStreamFormat can be called before StreamSetup, so it's not entirely correct
     fullScale = 32767;
     return SOAPY_SDR_CS16;
 }
@@ -57,29 +58,6 @@ SoapySDR::ArgInfoList Soapy_limesuiteng::getStreamArgsInfo(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
     SoapySDR::ArgInfoList argInfos;
-
-    // Buffer length
-    {
-        SoapySDR::ArgInfo info;
-        info.value = "0";
-        info.key = "bufferLength";
-        info.name = "Buffer Length";
-        info.description = "The buffer transfer size over the link.";
-        info.units = "samples";
-        info.type = SoapySDR::ArgInfo::INT;
-        argInfos.push_back(info);
-    }
-
-    // Latency
-    {
-        SoapySDR::ArgInfo info;
-        info.value = "0.5";
-        info.key = "latency";
-        info.name = "Latency";
-        info.description = "Latency vs. performance";
-        info.type = SoapySDR::ArgInfo::FLOAT;
-        argInfos.push_back(info);
-    }
 
     // Link format
     {
@@ -96,27 +74,27 @@ SoapySDR::ArgInfoList Soapy_limesuiteng::getStreamArgsInfo(
         argInfos.push_back(info);
     }
 
-    // Skip calibrations
-    {
-        SoapySDR::ArgInfo info;
-        info.value = "false";
-        info.key = "skipCal";
-        info.name = "Skip Calibration";
-        info.description = "Skip automatic activation calibration.";
-        info.type = SoapySDR::ArgInfo::BOOL;
-        argInfos.push_back(info);
-    }
+    // // Skip calibrations
+    // {
+    //     SoapySDR::ArgInfo info;
+    //     info.value = "false";
+    //     info.key = "skipCal";
+    //     info.name = "Skip Calibration";
+    //     info.description = "Skip automatic activation calibration.";
+    //     info.type = SoapySDR::ArgInfo::BOOL;
+    //     argInfos.push_back(info);
+    // }
 
-    // Align phase of Rx channels
-    {
-        SoapySDR::ArgInfo info;
-        info.value = "false";
-        info.key = "alignPhase";
-        info.name = "Align phase";
-        info.description = "Attempt to align phase of Rx channels.";
-        info.type = SoapySDR::ArgInfo::BOOL;
-        argInfos.push_back(info);
-    }
+    // // Align phase of Rx channels
+    // {
+    //     SoapySDR::ArgInfo info;
+    //     info.value = "false";
+    //     info.key = "alignPhase";
+    //     info.name = "Align phase";
+    //     info.description = "Attempt to align phase of Rx channels.";
+    //     info.type = SoapySDR::ArgInfo::BOOL;
+    //     argInfos.push_back(info);
+    // }
 
     return argInfos;
 }
@@ -132,12 +110,9 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     auto stream = new IConnectionStream;
     stream->direction = direction;
     stream->elemSize = SoapySDR::formatToSize(format);
-    stream->hasCmd = false;
-    stream->skipCal = args.count("skipCal") != 0 and args.at("skipCal") == "true";
+    stream->rxBurstRequest = false;
 
     StreamConfig& config = streamConfig;
-    config.alignPhase = args.count("alignPhase") != 0 and args.at("alignPhase") == "true";
-    // config.performanceLatency = 0.5;
     config.bufferSize = 0; // Auto
 
     TRXDir dir = (direction == SOAPY_SDR_TX) ? TRXDir::Tx : TRXDir ::Rx;
@@ -228,15 +203,6 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     stream->elemMTU = 8 / config.channels.at(dir).size() * samplesPerPacket;
 
     stream->ownerDevice = sdrDevice;
-
-    // Calibrate these channels when activated
-    // for (const auto& ch : channelIDs)
-    // {
-    // sdrDevice->Calibrate(0, dir, ch, sdrDevice->GetFrequency(0, dir, ch));
-    // lastSavedConfiguration.channel[ch].GetDirection(dir).calibrate = true;
-    // _channelsToCal.emplace(direction, ch);
-    // }
-
     stream->streamConfig = config;
 
     return reinterpret_cast<SoapySDR::Stream*>(stream);
@@ -264,15 +230,15 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     const auto& ownerDevice = icstream->ownerDevice;
-    if (sampleRate[SOAPY_SDR_TX] == 0.0 && sampleRate[SOAPY_SDR_RX] == 0.0)
-    {
-        throw std::runtime_error("Soapy_limesuiteng::activateStream() - the sample rate has not been configured!");
-    }
+
+    if (isStreamRunning)
+        return 0;
 
     if (sampleRate[SOAPY_SDR_RX] <= 0.0)
-    {
         sampleRate[SOAPY_SDR_RX] = sdrDevice->GetSampleRate(0, TRXDir::Rx, 0);
-    }
+
+    if (sampleRate[SOAPY_SDR_RX] <= 0.0)
+        throw std::runtime_error("Soapy_limesuiteng::activateStream() - the sample rate has not been configured!");
 
     // Perform self calibration with current bandwidth settings.
     // This is for the set-it-and-forget-it style of use case
@@ -292,12 +258,12 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     // }
     // Stream requests used with rx
     icstream->flags = flags;
-    icstream->timeNs = timeNs;
-    icstream->numElems = numElems;
-    icstream->hasCmd = true;
+    icstream->rxBurstStart_timeNs = timeNs;
+    icstream->rxBurstRequest = (flags & SOAPY_SDR_HAS_TIME) | (flags & SOAPY_SDR_END_BURST);
+    icstream->rxBurstSamples = numElems;
 
     ownerDevice->StreamStart(0);
-    activeStreams.insert(stream);
+    isStreamRunning = true;
     return 0;
 }
 
@@ -307,11 +273,10 @@ int Soapy_limesuiteng::deactivateStream(
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     const auto& ownerDevice = icstream->ownerDevice;
-    icstream->hasCmd = false;
+    icstream->rxBurstRequest = false;
 
     ownerDevice->StreamStop(0);
-
-    activeStreams.erase(stream);
+    isStreamRunning = false;
     return 0;
 }
 
@@ -323,114 +288,94 @@ int Soapy_limesuiteng::readStream(
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
 
-    const auto exitTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds(timeoutUs);
-
-    // Wait for a command from activate stream up to the timeout specified
-    if (not icstream->hasCmd)
-    {
-        while (std::chrono::high_resolution_clock::now() < exitTime)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        return SOAPY_SDR_TIMEOUT;
-    }
-
     // Handle the one packet flag by clipping
     if ((flags & SOAPY_SDR_ONE_PACKET) != 0)
-    {
         numElems = std::min(numElems, icstream->elemMTU);
-    }
 
     StreamMeta metadata{};
-    const uint64_t cmdTicks =
-        ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0) ? SoapySDR::timeNsToTicks(icstream->timeNs, sampleRate[SOAPY_SDR_RX]) : 0;
+    const uint64_t requestedBurstStart =
+        ((icstream->rxBurstRequest) ? SoapySDR::timeNsToTicks(icstream->rxBurstStart_timeNs, sampleRate[SOAPY_SDR_RX]) : 0);
 
-    int status = 0;
+    if (icstream->rxBurstRequest && ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0))
+    {
+        uint64_t rxNow = 0; // assume burst request is done with streamActivate, so Rx always start from 0
+        // rx samples requested to start at specified timestamp, drop all samples before that
+        while (rxNow < requestedBurstStart)
+        {
+            uint32_t samplesToSkip = rxNow + numElems >= requestedBurstStart ? requestedBurstStart - rxNow : numElems;
+
+            int samplesReceived = 0;
+            switch (icstream->streamConfig.format)
+            {
+            case DataFormat::I16:
+            case DataFormat::I12:
+                samplesReceived =
+                    icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), samplesToSkip, &metadata);
+                break;
+            case DataFormat::F32:
+                samplesReceived =
+                    icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), samplesToSkip, &metadata);
+                break;
+            }
+            if (samplesReceived <= 0)
+                return SOAPY_SDR_STREAM_ERROR;
+            rxNow = metadata.timestamp + samplesReceived;
+        }
+    }
+
+    if (icstream->rxBurstRequest)
+    {
+        if (icstream->rxBurstSamples > 0)
+            numElems = std::min(numElems, icstream->rxBurstSamples);
+        if (icstream->rxBurstSamples == 0 && ((icstream->flags & SOAPY_SDR_END_BURST) != 0))
+            return SOAPY_SDR_TIMEOUT; // requested burst samples have been consumed, return TIMEOUT as if no more data is available
+    }
+
+    int samplesReceived = 0;
     switch (icstream->streamConfig.format)
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        status = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata);
+        samplesReceived = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata);
         break;
     case DataFormat::F32:
-        status = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata);
+        samplesReceived = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
 
     flags = 0;
 
-    if (status == 0)
-    {
+    if (samplesReceived == 0)
         return SOAPY_SDR_TIMEOUT;
-    }
-    if (status < 0)
-    {
+
+    if (samplesReceived < 0)
         return SOAPY_SDR_STREAM_ERROR;
-    }
 
-    const uint64_t expectedTime(cmdTicks + status);
-
-    if (metadata.timestamp < expectedTime)
+    if (icstream->rxBurstRequest && ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0))
     {
-        SoapySDR::log(SOAPY_SDR_ERROR, "readStream() experienced non-monotonic timestamp");
-        return SOAPY_SDR_CORRUPTION;
-    }
-
-    // The command had a time, so we need to compare it to received time
-    if ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0 and metadata.waitForTimestamp)
-    {
-        // Our request time is now late, clear command and return error code
-        if (cmdTicks < metadata.timestamp)
+        icstream->flags &= ~SOAPY_SDR_HAS_TIME; // clear for next read
+        if (metadata.timestamp != requestedBurstStart)
         {
-            icstream->hasCmd = false;
-            return SOAPY_SDR_TIME_ERROR;
-        }
-
-        // _readStreamAligned should guarantee this condition
-        if (cmdTicks != metadata.timestamp)
-        {
-            SoapySDR::logf(SOAPY_SDR_ERROR,
-                "readStream() alignment algorithm failed\n"
-                "Request time = %lld, actual time = %lld",
-                cmdTicks,
-                metadata.timestamp);
-            return SOAPY_SDR_STREAM_ERROR;
-        }
-
-        icstream->flags &= ~SOAPY_SDR_HAS_TIME; // Clear for next read
-    }
-
-    // Handle finite burst request commands
-    if (icstream->numElems != 0)
-    {
-        // Clip to within the request size when over,
-        // and reduce the number of elements requested.
-        status = std::min<std::size_t>(status, icstream->numElems);
-        icstream->numElems -= status;
-
-        // The burst completed, done with the command
-        if (icstream->numElems == 0)
-        {
-            icstream->hasCmd = false;
-            metadata.flushPartialPacket = true;
+            SoapySDR::log(SOAPY_SDR_ERROR,
+                "readStream() rx burst overflow, expected tick:" + std::to_string(requestedBurstStart) +
+                    ", got: " + std::to_string(metadata.timestamp));
+            return SOAPY_SDR_OVERFLOW;
         }
     }
 
-    // Output metadata
-    if (metadata.flushPartialPacket)
+    if (icstream->rxBurstSamples > 0)
     {
-        flags |= SOAPY_SDR_END_BURST;
+        icstream->rxBurstSamples -= samplesReceived;
+        if (icstream->rxBurstSamples == 0)
+            flags |= SOAPY_SDR_END_BURST;
     }
 
-    if (metadata.waitForTimestamp)
-    {
-        flags |= SOAPY_SDR_HAS_TIME;
-    }
-
+    // LimeSDR always return Rx timestamp
+    flags |= SOAPY_SDR_HAS_TIME;
     timeNs = SoapySDR::ticksToTimeNs(metadata.timestamp, sampleRate[SOAPY_SDR_RX]);
 
     // Return num read or error code
-    return (status >= 0) ? status : SOAPY_SDR_STREAM_ERROR;
+    return (samplesReceived >= 0) ? samplesReceived : SOAPY_SDR_STREAM_ERROR;
 }
 
 int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
@@ -440,7 +385,7 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     const long long timeNs,
     [[maybe_unused]] const long timeoutUs)
 {
-    if ((flags & SOAPY_SDR_HAS_TIME) && (timeNs <= 0))
+    if ((flags & SOAPY_SDR_HAS_TIME) && (timeNs < 0))
     {
         return SOAPY_SDR_TIME_ERROR;
     }
@@ -454,29 +399,25 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     metadata.waitForTimestamp = (flags & SOAPY_SDR_HAS_TIME);
     metadata.flushPartialPacket = (flags & SOAPY_SDR_END_BURST);
 
-    int status = 0;
+    int samplesSent = 0;
     switch (icstream->streamConfig.format)
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        status = ownerDevice->StreamTx(0, reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata);
+        samplesSent = ownerDevice->StreamTx(0, reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata);
         break;
     case DataFormat::F32:
-        status = ownerDevice->StreamTx(0, reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata);
+        samplesSent = ownerDevice->StreamTx(0, reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
 
-    if (status == 0)
-    {
+    if (samplesSent == 0)
         return SOAPY_SDR_TIMEOUT;
-    }
-    if (status < 0)
-    {
-        return SOAPY_SDR_STREAM_ERROR;
-    }
 
-    // Return num written
-    return status;
+    if (samplesSent < 0)
+        return SOAPY_SDR_STREAM_ERROR;
+
+    return samplesSent;
 }
 
 int Soapy_limesuiteng::readStreamStatus(
@@ -502,7 +443,10 @@ int Soapy_limesuiteng::readStreamStatus(
 
         if (metadata.loss)
         {
-            ret = SOAPY_SDR_TIME_ERROR;
+            if (icstream->direction == SOAPY_SDR_TX)
+                ret = SOAPY_SDR_UNDERFLOW;
+            else
+                ret = SOAPY_SDR_OVERFLOW;
         }
         else if (metadata.overrun)
         {

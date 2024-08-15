@@ -4,9 +4,9 @@
 #include <cmath>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
-#include "LitePCIeDMA.h"
-#include "FPGA_common.h"
+#include "comms/PCIe/LimePCIe.h"
+#include "comms/PCIe/LimePCIeDMA.h"
+#include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "LMS64CProtocol.h"
 #include "CommonFunctions.h"
@@ -104,7 +104,7 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
 /// @param refClk The reference clock of the device.
 LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     std::shared_ptr<IComms> spiFPGA,
-    std::shared_ptr<LitePCIe> sampleStream,
+    std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
     : LMS7002M_SDRDevice()
@@ -134,6 +134,20 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
+    // Initial XTRX gateware supported only 32bit DMA, it worked fine on x86 with the PCIe driver
+    // limiting the address mask to 32bit, but some systems require at least 35bits,
+    // like Raspberry Pi, or other Arm systems. If host requires more than 32bit DMA mask
+    // the driver starts using 64bit mask, in that case it's a matter of luck if the system
+    // provided DMA addresses will be in 32bit zone, and could work, otherwise, data will be
+    // seen as transferred, but the values will be undefined.
+    // XTRX gateware added 64bit DMA support in 1.13
+    if (gw.version == 1 && gw.revision < 13)
+    {
+        lime::warning("Current XTRX gateware does not support 64bit DMA addressing. "
+                      "RF data streaming might not work. "
+                      "Please update gateware."s);
+    }
+
     // revision 1.13 introduced "dual boot" images
     if (gw.version >= 1 && gw.revision >= 13)
     {
@@ -159,9 +173,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     }
     {
         mStreamers.reserve(mLMSChips.size());
-        std::shared_ptr<LitePCIe> trxPort{ sampleStream };
-        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        std::shared_ptr<LimePCIe> trxPort{ sampleStream };
+        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
         mStreamers.push_back(std::move(streamer));

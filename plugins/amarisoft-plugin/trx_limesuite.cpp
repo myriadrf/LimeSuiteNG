@@ -8,7 +8,7 @@
 #include <stdarg.h>
 
 extern "C" {
-#include "trx_driver.h"
+#include "include/trx_driver.h"
 }
 
 using namespace std;
@@ -73,7 +73,7 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
 }
 
 //static TRXStatistics trxstats;
-static int trx_lms7002m_get_stats(TRXState* s, TRXStatistics* m)
+static int limesuiteng_trx_get_stats(TRXState* s, TRXStatistics* m)
 {
     //LimePluginContext* lime = (LimePluginContext*)s->opaque;
     // TODO:
@@ -88,7 +88,7 @@ static int trx_lms7002m_get_stats(TRXState* s, TRXStatistics* m)
 }
 
 /* Callback must allocate info buffer that will be displayed */
-static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
+static void limesuiteng_trx_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
 {
     // LimePluginContext* lime = (LimePluginContext*)s->opaque;
     // std::stringstream ss;
@@ -115,10 +115,26 @@ static void trx_lms7002m_dump_info(TRXState* s, trx_printf_cb cb, void* opaque)
     // cb(buffer, "%s\n", ss.str().c_str());
 }
 
+static void limesuiteng_trx_write_func(
+    TRXState* s, trx_timestamp_t timestamp, const void** samples, int count, int flags, int tx_port_index)
+{
+    if (!samples) // Nothing to transmit
+        return;
+
+    StreamMeta meta{};
+    meta.timestamp = timestamp;
+    meta.waitForTimestamp = true;
+    meta.flushPartialPacket = (flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
+
+    // samples format conversion is done internally
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
+    LimePlugin_Write_complex32f(lime, reinterpret_cast<const lime::complex32f_t* const*>(samples), count, tx_port_index, meta);
+}
+
 // count - can be configured by 'trx_get_tx_samples_per_packet_func' callback
 // if samples==NULL, Tx has to be disabled
 // samples are ranged [-1.0 : +1.0]
-static void trx_lms7002m_write(
+static void limesuiteng_trx_write_func2(
     TRXState* s, trx_timestamp_t timestamp, const void** samples, int count, int port, TRXWriteMetadata* md)
 {
     if (!samples) // Nothing to transmit
@@ -131,14 +147,31 @@ static void trx_lms7002m_write(
 
     // samples format conversion is done internally
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
+    // if (md->flags & TRX_WRITE_MD_FLAG_CUR_TIMESTAMP_REQ)
+    // {
+    //     md->cur_timestamp = lime->ports[port].composite->GetHardwareTimestamp();
+    //     md->cur_timestamp_set = 1;
+    // }
     LimePlugin_Write_complex32f(lime, reinterpret_cast<const lime::complex32f_t* const*>(samples), count, port, meta);
 }
 
+static int limesuiteng_trx_read_func(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int rx_port_index)
+{
+    StreamMeta meta{};
+    meta.waitForTimestamp = false;
+    meta.flushPartialPacket = false;
+
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
+    int samplesGot = LimePlugin_Read_complex32f(lime, reinterpret_cast<lime::complex32f_t**>(samples), count, rx_port_index, meta);
+    *ptimestamp = meta.timestamp; // if timestamp is not updated, amarisoft will freeze
+    return samplesGot;
+}
+
 // Read has to block until at least 1 sample is available and must return at most 'count' samples
-// 'count' argument value depends on sample rate and is at most 4096 samples.
 // timestamp is samples counter
 // return number of samples produced
-static int trx_lms7002m_read(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
+static int limesuiteng_trx_read_func2(
+    TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
 {
     StreamMeta meta{};
     meta.waitForTimestamp = false;
@@ -157,7 +190,7 @@ static int trx_lms7002m_read(TRXState* s, trx_timestamp_t* ptimestamp, void** sa
 // interpolator as 'n * 1.92' MHz. 'n' must currently be of the
 // form 2^n1*3^n2*5^n3.
 // Return 0 if OK, -1 if none.
-static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate, int* psample_rate_num, int bandwidth)
+static int limesuiteng_trx_get_sample_rate_func(TRXState* s1, TRXFraction* psample_rate, int* psample_rate_num, int bandwidth)
 {
     LimePluginContext* s = static_cast<LimePluginContext*>(s1->opaque);
     // multipliers that can be made using 2^n1*3^n2*5^n3, n1 >= 1
@@ -179,7 +212,7 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
         50,
         64 };
 
-    // trx_lms7002m_get_sample_rate seems to be called for each Port, but the API does not provide index.
+    // limesuiteng_trx_get_sample_rate_func seems to be called for each Port, but the API does not provide index.
     // workaround here assume that they are being configured in order 0,1,2...
     static int whichPort = 0;
     int p = whichPort;
@@ -246,20 +279,17 @@ static int trx_lms7002m_get_sample_rate(TRXState* s1, TRXFraction* psample_rate,
 }
 
 // return expected number of samples in Tx packet
-// !!! sometimes trx_lms7002m_write gets calls with samples count more than returned here
-static int trx_lms7002m_get_tx_samples_per_packet_func(TRXState* s1)
+static int limesuiteng_trx_get_tx_samples_per_packet_func(TRXState* s1)
 {
-    // LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
-    int txExpectedSamples = 256; //lime->samplesInPacket[0];
-    // if (lime->streamExtras[0] && lime->streamExtras[0]->tx.samplesInPacket > 0)
-    // {
-    //     txExpectedSamples = lime->streamExtras[0]->tx.samplesInPacket;
-    // }
-    // Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
+    // This impacts host processing performance at high sampling rates.
+    // The limesuiteng API can accept any number of samples, and splits them into
+    // multiple packets internally. So this can be any number.
+    const int txExpectedSamples = 8192;
+    Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
     return txExpectedSamples;
 }
 
-static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int channel_num)
+static int limesuiteng_trx_get_abs_rx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     if (lime->rxChannels[channel_num].parent->configInputs.rx.powerAvailable)
@@ -271,7 +301,7 @@ static int trx_lms7002m_get_abs_rx_power_func(TRXState* s1, float* presult, int 
         return -1;
 }
 
-static int trx_lms7002m_get_abs_tx_power_func(TRXState* s1, float* presult, int channel_num)
+static int limesuiteng_trx_get_abs_tx_power_func(TRXState* s1, float* presult, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     if (lime->txChannels[channel_num].parent->configInputs.tx.powerAvailable)
@@ -285,19 +315,45 @@ static int trx_lms7002m_get_abs_tx_power_func(TRXState* s1, float* presult, int 
 
 //min gain 0
 //max gain ~70-76 (higher will probably degrade signal quality to much)
-static void trx_lms7002m_set_tx_gain_func(TRXState* s1, double gain, int channel_num)
+static void limesuiteng_trx_set_tx_gain_func(TRXState* s1, double gain, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     LimePlugin_SetTxGain(lime, gain, channel_num);
 }
 
-static void trx_lms7002m_set_rx_gain_func(TRXState* s1, double gain, int channel_num)
+static void limesuiteng_trx_set_rx_gain_func(TRXState* s1, double gain, int channel_num)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     LimePlugin_SetRxGain(lime, gain, channel_num);
 }
 
-static int trx_lms7002m_start(TRXState* s1, const TRXDriverParams* params)
+static int limesuiteng_trx_set_start_params(TRXState* s1, const TRXDriverParams2* params)
+{
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
+    LimeRuntimeParameters state;
+
+    int rxCount = params->rx_channel_count;
+    int txCount = params->tx_channel_count;
+
+    CopyCArrayToVector(state.rx.freq, params->rx_freq, rxCount);
+    CopyCArrayToVector(state.tx.freq, params->tx_freq, txCount);
+
+    CopyCArrayToVector(state.rx.gain, params->rx_gain, rxCount);
+    CopyCArrayToVector(state.tx.gain, params->tx_gain, txCount);
+
+    CopyCArrayToVector(state.rx.bandwidth, params->rx_bandwidth, rxCount);
+    CopyCArrayToVector(state.tx.bandwidth, params->tx_bandwidth, txCount);
+
+    for (int i = 0; i < params->rf_port_count; ++i)
+    {
+        double sample_rate = static_cast<double>(params->sample_rate[i].num) / params->sample_rate[i].den;
+        state.rf_ports.push_back({ sample_rate, params->rx_port_channel_count[i], params->tx_port_channel_count[i] });
+    }
+
+    return LimePlugin_Setup(lime, &state);
+}
+
+static int limesuiteng_trx_start_func(TRXState* s1, const TRXDriverParams* params)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     LimeRuntimeParameters state;
@@ -326,7 +382,26 @@ static int trx_lms7002m_start(TRXState* s1, const TRXDriverParams* params)
     return LimePlugin_Start(lime);
 }
 
-static void trx_lms7002m_end(TRXState* s1)
+static int limesuiteng_trx_start_func2(TRXState* s1, const TRXDriverParams2* params)
+{
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
+    // params can be NULL if trx_set_start_params() was called before.
+    if (params != NULL)
+    {
+        int ret = limesuiteng_trx_set_start_params(s1, params);
+        if (ret != 0)
+            return ret;
+    }
+    return LimePlugin_Start(lime);
+}
+
+static void limesuiteng_trx_stop_func(TRXState* s1)
+{
+    LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
+    LimePlugin_Stop(lime);
+}
+
+static void limesuiteng_trx_end_func(TRXState* s1)
 {
     LimePluginContext* lime = static_cast<LimePluginContext*>(s1->opaque);
     LimePlugin_Destroy(lime);
@@ -357,20 +432,33 @@ int __attribute__((visibility("default"))) trx_driver_init(TRXState* hostState)
 
     // Set callbacks
     hostState->opaque = lime;
-    hostState->trx_end_func = trx_lms7002m_end;
-    // hostState->trx_write_func = // Deprecated
-    // hostState->trx_read_func = // Deprecated
-    hostState->trx_write_func2 = trx_lms7002m_write;
-    hostState->trx_read_func2 = trx_lms7002m_read;
-    hostState->trx_start_func = trx_lms7002m_start;
-    hostState->trx_get_sample_rate_func = trx_lms7002m_get_sample_rate;
-    hostState->trx_get_tx_samples_per_packet_func = trx_lms7002m_get_tx_samples_per_packet_func;
-    hostState->trx_get_abs_rx_power_func = trx_lms7002m_get_abs_rx_power_func;
-    hostState->trx_get_abs_tx_power_func = trx_lms7002m_get_abs_tx_power_func;
-    hostState->trx_set_tx_gain_func = trx_lms7002m_set_tx_gain_func;
-    hostState->trx_set_rx_gain_func = trx_lms7002m_set_rx_gain_func;
-    hostState->trx_get_stats = trx_lms7002m_get_stats;
-    hostState->trx_dump_info = trx_lms7002m_dump_info;
+    hostState->trx_start_func = limesuiteng_trx_start_func; // Obsolete
+    hostState->trx_write_func = limesuiteng_trx_write_func; // Deprecated
+    hostState->trx_read_func = limesuiteng_trx_read_func; // Deprecated
+    hostState->trx_set_tx_gain_func = limesuiteng_trx_set_tx_gain_func;
+    hostState->trx_set_rx_gain_func = limesuiteng_trx_set_rx_gain_func;
+
+    hostState->trx_end_func = limesuiteng_trx_end_func;
+    hostState->trx_get_tx_samples_per_packet_func = limesuiteng_trx_get_tx_samples_per_packet_func;
+    hostState->trx_get_stats = limesuiteng_trx_get_stats;
+    hostState->trx_dump_info = limesuiteng_trx_dump_info;
+    hostState->trx_get_abs_tx_power_func = limesuiteng_trx_get_abs_tx_power_func;
+    hostState->trx_get_abs_rx_power_func = limesuiteng_trx_get_abs_rx_power_func;
+    hostState->trx_write_func2 = limesuiteng_trx_write_func2;
+    hostState->trx_read_func2 = limesuiteng_trx_read_func2;
+
+    // TODO: get gain
+    //hostState->trx_get_tx_gain_func = ;
+    //hostState->trx_get_rx_gain_func = ;
+
+    hostState->trx_stop_func = limesuiteng_trx_stop_func;
+    hostState->trx_start_func2 = limesuiteng_trx_start_func2;
+
+    // TODO: take higher level loggin either from lime config, or stack's config
+    // hostState->trx_log_set_level_func = ;
+
+    hostState->trx_set_start_params = limesuiteng_trx_set_start_params;
+    hostState->trx_get_sample_rate_func = limesuiteng_trx_get_sample_rate_func;
 
     configProvider.Block(); // config parameters access is only allow within trx_driver_init
     return 0;

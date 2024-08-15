@@ -4,6 +4,8 @@
 @brief API for reporting error codes and error messages.
 */
 
+#include "rang.hpp" // terminal colors
+
 #include "limesuiteng/Logger.h"
 #include "LoggerInternal.h"
 
@@ -22,9 +24,20 @@ thread_local std::string Logger::_reportedErrorMessage{ ""s };
 
 void Logger::defaultLogHandler(const LogLevel level, const std::string& message)
 {
-    if (level > LogLevel::Error)
+    if (level > LogLevel::Warning)
         return;
-    std::cerr << message << std::endl;
+    switch (level)
+    {
+    case LogLevel::Critical:
+    case LogLevel::Error:
+        std::cerr << rang::fg::red << message << rang::fg::reset << std::endl;
+        break;
+    case LogLevel::Warning:
+        std::cerr << rang::fg::yellow << message << rang::fg::reset << std::endl;
+        break;
+    default:
+        std::cerr << message << std::endl;
+    }
 }
 
 void Logger::logHandlerWrapper(const LogLevel level, const std::string& message)

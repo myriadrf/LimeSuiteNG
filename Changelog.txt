@@ -1,3 +1,9 @@
+Release 0.2.0 ()
+
+- Switched to new PCIe driver
+- Fix exporting of cmake targets for use in other projects
+- Fix cmake find_package(limesuiteng)
+
 Release 0.1.0 ()
 
 - Rename LimeSuite to LimeSuiteNG

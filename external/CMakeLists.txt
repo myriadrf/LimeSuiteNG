@@ -39,6 +39,8 @@ fetchcontent_declare(
 
 set(BUILD_SHARED_LIBS_ORIG ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_BUILD_TYPE_ORIG ${CMAKE_BUILD_TYPE})
+set(CMAKE_BUILD_TYPE "Release") # always build kissFFT in release mode, for better performance.
 set(KISSFFT_OPENMP
     OFF
     CACHE INTERNAL "")
@@ -64,6 +66,7 @@ fetchcontent_getproperties(kissFFT)
 if(NOT kissfft_POPULATED)
     fetchcontent_populate(kissFFT)
     add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
+    set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 endif()
 set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 # disable warnings spam
@@ -71,6 +74,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
     target_compile_options(kissfft PRIVATE -Wno-strict-prototypes -Wno-newline-eof -Wno-cast-align)
 endif()
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
+set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_ORIG})
 
 # Download easily downloadable header only ones
 
@@ -107,9 +111,20 @@ fetchcontent_declare(
     cpp-feather-ini-parser
     GIT_REPOSITORY https://github.com/rjonaitis/cpp-feather-ini-parser
     GIT_TAG 85a7d3a89dd0e179587a87b8d12ea58a896e7881 # latest main at the time of writing this
-    CONFIGURE_COMMAND "" BUILD_COMMAND "")
+    CONFIGURE_COMMAND "" BUILD_COMMAND "" EXCLUDE_FROM_ALL)
 
 fetchcontent_makeavailable(cpp-feather-ini-parser)
 
-add_library(cpp-feather-ini-parser INTERFACE)
+add_library(cpp-feather-ini-parser INTERFACE ${cpp-feather-ini-parser_SOURCE_DIR}/INI.h)
 target_include_directories(cpp-feather-ini-parser INTERFACE ${cpp-feather-ini-parser_SOURCE_DIR})
+
+#########################################################################
+# rang // for coloring terminal outputs
+#########################################################################
+fetchcontent_declare(
+    rang
+    GIT_REPOSITORY https://github.com/agauniyal/rang
+    GIT_TAG 22345aa4c468db3bd4a0e64a47722aad3518cc81
+    EXCLUDE_FROM_ALL CONFIGURE_COMMAND "" BUILD_COMMAND "")
+
+fetchcontent_makeavailable(rang)

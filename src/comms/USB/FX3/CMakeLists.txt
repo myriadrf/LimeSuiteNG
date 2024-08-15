@@ -29,36 +29,17 @@ if(WIN32)
     else()
         message(WARNING "CYAPI SDK not found. Omitting Cypress FX3 USB support")
     endif()
-    target_link_libraries(limesuiteng PRIVATE ${FX3_LIBRARIES})
-    target_link_options(limesuiteng PUBLIC "legacy_stdio_definitions.lib")
-    target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${FX3_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
-elseif(UNIX)
-    find_package(libusb-1.0)
-    set_package_properties(
-        libusb-1.0 PROPERTIES
-        TYPE RECOMMENDED
-        PURPOSE "Adds USB communication support for Cypress FX3 chip")
-    set(FX3_FOUND ${LIBUSB_1_FOUND})
-    if(NOT ${FX3_FOUND})
-        message(WARNING "libusb-1.0 libraries not found. Omitting Cypress FX3 USB support")
-    endif()
-
-    target_link_libraries(limesuiteng PUBLIC ${LIBUSB_1_LIBRARIES})
-
-    if(LIBUSB_1_INCLUDE_DIR)
-        target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
-    endif()
+    target_link_options(limesuiteng PRIVATE "legacy_stdio_definitions.lib")
 endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_USB_FX3 "Enable FX3" ON "FX3_FOUND" OFF)
+cmake_dependent_option(ENABLE_USB_FX3 "Enable FX3" ON "FX3_FOUND OR LIBUSB_1_FOUND" OFF)
 add_feature_info(USB_FX3 ENABLE_USB_FX3 "USB support for Cypress FX3")
 if(NOT ENABLE_USB_FX3)
     return()
 endif()
 
-set(CONNECTION_FX3_SOURCES ${CMAKE_CURRENT_LIST_DIR}/FX3.cpp)
-
-target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
-target_sources(limesuiteng PRIVATE ${CONNECTION_FX3_SOURCES})
+target_sources(limesuiteng PRIVATE FX3.cpp)
+target_include_directories(limesuiteng PRIVATE ${FX3_INCLUDE_DIRS})
+target_link_libraries(limesuiteng PRIVATE ${FX3_LIBRARIES})

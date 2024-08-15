@@ -123,24 +123,24 @@ std::string DeviceHandle::ToString(void) const
     return out;
 }
 
-bool DeviceHandle::IsEqualIgnoringEmpty(const DeviceHandle& other) const
+bool DeviceHandle::IsEqualIgnoringEmpty(const DeviceHandle& hint) const
 {
-    if (!other.media.empty() && media != other.media)
+    if (!hint.media.empty() && media.find(hint.media) == std::string::npos)
     {
         return false;
     }
 
-    if (!other.name.empty() && name != other.name)
+    if (!hint.name.empty() && name.find(hint.name) == std::string::npos)
     {
         return false;
     }
 
-    if (!other.addr.empty() && addr != other.addr)
+    if (!hint.addr.empty() && addr.find(hint.addr) == std::string::npos)
     {
         return false;
     }
 
-    if (!other.serial.empty() && serial != other.serial)
+    if (!hint.serial.empty() && serial.find(hint.serial) == std::string::npos)
     {
         return false;
     }

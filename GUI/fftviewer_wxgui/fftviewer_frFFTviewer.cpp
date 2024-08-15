@@ -48,7 +48,7 @@ bool fftviewer_frFFTviewer::Initialize(SDRDevice* pDataPort)
     if (channelCount <= 1)
     {
         cmbMode->Clear();
-        cmbMode->Append("SISO");
+        cmbMode->Append("SISO Ch.A");
         cmbMode->SetSelection(0);
 
         cmbChannelVisibility->Clear();
@@ -57,9 +57,8 @@ bool fftviewer_frFFTviewer::Initialize(SDRDevice* pDataPort)
     }
     else
     {
-        constexpr uint8_t modeChoicesItemCount = 2;
-        const std::array<const wxString, modeChoicesItemCount> modeChoices{ "SISO", "MIMO" };
-        cmbMode->Set(modeChoicesItemCount, modeChoices.data());
+        const std::array<const wxString, 3> modeChoices{ "SISO Ch.A", "SISO Ch.B", "MIMO A&B" };
+        cmbMode->Set(modeChoices.size(), modeChoices.data());
         cmbMode->SetSelection(0);
         cmbMode->GetContainingSizer()->Layout(); // update the width of the box
 
@@ -233,17 +232,8 @@ void fftviewer_frFFTviewer::StartStreaming()
         return;
     if (mStreamRunning.load() == true)
         return;
-    switch (cmbMode->GetSelection() % 2)
-    {
-    case 0: //SISO
-        cmbChannelVisibility->SetSelection(0);
-        cmbChannelVisibility->Disable();
-        threadProcessing = std::thread(StreamingLoop, this, fftSize, 1, 0);
-        break;
-    case 1: //MIMO
-        threadProcessing = std::thread(StreamingLoop, this, fftSize, 2, 0);
-        break;
-    }
+
+    threadProcessing = std::thread(StreamingLoop, this, fftSize, cmbMode->GetSelection() + 1, 0);
 
     btnStartStop->SetLabel(_("STOP"));
     mGUIupdater->Start(500);
@@ -378,9 +368,27 @@ void fftviewer_frFFTviewer::OnUpdatePlots(wxThreadEvent& event)
 }
 
 void fftviewer_frFFTviewer::StreamingLoop(
-    fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const uint8_t channelsCount, const uint32_t format)
+    fftviewer_frFFTviewer* pthis, const unsigned int fftSize, const uint8_t channelEnablesMask, const uint32_t format)
 {
     const bool runTx = pthis->chkEnTx->GetValue();
+
+    StreamConfig config;
+    uint8_t channelsCount = 0;
+
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        if (channelEnablesMask & (1 << i))
+        {
+            config.channels.at(TRXDir::Rx).push_back(i);
+            if (runTx)
+                config.channels.at(TRXDir::Tx).push_back(i);
+            ++channelsCount;
+        }
+    }
+
+    if (channelsCount == 0)
+        return;
+
     int avgCount = pthis->spinAvgCount->GetValue();
     auto wndFunction = static_cast<lime::FFT::WindowFunctionType>(pthis->windowFunctionID.load());
     bool fftEnabled = true;
@@ -412,19 +420,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
     auto fmt = pthis->cmbFmt->GetSelection() == 1 ? DataFormat::I16 : DataFormat::I12;
 
-    StreamConfig config;
-
     config.format = DataFormat::F32;
     config.linkFormat = fmt;
-    for (uint8_t i = 0; i < channelsCount; ++i)
-    {
-        config.channels.at(TRXDir::Rx).push_back(i);
-        if (runTx)
-        {
-            config.channels.at(TRXDir::Tx).push_back(i);
-        }
-    }
-
     const uint8_t chipIndex = pthis->lmsIndex;
 
     try
@@ -602,7 +599,7 @@ void fftviewer_frFFTviewer::OnStreamChange(wxCommandEvent& event)
     cmbChannelVisibility->Clear();
     cmbChannelVisibility->Append(_T("A"));
     cmbChannelVisibility->Append(_T("B"));
-    if (cmbMode->GetSelection() % 2 == 1)
+    if (cmbMode->GetSelection() == 2)
         cmbChannelVisibility->Append(_T("A&B"));
     else if (tmp > 1)
         tmp = 0;

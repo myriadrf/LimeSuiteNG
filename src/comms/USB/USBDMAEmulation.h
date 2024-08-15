@@ -22,6 +22,7 @@ class USBDMAEmulation : public IDMA
     /// @param dir The data transfer direction to make the DMA interface for.
     USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir);
     virtual ~USBDMAEmulation();
+    OpStatus Initialize() override;
 
     OpStatus Enable(bool enabled) override;
     OpStatus EnableContinuous(bool enabled, uint32_t maxTransferSize, uint8_t irqPeriod) override;
@@ -33,6 +34,7 @@ class USBDMAEmulation : public IDMA
     void BufferOwnership(uint16_t index, DataTransferDirection dir) override;
 
     std::vector<IDMA::Buffer> GetBuffers() const override;
+    std::string GetName() const override;
 
   private:
     struct AsyncXfer {

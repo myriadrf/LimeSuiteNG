@@ -1,6 +1,6 @@
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_EXAMPLES "Enable library example programs" ON "ENABLE_LIBRARY" ON)
+cmake_dependent_option(ENABLE_EXAMPLES "Enable library example programs" ON "ENABLE_LIBRARY" OFF)
 add_feature_info(EXAMPLES ENABLE_EXAMPLES "LimeSuite library API examples")
 if(NOT ENABLE_EXAMPLES)
     return()
@@ -21,7 +21,7 @@ set_target_properties(basicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutp
 target_link_libraries(
     basicRX
     PUBLIC limesuiteng
-    PRIVATE kissfft taywee::args)
+    PRIVATE cli-shared kissfft taywee::args)
 
 add_executable(dualRXTX dualRXTX.cpp)
 set_target_properties(dualRXTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
@@ -29,7 +29,10 @@ target_link_libraries(dualRXTX PUBLIC limesuiteng)
 
 add_executable(basicTX basicTX.cpp)
 set_target_properties(basicTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
-target_link_libraries(basicTX PUBLIC limesuiteng)
+target_link_libraries(
+    basicTX
+    PUBLIC limesuiteng
+    PRIVATE cli-shared kissfft taywee::args)
 
 add_executable(legacyBasicRX legacy/basicRX.cpp)
 set_target_properties(legacyBasicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir}/legacy RUNTIME_OUTPUT_NAME basicRX)

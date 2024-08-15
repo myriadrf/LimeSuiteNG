@@ -32,18 +32,18 @@ enum class eGainTypes : uint8_t {
 };
 
 /// @brief Structure describing the range possible.
-struct Range {
+template<class T> struct Range {
     /// @brief Constructs the range structure,
     /// @param min The minimum value of the range (default 0.0)
     /// @param max The maximum value of the range (default 0.0)
     /// @param step The step of the range (default 0.0 - no step)
-    constexpr Range(double min = 0.0, double max = 0.0, double step = 0.0)
+    constexpr Range(T min = 0, T max = 0, T step = 1)
         : min(min)
         , max(max)
         , step(step){};
-    double min; ///< The minimum value of the range
-    double max; ///< The maximum value of the range
-    double step; ///< The step of the range (or 0.0 for any step)
+    T min; ///< The minimum value of the range
+    T max; ///< The maximum value of the range
+    T step; ///< The step of the range (or 0.0 for any step)
 };
 
 /// @brief Structure for storing the information of a memory region.

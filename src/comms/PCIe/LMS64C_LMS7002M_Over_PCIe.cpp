@@ -3,7 +3,7 @@
 
 using namespace lime;
 
-LMS64C_LMS7002M_Over_PCIe::LMS64C_LMS7002M_Over_PCIe(std::shared_ptr<LitePCIe> dataPort)
+LMS64C_LMS7002M_Over_PCIe::LMS64C_LMS7002M_Over_PCIe(std::shared_ptr<LimePCIe> dataPort)
     : pipe(dataPort)
 {
 }

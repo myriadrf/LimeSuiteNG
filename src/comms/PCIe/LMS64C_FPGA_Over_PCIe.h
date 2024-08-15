@@ -2,8 +2,8 @@
 #define LIME_LMS64C_FPGA_OVER_PCIE_H
 
 #include "comms/IComms.h"
-#include "LitePCIe.h"
-#include "PCIE_CSR_Pipe.h"
+#include "comms/PCIe/LimePCIe.h"
+#include "comms/PCIe/PCIE_CSR_Pipe.h"
 
 #include <cstdint>
 #include <memory>
@@ -18,7 +18,7 @@ class LMS64C_FPGA_Over_PCIe : public IComms
       @brief Constructs a new LMS64C_FPGA_Over_PCIe object.
       @param dataPort The PCIe data bus to use.
      */
-    LMS64C_FPGA_Over_PCIe(std::shared_ptr<LitePCIe> dataPort);
+    LMS64C_FPGA_Over_PCIe(std::shared_ptr<LimePCIe> dataPort);
 
     OpStatus SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
     OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;

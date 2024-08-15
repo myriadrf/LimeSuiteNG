@@ -4,13 +4,13 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "LitePCIe.h"
-#include "LitePCIeDMA.h"
+#include "comms/PCIe/LimePCIe.h"
+#include "comms/PCIe/LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "FPGA_X3.h"
 #include "LMS64CProtocol.h"
-#include "DSP/Equalizer/Equalizer.h"
+#include "DSP/CFR/CrestFactorReduction.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
@@ -165,7 +165,7 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
 /// @param control The serial port of the device for retrieving device firmware information.
 LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     std::shared_ptr<IComms> spiFPGA,
-    std::vector<std::shared_ptr<LitePCIe>> trxStreams,
+    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
     std::shared_ptr<ISerialPort> control)
     : LMS7002M_SDRDevice()
     , mTRXStreamPorts(trxStreams)
@@ -201,7 +201,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(cp_vctcxo_dac);
     desc.customParameters.push_back(cp_temperature);
 
-    mEqualizer = std::make_unique<Equalizer>(spiFPGA, SPI_FPGA);
+    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA));
     mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
@@ -249,9 +249,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     {
         mLMSChips[i]->SetConnection(mLMS7002Mcomms[i]);
 
-        std::shared_ptr<LitePCIe> trxPort{ mTRXStreamPorts.at(i) };
-        auto rxdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LitePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(i) };
+        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
         std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(i).get(), i);
         mStreamers.push_back(std::move(streamer));
@@ -586,7 +586,7 @@ OpStatus LimeSDR_X3::Configure(const SDRConfig& cfg, uint8_t socIndex)
         }
         else if (socIndex == 1 && sampleRate > 0)
         {
-            Equalizer::Config eqCfg;
+            CrestFactorReduction::Config eqCfg;
             for (int i = 0; i < 2; ++i)
             {
                 eqCfg.bypassRxEqualizer[i] = true;
@@ -657,12 +657,15 @@ void LimeSDR_X3::ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig&
 
     if (socIndex == 0)
     {
-        if (trx.enabled && chip.SetGFIRFilter(dir,
-                               ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB,
-                               trx.gfir.enabled,
-                               trx.gfir.bandwidth) != OpStatus::Success)
+        if (trx.enabled)
         {
-            throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
+            OpStatus status = chip.SetGFIRFilter(
+                dir, ch == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB, trx.gfir.enabled, trx.gfir.bandwidth);
+
+            if (status == OpStatus::NotImplemented)
+                lime::warning("%s ch%i GFIR config not implemented", ToString(dir).c_str(), ch);
+            else if (status != OpStatus::Success)
+                throw std::logic_error(strFormat("%s ch%i GFIR config failed", ToString(dir).c_str(), ch));
         }
     }
 
@@ -806,7 +809,7 @@ OpStatus LimeSDR_X3::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t chan
     }
     else if (moduleIndex == 1 && sampleRate > 0)
     {
-        Equalizer::Config eqCfg;
+        CrestFactorReduction::Config eqCfg;
         for (int i = 0; i < 2; ++i)
         {
             eqCfg.bypassRxEqualizer[i] = true;

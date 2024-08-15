@@ -163,7 +163,7 @@ static inline void CopyString(const std::string_view source, char* destination, 
     destination[charsToCopy] = 0;
 }
 
-static inline lms_range_t RangeToLMS_Range(const lime::Range& range)
+template<class T> static inline lms_range_t RangeToLMS_Range(const lime::Range<T>& range)
 {
     return { range.min, range.max, range.step };
 }
@@ -852,7 +852,7 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
 
         for (auto& streamHandle : streamHandles)
         {
-            if (streamHandle->parent != handle->parent)
+            if (!streamHandle || streamHandle->parent != handle->parent)
             {
                 continue;
             }
@@ -883,7 +883,7 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
 
         for (auto& streamHandle : streamHandles)
         {
-            if (streamHandle->parent != handle->parent)
+            if (!streamHandle || streamHandle->parent != handle->parent)
             {
                 continue;
             }

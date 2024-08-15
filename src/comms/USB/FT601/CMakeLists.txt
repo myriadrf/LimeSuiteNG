@@ -14,46 +14,26 @@ if(WIN32)
 
     #when using static libs specify FTD3XX_STATIC
     if(FTD3XX_STATIC)
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static/FTD3XX.lib SetupAPI)
-        add_compile_definitions(FTD3XX_STATIC)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static_Lib/FTD3XX.lib SetupAPI)
+        target_compile_definitions(limesuiteng PRIVATE FTD3XX_STATIC)
     else()
         #when using dynamic libs install the dll to bin/
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/FTD3XX.lib SetupAPI)
-        install(FILES ${FTD3XX_LIB_DIR}/FTD3XX.dll DESTINATION bin)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.lib SetupAPI)
+        install(FILES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.dll DESTINATION bin)
     endif()
 
     message(STATUS "FTDI_INCLUDE_DIRS: ${FTDI_INCLUDE_DIRS}")
     message(STATUS "FTDI_LIBRARIES: ${FTDI_LIBRARIES}")
-    target_link_libraries(limesuiteng PRIVATE ${FTDI_LIBRARIES})
+    target_link_libraries(limesuiteng PRIVATE ${FTDI_LIBRARIES} legacy_stdio_definitions.lib)
     target_include_directories(limesuiteng PRIVATE ${FTDI_INCLUDE_DIRS})
-elseif(UNIX)
-    find_package(libusb-1.0)
-    set_package_properties(
-        libusb-1.0 PROPERTIES
-        TYPE RECOMMENDED
-        PURPOSE "Adds USB communication support for FT601 chip")
-
-    set(FTDI_FOUND ${LIBUSB_1_FOUND})
-    if(NOT ${FTDI_FOUND})
-        message(WARNING "libusb-1.0 libraries not found. Omitting FTDI USB support")
-    endif()
-
-    target_link_libraries(limesuiteng PRIVATE ${LIBUSB_1_LIBRARIES})
-
-    if(LIBUSB_1_INCLUDE_DIR)
-        target_include_directories(limesuiteng PRIVATE $<BUILD_INTERFACE:${LIBUSB_1_INCLUDE_DIRS}> $<INSTALL_INTERFACE:include>)
-    endif()
 endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_USB_FTDI "Enable FT601" ON "FTDI_FOUND" OFF)
+cmake_dependent_option(ENABLE_USB_FTDI "Enable FT601" ON "FTDI_FOUND OR LIBUSB_1_FOUND" OFF)
 add_feature_info(USB_FTDI ENABLE_USB_FTDI "USB support for FTDI")
 if(NOT ENABLE_USB_FTDI)
     return()
 endif()
 
-set(CONNECTION_FT601_SOURCES ${CMAKE_CURRENT_LIST_DIR}/FT601.cpp)
-
-target_include_directories(limesuiteng PRIVATE ${THIS_SOURCE_DIR})
-target_sources(limesuiteng PRIVATE ${CONNECTION_FT601_SOURCES})
+target_sources(limesuiteng PRIVATE FT601.cpp)

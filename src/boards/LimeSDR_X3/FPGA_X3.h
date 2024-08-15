@@ -1,7 +1,7 @@
 #ifndef FPGA_X3_H
 #define FPGA_X3_H
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 
 namespace lime {
 

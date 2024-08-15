@@ -1,3 +1,5 @@
+#include "rang.hpp" // terminal colors
+
 #include "limesuiteng/Logger.h"
 #include "LoggerInternal.h"
 
@@ -7,9 +9,20 @@ LogHandlerCString Logger::logHandlerCString{ &defaultLogHandlerCString };
 
 void Logger::defaultLogHandlerCString(const LogLevel level, const char* message)
 {
-    if (level > LogLevel::Error)
+    if (level > LogLevel::Warning)
         return;
-    std::fprintf(stderr, "%s\n", message);
+    switch (level)
+    {
+    case LogLevel::Critical:
+    case LogLevel::Error:
+        std::cerr << rang::fg::red << message << rang::fg::reset << std::endl;
+        break;
+    case LogLevel::Warning:
+        std::cerr << rang::fg::yellow << message << rang::fg::reset << std::endl;
+        break;
+    default:
+        std::cerr << message << std::endl;
+    }
 }
 
 void Logger::logHandlerCStringWrapper(const LogLevel level, const char* message)

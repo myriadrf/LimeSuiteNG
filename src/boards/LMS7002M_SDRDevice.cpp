@@ -1,6 +1,6 @@
 #include "LMS7002M_SDRDevice.h"
 
-#include "FPGA_common.h"
+#include "FPGA/FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
@@ -1036,20 +1036,20 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
         eGainTypes::IAMP,
     };
 
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::LNA] = Range(0, 30);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::LoopbackLNA] = Range(0, 40);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::TIA] = Range(0, 12);
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::PGA] = Range(-12, 19);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD] = Range(0, 52);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::LoopbackPAD] = Range(-4.3, 0);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::IAMP] = Range(-12, 12);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::LNA] = Range<double>(0, 30);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::LoopbackLNA] = Range<double>(0, 40);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::TIA] = Range<double>(0, 12);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::PGA] = Range<double>(-12, 19);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD] = Range<double>(0, 52);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::LoopbackPAD] = Range<double>(-4.3, 0);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::IAMP] = Range<double>(-12, 12);
 
 #ifdef NEW_GAIN_BEHAVIOUR
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range(-12, 49);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range(0, 52);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 49);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(0, 52);
 #else
-    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range(-12, 61);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range(-12, 64);
+    descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 61);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(-12, 64);
 #endif
 }
 
@@ -1139,10 +1139,25 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M& chip, const Cha
     const ChannelConfig& ch = config;
 
     // TODO: Don't configure GFIR when external ADC/DAC is used
-    if (ch.rx.enabled && chip.SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth) != OpStatus::Success)
-        return lime::ReportError(OpStatus::Error, "Rx ch%i GFIR config failed", i);
-    if (ch.tx.enabled && chip.SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth) != OpStatus::Success)
-        return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
+    if (ch.rx.enabled)
+    {
+        OpStatus status = chip.SetGFIRFilter(TRXDir::Rx, enumChannel, ch.rx.gfir.enabled, ch.rx.gfir.bandwidth);
+
+        if (status == OpStatus::NotImplemented)
+            lime::warning("Rx ch%i GFIR config not implemented", i);
+        else if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Rx ch%i GFIR config failed", i);
+    }
+
+    if (ch.tx.enabled)
+    {
+        OpStatus status = chip.SetGFIRFilter(TRXDir::Tx, enumChannel, ch.tx.gfir.enabled, ch.tx.gfir.bandwidth);
+
+        if (status == OpStatus::NotImplemented)
+            lime::warning("Tx ch%i GFIR config not implemented", i);
+        else if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Tx ch%i GFIR config failed", i);
+    }
 
     OpStatus rxStatus = OpStatus::Success;
     if (ch.rx.calibrate && ch.rx.enabled)

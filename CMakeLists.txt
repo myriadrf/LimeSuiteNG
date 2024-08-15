@@ -127,7 +127,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #enable warnings
-    add_compile_options(-Wall -Wpedantic)
+    add_compile_options(-Wall -Wpedantic -fmax-errors=5)
 
     #symbols are only exported from libraries/modules explicitly
     add_compile_options(-fvisibility=hidden)
@@ -223,37 +223,6 @@ if(ENABLE_NEW_GAIN_BEHAVIOUR)
     add_compile_definitions(NEW_GAIN_BEHAVIOUR)
 endif()
 
-########################################################################
-# GTest
-########################################################################
-include(CMakeDependentOption)
-include(FeatureSummary)
-option(ENABLE_TESTING "Use GoogleTest to test the library" OFF)
-add_feature_info(TESTING ENABLE_TESTING "Build GoogleTest tests to test the library")
-cmake_dependent_option(ENABLE_CODE_COVERAGE "Use gcov/lcov to generate a code coverage report" ON "ENABLE_TESTING" OFF)
-
-if(ENABLE_TESTING)
-    include(CTest)
-    include(FetchContent)
-    fetchcontent_declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG a7f443b80b105f940225332ed3c31f2790092f47 # latest main at the time of writing this
-    )
-
-    set(INSTALL_GMOCK OFF) # Don't install the GMock headers
-    set(INSTALL_GTEST OFF) # Don't install the GTest headers
-
-    if(MSVC)
-        set(gtest_force_shared_crt
-            ON
-            CACHE BOOL "" FORCE)
-    endif()
-
-    fetchcontent_makeavailable(googletest)
-    enable_testing()
-endif()
-
 ###########################################################################################
 # rpath setup - https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
 ###########################################################################################
@@ -292,10 +261,21 @@ add_subdirectory(external)
 add_subdirectory(embedded)
 add_subdirectory(src)
 
+# Lime command line tools
+add_subdirectory(cli)
+
 ########################################################################
 ## graphical interface
 ########################################################################
 add_subdirectory(GUI)
+
+#########################################################################
+# GTest tests
+#########################################################################
+if(ENABLE_UNIT_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 ########################################################################
 ## plugins for external programs
@@ -316,17 +296,19 @@ add_subdirectory(docs/doxygen)
 # CMake Project config files
 ########################################################################
 if(ENABLE_HEADERS AND ENABLE_LIBRARY)
-    configure_file(
-        ${PROJECT_SOURCE_DIR}/cmake/Modules/limesuitengConfigVersion.in.cmake
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
         ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-        @ONLY)
+        VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+        COMPATIBILITY SameMinorVersion)
+    install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 
     install(
-        EXPORT limesuiteng
+        EXPORT limesuitengTarget
+        NAMESPACE limesuiteng::
         FILE limesuitengConfig.cmake
         DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 
-    install(FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake DESTINATION lib${LIB_SUFFIX}/cmake/${PROJECT_NAME})
 endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
 
 #########################################################################

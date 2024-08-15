@@ -116,7 +116,7 @@ typedef PVOID FT_HANDLE, *PFT_HANDLE;
 //
 // FT Status Codes
 //
-typedef enum _FT_STATUS
+enum _FT_STATUS
 {
     FT_OK,
     FT_INVALID_HANDLE,
@@ -251,6 +251,17 @@ typedef struct _FT_STRING_DESCRIPTOR
 
 } FT_STRING_DESCRIPTOR, *PFT_STRING_DESCRIPTOR;
 
+typedef struct _FT_ENDPOINT_DESCRIPTOR
+{
+    UCHAR   bLength;
+    UCHAR   bDescriptorType;
+    UCHAR   bEndpointAddress;
+    UCHAR   bmAttributes;
+    USHORT  wMaxPacketSize;
+    UCHAR   bInterval;
+
+} FT_ENDPOINT_DESCRIPTOR, * PFT_ENDPOINT_DESCRIPTOR;
+
 //
 // Pipe information
 //
@@ -375,19 +386,17 @@ typedef enum
 {
     CONFIGURATION_OPTIONAL_FEATURE_DISABLEALL                           = 0,
     CONFIGURATION_OPTIONAL_FEATURE_ENABLEBATTERYCHARGING                = (0x1 << 0),
-    CONFIGURATION_OPTIONAL_FEATURE_DISABLECANCELSESSIONUNDERRUN         = (0x1 << 1),
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLECANCELSESSIONUNDERRUN			= (0x1 << 1),	/* Setting this will Ignore session underrun */
     CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH1      = (0x1 << 2),
     CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH2      = (0x1 << 3),
     CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH3      = (0x1 << 4),
     CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCH4      = (0x1 << 5),
 	CONFIGURATION_OPTIONAL_FEATURE_ENABLENOTIFICATIONMESSAGE_INCHALL    = (0xF << 2),
-	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH1                = (0x1 << 6),
-	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH2                = (0x1 << 7),
-	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH3                = (0x1 << 8),
-	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH4                = (0x1 << 9),
-	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCHALL              = (0xF << 6),
-	CONFIGURATION_OPTIONAL_FEATURE_SUPPORT_ENABLE_FIFO_IN_SUSPEND		= (1 << 10),
-	CONFIGURATION_OPTIONAL_FEATURE_SUPPORT_DISABLE_CHIP_POWERDOWN		= (1 << 11),
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH1                = (0x1 << 6),	/* Setting this will Ignore underrun at FIFO Bus-Width for IN channel#1 */
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH2                = (0x1 << 7),	/* Setting this will Ignore underrun at FIFO Bus-Width for IN channel#2 */
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH3                = (0x1 << 8),	/* Setting this will Ignore underrun at FIFO Bus-Width for IN channel#3 */
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCH4                = (0x1 << 9),	/* Setting this will Ignore underrun at FIFO Bus-Width for IN channel#4 */
+	CONFIGURATION_OPTIONAL_FEATURE_DISABLEUNDERRUN_INCHALL				= (0xF << 6),	/* Setting this will Ignore underrun at FIFO Bus-Width for all IN channel */
 	CONFIGURATION_OPTIONAL_FEATURE_ENABLEALL                            = 0xFFFF,
 
 } CONFIGURATION_OPTIONAL_FEATURE_SUPPORT;
@@ -547,6 +556,26 @@ extern "C" {
         PULONG pulBytesTransferred,
         LPOVERLAPPED pOverlapped
         );
+
+	FTD3XX_API
+		FT_STATUS WINAPI FT_WritePipeEx(
+		FT_HANDLE ftHandle,
+		UCHAR ucPipeID,
+		PUCHAR pucBuffer,
+		ULONG ulBufferLength,
+		PULONG pulBytesTransferred,
+		LPOVERLAPPED pOverlapped
+		);
+
+	FTD3XX_API
+		FT_STATUS WINAPI FT_ReadPipeEx(
+		FT_HANDLE ftHandle,
+		UCHAR ucPipeID,
+		PUCHAR pucBuffer,
+		ULONG ulBufferLength,
+		PULONG pulBytesTransferred,
+		LPOVERLAPPED pOverlapped
+		);
 
     FTD3XX_API
         FT_STATUS WINAPI FT_GetOverlappedResult(
@@ -794,6 +823,13 @@ extern "C" {
     FT_HANDLE ftHandle,
     UINT32 u32Mask,
     UINT32 u32Pull
+    );
+
+    FTD3XX_API
+    FT_STATUS WINAPI FT_SetGPIOLevel(
+    FT_HANDLE ftHandle,
+    UINT32 u32Mask,
+    UINT32 u32Level
     );
 
 #ifdef __cplusplus

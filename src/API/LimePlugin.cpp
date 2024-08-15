@@ -834,10 +834,10 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         stream.format = context->samplesFormat;
         stream.extraConfig.negateQ = port.configInputs.double_freq_conversion_to_lower_side;
         stream.extraConfig.waitPPS = port.configInputs.syncPPS;
-        stream.extraConfig.rx.samplesInPacket = 256;
-        stream.extraConfig.rx.packetsInBatch = 4;
-        stream.extraConfig.tx.packetsInBatch = 8;
-        stream.extraConfig.tx.samplesInPacket = 256;
+        stream.extraConfig.rx.samplesInPacket = 0;
+        stream.extraConfig.rx.packetsInBatch = 0;
+        stream.extraConfig.tx.packetsInBatch = 0;
+        stream.extraConfig.tx.samplesInPacket = 0;
 
         // Initialize streams and map channels
         for (size_t ch = 0; ch < stream.channels[TRXDir::Rx].size(); ++ch)
@@ -983,7 +983,7 @@ int LimePlugin_Write_complex16(
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
-template<class T> static int LimePlugin_Read(LimePluginContext* context, T** samples, int count, int port, StreamMeta& meta)
+template<class T> static int LimePlugin_Read(LimePluginContext* context, T* const* samples, int count, int port, StreamMeta& meta)
 {
     meta.waitForTimestamp = false;
     meta.flushPartialPacket = false;
@@ -1004,12 +1004,13 @@ template<class T> static int LimePlugin_Read(LimePluginContext* context, T** sam
     return samplesGot;
 }
 
-int LimePlugin_Read_complex32f(LimePluginContext* context, lime::complex32f_t** samples, int count, int port, StreamMeta& meta)
+int LimePlugin_Read_complex32f(
+    LimePluginContext* context, lime::complex32f_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
 
-int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t** samples, int count, int port, StreamMeta& meta)
+int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }

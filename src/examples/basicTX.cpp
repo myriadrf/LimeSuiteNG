@@ -10,11 +10,13 @@
 #include <string_view>
 #include <cmath>
 #include <signal.h>
+#include "args.hxx"
+#include "common.h"
 
 using namespace lime;
 using namespace std::literals::string_view_literals;
 
-static const double frequencyLO = 2e9;
+double frequencyLO = 2e9;
 float sampleRate = 10e6;
 static uint8_t chipIndex = 0; // device might have several RF chips
 
@@ -35,27 +37,65 @@ static void LogCallback(LogLevel lvl, const std::string& msg)
 
 int main(int argc, char** argv)
 {
-    lime::registerLogHandler(LogCallback);
-    auto handles = DeviceRegistry::enumerate();
-    if (handles.size() == 0)
-    {
-        std::cout << "No devices found\n"sv;
-        return -1;
-    }
-    std::cout << "Devices found :"sv << std::endl;
-    for (size_t i = 0; i < handles.size(); i++)
-        std::cout << i << ": "sv << handles[i].Serialize() << std::endl;
-    std::cout << std::endl;
+    // clang-format off
+    args::ArgumentParser            parser("basicTX - minimal TX example", "");
+    args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
 
-    // Use first available device
-    SDRDevice* device = DeviceRegistry::makeDevice(handles.at(0));
+    args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
+    args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
+    args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
+    // clang-format on
+
+    try
+    {
+        parser.ParseCLI(argc, argv);
+    } catch (const args::Help&)
+    {
+        std::cout << parser;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    lime::registerLogHandler(LogCallback);
+
+    const std::string devName = args::get(deviceFlag);
+    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
         return -1;
     }
+
+    std::cout << "Connected to device: " << device->GetDescriptor().name << std::endl;
     device->SetMessageLogCallback(LogCallback);
     device->Init();
+
+    const auto& chipDescriptor = device->GetDescriptor().rfSOC[chipIndex];
+
+    // Default TX path when none is provided via the command lime.
+    int txPath = 2;
+
+    const std::string txAntennaName = args::get(txpathFlag);
+    if (!txAntennaName.empty())
+    {
+        txPath = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
+        if (txPath < 0)
+        {
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+    }
+
+    std::cout << "Using antenna "sv << chipDescriptor.pathNames.at(TRXDir::Tx).at(txPath) << std::endl;
+
+    if (txloFlag)
+    {
+        frequencyLO = args::get(txloFlag);
+    }
+    std::cout << "Transmitter center frequency: " << std::fixed << std::setprecision(3) << frequencyLO / 1e6 << " MHz" << std::endl;
 
     // RF parameters
     SDRConfig config;
@@ -68,7 +108,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.sampleRate = sampleRate;
     config.channel[0].tx.oversample = 2;
     config.channel[0].tx.lpf = 0;
-    config.channel[0].tx.path = 2; // TODO: replace with string names
+    config.channel[0].tx.path = txPath;
     config.channel[0].tx.calibrate = true;
     config.channel[0].tx.testSignal.enabled = false;
 
