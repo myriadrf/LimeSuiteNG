@@ -8,7 +8,7 @@
 #include <stdarg.h>
 
 extern "C" {
-#include "trx_driver.h"
+#include "include/trx_driver.h"
 }
 
 using namespace std;
