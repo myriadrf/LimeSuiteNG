@@ -1277,6 +1277,70 @@ static int limepcie_device_create_cdev_control(struct limepcie_device *myDevice,
     return limepcie_cdev_create(cdev, sysDev, name, &limepcie_fops_control);
 }
 
+// set dma address mask and check if buffer allocation and mapping is within the mask
+static int try_set_dma_bitmask(struct device *sysDev, uint32_t bitCount)
+{
+    const uint64_t mask = DMA_BIT_MASK(bitCount);
+    int ret = dma_set_mask_and_coherent(sysDev, mask);
+    if (ret)
+    {
+        dev_warn(sysDev, "Failed dma_set_mask_and_coherent %ubit\n", bitCount);
+        return -1;
+    }
+    void *memoryBuffer = kmalloc(PAGE_SIZE, GFP_KERNEL);
+    if (!memoryBuffer)
+    {
+        dev_err(sysDev, "%s(%i): Failed to allocate dma buffer\n", __func__, bitCount);
+        return -2;
+    }
+
+    dma_addr_t dma_bus = dma_map_single(sysDev, memoryBuffer, PAGE_SIZE, DMA_FROM_DEVICE);
+    if (dma_mapping_error(sysDev, dma_bus))
+    {
+        dev_err(sysDev,
+            "%s(%i): dma_map_single error @ va:%p pa:%llx bus:%llx\n",
+            __func__,
+            bitCount,
+            memoryBuffer,
+            virt_to_phys(memoryBuffer),
+            dma_bus);
+        kfree(memoryBuffer);
+        return -3;
+    }
+
+    ret = 0;
+    uint64_t physicallAddress = virt_to_phys(memoryBuffer);
+    dev_dbg(sysDev, "%s(%i): test buffer va:%p pa:%llx bus:%llx\n", __func__, bitCount, memoryBuffer, physicallAddress, dma_bus);
+    if (dma_bus & ~mask)
+    {
+        dev_err(sysDev, "DMA bus address is outside of requested mask.\n");
+        ret = -4;
+    }
+
+    dma_unmap_single(sysDev, dma_bus, PAGE_SIZE, DMA_FROM_DEVICE);
+    kfree(memoryBuffer);
+    return ret;
+}
+
+static int set_dma_addressing_mask(struct device *sysDev)
+{
+    const uint64_t required_dma_mask = dma_get_required_mask(sysDev);
+    dev_dbg(sysDev, "dma_get_required_mask: %llx.\n", required_dma_mask);
+    int ret = try_set_dma_bitmask(sysDev, 32);
+    if (ret)
+    {
+        dev_err(sysDev, "Failed to set DMA mask 32bit. \n");
+        ret = try_set_dma_bitmask(sysDev, 64);
+        if (ret)
+            return ret;
+        else
+            dev_info(sysDev, "using 64bit dma\n");
+    }
+    else
+        dev_info(sysDev, "using 32bit dma\n");
+    return 0;
+}
+
 static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev *pciContext)
 {
     struct device *sysDev = &pciContext->dev;
@@ -1299,33 +1363,9 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     pcie_print_link_status(pciContext);
     pci_set_master(pciContext);
 
-    const uint64_t required_dma_mask = dma_get_required_mask(sysDev);
-    // Raspberry Pi requires 36 bits. Attempting to set mask to 32bits does not generate errors, but DMA does not work.
-    if (required_dma_mask > DMA_BIT_MASK(32))
-    {
-        dev_info(sysDev, "Required DMA mask %llx. Attempting 64bit mask.\n", required_dma_mask);
-        ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(64));
-        if (ret)
-        {
-            dev_err(sysDev, "Failed to set DMA mask 64bit\n");
-            return -1;
-        }
-    }
-    else
-    {
-        // start with 32bit, upgrade to 64bit only if necessary
-        ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(32));
-        if (ret)
-        {
-            dev_err(sysDev, "Failed to set DMA mask 32bit\n");
-            ret = dma_set_mask_and_coherent(sysDev, DMA_BIT_MASK(64));
-            if (ret)
-            {
-                dev_err(sysDev, "Failed to set DMA mask 64bit\n");
-                return -1;
-            };
-        };
-    }
+    ret = set_dma_addressing_mask(sysDev);
+    if (ret < 0)
+        return -1;
 
     ret = AllocateIRQs(myDevice);
     if (ret < 0)
