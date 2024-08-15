@@ -611,7 +611,7 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
             break;
         }
 
-        uint64_t end_time = ktime_get_raw_ns() + m.timeout_ms * 1000000llu;
+        uint64_t end_time = ktime_get_raw_ns() + m.timeout_ms * 2000000llu;
 
         // int success = down_timeout(sem, msecs_to_jiffies(m.timeout_ms));
         // if (success != 0) // on failure
@@ -642,7 +642,7 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
         if (!success)
         {
             // up(sem);
-            ret = -EFAULT;
+            ret = -ETIMEDOUT;
             break;
         }
 
@@ -663,7 +663,7 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
     }
     break;
     default:
-        ret = -ENOIOCTLCMD;
+        ret = -ENOTTY;
         break;
     }
     return ret;
@@ -857,7 +857,7 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
     }
     break;
     default:
-        ret = -ENOIOCTLCMD;
+        ret = -ENOTTY;
         break;
     }
     return ret;

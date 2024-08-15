@@ -1,7 +1,7 @@
 #include "comms/PCIe/LimePCIe.h"
 
 #include <iostream>
-#include <errno.h>
+#include <cerrno>
 #include <string.h>
 #include <thread>
 #include <filesystem>
@@ -71,6 +71,9 @@ LimePCIe::~LimePCIe()
 
 OpStatus LimePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
 {
+#ifndef ENOIOCTLCMD
+    constexpr int ENOIOCTLCMD = 515; // not a standard Posix error code, but exists in linux kernel headers
+#endif
     limepcie_control_packet pkt;
     pkt.timeout_ms = timeout_ms;
     pkt.length = length;
@@ -81,14 +84,32 @@ OpStatus LimePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t
 
     switch (ret)
     {
+    case 0:
+        break;
+    case ENOTTY:
+    case -ENOTTY:
+    case ENOIOCTLCMD:
+    case -ENOIOCTLCMD: {
+        // driver does not support ioctl, fallback to write/read
+        ret = WriteControl(request, length, timeout_ms);
+        if (static_cast<size_t>(ret) != length)
+            return OpStatus::IOFailure;
+
+        ret = ReadControl(response, length, timeout_ms);
+        if (static_cast<size_t>(ret) != length)
+            return OpStatus::IOFailure;
+        return OpStatus::Success;
+    }
     case EBUSY:
     case -EBUSY:
         return OpStatus::Busy;
+    case ETIMEDOUT:
+    case -ETIMEDOUT:
+        lime::error("control command timeout");
+        return OpStatus::Timeout;
     default:
         lime::error("Unable to send control packet");
         return OpStatus::IOFailure;
-    case 0:
-        break;
     }
 
     if (pkt.length != length)
