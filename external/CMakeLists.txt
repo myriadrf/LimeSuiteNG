@@ -115,7 +115,8 @@ fetchcontent_declare(
 
 fetchcontent_makeavailable(cpp-feather-ini-parser)
 
-add_library(cpp-feather-ini-parser INTERFACE ${cpp-feather-ini-parser_SOURCE_DIR}/INI.h)
+add_library(cpp-feather-ini-parser INTERFACE)
+target_sources(cpp-feather-ini-parser PUBLIC ${cpp-feather-ini-parser_SOURCE_DIR}/INI.h)
 target_include_directories(cpp-feather-ini-parser INTERFACE ${cpp-feather-ini-parser_SOURCE_DIR})
 
 #########################################################################

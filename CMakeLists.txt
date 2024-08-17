@@ -2,6 +2,7 @@
 ## Create LimeSuiteNG project
 ########################################################################
 cmake_minimum_required(VERSION 3.15)
+message(STATUS "cmake version: ${CMAKE_VERSION}")
 set(CMAKE_CONFIGURATION_TYPES
     "Debug;Release;RelWithDebInfo"
     CACHE STRING INTERNAL FORCE)
