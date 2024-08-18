@@ -54,6 +54,8 @@ USBDMAEmulation::~USBDMAEmulation()
 void USBDMAEmulation::AbortAllTransfers()
 {
     std::vector<AsyncXfer*> temp;
+
+    std::unique_lock lck{ queuesMutex };
     temp.reserve(pendingXfers.size());
     while (!pendingXfers.empty())
     {
@@ -68,6 +70,8 @@ void USBDMAEmulation::AbortAllTransfers()
         port->FinishDataXfer(async->xfer);
         transfers.push(async);
     }
+    assert(pendingXfers.empty());
+    assert(transfers.size() == maxAsyncTransfers);
 }
 
 std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
@@ -107,6 +111,7 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
     if (dir != DataTransferDirection::DeviceToHost)
         return OpStatus::Success;
     // For continuous transferring, preemptively request data to be transferred
+    std::unique_lock lck{ queuesMutex };
     while (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();
@@ -123,6 +128,7 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
 
 void USBDMAEmulation::UpdateProducerStates()
 {
+    std::unique_lock lck{ queuesMutex };
     while (!pendingXfers.empty())
     {
         AsyncXfer* async = pendingXfers.front();
@@ -149,7 +155,7 @@ USBDMAEmulation::State USBDMAEmulation::GetCounters()
 OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection dir, bool irq)
 {
     int count = 1;
-
+    std::unique_lock lck{ queuesMutex };
     count = std::min(size_t(count), transfers.size());
     if (!transfers.empty() && count > 0)
     {
@@ -169,6 +175,7 @@ OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, Dat
 
 OpStatus USBDMAEmulation::Wait()
 {
+    std::unique_lock lck{ queuesMutex };
     if (pendingXfers.empty())
         return OpStatus::Success;
 

@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <queue>
 
@@ -48,6 +49,7 @@ class USBDMAEmulation : public IDMA
     std::queue<AsyncXfer*> transfers;
     std::queue<AsyncXfer*> pendingXfers;
     std::vector<Buffer> mappings;
+    std::mutex queuesMutex;
 
     void AbortAllTransfers();
     void UpdateProducerStates();
