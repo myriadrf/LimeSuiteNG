@@ -198,6 +198,7 @@ TEST_F(lms7002m_embedded, lms7002m_set_gfir_coefficients_SetGet_ValuesMatch)
         coefs[i] = -32768 + i * (65536 / 120);
 
     bool isTx = true;
+    spi_stub.Set(0, LMS7002M_HBI_OVR_TXTSP, 4); // gfir coefficients count is dictated by oversampling
     ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
     ASSERT_EQ(lms7002m_set_gfir_coefficients(chip, isTx, 2, coefs.data(), coefs.size()), lime_Result_Success);
 

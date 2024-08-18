@@ -21,13 +21,14 @@ void LimeSuiteWrapper_streaming::SetUp()
         GTEST_SKIP() << "device not connected, skipping"s;
 
     //open the first device
-    ASSERT_EQ(LMS_Open(&device, list[1], NULL), 0);
+    ASSERT_EQ(LMS_Open(&device, list[0], NULL), 0);
     ASSERT_EQ(LMS_Init(device), 0);
 }
 
 void LimeSuiteWrapper_streaming::TearDown()
 {
-    LMS_Close(device);
+    if (device)
+        LMS_Close(device);
 }
 
 int LimeSuiteWrapper_streaming::SetupSampleRate()

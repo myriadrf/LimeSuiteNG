@@ -29,7 +29,8 @@ void LimeSuiteWrapper_device::SetUp()
 
 void LimeSuiteWrapper_device::TearDown()
 {
-    LMS_Close(device);
+    if (device)
+        LMS_Close(device);
 }
 
 TEST_F(LimeSuiteWrapper_device, GetChipTemperatureIsInValidRange)
