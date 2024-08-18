@@ -325,6 +325,14 @@ OpStatus TRXLooper::RxSetup()
     const auto dmaChunks{ mRxArgs.dma->GetBuffers() };
     const auto dmaBufferSize = dmaChunks.front().size;
 
+    if (mConfig.hintSampleRate == 0)
+        mConfig.hintSampleRate = lms->GetSampleRate(
+            TRXDir::Rx, mConfig.channels.at(TRXDir::Rx).at(0) == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
+
+    // aim batch size to desired data output period, ~100us should be good enough
+    if (mConfig.hintSampleRate > 0)
+        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / samplesInPkt);
+
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
     if (mCallback_logMessage)
@@ -335,16 +343,17 @@ OpStatus TRXLooper::RxSetup()
         else
             bufferTimeDuration = 0;
         char msg[256];
-        std::snprintf(msg,
+        std::printf(msg,
             sizeof(msg),
-            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus",
+            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
             chipId,
             usePoll ? 1 : 0,
             samplesInPkt,
             mRx.packetsToBatch,
             mRx.packetsToBatch * packetSize,
             (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
-            bufferTimeDuration * 1e6);
+            bufferTimeDuration * 1e6,
+            mConfig.hintSampleRate);
         mCallback_logMessage(LogLevel::Verbose, msg);
     }
 

@@ -61,6 +61,7 @@ void LimeSuiteWrapper_streaming::SetupRxStreams(std::vector<lms_stream_t>& chann
         streamId.throughputVsLatency = 0.0;
         streamId.isTx = false;
         streamId.dataFmt = lms_stream_t::LMS_FMT_I16;
+        streamId.linkFmt = lms_stream_t::LMS_LINK_FMT_I16;
         ASSERT_EQ(LMS_SetupStream(device, &streamId), 0);
         channels.push_back(streamId);
     }
@@ -69,9 +70,10 @@ void LimeSuiteWrapper_streaming::SetupRxStreams(std::vector<lms_stream_t>& chann
 void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_stream_t>& channels)
 {
     const double expectedDuration_us{ 10000 };
-    const int samplesToGet = GetParam().sampleRate * expectedDuration_us / 1e6;
+    const float sampleRate = GetParam().sampleRate;
+    const int samplesToGet = sampleRate * expectedDuration_us / 1e6;
 
-    const int samplesBatchSize = 5000;
+    const int samplesBatchSize = 1020;
     int16_t buffer[samplesBatchSize * 2]; //buffer to hold complex values (2*samples))
 
     auto t1 = chrono::high_resolution_clock::now();
@@ -95,7 +97,13 @@ void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_
     auto t2 = chrono::high_resolution_clock::now();
     EXPECT_EQ(samplesRemaining, 0);
     const std::chrono::microseconds streamDuration{ chrono::duration_cast<chrono::microseconds>(t2 - t1) };
-    EXPECT_NEAR(streamDuration.count(), expectedDuration_us, 1000);
+    // margin shoudn't be less than one packet's size
+    // some devices don't have variable size packets so the minimum data output time
+    // is 1020 or 1360 samples depending on link data format.
+    const int margin_us = std::max(1000.0, 1e6 * samplesBatchSize / sampleRate);
+
+    // High sample rates can fail duration test in Debug builds due to poor performance
+    EXPECT_NEAR(streamDuration.count(), expectedDuration_us, margin_us);
 }
 
 TEST_P(LimeSuiteWrapper_streaming, SetSampleRateIsAccurate)
@@ -128,7 +136,9 @@ INSTANTIATE_TEST_SUITE_P(streamVariations,
         RxStreamParams{ 10e6, 2, 1 },
         RxStreamParams{ 5e6, 2, 1 },
         RxStreamParams{ 1e6, 2, 1 },
-        RxStreamParams{ 1e6, 2, 2 }),
+        RxStreamParams{ 1e6, 2, 2 },
+        RxStreamParams{ 5e5, 4, 1 },
+        RxStreamParams{ 5e6, 4, 2 }),
     ::testing::PrintToStringParamName());
 
 /*
