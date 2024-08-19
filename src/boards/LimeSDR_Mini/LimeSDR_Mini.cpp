@@ -15,6 +15,7 @@
 #include "comms/IComms.h"
 #include "ISerialPort.h"
 #include "comms/USB/FT601/FT601.h"
+#include "comms/SPI_utilities.h"
 
 #include <assert.h>
 #include <memory>
@@ -250,6 +251,12 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
             if (status != OpStatus::Success)
                 return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.", i);
             LMS7002TestSignalConfigure(*chip, cfg.channel[i], i);
+
+            if (i == 0) // only channel A is connected to RF ports
+            {
+                SetRFSwitch(TRXDir::Rx, cfg.channel[0].rx.path);
+                SetRFSwitch(TRXDir::Tx, cfg.channel[0].tx.path);
+            }
         }
 
         // enabled ADC/DAC is required for FPGA to work
@@ -594,4 +601,59 @@ void LimeSDR_Mini::SetSerialNumber(const std::string& number)
     uint64_t sn = 0;
     sscanf(number.c_str(), "%16lX", &sn);
     mDeviceDescriptor.serialNumber = sn;
+}
+
+OpStatus LimeSDR_Mini::SetRFSwitch(TRXDir dir, uint8_t path)
+{
+    if (dir == TRXDir::Rx)
+    {
+        Register rxRFswitch(0x0017, 9, 8);
+        uint8_t value = 0;
+        switch (path)
+        {
+        case 3: // LNAW
+            value = 0x2;
+            break;
+        case 2: // LNAL
+            lime::warning("LNAL has no connection to RF ports");
+            break;
+        case 1: // LNAH
+            value = 0x1;
+            break;
+        default:
+            value = 0;
+            break; // not connected
+        }
+        return ModifyRegister(mfpgaPort.get(), rxRFswitch, value);
+    }
+    else
+    {
+        Register txRFswitch(0x0017, 13, 12);
+        uint8_t value = 0;
+        switch (path)
+        {
+        case 2: // BAND2
+            value = 0x2;
+            break;
+        case 1: // BAND1
+            value = 0x1;
+            break;
+        default: // not connected
+            value = 0;
+            break;
+        }
+        return ModifyRegister(mfpgaPort.get(), txRFswitch, value);
+    }
+}
+
+OpStatus LimeSDR_Mini::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
+{
+    OpStatus status = LMS7002M_SDRDevice::SetAntenna(moduleIndex, trx, channel, path);
+    if (status != OpStatus::Success)
+        return status;
+
+    if (channel == 0)
+        return SetRFSwitch(trx, path);
+    else
+        return status;
 }
