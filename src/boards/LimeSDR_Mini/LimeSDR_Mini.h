@@ -50,7 +50,6 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
 
   private:
-    SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
     OpStatus SetRFSwitch(TRXDir dir, uint8_t path);
 

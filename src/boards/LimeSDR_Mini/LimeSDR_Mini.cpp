@@ -145,7 +145,11 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
 {
-    SDRDescriptor descriptor = GetDeviceInfo();
+    SDRDescriptor& descriptor = mDeviceDescriptor;
+
+    LMS64CProtocol::FirmwareInfo fw{};
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::FirmwareToDescriptor(fw, descriptor);
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
     double refClk = mFPGA->DetectRefClk();
@@ -163,6 +167,7 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         RFSOCDescriptor soc{ GetDefaultLMS7002MDescriptor() };
         // override specific capabilities
         soc.channelCount = 1;
+
         soc.pathNames[TRXDir::Rx] = { "NONE"s, "LNAH"s, "LNAL_NC"s, "LNAW"s }; // LNAL is not connected
         soc.samplingRateRange = { 100e3, 30.72e6, 0 };
         soc.frequencyRange = { 10e6, 3.5e9, 0 };
@@ -195,8 +200,6 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
     descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Mini"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
-
-    mDeviceDescriptor = descriptor;
 }
 
 LimeSDR_Mini::~LimeSDR_Mini()
@@ -476,45 +479,6 @@ OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
     {
         return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(cgenFreq, interpolation, decimation);
     }
-}
-
-SDRDescriptor LimeSDR_Mini::GetDeviceInfo(void)
-{
-    assert(mSerialPort);
-    SDRDescriptor deviceDescriptor;
-
-    LMS64CProtocol::FirmwareInfo info{};
-    OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);
-
-    if (returnCode != OpStatus::Success)
-    {
-        deviceDescriptor.name = GetDeviceName(LMS_DEV_UNKNOWN);
-        deviceDescriptor.expansionName = GetExpansionBoardName(EXP_BOARD_UNKNOWN);
-
-        return deviceDescriptor;
-    }
-
-    deviceDescriptor.name = GetDeviceName(static_cast<eLMS_DEV>(info.deviceId));
-    deviceDescriptor.expansionName = GetExpansionBoardName(static_cast<eEXP_BOARD>(info.expansionBoardId));
-    deviceDescriptor.firmwareVersion = std::to_string(info.firmware);
-    deviceDescriptor.hardwareVersion = std::to_string(info.hardware);
-    deviceDescriptor.protocolVersion = std::to_string(info.protocol);
-    deviceDescriptor.serialNumber = info.boardSerialNumber;
-
-    const uint32_t addrs[] = { 0x0000, 0x0001, 0x0002, 0x0003 };
-    uint32_t data[4];
-    SPI(SPI_FPGA, addrs, data, 4);
-    auto boardID = static_cast<eLMS_DEV>(data[0]); //(pkt.inBuffer[2] << 8) | pkt.inBuffer[3];
-    auto gatewareVersion = data[1]; //(pkt.inBuffer[6] << 8) | pkt.inBuffer[7];
-    auto gatewareRevision = data[2]; //(pkt.inBuffer[10] << 8) | pkt.inBuffer[11];
-    auto hwVersion = data[3] & 0x7F; //pkt.inBuffer[15]&0x7F;
-
-    deviceDescriptor.gatewareTargetBoard = GetDeviceName(boardID);
-    deviceDescriptor.gatewareVersion = std::to_string(gatewareVersion);
-    deviceDescriptor.gatewareRevision = std::to_string(gatewareRevision);
-    deviceDescriptor.hardwareVersion = std::to_string(hwVersion);
-
-    return deviceDescriptor;
 }
 
 OpStatus LimeSDR_Mini::GPIODirRead(uint8_t* buffer, const size_t bufLength)
