@@ -326,8 +326,15 @@ OpStatus TRXLooper::RxSetup()
     const auto dmaBufferSize = dmaChunks.front().size;
 
     if (mConfig.hintSampleRate == 0)
-        mConfig.hintSampleRate = lms->GetSampleRate(
-            TRXDir::Rx, mConfig.channels.at(TRXDir::Rx).at(0) == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
+    {
+        uint8_t samplerateChannel = 0;
+        // if no Rx channels are configured for streaming use channel 0 as reference sample rate
+        if (!mConfig.channels.at(TRXDir::Rx).empty())
+            samplerateChannel = mConfig.channels.at(TRXDir::Rx).at(0);
+
+        mConfig.hintSampleRate =
+            lms->GetSampleRate(TRXDir::Rx, samplerateChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
+    }
 
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
@@ -343,7 +350,7 @@ OpStatus TRXLooper::RxSetup()
         else
             bufferTimeDuration = 0;
         char msg[256];
-        std::printf(msg,
+        std::snprintf(msg,
             sizeof(msg),
             "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
             chipId,
