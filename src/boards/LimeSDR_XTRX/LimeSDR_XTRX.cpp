@@ -32,7 +32,28 @@ static const uint8_t SPI_FPGA = 1;
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static const CustomParameter cp_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
-static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
+// Fairwaves XTRX rev.5 requires specific LDO configuration to work properly
+static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_fairwaves_xtrx_rev5 = {
+    { 0x0022, 0x0FFF },
+    { 0x0023, 0x5550 },
+    { 0x002B, 0x0038 },
+    { 0x002C, 0x0000 },
+    { 0x008B, 0x218C },
+    { 0x00A6, 0x000F },
+    { 0x011C, 0x8941 },
+    { 0x0120, 0xE6C0 },
+    { 0x0121, 0x3638 },
+    { 0x0122, 0x0514 },
+    { 0x0123, 0x200F },
+    // LDOs
+    { 0x0092, 0x0D15 },
+    { 0x0093, 0x01B1 },
+    { 0x00A6, 0x000F },
+    // XBUF
+    { 0x0085, 0x0019 },
+};
+
+static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_limesdr_xtrx = {
     { 0x0020, 0xFFFD },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -165,7 +186,11 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
         desc.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(spiRFsoc);
-        chip->ModifyRegistersDefaults(lms7002defaultsOverrides);
+
+        if (gw.hardwareVersion == 0) // Fairwaves XTRX rev. 5
+            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_fairwaves_xtrx_rev5);
+        else // LimeSDR XTRX
+            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_limesdr_xtrx);
         chip->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, refClk);
