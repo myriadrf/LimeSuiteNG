@@ -355,6 +355,19 @@ static int FilterHandles(
     return filteredHandles.size();
 }
 
+static bool IsDevAssignedToAnyPort(const std::vector<PortData>& ports, int devIndex)
+{
+    for (const auto& port : ports)
+    {
+        for (const auto& dev : port.nodes)
+        {
+            if (dev->devIndex == devIndex && dev->assignedToPort)
+                return true;
+        }
+    }
+    return false;
+}
+
 static OpStatus ConnectInitializeDevices(LimePluginContext* context)
 {
     // Collect and connect specified unique nodes
@@ -362,11 +375,21 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
     for (int i = 0; i < LIME_MAX_UNIQUE_DEVICES; ++i)
     {
         DevNode& node = context->rfdev.at(i);
-        if (node.handleString.empty())
-            continue;
-
         std::vector<DeviceHandle> filteredHandles;
-        FilterHandles(node.handleString, fullHandles, filteredHandles);
+
+        if (node.handleString.empty())
+        {
+            // dev%i handle was not specified, by default connect to any single available device.
+            // Before connecting check if it actually is used by any port.
+            if (!IsDevAssignedToAnyPort(context->ports, i))
+                continue;
+
+            filteredHandles = fullHandles;
+        }
+        else
+        {
+            FilterHandles(node.handleString, fullHandles, filteredHandles);
+        }
 
         if (filteredHandles.size() > 1)
         {

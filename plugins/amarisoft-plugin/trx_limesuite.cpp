@@ -218,7 +218,10 @@ static int limesuiteng_trx_get_sample_rate_func(TRXState* s1, TRXFraction* psamp
     int p = whichPort;
     DevNode* node = s->ports[p].nodes[0];
     if (!node || !node->device)
+    {
+        Log(LogLevel::Error, "%s: No devices are assigned to port%i", __func__, p);
         return -1;
+    }
     double& rate = node->config.channel[0].rx.sampleRate;
     whichPort = (whichPort + 1); // mod, just in case.
 
