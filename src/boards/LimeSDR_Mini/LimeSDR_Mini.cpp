@@ -315,44 +315,6 @@ OpStatus LimeSDR_Mini::Init()
     if (status != OpStatus::Success)
         return status;
 
-    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
-
-    if (lms->CalibrateTxGain() != OpStatus::Success)
-        return OpStatus::Error;
-
-    lms->EnableChannel(TRXDir::Tx, 0, false);
-
-    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
-    lms->SPI_write(0x0123, 0x000F); //SXT
-    lms->SPI_write(0x0120, 0x80C0); //SXT
-    lms->SPI_write(0x011C, 0x8941); //SXT
-    lms->EnableChannel(TRXDir::Rx, 0, false);
-    lms->EnableChannel(TRXDir::Tx, 0, false);
-
-    lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
-
-    /*bool auto_path[2] = {auto_tx_path, auto_rx_path};
-    auto_tx_path = false;
-    auto_rx_path = false;
-
-    if(SetFrequency(true, 0, GetFrequency(true, 0)) != 0)
-    {
-        return -1;
-    }
-
-    if(SetFrequency(false, 0, GetFrequency(false, 0)) != 0)
-    {
-        return -1;
-    }
-
-    auto_tx_path = auto_path[0];
-    auto_rx_path = auto_path[1];
-
-    if (SetRate(15.36e6, 1) != 0)
-    {
-        return -1;
-    }*/
-
     return OpStatus::Success;
 }
 

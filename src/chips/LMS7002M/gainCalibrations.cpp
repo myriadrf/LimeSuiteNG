@@ -25,6 +25,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::AGC_AVG_RXTSP, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_RXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 0);
 
     //TBB
     Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
@@ -97,6 +98,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
         tsgValue = 0x7FFF;
     LoadDC_REG_IQ(TRXDir::Tx, tsgValue, tsgValue);
     SetNCOFrequency(TRXDir::Tx, 0, 0.5e6);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_TXTSP, 0);
 
     return OpStatus::Success;
 }

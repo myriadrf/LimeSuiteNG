@@ -288,18 +288,6 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     if (status != OpStatus::Success)
         return status;
 
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(true, 2*i, false);
-    // lms->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
-
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(false, 2*i+1, false);
-    // EnableChannel(true, 2*i+1, false);
-
     if (skipTune)
         return OpStatus::Success;
 
@@ -441,12 +429,6 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
-
-    // if(lms->CalibrateTxGain(0,nullptr) != 0)
-    //     return -1;
-
-    // EnableChannel(false, 2*i+1, false);
-    // EnableChannel(true, 2*i+1, false);
 
     if (skipTune)
         return OpStatus::Success;

@@ -25,6 +25,19 @@ void free(void* ptr);
     #include <string.h>
 #endif // __KERNEL__
 
+#ifndef NDEBUG // warn about unexpected conditions
+    #define EXPECT(context, condition) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                LMS7002M_LOG(self, lime_LogLevel_Error, "%s:%i Unmet expectation: (" #condition ")", __FILE__, __LINE__); \
+            } \
+        } while (0)
+#else
+    #define EXPECT(context, condition) // do nothing
+#endif
+
 static inline void* lms7002m_malloc(size_t size)
 {
 #ifdef __KERNEL__
@@ -1973,6 +1986,7 @@ static uint16_t lms7002m_get_rssi_delay(lms7002m_context* self)
 
 uint32_t lms7002m_get_rssi(lms7002m_context* self)
 {
+    EXPECT(self, lms7002m_spi_read_csr(self, LMS7002M_AGC_BYP_RXTSP) == 0); // ensure AGC is enabled, otherwise RSSI value will be 0
     uint32_t rssi;
     int waitTime = 1000000 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
     lms7002m_sleep(waitTime);
