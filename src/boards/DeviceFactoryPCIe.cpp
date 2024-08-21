@@ -107,7 +107,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     switch (fw.deviceId)
     {
     case LMS_DEV_LIMESDR_XTRX:
-        return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
+        return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
     case LMS_DEV_LIMESDR_X3:
         return new LimeSDR_X3(route_lms7002m, route_fpga, std::move(streamPorts), controlPipe);
     case LMS_DEV_LIMESDR_MMX8: {

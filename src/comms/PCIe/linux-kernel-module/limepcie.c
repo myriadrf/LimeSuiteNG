@@ -1369,23 +1369,29 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
 
     ret = AllocateIRQs(myDevice);
     if (ret < 0)
-        return -1;
-
-    const uint32_t dmaBufferSize = 65536; // actual buffer on device can be smaller, but they support scatter/gather
-    int32_t dmaFullDuplexChannels = limepcie_readl(myDevice, CSR_CNTRL_NDMA_ADDR);
-    if (dmaFullDuplexChannels > MAX_DMA_CHANNEL_COUNT || dmaFullDuplexChannels < 0)
     {
-        dev_err(sysDev, "Invalid DMA channel count(%i)\n", dmaFullDuplexChannels);
-        dmaFullDuplexChannels = 0;
+        dev_err(sysDev, "Failed to allocate IRQ, data streaming won't be available.\n");
+        // DMA won't work without IRQs, skip DMA channel creation so that device could still be enumerated and controls accessed.
     }
     else
-        dev_info(sysDev, "DMA channels: %i", dmaFullDuplexChannels);
+    {
+        const uint32_t dmaBufferSize = 65536; // actual buffer on device can be smaller, but they support scatter/gather
+        int32_t dmaFullDuplexChannels = limepcie_readl(myDevice, CSR_CNTRL_NDMA_ADDR);
+        if (dmaFullDuplexChannels > MAX_DMA_CHANNEL_COUNT || dmaFullDuplexChannels < 0)
+        {
+            dev_err(sysDev, "Invalid DMA channel count(%i)\n", dmaFullDuplexChannels);
+            dmaFullDuplexChannels = 0;
+        }
+        else
+            dev_info(sysDev, "DMA channels: %i", dmaFullDuplexChannels);
 
-    ret = limepcie_device_trx_setup(myDevice, dmaFullDuplexChannels, dmaBufferSize);
-    if (ret < 0)
-        return ret;
-    else if (ret != dmaFullDuplexChannels)
-        dev_err(sysDev, "Unable to create expected number of dma channels, expected:%i, got:%i\n", dmaFullDuplexChannels * 2, ret);
+        ret = limepcie_device_trx_setup(myDevice, dmaFullDuplexChannels, dmaBufferSize);
+        if (ret < 0)
+            return ret;
+        else if (ret != dmaFullDuplexChannels)
+            dev_err(
+                sysDev, "Unable to create expected number of dma channels, expected:%i, got:%i\n", dmaFullDuplexChannels * 2, ret);
+    }
 
     char cdev_name[128];
     snprintf(cdev_name, sizeof(cdev_name), "limepcie%i/control0", gDeviceCounter);

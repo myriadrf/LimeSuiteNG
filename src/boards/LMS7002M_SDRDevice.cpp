@@ -711,14 +711,16 @@ void* LMS7002M_SDRDevice::GetInternalChip(uint32_t index)
 
 uint64_t LMS7002M_SDRDevice::GetHardwareTimestamp(uint8_t moduleIndex)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->GetHardwareTimestamp();
 }
 
 OpStatus LMS7002M_SDRDevice::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now)
 {
-    // TODO: return status
-    mStreamers.at(moduleIndex)->SetHardwareTimestamp(now);
-    return OpStatus::Success;
+    if (moduleIndex >= mStreamers.size())
+        return OpStatus::OutOfRange;
+    return mStreamers.at(moduleIndex)->SetHardwareTimestamp(now);
 }
 
 OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
@@ -849,7 +851,7 @@ OpStatus LMS7002M_SDRDevice::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t ch
 
 OpStatus LMS7002M_SDRDevice::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
-    if (moduleIndex > mStreamers.size())
+    if (moduleIndex >= mStreamers.size())
         return OpStatus::InvalidValue;
 
     if (mStreamers.at(moduleIndex)->IsStreamRunning())
@@ -860,56 +862,75 @@ OpStatus LMS7002M_SDRDevice::StreamSetup(const StreamConfig& config, uint8_t mod
 
 void LMS7002M_SDRDevice::StreamStart(uint8_t moduleIndex)
 {
+    if (moduleIndex >= mStreamers.size())
+        return;
     mStreamers.at(moduleIndex)->Start();
 }
 
 void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
 {
-    assert(moduleIndex < mStreamers.size());
+    if (moduleIndex >= mStreamers.size())
+        return;
     mStreamers.at(moduleIndex)->Stop();
 }
 
 void LMS7002M_SDRDevice::StreamDestroy(uint8_t moduleIndex)
 {
-    assert(moduleIndex < mStreamers.size());
+    if (moduleIndex >= mStreamers.size())
+        return;
     mStreamers.at(moduleIndex)->Teardown();
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 uint32_t LMS7002M_SDRDevice::StreamTx(
     uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
 {
+    if (moduleIndex >= mStreamers.size())
+        return 0;
     return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
+    if (moduleIndex >= mStreamers.size())
+        return;
+
     auto& trx = mStreamers.at(moduleIndex);
     if (rx != nullptr)
         *rx = trx->GetStats(TRXDir::Rx);

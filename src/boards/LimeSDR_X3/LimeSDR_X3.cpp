@@ -249,12 +249,17 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     {
         mLMSChips[i]->SetConnection(mLMS7002Mcomms[i]);
 
-        std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(i) };
-        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        if (i < mTRXStreamPorts.size())
+        {
+            std::shared_ptr<LimePCIe> trxPort{ mTRXStreamPorts.at(i) };
+            auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+            auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
-        std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(i).get(), i);
-        mStreamers.push_back(std::move(streamer));
+            std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(i).get(), i);
+            mStreamers.push_back(std::move(streamer));
+        }
+        else
+            lime::warning("X3 RF%i data stream is not available", 0);
     }
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA.get());

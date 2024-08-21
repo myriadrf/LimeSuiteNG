@@ -198,12 +198,17 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     }
     {
         mStreamers.reserve(mLMSChips.size());
-        std::shared_ptr<LimePCIe> trxPort{ sampleStream };
-        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+        if (mStreamPort.get() != nullptr)
+        {
+            std::shared_ptr<LimePCIe> trxPort{ mStreamPort };
+            auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+            auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
 
-        std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
-        mStreamers.push_back(std::move(streamer));
+            std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
+            mStreamers.push_back(std::move(streamer));
+        }
+        else
+            lime::warning("XTRX RF data stream is not available");
     }
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_XTRX, mFPGA.get());
