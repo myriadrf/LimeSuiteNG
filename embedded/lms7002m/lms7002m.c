@@ -645,7 +645,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const struct lms7002m
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
     const int32_t pmax = 52;
-    uint16_t loss_int = pmax - decibel_int(value);
+    int32_t loss_int = pmax - decibel_int(value);
 
     //different scaling realm
     if (loss_int > 10)
@@ -653,7 +653,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const struct lms7002m
         loss_int = (loss_int + 10) / 2;
     }
 
-    loss_int = clamp_uint(loss_int, 0, 31);
+    loss_int = clamp_int(loss_int, 0, 31);
 
     lime_Result ret;
     lms7002m_spi_modify_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF, loss_int);
