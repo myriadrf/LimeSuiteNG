@@ -384,24 +384,24 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
 OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
 {
-    if (rxDecimation == 0)
+    if (f_Hz < 61.44e6)
     {
-        rxDecimation = 2;
+        if (rxDecimation == 1)
+            rxDecimation = 2;
+        if (txInterpolation == 1)
+            txInterpolation = 2;
     }
-
-    if (txInterpolation == 0)
+    else // sample rate above 61.44MHz is supported only in SISO mode, and no oversampling
     {
-        txInterpolation = 2;
+        rxDecimation = 1;
+        txInterpolation = 1;
     }
-
-    assert(rxDecimation > 0);
-    assert(txInterpolation > 0);
 
     if (rxDecimation != 0 && txInterpolation / rxDecimation > 4)
         throw std::logic_error(
             strFormat("TxInterpolation(%i)/RxDecimation(%i) should not be more than 4", txInterpolation, rxDecimation));
     uint8_t oversample = rxDecimation;
-    const bool bypass = (oversample == 1) || (oversample == 0 && f_Hz > 62e6);
+    const bool bypass = ((oversample == 1 || oversample == 0) && f_Hz > 61.44e6);
     uint8_t hbd_ovr = 7; // decimation ratio is 2^(1+hbd_ovr), HBD_OVR_RXTSP=7 - bypass
     uint8_t hbi_ovr = 7; // interpolation ratio is 2^(1+hbi_ovr), HBI_OVR_TXTSP=7 - bypass
     double cgenFreq = f_Hz * 4; // AI AQ BI BQ
@@ -425,8 +425,8 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
 
         if (txInterpolation == 0)
         {
-            int txMultiplier = std::log2(lime::LMS7002M::CGEN_MAX_FREQ / cgenFreq);
-            txInterpolation = rxDecimation << txMultiplier;
+            //int txMultiplier = std::log2(lime::LMS7002M::CGEN_MAX_FREQ / cgenFreq);
+            txInterpolation = rxDecimation; // << txMultiplier;
         }
 
         if (txInterpolation >= rxDecimation)

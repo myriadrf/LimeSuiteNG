@@ -381,7 +381,7 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 
 OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    const bool bypass = (oversample <= 1);
+    const bool bypass = (oversample == 1);
     uint8_t decimation = 7; // HBD_OVR_RXTSP=7 - bypass
     uint8_t interpolation = 7; // HBI_OVR_TXTSP=7 - bypass
     double cgenFreq = sampleRate * 4; // AI AQ BI BQ
