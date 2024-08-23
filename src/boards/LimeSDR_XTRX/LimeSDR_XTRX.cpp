@@ -155,22 +155,29 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
+    const bool isFairwavesRev5 = gw.hardwareVersion == 0;
+
     // Initial XTRX gateware supported only 32bit DMA, it worked fine on x86 with the PCIe driver
     // limiting the address mask to 32bit, but some systems require at least 35bits,
     // like Raspberry Pi, or other Arm systems. If host requires more than 32bit DMA mask
     // the driver starts using 64bit mask, in that case it's a matter of luck if the system
     // provided DMA addresses will be in 32bit zone, and could work, otherwise, data will be
     // seen as transferred, but the values will be undefined.
-    // XTRX gateware added 64bit DMA support in 1.13
-    if (gw.version == 1 && gw.revision < 13)
+    // LimeSDR XTRX gateware added 64bit DMA support in 1.13
+    // Fairwaves XTRX Rev 5 gateware added 64bit DMA support in 1.3
+    if (gw.version == 1 && ((isFairwavesRev5 && gw.revision < 4) || (!isFairwavesRev5 && gw.revision < 13)))
     {
         lime::warning("Current XTRX gateware does not support 64bit DMA addressing. "
                       "RF data streaming might not work. "
                       "Please update gateware."s);
     }
 
-    // revision 1.13 introduced "dual boot" images
-    if (gw.version >= 1 && gw.revision >= 13)
+    const bool isGoldGatewareActive = static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD;
+    if (isGoldGatewareActive)
+        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
+
+    // LimeSDR XTRX gateware revision 1.13 introduced "dual boot" images
+    if ((!isFairwavesRev5 && gw.version >= 1 && gw.revision >= 13) || isGoldGatewareActive)
     {
         desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_GOLD_IMAGE)] =
             std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_GOLD_IMAGE);
@@ -178,16 +185,13 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
             std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_USER_IMAGE);
     }
 
-    if (static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD)
-        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
-
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
         desc.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(spiRFsoc);
 
-        if (gw.hardwareVersion == 0) // Fairwaves XTRX rev. 5
+        if (isFairwavesRev5)
             chip->ModifyRegistersDefaults(lms7002defaultsOverrides_fairwaves_xtrx_rev5);
         else // LimeSDR XTRX
             chip->ModifyRegistersDefaults(lms7002defaultsOverrides_limesdr_xtrx);
@@ -384,7 +388,7 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
 OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
 {
-    if (f_Hz < 61.44e6)
+    if (f_Hz <= 61.44e6)
     {
         if (rxDecimation == 1)
             rxDecimation = 2;
@@ -456,7 +460,7 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
 
-    if (f_Hz >= 61.45e6)
+    if (f_Hz > 61.44e6)
     {
         // LimeLight & Pad
         mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::DIQ2_DS, 1);

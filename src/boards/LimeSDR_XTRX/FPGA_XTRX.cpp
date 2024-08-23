@@ -45,7 +45,9 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
 
 OpStatus FPGA_XTRX::EnableDirectClocking(bool enabled)
 {
-    if (enabled && (mGatewareVersion <= 1 && mGatewareRevision < 15))
+    const bool noDirectClocking = mGatewareVersion == 1 && ((mHardwareVersion == 0 && mGatewareRevision < 4) ||
+                                                               (mHardwareVersion == 1 && mGatewareRevision < 15));
+    if (enabled && noDirectClocking)
     {
         return ReportError(
             OpStatus::NotSupported, "FPGA_XTRX: current gateware does not support sample rates <5 MHz, please update gateware."s);

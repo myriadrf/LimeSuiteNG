@@ -111,6 +111,7 @@ class FPGA
     std::shared_ptr<ISPI> lms7002mPort;
     int32_t mGatewareVersion;
     int16_t mGatewareRevision;
+    int16_t mHardwareVersion;
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);

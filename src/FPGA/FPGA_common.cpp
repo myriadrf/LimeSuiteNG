@@ -95,11 +95,12 @@ FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     , lms7002mPort(lms7002mSPI)
     , useCache(false)
 {
-    uint32_t addr[2] = { 0x0001, 0x0002 }; // version, revision
-    uint32_t vals[2];
-    ReadRegisters(addr, vals, 2);
+    uint32_t addr[3] = { 0x0001, 0x0002, 0x0003 }; // version, revision, hardwareVersion
+    uint32_t vals[3];
+    ReadRegisters(addr, vals, 3);
     mGatewareVersion = vals[0];
     mGatewareRevision = vals[1];
+    mHardwareVersion = vals[2];
 }
 
 /// @brief Enables caching of registers on the hosts' end.
