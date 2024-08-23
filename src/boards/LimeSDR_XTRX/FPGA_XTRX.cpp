@@ -45,8 +45,9 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
 
 OpStatus FPGA_XTRX::EnableDirectClocking(bool enabled)
 {
-    const bool noDirectClocking = mGatewareVersion == 1 && ((mHardwareVersion == 0 && mGatewareRevision < 4) ||
-                                                               (mHardwareVersion == 1 && mGatewareRevision < 15));
+    const bool isFairwavesRev5 = mHardwareVersion == 0;
+    const bool noDirectClocking =
+        mGatewareVersion == 1 && ((isFairwavesRev5 && mGatewareRevision < 4) || (!isFairwavesRev5 && mGatewareRevision < 15));
     if (enabled && noDirectClocking)
     {
         return ReportError(
