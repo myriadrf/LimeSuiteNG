@@ -399,6 +399,7 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
 
 OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
 {
+    LMS7002M::ChannelScope scope(&chip, channel);
     if (chip.SetTRFPAD_dB(value, channel) != OpStatus::Success)
         return OpStatus::Error;
 
@@ -424,6 +425,7 @@ OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M& chip, LMS7002M::Ch
 
 OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
 {
+    LMS7002M::ChannelScope scope(&chip, channel);
     value = std::clamp(static_cast<int>(value + 12), 0, MAXIMUM_GAIN_VALUE - 1);
 
     unsigned int lna = LNATable.at(std::lround(value));
