@@ -13,8 +13,6 @@
 #include <complex>
 #include <initializer_list>
 
-using namespace std::literals::string_view_literals;
-
 // Allow for a one or two bit offset (in 12-bit format) in calculation in the samples.
 constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, std::initializer_list<int16_t> deltas)
 {
@@ -23,7 +21,7 @@ constexpr bool EqualOrOffsetBy(int16_t target, int16_t actual, std::initializer_
     });
 }
 
-MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples"sv)
+MATCHER_P(AreSamplesCorrect, divide, "Checks if the test pattern gave the correct samples")
 {
     auto nextExpectedSample = arg.at(0);
     const int divideBy = divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div4 ? 4 : 8;

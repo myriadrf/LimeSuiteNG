@@ -28,6 +28,8 @@
 
 #include <stdexcept>
 
+using namespace std::literals::string_literals;
+
 namespace gr {
 namespace limesdr {
 sink::sptr sink::make(std::string serial,

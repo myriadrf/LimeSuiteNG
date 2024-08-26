@@ -25,6 +25,7 @@ set(LIME_SUITE_SOURCES
     logger/Logger.cpp
     logger/LoggerCString.cpp
     protocols/LMS64CProtocol.cpp
+    protocols/LMSBoards.cpp
     FPGA/FPGA_common.cpp
     FPGA/WriteRegistersBatch.cpp
     threadHelper/threadHelper.cpp

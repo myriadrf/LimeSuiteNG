@@ -27,9 +27,7 @@
 
 #include <string>
 
-using namespace std::literals::string_literals;
-
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol("rx_time"s);
+static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol(std::string("rx_time"));
 
 namespace gr {
 namespace limesdr {

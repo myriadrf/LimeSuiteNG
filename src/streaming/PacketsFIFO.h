@@ -27,8 +27,6 @@
 
 #include "limesuiteng/Logger.h"
 
-using namespace std::literals::string_literals;
-
 namespace lime {
 
 /**
@@ -98,7 +96,7 @@ template<class T> class PacketsFIFO
             {
                 if (canWrite.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
                 {
-                    lime::error("write fifo timeout"s);
+                    lime::error(std::string("write fifo timeout"));
                     return false;
                 }
                 if (newWritePosition == readPosition)

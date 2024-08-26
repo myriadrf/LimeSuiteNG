@@ -27,6 +27,7 @@
 #include <gnuradio/io_signature.h>
 
 #include <stdexcept>
+using namespace std::literals::string_literals;
 
 namespace gr {
 namespace limesdr {

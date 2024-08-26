@@ -31,8 +31,6 @@
 #include <string>
 #include <vector>
 
-using namespace std::literals::string_literals;
-
 class device_handler
 {
 private:
@@ -52,8 +50,8 @@ private:
         int source_channel_mode = -1;
         int sink_channel_mode = -1;
 
-        std::string source_filename = ""s;
-        std::string sink_filename = ""s;
+        std::string source_filename = std::string();
+        std::string sink_filename = std::string();
     };
 
 #ifdef ENABLE_RFE
