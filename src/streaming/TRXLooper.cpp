@@ -1290,6 +1290,11 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
 
     fpga->WriteRegister(0x000D, 0x4); // WFM_LOAD
 
+    DataConversion conversion;
+    conversion.srcFormat = config.format;
+    conversion.destFormat = compressed ? DataFormat::I12 : DataFormat::I16;
+    conversion.channelCount = mimo ? 2 : 1;
+
     const auto dmaChunks{ dma->GetBuffers() };
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
@@ -1300,6 +1305,10 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
 
     uint32_t samplesRemaining = count;
     uint8_t stagingBufferIndex = 0;
+
+    const uint8_t* src[2] = { static_cast<const uint8_t*>(samples[0]),
+        static_cast<const uint8_t*>(useChannelB ? samples[1] : nullptr) };
+    const int sampleSize = config.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
 
     while (samplesRemaining > 0)
     {
@@ -1315,18 +1324,11 @@ OpStatus TRXLooper::UploadTxWaveform(FPGA* fpga,
         pkt->counter = 0;
         pkt->reserved[0] = 0;
 
-        if (config.format == DataFormat::I16)
-        {
-            const lime::complex16_t* src[2] = { &static_cast<const lime::complex16_t*>(samples[0])[count - samplesRemaining],
-                useChannelB ? &static_cast<const lime::complex16_t*>(samples[1])[count - samplesRemaining] : nullptr };
-            samplesDataSize = FPGA::Samples2FPGAPacketPayload(src, samplesToSend, mimo, compressed, pkt->data);
-        }
-        else if (config.format == DataFormat::F32)
-        {
-            const lime::complex32f_t* src[2] = { &static_cast<const lime::complex32f_t*>(samples[0])[count - samplesRemaining],
-                useChannelB ? &static_cast<const lime::complex32f_t*>(samples[1])[count - samplesRemaining] : nullptr };
-            samplesDataSize = FPGA::Samples2FPGAPacketPayloadFloat(src, samplesToSend, mimo, compressed, pkt->data);
-        }
+        samplesDataSize = Interleave(pkt->data, reinterpret_cast<const void**>(src), samplesToSend, conversion);
+
+        src[0] += samplesToSend * sampleSize;
+        if (useChannelB)
+            src[1] += samplesToSend * sampleSize;
 
         int payloadSize = (samplesDataSize / 4) * 4;
         if (samplesDataSize % 4 != 0)

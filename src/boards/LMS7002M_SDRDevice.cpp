@@ -6,7 +6,7 @@
 #include "chips/LMS7002M/MCU_BD.h"
 #include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
-#include "TRXLooper.h"
+#include "streaming/TRXLooper.h"
 #include "utilities/toString.h"
 
 #include <algorithm>

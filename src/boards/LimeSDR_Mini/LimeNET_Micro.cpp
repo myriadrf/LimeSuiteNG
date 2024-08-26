@@ -16,6 +16,7 @@
 #include "ISerialPort.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/SPI_utilities.h"
+#include "streaming/TRXLooper.h"
 
 #include <assert.h>
 #include <memory>

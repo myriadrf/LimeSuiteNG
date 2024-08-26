@@ -4,15 +4,16 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "WriteRegistersBatch.h"
+#include "streaming/DataPacket.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <thread>
 #include <vector>
-#include "samplesConversion.h"
 
 using namespace std;
+using namespace std::literals::string_literals;
 
 namespace lime {
 
@@ -678,177 +679,6 @@ OpStatus FPGA::SetDirectClocking(int clockIndex)
     if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
         return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers"s);
     return OpStatus::Success;
-}
-
-/** @brief Parses FPGA packet payload into samples.
-  @param buffer The buffer to parse.
-  @param bufLen The length of the buffer to parse.
-  @param mimo Whether the payload contains multiple (two) channels.
-  @param compressed Whether the samples are in 12-bit (true) or 16-bit (false) integer format.
-  @param samples The output buffer of the samples.
-  @return The amount of samples parsed.
- */
-int FPGA::FPGAPacketPayload2Samples(const uint8_t* buffer, int bufLen, bool mimo, bool compressed, complex16_t* const* samples)
-{
-    if (compressed) //compressed samples
-    {
-        const complex12_t* src = reinterpret_cast<const complex12_t*>(buffer);
-        int collected = 0;
-        int samplesToProcess = bufLen / sizeof(complex12_t);
-        for (int b = 0; b < samplesToProcess; collected++)
-        {
-            //I sample
-            Rescale(samples[0][collected], *src);
-            ++b;
-            ++src;
-            if (mimo)
-            {
-                Rescale(samples[1][collected], *src);
-                ++b;
-                ++src;
-            }
-        }
-        return collected;
-    }
-
-    if (mimo) //uncompressed samples
-    {
-        const complex16_t* ptr = reinterpret_cast<const complex16_t*>(buffer);
-        const int collected = bufLen / sizeof(complex16_t) / 2;
-        for (int i = 0; i < collected; i++)
-        {
-            samples[0][i] = *ptr++;
-            samples[1][i] = *ptr++;
-        }
-        return collected;
-    }
-
-    memcpy(samples[0], buffer, bufLen);
-    return bufLen / sizeof(complex16_t);
-}
-
-/** @brief Parses FPGA packet payload into samples.
-  @param buffer The buffer to parse.
-  @param bufLen The length of the buffer to parse.
-  @param mimo Whether the payload contains multiple (two) channels.
-  @param compressed Whether the samples are in 12-bit (true) or 16-bit (false) integer format.
-  @param samples The output buffer of the samples.
-  @return The amount of samples parsed.
- */
-int FPGA::FPGAPacketPayload2SamplesFloat(
-    const uint8_t* buffer, int bufLen, bool mimo, bool compressed, complex32f_t* const* samples)
-{
-    if (compressed) //compressed samples
-    {
-        const complex12_t* src = reinterpret_cast<const complex12_t*>(buffer);
-        int collected = 0;
-        int samplesToProcess = bufLen / sizeof(complex12_t);
-        for (int b = 0; b < samplesToProcess; collected++)
-        {
-            Rescale(samples[0][collected], *src);
-            ++b;
-            ++src;
-            if (mimo)
-            {
-                Rescale(samples[1][collected], *src);
-                ++b;
-                ++src;
-            }
-        }
-        return collected;
-    }
-
-    const complex16_t* src = reinterpret_cast<const complex16_t*>(buffer);
-    if (mimo) //uncompressed samples
-    {
-        const int collected = bufLen / sizeof(complex16_t) / 2;
-        for (int i = 0; i < collected; i++)
-        {
-            Rescale(samples[0][i], *src);
-            ++src;
-            Rescale(samples[1][i], *src);
-            ++src;
-        }
-        return collected;
-    }
-    else
-    {
-        const int collected = bufLen / sizeof(complex16_t);
-        for (int i = 0; i < collected; i++)
-        {
-            Rescale(samples[0][i], *src);
-            ++src;
-        }
-        return collected;
-    }
-}
-
-int FPGA::Samples2FPGAPacketPayloadFloat(
-    const complex32f_t* const* samples, int samplesCount, bool mimo, bool compressed, uint8_t* buffer)
-{
-    if (compressed)
-    {
-        complex12_t* dest = reinterpret_cast<complex12_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(dest[src], samples[0][src]);
-            if (mimo)
-                Rescale(dest[src], samples[1][src]);
-        }
-        return samplesCount * sizeof(complex12_t);
-    }
-
-    complex16_t* dest = reinterpret_cast<complex16_t*>(buffer);
-    if (mimo)
-    {
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(*dest, samples[0][src]);
-            ++dest;
-            Rescale(*dest, samples[1][src]);
-            ++dest;
-        }
-        return samplesCount * sizeof(complex16_t) * 2;
-    }
-    else
-    {
-        for (int src = 0; src < samplesCount; ++src)
-            Rescale(dest[src], samples[0][src]);
-        return samplesCount * sizeof(complex16_t);
-    }
-}
-
-int FPGA::Samples2FPGAPacketPayload(
-    const complex16_t* const* samples, int samplesCount, bool mimo, bool compressed, uint8_t* buffer)
-{
-    if (compressed)
-    {
-        complex12_t* dest = reinterpret_cast<complex12_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(*dest, samples[0][src]);
-            ++dest;
-            if (mimo)
-            {
-                Rescale(*dest, samples[1][src]);
-                ++dest;
-            }
-        }
-        return samplesCount * sizeof(complex12_t);
-    }
-
-    if (mimo)
-    {
-        complex16_t* ptr = reinterpret_cast<complex16_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            *ptr++ = samples[0][src];
-            *ptr++ = samples[1][src];
-        }
-        return samplesCount * 2 * sizeof(complex16_t);
-    }
-    std::memcpy(buffer, samples[0], samplesCount * sizeof(complex16_t));
-    return samplesCount * sizeof(complex16_t);
 }
 
 /// @brief Configures FPGA PLLs to LimeLight interface frequency.

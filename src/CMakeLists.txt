@@ -25,9 +25,6 @@ set(LIME_SUITE_SOURCES
     logger/Logger.cpp
     logger/LoggerCString.cpp
     protocols/LMS64CProtocol.cpp
-    protocols/TRXLooper.cpp
-    protocols/BufferInterleaving.cpp
-    protocols/AvgRmsCounter.cpp
     FPGA/FPGA_common.cpp
     FPGA/WriteRegistersBatch.cpp
     threadHelper/threadHelper.cpp
@@ -39,7 +36,7 @@ set(LIME_SUITE_SOURCES
 
 set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
-set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards protocols lms7002m external threadHelper memory vectorization)
+set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards protocols lms7002m external threadHelper memory)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
@@ -119,7 +116,7 @@ add_subdirectory(chips)
 add_subdirectory(DSP)
 add_subdirectory(examples)
 add_subdirectory(utilities)
-add_subdirectory(vectorization)
+add_subdirectory(streaming)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
 target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)

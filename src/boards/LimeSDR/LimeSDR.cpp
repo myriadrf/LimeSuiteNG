@@ -16,6 +16,7 @@
 #include "comms/USB/FX3/FX3.h"
 #include "ISerialPort.h"
 #include "utilities/toString.h"
+#include "streaming/TRXLooper.h"
 
 #include <array>
 #include <cassert>

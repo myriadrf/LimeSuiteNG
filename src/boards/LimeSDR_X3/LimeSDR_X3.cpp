@@ -16,6 +16,7 @@
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
 #include "utilities/toString.h"
+#include "streaming/TRXLooper.h"
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"

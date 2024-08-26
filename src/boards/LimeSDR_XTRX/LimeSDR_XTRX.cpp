@@ -17,6 +17,7 @@
 #include "comms/IComms.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "streaming/TRXLooper.h"
 
 #include "limesuiteng/LMS7002M.h"
 

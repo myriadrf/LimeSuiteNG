@@ -1,4 +1,5 @@
 #include "WriteRegistersBatch.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;

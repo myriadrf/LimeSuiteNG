@@ -21,6 +21,7 @@
 #include <algorithm>
 
 using namespace lime;
+using namespace std::literals::string_literals;
 
 void __loadDeviceFactoryPCIe(void) //TODO fixme replace with LoadLibrary/dlopen
 {

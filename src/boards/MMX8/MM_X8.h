@@ -6,7 +6,6 @@
 #include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "PacketsFIFO.h"
 #include "protocols/LMS64CProtocol.h"
 
 #include <cstdint>
