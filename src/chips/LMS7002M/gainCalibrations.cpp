@@ -68,7 +68,11 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
 
     //CGEN
     SetDefaults(MemorySection::CGEN);
+    // Don't trigger FPGA interface update, samples streaming is not required for this calibration, and because it would have to be restored.
+    // After calibration, CGEN registers will be restored manually, that won't trigger FPGA update.
+    skipExternalDataInterfaceUpdate = true;
     status = SetFrequencyCGEN(61.44e6);
+    skipExternalDataInterfaceUpdate = false;
     if (status != OpStatus::Success)
         return status;
 

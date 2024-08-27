@@ -270,6 +270,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , mRegistersMap(new LMS7002M_RegistersMap())
     , controlPort(port)
     , mC_impl(nullptr)
+    , skipExternalDataInterfaceUpdate(false)
 {
     struct lms7002m_hooks hooks {
     };
@@ -282,7 +283,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     hooks.on_cgen_frequency_changed_userData = this;
     hooks.on_cgen_frequency_changed = [](void* userData) -> lime_Result {
         LMS7002M* chip = reinterpret_cast<LMS7002M*>(userData);
-        if (chip->mCallback_onCGENChange)
+        if (chip->mCallback_onCGENChange && !chip->skipExternalDataInterfaceUpdate)
             return StatusToResult(chip->mCallback_onCGENChange(chip->mCallback_onCGENChange_userData));
         return lime_Result_Success;
     };
