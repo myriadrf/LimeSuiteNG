@@ -213,7 +213,7 @@ class ConstellationPlotter
             plot.write("plot '-' with points\n");
             const int samplesCount = samples.size();
             for (int j = 0; j < samplesCount; ++j)
-                plot.writef("%i %i\n", samples[j].i, samples[j].q);
+                plot.writef("%i %i\n", samples[j].real(), samples[j].imag());
             plot.write("e\n");
             plot.flush();
         }
