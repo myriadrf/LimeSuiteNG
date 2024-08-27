@@ -18,6 +18,13 @@ using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
+static bool interactiveMode = false;
+static void WaitForUserInput()
+{
+    std::cerr << "Press any key to continue" << std::endl;
+    cin.ignore();
+}
+
 static LogLevel logVerbosity = LogLevel::Error;
 static LogLevel strToLogLevel(const std::string_view str)
 {
@@ -81,6 +88,8 @@ class PrintOEMTestReporter : public OEMTestReporter
     {
         --indentLevel;
         std::cerr << Indent() << "=== " << rang::fg::green << test.title << " - PASSED" << rang::fg::reset << " ===" << std::endl;
+        if (interactiveMode)
+            WaitForUserInput();
     }
     void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) override
     {
@@ -91,6 +100,8 @@ class PrintOEMTestReporter : public OEMTestReporter
         if (!reasonText.empty())
             std::cerr << " (" << reasonText << ")";
         std::cerr << rang::fg::reset << " ===" << std::endl;
+        if (interactiveMode)
+            WaitForUserInput();
     }
     void ReportColumn(const std::string& header, const std::string& value) override
     {
@@ -124,6 +135,7 @@ int main(int argc, char** argv)
     args::ValueFlag<uint64_t>       serialNumberFlag(parser, "decimal", "One time programmable serial number to be written to device", {"write-serial-number"}, 0);
     args::Flag                      runTestsFlag(parser, "", "Run tests to check device functionality", {"test"});
     args::Flag                      showVersion(parser, "", "Print software version", {"version"});
+    args::Flag                      interactive(parser, "", "Wait for user input after each test", {"interactive"});
     // clang-format on
 
     try
@@ -151,6 +163,7 @@ int main(int argc, char** argv)
         if (argc == 2)
             return EXIT_SUCCESS;
     }
+    interactiveMode = interactive;
 
     logVerbosity = strToLogLevel(args::get(logFlag));
     const std::string devName = args::get(deviceFlag);
