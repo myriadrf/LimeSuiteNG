@@ -3,19 +3,28 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include "limesuiteng/OpStatus.h"
+#include "limesuiteng/complex.h"
 
 namespace lime {
 
 class SDRDevice;
 
 struct OEMTestData {
-    OEMTestData(const std::string& name)
-        : name(name)
-        , passed(false){};
+    OEMTestData(const std::string& title)
+        : title(title)
+        , status(OpStatus::InvalidValue){};
     virtual ~OEMTestData(){};
-    std::string name;
-    bool passed;
+    std::string title;
+    std::string output;
+    OpStatus status;
+
+    struct Measurement {
+        std::string title;
+        std::string value;
+    };
+    std::vector<Measurement> measurements;
 };
 
 class OEMTestReporter
@@ -45,7 +54,14 @@ struct RFTestOutput {
     float frequency;
 };
 
-OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter* reporter, RFTestOutput* output = nullptr);
+template<class T> bool IsWithinTolerance(T value, T expectedValue, T maxDeviation)
+{
+    return (std::abs(expectedValue - value) <= maxDeviation);
+}
+
+OpStatus CaptureRxSamples(
+    SDRDevice& device, uint8_t chipIndex, uint8_t channelIndex, std::vector<lime::complex32f_t>& samples, size_t count);
+void CalculateSignalPeak(const std::vector<lime::complex32f_t>& samples, double& peakAmplitude_dBFS, double& nyquistWeight);
 
 } // namespace lime
 

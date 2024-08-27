@@ -1083,7 +1083,7 @@ uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sam
     return packetSize;
 }
 
-OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
+OpStatus FPGA::OEMTestSetup(TestID testId, chrono::milliseconds timeout)
 {
     uint16_t completed;
     uint32_t addr[] = { 0x61, 0x63 };
@@ -1096,20 +1096,18 @@ OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
     if (WriteRegister(0x61, test) != OpStatus::Success)
         return OpStatus::IOFailure;
 
-    if (timeout < 0)
+    if (timeout.count() <= 0)
         return OpStatus::Success;
 
-    while (1)
+    chrono::milliseconds elapsed_time{ 0 };
+    while (elapsed_time < timeout)
     {
+        elapsed_time = chrono::duration_cast<std::chrono::milliseconds>(chrono::steady_clock::now() - start);
         completed = ReadRegister(0x65);
         if ((completed & test) == test)
             return OpStatus::Success;
-
-        auto end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        if (elapsed_seconds.count() > timeout)
-            return OpStatus::Error;
     }
+    return OpStatus::Timeout;
 }
 
 OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool sisoddr, bool trxiqpulse)

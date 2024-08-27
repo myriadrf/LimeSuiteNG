@@ -8,6 +8,7 @@
 #define LIME_FPGA_H
 
 #include <cstdint>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <vector>
@@ -81,7 +82,7 @@ class FPGA
         ADF4002 = 1 << 3,
         GNSS = 1 << 4,
     };
-    virtual OpStatus OEMTestSetup(TestID test, double timeout);
+    virtual OpStatus OEMTestSetup(TestID test, std::chrono::milliseconds timeout);
 
     OpStatus ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool ddr, bool trxiqpulse);
     OpStatus ResetPacketCounters(uint16_t chipId);
