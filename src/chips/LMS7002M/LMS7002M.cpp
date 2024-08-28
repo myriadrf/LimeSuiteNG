@@ -1994,7 +1994,7 @@ static lime_Result lms7002m_set_gfir_filter(
         div = (2 << (ratio));
 
     const uint32_t interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
-    const float w = (div / 2) * (static_cast<float>(bandwidth) / interface_Hz);
+    const float w = (div / 2.0) * (static_cast<float>(bandwidth) / interface_Hz);
 
     const int L = div > 8 ? 8 : div;
     div -= 1;
