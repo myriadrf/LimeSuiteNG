@@ -865,8 +865,7 @@ OEMTestData LimeSDR_XTRX::ConfigureAndMeasure(OEMTestReporter& reporter,
     config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = 61.44e6;
     config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
     config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
-    config.channel[0].tx.gain[eGainTypes::PAD] = 52;
-    config.channel[0].tx.gain[eGainTypes::IAMP] = -18;
+    config.channel[0].tx.gain[eGainTypes::GENERIC] = txGain;
 
     const double tx_lo_offset = 5e6;
     config.channel[0].rx.centerFrequency = LOFreq;
@@ -957,6 +956,9 @@ OEMTestData LimeSDR_XTRX::RFTest(OEMTestReporter& reporter)
 
     std::vector<Inputs> inputs;
     // TODO: Update gains and measure expected values
+    // Rx gain range [-12: 61]
+    // Tx gain range [-12; 64]
+
     // channel A
     inputs.push_back({ 0, 500e6, "Band2", 0, "LNAL", 0, -8 });
     inputs.push_back({ 0, 900e6, "Band2", 0, "LNAL", 0, -8 });
