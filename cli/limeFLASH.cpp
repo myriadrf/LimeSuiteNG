@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     if (terminateProgress)
         cerr << "Programming aborted."sv << endl;
     else
-        cerr << "Programming completed."sv << endl;
+        cerr << "Programming completed. Power cycle the device to boot updated gateware"sv << endl;
 
     DeviceRegistry::freeDevice(device);
     return EXIT_SUCCESS;
