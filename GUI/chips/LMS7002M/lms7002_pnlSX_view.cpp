@@ -978,9 +978,9 @@ void lms7002_pnlSX_view::UpdateGUI()
     LMS7002_WXGUI::UpdateControlsByMap(this, lmsControl, wndId2Enum, mChannel);
     double freq;
     freq = lmsControl->GetReferenceClk_SX(direction);
-    lblRefClk_MHz->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
+    lblRefClk_MHz->SetLabel(wxString::Format(_("%f"), freq / 1e6));
     freq = lmsControl->GetFrequencySX(direction);
-    lblRealOutFrequency->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
+    lblRealOutFrequency->SetLabel(wxString::Format(_("%f"), freq / 1e6));
     // TODO: if(chkEnableRefSpurCancellation->IsChecked())
     // {
     //     uint16_t downconvert = 0;
@@ -994,7 +994,7 @@ void lms7002_pnlSX_view::UpdateGUI()
     //         freq -= freqNCO[15];
     //     delete[] freqNCO;
     // }
-    txtFrequency->SetValue(wxString::Format(_("%.3f"), freq / 1e6));
+    txtFrequency->SetValue(wxString::Format(_("%f"), freq / 1e6));
     uint16_t div;
     div = ReadParam(LMS7002MCSR::DIV_LOCH);
     lblDivider->SetLabel("2^"s + std::to_string(div));

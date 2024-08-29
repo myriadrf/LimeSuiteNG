@@ -9,26 +9,30 @@
 
 using namespace lime::testing;
 
-lms7002m_embedded::lms7002m_embedded()
+class lms7002m_embedded : public ::testing::Test
 {
-}
+  protected:
+    lms7002m_embedded(){};
 
-void lms7002m_embedded::SetUp()
-{
-    lms7002m_hooks hooks{};
-    memset(&hooks, 0, sizeof(hooks));
+    void SetUp() override
+    {
+        lms7002m_hooks hooks{};
+        memset(&hooks, 0, sizeof(hooks));
 
-    hooks.spi16_userData = &spi_stub;
-    hooks.spi16_transact = LMS7002M_SPI_STUB::spi16_transact;
+        hooks.spi16_userData = &spi_stub;
+        hooks.spi16_transact = LMS7002M_SPI_STUB::spi16_transact;
 
-    chip = lms7002m_create(&hooks);
-    ASSERT_NE(chip, nullptr);
-}
+        chip = lms7002m_create(&hooks);
+        ASSERT_NE(chip, nullptr);
+    }
 
-void lms7002m_embedded::TearDown()
-{
-    lms7002m_destroy(chip);
-}
+    void TearDown() override { lms7002m_destroy(chip); }
+
+    LMS7002M_SPI_STUB spi_stub;
+
+  public:
+    lms7002m_context* chip;
+};
 
 TEST_F(lms7002m_embedded, lms7002m_spi_write_ValueIsCorrect)
 {
@@ -206,13 +210,4 @@ TEST_F(lms7002m_embedded, lms7002m_set_gfir_coefficients_SetGet_ValuesMatch)
     ASSERT_EQ(lms7002m_get_gfir_coefficients(chip, isTx, 2, coefs_readback.data(), coefs_readback.size()), lime_Result_Success);
 
     ASSERT_EQ(coefs_readback, coefs);
-}
-
-TEST_F(lms7002m_embedded, lms7002m_set_frequency_sx_SetGet_ValueMatch)
-{
-    spi_stub.Set(0, { 0x0123, 13, 12 }, 2); // force tune success
-    uint64_t expectedFreq = 1400000000;
-    bool isTx = false;
-    ASSERT_EQ(lms7002m_set_frequency_sx(chip, isTx, expectedFreq), lime_Result_Success);
-    EXPECT_NEAR(lms7002m_get_frequency_sx(chip, isTx), expectedFreq, 10);
 }

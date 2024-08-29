@@ -105,18 +105,4 @@ class LMS7002M_SPI_STUB
     int32_t readCount{ 0 };
 };
 
-class lms7002m_embedded : public ::testing::Test
-{
-  protected:
-    lms7002m_embedded();
-
-    void SetUp() override;
-    void TearDown() override;
-
-    LMS7002M_SPI_STUB spi_stub;
-
-  public:
-    lms7002m_context* chip;
-};
-
 } // namespace lime::testing

@@ -58,6 +58,11 @@ struct lms7002m_decibel {
     int32_t data;
 };
 
+struct lms7002m_fraction {
+    int64_t num;
+    int64_t den;
+};
+
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks);
 void lms7002m_destroy(struct lms7002m_context* context);
 
@@ -116,7 +121,9 @@ bool lms7002m_get_sx_locked(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_tune_vco(struct lms7002m_context* self, enum lms7002m_vco_type module);
 
+lime_Result lms7002m_set_frequency_sx_fractional(struct lms7002m_context* self, bool isTx, struct lms7002m_fraction freq_Hz);
 lime_Result lms7002m_set_frequency_sx(struct lms7002m_context* self, bool isTx, uint64_t freq_Hz);
+struct lms7002m_fraction lms7002m_get_frequency_sx_fractional(struct lms7002m_context* self, bool isTx);
 uint64_t lms7002m_get_frequency_sx(struct lms7002m_context* self, bool isTx);
 
 lime_Result lms7002m_set_nco_frequency(struct lms7002m_context* self, bool isTx, const uint8_t index, uint32_t freq_Hz);

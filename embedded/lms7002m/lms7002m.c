@@ -76,6 +76,26 @@ static inline uint32_t freq_to_nco_fcw(uint32_t freqOffset, uint32_t tsp_ref_clk
         ((int32_t)((R) * (1 << 16))) \
     }
 
+static int64_t GreatestCommonDenominator(int64_t a, int64_t b)
+{
+    if (b == 0)
+        return a;
+    return GreatestCommonDenominator(b, a % b);
+}
+
+static struct lms7002m_fraction reduce_fraction(const struct lms7002m_fraction input)
+{
+    int64_t gcd = GreatestCommonDenominator(input.num, input.den);
+    struct lms7002m_fraction c = { input.num / gcd, input.den / gcd };
+    return c;
+}
+
+static struct lms7002m_fraction div_fraction(const struct lms7002m_fraction a, const struct lms7002m_fraction b)
+{
+    struct lms7002m_fraction c = { a.num * b.den, a.den * b.num };
+    return reduce_fraction(c);
+}
+
 struct lms7002m_context* lms7002m_create(const lms7002m_hooks* hooks)
 {
     lms7002m_context* self = lms7002m_malloc(sizeof(lms7002m_context));
@@ -1012,14 +1032,21 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
 }
 
 static lime_Result lms7002m_write_sx_registers(
-    lms7002m_context* self, const uint64_t VCOfreq_hz, uint32_t reference_clock_hz, uint8_t div_loch)
+    lms7002m_context* self, const struct lms7002m_fraction VCOfreq, struct lms7002m_fraction reference_clock, uint8_t div_loch)
 {
     const uint64_t m_dThrF = 5500000000; // VCO frequency threshold to enable additional divider
-    const uint64_t divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
+    const bool additionalDivider = VCOfreq.num / VCOfreq.den > m_dThrF;
+    if (additionalDivider)
+        reference_clock.num *= 2;
 
-    uint16_t integerPart = VCOfreq_hz / divider;
-    // "Fixed point number" division, take only the fraction part
-    uint32_t fractionalPart = ((VCOfreq_hz - integerPart * divider) << 20) / divider;
+    struct lms7002m_fraction ratio = div_fraction(VCOfreq, reference_clock);
+    uint16_t integerPart = ratio.num / ratio.den;
+
+    ratio.num = ratio.num - (integerPart * ratio.den);
+    uint32_t fractionalPart = ratio.num * (1 << 20) / ratio.den;
+    if ((ratio.num * 2) >= ratio.den) // round
+        ++fractionalPart;
+
     integerPart -= 4;
 
     lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
@@ -1027,31 +1054,31 @@ static lime_Result lms7002m_write_sx_registers(
     lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
     lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
     lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
+    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, additionalDivider); //EN_DIV2_DIVPROG
 
     LMS7002M_LOG(self,
         lime_LogLevel_Debug,
-        "SX VCO:%lu Hz, RefClk:%u Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
-        VCOfreq_hz,
-        reference_clock_hz,
+        "SX VCO:%li Hz, RefClk:%li Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
+        VCOfreq.num / VCOfreq.den,
+        reference_clock.num / reference_clock.den,
         integerPart,
         fractionalPart,
         div_loch,
-        (VCOfreq_hz > m_dThrF));
+        additionalDivider);
 
     return lime_Result_Success;
 }
 
-lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_t LO_freq_hz)
+lime_Result lms7002m_set_frequency_sx_fractional(lms7002m_context* self, bool isTx, struct lms7002m_fraction LO_freq_hz)
 {
-    LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%lu Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
+    // LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%lu Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
 
     const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
     const uint64_t VCO_min_frequency[3] = { 3800000000, 4961000000, 6306000000 };
     const uint64_t VCO_max_frequency[3] = { 5222000000, 6754000000, 7714000000 };
 
     struct VCOData {
-        uint64_t frequency;
+        struct lms7002m_fraction frequency;
         uint8_t div_loch;
         uint8_t csw;
         bool canDeliverFrequency;
@@ -1065,10 +1092,12 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
     // div_loch value 7 is not allowed
     for (int8_t div_loch = 6; div_loch >= 0; --div_loch)
     {
-        uint64_t VCOfreq = (1 << (div_loch + 1)) * (uint64_t)LO_freq_hz;
+        struct lms7002m_fraction VCOfreq = LO_freq_hz;
+        VCOfreq.num *= (1 << (div_loch + 1));
         for (int i = 0; i < 3; ++i)
         {
-            if (!vco[i].canDeliverFrequency && (VCOfreq >= VCO_min_frequency[i]) && (VCOfreq <= VCO_max_frequency[i]))
+            if (!vco[i].canDeliverFrequency && (VCOfreq.num / VCOfreq.den >= VCO_min_frequency[i]) &&
+                (VCOfreq.num / VCOfreq.den <= VCO_max_frequency[i]))
             {
                 vco[i].canDeliverFrequency = true;
                 vco[i].div_loch = div_loch;
@@ -1085,7 +1114,7 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
             "%s: %s LO(%lu Hz) - VCO cannot deliver frequency.",
             __func__,
             isTx ? "Tx" : "Rx",
-            LO_freq_hz);
+            LO_freq_hz.num / LO_freq_hz.den);
         return lime_Result_Error;
     }
 
@@ -1115,7 +1144,8 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
                 continue;
             }
 
-            lms7002m_write_sx_registers(self, vco[sel_vco].frequency, refClk_Hz, vco[sel_vco].div_loch);
+            struct lms7002m_fraction ref = { refClk_Hz, 1 };
+            lms7002m_write_sx_registers(self, vco[sel_vco].frequency, ref, vco[sel_vco].div_loch);
             LMS7002M_LOG(self, lime_LogLevel_Debug, "Tuning %s %s (ICT_VCO:%d):", (isTx ? "Tx" : "Rx"), vcoNames[sel_vco], ict_vco);
 
             lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
@@ -1156,15 +1186,28 @@ lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_
 
     if (canDeliverFrequency == false)
     {
-        LMS7002M_LOG(
-            self, lime_LogLevel_Error, "%s: %s LO(%lu Hz) - cannot deliver frequency", __func__, isTx ? "Tx" : "Rx", LO_freq_hz);
+        LMS7002M_LOG(self,
+            lime_LogLevel_Error,
+            "%s: %s LO(%li Hz) - cannot deliver frequency",
+            __func__,
+            isTx ? "Tx" : "Rx",
+            LO_freq_hz.num / LO_freq_hz.den);
         return lime_Result_Error;
     }
     return lime_Result_Success;
 }
 
-uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_t LO_freq_hz)
 {
+    struct lms7002m_fraction value;
+    value.num = LO_freq_hz;
+    value.den = 1;
+    return lms7002m_set_frequency_sx_fractional(self, isTx, value);
+}
+
+struct lms7002m_fraction lms7002m_get_frequency_sx_fractional(lms7002m_context* self, bool isTx)
+{
+    struct lms7002m_fraction freq;
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
 
@@ -1182,13 +1225,21 @@ uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
     uint64_t fp = ((integerPart << 20) | fractionalPart);
     vco *= fp;
     vco >>= (div_loch + 1);
-    bool roundUp = vco & 0x80000;
-    vco >>= 20; // leave only integer part
-    if (roundUp)
-        vco += 1;
+    freq.num = vco;
+    freq.den = (1 << 20);
+
+    freq = reduce_fraction(freq);
 
     lms7002m_set_active_channel(self, savedChannel);
-    return vco;
+    return freq;
+}
+
+uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)
+{
+    struct lms7002m_fraction value = lms7002m_get_frequency_sx_fractional(self, isTx);
+    uint64_t freq = (value.num << 1) / value.den;
+    freq = (freq >> 1) + (freq & 1); // round fractional part
+    return freq;
 }
 
 lime_Result lms7002m_set_nco_frequency(lms7002m_context* self, bool isTx, const uint8_t index, uint32_t freq_Hz)

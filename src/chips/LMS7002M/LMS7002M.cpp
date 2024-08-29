@@ -1048,7 +1048,10 @@ const CSRegister& LMS7002M::GetParam(const std::string& name)
 
 OpStatus LMS7002M::SetFrequencySX(TRXDir dir, float_type freq_Hz)
 {
-    lime_Result result = lms7002m_set_frequency_sx(mC_impl, dir == TRXDir::Tx, freq_Hz);
+    struct lms7002m_fraction value {
+        int64_t(freq_Hz), 1
+    };
+    lime_Result result = lms7002m_set_frequency_sx_fractional(mC_impl, dir == TRXDir::Tx, value);
     return ResultToStatus(result);
 }
 
@@ -1121,7 +1124,8 @@ OpStatus LMS7002M::SetFrequencySXWithSpurCancellation(TRXDir dir, float_type fre
 
 float_type LMS7002M::GetFrequencySX(TRXDir dir)
 {
-    return lms7002m_get_frequency_sx(mC_impl, dir == TRXDir::Tx);
+    const struct lms7002m_fraction value = lms7002m_get_frequency_sx_fractional(mC_impl, dir == TRXDir::Tx);
+    return double(value.num) / value.den;
 }
 
 OpStatus LMS7002M::SetNCOFrequency(TRXDir dir, uint8_t index, float_type freq_Hz)
