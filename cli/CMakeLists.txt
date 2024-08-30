@@ -9,7 +9,7 @@ endif()
 # common functionality among cli tools
 add_library(cli-shared STATIC common.cpp)
 target_include_directories(cli-shared PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(cli-shared PUBLIC limesuiteng)
+target_link_libraries(cli-shared PUBLIC limesuiteng rang)
 
 add_executable(limeDevice limeDevice.cpp)
 set_target_properties(limeDevice PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
