@@ -295,15 +295,9 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
 
     OpStatus status = OpStatus::Success;
     if (tx)
-    {
-        int gain = lms->GetTBBIAMP_dB(ch);
         status = lms->SetTxLPF(lpf);
-        lms->SetTBBIAMP_dB(gain, ch);
-    }
     else
-    {
         status = lms->SetRxLPF(lpf);
-    }
 
     if (status != OpStatus::Success)
         return status;
@@ -400,27 +394,7 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
 OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
 {
     LMS7002M::ChannelScope scope(&chip, channel);
-    if (chip.SetTRFPAD_dB(value, channel) != OpStatus::Success)
-        return OpStatus::Error;
-
-#ifdef NEW_GAIN_BEHAVIOUR
-    if (value <= 0)
-    {
-        return chip.Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
-    }
-
-    if (chip.GetTBBIAMP_dB(channel) < 0.0)
-    {
-        return chip.CalibrateTxGain(0, nullptr);
-    }
-#else
-    value -= chip.GetTRFPAD_dB(channel);
-    if (chip.SetTBBIAMP_dB(value, channel) != OpStatus::Success)
-    {
-        return OpStatus::Error;
-    }
-#endif
-    return OpStatus::Success;
+    return chip.SetTRFPAD_dB(value, channel);
 }
 
 OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
@@ -1072,7 +1046,7 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
     descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(0, 52);
 #else
     descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 61);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(-12, 64);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD];
 #endif
 }
 
