@@ -4,7 +4,7 @@
 
 namespace lime {
 
-static constexpr int maxAsyncTransfers = 16;
+static constexpr int maxAsyncTransfers = 256;
 
 USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir)
     : port(port)
