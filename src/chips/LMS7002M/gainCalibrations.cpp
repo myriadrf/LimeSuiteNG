@@ -1,6 +1,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 #include "LMS7002MCSR_Data.h"
+#include <cmath>
 
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
@@ -107,6 +108,15 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     return OpStatus::Success;
 }
 
+///APPROXIMATE conversion
+static constexpr uint32_t maxRSSI = 0x10669;
+static float chip_rssi_to_dbfs(uint32_t rssi)
+{
+    if (rssi == 0)
+        rssi = 1;
+    return 20 * log10(float(rssi) / maxRSSI);
+}
+
 OpStatus LMS7002M::CalibrateTxGain()
 {
     if (!controlPort)
@@ -115,26 +125,44 @@ OpStatus LMS7002M::CalibrateTxGain()
         return OpStatus::IOFailure;
     }
     OpStatus status;
-    int cg_iamp = 0;
+    int cg_iamp = 1;
     auto registersBackup = BackupRegisterMap();
     status = CalibrateTxGainSetup();
     if (status == OpStatus::Success)
     {
-        cg_iamp = Get_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB);
-        while (GetRSSI() < 0x7FFF)
+        lime::debug("Calibrating CG_IAMP_TBB:"s);
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+        uint32_t previousRSSI = GetRSSI();
+        lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, previousRSSI, chip_rssi_to_dbfs(previousRSSI));
+
+        // while (GetRSSI() < 0x7FFF)
+        while(GetRSSI() < 0xFD00)
         {
-            if (++cg_iamp > 63)
+            ++cg_iamp;
+            if (cg_iamp > 63)
                 break;
+
             Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+            const uint32_t rssi = GetRSSI();
+            lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, rssi, chip_rssi_to_dbfs(rssi));
+            if (rssi < previousRSSI)
+            {
+                // drop in RSSI indicates oversaturation
+                --cg_iamp;
+                break;
+            }
+            previousRSSI = rssi;
         }
     }
     RestoreRegisterMap(registersBackup);
 
     int ind = GetActiveChannelIndex() % 2;
-    opt_gain_tbb[ind] = cg_iamp > 1 ? cg_iamp - 1 : 1;
 
     if (status == OpStatus::Success)
-        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, opt_gain_tbb[ind]);
+    {
+        opt_gain_tbb[ind] = std::clamp(cg_iamp, 1, 63); // can't allow opt_gain_tbb to be 0, it's used in division
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+    }
     //logic reset
     Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_A, 0);
     Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_B, 0);

@@ -395,6 +395,19 @@ OpStatus LMS7002M::ResetChip()
 
     status = SPI_write_batch(addrs.data(), values.data(), addrs.size(), true);
     status = Modify_SPI_Reg_bits(LMS7002MCSR::MIMO_SISO, 0); //enable B channel after reset
+
+    // TODO: replace with static register values
+    // Do TxLPF configuration to set CG_IAMP_TBB to reasonable value, as they are related.
+    // Otherwise if TxLPF is not configured, or CG_IAMP_TBB is not set explicitly to match it.
+    // it can result in inconsistent Tx gain results.
+    SetActiveChannel(Channel::ChA);
+    SetTxLPF(0);
+    SetRxLPF(0);
+    SetActiveChannel(Channel::ChB);
+    SetTxLPF(0);
+    SetRxLPF(0);
+    SetActiveChannel(Channel::ChA);
+
     return status;
 }
 
