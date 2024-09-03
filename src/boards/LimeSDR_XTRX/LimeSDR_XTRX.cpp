@@ -147,9 +147,13 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
 
     desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
 
-    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
+    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC (in FLASH)"s, { 0x01FF0000, 2 } } };
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
+
+    const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC (fake EEPROM)"s, { 0x0010, 2 } } };
+    desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
+        std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
     desc.customParameters = { cp_vctcxo_dac, cp_temperature };
 
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
