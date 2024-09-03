@@ -90,11 +90,19 @@ enum class Command : uint8_t {
 /// @brief The command statuses the device can send back.
 enum class CommandStatus : uint8_t { Undefined, Completed, Unknown, Busy, TooManyBlocks, Error, WrongOrder, ResourceDenied, Count };
 
-/// @brief The available targets for programming.
-enum class ProgramWriteTarget : uint8_t {
-    HPM,
-    FX3,
+/// @brief The available targets for firmware/gateware
+enum class ALTERA_FPGA_GW_WR_targets : uint8_t {
+    HPM = 0u,
+    FX3 = 1u,
     FPGA = 3u,
+};
+
+/// @brief The available targets of memory usage.
+enum class MEMORY_WR_targets : uint8_t {
+    HPM = 0u,
+    FX3 = 1u,
+    FPGA_FLASH = 2u,
+    EEPROM = 3u,
 };
 
 /// @brief Structure denoting the information about the firmware of the device.
@@ -128,17 +136,19 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
 /// @brief The function to call on programming progress updates.
 typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
 
-OpStatus ProgramWrite(ISerialPort& port,
+OpStatus FirmwareWrite(ISerialPort& port,
     const char* data,
     size_t length,
     int prog_mode,
-    ProgramWriteTarget device,
+    ALTERA_FPGA_GW_WR_targets device,
     ProgressCallback callback = nullptr,
     uint32_t subDevice = 0);
 
 OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice = 0);
-OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice = 0);
-OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
+OpStatus MemoryWrite(
+    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice = 0);
+OpStatus MemoryRead(
+    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
 
 OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& data);
 OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data);
@@ -188,7 +198,7 @@ class LMS64CPacketMemoryWriteView
 
     /// @brief Sets the memory device to use.
     /// @param device The memory device to use.
-    void SetDevice(LMS64CProtocol::ProgramWriteTarget device);
+    void SetDevice(LMS64CProtocol::MEMORY_WR_targets device);
 
     /// @brief Sets the data of the packet.
     /// @param src The data to set in the packet.

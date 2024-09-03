@@ -794,8 +794,8 @@ OpStatus LimeSDR_MMX8::UploadMemory(
     if (device == eMemoryDevice::FPGA_FLASH && moduleIndex == 0)
     {
         int progMode = 1;
-        LMS64CProtocol::ProgramWriteTarget target;
-        target = LMS64CProtocol::ProgramWriteTarget::FPGA;
+        LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target;
+        target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
         return mMainFPGAcomms->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
     }
 
