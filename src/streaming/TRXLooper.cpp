@@ -884,7 +884,8 @@ void TRXLooper::TxWorkLoop()
 void TRXLooper::TransmitPacketsLoop()
 {
     lime::debug("Tx transmit loop start.");
-    const bool isRxActive = true; // rx is always activated to provide timestamps // mConfig.channels.at(lime::TRXDir::Rx).size() > 0;
+    const bool isRxActive =
+        true; // rx is always activated to provide timestamps // mConfig.channels.at(lime::TRXDir::Rx).size() > 0;
     const bool mimo = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size()) > 1;
     const bool compressed = mConfig.linkFormat == DataFormat::I12;
     constexpr int irqPeriod{ 4 }; // Interrupt request period
