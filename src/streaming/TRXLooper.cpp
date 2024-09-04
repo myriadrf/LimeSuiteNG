@@ -24,7 +24,7 @@ using namespace LMS7002MCSR_Data;
 using namespace std;
 using namespace std::chrono;
 
-static constexpr uint16_t defaultSamplesInPkt = 256;
+static constexpr uint16_t defaultSamplesInPkt = 1360;
 
 static constexpr bool showStats{ false };
 static constexpr int statsPeriod_ms{ 1000 }; // at 122.88 MHz MIMO, fpga tx pkt counter overflows every 272ms
@@ -768,7 +768,9 @@ OpStatus TRXLooper::TxSetup()
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = (mConfig.linkFormat == DataFormat::I16 ? 4 : 3); // sizeof IQ pair
 
-    int samplesInPkt = 256; //(mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / chCount;
+    // TODO: check gateware for variable size Tx packets capabilities
+    // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
+    int samplesInPkt = (mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / chCount;
     const int packetSize = sizeof(StreamHeader) + samplesInPkt * sampleSize * chCount;
 
     if (mConfig.extraConfig.tx.samplesInPacket != 0)
@@ -778,7 +780,7 @@ OpStatus TRXLooper::TxSetup()
     }
 
     mTx.samplesInPkt = samplesInPkt;
-    mTx.packetsToBatch = 32; // Tx packets can be flushed early without filling whole batch
+    mTx.packetsToBatch = 8; // Tx packets can be flushed early without filling whole batch
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
         mTx.packetsToBatch = mConfig.extraConfig.tx.packetsInBatch;
@@ -801,7 +803,6 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.packetsToBatch = mTx.packetsToBatch;
     mTxArgs.samplesInPacket = samplesInPkt;
 
-    if (mCallback_logMessage)
     {
         float bufferTimeDuration;
         if (mConfig.hintSampleRate)
@@ -816,7 +817,10 @@ OpStatus TRXLooper::TxSetup()
             samplesInPkt,
             mTx.packetsToBatch,
             bufferTimeDuration * 1e6);
-        mCallback_logMessage(LogLevel::Verbose, msg);
+        if (showStats)
+            printf("%s\n", msg);
+        if (mCallback_logMessage)
+            mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
     const std::string name = "MemPool_Tx"s + std::to_string(chipId);
