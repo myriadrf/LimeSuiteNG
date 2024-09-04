@@ -87,19 +87,20 @@ void UnixUsb::process_libusbtransfer(libusb_transfer* trans)
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_ERROR:
-        lime::error("USB TRANSFER ERROR"s);
+        lime::error("USB TRANSFER ERROR ep:%02X", int(trans->endpoint));
         context->bytesXfered = trans->actual_length;
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_TIMED_OUT:
+        lime::warning("USB TRANSFER TIMEOUT ep:%02X", int(trans->endpoint));
         context->bytesXfered = trans->actual_length;
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_OVERFLOW:
-        lime::error("USB transfer overflow"s);
+        lime::error("USB transfer overflow ep:%02X", int(trans->endpoint));
         break;
     case LIBUSB_TRANSFER_STALL:
-        lime::error("USB transfer stalled"s);
+        lime::error("USB transfer stalled ep:%02X", int(trans->endpoint));
         break;
     case LIBUSB_TRANSFER_NO_DEVICE:
         lime::error("USB transfer no device"s);
@@ -333,6 +334,8 @@ void* UnixUsb::AllocateAsyncContext()
 OpStatus UnixUsb::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8_t endPointAddr)
 {
     assert(context);
+    assert(length > 0);
+    assert(buffer);
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
     assert(xfer->done.load() == false);
 
@@ -341,7 +344,7 @@ OpStatus UnixUsb::BeginDataXfer(void* context, uint8_t* buffer, size_t length, u
     xfer->done.store(false);
     xfer->bytesXfered = 0;
     int status = libusb_submit_transfer(tr);
-    if (status != 0)
+    if (status != LIBUSB_SUCCESS)
     {
         lime::error("UnixUsb::BeginDataXfer error: %s", libusb_error_name(status));
         return OpStatus::Error;
