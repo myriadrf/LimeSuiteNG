@@ -1357,8 +1357,8 @@ API_EXPORT int CALL_CONV LMS_SetLPF(lms_device_t* device, bool dir_tx, size_t ch
 
     try
     {
-        apiDevice->device->SetLowPassFilter(
-            apiDevice->moduleIndex, direction, chan, apiDevice->lastSavedLPFValue[chan][dir_tx]); // TODO: fix
+        double value = enabled ? apiDevice->lastSavedLPFValue[chan][dir_tx] : 0;
+        apiDevice->device->SetLowPassFilter(apiDevice->moduleIndex, direction, chan, value);
     } catch (...)
     {
         lime::error("Failed to set %s channel %li LPF.", ToString(direction).c_str(), chan);
@@ -1432,10 +1432,8 @@ API_EXPORT int CALL_CONV LMS_LoadConfig(lms_device_t* device, const char* filena
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->LoadConfig(apiDevice->moduleIndex, filename);
-
-    return 0;
+    OpStatus status = apiDevice->device->LoadConfig(apiDevice->moduleIndex, filename);
+    return int(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SaveConfig(lms_device_t* device, const char* filename)
@@ -1446,10 +1444,8 @@ API_EXPORT int CALL_CONV LMS_SaveConfig(lms_device_t* device, const char* filena
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->SaveConfig(apiDevice->moduleIndex, filename);
-
-    return 0;
+    OpStatus status = apiDevice->device->SaveConfig(apiDevice->moduleIndex, filename);
+    return int(status);
 }
 
 API_EXPORT void LMS_RegisterLogHandler(LMS_LogHandler handler)
@@ -1477,10 +1473,8 @@ API_EXPORT int CALL_CONV LMS_SetGFIRLPF(lms_device_t* device, bool dir_tx, size_
     }
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    // TODO: check status
-    apiDevice->device->ConfigureGFIR(apiDevice->moduleIndex, direction, chan & 1, { enabled, bandwidth });
-
-    return 0;
+    OpStatus status = apiDevice->device->ConfigureGFIR(apiDevice->moduleIndex, direction, chan & 1, { enabled, bandwidth });
+    return int(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetGFIRCoeff(
@@ -1492,13 +1486,13 @@ API_EXPORT int CALL_CONV LMS_SetGFIRCoeff(
         return -1;
     }
 
-    std::vector<double> coefficients(coef, coef + count);
-
-    // TODO: check status
-    apiDevice->device->SetGFIRCoefficients(
+    std::vector<double> coefficients(count);
+    for (size_t i = 0; i < count; ++i)
+        coefficients[i] = coef[i];
+    OpStatus status = apiDevice->device->SetGFIRCoefficients(
         apiDevice->moduleIndex, dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx, chan, static_cast<uint8_t>(filt), coefficients);
 
-    return 0;
+    return int(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetGFIRCoeff(lms_device_t* device, bool dir_tx, size_t chan, lms_gfir_t filt, float_type* coef)
@@ -1511,14 +1505,11 @@ API_EXPORT int CALL_CONV LMS_GetGFIRCoeff(lms_device_t* device, bool dir_tx, siz
 
     const uint8_t count = filt == LMS_GFIR3 ? 120 : 40;
 
-    // TODO: check status
     auto coefficients = apiDevice->device->GetGFIRCoefficients(
         apiDevice->moduleIndex, dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx, chan, static_cast<uint8_t>(filt));
 
-    for (std::size_t i = 0; i < count; ++i)
-    {
+    for (std::size_t i = 0; i < count && i < coefficients.size(); ++i)
         coef[i] = coefficients.at(i);
-    }
 
     return 0;
 }
@@ -1532,9 +1523,8 @@ API_EXPORT int CALL_CONV LMS_SetGFIR(lms_device_t* device, bool dir_tx, size_t c
     }
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 
-    // TODO: check status
-    apiDevice->device->SetGFIR(apiDevice->moduleIndex, direction, chan, filt, enabled);
-    return 0;
+    OpStatus status = apiDevice->device->SetGFIR(apiDevice->moduleIndex, direction, chan, filt, enabled);
+    return int(status);
 }
 
 API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Parameter param, uint16_t* val)
@@ -1559,10 +1549,8 @@ API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Paramet
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->SetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb, val);
-
-    return 0;
+    OpStatus status = apiDevice->device->SetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb, val);
+    return int(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetNCOFrequency(lms_device_t* device, bool dir_tx, size_t ch, const float_type* freq, float_type pho)
@@ -1576,8 +1564,9 @@ API_EXPORT int CALL_CONV LMS_SetNCOFrequency(lms_device_t* device, bool dir_tx, 
 
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
     {
-        // TODO: check status
-        apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, i, freq[i], pho);
+        OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, i, freq[i], pho);
+        if (status != OpStatus::Success)
+            return int(status);
     }
 
     return 0;
@@ -1596,8 +1585,9 @@ API_EXPORT int CALL_CONV LMS_GetNCOFrequency(lms_device_t* device, bool dir_tx, 
 
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
     {
-        // TODO: check status
         freq[i] = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i, phaseOffset);
+        if (status != OpStatus::Success)
+            return int(status);
     }
 
     if (pho != nullptr)
@@ -1617,8 +1607,9 @@ API_EXPORT int CALL_CONV LMS_SetNCOPhase(lms_device_t* device, bool dir_tx, size
     }
 
     auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    // TODO: check status
-    apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, fcw);
+    OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, fcw);
+    if (status != OpStatus::Success)
+        return int(status);
 
     if (phase != nullptr)
     {
