@@ -3,7 +3,6 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
 #include "utilities/toString.h"
 
@@ -20,6 +19,21 @@ using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
+static inline uint64_t ClearBit(uint64_t value, size_t bitIndex)
+{
+    return value & (~(1 << bitIndex));
+}
+
+static inline uint64_t InsertBit(uint64_t value, size_t bitIndex)
+{
+    return value | (1 << bitIndex);
+}
+
+static inline bool IsSetBit(uint64_t value, size_t bitIndex)
+{
+    return value & (1 << bitIndex);
+}
+
 namespace {
 
 struct StatsDeltas {
@@ -35,14 +49,26 @@ struct StatsDeltas {
     }
 };
 
-struct StreamBuffer {
-    void* buffer;
-    lime::MemoryPool* ownerMemoryPool;
-    lime::TRXDir direction;
-    uint8_t channel;
-    int samplesProduced;
+struct StreamStagingBuffers {
+    std::vector<uint8_t> buffer[2];
+    size_t bufferBytesFilled;
+    uint64_t timestamp;
 
-    StreamBuffer() = delete;
+    lime::TRXDir direction;
+    uint8_t maskDataPresentInBuffer;
+    uint8_t maskChannelsActive;
+    uint8_t maskChannelsSetup;
+
+    StreamStagingBuffers()
+        : timestamp(0)
+        , maskDataPresentInBuffer(0)
+        , maskChannelsActive(0)
+        , maskChannelsSetup(0)
+    {
+        buffer[0].resize(sizeof(complex32f_t) * 1024 * 1024);
+        buffer[1].resize(sizeof(complex32f_t) * 1024 * 1024);
+        bufferBytesFilled = 0;
+    }
 };
 
 struct LMS_APIDevice {
@@ -53,7 +79,7 @@ struct LMS_APIDevice {
 
     uint8_t moduleIndex;
 
-    std::vector<StreamBuffer> streamBuffers;
+    std::array<StreamStagingBuffers, 2> streamBuffers;
     lms_dev_info_t* deviceInfo;
 
     lime::eGainTypes rxGain;
@@ -66,7 +92,6 @@ struct LMS_APIDevice {
         , lastSavedLPFValue()
         , statsDeltas()
         , moduleIndex(0)
-        , streamBuffers()
         , deviceInfo(nullptr)
         , rxGain(lime::eGainTypes::UNKNOWN)
         , txGain(lime::eGainTypes::UNKNOWN)
@@ -90,23 +115,21 @@ struct LMS_APIDevice {
     }
 };
 
-struct StreamHandle {
+struct SubChannelHandle {
     static constexpr std::size_t MAX_ELEMENTS_IN_BUFFER = 4096;
 
     LMS_APIDevice* parent;
-    bool isStreamActuallyStarted;
-    lime::MemoryPool memoryPool;
+    StreamStagingBuffers* stagingArea;
+    size_t channelIndex;
 
-    StreamHandle() = delete;
-    StreamHandle(LMS_APIDevice* parent)
+    SubChannelHandle() = delete;
+    SubChannelHandle(LMS_APIDevice* parent, StreamStagingBuffers* staging, uint8_t index)
         : parent(parent)
-        , isStreamActuallyStarted(false)
-        , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool"s)
+        , stagingArea(staging)
+        , channelIndex(index)
     {
     }
 };
-
-static std::vector<StreamHandle*> streamHandles;
 
 static inline int OpStatusToReturnCode(OpStatus value)
 {
@@ -139,21 +162,6 @@ static inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
     }
 
     return apiDevice;
-}
-
-static inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
-{
-    for (std::size_t i = 0; i < streamHandles.size(); i++)
-    {
-        if (streamHandles.at(i) == nullptr)
-        {
-            streamHandles.at(i) = new StreamHandle{ parent };
-            return i;
-        }
-    }
-
-    streamHandles.push_back(new StreamHandle{ parent });
-    return streamHandles.size() - 1;
 }
 
 static inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
@@ -755,9 +763,9 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     lime::StreamConfig config = apiDevice->lastSavedStreamConfig;
     config.bufferSize = stream->fifoSize;
 
-    auto channel = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
+    auto channelIndex = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
 
-    config.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx).push_back(channel);
+    config.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx).push_back(channelIndex);
 
     config.alignPhase = stream->channel & LMS_ALIGN_CH_PHASE;
 
@@ -788,18 +796,20 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         break;
     }
 
-    // TODO: check functionality
-    // config.performanceLatency = stream->throughputVsLatency;
+    // stream->throughputVsLatency can be ignored, it's automatic now
 
-    auto returnValue = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
+    OpStatus returnValue = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
 
     if (returnValue == OpStatus::Success)
     {
         apiDevice->lastSavedStreamConfig = config;
     }
 
-    stream->handle = GetStreamHandle(apiDevice);
+    StreamStagingBuffers& stage = apiDevice->streamBuffers.at(stream->isTx ? 1 : 0);
+    SubChannelHandle* handle = new SubChannelHandle(apiDevice, &stage, channelIndex);
+    stage.maskChannelsSetup = InsertBit(stage.maskChannelsSetup, channelIndex);
 
+    stream->handle = reinterpret_cast<size_t>(handle);
     return returnValue == OpStatus::Success ? 0 : -1;
 }
 
@@ -818,12 +828,10 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
     }
 
     apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
-    auto& streamHandle = streamHandles.at(stream->handle);
-    if (streamHandle != nullptr)
-    {
-        delete streamHandle;
-        streamHandle = nullptr;
-    }
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
+    handle->stagingArea->maskChannelsSetup = ClearBit(handle->stagingArea->maskChannelsSetup, handle->channelIndex);
+    if (handle != nullptr)
+        delete handle;
 
     auto& channels = apiDevice->lastSavedStreamConfig.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
     auto iter = std::find(channels.begin(), channels.end(), stream->channel);
@@ -840,26 +848,17 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
     }
 
-    if (!handle->isStreamActuallyStarted)
-    {
+    StreamStagingBuffers* stage = handle->stagingArea;
+    stage->maskChannelsActive = InsertBit(stage->maskChannelsActive, handle->channelIndex);
+
+    if (stage->maskChannelsActive == stage->maskChannelsSetup)
         handle->parent->device->StreamStart(handle->parent->moduleIndex);
-
-        for (auto& streamHandle : streamHandles)
-        {
-            if (!streamHandle || streamHandle->parent != handle->parent)
-            {
-                continue;
-            }
-
-            streamHandle->isStreamActuallyStarted = true;
-        }
-    }
 
     return 0;
 }
@@ -871,26 +870,17 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
     }
 
-    if (handle->isStreamActuallyStarted)
-    {
+    StreamStagingBuffers* stage = handle->stagingArea;
+    stage->maskChannelsActive = ClearBit(stage->maskChannelsActive, handle->channelIndex);
+
+    if (stage->maskChannelsActive == 0)
         handle->parent->device->StreamStop(handle->parent->moduleIndex);
-
-        for (auto& streamHandle : streamHandles)
-        {
-            if (!streamHandle || streamHandle->parent != handle->parent)
-            {
-                continue;
-            }
-
-            streamHandle->isStreamActuallyStarted = false;
-        }
-    }
 
     return 0;
 }
@@ -900,7 +890,7 @@ namespace {
 template<class T>
 int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_stream_meta_t* meta, unsigned timeout_ms)
 {
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
@@ -913,66 +903,36 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         return -1;
     }
 
-    const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
-    const std::size_t rxChannelCount = handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).size();
     const std::size_t sampleSize = sizeof(T);
+    int samplesToReturn = 0;
 
-    if (rxChannelCount > 1)
+    StreamStagingBuffers* stage = handle->stagingArea;
+    if (stage->maskDataPresentInBuffer == 0)
     {
-        for (auto it = handle->parent->streamBuffers.begin(); it != handle->parent->streamBuffers.end(); it++)
-        {
-            auto& buffer = *it;
-            if (buffer.direction == direction && buffer.channel == streamChannel)
-            {
-                std::memcpy(samples, buffer.buffer, sample_count * sampleSize);
-                int samplesProduced = buffer.samplesProduced;
+        // if staging buffers are depleted request new batch
+        lime::StreamMeta metadata{ 0, false, false };
+        T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
+        size_t samplesProduced =
+            handle->parent->device->StreamRx(handle->parent->moduleIndex, reinterpret_cast<T**>(dest), sample_count, &metadata);
 
-                buffer.ownerMemoryPool->Free(buffer.buffer);
-                handle->parent->streamBuffers.erase(it);
-
-                return samplesProduced;
-            }
-        }
+        samplesToReturn = samplesProduced;
+        stage->maskDataPresentInBuffer = stage->maskChannelsActive;
+        stage->bufferBytesFilled = samplesProduced * sampleSize;
     }
 
-    // Related cache not found, need to make one up.
-    std::vector<T*> sampleBuffer(rxChannelCount);
-    for (uint8_t i = 0; i < rxChannelCount; ++i)
+    // take samples from staging buffer
+    if (IsSetBit(stage->maskDataPresentInBuffer, handle->channelIndex))
     {
-        if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).at(i) == streamChannel)
-        {
-            sampleBuffer[i] = reinterpret_cast<T*>(samples);
-        }
-        else
-        {
-            sampleBuffer[i] = reinterpret_cast<T*>(handle->memoryPool.Allocate(sample_count * sampleSize));
-
-            handle->parent->streamBuffers.push_back({ sampleBuffer[i],
-                &handle->memoryPool,
-                direction,
-                handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).at(i),
-                0 });
-        }
+        samplesToReturn = std::min(sample_count, stage->bufferBytesFilled / sampleSize);
+        std::memcpy(samples, stage->buffer[handle->channelIndex].data(), samplesToReturn * sampleSize);
+        stage->maskDataPresentInBuffer = ClearBit(stage->maskDataPresentInBuffer, handle->channelIndex);
+        if (stage->maskDataPresentInBuffer == 0)
+            stage->bufferBytesFilled = 0;
+        if (meta)
+            meta->timestamp = stage->timestamp;
     }
 
-    lime::StreamMeta metadata{ 0, false, false };
-    int samplesProduced =
-        handle->parent->device->StreamRx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
-
-    for (auto& buffer : handle->parent->streamBuffers)
-    {
-        if (buffer.direction == direction)
-        {
-            buffer.samplesProduced = samplesProduced;
-        }
-    }
-
-    if (meta != nullptr)
-    {
-        meta->timestamp = metadata.timestamp;
-    }
-
-    return samplesProduced;
+    return samplesToReturn;
 }
 
 } // namespace
@@ -1009,7 +969,7 @@ namespace {
 template<class T>
 int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, const lms_stream_meta_t* meta, unsigned timeout_ms)
 {
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
@@ -1022,70 +982,43 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
         return -1;
     }
 
-    const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
-    const std::size_t txChannelCount = handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).size();
+    // const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
     const std::size_t sampleSize = sizeof(T);
 
-    std::vector<const T*> sampleBuffer(txChannelCount, nullptr);
-
-    for (auto& buffer : handle->parent->streamBuffers)
+    int samplesToReturn = 0;
+    // fill the staging buffer
+    StreamStagingBuffers* stage = handle->stagingArea;
+    if (!IsSetBit(stage->maskDataPresentInBuffer, handle->channelIndex))
     {
-        if (buffer.direction == direction)
+        samplesToReturn = sample_count;
+        std::memcpy(stage->buffer[handle->channelIndex].data(), samples, samplesToReturn * sampleSize);
+        stage->maskDataPresentInBuffer = InsertBit(stage->maskDataPresentInBuffer, handle->channelIndex);
+        stage->bufferBytesFilled = samplesToReturn * sampleSize;
+        if (meta)
+            stage->timestamp = meta->timestamp;
+    }
+
+    if (stage->maskDataPresentInBuffer == stage->maskChannelsActive)
+    {
+        // all staging buffers ready, submit the batch
+        lime::StreamMeta metadata{ 0, false, false };
+        if (meta != nullptr)
         {
-            for (std::size_t i = 0; i < txChannelCount; ++i)
-            {
-                if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).at(i) == buffer.channel)
-                {
-                    sampleBuffer[i] = reinterpret_cast<const T*>(buffer.buffer);
-                    break;
-                }
-            }
+            metadata.flushPartialPacket = meta->flushPartialPacket;
+            metadata.waitForTimestamp = meta->waitForTimestamp;
+            metadata.timestamp = meta->timestamp;
         }
+
+        T* src[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
+        size_t samplesSent =
+            handle->parent->device->StreamTx(handle->parent->moduleIndex, reinterpret_cast<T**>(src), sample_count, &metadata);
+        stage->maskDataPresentInBuffer = 0;
+        stage->bufferBytesFilled = 0;
+
+        if (samplesSent != sample_count)
+            samplesToReturn = samplesSent;
     }
-
-    for (uint8_t i = 0; i < txChannelCount; ++i)
-    {
-        if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).at(i) == streamChannel)
-        {
-            sampleBuffer[i] = reinterpret_cast<const T*>(samples);
-            break;
-        }
-    }
-
-    if (std::any_of(sampleBuffer.begin(), sampleBuffer.end(), [](const T* item) { return item == nullptr; }))
-    {
-        auto buffer = reinterpret_cast<T*>(handle->memoryPool.Allocate(sample_count * sampleSize));
-        std::memcpy(buffer, samples, sample_count * sampleSize);
-        handle->parent->streamBuffers.push_back(
-            { reinterpret_cast<void*>(buffer), &handle->memoryPool, direction, static_cast<uint8_t>(streamChannel), 0 });
-
-        // Can't really know what to return here just yet, so just returning that all of them have passed through.
-        return sample_count;
-    }
-
-    lime::StreamMeta metadata{ 0, false, false };
-
-    if (meta != nullptr)
-    {
-        metadata.flushPartialPacket = meta->flushPartialPacket;
-        metadata.waitForTimestamp = meta->waitForTimestamp;
-        metadata.timestamp = meta->timestamp;
-    }
-
-    int samplesSent = handle->parent->device->StreamTx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
-
-    for (auto it = handle->parent->streamBuffers.begin(); it != handle->parent->streamBuffers.end(); it++)
-    {
-        auto& buffer = *it;
-        if (buffer.direction == direction && buffer.channel != streamChannel)
-        {
-            buffer.ownerMemoryPool->Free(buffer.buffer);
-
-            handle->parent->streamBuffers.erase(it--);
-        }
-    }
-
-    return samplesSent;
+    return samplesToReturn;
 }
 
 } // namespace
@@ -1125,7 +1058,7 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
