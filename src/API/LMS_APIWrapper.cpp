@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -17,6 +18,7 @@
 
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
+using namespace std;
 using namespace std::literals::string_literals;
 
 static inline uint64_t ClearBit(uint64_t value, size_t bitIndex)
@@ -888,7 +890,7 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
 namespace {
 
 template<class T>
-int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_stream_meta_t* meta, unsigned timeout_ms)
+int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_stream_meta_t* meta, chrono::microseconds timeout)
 {
     SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
@@ -912,8 +914,8 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         // if staging buffers are depleted request new batch
         lime::StreamMeta metadata{ 0, false, false };
         T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
-        size_t samplesProduced =
-            handle->parent->device->StreamRx(handle->parent->moduleIndex, reinterpret_cast<T**>(dest), sample_count, &metadata);
+        size_t samplesProduced = handle->parent->device->StreamRx(
+            handle->parent->moduleIndex, reinterpret_cast<T**>(dest), sample_count, &metadata, timeout);
 
         samplesToReturn = samplesProduced;
         stage->maskDataPresentInBuffer = stage->maskChannelsActive;
@@ -946,16 +948,17 @@ API_EXPORT int CALL_CONV LMS_RecvStream(
     }
 
     std::size_t samplesProduced = 0;
+    chrono::microseconds timeout{ timeout_ms * 1000 };
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        samplesProduced = ReceiveStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I12:
-        samplesProduced = ReceiveStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I16:
-        samplesProduced = ReceiveStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout);
         break;
     default:
         break;
@@ -967,7 +970,8 @@ API_EXPORT int CALL_CONV LMS_RecvStream(
 namespace {
 
 template<class T>
-int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, const lms_stream_meta_t* meta, unsigned timeout_ms)
+int SendStream(
+    lms_stream_t* stream, const void* samples, size_t sample_count, const lms_stream_meta_t* meta, chrono::microseconds timeout)
 {
     SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
@@ -1010,8 +1014,8 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
         }
 
         T* src[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
-        size_t samplesSent =
-            handle->parent->device->StreamTx(handle->parent->moduleIndex, reinterpret_cast<T**>(src), sample_count, &metadata);
+        size_t samplesSent = handle->parent->device->StreamTx(
+            handle->parent->moduleIndex, reinterpret_cast<T**>(src), sample_count, &metadata, timeout);
         stage->maskDataPresentInBuffer = 0;
         stage->bufferBytesFilled = 0;
 
@@ -1032,17 +1036,17 @@ API_EXPORT int CALL_CONV LMS_SendStream(
     }
 
     int samplesSent = 0;
-
+    chrono::microseconds timeout{ timeout_ms * 1000 };
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        samplesSent = SendStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I12:
-        samplesSent = SendStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I16:
-        samplesSent = SendStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout);
         break;
     default:
         break;

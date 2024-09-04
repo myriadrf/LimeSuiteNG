@@ -108,12 +108,36 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     void StreamStop(uint8_t moduleIndex) override;
     void StreamDestroy(uint8_t moduleIndex) override;
 
-    uint32_t StreamRx(uint8_t moduleIndex, complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, complex16_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, complex12_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex32f_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex16_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex12_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex32f_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex16_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex12_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
     void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     void SetMessageLogCallback(LogCallbackType callback) override;

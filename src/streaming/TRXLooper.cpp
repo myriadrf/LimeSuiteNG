@@ -21,6 +21,7 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 using namespace LMS7002MCSR_Data;
+using namespace std;
 using namespace std::chrono;
 
 static constexpr uint16_t defaultSamplesInPkt = 256;
@@ -342,27 +343,27 @@ OpStatus TRXLooper::RxSetup()
 
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
+    float bufferTimeDuration;
+    if (mConfig.hintSampleRate)
+        bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
+    else
+        bufferTimeDuration = 0;
+    char msg[256];
+    std::snprintf(msg,
+        sizeof(msg),
+        "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
+        chipId,
+        usePoll ? 1 : 0,
+        samplesInPkt,
+        mRx.packetsToBatch,
+        mRx.packetsToBatch * packetSize,
+        (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
+        bufferTimeDuration * 1e6,
+        mConfig.hintSampleRate);
+    if (showStats)
+        printf("%s", msg);
     if (mCallback_logMessage)
-    {
-        float bufferTimeDuration;
-        if (mConfig.hintSampleRate)
-            bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
-        else
-            bufferTimeDuration = 0;
-        char msg[256];
-        std::snprintf(msg,
-            sizeof(msg),
-            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
-            chipId,
-            usePoll ? 1 : 0,
-            samplesInPkt,
-            mRx.packetsToBatch,
-            mRx.packetsToBatch * packetSize,
-            (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
-            bufferTimeDuration * 1e6,
-            mConfig.hintSampleRate);
         mCallback_logMessage(LogLevel::Verbose, msg);
-    }
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
     for (uint32_t i = 0; i < dmaChunks.size(); ++i)
@@ -672,7 +673,8 @@ void TRXLooper::RxTeardown()
     delete mRx.memPool.release();
 }
 
-template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta)
+template<class T>
+uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
     bool timestampSet = false;
     uint32_t samplesProduced = 0;
@@ -685,10 +687,10 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
     if (useChannelB)
         assert(dest[1]);
 
-    //auto start = high_resolution_clock::now();
+    auto start = chrono::high_resolution_clock::now();
     while (samplesProduced < count)
     {
-        if (!mRx.stagingPacket && !mRx.fifo->pop(&mRx.stagingPacket, firstIteration, 2000))
+        if (!mRx.stagingPacket && !mRx.fifo->pop(&mRx.stagingPacket, firstIteration, timeout))
         {
             lime::error("No samples or timeout"s);
             return samplesProduced;
@@ -722,9 +724,9 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
             mRx.stagingPacket = nullptr;
         }
 
-        // int duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
-        // if(duration > 300) // TODO: timeout duration in meta
-        //     return samplesProduced;
+        auto duration = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - start);
+        if (duration > timeout)
+            return samplesProduced;
     }
 
     return samplesProduced;
@@ -735,21 +737,21 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 /// @param count The amount of samples to receive.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples received.
-uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex32f_t>(samples, count, meta);
+    return StreamRxTemplate<complex32f_t>(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex16_t>(samples, count, meta);
+    return StreamRxTemplate<complex16_t>(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex12_t>(samples, count, meta);
+    return StreamRxTemplate<complex12_t>(samples, count, meta, timeout);
 }
 
 OpStatus TRXLooper::TxSetup()
@@ -999,7 +1001,7 @@ void TRXLooper::TransmitPacketsLoop()
         {
             if (!srcPkt)
             {
-                if (!fifo->pop(&srcPkt, true, 100))
+                if (!fifo->pop(&srcPkt, true, chrono::microseconds(100000)))
                 {
                     std::this_thread::yield();
                     break;
@@ -1155,7 +1157,8 @@ void TRXLooper::TxTeardown()
     delete mTx.memPool.release();
 }
 
-template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta)
+template<class T>
+uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
     const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;
     const bool useTimestamp = meta ? meta->waitForTimestamp : false;
@@ -1170,7 +1173,7 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
 
     if (mTx.stagingPacket && mTx.stagingPacket->timestamp + mTx.stagingPacket->size() != meta->timestamp)
     {
-        if (!mTx.fifo->push(mTx.stagingPacket))
+        if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
             return 0;
 
         mTx.stagingPacket = nullptr;
@@ -1209,7 +1212,7 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
             if (samplesRemaining == 0)
                 mTx.stagingPacket->flush = flush;
 
-            if (!mTx.fifo->push(mTx.stagingPacket))
+            if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
                 break;
 
             mTx.stagingPacket = nullptr;
@@ -1224,21 +1227,24 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
 /// @param count The amount of samples to transmit.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples transmitted.
-uint32_t TRXLooper::StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @brief Gets statistics from a specified transfer direction.
