@@ -311,10 +311,25 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 OpStatus LimeSDR_Mini::Init()
 {
     auto& lms = mLMSChips.at(0);
-    OpStatus status;
+    OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+    if (status != OpStatus::Success)
+        return status;
+
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
+
+    // TODO: replace with static register values
+    // Do TxLPF configuration to set CG_IAMP_TBB to reasonable value, as they are related.
+    // Otherwise if TxLPF is not configured, or CG_IAMP_TBB is not set explicitly to match it.
+    // it can result in inconsistent Tx gain results.
+    lms->SetActiveChannel(LMS7002M::Channel::ChA);
+    lms->SetTxLPF(0);
+    lms->SetRxLPF(0);
+    // SetActiveChannel(Channel::ChB);
+    // SetTxLPF(0);
+    // SetRxLPF(0);
+    // SetActiveChannel(Channel::ChA);
 
     return OpStatus::Success;
 }
