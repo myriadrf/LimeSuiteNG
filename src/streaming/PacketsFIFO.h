@@ -83,9 +83,8 @@ template<class T> class PacketsFIFO
         std::unique_lock<std::mutex> lk(mwr);
         const std::size_t oldWritePosition = m_writePosition.load();
         const std::size_t newWritePosition = getPositionAfter(oldWritePosition);
-        const std::size_t readPosition = m_readPosition.load();
 
-        if (newWritePosition == readPosition)
+        if (newWritePosition == m_readPosition.load())
         {
             // The queue is full
             if (!wait)
@@ -96,10 +95,10 @@ template<class T> class PacketsFIFO
             {
                 if (canWrite.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
                 {
-                    lime::error(std::string("write fifo timeout"));
+                    lime::debug(std::string("write fifo timeout"));
                     return false;
                 }
-                if (newWritePosition == readPosition)
+                if (newWritePosition == m_readPosition.load())
                     return false;
             }
         }
