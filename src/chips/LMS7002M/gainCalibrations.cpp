@@ -1,6 +1,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 #include "LMS7002MCSR_Data.h"
+#include <algorithm>
 #include <cmath>
 
 using namespace lime;
