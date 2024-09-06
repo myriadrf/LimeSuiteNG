@@ -36,6 +36,7 @@ static const CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)"s, 0, 0, 25
 static const CustomParameter CP_TEMPERATURE = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v0 = { //
+    { 0x0020, 0xFFD5 },
     { 0x0022, 0x0FFF },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -85,6 +86,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v2 = { //
+    { 0x0020, 0xFFD5 },
     { 0x0022, 0x0FFF },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -311,10 +313,25 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 OpStatus LimeSDR_Mini::Init()
 {
     auto& lms = mLMSChips.at(0);
-    OpStatus status;
+    OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
+    if (status != OpStatus::Success)
+        return status;
+
     status = lms->ResetChip();
     if (status != OpStatus::Success)
         return status;
+
+    // TODO: replace with static register values
+    // Do TxLPF configuration to set CG_IAMP_TBB to reasonable value, as they are related.
+    // Otherwise if TxLPF is not configured, or CG_IAMP_TBB is not set explicitly to match it.
+    // it can result in inconsistent Tx gain results.
+    lms->SetActiveChannel(LMS7002M::Channel::ChA);
+    lms->SetTxLPF(20);
+    lms->SetRxLPF(20);
+    // SetActiveChannel(Channel::ChB);
+    // SetTxLPF(0);
+    // SetRxLPF(0);
+    // SetActiveChannel(Channel::ChA);
 
     return OpStatus::Success;
 }

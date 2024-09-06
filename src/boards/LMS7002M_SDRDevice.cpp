@@ -857,49 +857,61 @@ void LMS7002M_SDRDevice::StreamDestroy(uint8_t moduleIndex)
     mStreamers.at(moduleIndex)->Teardown();
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex32f_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex16_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex12_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)

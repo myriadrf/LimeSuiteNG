@@ -20,6 +20,7 @@
 #include <array>
 #include <atomic>
 #include <cassert>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -78,14 +79,13 @@ template<class T> class PacketsFIFO
     /// @param wait Whether to wait or now.
     /// @param timeout The timeout (in ms) to wait for.
     /// @return True when the element was added, false when the queue is full.
-    bool push(const T element, bool wait = false, int timeout = 250)
+    bool push(const T element, bool wait = false, std::chrono::microseconds timeout = std::chrono::microseconds(250000))
     {
         std::unique_lock<std::mutex> lk(mwr);
         const std::size_t oldWritePosition = m_writePosition.load();
         const std::size_t newWritePosition = getPositionAfter(oldWritePosition);
-        const std::size_t readPosition = m_readPosition.load();
 
-        if (newWritePosition == readPosition)
+        if (newWritePosition == m_readPosition.load())
         {
             // The queue is full
             if (!wait)
@@ -94,12 +94,12 @@ template<class T> class PacketsFIFO
             // The queue is empty
             //std::unique_lock<std::mutex> lk(mwr);
             {
-                if (canWrite.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+                if (canWrite.wait_for(lk, std::chrono::microseconds(timeout)) == std::cv_status::timeout)
                 {
-                    lime::error(std::string("write fifo timeout"));
+                    lime::debug(std::string("write fifo timeout"));
                     return false;
                 }
-                if (newWritePosition == readPosition)
+                if (newWritePosition == m_readPosition.load())
                     return false;
             }
         }
@@ -117,7 +117,7 @@ template<class T> class PacketsFIFO
     /// @param wait Whether to wait or now.
     /// @param timeout The timeout (in ms) to wait for.
     /// @return True when succeeded, false when the queue is empty.
-    bool pop(T* element, bool wait = false, int timeout = 250)
+    bool pop(T* element, bool wait = false, std::chrono::microseconds timeout = std::chrono::microseconds(250000))
     {
         std::unique_lock<std::mutex> lk(mwr);
         if (empty())
@@ -125,7 +125,7 @@ template<class T> class PacketsFIFO
             if (!wait)
                 return false;
 
-            if (canRead.wait_for(lk, std::chrono::milliseconds(timeout)) == std::cv_status::timeout)
+            if (canRead.wait_for(lk, std::chrono::microseconds(timeout)) == std::cv_status::timeout)
             {
                 //lime::error("pop fifo timeout"s);
                 return false;

@@ -3,13 +3,13 @@
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "MemoryPool.h"
 #include "utilities/DeltaVariable.h"
 #include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -18,7 +18,23 @@
 
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
+using namespace std;
 using namespace std::literals::string_literals;
+
+static inline uint64_t ClearBit(uint64_t value, size_t bitIndex)
+{
+    return value & (~(1 << bitIndex));
+}
+
+static inline uint64_t InsertBit(uint64_t value, size_t bitIndex)
+{
+    return value | (1 << bitIndex);
+}
+
+static inline bool IsSetBit(uint64_t value, size_t bitIndex)
+{
+    return value & (1 << bitIndex);
+}
 
 namespace {
 
@@ -35,14 +51,26 @@ struct StatsDeltas {
     }
 };
 
-struct StreamBuffer {
-    void* buffer;
-    lime::MemoryPool* ownerMemoryPool;
-    lime::TRXDir direction;
-    uint8_t channel;
-    int samplesProduced;
+struct StreamStagingBuffers {
+    std::vector<uint8_t> buffer[2];
+    size_t bufferBytesFilled;
+    uint64_t timestamp;
 
-    StreamBuffer() = delete;
+    lime::TRXDir direction;
+    uint8_t maskDataPresentInBuffer;
+    uint8_t maskChannelsActive;
+    uint8_t maskChannelsSetup;
+
+    StreamStagingBuffers()
+        : timestamp(0)
+        , maskDataPresentInBuffer(0)
+        , maskChannelsActive(0)
+        , maskChannelsSetup(0)
+    {
+        buffer[0].resize(sizeof(complex32f_t) * 1024 * 1024);
+        buffer[1].resize(sizeof(complex32f_t) * 1024 * 1024);
+        bufferBytesFilled = 0;
+    }
 };
 
 struct LMS_APIDevice {
@@ -53,7 +81,7 @@ struct LMS_APIDevice {
 
     uint8_t moduleIndex;
 
-    std::vector<StreamBuffer> streamBuffers;
+    std::array<StreamStagingBuffers, 2> streamBuffers;
     lms_dev_info_t* deviceInfo;
 
     lime::eGainTypes rxGain;
@@ -66,7 +94,6 @@ struct LMS_APIDevice {
         , lastSavedLPFValue()
         , statsDeltas()
         , moduleIndex(0)
-        , streamBuffers()
         , deviceInfo(nullptr)
         , rxGain(lime::eGainTypes::UNKNOWN)
         , txGain(lime::eGainTypes::UNKNOWN)
@@ -90,27 +117,28 @@ struct LMS_APIDevice {
     }
 };
 
-struct StreamHandle {
-    static constexpr std::size_t MAX_ELEMENTS_IN_BUFFER = 4096;
-
+struct SubChannelHandle {
     LMS_APIDevice* parent;
-    bool isStreamActuallyStarted;
-    lime::MemoryPool memoryPool;
+    StreamStagingBuffers* stagingArea;
+    size_t channelIndex;
 
-    StreamHandle() = delete;
-    StreamHandle(LMS_APIDevice* parent)
+    SubChannelHandle() = delete;
+    SubChannelHandle(LMS_APIDevice* parent, StreamStagingBuffers* staging, uint8_t index)
         : parent(parent)
-        , isStreamActuallyStarted(false)
-        , memoryPool(1, sizeof(lime::complex32f_t) * MAX_ELEMENTS_IN_BUFFER, 4096, "StreamHandleMemoryPool"s)
+        , stagingArea(staging)
+        , channelIndex(index)
     {
     }
 };
 
-static std::vector<StreamHandle*> streamHandles;
-
 static inline int OpStatusToReturnCode(OpStatus value)
 {
-    return value == OpStatus::Success ? 0 : -1;
+    return int(value);
+}
+
+static inline lime::TRXDir DirFromBool(bool isTx)
+{
+    return isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
 }
 
 static inline LMS_APIDevice* CheckDevice(lms_device_t* device)
@@ -139,21 +167,6 @@ static inline LMS_APIDevice* CheckDevice(lms_device_t* device, unsigned chan)
     }
 
     return apiDevice;
-}
-
-static inline std::size_t GetStreamHandle(LMS_APIDevice* parent)
-{
-    for (std::size_t i = 0; i < streamHandles.size(); i++)
-    {
-        if (streamHandles.at(i) == nullptr)
-        {
-            streamHandles.at(i) = new StreamHandle{ parent };
-            return i;
-        }
-    }
-
-    streamHandles.push_back(new StreamHandle{ parent });
-    return streamHandles.size() - 1;
 }
 
 static inline void CopyString(const std::string_view source, char* destination, std::size_t destinationLength)
@@ -287,18 +300,9 @@ API_EXPORT int CALL_CONV LMS_EnableChannel(lms_device_t* device, bool dir_tx, si
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    try
-    {
-        apiDevice->device->EnableChannel(apiDevice->moduleIndex, direction, chan, enabled);
-    } catch (...)
-    {
-        lime::error("Device configuration failed."s);
-
-        return -1;
-    }
-
-    return 0;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    const OpStatus status = apiDevice->device->EnableChannel(apiDevice->moduleIndex, direction, chan, enabled);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetSampleRate(lms_device_t* device, float_type rate, size_t oversample)
@@ -309,17 +313,8 @@ API_EXPORT int CALL_CONV LMS_SetSampleRate(lms_device_t* device, float_type rate
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->SetSampleRate(apiDevice->moduleIndex, lime::TRXDir::Rx, 0, rate, oversample);
-    } catch (...)
-    {
-        lime::error("Failed to set sampling rate."s);
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetSampleRate(apiDevice->moduleIndex, lime::TRXDir::Rx, 0, rate, oversample);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetSampleRateDir(lms_device_t* device, bool dir_tx, float_type rate, size_t oversample)
@@ -330,20 +325,10 @@ API_EXPORT int CALL_CONV LMS_SetSampleRateDir(lms_device_t* device, bool dir_tx,
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    try
-    {
-        apiDevice->device->SetSampleRate(apiDevice->moduleIndex, direction, 0, rate, oversample);
-
-    } catch (...)
-    {
-        lime::error("Failed to set %s sampling rate.", ToString(direction).c_str());
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetSampleRate(apiDevice->moduleIndex, direction, 0, rate, oversample);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetSampleRate(lms_device_t* device, bool dir_tx, size_t chan, float_type* host_Hz, float_type* rf_Hz)
@@ -354,7 +339,7 @@ API_EXPORT int CALL_CONV LMS_GetSampleRate(lms_device_t* device, bool dir_tx, si
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     uint32_t rf_rate;
     auto rate = apiDevice->device->GetSampleRate(apiDevice->moduleIndex, direction, 0, &rf_rate);
 
@@ -399,19 +384,9 @@ API_EXPORT int CALL_CONV LMS_SetLOFrequency(lms_device_t* device, bool dir_tx, s
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-
-    try
-    {
-        apiDevice->device->SetFrequency(apiDevice->moduleIndex, direction, chan, frequency);
-    } catch (...)
-    {
-        lime::error("Failed to set %s LO frequency.", ToString(direction).c_str());
-
-        return -1;
-    }
-
-    return 0;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    const OpStatus status = apiDevice->device->SetFrequency(apiDevice->moduleIndex, direction, chan, frequency);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetLOFrequency(lms_device_t* device, bool dir_tx, size_t chan, float_type* frequency)
@@ -472,19 +447,9 @@ API_EXPORT int CALL_CONV LMS_SetAntenna(lms_device_t* device, bool dir_tx, size_
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-
-    try
-    {
-        apiDevice->device->SetAntenna(apiDevice->moduleIndex, direction, chan, path);
-    } catch (...)
-    {
-        lime::error("Failed to set %s antenna.", ToString(direction).c_str());
-
-        return -1;
-    }
-
-    return 0;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    const OpStatus status = apiDevice->device->SetAntenna(apiDevice->moduleIndex, direction, chan, path);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetAntenna(lms_device_t* device, bool dir_tx, size_t chan)
@@ -495,8 +460,7 @@ API_EXPORT int CALL_CONV LMS_GetAntenna(lms_device_t* device, bool dir_tx, size_
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     return apiDevice->device->GetAntenna(apiDevice->moduleIndex, direction, chan);
 }
 
@@ -508,8 +472,8 @@ API_EXPORT int CALL_CONV LMS_GetAntennaBW(lms_device_t* device, bool dir_tx, siz
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    std::string pathName = apiDevice->GetRFSOCDescriptor().pathNames.at(direction).at(path);
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    const std::string& pathName = apiDevice->GetRFSOCDescriptor().pathNames.at(direction).at(path);
 
     if (range)
     {
@@ -527,19 +491,10 @@ API_EXPORT int CALL_CONV LMS_SetLPFBW(lms_device_t* device, bool dir_tx, size_t 
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-
-    try
-    {
-        apiDevice->device->SetLowPassFilter(apiDevice->moduleIndex, direction, chan, bandwidth);
-        apiDevice->lastSavedLPFValue[chan][dir_tx] = bandwidth;
-    } catch (...)
-    {
-        lime::error("Failed to set %s LPF bandwidth.", ToString(direction).c_str());
-
-        return -1;
-    }
-
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    const OpStatus status = apiDevice->device->SetLowPassFilter(apiDevice->moduleIndex, direction, chan, bandwidth);
+    apiDevice->lastSavedLPFValue[chan][dir_tx] = bandwidth;
+    return OpStatusToReturnCode(status);
     return 0;
 }
 
@@ -551,7 +506,7 @@ API_EXPORT int CALL_CONV LMS_GetLPFBWRange(lms_device_t* device, bool dir_tx, lm
         return -1;
     }
 
-    lime::TRXDir direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     if (range)
         *range = RangeToLMS_Range(apiDevice->GetRFSOCDescriptor().lowPassFilterRange.at(direction));
@@ -569,24 +524,15 @@ API_EXPORT int CALL_CONV LMS_SetNormalizedGain(lms_device_t* device, bool dir_tx
 
     gain = std::clamp(gain, 0.0, 1.0);
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     auto gainToUse = dir_tx ? apiDevice->txGain : apiDevice->rxGain;
 
     auto range = apiDevice->GetRFSOCDescriptor().gainRange.at(direction).at(gainToUse);
 
     gain = range.min + gain * (range.max - range.min);
 
-    try
-    {
-        apiDevice->device->SetGain(apiDevice->moduleIndex, direction, chan, gainToUse, gain);
-    } catch (...)
-    {
-        lime::error("Failed to set %s normalized gain.", ToString(direction).c_str());
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetGain(apiDevice->moduleIndex, direction, chan, gainToUse, gain);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetGaindB(lms_device_t* device, bool dir_tx, size_t chan, unsigned gain)
@@ -597,20 +543,11 @@ API_EXPORT int CALL_CONV LMS_SetGaindB(lms_device_t* device, bool dir_tx, size_t
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     auto gainToUse = dir_tx ? apiDevice->txGain : apiDevice->rxGain;
 
-    try
-    {
-        apiDevice->device->SetGain(apiDevice->moduleIndex, direction, chan, gainToUse, gain);
-    } catch (...)
-    {
-        lime::error("Failed to set %s gain.", ToString(direction).c_str());
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetGain(apiDevice->moduleIndex, direction, chan, gainToUse, gain);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetNormalizedGain(lms_device_t* device, bool dir_tx, size_t chan, float_type* gain)
@@ -621,18 +558,18 @@ API_EXPORT int CALL_CONV LMS_GetNormalizedGain(lms_device_t* device, bool dir_tx
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     auto gainToUse = dir_tx ? apiDevice->txGain : apiDevice->rxGain;
 
     auto range = apiDevice->GetRFSOCDescriptor().gainRange.at(direction).at(gainToUse);
 
     double deviceGain = 0.0;
-    OpStatus returnValue = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
+    const OpStatus status = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
 
     if (gain)
         *gain = (deviceGain - range.min) / (range.max - range.min);
 
-    return OpStatusToReturnCode(returnValue);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetGaindB(lms_device_t* device, bool dir_tx, size_t chan, unsigned* gain)
@@ -643,16 +580,17 @@ API_EXPORT int CALL_CONV LMS_GetGaindB(lms_device_t* device, bool dir_tx, size_t
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    if (gain == nullptr)
+        return 0;
+
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     auto gainToUse = dir_tx ? apiDevice->txGain : apiDevice->rxGain;
     auto deviceGain = 0.0;
 
-    OpStatus returnValue = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
+    const OpStatus status = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
+    *gain = std::lround(deviceGain) + 12;
 
-    if (gain)
-        *gain = std::lround(deviceGain) + 12;
-
-    return OpStatusToReturnCode(returnValue);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_Calibrate(lms_device_t* device, bool dir_tx, size_t chan, double bw, unsigned flags)
@@ -663,19 +601,10 @@ API_EXPORT int CALL_CONV LMS_Calibrate(lms_device_t* device, bool dir_tx, size_t
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    try
-    {
-        apiDevice->device->Calibrate(apiDevice->moduleIndex, direction, chan, bw);
-    } catch (...)
-    {
-        lime::error("Failed to calibrate %s channel %li.", ToString(direction).c_str(), chan);
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->Calibrate(apiDevice->moduleIndex, direction, chan, bw);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetTestSignal(
@@ -693,7 +622,7 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     auto enumToTestStruct = [](lms_testsig_t signal) -> lime::ChannelConfig::Direction::TestSignal {
         switch (signal)
@@ -727,15 +656,9 @@ API_EXPORT int CALL_CONV LMS_SetTestSignal(
         }
     };
 
-    try
-    {
+    const OpStatus status =
         apiDevice->device->SetTestSignal(apiDevice->moduleIndex, direction, chan, enumToTestStruct(sig), dc_i, dc_q);
-    } catch (...)
-    {
-        lime::error("Failed to set %s channel %li test signal.", ToString(direction).c_str(), chan);
-    }
-
-    return 0;
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* stream)
@@ -755,9 +678,9 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     lime::StreamConfig config = apiDevice->lastSavedStreamConfig;
     config.bufferSize = stream->fifoSize;
 
-    auto channel = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
+    auto channelIndex = stream->channel & ~LMS_ALIGN_CH_PHASE; // Clear the align phase bit
 
-    config.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx).push_back(channel);
+    config.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx).push_back(channelIndex);
 
     config.alignPhase = stream->channel & LMS_ALIGN_CH_PHASE;
 
@@ -788,19 +711,21 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         break;
     }
 
-    // TODO: check functionality
-    // config.performanceLatency = stream->throughputVsLatency;
+    // stream->throughputVsLatency can be ignored, it's automatic now
 
-    auto returnValue = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
+    OpStatus status = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
 
-    if (returnValue == OpStatus::Success)
+    if (status == OpStatus::Success)
     {
         apiDevice->lastSavedStreamConfig = config;
     }
 
-    stream->handle = GetStreamHandle(apiDevice);
+    StreamStagingBuffers& stage = apiDevice->streamBuffers.at(stream->isTx ? 1 : 0);
+    SubChannelHandle* handle = new SubChannelHandle(apiDevice, &stage, channelIndex);
+    stage.maskChannelsSetup = InsertBit(stage.maskChannelsSetup, channelIndex);
 
-    return returnValue == OpStatus::Success ? 0 : -1;
+    stream->handle = reinterpret_cast<size_t>(handle);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* stream)
@@ -818,12 +743,10 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
     }
 
     apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
-    auto& streamHandle = streamHandles.at(stream->handle);
-    if (streamHandle != nullptr)
-    {
-        delete streamHandle;
-        streamHandle = nullptr;
-    }
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
+    handle->stagingArea->maskChannelsSetup = ClearBit(handle->stagingArea->maskChannelsSetup, handle->channelIndex);
+    if (handle != nullptr)
+        delete handle;
 
     auto& channels = apiDevice->lastSavedStreamConfig.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
     auto iter = std::find(channels.begin(), channels.end(), stream->channel);
@@ -840,26 +763,17 @@ API_EXPORT int CALL_CONV LMS_StartStream(lms_stream_t* stream)
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
     }
 
-    if (!handle->isStreamActuallyStarted)
-    {
+    StreamStagingBuffers* stage = handle->stagingArea;
+    stage->maskChannelsActive = InsertBit(stage->maskChannelsActive, handle->channelIndex);
+
+    if (stage->maskChannelsActive == stage->maskChannelsSetup)
         handle->parent->device->StreamStart(handle->parent->moduleIndex);
-
-        for (auto& streamHandle : streamHandles)
-        {
-            if (!streamHandle || streamHandle->parent != handle->parent)
-            {
-                continue;
-            }
-
-            streamHandle->isStreamActuallyStarted = true;
-        }
-    }
 
     return 0;
 }
@@ -871,26 +785,17 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
     }
 
-    if (handle->isStreamActuallyStarted)
-    {
+    StreamStagingBuffers* stage = handle->stagingArea;
+    stage->maskChannelsActive = ClearBit(stage->maskChannelsActive, handle->channelIndex);
+
+    if (stage->maskChannelsActive == 0)
         handle->parent->device->StreamStop(handle->parent->moduleIndex);
-
-        for (auto& streamHandle : streamHandles)
-        {
-            if (!streamHandle || streamHandle->parent != handle->parent)
-            {
-                continue;
-            }
-
-            streamHandle->isStreamActuallyStarted = false;
-        }
-    }
 
     return 0;
 }
@@ -898,9 +803,9 @@ API_EXPORT int CALL_CONV LMS_StopStream(lms_stream_t* stream)
 namespace {
 
 template<class T>
-int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_stream_meta_t* meta, unsigned timeout_ms)
+int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_stream_meta_t* meta, chrono::microseconds timeout)
 {
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
@@ -913,66 +818,36 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         return -1;
     }
 
-    const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
-    const std::size_t rxChannelCount = handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).size();
     const std::size_t sampleSize = sizeof(T);
+    int samplesToReturn = 0;
 
-    if (rxChannelCount > 1)
+    StreamStagingBuffers* stage = handle->stagingArea;
+    if (stage->maskDataPresentInBuffer == 0)
     {
-        for (auto it = handle->parent->streamBuffers.begin(); it != handle->parent->streamBuffers.end(); it++)
-        {
-            auto& buffer = *it;
-            if (buffer.direction == direction && buffer.channel == streamChannel)
-            {
-                std::memcpy(samples, buffer.buffer, sample_count * sampleSize);
-                int samplesProduced = buffer.samplesProduced;
+        // if staging buffers are depleted request new batch
+        lime::StreamMeta metadata{ 0, false, false };
+        T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
+        size_t samplesProduced = handle->parent->device->StreamRx(
+            handle->parent->moduleIndex, reinterpret_cast<T**>(dest), sample_count, &metadata, timeout);
 
-                buffer.ownerMemoryPool->Free(buffer.buffer);
-                handle->parent->streamBuffers.erase(it);
-
-                return samplesProduced;
-            }
-        }
+        samplesToReturn = samplesProduced;
+        stage->maskDataPresentInBuffer = stage->maskChannelsActive;
+        stage->bufferBytesFilled = samplesProduced * sampleSize;
     }
 
-    // Related cache not found, need to make one up.
-    std::vector<T*> sampleBuffer(rxChannelCount);
-    for (uint8_t i = 0; i < rxChannelCount; ++i)
+    // take samples from staging buffer
+    if (IsSetBit(stage->maskDataPresentInBuffer, handle->channelIndex))
     {
-        if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).at(i) == streamChannel)
-        {
-            sampleBuffer[i] = reinterpret_cast<T*>(samples);
-        }
-        else
-        {
-            sampleBuffer[i] = reinterpret_cast<T*>(handle->memoryPool.Allocate(sample_count * sampleSize));
-
-            handle->parent->streamBuffers.push_back({ sampleBuffer[i],
-                &handle->memoryPool,
-                direction,
-                handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Rx).at(i),
-                0 });
-        }
+        samplesToReturn = std::min(sample_count, stage->bufferBytesFilled / sampleSize);
+        std::memcpy(samples, stage->buffer[handle->channelIndex].data(), samplesToReturn * sampleSize);
+        stage->maskDataPresentInBuffer = ClearBit(stage->maskDataPresentInBuffer, handle->channelIndex);
+        if (stage->maskDataPresentInBuffer == 0)
+            stage->bufferBytesFilled = 0;
+        if (meta)
+            meta->timestamp = stage->timestamp;
     }
 
-    lime::StreamMeta metadata{ 0, false, false };
-    int samplesProduced =
-        handle->parent->device->StreamRx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
-
-    for (auto& buffer : handle->parent->streamBuffers)
-    {
-        if (buffer.direction == direction)
-        {
-            buffer.samplesProduced = samplesProduced;
-        }
-    }
-
-    if (meta != nullptr)
-    {
-        meta->timestamp = metadata.timestamp;
-    }
-
-    return samplesProduced;
+    return samplesToReturn;
 }
 
 } // namespace
@@ -986,16 +861,17 @@ API_EXPORT int CALL_CONV LMS_RecvStream(
     }
 
     std::size_t samplesProduced = 0;
+    chrono::microseconds timeout{ timeout_ms * 1000 };
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        samplesProduced = ReceiveStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I12:
-        samplesProduced = ReceiveStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I16:
-        samplesProduced = ReceiveStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesProduced = ReceiveStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout);
         break;
     default:
         break;
@@ -1007,9 +883,10 @@ API_EXPORT int CALL_CONV LMS_RecvStream(
 namespace {
 
 template<class T>
-int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, const lms_stream_meta_t* meta, unsigned timeout_ms)
+int SendStream(
+    lms_stream_t* stream, const void* samples, size_t sample_count, const lms_stream_meta_t* meta, chrono::microseconds timeout)
 {
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
@@ -1022,70 +899,43 @@ int SendStream(lms_stream_t* stream, const void* samples, size_t sample_count, c
         return -1;
     }
 
-    const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
-    const std::size_t txChannelCount = handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).size();
+    // const uint32_t streamChannel = stream->channel & ~LMS_ALIGN_CH_PHASE;
     const std::size_t sampleSize = sizeof(T);
 
-    std::vector<const T*> sampleBuffer(txChannelCount, nullptr);
-
-    for (auto& buffer : handle->parent->streamBuffers)
+    int samplesToReturn = 0;
+    // fill the staging buffer
+    StreamStagingBuffers* stage = handle->stagingArea;
+    if (!IsSetBit(stage->maskDataPresentInBuffer, handle->channelIndex))
     {
-        if (buffer.direction == direction)
+        samplesToReturn = sample_count;
+        std::memcpy(stage->buffer[handle->channelIndex].data(), samples, samplesToReturn * sampleSize);
+        stage->maskDataPresentInBuffer = InsertBit(stage->maskDataPresentInBuffer, handle->channelIndex);
+        stage->bufferBytesFilled = samplesToReturn * sampleSize;
+        if (meta)
+            stage->timestamp = meta->timestamp;
+    }
+
+    if (stage->maskDataPresentInBuffer == stage->maskChannelsActive)
+    {
+        // all staging buffers ready, submit the batch
+        lime::StreamMeta metadata{ 0, false, false };
+        if (meta != nullptr)
         {
-            for (std::size_t i = 0; i < txChannelCount; ++i)
-            {
-                if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).at(i) == buffer.channel)
-                {
-                    sampleBuffer[i] = reinterpret_cast<const T*>(buffer.buffer);
-                    break;
-                }
-            }
+            metadata.flushPartialPacket = meta->flushPartialPacket;
+            metadata.waitForTimestamp = meta->waitForTimestamp;
+            metadata.timestamp = meta->timestamp;
         }
+
+        T* src[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
+        size_t samplesSent = handle->parent->device->StreamTx(
+            handle->parent->moduleIndex, reinterpret_cast<T**>(src), sample_count, &metadata, timeout);
+        stage->maskDataPresentInBuffer = 0;
+        stage->bufferBytesFilled = 0;
+
+        if (samplesSent != sample_count)
+            samplesToReturn = samplesSent;
     }
-
-    for (uint8_t i = 0; i < txChannelCount; ++i)
-    {
-        if (handle->parent->lastSavedStreamConfig.channels.at(lime::TRXDir::Tx).at(i) == streamChannel)
-        {
-            sampleBuffer[i] = reinterpret_cast<const T*>(samples);
-            break;
-        }
-    }
-
-    if (std::any_of(sampleBuffer.begin(), sampleBuffer.end(), [](const T* item) { return item == nullptr; }))
-    {
-        auto buffer = reinterpret_cast<T*>(handle->memoryPool.Allocate(sample_count * sampleSize));
-        std::memcpy(buffer, samples, sample_count * sampleSize);
-        handle->parent->streamBuffers.push_back(
-            { reinterpret_cast<void*>(buffer), &handle->memoryPool, direction, static_cast<uint8_t>(streamChannel), 0 });
-
-        // Can't really know what to return here just yet, so just returning that all of them have passed through.
-        return sample_count;
-    }
-
-    lime::StreamMeta metadata{ 0, false, false };
-
-    if (meta != nullptr)
-    {
-        metadata.flushPartialPacket = meta->flushPartialPacket;
-        metadata.waitForTimestamp = meta->waitForTimestamp;
-        metadata.timestamp = meta->timestamp;
-    }
-
-    int samplesSent = handle->parent->device->StreamTx(handle->parent->moduleIndex, sampleBuffer.data(), sample_count, &metadata);
-
-    for (auto it = handle->parent->streamBuffers.begin(); it != handle->parent->streamBuffers.end(); it++)
-    {
-        auto& buffer = *it;
-        if (buffer.direction == direction && buffer.channel != streamChannel)
-        {
-            buffer.ownerMemoryPool->Free(buffer.buffer);
-
-            handle->parent->streamBuffers.erase(it--);
-        }
-    }
-
-    return samplesSent;
+    return samplesToReturn;
 }
 
 } // namespace
@@ -1099,17 +949,17 @@ API_EXPORT int CALL_CONV LMS_SendStream(
     }
 
     int samplesSent = 0;
-
+    chrono::microseconds timeout{ timeout_ms * 1000 };
     switch (stream->dataFmt)
     {
     case lms_stream_t::LMS_FMT_F32:
-        samplesSent = SendStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex32f_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I12:
-        samplesSent = SendStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex12_t>(stream, samples, sample_count, meta, timeout);
         break;
     case lms_stream_t::LMS_FMT_I16:
-        samplesSent = SendStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout_ms);
+        samplesSent = SendStream<lime::complex16_t>(stream, samples, sample_count, meta, timeout);
         break;
     default:
         break;
@@ -1125,7 +975,7 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
         return -1;
     }
 
-    auto& handle = streamHandles.at(stream->handle);
+    SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle == nullptr || handle->parent == nullptr)
     {
         return -1;
@@ -1255,7 +1105,7 @@ API_EXPORT int CALL_CONV LMS_WriteCustomBoardParam(lms_device_t* device, uint8_t
         return -1;
     }
 
-    std::vector<lime::CustomParameterIO> parameter{ { param_id, val, units } };
+    const std::vector<lime::CustomParameterIO> parameter{ { param_id, val, units } };
 
     OpStatus status = apiDevice->device->CustomParameterWrite(parameter);
     return OpStatusToReturnCode(status);
@@ -1321,17 +1171,8 @@ API_EXPORT int CALL_CONV LMS_SetClockFreq(lms_device_t* device, size_t clk_id, f
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->SetClockFreq(clk_id, freq, apiDevice->moduleIndex * 2);
-    } catch (...)
-    {
-        lime::error("Failed to set clock%li.", clk_id);
-
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetClockFreq(clk_id, freq, apiDevice->moduleIndex * 2);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetChipTemperature(lms_device_t* dev, size_t ind, float_type* temp)
@@ -1362,15 +1203,8 @@ API_EXPORT int CALL_CONV LMS_Synchronize(lms_device_t* dev, bool toChip)
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->Synchronize(toChip);
-    } catch (...)
-    {
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->Synchronize(toChip);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_EnableCache(lms_device_t* dev, bool enable)
@@ -1381,14 +1215,7 @@ API_EXPORT int CALL_CONV LMS_EnableCache(lms_device_t* dev, bool enable)
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->EnableCache(enable);
-    } catch (...)
-    {
-        return -1;
-    }
-
+    apiDevice->device->EnableCache(enable);
     return 0;
 }
 
@@ -1400,7 +1227,7 @@ API_EXPORT int CALL_CONV LMS_GetLPFBW(lms_device_t* device, bool dir_tx, size_t 
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     if (bandwidth)
         *bandwidth = apiDevice->device->GetLowPassFilter(apiDevice->moduleIndex, direction, chan);
@@ -1416,20 +1243,11 @@ API_EXPORT int CALL_CONV LMS_SetLPF(lms_device_t* device, bool dir_tx, size_t ch
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    try
-    {
-        apiDevice->device->SetLowPassFilter(
-            apiDevice->moduleIndex, direction, chan, apiDevice->lastSavedLPFValue[chan][dir_tx]); // TODO: fix
-    } catch (...)
-    {
-        lime::error("Failed to set %s channel %li LPF.", ToString(direction).c_str(), chan);
-
-        return -1;
-    }
-
-    return 0;
+    const double value = enabled ? apiDevice->lastSavedLPFValue[chan][dir_tx] : 0;
+    const OpStatus status = apiDevice->device->SetLowPassFilter(apiDevice->moduleIndex, direction, chan, value);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetTestSignal(lms_device_t* device, bool dir_tx, size_t chan, lms_testsig_t* sig)
@@ -1440,7 +1258,7 @@ API_EXPORT int CALL_CONV LMS_GetTestSignal(lms_device_t* device, bool dir_tx, si
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     auto testSignal = apiDevice->device->GetTestSignal(apiDevice->moduleIndex, direction, chan);
 
@@ -1495,10 +1313,8 @@ API_EXPORT int CALL_CONV LMS_LoadConfig(lms_device_t* device, const char* filena
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->LoadConfig(apiDevice->moduleIndex, filename);
-
-    return 0;
+    const OpStatus status = apiDevice->device->LoadConfig(apiDevice->moduleIndex, filename);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SaveConfig(lms_device_t* device, const char* filename)
@@ -1509,10 +1325,8 @@ API_EXPORT int CALL_CONV LMS_SaveConfig(lms_device_t* device, const char* filena
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->SaveConfig(apiDevice->moduleIndex, filename);
-
-    return 0;
+    const OpStatus status = apiDevice->device->SaveConfig(apiDevice->moduleIndex, filename);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT void LMS_RegisterLogHandler(LMS_LogHandler handler)
@@ -1538,12 +1352,10 @@ API_EXPORT int CALL_CONV LMS_SetGFIRLPF(lms_device_t* device, bool dir_tx, size_
     {
         return -1;
     }
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    // TODO: check status
-    apiDevice->device->ConfigureGFIR(apiDevice->moduleIndex, direction, chan & 1, { enabled, bandwidth });
-
-    return 0;
+    OpStatus status = apiDevice->device->ConfigureGFIR(apiDevice->moduleIndex, direction, chan & 1, { enabled, bandwidth });
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetGFIRCoeff(
@@ -1555,13 +1367,13 @@ API_EXPORT int CALL_CONV LMS_SetGFIRCoeff(
         return -1;
     }
 
-    std::vector<double> coefficients(coef, coef + count);
-
-    // TODO: check status
-    apiDevice->device->SetGFIRCoefficients(
+    std::vector<double> coefficients(count);
+    for (size_t i = 0; i < count; ++i)
+        coefficients[i] = coef[i];
+    OpStatus status = apiDevice->device->SetGFIRCoefficients(
         apiDevice->moduleIndex, dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx, chan, static_cast<uint8_t>(filt), coefficients);
 
-    return 0;
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetGFIRCoeff(lms_device_t* device, bool dir_tx, size_t chan, lms_gfir_t filt, float_type* coef)
@@ -1574,14 +1386,11 @@ API_EXPORT int CALL_CONV LMS_GetGFIRCoeff(lms_device_t* device, bool dir_tx, siz
 
     const uint8_t count = filt == LMS_GFIR3 ? 120 : 40;
 
-    // TODO: check status
     auto coefficients = apiDevice->device->GetGFIRCoefficients(
         apiDevice->moduleIndex, dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx, chan, static_cast<uint8_t>(filt));
 
-    for (std::size_t i = 0; i < count; ++i)
-    {
+    for (std::size_t i = 0; i < count && i < coefficients.size(); ++i)
         coef[i] = coefficients.at(i);
-    }
 
     return 0;
 }
@@ -1593,11 +1402,10 @@ API_EXPORT int CALL_CONV LMS_SetGFIR(lms_device_t* device, bool dir_tx, size_t c
     {
         return -1;
     }
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    // TODO: check status
-    apiDevice->device->SetGFIR(apiDevice->moduleIndex, direction, chan, filt, enabled);
-    return 0;
+    const OpStatus status = apiDevice->device->SetGFIR(apiDevice->moduleIndex, direction, chan, filt, enabled);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Parameter param, uint16_t* val)
@@ -1622,10 +1430,8 @@ API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Paramet
         return -1;
     }
 
-    // TODO: check status
-    apiDevice->device->SetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb, val);
-
-    return 0;
+    OpStatus status = apiDevice->device->SetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb, val);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_SetNCOFrequency(lms_device_t* device, bool dir_tx, size_t ch, const float_type* freq, float_type pho)
@@ -1635,12 +1441,13 @@ API_EXPORT int CALL_CONV LMS_SetNCOFrequency(lms_device_t* device, bool dir_tx, 
     {
         return -1;
     }
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
     {
-        // TODO: check status
-        apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, i, freq[i], pho);
+        OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, i, freq[i], pho);
+        if (status != OpStatus::Success)
+            return OpStatusToReturnCode(status);
     }
 
     return 0;
@@ -1654,14 +1461,11 @@ API_EXPORT int CALL_CONV LMS_GetNCOFrequency(lms_device_t* device, bool dir_tx, 
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
     double phaseOffset = 0.0;
 
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
-    {
-        // TODO: check status
         freq[i] = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i, phaseOffset);
-    }
 
     if (pho != nullptr)
     {
@@ -1679,9 +1483,10 @@ API_EXPORT int CALL_CONV LMS_SetNCOPhase(lms_device_t* device, bool dir_tx, size
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
-    // TODO: check status
-    apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, fcw);
+    const lime::TRXDir direction = DirFromBool(dir_tx);
+    OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, fcw);
+    if (status != OpStatus::Success)
+        return OpStatusToReturnCode(status);
 
     if (phase != nullptr)
     {
@@ -1708,7 +1513,7 @@ API_EXPORT int CALL_CONV LMS_GetNCOPhase(lms_device_t* device, bool dir_tx, size
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     if (phase != nullptr)
     {
@@ -1740,15 +1545,10 @@ API_EXPORT int CALL_CONV LMS_SetNCOIndex(lms_device_t* device, bool dir_tx, size
         return -1;
     }
 
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
-    OpStatus returnValue = apiDevice->device->SetNCOIndex(apiDevice->moduleIndex, direction, chan, ind, down);
-    if (returnValue != OpStatus::Success)
-    {
-        return -1;
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->SetNCOIndex(apiDevice->moduleIndex, direction, chan, ind, down);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_GetNCOIndex(lms_device_t* device, bool dir_tx, size_t chan)
@@ -1758,7 +1558,7 @@ API_EXPORT int CALL_CONV LMS_GetNCOIndex(lms_device_t* device, bool dir_tx, size
     {
         return -1;
     }
-    auto direction = dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx;
+    const lime::TRXDir direction = DirFromBool(dir_tx);
 
     return apiDevice->device->GetNCOIndex(apiDevice->moduleIndex, direction, chan);
 }
@@ -1771,15 +1571,8 @@ API_EXPORT int CALL_CONV LMS_WriteLMSReg(lms_device_t* device, uint32_t address,
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->WriteRegister(apiDevice->moduleIndex, address, val);
-    } catch (...)
-    {
-        return lime::error("Failed to write register at %04X.", address);
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->WriteRegister(apiDevice->moduleIndex, address, val);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_ReadLMSReg(lms_device_t* device, uint32_t address, uint16_t* val)
@@ -1810,15 +1603,8 @@ API_EXPORT int CALL_CONV LMS_WriteFPGAReg(lms_device_t* device, uint32_t address
         return -1;
     }
 
-    try
-    {
-        apiDevice->device->WriteRegister(apiDevice->moduleIndex, address, val, true);
-    } catch (...)
-    {
-        return lime::error("Failed to write register at %04X.", address);
-    }
-
-    return 0;
+    const OpStatus status = apiDevice->device->WriteRegister(apiDevice->moduleIndex, address, val, true);
+    return OpStatusToReturnCode(status);
 }
 
 API_EXPORT int CALL_CONV LMS_ReadFPGAReg(lms_device_t* device, uint32_t address, uint16_t* val)
@@ -1955,13 +1741,12 @@ API_EXPORT int CALL_CONV LMS_VCTCXOWrite(lms_device_t* device, uint16_t val)
         return -1;
     }
 
-    std::vector<lime::CustomParameterIO> parameter{ { BOARD_PARAM_DAC, static_cast<double>(val), ""s } };
-    if (apiDevice->device->CustomParameterWrite(parameter) != OpStatus::Success)
-    {
-        return -1;
-    }
+    const std::vector<lime::CustomParameterIO> parameter{ { BOARD_PARAM_DAC, static_cast<double>(val), ""s } };
+    OpStatus status = apiDevice->device->CustomParameterWrite(parameter);
+    if (status != OpStatus::Success)
+        return OpStatusToReturnCode(status);
 
-    auto memoryDevice = lime::eMemoryDevice::EEPROM;
+    const auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
         const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));
@@ -2012,7 +1797,7 @@ API_EXPORT int CALL_CONV LMS_VCTCXORead(lms_device_t* device, uint16_t* val)
         return -1;
     }
 
-    auto memoryDevice = lime::eMemoryDevice::EEPROM;
+    const auto memoryDevice = lime::eMemoryDevice::EEPROM;
     try
     {
         const auto& dataStorage = apiDevice->device->GetDescriptor().memoryDevices.at(ToString(memoryDevice));

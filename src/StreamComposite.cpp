@@ -6,6 +6,9 @@
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/Logger.h"
 #include <assert.h>
+
+using namespace std;
+
 namespace lime {
 
 StreamComposite::StreamComposite(const std::vector<StreamAggregate>& aggregate)
@@ -93,14 +96,15 @@ void StreamComposite::StreamDestroy()
     }
 }
 
-template<class T> uint32_t StreamComposite::StreamRx(T* const* samples, uint32_t count, StreamMeta* meta)
+template<class T>
+uint32_t StreamComposite::StreamRx(T* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
     T* const* dest = samples;
     StreamMeta subDeviceMeta[8]{};
     int8_t i = 0;
     for (auto& a : mActiveAggregates)
     {
-        uint32_t ret = a.device->StreamRx(a.streamIndex, dest, count, &subDeviceMeta[i]);
+        uint32_t ret = a.device->StreamRx(a.streamIndex, dest, count, &subDeviceMeta[i], timeout);
         if (ret != count)
         {
             return ret;
@@ -126,12 +130,14 @@ template<class T> uint32_t StreamComposite::StreamRx(T* const* samples, uint32_t
     return count;
 }
 
-template<class T> uint32_t StreamComposite::StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta)
+template<class T>
+uint32_t StreamComposite::StreamTx(
+    const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
     const T* const* src = samples;
     for (auto& a : mActiveAggregates)
     {
-        uint32_t ret = a.device->StreamTx(a.streamIndex, src, count, meta);
+        uint32_t ret = a.device->StreamTx(a.streamIndex, src, count, meta, timeout);
         if (ret != count)
         {
             return ret;
@@ -151,12 +157,12 @@ uint64_t StreamComposite::GetHardwareTimestamp()
 
 // force instantiate functions with these types
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex16_t>(
-    lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
+    lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
 template LIME_API uint32_t StreamComposite::StreamRx<lime::complex32f_t>(
-    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
+    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex16_t>(
-    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
+    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
 template LIME_API uint32_t StreamComposite::StreamTx<lime::complex32f_t>(
-    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
 
 } // namespace lime
