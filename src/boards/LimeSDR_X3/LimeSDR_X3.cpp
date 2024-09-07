@@ -949,11 +949,11 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
     }
     else
     {
-        uint8_t path;
         switch (ePathLMS1_Rx(pathId))
         {
+        case ePathLMS1_Rx::LNAW:
+            lime::warning("LNAW has no connection to RF ports"s);
         case ePathLMS1_Rx::NONE:
-            path = static_cast<uint8_t>(LMS7002M::PathRFE::NONE);
             break;
         case ePathLMS1_Rx::LNAH:
             sw_val |= 1 << (11 - chan);
@@ -961,12 +961,9 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
         case ePathLMS1_Rx::LNAL:
             sw_val &= ~(1UL << (11 - chan));
             break;
-        case ePathLMS1_Rx::LNAW:
-            lime::warning("LNAW has no connection to RF ports"s);
-            break;
         }
         mFPGA->WriteRegister(sw_addr, sw_val);
-        lms->SetPathRFE(lime::LMS7002M::PathRFE(path));
+        lms->SetPathRFE(lime::LMS7002M::PathRFE(pathId));
     }
 }
 
