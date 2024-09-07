@@ -309,12 +309,18 @@ int Soapy_limesuiteng::readStream(
             {
             case DataFormat::I16:
             case DataFormat::I12:
-                samplesReceived =
-                    icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), samplesToSkip, &metadata);
+                samplesReceived = icstream->ownerDevice->StreamRx(0,
+                    reinterpret_cast<complex16_t* const*>(buffs),
+                    samplesToSkip,
+                    &metadata,
+                    std::chrono::microseconds(timeoutUs));
                 break;
             case DataFormat::F32:
-                samplesReceived =
-                    icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), samplesToSkip, &metadata);
+                samplesReceived = icstream->ownerDevice->StreamRx(0,
+                    reinterpret_cast<complex32f_t* const*>(buffs),
+                    samplesToSkip,
+                    &metadata,
+                    std::chrono::microseconds(timeoutUs));
                 break;
             }
             if (samplesReceived <= 0)
@@ -336,10 +342,12 @@ int Soapy_limesuiteng::readStream(
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        samplesReceived = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata);
+        samplesReceived = icstream->ownerDevice->StreamRx(
+            0, reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
         break;
     case DataFormat::F32:
-        samplesReceived = icstream->ownerDevice->StreamRx(0, reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata);
+        samplesReceived = icstream->ownerDevice->StreamRx(
+            0, reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
         break;
     }
 
@@ -383,7 +391,7 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     const size_t numElems,
     int& flags,
     const long long timeNs,
-    [[maybe_unused]] const long timeoutUs)
+    const long timeoutUs)
 {
     if ((flags & SOAPY_SDR_HAS_TIME) && (timeNs < 0))
     {
@@ -404,10 +412,12 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        samplesSent = ownerDevice->StreamTx(0, reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata);
+        samplesSent = ownerDevice->StreamTx(
+            0, reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
         break;
     case DataFormat::F32:
-        samplesSent = ownerDevice->StreamTx(0, reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata);
+        samplesSent = ownerDevice->StreamTx(
+            0, reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
         break;
     }
 
