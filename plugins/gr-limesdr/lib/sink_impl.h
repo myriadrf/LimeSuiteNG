@@ -26,8 +26,6 @@
 #include <array>
 #include <string>
 
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol(std::string("tx_time"));
-
 namespace gr {
 namespace limesdr {
 class sink_impl : public sink
