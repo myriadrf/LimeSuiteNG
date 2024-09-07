@@ -1,3 +1,4 @@
+#pragma once
 /**
 @file	Soapy_limesuiteng.h
 @brief	Header for Soapy SDR + IConnection bindings.
