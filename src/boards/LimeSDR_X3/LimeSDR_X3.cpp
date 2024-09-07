@@ -909,17 +909,6 @@ void LimeSDR_X3::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t t
     mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
 }
 
-enum // TODO: replace
-{
-    LMS_PATH_NONE = 0, ///<No active path (RX or TX)
-    LMS_PATH_LNAH = 1, ///<RX LNA_H port
-    LMS_PATH_LNAL = 2, ///<RX LNA_L port
-    LMS_PATH_LNAW = 3, ///<RX LNA_W port
-    LMS_PATH_TX1 = 1, ///<TX port 1
-    LMS_PATH_TX2 = 2, ///<TX port 2
-    LMS_PATH_AUTO = 255, ///<Automatically select port (if supported)
-};
-
 void LimeSDR_X3::LMS1_PA_Enable(uint8_t chan, bool enabled)
 {
     uint16_t pa_addr = 0x00D2;
@@ -942,29 +931,21 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 
     if (tx)
     {
-        uint8_t path;
         switch (ePathLMS1_Tx(pathId))
         {
-        case ePathLMS1_Tx::NONE:
-            path = LMS_PATH_NONE;
-            break;
+        case ePathLMS1_Tx::NONE: // RF switch don't need to change. Still set value to be deterministic.
         case ePathLMS1_Tx::BAND1:
-            path = LMS_PATH_TX1;
+            sw_val |= 1 << (13 - chan); // chan 0 = 13; chan 1 = 12
             break;
         case ePathLMS1_Tx::BAND2:
-            path = LMS_PATH_TX2;
+            sw_val &= ~(1 << (13 - chan));
             break;
         default:
-            throw std::logic_error("Invalid LMS1 Tx path"s);
+            lime::error("Invalid LMS1 Tx path"s);
+            return;
         }
-
-        if (path == LMS_PATH_TX1)
-            sw_val |= 1 << (13 - chan); // chan 0 = 13; chan 1 = 12
-        else if (path == LMS_PATH_TX2)
-            sw_val &= ~(1 << (13 - chan));
-
         mFPGA->WriteRegister(sw_addr, sw_val);
-        lms->SetBandTRF(path);
+        lms->SetBandTRF(pathId);
     }
     else
     {
@@ -975,24 +956,15 @@ void LimeSDR_X3::LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             path = static_cast<uint8_t>(LMS7002M::PathRFE::NONE);
             break;
         case ePathLMS1_Rx::LNAH:
-            path = static_cast<uint8_t>(LMS7002M::PathRFE::LNAH);
+            sw_val |= 1 << (11 - chan);
             break;
         case ePathLMS1_Rx::LNAL:
-            path = static_cast<uint8_t>(LMS7002M::PathRFE::LNAL);
-            break;
-        // TODO:
-        //case ePathLMS1_Rx::LNAW : path = LMS7002M::LNAW; break;
-        default:
-            throw std::logic_error("Invalid LMS1 Rx path"s);
-        }
-
-        if (path == LMS_PATH_LNAW)
-            lime::warning("LNAW has no connection to RF ports"s);
-        else if (path == LMS_PATH_LNAH)
-            sw_val |= 1 << (11 - chan);
-        else if (path == LMS_PATH_LNAL)
             sw_val &= ~(1UL << (11 - chan));
-
+            break;
+        case ePathLMS1_Rx::LNAW:
+            lime::warning("LNAW has no connection to RF ports"s);
+            break;
+        }
         mFPGA->WriteRegister(sw_addr, sw_val);
         lms->SetPathRFE(lime::LMS7002M::PathRFE(path));
     }
@@ -1117,18 +1089,18 @@ void LimeSDR_X3::LMS3SetPath(TRXDir dir, uint8_t chan, uint8_t path)
         lms->SetBandTRF(path);
     else
     {
-        if (path == LMS_PATH_NONE || path > 2)
+        if (path == static_cast<uint8_t>(ePathLMS3_Rx::NONE) || path > 2)
         {
-            lms->SetPathRFE(lime::LMS7002M::PathRFE(LMS_PATH_NONE));
+            lms->SetPathRFE(lime::LMS7002M::PathRFE(path));
             return;
         }
-        else if (path == LMS_PATH_LNAH)
+        else if (path == static_cast<uint8_t>(ePathLMS3_Rx::LNAH))
             sw_val &= ~(1 << (chan - 4));
         else if (path == 2) // Calibration path
             sw_val |= 1 << (chan - 4);
 
         mFPGA->WriteRegister(sw_addr, sw_val);
-        lms->SetPathRFE(lime::LMS7002M::PathRFE(LMS_PATH_LNAH));
+        lms->SetPathRFE(lime::LMS7002M::PathRFE(ePathLMS3_Rx::LNAH));
     }
 }
 

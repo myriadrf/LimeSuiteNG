@@ -492,17 +492,6 @@ OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uin
     return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
 }
 
-enum // TODO: replace
-{
-    LMS_PATH_NONE = 0, ///<No active path (RX or TX)
-    LMS_PATH_LNAH = 1, ///<RX LNA_H port
-    LMS_PATH_LNAL = 2, ///<RX LNA_L port
-    LMS_PATH_LNAW = 3, ///<RX LNA_W port
-    LMS_PATH_TX1 = 1, ///<TX port 1
-    LMS_PATH_TX2 = 2, ///<TX port 2
-    LMS_PATH_AUTO = 255, ///<Automatically select port (if supported)
-};
-
 void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
 {
     uint16_t sw_addr = 0x000A;
@@ -516,27 +505,19 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
 
     if (tx)
     {
-        uint8_t path;
         switch (ePathLMS1_Tx(pathId))
         {
-        case ePathLMS1_Tx::NONE:
-            path = LMS_PATH_NONE;
-            break;
+        case ePathLMS1_Tx::NONE: // RF switch don't need to change. Still set value to be deterministic.
         case ePathLMS1_Tx::BAND1:
-            path = LMS_PATH_TX1;
+            sw_val |= 1 << 4;
             break;
         case ePathLMS1_Tx::BAND2:
-            path = LMS_PATH_TX2;
+            sw_val &= ~(1 << 4);
             break;
         default:
-            throw std::logic_error("Invalid LMS1 Tx path"s);
+            lime::error("Invalid Tx RF path"s);
         }
-        sw_val &= ~(1 << 4);
-        if (path == LMS_PATH_TX1)
-            sw_val |= 1 << 4;
-        else if (path == LMS_PATH_TX2)
-            sw_val &= ~(1 << 4);
-        lms->SetBandTRF(path);
+        lms->SetBandTRF(pathId);
     }
     else
     {
@@ -558,6 +539,7 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
         else if (path == LMS7002M::PathRFE::LNAL)
             sw_val |= 1 << 2;
     }
+    // TODO: if MIMO use channel 0 as deciding factor, otherwise use active channel
     // RF switch controls are toggled for both channels, use channel 0 as the deciding source.
     if (chan == 0)
         mFPGA->WriteRegister(sw_addr, sw_val);
