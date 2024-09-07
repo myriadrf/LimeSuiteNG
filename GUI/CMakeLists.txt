@@ -96,6 +96,9 @@ target_sources(
             SDRConfiguration_view.cpp
             parsers/CoefficientFileParser.cpp)
 
+set_source_files_properties(fftviewer_wxgui/fftviewer_wxgui.cpp fftviewer_wxgui/fftviewer_frFFTviewer.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
+set_source_files_properties(oglGraph/dlgMarkers.cpp oglGraph//GLFont.cpp oglGraph/OpenGLGraph.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
+
 target_include_directories(
     limeGUI
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
