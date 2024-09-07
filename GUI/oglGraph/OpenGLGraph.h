@@ -7,7 +7,11 @@
 #ifndef OPENGL_GRAPH
 #define OPENGL_GRAPH
 
+#include "GL/glew.h" // must be included before wx/glcanvas.h
 #include <wx/glcanvas.h>
+#ifdef __unix__
+    #undef Success // somewhere in X11 headers is defined Success 0, it pollutes global scope
+#endif
 #include <wx/menu.h>
 
 class wxTimer;
