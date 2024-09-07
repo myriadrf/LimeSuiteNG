@@ -21,11 +21,12 @@
 
 #include "limesuiteng/LMS7002M.h"
 
-namespace lime {
-using namespace LMS7002MCSR_Data;
-
 using namespace std::literals::string_literals;
+using namespace lime::LMS7002MCSR_Data;
 
+namespace lime {
+
+namespace limesdrxtrx {
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
@@ -100,11 +101,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x01FF },
 };
 
-static inline void ValidateChannel(uint8_t channel)
-{
-    if (channel > 2)
-        throw std::logic_error("invalid channel index"s);
-}
+} // namespace limesdrxtrx
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
 OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
@@ -145,7 +142,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
+    desc.spiSlaveIds = { { "LMS7002M"s, limesdrxtrx::SPI_LMS7002M }, { "FPGA"s, limesdrxtrx::SPI_FPGA } };
 
     // const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
@@ -160,7 +157,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
             std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, std::move(eepromMap));
     }
 
-    desc.customParameters = { cp_vctcxo_dac, cp_temperature };
+    desc.customParameters = { limesdrxtrx::cp_vctcxo_dac, limesdrxtrx::cp_temperature };
 
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
@@ -211,9 +208,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(spiRFsoc);
 
         if (isFairwavesRev5)
-            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_fairwaves_xtrx_rev5);
+            chip->ModifyRegistersDefaults(limesdrxtrx::lms7002defaultsOverrides_fairwaves_xtrx_rev5);
         else // LimeSDR XTRX
-            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_limesdr_xtrx);
+            chip->ModifyRegistersDefaults(limesdrxtrx::lms7002defaultsOverrides_limesdr_xtrx);
         chip->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, refClk);
@@ -380,14 +377,12 @@ OpStatus LimeSDR_XTRX::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
 
 double LimeSDR_XTRX::GetClockFreq(uint8_t clk_id, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->GetClockFreq(static_cast<LMS7002M::ClockID>(clk_id));
 }
 
 OpStatus LimeSDR_XTRX::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
 }
@@ -396,9 +391,9 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M:
+    case limesdrxtrx::SPI_LMS7002M:
         return lms7002mPort->SPI(MOSI, MISO, count);
-    case SPI_FPGA:
+    case limesdrxtrx::SPI_FPGA:
         return fpgaPort->SPI(MOSI, MISO, count);
     default:
         throw std::logic_error("invalid SPI chip select"s);
@@ -700,7 +695,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
     unsigned count1;
     unsigned count2;
 
-    std::vector<CustomParameterIO> params{ { cp_vctcxo_dac.id, 0, "" } };
+    std::vector<CustomParameterIO> params{ { limesdrxtrx::cp_vctcxo_dac.id, 0, "" } };
 
     try
     {
@@ -708,7 +703,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         // Store current value, and restore it on return
         CustomParameterStash vctcxoStash(this, params);
 
-        params[0].value = cp_vctcxo_dac.minValue;
+        params[0].value = limesdrxtrx::cp_vctcxo_dac.minValue;
         status = CustomParameterWrite(params);
         if (status != OpStatus::Success)
             return status;
@@ -729,7 +724,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         }
 
         count1 = vals[0] + (vals[1] << 16);
-        params[0].value = cp_vctcxo_dac.maxValue;
+        params[0].value = limesdrxtrx::cp_vctcxo_dac.maxValue;
         if (CustomParameterWrite(params) != OpStatus::Success)
         {
             reporter.OnFail(test, "IO failure");

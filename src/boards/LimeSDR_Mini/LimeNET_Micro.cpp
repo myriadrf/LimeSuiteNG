@@ -24,12 +24,14 @@
 #include <stdexcept>
 #include <cmath>
 
-using namespace lime;
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
 // LimeNET Micro functionally is very similar to LimeSDR-Mini, could technically reuse it's code.
+
+namespace lime {
+namespace limenetmicro {
 
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
@@ -85,6 +87,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x00FB }
 };
 
+} // namespace limenetmicro
+
 /// @brief Constructs a new LimeNET_Micro object
 /// @param spiLMS The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
@@ -111,8 +115,8 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, descriptor);
 
-    descriptor.customParameters.push_back(CP_VCTCXO_DAC);
-    descriptor.customParameters.push_back(CP_TEMPERATURE);
+    descriptor.customParameters.push_back(limenetmicro::CP_VCTCXO_DAC);
+    descriptor.customParameters.push_back(limenetmicro::CP_TEMPERATURE);
 
     {
         RFSOCDescriptor soc{ GetDefaultLMS7002MDescriptor() };
@@ -125,7 +129,7 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
         descriptor.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(mlms7002mPort);
-        chip->ModifyRegistersDefaults(lms7002defaultsOverrides);
+        chip->ModifyRegistersDefaults(limenetmicro::lms7002defaultsOverrides);
 
         chip->SetOnCGENChangeCallback(UpdateFPGAInterface, this);
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
@@ -142,7 +146,7 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
             std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
     }
 
-    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
+    descriptor.spiSlaveIds = { { "LMS7002M"s, limenetmicro::SPI_LMS7002M }, { "FPGA"s, limenetmicro::SPI_FPGA } };
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA.get());
     fpgaNode->children.push_back(
@@ -301,9 +305,9 @@ OpStatus LimeNET_Micro::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t*
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M:
+    case limenetmicro::SPI_LMS7002M:
         return mlms7002mPort->SPI(0, MOSI, MISO, count);
-    case SPI_FPGA:
+    case limenetmicro::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
         throw std::logic_error("LimeNET_Micro SPI invalid SPI chip select"s);
@@ -557,3 +561,5 @@ OpStatus LimeNET_Micro::SetRFSwitch(TRXDir dir, uint8_t path)
     }
     return OpStatus::Success;
 }
+
+} // namespace lime

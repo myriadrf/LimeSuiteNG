@@ -24,10 +24,11 @@
 
 #include <cmath>
 
-namespace lime {
+using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;
 
-using namespace std::literals::string_literals;
+namespace lime {
+namespace limesdrx3 {
 
 // X3 board specific subdevice ids
 static const uint8_t SPI_LMS7002M_1 = 0;
@@ -140,11 +141,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride
     { 0x040C, 0x00FB },
 };
 
-static inline void ValidateChannel(uint8_t channel)
-{
-    if (channel > 2)
-        throw std::logic_error("invalid channel index"s);
-}
+} // namespace limesdrx3
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
 OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
@@ -181,17 +178,17 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     LMS64CProtocol::GetFirmwareInfo(*control, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    mLMS7002Mcomms[0] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_1);
+    mLMS7002Mcomms[0] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_1);
 
     mFPGA = std::make_unique<lime::FPGA_X3>(spiFPGA, mLMS7002Mcomms[0]);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
     desc.spiSlaveIds = {
-        { "LMS7002M_1"s, SPI_LMS7002M_1 },
-        { "LMS7002M_2"s, SPI_LMS7002M_2 },
-        { "LMS7002M_3"s, SPI_LMS7002M_3 },
-        { "FPGA"s, SPI_FPGA },
+        { "LMS7002M_1"s, limesdrx3::SPI_LMS7002M_1 },
+        { "LMS7002M_2"s, limesdrx3::SPI_LMS7002M_2 },
+        { "LMS7002M_3"s, limesdrx3::SPI_LMS7002M_3 },
+        { "FPGA"s, limesdrx3::SPI_FPGA },
     };
 
     const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 16, 2 } } };
@@ -199,10 +196,10 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
-    desc.customParameters.push_back(cp_vctcxo_dac);
-    desc.customParameters.push_back(cp_temperature);
+    desc.customParameters.push_back(limesdrx3::cp_vctcxo_dac);
+    desc.customParameters.push_back(limesdrx3::cp_temperature);
 
-    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, SPI_FPGA));
+    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, limesdrx3::SPI_FPGA));
     mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
@@ -213,7 +210,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         desc.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> lms1 = std::make_unique<LMS7002M>(mLMS7002Mcomms[0]);
-        lms1->ModifyRegistersDefaults(lms1defaultsOverride);
+        lms1->ModifyRegistersDefaults(limesdrx3::lms1defaultsOverride);
         lms1->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
         mLMSChips.push_back(std::move(lms1));
     }
@@ -226,9 +223,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         soc.pathNames[TRXDir::Tx] = { "None"s, "TDD"s, "FDD"s };
 
         desc.rfSOC.push_back(soc);
-        mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_2);
+        mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_2);
         std::unique_ptr<LMS7002M> lms2 = std::make_unique<LMS7002M>(mLMS7002Mcomms[1]);
-        lms2->ModifyRegistersDefaults(lms2and3defaultsOverride);
+        lms2->ModifyRegistersDefaults(limesdrx3::lms2and3defaultsOverride);
         mLMSChips.push_back(std::move(lms2));
     }
 
@@ -239,9 +236,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "Calibration(LMS2)"s };
         soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s };
         desc.rfSOC.push_back(soc);
-        mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, SPI_LMS7002M_3);
+        mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_3);
         std::unique_ptr<LMS7002M> lms3 = std::make_unique<LMS7002M>(mLMS7002Mcomms[2]);
-        lms3->ModifyRegistersDefaults(lms2and3defaultsOverride);
+        lms3->ModifyRegistersDefaults(limesdrx3::lms2and3defaultsOverride);
         mLMSChips.push_back(std::move(lms3));
     }
 
@@ -285,7 +282,8 @@ OpStatus LimeSDR_X3::InitLMS1(bool skipTune)
     LMS1_PA_Enable(1, false);
 
     double dacVal = 65535;
-    const std::vector<CustomParameterIO> params{ { cp_lms1_tx1dac.id, dacVal, ""s }, { cp_lms1_tx2dac.id, dacVal, ""s } };
+    const std::vector<CustomParameterIO> params{ { limesdrx3::cp_lms1_tx1dac.id, dacVal, ""s },
+        { limesdrx3::cp_lms1_tx2dac.id, dacVal, ""s } };
     CustomParameterWrite(params);
 
     OpStatus status;
@@ -821,14 +819,12 @@ OpStatus LimeSDR_X3::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 double LimeSDR_X3::GetClockFreq(uint8_t clk_id, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->GetClockFreq(static_cast<LMS7002M::ClockID>(clk_id));
 }
 
 OpStatus LimeSDR_X3::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
 }
@@ -837,13 +833,13 @@ OpStatus LimeSDR_X3::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MI
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M_1:
+    case limesdrx3::SPI_LMS7002M_1:
         return mLMS7002Mcomms[0]->SPI(MOSI, MISO, count);
-    case SPI_LMS7002M_2:
+    case limesdrx3::SPI_LMS7002M_2:
         return mLMS7002Mcomms[1]->SPI(MOSI, MISO, count);
-    case SPI_LMS7002M_3:
+    case limesdrx3::SPI_LMS7002M_3:
         return mLMS7002Mcomms[2]->SPI(MOSI, MISO, count);
-    case SPI_FPGA:
+    case limesdrx3::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
         throw std::logic_error("invalid SPI chip select"s);

@@ -29,6 +29,8 @@ using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
+namespace limesdrmini {
+
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
@@ -134,6 +136,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x00FB }
 };
 
+} // namespace limesdrmini
+
 /// @brief Constructs a new LimeSDR_Mini object
 /// @param spiLMS The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
@@ -160,10 +164,10 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, descriptor);
 
-    descriptor.customParameters.push_back(CP_VCTCXO_DAC);
+    descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC);
     if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI_V2))
     {
-        descriptor.customParameters.push_back(CP_TEMPERATURE);
+        descriptor.customParameters.push_back(limesdrmini::CP_TEMPERATURE);
     }
 
     {
@@ -178,9 +182,9 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(mlms7002mPort);
         if (gw.hardwareVersion >= 2)
-            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_1v2);
+            chip->ModifyRegistersDefaults(limesdrmini::lms7002defaultsOverrides_1v2);
         else
-            chip->ModifyRegistersDefaults(lms7002defaultsOverrides_1v0);
+            chip->ModifyRegistersDefaults(limesdrmini::lms7002defaultsOverrides_1v0);
         chip->SetOnCGENChangeCallback(UpdateFPGAInterface, this);
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         mLMSChips.push_back(std::move(chip));
@@ -196,7 +200,7 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
             std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
     }
 
-    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
+    descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrmini::SPI_LMS7002M }, { "FPGA"s, limesdrmini::SPI_FPGA } };
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA.get());
     fpgaNode->children.push_back(
@@ -370,9 +374,9 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M:
+    case limesdrmini::SPI_LMS7002M:
         return mlms7002mPort->SPI(0, MOSI, MISO, count);
-    case SPI_FPGA:
+    case limesdrmini::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
         throw std::logic_error("LimeSDR_Mini SPI invalid SPI chip select"s);

@@ -23,10 +23,12 @@
 #include <cmath>
 #include <memory>
 
-using namespace lime;
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
+
+namespace lime {
+namespace limesdrusb {
 
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
@@ -84,6 +86,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x00FB }
 };
 
+} // namespace limesdrusb
+
 /// @brief Constructs a new LimeSDR object
 /// @param spiLMS The communications port to the LMS7002M chip.
 /// @param spiFPGA The communications port to the device's FPGA.
@@ -110,7 +114,7 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
         descriptor.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(mlms7002mPort);
-        chip->ModifyRegistersDefaults(lms7002defaultsOverrides);
+        chip->ModifyRegistersDefaults(limesdrusb::lms7002defaultsOverrides);
         chip->SetConnection(mlms7002mPort);
         chip->SetOnCGENChangeCallback(UpdateFPGAInterface, this);
         mLMSChips.push_back(std::move(chip));
@@ -139,9 +143,9 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
         std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
-    descriptor.customParameters.push_back(CP_VCTCXO_DAC);
-    descriptor.customParameters.push_back(CP_TEMPERATURE);
-    descriptor.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
+    descriptor.customParameters.push_back(limesdrusb::CP_VCTCXO_DAC);
+    descriptor.customParameters.push_back(limesdrusb::CP_TEMPERATURE);
+    descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrusb::SPI_LMS7002M }, { "FPGA"s, limesdrusb::SPI_FPGA } };
 
     mDeviceDescriptor = descriptor;
 
@@ -371,7 +375,7 @@ SDRDescriptor LimeSDR::GetDeviceInfo(void)
 
     const uint32_t addrs[] = { 0x0000, 0x0001, 0x0002, 0x0003 };
     uint32_t data[4];
-    SPI(SPI_FPGA, addrs, data, 4);
+    SPI(limesdrusb::SPI_FPGA, addrs, data, 4);
     auto boardID = static_cast<eLMS_DEV>(data[0]); //(pkt.inBuffer[2] << 8) | pkt.inBuffer[3];
     auto gatewareVersion = data[1]; //(pkt.inBuffer[6] << 8) | pkt.inBuffer[7];
     auto gatewareRevision = data[2]; //(pkt.inBuffer[10] << 8) | pkt.inBuffer[11];
@@ -412,11 +416,11 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M:
+    case limesdrusb::SPI_LMS7002M:
         return mlms7002mPort->SPI(0, MOSI, MISO, count);
-    case SPI_FPGA:
+    case limesdrusb::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
-    case SPI_ADF4002:
+    case limesdrusb::SPI_ADF4002:
         return LMS64CProtocol::ADF4002_SPI(*mSerialPort, MOSI, count);
     default:
         throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
@@ -515,3 +519,5 @@ OpStatus LimeSDR::MemoryRead(std::shared_ptr<DataStorage> storage, Region region
         return OpStatus::Error;
     return mfpgaPort->MemoryRead(region.address, data, region.size);
 }
+
+} // namespace lime
