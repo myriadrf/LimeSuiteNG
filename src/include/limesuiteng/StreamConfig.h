@@ -4,6 +4,7 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
 
+#include <cstdint>
 #include <unordered_map>
 
 namespace lime {
@@ -12,24 +13,23 @@ namespace lime {
 struct StreamStats {
     /// @brief Structure for storing the first in first out queue statistics
     struct FIFOStats {
-        std::size_t totalCount; ///< The total amount of samples that can be in the FIFO queue.
-        std::size_t usedCount; ///< The amount of samples that is currently in the FIFO queue.
+        std::size_t totalCount{ 0 }; ///< The total amount of samples that can be in the FIFO queue.
+        std::size_t usedCount{ 0 }; ///< The amount of samples that is currently in the FIFO queue.
 
         /// @brief Gets the ratio of the amount of FIFO filled up.
         /// @return The amount of FIFO filled up (0 - completely empty, 1 - completely full).
         constexpr float ratio() const { return static_cast<float>(usedCount) / totalCount; }
     };
 
-    StreamStats() { std::memset(this, 0, sizeof(StreamStats)); }
-    uint64_t timestamp; ///< The current timestamp of the stream.
-    int64_t bytesTransferred; ///< The total amount of bytes transferred.
-    int64_t packets; ///< The total amount of packets transferred.
+    uint64_t timestamp{ 0 }; ///< The current timestamp of the stream.
+    int64_t bytesTransferred{ 0 }; ///< The total amount of bytes transferred.
+    int64_t packets{ 0 }; ///< The total amount of packets transferred.
     FIFOStats FIFO; ///< The status of the FIFO queue.
-    float dataRate_Bps; ///< The current data transmission rate.
-    uint32_t overrun; ///< The amount of packets overrun.
-    uint32_t underrun; ///< The amount of packets underrun.
-    uint32_t loss; ///< The amount of packets that are lost.
-    uint32_t late; ///< The amount of packets that arrived late for transmitting and were dropped.
+    float dataRate_Bps{ 0 }; ///< The current data transmission rate.
+    uint32_t overrun{ 0 }; ///< The amount of packets overrun.
+    uint32_t underrun{ 0 }; ///< The amount of packets underrun.
+    uint32_t loss{ 0 }; ///< The amount of packets that are lost.
+    uint32_t late{ 0 }; ///< The amount of packets that arrived late for transmitting and were dropped.
 };
 
 /// @brief Configuration settings for a stream.

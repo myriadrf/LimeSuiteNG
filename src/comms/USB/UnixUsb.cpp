@@ -302,7 +302,7 @@ int32_t UnixUsb::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length
 {
     assert(data);
     if (!IsConnected())
-        throw std::runtime_error("BulkTransfer: USB device is not connected"s);
+        return static_cast<int32_t>(OpStatus::NotConnected);
 
     int actualTransferred = 0;
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);

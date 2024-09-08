@@ -184,7 +184,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     #enable warnings
-    add_compile_options(-Wall -Wpedantic -ftime-trace)
+    add_compile_options(-Wall -Wpedantic)
 endif()
 
 if(MSVC)
