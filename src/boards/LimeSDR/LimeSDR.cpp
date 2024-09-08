@@ -1,22 +1,24 @@
 #include "LimeSDR.h"
 
-#include "comms/USB/IUSB.h"
-#include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/Si5351C/Si5351C.h"
-#include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
-#include "FPGA/FPGA_common.h"
+
+#include "comms/IComms.h"
+#include "comms/ISerialPort.h"
+#include "comms/USB/FX3/FX3.h"
+#include "comms/USB/IUSB.h"
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
+#include "chips/Si5351C/Si5351C.h"
+#include "FPGA/FPGA_common.h"
 #include "protocols/LMS64CProtocol.h"
-#include "DeviceTreeNode.h"
-#include "comms/IComms.h"
-#include "comms/USB/FX3/FX3.h"
-#include "ISerialPort.h"
-#include "utilities/toString.h"
+#include "protocols/LMSBoards.h"
+#include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
+#include "utilities/toString.h"
+
+#include "DeviceTreeNode.h"
 
 #include <array>
 #include <cassert>

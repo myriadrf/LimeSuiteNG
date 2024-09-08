@@ -6,7 +6,7 @@
 #include <wx/msgdlg.h>
 #include <wx/spinctrl.h>
 #include <map>
-#include <assert.h>
+#include <cassert>
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
 #include "events.h"

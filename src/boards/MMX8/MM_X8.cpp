@@ -4,12 +4,13 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "comms/PCIe/LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/LMS7002M/validation.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
+#include "chips/LMS7002M/validation.h"
+#include "comms/IComms.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "DeviceTreeNode.h"
 #include "utilities/toString.h"
 

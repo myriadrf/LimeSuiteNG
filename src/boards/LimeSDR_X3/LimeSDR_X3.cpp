@@ -9,7 +9,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_X3.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 #include "DSP/CFR/CrestFactorReduction.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"

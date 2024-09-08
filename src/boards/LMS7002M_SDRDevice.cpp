@@ -4,7 +4,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
-#include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "streaming/TRXLooper.h"
 #include "utilities/toString.h"

@@ -4,7 +4,7 @@
 #include "limesuiteng/config.h"
 
 #include <stdio.h>
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include <string>
 

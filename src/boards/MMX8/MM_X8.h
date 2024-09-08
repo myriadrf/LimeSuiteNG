@@ -3,7 +3,6 @@
 
 #include "chips/ADF4002/ADF4002.h"
 #include "chips/CDCM6208/CDCM6208.h"
-#include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "protocols/LMS64CProtocol.h"
@@ -15,6 +14,7 @@
 
 namespace lime {
 
+class IComms;
 class LimePCIe;
 class LimeSDR_XTRX;
 

@@ -2,6 +2,8 @@
 #include <filesystem>
 #include "args.hxx"
 
+#include "limesuiteng/SDRDescriptor.h"
+
 using namespace std;
 using namespace lime;
 

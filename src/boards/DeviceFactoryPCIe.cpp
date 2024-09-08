@@ -6,7 +6,7 @@
 #include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
 #include "comms/PCIe/LimePCIe.h"
-#include "LMSBoards.h"
+#include "protocols/LMSBoards.h"
 #include "comms/PCIe/LMS64C_FPGA_Over_PCIe.h"
 #include "comms/PCIe/LMS64C_LMS7002M_Over_PCIe.h"
 #include "MMX8/LMS64C_ADF_Over_PCIe_MMX8.h"

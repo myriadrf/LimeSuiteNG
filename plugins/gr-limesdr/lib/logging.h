@@ -21,8 +21,6 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <limesuiteng/Logger.h>
-
 #include <gnuradio/logger.h>
 #include <fmt/core.h>
 #include <fmt/format.h>

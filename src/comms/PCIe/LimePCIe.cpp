@@ -1,12 +1,12 @@
 #include "comms/PCIe/LimePCIe.h"
 
+#include "limesuiteng/Logger.h"
+
 #include <iostream>
 #include <cerrno>
-#include <string.h>
+#include <cstring>
 #include <thread>
-#include <filesystem>
-#include "limesuiteng/Logger.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 
 #ifdef __unix__
     #include <unistd.h>
@@ -105,10 +105,8 @@ OpStatus LimePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t
         return OpStatus::Busy;
     case ETIMEDOUT:
     case -ETIMEDOUT:
-        lime::error("control command timeout");
         return OpStatus::Timeout;
     default:
-        lime::error("Unable to send control packet");
         return OpStatus::IOFailure;
     }
 

@@ -25,6 +25,7 @@
 
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/limesuiteng.hpp"
 
 #include <array>
 #include <cmath>

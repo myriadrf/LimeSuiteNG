@@ -2,7 +2,7 @@
 #define LMS7_MCU_PROGRAMS_H
 
 #include "limesuiteng/config.h"
-#include <stdint.h>
+#include <cstdint>
 
 #define MCU_PROGRAM_SIZE 16384
 

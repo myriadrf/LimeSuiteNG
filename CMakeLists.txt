@@ -184,7 +184,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     #enable warnings
-    add_compile_options(-Wall -Wpedantic)
+    add_compile_options(-Wall -Wpedantic -ftime-trace)
 endif()
 
 if(MSVC)
@@ -250,6 +250,34 @@ option(CMAKE_INSTALL_RPATH_USE_LINK_PATH "build with automatic rpath" TRUE)
 if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
+
+set(CPP_STL_PCH
+    <array>
+    <atomic>
+    <algorithm>
+    <cassert>
+    <chrono>
+    <cmath>
+    <cstdint>
+    <cstring>
+    <filesystem>
+    <fstream>
+    <functional>
+    <iostream>
+    <list>
+    <limits>
+    <random>
+    <set>
+    <string>
+    <string_view>
+    <map>
+    <memory>
+    <mutex>
+    <thread>
+    <unordered_map>
+    <vector>
+    <queue>
+)
 
 #########################################################################
 # externals

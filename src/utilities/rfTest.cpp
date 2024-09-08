@@ -7,9 +7,9 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
-#include <assert.h>
+#include <cassert>
 #include <thread>
-#include <signal.h>
+#include <csignal>
 #include <atomic>
 #include <string_view>
 #undef USE_GNU_PLOT

@@ -10,10 +10,6 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include <string>
-#include <cstdarg>
-#include <cerrno>
-#include <stdexcept>
-#include <cstdint>
 #include <functional>
 
 namespace lime {

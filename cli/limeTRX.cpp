@@ -1,4 +1,7 @@
 #include "common.h"
+
+#include "limesuiteng/SDRDescriptor.h"
+
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/StreamComposite.h"
 #include <iostream>

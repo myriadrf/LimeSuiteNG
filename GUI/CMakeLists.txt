@@ -71,7 +71,34 @@ endif()
 
 include(${wxWidgets_USE_FILE})
 
+set(WXWIDGETS_PCH
+    <wx/panel.h>
+    <wx/button.h>
+    <wx/checkbox.h>
+    <wx/choice.h>
+    <wx/combobox.h>
+    <wx/dialog.h>
+    <wx/event.h>
+    <wx/frame.h>
+    <wx/combobox.h>
+    <wx/notebook.h>
+    <wx/msgdlg.h>
+    <wx/radiobox.h>
+    <wx/radiobut.h>
+    <wx/scrolbar.h>
+    <wx/sizer.h>
+    <wx/spinctrl.h>
+    <wx/statbox.h>
+    <wx/stattext.h>
+    <wx/string.h>
+    <wx/textctrl.h>
+    <wx/timer.h>
+)
+
 add_executable(limeGUI resources/resource.rc)
+target_precompile_headers(limeGUI
+  PRIVATE ${CPP_STL_PCH} ${WXWIDGETS_PCH}
+)
 
 set(BINARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin")
 set_target_properties(limeGUI PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})

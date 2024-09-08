@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "limesuiteng/SDRDevice.h"
+
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;

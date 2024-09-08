@@ -1,25 +1,25 @@
 #include "LimeSDR_XTRX.h"
 
-#include <fcntl.h>
-#include <cmath>
-
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M.h"
+
+#include <cmath>
+#include <fcntl.h>
+
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
-#include "LMS64CProtocol.h"
-#include "CommonFunctions.h"
-#include "utilities/toString.h"
-#include "OEMTesting.h"
-
-#include "DeviceTreeNode.h"
-#include "comms/IComms.h"
-#include "chips/LMS7002M/validation.h"
-#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
+#include "utilities/toString.h"
 
-#include "limesuiteng/LMS7002M.h"
+#include "CommonFunctions.h"
+#include "DeviceTreeNode.h"
+#include "OEMTesting.h"
 
 using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;

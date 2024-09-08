@@ -4,6 +4,8 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
 
+#include <unordered_map>
+
 namespace lime {
 
 /// @brief Structure for holding the statistics of a stream

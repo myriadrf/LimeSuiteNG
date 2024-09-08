@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include "commonWxHeaders.h"
 #include "lms7002_mainPanel.h"
 #include "lms7002_pnlAFE_view.h"

@@ -1,24 +1,24 @@
 #include "LimeNET_Micro.h"
 
-#include "comms/USB/IUSB.h"
-#include "LMSBoards.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/Si5351C/Si5351C.h"
-#include "LMS64CProtocol.h"
 #include "limesuiteng/Logger.h"
-#include "FPGA_Mini.h"
-#include "comms/USB/USBDMAEmulation.h"
+
+#include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "protocols/LMS64CProtocol.h"
-#include "DeviceTreeNode.h"
 #include "comms/IComms.h"
-#include "ISerialPort.h"
+#include "comms/ISerialPort.h"
 #include "comms/USB/FT601/FT601.h"
+#include "comms/USB/IUSB.h"
+#include "comms/USB/USBDMAEmulation.h"
 #include "comms/SPI_utilities.h"
+#include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
 
-#include <assert.h>
+#include "FPGA_Mini.h"
+#include "DeviceTreeNode.h"
+
+#include <cassert>
 #include <memory>
 #include <set>
 #include <stdexcept>
