@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
     args::ValueFlag<double>         rxlpfFlag(parser, "Hz", "Receiver low pass filter bandwidth in Hz", {"rxlpf"});
-    args::ValueFlag<uint8_t>        rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
+    args::ValueFlag<uint32_t>       rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
 
     args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
     args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
     args::ValueFlag<double>         txlpfFlag(parser, "Hz", "Transmitter low pass filter bandwidth in Hz", {"txlpf"});
-    args::ValueFlag<uint8_t>        txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
+    args::ValueFlag<uint32_t>       txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
     args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
