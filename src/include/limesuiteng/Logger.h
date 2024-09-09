@@ -9,16 +9,13 @@
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
-#include <string>
-#include <cstdarg>
-#include <cerrno>
-#include <stdexcept>
 #include <cstdint>
+#include <string>
 #include <functional>
 
 namespace lime {
 
-enum class LogLevel : uint8_t {
+enum class LogLevel : std::uint8_t {
     Critical, //!< A critical error. The application might not be able to continue running successfully.
     Error, //!< An error. An operation did not complete successfully, but the application as a whole is not affected.
     Warning, //!< A warning. An operation completed with an unexpected result.

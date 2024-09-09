@@ -6,7 +6,6 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "ISerialPort.h"
 #include "LMS64CProtocol.h"
 #include <chrono>
 #include <cassert>
@@ -17,6 +16,8 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
+
+#include "comms/ISerialPort.h"
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;

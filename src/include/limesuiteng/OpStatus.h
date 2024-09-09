@@ -1,6 +1,10 @@
 #ifndef LIME_OPSTATUS_H
 #define LIME_OPSTATUS_H
 
+#ifdef Success
+    #error unix X11 header has preprocessor define of Success. It might be included through graphics headers.
+#endif
+
 namespace lime {
 
 /// @brief The possible status codes from operations.

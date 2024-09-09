@@ -4,7 +4,7 @@
 #include <set>
 
 #include "comms/USB/FX3/FX3.h"
-#include "LMS64CProtocol.h"
+#include "protocols/LMS64CProtocol.h"
 
 using namespace lime;
 

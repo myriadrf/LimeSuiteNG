@@ -3,7 +3,7 @@
 
 #include <chrono>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include <iostream>
@@ -15,9 +15,8 @@
 
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDevice.h"
 
 lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument);
 

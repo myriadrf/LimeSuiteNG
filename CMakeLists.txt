@@ -251,6 +251,34 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
 
+set(CPP_STL_PCH
+    <array>
+    <atomic>
+    <algorithm>
+    <cassert>
+    <chrono>
+    <cmath>
+    <cstdint>
+    <cstring>
+    <filesystem>
+    <fstream>
+    <functional>
+    <iostream>
+    <list>
+    <limits>
+    <random>
+    <set>
+    <string>
+    <string_view>
+    <map>
+    <memory>
+    <mutex>
+    <thread>
+    <unordered_map>
+    <vector>
+    <queue>
+)
+
 #########################################################################
 # externals
 #########################################################################

@@ -30,7 +30,7 @@ const int OpenGLGraph::GLCanvasAttributes[8] = {
 
 bool OpenGLGraph::hasNotRecentEnoughOpenGLVersionWarningBeenThrownYet = false;
 
-static bool IsGlew1_5()
+static bool CanUseVBO()
 {
 #ifdef __GNUC__
     #pragma GCC diagnostic push
@@ -700,7 +700,7 @@ void OpenGLGraph::Draw()
 
     switchToDataView();
 
-    if (settings.useVBO && IsGlew1_5())
+    if (settings.useVBO && CanUseVBO())
     {
         for (std::size_t i = 0; i < series.size(); i++)
         {

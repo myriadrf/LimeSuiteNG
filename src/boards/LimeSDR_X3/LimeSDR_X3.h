@@ -67,10 +67,11 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     void LMS2_SetSampleRate(double f_Hz, uint8_t oversample);
 
-    enum class ePathLMS1_Rx : uint8_t { NONE, LNAH, LNAL };
+    enum class ePathLMS1_Rx : uint8_t { NONE, LNAH, LNAL, LNAW };
     enum class ePathLMS1_Tx : uint8_t { NONE, BAND1, BAND2 };
     enum class ePathLMS2_Rx : uint8_t { NONE, TDD, FDD, CALIBRATION };
     enum class ePathLMS2_Tx : uint8_t { NONE, TDD, FDD };
+    enum class ePathLMS3_Rx : uint8_t { NONE, LNAH, LNAL, LNAW };
 
     void ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig& cfg, int ch, uint8_t socIndex);
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);

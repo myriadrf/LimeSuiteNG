@@ -20,12 +20,11 @@
 
 #include "logging.h"
 
-#include <limesuiteng/Logger.h>
-
 #include <gnuradio/logger.h>
-
 #include <cassert>
 #include <mutex>
+
+#include "limesuiteng/Logger.h"
 
 static gr::logger_ptr logger;
 static gr::logger_ptr debug_logger;

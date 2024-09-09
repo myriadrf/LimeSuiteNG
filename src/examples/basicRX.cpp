@@ -9,7 +9,7 @@
 #include <chrono>
 #include <string_view>
 #include <cmath>
-#include <signal.h>
+#include <csignal>
 #include "kiss_fft.h"
 #include "args.hxx"
 #include "common.h"

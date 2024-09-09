@@ -136,8 +136,7 @@ OpStatus LMS7002M::CalibrateTxGain()
         uint32_t previousRSSI = GetRSSI();
         lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, previousRSSI, chip_rssi_to_dbfs(previousRSSI));
 
-        // while (GetRSSI() < 0x7FFF)
-        while(GetRSSI() < 0xFD00)
+        while (GetRSSI() < 0xFD00)
         {
             ++cg_iamp;
             if (cg_iamp > 63)

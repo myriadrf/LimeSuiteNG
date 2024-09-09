@@ -4,26 +4,30 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "comms/PCIe/LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/LMS7002M/validation.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
+#include "chips/LMS7002M/validation.h"
+#include "comms/IComms.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "DeviceTreeNode.h"
 #include "utilities/toString.h"
 
 #include <cmath>
 
-namespace lime {
-
 using namespace std::literals::string_literals;
+
+namespace lime {
+namespace limemmx8 {
 
 static const char DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
 static const char PATH_SEPARATOR_SYMBOL = '/';
 
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
+
+} // namespace limemmx8
 
 /// @brief Constructs the LimeSDR_MMX8 object.
 ///
@@ -70,31 +74,31 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
-    desc.customParameters.push_back(cp_vctcxo_dac);
+    desc.customParameters.push_back(limemmx8::cp_vctcxo_dac);
     for (size_t i = 0; i < 8; ++i)
     {
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, limemmx8::X8ReferenceClock);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
         {
             RFSOCDescriptor temp = soc;
-            temp.name = soc.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            temp.name = soc.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.rfSOC.push_back(temp);
         }
 
         for (const auto& slaveId : subdeviceDescriptor.spiSlaveIds)
         {
-            const std::string slaveName = slaveId.first + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            const std::string slaveName = slaveId.first + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.spiSlaveIds[slaveName] = (i + 1) << 8 | slaveId.second;
             chipSelectToDevice[desc.spiSlaveIds[slaveName]] = xtrx.get();
         }
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            const std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                          PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            const std::string indexName = subdeviceDescriptor.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL +
+                                          std::to_string(i + 1) + limemmx8::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
@@ -103,7 +107,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
         {
             CustomParameter parameter = customParameter;
             parameter.id |= (i + 1) << 8;
-            parameter.name = customParameter.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            parameter.name = customParameter.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.customParameters.push_back(parameter);
             customParameterToDevice[parameter.id] = xtrx.get();
         }

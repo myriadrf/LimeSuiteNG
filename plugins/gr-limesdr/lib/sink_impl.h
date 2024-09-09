@@ -21,12 +21,11 @@
 #ifndef INCLUDED_LIMESDR_SINK_IMPL_H
 #define INCLUDED_LIMESDR_SINK_IMPL_H
 
-#include "device_handler.h"
-#include <limesdr/sink.h>
+#include "limesdr/sink.h"
+#include "limesuiteng/StreamConfig.h"
+
 #include <array>
 #include <string>
-
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol(std::string("tx_time"));
 
 namespace gr {
 namespace limesdr {

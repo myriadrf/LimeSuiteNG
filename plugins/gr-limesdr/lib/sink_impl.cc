@@ -22,16 +22,22 @@
 #include "config.h"
 #endif
 
+#include <gnuradio/io_signature.h>
+#include <stdexcept>
+
+#include "device_handler.h"
 #include "logging.h"
 #include "sink_impl.h"
-#include <gnuradio/io_signature.h>
 
-#include <stdexcept>
+#include "limesuiteng/SDRDevice.h"
 
 using namespace std::literals::string_literals;
 
 namespace gr {
 namespace limesdr {
+
+static const pmt::pmt_t TX_TIME_TAG = pmt::string_to_symbol(std::string("tx_time"));
+
 sink::sptr sink::make(std::string serial,
                       int channel_mode,
                       const std::string& filename,
@@ -220,7 +226,7 @@ void sink_impl::work_tags(int noutput_items)
     // Go through the tags
     for (tag_t cTag : tags) {
         // Found tx_time tag
-        if (pmt::eq(cTag.key, TIME_TAG)) {
+        if (pmt::eq(cTag.key, TX_TIME_TAG)) {
             // Convert time to sample timestamp
             uint64_t secs = pmt::to_uint64(pmt::tuple_ref(cTag.value, 0));
             double fracs = pmt::to_double(pmt::tuple_ref(cTag.value, 1));

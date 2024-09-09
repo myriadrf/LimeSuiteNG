@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "limesuiteng/SDRDescriptor.h"
+
 #include <cassert>
 #include <cstring>
 #include <filesystem>

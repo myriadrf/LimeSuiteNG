@@ -1,11 +1,13 @@
 #include "limesuiteng/StreamComposite.h"
+
 #include <algorithm>
+#include <cassert>
+
 #include "limesuiteng/types.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/Logger.h"
-#include <assert.h>
 
 using namespace std;
 
