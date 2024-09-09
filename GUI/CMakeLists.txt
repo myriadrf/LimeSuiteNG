@@ -92,13 +92,10 @@ set(WXWIDGETS_PCH
     <wx/stattext.h>
     <wx/string.h>
     <wx/textctrl.h>
-    <wx/timer.h>
-)
+    <wx/timer.h>)
 
 add_executable(limeGUI resources/resource.rc)
-target_precompile_headers(limeGUI
-  PRIVATE ${CPP_STL_PCH} ${WXWIDGETS_PCH}
-)
+target_precompile_headers(limeGUI PRIVATE ${CPP_STL_PCH} ${WXWIDGETS_PCH})
 
 set(BINARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin")
 set_target_properties(limeGUI PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
@@ -123,8 +120,10 @@ target_sources(
             SDRConfiguration_view.cpp
             parsers/CoefficientFileParser.cpp)
 
-set_source_files_properties(fftviewer_wxgui/fftviewer_wxgui.cpp fftviewer_wxgui/fftviewer_frFFTviewer.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
-set_source_files_properties(oglGraph/dlgMarkers.cpp oglGraph//GLFont.cpp oglGraph/OpenGLGraph.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
+set_source_files_properties(
+    fftviewer_wxgui/fftviewer_wxgui.cpp fftviewer_wxgui/fftviewer_frFFTviewer.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
+set_source_files_properties(
+    oglGraph/dlgMarkers.cpp oglGraph//GLFont.cpp oglGraph/OpenGLGraph.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
 
 target_include_directories(
     limeGUI

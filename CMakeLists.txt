@@ -276,8 +276,7 @@ set(CPP_STL_PCH
     <thread>
     <unordered_map>
     <vector>
-    <queue>
-)
+    <queue>)
 
 #########################################################################
 # externals
