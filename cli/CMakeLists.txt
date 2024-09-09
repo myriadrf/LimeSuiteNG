@@ -11,7 +11,7 @@ add_library(cli-shared STATIC common.cpp)
 target_include_directories(cli-shared PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(cli-shared PUBLIC limesuiteng taywee::args)
 
-target_precompile_headers(cli-shared PUBLIC ${CPP_STL_PCH} \"args.hxx\")
+target_precompile_headers(cli-shared PRIVATE ${CPP_STL_PCH} \"args.hxx\")
 
 add_executable(limeDevice limeDevice.cpp)
 set_target_properties(limeDevice PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
