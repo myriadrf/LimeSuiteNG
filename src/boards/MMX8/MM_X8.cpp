@@ -626,6 +626,7 @@ OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     // Preemptively start subdevices stream during X8 stream setup. Threads and DMA will be ready
     // but the actual data stream will wait for stream enable on X8 FPGA.
     // That's to minimize time difference between X8 multiple streaming groups start.
+    maskStreamIsSetup |= (1 << (2 * moduleIndex));
     mSubDevices.at(moduleIndex)->StreamStart(0);
     return OpStatus::Success;
 }
@@ -648,8 +649,13 @@ void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t>& moduleIndexes)
         mask |= (1 << (2 * moduleIndex));
         // mSubDevices[moduleIndex]->StreamStart(0); // already started preemptively on StreamSetup
     }
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | mask);
+    maskStreamIsActive |= mask;
+
+    // If multiple streaming groups have been setup, start all of them upon first group's start, so they would be synchronized in time
+    if (maskStreamIsActive != maskStreamIsSetup)
+        maskStreamIsActive = maskStreamIsSetup;
+
+    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | maskStreamIsActive);
 }
 
 void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
@@ -667,6 +673,7 @@ void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t>& moduleIndexes)
     {
         mask |= (1 << (2 * moduleIndex));
     }
+    maskStreamIsActive &= ~mask;
     // for (uint8_t moduleIndex : moduleIndexes) // subDevice streams stop postponed to StreamDestroy
     //     mSubDevices[moduleIndex]->StreamStop(0);
     tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
@@ -676,6 +683,7 @@ void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
 {
     mSubDevices.at(moduleIndex)->StreamStop(0);
     mSubDevices.at(moduleIndex)->StreamDestroy(0);
+    maskStreamIsSetup &= ~(1 << (2 * moduleIndex));
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
