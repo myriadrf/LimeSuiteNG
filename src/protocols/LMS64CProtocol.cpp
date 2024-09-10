@@ -159,10 +159,26 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* 
     if (status != OpStatus::Success)
         return status;
 
-    if (reinterpret_cast<LMS64CPacket*>(response)->status != CommandStatus::Completed)
-        return OpStatus::IOFailure;
-
-    return OpStatus::Success;
+    switch (reinterpret_cast<LMS64CPacket*>(response)->status)
+    {
+    case CommandStatus::Completed:
+        return OpStatus::Success;
+    case CommandStatus::Busy:
+        return OpStatus::Busy;
+    case CommandStatus::Unknown:
+        return OpStatus::NotImplemented;
+    case CommandStatus::TooManyBlocks:
+        return OpStatus::OutOfRange;
+    case CommandStatus::Error:
+        return OpStatus::Error;
+    case CommandStatus::WrongOrder:
+        return OpStatus::InvalidValue;
+    case CommandStatus::ResourceDenied:
+        return OpStatus::PermissionDenied;
+    case CommandStatus::Undefined:
+    default:
+        return OpStatus::Error;
+    }
 }
 
 static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t length, int timeout_ms = 100)

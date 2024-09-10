@@ -363,7 +363,8 @@ OpStatus LimeSDR_XTRX::Init()
     // CustomParameterWrite(&paramId,&dacVal,1,"");
 
     OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
-    if (status != OpStatus::Success)
+    // XTRX on X8 board don't have Reset command, returns Unknown
+    if (status != OpStatus::Success && status != OpStatus::NotImplemented)
         return status;
 
     const bool skipTune = true;
