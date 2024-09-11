@@ -24,6 +24,8 @@
 #include "bsp/config.h"
 #include "boards.h"
 
+#define LIMEMICROSYSTEMS_VENDOR_ID 0x2058
+
 #define XILINX_FPGA_VENDOR_ID 0x10EE
 #define XILINX_FPGA_DEVICE_ID 0x7022
 #define ALTERA_FPGA_VENDOR_ID 0x1172
@@ -354,6 +356,11 @@ static int limepcie_dma_start_continuous(struct limepcie_dma *dma, uint32_t tran
 {
     struct limepcie_device *myDevice = dma->owner;
     struct device *sysDev = &myDevice->pciContext->dev;
+    if (dma->enabled)
+    {
+        dev_err(sysDev, "DMA%i is already enabled\n", dma->id);
+        return -EBUSY;
+    }
     if (transferSize == 0 || transferSize > dma->bufferSize)
     {
         dev_err(sysDev, "DMA start: invalid write size %i\n", transferSize);
@@ -706,6 +713,14 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
             break;
         }
         struct limepcie_dma *dma = m.control.directionFromDevice ? fromDevice : toDevice;
+
+        // don't allow repeated attempts to enable continuous transfers
+        // as the request might have different transfer sizes
+        if (m.control.enabled && dma->enabled)
+        {
+            ret = -EBUSY;
+            break;
+        }
 
         if (m.control.enabled != dma->enabled)
         {

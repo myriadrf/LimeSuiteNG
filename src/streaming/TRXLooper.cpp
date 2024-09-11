@@ -321,12 +321,11 @@ OpStatus TRXLooper::RxSetup()
     const int requestSamplesInPkt = 4080 / sampleSize / chCount;
 
     const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
-    const int samplesInPkt = payloadSize / (sampleSize * chCount);
 
     uint32_t packetSize = payloadSize + headerSize;
     packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
+    const int samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
 
-    mRx.packetsToBatch = 4; // TODO: adjust according to sampling rate to guarantee low latency
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
@@ -360,7 +359,8 @@ OpStatus TRXLooper::RxSetup()
     char msg[256];
     std::snprintf(msg,
         sizeof(msg),
-        "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
+        "%s Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
+        mRxArgs.dma->GetName().c_str(),
         chipId,
         usePoll ? 1 : 0,
         samplesInPkt,
@@ -391,6 +391,15 @@ OpStatus TRXLooper::RxSetup()
         sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
 
+    // Rx start
+    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    constexpr uint8_t irqPeriod{ 4 };
+    // Rx DMA has to be enabled before the stream enable, otherwise some data
+    // might be lost in the time frame between stream enable and then dma enable.
+    status = mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
+    if (status != OpStatus::Success)
+        return status;
+
     // Don't just use REALTIME scheduling, or at least be cautious with it.
     // if the thread blocks for too long, Linux can trigger RT throttling
     // which can cause unexpected data packet losses and timing issues.
@@ -410,13 +419,6 @@ OpStatus TRXLooper::RxSetup()
     pthread_setname_np(mRx.thread.native_handle(), threadName);
 #endif
 
-    // Rx start
-    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-    constexpr uint8_t irqPeriod{ 4 };
-    // Rx DMA has to be enabled before the stream enable, otherwise some data
-    // might be lost in the time frame between stream enable and then dma enable.
-    mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
-
     // wait for Rx thread to be ready
     lime::debug("RxSetup wait for Rx worker thread."s);
     {
@@ -425,7 +427,7 @@ OpStatus TRXLooper::RxSetup()
             mRx.cv.wait(lck);
     }
 
-    return OpStatus::Success;
+    return status;
 }
 
 struct DMATransactionCounter {
@@ -677,6 +679,7 @@ void TRXLooper::RxTeardown()
         {
             lime::error("Failed to join TRXLooper Rx thread"s);
         }
+        mRxArgs.dma->Enable(false);
     }
 
     if (mRx.stagingPacket)
