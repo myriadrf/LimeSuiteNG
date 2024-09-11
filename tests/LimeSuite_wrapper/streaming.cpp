@@ -72,7 +72,6 @@ void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_
     const double expectedDuration_us{ 10000 };
     const float sampleRate = GetParam().sampleRate;
     const int samplesToGet = sampleRate * expectedDuration_us / 1e6;
-
     const int samplesBatchSize = 1020;
     int16_t buffer[samplesBatchSize * 2]; //buffer to hold complex values (2*samples))
 
@@ -85,7 +84,7 @@ void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_
         int samplesGot = 0;
         for (auto& handle : channels)
         {
-            samplesGot = LMS_RecvStream(&handle, buffer, toRead, NULL, 1000);
+            samplesGot = LMS_RecvStream(&handle, buffer, toRead, NULL, 100);
             ASSERT_EQ(samplesGot, toRead);
             if (samplesGot <= 0)
                 break;
@@ -100,7 +99,7 @@ void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_
     // margin shoudn't be less than one packet's size
     // some devices don't have variable size packets so the minimum data output time
     // is 1020 or 1360 samples depending on link data format.
-    const int margin_us = std::max(1000.0, 1e6 * samplesBatchSize / sampleRate);
+    const int margin_us = std::max(1e6, 1e6 * samplesBatchSize / sampleRate);
 
     // High sample rates can fail duration test in Debug builds due to poor performance
     EXPECT_NEAR(streamDuration.count(), expectedDuration_us, margin_us);

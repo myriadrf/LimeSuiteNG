@@ -714,11 +714,10 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
     // stream->throughputVsLatency can be ignored, it's automatic now
 
     OpStatus status = apiDevice->device->StreamSetup(config, apiDevice->moduleIndex);
+    if (status != OpStatus::Success)
+        return OpStatusToReturnCode(status);
 
-    if (status == OpStatus::Success)
-    {
-        apiDevice->lastSavedStreamConfig = config;
-    }
+    apiDevice->lastSavedStreamConfig = config;
 
     StreamStagingBuffers& stage = apiDevice->streamBuffers.at(stream->isTx ? 1 : 0);
     SubChannelHandle* handle = new SubChannelHandle(apiDevice, &stage, channelIndex);
@@ -829,7 +828,6 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
         size_t samplesProduced = handle->parent->device->StreamRx(
             handle->parent->moduleIndex, reinterpret_cast<T**>(dest), sample_count, &metadata, timeout);
-
         samplesToReturn = samplesProduced;
         stage->maskDataPresentInBuffer = stage->maskChannelsActive;
         stage->bufferBytesFilled = samplesProduced * sampleSize;
