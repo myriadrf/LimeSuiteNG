@@ -122,7 +122,7 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
 
     int samplesReceived = 0;
     int samplesRemaining = samplesBatchSize;
-    int64_t lastTimestamp = 0;
+    uint64_t lastTimestamp = 0;
     bool firstRead = true;
     while (samplesRemaining > 0)
     {
@@ -151,8 +151,6 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
 
     device->StreamStart(moduleIndex);
 
-    auto t1 = chrono::high_resolution_clock::now();
-
     samplesReceived = 0;
     samplesRemaining = samplesBatchSize;
     lastTimestamp = 0;
@@ -179,7 +177,6 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
         EXPECT_TRUE(rxMeta.timestamp >= lastTimestamp);
         lastTimestamp = rxMeta.timestamp;
     }
-    auto t2 = chrono::high_resolution_clock::now();
     ASSERT_EQ(samplesRemaining, 0);
     ASSERT_EQ(samplesReceived, samplesBatchSize);
 
