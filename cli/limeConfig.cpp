@@ -11,39 +11,9 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
-{
-    std::vector<int> numbers;
-    for (const auto& number : args::get(flag))
-        numbers.push_back(number);
-    return numbers;
-}
-
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
-{
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    std::cout << msg << std::endl;
-}
 
 int main(int argc, char** argv)
 {
@@ -149,8 +119,8 @@ int main(int argc, char** argv)
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
 
     try
     {

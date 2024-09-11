@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     lime::registerLogHandler(LogCallback);
 
     const std::string devName = args::get(deviceFlag);
-    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
+    SDRDevice* device = lime::cli::ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     const std::string txAntennaName = args::get(txpathFlag);
     if (!txAntennaName.empty())
     {
-        txPath = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
+        txPath = lime::cli::AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
         if (txPath < 0)
         {
             DeviceRegistry::freeDevice(device);

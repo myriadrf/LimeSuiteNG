@@ -18,8 +18,17 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDevice.h"
 
+namespace lime::cli {
+
+extern LogLevel logVerbosity;
+LogLevel strToLogLevel(const std::string_view str);
+void LogCallback(LogLevel lvl, const std::string& msg);
+std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag);
+
 lime::SDRDevice* ConnectToFilteredOrDefaultDevice(const std::string_view argument);
 
 int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::string& name);
+
+} // namespace lime::cli
 
 #endif

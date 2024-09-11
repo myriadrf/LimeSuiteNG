@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     float peakAmplitude = -1000, peakFrequency = 0;
 
     const std::string devName = args::get(deviceFlag);
-    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
+    SDRDevice* device = lime::cli::ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     const std::string rxAntennaName = args::get(rxpathFlag);
     if (!rxAntennaName.empty())
     {
-        rxPath = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
+        rxPath = lime::cli::AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
         if (rxPath < 0)
         {
             DeviceRegistry::freeDevice(device);

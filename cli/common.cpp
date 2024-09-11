@@ -1,10 +1,45 @@
 #include "common.h"
 
+#include <iostream>
+
 #include "limesuiteng/SDRDevice.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
+
+namespace lime::cli {
+
+LogLevel logVerbosity = LogLevel::Error;
+LogLevel strToLogLevel(const std::string_view str)
+{
+    if ("debug"sv == str)
+        return LogLevel::Debug;
+    else if ("verbose"sv == str)
+        return LogLevel::Verbose;
+    else if ("error"sv == str)
+        return LogLevel::Error;
+    else if ("warning"sv == str)
+        return LogLevel::Warning;
+    else if ("info"sv == str)
+        return LogLevel::Info;
+    return LogLevel::Error;
+}
+
+void LogCallback(LogLevel lvl, const std::string& msg)
+{
+    if (lvl > logVerbosity)
+        return;
+    std::cerr << msg << std::endl;
+}
+
+std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
+{
+    std::vector<int> numbers;
+    for (const auto& number : args::get(flag))
+        numbers.push_back(number);
+    return numbers;
+}
 
 static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view text)
 {
@@ -112,3 +147,5 @@ int AntennaNameToIndex(const std::vector<std::string>& antennaNames, const std::
         std::cerr << "\t\""sv << iter << "\""sv << std::endl;
     return -1;
 }
+
+} // namespace lime::cli

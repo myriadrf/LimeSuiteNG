@@ -21,6 +21,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::cli;
 using namespace std;
 
 std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concurrently
@@ -30,29 +31,6 @@ void intHandler(int dummy)
 {
     //std::cerr << "Stopping\n"sv;
     stopProgram = true;
-}
-
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
-{
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    cerr << msg << endl;
 }
 
 #ifdef USE_GNU_PLOT
@@ -231,14 +209,6 @@ class ConstellationPlotter
 };
 #endif
 
-static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
-{
-    std::vector<int> numbers;
-    for (const auto& number : args::get(flag))
-        numbers.push_back(number);
-    return numbers;
-}
-
 int main(int argc, char** argv)
 {
     // clang-format off
@@ -334,8 +304,8 @@ int main(int argc, char** argv)
     if (!device)
         return EXIT_FAILURE;
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
 
     // if chip index is not specified and device has only one, use it by default
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)

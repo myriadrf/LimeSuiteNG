@@ -6,6 +6,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 
 SDRDevice* device = nullptr;
 bool terminateProgress(false);

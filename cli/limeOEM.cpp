@@ -16,33 +16,9 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
-{
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("critical"sv == str)
-        return LogLevel::Critical;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    cerr << msg << endl;
-}
 
 class PrintOEMTestReporter : public OEMTestReporter
 {
@@ -155,8 +131,8 @@ int main(int argc, char** argv)
     if (!device)
         return EXIT_FAILURE;
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
     OpStatus result = OpStatus::Success;
 
     if (serialNumberFlag)
