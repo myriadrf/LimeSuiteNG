@@ -12,6 +12,8 @@
 #include <complex>
 #include <iostream>
 
+#include "tests/externalData.h"
+
 using namespace lime;
 using namespace lime::testing;
 using namespace std::literals::string_literals;
@@ -28,26 +30,13 @@ LMS7002M_SDRDevice_Fixture::LMS7002M_SDRDevice_Fixture(const std::string& device
 
 void LMS7002M_SDRDevice_Fixture::SetUp()
 {
-    auto devices = DeviceRegistry::enumerate(DeviceHandle{ deviceHandleHint });
-
-    if (devices.empty())
-    {
-        GTEST_SKIP() << deviceHandleHint + " not connected, skipping"s;
-    }
-
-    device = DeviceRegistry::makeDevice(devices.at(0));
-
+    device = GetTestDevice();
     ASSERT_NE(device, nullptr);
-    // std::cout << "Run on device: " << devices.at(0).Serialize() << "\n";
-
     ASSERT_EQ(device->Init(), OpStatus::Success);
 }
 
 void LMS7002M_SDRDevice_Fixture::TearDown()
 {
-    if (device)
-        DestroySteam();
-    DeviceRegistry::freeDevice(device);
 }
 
 OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(

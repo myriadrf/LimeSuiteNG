@@ -5,6 +5,8 @@
 
 #include "limesuiteng/limesuiteng.hpp"
 
+#include "tests/externalData.h"
+
 using namespace lime;
 
 using namespace std;
@@ -13,20 +15,16 @@ using namespace std::literals::string_literals;
 namespace lime::testing {
 
 SDRDevice_streaming::SDRDevice_streaming()
+    : device(nullptr)
+    , channelCount(1)
+    , sampleRate(10e6)
+    , moduleIndex(0)
 {
-    channelCount = 1;
-    sampleRate = 10e6;
-    moduleIndex = 0;
 }
 
 void SDRDevice_streaming::SetUp()
 {
-    auto handles = DeviceRegistry::enumerate();
-    if (handles.size() == 0)
-        GTEST_SKIP() << "device not connected, skipping"s;
-
-    // Use first available device
-    device = DeviceRegistry::makeDevice(handles.at(0));
+    device = lime::testing::GetTestDevice();
     ASSERT_NE(device, nullptr);
 
     ASSERT_EQ(device->Init(), OpStatus::Success);
@@ -57,7 +55,6 @@ void SDRDevice_streaming::SetUp()
 
 void SDRDevice_streaming::TearDown()
 {
-    DeviceRegistry::freeDevice(device);
 }
 
 TEST_F(SDRDevice_streaming, SetSampleRateIsAccurate)
