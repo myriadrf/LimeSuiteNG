@@ -195,24 +195,8 @@ OpStatus TRXLooper::Start()
     if (status != OpStatus::Success)
         return status;
 
-    if (mRx.stagingPacket)
-    {
-        mRx.memPool->Free(mRx.stagingPacket);
-        mRx.stagingPacket = nullptr;
-    }
-    if (mRx.fifo)
-        mRx.fifo->clear();
-    if (mTx.fifo)
-        mTx.fifo->clear();
-
-    // Rx start
-    {
-        const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-        constexpr uint8_t irqPeriod{ 4 };
-        // Rx DMA has to be enabled before the stream enable, otherwise some data
-        // might be lost in the time frame between stream enable and then dma enable.
-        mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
-    }
+    mRx.terminate.store(false, std::memory_order_relaxed);
+    mTx.terminate.store(false, std::memory_order_relaxed);
 
     fpga->StartStreaming();
     {
@@ -282,6 +266,31 @@ void TRXLooper::Stop()
                 fpgaTxPktDropCounter);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
+    }
+
+    if (mRx.stagingPacket != nullptr)
+    {
+        mRx.memPool->Free(mRx.stagingPacket);
+        mRx.stagingPacket = nullptr;
+    }
+    if (mRx.fifo)
+    {
+        while (mRx.fifo->pop(&mRx.stagingPacket, false))
+            mRx.memPool->Free(mRx.stagingPacket);
+        mRx.fifo->clear();
+        mRx.stagingPacket = nullptr;
+    }
+    if (mTx.stagingPacket != nullptr)
+    {
+        mTx.memPool->Free(mTx.stagingPacket);
+        mTx.stagingPacket = nullptr;
+    }
+    if (mTx.fifo)
+    {
+        while (mTx.fifo->pop(&mTx.stagingPacket, false))
+            mTx.memPool->Free(mTx.stagingPacket);
+        mTx.fifo->clear();
+        mTx.stagingPacket = nullptr;
     }
 }
 
@@ -400,6 +409,13 @@ OpStatus TRXLooper::RxSetup()
     snprintf(threadName, sizeof(threadName), "lime:Rx%i", chipId);
     pthread_setname_np(mRx.thread.native_handle(), threadName);
 #endif
+
+    // Rx start
+    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    constexpr uint8_t irqPeriod{ 4 };
+    // Rx DMA has to be enabled before the stream enable, otherwise some data
+    // might be lost in the time frame between stream enable and then dma enable.
+    mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
 
     // wait for Rx thread to be ready
     lime::debug("RxSetup wait for Rx worker thread."s);
