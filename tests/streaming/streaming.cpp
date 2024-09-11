@@ -24,7 +24,7 @@ SDRDevice_streaming::SDRDevice_streaming()
 
 void SDRDevice_streaming::SetUp()
 {
-    device = lime::testing::GetTestDevice();
+    device = DeviceRegistry::makeDevice(std::string{ GetTestDeviceHandleArgument() });
     ASSERT_NE(device, nullptr);
 
     ASSERT_EQ(device->Init(), OpStatus::Success);
@@ -55,6 +55,7 @@ void SDRDevice_streaming::SetUp()
 
 void SDRDevice_streaming::TearDown()
 {
+    DeviceRegistry::freeDevice(device);
 }
 
 TEST_F(SDRDevice_streaming, SetSampleRateIsAccurate)

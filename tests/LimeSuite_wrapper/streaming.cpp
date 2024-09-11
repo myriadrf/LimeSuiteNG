@@ -3,6 +3,8 @@
 #include <chrono>
 #include <thread>
 
+#include "tests/externalData.h"
+
 using namespace std;
 using namespace std::literals::string_literals;
 
@@ -15,13 +17,11 @@ LimeSuiteWrapper_streaming::LimeSuiteWrapper_streaming()
 
 void LimeSuiteWrapper_streaming::SetUp()
 {
-    int n;
-    lms_info_str_t list[16]; //should be large enough to hold all detected devices
-    if ((n = LMS_GetDeviceList(list)) <= 0) //NULL can be passed to only get number of devices
-        GTEST_SKIP() << "device not connected, skipping"s;
-
     //open the first device
-    ASSERT_EQ(LMS_Open(&device, list[0], NULL), 0);
+    int rez = LMS_Open(&device, lime::testing::GetTestDeviceHandleArgument(), NULL);
+    ASSERT_EQ(rez, 0);
+    ASSERT_NE(device, nullptr);
+
     ASSERT_EQ(LMS_Init(device), 0);
 }
 
@@ -110,7 +110,7 @@ TEST_P(LimeSuiteWrapper_streaming, SetSampleRateIsAccurate)
     SetupSampleRate();
 
     std::vector<lms_stream_t> channels;
-    SetupRxStreams(channels);
+    ASSERT_NO_FATAL_FAILURE(SetupRxStreams(channels));
 
     for (auto& handle : channels)
         ASSERT_EQ(LMS_StartStream(&handle), 0);

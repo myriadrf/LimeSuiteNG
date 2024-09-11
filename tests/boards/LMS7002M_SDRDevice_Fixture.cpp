@@ -30,16 +30,17 @@ LMS7002M_SDRDevice_Fixture::LMS7002M_SDRDevice_Fixture(const std::string& device
 
 void LMS7002M_SDRDevice_Fixture::SetUp()
 {
-    device = GetTestDevice();
+    device = DeviceRegistry::makeDevice(std::string{ GetTestDeviceHandleArgument() });
     ASSERT_NE(device, nullptr);
     ASSERT_EQ(device->Init(), OpStatus::Success);
 }
 
 void LMS7002M_SDRDevice_Fixture::TearDown()
 {
+    DeviceRegistry::freeDevice(device);
 }
 
-OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
+void LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide)
 {
     SDRConfig deviceConfiguration;
@@ -55,21 +56,17 @@ OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     directionConfiguration.testSignal.scale = scale;
     directionConfiguration.testSignal.divide = divide;
 
-    return device->Configure(deviceConfiguration, moduleIndex);
+    ASSERT_EQ(device->Configure(deviceConfiguration, moduleIndex), OpStatus::Success);
 }
 
-OpStatus LMS7002M_SDRDevice_Fixture::SetupStream()
+void LMS7002M_SDRDevice_Fixture::SetupStream()
 {
     StreamConfig streamConfiguration;
     streamConfiguration.channels[TRXDir::Rx] = { 0 };
     streamConfiguration.format = DataFormat::I16;
 
-    OpStatus status = device->StreamSetup(streamConfiguration, moduleIndex);
-    if (status != OpStatus::Success)
-        return status;
-
+    ASSERT_EQ(device->StreamSetup(streamConfiguration, moduleIndex), OpStatus::Success);
     device->StreamStart(moduleIndex);
-    return status;
 }
 
 void LMS7002M_SDRDevice_Fixture::DestroySteam()
@@ -80,10 +77,9 @@ void LMS7002M_SDRDevice_Fixture::DestroySteam()
 
 TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
 {
-    ASSERT_EQ(SetUpDeviceForRxTestPattern(
-                  ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8),
-        OpStatus::Success);
-    ASSERT_EQ(SetupStream(), OpStatus::Success);
+    ASSERT_NO_FATAL_FAILURE(SetUpDeviceForRxTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8));
+    ASSERT_NO_FATAL_FAILURE(SetupStream());
     constexpr int samplesToReceive = 1020 * 16;
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;

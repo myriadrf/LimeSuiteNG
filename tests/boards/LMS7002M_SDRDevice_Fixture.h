@@ -66,10 +66,10 @@ class LMS7002M_SDRDevice_Fixture : public ::testing::Test
 
     void TearDown() override;
 
-    OpStatus SetUpDeviceForRxTestPattern(
+    void SetUpDeviceForRxTestPattern(
         ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide);
 
-    OpStatus SetupStream();
+    void SetupStream();
     void DestroySteam();
 
     void Configure4HalfTestPatternAndReceiveIt();

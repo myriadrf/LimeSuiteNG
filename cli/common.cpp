@@ -41,7 +41,7 @@ std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
     return numbers;
 }
 
-static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view text)
+bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view text)
 {
     if (text.empty())
         return true;

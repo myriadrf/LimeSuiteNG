@@ -3,6 +3,6 @@
 namespace lime::testing {
 
 // Supplies which device to use in test cases
-lime::SDRDevice* GetTestDevice();
+const char* GetTestDeviceHandleArgument();
 
 } // namespace lime::testing

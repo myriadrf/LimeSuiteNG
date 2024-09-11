@@ -102,12 +102,8 @@ struct LMS_APIDevice {
 
     ~LMS_APIDevice()
     {
-        lime::DeviceRegistry::freeDevice(device);
-
         if (deviceInfo != nullptr)
-        {
             delete deviceInfo;
-        }
     }
 
     const lime::RFSOCDescriptor& GetRFSOCDescriptor() const
@@ -250,7 +246,7 @@ API_EXPORT int CALL_CONV LMS_Close(lms_device_t* device)
     {
         return -1;
     }
-
+    lime::DeviceRegistry::freeDevice(apiDevice->device);
     delete apiDevice;
     return LMS_SUCCESS;
 }
