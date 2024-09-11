@@ -214,13 +214,11 @@ void TRXLooper::Stop()
         return;
     lime::debug("TRXLooper::Stop()");
     mStreamEnabled = false;
-    fpga->StopStreaming();
 
     // wait for loop ends
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        mRxArgs.dma->Enable(false);
         lime::debug("TRXLooper: wait for Rx loop end.");
         {
             std::unique_lock lck{ mRx.mutex };
@@ -267,6 +265,11 @@ void TRXLooper::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
+
+    // Disable FPGA streaming only after data transfer threads finish work.
+    // Becase stream disable halts DMA, and threads could get stuck waiting for interrupt
+    // of the next data batch.
+    fpga->StopStreaming();
 
     if (mRx.stagingPacket != nullptr)
     {

@@ -442,6 +442,7 @@ static void limepcie_dma_stop(struct limepcie_dma *dma)
             dma_dir_str(dma->direction),
             transfersDone);
     dma->enabled = false;
+    dma->transferCounter = 0;
     wake_up_interruptible(&dma->wait_transfer);
 }
 

@@ -134,7 +134,7 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
         samplesGot = device->StreamRx(moduleIndex, rxSamples, toRead, &rxMeta);
         if (firstRead)
         {
-            EXPECT_TRUE(rxMeta.timestamp == 0);
+            EXPECT_EQ(rxMeta.timestamp, 0);
             firstRead = false;
         }
 
@@ -144,7 +144,7 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
             break;
         samplesReceived += samplesGot;
         samplesRemaining -= toRead;
-        EXPECT_TRUE(rxMeta.timestamp >= lastTimestamp);
+        EXPECT_GE(rxMeta.timestamp, lastTimestamp);
         lastTimestamp = rxMeta.timestamp;
     }
 
@@ -165,7 +165,7 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
         samplesGot = device->StreamRx(moduleIndex, rxSamples, toRead, &rxMeta);
         if (firstRead)
         {
-            EXPECT_TRUE(rxMeta.timestamp == 0);
+            EXPECT_EQ(rxMeta.timestamp, 0);
             firstRead = false;
         }
 
@@ -175,7 +175,7 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
             break;
         samplesReceived += samplesGot;
         samplesRemaining -= toRead;
-        EXPECT_TRUE(rxMeta.timestamp >= lastTimestamp);
+        EXPECT_GE(rxMeta.timestamp, lastTimestamp);
         lastTimestamp = rxMeta.timestamp;
     }
     ASSERT_EQ(samplesRemaining, 0);
