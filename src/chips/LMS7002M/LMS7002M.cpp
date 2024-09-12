@@ -40,6 +40,9 @@
 #include "lms7002m/spi.h"
 #include "gfir/lms_gfir.h"
 
+#include "registersReadOnlyMasks.h"
+#include "registersVolatileMasks.h"
+
 using namespace lime;
 using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
@@ -208,6 +211,26 @@ static int16_t DegreesToPhaseOffsetValue(float_type degrees)
 static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
 {
     return 45.0 * (phoValue / 32768.0);
+}
+
+static uint16_t GetWritableBits(uint16_t addr)
+{
+    for (const auto& readOnlyMask : lms7002m::registersReadOnlyMasks)
+    {
+        if (readOnlyMask.address == addr)
+            return ~readOnlyMask.value;
+    }
+    return 0xFFFF;
+}
+
+static uint16_t GetVolatileMask(uint16_t addr)
+{
+    for (const auto& volatileMask : lms7002m::registersVolatileMasks)
+    {
+        if (volatileMask.address == addr)
+            return volatileMask.value;
+    }
+    return 0x0000;
 }
 
 /** @brief Sets connection which is used for data communication with chip
@@ -1228,40 +1251,7 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 {
-    fromChip |= !useCache;
-    //registers containing read only registers, which values can change
-    static const std::unordered_set<uint16_t> volatileRegs = {
-        0x0000,
-        0x0001,
-        0x0002,
-        0x0003,
-        0x0004,
-        0x0005,
-        0x0006,
-        0x002F,
-        0x008C,
-        0x00A8,
-        0x00A9,
-        0x00AA,
-        0x00AB,
-        0x00AC,
-        0x0123,
-        0x0209,
-        0x020A,
-        0x020B,
-        0x040E,
-        0x040F,
-        0x05C3,
-        0x05C4,
-        0x05C5,
-        0x05C6,
-        0x05C7,
-        0x05C8,
-        0x05C9,
-        0x05CA,
-    };
-    if (volatileRegs.find(address) != volatileRegs.end())
-        fromChip = true;
+    fromChip = !useCache || (GetVolatileMask(address) != 0);
 
     if (!controlPort || fromChip == false)
     {
