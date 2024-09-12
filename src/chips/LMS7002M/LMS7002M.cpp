@@ -205,12 +205,12 @@ Decibel::operator float() const
 
 static int16_t DegreesToPhaseOffsetValue(float_type degrees)
 {
-    return 32767 * (degrees / 45.0);
+    return (degrees / 360.0) * 32768;
 }
 
 static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
 {
-    return 45.0 * (phoValue / 32768.0);
+    return (phoValue / 32768.0) * 360.0;
 }
 
 static uint16_t GetWritableBits(uint16_t addr)
