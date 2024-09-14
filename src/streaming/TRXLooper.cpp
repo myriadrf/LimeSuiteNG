@@ -645,6 +645,7 @@ void TRXLooper::ReceivePacketsLoop()
         else
         {
             ++stats.overrun;
+            overrun.add(1);
             outputPkt->Reset();
         }
 
