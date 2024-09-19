@@ -107,6 +107,12 @@ void LimeSuiteWrapper_streaming::ReceiveSamplesVerifySampleRate(std::vector<lms_
 
 TEST_P(LimeSuiteWrapper_streaming, SetSampleRateIsAccurate)
 {
+    const RxStreamParams& params = GetParam();
+    const size_t deviceAvailableChannelCount = LMS_GetNumChannels(device, false);
+    if (deviceAvailableChannelCount < params.channelCount)
+        GTEST_SKIP() << "Test requests " << params.channelCount << " channels, but device supports only "
+                     << deviceAvailableChannelCount;
+
     SetupSampleRate();
 
     std::vector<lms_stream_t> channels;
