@@ -11,7 +11,7 @@ using namespace std::literals::string_literals;
 OpStatus LMS7002M::CalibrateTxGainSetup()
 {
     OpStatus status;
-    int ch = Get_SPI_Reg_bits(LMS7002MCSR::MAC);
+    int mac = Get_SPI_Reg_bits(LMS7002MCSR::MAC);
 
     uint16_t value = SPI_read(0x0020);
     if ((value & 3) == 1)
@@ -32,6 +32,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     //TBB
     Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::LOOPB_TBB, 3);
+    Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 0);
 
     //RFE
     Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, 0);
@@ -44,6 +45,8 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, 12);
     Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, 23);
 
+    Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 0);
+
     //TRF
     Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, 0);
 
@@ -51,7 +54,14 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     const int isel_dac_afe = Get_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE);
     SetDefaults(MemorySection::AFE);
     Modify_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE, isel_dac_afe);
-    if (ch == 2)
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE, 1);
+    if (mac == 1)
+    {
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE1, 0);
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE1, 0);
+    }
+    else if (mac == 2)
     {
         Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE2, 0);
         Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE2, 0);
@@ -82,7 +92,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO, 1);
 
-    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, ch);
+    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, mac);
 
     //TxTSP
     const int isinc = Get_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP);
