@@ -271,6 +271,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , controlPort(port)
     , mC_impl(nullptr)
     , skipExternalDataInterfaceUpdate(false)
+    , customConfigFileIsLoaded(false)
 {
     struct lms7002m_hooks hooks {
     };
@@ -395,7 +396,7 @@ OpStatus LMS7002M::ResetChip()
 
     status = SPI_write_batch(addrs.data(), values.data(), addrs.size(), true);
     status = Modify_SPI_Reg_bits(LMS7002MCSR::MIMO_SISO, 0); //enable B channel after reset
-
+    customConfigFileIsLoaded = false;
     return status;
 }
 
@@ -585,6 +586,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             }
         }
     }
+    customConfigFileIsLoaded = true;
     return OpStatus::Success;
 }
 
@@ -689,7 +691,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     }
 
     ResetLogicRegisters();
-
+    customConfigFileIsLoaded = true;
     if (tuneDynamicValues)
     {
         Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
@@ -2092,6 +2094,14 @@ OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
     OpStatus status = ResultToStatus(result);
     if (status != OpStatus::Success)
         return status;
+
+    // do not calibrate tx gain if custom config file is loaded to maintain custom values
+    if (customConfigFileIsLoaded)
+    {
+        lime::warning("Custom .ini configuration file is loaded, SetTxLPF will not calibrate CG_IAMP_TBB");
+        return status;
+    }
+
     return CalibrateTxGain();
 }
 
