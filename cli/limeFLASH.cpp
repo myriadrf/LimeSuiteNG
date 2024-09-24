@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
     args::ValueFlag<std::string>    targetFlag(parser, "TARGET", "Specifies which target to use", {'t', "target"}, "");
     args::Flag                      listFlag(parser, "list", "list available device's targets", {'l', "list"});
-    args::Positional<std::string>   fileFlag(parser, "file path", "Input file path", args::Options::Required);
+    args::Positional<std::string>   fileFlag(parser, "file path", "Input file path");
     // clang-format on
 
     try
@@ -147,7 +147,6 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    const std::string filePath = args::get(fileFlag);
     std::string devName = args::get(deviceFlag);
     std::string targetName = args::get(targetFlag);
     signal(SIGINT, intHandler);
@@ -160,6 +159,7 @@ int main(int argc, char** argv)
     {
         cerr << "Available targets:" << endl;
         PrintMemoryDevices(device->GetDescriptor());
+        DeviceRegistry::freeDevice(device);
         return EXIT_SUCCESS;
     }
 
@@ -169,6 +169,14 @@ int main(int argc, char** argv)
         DeviceRegistry::freeDevice(device);
         return EXIT_FAILURE;
     }
+
+    if (!fileFlag)
+    {
+        cerr << "File path is required." << endl;
+        DeviceRegistry::freeDevice(device);
+        return EXIT_FAILURE;
+    }
+    const std::string filePath = args::get(fileFlag);
 
     std::vector<char> data;
     std::ifstream inputFile;
