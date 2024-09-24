@@ -12,7 +12,6 @@ target_sources(
             lms7002_gui_utilities.cpp
             lms7002_pnlSX_view.cpp
             lms7002_pnlTBB_view.cpp
-            lms7002_dlgVCOfrequencies.cpp
             lms7002_pnlRBB_view.cpp
             lms7002_pnlLDO_view.cpp
             lms7002_pnlAFE_view.cpp

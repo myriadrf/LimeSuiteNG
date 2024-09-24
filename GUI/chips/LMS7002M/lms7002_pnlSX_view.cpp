@@ -10,7 +10,6 @@
 #include "numericSlider.h"
 #include "lms7002_gui_utilities.h"
 #include "events.h"
-#include "lms7002_dlgVCOfrequencies.h"
 #include <string>
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
@@ -550,11 +549,6 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
     fgSizer196->SetFlexibleDirection(wxBOTH);
     fgSizer196->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    btnShowVCOparams = new wxButton(
-        sbSizerFrequencyControls->GetStaticBox(), ID_BTN_SHOW_VCO, wxT("VCO params"), wxDefaultPosition, wxDefaultSize, 0);
-
-    fgSizer196->Add(btnShowVCOparams, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
-
     wxFlexGridSizer* fgSizer98;
     fgSizer98 = new wxFlexGridSizer(0, 2, 0, 0);
     fgSizer98->SetFlexibleDirection(wxBOTH);
@@ -705,8 +699,6 @@ lms7002_pnlSX_view::lms7002_pnlSX_view(wxWindow* parent, wxWindowID id, const wx
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
     cmbICT_VCO->Connect(
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlSX_view::SpinParameterChangeHandler), nullptr, this);
-    btnShowVCOparams->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlSX_view::OnShowVCOclicked), nullptr, this);
     cmbVDIV_VCO->Connect(
         wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler(lms7002_pnlSX_view::ParameterChangeHandler), nullptr, this);
     cmbIPULSE_CP->Connect(
@@ -1013,13 +1005,6 @@ void lms7002_pnlSX_view::UpdateGUI()
 
     wxCommandEvent evt;
     OnbtnReadComparators(evt);
-}
-
-void lms7002_pnlSX_view::OnShowVCOclicked(wxCommandEvent& event)
-{
-    lms7002_dlgVCOfrequencies* dlg = new lms7002_dlgVCOfrequencies(this, lmsControl);
-    dlg->ShowModal();
-    dlg->Destroy();
 }
 
 void lms7002_pnlSX_view::OnEnableRefSpurCancellation(wxCommandEvent& event)
