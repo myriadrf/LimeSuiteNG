@@ -310,7 +310,6 @@ OpStatus TRXLooper::RxSetup()
     if (status != OpStatus::Success)
         return status;
 
-    mRx.samplesInPkt = defaultSamplesInPkt;
     mRx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
 
@@ -321,13 +320,20 @@ OpStatus TRXLooper::RxSetup()
 
     constexpr std::size_t headerSize{ sizeof(StreamHeader) };
 
-    const int requestSamplesInPkt = 4080 / sampleSize / chCount;
-
-    const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
-
-    uint32_t packetSize = payloadSize + headerSize;
-    packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
-    const int samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    const GatewareFeatures gw = fpga->GetFeatures();
+    uint32_t packetSize = 4096;
+    if (gw.hasConfigurableStreamPacketSize)
+    {
+        const int requestSamplesInPkt = 256 / chCount;
+        const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
+        packetSize = payloadSize + headerSize;
+        packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
+        mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    }
+    else
+    {
+        mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    }
 
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
@@ -350,13 +356,13 @@ OpStatus TRXLooper::RxSetup()
 
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
-        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / samplesInPkt);
+        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mRx.samplesInPkt);
 
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
     float bufferTimeDuration;
     if (mConfig.hintSampleRate)
-        bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
+        bufferTimeDuration = mRx.samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
     else
         bufferTimeDuration = 0;
     char msg[256];
@@ -366,7 +372,7 @@ OpStatus TRXLooper::RxSetup()
         mRxArgs.dma->GetName().c_str(),
         chipId,
         usePoll ? 1 : 0,
-        samplesInPkt,
+        mRx.samplesInPkt,
         mRx.packetsToBatch,
         mRx.packetsToBatch * packetSize,
         (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
@@ -387,11 +393,11 @@ OpStatus TRXLooper::RxSetup()
     mRxArgs.bufferSize = dmaBufferSize;
     mRxArgs.packetSize = packetSize;
     mRxArgs.packetsToBatch = mRx.packetsToBatch;
-    mRxArgs.samplesInPacket = samplesInPkt;
+    mRxArgs.samplesInPacket = mRx.samplesInPkt;
 
     const std::string name = "MemPool_Rx"s + std::to_string(chipId);
     const int upperAllocationLimit =
-        sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
+        sizeof(complex32f_t) * mRx.packetsToBatch * mRx.samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
 
     // Rx start
@@ -791,18 +797,26 @@ OpStatus TRXLooper::TxSetup()
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = (mConfig.linkFormat == DataFormat::I16 ? 4 : 3); // sizeof IQ pair
 
-    // TODO: check gateware for variable size Tx packets capabilities
-    // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
-    int samplesInPkt = (mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / chCount;
-    const int packetSize = sizeof(StreamHeader) + samplesInPkt * sampleSize * chCount;
+    const GatewareFeatures gw = fpga->GetFeatures();
+    uint32_t packetSize;
+    if (gw.hasConfigurableStreamPacketSize)
+    {
+        mTx.samplesInPkt = 256;
+        packetSize = SamplesPacketType::headerSize + sampleSize * mTx.samplesInPkt * chCount;
+    }
+    else
+    {
+        // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
+        mTx.samplesInPkt = 4080 / sampleSize / chCount;
+        packetSize = 4096;
+    }
 
     if (mConfig.extraConfig.tx.samplesInPacket != 0)
     {
-        samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples override %i", samplesInPkt);
+        mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
+        lime::debug("Tx samples override %i", mTx.samplesInPkt);
     }
 
-    mTx.samplesInPkt = samplesInPkt;
     mTx.packetsToBatch = 8; // Tx packets can be flushed early without filling whole batch
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
@@ -824,12 +838,12 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.bufferSize = dmaBufferSize;
     mTxArgs.packetSize = packetSize;
     mTxArgs.packetsToBatch = mTx.packetsToBatch;
-    mTxArgs.samplesInPacket = samplesInPkt;
+    mTxArgs.samplesInPacket = mTx.samplesInPkt;
 
     {
         float bufferTimeDuration;
         if (mConfig.hintSampleRate)
-            bufferTimeDuration = samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
+            bufferTimeDuration = mTx.samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
         else
             bufferTimeDuration = 0;
         char msg[256];
@@ -837,7 +851,7 @@ OpStatus TRXLooper::TxSetup()
             sizeof(msg),
             "Tx%i Setup: samplesInTxPkt:%i maxTxPktInBatch:%i, batchSizeInTime:%gus",
             chipId,
-            samplesInPkt,
+            mTx.samplesInPkt,
             mTx.packetsToBatch,
             bufferTimeDuration * 1e6);
         if (showStats)
@@ -848,7 +862,7 @@ OpStatus TRXLooper::TxSetup()
 
     const std::string name = "MemPool_Tx"s + std::to_string(chipId);
     const int upperAllocationLimit =
-        sizeof(complex32f_t) * mTx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
+        sizeof(complex32f_t) * mTx.packetsToBatch * mTx.samplesInPkt * chCount + SamplesPacketType::headerSize;
     mTx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 4096, name);
 
     mTx.terminate.store(false, std::memory_order_relaxed);

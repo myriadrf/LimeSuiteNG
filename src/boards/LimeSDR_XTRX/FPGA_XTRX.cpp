@@ -13,6 +13,9 @@ namespace lime {
 FPGA_XTRX::FPGA_XTRX(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : FPGA(fpgaSPI, lms7002mSPI)
 {
+    GatewareFeatures f;
+    f.hasConfigurableStreamPacketSize = true;
+    SetFeatures(f);
 }
 
 OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPhase, double rxPhase, int chipIndex)

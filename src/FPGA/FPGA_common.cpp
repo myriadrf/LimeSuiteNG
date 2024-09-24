@@ -909,6 +909,20 @@ OpStatus FPGA::SubmoduleSPIEnableMask(uint16_t enableMask)
     return WriteRegister(0xFFFF, enableMask);
 }
 
+/// @brief Returns flags of current gateware supported features.
+/// Same device FPGA gateware can be equiped with different set of functionality,
+/// use these flags to check which functionality can be used.
+GatewareFeatures FPGA::GetFeatures() const
+{
+    return mFeatures;
+}
+
+/// @brief Set flags of current gateware supported features.
+void FPGA::SetFeatures(const GatewareFeatures& flags)
+{
+    mFeatures = flags;
+}
+
 /// @brief Sets up the variable receive packet size (if the device supports it)
 /// @param packetSize The target size of the packet
 /// @param payloadSize The side of the whole payload

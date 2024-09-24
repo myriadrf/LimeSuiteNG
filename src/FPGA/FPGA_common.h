@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 
+#include "GatewareFeatures.h"
+
 #include "limesuiteng/complex.h"
 #include "limesuiteng/types.h"
 #include "limesuiteng/OpStatus.h"
@@ -90,6 +92,9 @@ class FPGA
     OpStatus SelectModule(uint8_t chipIndex);
     OpStatus SubmoduleSPIEnableMask(uint16_t enableMask);
 
+    GatewareFeatures GetFeatures() const;
+    void SetFeatures(const GatewareFeatures& flags);
+
   protected:
     OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = "");
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
@@ -103,6 +108,7 @@ class FPGA
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);
+    GatewareFeatures mFeatures;
 };
 
 } // namespace lime
