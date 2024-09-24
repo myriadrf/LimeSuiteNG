@@ -54,7 +54,6 @@ class FPGA
     virtual OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, int chipIndex = 0);
     double DetectRefClk(double fx3Clk = 100e6);
 
-    virtual void EnableValuesCache(bool enabled);
     virtual OpStatus WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsigned cnt);
     virtual OpStatus ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt);
     OpStatus WriteRegister(uint32_t addr, uint32_t val);
@@ -104,8 +103,6 @@ class FPGA
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);
-    bool useCache;
-    std::map<uint16_t, uint16_t> regsCache;
 };
 
 } // namespace lime

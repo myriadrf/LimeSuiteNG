@@ -94,7 +94,6 @@ static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
 FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : fpgaPort(fpgaSPI)
     , lms7002mPort(lms7002mSPI)
-    , useCache(false)
 {
     uint32_t addr[3] = { 0x0001, 0x0002, 0x0003 }; // version, revision, hardwareVersion
     uint32_t vals[3];
@@ -102,16 +101,6 @@ FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     mGatewareVersion = vals[0];
     mGatewareRevision = vals[1];
     mHardwareVersion = vals[2];
-}
-
-/// @brief Enables caching of registers on the hosts' end.
-/// @param enabled Whether to enable or disable the caching.
-void FPGA::EnableValuesCache(bool enabled)
-{
-    lime::debug("Enable FPGA registers cache: %s", enabled ? "true" : "false");
-    useCache = enabled;
-    if (!useCache)
-        regsCache.clear();
 }
 
 /// @brief Writes the specified value into the specified address into the FPGA.
@@ -139,76 +128,10 @@ int FPGA::ReadRegister(uint32_t address)
 /// @return The status of the operation.
 OpStatus FPGA::WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsigned cnt)
 {
-    std::vector<uint32_t> spiBuffer;
-    if (useCache)
-    {
-        static constexpr std::array<int, 45> readonly_regs = {
-            0x000,
-            0x001,
-            0x002,
-            0x003,
-            0x021,
-            0x022,
-            0x065,
-            0x067,
-            0x069,
-            0x06A,
-            0x06B,
-            0x06C,
-            0x06D,
-            0x06F,
-            0x070,
-            0x071,
-            0x072,
-            0x073,
-            0x074,
-            0x076,
-            0x077,
-            0x078,
-            0x07A,
-            0x07B,
-            0x07C,
-            0x0C2,
-            0x100,
-            0x101,
-            0x102,
-            0x103,
-            0x104,
-            0x105,
-            0x106,
-            0x107,
-            0x108,
-            0x109,
-            0x10A,
-            0x10B,
-            0x10C,
-            0x10D,
-            0x10E,
-            0x10F,
-            0x110,
-            0x111,
-            0x114,
-        };
-
-        for (unsigned i = 0; i < cnt; i++)
-        {
-            if (std::find(readonly_regs.begin(), readonly_regs.end(), addrs[i]) != readonly_regs.end())
-                continue;
-
-            auto result = regsCache.find(addrs[i]);
-            if (result != regsCache.end() && result->second == data[i])
-                continue;
-            spiBuffer.push_back((1 << 31) | (addrs[i]) << 16 | data[i]);
-            regsCache[addrs[i]] = data[i];
-        }
-        if (spiBuffer.size())
-            return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
-    }
+    std::vector<uint32_t> spiBuffer(cnt);
     for (unsigned i = 0; i < cnt; i++)
-        spiBuffer.push_back((1 << 31) | (addrs[i]) << 16 | data[i]);
-    if (spiBuffer.size())
-        return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
-    return OpStatus::Success;
+        spiBuffer[i] = ((1 << 31) | (addrs[i]) << 16 | data[i]);
+    return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
 }
 
 /// @brief Writes the given data blocks into LMS7002M chip.
@@ -241,79 +164,9 @@ OpStatus FPGA::ReadLMS7002MSPI(const uint32_t* writeData, uint32_t* readData, ui
 /// @return The operation status.
 OpStatus FPGA::ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt)
 {
-    std::vector<uint32_t> spiBuffer;
-    if (useCache)
-    {
-        static constexpr std::array<int, 42> volatile_regs = {
-            0x021,
-            0x022,
-            0x060,
-            0x065,
-            0x067,
-            0x069,
-            0x06A,
-            0x06B,
-            0x06C,
-            0x06D,
-            0x06F,
-            0x070,
-            0x071,
-            0x072,
-            0x073,
-            0x074,
-            0x076,
-            0x077,
-            0x078,
-            0x07A,
-            0x07B,
-            0x07C,
-            0x0C2,
-            0x100,
-            0x101,
-            0x102,
-            0x103,
-            0x104,
-            0x105,
-            0x106,
-            0x107,
-            0x108,
-            0x109,
-            0x10A,
-            0x10B,
-            0x10C,
-            0x10D,
-            0x10E,
-            0x10F,
-            0x110,
-            0x111,
-            0x114,
-        };
-
-        std::vector<uint32_t> reg_addr;
-        for (unsigned i = 0; i < cnt; i++)
-        {
-            if (std::find(volatile_regs.begin(), volatile_regs.end(), addrs[i]) == volatile_regs.end())
-            {
-                auto result = regsCache.find(addrs[i]);
-                if (result != regsCache.end())
-                    continue;
-            }
-            spiBuffer.push_back(addrs[i]);
-        }
-
-        if (spiBuffer.size())
-        {
-            std::vector<uint32_t> reg_val(spiBuffer.size());
-            fpgaPort->SPI(spiBuffer.data(), reg_val.data(), spiBuffer.size());
-            for (unsigned i = 0; i < spiBuffer.size(); i++)
-                regsCache[spiBuffer[i]] = reg_val[i];
-        }
-        for (unsigned i = 0; i < cnt; i++)
-            data[i] = regsCache[addrs[i]];
-        return OpStatus::Success;
-    }
+    std::vector<uint32_t> spiBuffer(cnt);
     for (unsigned i = 0; i < cnt; i++)
-        spiBuffer.push_back(addrs[i]);
+        spiBuffer[i] = addrs[i];
     std::vector<uint32_t> reg_val(spiBuffer.size());
     OpStatus status = fpgaPort->SPI(spiBuffer.data(), reg_val.data(), spiBuffer.size());
     for (unsigned i = 0; i < cnt; i++)

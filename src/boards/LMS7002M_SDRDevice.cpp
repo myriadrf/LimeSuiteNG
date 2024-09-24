@@ -673,8 +673,6 @@ void LMS7002M_SDRDevice::EnableCache(bool enable)
 {
     for (auto& iter : mLMSChips)
         iter->EnableValuesCache(enable);
-    if (mFPGA)
-        mFPGA->EnableValuesCache(enable);
 }
 
 void* LMS7002M_SDRDevice::GetInternalChip(uint32_t index)
