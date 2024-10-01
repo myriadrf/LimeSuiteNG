@@ -22,9 +22,10 @@ class DeviceConnectionPanel : public wxPanel
   protected:
     void SendDisconnectEvent(wxCommandEvent& inEvent);
     void SendHandleChangeEvent(wxCommandEvent& inEvent);
+    void EnumerateDevicesToChoice(wxCommandEvent& inEvent);
 
-    void EnumerateDevicesToChoice();
     wxChoice* cmbDevHandle;
+    wxButton* btnEnumerate;
     wxButton* btnDisconnect;
 };
 
