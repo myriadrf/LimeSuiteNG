@@ -892,26 +892,26 @@ static int limepcie_ctrl_open(struct inode *inode, struct file *file)
 
 static ssize_t limepcie_ctrl_write(struct file *file, const char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limepcie_device *s = file->private_data;
+    struct limepcie_data_cdev *ctrlDevice = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
         if (copy_from_user(&value, userbuf + i, sizeof(value)))
             return -EFAULT;
-        limepcie_writel(s, CSR_CNTRL_BASE + i, value);
+        limepcie_writel(ctrlDevice->owner, CSR_CNTRL_BASE + i, value);
     }
     return count;
 }
 
 static ssize_t limepcie_ctrl_read(struct file *file, char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limepcie_device *s = file->private_data;
+    struct limepcie_data_cdev *ctrlDevice = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
-        value = limepcie_readl(s, CSR_CNTRL_BASE + i);
+        value = limepcie_readl(ctrlDevice->owner, CSR_CNTRL_BASE + i);
         if (copy_to_user(userbuf + i, &value, sizeof(value)))
             return -EFAULT;
     }
