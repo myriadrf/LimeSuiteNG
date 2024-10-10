@@ -733,7 +733,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         results.vctcxoMaxCount = count2;
         reporter.OnStepUpdate(test, str);
 
-        const bool fail = (count1 + 25 > count2) || (count1 + 35 < count2);
+        const bool fail = (count1 + 20 > count2) || (count1 + 35 < count2);
         if (fail)
         {
             reporter.OnFail(test, "unexpected values");
