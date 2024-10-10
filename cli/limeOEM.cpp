@@ -151,9 +151,11 @@ int main(int argc, char** argv)
     {
         uint64_t serialNumber = device->GetDescriptor().serialNumber;
         cerr << "Board serial number: " << serialNumber << " (";
+        stringstream ss;
+        ss << std::hex << std::setw(2) << std::setfill('0');
         for (size_t i = 0; i < sizeof(serialNumber); ++i)
-            cerr << hex << "0x" << std::setw(2) << std::setfill('0') << ((serialNumber >> 8 * i) & 0xFF) << " ";
-        cerr << ")" << endl;
+            ss << "0x" << ((serialNumber >> 8 * i) & 0xFF) << " ";
+        cerr << ss.str() << ")" << endl;
 
         PrintOEMTestReporter reporter(serialNumber, reportFilename);
         reporter.ReportColumn("S/N", std::to_string(serialNumber));

@@ -876,8 +876,9 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
             bytes.resize(currentSerial.size());
             std::stringstream ss;
             ss << "Padding serial number to:";
+            ss << std::hex << std::setw(2) << std::setfill('0');
             for (size_t i = 0; i < bytes.size(); ++i)
-                ss << std::setw(2) << std::setfill('0') << std::hex << bytes[i] << " ";
+                ss << "0x" << static_cast<uint32_t>(bytes[i]) << " ";
             lime::debug(ss.str());
         }
     }
@@ -933,9 +934,9 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
         return OpStatus::Error;
 
     std::stringstream ss;
-    ss << "Serial number written:";
+    ss << "Serial number written:" << std::hex << std::setw(2) << std::setfill('0');
     for (uint8_t b : bytes)
-        ss << std::hex << b << " ";
+        ss << "0x" << static_cast<uint32_t>(b) << " ";
     lime::info(ss.str());
     // wait for things to settle, otherwise reading serial immediately will return zeroes
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
