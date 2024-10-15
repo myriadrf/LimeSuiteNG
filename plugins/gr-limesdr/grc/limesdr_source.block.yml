@@ -86,7 +86,7 @@ parameters:
 - id: digital_bandw_ch0
   label: Digital filter bandwidth
   dtype: float
-  default: samp_rate
+  default: 0
   hide: part
   category: Channel A
 
@@ -130,7 +130,7 @@ parameters:
 - id: digital_bandw_ch1
   label: Digital filter bandwidth
   dtype: float
-  default: samp_rate
+  default: 0
   hide: part
   category: Channel B
 

@@ -45,8 +45,9 @@ void device_handler::error(int device_number)
 {
     GR_LOG_WARN(d_logger, lime::GetLastErrorMessageCString());
 
-    if (device_vector[device_number].address != nullptr)
-        close_all_devices();
+    // TODO: stop work only if error is critical, otherwise continue work
+    // if (device_vector[device_number].address != nullptr)
+    //     close_all_devices();
 }
 
 lime::SDRDevice* device_handler::get_device(int device_number)
@@ -281,6 +282,7 @@ void device_handler::settings_from_file(int device_number,
 {
     auto& instance = device_handler::getInstance();
     const auto& device = instance.get_device(device_number);
+    assert(device != nullptr);
     auto status = device->LoadConfig(0, filename);
 
     if (status != lime::OpStatus::Success)
@@ -352,6 +354,7 @@ void device_handler::set_samp_rate(int device_number, double& rate)
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_samp_rate(): ");
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->SetSampleRate(0, lime::TRXDir::Rx, 1, rate, 0) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -367,6 +370,7 @@ void device_handler::set_oversampling(int device_number, int oversample)
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     switch (oversample) {
     case 0:
@@ -402,6 +406,7 @@ double device_handler::set_rf_freq(int device_number,
     double value = 0;
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (rf_freq <= 0) {
         close_all_devices();
@@ -433,6 +438,7 @@ void device_handler::calibrate(int device_number,
     GR_LOG_DEBUG(d_debug_logger, "device_handler::calibrate(): ");
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->Calibrate(0, direction, channel, bandwidth) != lime::OpStatus::Success) {
         instance.error(device_number);
@@ -447,6 +453,7 @@ void device_handler::set_antenna(int device_number,
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_antenna(): ");
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->SetAntenna(0, direction, channel, antenna) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -495,6 +502,7 @@ double device_handler::set_digital_filter(int device_number,
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (channel < 0 || channel > 1) {
         close_all_devices();
@@ -533,6 +541,7 @@ unsigned device_handler::set_gain(int device_number,
     unsigned gain_value = 0;
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (gain_dB < 0 || gain_dB > 73) {
         close_all_devices();
@@ -572,6 +581,7 @@ void device_handler::set_nco(int device_number,
     const std::array<std::string, 2> s_dir = { "RX"s, "TX"s };
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     GR_LOG_DEBUG(d_debug_logger, "device_handler::set_nco(): ");
     if (nco_freq == 0) {
@@ -625,6 +635,7 @@ void device_handler::disable_DC_corrections(int device_number)
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->SetParameter(0, 0, "DC_BYP_RXTSP", 1) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -639,6 +650,7 @@ void device_handler::set_tcxo_dac(int device_number, uint16_t dacVal)
     double dac_value = dacVal;
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     std::vector<lime::CustomParameterIO> parameter{ { 0, dac_value, ""s } };
 
@@ -678,6 +690,7 @@ void device_handler::write_lms_reg(int device_number, uint32_t address, uint16_t
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->WriteRegister(0, address, val) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -687,6 +700,7 @@ void device_handler::set_gpio_dir(int device_number, uint8_t dir)
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->GPIODirWrite(&dir, 1) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -696,6 +710,7 @@ void device_handler::write_gpio(int device_number, uint8_t out)
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
 
     if (device->GPIOWrite(&out, 1) != lime::OpStatus::Success)
         instance.error(device_number);
@@ -705,6 +720,7 @@ uint8_t device_handler::read_gpio(int device_number)
 {
     auto& instance = device_handler::getInstance();
     auto device = instance.get_device(device_number);
+    assert(device != nullptr);
     uint8_t res = 0;
 
     if (device->GPIORead(&res, 1) != lime::OpStatus::Success)
