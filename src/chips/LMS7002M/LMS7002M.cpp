@@ -213,16 +213,6 @@ static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
     return (phoValue / 32768.0) * 360.0;
 }
 
-static uint16_t GetWritableBits(uint16_t addr)
-{
-    for (const auto& readOnlyMask : lms7002m::registersReadOnlyMasks)
-    {
-        if (readOnlyMask.address == addr)
-            return ~readOnlyMask.value;
-    }
-    return 0xFFFF;
-}
-
 static uint16_t GetVolatileMask(uint16_t addr)
 {
     for (const auto& volatileMask : lms7002m::registersVolatileMasks)
