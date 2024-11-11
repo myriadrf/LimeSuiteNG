@@ -1,6 +1,9 @@
+#include "limesuiteng/Logger.h"
+
+#include <cstdarg>
+
 #include "rang.hpp" // terminal colors
 
-#include "limesuiteng/Logger.h"
 #include "LoggerInternal.h"
 
 namespace lime {

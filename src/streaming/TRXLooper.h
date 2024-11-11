@@ -1,6 +1,7 @@
 #ifndef TRXLooper_H
 #define TRXLooper_H
 
+#include <chrono>
 #include <vector>
 #include <atomic>
 #include <thread>
@@ -40,13 +41,15 @@ class TRXLooper
     /// @brief Gets the current configuration of the stream.
     /// @return The current configuration of the stream.
     constexpr inline const lime::StreamConfig& GetConfig() const { return mConfig; }
-
-    uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta);
-    uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta);
-    uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta);
-    uint32_t StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta);
-    uint32_t StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta);
-    uint32_t StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta);
+    uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamTx(
+        const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamTx(
+        const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamTx(
+        const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
 
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.
@@ -144,8 +147,10 @@ class TRXLooper
     Stream mRx;
     Stream mTx;
 
-    template<class T> uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta);
-    template<class T> uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta);
+    template<class T>
+    uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    template<class T>
+    uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
 };
 
 } // namespace lime

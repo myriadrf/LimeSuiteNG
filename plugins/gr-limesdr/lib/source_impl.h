@@ -21,13 +21,11 @@
 #ifndef INCLUDED_LIMESDR_SOURCE_IMPL_H
 #define INCLUDED_LIMESDR_SOURCE_IMPL_H
 
-#include <limesdr/source.h>
-
-#include "device_handler.h"
+#include "limesdr/source.h"
 
 #include <string>
 
-static const pmt::pmt_t TIME_TAG = pmt::string_to_symbol(std::string("rx_time"));
+#include "limesuiteng/StreamConfig.h"
 
 namespace gr {
 namespace limesdr {

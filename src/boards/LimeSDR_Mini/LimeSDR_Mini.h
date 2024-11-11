@@ -2,7 +2,6 @@
 #define LIME_LIMESDR_MINI_H
 
 #include "LMS7002M_SDRDevice.h"
-#include "protocols/LMS64CProtocol.h"
 
 #include <vector>
 #include <memory>
@@ -10,6 +9,7 @@
 namespace lime {
 
 class IComms;
+class ISerialPort;
 class IUSB;
 
 /** @brief Class for managing the LimeSDR Mini device. */

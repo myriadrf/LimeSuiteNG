@@ -1862,7 +1862,7 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
 
     if (rfBandwidth_Hz <= 0) // Bypass LPF
     {
-        LMS7002M_LOG(self, lime_LogLevel_Info, "%s: TxLPF bypassed.", __func__);
+        LMS7002M_LOG(self, lime_LogLevel_Debug, "%s: TxLPF bypassed.", __func__);
         lms7002m_spi_modify(self, 0x0105, 4, 0, powerDowns);
         lms7002m_spi_modify_csr(self, LMS7002M_BYPLADDER_TBB, 1);
         return lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFS5_TBB, 0);

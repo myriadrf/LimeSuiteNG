@@ -6,7 +6,6 @@
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include "events.h"
-#include "lms7002_dlgVCOfrequencies.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
@@ -559,9 +558,6 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
         sbSizer67->GetStaticBox(), ID_ICT_VCO_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 31, 0);
     fgSizer85->Add(cmbICT_VCO_CGEN, 1, wxEXPAND, 5);
 
-    btnShowVCO = new wxButton(sbSizer67->GetStaticBox(), wxID_ANY, wxT("VCO params"), wxDefaultPosition, wxDefaultSize, 0);
-    fgSizer85->Add(btnShowVCO, 1, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
-
     sbSizer67->Add(fgSizer85, 1, wxEXPAND, 0);
 
     fgSizer245->Add(sbSizer67, 1, wxEXPAND, 5);
@@ -680,8 +676,6 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbICT_VCO_CGEN->Connect(
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
-    btnShowVCO->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(lms7002_pnlCLKGEN_view::OnShowVCOclicked), nullptr, this);
     cmbIOFFSET_CP_CGEN->Connect(
         wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::ParameterChangeHandler), nullptr, this);
     cmbIPULSE_CP_CGEN->Connect(
@@ -972,11 +966,4 @@ void lms7002_pnlCLKGEN_view::UpdateCLKL()
     txtFrequency->GetValue().ToDouble(&cgenFreq);
     double clklfreq = cgenFreq / pow(2.0, dMul);
     txtFrequencyCLKL->SetLabel(wxString::Format("%.3f", clklfreq));
-}
-
-void lms7002_pnlCLKGEN_view::OnShowVCOclicked(wxCommandEvent& event)
-{
-    lms7002_dlgVCOfrequencies* dlg = new lms7002_dlgVCOfrequencies(this, lmsControl);
-    dlg->ShowModal();
-    dlg->Destroy();
 }

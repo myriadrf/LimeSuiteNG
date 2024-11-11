@@ -24,6 +24,8 @@
 #include "bsp/config.h"
 #include "boards.h"
 
+#define LIMEMICROSYSTEMS_VENDOR_ID 0x2058
+
 #define XILINX_FPGA_VENDOR_ID 0x10EE
 #define XILINX_FPGA_DEVICE_ID 0x7022
 #define ALTERA_FPGA_VENDOR_ID 0x1172
@@ -354,6 +356,11 @@ static int limepcie_dma_start_continuous(struct limepcie_dma *dma, uint32_t tran
 {
     struct limepcie_device *myDevice = dma->owner;
     struct device *sysDev = &myDevice->pciContext->dev;
+    if (dma->enabled)
+    {
+        dev_err(sysDev, "DMA%i is already enabled\n", dma->id);
+        return -EBUSY;
+    }
     if (transferSize == 0 || transferSize > dma->bufferSize)
     {
         dev_err(sysDev, "DMA start: invalid write size %i\n", transferSize);
@@ -435,6 +442,7 @@ static void limepcie_dma_stop(struct limepcie_dma *dma)
             dma_dir_str(dma->direction),
             transfersDone);
     dma->enabled = false;
+    dma->transferCounter = 0;
     wake_up_interruptible(&dma->wait_transfer);
 }
 
@@ -707,6 +715,14 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
         }
         struct limepcie_dma *dma = m.control.directionFromDevice ? fromDevice : toDevice;
 
+        // don't allow repeated attempts to enable continuous transfers
+        // as the request might have different transfer sizes
+        if (m.control.enabled && dma->enabled)
+        {
+            ret = -EBUSY;
+            break;
+        }
+
         if (m.control.enabled != dma->enabled)
         {
             if (m.control.enabled)
@@ -876,26 +892,26 @@ static int limepcie_ctrl_open(struct inode *inode, struct file *file)
 
 static ssize_t limepcie_ctrl_write(struct file *file, const char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limepcie_device *s = file->private_data;
+    struct limepcie_data_cdev *ctrlDevice = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
         if (copy_from_user(&value, userbuf + i, sizeof(value)))
             return -EFAULT;
-        limepcie_writel(s, CSR_CNTRL_BASE + i, value);
+        limepcie_writel(ctrlDevice->owner, CSR_CNTRL_BASE + i, value);
     }
     return count;
 }
 
 static ssize_t limepcie_ctrl_read(struct file *file, char __user *userbuf, size_t count, loff_t *offset)
 {
-    struct limepcie_device *s = file->private_data;
+    struct limepcie_data_cdev *ctrlDevice = file->private_data;
     uint32_t value;
     count = min(count, CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t));
     for (int i = 0; i < count; i += sizeof(value))
     {
-        value = limepcie_readl(s, CSR_CNTRL_BASE + i);
+        value = limepcie_readl(ctrlDevice->owner, CSR_CNTRL_BASE + i);
         if (copy_to_user(userbuf + i, &value, sizeof(value)))
             return -EFAULT;
     }

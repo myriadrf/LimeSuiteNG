@@ -4,26 +4,30 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
-#include "comms/PCIe/LimePCIe.h"
 #include "limesuiteng/LMS7002M.h"
-#include "chips/LMS7002M/validation.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
+#include "chips/LMS7002M/validation.h"
+#include "comms/IComms.h"
+#include "comms/PCIe/LimePCIe.h"
 #include "DeviceTreeNode.h"
 #include "utilities/toString.h"
 
 #include <cmath>
 
-namespace lime {
-
 using namespace std::literals::string_literals;
+
+namespace lime {
+namespace limemmx8 {
 
 static const char DEVICE_NUMBER_SEPARATOR_SYMBOL = '@';
 static const char PATH_SEPARATOR_SYMBOL = '/';
 
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static double X8ReferenceClock = 30.72e6;
+
+} // namespace limemmx8
 
 /// @brief Constructs the LimeSDR_MMX8 object.
 ///
@@ -70,31 +74,31 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
-    desc.customParameters.push_back(cp_vctcxo_dac);
+    desc.customParameters.push_back(limemmx8::cp_vctcxo_dac);
     for (size_t i = 0; i < 8; ++i)
     {
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, limemmx8::X8ReferenceClock);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
         {
             RFSOCDescriptor temp = soc;
-            temp.name = soc.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            temp.name = soc.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.rfSOC.push_back(temp);
         }
 
         for (const auto& slaveId : subdeviceDescriptor.spiSlaveIds)
         {
-            const std::string slaveName = slaveId.first + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            const std::string slaveName = slaveId.first + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.spiSlaveIds[slaveName] = (i + 1) << 8 | slaveId.second;
             chipSelectToDevice[desc.spiSlaveIds[slaveName]] = xtrx.get();
         }
 
         for (const auto& memoryDevice : subdeviceDescriptor.memoryDevices)
         {
-            const std::string indexName = subdeviceDescriptor.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1) +
-                                          PATH_SEPARATOR_SYMBOL + memoryDevice.first;
+            const std::string indexName = subdeviceDescriptor.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL +
+                                          std::to_string(i + 1) + limemmx8::PATH_SEPARATOR_SYMBOL + memoryDevice.first;
 
             desc.memoryDevices[indexName] = memoryDevice.second;
         }
@@ -103,7 +107,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
         {
             CustomParameter parameter = customParameter;
             parameter.id |= (i + 1) << 8;
-            parameter.name = customParameter.name + DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
+            parameter.name = customParameter.name + limemmx8::DEVICE_NUMBER_SEPARATOR_SYMBOL + std::to_string(i + 1);
             desc.customParameters.push_back(parameter);
             customParameterToDevice[parameter.id] = xtrx.get();
         }
@@ -622,6 +626,7 @@ OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleInd
     // Preemptively start subdevices stream during X8 stream setup. Threads and DMA will be ready
     // but the actual data stream will wait for stream enable on X8 FPGA.
     // That's to minimize time difference between X8 multiple streaming groups start.
+    maskStreamIsSetup |= (1 << (2 * moduleIndex));
     mSubDevices.at(moduleIndex)->StreamStart(0);
     return OpStatus::Success;
 }
@@ -644,8 +649,13 @@ void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t>& moduleIndexes)
         mask |= (1 << (2 * moduleIndex));
         // mSubDevices[moduleIndex]->StreamStart(0); // already started preemptively on StreamSetup
     }
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | mask);
+    maskStreamIsActive |= mask;
+
+    // If multiple streaming groups have been setup, start all of them upon first group's start, so they would be synchronized in time
+    if (maskStreamIsActive != maskStreamIsSetup)
+        maskStreamIsActive = maskStreamIsSetup;
+
+    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | maskStreamIsActive);
 }
 
 void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
@@ -663,8 +673,9 @@ void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t>& moduleIndexes)
     {
         mask |= (1 << (2 * moduleIndex));
     }
-    // for (uint8_t moduleIndex : moduleIndexes) // subDevice streams stop postponed to StreamDestroy
-    //     mSubDevices[moduleIndex]->StreamStop(0);
+    maskStreamIsActive &= ~mask;
+    for (uint8_t moduleIndex : moduleIndexes) // subDevice streams stop postponed to StreamDestroy
+        mSubDevices[moduleIndex]->StreamStop(0);
     tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
 }
 
@@ -672,39 +683,52 @@ void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
 {
     mSubDevices.at(moduleIndex)->StreamStop(0);
     mSubDevices.at(moduleIndex)->StreamDestroy(0);
+    maskStreamIsSetup &= ~(1 << (2 * moduleIndex));
 }
 
-uint32_t LimeSDR_MMX8::StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamRx(
+    uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta);
+    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
-uint32_t LimeSDR_MMX8::StreamRx(uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamRx(
+    uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta);
+    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
-uint32_t LimeSDR_MMX8::StreamRx(uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamRx(
+    uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta);
+    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
-uint32_t LimeSDR_MMX8::StreamTx(
-    uint8_t moduleIndex, const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
+    const lime::complex32f_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta);
+    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
-uint32_t LimeSDR_MMX8::StreamTx(
-    uint8_t moduleIndex, const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
+    const lime::complex16_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta);
+    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
-uint32_t LimeSDR_MMX8::StreamTx(
-    uint8_t moduleIndex, const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
+    const lime::complex12_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta);
+    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
 void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
@@ -794,8 +818,8 @@ OpStatus LimeSDR_MMX8::UploadMemory(
     if (device == eMemoryDevice::FPGA_FLASH && moduleIndex == 0)
     {
         int progMode = 1;
-        LMS64CProtocol::ProgramWriteTarget target;
-        target = LMS64CProtocol::ProgramWriteTarget::FPGA;
+        LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target;
+        target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
         return mMainFPGAcomms->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
     }
 

@@ -4,7 +4,6 @@
 #include "limesuiteng/LMS7002M.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
-#include "LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "streaming/TRXLooper.h"
 #include "utilities/toString.h"
@@ -295,15 +294,9 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
 
     OpStatus status = OpStatus::Success;
     if (tx)
-    {
-        int gain = lms->GetTBBIAMP_dB(ch);
         status = lms->SetTxLPF(lpf);
-        lms->SetTBBIAMP_dB(gain, ch);
-    }
     else
-    {
         status = lms->SetRxLPF(lpf);
-    }
 
     if (status != OpStatus::Success)
         return status;
@@ -400,27 +393,7 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
 OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
 {
     LMS7002M::ChannelScope scope(&chip, channel);
-    if (chip.SetTRFPAD_dB(value, channel) != OpStatus::Success)
-        return OpStatus::Error;
-
-#ifdef NEW_GAIN_BEHAVIOUR
-    if (value <= 0)
-    {
-        return chip.Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
-    }
-
-    if (chip.GetTBBIAMP_dB(channel) < 0.0)
-    {
-        return chip.CalibrateTxGain(0, nullptr);
-    }
-#else
-    value -= chip.GetTRFPAD_dB(channel);
-    if (chip.SetTBBIAMP_dB(value, channel) != OpStatus::Success)
-    {
-        return OpStatus::Error;
-    }
-#endif
-    return OpStatus::Success;
+    return chip.SetTRFPAD_dB(value, channel);
 }
 
 OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double value)
@@ -700,8 +673,6 @@ void LMS7002M_SDRDevice::EnableCache(bool enable)
 {
     for (auto& iter : mLMSChips)
         iter->EnableValuesCache(enable);
-    if (mFPGA)
-        mFPGA->EnableValuesCache(enable);
 }
 
 void* LMS7002M_SDRDevice::GetInternalChip(uint32_t index)
@@ -883,49 +854,61 @@ void LMS7002M_SDRDevice::StreamDestroy(uint8_t moduleIndex)
     mStreamers.at(moduleIndex)->Teardown();
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamRx(uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta);
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex32f_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex16_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
-uint32_t LMS7002M_SDRDevice::StreamTx(
-    uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex12_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
 {
     if (moduleIndex >= mStreamers.size())
         return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta);
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
 }
 
 void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
@@ -1072,7 +1055,7 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
     descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(0, 52);
 #else
     descriptor.gainRange[TRXDir::Rx][eGainTypes::UNKNOWN] = Range<double>(-12, 61);
-    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = Range<double>(-12, 64);
+    descriptor.gainRange[TRXDir::Tx][eGainTypes::UNKNOWN] = descriptor.gainRange[TRXDir::Tx][eGainTypes::PAD];
 #endif
 }
 

@@ -22,15 +22,21 @@
 #include "config.h"
 #endif
 
+#include <gnuradio/io_signature.h>
+#include <stdexcept>
+
+#include "device_handler.h"
 #include "logging.h"
 #include "source_impl.h"
-#include <gnuradio/io_signature.h>
 
-#include <stdexcept>
+#include "limesuiteng/SDRDevice.h"
+
 using namespace std::literals::string_literals;
 
 namespace gr {
 namespace limesdr {
+
+static const pmt::pmt_t RX_TIME_TAG = pmt::string_to_symbol(std::string("rx_time"));
 
 source::sptr source::make(std::string serial,
                           int channel_mode,
@@ -273,7 +279,7 @@ void source_impl::add_time_tag(int channel, lime::StreamMeta meta)
     const pmt::pmt_t ID = pmt::string_to_symbol(stored.serial);
     const pmt::pmt_t t_val =
         pmt::make_tuple(pmt::from_uint64(intpart), pmt::from_double(fracpart));
-    add_item_tag(channel, nitems_written(channel), TIME_TAG, t_val, ID);
+    add_item_tag(channel, nitems_written(channel), RX_TIME_TAG, t_val, ID);
 }
 
 // Return io_signature to manage module output count

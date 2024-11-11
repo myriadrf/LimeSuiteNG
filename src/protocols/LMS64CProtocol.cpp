@@ -6,7 +6,6 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "ISerialPort.h"
 #include "LMS64CProtocol.h"
 #include <chrono>
 #include <cassert>
@@ -17,6 +16,8 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
+
+#include "comms/ISerialPort.h"
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -62,7 +63,7 @@ void LMS64CPacketMemoryWriteView::SetAddress(int addr)
     packet->payload[9] = addr & 0xFF;
 }
 
-void LMS64CPacketMemoryWriteView::SetDevice(LMS64CProtocol::ProgramWriteTarget device)
+void LMS64CPacketMemoryWriteView::SetDevice(LMS64CProtocol::MEMORY_WR_targets device)
 {
     auto targetAsInteger = static_cast<int>(device);
 
@@ -158,10 +159,26 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* 
     if (status != OpStatus::Success)
         return status;
 
-    if (reinterpret_cast<LMS64CPacket*>(response)->status != CommandStatus::Completed)
-        return OpStatus::IOFailure;
-
-    return OpStatus::Success;
+    switch (reinterpret_cast<LMS64CPacket*>(response)->status)
+    {
+    case CommandStatus::Completed:
+        return OpStatus::Success;
+    case CommandStatus::Busy:
+        return OpStatus::Busy;
+    case CommandStatus::Unknown:
+        return OpStatus::NotImplemented;
+    case CommandStatus::TooManyBlocks:
+        return OpStatus::OutOfRange;
+    case CommandStatus::Error:
+        return OpStatus::Error;
+    case CommandStatus::WrongOrder:
+        return OpStatus::InvalidValue;
+    case CommandStatus::ResourceDenied:
+        return OpStatus::PermissionDenied;
+    case CommandStatus::Undefined:
+    default:
+        return OpStatus::Error;
+    }
 }
 
 static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t length, int timeout_ms = 100)
@@ -493,7 +510,7 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
     return OpStatus::Success;
 }
 
-/// @brief Writes the given program into the device.
+/// @brief Writes the given firmware/gateware into the device memory.
 /// @param port The communications port to use.
 /// @param data The program to write to the device.
 /// @param length The length of the program to write.
@@ -502,11 +519,11 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
 /// @param callback The callback to use for program write progress updates.
 /// @param subDevice The ID of the subdevice to use.
 /// @return The operation status.
-OpStatus ProgramWrite(ISerialPort& port,
+OpStatus FirmwareWrite(ISerialPort& port,
     const char* data,
     size_t length,
     int prog_mode,
-    ProgramWriteTarget device,
+    ALTERA_FPGA_GW_WR_targets target,
     ProgressCallback callback,
     uint32_t subDevice)
 {
@@ -520,15 +537,15 @@ OpStatus ProgramWrite(ISerialPort& port,
     size_t bytesSent = 0;
 
     bool needsData = true;
-    if (device == ProgramWriteTarget::FPGA && prog_mode == 2)
+    if (target == ALTERA_FPGA_GW_WR_targets::FPGA && prog_mode == 2)
         needsData = false;
-    if (device == ProgramWriteTarget::FX3 && (prog_mode == 0 || prog_mode == 1))
+    if (target == ALTERA_FPGA_GW_WR_targets::FX3 && (prog_mode == 0 || prog_mode == 1))
         needsData = false;
 
     Command cmd;
-    if (device == ProgramWriteTarget::HPM || device == ProgramWriteTarget::FX3)
+    if (target == ALTERA_FPGA_GW_WR_targets::HPM || target == ALTERA_FPGA_GW_WR_targets::FX3)
         cmd = Command::MEMORY_WR;
-    else if (device == ProgramWriteTarget::FPGA)
+    else if (target == ALTERA_FPGA_GW_WR_targets::FPGA)
         cmd = Command::ALTERA_FPGA_GW_WR;
     else
     {
@@ -560,7 +577,8 @@ OpStatus ProgramWrite(ISerialPort& port,
         if (cmd == Command::MEMORY_WR)
         {
             progView.SetAddress(0x0000);
-            progView.SetDevice(device);
+            if (target == ALTERA_FPGA_GW_WR_targets::FX3)
+                progView.SetDevice(MEMORY_WR_targets::FX3);
         }
 
         if (needsData)
@@ -597,7 +615,7 @@ OpStatus ProgramWrite(ISerialPort& port,
     }
 #ifndef NDEBUG
     auto t2 = std::chrono::high_resolution_clock::now();
-    if ((device == ProgramWriteTarget::FPGA && prog_mode == 2) == false)
+    if ((target == ALTERA_FPGA_GW_WR_targets::FPGA && prog_mode == 2) == false)
         lime::log(LogLevel::Info,
             "Programming finished, %li bytes sent! %li ms",
             length,
@@ -738,7 +756,8 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
 /// @param dataLen The length of the data.
 /// @param subDevice The ID of the subdevice to use.
 /// @return The operation status.
-OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice)
+OpStatus MemoryWrite(
+    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice)
 {
     const int timeout_ms = 100;
     size_t bytesSent = 0;
@@ -764,7 +783,7 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
         progView.SetChunkSize(std::min(dataLen - bytesSent, chunkSize));
 
         progView.SetAddress(address + bytesSent);
-        progView.SetDevice(ProgramWriteTarget::FPGA);
+        progView.SetDevice(target);
 
         progView.SetData(src, chunkSize);
         src += chunkSize;
@@ -787,7 +806,7 @@ OpStatus MemoryWrite(ISerialPort& port, uint32_t address, const void* data, size
 /// @param dataLen The length of the data to read.
 /// @param subDevice The ID of the subdevice to use.
 /// @return The operation status.
-OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t dataLen, uint32_t subDevice)
+OpStatus MemoryRead(ISerialPort& port, MEMORY_WR_targets target, uint32_t address, void* data, size_t dataLen, uint32_t subDevice)
 {
     const int timeout_ms = 100;
     size_t bytesGot = 0;
@@ -802,7 +821,7 @@ OpStatus MemoryRead(ISerialPort& port, uint32_t address, void* data, size_t data
 
     LMS64CPacketMemoryWriteView writeView(&packet);
     writeView.SetMode(0);
-    writeView.SetDevice(ProgramWriteTarget::FPGA);
+    writeView.SetDevice(target);
 
     const size_t chunkSize = 32;
     static_assert(chunkSize <= writeView.GetMaxDataSize(), "chunk must fit into packet payload");
@@ -857,8 +876,9 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
             bytes.resize(currentSerial.size());
             std::stringstream ss;
             ss << "Padding serial number to:";
+            ss << std::hex << std::setw(2) << std::setfill('0');
             for (size_t i = 0; i < bytes.size(); ++i)
-                ss << std::setw(2) << std::setfill('0') << std::hex << bytes[i] << " ";
+                ss << "0x" << static_cast<uint32_t>(bytes[i]) << " ";
             lime::debug(ss.str());
         }
     }
@@ -914,9 +934,9 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
         return OpStatus::Error;
 
     std::stringstream ss;
-    ss << "Serial number written:";
+    ss << "Serial number written:" << std::hex << std::setw(2) << std::setfill('0');
     for (uint8_t b : bytes)
-        ss << std::hex << b << " ";
+        ss << "0x" << static_cast<uint32_t>(b) << " ";
     lime::info(ss.str());
     // wait for things to settle, otherwise reading serial immediately will return zeroes
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

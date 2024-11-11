@@ -2,8 +2,11 @@
 
 #include "comms/USB/IUSB.h"
 
+#include "CommonFunctions.h"
+
 namespace lime {
 
+// Too many async requests adds overhead and makes transfers timing consistency worse
 static constexpr int maxAsyncTransfers = 16;
 
 USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir)
@@ -13,8 +16,10 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
     , endpoint(endpoint)
     , dir(dir)
     , continuous(false)
+    , isEnabled(false)
 {
-    mappings.resize(256);
+    name = strFormat("USB ep:%02X", endpoint);
+    mappings.resize(maxAsyncTransfers);
     for (auto& memoryBlock : mappings)
     {
         memoryBlock.size = 65536;
@@ -81,15 +86,18 @@ std::vector<IDMA::Buffer> USBDMAEmulation::GetBuffers() const
 
 std::string USBDMAEmulation::GetName() const
 {
-    return "usb";
+    return name;
 }
 
 OpStatus USBDMAEmulation::Enable(bool enable)
 {
+    if (isEnabled && enable)
+        return OpStatus::Busy;
     continuous = false;
     if (!enable)
     {
         AbortAllTransfers();
+        isEnabled = false;
         return OpStatus::Success;
     }
 
@@ -97,6 +105,7 @@ OpStatus USBDMAEmulation::Enable(bool enable)
     lastRequestIndex = 0;
 
     // for USB nothing is needed to be done to just enable DMA
+    isEnabled = true;
     return OpStatus::Success;
 }
 
@@ -107,6 +116,9 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
 
     if (!enable)
         return status;
+
+    if (maxTransferSize == 0)
+        return OpStatus::InvalidValue;
 
     if (dir != DataTransferDirection::DeviceToHost)
         return OpStatus::Success;
@@ -154,6 +166,10 @@ USBDMAEmulation::State USBDMAEmulation::GetCounters()
 
 OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection dir, bool irq)
 {
+    assert(isEnabled);
+    assert(bytesCount > 0);
+    assert(index < mappings.size());
+
     int count = 1;
     std::unique_lock lck{ queuesMutex };
     count = std::min(size_t(count), transfers.size());

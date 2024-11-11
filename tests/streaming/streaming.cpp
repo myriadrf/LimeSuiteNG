@@ -5,6 +5,8 @@
 
 #include "limesuiteng/limesuiteng.hpp"
 
+#include "tests/externalData.h"
+
 using namespace lime;
 
 using namespace std;
@@ -13,20 +15,16 @@ using namespace std::literals::string_literals;
 namespace lime::testing {
 
 SDRDevice_streaming::SDRDevice_streaming()
+    : device(nullptr)
+    , channelCount(1)
+    , sampleRate(10e6)
+    , moduleIndex(0)
 {
-    channelCount = 1;
-    sampleRate = 10e6;
-    moduleIndex = 0;
 }
 
 void SDRDevice_streaming::SetUp()
 {
-    auto handles = DeviceRegistry::enumerate();
-    if (handles.size() == 0)
-        GTEST_SKIP() << "device not connected, skipping"s;
-
-    // Use first available device
-    device = DeviceRegistry::makeDevice(handles.at(0));
+    device = DeviceRegistry::makeDevice(std::string{ GetTestDeviceHandleArgument() });
     ASSERT_NE(device, nullptr);
 
     ASSERT_EQ(device->Init(), OpStatus::Success);
@@ -123,14 +121,10 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
     ASSERT_EQ(device->StreamSetup(stream, moduleIndex), OpStatus::Success);
     device->StreamStart(moduleIndex);
 
-    device->StreamStop(moduleIndex);
-
-    device->StreamStart(moduleIndex);
-
-    auto t1 = chrono::high_resolution_clock::now();
-
     int samplesReceived = 0;
-    int samplesRemaining = sampleRate;
+    int samplesRemaining = samplesBatchSize;
+    uint64_t lastTimestamp = 0;
+    bool firstRead = true;
     while (samplesRemaining > 0)
     {
         int toRead = samplesRemaining < samplesBatchSize ? samplesRemaining : samplesBatchSize;
@@ -138,6 +132,11 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
 
         StreamMeta rxMeta{};
         samplesGot = device->StreamRx(moduleIndex, rxSamples, toRead, &rxMeta);
+        if (firstRead)
+        {
+            EXPECT_EQ(rxMeta.timestamp, 0);
+            firstRead = false;
+        }
 
         ASSERT_EQ(samplesGot, toRead);
 
@@ -145,13 +144,42 @@ TEST_F(SDRDevice_streaming, RepeatedStartStopWorks)
             break;
         samplesReceived += samplesGot;
         samplesRemaining -= toRead;
+        EXPECT_GE(rxMeta.timestamp, lastTimestamp);
+        lastTimestamp = rxMeta.timestamp;
     }
-    auto t2 = chrono::high_resolution_clock::now();
+
+    device->StreamStop(moduleIndex);
+
+    device->StreamStart(moduleIndex);
+
+    samplesReceived = 0;
+    samplesRemaining = samplesBatchSize;
+    lastTimestamp = 0;
+    firstRead = true;
+    while (samplesRemaining > 0)
+    {
+        int toRead = samplesRemaining < samplesBatchSize ? samplesRemaining : samplesBatchSize;
+        int samplesGot = 0;
+
+        StreamMeta rxMeta{};
+        samplesGot = device->StreamRx(moduleIndex, rxSamples, toRead, &rxMeta);
+        if (firstRead)
+        {
+            EXPECT_EQ(rxMeta.timestamp, 0);
+            firstRead = false;
+        }
+
+        ASSERT_EQ(samplesGot, toRead);
+
+        if (samplesGot != toRead)
+            break;
+        samplesReceived += samplesGot;
+        samplesRemaining -= toRead;
+        EXPECT_GE(rxMeta.timestamp, lastTimestamp);
+        lastTimestamp = rxMeta.timestamp;
+    }
     ASSERT_EQ(samplesRemaining, 0);
-    ASSERT_EQ(samplesReceived, sampleRate);
-    const auto duration{ chrono::duration_cast<chrono::milliseconds>(t2 - t1) };
-    bool timeCorrect = chrono::milliseconds(980) < duration && duration < chrono::milliseconds(1020);
-    ASSERT_TRUE(timeCorrect);
+    ASSERT_EQ(samplesReceived, samplesBatchSize);
 
     //Stop streaming
     device->StreamStop(moduleIndex);

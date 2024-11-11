@@ -8,7 +8,7 @@
 #include <chrono>
 #include <string_view>
 #include <cmath>
-#include <signal.h>
+#include <csignal>
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif

@@ -10,7 +10,7 @@
 #include "LMS7002MCSR_Data.h"
 #include <cmath>
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include "MCU_BD.h"
 #include "mcu_programs.h"
 

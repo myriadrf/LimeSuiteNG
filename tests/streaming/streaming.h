@@ -18,7 +18,7 @@ class SDRDevice_streaming : public ::testing::Test
     void TearDown() override;
 
   public:
-    SDRDevice* device = nullptr;
+    SDRDevice* device;
     int channelCount;
     int sampleRate;
     int moduleIndex;

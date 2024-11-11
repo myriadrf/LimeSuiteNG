@@ -49,4 +49,4 @@ template<class T> class DeltaVariable
     T mLastValue;
 };
 
-}; // namespace lime
+} // namespace lime

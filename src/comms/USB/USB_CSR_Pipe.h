@@ -1,7 +1,7 @@
 #ifndef LIME_USB_CSR_PIPE_H
 #define LIME_USB_CSR_PIPE_H
 
-#include "ISerialPort.h"
+#include "comms/ISerialPort.h"
 
 namespace lime {
 

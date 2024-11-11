@@ -9,7 +9,9 @@ AvgRmsCounter::AvgRmsCounter()
     , avgAccumulator(0)
     , rmsAccumulator(0)
     , min(1e16)
-    , max(1e-16){};
+    , max(1e-16)
+{
+}
 
 void AvgRmsCounter::Add(double value)
 {

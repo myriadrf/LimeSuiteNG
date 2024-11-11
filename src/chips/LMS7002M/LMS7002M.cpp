@@ -40,6 +40,9 @@
 #include "lms7002m/spi.h"
 #include "gfir/lms_gfir.h"
 
+#include "registersReadOnlyMasks.h"
+#include "registersVolatileMasks.h"
+
 using namespace lime;
 using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
@@ -202,12 +205,32 @@ Decibel::operator float() const
 
 static int16_t DegreesToPhaseOffsetValue(float_type degrees)
 {
-    return 32767 * (degrees / 45.0);
+    return (degrees / 360.0) * 32768;
 }
 
 static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
 {
-    return 45.0 * (phoValue / 32768.0);
+    return (phoValue / 32768.0) * 360.0;
+}
+
+static uint16_t GetWritableBits(uint16_t addr)
+{
+    for (const auto& readOnlyMask : lms7002m::registersReadOnlyMasks)
+    {
+        if (readOnlyMask.address == addr)
+            return ~readOnlyMask.value;
+    }
+    return 0xFFFF;
+}
+
+static uint16_t GetVolatileMask(uint16_t addr)
+{
+    for (const auto& volatileMask : lms7002m::registersVolatileMasks)
+    {
+        if (volatileMask.address == addr)
+            return volatileMask.value;
+    }
+    return 0x0000;
 }
 
 /** @brief Sets connection which is used for data communication with chip
@@ -271,6 +294,7 @@ LMS7002M::LMS7002M(std::shared_ptr<ISPI> port)
     , controlPort(port)
     , mC_impl(nullptr)
     , skipExternalDataInterfaceUpdate(false)
+    , customConfigFileIsLoaded(false)
 {
     struct lms7002m_hooks hooks {
     };
@@ -395,6 +419,7 @@ OpStatus LMS7002M::ResetChip()
 
     status = SPI_write_batch(addrs.data(), values.data(), addrs.size(), true);
     status = Modify_SPI_Reg_bits(LMS7002MCSR::MIMO_SISO, 0); //enable B channel after reset
+    customConfigFileIsLoaded = false;
     return status;
 }
 
@@ -584,6 +609,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
             }
         }
     }
+    customConfigFileIsLoaded = true;
     return OpStatus::Success;
 }
 
@@ -688,7 +714,7 @@ OpStatus LMS7002M::LoadConfig(const std::string& filename, bool tuneDynamicValue
     }
 
     ResetLogicRegisters();
-
+    customConfigFileIsLoaded = true;
     if (tuneDynamicValues)
     {
         Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
@@ -1225,40 +1251,7 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 {
-    fromChip |= !useCache;
-    //registers containing read only registers, which values can change
-    static const std::unordered_set<uint16_t> volatileRegs = {
-        0x0000,
-        0x0001,
-        0x0002,
-        0x0003,
-        0x0004,
-        0x0005,
-        0x0006,
-        0x002F,
-        0x008C,
-        0x00A8,
-        0x00A9,
-        0x00AA,
-        0x00AB,
-        0x00AC,
-        0x0123,
-        0x0209,
-        0x020A,
-        0x020B,
-        0x040E,
-        0x040F,
-        0x05C3,
-        0x05C4,
-        0x05C5,
-        0x05C6,
-        0x05C7,
-        0x05C8,
-        0x05C9,
-        0x05CA,
-    };
-    if (volatileRegs.find(address) != volatileRegs.end())
-        fromChip = true;
+    fromChip = !useCache || (GetVolatileMask(address) != 0);
 
     if (!controlPort || fromChip == false)
     {
@@ -1994,7 +1987,7 @@ static lime_Result lms7002m_set_gfir_filter(
         div = (2 << (ratio));
 
     const uint32_t interface_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
-    const float w = (div / 2) * (static_cast<float>(bandwidth) / interface_Hz);
+    const float w = (div / 2.0) * (static_cast<float>(bandwidth) / interface_Hz);
 
     const int L = div > 8 ? 8 : div;
     div -= 1;
@@ -2088,7 +2081,18 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
 OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
 {
     lime_Result result = lms7002m_set_tx_lpf(mC_impl, rfBandwidth_Hz);
-    return ResultToStatus(result);
+    OpStatus status = ResultToStatus(result);
+    if (status != OpStatus::Success)
+        return status;
+
+    // do not calibrate tx gain if custom config file is loaded to maintain custom values
+    if (customConfigFileIsLoaded)
+    {
+        lime::warning("Custom .ini configuration file is loaded, SetTxLPF will not calibrate CG_IAMP_TBB");
+        return status;
+    }
+
+    return CalibrateTxGain();
 }
 
 int16_t LMS7002M::ReadAnalogDC(const uint16_t addr)

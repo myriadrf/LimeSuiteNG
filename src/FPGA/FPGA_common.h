@@ -13,6 +13,8 @@
 #include <memory>
 #include <vector>
 
+#include "GatewareFeatures.h"
+
 #include "limesuiteng/complex.h"
 #include "limesuiteng/types.h"
 #include "limesuiteng/OpStatus.h"
@@ -55,7 +57,6 @@ class FPGA
     virtual OpStatus SetInterfaceFreq(double f_Tx_Hz, double f_Rx_Hz, int chipIndex = 0);
     double DetectRefClk(double fx3Clk = 100e6);
 
-    virtual void EnableValuesCache(bool enabled);
     virtual OpStatus WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsigned cnt);
     virtual OpStatus ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt);
     OpStatus WriteRegister(uint32_t addr, uint32_t val);
@@ -92,6 +93,9 @@ class FPGA
     OpStatus SelectModule(uint8_t chipIndex);
     OpStatus SubmoduleSPIEnableMask(uint16_t enableMask);
 
+    GatewareFeatures GetFeatures() const;
+    void SetFeatures(const GatewareFeatures& flags);
+
   protected:
     OpStatus WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t errorMask, const std::string& title = "");
     virtual OpStatus SetPllFrequency(uint8_t pllIndex, double inputFreq, std::vector<FPGA_PLL_clock>& outputs);
@@ -105,8 +109,7 @@ class FPGA
 
   private:
     virtual int ReadRawStreamData(char* buffer, unsigned length, int epIndex, int timeout_ms);
-    bool useCache;
-    std::map<uint16_t, uint16_t> regsCache;
+    GatewareFeatures mFeatures;
 };
 
 } // namespace lime

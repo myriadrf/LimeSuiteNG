@@ -3,7 +3,6 @@
 
 #include "chips/ADF4002/ADF4002.h"
 #include "chips/CDCM6208/CDCM6208.h"
-#include "comms/IComms.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "protocols/LMS64CProtocol.h"
@@ -15,6 +14,7 @@
 
 namespace lime {
 
+class IComms;
 class LimePCIe;
 class LimeSDR_XTRX;
 
@@ -123,15 +123,36 @@ class LimeSDR_MMX8 : public SDRDevice
     void StreamStop(const std::vector<uint8_t>& moduleIndexes) override;
     void StreamDestroy(uint8_t moduleIndex) override;
 
-    uint32_t StreamRx(uint8_t moduleIndex, lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamTx(
-        uint8_t moduleIndex, const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(
-        uint8_t moduleIndex, const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(
-        uint8_t moduleIndex, const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        lime::complex32f_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        lime::complex16_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        lime::complex12_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const lime::complex32f_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const lime::complex16_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const lime::complex12_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
     void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
@@ -157,6 +178,8 @@ class LimeSDR_MMX8 : public SDRDevice
     std::map<uint32_t, LimeSDR_XTRX*> chipSelectToDevice;
     std::map<uint32_t, LimeSDR_XTRX*> customParameterToDevice;
     std::unique_ptr<lime::ADF4002> mADF;
+    uint32_t maskStreamIsSetup{ 0 };
+    uint32_t maskStreamIsActive{ 0 };
 };
 
 } // namespace lime

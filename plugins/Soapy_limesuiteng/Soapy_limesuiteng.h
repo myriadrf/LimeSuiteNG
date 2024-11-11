@@ -1,3 +1,4 @@
+#pragma once
 /**
 @file	Soapy_limesuiteng.h
 @brief	Header for Soapy SDR + IConnection bindings.
@@ -7,7 +8,6 @@
 #include <SoapySDR/Device.hpp>
 
 #include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 
 #include <array>
@@ -18,6 +18,10 @@
 #include <vector>
 
 struct IConnectionStream;
+
+namespace lime {
+class SDRDevice;
+}
 
 class Soapy_limesuiteng : public SoapySDR::Device
 {

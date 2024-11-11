@@ -6,7 +6,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "LMSBoards.h"
+#include "protocols/LMSBoards.h"
 #include "threadHelper.h"
 #include "TxBufferManager.h"
 #include "utilities/DeltaVariable.h"
@@ -21,9 +21,10 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 using namespace LMS7002MCSR_Data;
+using namespace std;
 using namespace std::chrono;
 
-static constexpr uint16_t defaultSamplesInPkt = 256;
+static constexpr uint16_t defaultSamplesInPkt = 1360;
 
 static constexpr bool showStats{ false };
 static constexpr int statsPeriod_ms{ 1000 }; // at 122.88 MHz MIMO, fpga tx pkt counter overflows every 272ms
@@ -194,24 +195,8 @@ OpStatus TRXLooper::Start()
     if (status != OpStatus::Success)
         return status;
 
-    if (mRx.stagingPacket)
-    {
-        mRx.memPool->Free(mRx.stagingPacket);
-        mRx.stagingPacket = nullptr;
-    }
-    if (mRx.fifo)
-        mRx.fifo->clear();
-    if (mTx.fifo)
-        mTx.fifo->clear();
-
-    // Rx start
-    {
-        const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-        constexpr uint8_t irqPeriod{ 4 };
-        // Rx DMA has to be enabled before the stream enable, otherwise some data
-        // might be lost in the time frame between stream enable and then dma enable.
-        mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
-    }
+    mRx.terminate.store(false, std::memory_order_relaxed);
+    mTx.terminate.store(false, std::memory_order_relaxed);
 
     fpga->StartStreaming();
     {
@@ -229,13 +214,11 @@ void TRXLooper::Stop()
         return;
     lime::debug("TRXLooper::Stop()");
     mStreamEnabled = false;
-    fpga->StopStreaming();
 
     // wait for loop ends
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        mRxArgs.dma->Enable(false);
         lime::debug("TRXLooper: wait for Rx loop end.");
         {
             std::unique_lock lck{ mRx.mutex };
@@ -282,6 +265,36 @@ void TRXLooper::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
+
+    // Disable FPGA streaming only after data transfer threads finish work.
+    // Becase stream disable halts DMA, and threads could get stuck waiting for interrupt
+    // of the next data batch.
+    fpga->StopStreaming();
+
+    if (mRx.stagingPacket != nullptr)
+    {
+        mRx.memPool->Free(mRx.stagingPacket);
+        mRx.stagingPacket = nullptr;
+    }
+    if (mRx.fifo)
+    {
+        while (mRx.fifo->pop(&mRx.stagingPacket, false))
+            mRx.memPool->Free(mRx.stagingPacket);
+        mRx.fifo->clear();
+        mRx.stagingPacket = nullptr;
+    }
+    if (mTx.stagingPacket != nullptr)
+    {
+        mTx.memPool->Free(mTx.stagingPacket);
+        mTx.stagingPacket = nullptr;
+    }
+    if (mTx.fifo)
+    {
+        while (mTx.fifo->pop(&mTx.stagingPacket, false))
+            mTx.memPool->Free(mTx.stagingPacket);
+        mTx.fifo->clear();
+        mTx.stagingPacket = nullptr;
+    }
 }
 
 /// @brief Stops all the running streams and clears up the memory.
@@ -297,7 +310,6 @@ OpStatus TRXLooper::RxSetup()
     if (status != OpStatus::Success)
         return status;
 
-    mRx.samplesInPkt = defaultSamplesInPkt;
     mRx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
 
@@ -308,15 +320,21 @@ OpStatus TRXLooper::RxSetup()
 
     constexpr std::size_t headerSize{ sizeof(StreamHeader) };
 
-    const int requestSamplesInPkt = 4080 / sampleSize / chCount;
+    const GatewareFeatures gw = fpga->GetFeatures();
+    uint32_t packetSize = 4096;
+    if (gw.hasConfigurableStreamPacketSize)
+    {
+        const int requestSamplesInPkt = 256 / chCount;
+        const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
+        packetSize = payloadSize + headerSize;
+        packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
+        mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    }
+    else
+    {
+        mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    }
 
-    const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
-    const int samplesInPkt = payloadSize / (sampleSize * chCount);
-
-    uint32_t packetSize = payloadSize + headerSize;
-    packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
-
-    mRx.packetsToBatch = 4; // TODO: adjust according to sampling rate to guarantee low latency
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
@@ -338,31 +356,32 @@ OpStatus TRXLooper::RxSetup()
 
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
-        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / samplesInPkt);
+        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mRx.samplesInPkt);
 
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
+    float bufferTimeDuration;
+    if (mConfig.hintSampleRate)
+        bufferTimeDuration = mRx.samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
+    else
+        bufferTimeDuration = 0;
+    char msg[256];
+    std::snprintf(msg,
+        sizeof(msg),
+        "%s Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
+        mRxArgs.dma->GetName().c_str(),
+        chipId,
+        usePoll ? 1 : 0,
+        mRx.samplesInPkt,
+        mRx.packetsToBatch,
+        mRx.packetsToBatch * packetSize,
+        (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
+        bufferTimeDuration * 1e6,
+        mConfig.hintSampleRate);
+    if (showStats)
+        printf("%s", msg);
     if (mCallback_logMessage)
-    {
-        float bufferTimeDuration;
-        if (mConfig.hintSampleRate)
-            bufferTimeDuration = samplesInPkt * mRx.packetsToBatch / mConfig.hintSampleRate;
-        else
-            bufferTimeDuration = 0;
-        char msg[256];
-        std::snprintf(msg,
-            sizeof(msg),
-            "Rx%i Setup: usePoll:%i rxSamplesInPkt:%i rxPacketsInBatch:%i, DMA_ReadSize:%i, link:%s, batchSizeInTime:%gus FS:%f\n",
-            chipId,
-            usePoll ? 1 : 0,
-            samplesInPkt,
-            mRx.packetsToBatch,
-            mRx.packetsToBatch * packetSize,
-            (mConfig.linkFormat == DataFormat::I12 ? "I12" : "I16"),
-            bufferTimeDuration * 1e6,
-            mConfig.hintSampleRate);
         mCallback_logMessage(LogLevel::Verbose, msg);
-    }
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
     for (uint32_t i = 0; i < dmaChunks.size(); ++i)
@@ -374,12 +393,21 @@ OpStatus TRXLooper::RxSetup()
     mRxArgs.bufferSize = dmaBufferSize;
     mRxArgs.packetSize = packetSize;
     mRxArgs.packetsToBatch = mRx.packetsToBatch;
-    mRxArgs.samplesInPacket = samplesInPkt;
+    mRxArgs.samplesInPacket = mRx.samplesInPkt;
 
     const std::string name = "MemPool_Rx"s + std::to_string(chipId);
     const int upperAllocationLimit =
-        sizeof(complex32f_t) * mRx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
+        sizeof(complex32f_t) * mRx.packetsToBatch * mRx.samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
+
+    // Rx start
+    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    constexpr uint8_t irqPeriod{ 4 };
+    // Rx DMA has to be enabled before the stream enable, otherwise some data
+    // might be lost in the time frame between stream enable and then dma enable.
+    status = mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
+    if (status != OpStatus::Success)
+        return status;
 
     // Don't just use REALTIME scheduling, or at least be cautious with it.
     // if the thread blocks for too long, Linux can trigger RT throttling
@@ -408,7 +436,7 @@ OpStatus TRXLooper::RxSetup()
             mRx.cv.wait(lck);
     }
 
-    return OpStatus::Success;
+    return status;
 }
 
 struct DMATransactionCounter {
@@ -623,6 +651,7 @@ void TRXLooper::ReceivePacketsLoop()
         else
         {
             ++stats.overrun;
+            overrun.add(1);
             outputPkt->Reset();
         }
 
@@ -660,6 +689,7 @@ void TRXLooper::RxTeardown()
         {
             lime::error("Failed to join TRXLooper Rx thread"s);
         }
+        mRxArgs.dma->Enable(false);
     }
 
     if (mRx.stagingPacket)
@@ -672,7 +702,8 @@ void TRXLooper::RxTeardown()
     delete mRx.memPool.release();
 }
 
-template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta)
+template<class T>
+uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
     bool timestampSet = false;
     uint32_t samplesProduced = 0;
@@ -685,10 +716,10 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
     if (useChannelB)
         assert(dest[1]);
 
-    //auto start = high_resolution_clock::now();
+    auto start = chrono::high_resolution_clock::now();
     while (samplesProduced < count)
     {
-        if (!mRx.stagingPacket && !mRx.fifo->pop(&mRx.stagingPacket, firstIteration, 2000))
+        if (!mRx.stagingPacket && !mRx.fifo->pop(&mRx.stagingPacket, firstIteration, timeout))
         {
             lime::error("No samples or timeout"s);
             return samplesProduced;
@@ -722,9 +753,9 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
             mRx.stagingPacket = nullptr;
         }
 
-        // int duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
-        // if(duration > 300) // TODO: timeout duration in meta
-        //     return samplesProduced;
+        auto duration = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - start);
+        if (duration > timeout)
+            return samplesProduced;
     }
 
     return samplesProduced;
@@ -735,21 +766,21 @@ template<class T> uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t 
 /// @param count The amount of samples to receive.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples received.
-uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex32f_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex32f_t>(samples, count, meta);
+    return StreamRxTemplate<complex32f_t>(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(complex16_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex16_t>(samples, count, meta);
+    return StreamRxTemplate<complex16_t>(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta)
+uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex12_t>(samples, count, meta);
+    return StreamRxTemplate<complex12_t>(samples, count, meta, timeout);
 }
 
 OpStatus TRXLooper::TxSetup()
@@ -766,17 +797,31 @@ OpStatus TRXLooper::TxSetup()
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = (mConfig.linkFormat == DataFormat::I16 ? 4 : 3); // sizeof IQ pair
 
-    int samplesInPkt = 256; //(mConfig.linkFormat == DataFormat::I16 ? 1020 : 1360) / chCount;
-    const int packetSize = sizeof(StreamHeader) + samplesInPkt * sampleSize * chCount;
+    const GatewareFeatures gw = fpga->GetFeatures();
+    uint32_t packetSize;
+    if (gw.hasConfigurableStreamPacketSize)
+    {
+        mTx.samplesInPkt = 256;
+        packetSize = SamplesPacketType::headerSize + sampleSize * mTx.samplesInPkt * chCount;
+    }
+    else
+    {
+        // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
+        mTx.samplesInPkt = 4080 / sampleSize / chCount;
+        packetSize = 4096;
+    }
 
     if (mConfig.extraConfig.tx.samplesInPacket != 0)
     {
-        samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples override %i", samplesInPkt);
+        mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
+        lime::debug("Tx samples override %i", mTx.samplesInPkt);
     }
 
-    mTx.samplesInPkt = samplesInPkt;
-    mTx.packetsToBatch = 32; // Tx packets can be flushed early without filling whole batch
+    mTx.packetsToBatch = 8; // Tx packets can be flushed early without filling whole batch
+    // aim batch size to desired data output period, ~100us should be good enough
+    if (mConfig.hintSampleRate > 0)
+        mTx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mTx.samplesInPkt);
+
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
         mTx.packetsToBatch = mConfig.extraConfig.tx.packetsInBatch;
@@ -797,13 +842,12 @@ OpStatus TRXLooper::TxSetup()
     mTxArgs.bufferSize = dmaBufferSize;
     mTxArgs.packetSize = packetSize;
     mTxArgs.packetsToBatch = mTx.packetsToBatch;
-    mTxArgs.samplesInPacket = samplesInPkt;
+    mTxArgs.samplesInPacket = mTx.samplesInPkt;
 
-    if (mCallback_logMessage)
     {
         float bufferTimeDuration;
         if (mConfig.hintSampleRate)
-            bufferTimeDuration = samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
+            bufferTimeDuration = mTx.samplesInPkt * mTx.packetsToBatch / mConfig.hintSampleRate;
         else
             bufferTimeDuration = 0;
         char msg[256];
@@ -811,15 +855,18 @@ OpStatus TRXLooper::TxSetup()
             sizeof(msg),
             "Tx%i Setup: samplesInTxPkt:%i maxTxPktInBatch:%i, batchSizeInTime:%gus",
             chipId,
-            samplesInPkt,
+            mTx.samplesInPkt,
             mTx.packetsToBatch,
             bufferTimeDuration * 1e6);
-        mCallback_logMessage(LogLevel::Verbose, msg);
+        if (showStats)
+            printf("%s\n", msg);
+        if (mCallback_logMessage)
+            mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
     const std::string name = "MemPool_Tx"s + std::to_string(chipId);
     const int upperAllocationLimit =
-        sizeof(complex32f_t) * mTx.packetsToBatch * samplesInPkt * chCount + SamplesPacketType::headerSize;
+        sizeof(complex32f_t) * mTx.packetsToBatch * mTx.samplesInPkt * chCount + SamplesPacketType::headerSize;
     mTx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 4096, name);
 
     mTx.terminate.store(false, std::memory_order_relaxed);
@@ -884,7 +931,8 @@ void TRXLooper::TxWorkLoop()
 void TRXLooper::TransmitPacketsLoop()
 {
     lime::debug("Tx transmit loop start.");
-    const bool isRxActive = mConfig.channels.at(lime::TRXDir::Rx).size() > 0;
+    const bool isRxActive =
+        true; // rx is always activated to provide timestamps // mConfig.channels.at(lime::TRXDir::Rx).size() > 0;
     const bool mimo = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size()) > 1;
     const bool compressed = mConfig.linkFormat == DataFormat::I12;
     constexpr int irqPeriod{ 4 }; // Interrupt request period
@@ -998,7 +1046,7 @@ void TRXLooper::TransmitPacketsLoop()
         {
             if (!srcPkt)
             {
-                if (!fifo->pop(&srcPkt, true, 100))
+                if (!fifo->pop(&srcPkt, true, chrono::microseconds(100000)))
                 {
                     std::this_thread::yield();
                     break;
@@ -1154,7 +1202,8 @@ void TRXLooper::TxTeardown()
     delete mTx.memPool.release();
 }
 
-template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta)
+template<class T>
+uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
     const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;
     const bool useTimestamp = meta ? meta->waitForTimestamp : false;
@@ -1169,7 +1218,7 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
 
     if (mTx.stagingPacket && mTx.stagingPacket->timestamp + mTx.stagingPacket->size() != meta->timestamp)
     {
-        if (!mTx.fifo->push(mTx.stagingPacket))
+        if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
             return 0;
 
         mTx.stagingPacket = nullptr;
@@ -1208,7 +1257,7 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
             if (samplesRemaining == 0)
                 mTx.stagingPacket->flush = flush;
 
-            if (!mTx.fifo->push(mTx.stagingPacket))
+            if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
                 break;
 
             mTx.stagingPacket = nullptr;
@@ -1223,21 +1272,24 @@ template<class T> uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, 
 /// @param count The amount of samples to transmit.
 /// @param meta The metadata of the packets of the stream.
 /// @return The amount of samples transmitted.
-uint32_t TRXLooper::StreamTx(const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta)
+uint32_t TRXLooper::StreamTx(
+    const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta);
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @brief Gets statistics from a specified transfer direction.

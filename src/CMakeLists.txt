@@ -37,7 +37,7 @@ set(LIME_SUITE_SOURCES
 
 set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
-set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards protocols lms7002m external threadHelper memory)
+set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards lms7002m external threadHelper memory)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
@@ -61,6 +61,9 @@ if(NOT ENABLE_LIBRARY)
 endif(NOT ENABLE_LIBRARY)
 
 add_library(limesuiteng ${LIME_SUITE_SOURCES})
+
+target_precompile_headers(limesuiteng PRIVATE ${CPP_STL_CPH})
+
 set_target_properties(
     limesuiteng
     PROPERTIES POSITION_INDEPENDENT_CODE TRUE

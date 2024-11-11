@@ -18,6 +18,7 @@
 
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "utilities/toString.h"
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <chrono>
 #include <memory>
 #include "limesuiteng/config.h"
 #include "limesuiteng/complex.h"
@@ -44,11 +45,19 @@ class LIME_API StreamComposite
 
     /// @copydoc TRXLooper::StreamRx()
     /// @tparam T The type of streams to send.
-    template<class T> uint32_t StreamRx(T* const* samples, uint32_t count, StreamMeta* meta);
+    template<class T>
+    uint32_t StreamRx(T* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout = std::chrono::microseconds(1000000));
 
     /// @copydoc TRXLooper::StreamTx()
     /// @tparam T The type of streams to receive.
-    template<class T> uint32_t StreamTx(const T* const* samples, uint32_t count, const StreamMeta* meta);
+    template<class T>
+    uint32_t StreamTx(const T* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout = std::chrono::microseconds(1000000));
 
     /// @return Current timestamp of the receiver.
     uint64_t GetHardwareTimestamp();

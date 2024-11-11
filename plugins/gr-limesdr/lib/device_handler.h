@@ -21,7 +21,6 @@
 #ifndef DEVICE_HANDLER_H
 #define DEVICE_HANDLER_H
 
-#include "limesuiteng/limesuiteng.hpp"
 #ifdef ENABLE_RFE
 #include <limesuiteng/limeRFE.h>
 #endif
@@ -30,6 +29,13 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+#include "limesuiteng/StreamConfig.h"
+
+namespace lime {
+class SDRDevice;
+class DeviceHandle;
+} // namespace lime
 
 class device_handler
 {

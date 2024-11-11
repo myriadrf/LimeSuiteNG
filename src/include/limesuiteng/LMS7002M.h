@@ -931,6 +931,7 @@ class LIME_API LMS7002M
 
     lms7002m_context* mC_impl;
     bool skipExternalDataInterfaceUpdate;
+    bool customConfigFileIsLoaded;
 };
 } // namespace lime
 #endif

@@ -1,7 +1,9 @@
 #include "common.h"
 
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+
 #include <cassert>
 #include <cstring>
 #include <string_view>
@@ -9,39 +11,9 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
-
-static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
-{
-    std::vector<int> numbers;
-    for (const auto& number : args::get(flag))
-        numbers.push_back(number);
-    return numbers;
-}
-
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
-{
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    std::cout << msg << std::endl;
-}
 
 int main(int argc, char** argv)
 {
@@ -61,7 +33,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
     args::ValueFlag<double>         rxlpfFlag(parser, "Hz", "Receiver low pass filter bandwidth in Hz", {"rxlpf"});
-    args::ValueFlag<uint8_t>        rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
+    args::ValueFlag<uint32_t>       rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
 
     args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
@@ -69,7 +41,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
     args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
     args::ValueFlag<double>         txlpfFlag(parser, "Hz", "Transmitter low pass filter bandwidth in Hz", {"txlpf"});
-    args::ValueFlag<uint8_t>        txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
+    args::ValueFlag<uint32_t>       txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
     args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
@@ -147,8 +119,8 @@ int main(int argc, char** argv)
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
 
     try
     {
