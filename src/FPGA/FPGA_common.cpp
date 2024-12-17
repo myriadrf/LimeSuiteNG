@@ -329,7 +329,8 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     if (!fpgaPort)
         return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 
-    const bool waitForDone = HasWaitForDone(ReadRegister(0)); // read targetDevice
+    const int targetDevice = ReadRegister(0);
+    const bool waitForDone = HasWaitForDone(targetDevice); // read targetDevice
     bool willDoPhaseSearch = false;
 
     if (pllIndex > 15)
@@ -422,7 +423,12 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
 
     // Calculate coefficients to multiply input frequency*(M/N) up to VCO frequency
     const int N = 1;
-    const int M = ceil(bestFreqVCO / inputFreq);
+    int M = ceil(bestFreqVCO / inputFreq);
+
+    if (targetDevice == LMS_DEV_LIMESDR_XTRX) // Xilinx FPGA M is limited to 64
+    {
+        M = std::clamp(M, 1, 64); // TODO: separate Altera/Xilinx FPGA implementations
+    }
 
     // TODO: if multiple VCO frequencies would have the same demand, choose one with less deviation
     //const double deviation = fabs(bestFreqVCO - inputFreq * M / N);
