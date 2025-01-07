@@ -89,15 +89,13 @@ function(add_kernel_module)
     endif()
 
     # add external configured files to sources,so they get copied during install
-    foreach(SRC_FILENAME ${KMOD_CONFIGURED_FILES})
-        target_sources(${KMOD_NAME} PRIVATE ${SRC_FILENAME})
-    endforeach()
+    set_property(TARGET ${KMOD_NAME} APPEND PROPERTY SOURCES ${KMOD_CONFIGURED_FILES})
 
     # Copy all source files into build directory and compile there, as the Kbuild produces artifacts in tree
     foreach(SRC_FILENAME ${KMOD_SOURCES})
         configure_file(${SRC_FILENAME} ${KBUILD_FILE_DIR}/${SRC_FILENAME} COPYONLY)
     endforeach()
-    target_sources(${KMOD_NAME} PRIVATE ${KMOD_SOURCES})
+    set_property(TARGET ${KMOD_NAME} APPEND PROPERTY SOURCES ${KMOD_SOURCES})
 
     # Pick compilable source files
     string(REGEX MATCHALL "[^ ;]+[.]c" KERNEL_OBJECTS_RELATIVE_PATHS "${KMOD_SOURCES}")
