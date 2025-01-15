@@ -3,6 +3,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 
+#include "boards/LimeSDR/LMS64C_ADF_Over_USB.h"
 #include "comms/IComms.h"
 #include "comms/ISerialPort.h"
 #include "comms/USB/FX3/FX3.h"
@@ -103,6 +104,7 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     , mSerialPort(commsPort)
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
+    , mADF(std::make_unique<ADF4002>())
     , mConfigInProgress(false)
 {
     mStreamers.resize(1);
@@ -128,6 +130,10 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
         std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
     descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-USB"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
+
+    auto ADFComms = std::make_shared<LMS64C_ADF_Over_USB>(mSerialPort, 0);
+    mADF->Initialize(ADFComms, 30.72e6);
+    descriptor.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF.get()));
 
     descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 0x0010, 1 } } };

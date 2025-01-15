@@ -3,6 +3,7 @@
 
 #include "boards/LMS7002M_SDRDevice.h"
 #include "protocols/LMS64CProtocol.h"
+#include "chips/ADF4002/ADF4002.h"
 
 #include <vector>
 #include <memory>
@@ -70,6 +71,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
+    std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };
 
