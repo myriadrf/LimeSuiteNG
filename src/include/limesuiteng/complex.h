@@ -132,8 +132,7 @@ static_assert(std::is_trivially_copyable<complex16_t>::value == true, "complex16
 */
 // Inheriting complex16_t instead of using alias of POD_complex_t<int16_t> to
 // differentiate types for templating
-class complex12_t : public complex16_t
-{
+struct complex12_t : public complex16_t {
     constexpr complex12_t()
         : complex16_t(){};
 

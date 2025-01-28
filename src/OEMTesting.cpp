@@ -3,6 +3,7 @@
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/RFStream.h"
 #include "DSP/FFT/FFT.h"
 
 namespace lime {
@@ -17,20 +18,20 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
     stream.format = DataFormat::F32;
     stream.linkFormat = DataFormat::I16;
 
-    device.StreamSetup(stream, input.moduleIndex);
-    device.StreamStart(input.moduleIndex);
-
-    //Receive samples
     const int fftSize = 8192;
     std::vector<lime::complex32f_t> samples(fftSize);
     lime::complex32f_t* dest[2] = { samples.data(), nullptr };
 
-    // ignore first batch of samples, just in case there would be instability from digital DC corrector
-    device.StreamRx(input.moduleIndex, reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
-    device.StreamRx(input.moduleIndex, reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
+    //Receive samples
+    {
+        std::unique_ptr<RFStream> rfstream = device.StreamCreate(stream, input.moduleIndex);
+        rfstream->Start();
+        // ignore first batch of samples, just in case there would be instability from digital DC corrector
+        rfstream->StreamRx(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
+        rfstream->StreamRx(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
 
-    device.StreamStop(input.moduleIndex);
-    device.StreamDestroy(input.moduleIndex);
+        rfstream->Stop();
+    }
 
     std::vector<float> bins = FFT::Calc(samples);
     FFT::ConvertToDBFS(bins);

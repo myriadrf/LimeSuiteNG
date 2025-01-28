@@ -57,6 +57,7 @@ apt-get install $yes --no-install-recommends \
   build-essential \
   cmake \
   $headers \
+  libglew-dev \
   libsoapysdr-dev \
   libusb-1.0-0-dev \
   $libwx

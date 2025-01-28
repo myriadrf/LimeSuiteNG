@@ -33,7 +33,9 @@ StreamConfig::StreamConfig()
     channels[TRXDir::Tx] = {};
 }
 
-SDRDevice::~SDRDevice(){};
+SDRDevice::~SDRDevice()
+{
+}
 
 OpStatus SDRDevice::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
@@ -85,7 +87,9 @@ OpStatus SDRDevice::CustomParameterRead(std::vector<CustomParameterIO>& paramete
     return ReportError(OpStatus::NotImplemented, "CustomParameterRead not implemented"s);
 }
 
-void SDRDevice::SetMessageLogCallback(LogCallbackType callback){};
+void SDRDevice::SetMessageLogCallback(LogCallbackType callback)
+{
+}
 
 OpStatus SDRDevice::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
@@ -107,13 +111,13 @@ void SDRDevice::StreamStart(const std::vector<uint8_t>& moduleIndexes)
 {
     for (uint8_t i : moduleIndexes)
         StreamStart(i);
-};
+}
 
 void SDRDevice::StreamStop(const std::vector<uint8_t>& moduleIndexes)
 {
     for (uint8_t i : moduleIndexes)
         StreamStop(i);
-};
+}
 
 OpStatus SDRDevice::OEMTest(OEMTestReporter* reporter)
 {

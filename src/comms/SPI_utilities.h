@@ -8,7 +8,7 @@
 namespace lime {
 
 class ISPI;
-class Register;
+struct Register;
 
 OpStatus WriteSPI(ISPI* spi, uint16_t address, uint16_t value);
 uint16_t ReadSPI(ISPI* spi, uint16_t address, OpStatus* status = nullptr);

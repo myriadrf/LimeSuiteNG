@@ -8,6 +8,12 @@
 
 namespace lime {
 
+enum CalibrationFlag {
+    NONE = 0,
+    DCIQ = (1 << 0),
+    FILTER = (1 << 1),
+};
+
 /// @brief Configuration of a single channel.
 struct ChannelConfig {
     ChannelConfig()
@@ -27,7 +33,7 @@ struct ChannelConfig {
             , oversample(0)
             , gfir()
             , enabled(false)
-            , calibrate(false)
+            , calibrate(CalibrationFlag::NONE)
             , testSignal{ false, false, TestSignal::Divide::Div8, TestSignal::Scale::Half }
         {
         }
@@ -76,7 +82,7 @@ struct ChannelConfig {
         uint8_t oversample; ///< The oversample ratio of this direction.
         GFIRFilter gfir; ///< The general finite impulse response (FIR) filter settings of this direction.
         bool enabled; ///< Denotes whether this direction of a channel is enabled or not.
-        bool calibrate; ///< Denotes whether the device will be calibrated or not.
+        uint32_t calibrate; ///< Which calibration to perform.
         TestSignal testSignal; ///< Denotes whether the signal being sent is a test signal or not.
     };
 

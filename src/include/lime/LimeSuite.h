@@ -597,7 +597,7 @@ API_EXPORT int CALL_CONV LMS_SetSampleRateDir(lms_device_t* device, bool dir_tx,
  * @param       dir_tx     Select RX or TX
  * @param       chan       Channel index
  * @param[in]   freq       List of NCO frequencies. Values cannot be negative.
- *                         Must be at least ::LMS_NCO_VAL_COUNT length;
+ *                         Must be at least LMS_NCO_VAL_COUNT length;
  * @param       pho        NCO phase offset in deg
  *
  * @return      0 on success, (-1) on failure
@@ -612,7 +612,7 @@ API_EXPORT int CALL_CONV LMS_SetNCOFrequency(
  * @param       dir_tx     Select RX or TX
  * @param       chan       Channel index
  * @param[out]  freq       List of NCO frequencies. Must be at least
- *                         ::LMS_NCO_VAL_COUNT length;
+ *                         LMS_NCO_VAL_COUNT length;
  * @param[out]  pho        Phase offset in deg
  *
  * @return      0 on success, (-1) on failure
@@ -629,7 +629,7 @@ API_EXPORT int CALL_CONV LMS_GetNCOFrequency(lms_device_t* device, bool dir_tx, 
  * @param       dir_tx     Select RX or TX
  * @param       chan       Channel index
  * @param[in]   phases     List of NCO phases. Values cannot be negative.
- *                         Must be at least ::LMS_NCO_VAL_COUNT length;
+ *                         Must be at least LMS_NCO_VAL_COUNT length;
  * @param       fcw        NCO frequency in Hz
  *
  * @return      0 on success, (-1) on failure
@@ -643,7 +643,7 @@ API_EXPORT int CALL_CONV LMS_SetNCOPhase(lms_device_t* device, bool dir_tx, size
  * @param       dir_tx    Select RX or TX
  * @param       chan      channel index
  * @param[out]  phases    List of configured NCO phases
- *                        Must be at least ::LMS_NCO_VAL_COUNT length;
+ *                        Must be at least LMS_NCO_VAL_COUNT length;
  * @param[out]  fcw       Current NCO frequency
  *
  * @return      0 on success, (-1) on failure

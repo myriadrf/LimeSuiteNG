@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "limesuiteng/SDRDescriptor.h"
+
 #include <cassert>
 #include <cstring>
 #include <filesystem>
@@ -7,6 +9,7 @@
 
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 
 static int32_t FindChipSelectByName(SDRDevice* device, const std::string_view chipName)
 {

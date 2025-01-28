@@ -14,7 +14,7 @@
     #include <poll.h>
     #include <sys/mman.h>
     #include <sys/ioctl.h>
-    #include "linux-kernel-module/limepcie.h"
+    #include "drivers/linux/limepcie/limepcie.h"
 #endif
 
 using namespace std::literals::string_literals;
@@ -142,7 +142,15 @@ OpStatus LimePCIeDMA::EnableContinuous(bool enabled, uint32_t maxTransferSize, u
 
     int ret = ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_DMA_CONTROL_CONTINUOUS, &args);
     if (ret < 0)
-        return ReportError(OpStatus::IOFailure, "Failed DMA Enable continuous ioctl. errno(%i) %s", errno, strerror(errno));
+    {
+        switch (ret)
+        {
+        case EBUSY:
+            return ReportError(OpStatus::Busy, "DMA is already enabled. errno(%i) %s", errno, strerror(errno));
+        default:
+            return ReportError(OpStatus::IOFailure, "Failed DMA Enable continuous ioctl. errno(%i) %s", errno, strerror(errno));
+        }
+    }
     return OpStatus::Success;
 }
 

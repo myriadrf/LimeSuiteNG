@@ -13,6 +13,9 @@ namespace lime {
 FPGA_XTRX::FPGA_XTRX(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : FPGA(fpgaSPI, lms7002mSPI)
 {
+    GatewareFeatures f;
+    f.hasConfigurableStreamPacketSize = true;
+    SetFeatures(f);
 }
 
 OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPhase, double rxPhase, int chipIndex)
@@ -45,7 +48,10 @@ OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double 
 
 OpStatus FPGA_XTRX::EnableDirectClocking(bool enabled)
 {
-    if (enabled && (mGatewareVersion <= 1 && mGatewareRevision < 15))
+    const bool isFairwavesRev5 = mHardwareVersion == 0;
+    const bool noDirectClocking =
+        mGatewareVersion == 1 && ((isFairwavesRev5 && mGatewareRevision < 4) || (!isFairwavesRev5 && mGatewareRevision < 15));
+    if (enabled && noDirectClocking)
     {
         return ReportError(
             OpStatus::NotSupported, "FPGA_XTRX: current gateware does not support sample rates <5 MHz, please update gateware."s);

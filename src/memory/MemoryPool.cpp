@@ -1,5 +1,6 @@
 #include "MemoryPool.h"
 
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -22,19 +23,24 @@ MemoryPool::MemoryPool(int blockCount, int blockSize, int alignment, const std::
     , freeCnt(0)
     , mBlockSize(blockSize)
 {
+
+    // Round up block size to be multiple of alignment.
+    // If this condition is violated, depending on compiler version can result in undefined behaviour.
+    // MacOS failed to perform allocation. Linux/Win worked without problems.
+    const int blockAllocatedSize = std::ceil(static_cast<float>(blockSize) / alignment) * alignment;
     for (int i = 0; i < blockCount; ++i)
     {
 #if __unix__
-        void* ptr = std::aligned_alloc(alignment, blockSize);
+        void* ptr = std::aligned_alloc(alignment, blockAllocatedSize);
 #else
-        void* ptr = _aligned_malloc(blockSize, alignment);
+        void* ptr = _aligned_malloc(blockAllocatedSize, alignment);
 #endif
         if (!ptr)
         {
-            throw std::runtime_error("Failed to allocate memory"s);
+            throw std::runtime_error("Failed to aligned_alloc memory"s);
         }
 
-        std::memset(ptr, 0, blockSize);
+        std::memset(ptr, 0, blockAllocatedSize);
         mFreeBlocks.push(ptr);
         ownedAddresses.insert(ptr);
     }
@@ -49,7 +55,7 @@ MemoryPool::~MemoryPool()
     {
         void* ptr = mFreeBlocks.top();
 #ifdef __unix__
-        free(ptr);
+        std::free(ptr);
 #else
         _aligned_free(ptr);
 #endif
@@ -58,7 +64,7 @@ MemoryPool::~MemoryPool()
     for (auto ptr : mUsedBlocks)
     {
 #ifdef __unix__
-        free(ptr);
+        std::free(ptr);
 #else
         _aligned_free(ptr);
 #endif

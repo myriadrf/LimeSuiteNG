@@ -12,6 +12,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/RFStream.h"
 #include "limesuiteng/complex.h"
 #include <array>
 
@@ -262,8 +263,10 @@ void fftviewer_frFFTviewer::OnUpdateStats(wxTimerEvent& event)
 
     StreamStats rxStats;
     StreamStats txStats;
-    const uint8_t chipIndex = lmsIndex;
-    device->StreamStatus(chipIndex, &rxStats, &txStats);
+    if (!stream)
+        return;
+
+    stream->StreamStatus(&rxStats, &txStats);
 
     float RxFilled = 100.0 * rxStats.FIFO.ratio();
     gaugeRxBuffer->SetValue(static_cast<int>(RxFilled));
@@ -424,26 +427,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
     config.linkFormat = fmt;
     const uint8_t chipIndex = pthis->lmsIndex;
 
-    try
-    {
-        pthis->device->StreamSetup(config, chipIndex);
-        pthis->device->StreamStart(chipIndex);
-    } catch (std::logic_error& e)
-    {
-        lime::error("%s", e.what());
-    } catch (std::runtime_error& e)
-    {
-        lime::error("%s", e.what());
-    }
-
-    // uint16_t regVal = 0;
-    // TODO:
-    // if (LMS_ReadFPGAReg(pthis->device, 0x0008, &regVal) == 0)
-    // {
-    //     wxCommandEvent* e = new wxCommandEvent(wxEVT_COMMAND_CHOICE_SELECTED);
-    //     e->SetInt((regVal&2) ? 0 : 1);
-    //     wxQueueEvent(pthis->cmbFmt, e);
-    // }
+    pthis->stream = pthis->device->StreamCreate(config, chipIndex);
+    pthis->stream->Start();
 
     pthis->mStreamRunning.store(true);
     StreamMeta txMeta{};
@@ -480,7 +465,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     while (pthis->stopProcessing.load() == false)
     {
         uint32_t samplesPopped;
-        samplesPopped = pthis->device->StreamRx(chipIndex, buffers, fftSize, &rxMeta);
+        samplesPopped = pthis->stream->StreamRx(buffers, fftSize, &rxMeta);
         if (samplesPopped <= 0)
             continue;
 
@@ -489,7 +474,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
         if (runTx)
         {
             txMeta.timestamp = rxTS + 1020 * 128;
-            pthis->device->StreamTx(chipIndex, buffers, fftSize, &txMeta);
+            pthis->stream->StreamTx(buffers, fftSize, &txMeta);
         }
 
         if (pthis->captureSamples.load())
@@ -557,8 +542,8 @@ void fftviewer_frFFTviewer::StreamingLoop(
     }
 
     pthis->stopProcessing.store(true);
-    pthis->device->StreamStop(chipIndex);
-    pthis->device->StreamDestroy(chipIndex);
+    pthis->stream->Stop();
+    pthis->stream.reset();
 
     for (uint8_t i = 0; i < channelsCount; ++i)
         delete[] buffers[i];

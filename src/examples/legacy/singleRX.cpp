@@ -6,9 +6,6 @@
 #include "lime/LimeSuite.h"
 #include <iostream>
 #include <chrono>
-#ifdef USE_GNU_PLOT
-    #include "gnuPlotPipe.h"
-#endif
 
 using namespace std;
 
@@ -152,35 +149,25 @@ int main(int argc, char** argv)
         error();
 
     //Data buffers
-    const int bufersize = 10000; //complex samples per buffer
-    float buffer[bufersize * 2]; //must hold I+Q values of each sample
+    const int buffersize = 10000; //complex samples per buffer
+    float buffer[buffersize * 2]; //must hold I+Q values of each sample
     //Start streaming
     LMS_StartStream(&streamId);
 
-#ifdef USE_GNU_PLOT
-    GNUPlotPipe gp;
-    gp.write("set size square\n set xrange[-1:1]\n set yrange[-1:1]\n");
-#endif
     auto t1 = chrono::high_resolution_clock::now();
     auto t2 = t1;
 
     while (chrono::high_resolution_clock::now() - t1 < chrono::seconds(10)) //run for 10 seconds
     {
-        int samplesRead;
         //Receive samples
-        samplesRead = LMS_RecvStream(&streamId, buffer, bufersize, NULL, 1000);
+        int samplesRead = LMS_RecvStream(&streamId, buffer, buffersize, NULL, 1000);
+        if (samplesRead != buffersize)
+            printf("Read only %i out of %i requested samples\n", samplesRead, buffersize);
         //I and Q samples are interleaved in buffer: IQIQIQ...
         /*
-		INSERT CODE FOR PROCESSING RECEIVED SAMPLES
-	*/
-        //Plot samples
-#ifdef USE_GNU_PLOT
-        gp.write("plot '-' with points\n");
-        for (int j = 0; j < samplesRead; ++j)
-            gp.writef("%f %f\n", buffer[2 * j], buffer[2 * j + 1]);
-        gp.write("e\n");
-        gp.flush();
-#endif
+        INSERT CODE FOR PROCESSING RECEIVED SAMPLES
+        */
+
         //Print stats (once per second)
         if (chrono::high_resolution_clock::now() - t2 > chrono::seconds(1))
         {

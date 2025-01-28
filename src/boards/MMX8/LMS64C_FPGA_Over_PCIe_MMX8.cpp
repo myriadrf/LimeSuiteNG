@@ -32,16 +32,16 @@ OpStatus LMS64C_FPGA_Over_PCIe_MMX8::CustomParameterRead(std::vector<CustomParam
 OpStatus LMS64C_FPGA_Over_PCIe_MMX8::ProgramWrite(
     const char* data, size_t length, int prog_mode, int target, ProgressCallback callback)
 {
-    return LMS64CProtocol::ProgramWrite(
-        pipe, data, length, prog_mode, static_cast<LMS64CProtocol::ProgramWriteTarget>(target), callback, subdeviceIndex);
+    return LMS64CProtocol::FirmwareWrite(
+        pipe, data, length, prog_mode, static_cast<LMS64CProtocol::ALTERA_FPGA_GW_WR_targets>(target), callback, subdeviceIndex);
 }
 
 OpStatus LMS64C_FPGA_Over_PCIe_MMX8::MemoryWrite(uint32_t address, const void* data, uint32_t dataLength)
 {
-    return LMS64CProtocol::MemoryWrite(pipe, address, data, dataLength, subdeviceIndex);
+    return LMS64CProtocol::MemoryWrite(pipe, LMS64CProtocol::MEMORY_WR_targets::EEPROM, address, data, dataLength, subdeviceIndex);
 }
 
 OpStatus LMS64C_FPGA_Over_PCIe_MMX8::MemoryRead(uint32_t address, void* data, uint32_t dataLength)
 {
-    return LMS64CProtocol::MemoryRead(pipe, address, data, dataLength, subdeviceIndex);
+    return LMS64CProtocol::MemoryRead(pipe, LMS64CProtocol::MEMORY_WR_targets::EEPROM, address, data, dataLength, subdeviceIndex);
 }

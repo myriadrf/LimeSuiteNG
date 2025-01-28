@@ -1,6 +1,8 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 #include "LMS7002MCSR_Data.h"
+#include <algorithm>
+#include <cmath>
 
 using namespace lime;
 using namespace lime::LMS7002MCSR_Data;
@@ -9,7 +11,7 @@ using namespace std::literals::string_literals;
 OpStatus LMS7002M::CalibrateTxGainSetup()
 {
     OpStatus status;
-    int ch = Get_SPI_Reg_bits(LMS7002MCSR::MAC);
+    int mac = Get_SPI_Reg_bits(LMS7002MCSR::MAC);
 
     uint16_t value = SPI_read(0x0020);
     if ((value & 3) == 1)
@@ -25,10 +27,12 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::AGC_AVG_RXTSP, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_RXTSP, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::AGC_BYP_RXTSP, 0);
 
     //TBB
     Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::LOOPB_TBB, 3);
+    Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 0);
 
     //RFE
     Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, 0);
@@ -41,6 +45,8 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, 12);
     Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, 23);
 
+    Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 0);
+
     //TRF
     Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, 0);
 
@@ -48,7 +54,14 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     const int isel_dac_afe = Get_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE);
     SetDefaults(MemorySection::AFE);
     Modify_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE, isel_dac_afe);
-    if (ch == 2)
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_AFE, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_AFE, 1);
+    if (mac == 1)
+    {
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE1, 0);
+        Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE1, 0);
+    }
+    else if (mac == 2)
     {
         Modify_SPI_Reg_bits(LMS7002MCSR::PD_RX_AFE2, 0);
         Modify_SPI_Reg_bits(LMS7002MCSR::PD_TX_AFE2, 0);
@@ -67,7 +80,11 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
 
     //CGEN
     SetDefaults(MemorySection::CGEN);
+    // Don't trigger FPGA interface update, samples streaming is not required for this calibration, and because it would have to be restored.
+    // After calibration, CGEN registers will be restored manually, that won't trigger FPGA update.
+    skipExternalDataInterfaceUpdate = true;
     status = SetFrequencyCGEN(61.44e6);
+    skipExternalDataInterfaceUpdate = false;
     if (status != OpStatus::Success)
         return status;
 
@@ -75,7 +92,7 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
     Modify_SPI_Reg_bits(LMS7002MCSR::PD_VCO, 1);
 
-    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, ch);
+    Modify_SPI_Reg_bits(LMS7002MCSR::MAC, mac);
 
     //TxTSP
     const int isinc = Get_SPI_Reg_bits(LMS7002MCSR::ISINC_BYP_TXTSP);
@@ -97,8 +114,18 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
         tsgValue = 0x7FFF;
     LoadDC_REG_IQ(TRXDir::Tx, tsgValue, tsgValue);
     SetNCOFrequency(TRXDir::Tx, 0, 0.5e6);
+    Modify_SPI_Reg_bits(LMS7002MCSR::CMIX_BYP_TXTSP, 0);
 
     return OpStatus::Success;
+}
+
+///APPROXIMATE conversion
+static constexpr uint32_t maxRSSI = 0x10669;
+static float chip_rssi_to_dbfs(uint32_t rssi)
+{
+    if (rssi == 0)
+        rssi = 1;
+    return 20 * log10(float(rssi) / maxRSSI);
 }
 
 OpStatus LMS7002M::CalibrateTxGain()
@@ -109,26 +136,43 @@ OpStatus LMS7002M::CalibrateTxGain()
         return OpStatus::IOFailure;
     }
     OpStatus status;
-    int cg_iamp = 0;
+    int cg_iamp = 1;
     auto registersBackup = BackupRegisterMap();
     status = CalibrateTxGainSetup();
     if (status == OpStatus::Success)
     {
-        cg_iamp = Get_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB);
-        while (GetRSSI() < 0x7FFF)
+        lime::debug("Calibrating CG_IAMP_TBB:"s);
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+        uint32_t previousRSSI = GetRSSI();
+        lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, previousRSSI, chip_rssi_to_dbfs(previousRSSI));
+
+        while (GetRSSI() < 0xFD00)
         {
-            if (++cg_iamp > 63)
+            ++cg_iamp;
+            if (cg_iamp > 63)
                 break;
+
             Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+            const uint32_t rssi = GetRSSI();
+            lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, rssi, chip_rssi_to_dbfs(rssi));
+            if (rssi < previousRSSI)
+            {
+                // drop in RSSI indicates oversaturation
+                --cg_iamp;
+                break;
+            }
+            previousRSSI = rssi;
         }
     }
     RestoreRegisterMap(registersBackup);
 
     int ind = GetActiveChannelIndex() % 2;
-    opt_gain_tbb[ind] = cg_iamp > 1 ? cg_iamp - 1 : 1;
 
     if (status == OpStatus::Success)
-        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, opt_gain_tbb[ind]);
+    {
+        opt_gain_tbb[ind] = std::clamp(cg_iamp, 1, 63); // can't allow opt_gain_tbb to be 0, it's used in division
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+    }
     //logic reset
     Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_A, 0);
     Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_B, 0);

@@ -15,7 +15,7 @@
 #include <ciso646>
 
 using namespace std;
-using namespace lime;
+using namespace std::literals::string_literals;
 using namespace lime;
 
 BEGIN_EVENT_TABLE(pnlXTRX, wxPanel)

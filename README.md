@@ -32,14 +32,33 @@ sudo ldconfig
 ```
 
 * Installing from packages:
-**TODO**
+
+#### apt:
+Install the GPG key:
+```
+wget -qO - https://repo.myriadrf.org/lime-microsystems-public.gpg | gpg --dearmor | sudo tee /etc/apt/keyrings/lime-microsystems-public.gpg > /dev/null
+```
+
+Add source for your distribution:
+```
+echo "deb [signed-by=/etc/apt/keyrings/lime-microsystems-public.gpg] https://repo.myriadrf.org/apt stable main" | sudo tee /etc/apt/sources.list.d/repo.myriadrf.org.list
+```
+
+Update apt sources and install limesuiteng:
+```
+sudo apt-get update
+sudo apt-get install limesuiteng
+```
 
 ### Windows:
 ```
 git clone https://github.com/myriadrf/LimeSuiteNG
 cd LimeSuiteNG
 cmake -B build
-cmake --build build
+cmake --build build --config Release
+
+Optionally can be installed into system, installation requires to be ran with Administrative privileges
+cmake --install build --config Release
 ```
 
 ## Documentation

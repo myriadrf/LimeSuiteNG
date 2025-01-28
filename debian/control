@@ -1,98 +1,115 @@
 Source: limesuiteng
 Section: comm
 Priority: optional
-Maintainer: Lime Microsystems <info@limemicro.com>
+Maintainer: Lime Microsystems <apps@limemicro.com>
 Build-Depends:
+    dkms | dh-dkms,
+    dh-python,
+    build-essential,
+    gnuradio-dev,
+    libsoapysdr-dev,
     debhelper-compat (= 13),
-    cmake (>= 3.14),
+    cmake (>= 3.15),
     libusb-1.0-0-dev,
-    libwxgtk3.0-dev | libwxgtk3.0-gtk3-dev | libwxgtk3.2-dev,
+    libglew-dev,
+    libwxgtk3.0-dev | libwxgtk3.0-gtk3-dev | libwxgtk3.2-dev
 Standards-Version: 4.1.1
-Homepage: https://myriadrf.org/projects/lime-suite/
+Homepage: https://discourse.myriadrf.org/
 Vcs-Git: https://github.com/myriadrf/LimeSuiteNG.git
 Vcs-Browser: https://github.com/myriadrf/LimeSuiteNG.git
+
+Package: limesuiteng
+Section: comm
+Architecture: any
+Depends:
+    liblimesuiteng,
+    limesuiteng-cli,
+Recommends:
+    limesuiteng-gui,
+    gr-limesuiteng,
+    limesuiteng-soapysdr
+Description: metapackage for installing all LimeSuiteNG components.
+ This package installs all LimeSuiteNG available components
 
 Package: liblimesuiteng
 Section: libs
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: limesuite-udev, limesuite-images
-Description: Lime Suite NG - shared library
- Lime Suite NG application software.
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+Recommends:
+    limesuiteng-udev,
+    limepcie-dkms
+Description: runtime shared libraries.
+ Core of the LimeSuiteNG runtime
 
-Package: liblimesuiteng-dev
+Package: limesuiteng-legacyapi
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+Description: Legacy LimeSuite API wrapper over LimeSuiteNG
+ Provides legacy LimeSuite C API wrapper for LimeSuiteNG library
+
+Package: limesuiteng-dev
 Section: libdevel
 Architecture: any
 Depends:
-    liblimesuiteng (= ${binary:Version}),
-    ${misc:Depends}
-Description: Lime Suite NG - development files
- Lime Suite NG application software.
+    liblimesuiteng
+Description: headers and development files.
 
-Package: limesuiteng
+Package: limesuiteng-cli
 Section: comm
 Architecture: any
 Depends:
-    liblimesuiteng (= ${binary:Version}),
     ${shlibs:Depends},
     ${misc:Depends},
-    xdg-utils
-Description: Lime Suite NG - Library applications
- Lime Suite NG application software.
+Description: command line interface tools.
 
-Package: limesuite-udev
-Section: libs
+Package: limesuiteng-gui
+Section: comm
 Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, udev
-Description: Lime Suite NG - USB rules for udev
- Lime Suite NG application software.
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+Description: Graphical User Interface for LimeSDR based devices.
 
-Package: limesuiteng-images
-Section: libs
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, wget
-Description: Lime Suite NG - Install firmware and gateware images
- Lime Suite NG application software.
- .
- This is dummy package that downloads the images from the web.
-
-Package: limesuite-images
-Section: libs
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, limesuiteng-images
-Description: Lime Suite NG - Install firmware and gateware images
- Lime Suite NG application software.
- .
- This is an empty dependency package that pulls in the images
- for the default version of Lime Suite NG.
-
-Package: limesuiteng-limepcie-kernel-module-dkms
-Section: libs
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, dkms
-Description: Lime Suite NG LimePCIe kernel driver.
-
-Package: soapysdr-module-limesuiteng
+Package: limesuiteng-udev
 Section: libs
 Architecture: all
-Pre-Depends: ${misc:Pre-Depends}
-Depends: soapysdr0.8-module-limesuiteng, ${misc:Depends}
-Description: Lime Suite NG - SoapySDR bindings metapackage
- Lime Suite NG application software.
+Depends: udev
+Description: UDEV rules for LimeSuiteNG devices.
 
-Package: soapysdr0.8-module-limesuiteng
+Package: limepcie-dkms
 Section: comm
 Architecture: any
 Multi-Arch: same
 Depends:
-    liblimesuiteng (= ${binary:Version}),
-    ${shlibs:Depends},
     ${misc:Depends}
-Description: Lime Suite NG - SoapySDR bindings
- Lime Suite NG application software.
+Description: PCIe driver for LimeSDR based devices.
+
+Package: gr-limesuiteng
+Section: comm
+Architecture: any
+Multi-Arch: same
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+Enhances:
+    gnuradio
+Description: GNU Radio plugin of LimeSDR devices
+
+Package: limesuiteng-soapysdr
+Section: comm
+Architecture: any
+Multi-Arch: same
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+Enhances:
+    libsoapysdr0.8
+Description: bindings for SoapySDR

@@ -67,6 +67,6 @@ class LIME_API DeviceHandle
 
 } // namespace lime
 //! Check two connection handles for equality
-bool operator==(const lime::DeviceHandle& lhs, const lime::DeviceHandle& rhs);
+bool LIME_API operator==(const lime::DeviceHandle& lhs, const lime::DeviceHandle& rhs);
 
 #endif

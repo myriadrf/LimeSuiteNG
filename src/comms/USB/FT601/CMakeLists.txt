@@ -1,6 +1,7 @@
 if(WIN32)
+    file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/external/FTD3XXLibrary.zip DESTINATION ${FETCHCONTENT_BASE_DIR}/)
     set(FTDI_FOUND TRUE)
-    set(FTDI_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/external/FTD3XXLibrary)
+    set(FTDI_INCLUDE_DIRS ${FETCHCONTENT_BASE_DIR}/FTD3XXLibrary)
 
     #library directory based on x64 vs x86
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -30,9 +31,9 @@ endif()
 
 include(FeatureSummary)
 include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_USB_FTDI "Enable FT601" ON "FTDI_FOUND OR LIBUSB_1_FOUND" OFF)
-add_feature_info(USB_FTDI ENABLE_USB_FTDI "USB support for FTDI")
-if(NOT ENABLE_USB_FTDI)
+cmake_dependent_option(LIMESUITENG_USB_FTDI "Enable FT601" ON "FTDI_FOUND OR LIBUSB_1_FOUND" OFF)
+add_feature_info("LIMESUITENG_USB_FTDI" LIMESUITENG_USB_FTDI "USB support for FTDI")
+if(NOT LIMESUITENG_USB_FTDI)
     return()
 endif()
 

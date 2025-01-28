@@ -1,3 +1,8 @@
+Release 0.3.0 ()
+
+- Added RFStream interface, deprecated SDRDevice::Stream* functions
+- Split legacy LMS_API wrapper into separate 'limesuiteng-legacyapi' library
+
 Release 0.2.0 ()
 
 - Switched to new PCIe driver

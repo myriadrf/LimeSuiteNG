@@ -1,6 +1,9 @@
 #include "common.h"
+
+#include "limesuiteng/SDRDescriptor.h"
+
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/StreamComposite.h"
+#include "streaming/StreamComposite.h"
 #include <iostream>
 #include <chrono>
 #include <cmath>
@@ -18,6 +21,7 @@
 #endif
 
 using namespace lime;
+using namespace lime::cli;
 using namespace std;
 
 std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concurrently
@@ -27,29 +31,6 @@ void intHandler(int dummy)
 {
     //std::cerr << "Stopping\n"sv;
     stopProgram = true;
-}
-
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
-{
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    cerr << msg << endl;
 }
 
 #ifdef USE_GNU_PLOT
@@ -213,7 +194,7 @@ class ConstellationPlotter
             plot.write("plot '-' with points\n");
             const int samplesCount = samples.size();
             for (int j = 0; j < samplesCount; ++j)
-                plot.writef("%i %i\n", samples[j].i, samples[j].q);
+                plot.writef("%i %i\n", samples[j].real(), samples[j].imag());
             plot.write("e\n");
             plot.flush();
         }
@@ -227,14 +208,6 @@ class ConstellationPlotter
     bool doWork; ///< Whether to continue plotting or not
 };
 #endif
-
-static std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
-{
-    std::vector<int> numbers;
-    for (const auto& number : args::get(flag))
-        numbers.push_back(number);
-    return numbers;
-}
 
 int main(int argc, char** argv)
 {
@@ -300,10 +273,7 @@ int main(int argc, char** argv)
 
     std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
-    StreamComposite* composite = nullptr;
     logVerbosity = strToLogLevel(args::get(logFlag));
-    int chipIndex = 0;
-    bool useComposite = false;
 
     DataFormat linkFormat = DataFormat::I12;
     if (linkFormatFlag)
@@ -331,72 +301,76 @@ int main(int argc, char** argv)
     if (!device)
         return EXIT_FAILURE;
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
 
     // if chip index is not specified and device has only one, use it by default
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
-    try
+    int rx_require = rx ? channelCount : 0;
+    int tx_require = tx ? channelCount : 0;
+
+    // Samples data streaming configuration
+    StreamConfig streamCfg;
+    streamCfg.format = DataFormat::I16;
+    streamCfg.linkFormat = linkFormat;
+
+    if (syncPPS || rxSamplesInPacket || rxPacketsInBatch || txSamplesInPacket || txPacketsInBatch)
     {
-        // Samples data streaming configuration
-        StreamConfig stream;
-        for (int i = 0; rx && i < channelCount; ++i)
-        {
-            stream.channels.at(TRXDir::Rx).push_back(i);
-        }
+        streamCfg.extraConfig.waitPPS = syncPPS;
+        streamCfg.extraConfig.rx.samplesInPacket = rxSamplesInPacket;
+        streamCfg.extraConfig.tx.samplesInPacket = txSamplesInPacket;
+        streamCfg.extraConfig.rx.packetsInBatch = rxPacketsInBatch;
+        streamCfg.extraConfig.tx.packetsInBatch = txPacketsInBatch;
+    }
 
-        for (int i = 0; tx && i < channelCount; ++i)
-        {
-            stream.channels.at(TRXDir::Tx).push_back(i);
-        }
+    std::unique_ptr<StreamComposite> stream = std::make_unique<StreamComposite>();
+    for (size_t index : chipIndexes)
+    {
+        if (rx_require == 0 && tx_require == 0)
+            break;
 
-        stream.format = DataFormat::I16;
-        stream.linkFormat = linkFormat;
+        streamCfg.channels.at(TRXDir::Rx).clear();
+        streamCfg.channels.at(TRXDir::Tx).clear();
 
-        if (syncPPS || rxSamplesInPacket || rxPacketsInBatch || txSamplesInPacket || txPacketsInBatch)
+        const int deviceChannelCount = device->GetDescriptor().rfSOC[index].channelCount;
+        for (int j = 0; j < deviceChannelCount; ++j)
         {
-            stream.extraConfig.waitPPS = syncPPS;
-            stream.extraConfig.rx.samplesInPacket = rxSamplesInPacket;
-            stream.extraConfig.tx.samplesInPacket = txSamplesInPacket;
-            stream.extraConfig.rx.packetsInBatch = rxPacketsInBatch;
-            stream.extraConfig.tx.packetsInBatch = txPacketsInBatch;
-        }
-
-        useComposite = chipIndexes.size() > 1;
-        if (useComposite)
-        {
-            std::vector<StreamAggregate> aggregates(chipIndexes.size());
-            for (size_t i = 0; i < chipIndexes.size(); ++i)
+            if (rx)
+                streamCfg.channels.at(TRXDir::Rx).push_back(j);
+            if (tx)
+                streamCfg.channels.at(TRXDir::Tx).push_back(j);
+            if (rx_require > 0)
             {
-                aggregates[i].device = device;
-                aggregates[i].streamIndex = chipIndexes[i];
-                int deviceChannelCount = device->GetDescriptor().rfSOC[chipIndexes[i]].channelCount;
-                for (int j = 0; j < deviceChannelCount; ++j)
-                    aggregates[i].channels.push_back(j);
+                streamCfg.channels.at(TRXDir::Rx).push_back(j);
+                --rx_require;
             }
-            composite = new StreamComposite(std::move(aggregates));
-            composite->StreamSetup(stream);
-        }
-        else
-        {
-            chipIndex = chipIndexes.empty() ? 0 : chipIndexes[0];
-            OpStatus status = device->StreamSetup(stream, chipIndex);
-            if (status != OpStatus::Success)
+            if (tx_require > 0)
             {
-                cerr << "Failed to setup data stream.\n";
-                return EXIT_FAILURE;
+                streamCfg.channels.at(TRXDir::Tx).push_back(j);
+                --tx_require;
             }
         }
-    } catch (std::runtime_error& e)
+
+        stream->Add(device->StreamCreate(streamCfg, index));
+    }
+
+    streamCfg.channels.at(TRXDir::Rx).clear();
+    for (int i = 0; rx && i < rx_require; ++i)
+        streamCfg.channels.at(TRXDir::Rx).push_back(i);
+
+    streamCfg.channels.at(TRXDir::Tx).clear();
+    for (int i = 0; tx && i < tx_require; ++i)
+        streamCfg.channels.at(TRXDir::Tx).push_back(i);
+
+    OpStatus status = stream->Setup(streamCfg);
+    if (status != OpStatus::Success)
     {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
-    } catch (std::logic_error& e)
-    {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
+        cerr << "Failed to setup streams" << endl;
+        stream.reset();
+        DeviceRegistry::freeDevice(device);
+        return EXIT_FAILURE;
     }
 
     signal(SIGINT, intHandler);
@@ -443,7 +417,7 @@ int main(int argc, char** argv)
 
     float peakAmplitude = 0;
     float peakFrequency = 0;
-    float sampleRate = device->GetSampleRate(chipIndex, TRXDir::Rx, 0);
+    float sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
     if (sampleRate <= 0)
         sampleRate = 1; // sample rate read-back not available, assign default value
     float frequencyLO = 0;
@@ -466,10 +440,8 @@ int main(int argc, char** argv)
     if (showConstellation)
         constellationPlot.Start();
 #endif
-    if (useComposite)
-        composite->StreamStart();
-    else
-        device->StreamStart(chipIndex);
+    stream->StageStart();
+    stream->Start();
 
     auto startTime = std::chrono::high_resolution_clock::now();
     auto t1 = startTime - std::chrono::seconds(2); // rewind t1 to do update on first loop
@@ -495,8 +467,7 @@ int main(int argc, char** argv)
                 const complex16_t* txSamples[16];
                 for (int i = 0; i < 16; ++i)
                     txSamples[i] = &txData[txSent];
-                uint32_t samplesSent = useComposite ? composite->StreamTx(txSamples, toSend, &txMeta)
-                                                    : device->StreamTx(chipIndex, txSamples, toSend, &txMeta);
+                uint32_t samplesSent = stream->StreamTx(txSamples, toSend, &txMeta);
                 if (samplesSent > 0)
                 {
                     txSent += samplesSent;
@@ -508,8 +479,7 @@ int main(int argc, char** argv)
         complex16_t* rxSamples[16];
         for (int i = 0; i < 16; ++i)
             rxSamples[i] = rxData[i].data();
-        uint32_t samplesRead = useComposite ? composite->StreamRx(rxSamples, fftSize, &rxMeta)
-                                            : device->StreamRx(chipIndex, rxSamples, fftSize, &rxMeta);
+        uint32_t samplesRead = stream->StreamRx(rxSamples, fftSize, &rxMeta);
         if (samplesRead == 0)
             continue;
 
@@ -518,10 +488,7 @@ int main(int argc, char** argv)
             txMeta.timestamp = rxMeta.timestamp + samplesRead + repeaterDelay;
             txMeta.waitForTimestamp = true;
             txMeta.flushPartialPacket = true;
-            if (useComposite)
-                composite->StreamTx(rxSamples, samplesRead, &txMeta);
-            else
-                device->StreamTx(chipIndex, rxSamples, samplesRead, &txMeta);
+            stream->StreamTx(rxSamples, samplesRead, &txMeta);
         }
 
         // process samples
@@ -587,16 +554,8 @@ int main(int argc, char** argv)
     // some sleep for GNU plot data to flush, otherwise sometimes cout spams  gnuplot "invalid command"
     this_thread::sleep_for(std::chrono::milliseconds(500));
 #endif
-    if (useComposite)
-        composite->StreamStop();
-    else
-    {
-        device->StreamStop(chipIndex);
-        device->StreamDestroy(chipIndex);
-    }
-
-    if (composite)
-        delete composite;
+    stream->Stop();
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 
     rxFile.close();

@@ -16,7 +16,6 @@
 #include "chips/CDCM6208/CDCM6208_wxgui.h"
 #include "LMS_Programming/LMS_Programming_wxgui.h"
 #include "utility/pnlMiniLog.h"
-#include "FPGAcontrols_wxgui.h"
 #include "utility/SPI_wxgui.h"
 #include <wx/string.h>
 #include "utility/dlgDeviceInfo.h"
@@ -372,6 +371,8 @@ void limeGUIFrame::OnDeviceHandleChange(wxCommandEvent& event)
             return;
         }
 
+        lmsControl->SetMessageLogCallback(&limeGUIFrame::OnGlobalLogEvent);
+
         //bind callback for spi data logging
         const SDRDescriptor& info = lmsControl->GetDescriptor();
         wxString controlDev = _("Device: ");
@@ -478,7 +479,7 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
         return sdrPanel;
     }
     default:
-        lime::warning("Unrecognized device class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));
+        // lime::warning("No GUI available for this device node class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));
         return nullptr;
     }
 }

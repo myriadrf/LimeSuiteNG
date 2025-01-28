@@ -108,12 +108,36 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     void StreamStop(uint8_t moduleIndex) override;
     void StreamDestroy(uint8_t moduleIndex) override;
 
-    uint32_t StreamRx(uint8_t moduleIndex, complex32f_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, complex16_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamRx(uint8_t moduleIndex, complex12_t* const* samples, uint32_t count, StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex32f_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex16_t* const* samples, uint32_t count, const StreamMeta* meta) override;
-    uint32_t StreamTx(uint8_t moduleIndex, const complex12_t* const* samples, uint32_t count, const StreamMeta* meta) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex32f_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex16_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(uint8_t moduleIndex,
+        complex12_t* const* samples,
+        uint32_t count,
+        StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex32f_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex16_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(uint8_t moduleIndex,
+        const complex12_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
     void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     void SetMessageLogCallback(LogCallbackType callback) override;
@@ -130,6 +154,8 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     static OpStatus UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& fpga, uint8_t chipIndex);
     static void SetGainInformationInDescriptor(RFSOCDescriptor& descriptor);
 
+    OpStatus LMS7002M_Configure(LMS7002M& chip, const SDRConfig& config);
+    OpStatus LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     OpStatus LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& config);
     OpStatus LMS7002ChannelConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
     OpStatus LMS7002ChannelCalibration(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
@@ -138,7 +164,7 @@ class LIME_API LMS7002M_SDRDevice : public SDRDevice
     LogCallbackType mCallback_logMessage;
     std::vector<std::unique_ptr<LMS7002M>> mLMSChips;
     std::unique_ptr<FPGA> mFPGA;
-    std::vector<std::unique_ptr<TRXLooper>> mStreamers;
+    std::vector<std::unique_ptr<RFStream>> mStreamers;
 
     SDRDescriptor mDeviceDescriptor;
 

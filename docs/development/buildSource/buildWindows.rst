@@ -21,8 +21,8 @@ In the root directory of the repository run these commands:
 
 .. code-block:: bash
 
-  cmake .. -B build
-  cmake --build build
+  cmake -B build
+  cmake --build build --config Release
 
 After a successful compilation the resulting binaries are placed in the ``build/bin/`` directory
 located in the root directory of the repository.
@@ -30,11 +30,13 @@ located in the root directory of the repository.
 Installing the built software
 -----------------------------
 
-Continuing on from the previous command block, in the ``build`` folder, execute:
+Optionally can be installed into system, installation requires to be ran with Administrative privileges.
+
+Continuing on from the previous command block, execute:
 
 .. code-block:: bash
 
-    cmake build . --target install
+    cmake --install build --config Release
 
 .. _`CMake`: https://cmake.org/
 .. _`wxWidgets`: https://www.wxwidgets.org/

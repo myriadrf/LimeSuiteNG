@@ -1,0 +1,120 @@
+id: limesuiteng_sdrdevice_sink
+label: LimeSuiteNG Sink
+category: '[LimeSuiteNG]'
+flags: throttle
+
+file_format: 1
+
+parameters:
+- id: data_format
+  label: Type
+  dtype: enum
+  options: [fc32, sc16]
+  option_labels: [Complex Float32, Complex Int16]
+  option_attributes:
+    type: [fc32, sc16]
+    limeFormat: ["complex32f_t", "complex16_t"]
+  hide: part
+  category: General
+
+- id: custom_config_file
+  label: Custom config file
+  dtype: string
+  hide: ${'part' if not custom_config_file else 'none'}
+  category: General
+
+- id: deviceHandleHint
+  label: Device Handle
+  dtype: string
+  hide: ${'part' if not deviceHandleHint else 'none'}
+  category: General
+
+- id: chip_index
+  label: RFSOC index
+  dtype: int
+  default: 0
+  hide: all
+  category: General
+
+- id: rf_freq
+  label: LO Frequency
+  dtype: float
+  default: 100e6
+  category: General
+
+- id: sample_rate
+  label: Sample Rate
+  dtype: float
+  default: 10e6
+  category: General
+
+- id: rf_oversampling
+  label: RF Oversampling
+  dtype: enum
+  options: [auto, x1, x2, x4, x8, x16, x32]
+  # option_labels: [Complex Float32, Complex Int16, Complex Byte]
+  option_attributes:
+    value: [0, 1, 2, 4, 8, 16, 32]
+  category: General
+  hide: ${'part' if rf_oversampling.value==0 else 'none'}
+
+- id: nco_offset
+  label: NCO offset
+  dtype: float
+  default: 0
+  category: General
+  hide: ${'part' if nco_offset==0 else 'none'}
+
+- id: lpf
+  label: Low Pass Filter
+  dtype: float
+  default: 20e6
+  category: General
+  hide: ${'part' if not lpf else 'none'}
+
+- id: antenna
+  label: Antenna port
+  dtype: string
+  default: 'auto'
+  category: General
+  hide: ${'part' if antenna=='auto' else 'none'}
+
+- id: channel_indexes
+  label: Data channel indexes
+  dtype: int_vector
+  default: [0]
+  hide: part
+  category: General
+
+- id: gain_generic
+  label: Gain (dB)
+  dtype: float
+  default: 20
+  category: General
+  hide: none
+
+inputs:
+- label: in
+  domain: stream
+  dtype: ${ data_format.type }
+  multiplicity: ${ len(channel_indexes) }
+# must be connected
+  optional: false
+
+templates:
+  imports: from gnuradio import limesuiteng
+  make: |-
+    limesuiteng.sdrdevice_sink(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ data_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
+    self.${id}.set_lo_frequency(${rf_freq})
+    self.${id}.set_lpf_bandwidth(${lpf})
+    self.${id}.set_antenna(${antenna})
+    self.${id}.set_gain_generic(${gain_generic})
+    self.${id}.set_nco_frequency(${nco_offset})
+
+  callbacks:
+  - set_config_file(${custom_config_file})
+  - set_lo_frequency(${rf_freq})
+  - set_lpf_bandwidth(${lpf})
+  - set_antenna(${antenna})
+  - set_gain_generic(${gain_generic})
+  - set_nco_frequency(${nco_offset})

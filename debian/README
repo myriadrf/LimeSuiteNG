@@ -1,0 +1,4 @@
+each package has it's own changelog, to be able to have it's own versioning.
+But the name inside each changelog has to match the Source package name, otherwise dpkg-buildpackage will complain.
+
+all changelogs are set to UNRELEASED distribution codename, use set_debian_changelog_codenames.sh script to set to desired distribution.

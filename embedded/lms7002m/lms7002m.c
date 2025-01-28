@@ -25,6 +25,19 @@ void free(void* ptr);
     #include <string.h>
 #endif // __KERNEL__
 
+#ifndef NDEBUG // warn about unexpected conditions
+    #define EXPECT(context, condition) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                LMS7002M_LOG(self, lime_LogLevel_Error, "%s:%i Unmet expectation: (" #condition ")", __FILE__, __LINE__); \
+            } \
+        } while (0)
+#else
+    #define EXPECT(context, condition) // do nothing
+#endif
+
 static inline void* lms7002m_malloc(size_t size)
 {
 #ifdef __KERNEL__
@@ -632,7 +645,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const struct lms7002m
     enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, channel);
 
     const int32_t pmax = 52;
-    uint16_t loss_int = pmax - decibel_int(value);
+    int32_t loss_int = pmax - decibel_int(value);
 
     //different scaling realm
     if (loss_int > 10)
@@ -640,7 +653,7 @@ lime_Result lms7002m_set_trfpad_db(lms7002m_context* self, const struct lms7002m
         loss_int = (loss_int + 10) / 2;
     }
 
-    loss_int = clamp_uint(loss_int, 0, 31);
+    loss_int = clamp_int(loss_int, 0, 31);
 
     lime_Result ret;
     lms7002m_spi_modify_csr(self, LMS7002M_LOSS_LIN_TXPAD_TRF, loss_int);
@@ -1493,18 +1506,24 @@ lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, uint32_t cg
 
     // [dependency] GFIR*_N clock dividers depend on HBI, HBD
     // TODO: also affects GFIR*L, which affects coefficients ordering, see: lms7002m_set_gfir_coefficients
+    enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, LMS7002M_CHANNEL_A);
+    for (int mac = 1; mac <= 2; ++mac)
     {
-        uint8_t gfirN = (hbi == 7) ? 0 : (2 << hbi) - 1;
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_MAC, mac);
+        {
+            uint8_t gfirN = (hbi == 7) ? 0 : (2 << hbi) - 1;
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, gfirN);
+        }
+        {
+            uint8_t gfirN = (hbd == 7) ? 0 : (2 << hbd) - 1;
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, gfirN);
+        }
     }
-    {
-        uint8_t gfirN = (hbd == 7) ? 0 : (2 << hbd) - 1;
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, gfirN);
-    }
+    lms7002m_set_active_channel(self, savedChannel);
 
     return lms7002m_set_frequency_cgen(self, cgen_freq_Hz);
 }
@@ -1849,7 +1868,7 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
 
     if (rfBandwidth_Hz <= 0) // Bypass LPF
     {
-        LMS7002M_LOG(self, lime_LogLevel_Info, "%s: TxLPF bypassed.", __func__);
+        LMS7002M_LOG(self, lime_LogLevel_Debug, "%s: TxLPF bypassed.", __func__);
         lms7002m_spi_modify(self, 0x0105, 4, 0, powerDowns);
         lms7002m_spi_modify_csr(self, LMS7002M_BYPLADDER_TBB, 1);
         return lms7002m_spi_modify_csr(self, LMS7002M_RCAL_LPFS5_TBB, 0);
@@ -1973,6 +1992,7 @@ static uint16_t lms7002m_get_rssi_delay(lms7002m_context* self)
 
 uint32_t lms7002m_get_rssi(lms7002m_context* self)
 {
+    EXPECT(self, lms7002m_spi_read_csr(self, LMS7002M_AGC_BYP_RXTSP) == 0); // ensure AGC is enabled, otherwise RSSI value will be 0
     uint32_t rssi;
     int waitTime = 1000000 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
     lms7002m_sleep(waitTime);

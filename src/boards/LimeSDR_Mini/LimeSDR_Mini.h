@@ -1,8 +1,7 @@
 #ifndef LIME_LIMESDR_MINI_H
 #define LIME_LIMESDR_MINI_H
 
-#include "LMS7002M_SDRDevice.h"
-#include "protocols/LMS64CProtocol.h"
+#include "boards/LMS7002M_SDRDevice.h"
 
 #include <vector>
 #include <memory>
@@ -10,6 +9,7 @@
 namespace lime {
 
 class IComms;
+class ISerialPort;
 class IUSB;
 
 /** @brief Class for managing the LimeSDR Mini device. */
@@ -46,11 +46,17 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
+    OpStatus UploadMemory(
+        eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
+
     void SetSerialNumber(const std::string& number);
+    OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
+
+    std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;
 
   private:
-    SDRDescriptor GetDeviceInfo();
     static OpStatus UpdateFPGAInterface(void* userData);
+    OpStatus SetRFSwitch(TRXDir dir, uint8_t path);
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;

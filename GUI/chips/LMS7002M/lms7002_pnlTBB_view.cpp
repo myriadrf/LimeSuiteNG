@@ -619,17 +619,11 @@ void lms7002_pnlTBB_view::OnbtnTuneTxGain(wxCommandEvent& event)
 {
     double input1;
     txtFilterFrequency->GetValue().ToDouble(&input1);
-    // TODO:
-    /*uint16_t ch;
-    ReadParam(LMS7002MCSR::MAC,&ch);
-    LMS7002M* lms = ((Device*)lmsControl)->GetLMS();
-    int status = lms->CalibrateTxGain(0, nullptr);
-
-    if (status != 0)
+    OpStatus status = lmsControl->CalibrateTxGain();
+    if (status != OpStatus::Success)
     {
         wxMessageBox(wxString(_("Tx gain calibration failed")));
         return;
     }
-    LMS_Synchronize(lmsControl,false);
-    UpdateGUI();*/
+    UpdateGUI();
 }

@@ -6,7 +6,7 @@
 #include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
 #include "comms/PCIe/LimePCIe.h"
-#include "LMSBoards.h"
+#include "protocols/LMSBoards.h"
 #include "comms/PCIe/LMS64C_FPGA_Over_PCIe.h"
 #include "comms/PCIe/LMS64C_LMS7002M_Over_PCIe.h"
 #include "MMX8/LMS64C_ADF_Over_PCIe_MMX8.h"
@@ -16,11 +16,12 @@
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "boards/LimeSDR_X3/LimeSDR_X3.h"
 #include "boards/MMX8/MM_X8.h"
-#include "boards/external/XSDR/XSDR.h"
 
 #include <algorithm>
 
 using namespace lime;
+using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 void __loadDeviceFactoryPCIe(void) //TODO fixme replace with LoadLibrary/dlopen
 {
@@ -107,7 +108,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
     switch (fw.deviceId)
     {
     case LMS_DEV_LIMESDR_XTRX:
-        return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
+        return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
     case LMS_DEV_LIMESDR_X3:
         return new LimeSDR_X3(route_lms7002m, route_fpga, std::move(streamPorts), controlPipe);
     case LMS_DEV_LIMESDR_MMX8: {
@@ -124,8 +125,6 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
 
         return new LimeSDR_MMX8(controls, fpga, std::move(streamPorts), controlPipe, adfComms);
     }
-    case LMS_DEV_EXTERNAL_XSDR:
-        return new XSDR(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
     default:
         lime::ReportError(OpStatus::InvalidValue, "Unrecognized device ID (%i)", fw.deviceId);
         return nullptr;

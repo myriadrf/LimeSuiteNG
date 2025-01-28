@@ -15,7 +15,7 @@
 
 namespace lime {
 
-void DeviceConnectionPanel::EnumerateDevicesToChoice()
+void DeviceConnectionPanel::EnumerateDevicesToChoice(wxCommandEvent& inEvent)
 {
     wxChoice* choice = cmbDevHandle;
     choice->Clear();
@@ -64,16 +64,21 @@ DeviceConnectionPanel::DeviceConnectionPanel(wxWindow* parent, wxWindowID id, co
     cmbDevHandle->Disable();
     szBox->Add(cmbDevHandle, 0, wxEXPAND, 0);
 
+    btnEnumerate = new wxButton(this, wxNewId(), wxT("Refresh"));
+    szBox->Add(btnEnumerate);
+
     btnDisconnect = new wxButton(this, wxNewId(), wxT("Disconnect"));
     btnDisconnect->Disable();
     szBox->Add(btnDisconnect);
 
-    EnumerateDevicesToChoice();
+    wxCommandEvent refreshEvent;
+    EnumerateDevicesToChoice(refreshEvent);
 
     SetSizerAndFit(szBox);
 
     // when device choice changes generate CONNECT_DEVICE
     cmbDevHandle->Bind(wxEVT_CHOICE, wxCommandEventHandler(DeviceConnectionPanel::SendHandleChangeEvent), this);
+    btnEnumerate->Bind(wxEVT_BUTTON, wxCommandEventHandler(DeviceConnectionPanel::EnumerateDevicesToChoice), this);
     btnDisconnect->Bind(wxEVT_BUTTON, wxCommandEventHandler(DeviceConnectionPanel::SendDisconnectEvent), this);
 }
 

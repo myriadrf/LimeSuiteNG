@@ -6,9 +6,6 @@
 #include "lime/LimeSuite.h"
 #include <iostream>
 #include <chrono>
-#ifdef USE_GNU_PLOT
-    #include "gnuPlotPipe.h"
-#endif
 
 using namespace std;
 
@@ -150,10 +147,6 @@ int main(int argc, char** argv)
     tx_metadata.flushPartialPacket = false; //do not force sending of incomplete packet
     tx_metadata.waitForTimestamp = true; //Enable synchronization to HW timestamp
 
-#ifdef USE_GNU_PLOT
-    GNUPlotPipe gp;
-    gp.write("set size square\n set xrange[-2050:2050]\n set yrange[-2050:2050]\n");
-#endif
     auto t1 = chrono::high_resolution_clock::now();
     auto t2 = t1;
 
@@ -164,7 +157,9 @@ int main(int argc, char** argv)
             int samplesRead;
             //Receive samples
             samplesRead = LMS_RecvStream(&rx_streams[i], buffers[i], bufersize, &rx_metadata, 1000);
+
             //Send samples with 1024*256 sample delay from RX (waitForTimestamp is enabled)
+
             tx_metadata.timestamp = rx_metadata.timestamp + 1024 * 256;
             LMS_SendStream(&tx_streams[i], buffers[i], samplesRead, &tx_metadata, 1000);
         }
@@ -173,19 +168,7 @@ int main(int argc, char** argv)
         if (chrono::high_resolution_clock::now() - t2 > chrono::seconds(1))
         {
             t2 = chrono::high_resolution_clock::now();
-#ifdef USE_GNU_PLOT
-            //Plot samples
-            gp.write("plot '-' with points title 'ch 0'");
-            for (int i = 1; i < chCount; ++i)
-                gp.write(", '-' with points title 'ch 1'\n");
-            for (int i = 0; i < chCount; ++i)
-            {
-                for (uint32_t j = 0; j < bufersize / 8; ++j)
-                    gp.writef("%i %i\n", buffers[i][2 * j], buffers[i][2 * j + 1]);
-                gp.write("e\n");
-                gp.flush();
-            }
-#endif
+
             //Print stats
             lms_stream_status_t status;
             LMS_GetStreamStatus(rx_streams, &status); //Obtain RX stream stats

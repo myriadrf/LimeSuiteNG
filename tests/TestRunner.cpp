@@ -2,5 +2,5 @@
 
 int main(int argc, char** argv)
 {
-    lime::tests::TestEntry(argc, argv);
+    return lime::tests::TestEntry(argc, argv);
 }

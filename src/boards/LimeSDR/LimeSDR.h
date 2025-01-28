@@ -1,8 +1,9 @@
 #ifndef LIME_LIMESDR_H
 #define LIME_LIMESDR_H
 
-#include "LMS7002M_SDRDevice.h"
+#include "boards/LMS7002M_SDRDevice.h"
 #include "protocols/LMS64CProtocol.h"
+#include "chips/ADF4002/ADF4002.h"
 
 #include <vector>
 #include <memory>
@@ -49,6 +50,8 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
+    std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;
+
   private:
     SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
@@ -68,6 +71,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<IComms> mlms7002mPort;
     std::shared_ptr<IComms> mfpgaPort;
+    std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };
 

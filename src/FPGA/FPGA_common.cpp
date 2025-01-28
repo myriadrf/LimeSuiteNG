@@ -1,18 +1,19 @@
 #include "FPGA/FPGA_common.h"
 #include "comms/ISPI.h"
-#include "LMSBoards.h"
+#include "protocols/LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "WriteRegistersBatch.h"
+#include "streaming/DataPacket.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <thread>
 #include <vector>
-#include "samplesConversion.h"
 
 using namespace std;
+using namespace std::literals::string_literals;
 
 namespace lime {
 
@@ -93,23 +94,13 @@ static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
 FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : fpgaPort(fpgaSPI)
     , lms7002mPort(lms7002mSPI)
-    , useCache(false)
 {
-    uint32_t addr[2] = { 0x0001, 0x0002 }; // version, revision
-    uint32_t vals[2];
-    ReadRegisters(addr, vals, 2);
+    uint32_t addr[3] = { 0x0001, 0x0002, 0x0003 }; // version, revision, hardwareVersion
+    uint32_t vals[3];
+    ReadRegisters(addr, vals, 3);
     mGatewareVersion = vals[0];
     mGatewareRevision = vals[1];
-}
-
-/// @brief Enables caching of registers on the hosts' end.
-/// @param enabled Whether to enable or disable the caching.
-void FPGA::EnableValuesCache(bool enabled)
-{
-    lime::debug("Enable FPGA registers cache: %s", enabled ? "true" : "false");
-    useCache = enabled;
-    if (!useCache)
-        regsCache.clear();
+    mHardwareVersion = vals[2];
 }
 
 /// @brief Writes the specified value into the specified address into the FPGA.
@@ -137,76 +128,10 @@ int FPGA::ReadRegister(uint32_t address)
 /// @return The status of the operation.
 OpStatus FPGA::WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsigned cnt)
 {
-    std::vector<uint32_t> spiBuffer;
-    if (useCache)
-    {
-        static constexpr std::array<int, 45> readonly_regs = {
-            0x000,
-            0x001,
-            0x002,
-            0x003,
-            0x021,
-            0x022,
-            0x065,
-            0x067,
-            0x069,
-            0x06A,
-            0x06B,
-            0x06C,
-            0x06D,
-            0x06F,
-            0x070,
-            0x071,
-            0x072,
-            0x073,
-            0x074,
-            0x076,
-            0x077,
-            0x078,
-            0x07A,
-            0x07B,
-            0x07C,
-            0x0C2,
-            0x100,
-            0x101,
-            0x102,
-            0x103,
-            0x104,
-            0x105,
-            0x106,
-            0x107,
-            0x108,
-            0x109,
-            0x10A,
-            0x10B,
-            0x10C,
-            0x10D,
-            0x10E,
-            0x10F,
-            0x110,
-            0x111,
-            0x114,
-        };
-
-        for (unsigned i = 0; i < cnt; i++)
-        {
-            if (std::find(readonly_regs.begin(), readonly_regs.end(), addrs[i]) != readonly_regs.end())
-                continue;
-
-            auto result = regsCache.find(addrs[i]);
-            if (result != regsCache.end() && result->second == data[i])
-                continue;
-            spiBuffer.push_back((1 << 31) | (addrs[i]) << 16 | data[i]);
-            regsCache[addrs[i]] = data[i];
-        }
-        if (spiBuffer.size())
-            return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
-    }
+    std::vector<uint32_t> spiBuffer(cnt);
     for (unsigned i = 0; i < cnt; i++)
-        spiBuffer.push_back((1 << 31) | (addrs[i]) << 16 | data[i]);
-    if (spiBuffer.size())
-        return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
-    return OpStatus::Success;
+        spiBuffer[i] = ((1 << 31) | (addrs[i]) << 16 | data[i]);
+    return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
 }
 
 /// @brief Writes the given data blocks into LMS7002M chip.
@@ -239,79 +164,9 @@ OpStatus FPGA::ReadLMS7002MSPI(const uint32_t* writeData, uint32_t* readData, ui
 /// @return The operation status.
 OpStatus FPGA::ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt)
 {
-    std::vector<uint32_t> spiBuffer;
-    if (useCache)
-    {
-        static constexpr std::array<int, 42> volatile_regs = {
-            0x021,
-            0x022,
-            0x060,
-            0x065,
-            0x067,
-            0x069,
-            0x06A,
-            0x06B,
-            0x06C,
-            0x06D,
-            0x06F,
-            0x070,
-            0x071,
-            0x072,
-            0x073,
-            0x074,
-            0x076,
-            0x077,
-            0x078,
-            0x07A,
-            0x07B,
-            0x07C,
-            0x0C2,
-            0x100,
-            0x101,
-            0x102,
-            0x103,
-            0x104,
-            0x105,
-            0x106,
-            0x107,
-            0x108,
-            0x109,
-            0x10A,
-            0x10B,
-            0x10C,
-            0x10D,
-            0x10E,
-            0x10F,
-            0x110,
-            0x111,
-            0x114,
-        };
-
-        std::vector<uint32_t> reg_addr;
-        for (unsigned i = 0; i < cnt; i++)
-        {
-            if (std::find(volatile_regs.begin(), volatile_regs.end(), addrs[i]) == volatile_regs.end())
-            {
-                auto result = regsCache.find(addrs[i]);
-                if (result != regsCache.end())
-                    continue;
-            }
-            spiBuffer.push_back(addrs[i]);
-        }
-
-        if (spiBuffer.size())
-        {
-            std::vector<uint32_t> reg_val(spiBuffer.size());
-            fpgaPort->SPI(spiBuffer.data(), reg_val.data(), spiBuffer.size());
-            for (unsigned i = 0; i < spiBuffer.size(); i++)
-                regsCache[spiBuffer[i]] = reg_val[i];
-        }
-        for (unsigned i = 0; i < cnt; i++)
-            data[i] = regsCache[addrs[i]];
-        return OpStatus::Success;
-    }
+    std::vector<uint32_t> spiBuffer(cnt);
     for (unsigned i = 0; i < cnt; i++)
-        spiBuffer.push_back(addrs[i]);
+        spiBuffer[i] = addrs[i];
     std::vector<uint32_t> reg_val(spiBuffer.size());
     OpStatus status = fpgaPort->SPI(spiBuffer.data(), reg_val.data(), spiBuffer.size());
     for (unsigned i = 0; i < cnt; i++)
@@ -677,177 +532,6 @@ OpStatus FPGA::SetDirectClocking(int clockIndex)
     if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
         return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers"s);
     return OpStatus::Success;
-}
-
-/** @brief Parses FPGA packet payload into samples.
-  @param buffer The buffer to parse.
-  @param bufLen The length of the buffer to parse.
-  @param mimo Whether the payload contains multiple (two) channels.
-  @param compressed Whether the samples are in 12-bit (true) or 16-bit (false) integer format.
-  @param samples The output buffer of the samples.
-  @return The amount of samples parsed.
- */
-int FPGA::FPGAPacketPayload2Samples(const uint8_t* buffer, int bufLen, bool mimo, bool compressed, complex16_t* const* samples)
-{
-    if (compressed) //compressed samples
-    {
-        const complex12_t* src = reinterpret_cast<const complex12_t*>(buffer);
-        int collected = 0;
-        int samplesToProcess = bufLen / sizeof(complex12_t);
-        for (int b = 0; b < samplesToProcess; collected++)
-        {
-            //I sample
-            Rescale(samples[0][collected], *src);
-            ++b;
-            ++src;
-            if (mimo)
-            {
-                Rescale(samples[1][collected], *src);
-                ++b;
-                ++src;
-            }
-        }
-        return collected;
-    }
-
-    if (mimo) //uncompressed samples
-    {
-        const complex16_t* ptr = reinterpret_cast<const complex16_t*>(buffer);
-        const int collected = bufLen / sizeof(complex16_t) / 2;
-        for (int i = 0; i < collected; i++)
-        {
-            samples[0][i] = *ptr++;
-            samples[1][i] = *ptr++;
-        }
-        return collected;
-    }
-
-    memcpy(samples[0], buffer, bufLen);
-    return bufLen / sizeof(complex16_t);
-}
-
-/** @brief Parses FPGA packet payload into samples.
-  @param buffer The buffer to parse.
-  @param bufLen The length of the buffer to parse.
-  @param mimo Whether the payload contains multiple (two) channels.
-  @param compressed Whether the samples are in 12-bit (true) or 16-bit (false) integer format.
-  @param samples The output buffer of the samples.
-  @return The amount of samples parsed.
- */
-int FPGA::FPGAPacketPayload2SamplesFloat(
-    const uint8_t* buffer, int bufLen, bool mimo, bool compressed, complex32f_t* const* samples)
-{
-    if (compressed) //compressed samples
-    {
-        const complex12_t* src = reinterpret_cast<const complex12_t*>(buffer);
-        int collected = 0;
-        int samplesToProcess = bufLen / sizeof(complex12_t);
-        for (int b = 0; b < samplesToProcess; collected++)
-        {
-            Rescale(samples[0][collected], *src);
-            ++b;
-            ++src;
-            if (mimo)
-            {
-                Rescale(samples[1][collected], *src);
-                ++b;
-                ++src;
-            }
-        }
-        return collected;
-    }
-
-    const complex16_t* src = reinterpret_cast<const complex16_t*>(buffer);
-    if (mimo) //uncompressed samples
-    {
-        const int collected = bufLen / sizeof(complex16_t) / 2;
-        for (int i = 0; i < collected; i++)
-        {
-            Rescale(samples[0][i], *src);
-            ++src;
-            Rescale(samples[1][i], *src);
-            ++src;
-        }
-        return collected;
-    }
-    else
-    {
-        const int collected = bufLen / sizeof(complex16_t);
-        for (int i = 0; i < collected; i++)
-        {
-            Rescale(samples[0][i], *src);
-            ++src;
-        }
-        return collected;
-    }
-}
-
-int FPGA::Samples2FPGAPacketPayloadFloat(
-    const complex32f_t* const* samples, int samplesCount, bool mimo, bool compressed, uint8_t* buffer)
-{
-    if (compressed)
-    {
-        complex12_t* dest = reinterpret_cast<complex12_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(dest[src], samples[0][src]);
-            if (mimo)
-                Rescale(dest[src], samples[1][src]);
-        }
-        return samplesCount * sizeof(complex12_t);
-    }
-
-    complex16_t* dest = reinterpret_cast<complex16_t*>(buffer);
-    if (mimo)
-    {
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(*dest, samples[0][src]);
-            ++dest;
-            Rescale(*dest, samples[1][src]);
-            ++dest;
-        }
-        return samplesCount * sizeof(complex16_t) * 2;
-    }
-    else
-    {
-        for (int src = 0; src < samplesCount; ++src)
-            Rescale(dest[src], samples[0][src]);
-        return samplesCount * sizeof(complex16_t);
-    }
-}
-
-int FPGA::Samples2FPGAPacketPayload(
-    const complex16_t* const* samples, int samplesCount, bool mimo, bool compressed, uint8_t* buffer)
-{
-    if (compressed)
-    {
-        complex12_t* dest = reinterpret_cast<complex12_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            Rescale(*dest, samples[0][src]);
-            ++dest;
-            if (mimo)
-            {
-                Rescale(*dest, samples[1][src]);
-                ++dest;
-            }
-        }
-        return samplesCount * sizeof(complex12_t);
-    }
-
-    if (mimo)
-    {
-        complex16_t* ptr = reinterpret_cast<complex16_t*>(buffer);
-        for (int src = 0; src < samplesCount; ++src)
-        {
-            *ptr++ = samples[0][src];
-            *ptr++ = samples[1][src];
-        }
-        return samplesCount * 2 * sizeof(complex16_t);
-    }
-    std::memcpy(buffer, samples[0], samplesCount * sizeof(complex16_t));
-    return samplesCount * sizeof(complex16_t);
 }
 
 /// @brief Configures FPGA PLLs to LimeLight interface frequency.
@@ -1225,6 +909,20 @@ OpStatus FPGA::SubmoduleSPIEnableMask(uint16_t enableMask)
     return WriteRegister(0xFFFF, enableMask);
 }
 
+/// @brief Returns flags of current gateware supported features.
+/// Same device FPGA gateware can be equiped with different set of functionality,
+/// use these flags to check which functionality can be used.
+GatewareFeatures FPGA::GetFeatures() const
+{
+    return mFeatures;
+}
+
+/// @brief Set flags of current gateware supported features.
+void FPGA::SetFeatures(const GatewareFeatures& flags)
+{
+    mFeatures = flags;
+}
+
 /// @brief Sets up the variable receive packet size (if the device supports it)
 /// @param packetSize The target size of the packet
 /// @param payloadSize The side of the whole payload
@@ -1283,12 +981,12 @@ OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
 
 OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFormat samplesFormat, bool sisoddr, bool trxiqpulse)
 {
-    int channelCount = 0;
-    for (int i = 0; i < 8; ++i)
-    {
-        if (channelsEnableMask & (1 << i))
-            ++channelCount;
-    }
+    // int channelCount = 0;
+    // for (int i = 0; i < 8; ++i)
+    // {
+    //     if (channelsEnableMask & (1 << i))
+    //         ++channelCount;
+    // }
     bool MIMO_EN = 1; // channelCount > 1;
     bool TRXIQ_PULSE_ON = trxiqpulse;
     bool DDR_EN = 0;

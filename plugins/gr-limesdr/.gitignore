@@ -1,7 +1,0 @@
-*~
-*.pyc
-*.pyo
-build*/
-examples/*.py
-.vscode
-limesuite-source/

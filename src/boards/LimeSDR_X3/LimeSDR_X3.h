@@ -2,7 +2,7 @@
 #define LIME_LIMESDR_X3_H
 
 #include "chips/CDCM6208/CDCM6208.h"
-#include "LMS7002M_SDRDevice.h"
+#include "boards/LMS7002M_SDRDevice.h"
 #include "protocols/LMS64CProtocol.h"
 
 #include <vector>
@@ -50,14 +50,16 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
     OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count) override;
 
+    std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;
+
   private:
     OpStatus InitLMS1(bool skipTune = false);
     OpStatus InitLMS2(bool skipTune = false);
     OpStatus InitLMS3(bool skipTune = false);
-    void PreConfigure(const SDRConfig& cfg, uint8_t socIndex);
-    void PostConfigure(const SDRConfig& cfg, uint8_t socIndex);
+    OpStatus ConfigureLMS1(const SDRConfig& config);
+    OpStatus ConfigureLMS2(const SDRConfig& config);
+    OpStatus ConfigureLMS3(const SDRConfig& config);
     void LMS1_PA_Enable(uint8_t chan, bool enabled);
-    void LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     void LMS1SetPath(TRXDir dir, uint8_t chan, uint8_t pathId);
     void LMS2SetPath(TRXDir dir, uint8_t chan, uint8_t path);
     void LMS2_PA_LNA_Enable(uint8_t chan, bool PAenabled, bool LNAenabled);
@@ -67,12 +69,12 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     void LMS2_SetSampleRate(double f_Hz, uint8_t oversample);
 
-    enum class ePathLMS1_Rx : uint8_t { NONE, LNAH, LNAL };
+    enum class ePathLMS1_Rx : uint8_t { NONE, LNAH, LNAL, LNAW };
     enum class ePathLMS1_Tx : uint8_t { NONE, BAND1, BAND2 };
     enum class ePathLMS2_Rx : uint8_t { NONE, TDD, FDD, CALIBRATION };
     enum class ePathLMS2_Tx : uint8_t { NONE, TDD, FDD };
+    enum class ePathLMS3_Rx : uint8_t { NONE, LNAH, LNAL, LNAW };
 
-    void ConfigureDirection(TRXDir dir, LMS7002M& chip, const SDRConfig& cfg, int ch, uint8_t socIndex);
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);
 
     std::unique_ptr<CDCM_Dev> mClockGeneratorCDCM;

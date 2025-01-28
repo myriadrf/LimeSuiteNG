@@ -1,4 +1,5 @@
 #include "WriteRegistersBatch.h"
+#include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -6,7 +7,9 @@ using namespace std::literals::string_literals;
 /// @brief Constructor for the batch.
 /// @param fpga The FPGA this batch belongs to.
 WriteRegistersBatch::WriteRegistersBatch(FPGA* fpga)
-    : owner(fpga){};
+    : owner(fpga)
+{
+}
 
 WriteRegistersBatch::~WriteRegistersBatch()
 {

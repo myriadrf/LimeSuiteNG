@@ -12,6 +12,8 @@
 #include <complex>
 #include <iostream>
 
+#include "tests/externalData.h"
+
 using namespace lime;
 using namespace lime::testing;
 using namespace std::literals::string_literals;
@@ -28,29 +30,20 @@ LMS7002M_SDRDevice_Fixture::LMS7002M_SDRDevice_Fixture(const std::string& device
 
 void LMS7002M_SDRDevice_Fixture::SetUp()
 {
-    auto devices = DeviceRegistry::enumerate(DeviceHandle{ deviceHandleHint });
-
-    if (devices.empty())
-    {
-        GTEST_SKIP() << deviceHandleHint + " not connected, skipping"s;
-    }
-
-    device = DeviceRegistry::makeDevice(devices.at(0));
-
+    device = DeviceRegistry::makeDevice(std::string{ GetTestDeviceHandleArgument() });
     ASSERT_NE(device, nullptr);
-    // std::cout << "Run on device: " << devices.at(0).Serialize() << "\n";
-
     ASSERT_EQ(device->Init(), OpStatus::Success);
 }
 
 void LMS7002M_SDRDevice_Fixture::TearDown()
 {
-    if (device)
-        DestroySteam();
+    if (stream)
+        stream->Stop();
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 }
 
-OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
+void LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     ChannelConfig::Direction::TestSignal::Scale scale, ChannelConfig::Direction::TestSignal::Divide divide)
 {
     SDRConfig deviceConfiguration;
@@ -66,35 +59,32 @@ OpStatus LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     directionConfiguration.testSignal.scale = scale;
     directionConfiguration.testSignal.divide = divide;
 
-    return device->Configure(deviceConfiguration, moduleIndex);
+    ASSERT_EQ(device->Configure(deviceConfiguration, moduleIndex), OpStatus::Success);
 }
 
-OpStatus LMS7002M_SDRDevice_Fixture::SetupStream()
+void LMS7002M_SDRDevice_Fixture::SetupStream()
 {
     StreamConfig streamConfiguration;
     streamConfiguration.channels[TRXDir::Rx] = { 0 };
     streamConfiguration.format = DataFormat::I16;
 
-    OpStatus status = device->StreamSetup(streamConfiguration, moduleIndex);
-    if (status != OpStatus::Success)
-        return status;
-
-    device->StreamStart(moduleIndex);
-    return status;
+    stream = device->StreamCreate(streamConfiguration, moduleIndex);
+    ASSERT_TRUE(stream);
+    stream->Start();
 }
 
 void LMS7002M_SDRDevice_Fixture::DestroySteam()
 {
-    device->StreamStop(moduleIndex);
-    device->StreamDestroy(moduleIndex);
+    stream->Stop();
+    stream.reset();
+    // device->StreamDestroy(moduleIndex);
 }
 
 TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
 {
-    ASSERT_EQ(SetUpDeviceForRxTestPattern(
-                  ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8),
-        OpStatus::Success);
-    ASSERT_EQ(SetupStream(), OpStatus::Success);
+    ASSERT_NO_FATAL_FAILURE(SetUpDeviceForRxTestPattern(
+        ChannelConfig::Direction::TestSignal::Scale::Half, ChannelConfig::Direction::TestSignal::Divide::Div8));
+    ASSERT_NO_FATAL_FAILURE(SetupStream());
     constexpr int samplesToReceive = 1020 * 16;
 
     std::array<complex16_t, samplesToReceive> sampleBuffer;
@@ -102,7 +92,7 @@ TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
 
     complex16_t* const data = sampleBuffer.data();
     StreamMeta meta{};
-    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, &meta) };
+    const auto actualSamplesReceived{ stream->StreamRx(&data, samplesToReceive, &meta) };
     EXPECT_EQ(meta.timestamp, 0);
     ASSERT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));

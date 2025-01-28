@@ -1,30 +1,39 @@
 #include "LimeSDR_XTRX.h"
 
-#include <fcntl.h>
-#include <cmath>
-
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M.h"
+
+#include <cmath>
+#include <unistd.h>
+#include <fcntl.h>
+
+// Linux headers
+#include <fcntl.h> // Contains file controls like O_RDWR
+#include <errno.h> // Error integer and strerror() function
+#include <termios.h> // Contains POSIX terminal control definitions
+#include <unistd.h> // write(), read(), close()
+
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
-#include "LMS64CProtocol.h"
-#include "CommonFunctions.h"
+#include "protocols/LMS64CProtocol.h"
+#include "streaming/TRXLooper.h"
 #include "utilities/toString.h"
+
+#include "CommonFunctions.h"
+#include "DeviceTreeNode.h"
 #include "OEMTesting.h"
 
-#include "DeviceTreeNode.h"
-#include "comms/IComms.h"
-#include "chips/LMS7002M/validation.h"
-#include "chips/LMS7002M/LMS7002MCSR_Data.h"
-
-#include "limesuiteng/LMS7002M.h"
+using namespace std::literals::string_literals;
+using namespace lime::LMS7002MCSR_Data;
 
 namespace lime {
-using namespace LMS7002MCSR_Data;
 
-using namespace std::literals::string_literals;
-
+namespace limesdrxtrx {
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
@@ -32,7 +41,28 @@ static const uint8_t SPI_FPGA = 1;
 static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
 static const CustomParameter cp_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
-static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides = {
+// Fairwaves XTRX rev.5 requires specific LDO configuration to work properly
+static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_fairwaves_xtrx_rev5 = {
+    { 0x0022, 0x0FFF },
+    { 0x0023, 0x5550 },
+    { 0x002B, 0x0038 },
+    { 0x002C, 0x0000 },
+    { 0x008B, 0x218C },
+    { 0x00A6, 0x000F },
+    { 0x011C, 0x8941 },
+    { 0x0120, 0xE6C0 },
+    { 0x0121, 0x3638 },
+    { 0x0122, 0x0514 },
+    { 0x0123, 0x200F },
+    // LDOs
+    { 0x0092, 0x0D15 },
+    { 0x0093, 0x01B1 },
+    { 0x00A6, 0x000F },
+    // XBUF
+    { 0x0085, 0x0019 },
+};
+
+static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_limesdr_xtrx = {
     { 0x0020, 0xFFFD },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
@@ -78,11 +108,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x040C, 0x01FF },
 };
 
-static inline void ValidateChannel(uint8_t channel)
-{
-    if (channel > 2)
-        throw std::logic_error("invalid channel index"s);
-}
+} // namespace limesdrxtrx
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
 OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
@@ -114,6 +140,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     , mSerialPort(control)
     , mConfigInProgress(false)
 {
+    mStreamers.resize(1);
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes.
     SDRDescriptor& desc = mDeviceDescriptor;
@@ -123,16 +150,28 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    desc.spiSlaveIds = { { "LMS7002M"s, SPI_LMS7002M }, { "FPGA"s, SPI_FPGA } };
+    desc.spiSlaveIds = { { "LMS7002M"s, limesdrxtrx::SPI_LMS7002M }, { "FPGA"s, limesdrxtrx::SPI_FPGA } };
 
-    const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
-    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] =
-        std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH, flashMap);
-    desc.customParameters = { cp_vctcxo_dac, cp_temperature };
+    // const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
+
+    {
+        // VCTCXO_DAC is actually stored in FLASH 0x01FF0000, as XTRX does not have EEPROM,
+        // but because firmware code does not allow to directly write/read all FLASH addresses,
+        // VCTCXO_DAC has to be used through "fake" EEPROM commands
+
+        const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 0x0010, 2 } } };
+        desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, std::move(eepromMap));
+    }
+
+    desc.customParameters = { limesdrxtrx::cp_vctcxo_dac, limesdrxtrx::cp_temperature };
 
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
+
+    const bool isFairwavesRev5 = gw.hardwareVersion == 0;
 
     // Initial XTRX gateware supported only 32bit DMA, it worked fine on x86 with the PCIe driver
     // limiting the address mask to 32bit, but some systems require at least 35bits,
@@ -140,16 +179,21 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     // the driver starts using 64bit mask, in that case it's a matter of luck if the system
     // provided DMA addresses will be in 32bit zone, and could work, otherwise, data will be
     // seen as transferred, but the values will be undefined.
-    // XTRX gateware added 64bit DMA support in 1.13
-    if (gw.version == 1 && gw.revision < 13)
+    // LimeSDR XTRX gateware added 64bit DMA support in 1.13
+    // Fairwaves XTRX Rev 5 gateware added 64bit DMA support in 1.3
+    if (gw.version == 1 && ((isFairwavesRev5 && gw.revision < 4) || (!isFairwavesRev5 && gw.revision < 13)))
     {
         lime::warning("Current XTRX gateware does not support 64bit DMA addressing. "
                       "RF data streaming might not work. "
                       "Please update gateware."s);
     }
 
-    // revision 1.13 introduced "dual boot" images
-    if (gw.version >= 1 && gw.revision >= 13)
+    const bool isGoldGatewareActive = static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD;
+    if (isGoldGatewareActive)
+        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
+
+    // LimeSDR XTRX gateware revision 1.13 introduced "dual boot" images
+    if ((!isFairwavesRev5 && gw.version >= 1 && gw.revision >= 13) || isGoldGatewareActive)
     {
         desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_GOLD_IMAGE)] =
             std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_GOLD_IMAGE);
@@ -157,28 +201,28 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
             std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_USER_IMAGE);
     }
 
-    if (static_cast<uint16_t>(gw.version) == 0xDEAD && static_cast<uint16_t>(gw.revision) == 0xDEAD)
-        lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
-
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
+        soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 3.3e9, 3.8e9 };
+        soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 0.3e9, 2.2e9 };
+        soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 0.7e9, 2.6e9 };
+        soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
+        soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
+        soc.antennaRange[TRXDir::Tx]["Band1"s] = { 3.3e9, 3.8e9 };
+        soc.antennaRange[TRXDir::Tx]["Band2"s] = { 0.03e9, 1.9e9 };
+
         desc.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(spiRFsoc);
-        chip->ModifyRegistersDefaults(lms7002defaultsOverrides);
+
+        if (isFairwavesRev5)
+            chip->ModifyRegistersDefaults(limesdrxtrx::lms7002defaultsOverrides_fairwaves_xtrx_rev5);
+        else // LimeSDR XTRX
+            chip->ModifyRegistersDefaults(limesdrxtrx::lms7002defaultsOverrides_limesdr_xtrx);
         chip->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, refClk);
         mLMSChips.push_back(std::move(chip));
-    }
-    {
-        mStreamers.reserve(mLMSChips.size());
-        std::shared_ptr<LimePCIe> trxPort{ sampleStream };
-        auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
-
-        std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
-        mStreamers.push_back(std::move(streamer));
     }
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_XTRX, mFPGA.get());
@@ -213,17 +257,22 @@ static OpStatus InitLMS1(LMS7002M& lms, bool skipTune = false)
 
 OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
-    std::vector<std::string> errors;
-    bool isValidConfig = LMS7002M_Validate(cfg, errors);
+    auto& chip = mLMSChips.at(0);
 
-    if (!isValidConfig)
+    mConfigInProgress = true;
+    if (!cfg.skipDefaults)
     {
-        std::stringstream ss;
-        for (const auto& err : errors)
-            ss << err << std::endl;
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + ss.str());
+        const bool skipTune = true;
+        InitLMS1(*chip, skipTune);
     }
 
+    OpStatus status = LMS7002M_Configure(*chip, cfg);
+    mConfigInProgress = false;
+
+    if (status != OpStatus::Success)
+        return status;
+
+    double sampleRate{ 0 };
     bool rxUsed = false;
     bool txUsed = false;
     for (int i = 0; i < 2; ++i)
@@ -232,63 +281,24 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         rxUsed |= ch.rx.enabled;
         txUsed |= ch.tx.enabled;
     }
+    if (rxUsed)
+        sampleRate = cfg.channel[0].rx.sampleRate;
+    else if (txUsed)
+        sampleRate = cfg.channel[0].tx.sampleRate;
 
-    try
+    if (sampleRate > 0)
+        LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+
+    for (int c = 0; c < 2; ++c)
     {
-        mConfigInProgress = true;
-        auto& chip = mLMSChips.at(socIndex);
-        if (!cfg.skipDefaults)
-        {
-            const bool skipTune = true;
-            InitLMS1(*chip, skipTune);
-        }
-
-        LMS7002LOConfigure(*chip, cfg);
-        for (int i = 0; i < 2; ++i)
-        {
-            LMS7002ChannelConfigure(*chip, cfg.channel[i], i);
-            LMS7002TestSignalConfigure(*chip, cfg.channel[i], i);
-        }
-
-        // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        double sampleRate{ 0 };
-        if (rxUsed)
-            sampleRate = cfg.channel[0].rx.sampleRate;
-        else if (txUsed)
-            sampleRate = cfg.channel[0].tx.sampleRate;
-
-        if (sampleRate > 0)
-            LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
-
-        for (int i = 0; i < 2; ++i)
-        {
-            const ChannelConfig& ch = cfg.channel[i];
-            LMS1SetPath(false, i, ch.rx.path);
-            LMS1SetPath(true, i, ch.tx.path);
-            LMS7002ChannelCalibration(*chip, ch, i);
-        }
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
-        uint16_t txMux = chip->Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, 2);
-        chip->Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, txMux);
-
-        mConfigInProgress = false;
-        if (sampleRate > 0)
-            return LMS1_UpdateFPGAInterface(this);
-    } //try
-    catch (std::logic_error& e)
-    {
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + e.what());
-    } catch (std::runtime_error& e)
-    {
-        return ReportError(OpStatus::Error, "LimeSDR_XTRX config: "s + e.what());
+        LMSSetPath(TRXDir::Tx, c, cfg.channel[c].tx.path);
+        LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
+        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
     }
+
+    if (sampleRate > 0)
+        return LMS1_UpdateFPGAInterface(this);
+
     return OpStatus::Success;
 }
 
@@ -313,7 +323,8 @@ OpStatus LimeSDR_XTRX::Init()
     // CustomParameterWrite(&paramId,&dacVal,1,"");
 
     OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
-    if (status != OpStatus::Success)
+    // XTRX on X8 board don't have Reset command, returns Unknown
+    if (status != OpStatus::Success && status != OpStatus::NotImplemented)
         return status;
 
     const bool skipTune = true;
@@ -327,14 +338,12 @@ OpStatus LimeSDR_XTRX::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t ch
 
 double LimeSDR_XTRX::GetClockFreq(uint8_t clk_id, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->GetClockFreq(static_cast<LMS7002M::ClockID>(clk_id));
 }
 
 OpStatus LimeSDR_XTRX::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
 {
-    ValidateChannel(channel);
     auto& chip = mLMSChips.at(channel / 2);
     return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
 }
@@ -343,9 +352,9 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 {
     switch (chipSelect)
     {
-    case SPI_LMS7002M:
+    case limesdrxtrx::SPI_LMS7002M:
         return lms7002mPort->SPI(MOSI, MISO, count);
-    case SPI_FPGA:
+    case limesdrxtrx::SPI_FPGA:
         return fpgaPort->SPI(MOSI, MISO, count);
     default:
         throw std::logic_error("invalid SPI chip select"s);
@@ -354,141 +363,61 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 
 OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
 {
-    if (rxDecimation == 0)
+    if (f_Hz <= 61.44e6)
     {
-        rxDecimation = 2;
+        if (rxDecimation == 1)
+            rxDecimation = 2;
+        if (txInterpolation == 1)
+            txInterpolation = 2;
+    }
+    else // sample rate above 61.44MHz is supported only in SISO mode, and no oversampling
+    {
+        rxDecimation = 1;
+        txInterpolation = 1;
     }
 
-    if (txInterpolation == 0)
+    if (f_Hz > 61.44e6)
     {
-        txInterpolation = 2;
-    }
-
-    assert(rxDecimation > 0);
-    assert(txInterpolation > 0);
-
-    if (rxDecimation != 0 && txInterpolation / rxDecimation > 4)
-        throw std::logic_error(
-            strFormat("TxInterpolation(%i)/RxDecimation(%i) should not be more than 4", txInterpolation, rxDecimation));
-    uint8_t oversample = rxDecimation;
-    const bool bypass = (oversample == 1) || (oversample == 0 && f_Hz > 62e6);
-    uint8_t hbd_ovr = 7; // decimation ratio is 2^(1+hbd_ovr), HBD_OVR_RXTSP=7 - bypass
-    uint8_t hbi_ovr = 7; // interpolation ratio is 2^(1+hbi_ovr), HBI_OVR_TXTSP=7 - bypass
-    double cgenFreq = f_Hz * 4; // AI AQ BI BQ
-    if (!bypass)
-    {
-        if (oversample == 0)
-        {
-            const int n = lime::LMS7002M::CGEN_MAX_FREQ / (cgenFreq);
-            oversample = (n >= 32) ? 32 : (n >= 16) ? 16 : (n >= 8) ? 8 : (n >= 4) ? 4 : 2;
-        }
-
-        hbd_ovr = 4;
-        if (oversample <= 16)
-        {
-            const int decTbl[] = { 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
-            hbd_ovr = decTbl[oversample];
-            rxDecimation = pow(2, hbd_ovr + 1);
-        }
-        cgenFreq *= 2 << hbd_ovr;
-        rxDecimation = 2 << hbd_ovr;
-
-        if (txInterpolation == 0)
-        {
-            int txMultiplier = std::log2(lime::LMS7002M::CGEN_MAX_FREQ / cgenFreq);
-            txInterpolation = rxDecimation << txMultiplier;
-        }
-
-        if (txInterpolation >= rxDecimation)
-        {
-            hbi_ovr = hbd_ovr + std::log2(txInterpolation / rxDecimation);
-            txInterpolation = pow(2, hbi_ovr + 1);
-        }
-        else
-            return lime::ReportError(
-                OpStatus::NotSupported, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
-    }
-    lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
-        f_Hz / 1e6,
-        cgenFreq / 1e6,
-        1 + hbd_ovr,
-        1 + hbi_ovr);
-    auto& mLMSChip = mLMSChips.at(0);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
-    if (rxDecimation != 0)
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
-    else
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
-    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
-
-    if (f_Hz >= 61.45e6)
-    {
+        auto& lms = mLMSChips.at(0);
         // LimeLight & Pad
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::DIQ2_DS, 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR, 1);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_SISODDR, 1);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::DIQ2_DS, 1);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR, 1);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::LML2_SISODDR, 1);
         // CDS
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXALML, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXALML, 1);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::CDSN_RXALML, 0);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::CDS_RXALML, 1);
         // LDO
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp1, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp2, 0);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::RDIV_DIGIp2, 140);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp1, 0);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::PD_LDO_DIGIp2, 0);
+        lms->Modify_SPI_Reg_bits(LMS7002MCSR::RDIV_DIGIp2, 140);
     }
 
-    return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
+    return LMS7002M_SDRDevice::LMS7002M_SetSampleRate(f_Hz, rxDecimation, txInterpolation);
 }
 
-enum // TODO: replace
-{
-    LMS_PATH_NONE = 0, ///<No active path (RX or TX)
-    LMS_PATH_LNAH = 1, ///<RX LNA_H port
-    LMS_PATH_LNAL = 2, ///<RX LNA_L port
-    LMS_PATH_LNAW = 3, ///<RX LNA_W port
-    LMS_PATH_TX1 = 1, ///<TX port 1
-    LMS_PATH_TX2 = 2, ///<TX port 2
-    LMS_PATH_AUTO = 255, ///<Automatically select port (if supported)
-};
-
-void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
+void LimeSDR_XTRX::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 {
     uint16_t sw_addr = 0x000A;
     uint16_t sw_val = mFPGA->ReadRegister(sw_addr);
+
     auto& lms = mLMSChips.at(0);
+    LMS7002M::ChannelScope scope(lms.get(), chan);
 
-    // Set active channel for configuring TRF and RFE registers to match the
-    // requested channel index.
-    const LMS7002M::Channel old_channel = lms->GetActiveChannel();
-    lms->SetActiveChannel(chan == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
-
-    if (tx)
+    if (dir == TRXDir::Tx)
     {
-        uint8_t path;
         switch (ePathLMS1_Tx(pathId))
         {
-        case ePathLMS1_Tx::NONE:
-            path = LMS_PATH_NONE;
-            break;
+        case ePathLMS1_Tx::NONE: // RF switch don't need to change. Still set value to be deterministic.
         case ePathLMS1_Tx::BAND1:
-            path = LMS_PATH_TX1;
+            sw_val |= 1 << 4;
             break;
         case ePathLMS1_Tx::BAND2:
-            path = LMS_PATH_TX2;
+            sw_val &= ~(1 << 4);
             break;
         default:
-            throw std::logic_error("Invalid LMS1 Tx path"s);
+            lime::error("Invalid Tx RF path"s);
         }
-        sw_val &= ~(1 << 4);
-        if (path == LMS_PATH_TX1)
-            sw_val |= 1 << 4;
-        else if (path == LMS_PATH_TX2)
-            sw_val &= ~(1 << 4);
-        lms->SetBandTRF(path);
+        lms->SetBandTRF(pathId);
     }
     else
     {
@@ -510,11 +439,10 @@ void LimeSDR_XTRX::LMS1SetPath(bool tx, uint8_t chan, uint8_t pathId)
         else if (path == LMS7002M::PathRFE::LNAL)
             sw_val |= 1 << 2;
     }
+    // TODO: if MIMO use channel 0 as deciding factor, otherwise use active channel
     // RF switch controls are toggled for both channels, use channel 0 as the deciding source.
     if (chan == 0)
         mFPGA->WriteRegister(sw_addr, sw_val);
-
-    lms->SetActiveChannel(old_channel);
 }
 
 OpStatus LimeSDR_XTRX::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
@@ -531,7 +459,7 @@ OpStatus LimeSDR_XTRX::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
     int progMode;
-    LMS64CProtocol::ProgramWriteTarget target = LMS64CProtocol::ProgramWriteTarget::FPGA;
+    LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
 
     switch (device)
     {
@@ -610,11 +538,104 @@ OpStatus LimeSDR_XTRX::GNSSTest(OEMTestReporter& reporter, TestData& results)
 {
     OEMTestData test("GNSS");
     reporter.OnStart(test);
-    OpStatus status = mFPGA->OEMTestSetup(FPGA::TestID::GNSS, 1.0);
-    results.gnssPassed = status == OpStatus::Success;
-    if (status != OpStatus::Success)
+
+    FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
+    if (gw.version == 1) // original gateware
     {
-        reporter.OnFail(test, "timeout");
+        OpStatus status = mFPGA->OEMTestSetup(FPGA::TestID::GNSS, 1.0);
+        results.gnssPassed = status == OpStatus::Success;
+        if (status != OpStatus::Success)
+        {
+            reporter.OnFail(test, "timeout");
+            return OpStatus::Error;
+        }
+    }
+    else if (gw.version == 2) // litex based gateware
+    {
+        std::string path = mStreamPort->GetPathName();
+        int flags = O_RDWR | O_NOCTTY | O_CLOEXEC;
+        int fpos = path.find("/trx");
+        path = path.substr(0, fpos);
+        path.append("/uart0");
+
+        int tty_fd = open(path.c_str(), flags);
+
+        struct termios tty;
+
+        if (tcgetattr(tty_fd, &tty) != 0)
+        {
+            printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+        }
+
+        tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
+        tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
+        tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
+        tty.c_cflag |= CS8; // 8 bits per byte (most common)
+        tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
+        tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
+
+        tty.c_lflag &= ~ICANON;
+        tty.c_lflag &= ~ECHO; // Disable echo
+        tty.c_lflag &= ~ECHOE; // Disable erasure
+        tty.c_lflag &= ~ECHONL; // Disable new-line echo
+        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+        tty.c_iflag &=
+            ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); // Disable any special handling of received bytes
+
+        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+        tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+        // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
+        // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
+
+        tty.c_cc[VTIME] = 10; // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+        tty.c_cc[VMIN] = 0;
+
+        // Set in/out baud rate to be 9600
+        cfsetispeed(&tty, B9600);
+        cfsetospeed(&tty, B9600);
+
+        if (tcsetattr(tty_fd, TCSANOW, &tty) != 0)
+        {
+            printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        }
+
+        const char outMessage[] = "$PMTK0*32\r\n";
+        int written = write(tty_fd, outMessage, sizeof(outMessage));
+        if (written != sizeof(outMessage))
+        {
+            reporter.OnFail(test, "Failed to write UART");
+            return OpStatus::Error;
+        }
+        const std::string expectedAnswer = "$PMTK001,0,3*30";
+        constexpr int bytesToRead = 256;
+        char inMessage[bytesToRead + 16]; // + some padding
+        memset(inMessage, 0, sizeof(inMessage));
+
+        // UART is periodically sending messages, so the expected message might not be the first to be read
+        for (int b = 0; b < bytesToRead;)
+        {
+            int bread = read(tty_fd, inMessage + b, sizeof(16));
+            if (bread < 0)
+            {
+                close(tty_fd);
+                reporter.OnFail(test, "Failed to read UART");
+                return OpStatus::Error;
+            }
+            b += bread;
+        }
+        close(tty_fd);
+        std::string searchStr(inMessage);
+        size_t foundPos = searchStr.find(expectedAnswer);
+        if (foundPos == std::string::npos)
+        {
+            reporter.OnFail(test, "Expected GNSS message not found");
+            return OpStatus::Error;
+        }
+    }
+    else
+    {
+        reporter.OnFail(test, "Unexpected gateware version.");
         return OpStatus::Error;
     }
     test.passed = true;
@@ -647,7 +668,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
     unsigned count1;
     unsigned count2;
 
-    std::vector<CustomParameterIO> params{ { cp_vctcxo_dac.id, 0, "" } };
+    std::vector<CustomParameterIO> params{ { limesdrxtrx::cp_vctcxo_dac.id, 0, "" } };
 
     try
     {
@@ -655,7 +676,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         // Store current value, and restore it on return
         CustomParameterStash vctcxoStash(this, params);
 
-        params[0].value = cp_vctcxo_dac.minValue;
+        params[0].value = limesdrxtrx::cp_vctcxo_dac.minValue;
         status = CustomParameterWrite(params);
         if (status != OpStatus::Success)
             return status;
@@ -676,7 +697,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         }
 
         count1 = vals[0] + (vals[1] << 16);
-        params[0].value = cp_vctcxo_dac.maxValue;
+        params[0].value = limesdrxtrx::cp_vctcxo_dac.maxValue;
         if (CustomParameterWrite(params) != OpStatus::Success)
         {
             reporter.OnFail(test, "IO failure");
@@ -702,7 +723,7 @@ OpStatus LimeSDR_XTRX::VCTCXOTest(OEMTestReporter& reporter, TestData& results)
         results.vctcxoMaxCount = count2;
         reporter.OnStepUpdate(test, str);
 
-        const bool fail = (count1 + 25 > count2) || (count1 + 35 < count2);
+        const bool fail = (count1 + 20 > count2) || (count1 + 35 < count2);
         if (fail)
         {
             reporter.OnFail(test, "unexpected values");
@@ -956,8 +977,32 @@ OpStatus LimeSDR_XTRX::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chann
     OpStatus status = LMS7002M_SDRDevice::SetAntenna(moduleIndex, trx, channel, path);
     if (status != OpStatus::Success)
         return status;
-    LMS1SetPath(trx == TRXDir::Tx, channel, path);
+    LMSSetPath(trx, channel, path);
     return OpStatus::Success;
+}
+
+std::unique_ptr<lime::RFStream> LimeSDR_XTRX::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
+{
+    if (mStreamPort.get() == nullptr)
+    {
+        lime::warning("XTRX RF data stream is not available");
+        return std::unique_ptr<RFStream>(nullptr);
+    }
+
+    std::shared_ptr<LimePCIe> trxPort{ mStreamPort };
+    auto rxdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<LimePCIeDMA>(trxPort, DataTransferDirection::HostToDevice);
+
+    std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(rxdma, txdma, mFPGA.get(), mLMSChips.at(0).get(), 0);
+    if (!streamer)
+        return streamer;
+
+    if (mCallback_logMessage)
+        streamer->SetMessageLogCallback(mCallback_logMessage);
+    OpStatus status = streamer->Setup(config);
+    if (status != OpStatus::Success)
+        return std::unique_ptr<RFStream>(nullptr);
+    return streamer;
 }
 
 } //namespace lime

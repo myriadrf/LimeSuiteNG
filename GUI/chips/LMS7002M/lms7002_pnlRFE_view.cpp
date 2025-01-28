@@ -3,7 +3,7 @@
 #include <wx/msgdlg.h>
 #include <map>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include "lms7002_gui_utilities.h"
 #include "numericSlider.h"
 #include <tuple>

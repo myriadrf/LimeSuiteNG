@@ -1,5 +1,4 @@
-#ifndef LIME_LMS64C_LMS7002M_OVER_USB_H
-#define LIME_LMS64C_LMS7002M_OVER_USB_H
+#pragma once
 
 #include "comms/IComms.h"
 #include "USB_CSR_Pipe.h"
@@ -21,5 +20,3 @@ class LMS64C_ADF4002_Over_USB : public IComms
 };
 
 } // namespace lime
-
-#endif // LIME_LMS64C_LMS7002M_OVER_USB_H

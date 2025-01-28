@@ -16,8 +16,6 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 
-using namespace std::literals::string_literals;
-
 namespace lime {
 
 class ISPI;
@@ -139,8 +137,8 @@ class LIME_API MCU_BD
     int m_bLoadedProd;
     int byte_array_size;
 
-    void IncrementStepsDone(unsigned short amount = 1, const std::string& message = ""s);
-    void SetStepsDone(unsigned short amount, const std::string& message = ""s);
+    void IncrementStepsDone(unsigned short amount = 1, const std::string& message = std::string());
+    void SetStepsDone(unsigned short amount, const std::string& message = std::string());
 };
 
 } // namespace lime

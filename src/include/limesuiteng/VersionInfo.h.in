@@ -1,0 +1,38 @@
+/**
+@file VersionInfo.h
+@author Lime Microsystems
+@brief API for querying version and build information.
+*/
+
+#ifndef LIMESUITENG_VERSION_INFO_H
+#define LIMESUITENG_VERSION_INFO_H
+
+#include "limesuiteng/config.h"
+#include <string>
+
+namespace lime {
+/*!
+ * Get the library version as a dotted string.
+ * The format is major.minor.patch.build-extra.
+ */
+LIME_API std::string GetLibraryVersion(void);
+
+/*!
+ * Get the date of the build in "%Y-%M-%d" format.
+ */
+LIME_API std::string GetBuildTimestamp(void);
+
+/*!
+ * Get the LimeSuite library API version as a string.
+ * The format of the version string is <b>major.minor.increment</b>,
+ */
+LIME_API std::string GetAPIVersion(void);
+
+/*!
+ * Get the ABI/so version of the library.
+ */
+LIME_API std::string GetABIVersion(void);
+
+} // namespace lime
+
+#endif //LIMESUITENG_VERSION_INFO_H

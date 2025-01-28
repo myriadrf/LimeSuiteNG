@@ -9,10 +9,10 @@
 #include <chrono>
 #include <string_view>
 #include <cmath>
-#include <signal.h>
+#include <csignal>
 #include "kiss_fft.h"
 #include "args.hxx"
-#include "common.h"
+#include "../../cli/common.h"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     float peakAmplitude = -1000, peakFrequency = 0;
 
     const std::string devName = args::get(deviceFlag);
-    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
+    SDRDevice* device = lime::cli::ConnectToFilteredOrDefaultDevice(devName);
     if (!device)
     {
         std::cout << "Failed to connect to device"sv << std::endl;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     const std::string rxAntennaName = args::get(rxpathFlag);
     if (!rxAntennaName.empty())
     {
-        rxPath = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
+        rxPath = lime::cli::AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
         if (rxPath < 0)
         {
             DeviceRegistry::freeDevice(device);
@@ -125,31 +125,20 @@ int main(int argc, char** argv)
     config.channel[0].tx.testSignal.enabled = false;
 
     std::cout << "Configuring device ...\n"sv;
-    try
-    {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        device->Configure(config, chipIndex);
-        auto t2 = std::chrono::high_resolution_clock::now();
-        std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
-        // Samples data streaming configuration
-        StreamConfig stream;
-        stream.channels[TRXDir::Rx] = { 0 };
-        stream.format = DataFormat::F32;
-        stream.linkFormat = DataFormat::I16;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    device->Configure(config, chipIndex);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
-        device->StreamSetup(stream, chipIndex);
-        device->StreamStart(chipIndex);
+    // Samples data streaming configuration
+    StreamConfig streamCfg;
+    streamCfg.channels[TRXDir::Rx] = { 0 };
+    streamCfg.format = DataFormat::F32;
+    streamCfg.linkFormat = DataFormat::I16;
 
-    } catch (std::runtime_error& e)
-    {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
-    } catch (std::logic_error& e)
-    {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
-    }
+    std::unique_ptr<lime::RFStream> stream = device->StreamCreate(streamCfg, chipIndex);
+    stream->Start();
 
     std::cout << "Stream started ...\n"sv;
     signal(SIGINT, intHandler);
@@ -165,8 +154,8 @@ int main(int argc, char** argv)
 #endif
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto t1 = startTime;
-    auto t2 = t1;
+    t1 = startTime;
+    t2 = t1;
 
     uint64_t totalSamplesReceived = 0;
 
@@ -178,7 +167,7 @@ int main(int argc, char** argv)
     StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
-        uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, fftSize, &rxMeta);
+        uint32_t samplesRead = stream->StreamRx(rxSamples, fftSize, &rxMeta);
         if (samplesRead == 0)
             continue;
 
@@ -219,6 +208,7 @@ int main(int argc, char** argv)
             peakAmplitude = -1000;
         }
     }
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 
     for (int i = 0; i < 2; ++i)

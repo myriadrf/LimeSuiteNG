@@ -1,6 +1,9 @@
 #include "common.h"
+
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/OpStatus.h"
-#include "OEMTesting.h"
+#include "limesuiteng/VersionInfo.h"
+
 #include <assert.h>
 #include <cstring>
 #include <sstream>
@@ -10,34 +13,19 @@
 #include "utilities/toString.h"
 #include "args.hxx"
 
+#include "OEMTesting.h"
+
 using namespace std;
 using namespace lime;
+using namespace lime::cli;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
-static LogLevel logVerbosity = LogLevel::Error;
-static LogLevel strToLogLevel(const std::string_view str)
+static bool interactiveMode = false;
+static void WaitForUserInput()
 {
-    if ("debug"sv == str)
-        return LogLevel::Debug;
-    else if ("verbose"sv == str)
-        return LogLevel::Verbose;
-    else if ("info"sv == str)
-        return LogLevel::Info;
-    else if ("warning"sv == str)
-        return LogLevel::Warning;
-    else if ("error"sv == str)
-        return LogLevel::Error;
-    else if ("critical"sv == str)
-        return LogLevel::Critical;
-    return LogLevel::Error;
-}
-
-static void LogCallback(LogLevel lvl, const std::string& msg)
-{
-    if (lvl > logVerbosity)
-        return;
-    cerr << msg << endl;
+    std::cerr << "Press any key to continue" << std::endl;
+    cin.ignore();
 }
 
 class PrintOEMTestReporter : public OEMTestReporter
@@ -78,8 +66,9 @@ class PrintOEMTestReporter : public OEMTestReporter
     {
         --indentLevel;
         std::cerr << Indent() << "=== " << test.name << " - PASSED"
-                  << " ===" << std::endl
-                  << std::endl;
+                  << " ===" << std::endl;
+        if (interactiveMode)
+            WaitForUserInput();
     }
     void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) override
     {
@@ -89,7 +78,9 @@ class PrintOEMTestReporter : public OEMTestReporter
 
         if (!reasonText.empty())
             std::cerr << " (" << reasonText << ")";
-        std::cerr << " ===" << std::endl << std::endl;
+        std::cerr << " ===" << std::endl;
+        if (interactiveMode)
+            WaitForUserInput();
     }
     void ReportColumn(const std::string& header, const std::string& value) override
     {
@@ -122,6 +113,8 @@ int main(int argc, char** argv)
     args::ValueFlag<std::string>    reportFileFlag(parser, "", "File to append test results", {'o', "output"}, "");
     args::ValueFlag<uint64_t>       serialNumberFlag(parser, "decimal", "One time programmable serial number to be written to device", {"write-serial-number"}, 0);
     args::Flag                      runTestsFlag(parser, "", "Run tests to check device functionality", {"test"});
+    args::Flag                      showVersion(parser, "", "Print software version", {"version"});
+    args::Flag                      interactive(parser, "", "Wait for user input after each test", {"interactive"});
     // clang-format on
 
     try
@@ -143,6 +136,14 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
+    if (showVersion)
+    {
+        cerr << GetLibraryVersion() << endl;
+        if (argc == 2)
+            return EXIT_SUCCESS;
+    }
+    interactiveMode = interactive;
+
     logVerbosity = strToLogLevel(args::get(logFlag));
     const std::string devName = args::get(deviceFlag);
     const std::string reportFilename = args::get(reportFileFlag);
@@ -151,8 +152,8 @@ int main(int argc, char** argv)
     if (!device)
         return EXIT_FAILURE;
 
-    device->SetMessageLogCallback(LogCallback);
-    lime::registerLogHandler(LogCallback);
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
     OpStatus result = OpStatus::Success;
 
     if (serialNumberFlag)
@@ -171,9 +172,11 @@ int main(int argc, char** argv)
     {
         uint64_t serialNumber = device->GetDescriptor().serialNumber;
         cerr << "Board serial number: " << serialNumber << " (";
+        stringstream ss;
+        ss << std::hex << std::setw(2) << std::setfill('0');
         for (size_t i = 0; i < sizeof(serialNumber); ++i)
-            cerr << hex << "0x" << std::setw(2) << std::setfill('0') << ((serialNumber >> 8 * i) & 0xFF) << " ";
-        cerr << ")" << endl;
+            ss << "0x" << ((serialNumber >> 8 * i) & 0xFF) << " ";
+        cerr << ss.str() << ")" << endl;
 
         PrintOEMTestReporter reporter(serialNumber, reportFilename);
         reporter.ReportColumn("S/N", std::to_string(serialNumber));

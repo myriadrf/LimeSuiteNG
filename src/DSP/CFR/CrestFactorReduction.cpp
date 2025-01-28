@@ -1,10 +1,10 @@
 #define _USE_MATH_DEFINES
-#include <cmath>
-#include <assert.h>
 #include <algorithm>
-#include <vector>
-#include <string.h>
+#include <cassert>
+#include <cmath>
+#include <cstring>
 #include <memory>
+#include <vector>
 
 #include "comms/ISPI.h"
 #include "CrestFactorReduction.h"

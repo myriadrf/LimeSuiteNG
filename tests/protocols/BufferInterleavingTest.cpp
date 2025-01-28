@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "protocols/BufferInterleaving.h"
+#include "streaming/BufferInterleaving.h"
 
 #include <array>
 
