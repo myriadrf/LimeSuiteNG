@@ -167,26 +167,6 @@ add_subdirectory(chips)
 add_subdirectory(DSP)
 add_subdirectory(streaming)
 
-########################################################################
-# LMS_API Wrapper lib
-# wrapper functions split into separate library to avoid symbols collision
-# if both limesuiteng and LimeSuite would be linked to application.
-########################################################################
-option(BUILD_LEGACYAPI "Build legacy LMS_API" ON)
-if(BUILD_LEGACYAPI)
-    add_library(limesuiteng-legacyapi API/LMS_APIWrapper.cpp)
-    add_library(limesuiteng::limesuiteng-legacyapi ALIAS limesuiteng-legacyapi)
-    target_include_directories(
-        limesuiteng-legacyapi PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include> $<INSTALL_INTERFACE:include>)
-    target_link_libraries(limesuiteng-legacyapi PUBLIC limesuiteng)
-
-    install(
-        TARGETS limesuiteng-legacyapi
-        EXPORT limesuitengTarget
-        COMPONENT legacyapi
-        DESTINATION lib${LIB_SUFFIX} # .so file
-        ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-    )
-endif()
+add_subdirectory(legacyapi)
 
 add_subdirectory(examples)

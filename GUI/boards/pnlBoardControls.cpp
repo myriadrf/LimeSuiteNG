@@ -7,10 +7,8 @@
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
 
-#include "lime/LimeSuite.h"
 #include "pnluLimeSDR.h"
 #include "pnlLimeSDR.h"
-#include "pnlBuffers.h"
 #include "pnlX3.h"
 #include "pnlX8.h"
 #include "pnlXTRX.h"

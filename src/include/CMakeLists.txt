@@ -24,14 +24,4 @@ if(INSTALL_DEVELOPMENT)
         FILES ${LIMESUITENG_PUBLIC_HEADERS}
         DESTINATION include/limesuiteng
         COMPONENT dev)
-
-    file(
-        GLOB LEGACY_PUBLIC_HEADERS
-        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/lime/*.h")
-
-    install(
-        FILES ${LEGACY_PUBLIC_HEADERS}
-        DESTINATION include/lime
-        COMPONENT dev)
 endif()
