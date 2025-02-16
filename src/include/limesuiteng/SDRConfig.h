@@ -123,7 +123,7 @@ struct SDRConfig {
     static constexpr uint8_t MAX_CHANNEL_COUNT = 16; ///< Maximum amount of channels an SDR Device can hold
     SDRConfig()
         : referenceClockFreq(0)
-        , skipDefaults(false) {};
+        , skipDefaults(false){};
     double referenceClockFreq; ///< The reference clock frequency of the device.
     ChannelConfig channel[MAX_CHANNEL_COUNT]; ///< The configuration settings for each of the channels.
     // Loopback setup?
