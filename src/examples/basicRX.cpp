@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     config.channel[0].rx.oversample = 2;
     config.channel[0].rx.lpf = 0;
     config.channel[0].rx.path = rxPath;
-    config.channel[0].rx.calibrate = false;
+    config.channel[0].rx.calibrate = CalibrationFlag::NONE;
     config.channel[0].rx.testSignal.enabled = false;
 
     config.channel[0].tx.enabled = false;

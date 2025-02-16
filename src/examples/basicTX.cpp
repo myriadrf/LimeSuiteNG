@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.oversample = 2;
     config.channel[0].tx.lpf = 0;
     config.channel[0].tx.path = txPath;
-    config.channel[0].tx.calibrate = true;
+    config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
     config.channel[0].tx.testSignal.enabled = false;
 
     std::cout << "Configuring device ...\n"sv;

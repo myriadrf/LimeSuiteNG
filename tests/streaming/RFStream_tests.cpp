@@ -41,7 +41,7 @@ void RFStream_tests::SetUp()
     config.channel[0].rx.oversample = 2;
     config.channel[0].rx.lpf = 0;
     config.channel[0].rx.path = 2; // TODO: replace with string names
-    config.channel[0].rx.calibrate = false;
+    config.channel[0].rx.calibrate = CalibrationFlag::NONE;
     config.channel[0].rx.testSignal.enabled = false;
 
     config.channel[0].tx.enabled = false;
