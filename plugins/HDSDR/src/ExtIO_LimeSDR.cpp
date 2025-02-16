@@ -291,7 +291,7 @@ static bool InitializeLMS()
     channelConfiguration.oversample = oversample;
     channelConfiguration.centerFrequency = currentLOFreq;
     channelConfiguration.path = antennaSelect;
-    channelConfiguration.calibrate = CalibrationFlag::DCIQ;
+    channelConfiguration.calibrate = lime::CalibrationFlag::DCIQ;
     channelConfiguration.gain[lime::eGainTypes::LNA] = LNA;
     channelConfiguration.gain[lime::eGainTypes::PGA] = PGA;
     channelConfiguration.gain[lime::eGainTypes::TIA] = TIA;
