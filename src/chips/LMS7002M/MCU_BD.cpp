@@ -18,6 +18,7 @@ using namespace std;
 #include "comms/ISPI.h"
 #include <functional>
 #include <string_view>
+#include <chrono>
 
 using namespace lime;
 using namespace std::literals::string_literals;
