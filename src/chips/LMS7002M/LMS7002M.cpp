@@ -47,6 +47,8 @@ using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
+namespace lime {
+
 // converts [-1:1] into [-32768:32767]
 static constexpr int16_t NormalFloatToInt16(const float value)
 {
@@ -74,8 +76,13 @@ constexpr LMS7002M::Channel IntToChannel(int channel)
     return channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
 }
 
+struct ReadOnlyRegister {
+    uint16_t address;
+    uint16_t mask;
+};
+
 // Module addresses needs to be sorted in ascending order
-const std::vector<LMS7002M::ReadOnlyRegister> LMS7002M::readOnlyRegisters{
+static const std::vector<ReadOnlyRegister> readOnlyRegisters{
     { 0x002F, 0x0000 },
     { 0x008C, 0x0FFF },
     { 0x00A8, 0x007F },
@@ -91,7 +98,7 @@ const std::vector<LMS7002M::ReadOnlyRegister> LMS7002M::readOnlyRegisters{
     { 0x040F, 0x0000 },
 };
 
-const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> LMS7002M::MemorySectionAddresses{
+static const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> MemorySectionAddresses{
     { LMS7002M::MemorySection::LimeLight, { 0x0020, 0x002F } },
     { LMS7002M::MemorySection::EN_DIR, { 0x0081, 0x0081 } },
     { LMS7002M::MemorySection::AFE, { 0x0082, 0x0082 } },
@@ -2160,3 +2167,5 @@ LMS7002M::ChannelScope::~ChannelScope()
     if (mNeedsRestore)
         mChip->SetActiveChannel(mStoredValue);
 }
+
+} // namespace lime
