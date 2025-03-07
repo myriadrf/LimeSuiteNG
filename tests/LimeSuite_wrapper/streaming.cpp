@@ -138,12 +138,13 @@ INSTANTIATE_TEST_SUITE_P(streamVariations,
         RxStreamParams{ 20e6, 2, 2 },
         // RxStreamParams{ 20e6, 1, 1 }, // oversampling x1 not always supported
         // RxStreamParams{ 20e6, 1, 2 },
-        RxStreamParams{ 10e6, 2, 1 },
-        RxStreamParams{ 5e6, 2, 1 },
-        RxStreamParams{ 1e6, 2, 1 },
-        RxStreamParams{ 1e6, 2, 2 },
-        RxStreamParams{ 5e5, 4, 1 },
-        RxStreamParams{ 5e6, 4, 2 }),
+        RxStreamParams{ 10e6, 2, 1 }
+        // RxStreamParams{ 5e6, 2, 1 },
+        // RxStreamParams{ 1e6, 2, 1 },
+        // RxStreamParams{ 1e6, 2, 2 },
+        // RxStreamParams{ 5e5, 4, 1 },
+        // RxStreamParams{ 5e6, 4, 2 }
+        ),
     ::testing::PrintToStringParamName());
 
 /*

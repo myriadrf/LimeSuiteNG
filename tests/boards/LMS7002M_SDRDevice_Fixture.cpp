@@ -50,7 +50,7 @@ void LMS7002M_SDRDevice_Fixture::SetUpDeviceForRxTestPattern(
     ChannelConfig::Direction& directionConfiguration = deviceConfiguration.channel[0].rx;
     directionConfiguration.enabled = true;
     directionConfiguration.centerFrequency = 1.4e9;
-    directionConfiguration.sampleRate = 30.72e6;
+    directionConfiguration.sampleRate = 20e6;
     directionConfiguration.path = 2;
     directionConfiguration.oversample = 2;
     directionConfiguration.lpf = 130e6;
