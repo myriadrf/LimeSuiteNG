@@ -5,6 +5,8 @@
 
 void lms7002m_spi_write(lms7002m_context* self, uint16_t address, uint16_t value)
 {
+    ++self->cnt_spi_wr;
+    ++self->cnt_spi;
     uint32_t mosi = address << 16 | value;
     mosi |= 1 << 31;
     self->hooks.spi16_transact(&mosi, 0, 1, self->hooks.spi16_userData);
@@ -12,6 +14,8 @@ void lms7002m_spi_write(lms7002m_context* self, uint16_t address, uint16_t value
 
 uint16_t lms7002m_spi_read(lms7002m_context* self, uint16_t address)
 {
+    ++self->cnt_spi_rd;
+    ++self->cnt_spi;
     uint32_t mosi = address << 16;
     uint32_t miso = 0;
     self->hooks.spi16_transact(&mosi, &miso, 1, self->hooks.spi16_userData);

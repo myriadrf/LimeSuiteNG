@@ -142,11 +142,11 @@ double LMS7002M_SDRDevice::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t
 OpStatus LMS7002M_SDRDevice::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
 {
     lime::LMS7002M* lms = mLMSChips.at(moduleIndex).get();
-    int64_t oppositeDirLO = lms->GetFrequencySX(trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx);
+    // int64_t oppositeDirLO = lms->GetFrequencySX(trx == TRXDir::Rx ? TRXDir::Tx : TRXDir::Rx);
     OpStatus status = lms->SetFrequencySX(trx, frequency);
     // Readback of LO frequency might not exactly match what was requested, so compare with some margin
-    bool useTDD = (std::abs(oppositeDirLO - frequency) <= 20);
-    lms->EnableSXTDD(useTDD);
+    // bool useTDD = (std::abs(oppositeDirLO - frequency) <= 20);
+    // lms->EnableSXTDD(useTDD);
     return status;
 }
 

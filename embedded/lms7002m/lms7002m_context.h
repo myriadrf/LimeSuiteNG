@@ -11,6 +11,10 @@ typedef struct lms7002m_context {
     lms7002m_hooks hooks;
 
     uint32_t reference_clock_hz; ///< Common reference clock for CGEN, SXR, SXT
+
+    uint64_t cnt_spi_rd;
+    uint64_t cnt_spi_wr;
+    uint64_t cnt_spi;
 } lms7002m_context;
 
 #ifdef __cplusplus

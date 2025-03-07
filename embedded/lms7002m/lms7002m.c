@@ -6,6 +6,7 @@
 #include "lms7002m_context.h"
 #include "privates.h"
 #include "spi.h"
+#include "pll.h"
 
 #ifdef FLOATING_POINT_AVAILABLE
     #include "lms_gfir.h"
@@ -25,18 +26,7 @@ void free(void* ptr);
     #include <string.h>
 #endif // __KERNEL__
 
-#ifndef NDEBUG // warn about unexpected conditions
-    #define EXPECT(context, condition) \
-        do \
-        { \
-            if (!(condition)) \
-            { \
-                LMS7002M_LOG(self, lime_LogLevel_Error, "%s:%i Unmet expectation: (" #condition ")", __FILE__, __LINE__); \
-            } \
-        } while (0)
-#else
-    #define EXPECT(context, condition) // do nothing
-#endif
+#include "expect.h"
 
 static inline void* lms7002m_malloc(size_t size)
 {
@@ -96,7 +86,7 @@ void lms7002m_destroy(lms7002m_context* context)
         lms7002m_free(context);
 }
 
-static enum lms7002m_channel lms7002m_set_active_channel_readback(lms7002m_context* self, const enum lms7002m_channel channel)
+enum lms7002m_channel lms7002m_set_active_channel_readback(struct lms7002m_context* self, const enum lms7002m_channel channel)
 {
     enum lms7002m_channel prev_ch = lms7002m_get_active_channel(self);
     if (channel != prev_ch)
@@ -841,326 +831,22 @@ lime_Result lms7002m_tune_vco(lms7002m_context* self, enum lms7002m_vco_type mod
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, module == LMS7002M_VCO_SXR ? LMS7002M_CHANNEL_SXR : LMS7002M_CHANNEL_SXT);
 
-    const char* const moduleName = (module == LMS7002M_VCO_SXR) ? "SXR" : "SXT";
-
-    // Initialization activate VCO and comparator
-    const uint16_t addrVCOpd = LMS7002M_PD_VCO.address; // VCO power down address
-    const lime_Result status = lms7002m_spi_modify(self, addrVCOpd, 2, 1, 0);
-    if (status != lime_Result_Success)
-    {
-        lms7002m_set_active_channel(self, savedChannel);
-        return status;
-    }
-
-    if (lms7002m_spi_read_bits(self, addrVCOpd, 2, 1) != 0)
-    {
-        LMS7002M_LOG(self, lime_LogLevel_Error, "TuneVCO(%s) - VCO is powered down", moduleName);
-
-        lms7002m_set_active_channel(self, savedChannel);
-        return lime_Result_Error;
-    }
-
-    //check if lock is within VCO range
-    const uint16_t addrCSW_VCO = LMS7002M_CSW_VCO.address;
-    const uint8_t lsb = LMS7002M_CSW_VCO.lsb; //SWC lsb index
-    const uint8_t msb = LMS7002M_CSW_VCO.msb; //SWC msb index
-    lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, 0);
-
-    const uint16_t settlingTimeMicroseconds = 50; //can be lower
-    lms7002m_sleep(settlingTimeMicroseconds);
-
-    const uint16_t addrCMP = LMS7002M_VCO_CMPHO.address; //comparator address
-
-    uint8_t cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12); //comparators
-    if (cmphl == 3) //VCO too high
-    {
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "TuneVCO(%s) - attempted VCO too high", moduleName);
-
-        lms7002m_set_active_channel(self, savedChannel);
-        return lime_Result_Error;
-    }
-
-    lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, 255);
-    lms7002m_sleep(settlingTimeMicroseconds);
-    cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
-    if (cmphl == 0) //VCO too low
-    {
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "TuneVCO(%s) - attempted VCO too low", moduleName);
-
-        lms7002m_set_active_channel(self, savedChannel);
-        return lime_Result_Error;
-    }
-
-    typedef struct {
-        int16_t high;
-        int16_t low;
-    } CSWInterval;
-
-    CSWInterval cswSearch[2];
-
-    //search intervals [0-127][128-255]
-    for (int t = 0; t < 2; ++t)
-    {
-        bool hadLock = false;
-        // initialize search range with invalid values
-        cswSearch[t].low = 128 * (t + 1); // set low to highest possible value
-        cswSearch[t].high = 128 * t; // set high to lowest possible value
-        LMS7002M_LOG(
-            self, lime_LogLevel_Debug, "TuneVCO(%s) - searching interval [%i:%i]", moduleName, cswSearch[t].high, cswSearch[t].low);
-        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].high);
-        //binary search for and high value, and on the way store approximate low value
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "%s", "binary search:");
-        for (int i = 6; i >= 0; --i)
-        {
-            cswSearch[t].high |= 1 << i; //CSW_VCO<i>=1
-            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].high);
-            lms7002m_sleep(settlingTimeMicroseconds);
-            cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
-            LMS7002M_LOG(self, lime_LogLevel_Debug, "csw=%d\tcmphl=%d", cswSearch[t].high, cmphl);
-            if (cmphl & 0x01) // reduce CSW
-                cswSearch[t].high &= ~(1 << i); //CSW_VCO<i>=0
-            if (cmphl == 2 && cswSearch[t].high < cswSearch[t].low)
-            {
-                cswSearch[t].low = cswSearch[t].high;
-                hadLock = true;
-            }
-        }
-        //linear search to make sure there are no gaps, and move away from edge case
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "%s", "adjust with linear search:");
-        while (cswSearch[t].low <= cswSearch[t].high && cswSearch[t].low > t * 128)
-        {
-            --cswSearch[t].low;
-            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswSearch[t].low);
-            lms7002m_sleep(settlingTimeMicroseconds);
-            const uint8_t tempCMPvalue = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
-            LMS7002M_LOG(self, lime_LogLevel_Debug, "csw=%d\tcmphl=%d", cswSearch[t].low, tempCMPvalue);
-            if (tempCMPvalue != 2)
-            {
-                ++cswSearch[t].low;
-                break;
-            }
-        }
-        if (hadLock)
-        {
-            LMS7002M_LOG(self,
-                lime_LogLevel_Debug,
-                "CSW: lowest=%d, highest=%d, will use=%d",
-                cswSearch[t].low,
-                cswSearch[t].high,
-                cswSearch[t].low + (cswSearch[t].high - cswSearch[t].low) / 2);
-        }
-        else
-            LMS7002M_LOG(self, lime_LogLevel_Debug, "%s", "CSW interval failed to lock");
-    }
-
-    //check if the intervals are joined
-    int16_t cswHigh = 0, cswLow = 0;
-    if (cswSearch[0].high == cswSearch[1].low - 1)
-    {
-        cswHigh = cswSearch[1].high;
-        cswLow = cswSearch[0].low;
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "CSW is locking in one continuous range: low=%d, high=%d", cswLow, cswHigh);
-    }
-    //compare which interval is wider
-    else
-    {
-        uint8_t intervalIndex = (cswSearch[1].high - cswSearch[1].low > cswSearch[0].high - cswSearch[0].low);
-        cswHigh = cswSearch[intervalIndex].high;
-        cswLow = cswSearch[intervalIndex].low;
-        LMS7002M_LOG(self, lime_LogLevel_Debug, "choosing wider CSW locking range: low=%d, high=%d", cswLow, cswHigh);
-    }
-
-    uint8_t finalCSW = 0;
-    if (cswHigh - cswLow <= 1)
-    {
-        LMS7002M_LOG(self,
-            lime_LogLevel_Debug,
-            "TuneVCO(%s) - narrow locking values range detected [%i:%i]. VCO lock status might change with temperature.",
-            moduleName,
-            cswLow,
-            cswHigh);
-        //check which of two values really locks
-        finalCSW = cswLow;
-        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswLow);
-        lms7002m_sleep(settlingTimeMicroseconds);
-        cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
-        if (cmphl != 2)
-        {
-            finalCSW = cswHigh;
-            lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, cswHigh);
-        }
-    }
-    else
-    {
-        finalCSW = cswLow + (cswHigh - cswLow) / 2;
-        lms7002m_spi_modify(self, addrCSW_VCO, msb, lsb, finalCSW);
-    }
-    lms7002m_sleep(settlingTimeMicroseconds);
-    cmphl = lms7002m_spi_read_bits(self, addrCMP, 13, 12);
+    lime_Result status = lms7002m_tune_vco_sx_fast(self, NULL);
     lms7002m_set_active_channel(self, savedChannel);
-
-    if (cmphl != 2)
-    {
-        LMS7002M_LOG(
-            self, lime_LogLevel_Debug, "TuneVCO(%s) - failed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-        return lime_Result_Error;
-    }
-
-    LMS7002M_LOG(
-        self, lime_LogLevel_Debug, "TuneVCO(%s) - confirmed lock with final csw=%i, cmphl=%i", moduleName, finalCSW, cmphl);
-    return lime_Result_Success;
-}
-
-static lime_Result lms7002m_write_sx_registers(
-    lms7002m_context* self, const uint64_t VCOfreq_hz, uint32_t reference_clock_hz, uint8_t div_loch)
-{
-    const uint64_t m_dThrF = 5500000000; // VCO frequency threshold to enable additional divider
-    const uint64_t divider = reference_clock_hz << (VCOfreq_hz > m_dThrF);
-
-    uint16_t integerPart = VCOfreq_hz / divider;
-    // "Fixed point number" division, take only the fraction part
-    uint32_t fractionalPart = ((VCOfreq_hz - integerPart * divider) << 20) / divider;
-    integerPart -= 4;
-
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
-    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
-    lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
-    lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
-    lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
-
-    LMS7002M_LOG(self,
-        lime_LogLevel_Debug,
-        "SX VCO:%lu Hz, RefClk:%u Hz, INT:%u, FRAC:%u, DIV_LOCH:%u, EN_DIV2_DIVPROG:%d",
-        VCOfreq_hz,
-        reference_clock_hz,
-        integerPart,
-        fractionalPart,
-        div_loch,
-        (VCOfreq_hz > m_dThrF));
-
-    return lime_Result_Success;
+    return status;
 }
 
 lime_Result lms7002m_set_frequency_sx(lms7002m_context* self, bool isTx, uint64_t LO_freq_hz)
 {
-    LMS7002M_LOG(self, lime_LogLevel_Debug, "Set %s LO frequency (%lu Hz)", isTx ? "Tx" : "Rx", LO_freq_hz);
-
-    const char* const vcoNames[] = { "VCOL", "VCOM", "VCOH" };
-    const uint64_t VCO_min_frequency[3] = { 3800000000, 4961000000, 6306000000 };
-    const uint64_t VCO_max_frequency[3] = { 5222000000, 6754000000, 7714000000 };
-
-    struct VCOData {
-        uint64_t frequency;
-        uint8_t div_loch;
-        uint8_t csw;
-        bool canDeliverFrequency;
-    } vco[3];
-
-    memset(vco, 0, sizeof(vco));
-
-    bool canDeliverFrequency = false;
-
-    //find required VCO frequency
-    // div_loch value 7 is not allowed
-    for (int8_t div_loch = 6; div_loch >= 0; --div_loch)
-    {
-        uint64_t VCOfreq = (1 << (div_loch + 1)) * (uint64_t)LO_freq_hz;
-        for (int i = 0; i < 3; ++i)
-        {
-            if (!vco[i].canDeliverFrequency && (VCOfreq >= VCO_min_frequency[i]) && (VCOfreq <= VCO_max_frequency[i]))
-            {
-                vco[i].canDeliverFrequency = true;
-                vco[i].div_loch = div_loch;
-                vco[i].frequency = VCOfreq;
-                canDeliverFrequency = true;
-            }
-        }
-    }
-
-    if (!canDeliverFrequency)
-    {
-        LMS7002M_LOG(self,
-            lime_LogLevel_Error,
-            "%s: %s LO(%lu Hz) - VCO cannot deliver frequency.",
-            __func__,
-            isTx ? "Tx" : "Rx",
-            LO_freq_hz);
-        return lime_Result_Error;
-    }
-
-    const uint32_t refClk_Hz = lms7002m_get_reference_clock(self);
-    if (refClk_Hz == 0)
-        return lime_Result_Error;
-
+    uint64_t rds = self->cnt_spi_rd;
+    uint64_t wrs = self->cnt_spi_wr;
+    uint64_t trs = self->cnt_spi;
     enum lms7002m_channel savedChannel =
         lms7002m_set_active_channel_readback(self, isTx ? LMS7002M_CHANNEL_SXT : LMS7002M_CHANNEL_SXR);
-
-    // turn on VCO and comparator
-    lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO, 0);
-    lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO_COMP, 0);
-
-    const uint8_t preferred_vco_order[3] = { 2, 0, 1 };
-    uint8_t sel_vco;
-    canDeliverFrequency = false;
-    uint8_t ict_vco = lms7002m_spi_read_csr(self, LMS7002M_ICT_VCO);
-    do // if initial tune fails, attempt again with modified bias current
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            sel_vco = preferred_vco_order[i];
-            if (!vco[sel_vco].canDeliverFrequency)
-            {
-                LMS7002M_LOG(self, lime_LogLevel_Debug, "%s skipped", vcoNames[sel_vco]);
-                continue;
-            }
-
-            lms7002m_write_sx_registers(self, vco[sel_vco].frequency, refClk_Hz, vco[sel_vco].div_loch);
-            LMS7002M_LOG(self, lime_LogLevel_Debug, "Tuning %s %s (ICT_VCO:%d):", (isTx ? "Tx" : "Rx"), vcoNames[sel_vco], ict_vco);
-
-            lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
-            lime_Result status = lms7002m_tune_vco(self, isTx ? LMS7002M_VCO_SXT : LMS7002M_VCO_SXR);
-            if (status == lime_Result_Success)
-            {
-                vco[sel_vco].csw = lms7002m_spi_read_csr(self, LMS7002M_CSW_VCO);
-                canDeliverFrequency = true;
-                LMS7002M_LOG(self,
-                    lime_LogLevel_Debug,
-                    "%s : csw=%d %s",
-                    vcoNames[sel_vco],
-                    vco[sel_vco].csw,
-                    (status == lime_Result_Success ? "tune ok" : "tune fail"));
-                break;
-            }
-            else
-                LMS7002M_LOG(self, lime_LogLevel_Debug, "%s : failed to lock", vcoNames[sel_vco]);
-        }
-
-        if (canDeliverFrequency)
-        {
-            LMS7002M_LOG(self, lime_LogLevel_Debug, "Selected: %s, CSW_VCO: %i", vcoNames[sel_vco], vco[sel_vco].csw);
-            lms7002m_spi_modify_csr(self, LMS7002M_SEL_VCO, sel_vco);
-            lms7002m_spi_modify_csr(self, LMS7002M_CSW_VCO, vco[sel_vco].csw);
-            break;
-        }
-        else
-        {
-            if (ict_vco == 255)
-                break;
-            ict_vco = ict_vco + 32 > 255 ? 255 : ict_vco + 32; // retry with higher bias current
-            lms7002m_spi_modify_csr(self, LMS7002M_ICT_VCO, ict_vco);
-        }
-    } while (ict_vco <= 255);
-
+    lime_Result status = lms7002m_set_lo_sx(self, LO_freq_hz);
     lms7002m_set_active_channel(self, savedChannel);
-
-    if (canDeliverFrequency == false)
-    {
-        LMS7002M_LOG(
-            self, lime_LogLevel_Error, "%s: %s LO(%lu Hz) - cannot deliver frequency", __func__, isTx ? "Tx" : "Rx", LO_freq_hz);
-        return lime_Result_Error;
-    }
-    return lime_Result_Success;
+    // printf("Set freq spi cnt, wr:%li  rd:%li, tr:%li\n", self->cnt_spi_wr - wrs, self->cnt_spi_rd - rds, self->cnt_spi - trs);
+    return status;
 }
 
 uint64_t lms7002m_get_frequency_sx(lms7002m_context* self, bool isTx)

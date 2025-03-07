@@ -4,6 +4,7 @@
 #include "limesuiteng/embedded/loglevel.h"
 #include "limesuiteng/embedded/result.h"
 #include "limesuiteng/embedded/types.h"
+#include "limesuiteng/embedded/lms7002m/lms7002m.h"
 
 struct lms7002m_context;
 struct lms7002m_csr;
@@ -43,6 +44,8 @@ void lms7002m_trigger_rising_edge(struct lms7002m_context* self, const struct lm
 // clamps
 int32_t clamp_int(int32_t value, int32_t min, int32_t max);
 uint32_t clamp_uint(uint32_t value, uint32_t min, uint32_t max);
+
+enum lms7002m_channel lms7002m_set_active_channel_readback(struct lms7002m_context* self, const enum lms7002m_channel channel);
 
 #ifdef __cplusplus
 } // extern C
