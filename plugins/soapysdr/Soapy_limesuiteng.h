@@ -170,6 +170,8 @@ class Soapy_limesuiteng : public SoapySDR::Device
 
     double getSampleRate(int direction, size_t channel) const override;
 
+    std::vector<double> listSampleRates(const int direction, const size_t channel) const;
+
     SoapySDR::RangeList getSampleRateRange(int direction, size_t channel) const override;
 
     /*******************************************************************
@@ -179,6 +181,8 @@ class Soapy_limesuiteng : public SoapySDR::Device
     void setBandwidth(int direction, size_t channel, const double bw) override;
 
     double getBandwidth(int direction, size_t channel) const override;
+
+    std::vector<double> listBandwidths(const int direction, const size_t channel) const;
 
     SoapySDR::RangeList getBandwidthRange(int direction, size_t channel) const override;
 

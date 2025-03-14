@@ -516,6 +516,17 @@ double Soapy_limesuiteng::getSampleRate(const int direction, [[maybe_unused]] co
     return sdrDevice->GetSampleRate(socIndex, direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx, 0);
 }
 
+std::vector<double> Soapy_limesuiteng::listSampleRates(
+    [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
+{
+    auto range = sdrDevice->GetDescriptor().rfSOC.at(socIndex).samplingRateRange;
+    std::vector<double> values;
+    // sampling rate can be any value in range, but return only in 1MHz steps not to spam too many entries
+    for (double value = range.min; value < range.max; value += 1e6)
+        values.push_back(value);
+    return values;
+}
+
 SoapySDR::RangeList Soapy_limesuiteng::getSampleRateRange(
     [[maybe_unused]] const int direction, [[maybe_unused]] const size_t channel) const
 {
@@ -554,6 +565,17 @@ double Soapy_limesuiteng::getBandwidth(const int direction, const size_t channel
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
 
     return sdrDevice->GetLowPassFilter(socIndex, direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx, channel);
+}
+
+std::vector<double> Soapy_limesuiteng::listBandwidths(const int direction, const size_t channel) const
+{
+    TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
+    auto range = sdrDevice->GetDescriptor().rfSOC.at(socIndex).lowPassFilterRange.at(dir);
+    std::vector<double> bandwidths;
+    // sampling rate can be any value in range, but return only in 1MHz steps not to spam too many entries
+    for (double bw = range.min; bw <= range.max; bw += 1e6)
+        bandwidths.push_back(bw);
+    return bandwidths;
 }
 
 SoapySDR::RangeList Soapy_limesuiteng::getBandwidthRange(const int direction, [[maybe_unused]] const size_t channel) const
