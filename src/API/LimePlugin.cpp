@@ -18,6 +18,7 @@
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "protocols/LMSBoards.h"
 
 #ifdef _MSC_VER
     #define strncasecmp _strnicmp
@@ -995,7 +996,29 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             if (node.fpgaRegisterWrites.size() > 0)
             {
                 const auto slaves = node.device->GetDescriptor().spiSlaveIds;
-                node.device->SPI(slaves.at("FPGA"s), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
+                int spiid = 0;
+                std::string spiname = "FPGA";
+                if (node.device->GetDescriptor().name == GetDeviceName(LMS_DEV_LIMESDR_MMX8))
+                {
+                    spiname += "@" + std::to_string(node.chipIndex + 1);
+                }
+                const auto spiiter = slaves.find(spiname);
+                if (spiiter != slaves.end())
+                    spiid = spiiter->second;
+                else
+                    spiid = slaves.at("FPGA"s);
+
+                {
+                    std::stringstream ss;
+                    for (const auto& reg : node.fpgaRegisterWrites)
+                    {
+                        char datastring[64];
+                        sprintf(datastring, " %08X", reg);
+                        ss << datastring;
+                    }
+                    Log(LogLevel::Info, "SPI write[%s](%s)", spiname.c_str(), ss.str().c_str());
+                }
+                node.device->SPI(spiid, node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
             }
         }
 
