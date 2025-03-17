@@ -846,12 +846,14 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             if (!dev->assignedToPort)
                 continue;
 
+            streamCfg.channels[TRXDir::Rx].clear();
             for (int i = 0; i < dev->configInputs.maxChannelsToUse && rx_channel_remaining > 0; ++i)
             {
                 streamCfg.channels[TRXDir::Rx].push_back(i);
                 --rx_channel_remaining;
             }
 
+            streamCfg.channels[TRXDir::Tx].clear();
             for (int i = 0; i < dev->configInputs.maxChannelsToUse && tx_channel_remaining > 0; ++i)
             {
                 streamCfg.channels[TRXDir::Tx].push_back(i);
