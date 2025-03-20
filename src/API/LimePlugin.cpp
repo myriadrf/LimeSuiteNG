@@ -1087,6 +1087,12 @@ int LimePlugin_Write_complex16(
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
+int LimePlugin_Write_complex12(
+    LimePluginContext* context, const lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
+{
+    return LimePlugin_Write(context, samples, count, port, meta);
+}
+
 template<class T> static int LimePlugin_Read(LimePluginContext* context, T* const* samples, int count, int port, StreamMeta& meta)
 {
     meta.waitForTimestamp = false;
@@ -1115,6 +1121,11 @@ int LimePlugin_Read_complex32f(
 }
 
 int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
+{
+    return LimePlugin_Read(context, samples, count, port, meta);
+}
+
+int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
