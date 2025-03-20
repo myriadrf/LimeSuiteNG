@@ -286,6 +286,8 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 
 OpStatus LimeSDR_Mini::Init()
 {
+    mFPGA->StopStreaming();
+
     auto& lms = mLMSChips.at(0);
     OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
     if (status != OpStatus::Success)

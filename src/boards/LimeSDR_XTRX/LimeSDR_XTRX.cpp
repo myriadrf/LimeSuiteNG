@@ -316,6 +316,9 @@ OpStatus LimeSDR_XTRX::Init()
     for (auto i : mFPGAInitVals)
         mFPGA->WriteRegister(i.adr, i.val);
 
+    // Stop streaming just in case it was left enabled by crashed application.
+    mFPGA->StopStreaming();
+
     // uint8_t paramId = 2;
     // double dacVal = 65535;
     // CustomParameterWrite(&paramId,&dacVal,1,"");

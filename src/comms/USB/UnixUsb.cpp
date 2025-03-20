@@ -412,4 +412,9 @@ OpStatus UnixUsb::ClaimInterface(int32_t interface_number)
     return OpStatus::Success;
 }
 
+void UnixUsb::FlushEndpoint()
+{
+    // do nothing, libusb does not have such functionality
+}
+
 } // namespace lime

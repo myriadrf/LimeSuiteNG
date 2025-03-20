@@ -40,6 +40,7 @@ class FT601 : public IUSB
       @return Status of the operation.
      */
     OpStatus ResetStreamBuffers();
+    void FlushEndpoint() override;
 
   private:
 #ifdef __unix__

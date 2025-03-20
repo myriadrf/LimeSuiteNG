@@ -206,6 +206,16 @@ OpStatus TRXLooper::Start()
     mRx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminate.store(false, std::memory_order_relaxed);
 
+    // Rx start
+    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    assert(readSize > 0);
+    constexpr uint8_t irqPeriod{ 4 };
+    // Rx DMA has to be enabled first before the stream enable, otherwise some data
+    // might be lost in the time frame between stream enable and then dma enable.
+    status = mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
+    if (status != OpStatus::Success)
+        return status;
+
     fpga->StartStreaming();
     {
         std::lock_guard<std::mutex> lock(streamMutex);
@@ -229,6 +239,7 @@ void TRXLooper::Stop()
     mStreamEnabled = false;
 
     // wait for loop ends
+
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
@@ -246,6 +257,7 @@ void TRXLooper::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
+    mRxArgs.dma->Enable(false);
 
     // wait for loop ends
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
@@ -308,6 +320,8 @@ void TRXLooper::Stop()
         mTx.fifo->clear();
         mTx.stagingPacket = nullptr;
     }
+
+    mRx.lastTimestamp.store(0, std::memory_order_relaxed);
 }
 
 /// @brief Stops all the running streams and clears up the memory.
@@ -412,15 +426,6 @@ OpStatus TRXLooper::RxSetup()
     const int upperAllocationLimit =
         sizeof(complex32f_t) * mRx.packetsToBatch * mRx.samplesInPkt * chCount + SamplesPacketType::headerSize;
     mRx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
-
-    // Rx start
-    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-    constexpr uint8_t irqPeriod{ 4 };
-    // Rx DMA has to be enabled before the stream enable, otherwise some data
-    // might be lost in the time frame between stream enable and then dma enable.
-    status = mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
-    if (status != OpStatus::Success)
-        return status;
 
     // Don't just use REALTIME scheduling, or at least be cautious with it.
     // if the thread blocks for too long, Linux can trigger RT throttling
@@ -703,7 +708,6 @@ void TRXLooper::RxTeardown()
         {
             lime::error("Failed to join TRXLooper Rx thread"s);
         }
-        mRxArgs.dma->Enable(false);
     }
 
     if (mRx.stagingPacket)

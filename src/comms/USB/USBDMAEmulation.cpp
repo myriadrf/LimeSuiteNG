@@ -124,6 +124,8 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
         return OpStatus::Success;
     // For continuous transferring, preemptively request data to be transferred
     std::unique_lock lck{ queuesMutex };
+    lastRequestIndex = 0;
+    port->FlushEndpoint();
     while (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();

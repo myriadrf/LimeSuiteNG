@@ -296,6 +296,11 @@ OpStatus FT601::ResetStreamBuffers()
     return OpStatus::Success;
 }
 
+void FT601::FlushEndpoint()
+{
+    ResetStreamBuffers();
+}
+
 #ifndef __unix__
 int FT601::ReinitPipe(unsigned char ep)
 {

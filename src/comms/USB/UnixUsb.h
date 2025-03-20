@@ -42,6 +42,8 @@ class UnixUsb : IUSB
     /// @return The status of the operation.
     virtual OpStatus ClaimInterface(int32_t interface_number);
 
+    void FlushEndpoint() override;
+
   private:
     libusb_device_handle* dev_handle; //a device handle
 

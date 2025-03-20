@@ -185,6 +185,33 @@ int32_t FX3::ControlTransfer(int requestType, int request, int value, int index,
 #endif
 }
 
+void FX3::FlushEndpoint()
+{
+    constexpr int CTR_W_REQCODE = 0xC1;
+    constexpr int CTR_W_VALUE = 0x0000;
+    constexpr int CTR_W_INDEX = 0x0000;
+
+    constexpr int length = 64;
+    uint8_t packet[length];
+    // command to reset bulk endpoint fifos
+    packet[0] = 0x40; // https://github.com/myriadrf/LimeSDR-USB_FX3/blob/27435fbecdf1950897311079d764090b56a8ae9d/main.c#L767
+
+    ControlTransfer(FX3::CTR_WRITE_REQUEST_VALUE,
+        CTR_W_REQCODE,
+        CTR_W_VALUE,
+        CTR_W_INDEX,
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+        const_cast<uint8_t*>(packet),
+        length,
+        100);
+
+    constexpr int CTR_R_REQCODE = 0xC0;
+    constexpr int CTR_R_VALUE = 0x0000;
+    constexpr int CTR_R_INDEX = 0x0000;
+
+    ControlTransfer(FX3::CTR_READ_REQUEST_VALUE, CTR_R_REQCODE, CTR_R_VALUE, CTR_R_INDEX, packet, length, 100);
+}
+
 void* FX3::AllocateAsyncContext()
 {
 #ifdef __unix__
