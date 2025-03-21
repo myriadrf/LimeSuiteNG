@@ -71,9 +71,10 @@ void RFStream_X8::Stop()
     if (!isActive)
         return;
 
-    stream->Stop();
+    // X8 FPGA has to be stopped first, otherwise stream data can become misaligneed.
     parentDevice->StreamEnable(moduleIndex, false);
     parentDevice->StreamsTrigger();
+    stream->Stop();
     isActive = false;
 }
 

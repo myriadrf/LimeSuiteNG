@@ -243,6 +243,7 @@ void TRXLooper::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
+        mRxArgs.dma->Enable(false);
         lime::debug("TRXLooper: wait for Rx loop end.");
         {
             std::unique_lock lck{ mRx.mutex };
@@ -257,7 +258,6 @@ void TRXLooper::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
-    mRxArgs.dma->Enable(false);
 
     // wait for loop ends
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
