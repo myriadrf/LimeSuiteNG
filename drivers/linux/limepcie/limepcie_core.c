@@ -756,13 +756,15 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
         if (m.wait_for_read)
         {
             uint64_t before = fromDevice->transferCounter;
-            wait_event_interruptible(fromDevice->wait_transfer, (!fromDevice->enabled || fromDevice->transferCounter != before));
+            wait_event_interruptible_timeout(
+                fromDevice->wait_transfer, (!fromDevice->enabled || fromDevice->transferCounter != before), 1000);
         }
 
         if (m.wait_for_write)
         {
             uint64_t before = toDevice->transferCounter;
-            wait_event_interruptible(toDevice->wait_transfer, (!toDevice->enabled || toDevice->transferCounter != before));
+            wait_event_interruptible_timeout(
+                toDevice->wait_transfer, (!toDevice->enabled || toDevice->transferCounter != before), 1000);
         }
 
         m.fromDeviceCounter = fromDevice ? fromDevice->transferCounter : 0;
