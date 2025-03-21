@@ -955,6 +955,21 @@ static void SetCalibrationDevicesParams(LimePluginContext* context, const LimeRu
     }
 }
 
+static OpStatus ConfigureCalibrationDevices(LimePluginContext* context)
+{
+    OpStatus status = OpStatus::Success;
+    for (auto& port : context->ports)
+    {
+        if (port.calibrationNode)
+        {
+            status = port.calibrationNode->device->Configure(port.calibrationNode->config, port.calibrationNode->chipIndex);
+            if (status != OpStatus::Success)
+                return status;
+        }
+    }
+    return OpStatus::Success;
+}
+
 int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params)
 {
     OpStatus status = MapChannelsToDevices(context->rxChannels, context->ports, *params, TRXDir::Rx);
@@ -1020,6 +1035,12 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                 }
                 node.device->SPI(spiid, node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
             }
+        }
+
+        if (ConfigureCalibrationDevices(context) != OpStatus::Success)
+        {
+            log(LogLevel::Error, "Failed to configure calibration devices");
+            return -1;
         }
 
         // override gains after device Configure
@@ -1125,7 +1146,7 @@ int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t* con
     return LimePlugin_Read(context, samples, count, port, meta);
 }
 
-int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
+int LimePlugin_Read_complex12(LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
