@@ -96,12 +96,10 @@ FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : fpgaPort(fpgaSPI)
     , lms7002mPort(lms7002mSPI)
 {
-    uint32_t addr[3] = { 0x0001, 0x0002, 0x0003 }; // version, revision, hardwareVersion
-    uint32_t vals[3];
-    ReadRegisters(addr, vals, 3);
-    mGatewareVersion = vals[0];
-    mGatewareRevision = vals[1];
-    mHardwareVersion = vals[2];
+    const FPGA::GatewareInfo gw = GetGatewareInfo();
+    mGatewareVersion = gw.version;
+    mGatewareRevision = gw.revision;
+    mHardwareVersion = gw.hardwareVersion;
 }
 
 /// @brief Writes the specified value into the specified address into the FPGA.
@@ -882,7 +880,8 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
     info.boardID = data[0];
     info.version = data[1];
     info.revision = data[2];
-    info.hardwareVersion = data[3] & 0x7F;
+    info.hardwareVersion = data[3] & 0xF;
+    // const uint8_t BOM_version = (data[3] >> 4) & 0x7; // bill of materials
     return info;
 }
 
