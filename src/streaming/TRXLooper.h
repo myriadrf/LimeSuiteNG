@@ -109,6 +109,7 @@ class TRXLooper : public RFStream
     std::condition_variable streamActive;
     std::mutex streamMutex;
     bool mStreamEnabled;
+    bool omitRxPackets;
 
     struct Stream {
         enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };

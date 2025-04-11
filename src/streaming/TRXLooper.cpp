@@ -66,6 +66,7 @@ TRXLooper::TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f
     , chipId(moduleIndex)
     , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
+    , omitRxPackets(false)
 {
     mRxArgs.dma = rx;
     mTxArgs.dma = tx;
@@ -137,6 +138,7 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     mConfig = cfg;
     bool needTx = cfg.channels.at(TRXDir::Tx).size() > 0;
     bool needRx = cfg.channels.at(TRXDir::Rx).size() > 0 || needTx; // always need Rx to know current timestamps, cfg.rxCount > 0;
+    omitRxPackets = cfg.channels.at(TRXDir::Rx).size() == 0;
 
     uint16_t channelEnables = 0;
     channelEnables |= indexListToMask(cfg.channels.at(TRXDir::Rx));
@@ -662,16 +664,19 @@ void TRXLooper::ReceivePacketsLoop()
             }
         }
 
-        if (fifo->push(outputPkt, false))
+        if (!omitRxPackets)
         {
-            outputPkt = nullptr;
-        }
-        else
-        {
-            ++stats.overrun;
-            overrun.add(1);
-            outputPkt->Reset();
-            reportProblems = true;
+            if (fifo->push(outputPkt, false))
+            {
+                outputPkt = nullptr;
+            }
+            else
+            {
+                ++stats.overrun;
+                overrun.add(1);
+                outputPkt->Reset();
+                reportProblems = true;
+            }
         }
 
         mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::HostToDevice);
