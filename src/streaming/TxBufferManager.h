@@ -71,7 +71,7 @@ template<class T> class TxBufferManager
     /// @return The sendability of the transfer (true to send it now).
     bool consume(T* src)
     {
-        while (!src->empty())
+        while (!src->samples.empty())
         {
             if (payloadSize >= maxPayloadSize || payloadSize == maxSamplesInPkt * bytesForFrame)
             {
@@ -81,19 +81,19 @@ template<class T> class TxBufferManager
                 payloadSize = 0;
             }
 
-            header->ignoreTimestamp(!src->useTimestamp);
+            header->ignoreTimestamp(!src->meta.useTimestamp);
             if (payloadSize == 0)
             {
                 ++packetsCreated;
-                header->counter = src->timestamp;
+                header->counter = src->meta.timestamp;
                 bytesUsed += sizeof(StreamHeader);
             }
             const uint32_t freeSpace = std::min(maxPayloadSize - payloadSize, mCapacity - bytesUsed - 16);
-            const uint32_t transferCount = std::min(freeSpace / bytesForFrame, std::min(src->size(), maxSamplesInPkt));
+            const uint32_t transferCount = std::min(freeSpace / bytesForFrame, std::min(src->samples.size(), maxSamplesInPkt));
             if (transferCount > 0)
             {
-                int samplesDataSize = Interleave(payloadPtr, src->front(), transferCount, conversion);
-                src->pop(transferCount);
+                int samplesDataSize = Interleave(payloadPtr, src->samples.front(), transferCount, conversion);
+                src->samples.pop(transferCount);
                 payloadPtr = payloadPtr + samplesDataSize;
                 payloadSize += samplesDataSize;
                 bytesUsed += samplesDataSize;
@@ -122,7 +122,7 @@ template<class T> class TxBufferManager
             }
         }
 
-        return !hasSpace() || src->flush;
+        return !hasSpace() || src->meta.flush;
     }
 
     /// @brief Gets the current size of the transfer.

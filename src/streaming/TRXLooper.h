@@ -12,8 +12,7 @@
 #include "limesuiteng/complex.h"
 #include "limesuiteng/RFStream.h"
 #include "PacketsFIFO.h"
-#include "memory/MemoryPool.h"
-#include "SamplesPacket.h"
+#include "StreamPacket.h"
 
 namespace lime {
 
@@ -64,9 +63,6 @@ class TRXLooper : public RFStream
     void SetMessageLogCallback(SDRDevice::LogCallbackType callback) { mCallback_logMessage = callback; }
     void StreamStatus(StreamStats* rx, StreamStats* tx) override;
 
-    /// @brief The type of a sample packet.
-    typedef SamplesPacket<2> SamplesPacketType;
-
     static OpStatus UploadTxWaveform(FPGA* fpga,
         std::shared_ptr<IDMA> port,
         const StreamConfig& config,
@@ -114,9 +110,9 @@ class TRXLooper : public RFStream
     struct Stream {
         enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
 
-        std::unique_ptr<MemoryPool> memPool;
-        std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
-        SamplesPacketType* stagingPacket;
+        std::unique_ptr<PacketsFIFO<StreamPacket*>> packetsPool;
+        std::unique_ptr<PacketsFIFO<StreamPacket*>> fifo;
+        StreamPacket* stagingPacket;
         StreamStats stats;
         std::thread thread;
         std::atomic<uint64_t> lastTimestamp;
@@ -131,7 +127,7 @@ class TRXLooper : public RFStream
         uint8_t packetsToBatch;
 
         Stream()
-            : memPool(nullptr)
+            : packetsPool(nullptr)
             , fifo(nullptr)
             , stagingPacket(nullptr)
             , terminateWorker(false)
@@ -143,12 +139,14 @@ class TRXLooper : public RFStream
 
         void DeleteMemoryPool()
         {
-            if (!stagingPacket)
-                return;
-
-            if (memPool)
-                memPool->Free(stagingPacket);
-            stagingPacket = nullptr;
+            do
+            {
+                if (stagingPacket)
+                    delete stagingPacket;
+                stagingPacket = nullptr;
+                if (packetsPool && !packetsPool->pop(&stagingPacket, false, std::chrono::microseconds(0)))
+                    break;
+            } while (stagingPacket);
         }
     };
 

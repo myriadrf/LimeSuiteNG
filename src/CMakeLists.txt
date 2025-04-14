@@ -113,7 +113,6 @@ target_sources(
             FPGA/FPGA_common.cpp
             FPGA/WriteRegistersBatch.cpp
             threadHelper/threadHelper.cpp
-            memory/MemoryPool.cpp
             API/LimePlugin.cpp
             include/limesuiteng/SDRDevice.cpp
             utilities/toString.cpp

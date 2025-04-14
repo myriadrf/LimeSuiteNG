@@ -300,25 +300,25 @@ void TRXLooper::Stop()
 
     if (mRx.stagingPacket != nullptr)
     {
-        mRx.memPool->Free(mRx.stagingPacket);
+        mRx.packetsPool->push(mRx.stagingPacket, true);
         mRx.stagingPacket = nullptr;
     }
     if (mRx.fifo)
     {
         while (mRx.fifo->pop(&mRx.stagingPacket, false))
-            mRx.memPool->Free(mRx.stagingPacket);
+            mRx.packetsPool->push(mRx.stagingPacket, true);
         mRx.fifo->clear();
         mRx.stagingPacket = nullptr;
     }
     if (mTx.stagingPacket != nullptr)
     {
-        mTx.memPool->Free(mTx.stagingPacket);
+        mTx.packetsPool->push(mTx.stagingPacket, true);
         mTx.stagingPacket = nullptr;
     }
     if (mTx.fifo)
     {
         while (mTx.fifo->pop(&mTx.stagingPacket, false))
-            mTx.memPool->Free(mTx.stagingPacket);
+            mTx.packetsPool->push(mTx.stagingPacket, true);
         mTx.fifo->clear();
         mTx.stagingPacket = nullptr;
     }
@@ -339,7 +339,7 @@ OpStatus TRXLooper::RxSetup()
     if (status != OpStatus::Success)
         return status;
 
-    mRx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
+    mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
@@ -424,10 +424,10 @@ OpStatus TRXLooper::RxSetup()
     mRxArgs.packetsToBatch = mRx.packetsToBatch;
     mRxArgs.samplesInPacket = mRx.samplesInPkt;
 
-    const std::string name = "MemPool_Rx"s + std::to_string(chipId);
-    const int upperAllocationLimit =
-        sizeof(complex32f_t) * mRx.packetsToBatch * mRx.samplesInPkt * chCount + SamplesPacketType::headerSize;
-    mRx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
+    mRx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(1024);
+    const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
+    for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
+        mRx.packetsPool->push(new StreamPacket(mRx.packetsToBatch * mRx.samplesInPkt, chCount, userSampleSize));
 
     // Don't just use REALTIME scheduling, or at least be cautious with it.
     // if the thread blocks for too long, Linux can trigger RT throttling
@@ -512,13 +512,9 @@ void TRXLooper::ReceivePacketsLoop()
     const int32_t bufferCount = mRxArgs.buffers.size();
     const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
     const int32_t packetSize = mRxArgs.packetSize;
-    const int32_t samplesInPkt = mRxArgs.samplesInPacket;
     const std::vector<uint8_t*>& dmaBuffers{ mRxArgs.buffers };
     StreamStats& stats = mRx.stats;
     auto& fifo = mRx.fifo;
-
-    const uint8_t outputSampleSize = mConfig.format == DataFormat::F32 ? sizeof(complex32f_t) : sizeof(complex16_t);
-    const int32_t outputPktSize = SamplesPacketType::headerSize + mRxArgs.packetsToBatch * samplesInPkt * outputSampleSize;
 
     DeltaVariable<int32_t> overrun(0);
     DeltaVariable<int32_t> loss(0);
@@ -530,7 +526,7 @@ void TRXLooper::ReceivePacketsLoop()
 
     int32_t Bps = 0;
     int64_t expectedTS = 0;
-    SamplesPacketType* outputPkt = nullptr;
+    StreamPacket* outputPkt = nullptr;
 
     uint32_t lastHwIndex{ 0 };
     DMATransactionCounter counters;
@@ -560,7 +556,6 @@ void TRXLooper::ReceivePacketsLoop()
             t1 = t2;
             double dataRateBps = 1000.0 * Bps / timePeriod;
             stats.dataRate_Bps = dataRateBps;
-
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
@@ -602,13 +597,12 @@ void TRXLooper::ReceivePacketsLoop()
 
         if (outputPkt == nullptr)
         {
-            outputPkt = SamplesPacketType::ConstructSamplesPacket(
-                mRx.memPool->Allocate(outputPktSize), samplesInPkt * mRxArgs.packetsToBatch, outputSampleSize);
-            if (outputPkt == nullptr)
+            if (!mRx.packetsPool->pop(&outputPkt, false) || outputPkt == nullptr)
             {
                 lime::warning("Rx%i: packets fifo full.", chipId);
                 continue;
             }
+            outputPkt->Reset();
         }
 
         const uint64_t currentBufferIndex{ counters.requests % bufferCount };
@@ -616,7 +610,7 @@ void TRXLooper::ReceivePacketsLoop()
         const uint8_t* buffer{ dmaBuffers.at(currentBufferIndex) };
 
         const FPGA_RxDataPacket* pkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
-        outputPkt->timestamp = pkt->counter;
+        outputPkt->meta.timestamp = pkt->counter;
 
         bool reportProblems = false;
         const int srcPktCount = mRxArgs.packetsToBatch;
@@ -641,8 +635,8 @@ void TRXLooper::ReceivePacketsLoop()
             }
 
             const int payloadSize{ packetSize - headerSize };
-            const int samplesProduced = Deinterleave(outputPkt->back(), pkt->data, payloadSize, conversion);
-            outputPkt->SetSize(outputPkt->size() + samplesProduced);
+            const int samplesProduced = Deinterleave(outputPkt->samples.back(), pkt->data, payloadSize, conversion);
+            outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
             expectedTS = pkt->counter + samplesProduced;
         }
         stats.packets += srcPktCount;
@@ -653,11 +647,14 @@ void TRXLooper::ReceivePacketsLoop()
         {
             switch (mConfig.format)
             {
+            case DataFormat::I12:
+                outputPkt->samples.Scale<complex12_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
+                break;
             case DataFormat::I16:
-                outputPkt->Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
+                outputPkt->samples.Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
                 break;
             case DataFormat::F32:
-                outputPkt->Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
+                outputPkt->samples.Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
                 break;
             default:
                 break;
@@ -717,12 +714,19 @@ void TRXLooper::RxTeardown()
 
     if (mRx.stagingPacket)
     {
-        mRx.memPool->Free(mRx.stagingPacket);
+        delete mRx.stagingPacket;
+        mRx.stagingPacket = nullptr;
+    }
+
+    if (mRx.packetsPool)
+    {
+        while (mRx.packetsPool->pop(&mRx.stagingPacket, false))
+            delete mRx.stagingPacket;
         mRx.stagingPacket = nullptr;
     }
 
     delete mRx.fifo.release();
-    delete mRx.memPool.release();
+    delete mRx.packetsPool.release();
 }
 
 template<class T>
@@ -750,14 +754,14 @@ uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta*
 
         if (!timestampSet && meta)
         {
-            meta->timestamp = mRx.stagingPacket->timestamp;
+            meta->timestamp = mRx.stagingPacket->meta.timestamp;
             timestampSet = true;
         }
 
         uint32_t expectedCount = count - samplesProduced;
-        const uint32_t samplesToCopy = std::min(expectedCount, mRx.stagingPacket->size());
+        const uint32_t samplesToCopy = std::min(expectedCount, mRx.stagingPacket->samples.size());
 
-        T* const* src = reinterpret_cast<T* const*>(mRx.stagingPacket->front());
+        T* const* src = reinterpret_cast<T* const*>(mRx.stagingPacket->samples.front());
 
         std::memcpy(&dest[0][samplesProduced], src[0], samplesToCopy * sizeof(T));
 
@@ -767,12 +771,13 @@ uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta*
             std::memcpy(&dest[1][samplesProduced], src[1], samplesToCopy * sizeof(T));
         }
 
-        mRx.stagingPacket->pop(samplesToCopy);
+        mRx.stagingPacket->samples.pop(samplesToCopy);
+        mRx.stagingPacket->meta.timestamp += samplesToCopy;
         samplesProduced += samplesToCopy;
 
-        if (mRx.stagingPacket->empty())
+        if (mRx.stagingPacket->samples.empty())
         {
-            mRx.memPool->Free(mRx.stagingPacket);
+            mRx.packetsPool->push(mRx.stagingPacket);
             mRx.stagingPacket = nullptr;
         }
 
@@ -814,7 +819,7 @@ OpStatus TRXLooper::TxSetup()
         return status;
 
     mTx.samplesInPkt = defaultSamplesInPkt;
-    mTx.fifo = std::make_unique<PacketsFIFO<SamplesPacketType*>>(512);
+    mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mTx.terminate.store(false, std::memory_order_relaxed);
 
     mTx.lastTimestamp.store(0, std::memory_order_relaxed);
@@ -826,7 +831,7 @@ OpStatus TRXLooper::TxSetup()
     if (gw.hasConfigurableStreamPacketSize)
     {
         mTx.samplesInPkt = 256;
-        packetSize = SamplesPacketType::headerSize + sampleSize * mTx.samplesInPkt * chCount;
+        packetSize = sizeof(StreamHeader) + sampleSize * mTx.samplesInPkt * chCount;
     }
     else
     {
@@ -888,10 +893,10 @@ OpStatus TRXLooper::TxSetup()
             mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
-    const std::string name = "MemPool_Tx"s + std::to_string(chipId);
-    const int upperAllocationLimit =
-        sizeof(complex32f_t) * mTx.packetsToBatch * mTx.samplesInPkt * chCount + SamplesPacketType::headerSize;
-    mTx.memPool = std::make_unique<MemoryPool>(1024, upperAllocationLimit, 8, name);
+    mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(1024);
+    const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
+    for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
+        mTx.packetsPool->push(new StreamPacket(mTx.packetsToBatch * mTx.samplesInPkt, chCount, userSampleSize));
 
     mTx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminateWorker.store(false, std::memory_order_relaxed);
@@ -979,9 +984,9 @@ void TRXLooper::TransmitPacketsLoop()
     std::queue<PendingWrite> pendingWrites;
 
     uint32_t stagingBufferIndex = 0;
-    SamplesPacketType* srcPkt = nullptr;
+    StreamPacket* srcPkt = nullptr;
 
-    TxBufferManager<SamplesPacketType> output(mimo, compressed, mTxArgs.samplesInPacket, mTxArgs.packetsToBatch, mConfig.format);
+    TxBufferManager<StreamPacket> output(mimo, compressed, mTxArgs.samplesInPacket, mTxArgs.packetsToBatch, mConfig.format);
 
     mTxArgs.dma->BufferOwnership(0, DataTransferDirection::DeviceToHost);
     output.Reset(dmaBuffers[0], mTxArgs.bufferSize);
@@ -1080,11 +1085,14 @@ void TRXLooper::TransmitPacketsLoop()
                 {
                     switch (mConfig.format)
                     {
+                    case DataFormat::I12:
+                        srcPkt->samples.Scale<complex12_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
+                        break;
                     case DataFormat::I16:
-                        srcPkt->Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
+                        srcPkt->samples.Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
                         break;
                     case DataFormat::F32:
-                        srcPkt->Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
+                        srcPkt->samples.Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
                         break;
                     default:
                         break;
@@ -1093,10 +1101,10 @@ void TRXLooper::TransmitPacketsLoop()
             }
 
             // drop old packets before forming, Rx is needed to get current timestamp
-            if (srcPkt->useTimestamp && isRxActive)
+            if (srcPkt->meta.useTimestamp && isRxActive)
             {
                 int64_t rxNow = mRx.lastTimestamp.load(std::memory_order_relaxed);
-                const int64_t txAdvance = srcPkt->timestamp - rxNow;
+                const int64_t txAdvance = srcPkt->meta.timestamp - rxNow;
                 if (mConfig.hintSampleRate)
                 {
                     int64_t timeAdvance = ts_to_us(mConfig.hintSampleRate, txAdvance);
@@ -1108,7 +1116,7 @@ void TRXLooper::TransmitPacketsLoop()
                 {
                     underrun.add(1);
                     ++stats.underrun;
-                    mTx.memPool->Free(srcPkt);
+                    mTx.packetsPool->push(srcPkt, true);
                     srcPkt = nullptr;
                     reportProblems = true;
                     continue;
@@ -1117,9 +1125,9 @@ void TRXLooper::TransmitPacketsLoop()
 
             const bool doFlush = output.consume(srcPkt);
 
-            if (srcPkt->empty())
+            if (srcPkt->samples.empty())
             {
-                mTx.memPool->Free(srcPkt);
+                mTx.packetsPool->push(srcPkt, true);
                 srcPkt = nullptr;
             }
             if (doFlush)
@@ -1224,12 +1232,18 @@ void TRXLooper::TxTeardown()
 
     if (mTx.stagingPacket)
     {
-        mTx.memPool->Free(mTx.stagingPacket);
+        delete mTx.stagingPacket;
+        mTx.stagingPacket = nullptr;
+    }
+    if (mTx.packetsPool)
+    {
+        while (mTx.packetsPool->pop(&mTx.stagingPacket, false))
+            delete mTx.stagingPacket;
         mTx.stagingPacket = nullptr;
     }
 
     delete mTx.fifo.release();
-    delete mTx.memPool.release();
+    delete mTx.packetsPool.release();
 }
 
 template<class T>
@@ -1242,11 +1256,7 @@ uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, co
 
     uint32_t samplesRemaining = count;
 
-    const int samplesInPkt = mTx.samplesInPkt;
-    const int packetsToBatch = mTx.packetsToBatch;
-    const int32_t outputPktSize = SamplesPacketType::headerSize + packetsToBatch * samplesInPkt * sizeof(T);
-
-    if (mTx.stagingPacket && mTx.stagingPacket->timestamp + mTx.stagingPacket->size() != meta->timestamp)
+    if (mTx.stagingPacket && mTx.stagingPacket->meta.timestamp + mTx.stagingPacket->samples.size() != meta->timestamp)
     {
         if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
             return 0;
@@ -1263,18 +1273,16 @@ uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, co
     {
         if (!mTx.stagingPacket)
         {
-            mTx.stagingPacket = SamplesPacketType::ConstructSamplesPacket(
-                mTx.memPool->Allocate(outputPktSize), samplesInPkt * packetsToBatch, sizeof(T));
-
+            mTx.packetsPool->pop(&mTx.stagingPacket, true);
             if (!mTx.stagingPacket)
                 break;
 
             mTx.stagingPacket->Reset();
-            mTx.stagingPacket->timestamp = ts;
-            mTx.stagingPacket->useTimestamp = useTimestamp;
+            mTx.stagingPacket->meta.timestamp = ts;
+            mTx.stagingPacket->meta.useTimestamp = useTimestamp;
         }
 
-        int consumed = mTx.stagingPacket->push(src, samplesRemaining);
+        int consumed = mTx.stagingPacket->samples.push(src, samplesRemaining);
         src[0] += consumed;
         if (useChannelB)
             src[1] += consumed;
@@ -1282,10 +1290,10 @@ uint32_t TRXLooper::StreamTxTemplate(const T* const* samples, uint32_t count, co
         samplesRemaining -= consumed;
         ts += consumed;
 
-        if (mTx.stagingPacket->isFull() || flush)
+        if (mTx.stagingPacket->samples.isFull() || flush)
         {
             if (samplesRemaining == 0)
-                mTx.stagingPacket->flush = flush;
+                mTx.stagingPacket->meta.flush = flush;
 
             if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
                 break;
