@@ -502,6 +502,7 @@ OpStatus LimeSDR_Mini::UploadMemory(
         memcpy(v1_buffer.data() + sizeUFM, data + startCFM0, sizeCFM0);
 
         data_src = v1_buffer.data();
+        length = v1_buffer.size();
     }
 
     OpStatus status = mfpgaPort->ProgramWrite(data_src, length, progMode, static_cast<int>(target), callback);
