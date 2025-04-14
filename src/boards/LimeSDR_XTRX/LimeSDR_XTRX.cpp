@@ -193,7 +193,8 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
         lime::warning("XTRX FPGA is running backup 'gold' image, 'user' image might be corrupted, and need reflashing");
 
     // LimeSDR XTRX gateware revision 1.13 introduced "dual boot" images
-    if ((!isFairwavesRev5 && gw.version >= 1 && gw.revision >= 13) || isGoldGatewareActive)
+    const bool hasDualBoot = isGoldGatewareActive || (gw.version == 1 && gw.revision >= 13) || (gw.version >= 3);
+    if (hasDualBoot && !isFairwavesRev5)
     {
         desc.memoryDevices[ToString(eMemoryDevice::GATEWARE_GOLD_IMAGE)] =
             std::make_shared<DataStorage>(this, eMemoryDevice::GATEWARE_GOLD_IMAGE);
