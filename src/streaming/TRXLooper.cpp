@@ -635,8 +635,12 @@ void TRXLooper::ReceivePacketsLoop()
             }
 
             const int payloadSize{ packetSize - headerSize };
-            const int samplesProduced = Deinterleave(outputPkt->samples.back(), pkt->data, payloadSize, conversion);
-            outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
+            int samplesProduced = 0;
+            if (!omitRxPackets)
+            {
+                samplesProduced = Deinterleave(outputPkt->samples.back(), pkt->data, payloadSize, conversion);
+                outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
+            }
             expectedTS = pkt->counter + samplesProduced;
         }
         stats.packets += srcPktCount;
@@ -675,6 +679,8 @@ void TRXLooper::ReceivePacketsLoop()
                 reportProblems = true;
             }
         }
+        else
+            outputPkt->Reset();
 
         mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::HostToDevice);
         bool requestIRQ = (counters.requests % irqPeriod) == 0;
