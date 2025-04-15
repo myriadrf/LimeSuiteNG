@@ -640,8 +640,10 @@ void TRXLooper::ReceivePacketsLoop()
             {
                 samplesProduced = Deinterleave(outputPkt->samples.back(), pkt->data, payloadSize, conversion);
                 outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
+                expectedTS = pkt->counter + samplesProduced;
             }
-            expectedTS = pkt->counter + samplesProduced;
+            else
+                expectedTS = pkt->counter + mRxArgs.samplesInPacket;
         }
         stats.packets += srcPktCount;
         stats.timestamp = expectedTS;
