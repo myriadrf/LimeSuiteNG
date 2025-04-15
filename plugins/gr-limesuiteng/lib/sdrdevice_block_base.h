@@ -45,6 +45,7 @@ public:
     double set_nco_frequency(double frequency_offset_Hz);
 
 protected:
+    void StartRFStreaming();
     void ReleaseResources();
     uint32_t chipIndex;
     std::shared_ptr<sdrdevice_manager> devManager;
@@ -53,7 +54,7 @@ protected:
     bool autoAntenna;
     bool canWork;
 
-private:
+
     gr::logger_ptr baselogger;
 };
 

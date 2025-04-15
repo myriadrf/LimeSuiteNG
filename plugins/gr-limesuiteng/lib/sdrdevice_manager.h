@@ -33,6 +33,7 @@ struct sdrdevice_context {
     bool sinkConfigReady{ false };
     bool sourceConfigReady{ false };
     std::string customBaseConfigFilepath;
+    std::atomic<bool> streamIsActive{ false };
 };
 
 /// @brief class managing SDR devices and acting as intermediary between Sink/Source

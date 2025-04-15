@@ -147,12 +147,21 @@ bool sdrdevice_block_base::start()
     if (!devContext->stream)
         return false;
 
-    GR_LOG_DEBUG(baselogger, "RFStream Start()");
-    if (devContext->stream->Start() != OpStatus::Success)
-        return false;
-
+    // Start the actual streaming in work(), otherwise multiple devices won't be started
+    // at the same time
+    OpStatus status = devContext->stream->StageStart();
+    GR_LOG_INFO(baselogger, "Device configured and ready.");
     canWork = true;
     return true;
+}
+
+void sdrdevice_block_base::StartRFStreaming()
+{
+    if (devContext->stream->Start() != OpStatus::Success) {
+        GR_LOG_ERROR(baselogger, "RFStream Start() Failed");
+    } else {
+        GR_LOG_INFO(baselogger, "RFStream Start()");
+    }
 }
 
 bool sdrdevice_block_base::stop()
@@ -177,7 +186,6 @@ bool sdrdevice_block_base::stop()
     // GRC does not call destructor, so cleanup resources on stop() to ensure proper
     // resources destruction order
     ReleaseResources();
-    GR_LOG_DEBUG(baselogger, "st done");
     return true;
 }
 

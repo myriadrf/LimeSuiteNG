@@ -96,12 +96,18 @@ int sdrdevice_source_impl::work(int noutput_items,
                                 gr_vector_void_star& output_items)
 {
     if (!canWork) {
-        GR_LOG_DEBUG(d_logger, "WORK_DONE");
+        GR_LOG_INFO(baselogger, "WORK_DONE");
         return gr::block::work_return_t::WORK_DONE;
     }
 
     assert(devContext);
     assert(devContext->stream);
+
+    // start actual data streaming only when work starts, stream is shared by Rx/Tx
+    // so start should be done once from either of them.
+    if (!devContext->streamIsActive.exchange(true)) {
+        StartRFStreaming();
+    }
 
     lime::complex32f_t* samples[8];
     for (size_t i = 0; i < devContext->streamCfg.channels.at(direction).size(); ++i)
