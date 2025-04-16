@@ -63,7 +63,7 @@ class PacketData
       @return True if full.
       @return False if there is still space..
      */
-    inline constexpr bool isFull() const { return (tail[0] - head[0]) < frameSize; };
+    inline constexpr bool isFull() const { return (mCapacity - (tail[0] - channel[0]) / frameSize) < 1; };
 
     /**
       @brief Gets the channel count of this packet.
@@ -83,7 +83,7 @@ class PacketData
         static_assert(std::is_trivially_copyable_v<T> == true);
         assert(sizeof(T) == frameSize);
 
-        const uint32_t freeSamples = mCapacity - (tail[0] - head[0]) / frameSize;
+        const uint32_t freeSamples = mCapacity - (tail[0] - channel[0]) / frameSize;
         const uint32_t samplesToCopy = std::min(freeSamples, count);
         for (uint8_t i = 0; i < mChannelCount; ++i)
         {
