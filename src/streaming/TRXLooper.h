@@ -161,7 +161,10 @@ class TRXLooper : public RFStream
     Stream mRx;
     Stream mTx;
 
+    std::mutex startTimeMutex;
+    std::condition_variable startTimeIsSet;
     int64_t startUnixTime;
+    bool startUnixTimeSet;
     int ticksPerSample = 1;
 
     template<class T>

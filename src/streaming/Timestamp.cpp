@@ -73,6 +73,8 @@ double Timestamp::GetFracSeconds() const
 
 uint64_t Timestamp::GetTicks() const
 {
+    if (seconds < 0)
+        return 0;
     return seconds * ticksPerSecond + fracSeconds * ticksPerSecond;
 }
 

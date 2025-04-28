@@ -289,7 +289,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 {
     for (const CaptureChunk& chunk : *args->chunks)
     {
-        if (args->terminate->load() == true)
+        if (args->terminate->load(std::memory_order_relaxed) == true)
             break;
         const complex16_t* txSamples[16];
         for (int i = 0; i < 16; ++i)
@@ -298,11 +298,18 @@ static void TransmitLoop(TransmitLoopArgs* args)
         txMeta.flags = StreamTxMeta::EndOfBurst;
         txMeta.timestamp = chunk.timestamp;
         txMeta.hasTimestamp = true;
-        // printf("Tx %li s: %li\n", txMeta.timestamp.GetTicks(), chunk.samples_count);
-        uint32_t samplesSent = args->stream->Transmit(txSamples, chunk.samples_count, &txMeta);
-        if (samplesSent != chunk.samples_count)
+        int samplesRemaining = chunk.samples_count;
+        while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
         {
-            cerr << "Transmit failed"sv << endl;
+            const int mtu = 256 * 32;
+            int samplesToSend = samplesRemaining > mtu ? mtu : samplesRemaining;
+            int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
+
+            txMeta.timestamp.AddTicks(samplesSent);
+            for (int i = 0; i < 16; ++i)
+                txSamples[i] += samplesSent;
+
+            samplesRemaining -= samplesSent;
         }
     }
 }
@@ -483,6 +490,8 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
+
     signal(SIGINT, intHandler);
 
     const int fftSize = 256;
@@ -492,7 +501,7 @@ int main(int argc, char** argv)
 
     complex16_t* txData = nullptr;
 
-    size_t txDataSize = 0;
+    size_t txSamplesCountTotal = 0;
     std::vector<CaptureChunk> txcaptures;
     if (tx && !txFilename.empty())
     {
@@ -504,7 +513,7 @@ int main(int argc, char** argv)
             return -1;
         }
         auto cnt = lseek(txfd, 0, SEEK_END);
-        txDataSize = cnt / sizeof(complex16_t);
+        txSamplesCountTotal = cnt / sizeof(complex16_t);
         lseek(txfd, 0, SEEK_SET);
 
         cerr << "File size : "sv << cnt << " bytes."sv << endl;
@@ -530,14 +539,21 @@ int main(int argc, char** argv)
         size_t lastTxStart = 0;
         for (const auto& capture : captures)
         {
-
             const std::string utcdatetime = capture.at("core:datetime");
             struct timespec ts = utc_string_to_timespec(utcdatetime);
-            lime::Timestamp timestamp(ts.tv_sec, ts.tv_nsec);
+            lime::Timestamp timestamp(ts.tv_sec, ts.tv_nsec * 1.0e-9);
+            timestamp.SetTickRate(sampleRate);
             uint64_t sample_start = capture.at("core:sample_start");
             size_t samples_count = sample_start - lastTxStart;
             lastTxStart = sample_start;
             txcaptures.push_back({ timestamp, sample_start, samples_count });
+        }
+        int samplesRemaining = txSamplesCountTotal;
+        for (int i = txcaptures.size() - 1; i >= 0; --i)
+        {
+            int samples_count = samplesRemaining - txcaptures[i].sample_start;
+            txcaptures[i].samples_count = samples_count;
+            samplesRemaining -= samples_count;
         }
     }
 
@@ -558,7 +574,6 @@ int main(int argc, char** argv)
 
     float peakAmplitude = 0;
     float peakFrequency = 0;
-    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
     if (sampleRate <= 0)
         sampleRate = 1; // sample rate read-back not available, assign default value
     float frequencyLO = 0;
@@ -609,7 +624,7 @@ int main(int argc, char** argv)
     TransmitLoopArgs txArgs;
     txArgs.stream = stream.get();
     txArgs.samples = txData;
-    txArgs.samplesCount = txDataSize;
+    txArgs.samplesCount = txSamplesCountTotal;
     txArgs.chunks = &txcaptures;
     txArgs.terminate = &stopProgram;
 
@@ -726,23 +741,18 @@ int main(int argc, char** argv)
     ofstream rxMetaFile;
     rxMetaFile.open(rxFilename + ".sigmf-meta", std::ofstream::out);
     auto& captures = rxmetadataJSON["captures"];
-    double samplePeriod = 1.0 / sampleRate;
     for (auto& chunk : rxcaptures)
     {
-        // should concatenate contiguous ranges
-        {
-            auto datetime = chunk.timestamp.GetTimespec();
-            captures.push_back(json{ { "core:global_index", 0 },
-                { "core:sample_start", chunk.sample_start },
-                { "core:datetime", timespec_to_utc_string(datetime) } });
-        }
-        // expectedTS = chunk.timestamp.GetRealSeconds() + chunk.samples_count * samplePeriod;
+        auto datetime = chunk.timestamp.GetTimespec();
+        captures.push_back(json{ { "core:global_index", 0 },
+            { "core:sample_start", chunk.sample_start },
+            { "core:datetime", timespec_to_utc_string(datetime) } });
     }
     rxMetaFile << rxmetadataJSON.dump();
     rxMetaFile.close();
 
     if (txData)
-        munmap(txData, txDataSize);
+        munmap(txData, txSamplesCountTotal);
 
     return 0;
 }

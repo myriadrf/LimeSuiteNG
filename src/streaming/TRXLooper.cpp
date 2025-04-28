@@ -106,6 +106,7 @@ TRXLooper::TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f
     , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
     , omitRxPackets(false)
+    , startUnixTimeSet(false)
 {
     mRxArgs.dma = rx;
     mTxArgs.dma = tx;
@@ -384,6 +385,8 @@ void TRXLooper::Stop()
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
     fpga->ResetPacketCounters(chipId);
     fpga->ResetTimestamp();
+    startUnixTimeSet = false;
+    startUnixTime = 0;
 }
 
 /// @brief Stops all the running streams and clears up the memory.
@@ -645,7 +648,7 @@ void TRXLooper::ReceivePacketsLoop()
     assert(mRx.stagingPacket == nullptr); // should be clean start
     assert(fifo->empty());
 
-    bool getStartTime = true;
+    bool getStartTime = mConfig.timestampType != TimestampType::SAMPLE_TICKS;
     startUnixTime = 0;
 
     Timestamp lastPacketTS;
@@ -736,8 +739,10 @@ void TRXLooper::ReceivePacketsLoop()
 
         if (getStartTime)
         {
+            std::lock_guard<std::mutex> lock(startTimeMutex);
             startUnixTime = UTC_to_UnixTime(ReadUTC(fpga, 0x0283));
             ++startUnixTime; // last GNSS message is from previous PPS, so add 1 second
+            startUnixTimeSet = true;
             // stream starts with the PPS signal, but there is delay until the samples are put into packet by the hardware
             // rewind timstamps by the amount of first packet clockCounter
             // const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
@@ -745,6 +750,7 @@ void TRXLooper::ReceivePacketsLoop()
             getStartTime = false;
             t1 = std::chrono::steady_clock::now();
         }
+        startTimeIsSet.notify_all();
 
         bool reportProblems = false;
         const int srcPktCount = mRxArgs.packetsToBatch;
@@ -1209,6 +1215,15 @@ void TRXLooper::TransmitPacketsLoop()
     uint8_t* outputTail = dmaBuffers[0];
     uint64_t packetsCounter = 0;
 
+    if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
+    {
+        std::unique_lock lk{ startTimeMutex };
+        while (!startUnixTimeSet && !mTx.terminateWorker.load(std::memory_order_relaxed))
+        {
+            startTimeIsSet.wait_for(lk, std::chrono::milliseconds(100));
+        }
+    }
+
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
         IDMA::State dma{ mTxArgs.dma->GetCounters() };
@@ -1322,7 +1337,17 @@ void TRXLooper::TransmitPacketsLoop()
                 }
                 lastTS = srcPkt->meta.timestamp;
                 if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
+                {
                     srcPkt->meta.timestamp.AddSeconds(-startUnixTime);
+                    if (srcPkt->meta.timestamp.GetSeconds() < 0) // Drop packets that are in the past
+                    {
+                        ++stats.underrun;
+                        srcPkt->Reset();
+                        mTx.packetsPool->push(srcPkt, true);
+                        srcPkt = nullptr;
+                        continue;
+                    }
+                }
             }
 
             // drop old packets before forming, Rx is needed to get current timestamp
