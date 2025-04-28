@@ -1001,17 +1001,17 @@ uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, 
 
 uint32_t TRXLooper::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
 {
-    return StreamRxTemplate<complex32f_t>(samples, count, meta, chrono::microseconds(100000));
+    return StreamRxTemplate<complex32f_t>(samples, count, meta, chrono::microseconds(1000000));
 }
 
 uint32_t TRXLooper::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
 {
-    return StreamRxTemplate<complex16_t>(samples, count, meta, chrono::microseconds(100000));
+    return StreamRxTemplate<complex16_t>(samples, count, meta, chrono::microseconds(1000000));
 }
 
 uint32_t TRXLooper::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
 {
-    return StreamRxTemplate<complex12_t>(samples, count, meta, chrono::microseconds(100000));
+    return StreamRxTemplate<complex12_t>(samples, count, meta, chrono::microseconds(1000000));
 }
 
 OpStatus TRXLooper::TxSetup()

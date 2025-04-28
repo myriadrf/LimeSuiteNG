@@ -616,6 +616,8 @@ int main(int argc, char** argv)
     if (tx && !repeater)
         txThread = std::thread(TransmitLoop, &txArgs);
 
+    Timestamp rxExpectedTs(-1, 0);
+
     while (stopProgram.load() == false)
     {
         if (workTime != 0 && (std::chrono::high_resolution_clock::now() - startTime) > std::chrono::milliseconds(workTime))
@@ -645,9 +647,13 @@ int main(int argc, char** argv)
         // process samples
         if (!rxFilename.empty())
         {
-            rxcaptures.push_back({ rxMeta.timestamp, totalSamplesReceived, samplesRead });
+            if (rxExpectedTs != rxMeta.timestamp)
+            {
+                rxcaptures.push_back({ rxMeta.timestamp, totalSamplesReceived, samplesRead });
+            }
             rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
         }
+        rxExpectedTs = rxMeta.timestamp + Timestamp(samplesRead / sampleRate);
         totalSamplesReceived += samplesRead;
 
         t2 = std::chrono::high_resolution_clock::now();
@@ -721,7 +727,6 @@ int main(int argc, char** argv)
     rxMetaFile.open(rxFilename + ".sigmf-meta", std::ofstream::out);
     auto& captures = rxmetadataJSON["captures"];
     double samplePeriod = 1.0 / sampleRate;
-    double expectedTS = 0; //rxcaptures.empty() ? 0 : rxcaptures.front().timestamp().GetRealSeconds();
     for (auto& chunk : rxcaptures)
     {
         // should concatenate contiguous ranges

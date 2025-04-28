@@ -18,12 +18,17 @@ Timestamp::Timestamp(double sec)
 {
 }
 
-Timestamp::Timestamp(double int_seconds, double frac_seconds)
+Timestamp::Timestamp(int64_t int_seconds, double frac_seconds)
     : seconds(int_seconds)
     , fracSeconds(frac_seconds)
     , ticksPerSecond(1000)
     , hasTickRate(false)
 {
+    if (fracSeconds > 1e9)
+    {
+        seconds += fracSeconds / 1e9;
+        fracSeconds = fmod(fracSeconds, 1.0);
+    }
 }
 
 Timestamp::Timestamp(int64_t seconds, uint64_t ticks, double tickRate)
@@ -89,6 +94,41 @@ double Timestamp::GetRealSeconds() const
 void Timestamp::SetTickRate(double tps)
 {
     ticksPerSecond = tps;
+}
+
+bool operator==(const Timestamp& lhs, const Timestamp& rhs)
+{
+    bool fracSecondsMatch = std::fabs(lhs.fracSeconds - rhs.fracSeconds) < 1.0e-9;
+    return (lhs.seconds == rhs.seconds) && fracSecondsMatch;
+}
+
+bool operator!=(const Timestamp& lhs, const Timestamp& rhs)
+{
+    return !(lhs == rhs);
+}
+
+Timestamp operator+(Timestamp lhs, const Timestamp& rhs)
+{
+    lhs.seconds += rhs.seconds;
+    lhs.fracSeconds += rhs.fracSeconds;
+    if (lhs.fracSeconds >= 1e9)
+    {
+        ++lhs.seconds;
+        lhs.fracSeconds -= 1e9;
+    }
+    return lhs;
+}
+
+Timestamp operator-(Timestamp lhs, const Timestamp& rhs)
+{
+    lhs.seconds -= rhs.seconds;
+    lhs.fracSeconds -= rhs.fracSeconds;
+    if (lhs.fracSeconds < 0)
+    {
+        --lhs.seconds;
+        lhs.fracSeconds += 1e9;
+    }
+    return lhs;
 }
 
 } // namespace lime
