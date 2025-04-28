@@ -7,6 +7,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/StreamMeta.h"
 
 using namespace std;
 
@@ -94,18 +95,16 @@ void StreamComposite::Teardown()
 }
 
 template<class T>
-uint32_t StreamComposite::StreamRx_T(T* const* samples, uint32_t count, StreamMeta* meta, chrono::microseconds timeout)
+uint32_t StreamComposite::StreamRx_T(T* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
     T* const* dest = samples;
-    StreamMeta subDeviceMeta[8]{};
+    StreamRxMeta subDeviceMeta[8]{};
+    uint32_t samplesGot[8]{};
     uint8_t subDeviceCount = 0;
     uint8_t channelsCount = 0;
     for (auto& a : mAggregate)
     {
-        uint32_t ret = a->StreamRx(dest, count, &subDeviceMeta[subDeviceCount], timeout);
-        if (ret != count)
-            return ret;
-
+        samplesGot[subDeviceCount] = a->Receive(dest, count, &subDeviceMeta[subDeviceCount]);
         const int devChannels = a->GetConfig().channels.at(TRXDir::Rx).size();
         dest += devChannels;
         channelsCount += devChannels;
@@ -123,13 +122,18 @@ uint32_t StreamComposite::StreamRx_T(T* const* samples, uint32_t count, StreamMe
         return count;
 
     bool misalignedTimestamps{ false };
-    for (uint32_t i = 1; i < subDeviceCount; ++i)
+    for (uint32_t i = 0; i < subDeviceCount; ++i)
     {
-        if (subDeviceMeta[i].timestamp != subDeviceMeta[0].timestamp)
+        if (samplesGot[i] != count)
         {
-            misalignedTimestamps = true;
-            break;
+            lime::error("StreamComposite: not enough samples");
+            return samplesGot[i];
         }
+        // if (subDeviceMeta[0].timestamp != subDeviceMeta[0].timestamp)
+        // {
+        //     misalignedTimestamps = true;
+        //     break;
+        // }
     }
 
     if (misalignedTimestamps)
@@ -142,13 +146,13 @@ uint32_t StreamComposite::StreamRx_T(T* const* samples, uint32_t count, StreamMe
 
 template<class T>
 uint32_t StreamComposite::StreamTx_T(
-    const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
+    const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout)
 {
     const T* const* src = samples;
     uint8_t channelsCount = 0;
     for (auto& a : mAggregate)
     {
-        uint32_t ret = a->StreamTx(src, count, meta, timeout);
+        uint32_t ret = a->Transmit(src, count, meta);
         if (ret != count)
             return ret;
 
@@ -166,37 +170,76 @@ uint32_t StreamComposite::StreamTx_T(
 uint32_t StreamComposite::StreamRx(
     lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, timeout);
+    StreamRxMeta rxmeta;
+    uint32_t samplesRead = StreamRx_T(samples, count, &rxmeta, timeout);
+    if (meta)
+        meta->timestamp = rxmeta.timestamp.GetTicks();
+    return samplesRead;
 }
 
 uint32_t StreamComposite::StreamRx(
     lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, timeout);
+    StreamRxMeta rxmeta;
+    uint32_t samplesRead = StreamRx_T(samples, count, &rxmeta, timeout);
+    if (meta)
+        meta->timestamp = rxmeta.timestamp.GetTicks();
+    return samplesRead;
 }
 
 uint32_t StreamComposite::StreamRx(
     lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, timeout);
+    StreamRxMeta rxmeta;
+    uint32_t samplesRead = StreamRx_T(samples, count, &rxmeta, timeout);
+    if (meta)
+        meta->timestamp = rxmeta.timestamp.GetTicks();
+    return samplesRead;
 }
 
 uint32_t StreamComposite::StreamTx(
     const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, timeout);
+    StreamTxMeta txmeta;
+    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
+    if (txmeta.hasTimestamp)
+    {
+        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
+            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+        else
+            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+    }
+    return StreamTx_T(samples, count, &txmeta, timeout);
 }
 
 uint32_t StreamComposite::StreamTx(
     const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, timeout);
+    StreamTxMeta txmeta;
+    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
+    if (txmeta.hasTimestamp)
+    {
+        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
+            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+        else
+            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+    }
+    return StreamTx_T(samples, count, &txmeta, timeout);
 }
 
 uint32_t StreamComposite::StreamTx(
     const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, timeout);
+    StreamTxMeta txmeta;
+    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
+    if (txmeta.hasTimestamp)
+    {
+        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
+            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+        else
+            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+    }
+    return StreamTx_T(samples, count, &txmeta, timeout);
 }
 
 void StreamComposite::StreamStatus(StreamStats* rx, StreamStats* tx)
@@ -209,6 +252,36 @@ uint64_t StreamComposite::GetHardwareTimestamp() const
     if (mAggregate.empty())
         return 0;
     return mAggregate.front()->GetHardwareTimestamp();
+}
+
+uint32_t StreamComposite::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+}
+
+uint32_t StreamComposite::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+}
+
+uint32_t StreamComposite::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+}
+
+uint32_t StreamComposite::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
+}
+
+uint32_t StreamComposite::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
+}
+
+uint32_t StreamComposite::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
 }
 
 } // namespace lime

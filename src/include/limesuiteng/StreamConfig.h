@@ -3,6 +3,7 @@
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
+#include "limesuiteng/Timestamp.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -31,6 +32,8 @@ struct StreamStats {
     uint32_t loss{ 0 }; ///< The amount of packets that are lost.
     uint32_t late{ 0 }; ///< The amount of packets that arrived late for transmitting and were dropped.
 };
+
+enum class TimestampType { SAMPLE_TICKS, REALTIME_SECONDS, UNIX_EPOCH };
 
 /// @brief Configuration settings for a stream.
 struct LIME_API StreamConfig {
@@ -70,7 +73,7 @@ struct LIME_API StreamConfig {
 
     /// Optional: expected sampling rate for data transfer optimizations (in Hz).
     /// Default: 0 - decide internally.
-    float hintSampleRate;
+    double hintSampleRate;
     bool alignPhase; ///< Attempt to do phases alignment between paired channels
 
     StatusCallbackFunc statusCallback; ///< Function to call on a status change.
@@ -78,6 +81,8 @@ struct LIME_API StreamConfig {
     // TODO: callback for drops and errors
 
     Extras extraConfig; ///< Extra stream configuration settings.
+
+    TimestampType timestampType{ TimestampType::SAMPLE_TICKS };
 };
 
 /// @brief The metadata of a stream packet.

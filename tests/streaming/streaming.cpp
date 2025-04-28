@@ -62,6 +62,7 @@ TEST_F(SDRDevice_streaming, SetSampleRateIsAccurate)
 {
     StreamConfig stream;
     stream.channels[TRXDir::Rx] = { 0 };
+    stream.channels[TRXDir::Tx] = { 0 };
     stream.format = DataFormat::I16;
     stream.linkFormat = DataFormat::I12;
 

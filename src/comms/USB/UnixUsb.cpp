@@ -97,10 +97,13 @@ void UnixUsb::process_libusbtransfer(libusb_transfer* trans)
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_OVERFLOW:
-        lime::error("USB transfer overflow ep:%02X", int(trans->endpoint));
+        lime::error("USB transfer overflow ep:%02X, actual %i", int(trans->endpoint), trans->actual_length);
+        context->bytesXfered = trans->actual_length;
+        context->done.store(true);
         break;
     case LIBUSB_TRANSFER_STALL:
         lime::error("USB transfer stalled ep:%02X", int(trans->endpoint));
+        context->done.store(true);
         break;
     case LIBUSB_TRANSFER_NO_DEVICE:
         lime::error("USB transfer no device"s);
@@ -357,7 +360,6 @@ OpStatus UnixUsb::WaitForXfer(void* context, int32_t timeout_ms)
     assert(context);
 
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
-
     // Blocking not to waste CPU
     std::unique_lock<std::mutex> lck(xfer->transferLock);
     bool value = xfer->cv.wait_for(lck, std::chrono::milliseconds(timeout_ms), [&]() { return xfer->done.load(); });
@@ -384,6 +386,7 @@ OpStatus UnixUsb::AbortXfer(void* context)
 void UnixUsb::FreeAsyncContext(void* context)
 {
     assert(context);
+    AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
     delete reinterpret_cast<AsyncContext*>(context);
 }
 
