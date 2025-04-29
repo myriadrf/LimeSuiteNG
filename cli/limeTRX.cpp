@@ -603,7 +603,6 @@ int main(int argc, char** argv)
 
     json rxmetadataJSON = { { "global",
                                 { { "core:datatype", "ci16_le" },
-                                    { "core:license", "Apache License, Version 2.0" },
                                     { "core:sample_rate", sampleRate },
                                     { "core:version", "0.0.1" },
                                     { "core:recorder", "limeTRX" } } },
@@ -662,7 +661,8 @@ int main(int argc, char** argv)
         // process samples
         if (!rxFilename.empty())
         {
-            if (rxExpectedTs != rxMeta.timestamp)
+            double diff = (rxExpectedTs - rxMeta.timestamp).GetRealSeconds();
+            if (std::fabs(diff) > 1.0 / sampleRate)
             {
                 rxcaptures.push_back({ rxMeta.timestamp, totalSamplesReceived, samplesRead });
             }
@@ -746,9 +746,16 @@ int main(int argc, char** argv)
         struct timespec ts;
         ts.tv_sec = chunk.timestamp.GetSeconds();
         ts.tv_nsec = chunk.timestamp.GetFracSeconds() * 1e9;
-        captures.push_back(json{ { "core:global_index", 0 },
-            { "core:sample_start", chunk.sample_start },
-            { "core:datetime", timespec_to_utc_string(ts) } });
+        if (streamCfg.timestampType == TimestampType::UNIX_EPOCH)
+        {
+            // add datetime only if using such timestamps
+            captures.push_back(
+                json{ { "core:sample_start", chunk.sample_start }, { "core:datetime", timespec_to_utc_string(ts) } });
+        }
+        else
+        {
+            captures.push_back(json{ { "core:sample_start", chunk.sample_start } });
+        }
     }
     rxMetaFile << rxmetadataJSON.dump();
     rxMetaFile.close();
