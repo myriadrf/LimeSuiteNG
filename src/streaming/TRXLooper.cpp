@@ -220,7 +220,9 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
     else
     {
         fpga->WriteRegister(0x0280, 1); // PPS, and clock ticks
-        ticksPerSample = 2; // 1 or 2 depending on chip settings
+        uint16_t port1sisoddr = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML1_SISODDR);
+        // uint16_t port2sisoddr = lms->Get_SPI_Reg_bits(LMS7002MCSR::LML2_SISODDR);
+        ticksPerSample = port1sisoddr ? 1 : 2; // 1 or 2 depending on chip settings
     }
 
     if (mConfig.extraConfig.waitPPS)
@@ -570,7 +572,7 @@ void TRXLooper::RxWorkLoop()
     lime::debug("Rx worker thread shutdown.");
 }
 
-static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket)
+static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket, int clockTicksPerSample)
 {
     switch (config.timestampType)
     {
@@ -583,7 +585,7 @@ static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_Rx
         uint32_t PPScount = (fpgapacket->counter >> 32) & 0xFFFFFFFF;
         uint64_t ticks = clockCount; // depending on interface configuration there might be 2 or 1 tick per sample
         uint64_t seconds = PPScount;
-        return Timespec(seconds, ticks, 2 * config.hintSampleRate);
+        return Timespec(seconds, ticks, clockTicksPerSample * config.hintSampleRate);
     }
     break;
     }
@@ -750,7 +752,7 @@ void TRXLooper::ReceivePacketsLoop()
             if (mConfig.extraConfig.waitPPS)
             {
                 const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
-                fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, hardwarePkt);
+                fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, hardwarePkt, ticksPerSample);
             }
             getStartTime = false;
             t1 = std::chrono::steady_clock::now();
@@ -772,7 +774,7 @@ void TRXLooper::ReceivePacketsLoop()
             }
 
             const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(&buffer[packetSize * i]);
-            Timespec hwts = ExtractPacketTimestamp(mConfig, hardwarePkt);
+            Timespec hwts = ExtractPacketTimestamp(mConfig, hardwarePkt, ticksPerSample);
 
             userPkt->meta.timestamp = hwts;
             userPkt->meta.useTimestamp = true;
