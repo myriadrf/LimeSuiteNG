@@ -4,14 +4,14 @@
 #include <cassert>
 #include <cstring>
 
-#include "limesuiteng/Timestamp.h"
+#include "limesuiteng/Timespec.h"
 
 namespace lime {
 
 class PacketMeta
 {
   public:
-    Timestamp timestamp;
+    Timespec timestamp;
     bool useTimestamp{ 0 }; ///< Whether to use the timestamp or not.
     bool flush{ 0 }; ///< Whether to flush the whole packet early or not.
 };
@@ -190,7 +190,7 @@ class StreamPacket
 
     void Reset()
     {
-        meta.timestamp.Reset();
+        meta.timestamp = Timespec(0);
         samples.Reset();
     }
 

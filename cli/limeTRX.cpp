@@ -3,7 +3,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/Timestamp.h"
+#include "limesuiteng/Timespec.h"
 #include "limesuiteng/StreamMeta.h"
 #include "streaming/StreamComposite.h"
 #include <iostream>
@@ -36,7 +36,7 @@ using namespace std;
 using json = nlohmann::json;
 
 struct CaptureChunk {
-    lime::Timestamp timestamp;
+    lime::Timespec timestamp;
     uint64_t sample_start;
     uint64_t samples_count;
 };
@@ -541,7 +541,7 @@ int main(int argc, char** argv)
         {
             const std::string utcdatetime = capture.at("core:datetime");
             struct timespec ts = utc_string_to_timespec(utcdatetime);
-            lime::Timestamp timestamp(ts.tv_sec, ts.tv_nsec * 1.0e-9);
+            lime::Timespec timestamp(ts.tv_sec, ts.tv_nsec * 1.0e-9);
             timestamp.SetTickRate(sampleRate);
             uint64_t sample_start = capture.at("core:sample_start");
             size_t samples_count = sample_start - lastTxStart;
@@ -591,7 +591,7 @@ int main(int argc, char** argv)
     StreamTxMeta txMeta{};
     txMeta.flags = StreamTxMeta::EndOfBurst;
 
-    lime::Timestamp ts(0, sampleRate / 100, tickRatio * sampleRate);
+    lime::Timespec ts(0, sampleRate / 100, tickRatio * sampleRate);
     txMeta.timestamp = ts.GetTicks(); //sampleRate / 100; // send tx samples 10ms after start
 
 #ifdef USE_GNU_PLOT
@@ -631,7 +631,7 @@ int main(int argc, char** argv)
     if (tx && !repeater)
         txThread = std::thread(TransmitLoop, &txArgs);
 
-    Timestamp rxExpectedTs(-1, 0);
+    Timespec rxExpectedTs(-1, 0);
 
     while (stopProgram.load() == false)
     {
@@ -650,7 +650,7 @@ int main(int argc, char** argv)
         if (tx && repeater)
         {
             txMeta.timestamp = rxMeta.timestamp;
-            Timestamp txts = rxMeta.timestamp;
+            Timespec txts = rxMeta.timestamp;
             txts.AddTicks(tickRatio * repeaterDelay);
             txts.AddTicks(tickRatio * samplesRead);
             txMeta.timestamp = txts;
@@ -668,7 +668,7 @@ int main(int argc, char** argv)
             }
             rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
         }
-        rxExpectedTs = rxMeta.timestamp + Timestamp(samplesRead / sampleRate);
+        rxExpectedTs = rxMeta.timestamp + Timespec(samplesRead / sampleRate);
         totalSamplesReceived += samplesRead;
 
         t2 = std::chrono::high_resolution_clock::now();
@@ -743,10 +743,12 @@ int main(int argc, char** argv)
     auto& captures = rxmetadataJSON["captures"];
     for (auto& chunk : rxcaptures)
     {
-        auto datetime = chunk.timestamp.GetTimespec();
+        struct timespec ts;
+        ts.tv_sec = chunk.timestamp.GetSeconds();
+        ts.tv_nsec = chunk.timestamp.GetFracSeconds() * 1e9;
         captures.push_back(json{ { "core:global_index", 0 },
             { "core:sample_start", chunk.sample_start },
-            { "core:datetime", timespec_to_utc_string(datetime) } });
+            { "core:datetime", timespec_to_utc_string(ts) } });
     }
     rxMetaFile << rxmetadataJSON.dump();
     rxMetaFile.close();

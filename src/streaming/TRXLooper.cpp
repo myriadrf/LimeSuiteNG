@@ -570,12 +570,12 @@ void TRXLooper::RxWorkLoop()
     lime::debug("Rx worker thread shutdown.");
 }
 
-static Timestamp ExtractPacketTimestamp(const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket)
+static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket)
 {
     switch (config.timestampType)
     {
     case TimestampType::SAMPLE_TICKS:
-        return Timestamp(0, fpgapacket->counter, config.hintSampleRate);
+        return Timespec(0, fpgapacket->counter, config.hintSampleRate);
         break;
     case TimestampType::REALTIME_SECONDS:
     case TimestampType::UNIX_EPOCH: {
@@ -583,12 +583,11 @@ static Timestamp ExtractPacketTimestamp(const StreamConfig& config, const FPGA_R
         uint32_t PPScount = (fpgapacket->counter >> 32) & 0xFFFFFFFF;
         uint64_t ticks = clockCount; // depending on interface configuration there might be 2 or 1 tick per sample
         uint64_t seconds = PPScount;
-        return Timestamp(seconds, ticks, 2 * config.hintSampleRate);
+        return Timespec(seconds, ticks, 2 * config.hintSampleRate);
     }
     break;
     }
-    throw;
-    return Timestamp();
+    return Timespec();
 }
 
 static int32_t ExtractPacketSamples(
@@ -651,8 +650,9 @@ void TRXLooper::ReceivePacketsLoop()
     bool getStartTime = mConfig.timestampType != TimestampType::SAMPLE_TICKS;
     startUnixTime = 0;
 
-    Timestamp lastPacketTS;
-    Timestamp expectedTimestamp;
+    Timespec lastPacketTS;
+    Timespec expectedTimestamp;
+    Timespec fpgaFrontEndDelay;
     expectedTimestamp.SetTickRate(ticksPerSample * mConfig.hintSampleRate);
 
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
@@ -684,7 +684,9 @@ void TRXLooper::ReceivePacketsLoop()
                 snprintf(timestampstr, sizeof(timestampstr), "%.9fs", lastPacketTS.GetRealSeconds());
                 break;
             case TimestampType::UNIX_EPOCH: {
-                struct timespec ts = lastPacketTS.GetTimespec();
+                struct timespec ts;
+                ts.tv_sec = lastPacketTS.GetSeconds();
+                ts.tv_nsec = lastPacketTS.GetFracSeconds() * 1e9;
                 std::string utctimestamp = timespec_to_utc_string(&ts);
                 snprintf(timestampstr, sizeof(timestampstr), "%s", utctimestamp.c_str());
                 break;
@@ -745,8 +747,11 @@ void TRXLooper::ReceivePacketsLoop()
             startUnixTimeSet = true;
             // stream starts with the PPS signal, but there is delay until the samples are put into packet by the hardware
             // rewind timstamps by the amount of first packet clockCounter
-            // const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
-            // Timestamp firstTimestamp = ExtractPacketTimestamp(mConfig, hardwarePkt);
+            if (mConfig.extraConfig.waitPPS)
+            {
+                const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
+                fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, hardwarePkt);
+            }
             getStartTime = false;
             t1 = std::chrono::steady_clock::now();
         }
@@ -767,36 +772,38 @@ void TRXLooper::ReceivePacketsLoop()
             }
 
             const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(&buffer[packetSize * i]);
-            Timestamp hwts = ExtractPacketTimestamp(mConfig, hardwarePkt);
+            Timespec hwts = ExtractPacketTimestamp(mConfig, hardwarePkt);
 
             userPkt->meta.timestamp = hwts;
             userPkt->meta.useTimestamp = true;
             userPkt->meta.flush = false;
 
             // clock counter can drift, and gets reset with PPS, creating small discontinuity in expected and received counter
-            // if (std::abs(int64_t(hwts.GetTicks() - expectedTimestamp.GetTicks())) != 0)
-            // {
-            //     int64_t fpgaTicks = hardwarePkt->counter & 0xFFFFFFFF;
-            //     int64_t expectedTicks = int64_t((expectedTimestamp.GetRealSeconds() - expectedTimestamp.GetSeconds()) *
-            //                                     mConfig.hintSampleRate * ticksPerSample);
-            //     int64_t ticksDiff = expectedTicks - fpgaTicks;
-            //     printf("FPGA TS: %016lx, PPS=%i, CLK=%i,  expected PPS=%i, CLK=%i, diff=%li\n",
-            //         hardwarePkt->counter,
-            //         hardwarePkt->counter >> 32,
-            //         fpgaTicks,
-            //         expectedTimestamp.GetSeconds(),
-            //         expectedTicks,
-            //         ticksDiff);
+            double diff = (hwts - expectedTimestamp).GetRealSeconds();
+            if (std::fabs(diff) > 1.0 / mConfig.hintSampleRate)
+            {
+                int64_t fpgaTicks = hardwarePkt->counter & 0xFFFFFFFF;
+                int64_t expectedTicks = int64_t((expectedTimestamp.GetRealSeconds() - expectedTimestamp.GetSeconds()) *
+                                                mConfig.hintSampleRate * ticksPerSample);
+                int64_t ticksDiff = expectedTicks - fpgaTicks;
+                lime::debug("FPGA TS: %016lx, PPS=%li, CLK=%li,  expected PPS=%li, CLK=%li, diff=%li",
+                    hardwarePkt->counter,
+                    hardwarePkt->counter >> 32,
+                    fpgaTicks,
+                    expectedTimestamp.GetSeconds(),
+                    expectedTicks,
+                    ticksDiff);
 
-            //     printf("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li\n",
-            //         stats.packets + i,
-            //         expectedTimestamp.GetTicks(),
-            //         hwts.GetTicks(),
-            //         hwts.GetTicks() - expectedTimestamp.GetTicks());
-            //     ++stats.loss;
-            //     loss.add(1);
-            //     reportProblems = true;
-            // }
+                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
+                    stats.packets + i,
+                    expectedTimestamp.GetTicks(),
+                    hwts.GetTicks(),
+                    expectedTimestamp.GetTicks() - hwts.GetTicks(),
+                    int64_t(diff * 1e9));
+                ++stats.loss;
+                loss.add(1);
+                reportProblems = true;
+            }
             if (hardwarePkt->txWasDropped())
             {
                 ++mTx.stats.loss;
@@ -806,7 +813,7 @@ void TRXLooper::ReceivePacketsLoop()
 
             lastPacketTS = hwts;
             if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
-                lastPacketTS.AddSeconds(startUnixTime);
+                lastPacketTS = lastPacketTS + Timespec(startUnixTime);
 
             if (!omitRxPackets)
             {
@@ -832,7 +839,10 @@ void TRXLooper::ReceivePacketsLoop()
                 }
 
                 if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
-                    userPkt->meta.timestamp.AddSeconds(startUnixTime);
+                {
+                    userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime);
+                    userPkt->meta.timestamp = userPkt->meta.timestamp - fpgaFrontEndDelay;
+                }
 
                 if (fifo->push(userPkt, false))
                     userPkt = nullptr;
@@ -1183,7 +1193,7 @@ void TRXLooper::TransmitPacketsLoop()
     auto& fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    Timestamp lastTS = 0;
+    Timespec lastTS = 0;
 
     struct PendingWrite {
         uint32_t id;
@@ -1264,7 +1274,9 @@ void TRXLooper::TransmitPacketsLoop()
                     snprintf(timestampstr, sizeof(timestampstr), "%.9fs", lastTS.GetRealSeconds());
                     break;
                 case TimestampType::UNIX_EPOCH: {
-                    struct timespec ts = lastTS.GetTimespec();
+                    struct timespec ts;
+                    ts.tv_sec = lastTS.GetSeconds();
+                    ts.tv_nsec = lastTS.GetFracSeconds() * 1e9;
                     std::string utctimestamp = timespec_to_utc_string(&ts);
                     snprintf(timestampstr, sizeof(timestampstr), "%s", utctimestamp.c_str());
                     break;
@@ -1338,7 +1350,7 @@ void TRXLooper::TransmitPacketsLoop()
                 lastTS = srcPkt->meta.timestamp;
                 if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
                 {
-                    srcPkt->meta.timestamp.AddSeconds(-startUnixTime);
+                    srcPkt->meta.timestamp = srcPkt->meta.timestamp - Timespec(startUnixTime);
                     if (srcPkt->meta.timestamp.GetSeconds() < 0) // Drop packets that are in the past
                     {
                         ++stats.underrun;
@@ -1582,12 +1594,12 @@ uint32_t TRXLooper::StreamTxTemplate(
     const bool useTimestamp = meta ? (meta->hasTimestamp) : false;
     const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
 
-    Timestamp ts = meta->timestamp;
+    Timespec ts = meta->timestamp;
     ts.SetTickRate(ticksPerSample * mConfig.hintSampleRate);
 
     uint32_t samplesRemaining = count;
 
-    bool timeGap = true; // expectedTS != lime::Timestamp(meta->timestamp);
+    bool timeGap = true; // expectedTS != lime::Timespec(meta->timestamp);
 
     if (mTx.stagingPacket && timeGap)
     {
@@ -1651,9 +1663,9 @@ uint32_t TRXLooper::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
         else
-            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
     return StreamTxTemplate(samples, count, &txmeta, timeout);
 }
@@ -1667,9 +1679,9 @@ uint32_t TRXLooper::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
         else
-            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
     return StreamTxTemplate(samples, count, &txmeta, timeout);
 }
@@ -1683,9 +1695,9 @@ uint32_t TRXLooper::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timestamp(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
         else
-            txmeta.timestamp = Timestamp(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
     return StreamTxTemplate(samples, count, &txmeta, timeout);
 }

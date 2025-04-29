@@ -1,7 +1,7 @@
 #ifndef LIMESUITENG_STREAMMETA_H
 #define LIMESUITENG_STREAMMETA_H
 
-#include "limesuiteng/Timestamp.h"
+#include "limesuiteng/Timespec.h"
 
 namespace lime {
 
@@ -11,7 +11,7 @@ class StreamTxMeta
     enum Flags {
         EndOfBurst = (1 << 0),
     };
-    lime::Timestamp timestamp;
+    lime::Timespec timestamp;
     bool hasTimestamp;
 
     uint32_t flags;
@@ -20,7 +20,7 @@ class StreamTxMeta
 class StreamRxMeta
 {
   public:
-    lime::Timestamp timestamp;
+    lime::Timespec timestamp;
     bool hasTimestamp;
 };
 
