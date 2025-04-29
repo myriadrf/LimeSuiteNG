@@ -753,6 +753,7 @@ void TRXLooper::ReceivePacketsLoop()
             {
                 const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
                 fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, hardwarePkt, ticksPerSample);
+                expectedTimestamp = expectedTimestamp + fpgaFrontEndDelay;
             }
             getStartTime = false;
             t1 = std::chrono::steady_clock::now();
@@ -788,14 +789,16 @@ void TRXLooper::ReceivePacketsLoop()
                 int64_t expectedTicks = int64_t((expectedTimestamp.GetRealSeconds() - expectedTimestamp.GetSeconds()) *
                                                 mConfig.hintSampleRate * ticksPerSample);
                 int64_t ticksDiff = expectedTicks - fpgaTicks;
-                lime::debug("FPGA TS: %016lx, PPS=%li, CLK=%li,  expected PPS=%li, CLK=%li, diff=%li",
-                    hardwarePkt->counter,
-                    hardwarePkt->counter >> 32,
-                    fpgaTicks,
-                    expectedTimestamp.GetSeconds(),
-                    expectedTicks,
-                    ticksDiff);
-
+                if (mConfig.timestampType != TimestampType::SAMPLE_TICKS)
+                {
+                    lime::debug("FPGA TS: %016lx, PPS=%li, CLK=%li,  expected PPS=%li, CLK=%li, diff=%li",
+                        hardwarePkt->counter,
+                        hardwarePkt->counter >> 32,
+                        fpgaTicks,
+                        expectedTimestamp.GetSeconds(),
+                        expectedTicks,
+                        ticksDiff);
+                }
                 lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
                     stats.packets + i,
                     expectedTimestamp.GetTicks(),
