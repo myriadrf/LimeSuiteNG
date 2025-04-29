@@ -1636,6 +1636,7 @@ lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_c
     switch (clk_id)
     {
     case LMS7002M_CLK_REFERENCE:
+        return lms7002m_set_reference_clock(self, freq);
         // TODO: recalculate CGEN,SXR/T
         break;
     case LMS7002M_CLK_CGEN:
