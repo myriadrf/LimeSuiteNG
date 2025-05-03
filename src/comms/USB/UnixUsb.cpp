@@ -3,7 +3,7 @@
 #include <thread>
 #include <cassert>
 
-#ifdef __unix__
+#ifdef __GNUC__
     #ifdef __GNUC__
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wpedantic"

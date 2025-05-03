@@ -5,7 +5,7 @@
 #include <map>
 #include <memory>
 
-#ifdef __unix__
+#if defined (__unix__) || defined(__GNUC__)
     #include "comms/USB/UnixUsb.h"
 #endif // !__unix__
 
@@ -48,7 +48,7 @@ class FX3 : public IUSB
     static constexpr uint8_t CONTROL_BULK_IN_ADDRESS =
         0x8F; ///< THe memory address for reading information via the bulk transfer protocol.
   private:
-#ifdef __unix__
+#if defined (__unix__) || defined(__GNUC__)
     UnixUsb libusb_impl;
 #else
     // using pointer so that windows.h header would only be needed inside cpp file
