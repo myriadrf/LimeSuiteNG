@@ -13,7 +13,7 @@
 #include <string_view>
 #include <sstream>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <windows.h>
     #include <shlobj.h>
     #include <io.h>
