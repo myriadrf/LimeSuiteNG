@@ -16,6 +16,7 @@
 #include <ciso646>
 #include <complex>
 #include <queue>
+#include <cinttypes>
 
 using namespace std::literals::string_literals;
 
@@ -256,7 +257,7 @@ void TRXLooper::Stop()
         if (mCallback_logMessage)
         {
             char msg[256];
-            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %lli", chipId, mRx.stats.packets);
+            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %" PRIi64, chipId, mRx.stats.packets);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
@@ -281,7 +282,7 @@ void TRXLooper::Stop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg),
-                "Tx%i stop: host sent packets: %lli (0x%08llX), FPGA packet ingresed: %i (0x%08X), diff: %lli, Tx packet dropped: %i",
+                "Tx%i stop: host sent packets: %" PRIi64 " (0x%08" PRIX64 "), FPGA packet ingresed: %i (0x%08X), diff: %" PRIi64 ", Tx packet dropped: %i",
                 chipId,
                 mTx.stats.packets,
                 mTx.stats.packets,
@@ -559,7 +560,7 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "%s Rx%i: %3.3f MB/s | TS:%llu pkt:%lli o:%i(%+i) l:%i(%+i) dma:%llu/%llu(+%llu) swFIFO:%zu",
+                "%s Rx%i: %3.3f MB/s | TS:%" PRIu64 " pkt:%" PRIi64 " o:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(+%" PRIu64 ") swFIFO:%" PRIuPTR,
                 mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
@@ -1045,7 +1046,7 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "%s Tx%i: %3.3f MB/s | TS:%lli pkt:%lli u:%i(%+i) l:%i(%+i) dma:%llu/%llu(%+lli) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "%s Tx%i: %3.3f MB/s | TS:%" PRIi64 " pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(%+" PRIi64 ") tsAdvance:%+.0f/%+.0f/%+.0f%s, "
                     "f:%zu",
                     mTxArgs.dma->GetName().c_str(),
                     chipId,

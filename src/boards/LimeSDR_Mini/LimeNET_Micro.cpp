@@ -23,6 +23,7 @@
 #include <set>
 #include <stdexcept>
 #include <cmath>
+#include <cinttypes>
 
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
@@ -356,7 +357,7 @@ OpStatus LimeNET_Micro::CustomParameterRead(std::vector<CustomParameterIO>& para
 void LimeNET_Micro::SetSerialNumber(const std::string& number)
 {
     uint64_t sn = 0;
-    sscanf(number.c_str(), "%16llX", &sn);
+    sscanf(number.c_str(), "%16" SCNx64 "", &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
 

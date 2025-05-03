@@ -9,6 +9,7 @@
 #include <mutex>
 #include <sstream>
 #include <string_view>
+#include <cinttypes>
 
 #include "streaming/StreamComposite.h"
 
@@ -449,7 +450,7 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         const auto& desc = node.device->GetDescriptor();
         if (node.chipIndex >= desc.rfSOC.size())
         {
-            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%llu has only %llu chips.", node.chipIndex, i, desc.rfSOC.size());
+            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%" PRIuPTR " has only %" PRIuPTR " chips.", node.chipIndex, i, desc.rfSOC.size());
             return OpStatus::OutOfRange;
         }
 
@@ -466,12 +467,12 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
 
         if (chip->LoadConfig(configFilepath, false) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "dev%llu chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
+            Log(LogLevel::Error, "dev%" PRIuPTR " chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
             return OpStatus::Error;
         }
 
         node.config.skipDefaults = true;
-        Log(LogLevel::Info, "dev%llu chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
+        Log(LogLevel::Info, "dev%" PRIuPTR " chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
     }
     return OpStatus::Success;
 }
@@ -801,7 +802,7 @@ static void TransferRuntimeParametersToConfig(
         const auto& paths = desc.pathNames.at(isTx ? TRXDir::Tx : TRXDir::Rx);
 
         Log(LogLevel::Verbose,
-            "%s channel%llu: dev%i chip%i ch%i , LO: %.3lf MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
+            "%s channel%" PRIuPTR ": dev%i chip%i ch%i , LO: %.3lf MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
             isTx ? "Tx" : "Rx",
             i,
             channelMap[i].parent->devIndex,
@@ -879,14 +880,14 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             streamCfg.channels[TRXDir::Tx].push_back(ch);
 
         Log(LogLevel::Debug,
-            "Port[%llu] Stream samples format: %s , link: %s %s",
+            "Port[%" PRIuPTR "] Stream samples format: %s , link: %s %s",
             p,
             streamCfg.format == DataFormat::F32 ? "F32" : "I16",
             streamCfg.linkFormat == DataFormat::I12 ? "I12" : "I16",
             (streamCfg.extraConfig.negateQ ? ", Negating Q samples" : ""));
         if (composite->Setup(streamCfg) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "Port%llu stream setup failed.", p);
+            Log(LogLevel::Error, "Port%" PRIuPTR " stream setup failed.", p);
             return OpStatus::Error;
         }
         port.stream = std::move(composite);
@@ -994,12 +995,12 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                 continue;
             else if (node.device != nullptr && !node.assignedToPort)
             {
-                Log(LogLevel::Warning, "dev%llu is not assigned to any port.", i);
+                Log(LogLevel::Warning, "dev%" PRIuPTR " is not assigned to any port.", i);
                 continue;
             }
             try
             {
-                Log(LogLevel::Debug, "dev%llu configure.", i);
+                Log(LogLevel::Debug, "dev%" PRIuPTR " configure.", i);
                 OpStatus status = node.device->Configure(node.config, node.chipIndex);
                 if (status != OpStatus::Success)
                     return -1;
