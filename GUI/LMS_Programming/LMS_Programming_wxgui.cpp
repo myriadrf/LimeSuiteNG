@@ -63,7 +63,7 @@ LMS_Programming_wxgui::LMS_Programming_wxgui(
     FlexGridSizer2->Add(btnStartStop, 1, wxEXPAND | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
     FlexGridSizer8 = new wxFlexGridSizer(0, 1, 0, 0);
     FlexGridSizer8->AddGrowableCol(0);
-    lblProgressPercent = new wxStaticText(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(48, -1), 0, _T("ID_STATICTEXT5"));
+    lblProgressPercent = new wxStaticText(this, wxID_ANY, _T(" "), wxDefaultPosition, wxSize(48, -1), 0, _T("ID_STATICTEXT5"));
 
     progressBar = new wxGauge(this, ID_GAUGE1, 100, wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_GAUGE1"));
     FlexGridSizer8->Add(progressBar, 1, wxEXPAND, 0);

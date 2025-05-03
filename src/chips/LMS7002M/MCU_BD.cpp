@@ -975,7 +975,7 @@ int MCU_BD::WaitForMCU(uint32_t timeout_ms)
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() < timeout_ms);
     mSPI_write(0x0006, 0); //return SPI control to PC
     //if((value & 0x7f) != 0)
-    lime::debug("MCU algorithm time: %li ms", std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
+    lime::debug("MCU algorithm time: %lli ms", std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
     return value & 0x7F;
 }
 

@@ -256,7 +256,7 @@ void TRXLooper::Stop()
         if (mCallback_logMessage)
         {
             char msg[256];
-            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %li", chipId, mRx.stats.packets);
+            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %lli", chipId, mRx.stats.packets);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
@@ -281,7 +281,7 @@ void TRXLooper::Stop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg),
-                "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
+                "Tx%i stop: host sent packets: %lli (0x%08llX), FPGA packet ingresed: %i (0x%08X), diff: %lli, Tx packet dropped: %i",
                 chipId,
                 mTx.stats.packets,
                 mTx.stats.packets,
@@ -559,7 +559,7 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "%s Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                "%s Rx%i: %3.3f MB/s | TS:%llu pkt:%lli o:%i(%+i) l:%i(%+i) dma:%llu/%llu(+%llu) swFIFO:%zu",
                 mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
@@ -1045,8 +1045,8 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "%s Tx%i: %3.3f MB/s | TS:%li pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
-                    "f:%li",
+                    "%s Tx%i: %3.3f MB/s | TS:%lli pkt:%lli u:%i(%+i) l:%i(%+i) dma:%llu/%llu(%+lli) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
+                    "f:%zu",
                     mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,
