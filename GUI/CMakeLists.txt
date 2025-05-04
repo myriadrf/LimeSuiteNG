@@ -155,7 +155,7 @@ endif(MSVC)
 ########################################################################
 # Copy external DLLs to binaries directory
 ########################################################################
-if(WIN32)
+if(WIN32 AND MSVC)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(x64_postfix "_x64")
     endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -170,16 +170,16 @@ if(WIN32)
         POST_BUILD
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
-            ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll
-            ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll
-            ${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll
-            $<TARGET_PROPERTY:limeGUI,RUNTIME_OUTPUT_DIRECTORY>/$<${IS_MULTI_CONF}:$<CONFIG>>)
+            "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll"
+            "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll"
+            "${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll"
+            "$<TARGET_PROPERTY:limeGUI,RUNTIME_OUTPUT_DIRECTORY>/$<${IS_MULTI_CONF}:$<CONFIG>>")
     install(
-        FILES ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll
-              ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll
-              ${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll
+        FILES "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll"
+              "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll"
+              "${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll"
         DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif(WIN32)
+endif(WIN32 AND MSVC)
 
 install(
     TARGETS limeGUI

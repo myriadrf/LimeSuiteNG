@@ -13,15 +13,17 @@
 #include <string_view>
 #include <sstream>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
     #include <windows.h>
     #include <shlobj.h>
     #include <io.h>
 
     //access mode constants
     #define F_OK 0
-    #define R_OK 2
-    #define W_OK 4
+    #if (!defined(R_OK)) || (!defined(W_OK))
+        #define R_OK 2
+        #define W_OK 4
+    #endif
 #endif
 
 #ifdef __unix__
@@ -44,7 +46,7 @@ std::string getLimeSuiteRoot(void)
 // Get the path to the current dynamic linked library.
 // The path to this library can be used to determine
 // the installation root without prior knowledge.
-#if defined(_MSC_VER) && defined(LIME_DLL)
+#if defined(_WIN32) && defined(LIME_DLL)
     char path[MAX_PATH];
     HMODULE hm = NULL;
     if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -94,7 +96,7 @@ static std::string getBareAppDataDirectory(void)
         return appDataDir;
 
 //use windows API to query for roaming app data directory
-#ifdef _MSC_VER
+#ifdef _WIN32
     char csidlAppDataDir[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, csidlAppDataDir)))
     {
@@ -130,7 +132,7 @@ std::vector<std::string> listImageSearchPaths(void)
     std::vector<std::string> imageSearchPaths;
 
 //separator for search paths in the environment variable
-#ifdef _MSC_VER
+#ifdef _WIN32
     static const char sep = ';';
 #else
     static const char sep = ':';

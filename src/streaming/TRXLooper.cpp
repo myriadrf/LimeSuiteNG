@@ -16,6 +16,7 @@
 #include <ciso646>
 #include <complex>
 #include <queue>
+#include <cinttypes>
 
 using namespace std::literals::string_literals;
 
@@ -256,7 +257,7 @@ void TRXLooper::Stop()
         if (mCallback_logMessage)
         {
             char msg[256];
-            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %li", chipId, mRx.stats.packets);
+            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %" PRIi64, chipId, mRx.stats.packets);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
@@ -281,7 +282,8 @@ void TRXLooper::Stop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg),
-                "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: %i",
+                "Tx%i stop: host sent packets: %" PRIi64 " (0x%08" PRIX64 "), FPGA packet ingresed: %i (0x%08X), diff: %" PRIi64
+                ", Tx packet dropped: %i",
                 chipId,
                 mTx.stats.packets,
                 mTx.stats.packets,
@@ -559,7 +561,8 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "%s Rx%i: %3.3f MB/s | TS:%li pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                "%s Rx%i: %3.3f MB/s | TS:%" PRIu64 " pkt:%" PRIi64 " o:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(+%" PRIu64
+                ") swFIFO:%" PRIuPTR,
                 mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
@@ -1045,8 +1048,8 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "%s Tx%i: %3.3f MB/s | TS:%li pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
-                    "f:%li",
+                    "%s Tx%i: %3.3f MB/s | TS:%" PRIi64 " pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(%+" PRIi64
+                    ") tsAdvance:%+.0f/%+.0f/%+.0f%s, f:%" PRIuPTR,
                     mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,

@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+#include <cinttypes>
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
@@ -517,7 +518,7 @@ void LimeSDR_Mini::SetSerialNumber(const std::string& number)
 {
 
     uint64_t sn = 0;
-    sscanf(number.c_str(), "%16lX", &sn);
+    sscanf(number.c_str(), "%16" SCNx64, &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
 
