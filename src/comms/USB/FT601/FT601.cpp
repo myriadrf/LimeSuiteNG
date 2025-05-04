@@ -22,7 +22,7 @@ static const int CONTROL_BULK_READ_ADDRESS = 0x82;
 
 std::vector<USBDescriptor> FT601::enumerateDevices(const std::set<VendorProductId>& ids)
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.enumerateDevices(ids);
 #else
     std::vector<USBDescriptor> devDescriptors;
@@ -58,7 +58,7 @@ std::vector<USBDescriptor> FT601::enumerateDevices(const std::set<VendorProductI
 }
 
 FT601::FT601()
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     : mUsbCounter(0)
 #else
     : mFTHandle(nullptr)
@@ -74,7 +74,7 @@ FT601::~FT601()
 bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
 {
     Disconnect();
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     if (libusb_impl.Connect(vid, pid, serial))
     {
         OpStatus status = libusb_impl.ClaimInterface(1);
@@ -116,7 +116,7 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
 
 void FT601::Disconnect()
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     if (!IsConnected())
         return;
 
@@ -133,7 +133,7 @@ void FT601::Disconnect()
 
 bool FT601::IsConnected()
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.IsConnected();
 #else
     return mFTHandle != nullptr;
@@ -142,7 +142,7 @@ bool FT601::IsConnected()
 
 int32_t FT601::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length, int32_t timeout_ms)
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.BulkTransfer(endPointAddr, data, length, timeout_ms);
 #else
     ULONG ulBytesTransferred = 0;
@@ -181,7 +181,7 @@ int32_t FT601::ControlTransfer(int requestType, int request, int value, int inde
 
 void* FT601::AllocateAsyncContext()
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.AllocateAsyncContext();
 #else
     return new FTDIAsyncContext();
@@ -190,7 +190,7 @@ void* FT601::AllocateAsyncContext()
 
 OpStatus FT601::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8_t endPointAddr)
 {
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.BeginDataXfer(context, buffer, length, endPointAddr);
 #else
     ULONG ulActual{ 0 };
@@ -214,7 +214,7 @@ OpStatus FT601::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uin
 OpStatus FT601::WaitForXfer(void* context, int32_t timeout_ms)
 {
     assert(context);
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.WaitForXfer(context, timeout_ms);
 #else
     FTDIAsyncContext* async{ reinterpret_cast<FTDIAsyncContext*>(context) };
@@ -226,7 +226,7 @@ OpStatus FT601::WaitForXfer(void* context, int32_t timeout_ms)
 size_t FT601::FinishDataXfer(void* context)
 {
     assert(context);
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.FinishDataXfer(context);
 #else
     FTDIAsyncContext* async{ reinterpret_cast<FTDIAsyncContext*>(context) };
@@ -241,7 +241,7 @@ size_t FT601::FinishDataXfer(void* context)
 OpStatus FT601::AbortXfer(void* context)
 {
     assert(context);
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.AbortXfer(context);
 #else
     FTDIAsyncContext* async = reinterpret_cast<FTDIAsyncContext*>(context);
@@ -258,7 +258,7 @@ OpStatus FT601::AbortXfer(void* context)
 void FT601::FreeAsyncContext(void* context)
 {
     assert(context);
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     libusb_impl.FreeAsyncContext(context);
 #else
     delete reinterpret_cast<FTDIAsyncContext*>(context);
@@ -268,7 +268,7 @@ void FT601::FreeAsyncContext(void* context)
 OpStatus FT601::ResetStreamBuffers()
 {
     constexpr int streamBufferSize = 4096;
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
     if (FT_FlushPipe(STREAM_BULK_WRITE_ADDRESS) != 0)
         return OpStatus::Error;
 
@@ -311,7 +311,7 @@ int FT601::ReinitPipe(unsigned char ep)
 }
 #endif
 
-#if defined (__unix__) || defined(__GNUC__)
+#if defined(__unix__) || defined(__GNUC__)
 int FT601::FT_FlushPipe(unsigned char ep)
 {
     uint8_t wbuffer[20];

@@ -450,7 +450,11 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         const auto& desc = node.device->GetDescriptor();
         if (node.chipIndex >= desc.rfSOC.size())
         {
-            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%" PRIuPTR " has only %" PRIuPTR " chips.", node.chipIndex, i, desc.rfSOC.size());
+            Log(LogLevel::Error,
+                "Invalid chipIndex (%i). dev%" PRIuPTR " has only %" PRIuPTR " chips.",
+                node.chipIndex,
+                i,
+                desc.rfSOC.size());
             return OpStatus::OutOfRange;
         }
 

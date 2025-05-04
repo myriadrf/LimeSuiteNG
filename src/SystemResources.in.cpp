@@ -20,7 +20,7 @@
 
     //access mode constants
     #define F_OK 0
-    #if  (! defined(R_OK)) || (! defined(W_OK))
+    #if (!defined(R_OK)) || (!defined(W_OK))
         #define R_OK 2
         #define W_OK 4
     #endif
