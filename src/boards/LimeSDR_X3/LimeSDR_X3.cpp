@@ -400,6 +400,8 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
 {
     LMS2_PA_LNA_Enable(0, false, false);
     LMS2_PA_LNA_Enable(1, false, false);
+    LMS2SetPath(TRXDir::Tx, 0, 0); // Tx RF Switch to ground
+    LMS2SetPath(TRXDir::Tx, 1, 0); // Tx RF Switch to ground
 
     struct regVal {
         uint16_t adr;
@@ -961,6 +963,13 @@ void LimeSDR_X3::LMS2SetPath(TRXDir dir, uint8_t chan, uint8_t path)
     uint16_t shift = chan == 0 ? 0 : 2;
     if (path == 0)
     {
+        if (tx)
+        {
+            if (chan == 0)
+                sw_val |= 1 << 7; // TRX1T to ground
+            else
+                sw_val &= ~(1 << 9); // TRX2T to ground
+        }
     }
     else if (tx && ePathLMS2_Tx(path) == ePathLMS2_Tx::TDD) // TDD_TX
     {
