@@ -34,7 +34,6 @@
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
 #include "MCU_BD.h"
-#include "utilities/toString.h"
 
 #include "lms7002m/csr_data.h"
 #include "lms7002m/spi.h"

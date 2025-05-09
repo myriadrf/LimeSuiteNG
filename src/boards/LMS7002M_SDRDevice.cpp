@@ -2,12 +2,12 @@
 
 #include "FPGA/FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
 #include "chips/LMS7002M/validation.h"
 #include "limesuiteng/Logger.h"
 #include "streaming/TRXLooper.h"
-#include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>
@@ -1238,6 +1238,14 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     chip.EnableChannel(TRXDir::Tx, channelIndex, ch.tx.enabled);
     chip.SetBandTRF(ch.tx.path);
 
+    // Rx LPF configuration modifies Rx PGA
+    status = chip.SetRxLPF(ch.rx.lpf);
+    if (status != OpStatus::Success)
+        return status;
+    status = chip.SetTxLPF(ch.tx.lpf);
+    if (status != OpStatus::Success)
+        return status;
+
     for (const auto& gain : ch.rx.gain)
     {
         SetGain(0, TRXDir::Rx, channelIndex, gain.first, gain.second);
@@ -1247,13 +1255,6 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     {
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
-
-    status = chip.SetRxLPF(ch.rx.lpf);
-    if (status != OpStatus::Success)
-        return status;
-    status = chip.SetTxLPF(ch.tx.lpf);
-    if (status != OpStatus::Success)
-        return status;
     // TODO: set GFIR filters...
     return status;
 }

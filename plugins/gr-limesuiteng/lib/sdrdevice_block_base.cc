@@ -14,6 +14,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/ToString.h"
 #include "limesuiteng/complex.h"
 
 using namespace lime;
@@ -321,39 +322,48 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
 
 double sdrdevice_block_base::set_gain_generic(double gain_dB)
 {
-    if (!devContext)
-        return gain_dB;
+    return set_gain(lime::eGainTypes::GENERIC, gain_dB);
+}
 
-    GR_LOG_INFO(baselogger, fmt::format("{:s} {:f}", __func__, gain_dB));
+double sdrdevice_block_base::set_gain(lime::eGainTypes type, double gain_value)
+{
+    if (!devContext)
+        return gain_value;
+
+    const std::string gainName = lime::ToString(type);
+
+    GR_LOG_INFO(baselogger,
+                fmt::format("{:s} {:s} {:f}", __func__, gainName, gain_value));
     const RFSOCDescriptor& desc = devContext->device->GetDescriptor().rfSOC.at(chipIndex);
 
-    lime::Range gain_range = desc.gainRange.at(direction).at(lime::eGainTypes::GENERIC);
-    GR_LOG_INFO(
-        baselogger,
-        fmt::format(
-            "{:s} gain range: {:f}:{:f}", __func__, gain_range.min, gain_range.max));
-    if (gain_dB > gain_range.max) {
-        gain_dB = gain_range.max;
-        GR_LOG_WARN(baselogger, fmt::format("{:s} clip gain to {:f}", __func__, gain_dB));
-    } else if (gain_dB < gain_range.min) {
-        gain_dB = gain_range.min;
-        GR_LOG_WARN(baselogger, fmt::format("{:s} clip gain to {:f}", __func__, gain_dB));
+    lime::Range gain_range = desc.gainRange.at(direction).at(type);
+    GR_LOG_INFO(baselogger,
+                fmt::format("{:s} {:s} gain range: {:f}:{:f}",
+                            __func__,
+                            gainName,
+                            gain_range.min,
+                            gain_range.max));
+    if (gain_value > gain_range.max) {
+        gain_value = gain_range.max;
+        GR_LOG_WARN(baselogger,
+                    fmt::format("{:s} clip gain to {:f}", __func__, gain_value));
+    } else if (gain_value < gain_range.min) {
+        gain_value = gain_range.min;
+        GR_LOG_WARN(baselogger,
+                    fmt::format("{:s} clip gain to {:f}", __func__, gain_value));
     }
 
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
-            devContext->device->SetGain(
-                chipIndex, direction, ch, lime::eGainTypes::GENERIC, gain_dB);
+            devContext->device->SetGain(chipIndex, direction, ch, type, gain_value);
         } else {
             if (direction == TRXDir::Tx)
-                devContext->deviceConfig.channel[ch].tx.gain[lime::eGainTypes::GENERIC] =
-                    gain_dB;
+                devContext->deviceConfig.channel[ch].tx.gain[type] = gain_value;
             else
-                devContext->deviceConfig.channel[ch].rx.gain[lime::eGainTypes::GENERIC] =
-                    gain_dB;
+                devContext->deviceConfig.channel[ch].rx.gain[type] = gain_value;
         }
     }
-    return gain_dB;
+    return gain_value;
 }
 
 double sdrdevice_block_base::set_nco_frequency(double frequency_offset_Hz)

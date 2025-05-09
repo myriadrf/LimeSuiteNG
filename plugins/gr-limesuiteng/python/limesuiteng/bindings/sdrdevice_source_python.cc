@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Free Software Foundation, Inc.
+ * Copyright 2025 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_source.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(a826788d3b9d6b39aa49f6df8eff4c0d)                     */
+/* BINDTOOL_HEADER_FILE_HASH(5a2603ee2fea2a0c81ecd7c5a7a7bc4c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -79,6 +79,13 @@ void bind_sdrdevice_source(py::module& m)
              &sdrdevice_source::set_gain_generic,
              py::arg("gain_dB"),
              D(sdrdevice_source, set_gain_generic))
+
+
+        .def("set_gain",
+             &sdrdevice_source::set_gain,
+             py::arg("type"),
+             py::arg("gain_value"),
+             D(sdrdevice_source, set_gain))
 
 
         .def("set_nco_frequency",

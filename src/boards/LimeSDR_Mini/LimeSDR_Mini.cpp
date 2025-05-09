@@ -9,6 +9,7 @@
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 
 #include "comms/IComms.h"
 #include "chips/Si5351C/Si5351C.h"
@@ -22,8 +23,6 @@
 
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64CProtocol.h"
-
-#include "utilities/toString.h"
 
 #include "DeviceTreeNode.h"
 #include "streaming/TRXLooper.h"

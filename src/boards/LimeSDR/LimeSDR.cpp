@@ -17,7 +17,7 @@
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
-#include "utilities/toString.h"
+#include "limesuiteng/ToString.h"
 
 #include "DeviceTreeNode.h"
 

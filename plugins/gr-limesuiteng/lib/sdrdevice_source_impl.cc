@@ -149,6 +149,12 @@ double sdrdevice_source_impl::set_gain_generic(double gain_dB)
     return sdrdevice_block_base::set_gain_generic(gain_dB);
 }
 
+double sdrdevice_source_impl::set_gain(int type, double gain_value)
+{
+    return sdrdevice_block_base::set_gain(static_cast<lime::eGainTypes>(type),
+                                          gain_value);
+}
+
 double sdrdevice_source_impl::set_nco_frequency(double frequency_offset_Hz)
 {
     return sdrdevice_block_base::set_nco_frequency(frequency_offset_Hz);

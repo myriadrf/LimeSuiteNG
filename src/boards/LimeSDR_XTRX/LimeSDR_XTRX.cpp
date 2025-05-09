@@ -2,6 +2,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 
 #include <cmath>
 #include <unistd.h>
@@ -22,7 +23,6 @@
 #include "FPGA_XTRX.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
-#include "utilities/toString.h"
 
 #include "CommonFunctions.h"
 #include "DeviceTreeNode.h"

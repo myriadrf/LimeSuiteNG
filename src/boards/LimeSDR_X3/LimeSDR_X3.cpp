@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
@@ -15,7 +16,6 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
-#include "utilities/toString.h"
 #include "streaming/TRXLooper.h"
 
 #include "chips/LMS7002M/validation.h"

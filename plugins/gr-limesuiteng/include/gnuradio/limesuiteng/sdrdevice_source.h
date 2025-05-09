@@ -13,6 +13,8 @@
 
 #include <string>
 
+#include "limesuiteng/types.h"
+
 namespace gr {
 namespace limesuiteng {
 
@@ -91,6 +93,15 @@ public:
      * @return  value that was set
      */
     virtual double set_gain_generic(double gain_dB) = 0;
+
+    /**
+     * Set receiver gain
+     *
+     * @param   type Gain type
+     * @param   gain_value Gain value
+     * @return  value that was set
+     */
+    virtual double set_gain(int type, double gain_value) = 0;
 
     /**
      * Set Numerically controlled oscilator frequency

@@ -45,6 +45,7 @@ public:
     double set_lpf_bandwidth(double bandwidthHz) override;
     bool set_antenna(const std::string& antenna_name) override;
     double set_gain_generic(double gain_dB) override;
+    double set_gain(int type, double gain_value) override;
     double set_nco_frequency(double frequency_offset_Hz) override;
 };
 

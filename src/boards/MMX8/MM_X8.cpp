@@ -6,6 +6,7 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
@@ -13,7 +14,6 @@
 #include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "DeviceTreeNode.h"
-#include "utilities/toString.h"
 
 #include "RFStream_X8.h"
 
