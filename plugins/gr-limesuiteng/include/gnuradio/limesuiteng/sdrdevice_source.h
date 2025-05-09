@@ -13,8 +13,6 @@
 
 #include <string>
 
-#include "limesuiteng/types.h"
-
 namespace gr {
 namespace limesuiteng {
 
