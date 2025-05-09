@@ -167,3 +167,6 @@ templates:
   - set_antenna(${antenna})
   - set_gain_generic(${gain_generic})
   - set_nco_frequency(${nco_offset})
+  - self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
+  - self.${id}.set_gain(2, ${lms7002m_gain_pga})
+  - self.${id}.set_gain(3, 12+${lms7002m_gain_tia})
