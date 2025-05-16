@@ -83,6 +83,10 @@ sdrdevice_sink_impl::sdrdevice_sink_impl(const std::string& alias,
                            d_logger,
                            d_logger)
 {
+    // GNU radio can start feeding Sink Work() with 1 sample chunks, somehow that makes
+    // the gnu radio boost thread to die. Setting the output granularity seems to
+    // workaround that.
+    set_output_multiple(256);
 }
 
 sdrdevice_sink_impl::~sdrdevice_sink_impl() { GR_LOG_DEBUG(d_logger, __func__); }
