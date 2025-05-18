@@ -349,7 +349,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     case limesdrmini::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
-        throw std::logic_error("LimeSDR_Mini SPI invalid SPI chip select"s);
+        return ReportError(OpStatus::InvalidValue, "LimeSDR_Mini SPI invalid SPI chip select"s);
     }
 }
 
@@ -365,7 +365,8 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 {
     if (mDeviceDescriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
-        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        ReportError(OpStatus::NotSupported, "LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        return -1;
     }
 
     return LMS7002M_SDRDevice::GetTemperature(moduleIndex);
