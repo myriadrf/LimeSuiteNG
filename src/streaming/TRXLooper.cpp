@@ -841,7 +841,7 @@ OpStatus TRXLooper::TxSetup()
     uint32_t packetSize;
     if (gw.hasConfigurableStreamPacketSize)
     {
-        mTx.samplesInPkt = 256;
+        mTx.samplesInPkt = 256 / chCount;
         packetSize = sizeof(StreamHeader) + sampleSize * mTx.samplesInPkt * chCount;
     }
     else
