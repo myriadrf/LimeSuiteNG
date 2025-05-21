@@ -405,7 +405,6 @@ OpStatus TRXLooper::RxSetup()
     if (status != OpStatus::Success)
         return status;
 
-    mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
@@ -482,6 +481,7 @@ OpStatus TRXLooper::RxSetup()
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
         mRx.packetsPool->push(new StreamPacket(mRx.samplesInPkt, chCount, userSampleSize));
+    mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
 
     char msg[256];
     std::snprintf(msg,
@@ -1044,7 +1044,6 @@ OpStatus TRXLooper::TxSetup()
         return status;
 
     mTx.samplesInPkt = defaultSamplesInPkt;
-    mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mTx.terminate.store(false, std::memory_order_relaxed);
 
     mTx.lastTimestamp.store(0, std::memory_order_relaxed);
@@ -1119,10 +1118,12 @@ OpStatus TRXLooper::TxSetup()
             mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
-    mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(1024);
+    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / mTx.samplesInPkt; // buffer 0.25 second of data
+    mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mTx.packetsPool->max_size(); ++i)
         mTx.packetsPool->push(new StreamPacket(mTx.packetsToBatch * mTx.samplesInPkt, chCount, userSampleSize));
+    mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
 
     mTx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminateWorker.store(false, std::memory_order_relaxed);
