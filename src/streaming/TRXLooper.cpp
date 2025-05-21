@@ -1119,7 +1119,7 @@ OpStatus TRXLooper::TxSetup()
 
     mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(1024);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
-    for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
+    for (uint32_t i = 0; i < mTx.packetsPool->max_size(); ++i)
         mTx.packetsPool->push(new StreamPacket(mTx.packetsToBatch * mTx.samplesInPkt, chCount, userSampleSize));
 
     mTx.terminate.store(false, std::memory_order_relaxed);
