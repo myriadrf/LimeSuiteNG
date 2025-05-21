@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
@@ -15,7 +16,6 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
 #include "SlaveSelectShim.h"
-#include "utilities/toString.h"
 #include "streaming/TRXLooper.h"
 
 #include "chips/LMS7002M/validation.h"
@@ -77,9 +77,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = {
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x200F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -127,9 +127,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x200F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -400,6 +400,8 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
 {
     LMS2_PA_LNA_Enable(0, false, false);
     LMS2_PA_LNA_Enable(1, false, false);
+    LMS2SetPath(TRXDir::Tx, 0, 0); // Tx RF Switch to ground
+    LMS2SetPath(TRXDir::Tx, 1, 0); // Tx RF Switch to ground
 
     struct regVal {
         uint16_t adr;
@@ -961,6 +963,13 @@ void LimeSDR_X3::LMS2SetPath(TRXDir dir, uint8_t chan, uint8_t path)
     uint16_t shift = chan == 0 ? 0 : 2;
     if (path == 0)
     {
+        if (tx)
+        {
+            if (chan == 0)
+                sw_val |= 1 << 7; // TRX1T to ground
+            else
+                sw_val &= ~(1 << 9); // TRX2T to ground
+        }
     }
     else if (tx && ePathLMS2_Tx(path) == ePathLMS2_Tx::TDD) // TDD_TX
     {

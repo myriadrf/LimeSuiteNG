@@ -5,9 +5,11 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+#include <cinttypes>
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 
 #include "comms/IComms.h"
 #include "chips/Si5351C/Si5351C.h"
@@ -21,8 +23,6 @@
 
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64CProtocol.h"
-
-#include "utilities/toString.h"
 
 #include "DeviceTreeNode.h"
 #include "streaming/TRXLooper.h"
@@ -92,8 +92,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0740 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x8650 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x000F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -141,8 +142,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0740 },
-    { 0x0120, 0xC5C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x8650 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x000F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -347,7 +349,7 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     case limesdrmini::SPI_FPGA:
         return mfpgaPort->SPI(MOSI, MISO, count);
     default:
-        throw std::logic_error("LimeSDR_Mini SPI invalid SPI chip select"s);
+        return ReportError(OpStatus::InvalidValue, "LimeSDR_Mini SPI invalid SPI chip select"s);
     }
 }
 
@@ -363,7 +365,8 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 {
     if (mDeviceDescriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
-        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        ReportError(OpStatus::NotSupported, "LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        return -1;
     }
 
     return LMS7002M_SDRDevice::GetTemperature(moduleIndex);
@@ -517,7 +520,7 @@ void LimeSDR_Mini::SetSerialNumber(const std::string& number)
 {
 
     uint64_t sn = 0;
-    sscanf(number.c_str(), "%16lX", &sn);
+    sscanf(number.c_str(), "%16" SCNx64, &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
 

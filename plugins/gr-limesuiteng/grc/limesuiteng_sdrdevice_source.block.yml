@@ -52,7 +52,6 @@ parameters:
   label: RF Oversampling
   dtype: enum
   options: [auto, x1, x2, x4, x8, x16, x32]
-  # option_labels: [Complex Float32, Complex Int16, Complex Byte]
   option_attributes:
     value: [0, 1, 2, 4, 8, 16, 32]
   category: General
@@ -91,7 +90,46 @@ parameters:
   dtype: float
   default: 20
   category: General
-  hide: none
+  hide: ${'part' if override_lms7002m_rx_gains=='Enabled' else 'none'}
+
+# Advanced settings for LMS7002M
+- id: override_lms7002m_rx_gains
+  label: LMS7002M Rx Gains Override
+  dtype: enum
+  options: ["Disabled", "Enabled"]
+  option_labels: ["Disabled", "Enabled"]
+  option_attributes:
+    value: [0, 1]
+  # default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_lna
+  label: Rx LNA dB
+  dtype: float
+  options: [-30, -27, -24, -21, -18, -15, -12, -9, -6, -5, -4, -3, -2, -1, 0]
+  option_labels: ["max-30", "max-27", "max-24", "max-21", "max-18", "max-15", "max-12", "max-9", "max-6", "max-5", "max-4", "max-3", "max-2", "max-1", "max"]
+  default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_pga
+  label: Rx PGA dB
+  dtype: float
+  options: [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  # option_labels: ["max-30", "max-27", "max-24", "max-21", "max-18", "max-15", "max-12", "max-9", "max-6", "max-5", "max-4", "max-3", "max-2", "max-1", "max"]
+  default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_tia
+  label: Rx TIA dB
+  dtype: float
+  options: [-12, -3, 0]
+  option_labels: ["max-12", "max-3", "max"]
+  default: -3
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
 
 outputs:
 - label: out
@@ -114,7 +152,12 @@ templates:
     self.${id}.set_lo_frequency(${rf_freq})
     self.${id}.set_lpf_bandwidth(${lpf})
     self.${id}.set_antenna(${antenna})
-    self.${id}.set_gain_generic(${gain_generic})
+    if ${override_lms7002m_rx_gains.value} == 1:
+      self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
+      self.${id}.set_gain(2, ${lms7002m_gain_pga})
+      self.${id}.set_gain(3, 12+${lms7002m_gain_tia})
+    else:
+      self.${id}.set_gain_generic(${gain_generic})
     self.${id}.set_nco_frequency(${nco_offset})
 
   callbacks:
@@ -124,3 +167,6 @@ templates:
   - set_antenna(${antenna})
   - set_gain_generic(${gain_generic})
   - set_nco_frequency(${nco_offset})
+  - self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
+  - self.${id}.set_gain(2, ${lms7002m_gain_pga})
+  - self.${id}.set_gain(3, 12+${lms7002m_gain_tia})

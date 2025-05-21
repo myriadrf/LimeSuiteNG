@@ -2,8 +2,9 @@
 
 #include <thread>
 #include <cassert>
+#include <cinttypes>
 
-#ifdef __unix__
+#ifdef __GNUC__
     #ifdef __GNUC__
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wpedantic"
@@ -311,7 +312,7 @@ int32_t UnixUsb::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);
     if (status != 0)
     {
-        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
+        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %" PRIuPTR,
             endPointAddr,
             libusb_error_name(status),
             actualTransferred,

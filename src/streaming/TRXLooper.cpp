@@ -19,6 +19,7 @@
 #include <queue>
 #include <fstream>
 #include <iostream>
+#include <cinttypes>
 
 using namespace std::literals::string_literals;
 
@@ -315,7 +316,7 @@ void TRXLooper::Stop()
         if (mCallback_logMessage)
         {
             char msg[256];
-            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %li", chipId, mRx.stats.packets);
+            std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %" PRIi64, chipId, mRx.stats.packets);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
@@ -340,8 +341,8 @@ void TRXLooper::Stop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg),
-                "Tx%i stop: host sent packets: %li (0x%08lX), FPGA packet ingresed: %i (0x%08X), diff: %li, Tx packet dropped: "
-                "%i|%i",
+                "Tx%i stop: host sent packets: %" PRIi64 " (0x%08" PRIX64 "), FPGA packet ingresed: %i (0x%08X), diff: %" PRIi64
+                ", Tx packet dropped: %i",
                 chipId,
                 mTx.stats.packets,
                 mTx.stats.packets,
@@ -701,7 +702,8 @@ void TRXLooper::ReceivePacketsLoop()
             char msg[512];
             std::snprintf(msg,
                 sizeof(msg) - 1,
-                "%s Rx%i: %3.3f MB/s | TS:%s pkt:%li o:%i(%+i) l:%i(%+i) dma:%lu/%lu(+%li) swFIFO:%li",
+                "%s Rx%i: %3.3f MB/s | TS:%s pkt:%" PRIi64 " o:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(+%" PRIu64
+                ") swFIFO:%" PRIuPTR,
                 mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
@@ -1054,7 +1056,7 @@ OpStatus TRXLooper::TxSetup()
     uint32_t packetSize;
     if (gw.hasConfigurableStreamPacketSize)
     {
-        mTx.samplesInPkt = 256;
+        mTx.samplesInPkt = 256 / chCount;
         packetSize = sizeof(StreamHeader) + sampleSize * mTx.samplesInPkt * chCount;
     }
     else
@@ -1070,10 +1072,10 @@ OpStatus TRXLooper::TxSetup()
         lime::debug("Tx samples override %i", mTx.samplesInPkt);
     }
 
-    mTx.packetsToBatch = 8; // Tx packets can be flushed early without filling whole batch
+    mTx.packetsToBatch = 16; // Tx packets can be flushed early without filling whole batch
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
-        mTx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mTx.samplesInPkt);
+        mTx.packetsToBatch = std::floor((0.0005 * mConfig.hintSampleRate) / mTx.samplesInPkt);
 
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
     {
@@ -1291,8 +1293,8 @@ void TRXLooper::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "%s Tx%i: %3.3f MB/s | TS:%s pkt:%li u:%i(%+i) l:%i(%+i) dma:%lu/%lu(%+li) tsAdvance:%+.0f/%+.0f/%+.0f%s, "
-                    "f:%li",
+                    "%s Tx%i: %3.3f MB/s | TS:%s pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(%+" PRIi64
+                    ") tsAdvance:%+.0f/%+.0f/%+.0f%s, f:%" PRIuPTR,
                     mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,

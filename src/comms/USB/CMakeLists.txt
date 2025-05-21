@@ -1,4 +1,4 @@
-if(UNIX)
+if(UNIX OR MINGW)
     find_package(libusb-1.0)
     set_package_properties(
         libusb-1.0 PROPERTIES
@@ -12,7 +12,7 @@ if(UNIX)
     else()
         message(WARNING "libusb-1.0 libraries not found. Omitting USB devices support")
     endif()
-endif()
+endif(UNIX OR MINGW)
 
 add_subdirectory(FT601)
 add_subdirectory(FX3)

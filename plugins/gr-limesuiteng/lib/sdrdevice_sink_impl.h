@@ -12,7 +12,6 @@
 
 #include <memory>
 
-#include "limesuiteng/types.h"
 #include "sdrdevice_block_base.h"
 
 namespace gr {

@@ -17,7 +17,7 @@
     #ifdef _MSC_VER
         #include <windows.h>
     #else
-        #include <time.h>
+        #include <unistd.h>
     #endif
 #endif
 
@@ -46,12 +46,7 @@ void lms7002m_sleep(long timeInMicroseconds)
     #ifdef __KERNEL__
     usleep_range(timeInMicroseconds, timeInMicroseconds + 50);
     #else
-    struct timespec time;
-    time.tv_sec = 0;
-    time.tv_nsec = timeInMicroseconds * 1000;
-
-    // POSIX function, non-standard C
-    nanosleep(&time, NULL);
+    usleep(timeInMicroseconds);
     #endif // __KERNEL__
 #endif
 }

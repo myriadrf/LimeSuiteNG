@@ -122,6 +122,13 @@ if(NOT MSVC)
     set_source_files_properties(include/limesuiteng/SDRDevice.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 
+# if(MINGW)
+#     set_source_files_properties(
+#         limesuiteng
+#         PROPERTIES COMPILE_FLAGS -D__USE_MINGW_ANSI_STDIO=1
+#     )
+# endif()
+
 set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
 target_precompile_headers(limesuiteng PRIVATE ${CPP_STL_CPH})

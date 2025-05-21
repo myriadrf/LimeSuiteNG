@@ -20,7 +20,7 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "utilities/toString.h"
+#include "limesuiteng/ToString.h"
 
 using namespace lime;
 

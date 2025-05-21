@@ -42,6 +42,7 @@ public:
     double set_lpf_bandwidth(double bandwidthHz);
     bool set_antenna(const std::string& antenna_name);
     double set_gain_generic(double gain_dB);
+    double set_gain(lime::eGainTypes type, double gain_value);
     double set_nco_frequency(double frequency_offset_Hz);
 
 protected:
