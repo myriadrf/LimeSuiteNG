@@ -1118,7 +1118,7 @@ OpStatus TRXLooper::TxSetup()
             mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
-    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / mTx.samplesInPkt; // buffer 0.25 second of data
+    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / (mTx.packetsToBatch * mTx.samplesInPkt); // buffer 0.25 second of data
     mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mTx.packetsPool->max_size(); ++i)
