@@ -35,7 +35,10 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::TSTIN_TBB, 0);
 
     //RFE
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, 0);
+    // Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_TIA_RFE, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_QGEN_RFE, 1);
     Modify_SPI_Reg_bits(0x010D, 4, 1, 0xF);
 
     //RBB
@@ -48,7 +51,9 @@ OpStatus LMS7002M::CalibrateTxGainSetup()
     Modify_SPI_Reg_bits(LMS7002MCSR::OSW_PGA_RBB, 0);
 
     //TRF
-    Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, 0);
+    // Modify_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF, 0);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF, 1);
+    Modify_SPI_Reg_bits(LMS7002MCSR::PD_TLOBUF_TRF, 1);
 
     //AFE
     const int isel_dac_afe = Get_SPI_Reg_bits(LMS7002MCSR::ISEL_DAC_AFE);
@@ -155,12 +160,8 @@ OpStatus LMS7002M::CalibrateTxGain()
             Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
             const uint32_t rssi = GetRSSI();
             lime::debug("CG_IAMP_TBB(%i) RSSI:0x%08X  approx. %+2.2f dBFS", cg_iamp, rssi, chip_rssi_to_dbfs(rssi));
-            if (rssi < previousRSSI)
-            {
-                // drop in RSSI indicates oversaturation
-                --cg_iamp;
+            if (rssi >= 0xB000) // ~ -3dBFS
                 break;
-            }
             previousRSSI = rssi;
         }
     }
