@@ -1255,7 +1255,6 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     {
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
-    // TODO: set GFIR filters...
     return status;
 }
 

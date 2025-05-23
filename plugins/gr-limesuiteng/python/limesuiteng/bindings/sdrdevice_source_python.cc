@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_source.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(4bdc3b2d48e0c8fcd6f2492c6dc3fdd7)                     */
+/* BINDTOOL_HEADER_FILE_HASH(de31c68e6526b0415c25714162b0fdb5)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -67,6 +67,12 @@ void bind_sdrdevice_source(py::module& m)
              &sdrdevice_source::set_lpf_bandwidth,
              py::arg("bandwidthHz"),
              D(sdrdevice_source, set_lpf_bandwidth))
+
+
+        .def("set_gfir_bandwidth",
+             &sdrdevice_source::set_gfir_bandwidth,
+             py::arg("bandwidthHz"),
+             D(sdrdevice_source, set_gfir_bandwidth))
 
 
         .def("set_antenna",

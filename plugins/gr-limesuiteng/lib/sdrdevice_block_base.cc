@@ -241,6 +241,36 @@ double sdrdevice_block_base::set_lpf_bandwidth(double bandwidthHz)
     return bandwidthHz;
 }
 
+double sdrdevice_block_base::set_gfir_bandwidth(double bandwidthHz)
+{
+    if (!devContext)
+        return bandwidthHz;
+
+    const bool enableFilter = bandwidthHz > 0;
+    GR_LOG_INFO(baselogger,
+                fmt::format("{:s} {:f} {:s}",
+                            __func__,
+                            bandwidthHz,
+                            enableFilter ? "enabled" : "disabled"));
+    for (const int ch : devContext->streamCfg.channels.at(direction)) {
+        if (devContext->stream) {
+            ChannelConfig::Direction::GFIRFilter filter;
+            filter.enabled = enableFilter;
+            filter.bandwidth = bandwidthHz;
+            devContext->device->ConfigureGFIR(chipIndex, direction, ch, filter);
+        } else {
+            if (direction == TRXDir::Tx) {
+                devContext->deviceConfig.channel[ch].tx.gfir.enabled = enableFilter;
+                devContext->deviceConfig.channel[ch].tx.gfir.bandwidth = bandwidthHz;
+            } else {
+                devContext->deviceConfig.channel[ch].rx.gfir.enabled = enableFilter;
+                devContext->deviceConfig.channel[ch].rx.gfir.bandwidth = bandwidthHz;
+            }
+        }
+    }
+    return bandwidthHz;
+}
+
 static std::string
 GetAntennaForFrequency(double frequencyHz,
                        const std::vector<std::string>& options,

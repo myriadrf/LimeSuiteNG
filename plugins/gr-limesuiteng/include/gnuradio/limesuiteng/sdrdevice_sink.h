@@ -76,6 +76,13 @@ public:
     virtual double set_lpf_bandwidth(double bandwidthHz) = 0;
 
     /**
+     * Set Digital general finite impulse response filter bandwidth
+     *
+     * @param   bandwidthHz filter bandwidth in Hz
+     */
+    virtual double set_gfir_bandwidth(double bandwidthHz) = 0;
+
+    /**
      * Set which antenna port to use
      *
      * @param   antenna_name Name of the antenna to use, the names can be different among

@@ -139,6 +139,11 @@ double sdrdevice_source_impl::set_lpf_bandwidth(double bandwidthHz)
     return sdrdevice_block_base::set_lpf_bandwidth(bandwidthHz);
 }
 
+double sdrdevice_source_impl::set_gfir_bandwidth(double bandwidthHz)
+{
+    return sdrdevice_block_base::set_gfir_bandwidth(bandwidthHz);
+}
+
 bool sdrdevice_source_impl::set_antenna(const std::string& antenna_name)
 {
     return sdrdevice_block_base::set_antenna(antenna_name);

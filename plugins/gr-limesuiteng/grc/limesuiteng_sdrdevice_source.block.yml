@@ -71,6 +71,13 @@ parameters:
   category: General
   hide: ${'part' if not lpf else 'none'}
 
+- id: gfir_bandwidth
+  label: GFIR filter
+  dtype: float
+  default: 0
+  category: General
+  hide: ${'part' if not gfir_bandwidth else 'none'}
+
 - id: antenna
   label: Antenna port
   dtype: string
@@ -144,6 +151,7 @@ asserts:
 - ${ len(channel_indexes) > 0 }
 - ${ sample_rate > 0 }
 - ${ abs(nco_offset) < sample_rate/2 }
+- ${ gfir_bandwidth < sample_rate }
 
 templates:
   imports: from gnuradio import limesuiteng
@@ -151,6 +159,7 @@ templates:
     limesuiteng.sdrdevice_source(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ data_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
     self.${id}.set_lo_frequency(${rf_freq})
     self.${id}.set_lpf_bandwidth(${lpf})
+    self.${id}.set_gfir_bandwidth(${gfir_bandwidth})
     self.${id}.set_antenna(${antenna})
     if ${override_lms7002m_rx_gains.value} == 1:
       self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
@@ -164,6 +173,7 @@ templates:
   - set_config_file(${custom_config_file})
   - set_lo_frequency(${rf_freq})
   - set_lpf_bandwidth(${lpf})
+  - set_gfir_bandwidth(${gfir_bandwidth})
   - set_antenna(${antenna})
   - set_gain_generic(${gain_generic})
   - set_nco_frequency(${nco_offset})

@@ -40,6 +40,7 @@ public:
     void set_config_file(const std::string& file_path);
     double set_lo_frequency(double frequencyHz);
     double set_lpf_bandwidth(double bandwidthHz);
+    double set_gfir_bandwidth(double bandwidthHz);
     bool set_antenna(const std::string& antenna_name);
     double set_gain_generic(double gain_dB);
     double set_gain(lime::eGainTypes type, double gain_value);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Free Software Foundation, Inc.
+ * Copyright 2025 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_sink.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(1a00d61ebb47b68e02d645614fe34ce2)                     */
+/* BINDTOOL_HEADER_FILE_HASH(0bee7da521c8f941090913e7104db488)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -66,6 +66,12 @@ void bind_sdrdevice_sink(py::module& m)
              &sdrdevice_sink::set_lpf_bandwidth,
              py::arg("bandwidthHz"),
              D(sdrdevice_sink, set_lpf_bandwidth))
+
+
+        .def("set_gfir_bandwidth",
+             &sdrdevice_sink::set_gfir_bandwidth,
+             py::arg("bandwidthHz"),
+             D(sdrdevice_sink, set_gfir_bandwidth))
 
 
         .def("set_antenna",

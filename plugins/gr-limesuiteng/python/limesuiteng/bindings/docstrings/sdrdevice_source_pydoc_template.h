@@ -36,6 +36,9 @@ static const char* __doc_gr_limesuiteng_sdrdevice_source_set_lo_frequency = R"do
 static const char* __doc_gr_limesuiteng_sdrdevice_source_set_lpf_bandwidth = R"doc()doc";
 
 
+static const char* __doc_gr_limesuiteng_sdrdevice_source_set_gfir_bandwidth = R"doc()doc";
+
+
 static const char* __doc_gr_limesuiteng_sdrdevice_source_set_antenna = R"doc()doc";
 
 
