@@ -158,7 +158,6 @@ templates:
   make: |-
     limesuiteng.sdrdevice_source(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ data_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
     self.${id}.set_lo_frequency(${rf_freq})
-    self.${id}.set_lpf_bandwidth(${lpf})
     self.${id}.set_gfir_bandwidth(${gfir_bandwidth})
     self.${id}.set_antenna(${antenna})
     if ${override_lms7002m_rx_gains.value} == 1:
@@ -168,6 +167,7 @@ templates:
     else:
       self.${id}.set_gain_generic(${gain_generic})
     self.${id}.set_nco_frequency(${nco_offset})
+    self.${id}.set_lpf_bandwidth(${lpf}) # Rx LPF range depends on TIA gain
 
   callbacks:
   - set_config_file(${custom_config_file})
