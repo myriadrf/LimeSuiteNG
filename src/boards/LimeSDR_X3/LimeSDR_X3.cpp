@@ -502,6 +502,8 @@ OpStatus LimeSDR_X3::ConfigureLMS1(const SDRConfig& cfg)
     {
         SetLMSPath(TRXDir::Tx, cfg.channel[c].tx, c, socIndex);
         SetLMSPath(TRXDir::Rx, cfg.channel[c].rx, c, socIndex);
+        SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
+        SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
         LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
     }
 
