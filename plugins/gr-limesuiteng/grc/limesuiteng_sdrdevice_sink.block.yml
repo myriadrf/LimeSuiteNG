@@ -100,6 +100,16 @@ parameters:
   category: General
   hide: none
 
+- id: calibrate_dciq
+  label: Calibrate DC & IQ
+  dtype: enum
+  options: ["Disabled", "Enabled"]
+  option_labels: ["Disabled", "Enabled"]
+  option_attributes:
+    value: [0, 1]
+  category: General
+  hide: ${'part' if calibrate_dciq=='Disabled' else 'none'}
+
 inputs:
 - label: in
   domain: stream
@@ -125,6 +135,7 @@ templates:
     self.${id}.set_antenna(${antenna})
     self.${id}.set_gain_generic(${gain_generic})
     self.${id}.set_nco_frequency(${nco_offset})
+    self.${id}.set_calibration_enable(${calibrate_dciq.value})
 
   callbacks:
   - set_config_file(${custom_config_file})

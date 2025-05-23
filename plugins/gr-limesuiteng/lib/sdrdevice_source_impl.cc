@@ -165,5 +165,10 @@ double sdrdevice_source_impl::set_nco_frequency(double frequency_offset_Hz)
     return sdrdevice_block_base::set_nco_frequency(frequency_offset_Hz);
 }
 
+void sdrdevice_source_impl::set_calibration_enable(int flags)
+{
+    sdrdevice_block_base::set_calibration_enable(flags);
+}
+
 } /* namespace limesuiteng */
 } /* namespace gr */

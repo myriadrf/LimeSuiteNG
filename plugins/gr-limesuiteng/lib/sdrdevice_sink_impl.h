@@ -46,6 +46,7 @@ public:
     bool set_antenna(const std::string& antenna_name) override;
     double set_gain_generic(double gain_dB) override;
     double set_nco_frequency(double frequency_offset_Hz) override;
+    void set_calibration_enable(int flags) override;
 };
 
 } // namespace limesuiteng

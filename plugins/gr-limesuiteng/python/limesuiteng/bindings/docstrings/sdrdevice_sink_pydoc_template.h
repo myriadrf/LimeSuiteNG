@@ -46,3 +46,7 @@ static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_gain_generic = R"doc(
 
 
 static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_nco_frequency = R"doc()doc";
+
+
+static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_calibration_enable =
+    R"doc()doc";

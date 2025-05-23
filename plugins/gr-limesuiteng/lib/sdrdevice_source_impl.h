@@ -47,6 +47,7 @@ public:
     double set_gain_generic(double gain_dB) override;
     double set_gain(int type, double gain_value) override;
     double set_nco_frequency(double frequency_offset_Hz) override;
+    void set_calibration_enable(int flags) override;
 };
 
 } // namespace limesuiteng

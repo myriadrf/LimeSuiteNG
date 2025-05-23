@@ -116,6 +116,13 @@ public:
      * @return  value that was set
      */
     virtual double set_nco_frequency(double frequency_offset_Hz) = 0;
+
+    /**
+     * Enable calibration at startup
+     *
+     * @param   flags calibration mode flags
+     */
+    virtual void set_calibration_enable(int flags) = 0;
 };
 
 } // namespace limesuiteng

@@ -419,5 +419,18 @@ double sdrdevice_block_base::set_nco_frequency(double frequency_offset_Hz)
     return frequency_offset_Hz;
 }
 
+void sdrdevice_block_base::set_calibration_enable(int flags)
+{
+    if (!devContext)
+        return;
+
+    for (const int ch : devContext->streamCfg.channels.at(direction)) {
+        if (direction == TRXDir::Tx)
+            devContext->deviceConfig.channel[ch].tx.calibrate = flags;
+        else
+            devContext->deviceConfig.channel[ch].rx.calibrate = flags;
+    }
+}
+
 } /* namespace limesuiteng */
 } /* namespace gr */

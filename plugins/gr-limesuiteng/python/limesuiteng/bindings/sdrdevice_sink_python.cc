@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_sink.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(0bee7da521c8f941090913e7104db488)                     */
+/* BINDTOOL_HEADER_FILE_HASH(f2735e273fcf2d6b3b938bb65ef614e2)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -90,6 +90,12 @@ void bind_sdrdevice_sink(py::module& m)
              &sdrdevice_sink::set_nco_frequency,
              py::arg("frequency_offset_Hz"),
              D(sdrdevice_sink, set_nco_frequency))
+
+
+        .def("set_calibration_enable",
+             &sdrdevice_sink::set_calibration_enable,
+             py::arg("flags"),
+             D(sdrdevice_sink, set_calibration_enable))
 
         ;
 }
