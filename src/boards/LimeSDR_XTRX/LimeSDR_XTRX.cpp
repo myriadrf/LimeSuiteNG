@@ -85,6 +85,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0120, 0x29DC },
     { 0x0121, 0x37F8 },
     { 0x0122, 0x0FFF },
+    { 0x0123, 0x200F },
     { 0x0124, 0x001F },
     // { 0x0208, 0x017B },
     // { 0x040C, 0x01FF },

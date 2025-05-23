@@ -67,7 +67,6 @@ blocks:
   id: variable_qtgui_entry
   parameters:
     comment: ''
-    entry_signal: editingFinished
     gui_hint: 0,0,1,1
     label: RX Baseband [MHz]
     type: real
@@ -182,7 +181,6 @@ blocks:
     alias: ''
     audio_decimation: '10'
     comment: ''
-    deemph_tau: 75e-6
     maxoutbuf: '0'
     minoutbuf: '0'
     quad_rate: 480e3
@@ -241,10 +239,15 @@ blocks:
     data_format: fc32
     deviceHandleHint: ''
     gain_generic: gain
-    lpf: 5e6
+    gfir_bandwidth: 0.33e6
+    lms7002m_gain_lna: '0'
+    lms7002m_gain_pga: '0'
+    lms7002m_gain_tia: '-3'
+    lpf: 30e6
     maxoutbuf: '0'
     minoutbuf: '0'
-    nco_offset: '0'
+    nco_offset: 0.15e6
+    override_lms7002m_rx_gains: Disabled
     rf_freq: baseband*1e6
     rf_oversampling: auto
     sample_rate: samp_rate
@@ -391,4 +394,3 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: v3.11.0.0git-705-g4ce72612
