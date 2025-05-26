@@ -81,11 +81,14 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
                            sampleRate,
                            rf_oversampling,
                            d_logger,
-                           d_logger)
+                           d_debug_logger)
 {
 }
 
-sdrdevice_source_impl::~sdrdevice_source_impl() { GR_LOG_DEBUG(d_logger, __func__); }
+sdrdevice_source_impl::~sdrdevice_source_impl()
+{
+    GR_LOG_DEBUG(d_debug_logger, __func__);
+}
 
 bool sdrdevice_source_impl::start() { return sdrdevice_block_base::start(); }
 
@@ -96,7 +99,7 @@ int sdrdevice_source_impl::work(int noutput_items,
                                 gr_vector_void_star& output_items)
 {
     if (!canWork) {
-        GR_LOG_INFO(baselogger, "WORK_DONE");
+        GR_LOG_DEBUG(d_debug_logger, "WORK_DONE");
         return gr::block::work_return_t::WORK_DONE;
     }
 

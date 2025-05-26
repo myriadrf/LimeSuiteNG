@@ -300,7 +300,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     if (status != OpStatus::Success)
         return status;
 
-    lime::info(ToString(trx) + " LPF configured"s);
+    lime::debug(ToString(trx) + " LPF configured"s);
     return OpStatus::Success;
 }
 
@@ -1156,7 +1156,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecim
             return lime::ReportError(
                 OpStatus::NotSupported, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
     }
-    lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
+    lime::debug("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
         f_Hz / 1e6,
         cgenFreq / 1e6,
         1 + hbd_ovr,

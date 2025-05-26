@@ -41,8 +41,9 @@ static void gr_loghandler(const lime::LogLevel level, const char* message)
         GR_LOG_INFO(logger, message);
         break;
 
+    case lime::LogLevel::Verbose:
     case lime::LogLevel::Debug:
-        GR_LOG_DEBUG(logger, message);
+        GR_LOG_DEBUG(debug_logger, message);
         break;
 
     default:
@@ -78,9 +79,9 @@ static bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view 
 std::shared_ptr<sdrdevice_manager> sdrdevice_manager::GetSingleton()
 {
     if (!g_deviceManager) {
-        g_deviceManager = std::make_shared<sdrdevice_manager>();
         if (!logger)
             gr::configure_default_loggers(logger, debug_logger, "LimeSuiteNG");
+        g_deviceManager = std::make_shared<sdrdevice_manager>();
         lime::registerLogHandler(gr_loghandler);
 
         logger->info(fmt::format("version: {:s} build {:s}",
@@ -90,9 +91,9 @@ std::shared_ptr<sdrdevice_manager> sdrdevice_manager::GetSingleton()
     return g_deviceManager;
 }
 
-sdrdevice_manager::sdrdevice_manager() : _logger("SDRDeviceManager")
+sdrdevice_manager::sdrdevice_manager()
 {
-    _logger.debug("sdrdevice_manager created");
+    debug_logger->debug("sdrdevice_manager created");
     enumeratedHandles = lime::DeviceRegistry::enumerate();
     if (enumeratedHandles.empty()) {
         throw std::runtime_error(
@@ -102,7 +103,7 @@ sdrdevice_manager::sdrdevice_manager() : _logger("SDRDeviceManager")
 
 sdrdevice_manager::~sdrdevice_manager()
 {
-    _logger.debug("sdrdevice_manager destroyed");
+    debug_logger->debug("sdrdevice_manager destroyed");
     for (auto& ctx : m_contexts) {
         ctx->stream.reset();
         lime::DeviceRegistry::freeDevice(ctx->device.release());
@@ -131,7 +132,7 @@ bool sdrdevice_manager::GetDeviceFullHandle(const std::string_view hintArguments
     }
 
     if (filteredHandles.empty()) {
-        _logger.error("No devices match the handle");
+        logger->error("No devices match the handle");
         return false;
     }
 
@@ -140,7 +141,7 @@ bool sdrdevice_manager::GetDeviceFullHandle(const std::string_view hintArguments
         ss << "Ambiguous device argument, matches:\n";
         for (const auto& h : filteredHandles)
             ss << '\t' << h.Serialize() << std::endl;
-        _logger.error(ss.str());
+        logger->error(ss.str());
         return false;
     }
 
@@ -162,7 +163,7 @@ sdrdevice_manager::GetDeviceContextByHandle(const std::string& deviceHandleHint)
 
     std::shared_ptr<sdrdevice_context>& ctx =
         m_contexts.emplace_back(std::make_shared<sdrdevice_context>());
-    _logger.info(fmt::format("Connecting device: \"{:s}\"", handle.Serialize()));
+    logger->info(fmt::format("Connecting device: \"{:s}\"", handle.Serialize()));
     ctx->handle = handle;
     ctx->device = std::unique_ptr<SDRDevice>(DeviceRegistry::makeDevice(handle));
 
@@ -170,7 +171,7 @@ sdrdevice_manager::GetDeviceContextByHandle(const std::string& deviceHandleHint)
 
     if (!ctx->device) {
         m_contexts.pop_back();
-        _logger.error(fmt::format("Unable to use device: \"{:s}\"", handle.Serialize()));
+        logger->error(fmt::format("Unable to use device: \"{:s}\"", handle.Serialize()));
         return nullptr;
     }
     return ctx;

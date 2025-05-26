@@ -59,6 +59,7 @@ protected:
 
 
     gr::logger_ptr baselogger;
+    gr::logger_ptr debuglogger;
 };
 
 } // namespace limesuiteng
