@@ -959,8 +959,8 @@ RFSOCDescriptor LMS7002M_SDRDevice::GetDefaultLMS7002MDescriptor()
     soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
     soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
     soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
-    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
     SetGainInformationInDescriptor(soc);
     return soc;
