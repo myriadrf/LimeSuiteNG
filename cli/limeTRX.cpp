@@ -632,10 +632,10 @@ int main(int argc, char** argv)
 
     Timespec rxExpectedTs(-1, 0);
 
+    bool getActualStreamStartTime = syncPPS;
+
     while (stopProgram.load() == false)
     {
-        if (workTime != 0 && (std::chrono::high_resolution_clock::now() - startTime) > std::chrono::milliseconds(workTime))
-            break;
         if (samplesToCollect != 0 && totalSamplesReceived > samplesToCollect)
             break;
 
@@ -643,6 +643,16 @@ int main(int argc, char** argv)
         for (int i = 0; i < 16; ++i)
             rxSamples[i] = rxData[i].data();
         uint32_t samplesRead = stream->Receive(rxSamples, fftSize, &rxMeta);
+        if (getActualStreamStartTime)
+        {
+            // stream start can wait varying amount of time for the PPS, set start time once the first data has been produced
+            startTime = std::chrono::high_resolution_clock::now();
+            getActualStreamStartTime = false;
+        }
+
+        if (workTime != 0 && (std::chrono::high_resolution_clock::now() - startTime) > std::chrono::milliseconds(workTime))
+            break;
+
         if (samplesRead == 0)
             continue;
 
