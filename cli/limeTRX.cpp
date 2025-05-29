@@ -603,6 +603,7 @@ int main(int argc, char** argv)
 
     json rxmetadataJSON = { { "global",
                                 { { "core:datatype", "ci16_le" },
+                                    { "core:num_channels", channelCount },
                                     { "core:sample_rate", sampleRate },
                                     { "core:version", "0.0.1" },
                                     { "core:recorder", "limeTRX" } } },
@@ -633,6 +634,12 @@ int main(int argc, char** argv)
     Timespec rxExpectedTs(-1, 0);
 
     bool getActualStreamStartTime = syncPPS;
+
+    std::vector<complex16_t> interleavingBuffer;
+    if (!rxFilename.empty())
+    {
+        interleavingBuffer.resize(fftSize * channelCount);
+    }
 
     while (stopProgram.load() == false)
     {
@@ -676,7 +683,21 @@ int main(int argc, char** argv)
             {
                 rxcaptures.push_back({ rxMeta.timestamp, totalSamplesReceived, samplesRead });
             }
-            rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
+
+            if (channelCount == 1)
+            {
+                rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
+            }
+            else
+            {
+                int destIndex = 0;
+                for (int s = 0; s < samplesRead; ++s)
+                {
+                    for (int c = 0; c < channelCount; ++c)
+                        interleavingBuffer[destIndex++] = rxSamples[c][s];
+                }
+                rxFile.write(reinterpret_cast<char*>(interleavingBuffer.data()), destIndex * sizeof(lime::complex16_t));
+            }
         }
         rxExpectedTs = rxMeta.timestamp + Timespec(samplesRead / sampleRate);
         totalSamplesReceived += samplesRead;
