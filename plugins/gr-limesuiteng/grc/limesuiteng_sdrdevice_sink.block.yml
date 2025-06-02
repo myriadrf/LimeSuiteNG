@@ -122,7 +122,7 @@ asserts:
 - ${ rf_freq > 0 }
 - ${ len(channel_indexes) > 0 }
 - ${ sample_rate > 0 }
-- ${ abs(nco_offset) < sample_rate/2 }
+- ${ abs(nco_offset) < sample_rate }
 - ${ gfir_bandwidth < sample_rate }
 
 templates:
