@@ -349,8 +349,7 @@ void TRXLooper::Stop()
                 fpgaTxPktIngressCount,
                 fpgaTxPktIngressCount,
                 (mTx.stats.packets & 0xFFFFFFFF) - fpgaTxPktIngressCount,
-                fpgaTxPktDropCounter,
-                mTx.stats.underrun);
+                fpgaTxPktDropCounter);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
@@ -784,29 +783,26 @@ void TRXLooper::ReceivePacketsLoop()
             userPkt->meta.flush = false;
 
             // clock counter can drift, and gets reset with PPS, creating small discontinuity in expected and received counter
-            double diff = (hwts - expectedTimestamp).GetRealSeconds();
-            if (std::fabs(diff) > 1.0 / mConfig.hintSampleRate)
+            Timespec diff = (hwts - expectedTimestamp);
+            const Timespec samplePeriod(0, 1.0 / mConfig.hintSampleRate);
+            if (abs(diff) > samplePeriod)
             {
                 int64_t fpgaTicks = hardwarePkt->counter & 0xFFFFFFFF;
-                int64_t expectedTicks = int64_t((expectedTimestamp.GetRealSeconds() - expectedTimestamp.GetSeconds()) *
-                                                mConfig.hintSampleRate * ticksPerSample);
-                int64_t ticksDiff = expectedTicks - fpgaTicks;
                 if (mConfig.timestampType != TimestampType::SAMPLE_TICKS)
                 {
-                    lime::debug("FPGA TS: %016lx, PPS=%li, CLK=%li,  expected PPS=%li, CLK=%li, diff=%li",
-                        hardwarePkt->counter,
+                    lime::debug("Expected PPS=%li, CLK=%li, got FPGA PPS=%li, CLK=%li, diff=%lins",
+                        expectedTimestamp.GetSeconds(),
+                        static_cast<int64_t>(expectedTimestamp.GetFracSeconds() * ticksPerSample * mConfig.hintSampleRate),
                         hardwarePkt->counter >> 32,
                         fpgaTicks,
-                        expectedTimestamp.GetSeconds(),
-                        expectedTicks,
-                        ticksDiff);
+                        static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 }
                 lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
                     stats.packets + i,
                     expectedTimestamp.GetTicks(),
                     hwts.GetTicks(),
                     expectedTimestamp.GetTicks() - hwts.GetTicks(),
-                    int64_t(diff * 1e9));
+                    static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 ++stats.loss;
                 loss.add(1);
                 reportProblems = true;

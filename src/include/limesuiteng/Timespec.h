@@ -28,10 +28,13 @@ class LIME_API Timespec
 
     friend bool operator==(const Timespec& lhs, const Timespec& rhs);
     friend bool operator!=(const Timespec& lhs, const Timespec& rhs);
+    friend bool operator<(const Timespec& lhs, const Timespec& rhs);
+    friend bool operator>(const Timespec& lhs, const Timespec& rhs);
     friend Timespec operator+(Timespec lhs, const Timespec& rhs);
     friend Timespec operator-(Timespec lhs, const Timespec& rhs);
 
   private:
+    static void normalize(Timespec& ts);
     int64_t seconds;
     double fracSeconds;
     double ticksPerSecond;
@@ -40,8 +43,13 @@ class LIME_API Timespec
 
 bool LIME_API operator==(const Timespec& lhs, const Timespec& rhs);
 bool LIME_API operator!=(const Timespec& lhs, const Timespec& rhs);
+bool LIME_API operator<(const Timespec& lhs, const Timespec& rhs);
+bool LIME_API operator>(const Timespec& lhs, const Timespec& rhs);
+
 Timespec LIME_API operator+(Timespec lhs, const Timespec& rhs);
 Timespec LIME_API operator-(Timespec lhs, const Timespec& rhs);
+
+Timespec LIME_API abs(const Timespec& ts);
 
 } // namespace lime
 

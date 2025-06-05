@@ -2,6 +2,28 @@
 
 namespace lime {
 
+void Timespec::normalize(Timespec& ts)
+{
+    ts.seconds += int64_t(ts.fracSeconds);
+    ts.fracSeconds = fmod(ts.fracSeconds, 1.0);
+    if (ts.seconds < 0)
+    {
+        if (ts.fracSeconds > 0)
+        {
+            ++ts.seconds;
+            ts.fracSeconds -= 1.0;
+        }
+    }
+    else if (ts.seconds > 0)
+    {
+        if (ts.fracSeconds < 0)
+        {
+            --ts.seconds;
+            ts.fracSeconds += 1.0;
+        }
+    }
+}
+
 Timespec::Timespec()
     : seconds(0)
     , fracSeconds(0)
@@ -88,13 +110,31 @@ bool operator!=(const Timespec& lhs, const Timespec& rhs)
     return !(lhs == rhs);
 }
 
+bool operator<(const Timespec& lhs, const Timespec& rhs)
+{
+    if (lhs.seconds < rhs.seconds)
+        return true;
+    else if (lhs.seconds == rhs.seconds)
+        return lhs.fracSeconds < rhs.fracSeconds;
+    else
+        return false;
+}
+
+bool operator>(const Timespec& lhs, const Timespec& rhs)
+{
+    if (lhs.seconds > rhs.seconds)
+        return true;
+    else if (lhs.seconds == rhs.seconds)
+        return lhs.fracSeconds > rhs.fracSeconds;
+    else
+        return false;
+}
+
 Timespec operator+(Timespec lhs, const Timespec& rhs)
 {
     lhs.seconds += rhs.seconds;
     lhs.fracSeconds += rhs.fracSeconds;
-
-    lhs.seconds += int64_t(lhs.fracSeconds);
-    lhs.fracSeconds = fmod(lhs.fracSeconds, 1.0);
+    Timespec::normalize(lhs);
     return lhs;
 }
 
@@ -102,10 +142,14 @@ Timespec operator-(Timespec lhs, const Timespec& rhs)
 {
     lhs.seconds -= rhs.seconds;
     lhs.fracSeconds -= rhs.fracSeconds;
-
-    lhs.seconds += int64_t(lhs.fracSeconds);
-    lhs.fracSeconds = fmod(lhs.fracSeconds, 1.0);
+    Timespec::normalize(lhs);
     return lhs;
+}
+
+Timespec LIME_API abs(const Timespec& ts)
+{
+    Timespec a(std::abs(ts.GetSeconds()), std::fabs(ts.GetFracSeconds()));
+    return a;
 }
 
 } // namespace lime
