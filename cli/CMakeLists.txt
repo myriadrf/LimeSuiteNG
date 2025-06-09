@@ -44,7 +44,12 @@ set_target_properties(limeOEM PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_link_libraries(limeOEM PRIVATE cli-shared)
 target_precompile_headers(limeOEM REUSE_FROM cli-shared)
 
+add_executable(limePDET limePDET.cpp)
+set_target_properties(limePDET PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(limePDET PRIVATE cli-shared)
+target_precompile_headers(limePDET REUSE_FROM cli-shared)
+
 install(
-    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM
+    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM limePDET
     COMPONENT cli
     DESTINATION bin)
