@@ -6,6 +6,8 @@
 #include "privates.h"
 #include "spi.h"
 
+#include <string.h>
+
 #ifdef __KERNEL__
 // TODO: add linux kernel headers
 #else
@@ -26,9 +28,9 @@ static const char* const get_lna_name(uint16_t value)
     case 1:
         return "LNAH";
     case 2:
-        return "LNAW";
-    case 3:
         return "LNAL";
+    case 3:
+        return "LNAW";
     }
 }
 
@@ -621,12 +623,14 @@ static lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const ui
     const int32_t failureRSSI_level = 285; // dbfs_to_chip_rssi(-50)
     if (rssi < expectedRSSI_level)
     {
+        char expectedRSSI_string[32];
+        strcpy(expectedRSSI_string, rssi_to_string(expectedRSSI_level));
         LMS7002M_LOG(self,
             rssi > failureRSSI_level ? lime_LogLevel_Warning : lime_LogLevel_Error,
             "Low calibration test signal level %s, expected to be more than %s."
             " Calibration results might be impacted. Try re-calibrating or adjusting the RX gains.",
             rssi_to_string(rssi),
-            rssi_to_string(expectedRSSI_level));
+            expectedRSSI_string);
     }
     return rssi > failureRSSI_level ? lime_Result_Success : lime_Result_Error;
 }
@@ -1068,12 +1072,14 @@ static lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, uint3
     const int32_t failureRSSI_level = 285; // dbfs_to_chip_rssi(-50)
     if (rssi < expectedRSSI_level)
     {
+        char expectedRSSI_string[32];
+        strcpy(expectedRSSI_string, rssi_to_string(expectedRSSI_level));
         LMS7002M_LOG(self,
             rssi > failureRSSI_level ? lime_LogLevel_Warning : lime_LogLevel_Error,
             "Low calibration test signal level %s, expected to be more than %s."
             " Calibration results might be impacted. Try re-calibrating or adjusting the TX gains.",
             rssi_to_string(rssi),
-            rssi_to_string(expectedRSSI_level));
+            expectedRSSI_string);
         if (rssi < failureRSSI_level)
             return lime_Result_Error;
     }

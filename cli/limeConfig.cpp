@@ -36,6 +36,7 @@ int main(int argc, char** argv)
     args::ValueFlag<uint32_t>       rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
     args::ValueFlag<double>         rxGainFlag(parser, "", "Rx gain", {"rxgain"});
+    args::Flag                      rxCalibrateFlag(parser, "", "Calibrates Rx DC and IQ imbalance", {"rxcalibrate"});
 
     args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           txenFlag(parser, "tx enable", "Enable transmitter", {"txen"});
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
     args::ValueFlag<uint32_t>       txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
     args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
     args::ValueFlag<double>         txGainFlag(parser, "", "Tx gain", {"txgain"});
+    args::Flag                      txCalibrateFlag(parser, "", "Calibrates Tx DC and IQ imbalance", {"txcalibrate"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
     // clang-format on
@@ -99,6 +101,7 @@ int main(int argc, char** argv)
     if (rxoversampleFlag)   config.channel[0].rx.oversample = args::get(rxoversampleFlag);
     if (rxtestsignalFlag)   config.channel[0].rx.testSignal.enabled = args::get(rxtestsignalFlag);
     if (rxGainFlag)         config.channel[0].rx.gain[eGainTypes::GENERIC] = args::get(rxGainFlag);
+    if (rxCalibrateFlag)    config.channel[0].rx.calibrate = CalibrationFlag::DCIQ;
 
     if (txenFlag)           config.channel[0].tx.enabled = args::get(txenFlag);
     if (txloFlag)           config.channel[0].tx.centerFrequency = args::get(txloFlag);
@@ -106,6 +109,7 @@ int main(int argc, char** argv)
     if (txoversampleFlag)   config.channel[0].tx.oversample = args::get(txoversampleFlag);
     if (txtestsignalFlag)   config.channel[0].tx.testSignal.enabled = args::get(txtestsignalFlag);
     if (txGainFlag)         config.channel[0].tx.gain[eGainTypes::GENERIC] = args::get(txGainFlag);
+    if (txCalibrateFlag)    config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
     // clang-format on
 
     auto handles = DeviceRegistry::enumerate();
