@@ -56,7 +56,6 @@ private:
 
     std::list<std::shared_ptr<sdrdevice_context>> m_contexts;
     std::vector<lime::DeviceHandle> enumeratedHandles;
-    gr::logger _logger;
 };
 
 } // namespace limesuiteng

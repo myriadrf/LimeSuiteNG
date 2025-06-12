@@ -43,12 +43,13 @@ sdrdevice_block_base::sdrdevice_block_base(lime::TRXDir dir,
                                            double sampleRate,
                                            int rf_oversampling,
                                            gr::logger_ptr logger,
-                                           gr::logger_ptr debug_baselogger)
+                                           gr::logger_ptr debug_logger)
     : chipIndex(chipIndex),
       direction(dir),
       autoAntenna(true),
       canWork(false),
-      baselogger(logger)
+      baselogger(logger),
+      debuglogger(debug_logger)
 {
     devManager = sdrdevice_manager::GetSingleton();
     assert(devManager);
@@ -91,20 +92,20 @@ sdrdevice_block_base::sdrdevice_block_base(lime::TRXDir dir,
 
 sdrdevice_block_base::~sdrdevice_block_base()
 {
-    GR_LOG_DEBUG(baselogger, __func__);
+    GR_LOG_DEBUG(debuglogger, __func__);
     ReleaseResources();
 }
 
 void sdrdevice_block_base::ReleaseResources()
 {
-    GR_LOG_DEBUG(baselogger, __func__);
+    GR_LOG_DEBUG(debuglogger, __func__);
     devContext.reset();
     devManager.reset();
 }
 
 bool sdrdevice_block_base::start()
 {
-    GR_LOG_DEBUG(baselogger, __func__);
+    GR_LOG_DEBUG(debuglogger, __func__);
     assert(devContext);
 
     lime::SDRConfig& config = devContext->deviceConfig;
@@ -123,26 +124,25 @@ bool sdrdevice_block_base::start()
         return true;
     }
 
-    GR_LOG_DEBUG(baselogger, "SDRDevice Configure()");
+    GR_LOG_DEBUG(debuglogger, "SDRDevice Configure()");
     config.skipDefaults = !devContext->customBaseConfigFilepath.empty();
     if (config.skipDefaults &&
         devContext->device->LoadConfig(chipIndex, devContext->customBaseConfigFilepath) !=
             OpStatus::Success) {
         const std::string msg = fmt::format("Failed to load configuration file {:s}",
                                             devContext->customBaseConfigFilepath);
-        GR_LOG_ERROR(baselogger, msg);
+        GR_LOG_CRIT(baselogger, msg);
         throw std::runtime_error(msg);
     }
 
     if (devContext->device->Configure(config, chipIndex) != OpStatus::Success) {
         const std::string msg = fmt::format("Failed to configure device. {:s}",
                                             lime::GetLastErrorMessageCString());
-        GR_LOG_ERROR(baselogger, msg);
+        GR_LOG_CRIT(baselogger, msg);
         throw std::runtime_error(msg);
         return false;
     }
 
-    GR_LOG_DEBUG(baselogger, "RFStream Create()");
     devContext->stream =
         devContext->device->StreamCreate(devContext->streamCfg, chipIndex);
     if (!devContext->stream)
@@ -151,7 +151,7 @@ bool sdrdevice_block_base::start()
     // Start the actual streaming in work(), otherwise multiple devices won't be started
     // at the same time
     OpStatus status = devContext->stream->StageStart();
-    GR_LOG_INFO(baselogger, "Device configured and ready.");
+    GR_LOG_DEBUG(debuglogger, "Device configured and ready.");
     canWork = true;
     return true;
 }
@@ -159,16 +159,16 @@ bool sdrdevice_block_base::start()
 void sdrdevice_block_base::StartRFStreaming()
 {
     if (devContext->stream->Start() != OpStatus::Success) {
-        GR_LOG_ERROR(baselogger, "RFStream Start() Failed");
+        GR_LOG_ERROR(debuglogger, "RFStream Start() Failed");
     } else {
-        GR_LOG_INFO(baselogger, "RFStream Start()");
+        GR_LOG_DEBUG(debuglogger, "RFStream Start()");
     }
 }
 
 bool sdrdevice_block_base::stop()
 {
     assert(devContext);
-    GR_LOG_DEBUG(baselogger, __func__);
+    GR_LOG_DEBUG(debuglogger, __func__);
     if (direction == TRXDir::Tx)
         devContext->sinkBlockCounter--;
     else
@@ -178,7 +178,7 @@ bool sdrdevice_block_base::stop()
         (devContext->sourceBlockCounter == 0 && devContext->sinkBlockCounter == 0);
 
     if (doStop && devContext->stream) {
-        GR_LOG_DEBUG(baselogger, "RFStream Stop");
+        GR_LOG_DEBUG(debuglogger, "RFStream Stop");
         devContext->stream->Stop();
         devContext->stream->Teardown();
         devContext->stream.reset();
@@ -204,10 +204,9 @@ double sdrdevice_block_base::set_lo_frequency(double frequencyHz)
     if (!devContext)
         return frequencyHz;
 
-    GR_LOG_INFO(baselogger, fmt::format("{:s} {:f}", __func__, frequencyHz));
-
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger, fmt::format("{:s} {:f}", __func__, frequencyHz));
             devContext->device->SetFrequency(chipIndex, direction, ch, frequencyHz);
         } else {
             if (direction == TRXDir::Tx)
@@ -227,15 +226,45 @@ double sdrdevice_block_base::set_lpf_bandwidth(double bandwidthHz)
     if (!devContext)
         return bandwidthHz;
 
-    GR_LOG_INFO(baselogger, fmt::format("{:s} {:f}", __func__, bandwidthHz));
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger, fmt::format("{:s} {:f}", __func__, bandwidthHz));
             devContext->device->SetLowPassFilter(chipIndex, direction, ch, bandwidthHz);
         } else {
             if (direction == TRXDir::Tx)
                 devContext->deviceConfig.channel[ch].tx.lpf = bandwidthHz;
             else
                 devContext->deviceConfig.channel[ch].rx.lpf = bandwidthHz;
+        }
+    }
+    return bandwidthHz;
+}
+
+double sdrdevice_block_base::set_gfir_bandwidth(double bandwidthHz)
+{
+    if (!devContext)
+        return bandwidthHz;
+
+    const bool enableFilter = bandwidthHz > 0;
+    for (const int ch : devContext->streamCfg.channels.at(direction)) {
+        if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger,
+                         fmt::format("{:s} {:f} {:s}",
+                                     __func__,
+                                     bandwidthHz,
+                                     enableFilter ? "enabled" : "disabled"));
+            ChannelConfig::Direction::GFIRFilter filter;
+            filter.enabled = enableFilter;
+            filter.bandwidth = bandwidthHz;
+            devContext->device->ConfigureGFIR(chipIndex, direction, ch, filter);
+        } else {
+            if (direction == TRXDir::Tx) {
+                devContext->deviceConfig.channel[ch].tx.gfir.enabled = enableFilter;
+                devContext->deviceConfig.channel[ch].tx.gfir.bandwidth = bandwidthHz;
+            } else {
+                devContext->deviceConfig.channel[ch].rx.gfir.enabled = enableFilter;
+                devContext->deviceConfig.channel[ch].rx.gfir.bandwidth = bandwidthHz;
+            }
         }
     }
     return bandwidthHz;
@@ -269,7 +298,6 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
     if (!devContext)
         return false;
 
-    GR_LOG_INFO(baselogger, fmt::format("{:s} {:s}", __func__, antenna_name));
     const auto& antennas =
         devContext->device->GetDescriptor().rfSOC.at(chipIndex).pathNames.at(direction);
     auto antennaFind = antennas.begin();
@@ -280,6 +308,7 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
         double freq;
         int ch = devContext->streamCfg.channels.at(direction).front();
         if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger, fmt::format("{:s} {:s}", __func__, antenna_name));
             freq = devContext->device->GetFrequency(chipIndex, direction, ch);
         } else {
             if (direction == TRXDir::Tx)
@@ -292,7 +321,8 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
             antennas,
             devContext->device->GetDescriptor().rfSOC.at(chipIndex).antennaRange.at(
                 direction));
-        GR_LOG_INFO(baselogger, fmt::format("auto selected antenna: {:s}", bestAntenna));
+        GR_LOG_DEBUG(debuglogger,
+                     fmt::format("auto selected antenna: {:s}", bestAntenna));
         antennaFind = std::find(antennas.begin(), antennas.end(), bestAntenna);
     } else
         antennaFind = std::find(antennas.begin(), antennas.end(), antenna_name);
@@ -302,7 +332,7 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
         ss << "Antenna " << antenna_name << " not found. Available:" << std::endl;
         for (const auto& iter : antennas)
             ss << "\t\"" << iter << "\"" << std::endl;
-        GR_LOG_ERROR(baselogger, ss.str());
+        GR_LOG_ERROR(debuglogger, ss.str());
         return false;
     }
 
@@ -332,29 +362,23 @@ double sdrdevice_block_base::set_gain(lime::eGainTypes type, double gain_value)
 
     const std::string gainName = lime::ToString(type);
 
-    GR_LOG_INFO(baselogger,
-                fmt::format("{:s} {:s} {:f}", __func__, gainName, gain_value));
     const RFSOCDescriptor& desc = devContext->device->GetDescriptor().rfSOC.at(chipIndex);
 
     lime::Range gain_range = desc.gainRange.at(direction).at(type);
-    GR_LOG_INFO(baselogger,
-                fmt::format("{:s} {:s} gain range: {:f}:{:f}",
-                            __func__,
-                            gainName,
-                            gain_range.min,
-                            gain_range.max));
     if (gain_value > gain_range.max) {
         gain_value = gain_range.max;
-        GR_LOG_WARN(baselogger,
+        GR_LOG_WARN(debuglogger,
                     fmt::format("{:s} clip gain to {:f}", __func__, gain_value));
     } else if (gain_value < gain_range.min) {
         gain_value = gain_range.min;
-        GR_LOG_WARN(baselogger,
+        GR_LOG_WARN(debuglogger,
                     fmt::format("{:s} clip gain to {:f}", __func__, gain_value));
     }
 
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger,
+                         fmt::format("{:s} {:s} {:f}", __func__, gainName, gain_value));
             devContext->device->SetGain(chipIndex, direction, ch, type, gain_value);
         } else {
             if (direction == TRXDir::Tx)
@@ -371,12 +395,13 @@ double sdrdevice_block_base::set_nco_frequency(double frequency_offset_Hz)
     if (!devContext)
         return frequency_offset_Hz;
 
-    GR_LOG_INFO(baselogger, fmt::format("{:s} {:f}", __func__, frequency_offset_Hz));
     if (!devContext)
         return frequency_offset_Hz;
 
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
+            GR_LOG_DEBUG(debuglogger,
+                         fmt::format("{:s} {:f}", __func__, frequency_offset_Hz));
             devContext->device->SetNCOFrequency(
                 chipIndex, direction, ch, 0, frequency_offset_Hz);
         } else {
@@ -387,6 +412,19 @@ double sdrdevice_block_base::set_nco_frequency(double frequency_offset_Hz)
         }
     }
     return frequency_offset_Hz;
+}
+
+void sdrdevice_block_base::set_calibration_enable(int flags)
+{
+    if (!devContext)
+        return;
+
+    for (const int ch : devContext->streamCfg.channels.at(direction)) {
+        if (direction == TRXDir::Tx)
+            devContext->deviceConfig.channel[ch].tx.calibrate = flags;
+        else
+            devContext->deviceConfig.channel[ch].rx.calibrate = flags;
+    }
 }
 
 } /* namespace limesuiteng */

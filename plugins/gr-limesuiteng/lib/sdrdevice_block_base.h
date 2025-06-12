@@ -40,10 +40,12 @@ public:
     void set_config_file(const std::string& file_path);
     double set_lo_frequency(double frequencyHz);
     double set_lpf_bandwidth(double bandwidthHz);
+    double set_gfir_bandwidth(double bandwidthHz);
     bool set_antenna(const std::string& antenna_name);
     double set_gain_generic(double gain_dB);
     double set_gain(lime::eGainTypes type, double gain_value);
     double set_nco_frequency(double frequency_offset_Hz);
+    void set_calibration_enable(int flags);
 
 protected:
     void StartRFStreaming();
@@ -57,6 +59,7 @@ protected:
 
 
     gr::logger_ptr baselogger;
+    gr::logger_ptr debuglogger;
 };
 
 } // namespace limesuiteng

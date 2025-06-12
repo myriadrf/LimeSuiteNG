@@ -300,7 +300,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     if (status != OpStatus::Success)
         return status;
 
-    lime::info(ToString(trx) + " LPF configured"s);
+    lime::debug(ToString(trx) + " LPF configured"s);
     return OpStatus::Success;
 }
 
@@ -959,8 +959,8 @@ RFSOCDescriptor LMS7002M_SDRDevice::GetDefaultLMS7002MDescriptor()
     soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
     soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
     soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
-    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
     SetGainInformationInDescriptor(soc);
     return soc;
@@ -1156,7 +1156,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecim
             return lime::ReportError(
                 OpStatus::NotSupported, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
     }
-    lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
+    lime::debug("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
         f_Hz / 1e6,
         cgenFreq / 1e6,
         1 + hbd_ovr,
@@ -1255,7 +1255,6 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     {
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
-    // TODO: set GFIR filters...
     return status;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Free Software Foundation, Inc.
+ * Copyright 2025 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -36,6 +36,9 @@ static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_lo_frequency = R"doc(
 static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_lpf_bandwidth = R"doc()doc";
 
 
+static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_gfir_bandwidth = R"doc()doc";
+
+
 static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_antenna = R"doc()doc";
 
 
@@ -43,3 +46,7 @@ static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_gain_generic = R"doc(
 
 
 static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_nco_frequency = R"doc()doc";
+
+
+static const char* __doc_gr_limesuiteng_sdrdevice_sink_set_calibration_enable =
+    R"doc()doc";
