@@ -98,6 +98,19 @@ install(
     RUNTIME DESTINATION bin # .dll file
 )
 
+if(NOT BUILD_SHARED_LIBS)
+    # install with a prefix, so will not interfere with kissfft lib
+    set_target_properties(kissfft PROPERTIES PREFIX "liblimesuiteng-")
+    install(
+        TARGETS kissfft
+        EXPORT limesuitengTarget
+        COMPONENT RUNTIME
+        DESTINATION lib${LIB_SUFFIX} # .so file
+        ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
+        RUNTIME DESTINATION bin # .dll file
+    )
+endif()
+
 ########################################################################
 ## lime suite library
 ########################################################################
