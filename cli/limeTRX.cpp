@@ -9,11 +9,12 @@
 #include <cmath>
 #include <signal.h>
 #include <thread>
-#include "kiss_fft.h"
 #include <condition_variable>
 #include <mutex>
 #include <filesystem>
 #include "args.hxx"
+
+#include "DSP/FFT/FFT.h"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -402,11 +403,10 @@ int main(int argc, char** argv)
 
     int64_t totalSamplesReceived = 0;
 
+    lime::FFT fft(channelCount, fftSize);
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
-    kiss_fft_cpx m_fftCalcIn[fftSize];
-    kiss_fft_cpx m_fftCalcOut[fftSize];
     fftBins[0] = 0;
+    std::vector<complex32f_t> samples(fftSize);
 
     std::ofstream rxFile;
     if (!rxFilename.empty())
@@ -509,22 +509,17 @@ int main(int argc, char** argv)
             {
                 for (unsigned i = 0; i < fftSize; ++i)
                 {
-                    m_fftCalcIn[i].r = rxSamples[0][i].real() / 32768.0;
-                    m_fftCalcIn[i].i = rxSamples[0][i].imag() / 32768.0;
+                    samples[i] = complex32f_t(rxSamples[0][i].real() / 32768.0, rxSamples[0][i].imag() / 32768.0);
                 }
-                kiss_fft(
-                    m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
+                fftBins = lime::FFT::Calc(samples);
+                lime::FFT::ConvertToDBFS(fftBins);
+
                 for (unsigned int i = 0; i < fftSize; ++i)
                 {
-                    float amplitude =
-                        ((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize));
-
-                    float output = amplitude > 0 ? 10 * log10(amplitude) : -150;
-                    fftBins[i] = output;
                     // exclude DC from amplitude comparison, the 0 bin
-                    if (output > peakAmplitude && i > 0)
+                    if (fftBins[i] > peakAmplitude && i > 0)
                     {
-                        peakAmplitude = output;
+                        peakAmplitude = fftBins[i];
                         peakFrequency = i * sampleRate / fftSize;
                     }
                 }

@@ -50,11 +50,11 @@ if(TRUE)
         fetchcontent_populate(kissFFT SOURCE_DIR ${FETCHCONTENT_BASE_DIR}/kissfft-master)
     endif()
     add_subdirectory(${kissfft_SOURCE_DIR} ${kissfft_BINARY_DIR} EXCLUDE_FROM_ALL)
-    set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+    # set_property(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     # disable warnings spam
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(kissfft PRIVATE -Wno-strict-prototypes -Wno-newline-eof -Wno-cast-align)
-    endif()
+    # if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    #     target_compile_options(kissfft PRIVATE -Wno-strict-prototypes -Wno-newline-eof -Wno-cast-align)
+    # endif()
     set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_ORIG})
     set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_ORIG})
 
@@ -63,8 +63,8 @@ if(TRUE)
         ${CMAKE_PREFIX_PATH}
         PARENT_SCOPE)
 
-    add_library(kissfft::kissfft ALIAS kissfft)
-    include_directories(${kissfft_SOURCE_DIR})
+    # add_library(kissfft::kissfft ALIAS kissfft)
+    # include_directories(${kissfft_SOURCE_DIR})
 endif()
 
 #########################################################################

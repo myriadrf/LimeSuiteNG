@@ -5,7 +5,6 @@
 #include <vector>
 #include "limesuiteng/Logger.h"
 #include "OpenGLGraph.h"
-#include "kiss_fft.h"
 #include "limesuiteng/LMS7002M.h"
 #include "DSP/FFT/FFT.h"
 #include <fstream>

@@ -138,11 +138,7 @@ add_subdirectory(boards)
 add_subdirectory(chips)
 add_subdirectory(oglGraph)
 
-find_package(kissfft CONFIG REQUIRED)
-target_link_libraries(
-    limeGUI
-    PUBLIC limesuiteng ${wxWidgets_LIBRARIES}
-    PRIVATE kissfft)
+target_link_libraries(limeGUI PUBLIC limesuiteng ${wxWidgets_LIBRARIES})
 
 if(MSVC)
     target_compile_definitions(limeGUI PRIVATE WIN32_LEAN_AND_MEAN)

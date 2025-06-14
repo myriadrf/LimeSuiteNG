@@ -10,7 +10,6 @@
 #include <string_view>
 #include <cmath>
 #include <csignal>
-#include "kiss_fft.h"
 #include "args.hxx"
 #include "../../cli/common.h"
 #ifdef USE_GNU_PLOT
@@ -160,9 +159,9 @@ int main(int argc, char** argv)
     uint64_t totalSamplesReceived = 0;
 
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
-    kiss_fft_cpx m_fftCalcIn[fftSize];
-    kiss_fft_cpx m_fftCalcOut[fftSize];
+    // kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
+    // kiss_fft_cpx m_fftCalcIn[fftSize];
+    // kiss_fft_cpx m_fftCalcOut[fftSize];
 
     StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
@@ -173,25 +172,25 @@ int main(int argc, char** argv)
 
         // process samples
         totalSamplesReceived += samplesRead;
-        for (unsigned i = 0; i < fftSize; ++i)
-        {
-            m_fftCalcIn[i].r = rxSamples[0][i].real();
-            m_fftCalcIn[i].i = rxSamples[0][i].imag();
-        }
-        kiss_fft(m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
-        for (unsigned int i = 1; i < fftSize; ++i)
-        {
-            float output =
-                10 * log10(((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize)));
-            fftBins[i] = output;
-            if (output > peakAmplitude)
-            {
-                peakAmplitude = output;
-                peakFrequency = i * sampleRate / fftSize;
-            }
-        }
-        if (peakFrequency > sampleRate / 2)
-            peakFrequency = peakFrequency - sampleRate;
+        // for (unsigned i = 0; i < fftSize; ++i)
+        // {
+        //     m_fftCalcIn[i].r = rxSamples[0][i].real();
+        //     m_fftCalcIn[i].i = rxSamples[0][i].imag();
+        // }
+        // kiss_fft(m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
+        // for (unsigned int i = 1; i < fftSize; ++i)
+        // {
+        //     float output =
+        //         10 * log10(((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize)));
+        //     fftBins[i] = output;
+        //     if (output > peakAmplitude)
+        //     {
+        //         peakAmplitude = output;
+        //         peakFrequency = i * sampleRate / fftSize;
+        //     }
+        // }
+        // if (peakFrequency > sampleRate / 2)
+        //     peakFrequency = peakFrequency - sampleRate;
         t2 = std::chrono::high_resolution_clock::now();
         if (t2 - t1 > std::chrono::seconds(1))
         {
@@ -214,6 +213,6 @@ int main(int argc, char** argv)
     for (int i = 0; i < 2; ++i)
         delete[] rxSamples[i];
     delete[] rxSamples;
-    free(m_fftCalcPlan);
+    // free(m_fftCalcPlan);
     return 0;
 }
