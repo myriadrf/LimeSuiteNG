@@ -50,39 +50,12 @@ endif()
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
-add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
-if(INSTALL_DEVELOPMENT)
-    install(
-        FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
-        COMPONENT dev
-        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
-
-    install(
-        FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-        COMPONENT dev
-        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
-
-    install(
-        EXPORT limesuitengTarget
-        NAMESPACE limesuiteng::
-        FILE limesuitengConfig.cmake
-        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng
-        COMPONENT dev)
-endif(INSTALL_DEVELOPMENT)
-
 add_subdirectory(include)
 
 option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 if(ENABLE_NEW_GAIN_BEHAVIOUR)
     target_compile_definitions(limesuiteng PRIVATE NEW_GAIN_BEHAVIOUR)
 endif()
-
-########################################################################
-# CMake Project config files
-########################################################################
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake COMPATIBILITY SameMinorVersion)
 
 ########################################################################
 # Build pkg config file
@@ -176,3 +149,31 @@ add_subdirectory(streaming)
 add_subdirectory(legacyapi)
 
 add_subdirectory(examples)
+
+option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
+add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
+if(INSTALL_DEVELOPMENT)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+
+    install(
+        FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+
+    install(
+        EXPORT limesuitengTarget
+        NAMESPACE limesuiteng::
+        FILE limesuitengTargets.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng
+        COMPONENT dev)
+
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake COMPATIBILITY SameMinorVersion)
+    configure_package_config_file(
+        ${CMAKE_CURRENT_LIST_DIR}/limesuitengConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake
+        INSTALL_DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+endif(INSTALL_DEVELOPMENT)
