@@ -160,6 +160,25 @@ class PowerDetector
 
 int main(int argc, char** argv)
 {
+    // clang-format off
+    args::ArgumentParser            parser("limePDET", "");
+    args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
+    args::Flag                      readFlag(parser, "read", "Only read power detector values", {'r', "read"});
+    // clang-format on
+
+    try
+    {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help&)
+    {
+        cout << parser << endl;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e)
+    {
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
     {
@@ -183,6 +202,17 @@ int main(int argc, char** argv)
     PowerDetector pdet("/dev/spidev0.0");
 
     uint16_t powerLevel[2] = { 0, 0 };
+    if (readFlag)
+    {
+        for (int c = 0; c < 2; ++c)
+        {
+            powerLevel[c] = pdet.ReadValue(c);
+            printf("Ch.%s power:%i\n", c == 0 ? "A" : "B", powerLevel[c]);
+        }
+        DeviceRegistry::freeDevice(device);
+        return EXIT_SUCCESS;
+    }
+
     uint16_t gainValue[2];
     uint16_t expectedPowerThreshold = 0x8000;
     bool powerReached[2] = { 0, 0 };
