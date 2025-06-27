@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/Register.h"
 
 #include <cassert>
 #include <cstring>
@@ -126,6 +127,22 @@ static std::string ReadFile(const std::string& fileName)
     return buffer.data();
 }
 
+OpStatus ParseAddress(const char* text, lime::Register& reg)
+{
+    uint addr, msb, lsb;
+    int argsParsed = sscanf(text, "%04X[%u:%u]", &addr, &msb, &lsb);
+    if (argsParsed != 3)
+    {
+        cerr << "Invalid address[msb:lsb] format" << endl;
+        return OpStatus::Error;
+    }
+    lime::Register csr;
+    reg.address = addr;
+    reg.msb = msb;
+    reg.lsb = lsb;
+    return OpStatus::Success;
+}
+
 int main(int argc, char** argv)
 {
     // clang-format off
@@ -135,6 +152,7 @@ int main(int argc, char** argv)
     args::Group                             commands(parser, "commands"); // NOLINT(cppcoreguidelines-slicing) 
     args::Command                           read(commands, "read", "Reading operation");
     args::Command                           write(commands, "write", "Do writing operation");
+    args::Command                           modify(commands, "modify", "Read/modify/write");
 
     args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {'d', "device"}, "");
@@ -142,6 +160,9 @@ int main(int argc, char** argv)
     args::Group                             writeGroup(arguments, "Data options");
     args::ValueFlag<std::string>            fileFlag(arguments, "file", "File", {'f', "file"});
     args::ValueFlag<std::string>            streamFlag(arguments, "stream", "Stream", {'s', "stream"});
+
+    args::ValueFlag<std::string>            addressFlag(arguments, "address", "address", {'a', "address"});
+    args::ValueFlag<uint>                   valueFlag(arguments, "value", "value", {'v', "value"});
     // clang-format on
 
     try
@@ -157,7 +178,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    if (fileFlag == streamFlag)
+    if (!modify && (fileFlag == streamFlag))
     {
         cerr << "Either -s or -f must be provided ONCE" << endl;
         return EXIT_FAILURE;
@@ -165,13 +186,6 @@ int main(int argc, char** argv)
 
     const std::string devName = args::get(deviceFlag);
     const std::string chipName = args::get(chipFlag);
-    const std::string hexInput = streamFlag ? args::get(streamFlag) : ReadFile(args::get(fileFlag));
-
-    if (hexInput.empty())
-    {
-        cerr << "No input provided"sv << endl;
-        return EXIT_FAILURE;
-    }
 
     auto handles = DeviceRegistry::enumerate();
     if (handles.size() == 0)
@@ -191,30 +205,65 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::vector<uint32_t> mosi;
-    if (write)
-        parseWriteInput(hexInput, mosi);
-    else if (read)
-        parseReadInput(hexInput, mosi);
-
-    std::vector<uint32_t> miso(mosi.size());
-
-    try
+    if (modify)
     {
+        const std::string addr = args::get(addressFlag);
+        lime::Register csr;
+        OpStatus status = ParseAddress(addr.c_str(), csr);
+        if (status != OpStatus::Success)
+        {
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+
+        const uint16_t value = args::get(valueFlag);
+
+        std::vector<uint32_t> mosi;
+        mosi.push_back(csr.address);
+        std::vector<uint32_t> miso(mosi.size());
+
         device->SPI(chipSelect, mosi.data(), miso.data(), mosi.size());
-    } catch (std::runtime_error& e)
-    {
-        DeviceRegistry::freeDevice(device);
-        cerr << "SPI failed: "sv << e.what() << endl;
-        return EXIT_FAILURE;
+
+        uint16_t regValue = miso[0];
+        const uint16_t mask = lime::bitMask(csr.msb, csr.lsb);
+        regValue &= ~(mask);
+        regValue |= (value << csr.lsb) & mask;
+        mosi[0] = (1 << 31) | csr.address << 16 | regValue;
+
+        device->SPI(chipSelect, mosi.data(), miso.data(), mosi.size());
     }
+    else
+    {
+        const std::string hexInput = streamFlag ? args::get(streamFlag) : ReadFile(args::get(fileFlag));
+        if (hexInput.empty())
+        {
+            cerr << "No input provided"sv << endl;
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+        std::vector<uint32_t> mosi;
+        if (write)
+            parseWriteInput(hexInput, mosi);
+        else if (read)
+            parseReadInput(hexInput, mosi);
+        std::vector<uint32_t> miso(mosi.size());
 
-    // fill in register addresses for convenience and reuse as write input
-    for (size_t i = 0; i < miso.size(); ++i)
-        miso[i] |= mosi[i] << 16;
+        try
+        {
+            device->SPI(chipSelect, mosi.data(), miso.data(), mosi.size());
+        } catch (std::runtime_error& e)
+        {
+            DeviceRegistry::freeDevice(device);
+            cerr << "SPI failed: "sv << e.what() << endl;
+            return EXIT_FAILURE;
+        }
+        // fill in register addresses for convenience and reuse as write input
+        for (size_t i = 0; i < miso.size(); ++i)
+            miso[i] |= mosi[i] << 16;
 
-    if (read)
-        PrintMISO(cout, miso);
+        if (read)
+            PrintMISO(cout, miso);
+    }
 
     DeviceRegistry::freeDevice(device);
     return EXIT_SUCCESS;
