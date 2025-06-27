@@ -131,7 +131,7 @@ class PowerDetector
             binaryData = exec(command);
             if (binaryData.size() < 2)
             {
-                printf("Bad SPI read, got %i bytes, retry\n", binaryData.size());
+                // printf("Bad SPI read, got %i bytes, retry\n", binaryData.size());
                 continue;
             }
             break;
@@ -164,6 +164,7 @@ int main(int argc, char** argv)
     args::ArgumentParser            parser("limePDET", "");
     args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
     args::Flag                      readFlag(parser, "read", "Only read power detector values", {'r', "read"});
+    args::ValueFlag<uint>           powerFlag(parser, "power", "Power target threshold", {'p', "power"});
     // clang-format on
 
     try
@@ -176,6 +177,12 @@ int main(int argc, char** argv)
     } catch (const std::exception& e)
     {
         cerr << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+
+    if (!powerFlag && readFlag)
+    {
+        cerr << "missing power threshold target" << endl;
         return EXIT_FAILURE;
     }
 
@@ -214,7 +221,7 @@ int main(int argc, char** argv)
     }
 
     uint16_t gainValue[2];
-    uint16_t expectedPowerThreshold = 0x8000;
+    uint16_t expectedPowerThreshold = args::get(powerFlag);
     bool powerReached[2] = { 0, 0 };
     for (int g = 30; g >= 0; g--)
     {
