@@ -188,6 +188,7 @@ int main(int argc, char** argv)
                 soc->SetActiveChannel(c == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF, g);
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_MAIN_TXPAD_TRF, g);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 powerLevel[c] = pdet.ReadValue(c);
                 printf("Ch.%s gain:%02i  power:%04X (%i)\n", c == 0 ? "A" : "B", gainValue[c], powerLevel[c], powerLevel[c]);
             }
