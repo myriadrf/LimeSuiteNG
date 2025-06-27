@@ -125,11 +125,17 @@ class PowerDetector
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         sprintf(command, "spi-pipe --device=%s -b 2 -n 1 < /dev/zero", spiDev.c_str());
-        std::string binaryData = exec(command);
-        if (binaryData.size() < 2)
+        std::string binaryData;
+        for (int r = 0; r < 4; ++r)
         {
-            printf("Bad SPI read, got %i bytes\n", binaryData.size());
-            return 0;
+            binaryData = exec(command);
+            if (binaryData.size() < 2)
+            {
+                printf("Bad SPI read, got %i bytes\n", binaryData.size());
+                printf("Retry\n");
+                continue;
+            }
+            break;
         }
         uint16_t value = uint16_t(binaryData[0]) << 8 | binaryData[1];
         printf("SPI Read %02X\n", value);
