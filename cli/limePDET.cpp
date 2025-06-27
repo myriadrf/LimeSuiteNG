@@ -100,7 +100,7 @@ class PowerDetector
         sprintf(command, "gpioset %s=1", rfpd_en_handle.c_str());
         exec(command);
 
-        sprintf(command, "spi-config -d %s -s 400000 -w", spiDev.c_str());
+        sprintf(command, "spi-config -d %s -s 400000", spiDev.c_str());
         spiConfigHandle = popen(command, "we");
 
         sprintf(command, "gpioset %s=1", gpio25handle.c_str());
