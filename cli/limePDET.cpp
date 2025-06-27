@@ -114,19 +114,19 @@ class PowerDetector
     {
         const std::string& gpioHandle = channel == 0 ? gpio25handle : gpio26handle;
         char command[512];
-        sprintf(command, "gpioset %s=0", gpioHandle.c_str());
-        exec(command);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        sprintf(command, "gpioset %s=1", gpioHandle.c_str());
-        exec(command);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        sprintf(command, "gpioset %s=0", gpioHandle.c_str());
-        exec(command);
-
-        sprintf(command, "spi-pipe --device=%s -b 2 -n 1 < /dev/zero", spiDev.c_str());
         std::string binaryData;
         for (int r = 0; r < 4; ++r)
         {
+            sprintf(command, "gpioset %s=0", gpioHandle.c_str());
+            exec(command);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            sprintf(command, "gpioset %s=1", gpioHandle.c_str());
+            exec(command);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            sprintf(command, "gpioset %s=0", gpioHandle.c_str());
+            exec(command);
+
+            sprintf(command, "spi-pipe --device=%s -b 2 -n 1 < /dev/zero", spiDev.c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
             binaryData = exec(command);
             if (binaryData.size() < 2)
