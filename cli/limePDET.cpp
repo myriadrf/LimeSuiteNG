@@ -122,23 +122,22 @@ class PowerDetector
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         sprintf(command, "gpioset %s=0", gpioHandle.c_str());
         exec(command);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         sprintf(command, "spi-pipe --device=%s -b 2 -n 1 < /dev/zero", spiDev.c_str());
         std::string binaryData;
         for (int r = 0; r < 4; ++r)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
             binaryData = exec(command);
             if (binaryData.size() < 2)
             {
-                printf("Bad SPI read, got %i bytes\n", binaryData.size());
-                printf("Retry\n");
+                printf("Bad SPI read, got %i bytes, retry\n", binaryData.size());
                 continue;
             }
             break;
         }
         uint16_t value = uint16_t(binaryData[0]) << 8 | binaryData[1];
-        printf("SPI Read %02X\n", value);
+        // printf("SPI Read %04X\n", value);
 
         sprintf(command, "gpioset %s=1", gpioHandle.c_str());
         exec(command);
@@ -198,7 +197,7 @@ int main(int argc, char** argv)
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF, g);
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_MAIN_TXPAD_TRF, g);
                 powerLevel[c] = pdet.ReadValue(c);
-                printf("Ch.%s gain:%02i  power:%04X (%i)\n", c == 0 ? "A" : "B", gainValue[c], powerLevel[c], powerLevel[c]);
+                printf("gain:%02i Ch.%s power:%04X (%i)\n", gainValue[c], c == 0 ? "A" : "B", powerLevel[c], powerLevel[c]);
             }
             else
                 powerReached[c] = true;
