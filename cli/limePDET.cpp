@@ -100,7 +100,7 @@ class PowerDetector
         sprintf(command, "gpioset %s=1", rfpd_en_handle.c_str());
         exec(command);
 
-        sprintf(command, "spi-config -d %s -s 500000 -w", spiDev.c_str());
+        sprintf(command, "spi-config -d %s -s 400000 -w", spiDev.c_str());
         spiConfigHandle = popen(command, "we");
 
         sprintf(command, "gpioset %s=1", gpio25handle.c_str());
@@ -116,10 +116,13 @@ class PowerDetector
         char command[512];
         sprintf(command, "gpioset %s=0", gpioHandle.c_str());
         exec(command);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         sprintf(command, "gpioset %s=1", gpioHandle.c_str());
         exec(command);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         sprintf(command, "gpioset %s=0", gpioHandle.c_str());
         exec(command);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         sprintf(command, "spi-pipe --device=%s -b 2 -n 1 < /dev/zero", spiDev.c_str());
         std::string binaryData = exec(command);
@@ -188,7 +191,6 @@ int main(int argc, char** argv)
                 soc->SetActiveChannel(c == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_LIN_TXPAD_TRF, g);
                 soc->Modify_SPI_Reg_bits(LMS7002MCSR::LOSS_MAIN_TXPAD_TRF, g);
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 powerLevel[c] = pdet.ReadValue(c);
                 printf("Ch.%s gain:%02i  power:%04X (%i)\n", c == 0 ? "A" : "B", gainValue[c], powerLevel[c], powerLevel[c]);
             }
