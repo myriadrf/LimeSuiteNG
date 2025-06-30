@@ -180,7 +180,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    if (!powerFlag && readFlag)
+    if (!powerFlag && !readFlag)
     {
         cerr << "missing power threshold target" << endl;
         return EXIT_FAILURE;
