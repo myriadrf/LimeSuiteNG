@@ -19,6 +19,12 @@ using namespace std;
 using namespace lime;
 using namespace lime::cli;
 
+static void WaitForUserInput()
+{
+    std::cerr << "Press any key to continue" << std::endl;
+    cin.ignore();
+}
+
 static std::string exec(const char* cmd)
 {
     std::array<char, 128> buffer;
@@ -165,6 +171,7 @@ int main(int argc, char** argv)
     args::HelpFlag                  help(parser, "help", "This help", {'h', "help"});
     args::Flag                      readFlag(parser, "read", "Only read power detector values", {'r', "read"});
     args::ValueFlag<uint>           powerFlag(parser, "power", "Power target threshold", {'p', "power"});
+    args::Flag                      interactive(parser, "", "Wait for user input after each test", {"interactive"});
     // clang-format on
 
     try
@@ -238,6 +245,9 @@ int main(int argc, char** argv)
             }
             else
                 powerReached[c] = true;
+
+            if (interactive)
+                WaitForUserInput();
         }
         printf("\n");
         if (powerReached[0] && powerReached[1])
