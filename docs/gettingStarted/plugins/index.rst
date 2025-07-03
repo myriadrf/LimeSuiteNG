@@ -10,7 +10,7 @@ LimeSuiteNG provides integration with other software packages
 .. toctree::
    :maxdepth: 1
 
-   gnuradio
+   gnuradio/index
    soapysdr
 
 .. _HDSDR: https://www.hdsdr.de/
