@@ -44,7 +44,7 @@ Activate your conda enivronment:
    conda activate -n <environment name>
 
 .. hint::
-   Check out radioconda and conda environment set up process.
+   Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 .. Add reference to radioconda and conda setup
 
 Install conda packages:
@@ -122,5 +122,5 @@ Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\example
 If the example runs successfully, adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
 
 .. hint::
-   Make sure that the device is supported by Lime Suite NG library.
+   Make sure that the device is supported by Lime Suite NG library. See :ref:`dev-supp-list-ref`.
 .. Add reference to supported device list

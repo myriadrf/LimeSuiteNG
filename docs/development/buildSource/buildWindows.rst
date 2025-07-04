@@ -31,7 +31,7 @@ Activate your conda enivronment:
    conda activate -n <environment name>
 
 .. hint::
-   Check out radioconda and conda environment set up process.
+   Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 .. Add reference to radioconda and conda setup
 
 Install conda packages:

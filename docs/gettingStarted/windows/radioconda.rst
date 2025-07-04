@@ -1,3 +1,6 @@
+.. _radioconda-setup-ref:
+
+======================
 Radioconda environment
 ======================
 
@@ -17,7 +20,7 @@ Install the following packages that contain necessary build tools for the curren
 Conda environment is ready for use with Lime Suite NG library and any of its plugins.
 
 .. tip::
-   Make sure that your limeSDR is compatible with the new generation library and install appropriate SDR device drivers.
+   Make sure that your limeSDR is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
 
 
 .. _`release page`: https://github.com/ryanvolz/radioconda/releases
