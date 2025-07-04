@@ -1,3 +1,13 @@
 Install from packages
 =====================
 
+Lime Suite NG library can also be installed as a conda package.
+
+.. code-block:: bash
+
+   conda activate <environment>
+   conda install limesuiteng
+
+.. hint::
+   Check out radioconda and conda environment set up process.
+.. Add reference to radioconda and conda setup
