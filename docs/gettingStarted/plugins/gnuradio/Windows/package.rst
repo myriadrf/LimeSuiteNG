@@ -23,5 +23,5 @@ Installing
    conda install gnuradio-limesuiteng
 
 .. hint::
-   Checkout radioconda and conda environment set up process.
+   Check out radioconda and conda environment set up process.
 .. Add reference to radioconda and conda setup
