@@ -1,9 +1,7 @@
 GNURadio
 ========
 
-https://www.gnuradio.org/
-
-LimeSDR devices can be used with GNU Radio, and also using it's GNU Radio companion GUI blocks.
+LimeSDR devices can be used with GNU Radio on Windows and Linux platforms.
 
 .. Checkout the included examples: https://github.com/myriadrf/LimeSuiteNG/blob/develop/plugins/gr-limesuiteng/examples
 
@@ -12,5 +10,9 @@ LimeSDR devices can be used with GNU Radio, and also using it's GNU Radio compan
 
    Linux/index
    Windows/index
+
+More about `GNURadio`_.
+
+.. _GNURadio: https://www.gnuradio.org/
 
 .. image:: gnuradio.png
