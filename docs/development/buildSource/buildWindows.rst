@@ -8,14 +8,14 @@ Required components to compile LimeSuiteNG project:
 
 #. Visual Studio Build Tools 2022 components:
 
-  #. MSVC v143 - VS 2022
-  #. Windows 11 SDK
+   #. MSVC v143 - VS 2022
+   #. Windows 11 SDK
 
 #. Conda packages:
 
-  #. conda-build
-  #. conda-forge-pinning
-  #. vs2022_win-64
+   #. conda-build
+   #. conda-forge-pinning
+   #. vs2022_win-64
 
 Optional components that add specific functionality:
 
