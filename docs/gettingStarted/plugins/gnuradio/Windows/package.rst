@@ -14,6 +14,9 @@ Conda packages required to run the gnuradio plugin:
 #. Numpy=1.26.4
 #. gnuradio=3.10.9.2
 
+.. tip::
+   You can check if packages are present by using ``conda list <package name>``.
+   
 Installing
 ----------
 
