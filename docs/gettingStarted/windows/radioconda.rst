@@ -1,11 +1,12 @@
 Radioconda environment
 ======================
 
-Install radioconda terminal using windows installer from radioconda `release page`_. Search for **radioconda prompt** and open it. Create a new conda environment using the following command:
+Install radioconda terminal using windows installer from radioconda `release page`_. Search for **radioconda prompt** and open it. Create a new conda environment and activate it using the following commands:
 
 .. code-block:: bash
    
    conda create -n <custom environment name>
+   conda activate <custom environment name>
 
 Install the following packages that contain necessary build tools for the current environment.
 
