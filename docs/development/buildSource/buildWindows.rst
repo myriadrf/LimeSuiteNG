@@ -76,7 +76,7 @@ Built library is located in ``build\lib`` directory and executables are located 
 Installing the built software
 -----------------------------
 
-Optionally can be installed into system, installation requires to be ran with Administrative privileges.
+Optionally library can be installed into system, installation requires to be ran with Administrative privileges.
 
 Continuing on from the previous command block, execute:
 
@@ -85,7 +85,7 @@ Continuing on from the previous command block, execute:
    cmake --install .
 
 .. tip::
-   To uninstall plugin from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
+   To uninstall library from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
 
 .. _`CMake`: https://cmake.org/
 .. _`wxWidgets`: https://www.wxwidgets.org/
