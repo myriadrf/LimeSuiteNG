@@ -119,8 +119,8 @@ Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\example
 
 .. image:: settingUpSdr.png
 
+If the example runs successfully, adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
+
 .. hint::
    Make sure that the device is supported by Lime Suite NG library.
 .. Add reference to supported device list
-
-If the example runs successfully, adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
