@@ -9,3 +9,4 @@ Lime Suite NG can be built from source or installed as package using radioconda 
    radioconda
    Build from Source <../../development/buildSource/buildWindows>
    package
+   Drivers <drivers>
