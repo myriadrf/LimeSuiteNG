@@ -6,26 +6,72 @@ Prerequisites
 
 Required components to compile LimeSuiteNG project:
 
-- C++ compiler (GCC, Clang, MSVC)
-- `CMake`_
+#. Visual Studio Build Tools 2022 components:
+
+  #. MSVC v143 - VS 2022
+  #. Windows 11 SDK
+
+#. Conda packages:
+
+  #. conda-build
+  #. conda-forge-pinning
+  #. vs2022_win-64
 
 Optional components that add specific functionality:
 
-- `wxWidgets`_ : allows graphical user interface
 - `SoapySDR`_ : allows building of limesuiteng plugin for SoapySDR
 
 Compilation
 -----------
 
-In the root directory of the repository run these commands:
+Activate your conda enivronment:
 
 .. code-block:: bash
 
-  cmake -B build
-  cmake --build build --config Release
+   conda activate -n <environment name>
 
-After a successful compilation the resulting binaries are placed in the ``build/bin/`` directory
-located in the root directory of the repository.
+.. hint::
+   Check out radioconda and conda environment set up process.
+.. Add reference to radioconda and conda setup
+
+Install conda packages:
+
+.. code-block:: bash
+
+   conda install conda-build conda-forge-pinning vs2022_win-64
+
+Downgrade cmake package:
+
+.. code-block:: bash
+
+   conda install cmake=3.26.4
+
+Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+
+.. code-block:: bash
+
+   git clone <repository url>
+
+Enter repository directory, create and enter build directory:
+
+.. code-block:: bash
+   
+   mkdir build && cd build
+
+Configure LimeSuiteNG library build files:
+
+.. code-block:: bash
+
+   cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%CONDA_PREFIX%\Library" -DCMAKE_PREFIX_PATH="%CONDA_PREFIX%\Library" -DGR_PYTHON_DIR="%CONDA_PREFIX%\Lib\site-packages" ..
+
+Build library:
+
+.. code-block:: bash
+
+   cmake --build .
+
+Built library is located in ``build\lib`` directory and executables are located in ``build\bin`` directory.
+  
 
 Installing the built software
 -----------------------------
@@ -36,7 +82,10 @@ Continuing on from the previous command block, execute:
 
 .. code-block:: bash
 
-    cmake --install build --config Release
+   cmake --install .
+
+.. tip::
+   To uninstall plugin from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
 
 .. _`CMake`: https://cmake.org/
 .. _`wxWidgets`: https://www.wxwidgets.org/
