@@ -6,14 +6,17 @@ Prerequisites
 
 Required components to compile gnuradio-limesuiteng plugin:
 
-#. gnuradio (version 3.10.9.2)
-#. boost    (version 1.83 or higher)
-#. pybind11 (version 2.11.1 or higher)
-#. gmp
-#. python   (version 3.12.3 or higher)
-#. gcc compiler (major version 13.xx)
-#. cmake (version 3.26.4)
-#. Lime Suite NG
+#. GNURadio (version 3.10.9.2)
+#. Boost    (version 1.83 or higher)
+#. Pybind11 (version 2.11.1 or higher)
+#. Gmp
+#. Python   (version 3.12.3 or higher)
+#. C++ compiler (GCC major version 13.xx)
+#. CMake (version 3.26.4)
+#. LimeSuiteNG
+
+.. tip::
+   If gnuradio-limesuiteng build fails, try to use exact dependency versions as shown in the list.
 
 Compilation
 -----------

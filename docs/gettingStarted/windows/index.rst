@@ -1,7 +1,7 @@
 On Windows
 ==========
 
-Lime Suite NG can be built from source or installed as package in conda environment using radioconda prompt.
+LimeSuiteNG can be built from source or installed as package in conda environment using radioconda prompt.
 
 .. toctree::
    :maxdepth: 1

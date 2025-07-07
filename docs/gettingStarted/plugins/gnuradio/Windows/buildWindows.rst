@@ -6,7 +6,7 @@ Prerequisites
 
 Required components to compile gnuradio-limesuiteng plugin:
 
-#. Visual Studio Build Tools 2022 17.14 components:
+#. Visual Studio Build Tools 2022 (version 17.14) components:
 
    #. MSVC v143 - VS 2022
    #. Windows 11 SDK
@@ -45,7 +45,6 @@ Activate your conda enivronment:
 
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
-.. Add reference to radioconda and conda setup
 
 Install conda packages:
 
@@ -122,5 +121,4 @@ Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\example
 If the example runs successfully, adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
 
 .. hint::
-   Make sure that the device is supported by Lime Suite NG library. See :ref:`dev-supp-list-ref`.
-.. Add reference to supported device list
+   Make sure that the device is supported by LimeSuiteNG library. See :ref:`dev-supp-list-ref`.

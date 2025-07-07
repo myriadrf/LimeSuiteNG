@@ -17,10 +17,10 @@ Install the following packages that contain necessary build tools for the curren
 
    conda install conda-build conda-forge-pinning
 
-Conda environment is ready for use with Lime Suite NG library and any of its plugins.
+Initial conda environment set up is complete.
 
 .. tip::
-   Make sure that your limeSDR is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
+   Make sure that your limeSDR device is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
 
 
 .. _`release page`: https://github.com/ryanvolz/radioconda/releases
