@@ -12,11 +12,11 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. Gmp
 #. Python   (version 3.12.3 or higher)
 #. C++ compiler (GCC major version 13.xx)
-#. CMake (version 3.26.4)
+#. CMake (version 3.28.3 or higher)
 #. LimeSuiteNG
 
-.. tip::
-   If gnuradio-limesuiteng build fails, try to use exact dependency versions as shown in the list.
+.. Note::
+   Some plugin component versions may be incompatible and can break the functionality of a plugin. For example, higher versions of pybind11 can cause functionality problems as the GNURadio itself uses 2.11.1 version of pybind11. It is recommended to install the specified minimum version of component from required component list.
 
 Compilation
 -----------
