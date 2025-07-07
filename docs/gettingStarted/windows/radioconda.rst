@@ -4,7 +4,7 @@
 Radioconda environment
 ======================
 
-Install radioconda terminal using windows installer from radioconda `release page`_. Search for **radioconda prompt** and open it. Create a new conda environment and activate it using the following commands:
+Install radioconda terminal using windows installer from radioconda `release page`_. Search for **radioconda prompt** and run it as administrator. Create new conda environment and activate it using the following commands:
 
 .. code-block:: bash
    

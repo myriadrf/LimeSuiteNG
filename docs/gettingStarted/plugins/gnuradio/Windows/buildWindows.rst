@@ -115,7 +115,7 @@ Launch gnuradio in conda environment by executing the following command:
 
    (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>gnuradio-companion
 
-Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\examples`` directory. Enter SDR serial number as show in figure below and run the example.
+Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\examples`` directory. Enter SDR serial number as shown in figure below and run the example.
 
 .. image:: settingUpSdr.png
 
