@@ -13,6 +13,7 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. python   (version 3.12.3 or higher)
 #. gcc compiler (major version 13.xx)
 #. cmake (version 3.26.4)
+#. Lime Suite NG
 
 Compilation
 -----------
