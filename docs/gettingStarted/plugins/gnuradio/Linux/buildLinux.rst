@@ -36,7 +36,7 @@ Run cmake to configure build files and then build:
 .. code-block:: bash
 
    cmake .. -DCMAKE_BUILD_TYPE=Release
-   make
+   sudo make
 
 .. tip::
    Add ``-jx`` flag to speed up building process, where ``x`` is processor core count.
