@@ -1,3 +1,7 @@
+
+.. _cli-tools-ref:
+
+============================
 Command line interface tools
 ============================
 

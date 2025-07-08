@@ -8,5 +8,6 @@ LimeSuiteNG can be built from source or installed as package in conda environmen
 
    radioconda
    Build from Source <../../development/buildSource/buildWindows>
+   Conda recipe <condaRecipe>
    package
    Drivers <drivers>

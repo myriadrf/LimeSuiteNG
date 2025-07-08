@@ -1,3 +1,6 @@
+.. _windows-lib-build-ref:
+
+============================
 Build from source on Windows
 ============================
 
