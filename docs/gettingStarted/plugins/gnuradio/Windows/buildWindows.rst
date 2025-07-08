@@ -1,3 +1,6 @@
+.. _windows-plugin-build-ref:
+
+=================
 Build from source
 =================
 
