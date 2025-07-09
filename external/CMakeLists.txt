@@ -131,4 +131,32 @@ if(NOT rang_POPULATED)
 endif()
 add_subdirectory(${rang_SOURCE_DIR} ${rang_BINARY_DIR} EXCLUDE_FROM_ALL)
 
+#########################################################################
+fetchcontent_declare(
+    nlohmann_json
+    # GIT_REPOSITORY https://github.com/nlohmann/json
+    # GIT_TAG 6b9199382bca57d5c85609c54f70279f0d5e7f25
+    URL ${CMAKE_CURRENT_LIST_DIR}/json.zip CONFIGURE_COMMAND "" BUILD_COMMAND "" EXCLUDE_FROM_ALL)
+file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_LIST_DIR}/json.zip DESTINATION ${FETCHCONTENT_BASE_DIR}/)
+# Exclude from all for pre-CMake 3.28
+fetchcontent_getproperties(nlohmann_json)
+if(NOT rang_POPULATED)
+    fetchcontent_populate(nlohmann_json SOURCE_DIR ${FETCHCONTENT_BASE_DIR}/json-develop)
+endif()
+add_subdirectory(${nlohmann_json_SOURCE_DIR} ${nlohmann_json_BINARY_DIR} EXCLUDE_FROM_ALL)
+
+#########################################################################
+# fetchcontent_declare(
+#     sigmf-libsigmf
+#     # GIT_REPOSITORY https://github.com/sigmf/libsigmf
+#     # GIT_TAG fc8f6e8346c4fc8a5440b97045de10271e0ab94e
+#     URL ${CMAKE_CURRENT_LIST_DIR}/libsigmf.zip CONFIGURE_COMMAND "" BUILD_COMMAND "" EXCLUDE_FROM_ALL)
+# file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_LIST_DIR}/libsigmf.zip DESTINATION ${FETCHCONTENT_BASE_DIR}/)
+# # Exclude from all for pre-CMake 3.28
+# fetchcontent_getproperties(sigmf-libsigmf)
+# if(NOT rang_POPULATED)
+#     fetchcontent_populate(sigmf-libsigmf SOURCE_DIR ${FETCHCONTENT_BASE_DIR}/libsigmf-main)
+# endif()
+# add_subdirectory(${sigmf-libsigmf_SOURCE_DIR} ${sigmf-libsigmf_BINARY_DIR} EXCLUDE_FROM_ALL)
+
 message(STATUS "##### </external> #####")

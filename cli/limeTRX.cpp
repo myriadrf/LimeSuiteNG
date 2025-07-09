@@ -3,6 +3,8 @@
 #include "limesuiteng/SDRDescriptor.h"
 
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/Timespec.h"
+#include "limesuiteng/StreamMeta.h"
 #include "streaming/StreamComposite.h"
 #include <iostream>
 #include <chrono>
@@ -15,6 +17,12 @@
 #include "args.hxx"
 
 #include "DSP/FFT/FFT.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <time.h>
+
+#include "nlohmann/json.hpp"
 
 // #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
@@ -25,13 +33,72 @@ using namespace lime;
 using namespace lime::cli;
 using namespace std;
 
+using json = nlohmann::json;
+
+struct CaptureChunk {
+    lime::Timespec timestamp;
+    uint64_t sample_start;
+    uint64_t samples_count;
+};
+
 std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concurrently
 
-bool stopProgram(false);
+static std::string timespec_to_utc_string(struct timespec& ts)
+{
+    const int nanosecond_offset = 21;
+    char buf[64];
+    struct tm tm;
+    gmtime_r(&ts.tv_sec, &tm);
+    strftime(buf, nanosecond_offset, "%Y-%m-%dT%H:%M:%S.", &tm);
+    sprintf(buf + nanosecond_offset - 1, "%09luZ", ts.tv_nsec);
+    return std::string(buf);
+}
+
+static int64_t UTC_to_UnixTime(const struct tm& calendarTime)
+{
+    struct tm datetime;
+    memcpy(&datetime, &calendarTime, sizeof(struct tm));
+#ifndef __unix__
+    time_t unixtime = _mkgmtime(&datetime);
+#else
+    time_t unixtime = timegm(&datetime);
+#endif
+    return unixtime;
+}
+
+static struct timespec utc_string_to_timespec(const std::string& str)
+{
+    uint year;
+    uint month;
+    uint day;
+    uint hour;
+    uint minute;
+    uint second;
+    uint64_t nanoSecond;
+
+    sscanf(str.c_str(), "%4u-%2u-%2uT%2u:%2u:%2u.%luZ", &year, &month, &day, &hour, &minute, &second, &nanoSecond);
+
+    struct tm tm;
+    memset(&tm, 0, sizeof(struct tm));
+    tm.tm_sec = second;
+    tm.tm_min = minute;
+    tm.tm_hour = hour;
+    tm.tm_mday = day;
+    tm.tm_mon = month - 1; // months since January
+    tm.tm_year = year - 1900; // years since 1900
+    tm.tm_isdst = -1;
+
+    struct timespec ts;
+    ts.tv_sec = UTC_to_UnixTime(tm);
+    ts.tv_nsec = nanoSecond;
+    return ts;
+}
+
+std::atomic<bool> stopProgram(false);
 void intHandler(int dummy)
 {
     //std::cerr << "Stopping\n"sv;
-    stopProgram = true;
+    stopProgram.store(true);
 }
 
 #ifdef USE_GNU_PLOT
@@ -210,6 +277,43 @@ class ConstellationPlotter
 };
 #endif
 
+struct TransmitLoopArgs {
+    RFStream* stream;
+    const complex16_t* samples;
+    size_t samplesCount;
+    const std::vector<CaptureChunk>* chunks;
+    std::atomic<bool>* terminate;
+};
+
+static void TransmitLoop(TransmitLoopArgs* args)
+{
+    for (const CaptureChunk& chunk : *args->chunks)
+    {
+        if (args->terminate->load(std::memory_order_relaxed) == true)
+            break;
+        const complex16_t* txSamples[16];
+        for (int i = 0; i < 16; ++i)
+            txSamples[i] = &args->samples[chunk.sample_start];
+        StreamTxMeta txMeta{};
+        txMeta.flags = StreamTxMeta::EndOfBurst;
+        txMeta.timestamp = chunk.timestamp;
+        txMeta.hasTimestamp = true;
+        int samplesRemaining = chunk.samples_count;
+        while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
+        {
+            const int mtu = 256 * 32;
+            int samplesToSend = samplesRemaining > mtu ? mtu : samplesRemaining;
+            int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
+
+            txMeta.timestamp.AddTicks(samplesSent);
+            for (int i = 0; i < 16; ++i)
+                txSamples[i] += samplesSent;
+
+            samplesRemaining -= samplesSent;
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     // clang-format off
@@ -233,6 +337,8 @@ int main(int argc, char** argv)
     args::ValueFlag<int>                txSamplesInPacketFlag(parser, "packets", "number of samples in Tx packet", {"txSamplesInPacket"}, 0, args::Options{});
     args::ValueFlag<int>                rxPacketsInBatchFlag(parser, "packets", "number of Rx packets in data transfer", {"rxPacketsInBatch"}, 0, args::Options{});
     args::ValueFlag<int>                txPacketsInBatchFlag(parser, "packets", "number of Tx packets in data transfer", {"txPacketsInBatch"}, 0, args::Options{});
+    args::ValueFlag<int>                fftSizeFlag(parser, "samplesCount", "FFT size in samples", {"fftSize"}, 16384, args::Options{});
+    args::ValueFlag<std::string>        timestampFlag(parser, "", "Timestamp type: ticks, seconds, unix", {'t', "timestamp"}, "ticks", args::Options{});
 #ifdef USE_GNU_PLOT
     args::Flag                          constellationFlag(parser, "", "Display IQ constellation plot", {"constellation"});
 #endif
@@ -261,7 +367,7 @@ int main(int argc, char** argv)
     const bool showConstellation = constellationFlag;
 #endif
     const bool loopTx = looptxFlag;
-    const int64_t samplesToCollect = args::get(samplesCountFlag);
+    const uint64_t samplesToCollect = args::get(samplesCountFlag);
     const int64_t workTime = args::get(timeFlag);
     const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
     const bool repeater = repeaterFlag;
@@ -316,6 +422,17 @@ int main(int argc, char** argv)
     StreamConfig streamCfg;
     streamCfg.format = DataFormat::I16;
     streamCfg.linkFormat = linkFormat;
+
+    {
+        streamCfg.timestampType = TimestampType::SAMPLE_TICKS;
+        const std::string str = args::get(timestampFlag);
+        if ("ticks"sv == str)
+            streamCfg.timestampType = TimestampType::SAMPLE_TICKS;
+        else if ("seconds"sv == str)
+            streamCfg.timestampType = TimestampType::REALTIME_SECONDS;
+        else if ("unix"sv == str)
+            streamCfg.timestampType = TimestampType::UNIX_EPOCH;
+    }
 
     if (syncPPS || rxSamplesInPacket || rxPacketsInBatch || txSamplesInPacket || txPacketsInBatch)
     {
@@ -374,34 +491,74 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
+
     signal(SIGINT, intHandler);
 
-    const int fftSize = 16384;
+    const int fftSize = args::get(fftSizeFlag);
     std::vector<complex16_t> rxData[16];
     for (int i = 0; i < 16; ++i)
         rxData[i].resize(fftSize);
 
-    std::vector<complex16_t> txData;
-    int64_t txSent = 0;
+    complex16_t* txData = nullptr;
+
+    size_t txSamplesCountTotal = 0;
+    std::vector<CaptureChunk> txcaptures;
     if (tx && !txFilename.empty())
     {
+        int txfd = 0;
+        txfd = open((txFilename + ".sigmf-data").c_str(), O_RDONLY);
+        if (!txfd)
+        {
+            cerr << "Failed to open file: "sv << txFilename << endl;
+            return -1;
+        }
+        auto cnt = lseek(txfd, 0, SEEK_END);
+        txSamplesCountTotal = cnt / sizeof(complex16_t);
+        lseek(txfd, 0, SEEK_SET);
+
+        cerr << "File size : "sv << cnt << " bytes."sv << endl;
+        txData = reinterpret_cast<complex16_t*>(mmap(0, cnt, PROT_READ, MAP_PRIVATE, txfd, 0));
+        if (!txData)
+        {
+            cerr << "Failed to mmap file: "sv << txFilename << endl;
+            return -1;
+        }
+        close(txfd);
+
         std::ifstream inputFile;
-        inputFile.open(txFilename, std::ifstream::in | std::ifstream::binary);
+        inputFile.open(txFilename + ".sigmf-meta", std::ifstream::in | std::ifstream::binary);
         if (!inputFile)
         {
             cerr << "Failed to open file: "sv << txFilename << endl;
             return -1;
         }
-        inputFile.seekg(0, std::ios_base::end);
-        auto cnt = inputFile.tellg();
-        inputFile.seekg(0, std::ios_base::beg);
-        cerr << "File size : "sv << cnt << " bytes."sv << endl;
-        txData.resize(cnt / sizeof(complex16_t));
-        inputFile.read(reinterpret_cast<char*>(txData.data()), cnt);
-        inputFile.close();
+
+        ifstream txmetafile(txFilename + ".sigmf-meta");
+        json txmetadataJSON = json::parse(txmetafile);
+        const auto& captures = txmetadataJSON["captures"];
+        size_t lastTxStart = 0;
+        for (const auto& capture : captures)
+        {
+            const std::string utcdatetime = capture.at("core:datetime");
+            struct timespec ts = utc_string_to_timespec(utcdatetime);
+            lime::Timespec timestamp(ts.tv_sec, ts.tv_nsec * 1.0e-9);
+            timestamp.SetTickRate(sampleRate);
+            uint64_t sample_start = capture.at("core:sample_start");
+            size_t samples_count = sample_start - lastTxStart;
+            lastTxStart = sample_start;
+            txcaptures.push_back({ timestamp, sample_start, samples_count });
+        }
+        int samplesRemaining = txSamplesCountTotal;
+        for (int i = txcaptures.size() - 1; i >= 0; --i)
+        {
+            int samples_count = samplesRemaining - txcaptures[i].sample_start;
+            txcaptures[i].samples_count = samples_count;
+            samplesRemaining -= samples_count;
+        }
     }
 
-    int64_t totalSamplesReceived = 0;
+    uint64_t totalSamplesReceived = 0;
 
     lime::FFT fft(channelCount, fftSize);
     std::vector<float> fftBins(fftSize);
@@ -412,12 +569,11 @@ int main(int argc, char** argv)
     if (!rxFilename.empty())
     {
         std::cout << "Rx data to file: "sv << rxFilename << std::endl;
-        rxFile.open(rxFilename, std::ofstream::out | std::ofstream::binary);
+        rxFile.open(rxFilename + ".sigmf-data", std::ofstream::out | std::ofstream::binary);
     }
 
     float peakAmplitude = 0;
     float peakFrequency = 0;
-    float sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
     if (sampleRate <= 0)
         sampleRate = 1; // sample rate read-back not available, assign default value
     float frequencyLO = 0;
@@ -429,10 +585,14 @@ int main(int argc, char** argv)
     FFTPlotter fftPlot(sampleRate, fftSize, persistPlotWindows);
 #endif
 
-    StreamMeta rxMeta{};
-    StreamMeta txMeta{};
-    txMeta.waitForTimestamp = true;
-    txMeta.timestamp = sampleRate / 100; // send tx samples 10ms after start
+    int tickRatio = streamCfg.timestampType == TimestampType::SAMPLE_TICKS ? 1 : 2;
+
+    StreamRxMeta rxMeta{};
+    StreamTxMeta txMeta{};
+    txMeta.flags = StreamTxMeta::EndOfBurst;
+
+    lime::Timespec ts(0, sampleRate / 100, tickRatio * sampleRate);
+    txMeta.timestamp = ts.GetTicks(); //sampleRate / 100; // send tx samples 10ms after start
 
 #ifdef USE_GNU_PLOT
     if (showFFT)
@@ -440,6 +600,19 @@ int main(int argc, char** argv)
     if (showConstellation)
         constellationPlot.Start();
 #endif
+
+    json rxmetadataJSON = { { "global",
+                                { { "core:datatype", "ci16_le" },
+                                    { "core:num_channels", channelCount },
+                                    { "core:sample_rate", sampleRate },
+                                    { "core:version", "0.0.1" },
+                                    { "core:recorder", "limeTRX" } } },
+        { "captures", json::array() },
+        { "annotations", json::array() } };
+
+    std::vector<CaptureChunk> rxcaptures;
+    rxcaptures.reserve(1024 * 1024);
+
     stream->StageStart();
     stream->Start();
 
@@ -447,56 +620,87 @@ int main(int argc, char** argv)
     auto t1 = startTime - std::chrono::seconds(2); // rewind t1 to do update on first loop
     auto t2 = t1;
 
-    while (!stopProgram)
+    std::thread txThread;
+    TransmitLoopArgs txArgs;
+    txArgs.stream = stream.get();
+    txArgs.samples = txData;
+    txArgs.samplesCount = txSamplesCountTotal;
+    txArgs.chunks = &txcaptures;
+    txArgs.terminate = &stopProgram;
+
+    if (tx && !repeater)
+        txThread = std::thread(TransmitLoop, &txArgs);
+
+    Timespec rxExpectedTs(-1, 0);
+
+    bool getActualStreamStartTime = syncPPS;
+
+    std::vector<complex16_t> interleavingBuffer;
+    if (!rxFilename.empty())
     {
-        if (workTime != 0 && (std::chrono::high_resolution_clock::now() - startTime) > std::chrono::milliseconds(workTime))
-            break;
+        interleavingBuffer.resize(fftSize * channelCount);
+    }
+
+    while (stopProgram.load() == false)
+    {
         if (samplesToCollect != 0 && totalSamplesReceived > samplesToCollect)
             break;
-
-        int toSend = txData.size() - txSent > fftSize ? fftSize : txData.size() - txSent;
-        if (tx && !repeater)
-        {
-            if (loopTx && toSend == 0)
-            {
-                txSent = 0;
-                toSend = txData.size() - txSent > fftSize ? fftSize : txData.size() - txSent;
-            }
-            if (toSend > 0)
-            {
-                const complex16_t* txSamples[16];
-                for (int i = 0; i < 16; ++i)
-                    txSamples[i] = &txData[txSent];
-                uint32_t samplesSent = stream->StreamTx(txSamples, toSend, &txMeta);
-                if (samplesSent > 0)
-                {
-                    txSent += samplesSent;
-                    txMeta.timestamp += samplesSent;
-                }
-            }
-        }
 
         complex16_t* rxSamples[16];
         for (int i = 0; i < 16; ++i)
             rxSamples[i] = rxData[i].data();
-        uint32_t samplesRead = stream->StreamRx(rxSamples, fftSize, &rxMeta);
+        uint32_t samplesRead = stream->Receive(rxSamples, fftSize, &rxMeta);
+        if (getActualStreamStartTime)
+        {
+            // stream start can wait varying amount of time for the PPS, set start time once the first data has been produced
+            startTime = std::chrono::high_resolution_clock::now();
+            getActualStreamStartTime = false;
+        }
+
+        if (workTime != 0 && (std::chrono::high_resolution_clock::now() - startTime) > std::chrono::milliseconds(workTime))
+            break;
+
         if (samplesRead == 0)
             continue;
 
         if (tx && repeater)
         {
-            txMeta.timestamp = rxMeta.timestamp + samplesRead + repeaterDelay;
-            txMeta.waitForTimestamp = true;
-            txMeta.flushPartialPacket = true;
-            stream->StreamTx(rxSamples, samplesRead, &txMeta);
+            txMeta.timestamp = rxMeta.timestamp;
+            Timespec txts = rxMeta.timestamp;
+            txts.AddTicks(tickRatio * repeaterDelay);
+            txts.AddTicks(tickRatio * samplesRead);
+            txMeta.timestamp = txts;
+            txMeta.hasTimestamp = true;
+            txMeta.flags = 0;
+            stream->Transmit(rxSamples, samplesRead, &txMeta);
         }
 
         // process samples
-        totalSamplesReceived += samplesRead;
         if (!rxFilename.empty())
         {
-            rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
+            double diff = (rxExpectedTs - rxMeta.timestamp).GetRealSeconds();
+            if (std::fabs(diff) > 1.0 / sampleRate)
+            {
+                rxcaptures.push_back({ rxMeta.timestamp, totalSamplesReceived, samplesRead });
+            }
+
+            if (channelCount == 1)
+            {
+                rxFile.write(reinterpret_cast<char*>(rxSamples[0]), samplesRead * sizeof(lime::complex16_t));
+            }
+            else
+            {
+                int destIndex = 0;
+                for (int s = 0; s < samplesRead; ++s)
+                {
+                    for (int c = 0; c < channelCount; ++c)
+                        interleavingBuffer[destIndex++] = rxSamples[c][s];
+                }
+                rxFile.write(reinterpret_cast<char*>(interleavingBuffer.data()), destIndex * sizeof(lime::complex16_t));
+            }
         }
+        rxExpectedTs = rxMeta.timestamp + Timespec(samplesRead / sampleRate);
+        totalSamplesReceived += samplesRead;
 
         t2 = std::chrono::high_resolution_clock::now();
         const bool doUpdate = t2 - t1 > std::chrono::milliseconds(500);
@@ -507,14 +711,14 @@ int main(int argc, char** argv)
         {
             if (showFFT)
             {
-                for (unsigned i = 0; i < fftSize; ++i)
+                for (int i = 0; i < fftSize; ++i)
                 {
                     samples[i] = complex32f_t(rxSamples[0][i].real() / 32768.0, rxSamples[0][i].imag() / 32768.0);
                 }
                 fftBins = lime::FFT::Calc(samples);
                 lime::FFT::ConvertToDBFS(fftBins);
 
-                for (unsigned int i = 0; i < fftSize; ++i)
+                for (int i = 0; i < fftSize; ++i)
                 {
                     // exclude DC from amplitude comparison, the 0 bin
                     if (fftBins[i] > peakAmplitude && i > 0)
@@ -545,6 +749,11 @@ int main(int argc, char** argv)
             constellationPlot.SubmitData(rxData[0]);
 #endif
     }
+    stopProgram.store(true);
+
+    if (tx && !repeater)
+        txThread.join();
+
 #ifdef USE_GNU_PLOT
     // some sleep for GNU plot data to flush, otherwise sometimes cout spams  gnuplot "invalid command"
     this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -554,5 +763,31 @@ int main(int argc, char** argv)
     DeviceRegistry::freeDevice(device);
 
     rxFile.close();
+
+    ofstream rxMetaFile;
+    rxMetaFile.open(rxFilename + ".sigmf-meta", std::ofstream::out);
+    auto& captures = rxmetadataJSON["captures"];
+    for (auto& chunk : rxcaptures)
+    {
+        struct timespec ts;
+        ts.tv_sec = chunk.timestamp.GetSeconds();
+        ts.tv_nsec = chunk.timestamp.GetFracSeconds() * 1e9;
+        if (streamCfg.timestampType == TimestampType::UNIX_EPOCH)
+        {
+            // add datetime only if using such timestamps
+            captures.push_back(
+                json{ { "core:sample_start", chunk.sample_start }, { "core:datetime", timespec_to_utc_string(ts) } });
+        }
+        else
+        {
+            captures.push_back(json{ { "core:sample_start", chunk.sample_start } });
+        }
+    }
+    rxMetaFile << rxmetadataJSON.dump();
+    rxMetaFile.close();
+
+    if (txData)
+        munmap(txData, txSamplesCountTotal);
+
     return 0;
 }

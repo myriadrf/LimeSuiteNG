@@ -4,12 +4,14 @@
 #include <cassert>
 #include <cstring>
 
+#include "limesuiteng/Timespec.h"
+
 namespace lime {
 
 class PacketMeta
 {
   public:
-    uint64_t timestamp{ 0 };
+    Timespec timestamp;
     bool useTimestamp{ 0 }; ///< Whether to use the timestamp or not.
     bool flush{ 0 }; ///< Whether to flush the whole packet early or not.
 };
@@ -19,12 +21,16 @@ class PacketMeta
  */
 class PacketData
 {
+  private:
+    PacketData() = delete;
+
   public:
     PacketData(uint32_t samplesCapacity, uint32_t channelCount, uint32_t sampleSize)
         : mCapacity(samplesCapacity)
         , frameSize(sampleSize)
         , mChannelCount(channelCount)
     {
+        assert(channelCount > 0);
         assert(channelCount <= MAX_CHANNEL_COUNT);
 
         for (uint32_t i = 0; i < mChannelCount; ++i)
@@ -173,6 +179,9 @@ class PacketData
 
 class StreamPacket
 {
+  private:
+    StreamPacket() = delete;
+
   public:
     StreamPacket(uint32_t samplesCapacity, uint32_t channelCount, uint32_t sampleSize)
         : samples(samplesCapacity, channelCount, sampleSize)
@@ -181,7 +190,7 @@ class StreamPacket
 
     void Reset()
     {
-        meta.timestamp = 0;
+        meta.timestamp = Timespec(0);
         samples.Reset();
     }
 

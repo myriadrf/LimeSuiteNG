@@ -58,6 +58,14 @@ class TRXLooper : public RFStream
         const StreamMeta* meta,
         std::chrono::microseconds timeout) override;
 
+    uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+
+    uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.
     void SetMessageLogCallback(SDRDevice::LogCallbackType callback) { mCallback_logMessage = callback; }
@@ -74,10 +82,10 @@ class TRXLooper : public RFStream
     struct TransferArgs {
         std::shared_ptr<IDMA> dma; ///< The DMA interface to use.
         std::vector<uint8_t*> buffers; ///< The memory buffers to use.
-        int32_t bufferSize; ///< The size of a single buffer.
-        int16_t packetSize; ///< The size of a single packet.
+        uint32_t bufferSize; ///< The size of a single buffer.
+        uint32_t samplesInPacket; ///< The amount of samples in a single packet.
+        uint16_t packetSize; ///< The size of a single packet.
         uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
-        int32_t samplesInPacket; ///< The amount of samples in a single packet.
     };
 
   private:
@@ -153,10 +161,16 @@ class TRXLooper : public RFStream
     Stream mRx;
     Stream mTx;
 
+    std::mutex startTimeMutex;
+    std::condition_variable startTimeIsSet;
+    int64_t startUnixTime;
+    bool startUnixTimeSet;
+    int ticksPerSample = 1;
+
     template<class T>
-    uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout);
     template<class T>
-    uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
 };
 
 } // namespace lime

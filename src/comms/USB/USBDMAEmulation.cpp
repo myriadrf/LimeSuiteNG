@@ -65,12 +65,9 @@ void USBDMAEmulation::AbortAllTransfers()
     while (!pendingXfers.empty())
     {
         AsyncXfer* async = pendingXfers.front();
+        assert(async);
         pendingXfers.pop();
         port->AbortXfer(async->xfer);
-        temp.push_back(async);
-    }
-    for (auto& async : temp)
-    {
         port->WaitForXfer(async->xfer, 1000);
         port->FinishDataXfer(async->xfer);
         transfers.push(async);
@@ -146,7 +143,8 @@ void USBDMAEmulation::UpdateProducerStates()
     while (!pendingXfers.empty())
     {
         AsyncXfer* async = pendingXfers.front();
-        int timeout_ms = 0; // just checking if the transfer is complete, not waiting.
+        assert(async);
+        int timeout_ms = 100; // just checking if the transfer is complete, not waiting.
         OpStatus status = port->WaitForXfer(async->xfer, timeout_ms);
         if (status != OpStatus::Success)
             break;
@@ -199,7 +197,9 @@ OpStatus USBDMAEmulation::Wait()
     if (pendingXfers.empty())
         return OpStatus::Success;
 
+    assert(!pendingXfers.empty());
     AsyncXfer* async = pendingXfers.front();
+    assert(async);
     return port->WaitForXfer(async->xfer, 1000);
 }
 

@@ -13,6 +13,8 @@ class SDRDevice;
 struct StreamConfig;
 struct StreamMeta;
 struct StreamStats;
+class StreamRxMeta;
+class StreamTxMeta;
 
 /// @brief Interface for interacting with RF Rx/Tx samples data streaming
 class LIME_API RFStream
@@ -96,6 +98,14 @@ class LIME_API RFStream
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
     virtual void StreamStatus(StreamStats* rx, StreamStats* tx) = 0;
+
+    virtual uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+    virtual uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+    virtual uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+
+    virtual uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+    virtual uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+    virtual uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
 };
 
 } // namespace lime
