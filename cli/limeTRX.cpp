@@ -337,6 +337,7 @@ int main(int argc, char** argv)
     args::ValueFlag<int>                txSamplesInPacketFlag(parser, "packets", "number of samples in Tx packet", {"txSamplesInPacket"}, 0, args::Options{});
     args::ValueFlag<int>                rxPacketsInBatchFlag(parser, "packets", "number of Rx packets in data transfer", {"rxPacketsInBatch"}, 0, args::Options{});
     args::ValueFlag<int>                txPacketsInBatchFlag(parser, "packets", "number of Tx packets in data transfer", {"txPacketsInBatch"}, 0, args::Options{});
+    args::ValueFlag<int>                fftSizeFlag(parser, "samplesCount", "FFT size in samples", {"fftSize"}, 16384, args::Options{});
     args::ValueFlag<std::string>        timestampFlag(parser, "", "Timestamp type: ticks, seconds, unix", {'t', "timestamp"}, "ticks", args::Options{});
 #ifdef USE_GNU_PLOT
     args::Flag                          constellationFlag(parser, "", "Display IQ constellation plot", {"constellation"});
@@ -494,7 +495,7 @@ int main(int argc, char** argv)
 
     signal(SIGINT, intHandler);
 
-    const int fftSize = 256;
+    const int fftSize = args::get(fftSizeFlag);
     std::vector<complex16_t> rxData[16];
     for (int i = 0; i < 16; ++i)
         rxData[i].resize(fftSize);
@@ -711,14 +712,14 @@ int main(int argc, char** argv)
         {
             if (showFFT)
             {
-                for (unsigned i = 0; i < fftSize; ++i)
+                for (int i = 0; i < fftSize; ++i)
                 {
                     m_fftCalcIn[i].r = rxSamples[0][i].real() / 32768.0;
                     m_fftCalcIn[i].i = rxSamples[0][i].imag() / 32768.0;
                 }
                 kiss_fft(
                     m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
-                for (unsigned int i = 0; i < fftSize; ++i)
+                for (int i = 0; i < fftSize; ++i)
                 {
                     float amplitude =
                         ((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize));
