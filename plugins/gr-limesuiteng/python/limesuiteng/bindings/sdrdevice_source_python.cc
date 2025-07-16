@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_source.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(f1c2f79ff8aac41a88f02a0942e46114)                     */
+/* BINDTOOL_HEADER_FILE_HASH(4c81bd2840513c317c4c495212015327)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -34,7 +34,7 @@ void bind_sdrdevice_source(py::module& m)
 
 
     py::class_<sdrdevice_source,
-               gr::sync_block,
+               // gr::sync_block,
                gr::block,
                gr::basic_block,
                std::shared_ptr<sdrdevice_source>>(
