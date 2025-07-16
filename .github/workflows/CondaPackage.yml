@@ -1,0 +1,50 @@
+name: Build Conda package
+
+on:
+  # push:
+  #   branches: [ "main" ]
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: windows-latest
+    steps: 
+      - uses: actions/checkout@v4
+      
+      - name: Set up and activate Conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        
+      - name: Verify conda environment
+        run: conda env list
+
+      - name: Install Conda package build tools
+        run: |
+          conda config --append channels conda-forge
+          conda install conda-build conda-forge-pinning
+
+      - name: Detect VS path and set up VS C/C++ environment
+        shell: cmd
+        run: |
+          for /f "delims=" %%i in ('vswhere -products * ^| findstr "installationPath: "') do set VS_INSTALL_DIR=%%i
+          set "VS_INSTALL_DIR=%VS_INSTALL_DIR:installationPath: =%"
+          call "%VS_INSTALL_DIR%\VC\Auxiliary\Build\vcvars64.bat"
+
+      - name: Building limesuiteng conda package
+        run: conda-build .conda\recipe\
+
+      - name: Detect full name of limesuiteng package
+        shell: cmd
+        run: |
+          set PKG_DIR="%CONDA%\envs\test\conda-bld\win-64"
+          for /f "delims=" %%i in ('dir %PKG_DIR% ^| findstr "limesuiteng"') do set TMP_PKG_NAME=%%i
+          set "TMP_PKG_NAME=%TMP_PKG_NAME:* print=print%"
+          echo PKG_NAME=%TMP_PKG_NAME%>>"%GITHUB_ENV%" 
+
+      - name: Install limesuiteng package localy
+        run: |
+          conda install ${{env.CONDA}}\envs\test\conda-bld\win-64\${{env.PKG_NAME}}
+
+      - name: Building gnuradio-limesuiteng plugin package
+        run: |
+          cd plugins\gr-limesuiteng
+          conda-build .conda\recipe\ -m %CONDA_PREFIX%\conda_build_config.yaml
