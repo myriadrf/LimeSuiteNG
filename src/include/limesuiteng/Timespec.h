@@ -26,12 +26,12 @@ class LIME_API Timespec
     double GetRealSeconds() const;
     void SetTickRate(double ticksPerSecond);
 
-    friend bool operator==(const Timespec& lhs, const Timespec& rhs);
-    friend bool operator!=(const Timespec& lhs, const Timespec& rhs);
-    friend bool operator<(const Timespec& lhs, const Timespec& rhs);
-    friend bool operator>(const Timespec& lhs, const Timespec& rhs);
-    friend Timespec operator+(Timespec lhs, const Timespec& rhs);
-    friend Timespec operator-(Timespec lhs, const Timespec& rhs);
+    friend bool LIME_API operator==(const Timespec& lhs, const Timespec& rhs);
+    friend bool LIME_API operator!=(const Timespec& lhs, const Timespec& rhs);
+    friend bool LIME_API operator<(const Timespec& lhs, const Timespec& rhs);
+    friend bool LIME_API operator>(const Timespec& lhs, const Timespec& rhs);
+    friend Timespec LIME_API operator+(Timespec lhs, const Timespec& rhs);
+    friend Timespec LIME_API operator-(Timespec lhs, const Timespec& rhs);
 
   private:
     static void normalize(Timespec& ts);

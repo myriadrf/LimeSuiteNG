@@ -1,5 +1,7 @@
 #include "limesuiteng/Timespec.h"
 
+#include <math.h>
+
 namespace lime {
 
 void Timespec::normalize(Timespec& ts)
@@ -101,7 +103,7 @@ void Timespec::SetTickRate(double tps)
 
 bool operator==(const Timespec& lhs, const Timespec& rhs)
 {
-    bool fracSecondsMatch = std::fabs(lhs.fracSeconds - rhs.fracSeconds) < 1.0e-9;
+    bool fracSecondsMatch = fabs(lhs.fracSeconds - rhs.fracSeconds) < 1.0e-9;
     return (lhs.seconds == rhs.seconds) && fracSecondsMatch;
 }
 
@@ -148,7 +150,7 @@ Timespec operator-(Timespec lhs, const Timespec& rhs)
 
 Timespec LIME_API abs(const Timespec& ts)
 {
-    Timespec a(std::abs(ts.GetSeconds()), std::fabs(ts.GetFracSeconds()));
+    Timespec a(::abs(ts.GetSeconds()), fabs(ts.GetFracSeconds()));
     return a;
 }
 

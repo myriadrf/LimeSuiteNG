@@ -19,7 +19,6 @@
 #include "DSP/FFT/FFT.h"
 #include <stdio.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <time.h>
 
 #include "nlohmann/json.hpp"
@@ -43,17 +42,22 @@ struct CaptureChunk {
 
 std::mutex globalGnuPlotMutex; // Seems multiple plot pipes can't be used concurrently
 
-static std::string timespec_to_utc_string(struct timespec& ts)
+static std::string timespec_to_utc_string(struct timespec* ts)
 {
     const int nanosecond_offset = 21;
     char buf[64];
     struct tm tm;
-    gmtime_r(&ts.tv_sec, &tm);
+#ifdef __unix__
+    gmtime_r(&ts->tv_sec, &tm);
+#else
+    gmtime_s(&tm, &ts->tv_sec);
+#endif
     strftime(buf, nanosecond_offset, "%Y-%m-%dT%H:%M:%S.", &tm);
-    sprintf(buf + nanosecond_offset - 1, "%09luZ", ts.tv_nsec);
+    sprintf(buf + nanosecond_offset - 1, "%09luZ", ts->tv_nsec);
     return std::string(buf);
 }
 
+/*
 static int64_t UTC_to_UnixTime(const struct tm& calendarTime)
 {
     struct tm datetime;
@@ -68,12 +72,12 @@ static int64_t UTC_to_UnixTime(const struct tm& calendarTime)
 
 static struct timespec utc_string_to_timespec(const std::string& str)
 {
-    uint year;
-    uint month;
-    uint day;
-    uint hour;
-    uint minute;
-    uint second;
+    uint32_t year;
+    uint32_t month;
+    uint32_t day;
+    uint32_t hour;
+    uint32_t minute;
+    uint32_t second;
     uint64_t nanoSecond;
 
     sscanf(str.c_str(), "%4u-%2u-%2uT%2u:%2u:%2u.%luZ", &year, &month, &day, &hour, &minute, &second, &nanoSecond);
@@ -93,6 +97,7 @@ static struct timespec utc_string_to_timespec(const std::string& str)
     ts.tv_nsec = nanoSecond;
     return ts;
 }
+*/
 
 std::atomic<bool> stopProgram(false);
 void intHandler(int dummy)
@@ -279,39 +284,65 @@ class ConstellationPlotter
 
 struct TransmitLoopArgs {
     RFStream* stream;
-    const complex16_t* samples;
-    size_t samplesCount;
-    const std::vector<CaptureChunk>* chunks;
+    std::ifstream* fileStream;
+    int channelCount;
     std::atomic<bool>* terminate;
+    bool loop;
 };
 
 static void TransmitLoop(TransmitLoopArgs* args)
 {
-    for (const CaptureChunk& chunk : *args->chunks)
+    std::ifstream* fin = args->fileStream;
+    assert(fin);
+
+    fin->seekg(0, fin->end);
+    int fileSize = fin->tellg();
+    fin->seekg(0, fin->beg);
+
+    const int64_t txSamplesCountTotal = fileSize / sizeof(complex16_t) / args->channelCount;
+
+    cerr << "Tx file size : "sv << fileSize << " bytes."sv << endl;
+
+    const int samplesBatchSize = 256 * 32;
+    complex16_t* txSamples[16];
+    std::vector<complex16_t> channelSamples[16];
+    for (int i = 0; i < args->channelCount; ++i)
     {
-        if (args->terminate->load(std::memory_order_relaxed) == true)
-            break;
-        const complex16_t* txSamples[16];
-        for (int i = 0; i < 16; ++i)
-            txSamples[i] = &args->samples[chunk.sample_start];
-        StreamTxMeta txMeta{};
-        txMeta.flags = StreamTxMeta::EndOfBurst;
-        txMeta.timestamp = chunk.timestamp;
-        txMeta.hasTimestamp = true;
-        int samplesRemaining = chunk.samples_count;
+        channelSamples[i].resize(samplesBatchSize);
+        txSamples[i] = channelSamples[i].data();
+    }
+
+    StreamTxMeta txMeta{};
+    txMeta.flags = StreamTxMeta::EndOfBurst;
+    txMeta.timestamp = 0;
+    txMeta.hasTimestamp = false; // transmit immediately
+    do
+    {
+        int samplesRemaining = txSamplesCountTotal;
         while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
         {
-            const int mtu = 256 * 32;
-            int samplesToSend = samplesRemaining > mtu ? mtu : samplesRemaining;
+            int samplesToSend = samplesRemaining > samplesBatchSize ? samplesBatchSize : samplesRemaining;
+            if (args->channelCount == 1)
+            {
+                fin->read(reinterpret_cast<char*>(txSamples[0]), samplesToSend * sizeof(complex16_t));
+            }
+            else
+            {
+                complex16_t interleavedBuffer[samplesBatchSize];
+                fin->read(reinterpret_cast<char*>(interleavedBuffer), args->channelCount * samplesToSend * sizeof(complex16_t));
+                int srcIndex = 0;
+                for (int s = 0; s < samplesToSend; ++s)
+                {
+                    for (int c = 0; c < args->channelCount; ++c)
+                        txSamples[c][s] = interleavedBuffer[srcIndex++];
+                }
+            }
             int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
 
             txMeta.timestamp.AddTicks(samplesSent);
-            for (int i = 0; i < 16; ++i)
-                txSamples[i] += samplesSent;
-
             samplesRemaining -= samplesSent;
         }
-    }
+    } while (args->loop && args->terminate->load(std::memory_order_relaxed) == false);
 }
 
 int main(int argc, char** argv)
@@ -366,7 +397,6 @@ int main(int argc, char** argv)
 #ifdef USE_GNU_PLOT
     const bool showConstellation = constellationFlag;
 #endif
-    const bool loopTx = looptxFlag;
     const uint64_t samplesToCollect = args::get(samplesCountFlag);
     const int64_t workTime = args::get(timeFlag);
     const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
@@ -394,6 +424,17 @@ int main(int argc, char** argv)
         {
             cerr << "Invalid linkFormat "sv << val << std::endl;
             return EXIT_FAILURE;
+        }
+    }
+
+    std::ifstream txFile;
+    if (tx && !txFilename.empty())
+    {
+        txFile.open(txFilename, std::ifstream::in | std::ifstream::binary);
+        if (!txFile.is_open())
+        {
+            cerr << "Failed to open file: "sv << txFilename << endl;
+            return -1;
         }
     }
 
@@ -500,66 +541,6 @@ int main(int argc, char** argv)
     for (int i = 0; i < 16; ++i)
         rxData[i].resize(fftSize);
 
-    complex16_t* txData = nullptr;
-
-    size_t txSamplesCountTotal = 0;
-    std::vector<CaptureChunk> txcaptures;
-    if (tx && !txFilename.empty())
-    {
-        int txfd = 0;
-        txfd = open((txFilename + ".sigmf-data").c_str(), O_RDONLY);
-        if (!txfd)
-        {
-            cerr << "Failed to open file: "sv << txFilename << endl;
-            return -1;
-        }
-        auto cnt = lseek(txfd, 0, SEEK_END);
-        txSamplesCountTotal = cnt / sizeof(complex16_t);
-        lseek(txfd, 0, SEEK_SET);
-
-        cerr << "File size : "sv << cnt << " bytes."sv << endl;
-        txData = reinterpret_cast<complex16_t*>(mmap(0, cnt, PROT_READ, MAP_PRIVATE, txfd, 0));
-        if (!txData)
-        {
-            cerr << "Failed to mmap file: "sv << txFilename << endl;
-            return -1;
-        }
-        close(txfd);
-
-        std::ifstream inputFile;
-        inputFile.open(txFilename + ".sigmf-meta", std::ifstream::in | std::ifstream::binary);
-        if (!inputFile)
-        {
-            cerr << "Failed to open file: "sv << txFilename << endl;
-            return -1;
-        }
-
-        ifstream txmetafile(txFilename + ".sigmf-meta");
-        json txmetadataJSON = json::parse(txmetafile);
-        const auto& captures = txmetadataJSON["captures"];
-        size_t lastTxStart = 0;
-        for (const auto& capture : captures)
-        {
-            const std::string utcdatetime = capture.at("core:datetime");
-            struct timespec ts = utc_string_to_timespec(utcdatetime);
-            lime::Timespec timestamp(ts.tv_sec, ts.tv_nsec * 1.0e-9);
-            timestamp.SetTickRate(sampleRate);
-            uint64_t sample_start = capture.at("core:sample_start");
-            size_t samples_count = sample_start - lastTxStart;
-            lastTxStart = sample_start;
-            txcaptures.push_back({ timestamp, sample_start, samples_count });
-        }
-        int samplesRemaining = txSamplesCountTotal;
-        for (int i = txcaptures.size() - 1; i >= 0; --i)
-        {
-            int samples_count = samplesRemaining - txcaptures[i].sample_start;
-            txcaptures[i].samples_count = samples_count;
-            samplesRemaining -= samples_count;
-        }
-    }
-
-    uint64_t totalSamplesReceived = 0;
-
     lime::FFT fft(channelCount, fftSize);
     std::vector<float> fftBins(fftSize);
     fftBins[0] = 0;
@@ -622,11 +603,13 @@ int main(int argc, char** argv)
 
     std::thread txThread;
     TransmitLoopArgs txArgs;
+    txArgs.fileStream = &txFile;
+    txArgs.channelCount = channelCount;
     txArgs.stream = stream.get();
-    txArgs.samples = txData;
-    txArgs.samplesCount = txSamplesCountTotal;
-    txArgs.chunks = &txcaptures;
     txArgs.terminate = &stopProgram;
+    txArgs.loop = looptxFlag;
+
+    uint64_t totalSamplesReceived = 0;
 
     if (tx && !repeater)
         txThread = std::thread(TransmitLoop, &txArgs);
@@ -691,7 +674,7 @@ int main(int argc, char** argv)
             else
             {
                 int destIndex = 0;
-                for (int s = 0; s < samplesRead; ++s)
+                for (uint32_t s = 0; s < samplesRead; ++s)
                 {
                     for (int c = 0; c < channelCount; ++c)
                         interleavingBuffer[destIndex++] = rxSamples[c][s];
@@ -764,30 +747,30 @@ int main(int argc, char** argv)
 
     rxFile.close();
 
-    ofstream rxMetaFile;
-    rxMetaFile.open(rxFilename + ".sigmf-meta", std::ofstream::out);
-    auto& captures = rxmetadataJSON["captures"];
-    for (auto& chunk : rxcaptures)
+    if (!rxFilename.empty())
     {
-        struct timespec ts;
-        ts.tv_sec = chunk.timestamp.GetSeconds();
-        ts.tv_nsec = chunk.timestamp.GetFracSeconds() * 1e9;
-        if (streamCfg.timestampType == TimestampType::UNIX_EPOCH)
+        ofstream rxMetaFile;
+        rxMetaFile.open(rxFilename + ".sigmf-meta", std::ofstream::out);
+        auto& captures = rxmetadataJSON["captures"];
+        for (auto& chunk : rxcaptures)
         {
-            // add datetime only if using such timestamps
-            captures.push_back(
-                json{ { "core:sample_start", chunk.sample_start }, { "core:datetime", timespec_to_utc_string(ts) } });
+            struct timespec ts;
+            ts.tv_sec = chunk.timestamp.GetSeconds();
+            ts.tv_nsec = chunk.timestamp.GetFracSeconds() * 1e9;
+            if (streamCfg.timestampType == TimestampType::UNIX_EPOCH)
+            {
+                // add datetime only if using such timestamps
+                captures.push_back(
+                    json{ { "core:sample_start", chunk.sample_start }, { "core:datetime", timespec_to_utc_string(&ts) } });
+            }
+            else
+            {
+                captures.push_back(json{ { "core:sample_start", chunk.sample_start } });
+            }
         }
-        else
-        {
-            captures.push_back(json{ { "core:sample_start", chunk.sample_start } });
-        }
+        rxMetaFile << rxmetadataJSON.dump();
+        rxMetaFile.close();
     }
-    rxMetaFile << rxmetadataJSON.dump();
-    rxMetaFile.close();
-
-    if (txData)
-        munmap(txData, txSamplesCountTotal);
 
     return 0;
 }
