@@ -47,6 +47,20 @@ jobs:
         run: |
           conda install ${{env.CONDA}}\envs\test\conda-bld\win-64\${{env.PKG_NAME}}
 
+      - name: Validate package installation
+        run: |
+          conda list limesuiteng
+
+      - name: Validate limesuite header folder location
+        shell: cmd
+        run: |
+          dir  %CONDA%\envs\test\Library\include
+
+      - name: Validate limesuite header folder files
+        shell: cmd
+        run: |
+          dir %CONDA%\envs\test\Library\include\limesuiteng      
+
       - name: Building gnuradio-limesuiteng conda package
         run: |
           cd plugins\gr-limesuiteng
