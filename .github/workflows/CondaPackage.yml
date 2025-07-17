@@ -40,7 +40,7 @@ jobs:
         run: |
           set PKG_DIR="%CONDA%\envs\test\conda-bld\win-64"
           for /f "delims=" %%i in ('dir %PKG_DIR% ^| findstr "limesuiteng"') do set TMP_PKG_NAME=%%i
-          set "TMP_PKG_NAME=%TMP_PKG_NAME:* print=print%"
+          set "TMP_PKG_NAME=%TMP_PKG_NAME:*limesuiteng=limesuiteng%"
           echo PKG_NAME=%TMP_PKG_NAME%>>"%GITHUB_ENV%" 
 
       - name: Install limesuiteng package localy
