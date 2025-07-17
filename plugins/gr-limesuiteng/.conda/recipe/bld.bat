@@ -13,7 +13,7 @@ cmake -G "Ninja" ^
     -DGR_PYTHON_DIR="%SP_DIR%" ^
     -DENABLE_DOXYGEN=OFF ^
     -DENABLE_TESTING=ON ^
-    ..
+    ../plugins/gr-limesuiteng
 if errorlevel 1 exit 1
 
 :: build
