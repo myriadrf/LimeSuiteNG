@@ -19,7 +19,7 @@ source:
   path: "../.."  # [not os.environ.get("CI")]
   git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}  # [os.environ.get("CI")]
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
-  git_rev: docs
+  git_rev: docs-upgrade
 
 build:
   number: 0
