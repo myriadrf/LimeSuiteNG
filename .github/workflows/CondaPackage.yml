@@ -11,7 +11,7 @@ jobs:
     steps: 
       - uses: actions/checkout@v4
         with:
-          ref: docs          # Repo branch. Change this in the future
+          ref: docs-upgrade          # Repo branch. Change this in the future
       
       - name: Set up and activate Conda environment
         uses: conda-incubator/setup-miniconda@v3
