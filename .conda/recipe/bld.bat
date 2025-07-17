@@ -14,14 +14,13 @@ cmake -G "Ninja" ^
     -DENABLE_DOXYGEN=OFF ^
     -DENABLE_TESTING=ON ^
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
-    -DINSTALL_DEVELOPMENT=ON
     ..
 if errorlevel 1 exit 1
 
 :: build
-cmake --build . --config Release
+cmake --build .
 if errorlevel 1 exit 1
 
 :: install
-cmake --install . --config Release
+cmake --install .
 if errorlevel 1 exit 1
