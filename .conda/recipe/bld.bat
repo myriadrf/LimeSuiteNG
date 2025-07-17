@@ -14,6 +14,7 @@ cmake -G "Ninja" ^
     -DENABLE_DOXYGEN=OFF ^
     -DENABLE_TESTING=ON ^
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
+    -DINSTALL_DEVELOPMENT=ON
     ..
 if errorlevel 1 exit 1
 
