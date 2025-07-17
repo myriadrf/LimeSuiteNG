@@ -22,7 +22,7 @@ jobs:
       - name: Install Conda package build tools
         run: |
           conda config --append channels conda-forge
-          conda install conda-build conda-forge-pinning
+          conda install conda-build conda-forge-pinning numpy=1.26.4
 
       - name: Detect VS path and set up VS C/C++ environment
         shell: cmd
