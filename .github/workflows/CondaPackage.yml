@@ -25,10 +25,7 @@ jobs:
       - name: Verify conda environment
         run: conda env list
 
-      - name: Check channels list
-        run: conda config --show channels
-
-      - name: Install Conda package build tools
+      - name: Install Conda build tools package
         run: |
           conda install conda-build conda-forge-pinning
 
