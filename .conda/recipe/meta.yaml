@@ -73,6 +73,12 @@ test:
     # verify that the python module imports
 
 about:
+  home: https://github.com/myriadrf/LimeSuiteNG
+  license: Apache-2.0 license
+  license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+  summary: Lime Suite NG is a new generation software suite designed for working with LimeSDR family devices.
+  dev_url: https://github.com/myriadrf/LimeSuiteNG
+  doc_url: https://limesuiteng.myriadrf.org/
   # For licenses, use the SPDX identifier, e.g: "GPL-2.0-only" instead of
   # "GNU General Public License version 2.0". See https://spdx.org/licenses/.
   # Include the license text by using the license_file entry set to the path
