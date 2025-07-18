@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      CENV: LimeSuiteNG-Pkg  #  Conda env name
     steps: 
       - uses: actions/checkout@v4
         with:
@@ -15,14 +17,20 @@ jobs:
       
       - name: Set up and activate Conda environment
         uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: ${{env.CENV}}
+          channels: conda-forge
+          python-version: 3.12
         
       - name: Verify conda environment
         run: conda env list
 
+      - name: Check channels list
+        run: conda config --show channels
+
       - name: Install Conda package build tools
         run: |
-          conda config --append channels conda-forge
-          conda install conda-build conda-forge-pinning numpy=1.26.4
+          conda install conda-build conda-forge-pinning
 
       - name: Detect VS path and set up VS C/C++ environment
         shell: cmd
@@ -38,28 +46,14 @@ jobs:
       - name: Detect full name of built limesuiteng package
         shell: cmd
         run: |
-          set PKG_DIR="%CONDA%\envs\test\conda-bld\win-64"
+          set PKG_DIR="%CONDA%\envs\%CENV%\conda-bld\win-64"
           for /f "delims=" %%i in ('dir %PKG_DIR% ^| findstr "limesuiteng"') do set TMP_PKG_NAME=%%i
           set "TMP_PKG_NAME=%TMP_PKG_NAME:*limesuiteng=limesuiteng%"
           echo PKG_NAME=%TMP_PKG_NAME%>>"%GITHUB_ENV%" 
 
       - name: Install limesuiteng package localy
         run: |
-          conda install ${{env.CONDA}}\envs\test\conda-bld\win-64\${{env.PKG_NAME}}
-
-      - name: Validate package installation
-        run: |
-          conda list limesuiteng
-
-      - name: Validate limesuite header folder location
-        shell: cmd
-        run: |
-          dir  %CONDA%\envs\test\Library\include
-
-      - name: Validate limesuite header folder files
-        shell: cmd
-        run: |
-          dir %CONDA%\envs\test\Library\include\limesuiteng      
+          conda install ${{env.CONDA}}\envs\${{env.CENV}}\conda-bld\win-64\${{env.PKG_NAME}}
 
       - name: Building gnuradio-limesuiteng conda package
         run: |
