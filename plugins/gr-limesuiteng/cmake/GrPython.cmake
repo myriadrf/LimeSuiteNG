@@ -99,7 +99,6 @@ execute_process(
 set(Python_NumPy_INCLUDE_DIR
     ${NUMPY_INCLUDE_DIR}
     CACHE FILEPATH "NumPy include directory")
-message(STATUS "Python numpy dir - ${Python_NumPy_INCLUDE_DIR}")
 mark_as_advanced(Python_NumPy_INCLUDE_DIR)
 # output used by modern FindPython, duplicate the behavior
 set(Python_NumPy_INCLUDE_DIRS ${Python_NumPy_INCLUDE_DIR})
