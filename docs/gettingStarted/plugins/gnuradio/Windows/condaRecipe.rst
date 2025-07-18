@@ -3,7 +3,7 @@ Build using conda recipe
 
 .. important::
 
-   Compared to standard build procedure, building plugin package using conda-build tool takes more time and resources. For development purposes it is advised to build from source using cmake. See :ref:`windows-plugin-build-ref`.
+   Compared to standard build procedure, building plugin package using conda-build tool takes more time (10-15 min.) and resources. For development purposes it is advised to build from source using cmake. See :ref:`windows-plugin-build-ref`.
 
 .. hint::
    
@@ -17,7 +17,7 @@ To start the build process execute the following commands:
 
    conda activate <custom env name>
    cd <repo dir>\plugins\gr-limesuiteng
-   conda-build .conda\recipe\ -m %CONDA_PREFIX%\conda_build_config.yaml
+   conda-build .conda\local_recipe\ -m %CONDA_PREFIX%\conda_build_config.yaml
 
 Conda will start building package. After successfull build conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``package_name-version-build_number.conda``. To use built gnuradio-limesuiteng plugin, package must be installed using the following command:
 
