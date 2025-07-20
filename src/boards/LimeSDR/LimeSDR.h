@@ -11,14 +11,13 @@
 namespace lime {
 
 class IUSB;
-class IComms;
 
 /** @brief Class for managing the LimeSDR-USB device. */
 class LimeSDR : public LMS7002M_SDRDevice
 {
   public:
-    LimeSDR(std::shared_ptr<IComms> spiLMS,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeSDR(std::shared_ptr<ISPI> spiLMS,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR();
@@ -69,8 +68,8 @@ class LimeSDR : public LMS7002M_SDRDevice
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<IComms> mlms7002mPort;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::shared_ptr<ISPI> mlms7002mPort;
+    std::shared_ptr<ISPI> mfpgaPort;
     std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };

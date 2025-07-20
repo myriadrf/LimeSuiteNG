@@ -5,7 +5,7 @@
 */
 
 #include "ADF4002.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 
 #include <cmath>
 #include <vector>
@@ -41,7 +41,7 @@ int ADF4002::UploadConfig()
         dataWr.push_back(static_cast<uint32_t>(data[i]) << 16 | static_cast<uint32_t>(data[i + 1]) << 8 | data[i + 2]);
 
     // ADF4002 needs to be written 4 values of 24 bits
-    mComms->SPI(dataWr.data(), nullptr, 4);
+    mComms->Transact(dataWr.data(), nullptr, 4);
     return 0;
 }
 

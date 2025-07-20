@@ -11,12 +11,12 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
 
-#include "comms/IComms.h"
 #include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "comms/ISerialPort.h"
-#include "comms/SPI_utilities.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "comms/SPI/ISPI.h"
 #include "comms/USB/IUSB.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/USBDMAEmulation.h"
@@ -163,8 +163,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param streamPort The communications port to send and receive sample data.
 /// @param commsPort The communications port for direct communications with the device.
-LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
-    std::shared_ptr<IComms> spiFPGA,
+LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
@@ -176,7 +176,7 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     SDRDescriptor& descriptor = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, descriptor);
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
@@ -347,9 +347,9 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     switch (chipSelect)
     {
     case limesdrmini::SPI_LMS7002M:
-        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+        return mlms7002mPort->Transact(MOSI, MISO, count);
     case limesdrmini::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     default:
         return ReportError(OpStatus::InvalidValue, "LimeSDR_Mini SPI invalid SPI chip select"s);
     }
@@ -456,12 +456,12 @@ OpStatus LimeSDR_Mini::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 
 OpStatus LimeSDR_Mini::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR_Mini::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR_Mini::UploadMemory(
@@ -490,7 +490,7 @@ OpStatus LimeSDR_Mini::UploadMemory(
         if (gw.version != 0)
         {
             // boot from flash
-            mfpgaPort->ProgramWrite(nullptr, 0, 2, static_cast<int>(target), nullptr);
+            LMS64CProtocol::FirmwareWrite(*mSerialPort, nullptr, 0, 2, target, nullptr, 0);
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         }
 
@@ -510,12 +510,12 @@ OpStatus LimeSDR_Mini::UploadMemory(
         length = v1_buffer.size();
     }
 
-    OpStatus status = mfpgaPort->ProgramWrite(data_src, length, progMode, static_cast<int>(target), callback);
+    OpStatus status = LMS64CProtocol::FirmwareWrite(*mSerialPort, data_src, length, progMode, target, callback, 0);
     if (status != OpStatus::Success)
         return status;
 
     progMode = 2; // boot from FLASH
-    return mfpgaPort->ProgramWrite(nullptr, 0, progMode, static_cast<int>(target), nullptr);
+    return LMS64CProtocol::FirmwareWrite(*mSerialPort, nullptr, 0, progMode, target, nullptr, 0);
 }
 
 void LimeSDR_Mini::SetSerialNumber(const std::string& number)

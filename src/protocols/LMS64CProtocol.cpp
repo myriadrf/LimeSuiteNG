@@ -204,7 +204,7 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t lengt
     return RunControlCommand(port, data, data, length, timeout_ms);
 }
 
-static OpStatus SPI16(ISerialPort& port,
+OpStatus SPI16(ISerialPort& port,
     uint8_t chipSelect,
     Command writeCmd,
     const uint32_t* MOSI,

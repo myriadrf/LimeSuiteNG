@@ -1,4 +1,4 @@
-#include "USB_CSR_Pipe_SDR.h"
+#include "FX3_SerialPort.h"
 
 #include <cstdint>
 #include <set>
@@ -23,13 +23,12 @@ static const std::set<LMS64CProtocol::Command> commandsToBulkTransfer = {
     LMS64CProtocol::Command::GPIO_RD,
 };
 
-USB_CSR_Pipe_SDR::USB_CSR_Pipe_SDR(FX3& port)
-    : USB_CSR_Pipe()
-    , port(port)
+FX3_SerialPort::FX3_SerialPort(FX3& port)
+    : port(port)
 {
 }
 
-int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
+int FX3_SerialPort::Write(const uint8_t* data, size_t length, int timeout_ms)
 {
     const LMS64CPacket* pkt = reinterpret_cast<const LMS64CPacket*>(data);
 
@@ -53,7 +52,7 @@ int USB_CSR_Pipe_SDR::Write(const uint8_t* data, size_t length, int timeout_ms)
         timeout_ms);
 }
 
-int USB_CSR_Pipe_SDR::Read(uint8_t* data, size_t length, int timeout_ms)
+int FX3_SerialPort::Read(uint8_t* data, size_t length, int timeout_ms)
 {
     const LMS64CPacket* pkt = reinterpret_cast<const LMS64CPacket*>(data);
 
@@ -69,12 +68,12 @@ int USB_CSR_Pipe_SDR::Read(uint8_t* data, size_t length, int timeout_ms)
     return port.ControlTransfer(FX3::CTR_READ_REQUEST_VALUE, CTR_R_REQCODE, CTR_R_VALUE, CTR_R_INDEX, data, length, timeout_ms);
 }
 
-OpStatus USB_CSR_Pipe_SDR::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
+OpStatus FX3_SerialPort::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
 {
     return RunControlCommand(data, data, length, timeout_ms);
 }
 
-OpStatus USB_CSR_Pipe_SDR::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
+OpStatus FX3_SerialPort::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
 {
     size_t len = Write(request, length, timeout_ms);
 

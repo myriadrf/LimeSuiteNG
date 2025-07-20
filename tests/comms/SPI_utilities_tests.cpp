@@ -1,6 +1,6 @@
 #include "SPI_utilities_tests.h"
 
-#include "comms/SPI_utilities.h"
+#include "comms/SPI/SPI_utilities.h"
 
 #include "limesuiteng/Register.h"
 
@@ -8,12 +8,7 @@ using namespace lime;
 
 namespace lime::testing {
 
-OpStatus SPI_emulation::SPI(const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
-{
-    return SPI(0, MOSI, MISO, count);
-}
-
-OpStatus SPI_emulation::SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
+OpStatus SPI_emulation::Transact(const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
     if (!MOSI)
         return OpStatus::Error;

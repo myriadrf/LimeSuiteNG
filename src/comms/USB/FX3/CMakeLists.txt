@@ -44,4 +44,4 @@ if(NOT LIMESUITENG_USB_FX3)
     return()
 endif()
 
-target_sources(limesuiteng PRIVATE FX3.cpp)
+target_sources(limesuiteng PRIVATE FX3.cpp FX3_SerialPort.cpp)

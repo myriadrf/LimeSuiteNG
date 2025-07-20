@@ -17,7 +17,7 @@ class FPGA;
 struct RFSOCDescriptor;
 
 /// @brief Base class for device with one or more LMS7002M chips and a FPGA.
-class LIME_API LMS7002M_SDRDevice : public SDRDevice
+class LMS7002M_SDRDevice : public SDRDevice
 {
   public:
     LMS7002M_SDRDevice();

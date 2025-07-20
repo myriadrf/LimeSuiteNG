@@ -14,8 +14,7 @@ endif()
 ########################################################################
 ## Add to library
 ########################################################################
-target_sources(
-    limesuiteng PRIVATE LMS64C_FPGA_Over_PCIe.cpp LMS64C_LMS7002M_Over_PCIe.cpp LimePCIe.cpp LimePCIeDMA.cpp PCIE_CSR_Pipe.cpp)
+target_sources(limesuiteng PRIVATE LimePCIe.cpp LimePCIeDMA.cpp PCIE_CSR_Pipe.cpp)
 
 # to allow including header from drivers
 target_include_directories(limesuiteng PRIVATE ${limesuiteng_SOURCE_DIR})
