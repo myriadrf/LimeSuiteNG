@@ -27,7 +27,7 @@
 
 #include "INI.h"
 #include "limesuiteng/types.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002MCSR.h"
@@ -1329,7 +1329,7 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
             return OpStatus::Success;
         return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
-    controlPort->SPI(data.data(), nullptr, data.size());
+    controlPort->Transact(data.data(), nullptr, data.size());
     return OpStatus::Success;
 }
 
@@ -1347,7 +1347,7 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
         dataWr[i] = spiAddr[i];
     }
 
-    controlPort->SPI(dataWr.data(), dataRd.data(), cnt);
+    controlPort->Transact(dataWr.data(), dataRd.data(), cnt);
 
     int mac = mRegistersMap->GetValue(0, MAC.address) & 0x0003;
 
@@ -1633,7 +1633,7 @@ bool LMS7002M::IsSynced()
     std::vector<uint32_t> dataRd(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataWr[i] = (static_cast<uint32_t>(addrToRead[i]) << 16);
-    controlPort->SPI(dataWr.data(), dataRd.data(), dataWr.size());
+    controlPort->Transact(dataWr.data(), dataRd.data(), dataWr.size());
 
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
@@ -1669,7 +1669,7 @@ bool LMS7002M::IsSynced()
     dataRd.resize(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataWr[i] = (static_cast<uint32_t>(addrToRead[i]) << 16);
-    controlPort->SPI(dataWr.data(), dataRd.data(), dataWr.size());
+    controlPort->Transact(dataWr.data(), dataRd.data(), dataWr.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
     SetActiveChannel(Channel::ChB);

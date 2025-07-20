@@ -1,22 +1,23 @@
-#ifndef LIME_USB_CSR_Pipe_SDR_H
-#define LIME_USB_CSR_Pipe_SDR_H
+#ifndef LIME_FX3_SERIALPORT_H
+#define LIME_FX3_SERIALPORT_H
 
-#include "comms/USB/USB_CSR_Pipe.h"
-#include "comms/USB/FX3/FX3.h"
+#include "comms/ISerialPort.h"
 
 #include <cstdint>
 
 namespace lime {
 
+class FX3;
+
 /** @brief Class for interfacing with Control/Status registers (CSR) of LimeSDR-USB. */
-class USB_CSR_Pipe_SDR : public USB_CSR_Pipe
+class FX3_SerialPort : public ISerialPort
 {
   public:
     /**
-      @brief Constructs a new USB_CSR_Pipe_SDR object
+      @brief Constructs a new FX3_SerialPort object
       @param port The FX3 communications port to use.
      */
-    explicit USB_CSR_Pipe_SDR(FX3& port);
+    explicit FX3_SerialPort(FX3& port);
 
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
@@ -29,4 +30,4 @@ class USB_CSR_Pipe_SDR : public USB_CSR_Pipe
 
 } // namespace lime
 
-#endif // LIME_USB_CSR_Pipe_SDR_H
+#endif // LIME_FX3_SERIALPORT_H

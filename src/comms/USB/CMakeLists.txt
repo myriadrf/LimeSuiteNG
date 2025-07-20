@@ -17,5 +17,4 @@ endif(UNIX OR MINGW)
 add_subdirectory(FT601)
 add_subdirectory(FX3)
 
-target_sources(
-    limesuiteng PRIVATE LMS64C_FPGA_Over_USB.cpp LMS64C_LMS7002M_Over_USB.cpp LMS64C_ADF4002_Over_USB.cpp USBDMAEmulation.cpp)
+target_sources(limesuiteng PRIVATE USBDMAEmulation.cpp)

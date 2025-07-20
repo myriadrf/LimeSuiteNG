@@ -6,12 +6,12 @@
 #include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "comms/IComms.h"
 #include "comms/ISerialPort.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/IUSB.h"
 #include "comms/USB/USBDMAEmulation.h"
-#include "comms/SPI_utilities.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "comms/SPI/ISPI.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
 
@@ -95,8 +95,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param streamPort The communications port to send and receive sample data.
 /// @param commsPort The communications port for direct communications with the device.
-LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
-    std::shared_ptr<IComms> spiFPGA,
+LimeNET_Micro::LimeNET_Micro(std::shared_ptr<ISPI> spiLMS,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
@@ -108,7 +108,7 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
     SDRDescriptor& descriptor = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, descriptor);
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
@@ -253,9 +253,9 @@ OpStatus LimeNET_Micro::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t*
     switch (chipSelect)
     {
     case limenetmicro::SPI_LMS7002M:
-        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+        return mlms7002mPort->Transact(MOSI, MISO, count);
     case limenetmicro::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     default:
         throw std::logic_error("LimeNET_Micro SPI invalid SPI chip select"s);
     }
@@ -346,12 +346,12 @@ OpStatus LimeNET_Micro::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 
 OpStatus LimeNET_Micro::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeNET_Micro::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
 }
 
 void LimeNET_Micro::SetSerialNumber(const std::string& number)

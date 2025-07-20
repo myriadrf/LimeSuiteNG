@@ -41,4 +41,4 @@ if(NOT LIMESUITENG_USB_FTDI)
     return()
 endif()
 
-target_sources(limesuiteng PRIVATE FT601.cpp)
+target_sources(limesuiteng PRIVATE FT601.cpp FTDI_SerialPort.cpp)

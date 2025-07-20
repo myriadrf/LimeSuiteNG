@@ -1,6 +1,6 @@
 #include "FPGA_Mini.h"
 #include "limesuiteng/Logger.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include <ciso646>
 #include <vector>
 #include <map>
@@ -89,10 +89,10 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
 
     //backup registers
     dataWr[0] = 0x0020;
-    lms7002mPort->SPI(dataWr.data(), &reg20, 1);
+    lms7002mPort->Transact(dataWr.data(), &reg20, 1);
     dataWr[0] = (1 << 31) | (0x0020u << 16) | 0xFFFD; //msbit 1=SPI write
-    lms7002mPort->SPI(dataWr.data(), nullptr, 1);
-    lms7002mPort->SPI(spiAddr.data(), dataRd.data(), bakRegCnt);
+    lms7002mPort->Transact(dataWr.data(), nullptr, 1);
+    lms7002mPort->Transact(spiAddr.data(), dataRd.data(), bakRegCnt);
 
     { //Config Rx
         const std::vector<uint32_t> spiData = {
@@ -105,7 +105,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
             dataWr[i] = (1 << 31) | (spiAddr[i] << 16) | spiData[i]; //msbit 1=SPI write
         }
 
-        lms7002mPort->SPI(dataWr.data(), nullptr, setRegCnt);
+        lms7002mPort->Transact(dataWr.data(), nullptr, setRegCnt);
     }
 
     bool rxPhaseSearchSuccess = false;
@@ -141,7 +141,7 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
             dataWr[i] = (1 << 31) | (spiAddr[i] << 16) | spiData[i]; //msbit 1=SPI write
         }
 
-        lms7002mPort->SPI(dataWr.data(), nullptr, setRegCnt);
+        lms7002mPort->Transact(dataWr.data(), nullptr, setRegCnt);
 
         for (int i = 0; i < pllRetryConfigCount; i++)
         {
@@ -176,10 +176,10 @@ OpStatus FPGA_Mini::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int cha
         dataWr[i] = (1 << 31) | (spiAddr[i] << 16) | dataRd[i]; //msbit 1=SPI write
     }
 
-    lms7002mPort->SPI(dataWr.data(), nullptr, bakRegCnt);
+    lms7002mPort->Transact(dataWr.data(), nullptr, bakRegCnt);
 
     dataWr[0] = (1 << 31) | (0x0020u << 16) | reg20; //msbit 1=SPI write
-    lms7002mPort->SPI(dataWr.data(), nullptr, 1);
+    lms7002mPort->Transact(dataWr.data(), nullptr, 1);
 
     WriteRegister(0x000A, 0);
 

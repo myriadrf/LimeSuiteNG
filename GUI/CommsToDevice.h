@@ -1,6 +1,6 @@
 #pragma once
 
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include "comms/II2C.h"
 #include "limesuiteng/SDRDevice.h"
 

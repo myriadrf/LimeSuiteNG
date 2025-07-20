@@ -11,7 +11,7 @@ namespace lime {
 
 class LimePCIe;
 class ISerialPort;
-class IComms;
+class ISPI;
 
 static const float XTRX_DEFAULT_REFERENCE_CLOCK = 26e6;
 
@@ -20,11 +20,12 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 {
   public:
     LimeSDR_XTRX() = delete;
-    LimeSDR_XTRX(std::shared_ptr<IComms> spiLMS7002M,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeSDR_XTRX(std::shared_ptr<ISPI> spiLMS7002M,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<LimePCIe> sampleStream,
         std::shared_ptr<ISerialPort> control,
         double refClk = XTRX_DEFAULT_REFERENCE_CLOCK);
+    void SetSubDeviceIndex(uint32_t index);
 
     OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
 
@@ -91,12 +92,13 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         double expectChB_dBFS);
     OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
 
-    std::shared_ptr<IComms> lms7002mPort;
-    std::shared_ptr<IComms> fpgaPort;
+    std::shared_ptr<ISPI> lms7002mPort;
+    std::shared_ptr<ISPI> fpgaPort;
     std::shared_ptr<LimePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 
     bool mConfigInProgress;
+    uint32_t mSubDeviceIndex;
 };
 
 } // namespace lime

@@ -16,9 +16,9 @@
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
+#include "comms/SPI/ISPI.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "protocols/LMS64CProtocol.h"
@@ -111,8 +111,8 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
 /// @param sampleStream The communications port to send and receive sample data.
 /// @param control The serial port communication of the device.
 /// @param refClk The reference clock of the device.
-LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
-    std::shared_ptr<IComms> spiFPGA,
+LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
@@ -122,6 +122,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     , mStreamPort(sampleStream)
     , mSerialPort(control)
     , mConfigInProgress(false)
+    , mSubDeviceIndex(0)
 {
     mStreamers.resize(1);
     /// Do not perform any unnecessary configuring to device in constructor, so you
@@ -130,7 +131,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_XTRX);
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
     desc.spiSlaveIds = { { "LMS7002M"s, limesdrxtrx::SPI_LMS7002M }, { "FPGA"s, limesdrxtrx::SPI_FPGA } };
@@ -214,6 +215,11 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<IComms> spiRFsoc,
         std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
     desc.socTree = std::make_shared<DeviceTreeNode>("XTRX"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(fpgaNode);
+}
+
+void LimeSDR_XTRX::SetSubDeviceIndex(uint32_t index)
+{
+    mSubDeviceIndex = index;
 }
 
 static OpStatus InitLMS1(LMS7002M& lms, bool skipTune = false)
@@ -342,9 +348,9 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     switch (chipSelect)
     {
     case limesdrxtrx::SPI_LMS7002M:
-        return lms7002mPort->SPI(MOSI, MISO, count);
+        return lms7002mPort->Transact(MOSI, MISO, count);
     case limesdrxtrx::SPI_FPGA:
-        return fpgaPort->SPI(MOSI, MISO, count);
+        return fpgaPort->Transact(MOSI, MISO, count);
     default:
         throw std::logic_error("invalid SPI chip select"s);
     }
@@ -436,12 +442,12 @@ void LimeSDR_XTRX::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 
 OpStatus LimeSDR_XTRX::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return fpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, mSubDeviceIndex);
 }
 
 OpStatus LimeSDR_XTRX::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return fpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, mSubDeviceIndex);
 }
 
 OpStatus LimeSDR_XTRX::UploadMemory(
@@ -468,21 +474,27 @@ OpStatus LimeSDR_XTRX::UploadMemory(
         return OpStatus::InvalidValue;
     }
 
-    return fpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
+    return LMS64CProtocol::FirmwareWrite(*mSerialPort, data, length, progMode, target, callback, mSubDeviceIndex);
 }
 
 OpStatus LimeSDR_XTRX::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
-    if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::InvalidValue;
-    return fpgaPort->MemoryWrite(region.address, data, region.size);
+    if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
+    {
+        return OpStatus::Error;
+    }
+    return LMS64CProtocol::MemoryWrite(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, mSubDeviceIndex);
 }
 
 OpStatus LimeSDR_XTRX::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
-    if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::InvalidValue;
-    return fpgaPort->MemoryRead(region.address, data, region.size);
+    if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
+    {
+        return OpStatus::Error;
+    }
+    return LMS64CProtocol::MemoryRead(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, mSubDeviceIndex);
 }
 
 OpStatus LimeSDR_XTRX::ClkTest(OEMTestReporter& reporter, TestData& results)
@@ -499,7 +511,7 @@ OpStatus LimeSDR_XTRX::ClkTest(OEMTestReporter& reporter, TestData& results)
     uint32_t vals[3];
     try
     {
-        fpgaPort->SPI(addr, vals, 3);
+        fpgaPort->Transact(addr, vals, 3);
     } catch (...)
     {
         reporter.OnFail(test, "SPI failed");

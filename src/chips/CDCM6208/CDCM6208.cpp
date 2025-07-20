@@ -6,7 +6,8 @@
 #include <cmath>
 #include <thread>
 #include <map>
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
+#include "comms/SPI/SPI_utilities.h"
 
 namespace lime {
 
@@ -1039,15 +1040,7 @@ CDCM_VCO CDCM_Dev::FindVCOConfig()
  */
 int CDCM_Dev::WriteRegister(uint16_t addr, uint16_t val)
 {
-    const uint32_t mosi = (1 << 31) | (addr << 16) | val;
-    try
-    {
-        comms->SPI(&mosi, nullptr, 1);
-        return 0;
-    } catch (...)
-    {
-        return -1;
-    }
+    return WriteSPI(comms.get(), addr, val) == OpStatus::Success ? 0 : -1;
 }
 
 /**
@@ -1057,16 +1050,9 @@ int CDCM_Dev::WriteRegister(uint16_t addr, uint16_t val)
  */
 uint16_t CDCM_Dev::ReadRegister(uint16_t addr)
 {
-    const uint32_t mosi = (addr);
-    uint32_t miso = 0;
-    try
-    {
-        comms->SPI(&mosi, &miso, 1);
-        return miso & 0xFFFF;
-    } catch (...)
-    {
-        return -1;
-    }
+    OpStatus status;
+    return ReadSPI(comms.get(), addr, &status);
+    return status == OpStatus::Success ? 0 : -1;
 }
 
 } // namespace lime

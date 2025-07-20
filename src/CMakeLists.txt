@@ -139,6 +139,7 @@ if(WIN32) # Windows don't have RPATH support, so need to place the DLLs into sam
     set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 endif()
 
+add_subdirectory(protocols)
 # comms has to be processed before boards, to set up cmake variables needed for board support
 add_subdirectory(comms)
 add_subdirectory(boards)

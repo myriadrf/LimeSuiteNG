@@ -1,21 +1,21 @@
-#ifndef LIME_USB_CSR_PIPE_MINI_H
-#define LIME_USB_CSR_PIPE_MINI_H
+#ifndef LIME_FTDI_SerialPort_H
+#define LIME_FTDI_SerialPort_H
 
-#include "comms/USB/USB_CSR_Pipe.h"
+#include "comms/ISerialPort.h"
 
 namespace lime {
 
 class FT601;
 
 /** @brief Class for interfacing with Control/Status registers (CSR) of LimeSDR-Mini. */
-class USB_CSR_Pipe_Mini : public USB_CSR_Pipe
+class FTDI_SerialPort : public ISerialPort
 {
   public:
     /**
-      @brief Constructs a new USB_CSR_Pipe_Mini object
+      @brief Constructs a new FTDI_SerialPort object
       @param port The FT601 communications port to use.
      */
-    explicit USB_CSR_Pipe_Mini(FT601& port);
+    explicit FTDI_SerialPort(FT601& port);
 
     int Write(const uint8_t* data, std::size_t length, int timeout_ms) override;
     int Read(uint8_t* data, std::size_t length, int timeout_ms) override;
@@ -28,4 +28,4 @@ class USB_CSR_Pipe_Mini : public USB_CSR_Pipe
 
 } // namespace lime
 
-#endif // LIME_USB_CSR_PIPE_MINI_H
+#endif // LIME_FTDI_SerialPort_H
