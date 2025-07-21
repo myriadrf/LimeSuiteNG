@@ -34,6 +34,7 @@ requirements:
     - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - numpy =1.26.4                       # [build_platform != target_platform]
     - pybind11 =2.11.1                    # [build_platform != target_platform]
+    - vs2022_win-64
     # Add extra build tool dependencies here
 
   host:
