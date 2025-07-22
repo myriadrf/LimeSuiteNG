@@ -23,6 +23,8 @@ Required components to compile gnuradio-limesuiteng plugin:
    #. boost=1.82
    #. vs2022_win-64
    #. LimeSuiteNG (Manually built)
+   #. cmake (supported versions by project: 3.15 - 3.31)
+   #. ninja
 
 .. warning::
    External Python and numpy installations that are not related to any conda environment can interfere with build process. It is advised to remove these components or temporarily disable environment variables that point to their locations in PC file system.
@@ -53,13 +55,7 @@ Install conda packages:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 gnuradio-build-deps=3.10.9.2 boost=1.82 vs2022_win-64
-
-Downgrade the following packages:
-
-.. code-block:: bash
-
-   conda install cmake=3.26.4 python=3.12 pybind11=2.11.1
+   conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 gnuradio-build-deps=3.10.9.2 boost=1.82 vs2022_win-64 cmake=3.26.4 python=3.12 pybind11=2.11.1
 
 Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
