@@ -66,13 +66,13 @@ Configure LimeSuiteNG library build files:
 .. warning::
    It is possible that during cmake configuration python bindings for gnuradio-limesuiteng plugin sink and source blocks will be out of sync. This issue is common when building plugin for different versions of GNURadio on different operating systems. To fix the bindings enter gnuradio-limesuiteng root directory ``cd <repo root>\plugins\gr-limesuiteng`` and manually rebind the files using the following commands ``gr_modtool bind -u sdrdevice_source`` and ``gr_modtool bind -u sdrdevice_sink``. Conda environment must be active to use the gnuradio gr_modtool.
 
-Build library:
+Build suite:
 
 .. code-block:: bash
 
    cmake --build .
 
-Built library is located in ``build\lib`` directory and executables are located in ``build\bin`` directory.
+Built suite files are located in ``build\lib`` directory and executables are located in ``build\bin`` directory.
   
 
 Installing the built software

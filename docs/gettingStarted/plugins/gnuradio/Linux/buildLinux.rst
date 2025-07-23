@@ -31,7 +31,7 @@ Enter repository, create and enter build directory:
 
 .. code-block:: bash
 
-   cd <root directory of repository>/plugins/gr-limesuiteng
+   cd <repo root>/plugins/gr-limesuiteng
    mkdir build
    cd build
 

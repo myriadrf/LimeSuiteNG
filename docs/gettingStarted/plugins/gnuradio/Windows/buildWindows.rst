@@ -67,7 +67,7 @@ Enter plugin directory:
 
 .. code-block:: bash
 
-   cd <repository-location>\plugin\gr-limesuiteng
+   cd <repo root>\plugin\gr-limesuiteng
 
 Create and enter build directory:
 
