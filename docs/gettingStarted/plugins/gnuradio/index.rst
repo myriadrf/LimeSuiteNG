@@ -39,6 +39,8 @@ If the example runs successfully, a pop up window will open as shown below. Adju
 
 .. image:: settingUpSdrParams.png
 
+If the audio stream from selected radio station is clear, then the plugin is working correctly. Explore more examples in ``<repo root>\plugin\gr-limesuiteng\examples`` directory.
+
 .. hint::
    Make sure that the device is supported by Lime Suite NG library. See :ref:`dev-supp-list-ref`.
 
