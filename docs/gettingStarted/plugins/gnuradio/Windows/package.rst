@@ -25,5 +25,7 @@ Installing
    conda activate <environment>
    conda install gnuradio-limesuiteng
 
+Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.
+
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.

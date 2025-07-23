@@ -99,28 +99,4 @@ Install plugin into conda environment:
 .. tip::
    To uninstall plugin from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
 
-Testing plugin
---------------
-
-Plug in your limeSDR device into USB port. Execute the following command in an active conda environment to retrieve SDR device serial number:
-
-.. code-block:: bash
-
-   (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>limedevice
-   Found 1 device(s) :
-   0: LimeSDR Mini, addr=0403:601f, serial=00000000000000
-
-Launch gnuradio in conda environment by executing the following command:
-
-.. code-block:: bash
-
-   (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>gnuradio-companion
-
-Open ``FM_receiver.grc`` example from repository ``plugin\gr-limesuiteng\examples`` directory. Enter SDR serial number as shown in figure below and run the example.
-
-.. image:: settingUpSdr.png
-
-If the example runs successfully, adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
-
-.. hint::
-   Make sure that the device is supported by LimeSuiteNG library. See :ref:`dev-supp-list-ref`.
+Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.

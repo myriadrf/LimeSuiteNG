@@ -27,3 +27,5 @@ Conda will start building package. After successfull build conda package is popu
 .. code-block:: bash
 
    conda install <absolute_path>\package.conda
+
+Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.

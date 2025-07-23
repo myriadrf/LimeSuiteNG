@@ -59,4 +59,4 @@ Install plugin using the following command:
 .. tip::
    To uninstall plugin from gnuradio folder use ``sudo make uninstall`` inside the build directory.
 
-
+Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.
