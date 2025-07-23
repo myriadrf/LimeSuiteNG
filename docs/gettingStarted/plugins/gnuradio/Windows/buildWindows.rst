@@ -55,7 +55,7 @@ Install conda packages:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 gnuradio-build-deps=3.10.9.2 boost=1.82 vs2022_win-64 cmake=3.26.4 python=3.12 pybind11=2.11.1
+   conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 gnuradio-build-deps=3.10.9.2 boost=1.82 vs2022_win-64 cmake=3.26.4 python=3.12.9 pybind11=2.11.1
 
 Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
@@ -80,6 +80,9 @@ Run cmake to configure build files:
 .. code-block:: bash
 
    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%CONDA_PREFIX%\Library" -DCMAKE_PREFIX_PATH="%CONDA_PREFIX%\Library" -DGR_PYTHON_DIR="%CONDA_PREFIX%\Lib\site-packages" ..
+
+.. warning::
+   It is possible that during cmake configuration python bindings for gnuradio-limesuiteng plugin sink and source blocks will be out of sync. This issue is common when building plugin for different versions of GNURadio on different operating systems. To fix the bindings enter gnuradio-limesuiteng root directory ``cd <repo root>\plugins\gr-limesuiteng`` and manually rebind the files using the following commands ``gr_modtool bind -u sdrdevice_source`` and ``gr_modtool bind -u sdrdevice_sink``. Conda environment must be active to use the gnuradio gr_modtool.
 
 Build plugin:
 
