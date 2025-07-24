@@ -313,12 +313,13 @@ static void TransmitLoop(TransmitLoopArgs* args)
     }
 
     StreamTxMeta txMeta{};
-    txMeta.flags = StreamTxMeta::EndOfBurst;
+    txMeta.flags = 0;
     txMeta.timestamp = 0;
     txMeta.hasTimestamp = false; // transmit immediately
     do
     {
         int samplesRemaining = txSamplesCountTotal;
+        txMeta.flags = 0;
         while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
         {
             int samplesToSend = samplesRemaining > samplesBatchSize ? samplesBatchSize : samplesRemaining;
@@ -337,6 +338,8 @@ static void TransmitLoop(TransmitLoopArgs* args)
                         txSamples[c][s] = interleavedBuffer[srcIndex++];
                 }
             }
+            if (samplesRemaining < samplesBatchSize)
+                txMeta.flags = StreamTxMeta::EndOfBurst;
             int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
 
             txMeta.timestamp.AddTicks(samplesSent);

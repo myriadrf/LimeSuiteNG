@@ -191,6 +191,7 @@ class StreamPacket
     void Reset()
     {
         meta.timestamp = Timespec(0);
+        meta.flush = false;
         samples.Reset();
     }
 

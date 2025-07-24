@@ -1444,6 +1444,7 @@ void TRXLooper::TransmitPacketsLoop()
             if (isPacketFull || doFlush)
             {
                 ++packetsCounter;
+
                 int producedDataSize = sizeof(StreamHeader) + payloadOffset;
                 memcpy(outputTail, &tempPacket, producedDataSize);
                 outputTail += producedDataSize;
@@ -1643,11 +1644,16 @@ uint32_t TRXLooper::StreamTxTemplate(
         samplesRemaining -= consumed;
         ts.AddTicks(consumed * ticksPerSample);
 
-        if (mTx.stagingPacket->samples.isFull() || flush)
-        {
-            if (samplesRemaining == 0)
-                mTx.stagingPacket->meta.flush = flush;
+        bool pushPacket = mTx.stagingPacket->samples.isFull();
 
+        if (samplesRemaining == 0 && flush)
+        {
+            mTx.stagingPacket->meta.flush = flush;
+            pushPacket = true;
+        }
+
+        if (pushPacket)
+        {
             if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
                 break;
 
