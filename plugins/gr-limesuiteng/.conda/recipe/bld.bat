@@ -3,6 +3,14 @@ setlocal EnableDelayedExpansion
 
 :: Make a build folder and change to it
 cmake -E make_directory buildconda
+cd plugins/gr-limesuiteng
+
+gr_modtool bind -u sdrdevice_source
+if errorlevel 1 exit 1
+
+gr_modtool bind -u sdrdevice_sink
+if errorlevel 1 exit 1
+cd ..\..
 cd buildconda
 
 :: configure
