@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Conda build tools package
         run: |
-          conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 
+          conda install conda-build conda-forge-pinning
 
       - name: Detect VS path and set up VS C/C++ environment
         shell: cmd
@@ -55,6 +55,4 @@ jobs:
       - name: Building gnuradio-limesuiteng conda package
         run: |
           cd plugins\gr-limesuiteng
-          gr_modtool bind -u sdrdevice_sink
-          gr_modtool bind -u sdrdevice_source
           conda-build .conda\recipe\ -m %CONDA_PREFIX%\conda_build_config.yaml
