@@ -51,4 +51,4 @@ with warnings.catch_warnings():
                           flag_automatic=True if args.flag_automatic.lower() in [
                               '1', 'true'] else False,
                           flag_pygccxml=True if args.flag_pygccxml.lower() in ['1', 'true'] else False)
-    bg.gen_file_binding(args.filename)
+    bg.fix_file_hash(args.filename)
