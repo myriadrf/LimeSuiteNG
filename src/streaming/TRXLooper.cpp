@@ -278,6 +278,8 @@ OpStatus TRXLooper::Start()
         // might be lost in the time frame between stream enable and then dma enable.
         mRxArgs.dma->EnableContinuous(true, readSize, irqPeriod);
     }
+    mRx.terminate.store(false, std::memory_order_relaxed);
+    mTx.terminate.store(false, std::memory_order_relaxed);
 
     fpga->StartStreaming();
     {
@@ -305,13 +307,13 @@ void TRXLooper::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        mRxArgs.dma->Enable(false);
         lime::debug("TRXLooper: wait for Rx loop end.");
         {
             std::unique_lock lck{ mRx.mutex };
             while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
                 mRx.cv.wait(lck);
         }
+        mRxArgs.dma->Enable(false);
 
         if (mCallback_logMessage)
         {
@@ -325,13 +327,13 @@ void TRXLooper::Stop()
     if (mTx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
-        // mTxArgs.dma->Enable(false);
         lime::debug("TRXLooper: wait for Tx loop end."s);
         {
             std::unique_lock lck{ mTx.mutex };
             while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
                 mTx.cv.wait(lck);
         }
+        mTxArgs.dma->Enable(false);
 
         uint32_t fpgaTxPktIngressCount;
         uint32_t fpgaTxPktDropCounter;
