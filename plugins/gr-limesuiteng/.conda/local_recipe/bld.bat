@@ -13,6 +13,7 @@ cmake -G "Ninja" ^
     -DGR_PYTHON_DIR="%SP_DIR%" ^
     -DENABLE_DOXYGEN=OFF ^
     -DENABLE_TESTING=ON ^
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
     ..
     
 if errorlevel 1 exit 1
