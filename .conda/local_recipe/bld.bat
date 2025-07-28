@@ -15,6 +15,7 @@ cmake -G "Ninja" ^
     -DENABLE_TESTING=ON ^
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
     -DINSTALL_DEVELOPMENT=ON ^
+    -DBUILD_PLUGINS=OFF ^
     ..
 if errorlevel 1 exit 1
 

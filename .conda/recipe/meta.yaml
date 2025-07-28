@@ -21,7 +21,6 @@ requirements:
     - ninja
     - pkg-config
     - python =3.12.9
-    - cross-python_{{ target_platform }}
     - numpy
     - vs2022_win-64
 
@@ -36,29 +35,51 @@ requirements:
 
 test:
   commands:
-    # Add a list of commands to run to check that the package works. Examples below.
+    - if not exist %PREFIX%\\Library\\include\\lime\\LimeSuite.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\lime\\LMS7002M_parameters.h exit 1
 
-    ## verify that commands run
-    #- COMMAND --help
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1
 
-    ## verify that (some) headers get installed
-    # - test -f $PREFIX/include/gnuradio/{{ oot_name }}/api.h  # [not win]
-    # - if not exist %PREFIX%\\Library\\include\\gnuradio\\{{ oot_name }}\\api.h exit 1  # [win]
+    - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_gl_vc14x_x64.dll exit 1
+    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_core_vc14x_x64.dll exit 1
+    - if not exist %PREFIX%\\Library\\bin\\wxbase32u_vc14x_x64.dll exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeGUI.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1
+    - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1 
 
-    ## verify that libraries get installed
-    #- test -f $PREFIX/lib/lib{{ name }}${SHLIB_EXT}  # [not win]
-    #- if not exist %PREFIX%\\Library\\bin\\{{ name }}.dll exit 1  # [win]
-    #- if not exist %PREFIX%\\Library\\lib\\{{ name }}.lib exit 1  # [win]
-
-    ## verify that (some) GRC blocks get installed
-    #{% set blocks = ["LIST", "OF", "GRC", "BLOCK", "NAMES"] %}
-    #{% for block in blocks %}
-    #- test -f $PREFIX/share/gnuradio/grc/blocks/{{ block }}.block.yml  # [not win]
-    #- if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\{{ block }}.block.yml exit 1  # [win]
-    #{% endfor %}
-
-  imports:
-    # verify that the python module imports
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1
+    - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1
 
 about:
   home: https://github.com/myriadrf/LimeSuiteNG
