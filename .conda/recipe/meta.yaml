@@ -1,20 +1,11 @@
-# {% set name = "liblimesuiteng"%}
-# # Set package version from cleaned up git tags if possible,
-# # otherwise fall back to date-based version.
-# {% set tag_version = environ.get("GIT_DESCRIBE_TAG", "")|string|replace("-","_")|replace("v","")|replace("git","") %}
-# {% set post_commit = environ.get("GIT_DESCRIBE_NUMBER", 0)|string %}
-# {% set hash = environ.get("GIT_DESCRIBE_HASH", "local")|string %}
-# {% set fallback_version = "0.0.0.{0}.dev+g{1}".format(datetime.datetime.now().strftime("%Y%m%d"), environ.get("GIT_FULL_HASH", "local")[:9]) %}
-# {% set version = (tag_version if post_commit == "0" else "{0}.post{1}+{2}".format(tag_version, post_commit, hash)) if tag_version else fallback_version %}
 
 package:
   name:  limesuiteng
   version: 25.1.0
 
 source:
-  # use local path or git repository depending on if the build is local or done on CI
-  path: "../.."  # [not os.environ.get("CI")]
-  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}  # [os.environ.get("CI")]
+  path: "../.."
+  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
   git_rev: docs-upgrade
 
@@ -29,22 +20,19 @@ requirements:
     - git
     - ninja
     - pkg-config
-    # cross-compilation requirements
-    - python =3.12.9                      # [build_platform != target_platform]
-    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
-    - numpy                               # [build_platform != target_platform]
+    - python =3.12.9
+    - cross-python_{{ target_platform }}
+    - numpy
     - vs2022_win-64
-    # Add extra build tool dependencies here
 
   host:
-    - pip  # [win]
+    - pip
     - python =3.12.9
     - numpy
 
   run:
     - numpy
     - python =3.12.9
-    # Add/remove runtime dependencies here
 
 test:
   commands:
@@ -75,6 +63,7 @@ test:
 about:
   home: https://github.com/myriadrf/LimeSuiteNG
   license: Apache-2.0
+  license_file: COPYING
   license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
   summary: Lime Suite NG is a new generation software suite designed for working with LimeSDR family devices.
   dev_url: https://github.com/myriadrf/LimeSuiteNG
