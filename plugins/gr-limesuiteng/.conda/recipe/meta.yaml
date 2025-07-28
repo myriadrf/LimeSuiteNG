@@ -1,23 +1,13 @@
 {% set oot_name = "limesuiteng" %}
 {% set name = "gnuradio-" + oot_name %}
-# Set package version from cleaned up git tags if possible,
-# otherwise fall back to date-based version.
-{% set tag_version = environ.get("GIT_DESCRIBE_TAG", "")|string|replace("-","_")|replace("v","")|replace("git","") %}
-{% set post_commit = environ.get("GIT_DESCRIBE_NUMBER", 0)|string %}
-{% set hash = environ.get("GIT_DESCRIBE_HASH", "local")|string %}
-{% set fallback_version = "0.0.0.{0}.dev+g{1}".format(datetime.datetime.now().strftime("%Y%m%d"), environ.get("GIT_FULL_HASH", "local")[:9]) %}
-{% set version = (tag_version if post_commit == "0" else "{0}.post{1}+{2}".format(tag_version, post_commit, hash)) if tag_version else fallback_version %}
-
-# NOTE: In the requirements section specified component versions are mandatory to avoid package version missmatches since conda fails to automatically detect the correct versions of required packages. These versions are only mandatory when building againts GNURadio 3.10.9.2. Other GNURadio version may require different versions of components.
 
 package:
   name:  {{ name }}
-  version:  1.0.0     # Removed Jinja compiled version tag since it breaks conda-build and causes package build loop.
+  version:  1.0.0
 
 source:
-  # use local path or git repository depending on if the build is local or done on CI
-  path: "../.."  # [not os.environ.get("CI")]
-  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}  # [os.environ.get("CI")]
+  path: "../.."
+  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
   git_rev: docs-upgrade
 
@@ -32,33 +22,28 @@ requirements:
     - git
     - ninja
     - pkg-config
-    # cross-compilation requirements
-    - python =3.12.9                      # [build_platform != target_platform]
-    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
-    - numpy =1.26.4                       # [build_platform != target_platform]
-    - pybind11 =2.11.1                    # [build_platform != target_platform]
+    - python =3.12.9
+    - cross-python_{{ target_platform }}
+    - numpy =1.26.4
+    - pybind11 =2.11.1
     - vs2022_win-64
-    # Add extra build tool dependencies here
 
   host:
-    - gmp  # [linux]
-    # the following two entries are for generating builds against specific GR versions
-    - gnuradio-core =3.10.9.2  # [not gnuradio_extra_pin]
-    - gnuradio-core =3.10.9.2 {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
+    - gmp
+    - gnuradio-core =3.10.9.2
+    - gnuradio-core =3.10.9.2 {{ gnuradio_extra_pin }}.*
     - boost =1.82
     - limesuiteng
-    - pip  # [win]
+    - pip
     - pybind11 =2.11.1
     - python =3.12.9
     - numpy =1.26.4
     - volk =3.1.2
-    # Add/remove library dependencies here
 
   run:
     - numpy =1.26.4
     - python =3.12.9
     - gnuradio-core =3.10.9.2
-    # Add/remove runtime dependencies here
 
 test:
   commands:
