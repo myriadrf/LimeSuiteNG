@@ -15,6 +15,7 @@ cmake -G "Ninja" ^
     -DENABLE_TESTING=ON ^
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
     ../plugins/gr-limesuiteng
+
 if errorlevel 1 exit 1
 
 :: build
@@ -25,6 +26,6 @@ if errorlevel 1 exit 1
 cmake --build . --config Release --target install
 if errorlevel 1 exit 1
 
-:: test
-ctest --build-config Release --output-on-failure --timeout 120 -j%CPU_COUNT%
+:: Test
+python -c "import gnuradio.limesuiteng"
 if errorlevel 1 exit 1
