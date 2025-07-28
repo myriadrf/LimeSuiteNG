@@ -35,10 +35,6 @@ Required components to compile gnuradio-limesuiteng plugin:
 .. note::
    MSVC version must be equal or higher than compiler version that was used to build gnuradio. To check compiler compatibility use ``gnuradio-config-print --cxx`` inside activated conda environment with installed gnuradio.
 
-.. note::
-   Visual Studio Build Tools 2019 can also be used to build the plugin, but the MSVC compiler version must be higher or equal to version 19.29.
-
-
 Compilation
 -----------
 
