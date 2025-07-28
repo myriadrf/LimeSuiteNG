@@ -156,7 +156,6 @@ TEST_F(RFStream_tests, RepeatedStartStopWorks)
     }
 
     stream->Stop();
-
     stream->Start();
 
     samplesReceived = 0;
@@ -273,7 +272,7 @@ TEST_F(RFStream_tests, StreamStatusCallbackCalledIfRxOverrun)
     stream->Start();
 
     // should be lone enough to allow filling up internal buffers
-    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
     ASSERT_GT(overrun_count, 0);
     stream->Stop();
@@ -286,6 +285,7 @@ TEST_F(RFStream_tests, StreamStatusCallbackCalledIfTxUnderrun)
     streamCfg.channels[TRXDir::Tx] = { 0 };
     streamCfg.format = DataFormat::I16;
     streamCfg.linkFormat = DataFormat::I12;
+    streamCfg.timestampType = TimestampType::SAMPLE_TICKS;
 
     long underrun_count = 0;
     auto lambda_callback = [](bool isTx, const StreamStats* stats, void* userData) -> bool {
@@ -304,10 +304,8 @@ TEST_F(RFStream_tests, StreamStatusCallbackCalledIfTxUnderrun)
 
     stream = std::move(device->StreamCreate(streamCfg, moduleIndex));
     ASSERT_TRUE(stream);
-
     stream->Start();
 
-    // should be lone enough to allow filling up internal buffers
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     StreamMeta txMeta{};

@@ -147,14 +147,11 @@ class PacketData
       @tparam T The type of samples the packet is holding.
       @param iScale The multiplier with which to multiply all the I values.
       @param qScale The multiplier with which to multiply all the Q values.
-      @param channelCount The amount of channels to multiply the values for.
      */
-    template<class T> void Scale(float iScale, float qScale, int channelCount)
+    template<class T> void Scale(float iScale, float qScale)
     {
-        assert(channelCount <= mChannelCount);
-
         int samplesCount = size();
-        for (int c = 0; c < channelCount; ++c)
+        for (int c = 0; c < mChannelCount; ++c)
         {
             T* samples = reinterpret_cast<T*>(head[c]);
             for (int i = 0; i < samplesCount; ++i)

@@ -168,6 +168,9 @@ class TRXLooper : public RFStream
     int ticksPerSample = 1;
 
     template<class T>
+    uint32_t StreamMetaToStreamTxMeta(
+        const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    template<class T>
     uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout);
     template<class T>
     uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);

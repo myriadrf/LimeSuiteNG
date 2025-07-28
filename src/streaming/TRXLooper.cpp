@@ -94,6 +94,24 @@ template<class T> static uint32_t indexListToMask(const std::vector<T>& indexes)
     return mask;
 }
 
+static void NegateQChannel(StreamPacket* srcPkt, DataFormat format)
+{
+    switch (format)
+    {
+    case DataFormat::I12:
+        srcPkt->samples.Scale<lime::complex12_t>(1, -1);
+        break;
+    case DataFormat::I16:
+        srcPkt->samples.Scale<lime::complex16_t>(1, -1);
+        break;
+    case DataFormat::F32:
+        srcPkt->samples.Scale<lime::complex32f_t>(1, -1);
+        break;
+    default:
+        break;
+    }
+}
+
 /// @brief Constructs a new TRXLooper object.
 /// @param rx The DMA communications interface to receive the data from.
 /// @param tx The DMA communications interface to send the data to.
@@ -626,6 +644,29 @@ static std::string timespec_to_utc_string(struct timespec* ts)
     return std::string(buf);
 }
 
+static std::string TimestampToString(Timespec timestamp, TimestampType type)
+{
+    char timestampstr[256];
+    switch (type)
+    {
+    case TimestampType::SAMPLE_TICKS:
+        snprintf(timestampstr, sizeof(timestampstr), "%" PRIu64, timestamp.GetTicks());
+        break;
+    case TimestampType::REALTIME_SECONDS:
+        snprintf(timestampstr, sizeof(timestampstr), "%.9fs", timestamp.GetRealSeconds());
+        break;
+    case TimestampType::UNIX_EPOCH: {
+        struct timespec ts;
+        ts.tv_sec = timestamp.GetSeconds();
+        ts.tv_nsec = timestamp.GetFracSeconds() * 1e9;
+        std::string utctimestamp = timespec_to_utc_string(&ts);
+        snprintf(timestampstr, sizeof(timestampstr), "%s", utctimestamp.c_str());
+        break;
+    }
+    }
+    return std::string(timestampstr);
+}
+
 /** @brief Function dedicated for receiving data samples from board */
 void TRXLooper::ReceivePacketsLoop()
 {
@@ -682,25 +723,6 @@ void TRXLooper::ReceivePacketsLoop()
         const auto timePeriod{ std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() };
         if (timePeriod >= statsPeriod_ms)
         {
-            char timestampstr[256];
-            switch (mConfig.timestampType)
-            {
-            case TimestampType::SAMPLE_TICKS:
-                snprintf(timestampstr, sizeof(timestampstr), "%" PRIu64, lastPacketTS.GetTicks());
-                break;
-            case TimestampType::REALTIME_SECONDS:
-                snprintf(timestampstr, sizeof(timestampstr), "%.9fs", lastPacketTS.GetRealSeconds());
-                break;
-            case TimestampType::UNIX_EPOCH: {
-                struct timespec ts;
-                ts.tv_sec = lastPacketTS.GetSeconds();
-                ts.tv_nsec = lastPacketTS.GetFracSeconds() * 1e9;
-                std::string utctimestamp = timespec_to_utc_string(&ts);
-                snprintf(timestampstr, sizeof(timestampstr), "%s", utctimestamp.c_str());
-                break;
-            }
-            }
-
             t1 = t2;
             double dataRateBps = 1000.0 * Bps / timePeriod;
             stats.dataRate_Bps = dataRateBps;
@@ -712,7 +734,7 @@ void TRXLooper::ReceivePacketsLoop()
                 mRxArgs.dma->GetName().c_str(),
                 chipId,
                 stats.dataRate_Bps / 1e6,
-                timestampstr,
+                TimestampToString(lastPacketTS, mConfig.timestampType).c_str(),
                 stats.packets,
                 overrun.value(),
                 overrun.delta(),
@@ -771,22 +793,8 @@ void TRXLooper::ReceivePacketsLoop()
         const int srcPktCount = mRxArgs.packetsToBatch;
         for (int i = 0; i < srcPktCount; ++i)
         {
-            if (userPkt == nullptr)
-            {
-                if (!mRx.packetsPool->pop(&userPkt, false) || userPkt == nullptr)
-                {
-                    // lime::debug("Rx%i: packets fifo full.", chipId);
-                    continue;
-                }
-                userPkt->Reset();
-            }
-
             const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(&buffer[packetSize * i]);
             Timespec hwts = ExtractPacketTimestamp(mConfig, hardwarePkt, ticksPerSample);
-
-            userPkt->meta.timestamp = hwts;
-            userPkt->meta.useTimestamp = true;
-            userPkt->meta.flush = false;
 
             // clock counter can drift, and gets reset with PPS, creating small discontinuity in expected and received counter
             Timespec diff = (hwts - expectedTimestamp);
@@ -816,57 +824,51 @@ void TRXLooper::ReceivePacketsLoop()
             if (hardwarePkt->txWasDropped())
             {
                 ++mTx.stats.loss;
-                reportProblems = true;
             }
             expectedTimestamp = hwts;
+            expectedTimestamp.AddTicks(mRxArgs.samplesInPacket * ticksPerSample);
 
             lastPacketTS = hwts;
             if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
                 lastPacketTS = lastPacketTS + Timespec(startUnixTime);
 
-            if (!omitRxPackets)
+            if (omitRxPackets)
+                continue;
+
+            if (userPkt == nullptr)
             {
-                int32_t samplesProduced = ExtractPacketSamples(mConfig, mRxArgs, userPkt, hardwarePkt);
-                expectedTimestamp.AddTicks(samplesProduced * ticksPerSample);
-
-                if (mConfig.extraConfig.negateQ)
-                {
-                    switch (mConfig.format)
-                    {
-                    case DataFormat::I12:
-                        userPkt->samples.Scale<complex12_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
-                        break;
-                    case DataFormat::I16:
-                        userPkt->samples.Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
-                        break;
-                    case DataFormat::F32:
-                        userPkt->samples.Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Rx).size());
-                        break;
-                    default:
-                        break;
-                    }
-                }
-
-                if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
-                {
-                    userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime);
-                    userPkt->meta.timestamp = userPkt->meta.timestamp - fpgaFrontEndDelay;
-                }
-
-                if (fifo->push(userPkt, false))
-                    userPkt = nullptr;
-                else
+                if (!mRx.packetsPool->pop(&userPkt, false) || userPkt == nullptr)
                 {
                     ++stats.overrun;
                     overrun.add(1);
-                    userPkt->Reset();
                     reportProblems = true;
+                    continue;
                 }
+                userPkt->Reset();
+                userPkt->meta.timestamp = hwts;
+                userPkt->meta.useTimestamp = true;
+                userPkt->meta.flush = false;
             }
+
+            ExtractPacketSamples(mConfig, mRxArgs, userPkt, hardwarePkt);
+
+            if (mConfig.extraConfig.negateQ)
+                NegateQChannel(userPkt, mConfig.format);
+
+            if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
+            {
+                userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime);
+                userPkt->meta.timestamp = userPkt->meta.timestamp - fpgaFrontEndDelay;
+            }
+
+            if (fifo->push(userPkt, false))
+                userPkt = nullptr;
             else
             {
-                expectedTimestamp.AddTicks(mRxArgs.samplesInPacket * ticksPerSample);
+                ++stats.overrun;
+                overrun.add(1);
                 userPkt->Reset();
+                reportProblems = true;
             }
         }
 
@@ -1186,6 +1188,31 @@ void TRXLooper::TxWorkLoop()
     lime::debug("Tx worker thread shutdown.");
 }
 
+static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat)
+{
+    // in gateware data is transferred on 128 bit bus
+    // Tx data transfers have to be multiple of the bus size
+    constexpr uint16_t busWidthBytes = 16;
+    const uint16_t minPayloadSize = linkFormat == DataFormat::I12 ? 48 : 16;
+
+    uint16_t payloadSize = packet.GetPayloadSize();
+
+    uint16_t paddingSize = 0;
+    uint16_t bytesRemainder = payloadSize % busWidthBytes;
+    if (bytesRemainder > 0)
+    {
+        paddingSize = busWidthBytes - bytesRemainder;
+    }
+    if (payloadSize + paddingSize < minPayloadSize)
+        paddingSize = minPayloadSize - payloadSize;
+
+    if (paddingSize > 0)
+    {
+        std::memset(&packet.data[payloadSize], 0, paddingSize); // pad with zeroes
+        packet.SetPayloadSize(paddingSize + paddingSize);
+    }
+}
+
 void TRXLooper::TransmitPacketsLoop()
 {
     lime::debug("Tx transmit loop start.");
@@ -1274,25 +1301,6 @@ void TRXLooper::TransmitPacketsLoop()
             loss.set(stats.loss);
             if (showStats || mCallback_logMessage)
             {
-                char timestampstr[256];
-                switch (mConfig.timestampType)
-                {
-                case TimestampType::SAMPLE_TICKS:
-                    snprintf(timestampstr, sizeof(timestampstr), "%" PRIu64, lastTS.GetTicks());
-                    break;
-                case TimestampType::REALTIME_SECONDS:
-                    snprintf(timestampstr, sizeof(timestampstr), "%.9fs", lastTS.GetRealSeconds());
-                    break;
-                case TimestampType::UNIX_EPOCH: {
-                    struct timespec ts;
-                    ts.tv_sec = lastTS.GetSeconds();
-                    ts.tv_nsec = lastTS.GetFracSeconds() * 1e9;
-                    std::string utctimestamp = timespec_to_utc_string(&ts);
-                    snprintf(timestampstr, sizeof(timestampstr), "%s", utctimestamp.c_str());
-                    break;
-                }
-                }
-
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
@@ -1301,7 +1309,7 @@ void TRXLooper::TransmitPacketsLoop()
                     mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,
-                    timestampstr,
+                    TimestampToString(lastTS, mConfig.timestampType).c_str(),
                     stats.packets,
                     underrun.value(),
                     underrun.delta(),
@@ -1341,28 +1349,15 @@ void TRXLooper::TransmitPacketsLoop()
                     break;
                 }
                 if (mConfig.extraConfig.negateQ)
-                {
-                    switch (mConfig.format)
-                    {
-                    case DataFormat::I12:
-                        srcPkt->samples.Scale<complex12_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
-                        break;
-                    case DataFormat::I16:
-                        srcPkt->samples.Scale<complex16_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
-                        break;
-                    case DataFormat::F32:
-                        srcPkt->samples.Scale<complex32f_t>(1, -1, mConfig.channels.at(lime::TRXDir::Tx).size());
-                        break;
-                    default:
-                        break;
-                    }
-                }
+                    NegateQChannel(srcPkt, mConfig.format);
+
                 lastTS = srcPkt->meta.timestamp;
                 if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
                 {
                     srcPkt->meta.timestamp = srcPkt->meta.timestamp - Timespec(startUnixTime);
                     if (srcPkt->meta.useTimestamp && srcPkt->meta.timestamp.GetSeconds() < 0) // Drop packets that are in the past
                     {
+                        reportProblems = true;
                         ++stats.underrun;
                         srcPkt->Reset();
                         mTx.packetsPool->push(srcPkt, true);
@@ -1370,41 +1365,6 @@ void TRXLooper::TransmitPacketsLoop()
                         break;
                     }
                 }
-            }
-
-            // drop old packets before forming, Rx is needed to get current timestamp
-            if (srcPkt->meta.useTimestamp && isRxActive)
-            {
-                // <<<<<<< HEAD
-                //                 // int64_t rxNow = mRx.lastTimestamp.load(std::memory_order_relaxed);
-                //                 // const int64_t txAdvance = srcPkt->meta.timestamp - rxNow;
-                //                 // if (mConfig.hintSampleRate)
-                //                 // {
-                //                 //     int64_t timeAdvance = ts_to_us(mConfig.hintSampleRate, txAdvance);
-                //                 //     txTSAdvance.Add(timeAdvance);
-                //                 // }
-                //                 // else
-                //                 //     txTSAdvance.Add(txAdvance);
-                // =======
-                //                 int64_t rxNow = mRx.lastTimestamp.load(std::memory_order_relaxed);
-                //                 const int64_t txAdvance = srcPkt->meta.timestamp - rxNow;
-                //                 if (mConfig.hintSampleRate)
-                //                 {
-                //                     int64_t timeAdvance = ts_to_us(mConfig.hintSampleRate, txAdvance);
-                //                     txTSAdvance.Add(timeAdvance);
-                //                 }
-                //                 else
-                //                     txTSAdvance.Add(txAdvance);
-                // >>>>>>> rycka/txparse
-                // if (txAdvance <= 0)
-                // {
-                //     underrun.add(1);
-                //     ++stats.underrun;
-                //     mTx.packetsPool->push(srcPkt, true);
-                //     srcPkt = nullptr;
-                //     reportProblems = true;
-                //     continue;
-                // }
             }
 
             uint32_t payloadOffset = tempPacket.GetPayloadSize();
@@ -1447,7 +1407,9 @@ void TRXLooper::TransmitPacketsLoop()
             {
                 ++packetsCounter;
 
-                int producedDataSize = sizeof(StreamHeader) + payloadOffset;
+                TxPacketPadding(tempPacket, mConfig.linkFormat);
+
+                const int producedDataSize = sizeof(StreamHeader) + tempPacket.GetPayloadSize();
                 memcpy(outputTail, &tempPacket, producedDataSize);
                 outputTail += producedDataSize;
                 tempPacket.ClearHeader();
@@ -1501,36 +1463,16 @@ void TRXLooper::TransmitPacketsLoop()
                 txTSAdvance.Add(txAdvance);
             if (txAdvance <= 0)
             {
+                reportProblems = true;
                 underrun.add(1);
                 ++stats.underrun;
-                // TODO: first packet in the buffer is already late, could just skip this
-                // buffer transmission, but packets at the end of buffer might just still
-                // make it in time.
-                // outputReady = false;
-                // output.Reset(dmaBuffers[stagingBufferIndex % bufferCount], mTxArgs.bufferSize);
-                // continue;
             }
         }
+
+        if (reportProblems && mConfig.statusCallback)
+            mConfig.statusCallback(true, &stats, mConfig.userData);
 
         uint32_t bytesToSend = outputTail - dmaBuffers[stagingBufferIndex];
-        int diff = 0;
-        for (uint32_t i = 0; i < bytesToSend;)
-        {
-            FPGA_TxDataPacket* pkt = reinterpret_cast<FPGA_TxDataPacket*>(&dmaBuffers[stagingBufferIndex][i]);
-            i += 16 + pkt->GetPayloadSize();
-
-            int payloadsz = pkt->GetPayloadSize();
-
-            if (payloadsz != 4080)
-            {
-                int q = 16; // payload size has to be multiple of 16 bytes
-                int payloadSize = (1 + (payloadsz - 1) / q) * q;
-                pkt->SetPayloadSize(payloadSize);
-                diff = payloadSize - payloadsz;
-            }
-        }
-        bytesToSend += diff;
-
         PendingWrite wrInfo{ stagingBufferIndex, dmaBuffers[stagingBufferIndex], bytesToSend };
         bool requestIRQ = (wrInfo.id % irqPeriod) == 0;
         // DMA memory is write only, to read from the buffer will trigger Bus errors
@@ -1553,7 +1495,6 @@ void TRXLooper::TransmitPacketsLoop()
         outputReady = false;
         stats.timestamp = lastTS.GetTicks();
         outputTail = dmaBuffers[stagingBufferIndex];
-        // output.Reset(dmaBuffers[stagingBufferIndex], mTxArgs.bufferSize);
     }
     lime::debug("Tx transmit loop end.");
 }
@@ -1595,6 +1536,23 @@ void TRXLooper::TxTeardown()
 
     delete mTx.fifo.release();
     delete mTx.packetsPool.release();
+}
+
+template<class T>
+uint32_t TRXLooper::StreamMetaToStreamTxMeta(
+    const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    StreamTxMeta txmeta;
+    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
+    txmeta.flags = meta ? (meta->flushPartialPacket ? StreamTxMeta::EndOfBurst : 0) : 0;
+    if (txmeta.hasTimestamp)
+    {
+        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
+            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+        else
+            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
+    }
+    return StreamTxTemplate(samples, count, &txmeta, timeout);
 }
 
 template<class T>
@@ -1674,48 +1632,21 @@ uint32_t TRXLooper::StreamTxTemplate(
 uint32_t TRXLooper::StreamTx(
     const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    StreamTxMeta txmeta;
-    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
-    if (txmeta.hasTimestamp)
-    {
-        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
-        else
-            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
-    }
-    return StreamTxTemplate(samples, count, &txmeta, timeout);
+    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
 uint32_t TRXLooper::StreamTx(
     const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    StreamTxMeta txmeta;
-    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
-    if (txmeta.hasTimestamp)
-    {
-        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
-        else
-            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
-    }
-    return StreamTxTemplate(samples, count, &txmeta, timeout);
+    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
 /// @copydoc TRXLooper::StreamTx()
 uint32_t TRXLooper::StreamTx(
     const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    StreamTxMeta txmeta;
-    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
-    if (txmeta.hasTimestamp)
-    {
-        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
-        else
-            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
-    }
-    return StreamTxTemplate(samples, count, &txmeta, timeout);
+    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
 uint32_t TRXLooper::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
