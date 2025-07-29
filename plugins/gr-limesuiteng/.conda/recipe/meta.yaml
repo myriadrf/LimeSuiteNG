@@ -9,7 +9,6 @@ source:
   path: "../.."
   git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
-  git_rev: docs-upgrade
 
 build:
   number: 0
