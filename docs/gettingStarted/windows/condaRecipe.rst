@@ -19,7 +19,13 @@ To start the build process execute the following commands:
    cd <repo root>
    conda-build .conda\local_recipe\
 
-Conda will start building package. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``package_name-version-build_number.conda``. To use built LimeSuiteNG library components, package must be installed using the following command:
+Conda will start building package. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``package_name-version-build_number.conda``.
+
+.. note::
+
+   ``.conda\local_recipe\`` directory contains recipe for building packages locally on computer. ``.conda\recipe\`` directory contains recipe for building packages using CI/CD systems.
+
+To use built LimeSuiteNG library components, package must be installed using the following command:
 
 .. code-block:: bash
 
