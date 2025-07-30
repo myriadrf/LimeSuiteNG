@@ -1,7 +1,7 @@
 Install from packages
 =====================
 
-Lime Suite NG library can also be installed as a conda package using the following commands.
+LimeSuiteNG library can also be installed as a conda package using the following commands.
 
 .. code-block:: bash
 

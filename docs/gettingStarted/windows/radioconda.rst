@@ -20,7 +20,7 @@ Install the following packages that contain necessary build tools for the curren
 Initial conda environment set up is complete.
 
 .. tip::
-   Make sure that your limeSDR device is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
+   Make sure that your LimeSDR device is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
 
 
 .. _`release page`: https://github.com/ryanvolz/radioconda/releases

@@ -1,13 +1,13 @@
 Documentation generation guide
 ==============================
 
-This page describes how to generate the Lime Suite NG documentation
+This page describes how to generate the LimeSuiteNG documentation
 (the very thing you're reading right now) on Linux.
 
 Prerequisites
 -------------
 
-Components needed to generate the Lime Suite NG documentation:
+Components needed to generate the LimeSuiteNG documentation:
 
 - `GCC`_
 - `CMake`_
