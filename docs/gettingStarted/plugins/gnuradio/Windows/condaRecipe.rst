@@ -9,7 +9,7 @@ Build using conda recipe
    
    Check out radioconda and conda environment setup. See :ref:`radioconda-setup-ref`.
 
-Gnuradio-limesuiteng plugin for GNURadio 3.10.9.2 (Python 3.12) can also be built using conda recipe. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory.
+Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory.
 
 To start the build process execute the following commands:
 

@@ -1,7 +1,7 @@
 Conda package
 =============
 
-Gnuradio-limesuiteng plugin for GNURadio 3.10.9.2 (Python 3.12) can also be downloaded as a conda package.
+Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
 
 
 Prerequisites
