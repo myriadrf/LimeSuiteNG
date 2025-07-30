@@ -17,25 +17,30 @@ More about `GNURadio`_.
 Plugin demonstration
 ====================
 
-Plug in your LimeSDR device into USB port. Execute the following command in an active conda environment (or in linux terminal) to retrieve SDR device serial number:
+Plug in your LimeSDR device(s) into USB port. If multiple LimeSDR devices are pluged in, execute the following command in an active conda environment (or in linux terminal) to retrieve required SDR device serial number:
 
 .. code-block:: bash
 
    (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>limedevice
    Found 1 device(s) :
-   0: LimeSDR Mini, addr=0403:601f, serial=00000000000000
+	0: LimeSDR Mini, media=USB 3.0, addr=0403:601f, serial=1D9EFA3E84B944
+	1: LimeSDR-USB, media=USB 3.0, addr=1d50:6108, serial=00090706024F2403
 
 Launch gnuradio in conda environment (or in linux terminal) by executing the following command:
 
 .. code-block:: bash
 
-   (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>gnuradio-companion
+   (LimeSuiteNG) D:\LimeSuiteNG\plugins\gr-limesuiteng>gnuradio-companion FM_receiver.grc
 
-Open ``FM_receiver.grc`` example from repository ``<repo root>\plugin\gr-limesuiteng\examples`` directory. Enter SDR serial number as shown in figure below and run the example.
+.. note::
+   
+   If the ``FM_receiver.grc`` does not open when launching GNURadio, open example from one of the following directories: ``<repo root>\plugin\gr-limesuiteng\examples``, ``<radioconda install dir>\envs\<your env>\Library\share\gnuradio\examples\limesuiteng`` (on Windows) or ``/usr/local/share/gnuradio/examples/limesuiteng`` (on Linux).
+
+If a single LimeSDR device is pluged in, run the example by pressing the play button. The software will automatically detect the LimeSDR device and use it to run the example. If multiple LimeSDR devices are present, to run the example you must enter serial number of appropriate LimeSDR device as shown in figure below.
 
 .. image:: settingUpSdr.png
 
-If the example runs successfully, a pop up window will open as shown below. Adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters to normalize sound quality and volume.
+If the example runs successfully, a pop up window will open as shown below. Adjust RX baseband parameter to frequency of a local radio station and adjust volume and gain parameters inside the pop up window to normalize sound quality and volume.
 
 .. image:: settingUpSdrParams.png
 
