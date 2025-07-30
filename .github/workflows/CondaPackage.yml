@@ -13,6 +13,8 @@ jobs:
       CENV: LimeSuiteNG-Pkg  #  Conda env name
     steps: 
       - uses: actions/checkout@v4
+        with:
+          ref: docs-upgrade
 
       - name: Set up and activate Conda environment
         uses: conda-incubator/setup-miniconda@v3
