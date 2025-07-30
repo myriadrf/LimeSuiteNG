@@ -3,7 +3,7 @@ Build using conda recipe
 
 .. important::
 
-   Compared to standard build procedure, building library package using conda-build tool takes more time (5-8 min.) and resources. For development purposes it is advised to build from source using cmake. See :ref:`windows-lib-build-ref`.
+   Compared to standard build procedure, building library package using conda-build tool takes more time (5-8 min.) and resources. For development purposes it is advised to build from source using CMake. See :ref:`windows-lib-build-ref`.
 
 .. hint::
    

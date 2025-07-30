@@ -12,7 +12,7 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. Gmp
 #. Python   (version 3.12.3 or higher)
 #. C++ compiler (GCC major version 13.xx)
-#. CMake (version 3.28.3 or higher)
+#. CMake
 #. LimeSuiteNG
 
 .. Note::

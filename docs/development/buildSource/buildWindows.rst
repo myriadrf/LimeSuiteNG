@@ -19,7 +19,7 @@ Required components to compile LimeSuiteNG project:
    #. conda-build
    #. conda-forge-pinning
    #. vs2022_win-64
-   #. cmake (supported versions by project: 3.15 - 3.31)
+   #. cmake
    #. ninja
 
 Optional components that add specific functionality:
@@ -43,7 +43,7 @@ Install conda packages:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning vs2022_win-64 cmake=3.26.4 ninja
+   conda install conda-build conda-forge-pinning vs2022_win-64 cmake ninja
 
 Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
