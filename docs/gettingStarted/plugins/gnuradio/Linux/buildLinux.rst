@@ -15,9 +15,6 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. CMake
 #. LimeSuiteNG
 
-.. Note::
-   Some plugin component versions may be incompatible and can break the functionality of a plugin. For example, higher versions of pybind11 can cause functionality problems as the GNURadio itself uses 2.11.1 version of pybind11. It is recommended to install the specified minimum version of component from required component list.
-
 Compilation
 -----------
 
