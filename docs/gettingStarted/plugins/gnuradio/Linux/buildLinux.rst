@@ -6,7 +6,7 @@ Prerequisites
 
 Required components to compile gnuradio-limesuiteng plugin:
 
-#. GNURadio (version 3.10.9.2)
+#. GNURadio (version 3.10.x.x)
 #. Boost    (version 1.83 or higher)
 #. Pybind11 (version 2.11.1 or higher)
 #. Gmp
