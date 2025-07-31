@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <cinttypes>
+#include <numeric>
 
 using namespace std::literals::string_literals;
 
@@ -1188,12 +1189,12 @@ void TRXLooper::TxWorkLoop()
     lime::debug("Tx worker thread shutdown.");
 }
 
-static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat)
+static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat, uint8_t channelCount)
 {
     // in gateware data is transferred on 128 bit bus
     // Tx data transfers have to be multiple of the bus size
     constexpr uint16_t busWidthBytes = 16;
-    const uint16_t minPayloadSize = linkFormat == DataFormat::I12 ? 48 : 16;
+    uint16_t minPayloadSize = busWidthBytes;
 
     uint16_t payloadSize = packet.GetPayloadSize();
 
@@ -1202,6 +1203,8 @@ static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat)
     if (bytesRemainder > 0)
     {
         paddingSize = busWidthBytes - bytesRemainder;
+        const int frameSize = (linkFormat == DataFormat::I12 ? 3 : 4) * channelCount;
+        minPayloadSize = std::lcm(busWidthBytes, frameSize);
     }
     if (payloadSize + paddingSize < minPayloadSize)
         paddingSize = minPayloadSize - payloadSize;
@@ -1209,7 +1212,7 @@ static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat)
     if (paddingSize > 0)
     {
         std::memset(&packet.data[payloadSize], 0, paddingSize); // pad with zeroes
-        packet.SetPayloadSize(paddingSize + paddingSize);
+        packet.SetPayloadSize(payloadSize + paddingSize);
     }
 }
 
@@ -1407,7 +1410,7 @@ void TRXLooper::TransmitPacketsLoop()
             {
                 ++packetsCounter;
 
-                TxPacketPadding(tempPacket, mConfig.linkFormat);
+                TxPacketPadding(tempPacket, mConfig.linkFormat, conversion.channelCount);
 
                 const int producedDataSize = sizeof(StreamHeader) + tempPacket.GetPayloadSize();
                 memcpy(outputTail, &tempPacket, producedDataSize);
