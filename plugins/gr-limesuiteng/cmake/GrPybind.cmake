@@ -331,7 +331,8 @@ macro(GR_PYBIND_MAKE_OOT name updir filter files)
     target_include_directories(
         ${name}_python
         PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/lib
-                ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/include)
+                ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/include
+                ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/include/gnuradio)
     target_link_libraries(
         ${name}_python PRIVATE ${Boost_LIBRARIES} pybind11::pybind11 Python::Module
                                Python::NumPy gnuradio-${MODULE_NAME})

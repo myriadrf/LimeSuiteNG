@@ -14,18 +14,15 @@ cmake -G "Ninja" ^
     -DENABLE_DOXYGEN=OFF ^
     -DENABLE_TESTING=ON ^
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15 ^
-    ../plugins/gr-limesuiteng
-
+    -DINSTALL_DEVELOPMENT=ON ^
+    -DBUILD_PLUGINS=OFF ^
+    ..
 if errorlevel 1 exit 1
 
 :: build
-cmake --build . --config Release -- -j%CPU_COUNT%
+cmake --build . --config Release
 if errorlevel 1 exit 1
 
 :: install
-cmake --build . --config Release --target install
-if errorlevel 1 exit 1
-
-:: Test
-python -c "import gnuradio.limesuiteng"
+cmake --install . --config Release
 if errorlevel 1 exit 1

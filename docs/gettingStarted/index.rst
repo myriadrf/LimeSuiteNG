@@ -8,6 +8,7 @@ Combine LimeSuiteNG with other SDR applications for custom usage.
    :maxdepth: 2
 
    linux/index
+   windows/index
    CLI Tools <common/cliTools>
    common/GUI
    plugins/index
