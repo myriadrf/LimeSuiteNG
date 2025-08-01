@@ -9,8 +9,12 @@ SET CONDA_F_PKG_NAME=conda-forge-pinning
 SET VS_PKG_NAME=vs2022_win-64
 SET CMAKE_PKG_NAME=cmake
 SET NINJA_PKG_NAME=ninja
+SET GNURADIO_PKG_NAME=gnuradio
+SET BOOST_PKG_NAME=boost
 SET ENV_MIN_VS_DISP_VER="17.14.7"
 SET MIN_VS_LINE_VER=2022
+
+SET GNURADIO_VERSION_FLAG=--v
 
 :: Script start
 ECHO # - Starting LimeSuiteNG conda package installation
@@ -75,6 +79,35 @@ IF NOT "%NINJA_PKG%"=="%NINJA_PKG_NAME%" (
 ) ELSE (
    ECHO # - %NINJA_PKG_NAME% package detected. Skipping.
 )
+
+@REM ECHO %%1 = %1
+IF "%1"=="%GNURADIO_VERSION_FLAG%" (
+   ECHO # - ================================================================================
+   ECHO # -   Checking for additional conda packages for gnuradio-limesuiteng plugin build
+   ECHO # - ================================================================================
+   ECHO # - Checking if requested GNURadio version is valid.
+   @REM TODO: Check if requested GNURadio version is valid
+) ELSE (
+   GOTO skipPluginDeps
+)
+
+FOR /f %%i in ('conda list %GNURADIO_PKG_NAME% ^| findstr /C:"%GNURADIO_PKG_NAME%"') do SET GNURADIO_PKG=%%i
+IF NOT "%GNURADIO_PKG%"=="%GNURADIO_PKG_NAME%" (
+   ECHO # - %GNURADIO_PKG_NAME% package missing^! Adding package to dependency list^!
+   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%=%2"
+) ELSE (
+   ECHO # - %GNURADIO_PKG_NAME% package detected. Skipping.
+)
+
+FOR /f %%i in ('conda list %BOOST_PKG_NAME% ^| findstr /C:"%BOOST_PKG_NAME%"') do SET BOOST_PKG=%%i
+IF NOT "%BOOST_PKG%"=="%BOOST_PKG_NAME%" (
+   ECHO # - %BOOST_PKG_NAME% package missing^! Adding package to dependency list^!
+   SET "CONDA_DEPS=%CONDA_DEPS% %BOOST_PKG_NAME%"
+) ELSE (
+   ECHO # - %BOOST_PKG_NAME% package detected. Skipping.
+)
+
+:skipPluginDeps
 
 IF "%CONDA_DEPS%"==" " (
    ECHO # - ==================================================================================
