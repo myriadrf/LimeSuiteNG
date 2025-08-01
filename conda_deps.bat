@@ -12,7 +12,6 @@ SET NINJA_PKG_NAME=ninja
 SET ENV_MIN_VS_DISP_VER="17.14.7"
 SET MIN_VS_LINE_VER=2022
 
-
 :: Script start
 ECHO # - Starting LimeSuiteNG conda package installation
 WHERE /Q conda
@@ -77,7 +76,6 @@ IF NOT "%NINJA_PKG%"=="%NINJA_PKG_NAME%" (
    ECHO # - %NINJA_PKG_NAME% package detected. Skipping.
 )
 
-@REM SET "CONDA_DEPS=%CONDA_DEPS% zstd g++ gcc"
 IF "%CONDA_DEPS%"==" " (
    ECHO # - ==================================================================================
    ECHO # -   All conda packages are present^! Skipping LimeSuiteNG component installation^!
