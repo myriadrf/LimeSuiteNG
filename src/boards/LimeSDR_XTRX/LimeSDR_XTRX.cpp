@@ -844,30 +844,32 @@ OEMTestData LimeSDR_XTRX::RFTest(OEMTestReporter& reporter)
 
     std::vector<Inputs> inputs;
     // TODO: Update gains and measure expected values
-    // Rx gain range [-12: 61]
-    // Tx gain range [-12; 64]
+    const int rxLNALgain = 0;
+    const int rxLNAWgain = 14;
+    const int rxLNAHgain = 34;
+    const int txGain = 52;
 
     // channel A
-    inputs.push_back({ 0, 500e6, "Band2", 0, "LNAL", 0, -8 });
-    inputs.push_back({ 0, 900e6, "Band2", 0, "LNAL", 0, -8 });
-    inputs.push_back({ 0, 1900e6, "Band2", 0, "LNAL", 0, -8 });
+    inputs.push_back({ 0, 500e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
+    inputs.push_back({ 0, 900e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
+    inputs.push_back({ 0, 1900e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
 
-    inputs.push_back({ 0, 900e6, "Band2", 0, "LNAW", 0, -8 });
-    inputs.push_back({ 0, 1900e6, "Band2", 0, "LNAW", 0, -8 });
-    inputs.push_back({ 0, 2700e6, "Band2", 0, "LNAW", 0, -8 });
+    inputs.push_back({ 0, 900e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
+    inputs.push_back({ 0, 1900e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
+    inputs.push_back({ 0, 2700e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
 
-    inputs.push_back({ 0, 3300e6, "Band1", 0, "LNAH", 0, -8 });
+    inputs.push_back({ 0, 3300e6, "Band1", txGain, "LNAH", rxLNAHgain, -8 });
 
     // channel B
-    inputs.push_back({ 1, 500e6, "Band2", 0, "LNAL", 0, -8 });
-    inputs.push_back({ 1, 900e6, "Band2", 0, "LNAL", 0, -8 });
-    inputs.push_back({ 1, 1900e6, "Band2", 0, "LNAL", 0, -8 });
+    inputs.push_back({ 1, 500e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
+    inputs.push_back({ 1, 900e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
+    inputs.push_back({ 1, 1900e6, "Band2", txGain, "LNAL", rxLNALgain, -8 });
 
-    inputs.push_back({ 1, 900e6, "Band2", 0, "LNAW", 0, -8 });
-    inputs.push_back({ 1, 1900e6, "Band2", 0, "LNAW", 0, -8 });
-    inputs.push_back({ 1, 2700e6, "Band2", 0, "LNAW", 0, -8 });
+    inputs.push_back({ 1, 900e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
+    inputs.push_back({ 1, 1900e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
+    inputs.push_back({ 1, 2700e6, "Band2", txGain, "LNAW", rxLNAWgain, -8 });
 
-    inputs.push_back({ 1, 3300e6, "Band1", 0, "LNAH", 0, -8 });
+    inputs.push_back({ 1, 3300e6, "Band1", txGain, "LNAH", rxLNAHgain, -8 });
 
     const double dbfs_deviation = 6.0;
     test.status = OpStatus::Success;
