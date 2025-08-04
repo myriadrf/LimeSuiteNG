@@ -25,7 +25,7 @@ SET GNURADIO_VERSION_FLAG=--v
 ECHO # - Starting LimeSuiteNG conda package installation
 WHERE /Q conda
 IF ERRORLEVEL 1 (
-   ECHO # - Error: Using invalid prompt^! Use radioconda prompt with admin privileges^!
+   ECHO # - Error: Using invalid prompt. Use radioconda prompt with admin privileges.
    EXIT /B   
 )
 
@@ -60,23 +60,24 @@ IF "%1"=="%GNURADIO_VERSION_FLAG%" (
    GOTO skipPluginDeps
 )
 ECHO # - Checking if requested GNURadio version is valid.
-CALL :CheckReqGnuradioVer %2
+SET REQ_VER=%2
+CALL :CheckReqGnuradioVer %REQ_VER%
 IF !ERRORLEVEL! NEQ 0 (
-   CALL :ExpandErrorString !ERRORLEVEL!
+   CALL :VersionCheckError !ERRORLEVEL!
    GOTO ending
 )
 
 FOR /f %%i in ('conda list %GNURADIO_PKG_NAME% ^| findstr /C:"%GNURADIO_PKG_NAME%"') do SET GNURADIO_PKG=%%i
 IF NOT "%GNURADIO_PKG%"=="%GNURADIO_PKG_NAME%" (
-   ECHO # - %GNURADIO_PKG_NAME% package missing^! Adding package to dependency list.
-   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%=%2"
+   ECHO # - %GNURADIO_PKG_NAME% package missing. Adding package to dependency list.
+   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%=%REQ_VER%"
 ) ELSE (
    ECHO # - %GNURADIO_PKG_NAME% package detected. Skipping.
 )
 
 FOR /f %%i in ('conda list %BOOST_PKG_NAME% ^| findstr /C:"%BOOST_PKG_NAME%"') do SET BOOST_PKG=%%i
 IF NOT "%BOOST_PKG%"=="%BOOST_PKG_NAME%" (
-   ECHO # - %BOOST_PKG_NAME% package missing^! Adding package to dependency list.
+   ECHO # - %BOOST_PKG_NAME% package missing. Adding package to dependency list.
    SET "CONDA_DEPS=%CONDA_DEPS% %BOOST_PKG_NAME%"
 ) ELSE (
    ECHO # - %BOOST_PKG_NAME% package detected. Skipping.
@@ -86,7 +87,7 @@ IF NOT "%BOOST_PKG%"=="%BOOST_PKG_NAME%" (
 
 IF "%CONDA_DEPS%"==" " (
    ECHO # - ==================================================================================
-   ECHO # -   All conda packages are present^! Skipping LimeSuiteNG component installation^!
+   ECHO # -   All conda packages are present. Skipping LimeSuiteNG component installation.
    ECHO # - ==================================================================================
    GOTO finalize
    )
@@ -113,7 +114,7 @@ FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Micros
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property productDisplayVersion`) do set VS_DISP_VER=%%i
 
 IF "%VS_INSTALL_DIR%"=="" (
-   ECHO # - Visual Studio Build Tools are not installed^! Please install Visual Studio Build Tools 2022 from official microsoft visual studio page^!
+   ECHO # - Visual Studio Build Tools are not installed. Please install Visual Studio Build Tools 2022 from official microsoft visual studio page.
 ) ELSE (
    ECHO # - Detected Visual Studio Build Tools.
    ECHO # - Installation path: "%VS_INSTALL_DIR%"
@@ -156,16 +157,14 @@ EXIT /B 0
 
 :: :CheckReqGnuradioVer
 
-:: Check if the requested GNuradio version is valid.
+:: Check if the requested GNURadio version is valid.
 :: Arguments:
 :: %1 - Version string
 :: ErrorLevels:
-:: 0 - Requested version valid
-:: 1 - Malformed version string passed
-:: 2 - Major version missmatch
-:: 3 - Minor version missmatch
-:: 4 - Patch version missmatch
-:: 5 - Fix version missmatch
+:: 0 - Requested GNURadio version valid.
+:: 1 - GNURadio version not supported.
+:: 2 - Major GNURadio version not supported.
+:: 3 - Minor GNURadio version not supported.
 
 :CheckReqGnuradioVer
 
@@ -178,33 +177,25 @@ EXIT /B 0
       SET "REQ_FIX=%%D"
    )
 
+   IF NOT DEFINED REQ_MAJOR EXIT /B 1
+   IF NOT DEFINED REQ_MINOR EXIT /B 1
+   IF NOT DEFINED REQ_PATCH EXIT /B 1
+   IF NOT DEFINED REQ_FIX EXIT /B 1
+
    IF !REQ_MAJOR! NEQ %GNUR_MAJOR_VER% EXIT /B 2
    IF !REQ_MINOR! NEQ %GNUR_MINOR_VER% EXIT /B 3
-   IF !REQ_PATCH! GTR %GNUR_PATCH_VER% EXIT /B 4
 
-   :: Check for patches and fixes
-   IF !REQ_PATCH! EQU 1 IF !REQ_FIX! GTR 1 EXIT /B 5
-   IF !REQ_PATCH! EQU 2 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 3 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 4 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 5 IF !REQ_FIX! GTR 1 EXIT /B 5
-   IF !REQ_PATCH! EQU 6 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 7 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 8 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 9 IF !REQ_FIX! GTR 2 EXIT /B 5
-   IF !REQ_PATCH! EQU 10 IF !REQ_FIX! NEQ 0 EXIT /B 5
-   IF !REQ_PATCH! EQU 11 IF !REQ_FIX! NEQ 0 EXIT /B 5
+   FOR /f "delims=" %%i in ('conda search gnuradio ^| findstr /C:"!VER_STR!"') do SET FOUND_VER=%%i
+   IF NOT DEFINED FOUND_VER EXIT /B 1
 
    EXIT /B 0
 
-:: :ExpandErrorString
+:: :VersionCheckError
 
 :: Prints error message if a not valid gnuradio version is passed.
 
-:ExpandErrorString
-   IF %1 EQU 1 ECHO # - Error: Passed GNURadio version not supported^!
-   IF %1 EQU 2 ECHO # - Error: Passed GNURadio major version incorrect^! Allowed major version 3^!
-   IF %1 EQU 3 ECHO # - Error: Passed GNURadio minor version incorrect^! Allowed minor version 10^!
-   IF %1 EQU 4 ECHO # - Error: Passed GNURadio patch version incorrect^! Allowed patch version range 0-11^!
-   IF %1 EQU 5 ECHO # - Error: Passed GNURadio fix version incorrect^!
+:VersionCheckError
+   IF %1 EQU 1 ECHO # - Error: Passed GNURadio version not supported.
+   IF %1 EQU 2 ECHO # - Error: Passed GNURadio major version incorrect. Allowed major version 3.
+   IF %1 EQU 3 ECHO # - Error: Passed GNURadio minor version incorrect. Allowed minor version 10.
    EXIT /B 0
