@@ -751,12 +751,15 @@ OEMTestData LimeSDR_XTRX::ConfigureAndMeasure(OEMTestReporter& reporter,
     config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
     config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
     config.channel[0].tx.gain[eGainTypes::GENERIC] = txGain;
+    config.channel[0].tx.lpf = 0;
+    config.channel[0].tx.calibrate = CalibrationFlag::FILTER;
 
     const double tx_lo_offset = 5e6;
     config.channel[0].rx.centerFrequency = LOFreq;
     config.channel[0].tx.centerFrequency = LOFreq + tx_lo_offset;
     config.channel[0].rx.path = AntennaNameToIndex(mDeviceDescriptor.rfSOC.at(0).pathNames.at(TRXDir::Rx), rxAntenna);
     config.channel[0].rx.gain[eGainTypes::GENERIC] = rxGain;
+    config.channel[0].rx.lpf = 0;
 
     // If RX H is chosen, use TX 1; else use TX 2
     config.channel[0].tx.path = AntennaNameToIndex(mDeviceDescriptor.rfSOC.at(0).pathNames.at(TRXDir::Tx), txAntenna);
