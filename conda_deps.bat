@@ -40,47 +40,14 @@ ECHO # - ========================================================
 ECHO # -   Checking for installed packages in conda environment
 ECHO # - ========================================================
 
-FOR /f %%i in ('conda list %CONDA_B_PKG_NAME% ^| findstr /C:"%CONDA_B_PKG_NAME%"') do SET CONDA_BUILD_PKG=%%i
-IF NOT "%CONDA_BUILD_PKG%"=="%CONDA_B_PKG_NAME%" (
-   ECHO # - %CONDA_B_PKG_NAME% tools package missing! Adding package to dependency list.
-   SET "CONDA_DEPS=%CONDA_DEPS% %CONDA_B_PKG_NAME%"
-) ELSE (
-   ECHO # - %CONDA_B_PKG_NAME% package detected. Skipping.
-)
+CALL :CheckForPackage %CONDA_B_PKG_NAME%
+CALL :CheckForPackage %CONDA_F_PKG_NAME%
+CALL :CheckForPackage %VS_PKG_NAME%
+CALL :CheckForPackage %CMAKE_PKG_NAME%
+CALL :CheckForPackage %NINJA_PKG_NAME%
 
-FOR /f %%i in ('conda list %CONDA_F_PKG_NAME% ^| findstr "%CONDA_F_PKG_NAME%"') do SET CONDA_FORGE_PKG=%%i
-IF NOT "%CONDA_FORGE_PKG%"=="%CONDA_F_PKG_NAME%" (
-   ECHO # - %CONDA_F_PKG_NAME% package missing^! Adding package to dependency list^!
-   SET "CONDA_DEPS=%CONDA_DEPS% %CONDA_F_PKG_NAME%"
-) ELSE (
-   ECHO # - %CONDA_F_PKG_NAME% package detected. Skipping.
-)
-
-FOR /f %%i in ('conda list %VS_PKG_NAME% ^| findstr /C:"%VS_PKG_NAME%"') do SET VS2022_BAT=%%i
-IF NOT "%VS2022_BAT%"=="%VS_PKG_NAME%" (
-   ECHO # - %VS_PKG_NAME% package missing^! Adding package to dependency list^!
-   SET "CONDA_DEPS=%CONDA_DEPS% %VS_PKG_NAME%"
-) ELSE (
-   ECHO # - %VS_PKG_NAME% package detected. Skipping.
-)
-
-FOR /f %%i in ('conda list %CMAKE_PKG_NAME% ^| findstr /C:"%CMAKE_PKG_NAME%"') do SET CMAKE_PKG=%%i
-IF NOT "%CMAKE_PKG%"=="%CMAKE_PKG_NAME%" (
-   ECHO # - %CMAKE_PKG_NAME% package missing^! Adding package to dependency list^!
-   SET "CONDA_DEPS=%CONDA_DEPS% %CMAKE_PKG_NAME%"
-) ELSE (
-   ECHO # - %CMAKE_PKG_NAME% package detected. Skipping.
-)
-
-FOR /f %%i in ('conda list %NINJA_PKG_NAME% ^| findstr /C:"%NINJA_PKG_NAME%"') do SET NINJA_PKG=%%i
-IF NOT "%NINJA_PKG%"=="%NINJA_PKG_NAME%" (
-   ECHO # - %NINJA_PKG_NAME% package missing^! Adding package to dependency list^!
-   SET "CONDA_DEPS=%CONDA_DEPS% %NINJA_PKG_NAME%"
-) ELSE (
-   ECHO # - %NINJA_PKG_NAME% package detected. Skipping.
-)
-
-@REM ECHO %%1 = %1
+@REM @REM ECHO %%1 = %1
+:: Check if plugin dependencies requested
 IF "%1"=="%GNURADIO_VERSION_FLAG%" (
    ECHO # - ================================================================================
    ECHO # -   Checking for additional conda packages for gnuradio-limesuiteng plugin build
@@ -154,3 +121,26 @@ IF "%VS_INSTALL_DIR%"=="" (
 )
 ECHO # - Exiting conda_deps.bat script
 ENDLOCAL
+EXIT /B 0
+
+:: =======================
+::       SUB-ROUTINES
+:: =======================
+
+
+:: :CheckForPackage 
+
+:: Checks if the requested package is already installed in conda environment.
+:: If not, append the package name to dependency list.
+:: Arguments:
+:: %1 - Requested package name
+
+:CheckForPackage
+   FOR /f %%i in ('conda list %1 ^| findstr /C:"%1"') do SET PKG_STATUS=%%i
+   IF NOT "%PKG_STATUS%"=="%1" (
+      ECHO # - %1 tools package missing! Adding package to dependency list.
+      SET "CONDA_DEPS=%CONDA_DEPS% %1"
+   ) ELSE (
+      ECHO # - %1 package detected. Skipping.
+   )
+   EXIT /B
