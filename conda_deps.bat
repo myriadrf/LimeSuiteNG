@@ -164,6 +164,7 @@ EXIT /B 0
 :CheckReqGnuradioVer
 
    SET VER_STR=%~1
+   SET ERR_STATUS=0
    :: Strip the version string into 4 variables
    FOR /F "tokens=1-4 delims=." %%A IN ("%VER_STR%") DO (
       SET "REQ_MAJOR=%%A"
@@ -172,18 +173,19 @@ EXIT /B 0
       SET "REQ_FIX=%%D"
    )
 
-   IF NOT DEFINED REQ_MAJOR EXIT /B 1
-   IF NOT DEFINED REQ_MINOR EXIT /B 1
-   IF NOT DEFINED REQ_PATCH EXIT /B 1
-   IF NOT DEFINED REQ_FIX EXIT /B 1
+   IF NOT DEFINED REQ_MAJOR SET /A ERR_STATUS=1 & GOTO VerCheckEnd
+   IF NOT DEFINED REQ_MINOR SET /A ERR_STATUS=1 & GOTO VerCheckEnd
+   IF NOT DEFINED REQ_PATCH SET /A ERR_STATUS=1 & GOTO VerCheckEnd
+   IF NOT DEFINED REQ_FIX   SET /A ERR_STATUS=1 & GOTO VerCheckEnd
 
-   IF !REQ_MAJOR! NEQ %GNUR_MAJOR_VER% EXIT /B 2
-   IF !REQ_MINOR! NEQ %GNUR_MINOR_VER% EXIT /B 3
+   IF !REQ_MAJOR! NEQ %GNUR_MAJOR_VER% SET /A ERR_STATUS=2 & GOTO VerCheckEnd
+   IF !REQ_MINOR! NEQ %GNUR_MINOR_VER% SET /A ERR_STATUS=3 & GOTO VerCheckEnd
 
    FOR /f "delims=" %%i in ('conda search gnuradio ^| findstr /C:"!VER_STR!"') do SET FOUND_VER=%%i
-   IF NOT DEFINED FOUND_VER EXIT /B 1
+   IF NOT DEFINED FOUND_VER SET /A ERR_STATUS=1 & GOTO VerCheckEnd
 
-   EXIT /B 0
+   :VerCheckEnd
+   EXIT /B !ERR_STATUS!
 
 :: :VersionCheckError
 
