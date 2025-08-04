@@ -17,7 +17,6 @@ SET MIN_VS_LINE_VER=2022
 :: GNURadio version limitations
 SET GNUR_MAJOR_VER=3
 SET GNUR_MINOR_VER=10
-SET GNUR_PATCH_VER=11
 
 SET GNURADIO_VERSION_FLAG=--v
 
@@ -70,17 +69,12 @@ IF !ERRORLEVEL! NEQ 0 (
 FOR /f %%i in ('conda list %GNURADIO_PKG_NAME% ^| findstr /C:"%GNURADIO_PKG_NAME%"') do SET GNURADIO_PKG=%%i
 IF NOT "%GNURADIO_PKG%"=="%GNURADIO_PKG_NAME%" (
    ECHO # - %GNURADIO_PKG_NAME% package missing. Adding package to dependency list.
-   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%=%REQ_VER%"
+   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%="
+   CALL :LoadGNURadioDeps %REQ_VER%
+   IF !ERRORLEVEL! NEQ 0 GOTO ending
+   SET "CONDA_DEPS=%CONDA_DEPS%!FOUND_DEPS!"
 ) ELSE (
    ECHO # - %GNURADIO_PKG_NAME% package detected. Skipping.
-)
-
-FOR /f %%i in ('conda list %BOOST_PKG_NAME% ^| findstr /C:"%BOOST_PKG_NAME%"') do SET BOOST_PKG=%%i
-IF NOT "%BOOST_PKG%"=="%BOOST_PKG_NAME%" (
-   ECHO # - %BOOST_PKG_NAME% package missing. Adding package to dependency list.
-   SET "CONDA_DEPS=%CONDA_DEPS% %BOOST_PKG_NAME%"
-) ELSE (
-   ECHO # - %BOOST_PKG_NAME% package detected. Skipping.
 )
 
 :skipPluginDeps
@@ -192,10 +186,27 @@ EXIT /B 0
 
 :: :VersionCheckError
 
-:: Prints error message if a not valid gnuradio version is passed.
+:: Prints error message if passed GNURadio version is not valid.
 
 :VersionCheckError
    IF %1 EQU 1 ECHO # - Error: Passed GNURadio version not supported.
    IF %1 EQU 2 ECHO # - Error: Passed GNURadio major version incorrect. Allowed major version 3.
    IF %1 EQU 3 ECHO # - Error: Passed GNURadio minor version incorrect. Allowed minor version 10.
+   EXIT /B 0
+
+:: :LoadGNURadioDeps
+
+:: Loads GNURadio dependencies from a file acording to requested GNURadio version
+:: ErrorLevels:
+:: 0 - Dependencies found.
+:: 1 - Missing dependencies.
+
+:LoadGNURadioDeps
+
+   SET REQ_VER=%1
+   FOR /f "delims=" %%i in ('findstr /C:!REQ_VER! conda_requirements.txt') do SET FOUND_DEPS=%%i
+   IF NOT DEFINED FOUND_DEPS (
+      ECHO # - Error: Cannot find required dependencies for selected GNURadio version. Update conda_requirements.txt file.
+      EXIT /B 1
+   )
    EXIT /B 0
