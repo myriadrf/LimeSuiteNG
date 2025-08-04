@@ -29,9 +29,9 @@ IF ERRORLEVEL 1 (
 )
 
 FOR /f "delims=" %%i in ('conda info ^| findstr /C:"active environment"') do SET CURR_CONDA_ENV=%%i
-SET "CURR_CONDA_ENV=%CURR_CONDA_ENV:*active environment : =%"
+SET "CURR_CONDA_ENV=!CURR_CONDA_ENV:*active environment : =!"
 
-IF "%CURR_CONDA_ENV%"=="base" (
+IF "!CURR_CONDA_ENV!"=="base" (
    ECHO # - Error: Trying to install conda packages into base environment!
    ECHO # - Activate your environment:
    ECHO # -
@@ -60,26 +60,26 @@ IF "%1"=="%GNURADIO_VERSION_FLAG%" (
 )
 ECHO # - Checking if requested GNURadio version is valid.
 SET REQ_VER=%2
-CALL :CheckReqGnuradioVer %REQ_VER%
+CALL :CheckReqGnuradioVer !REQ_VER!
 IF !ERRORLEVEL! NEQ 0 (
    CALL :VersionCheckError !ERRORLEVEL!
    GOTO ending
 )
 
 FOR /f %%i in ('conda list %GNURADIO_PKG_NAME% ^| findstr /C:"%GNURADIO_PKG_NAME%"') do SET GNURADIO_PKG=%%i
-IF NOT "%GNURADIO_PKG%"=="%GNURADIO_PKG_NAME%" (
+IF NOT DEFINED GNURADIO_PKG (
    ECHO # - %GNURADIO_PKG_NAME% package missing. Adding package to dependency list.
-   SET "CONDA_DEPS=%CONDA_DEPS% %GNURADIO_PKG_NAME%="
-   CALL :LoadGNURadioDeps %REQ_VER%
+   SET "CONDA_DEPS=!CONDA_DEPS! %GNURADIO_PKG_NAME%="
+   CALL :LoadGNURadioDeps !REQ_VER!
    IF !ERRORLEVEL! NEQ 0 GOTO ending
-   SET "CONDA_DEPS=%CONDA_DEPS%!FOUND_DEPS!"
+   SET "CONDA_DEPS=!CONDA_DEPS!!PLUGIN_DEPS!"
 ) ELSE (
    ECHO # - %GNURADIO_PKG_NAME% package detected. Skipping.
 )
 
 :skipPluginDeps
 
-IF "%CONDA_DEPS%"==" " (
+IF "!CONDA_DEPS!"==" " (
    ECHO # - ==================================================================================
    ECHO # -   All conda packages are present. Skipping LimeSuiteNG component installation.
    ECHO # - ==================================================================================
@@ -89,12 +89,12 @@ IF "%CONDA_DEPS%"==" " (
 ECHO # - ==============================================================
 ECHO # -   Installing following conda packages for LimeSuiteNG build:
 ECHO # - ==============================================================
-FOR %%i in (%CONDA_DEPS%) do (
+FOR %%i in (!CONDA_DEPS!) do (
    ECHO # -    %%i
 )
 ECHO # -
 
-CALL conda install %CONDA_DEPS%
+CALL conda install !CONDA_DEPS!
 
 :finalize
 
@@ -107,18 +107,18 @@ FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Micros
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property productLineVersion`) do set VS_LINE_VER=%%i
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property productDisplayVersion`) do set VS_DISP_VER=%%i
 
-IF "%VS_INSTALL_DIR%"=="" (
+IF NOT DEFINED VS_INSTALL_DIR (
    ECHO # - Visual Studio Build Tools are not installed. Please install Visual Studio Build Tools 2022 from official microsoft visual studio page.
 ) ELSE (
    ECHO # - Detected Visual Studio Build Tools.
-   ECHO # - Installation path: "%VS_INSTALL_DIR%"
+   ECHO # - Installation path: "!VS_INSTALL_DIR!"
 
-   IF "%VS_LINE_VER%"=="%MIN_VS_LINE_VER%" (
-      ECHO # - Product line version: %VS_LINE_VER% ^(Correct^)
-      ECHO # - Product display version: %VS_DISP_VER% ^(Recommended minimum version: %ENV_MIN_VS_DISP_VER%^)
+   IF "!VS_LINE_VER!"=="%MIN_VS_LINE_VER%" (
+      ECHO # - Product line version: !VS_LINE_VER! ^(Correct^)
+      ECHO # - Product display version: !VS_DISP_VER! ^(Recommended minimum version: %ENV_MIN_VS_DISP_VER%^)
       ECHO # - Warning: Make sure you have installed the latest or atleast recommended minimum version of Visual Studio Build Tools.
    ) ELSE (
-      ECHO # - Product line version: %VS_LINE_VER% ^(Incorrect^)
+      ECHO # - Product line version: !VS_LINE_VER! ^(Incorrect^)
       ECHO # - Warning: Install the correct product line version.
    )
 )
@@ -140,12 +140,13 @@ EXIT /B 0
 :: %1 - Requested package name
 
 :CheckForPackage
-   FOR /f %%i in ('conda list %1 ^| findstr /C:"%1"') do SET PKG_STATUS=%%i
-   IF NOT "%PKG_STATUS%"=="%1" (
-      ECHO # - %1 tools package missing! Adding package to dependency list.
-      SET "CONDA_DEPS=%CONDA_DEPS% %1"
+   set REQ_PKG=%1
+   FOR /f %%i in ('conda list !REQ_PKG! ^| findstr /C:"!REQ_PKG!"') do SET PKG_STATUS=%%i
+   IF NOT DEFINED PKG_STATUS (
+      ECHO # - !REQ_PKG! package missing! Adding package to dependency list.
+      SET "CONDA_DEPS=!CONDA_DEPS! !REQ_PKG!"
    ) ELSE (
-      ECHO # - %1 package detected. Skipping.
+      ECHO # - !REQ_PKG! package detected. Skipping.
    )
    EXIT /B
 
@@ -204,8 +205,8 @@ EXIT /B 0
 :LoadGNURadioDeps
 
    SET REQ_VER=%1
-   FOR /f "delims=" %%i in ('findstr /C:!REQ_VER! conda_requirements.txt') do SET FOUND_DEPS=%%i
-   IF NOT DEFINED FOUND_DEPS (
+   FOR /f "delims=" %%i in ('findstr /C:!REQ_VER! conda_requirements.txt') do SET PLUGIN_DEPS=%%i
+   IF NOT DEFINED PLUGIN_DEPS (
       ECHO # - Error: Cannot find required dependencies for selected GNURadio version. Update conda_requirements.txt file.
       EXIT /B 1
    )
