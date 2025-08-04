@@ -2,11 +2,12 @@
 
 #include "FPGA/FPGA_common.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
+#include "chips/LMS7002M/validation.h"
 #include "limesuiteng/Logger.h"
 #include "streaming/TRXLooper.h"
-#include "utilities/toString.h"
 
 #include <algorithm>
 #include <array>
@@ -77,8 +78,6 @@ OpStatus LMS7002M_SDRDevice::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint
 void LMS7002M_SDRDevice::SetMessageLogCallback(LogCallbackType callback)
 {
     mCallback_logMessage = callback;
-    for (auto& looper : mStreamers)
-        looper->SetMessageLogCallback(mCallback_logMessage);
 }
 
 const SDRDescriptor& LMS7002M_SDRDevice::GetDescriptor() const
@@ -301,7 +300,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     if (status != OpStatus::Success)
         return status;
 
-    lime::info(ToString(trx) + " LPF configured"s);
+    lime::debug(ToString(trx) + " LPF configured"s);
     return OpStatus::Success;
 }
 
@@ -355,6 +354,116 @@ OpStatus LMS7002M_SDRDevice::ConfigureGFIR(
     LMS7002M::Channel enumChannel = channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
 
     return lms->SetGFIRFilter(trx, enumChannel, settings.enabled, settings.bandwidth);
+}
+
+OpStatus LMS7002M_SDRDevice::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+{
+    if (moduleIndex >= mStreamers.size())
+        return OpStatus::InvalidValue;
+
+    mStreamers.at(moduleIndex) = StreamCreate(config, moduleIndex);
+    if (mStreamers[moduleIndex])
+        return OpStatus::Success;
+    else
+        return OpStatus::Error;
+}
+
+void LMS7002M_SDRDevice::StreamStart(uint8_t moduleIndex)
+{
+    if (moduleIndex >= mStreamers.size())
+        return;
+
+    if (!mStreamers.at(moduleIndex))
+        return;
+
+    mStreamers.at(moduleIndex)->Start();
+}
+
+void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
+{
+    if (moduleIndex >= mStreamers.size())
+        return;
+
+    if (!mStreamers.at(moduleIndex))
+        return;
+
+    mStreamers.at(moduleIndex)->Stop();
+}
+
+void LMS7002M_SDRDevice::StreamDestroy(uint8_t moduleIndex)
+{
+    if (moduleIndex >= mStreamers.size())
+        return;
+
+    if (!mStreamers.at(moduleIndex))
+        return;
+
+    mStreamers.at(moduleIndex).reset();
+}
+
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
+}
+
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
+}
+
+uint32_t LMS7002M_SDRDevice::StreamRx(
+    uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
+}
+
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex32f_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
+}
+
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex16_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
+}
+
+uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
+    const complex12_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    if (moduleIndex >= mStreamers.size())
+        return 0;
+    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
+}
+
+void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
+{
+    if (moduleIndex >= mStreamers.size())
+        return;
+
+    mStreamers[moduleIndex]->StreamStatus(rx, tx);
 }
 
 OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
@@ -693,7 +802,9 @@ OpStatus LMS7002M_SDRDevice::SetHardwareTimestamp(uint8_t moduleIndex, const uin
 {
     if (moduleIndex >= mStreamers.size())
         return OpStatus::OutOfRange;
-    return mStreamers.at(moduleIndex)->SetHardwareTimestamp(now);
+
+    return OpStatus::NotImplemented;
+    //return mStreamers.at(moduleIndex)->SetHardwareTimestamp(now);
 }
 
 OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
@@ -822,108 +933,6 @@ OpStatus LMS7002M_SDRDevice::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t ch
     return status;
 }
 
-OpStatus LMS7002M_SDRDevice::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
-{
-    if (moduleIndex >= mStreamers.size())
-        return OpStatus::InvalidValue;
-
-    if (mStreamers.at(moduleIndex)->IsStreamRunning())
-        return OpStatus::Busy;
-
-    return mStreamers.at(moduleIndex)->Setup(config);
-}
-
-void LMS7002M_SDRDevice::StreamStart(uint8_t moduleIndex)
-{
-    if (moduleIndex >= mStreamers.size())
-        return;
-    mStreamers.at(moduleIndex)->Start();
-}
-
-void LMS7002M_SDRDevice::StreamStop(uint8_t moduleIndex)
-{
-    if (moduleIndex >= mStreamers.size())
-        return;
-    mStreamers.at(moduleIndex)->Stop();
-}
-
-void LMS7002M_SDRDevice::StreamDestroy(uint8_t moduleIndex)
-{
-    if (moduleIndex >= mStreamers.size())
-        return;
-    mStreamers.at(moduleIndex)->Teardown();
-}
-
-uint32_t LMS7002M_SDRDevice::StreamRx(
-    uint8_t moduleIndex, complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
-}
-
-uint32_t LMS7002M_SDRDevice::StreamRx(
-    uint8_t moduleIndex, complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
-}
-
-uint32_t LMS7002M_SDRDevice::StreamRx(
-    uint8_t moduleIndex, complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamRx(dest, count, meta, timeout);
-}
-
-uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
-    const complex32f_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
-}
-
-uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
-    const complex16_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
-}
-
-uint32_t LMS7002M_SDRDevice::StreamTx(uint8_t moduleIndex,
-    const complex12_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    if (moduleIndex >= mStreamers.size())
-        return 0;
-    return mStreamers.at(moduleIndex)->StreamTx(samples, count, meta, timeout);
-}
-
-void LMS7002M_SDRDevice::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
-{
-    if (moduleIndex >= mStreamers.size())
-        return;
-
-    auto& trx = mStreamers.at(moduleIndex);
-    if (rx != nullptr)
-        *rx = trx->GetStats(TRXDir::Rx);
-
-    if (tx != nullptr)
-        *tx = trx->GetStats(TRXDir::Tx);
-}
-
 OpStatus LMS7002M_SDRDevice::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
@@ -950,8 +959,8 @@ RFSOCDescriptor LMS7002M_SDRDevice::GetDefaultLMS7002MDescriptor()
     soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
     soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
     soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
-    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 30e6, 1.9e9 };
-    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
+    soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
     SetGainInformationInDescriptor(soc);
     return soc;
@@ -1059,6 +1068,117 @@ void LMS7002M_SDRDevice::SetGainInformationInDescriptor(RFSOCDescriptor& descrip
 #endif
 }
 
+OpStatus LMS7002M_SDRDevice::LMS7002M_Configure(LMS7002M& chip, const SDRConfig& cfg)
+{
+    std::vector<std::string> errors;
+    bool isValidConfig = LMS7002M_Validate(cfg, errors);
+
+    if (!isValidConfig)
+    {
+        std::stringstream ss;
+        for (const auto& err : errors)
+            ss << err << std::endl;
+        return ReportError(OpStatus::Error, "config error: "s + ss.str());
+    }
+
+    try
+    {
+        LMS7002LOConfigure(chip, cfg);
+        for (int i = 0; i < 2; ++i)
+        {
+            LMS7002ChannelConfigure(chip, cfg.channel[i], i);
+            LMS7002TestSignalConfigure(chip, cfg.channel[i], i);
+        }
+
+        // enabled ADC/DAC is required for FPGA to work
+        chip.Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+        chip.Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
+        chip.SetActiveChannel(LMS7002M::Channel::ChA);
+
+        // Workaround: Toggle LimeLights transmit port to flush residual value from data interface
+        uint16_t txMux = chip.Get_SPI_Reg_bits(LMS7002MCSR::TX_MUX);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, 2);
+        chip.Modify_SPI_Reg_bits(LMS7002MCSR::TX_MUX, txMux);
+    } //try
+    catch (std::logic_error& e)
+    {
+        return ReportError(OpStatus::Error, "LimeSDR config: "s + e.what());
+    } catch (std::runtime_error& e)
+    {
+        return ReportError(OpStatus::Error, "LimeSDR config: "s + e.what());
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LMS7002M_SDRDevice::LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
+{
+    if (rxDecimation != 0 && txInterpolation / rxDecimation > 4)
+        return lime::ReportError(OpStatus::InvalidValue,
+            "TxInterpolation(%i)/RxDecimation(%i) should not be more than 4",
+            txInterpolation,
+            rxDecimation);
+
+    uint8_t oversample = rxDecimation;
+    const bool bypass = ((oversample == 1 || oversample == 0) && f_Hz > 61.44e6);
+    uint8_t hbd_ovr = 7; // decimation ratio is 2^(1+hbd_ovr), HBD_OVR_RXTSP=7 - bypass
+    uint8_t hbi_ovr = 7; // interpolation ratio is 2^(1+hbi_ovr), HBI_OVR_TXTSP=7 - bypass
+    double cgenFreq = f_Hz * 4; // AI AQ BI BQ
+    if (!bypass)
+    {
+        if (oversample == 0)
+        {
+            const int n = lime::LMS7002M::CGEN_MAX_FREQ / (cgenFreq);
+            oversample = (n >= 32) ? 32 : (n >= 16) ? 16 : (n >= 8) ? 8 : (n >= 4) ? 4 : 2;
+        }
+
+        hbd_ovr = 4;
+        if (oversample <= 16)
+        {
+            const int decTbl[] = { 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
+            hbd_ovr = decTbl[oversample];
+            rxDecimation = pow(2, hbd_ovr + 1);
+        }
+        cgenFreq *= 2 << hbd_ovr;
+        rxDecimation = 2 << hbd_ovr;
+
+        if (txInterpolation == 0)
+        {
+            //int txMultiplier = std::log2(lime::LMS7002M::CGEN_MAX_FREQ / cgenFreq);
+            txInterpolation = rxDecimation; // << txMultiplier;
+        }
+
+        if (txInterpolation >= rxDecimation)
+        {
+            hbi_ovr = hbd_ovr + std::log2(txInterpolation / rxDecimation);
+            txInterpolation = pow(2, hbi_ovr + 1);
+        }
+        else
+            return lime::ReportError(
+                OpStatus::NotSupported, "Rx decimation(2^%i) > Tx interpolation(2^%i) currently not supported", hbd_ovr, hbi_ovr);
+    }
+    lime::debug("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
+        f_Hz / 1e6,
+        cgenFreq / 1e6,
+        1 + hbd_ovr,
+        1 + hbi_ovr);
+    auto& mLMSChip = mLMSChips.at(0);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
+    if (rxDecimation != 0)
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2 - std::log2(txInterpolation / rxDecimation));
+    else
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, 2);
+
+    LMS7002M::ChannelScope scope(mLMSChip.get());
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+
+    return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
+}
+
 OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& cfg)
 {
     OpStatus status = OpStatus::Success;
@@ -1098,9 +1218,10 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
 
 OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex)
 {
+    LMS7002M::ChannelScope scope(&chip, channelIndex);
+
     OpStatus status;
     const ChannelConfig& ch = config;
-    chip.SetActiveChannel((channelIndex & 1) ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA);
 
     chip.EnableChannel(TRXDir::Rx, channelIndex, ch.rx.enabled);
     chip.SetPathRFE(static_cast<LMS7002M::PathRFE>(ch.rx.path));
@@ -1117,6 +1238,14 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     chip.EnableChannel(TRXDir::Tx, channelIndex, ch.tx.enabled);
     chip.SetBandTRF(ch.tx.path);
 
+    // Rx LPF configuration modifies Rx PGA
+    status = chip.SetRxLPF(ch.rx.lpf);
+    if (status != OpStatus::Success)
+        return status;
+    status = chip.SetTxLPF(ch.tx.lpf);
+    if (status != OpStatus::Success)
+        return status;
+
     for (const auto& gain : ch.rx.gain)
     {
         SetGain(0, TRXDir::Rx, channelIndex, gain.first, gain.second);
@@ -1126,22 +1255,14 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelConfigure(LMS7002M& chip, const Chann
     {
         SetGain(0, TRXDir::Tx, channelIndex, gain.first, gain.second);
     }
-
-    status = chip.SetRxLPF(ch.rx.lpf);
-    if (status != OpStatus::Success)
-        return status;
-    status = chip.SetTxLPF(ch.tx.lpf);
-    if (status != OpStatus::Success)
-        return status;
-    // TODO: set GFIR filters...
     return status;
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex)
 {
+    LMS7002M::ChannelScope scope(&chip, channelIndex);
     int i = channelIndex;
     auto enumChannel = i == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB;
-    chip.SetActiveChannel(enumChannel);
     const ChannelConfig& ch = config;
 
     // TODO: Don't configure GFIR when external ADC/DAC is used
@@ -1166,15 +1287,18 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M& chip, const Cha
     }
 
     OpStatus rxStatus = OpStatus::Success;
-    if (ch.rx.calibrate && ch.rx.enabled)
+    if ((ch.rx.calibrate & CalibrationFlag::DCIQ) && ch.rx.enabled)
     {
         rxStatus = chip.CalibrateRx(ch.rx.sampleRate);
     }
 
     OpStatus txStatus = OpStatus::Success;
-    if (ch.tx.calibrate && ch.tx.enabled)
+    if (ch.tx.enabled)
     {
-        txStatus = chip.CalibrateTx(ch.tx.sampleRate);
+        if (ch.tx.calibrate & CalibrationFlag::DCIQ)
+            txStatus = chip.CalibrateTx(ch.tx.sampleRate);
+        if (ch.tx.calibrate & CalibrationFlag::FILTER)
+            chip.CalibrateTxGain();
     }
 
     if (rxStatus != OpStatus::Success || txStatus != OpStatus::Success)
@@ -1184,6 +1308,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002ChannelCalibration(LMS7002M& chip, const Cha
 
 OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex)
 {
+    LMS7002M::ChannelScope scope(&chip, channelIndex);
     const ChannelConfig& ch = config;
     chip.Modify_SPI_Reg_bits(INSEL_RXTSP, ch.rx.testSignal.enabled ? 1 : 0);
     if (ch.rx.testSignal.enabled)

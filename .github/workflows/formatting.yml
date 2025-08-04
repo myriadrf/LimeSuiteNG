@@ -8,7 +8,7 @@ on:
 
 jobs:
   clang-format:
-    runs-on: [ubuntu-latest]
+    runs-on: [ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,22 +22,16 @@ jobs:
 
       - name: Run clang-format
         run: |
-          before="${{ github.event.pull_request.base.sha }}"
-          if [ "$before" == "" ]; then
-            before="${{ github.event.before }}"
+          clang-format --version
+          base_hash="${{ github.event.pull_request.base.sha }}"
+          # if base is not provided, do whole source formatting
+          if [ "$base_hash" == "" ]; then
+            base_hash=$(git rev-list --max-parents=0 HEAD)
           fi
-
-          diff=$(git-clang-format --diff --commit "$before")
-          [ "$diff" = "no modified files to format" ] && exit 0
-          [ "$diff" = "clang-format did not modify any files" ] && exit 0
-
-          printf "\033[1mYou have introduced coding style breakages, suggested changes:\n\n"
-
-          echo "$diff" | colordiff
-          exit 1
+          ./clang-format-all.sh "$base_hash"
 
   cmake-format:
-    runs-on: [ubuntu-latest]
+    runs-on: [ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@v4
@@ -49,16 +43,21 @@ jobs:
 
       - name: Run cmake-format
         run: |
+          cmake-format --version
           cmake-format --check $(find ${{github.workspace}} -name CMakeLists.txt)
           code=$?
-          if [[ $code != 0 ]]; then
-              exit 1
+          if [[ $code == 0 ]]; then
+            exit 0
           fi
-          exit 0
+
+          # show why the formatting changes, for some reason local formatting not always match repo formatting
+          cmake-format -i $(find ${{github.workspace}} -name CMakeLists.txt)
+          git diff
+          exit 1
 
   clang-tidy:
     if: false # skip job until it's properly setup to be runnable locally
-    runs-on: [ubuntu-24.04] # Change to ubuntu-latest when that changes over
+    runs-on: [ubuntu-22.04] # Change to ubuntu-latest when that changes over
 
     steps:
       - uses: actions/checkout@v4

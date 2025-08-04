@@ -1,20 +1,23 @@
 #include "MM_X8.h"
 
+#include <cmath>
 #include <fcntl.h>
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "chips/LMS7002M/validation.h"
-#include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "protocols/LMS64C/SPI.h"
+#include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "DeviceTreeNode.h"
-#include "utilities/toString.h"
 
-#include <cmath>
+#include "RFStream_X8.h"
 
 using namespace std::literals::string_literals;
 
@@ -36,15 +39,12 @@ static double X8ReferenceClock = 30.72e6;
 /// @param trxStreams The communications ports to send and receive sample data.
 /// @param control The serial port communication of the device.
 /// @param adfComms The communications port to the device's ADF4002 chip.
-LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
-    std::vector<std::shared_ptr<IComms>>& spiFPGA,
-    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
-    std::shared_ptr<ISerialPort> control,
-    std::shared_ptr<ISPI> adfComms)
-    : mMainFPGAcomms(spiFPGA[8])
+LimeSDR_MMX8::LimeSDR_MMX8(std::shared_ptr<ISerialPort> controlPort, std::vector<std::shared_ptr<LimePCIe>> trxStreams)
+    : controlPort(controlPort)
     , mTRXStreamPorts(trxStreams)
     , mADF(std::make_unique<ADF4002>())
 {
+    mStreamers.resize(8);
     /// Do not perform any unnecessary configuring to device in constructor, so you
     /// could read back it's state for debugging purposes
 
@@ -63,7 +63,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
 
     // TODO: read-back board's reference clock
-    mADF->Initialize(adfComms, 30.72e6);
+    mADF->Initialize(std::make_shared<LMS64C_ADF4002_SPI>(controlPort, 0), 30.72e6);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF.get()));
 
     mSubDevices.reserve(8);
@@ -77,8 +77,14 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.customParameters.push_back(limemmx8::cp_vctcxo_dac);
     for (size_t i = 0; i < 8; ++i)
     {
+        int subDeviceId = i + 1;
+        auto lms_spi = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, subDeviceId, 0);
+        auto fpga_spi = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, subDeviceId, 0);
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, limemmx8::X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, trxStreams[i], controlPort, limemmx8::X8ReferenceClock);
+        xtrx->SetSubDeviceIndex(subDeviceId);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
@@ -136,9 +142,10 @@ OpStatus LimeSDR_MMX8::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
 OpStatus LimeSDR_MMX8::Init()
 {
-    FPGA tempFPGA(mMainFPGAcomms, nullptr);
-    tempFPGA.WriteRegister(0x000A, 0); // stop all data streams
     OpStatus status = OpStatus::Success;
+    maskStreamIsSetup = 0;
+    StreamsTrigger();
+
     for (size_t i = 0; i < mSubDevices.size(); ++i)
     {
         // TODO: check if the XTRX board slot is populated
@@ -607,27 +614,18 @@ OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     return mSubDevices[moduleIndex]->SetTestSignal(0, direction, channel, signalConfiguration, dc_i, dc_q);
 }
 
-ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
-{
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
-
-    return mSubDevices[moduleIndex]->GetTestSignal(0, direction, channel);
-}
-
 OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
 {
-    OpStatus status = mSubDevices.at(moduleIndex)->StreamSetup(config, 0);
-    if (status != OpStatus::Success)
-        return status;
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::InvalidValue;
 
-    // Preemptively start subdevices stream during X8 stream setup. Threads and DMA will be ready
-    // but the actual data stream will wait for stream enable on X8 FPGA.
-    // That's to minimize time difference between X8 multiple streaming groups start.
-    maskStreamIsSetup |= (1 << (2 * moduleIndex));
-    mSubDevices.at(moduleIndex)->StreamStart(0);
+    std::unique_ptr<RFStream> xtrxstream = mSubDevices.at(moduleIndex)->StreamCreate(config, 0);
+    mStreamers.at(moduleIndex) = std::make_unique<RFStream_X8>(this, std::move(xtrxstream), moduleIndex);
+
+    // OpStatus status = mSubDevices.at(moduleIndex)->StreamSetup(config, 0);
+    if (!mStreamers.at(moduleIndex))
+        return OpStatus::Error;
+
     return OpStatus::Success;
 }
 
@@ -639,23 +637,11 @@ void LimeSDR_MMX8::StreamStart(uint8_t moduleIndex)
 
 void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t>& moduleIndexes)
 {
-    // X8 board has two stage stream start.
-    // start stream for expected subdevices, they will wait for secondary enable from main fpga register
-    FPGA tempFPGA(mMainFPGAcomms, nullptr);
-    int interface_ctrl_000A = tempFPGA.ReadRegister(0x000A);
-    uint16_t mask = 0;
-    for (uint8_t moduleIndex : moduleIndexes)
-    {
-        mask |= (1 << (2 * moduleIndex));
-        // mSubDevices[moduleIndex]->StreamStart(0); // already started preemptively on StreamSetup
-    }
-    maskStreamIsActive |= mask;
+    for (auto index : moduleIndexes)
+        mStreamers.at(index)->StageStart();
 
-    // If multiple streaming groups have been setup, start all of them upon first group's start, so they would be synchronized in time
-    if (maskStreamIsActive != maskStreamIsSetup)
-        maskStreamIsActive = maskStreamIsSetup;
-
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A | maskStreamIsActive);
+    for (auto index : moduleIndexes)
+        mStreamers.at(index)->Start();
 }
 
 void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
@@ -666,24 +652,14 @@ void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
 
 void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t>& moduleIndexes)
 {
-    FPGA tempFPGA(mMainFPGAcomms, nullptr);
-    int interface_ctrl_000A = tempFPGA.ReadRegister(0x000A);
-    uint16_t mask = 0;
-    for (uint8_t moduleIndex : moduleIndexes)
-    {
-        mask |= (1 << (2 * moduleIndex));
-    }
-    maskStreamIsActive &= ~mask;
-    for (uint8_t moduleIndex : moduleIndexes) // subDevice streams stop postponed to StreamDestroy
-        mSubDevices[moduleIndex]->StreamStop(0);
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A & ~mask);
+    for (auto index : moduleIndexes)
+        mStreamers.at(index)->Stop();
 }
 
 void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
 {
-    mSubDevices.at(moduleIndex)->StreamStop(0);
-    mSubDevices.at(moduleIndex)->StreamDestroy(0);
-    maskStreamIsSetup &= ~(1 << (2 * moduleIndex));
+    mStreamers.at(moduleIndex)->Stop();
+    mStreamers.at(moduleIndex).reset();
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
@@ -736,11 +712,28 @@ void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStat
     mSubDevices[moduleIndex]->StreamStatus(0, rx, tx);
 }
 
+ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
+{
+    if (moduleIndex >= 8)
+    {
+        moduleIndex = 0;
+    }
+
+    return mSubDevices[moduleIndex]->GetTestSignal(0, direction, channel);
+}
+
+std::unique_ptr<lime::RFStream> LimeSDR_MMX8::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
+{
+    std::unique_ptr<RFStream> xtrxstream = mSubDevices.at(moduleIndex)->StreamCreate(config, 0);
+    std::unique_ptr<RFStream_X8> stream = std::make_unique<RFStream_X8>(this, std::move(xtrxstream), moduleIndex);
+    return stream;
+}
+
 OpStatus LimeSDR_MMX8::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
 {
     if (chipSelect == 0)
     {
-        return mMainFPGAcomms->SPI(MOSI, MISO, count);
+        return mainFPGAspi->Transact(MOSI, MISO, count);
     }
 
     SDRDevice* dev = chipSelectToDevice.at(chipSelect);
@@ -774,11 +767,7 @@ OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-
-        if (subModuleIndex >= 0)
-            status = mSubDevices[subModuleIndex]->CustomParameterWrite(parameter);
-        else
-            status = mMainFPGAcomms->CustomParameterWrite(parameter);
+        status = LMS64CProtocol::CustomParameterWrite(*controlPort, parameters, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
@@ -796,11 +785,7 @@ OpStatus LimeSDR_MMX8::CustomParameterRead(std::vector<CustomParameterIO>& param
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-
-        if (subModuleIndex >= 0)
-            status = mSubDevices[subModuleIndex]->CustomParameterRead(parameter);
-        else
-            status = mMainFPGAcomms->CustomParameterRead(parameter);
+        status = LMS64CProtocol::CustomParameterRead(*controlPort, parameters, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
@@ -820,7 +805,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
         int progMode = 1;
         LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target;
         target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
-        return mMainFPGAcomms->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
+        return LMS64CProtocol::FirmwareWrite(*controlPort, data, length, progMode, target, callback, 0);
     }
 
     auto& dev = mSubDevices.at(moduleIndex);
@@ -836,7 +821,8 @@ OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region 
         return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
-        return mMainFPGAcomms->MemoryWrite(region.address, data, region.size);
+        return LMS64CProtocol::MemoryWrite(
+            *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
@@ -851,7 +837,8 @@ OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region r
         return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
-        return mMainFPGAcomms->MemoryRead(region.address, data, region.size);
+        return LMS64CProtocol::MemoryRead(
+            *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
@@ -863,6 +850,29 @@ OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region r
 OpStatus LimeSDR_MMX8::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
 {
     return mSubDevices[moduleIndex]->UploadTxWaveform(config, 0, samples, count);
+}
+
+OpStatus LimeSDR_MMX8::StreamsTrigger()
+{
+    // X8 board has two stage stream start.
+    // start stream for expected subdevices, they will wait for secondary enable from main fpga register
+    uint32_t interface_ctrl_000A = ReadSPI(mainFPGAspi.get(), 0x000A);
+    if (interface_ctrl_000A == maskStreamIsSetup)
+        return OpStatus::Success;
+
+    interface_ctrl_000A = maskStreamIsSetup;
+    lime::debug("MMX8: streams enable %04X", interface_ctrl_000A);
+    WriteSPI(mainFPGAspi.get(), 0x000A, interface_ctrl_000A);
+    return OpStatus::Success;
+}
+
+void LimeSDR_MMX8::StreamEnable(uint8_t moduleIndex, bool ready)
+{
+    uint16_t mask = (1 << (2 * moduleIndex));
+    if (ready)
+        maskStreamIsSetup |= mask;
+    else
+        maskStreamIsSetup &= ~mask;
 }
 
 } //namespace lime

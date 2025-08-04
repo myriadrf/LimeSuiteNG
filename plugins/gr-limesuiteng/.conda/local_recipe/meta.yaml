@@ -1,0 +1,73 @@
+{% set oot_name = "limesuiteng" %}
+{% set name = "gnuradio-" + oot_name %}
+
+package:
+  name:  {{ name }}
+  version:  1.0.0
+
+source:
+  path: "../.."
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler("c") }}
+    - {{ compiler("cxx") }}
+    - cmake
+    - git
+    - ninja
+    - pkg-config
+    # cross-compilation requirements
+    - python =3.12.9                      # [build_platform != target_platform]
+    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
+    - numpy =1.26.4                       # [build_platform != target_platform]
+    - pybind11 =2.11.1                    # [build_platform != target_platform]
+    - vs2022_win-64
+
+  host:
+    - gmp  # [linux]
+    # the following two entries are for generating builds against specific GR versions
+    - gnuradio-core =3.10.9.2  # [not gnuradio_extra_pin]
+    - gnuradio-core =3.10.9.2 {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
+    - boost =1.82
+    - limesuiteng
+    - pip
+    - pybind11 =2.11.1
+    - python =3.12.9
+    - numpy =1.26.4
+    - volk =3.1.2
+
+  run:
+    - numpy =1.26.4
+    - python =3.12.9
+    - gnuradio-core =3.10.9.2
+
+test:
+  commands:
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1
+
+    - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1
+
+    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.cp312-win_amd64.pyd exit 1
+    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1
+
+    - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1
+
+about:
+  home: https://github.com/myriadrf/LimeSuiteNG
+  license: Apache-2.0
+  license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+  summary: GNURadio-limesuiteng is a GNURadio compatible plugin based on the Lime Suite NG new generation software suite designed for working with LimeSDR family devices.
+  dev_url: https://github.com/myriadrf/LimeSuiteNG
+  doc_url: https://limesuiteng.myriadrf.org/

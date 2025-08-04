@@ -1,79 +1,110 @@
-########################################################################
-## public headers
-########################################################################
-file(
-    GLOB LIMESUITENG_PUBLIC_HEADERS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/lime/*.h")
-include(FeatureSummary)
-include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_HEADERS "Enable install headers" ON "TRUE" OFF)
-add_feature_info(HEADERS ENABLE_HEADERS "The limesuiteng headers")
-if(ENABLE_HEADERS)
-    install(FILES ${LIMESUITENG_PUBLIC_HEADERS} DESTINATION include/limesuiteng)
+if(NOT DEFINED CMAKE_MINIMUM_REQUIRED_VERSION)
+    cmake_minimum_required(VERSION 3.15)
 endif()
 
-########################################################################
-## lime suite library
-########################################################################
-set(LIME_SUITE_SOURCES
-    StreamComposite.cpp
-    CommonFunctions.cpp
-    OEMTesting.cpp
-    logger/Logger.cpp
-    logger/LoggerCString.cpp
-    protocols/LMS64CProtocol.cpp
-    protocols/LMSBoards.cpp
-    FPGA/FPGA_common.cpp
-    FPGA/WriteRegistersBatch.cpp
-    threadHelper/threadHelper.cpp
-    memory/MemoryPool.cpp
-    API/LMS_APIWrapper.cpp
-    API/LimePlugin.cpp
-    include/limesuiteng/SDRDevice.cpp
-    utilities/toString.cpp)
-
-set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
-
-set(LIME_SUITE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} include boards lms7002m external threadHelper memory)
-
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/limesuiteng/VersionInfo.in.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp
-    @ONLY)
-list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/include/limesuiteng/VersionInfo.cpp)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
-list(APPEND LIME_SUITE_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp)
-
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-
 include(FeatureSummary)
 include(CMakeDependentOption)
+project(
+    "liblimesuiteng"
+    VERSION 0.3.0
+    DESCRIPTION "Core library for interacting with LimeSDR based devices"
+    LANGUAGES C CXX)
+checkdebianchangelogversion(${PROJECT_NAME})
 
-option(ENABLE_LIBRARY "Enable build library" ON)
-add_feature_info(LIBRARY ENABLE_LIBRARY "The limesuiteng library")
-if(NOT ENABLE_LIBRARY)
-    return()
-endif(NOT ENABLE_LIBRARY)
+add_library(limesuiteng)
+# namespaced target for use in plugins build
+add_library(limesuiteng::limesuiteng ALIAS limesuiteng)
 
-add_library(limesuiteng ${LIME_SUITE_SOURCES})
+# the ABI compatibility number should be incremented when the ABI changes
+# the format is to use the same major and minor, but to have an incrementing
+# number if there are changes within the major.minor release series
+set(LIMESUITENG_SOVER "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}-1")
 
-target_precompile_headers(limesuiteng PRIVATE ${CPP_STL_CPH})
+# packagers may specify -DLIMESUITENG_EXTVER="foo" to replace the git hash
+if(NOT LIMESUITENG_EXTVER)
+    include(GetGitRevisionDescription)
+    get_git_head_revision(GITREFSPEC GITHASH)
+    if(GITHASH)
+        string(SUBSTRING "${GITHASH}" 0 8 GITHASH)
+        set(LIMESUITENG_EXTVER "g${GITHASH}")
+    else(GITHASH)
+        set(LIMESUITENG_EXTVER "unknown")
+    endif(GITHASH)
+endif()
 
 set_target_properties(
     limesuiteng
     PROPERTIES POSITION_INDEPENDENT_CODE TRUE
-               SOVERSION ${LIME_SUITE_SOVER}
-               VERSION ${LIME_SUITE_LIBVER}
+               SOVERSION ${LIMESUITENG_SOVER}
                DEFINE_SYMBOL "LIME_DLL_EXPORTS")
 
 if(BUILD_SHARED_LIBS)
     target_compile_definitions(limesuiteng PUBLIC "LIME_DLL")
 endif()
+
+# components
+# runtime: just the shared library object
+# dev: objects, headers, and other development files
+# legacyapi: LMS_API wrapper of liblimesuiteng
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+
+add_subdirectory(include)
+
+option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
+if(ENABLE_NEW_GAIN_BEHAVIOUR)
+    target_compile_definitions(limesuiteng PRIVATE NEW_GAIN_BEHAVIOUR)
+endif()
+
+########################################################################
+# Build pkg config file
+########################################################################
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng.pc.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc @ONLY)
+
+install(
+    TARGETS limesuiteng
+    EXPORT limesuitengTarget
+    COMPONENT runtime
+    DESTINATION lib${LIB_SUFFIX} # .so file
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
+    RUNTIME DESTINATION bin # .dll file
+)
+
+########################################################################
+## lime suite library
+########################################################################
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
+target_sources(
+    limesuiteng
+    PRIVATE CommonFunctions.cpp
+            OEMTesting.cpp
+            logger/Logger.cpp
+            logger/LoggerCString.cpp
+            protocols/LMS64CProtocol.cpp
+            protocols/LMSBoards.cpp
+            FPGA/FPGA_common.cpp
+            FPGA/WriteRegistersBatch.cpp
+            threadHelper/threadHelper.cpp
+            API/LimePlugin.cpp
+            include/limesuiteng/SDRDevice.cpp
+            utilities/toString.cpp
+            ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp)
+
+if(NOT MSVC)
+    set_source_files_properties(include/limesuiteng/SDRDevice.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+endif()
+
+# if(MINGW)
+#     set_source_files_properties(
+#         limesuiteng
+#         PROPERTIES COMPILE_FLAGS -D__USE_MINGW_ANSI_STDIO=1
+#     )
+# endif()
+
+set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
+
+target_precompile_headers(limesuiteng PRIVATE ${CPP_STL_CPH})
 
 include(CheckAtomic)
 if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
@@ -84,15 +115,14 @@ find_package(Threads REQUIRED)
 target_link_libraries(
     limesuiteng
     PUBLIC Threads::Threads
-    PRIVATE $<BUILD_INTERFACE:kissfft> rang $<BUILD_INTERFACE:cpp-feather-ini-parser>)
+    PRIVATE $<BUILD_INTERFACE:rang> $<BUILD_INTERFACE:cpp-feather-ini-parser>)
 
 target_include_directories(
     limesuiteng
-    PRIVATE ${LIME_SUITE_INCLUDES}
-    INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external>
-              $<INSTALL_INTERFACE:include>)
+    PRIVATE threadHelper
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}> # so that GUI build can access internal headers
+           $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+           $<INSTALL_INTERFACE:include>)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug"
    AND ENABLE_CODE_COVERAGE
@@ -105,31 +135,46 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug"
     endif()
 endif()
 
-install(
-    TARGETS limesuiteng
-    EXPORT limesuitengTarget
-    LIBRARY DESTINATION lib${LIB_SUFFIX} # .so file
-    ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-    RUNTIME DESTINATION bin # .dll file
-)
+if(WIN32) # Windows don't have RPATH support, so need to place the DLLs into same directory as binaries
+    set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+endif()
 
+add_subdirectory(protocols)
 # comms has to be processed before boards, to set up cmake variables needed for board support
 add_subdirectory(comms)
 add_subdirectory(boards)
 add_subdirectory(chips)
 add_subdirectory(DSP)
-add_subdirectory(examples)
-add_subdirectory(utilities)
 add_subdirectory(streaming)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/BoardSupportLoader.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
-target_sources(limesuiteng PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/BoardSupportLoader.cpp)
+add_subdirectory(legacyapi)
 
-########################################################################
-# Build pkg config file
-########################################################################
-if(ENABLE_HEADERS AND ENABLE_LIBRARY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng.pc.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc @ONLY)
+add_subdirectory(examples)
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
-endif(ENABLE_HEADERS AND ENABLE_LIBRARY)
+option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
+add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
+if(INSTALL_DEVELOPMENT)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+
+    install(
+        FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+
+    install(
+        EXPORT limesuitengTarget
+        NAMESPACE limesuiteng::
+        FILE limesuitengTargets.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng
+        COMPONENT dev)
+
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake COMPATIBILITY SameMinorVersion)
+    configure_package_config_file(
+        ${CMAKE_CURRENT_LIST_DIR}/limesuitengConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake
+        INSTALL_DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+endif(INSTALL_DEVELOPMENT)

@@ -2,7 +2,7 @@
 
 #include "comms/USB/IUSB.h"
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     #include "comms/USB/UnixUsb.h"
 #else
     #include "FTD3XX.h"
@@ -40,9 +40,10 @@ class FT601 : public IUSB
       @return Status of the operation.
      */
     OpStatus ResetStreamBuffers();
+    void FlushEndpoint() override;
 
   private:
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     UnixUsb libusb_impl;
     int FT_SetStreamPipe(unsigned char ep, size_t size);
     int FT_FlushPipe(unsigned char ep);

@@ -1,14 +1,14 @@
 #ifndef LIME_LIMESDR_MINI_H
 #define LIME_LIMESDR_MINI_H
 
-#include "LMS7002M_SDRDevice.h"
+#include "boards/LMS7002M_SDRDevice.h"
 
 #include <vector>
 #include <memory>
 
 namespace lime {
 
-class IComms;
+class ISPI;
 class ISerialPort;
 class IUSB;
 
@@ -16,8 +16,8 @@ class IUSB;
 class LimeSDR_Mini : public LMS7002M_SDRDevice
 {
   public:
-    LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR_Mini();
@@ -46,8 +46,13 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
 
+    OpStatus UploadMemory(
+        eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
+
     void SetSerialNumber(const std::string& number);
     OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
+
+    std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;
 
   private:
     static OpStatus UpdateFPGAInterface(void* userData);
@@ -55,8 +60,8 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<IComms> mlms7002mPort;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::shared_ptr<ISPI> mlms7002mPort;
+    std::shared_ptr<ISPI> mfpgaPort;
     bool mConfigInProgress{};
 };
 

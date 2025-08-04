@@ -1,4 +1,6 @@
-target_sources(limesuiteng PRIVATE samplesConversion.cpp TRXLooper.cpp BufferInterleaving.cpp AvgRmsCounter.cpp)
+target_sources(
+    limesuiteng
+    PRIVATE samplesConversion.cpp TRXLooper.cpp BufferInterleaving.cpp AvgRmsCounter.cpp StreamComposite.cpp Timespec.cpp)
 
 add_executable(samplesConversionPerfTest main.cpp samplesConversion.cpp)
 target_link_libraries(samplesConversionPerfTest limesuiteng)

@@ -8,6 +8,7 @@
 
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/RFStream.h"
 
 #include <cmath>
 #include <complex>
@@ -83,6 +84,7 @@ class LMS7002M_SDRDevice_Fixture : public ::testing::Test
     bool configValid{ false };
 
     SDRDevice* device = nullptr;
+    std::unique_ptr<RFStream> stream;
 };
 
 } // namespace lime::testing

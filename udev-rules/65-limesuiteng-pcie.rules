@@ -4,3 +4,5 @@
 
 
 ACTION=="add|change", SUBSYSTEM=="limepcie", MODE="666"
+
+ACTION=="add|change", SUBSYSTEM=="tty", DRIVERS=="limeuart", MODE="666", SYMLINK+="$attr{driver_dev_symlink_name}"

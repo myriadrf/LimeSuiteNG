@@ -114,12 +114,12 @@ struct FirmwareInfo {
     int protocol; ///< The protocol version of the device.
     uint64_t boardSerialNumber; ///< The serial number of the device.
 };
-OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice = 0);
+OpStatus GetFirmwareInfo(ISerialPort& port, FirmwareInfo& info, uint32_t subDevice);
 void FirmwareToDescriptor(const FirmwareInfo& info, SDRDescriptor& descriptor);
 
 OpStatus LMS7002M_SPI(
-    ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);
-OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice = 0);
+    ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
+OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* mosi, size_t count, uint32_t subDevice = 0);
 
 OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count);
@@ -130,8 +130,8 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
 OpStatus GPIODirWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
 OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLength);
 
-OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
-OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice = 0);
+OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParameterIO>& parameters, uint32_t subDevice);
+OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& parameters, uint32_t subDevice);
 
 /// @brief The function to call on programming progress updates.
 typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> ProgressCallback;
@@ -141,17 +141,25 @@ OpStatus FirmwareWrite(ISerialPort& port,
     size_t length,
     int prog_mode,
     ALTERA_FPGA_GW_WR_targets device,
-    ProgressCallback callback = nullptr,
-    uint32_t subDevice = 0);
+    ProgressCallback callback,
+    uint32_t subDevice);
 
 OpStatus DeviceReset(ISerialPort& port, uint32_t socIndex, uint32_t subDevice = 0);
 OpStatus MemoryWrite(
-    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice = 0);
-OpStatus MemoryRead(
-    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, void* data, size_t dataLen, uint32_t subDevice = 0);
+    ISerialPort& port, MEMORY_WR_targets target, uint32_t address, const void* data, size_t dataLen, uint32_t subDevice);
+OpStatus MemoryRead(ISerialPort& port, MEMORY_WR_targets target, uint32_t address, void* data, size_t dataLen, uint32_t subDevice);
 
 OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& data);
 OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& data);
+
+OpStatus SPI16(ISerialPort& port,
+    uint8_t chipSelect,
+    LMS64CProtocol::Command writeCmd,
+    const uint32_t* MOSI,
+    LMS64CProtocol::Command readCmd,
+    uint32_t* MISO,
+    size_t count,
+    uint32_t subDevice);
 
 } // namespace LMS64CProtocol
 

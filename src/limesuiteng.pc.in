@@ -3,10 +3,10 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib@LIB_SUFFIX@
 includedir=${prefix}/include
 
-Name: LimeSuiteNG
+Name: liblimesuiteng
 Description: Driver and GUI for Lime Microsystems SDR devices.
 URL: https://limesuiteng.myriadrf.org/
-Version: @LIME_SUITE_VERSION@
+Version: @PROJECT_VERSION@
 Requires:
 Requires.private:
 Conflicts:

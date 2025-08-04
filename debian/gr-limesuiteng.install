@@ -1,0 +1,7 @@
+usr/include/gnuradio/limesuiteng/*
+usr/lib/*/libgnuradio-limesuiteng*
+usr/lib/*/cmake/gnuradio-limesuiteng/gnuradio-limesuiteng*
+usr/share/gnuradio/examples/limesuiteng/FM_receiver.grc
+usr/lib/python*/site-packages/gnuradio/limesuiteng/*
+usr/share/gnuradio/grc/blocks/limesuiteng*
+usr/share/gnuradio/manifests/limesuiteng/MANIFEST*

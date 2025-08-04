@@ -2,8 +2,9 @@
 
 #include <thread>
 #include <cassert>
+#include <cinttypes>
 
-#ifdef __unix__
+#ifdef __GNUC__
     #ifdef __GNUC__
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wpedantic"
@@ -97,10 +98,13 @@ void UnixUsb::process_libusbtransfer(libusb_transfer* trans)
         context->done.store(true);
         break;
     case LIBUSB_TRANSFER_OVERFLOW:
-        lime::error("USB transfer overflow ep:%02X", int(trans->endpoint));
+        lime::error("USB transfer overflow ep:%02X, actual %i", int(trans->endpoint), trans->actual_length);
+        context->bytesXfered = trans->actual_length;
+        context->done.store(true);
         break;
     case LIBUSB_TRANSFER_STALL:
         lime::error("USB transfer stalled ep:%02X", int(trans->endpoint));
+        context->done.store(true);
         break;
     case LIBUSB_TRANSFER_NO_DEVICE:
         lime::error("USB transfer no device"s);
@@ -308,7 +312,7 @@ int32_t UnixUsb::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length
     int status = libusb_bulk_transfer(dev_handle, endPointAddr, data, length, &actualTransferred, timeout_ms);
     if (status != 0)
     {
-        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %lu",
+        lime::error("UnixUsb::BulkTransfer(0x%02X) : %s, transferred: %i, expected: %" PRIuPTR,
             endPointAddr,
             libusb_error_name(status),
             actualTransferred,
@@ -357,7 +361,6 @@ OpStatus UnixUsb::WaitForXfer(void* context, int32_t timeout_ms)
     assert(context);
 
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
-
     // Blocking not to waste CPU
     std::unique_lock<std::mutex> lck(xfer->transferLock);
     bool value = xfer->cv.wait_for(lck, std::chrono::milliseconds(timeout_ms), [&]() { return xfer->done.load(); });
@@ -384,6 +387,7 @@ OpStatus UnixUsb::AbortXfer(void* context)
 void UnixUsb::FreeAsyncContext(void* context)
 {
     assert(context);
+    AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
     delete reinterpret_cast<AsyncContext*>(context);
 }
 
@@ -410,6 +414,11 @@ OpStatus UnixUsb::ClaimInterface(int32_t interface_number)
         return OpStatus::Error;
     }
     return OpStatus::Success;
+}
+
+void UnixUsb::FlushEndpoint()
+{
+    // do nothing, libusb does not have such functionality
 }
 
 } // namespace lime

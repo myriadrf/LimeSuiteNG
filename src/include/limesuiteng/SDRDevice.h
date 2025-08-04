@@ -25,6 +25,7 @@ struct DataStorage;
 struct Region;
 struct CustomParameterIO;
 class OEMTestReporter;
+class RFStream;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -432,33 +433,34 @@ class LIME_API SDRDevice
     /// @param config The configuration to use for setting the streams up.
     /// @param moduleIndex The index of the device to set up.
     /// @return The status code of the operation.
-    virtual OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) = 0;
+    [[deprecated]] virtual OpStatus StreamSetup(const StreamConfig& config, uint8_t moduleIndex) = 0;
 
     /// @brief Starts all the set up streams on the device.
     /// @param moduleIndex The index of the device to start the streams on.
-    virtual void StreamStart(uint8_t moduleIndex) = 0;
+    [[deprecated]] virtual void StreamStart(uint8_t moduleIndex) = 0;
 
     /// @brief Starts all the set up streams on the devices.
     /// @param moduleIndexes The indices of the devices to start the streams on.
-    virtual void StreamStart(const std::vector<uint8_t>& moduleIndexes);
+    [[deprecated]] virtual void StreamStart(const std::vector<uint8_t>& moduleIndexes);
 
     /// @brief Stops all the set up streams on the device.
     /// @param moduleIndex The index of the device to stop the streams on.
-    virtual void StreamStop(uint8_t moduleIndex) = 0;
+    [[deprecated]] virtual void StreamStop(uint8_t moduleIndex) = 0;
 
     /// @brief Stops all the set up streams on the devices.
     /// @param moduleIndexes The indices of the devices to stop the streams on.
-    virtual void StreamStop(const std::vector<uint8_t>& moduleIndexes);
+    [[deprecated]] virtual void StreamStop(const std::vector<uint8_t>& moduleIndexes);
 
     /// @brief Deallocate stream resources.
     /// @param moduleIndex The index of the device to stop the streams on.
-    virtual void StreamDestroy(uint8_t moduleIndex) = 0;
+    [[deprecated]] virtual void StreamDestroy(uint8_t moduleIndex) = 0;
 
     /// @brief Receives samples from all the active streams in the device.
     /// @param moduleIndex The index of the device to receive the samples from.
     /// @param samples The buffer to put the received samples in.
     /// @param count The amount of samples to receive.
     /// @param meta The metadata of the packets of the stream.
+    /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
     /// @return The amount of samples received.
     virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex32f_t* const* samples,
@@ -483,20 +485,21 @@ class LIME_API SDRDevice
     /// @param samples The buffer of the samples to transmit.
     /// @param count The amount of samples to transmit.
     /// @param meta The metadata of the packets of the stream.
+    /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
     /// @return The amount of samples transmitted.
-    virtual uint32_t StreamTx(uint8_t moduleIndex,
+    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
         const lime::complex32f_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamTx()
-    virtual uint32_t StreamTx(uint8_t moduleIndex,
+    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
         const lime::complex16_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamTx(uint8_t moduleIndex,
+    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
         const lime::complex12_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
@@ -506,7 +509,13 @@ class LIME_API SDRDevice
     /// @param moduleIndex The index of the device to retrieve the status from.
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
-    virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
+    [[deprecated]] virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
+
+    /// @brief Creates a RF data streaming interface for selected RF module.
+    /// @param config The configuration to use for setting the streams up.
+    /// @param moduleIndex The index of the device to set up.
+    /// @return RF data streaming interface object.
+    virtual std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) = 0;
 
     /// @brief Uploads waveform to on board memory for later use.
     /// @param config The configuration of the stream.
@@ -530,26 +539,20 @@ class LIME_API SDRDevice
      * GPIO API
      **********************************************************************/
 
-    /// @copydoc IComms::GPIOWrite()
     virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIORead()
     virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIODirWrite()
     virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIODirRead()
     virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength);
 
     /***********************************************************************
      * Arbitrary settings API
      **********************************************************************/
 
-    /// @copydoc IComms::CustomParameterWrite()
     virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters);
 
-    /// @copydoc IComms::CustomParameterRead()
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters);
 
     /// @brief The definition of a function to call when a log message is generated.

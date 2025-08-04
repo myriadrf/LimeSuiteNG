@@ -10,9 +10,8 @@
 #include <string_view>
 #include <cmath>
 #include <csignal>
-#include "kiss_fft.h"
 #include "args.hxx"
-#include "common.h"
+#include "../../cli/common.h"
 #ifdef USE_GNU_PLOT
     #include "gnuPlotPipe.h"
 #endif
@@ -114,7 +113,7 @@ int main(int argc, char** argv)
     config.channel[0].rx.oversample = 2;
     config.channel[0].rx.lpf = 0;
     config.channel[0].rx.path = rxPath;
-    config.channel[0].rx.calibrate = false;
+    config.channel[0].rx.calibrate = CalibrationFlag::NONE;
     config.channel[0].rx.testSignal.enabled = false;
 
     config.channel[0].tx.enabled = false;
@@ -125,31 +124,20 @@ int main(int argc, char** argv)
     config.channel[0].tx.testSignal.enabled = false;
 
     std::cout << "Configuring device ...\n"sv;
-    try
-    {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        device->Configure(config, chipIndex);
-        auto t2 = std::chrono::high_resolution_clock::now();
-        std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
-        // Samples data streaming configuration
-        StreamConfig stream;
-        stream.channels[TRXDir::Rx] = { 0 };
-        stream.format = DataFormat::F32;
-        stream.linkFormat = DataFormat::I16;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    device->Configure(config, chipIndex);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
 
-        device->StreamSetup(stream, chipIndex);
-        device->StreamStart(chipIndex);
+    // Samples data streaming configuration
+    StreamConfig streamCfg;
+    streamCfg.channels[TRXDir::Rx] = { 0 };
+    streamCfg.format = DataFormat::F32;
+    streamCfg.linkFormat = DataFormat::I16;
 
-    } catch (std::runtime_error& e)
-    {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
-    } catch (std::logic_error& e)
-    {
-        std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
-        return -1;
-    }
+    std::unique_ptr<lime::RFStream> stream = device->StreamCreate(streamCfg, chipIndex);
+    stream->Start();
 
     std::cout << "Stream started ...\n"sv;
     signal(SIGINT, intHandler);
@@ -165,44 +153,44 @@ int main(int argc, char** argv)
 #endif
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto t1 = startTime;
-    auto t2 = t1;
+    t1 = startTime;
+    t2 = t1;
 
     uint64_t totalSamplesReceived = 0;
 
     std::vector<float> fftBins(fftSize);
-    kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
-    kiss_fft_cpx m_fftCalcIn[fftSize];
-    kiss_fft_cpx m_fftCalcOut[fftSize];
+    // kiss_fft_cfg m_fftCalcPlan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
+    // kiss_fft_cpx m_fftCalcIn[fftSize];
+    // kiss_fft_cpx m_fftCalcOut[fftSize];
 
     StreamMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
-        uint32_t samplesRead = device->StreamRx(chipIndex, rxSamples, fftSize, &rxMeta);
+        uint32_t samplesRead = stream->StreamRx(rxSamples, fftSize, &rxMeta);
         if (samplesRead == 0)
             continue;
 
         // process samples
         totalSamplesReceived += samplesRead;
-        for (unsigned i = 0; i < fftSize; ++i)
-        {
-            m_fftCalcIn[i].r = rxSamples[0][i].real();
-            m_fftCalcIn[i].i = rxSamples[0][i].imag();
-        }
-        kiss_fft(m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
-        for (unsigned int i = 1; i < fftSize; ++i)
-        {
-            float output =
-                10 * log10(((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize)));
-            fftBins[i] = output;
-            if (output > peakAmplitude)
-            {
-                peakAmplitude = output;
-                peakFrequency = i * sampleRate / fftSize;
-            }
-        }
-        if (peakFrequency > sampleRate / 2)
-            peakFrequency = peakFrequency - sampleRate;
+        // for (unsigned i = 0; i < fftSize; ++i)
+        // {
+        //     m_fftCalcIn[i].r = rxSamples[0][i].real();
+        //     m_fftCalcIn[i].i = rxSamples[0][i].imag();
+        // }
+        // kiss_fft(m_fftCalcPlan, reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcIn), reinterpret_cast<kiss_fft_cpx*>(&m_fftCalcOut));
+        // for (unsigned int i = 1; i < fftSize; ++i)
+        // {
+        //     float output =
+        //         10 * log10(((m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i) / (fftSize * fftSize)));
+        //     fftBins[i] = output;
+        //     if (output > peakAmplitude)
+        //     {
+        //         peakAmplitude = output;
+        //         peakFrequency = i * sampleRate / fftSize;
+        //     }
+        // }
+        // if (peakFrequency > sampleRate / 2)
+        //     peakFrequency = peakFrequency - sampleRate;
         t2 = std::chrono::high_resolution_clock::now();
         if (t2 - t1 > std::chrono::seconds(1))
         {
@@ -219,11 +207,12 @@ int main(int argc, char** argv)
             peakAmplitude = -1000;
         }
     }
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 
     for (int i = 0; i < 2; ++i)
         delete[] rxSamples[i];
     delete[] rxSamples;
-    free(m_fftCalcPlan);
+    // free(m_fftCalcPlan);
     return 0;
 }

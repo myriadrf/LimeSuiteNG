@@ -1,0 +1,5 @@
+usr/lib/*/liblimesuiteng.so
+usr/include/limesuiteng
+usr/include/lime
+usr/lib/*/cmake/
+usr/lib/*/pkgconfig/

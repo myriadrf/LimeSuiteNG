@@ -3,8 +3,8 @@
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/StreamComposite.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/RFStream.h"
 #include "limesuiteng/types.h"
 
 #include <map>
@@ -35,12 +35,12 @@ class LIME_API LimeSettingsProvider
 struct LIME_API DirectionalSettings {
     std::string antenna; ///< The name of the antenna to use.
     std::string calibration; ///< The mode of calibration to use.
-    double lo_override; ///< The overridden frequency of the direction.
-    double gfir_bandwidth; ///< The width of the General Finite Impulse Response filter
-    int oversample; ///< Oversampling ratio.
-    int power_dBm; ///< The maximum power level of the direction.
-    bool powerAvailable; ///< Whether the maximum power level value #power_dBm is available
-    bool gfir_enable; ///< Whether the General Finite Impulse Response filter is enabled.
+    double lo_override{ 0 }; ///< The overridden frequency of the direction.
+    double gfir_bandwidth{ 0 }; ///< The width of the General Finite Impulse Response filter
+    int oversample{ 0 }; ///< Oversampling ratio.
+    int power_dBm{ 0 }; ///< The maximum power level of the direction.
+    bool powerAvailable{ false }; ///< Whether the maximum power level value #power_dBm is available
+    bool gfir_enable{ false }; ///< Whether the General Finite Impulse Response filter is enabled.
 };
 
 /// @brief Configuration settings for a device
@@ -73,7 +73,7 @@ struct LIME_API DevNode {
     std::string handleString; ///< The handle of the device.
     uint8_t chipIndex; ///< The chip index to use of the device.
     std::vector<uint32_t> fpgaRegisterWrites; ///< The values to write to the FPGA upon initialization.
-    lime::SDRDevice* device; ///< The device that owns the chip.
+    lime::SDRDevice* device{ nullptr }; ///< The device that owns the chip.
     lime::SDRConfig config; ///< The configuration of the device.
     int portIndex{}; ///< The index of the port to use.
     int devIndex{}; ///< The index of the device.
@@ -82,8 +82,8 @@ struct LIME_API DevNode {
 
 /// @brief The data for a channel
 struct LIME_API ChannelData {
-    DevNode* parent; ///< The owner of this ChannelData.
-    int chipChannel; ///< The channel the chip is using with this data.
+    DevNode* parent{ nullptr }; ///< The owner of this ChannelData.
+    int chipChannel{ 0 }; ///< The channel the chip is using with this data.
 };
 
 // Ports/Cells that can have combined multiple RF devices to act as one
@@ -91,9 +91,12 @@ struct LIME_API ChannelData {
 struct LIME_API PortData {
     // settings from file
     std::string deviceNames; ///< The names of the devices to connect to.
+    std::string calibrationDeviceName; ///< The name of device dedicated for monitoring/calibrating this port
 
     std::vector<DevNode*> nodes; ///< The devices connected to.
-    lime::StreamComposite* composite; ///< The composite sample stream streamer.
+    std::shared_ptr<lime::RFStream> stream; ///< The composite of samples streams.
+    DevNode* calibrationNode; ///< device assigned to monitor/calibrate the port
+    std::shared_ptr<lime::RFStream> calibrationStream; ///< monitoring/calibration samples stream.
     ConfigSettings configInputs; ///< The configuration settings for the devices.
 };
 
@@ -127,9 +130,9 @@ struct LIME_API LimeRuntimeParameters {
 
     /// @brief The parameters of the ports.
     struct LIME_API PortParams {
-        double sample_rate; ///< The sample rate of the transmissions (in Hz).
-        int rx_channel_count; ///< The count of the receive channels.
-        int tx_channel_count; ///< The count of the transmit channels.
+        double sample_rate{ 0 }; ///< The sample rate of the transmissions (in Hz).
+        int rx_channel_count{ 0 }; ///< The count of the receive channels.
+        int tx_channel_count{ 0 }; ///< The count of the transmit channels.
     };
 
     std::vector<PortParams> rf_ports; ///< The parameters for each of the devices.
@@ -150,10 +153,14 @@ LIME_API int LimePlugin_Write_complex32f(
     LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 LIME_API int LimePlugin_Write_complex16(
     LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+LIME_API int LimePlugin_Write_complex12(
+    LimePluginContext* context, const lime::complex12_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 LIME_API int LimePlugin_Read_complex32f(
     LimePluginContext* context, lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 LIME_API int LimePlugin_Read_complex16(
     LimePluginContext* context, lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+LIME_API int LimePlugin_Read_complex12(
+    LimePluginContext* context, lime::complex12_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
 {

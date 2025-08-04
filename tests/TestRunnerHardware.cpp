@@ -6,7 +6,7 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "common.h"
+#include "cli/common.h"
 
 using ::testing::InitGoogleTest;
 using namespace std;
@@ -82,6 +82,9 @@ int main(int argc, char** argv)
         std::cerr << "Failed to connect to: "sv << handles.at(0).Serialize() << std::endl;
         return EXIT_FAILURE;
     }
+
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
 
     const lime::SDRDescriptor d = device->GetDescriptor();
     cout << "Using " << d.name << " HW:" << d.hardwareVersion << " GW:" << d.gatewareVersion << "." << d.gatewareRevision

@@ -1,8 +1,33 @@
+#########################################################################
+# GLEW
+#########################################################################
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
-if(NOT TARGET OpenGL::GL)
+if(TARGET OpenGL::GL) # GLEW header needs GL/gl.h
+    find_package(GLEW) # use system libs
+    if(NOT GLEW_FOUND)
+        fetchcontent_declare(
+            GLEW_download
+            URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
+            URL_HASH SHA256=d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
+            EXCLUDE_FROM_ALL CONFIGURE_COMMAND "" BUILD_COMMAND "")
+        fetchcontent_makeavailable(GLEW_download)
+        fetchcontent_getproperties(GLEW_download SOURCE_DIR GLEW_PATH)
+        add_library(glew-internal STATIC ${GLEW_PATH}/src/glew.c)
+        target_include_directories(glew-internal PUBLIC ${GLEW_PATH}/include ${OPENGL_INCLUDE_DIR})
+        target_compile_definitions(glew-internal PUBLIC GLEW_STATIC GLEW_NO_GLU)
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(glew-internal PRIVATE -Wno-address -Wno-strict-prototypes)
+        endif()
+
+        # compile only when other targets link to it
+        set_target_properties(glew-internal PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+        add_library(GLEW::GLEW ALIAS glew-internal)
+    endif()
+else()
     message(FATAL_ERROR "OpenGL/GL not found!")
-endif(NOT TARGET OpenGL::GL)
+endif(TARGET OpenGL::GL)
 message(STATUS "OPENGL_INCLUDE_DIR: ${OPENGL_INCLUDE_DIR}")
 message(STATUS "OPENGL_LIBRARIES: ${OPENGL_LIBRARIES}")
 
@@ -16,4 +41,4 @@ elseif(UNIX)
     set(GL_LIBS ${OPENGL_LIBRARIES})
 endif()
 
-target_link_libraries(limeGUI PRIVATE GLEW ${GL_LIBS})
+target_link_libraries(limeGUI PRIVATE GLEW::GLEW ${GL_LIBS})

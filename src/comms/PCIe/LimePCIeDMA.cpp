@@ -14,7 +14,7 @@
     #include <poll.h>
     #include <sys/mman.h>
     #include <sys/ioctl.h>
-    #include "linux-kernel-module/limepcie.h"
+    #include "drivers/linux/limepcie/limepcie.h"
 #endif
 
 using namespace std::literals::string_literals;

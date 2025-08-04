@@ -10,9 +10,9 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
+#include "limesuiteng/RFStream.h"
 #include "PacketsFIFO.h"
-#include "memory/MemoryPool.h"
-#include "SamplesPacket.h"
+#include "StreamPacket.h"
 
 namespace lime {
 
@@ -21,44 +21,55 @@ class IDMA;
 class LMS7002M;
 
 /** @brief Class responsible for receiving and transmitting continuous sample data */
-class TRXLooper
+class TRXLooper : public RFStream
 {
   public:
     TRXLooper(std::shared_ptr<IDMA> rx, std::shared_ptr<IDMA> tx, FPGA* f, LMS7002M* chip, uint8_t moduleIndex);
-    ~TRXLooper();
+    virtual ~TRXLooper();
 
-    uint64_t GetHardwareTimestamp() const;
+    uint64_t GetHardwareTimestamp() const override;
     OpStatus SetHardwareTimestamp(const uint64_t now);
-    OpStatus Setup(const lime::StreamConfig& cfg);
-    OpStatus Start();
-    void Stop();
-    void Teardown();
+    OpStatus Setup(const lime::StreamConfig& cfg) override;
+    const StreamConfig& GetConfig() const override;
+    OpStatus Start() override;
+    OpStatus StageStart() override;
+    void Stop() override;
+    void Teardown() override;
 
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
     constexpr inline bool IsStreamRunning() const { return mStreamEnabled; }
+    uint32_t StreamRx(
+        lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(
+        lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
+    uint32_t StreamRx(
+        lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(const lime::complex32f_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(const lime::complex16_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t StreamTx(const lime::complex12_t* const* samples,
+        uint32_t count,
+        const StreamMeta* meta,
+        std::chrono::microseconds timeout) override;
 
-    /// @brief Gets the current configuration of the stream.
-    /// @return The current configuration of the stream.
-    constexpr inline const lime::StreamConfig& GetConfig() const { return mConfig; }
-    uint32_t StreamRx(lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
-    uint32_t StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
-    uint32_t StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
-    uint32_t StreamTx(
-        const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
-    uint32_t StreamTx(
-        const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
-    uint32_t StreamTx(
-        const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+
+    uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
 
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.
     void SetMessageLogCallback(SDRDevice::LogCallbackType callback) { mCallback_logMessage = callback; }
-
-    StreamStats GetStats(TRXDir tx) const;
-
-    /// @brief The type of a sample packet.
-    typedef SamplesPacket<2> SamplesPacketType;
+    void StreamStatus(StreamStats* rx, StreamStats* tx) override;
 
     static OpStatus UploadTxWaveform(FPGA* fpga,
         std::shared_ptr<IDMA> port,
@@ -71,10 +82,10 @@ class TRXLooper
     struct TransferArgs {
         std::shared_ptr<IDMA> dma; ///< The DMA interface to use.
         std::vector<uint8_t*> buffers; ///< The memory buffers to use.
-        int32_t bufferSize; ///< The size of a single buffer.
-        int16_t packetSize; ///< The size of a single packet.
+        uint32_t bufferSize; ///< The size of a single buffer.
+        uint32_t samplesInPacket; ///< The amount of samples in a single packet.
+        uint16_t packetSize; ///< The size of a single packet.
         uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
-        int32_t samplesInPacket; ///< The amount of samples in a single packet.
     };
 
   private:
@@ -102,13 +113,14 @@ class TRXLooper
     std::condition_variable streamActive;
     std::mutex streamMutex;
     bool mStreamEnabled;
+    bool omitRxPackets;
 
     struct Stream {
         enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
 
-        std::unique_ptr<MemoryPool> memPool;
-        std::unique_ptr<PacketsFIFO<SamplesPacketType*>> fifo;
-        SamplesPacketType* stagingPacket;
+        std::unique_ptr<PacketsFIFO<StreamPacket*>> packetsPool;
+        std::unique_ptr<PacketsFIFO<StreamPacket*>> fifo;
+        StreamPacket* stagingPacket;
         StreamStats stats;
         std::thread thread;
         std::atomic<uint64_t> lastTimestamp;
@@ -123,7 +135,7 @@ class TRXLooper
         uint8_t packetsToBatch;
 
         Stream()
-            : memPool(nullptr)
+            : packetsPool(nullptr)
             , fifo(nullptr)
             , stagingPacket(nullptr)
             , terminateWorker(false)
@@ -135,22 +147,33 @@ class TRXLooper
 
         void DeleteMemoryPool()
         {
-            if (!stagingPacket)
-                return;
-
-            if (memPool)
-                memPool->Free(stagingPacket);
-            stagingPacket = nullptr;
+            do
+            {
+                if (stagingPacket)
+                    delete stagingPacket;
+                stagingPacket = nullptr;
+                if (packetsPool && !packetsPool->pop(&stagingPacket, false, std::chrono::microseconds(0)))
+                    break;
+            } while (stagingPacket);
         }
     };
 
     Stream mRx;
     Stream mTx;
 
+    std::mutex startTimeMutex;
+    std::condition_variable startTimeIsSet;
+    int64_t startUnixTime;
+    bool startUnixTimeSet;
+    int ticksPerSample = 1;
+
     template<class T>
-    uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamMetaToStreamTxMeta(
+        const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
     template<class T>
-    uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout);
+    template<class T>
+    uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
 };
 
 } // namespace lime

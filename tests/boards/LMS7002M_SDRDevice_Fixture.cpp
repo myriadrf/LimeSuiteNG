@@ -37,6 +37,9 @@ void LMS7002M_SDRDevice_Fixture::SetUp()
 
 void LMS7002M_SDRDevice_Fixture::TearDown()
 {
+    if (stream)
+        stream->Stop();
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 }
 
@@ -65,14 +68,16 @@ void LMS7002M_SDRDevice_Fixture::SetupStream()
     streamConfiguration.channels[TRXDir::Rx] = { 0 };
     streamConfiguration.format = DataFormat::I16;
 
-    ASSERT_EQ(device->StreamSetup(streamConfiguration, moduleIndex), OpStatus::Success);
-    device->StreamStart(moduleIndex);
+    stream = device->StreamCreate(streamConfiguration, moduleIndex);
+    ASSERT_TRUE(stream);
+    stream->Start();
 }
 
 void LMS7002M_SDRDevice_Fixture::DestroySteam()
 {
-    device->StreamStop(moduleIndex);
-    device->StreamDestroy(moduleIndex);
+    stream->Stop();
+    stream.reset();
+    // device->StreamDestroy(moduleIndex);
 }
 
 TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
@@ -87,7 +92,7 @@ TEST_F(LMS7002M_SDRDevice_Fixture, Configure8HalfTestPatternAndReceiveIt)
 
     complex16_t* const data = sampleBuffer.data();
     StreamMeta meta{};
-    const auto actualSamplesReceived{ device->StreamRx(0, &data, samplesToReceive, &meta) };
+    const auto actualSamplesReceived{ stream->StreamRx(&data, samplesToReceive, &meta) };
     EXPECT_EQ(meta.timestamp, 0);
     ASSERT_EQ(samplesToReceive, actualSamplesReceived);
     EXPECT_THAT(sampleBuffer, AreSamplesCorrect(ChannelConfig::Direction::TestSignal::Divide::Div8));

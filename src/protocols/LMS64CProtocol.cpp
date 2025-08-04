@@ -19,6 +19,24 @@
 
 #include "comms/ISerialPort.h"
 
+#define DEBUG_SPI 0
+
+#if DEBUG_SPI
+static std::string PacketToString(const lime::LMS64CPacket& pkt)
+{
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&pkt);
+    int i = 0;
+    for (; i < 8; ++i) // header
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
+    ss << " |";
+    for (; i < 8 + pkt.blockCount * 4; ++i) // payload
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
+    return ss.str();
+}
+#endif
+
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
@@ -186,7 +204,7 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t lengt
     return RunControlCommand(port, data, data, length, timeout_ms);
 }
 
-static OpStatus SPI16(ISerialPort& port,
+OpStatus SPI16(ISerialPort& port,
     uint8_t chipSelect,
     Command writeCmd,
     const uint32_t* MOSI,
@@ -235,7 +253,15 @@ static OpStatus SPI16(ISerialPort& port,
             ++srcIndex;
         }
 
+#if DEBUG_SPI
+        std::string msg = PacketToString(pkt);
+        lime::log(LogLevel::Debug, "Wr:"s + msg);
+#endif
         OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+#if DEBUG_SPI
+        msg = PacketToString(pkt);
+        lime::log(LogLevel::Debug, "Rd:"s + msg);
+#endif
         if (status != OpStatus::Success)
             return status;
 
@@ -515,7 +541,7 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
 /// @param data The program to write to the device.
 /// @param length The length of the program to write.
 /// @param prog_mode The programming mode to use.
-/// @param device The memory to write the program to.
+/// @param target The memory to write the program to.
 /// @param callback The callback to use for program write progress updates.
 /// @param subDevice The ID of the subdevice to use.
 /// @return The operation status.

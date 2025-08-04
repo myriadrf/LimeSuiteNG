@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <string>
 #include <string_view>
+#include "args.hxx"
 
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"

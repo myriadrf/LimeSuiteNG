@@ -1,3 +1,17 @@
+if(NOT DEFINED CMAKE_MINIMUM_REQUIRED_VERSION)
+    cmake_minimum_required(VERSION 3.15)
+endif()
+
+project(
+    "limesuiteng-gui"
+    DESCRIPTION "LimeSuiteNG Graphical User Interface application"
+    VERSION 1.0.0
+    LANGUAGES CXX)
+
+checkdebianchangelogversion(${PROJECT_NAME})
+include(FeatureSummary)
+include(CMakeDependentOption)
+
 ########################################################################
 ## wx widgets dependency
 ########################################################################
@@ -61,16 +75,13 @@ message(STATUS "wxWidgets_DEFINITIONS: ${wxWidgets_DEFINITIONS}")
 message(STATUS "wxWidgets_INCLUDE_DIRS: ${wxWidgets_INCLUDE_DIRS}")
 message(STATUS "wxWidgets_LIBRARIES: ${wxWidgets_LIBRARIES}")
 
-include(FeatureSummary)
-include(CMakeDependentOption)
-cmake_dependent_option(ENABLE_GUI "Enable build limeGUI" ON "ENABLE_LIBRARY;wxWidgets_FOUND" OFF)
-add_feature_info(GUI ENABLE_GUI "GUI Application for LimeSuite")
-if(NOT ENABLE_GUI)
-    return()
-endif()
-
 include(${wxWidgets_USE_FILE})
 
+add_executable(limeGUI resources/resource.rc)
+
+########################################################################
+# Precompiled headers
+########################################################################
 set(WXWIDGETS_PCH
     <wx/panel.h>
     <wx/button.h>
@@ -93,12 +104,8 @@ set(WXWIDGETS_PCH
     <wx/string.h>
     <wx/textctrl.h>
     <wx/timer.h>)
-
-add_executable(limeGUI resources/resource.rc)
 target_precompile_headers(limeGUI PRIVATE ${CPP_STL_PCH} ${WXWIDGETS_PCH})
-
-set(BINARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin")
-set_target_properties(limeGUI PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
+set_target_properties(limeGUI PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 target_sources(
     limeGUI
@@ -125,26 +132,13 @@ set_source_files_properties(
 set_source_files_properties(
     oglGraph/dlgMarkers.cpp oglGraph//GLFont.cpp oglGraph/OpenGLGraph.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION true)
 
-target_include_directories(
-    limeGUI
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-            lms7002_wxgui
-            utilities_gui
-            FPGAcontrols_wxgui
-            numericSlider
-            fftviewer_wxgui
-            lms7suiteEvents
-            boards_wxgui
-            GUI)
+target_include_directories(limeGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} numericSlider fftviewer_wxgui GUI)
 
 add_subdirectory(boards)
 add_subdirectory(chips)
 add_subdirectory(oglGraph)
 
-target_link_libraries(
-    limeGUI
-    PUBLIC limesuiteng ${wxWidgets_LIBRARIES}
-    PRIVATE kissfft)
+target_link_libraries(limeGUI PUBLIC limesuiteng ${wxWidgets_LIBRARIES})
 
 if(MSVC)
     target_compile_definitions(limeGUI PRIVATE WIN32_LEAN_AND_MEAN)
@@ -154,15 +148,15 @@ if(MSVC)
         PROPERTY LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif(MSVC)
 
-if(WIN32)
+########################################################################
+# Copy external DLLs to binaries directory
+########################################################################
+if(WIN32 AND MSVC)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(x64_postfix "_x64")
     endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
 
     get_cmake_property(IS_MULTI_CONF GENERATOR_IS_MULTI_CONFIG)
-    if(${IS_MULTI_CONF})
-        set(additional_folder "/$<CONFIG>")
-    endif()
 
     set(debug_flag "$<$<CONFIG:Debug>:d>")
     set(release_dir "$<$<NOT:$<CONFIG:Debug>>:/ReleaseDLLs/lib/vc14x${x64_postfix}_dll>")
@@ -172,10 +166,18 @@ if(WIN32)
         POST_BUILD
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
-            ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll
-            ${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll
-            ${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll
-            ${BINARY_OUTPUT_DIR}${additional_folder})
-endif(WIN32)
+            "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll"
+            "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll"
+            "${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll"
+            "$<TARGET_PROPERTY:limeGUI,RUNTIME_OUTPUT_DIRECTORY>/$<${IS_MULTI_CONF}:$<CONFIG>>")
+    install(
+        FILES "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_gl_vc14x${x64_postfix}.dll"
+              "${wxWidgets_LIB_DIR}${release_dir}/wxmsw32u${debug_flag}_core_vc14x${x64_postfix}.dll"
+              "${wxWidgets_LIB_DIR}${release_dir}/wxbase32u${debug_flag}_vc14x${x64_postfix}.dll"
+        DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif(WIN32 AND MSVC)
 
-install(TARGETS limeGUI DESTINATION bin)
+install(
+    TARGETS limeGUI
+    DESTINATION bin
+    COMPONENT gui)

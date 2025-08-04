@@ -11,7 +11,7 @@
 #include <cmath>
 #include <csignal>
 #include "args.hxx"
-#include "common.h"
+#include "../../cli/common.h"
 
 using namespace lime;
 using namespace std::literals::string_view_literals;
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.oversample = 2;
     config.channel[0].tx.lpf = 0;
     config.channel[0].tx.path = txPath;
-    config.channel[0].tx.calibrate = true;
+    config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
     config.channel[0].tx.testSignal.enabled = false;
 
     std::cout << "Configuring device ...\n"sv;
@@ -119,18 +119,6 @@ int main(int argc, char** argv)
         device->Configure(config, chipIndex);
         auto t2 = std::chrono::high_resolution_clock::now();
         std::cout << "SDR configured in "sv << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n"sv;
-
-        // Samples data streaming configuration
-        StreamConfig stream;
-
-        stream.channels[TRXDir::Tx] = { 0 };
-
-        stream.format = DataFormat::F32;
-        stream.linkFormat = DataFormat::I16;
-
-        device->StreamSetup(stream, chipIndex);
-        device->StreamStart(chipIndex);
-
     } catch (std::runtime_error& e)
     {
         std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
@@ -140,6 +128,17 @@ int main(int argc, char** argv)
         std::cout << "Failed to configure settings: "sv << e.what() << std::endl;
         return -1;
     }
+
+    // Samples data streaming configuration
+    StreamConfig streamCfg;
+
+    streamCfg.channels[TRXDir::Tx] = { 0 };
+
+    streamCfg.format = DataFormat::F32;
+    streamCfg.linkFormat = DataFormat::I16;
+
+    std::unique_ptr<RFStream> stream = device->StreamCreate(streamCfg, chipIndex);
+    stream->Start();
 
     std::cout << "Stream started ...\n"sv;
     signal(SIGINT, intHandler);
@@ -178,7 +177,7 @@ int main(int argc, char** argv)
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram) //run for 10 seconds
     {
         uint32_t samplesToSend = samplesInPkt * txPacketCount;
-        uint32_t samplesSent = device->StreamTx(chipIndex, src, samplesToSend, &txMeta);
+        uint32_t samplesSent = stream->StreamTx(src, samplesToSend, &txMeta);
         if (samplesSent < 0)
         {
             std::cout << "Failure to send\n"sv;
@@ -198,6 +197,7 @@ int main(int argc, char** argv)
         }
     }
 
+    stream.reset();
     DeviceRegistry::freeDevice(device);
 
     return 0;

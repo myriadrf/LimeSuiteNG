@@ -5,16 +5,18 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+#include <cinttypes>
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 
-#include "comms/IComms.h"
 #include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "comms/ISerialPort.h"
-#include "comms/SPI_utilities.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "comms/SPI/ISPI.h"
 #include "comms/USB/IUSB.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/USBDMAEmulation.h"
@@ -27,17 +29,30 @@
 
 #include "FPGA_Mini.h"
 
-using namespace lime;
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 
+namespace lime {
 namespace limesdrmini {
+
+// hardware versions reported by gateware
+// v1.0 - 0
+// v1.1 - 0
+// v1.2 - 0
+// v1.3 - 3
+// v2.0 - 3
+// v2.1 - 4
+// v2.2 - 5
+// v2.3 - 6
+// v2.4 - 7
 
 static const uint8_t SPI_LMS7002M = 0;
 static const uint8_t SPI_FPGA = 1;
 
-static const CustomParameter CP_VCTCXO_DAC = { "VCTCXO DAC (runtime)"s, 0, 0, 255, false };
+static const CustomParameter CP_VCTCXO_DAC_v1 = { "VCTCXO DAC (runtime)"s, 0, 0, 255, false };
+static const CustomParameter CP_VCTCXO_DAC_v2 = { "VCTCXO DAC (runtime)"s, 0, 0, 1023, false };
+
 static const CustomParameter CP_TEMPERATURE = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_1v0 = { //
@@ -73,12 +88,13 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0113, 0x03C2 },
     { 0x0114, 0x00D0 },
     { 0x0117, 0x1230 },
-    { 0x0119, 0x18D2 },
+    { 0x0119, 0x18CC },
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0740 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x8650 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x000F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -122,12 +138,13 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0113, 0x03C2 },
     { 0x0114, 0x00D0 },
     { 0x0117, 0x1230 },
-    { 0x0119, 0x18D2 },
+    { 0x0119, 0x18CC },
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0740 },
-    { 0x0120, 0xC5C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x8650 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x000F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -146,8 +163,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param streamPort The communications port to send and receive sample data.
 /// @param commsPort The communications port for direct communications with the device.
-LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
-    std::shared_ptr<IComms> spiFPGA,
+LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
@@ -155,10 +172,11 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
 {
+    mStreamers.resize(1);
     SDRDescriptor& descriptor = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, descriptor);
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
@@ -167,9 +185,13 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, descriptor);
 
-    descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC);
-    if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI_V2))
+    if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
+        descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC_v1);
+    }
+    else if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI_V2))
+    {
+        descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC_v2);
         descriptor.customParameters.push_back(limesdrmini::CP_TEMPERATURE);
     }
 
@@ -192,16 +214,8 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         mLMSChips.push_back(std::move(chip));
     }
-    {
-        mStreamers.reserve(mLMSChips.size());
-        constexpr uint8_t rxBulkEndpoint = 0x83;
-        constexpr uint8_t txBulkEndpoint = 0x03;
-        auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
 
-        mStreamers.push_back(std::make_unique<TRXLooper>(
-            std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
-    }
+    descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrmini::SPI_LMS7002M }, { "FPGA"s, limesdrmini::SPI_FPGA } };
 
@@ -218,22 +232,24 @@ LimeSDR_Mini::~LimeSDR_Mini()
 
 OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 {
-    OpStatus status = OpStatus::Success;
-    std::vector<std::string> errors;
-    bool isValidConfig = LMS7002M_Validate(cfg, errors, 1);
+    auto& chip = mLMSChips.at(0);
 
-    if (!isValidConfig)
+    mConfigInProgress = true;
+    if (!cfg.skipDefaults)
     {
-        std::stringstream ss;
-
-        for (const auto& err : errors)
-        {
-            ss << err << std::endl;
-        }
-
-        return lime::ReportError(OpStatus::Error, "LimeSDR-Mini: "s + ss.str());
+        Init();
     }
+    // enabled ADC/DAC is required for FPGA to work
+    chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+    chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
 
+    OpStatus status = LMS7002M_Configure(*chip, cfg);
+    mConfigInProgress = false;
+
+    if (status != OpStatus::Success)
+        return status;
+
+    double sampleRate{ 0 };
     bool rxUsed = false;
     bool txUsed = false;
     for (int i = 0; i < 2; ++i)
@@ -242,83 +258,40 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         rxUsed |= ch.rx.enabled;
         txUsed |= ch.tx.enabled;
     }
+    if (rxUsed)
+        sampleRate = cfg.channel[0].rx.sampleRate;
+    else if (txUsed)
+        sampleRate = cfg.channel[0].tx.sampleRate;
 
-    // config validation complete, now do the actual configuration
-    try
+    if (sampleRate > 0)
     {
-        mConfigInProgress = true;
-        auto& chip = mLMSChips.at(0);
-        if (!cfg.skipDefaults)
-        {
-            status = Init();
-            if (status != OpStatus::Success)
-                return status;
-        }
-
-        status = LMS7002LOConfigure(*chip, cfg);
+        status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
         if (status != OpStatus::Success)
-            return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: LO configuration failed."s);
-        for (int i = 0; i < 2; ++i)
-        {
-            status = LMS7002ChannelConfigure(*chip, cfg.channel[i], i);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: channel%i configuration failed.", i);
-            LMS7002TestSignalConfigure(*chip, cfg.channel[i], i);
+            return status;
+    }
 
-            if (i == 0) // only channel A is connected to RF ports
-            {
-                SetRFSwitch(TRXDir::Rx, cfg.channel[0].rx.path);
-                SetRFSwitch(TRXDir::Tx, cfg.channel[0].tx.path);
-            }
-        }
-
-        // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        double sampleRate{ 0 };
-        if (rxUsed)
-            sampleRate = cfg.channel[0].rx.sampleRate;
-        else if (txUsed)
-            sampleRate = cfg.channel[0].tx.sampleRate;
-
-        if (sampleRate > 0)
-        {
-            status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to set sampling rate."s);
-        }
-
-        for (int i = 0; i < 2; ++i)
-        {
-            const ChannelConfig& ch = cfg.channel[i];
-            LMS7002ChannelCalibration(*chip, ch, i);
-            // TODO: should report calibration failure, but configuration can
-            // still work after failed calibration.
-        }
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        mConfigInProgress = false;
-        if (sampleRate > 0)
-        {
-            status = UpdateFPGAInterface(this);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeSDR_Mini: failed to update FPGA interface frequency."s);
-        }
-    } //try
-    catch (std::logic_error& e)
+    for (int c = 0; c < 2; ++c)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
-    } catch (std::runtime_error& e)
+        SetAntenna(0, TRXDir::Tx, c, cfg.channel[c].tx.path);
+        SetAntenna(0, TRXDir::Rx, c, cfg.channel[c].rx.path);
+        SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
+        SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
+        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+    }
+
+    if (sampleRate > 0)
     {
-        return ReportError(OpStatus::Error, "LimeSDR_Mini config: "s + e.what());
+        status = UpdateFPGAInterface(this);
+        if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Failed to update FPGA interface frequency."s);
     }
     return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Mini::Init()
 {
+    mFPGA->StopStreaming();
+
     auto& lms = mLMSChips.at(0);
     OpStatus status = LMS64CProtocol::DeviceReset(*mSerialPort, 0);
     if (status != OpStatus::Success)
@@ -333,12 +306,8 @@ OpStatus LimeSDR_Mini::Init()
     // Otherwise if TxLPF is not configured, or CG_IAMP_TBB is not set explicitly to match it.
     // it can result in inconsistent Tx gain results.
     lms->SetActiveChannel(LMS7002M::Channel::ChA);
-    lms->SetTxLPF(20);
-    lms->SetRxLPF(20);
-    // SetActiveChannel(Channel::ChB);
-    // SetTxLPF(0);
-    // SetRxLPF(0);
-    // SetActiveChannel(Channel::ChA);
+    lms->SetTxLPF(20e6);
+    lms->SetRxLPF(20e6);
 
     return OpStatus::Success;
 }
@@ -378,11 +347,11 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     switch (chipSelect)
     {
     case limesdrmini::SPI_LMS7002M:
-        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+        return mlms7002mPort->Transact(MOSI, MISO, count);
     case limesdrmini::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     default:
-        throw std::logic_error("LimeSDR_Mini SPI invalid SPI chip select"s);
+        return ReportError(OpStatus::InvalidValue, "LimeSDR_Mini SPI invalid SPI chip select"s);
     }
 }
 
@@ -398,7 +367,8 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 {
     if (mDeviceDescriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
-        throw std::logic_error("LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        ReportError(OpStatus::NotSupported, "LimeSDR-Mini v1 doesn't have a temperature sensor"s);
+        return -1;
     }
 
     return LMS7002M_SDRDevice::GetTemperature(moduleIndex);
@@ -406,66 +376,14 @@ double LimeSDR_Mini::GetTemperature(uint8_t moduleIndex)
 
 OpStatus LimeSDR_Mini::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    const bool bypass = (oversample == 1);
-    uint8_t decimation = 7; // HBD_OVR_RXTSP=7 - bypass
-    uint8_t interpolation = 7; // HBI_OVR_TXTSP=7 - bypass
-    double cgenFreq = sampleRate * 4; // AI AQ BI BQ
-    // TODO:
-    // for (uint8_t i = 0; i < GetNumChannels(false) ;i++)
-    // {
-    //     if (rx_channels[i].cF_offset_nco != 0.0 || tx_channels[i].cF_offset_nco != 0.0)
-    //     {
-    //         bypass = false;
-    //         break;
-    //     }
-    // }
-
-    if (bypass)
-    {
-        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: bypass, Interp: bypass", sampleRate / 1e6, cgenFreq / 1e6);
-    }
-    else
-    {
-        if (oversample == 0)
-        {
-            const int n = lime::LMS7002M::CGEN_MAX_FREQ / (cgenFreq);
-            oversample = (n >= 32) ? 32 : (n >= 16) ? 16 : (n >= 8) ? 8 : (n >= 4) ? 4 : 2;
-        }
-
-        decimation = 4;
-        if (oversample <= 16)
-        {
-            constexpr std::array<int, 17> decimationTable{ 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
-            decimation = decimationTable.at(oversample);
-        }
-        interpolation = decimation;
-        cgenFreq *= 2 << decimation;
-
-        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
-            sampleRate / 1e6,
-            cgenFreq / 1e6,
-            decimation + 1,
-            interpolation + 1); // dec/inter ratio is 2^(value+1)
-    }
-
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML1_SISODDR, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML2_SISODDR, 1);
+    const bool bypass = ((oversample == 1 || oversample == 0) && sampleRate > 61.44e6);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CDSN_RXALML, !bypass);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::EN_ADCCLKH_CLKGN, 0);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CLKH_OV_CLKL_CGEN, 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBD_OVR_RXTSP, decimation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBI_OVR_TXTSP, interpolation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
-    if (bypass)
-    {
-        return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(sampleRate * 4, 7, 7);
-    }
-    else
-    {
-        return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(cgenFreq, interpolation, decimation);
-    }
+
+    return LMS7002M_SDRDevice::LMS7002M_SetSampleRate(sampleRate, oversample, oversample);
 }
 
 OpStatus LimeSDR_Mini::GPIODirRead(uint8_t* buffer, const size_t bufLength)
@@ -538,19 +456,73 @@ OpStatus LimeSDR_Mini::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 
 OpStatus LimeSDR_Mini::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR_Mini::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
+}
+
+OpStatus LimeSDR_Mini::UploadMemory(
+    eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
+{
+    int progMode;
+    LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
+
+    switch (device)
+    {
+    case eMemoryDevice::FPGA_FLASH:
+        progMode = 1;
+        break;
+    default:
+        return OpStatus::InvalidValue;
+    }
+
+    const char* data_src = data;
+
+    // LimeSDR-Mini v1.X, needs data modification
+    std::vector<char> v1_buffer;
+
+    FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
+    if (gw.boardID == LMS_DEV_LIMESDRMINI && gw.hardwareVersion <= 3) // LimeSDR-Mini v1.X
+    {
+        if (gw.version != 0)
+        {
+            // boot from flash
+            LMS64CProtocol::FirmwareWrite(*mSerialPort, nullptr, 0, 2, target, nullptr, 0);
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        }
+
+        const int sizeUFM = 0x8000;
+        const int sizeCFM0 = 0x42000;
+        const int startUFM = 0x1000;
+        const int startCFM0 = 0x4B000;
+
+        if (length != startCFM0 + sizeCFM0)
+            return ReportError(OpStatus::Error, "LimeSDR_Mini: Invalid image file");
+
+        v1_buffer.resize(sizeUFM + sizeCFM0);
+        memcpy(v1_buffer.data(), data + startUFM, sizeUFM);
+        memcpy(v1_buffer.data() + sizeUFM, data + startCFM0, sizeCFM0);
+
+        data_src = v1_buffer.data();
+        length = v1_buffer.size();
+    }
+
+    OpStatus status = LMS64CProtocol::FirmwareWrite(*mSerialPort, data_src, length, progMode, target, callback, 0);
+    if (status != OpStatus::Success)
+        return status;
+
+    progMode = 2; // boot from FLASH
+    return LMS64CProtocol::FirmwareWrite(*mSerialPort, nullptr, 0, progMode, target, nullptr, 0);
 }
 
 void LimeSDR_Mini::SetSerialNumber(const std::string& number)
 {
 
     uint64_t sn = 0;
-    sscanf(number.c_str(), "%16lX", &sn);
+    sscanf(number.c_str(), "%16" SCNx64, &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
 
@@ -608,3 +580,25 @@ OpStatus LimeSDR_Mini::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chann
     else
         return status;
 }
+
+std::unique_ptr<lime::RFStream> LimeSDR_Mini::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
+{
+    constexpr uint8_t rxBulkEndpoint = 0x83;
+    constexpr uint8_t txBulkEndpoint = 0x03;
+    auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
+
+    std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(
+        std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0);
+    if (!streamer)
+        return streamer;
+
+    if (mCallback_logMessage)
+        streamer->SetMessageLogCallback(mCallback_logMessage);
+    OpStatus status = streamer->Setup(config);
+    if (status != OpStatus::Success)
+        return std::unique_ptr<RFStream>(nullptr);
+    return streamer;
+}
+
+} // namespace lime

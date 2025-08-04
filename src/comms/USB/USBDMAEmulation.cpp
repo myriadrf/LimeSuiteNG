@@ -65,12 +65,9 @@ void USBDMAEmulation::AbortAllTransfers()
     while (!pendingXfers.empty())
     {
         AsyncXfer* async = pendingXfers.front();
+        assert(async);
         pendingXfers.pop();
         port->AbortXfer(async->xfer);
-        temp.push_back(async);
-    }
-    for (auto& async : temp)
-    {
         port->WaitForXfer(async->xfer, 1000);
         port->FinishDataXfer(async->xfer);
         transfers.push(async);
@@ -124,6 +121,8 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
         return OpStatus::Success;
     // For continuous transferring, preemptively request data to be transferred
     std::unique_lock lck{ queuesMutex };
+    lastRequestIndex = 0;
+    port->FlushEndpoint();
     while (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();
@@ -144,7 +143,8 @@ void USBDMAEmulation::UpdateProducerStates()
     while (!pendingXfers.empty())
     {
         AsyncXfer* async = pendingXfers.front();
-        int timeout_ms = 0; // just checking if the transfer is complete, not waiting.
+        assert(async);
+        int timeout_ms = 100; // just checking if the transfer is complete, not waiting.
         OpStatus status = port->WaitForXfer(async->xfer, timeout_ms);
         if (status != OpStatus::Success)
             break;
@@ -166,7 +166,9 @@ USBDMAEmulation::State USBDMAEmulation::GetCounters()
 
 OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, DataTransferDirection dir, bool irq)
 {
-    assert(isEnabled);
+    if (!isEnabled)
+        return OpStatus::Error;
+
     assert(bytesCount > 0);
     assert(index < mappings.size());
 
@@ -177,8 +179,8 @@ OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, Dat
     {
         AsyncXfer* async = transfers.front();
         async->requestedSize = bytesCount;
-        OpStatus status = port->BeginDataXfer(async->xfer, mappings[lastRequestIndex].buffer, async->requestedSize, endpoint);
-        lastRequestIndex = (lastRequestIndex + 1) % mappings.size();
+        OpStatus status = port->BeginDataXfer(async->xfer, mappings[index].buffer, async->requestedSize, endpoint);
+        lastRequestIndex = index; //(lastRequestIndex + 1) % mappings.size();
         if (status != OpStatus::Success)
             return OpStatus::Error;
         transfers.pop();
@@ -195,7 +197,9 @@ OpStatus USBDMAEmulation::Wait()
     if (pendingXfers.empty())
         return OpStatus::Success;
 
+    assert(!pendingXfers.empty());
     AsyncXfer* async = pendingXfers.front();
+    assert(async);
     return port->WaitForXfer(async->xfer, 1000);
 }
 

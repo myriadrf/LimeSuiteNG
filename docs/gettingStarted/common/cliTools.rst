@@ -1,3 +1,7 @@
+
+.. _cli-tools-ref:
+
+============================
 Command line interface tools
 ============================
 
@@ -57,8 +61,8 @@ Utility for reading/writing device's SPI registers
 
 .. code-block:: bash
 
-	user@computer:~$ limeSPI --chip LMS7002M --write=0020fffd
-	user@computer:~$ limeSPI --chip LMS7002M --read=0020
+	user@computer:~$ limeSPI write --chip LMS7002M --stream=0020fffd
+	user@computer:~$ limeSPI read --chip LMS7002M --stream=0020
 	0020fffd
 
 limeFLASH

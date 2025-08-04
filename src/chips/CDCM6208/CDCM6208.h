@@ -5,9 +5,10 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
-#include "comms/IComms.h"
 
 namespace lime {
+
+class ISPI;
 
 constexpr double CDCM_VCO_MIN_V1{ 2390.0 * 1e6 };
 constexpr double CDCM_VCO_MAX_V1{ 2550.0 * 1e6 };

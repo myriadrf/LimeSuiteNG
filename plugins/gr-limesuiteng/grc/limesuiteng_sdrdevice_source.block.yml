@@ -1,0 +1,193 @@
+id: limesuiteng_sdrdevice_source
+label: LimeSuiteNG Source
+category: '[LimeSuiteNG]'
+flags: throttle
+
+file_format: 1
+
+parameters:
+- id: data_format
+  label: Type
+  dtype: enum
+  options: [fc32, sc16]
+  option_labels: [Complex Float32, Complex Int16]
+  option_attributes:
+    type: [fc32, sc16]
+    limeFormat: ["complex32f_t", "complex16_t"]
+  hide: part
+  category: General
+
+- id: custom_config_file
+  label: Custom config file
+  dtype: string
+  hide: ${'part' if not custom_config_file else 'none'}
+  category: General
+
+- id: deviceHandleHint
+  label: Device Handle
+  dtype: string
+  hide: ${'part' if not deviceHandleHint else 'none'}
+  category: General
+
+- id: chip_index
+  label: RFSOC index
+  dtype: int
+  default: 0
+  hide: all
+  category: General
+
+- id: rf_freq
+  label: LO Frequency
+  dtype: float
+  default: 100e6
+  category: General
+
+- id: sample_rate
+  label: Sample Rate
+  dtype: float
+  default: 10e6
+  category: General
+
+- id: rf_oversampling
+  label: RF Oversampling
+  dtype: enum
+  options: [auto, x1, x2, x4, x8, x16, x32]
+  option_attributes:
+    value: [0, 1, 2, 4, 8, 16, 32]
+  category: General
+  hide: ${'part' if rf_oversampling.value==0 else 'none'}
+
+- id: nco_offset
+  label: NCO offset
+  dtype: float
+  default: 0
+  category: General
+  hide: ${'part' if nco_offset==0 else 'none'}
+
+- id: lpf
+  label: Low Pass Filter
+  dtype: float
+  default: 20e6
+  category: General
+  hide: ${'part' if not lpf else 'none'}
+
+- id: gfir_bandwidth
+  label: GFIR filter
+  dtype: float
+  default: 0
+  category: General
+  hide: ${'part' if not gfir_bandwidth else 'none'}
+
+- id: antenna
+  label: Antenna port
+  dtype: string
+  default: 'auto'
+  category: General
+  hide: ${'part' if antenna=='auto' else 'none'}
+
+- id: channel_indexes
+  label: Data channel indexes
+  dtype: int_vector
+  default: [0]
+  hide: part
+  category: General
+
+- id: gain_generic
+  label: Gain (dB)
+  dtype: float
+  default: 20
+  category: General
+  hide: ${'part' if override_lms7002m_rx_gains=='Enabled' else 'none'}
+
+- id: calibrate_dciq
+  label: Calibrate DC & IQ
+  dtype: enum
+  options: ["Disabled", "Enabled"]
+  option_labels: ["Disabled", "Enabled"]
+  option_attributes:
+    value: [0, 1]
+  category: General
+  hide: ${'part' if calibrate_dciq=='Disabled' else 'none'}
+
+# Advanced settings for LMS7002M
+- id: override_lms7002m_rx_gains
+  label: LMS7002M Rx Gains Override
+  dtype: enum
+  options: ["Disabled", "Enabled"]
+  option_labels: ["Disabled", "Enabled"]
+  option_attributes:
+    value: [0, 1]
+  # default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_lna
+  label: Rx LNA dB
+  dtype: float
+  options: [-30, -27, -24, -21, -18, -15, -12, -9, -6, -5, -4, -3, -2, -1, 0]
+  option_labels: ["max-30", "max-27", "max-24", "max-21", "max-18", "max-15", "max-12", "max-9", "max-6", "max-5", "max-4", "max-3", "max-2", "max-1", "max"]
+  default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_pga
+  label: Rx PGA dB
+  dtype: float
+  options: [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  # option_labels: ["max-30", "max-27", "max-24", "max-21", "max-18", "max-15", "max-12", "max-9", "max-6", "max-5", "max-4", "max-3", "max-2", "max-1", "max"]
+  default: 0
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+- id: lms7002m_gain_tia
+  label: Rx TIA dB
+  dtype: float
+  options: [-12, -3, 0]
+  option_labels: ["max-12", "max-3", "max"]
+  default: -3
+  category: LMS7002M Advanced
+  hide: ${'part' if override_lms7002m_rx_gains=='Disabled' else 'none'}
+
+outputs:
+- label: out
+  domain: stream
+  dtype: ${ data_format.type }
+  multiplicity: ${ len(channel_indexes) }
+# must be connected
+  optional: false
+
+asserts:
+- ${ rf_freq > 0 }
+- ${ len(channel_indexes) > 0 }
+- ${ sample_rate > 0 }
+- ${ abs(nco_offset) < sample_rate }
+- ${ gfir_bandwidth < sample_rate }
+
+templates:
+  imports: from gnuradio import limesuiteng
+  make: |-
+    limesuiteng.sdrdevice_source(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ data_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
+    self.${id}.set_lo_frequency(${rf_freq})
+    self.${id}.set_gfir_bandwidth(${gfir_bandwidth})
+    self.${id}.set_antenna(${antenna})
+    if ${override_lms7002m_rx_gains.value} == 1:
+      self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
+      self.${id}.set_gain(2, ${lms7002m_gain_pga})
+      self.${id}.set_gain(3, 12+${lms7002m_gain_tia})
+    else:
+      self.${id}.set_gain_generic(${gain_generic})
+    self.${id}.set_nco_frequency(${nco_offset})
+    self.${id}.set_lpf_bandwidth(${lpf}) # Rx LPF range depends on TIA gain
+    self.${id}.set_calibration_enable(${calibrate_dciq.value})
+
+  callbacks:
+  - set_config_file(${custom_config_file})
+  - set_lo_frequency(${rf_freq})
+  - set_lpf_bandwidth(${lpf})
+  - set_gfir_bandwidth(${gfir_bandwidth})
+  - set_antenna(${antenna})
+  - set_gain_generic(${gain_generic})
+  - set_nco_frequency(${nco_offset})
+  - self.${id}.set_gain(0, 30+${lms7002m_gain_lna})
+  - self.${id}.set_gain(2, ${lms7002m_gain_pga})
+  - self.${id}.set_gain(3, 12+${lms7002m_gain_tia})

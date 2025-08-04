@@ -1506,18 +1506,24 @@ lime_Result lms7002m_set_interface_frequency(lms7002m_context* self, uint32_t cg
 
     // [dependency] GFIR*_N clock dividers depend on HBI, HBD
     // TODO: also affects GFIR*L, which affects coefficients ordering, see: lms7002m_set_gfir_coefficients
+    enum lms7002m_channel savedChannel = lms7002m_set_active_channel_readback(self, LMS7002M_CHANNEL_A);
+    for (int mac = 1; mac <= 2; ++mac)
     {
-        uint8_t gfirN = (hbi == 7) ? 0 : (2 << hbi) - 1;
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, gfirN);
+        lms7002m_spi_modify_csr(self, LMS7002M_MAC, mac);
+        {
+            uint8_t gfirN = (hbi == 7) ? 0 : (2 << hbi) - 1;
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_TXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_TXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_TXTSP, gfirN);
+        }
+        {
+            uint8_t gfirN = (hbd == 7) ? 0 : (2 << hbd) - 1;
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, gfirN);
+            lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, gfirN);
+        }
     }
-    {
-        uint8_t gfirN = (hbd == 7) ? 0 : (2 << hbd) - 1;
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR1_N_RXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR2_N_RXTSP, gfirN);
-        lms7002m_spi_modify_csr(self, LMS7002M_GFIR3_N_RXTSP, gfirN);
-    }
+    lms7002m_set_active_channel(self, savedChannel);
 
     return lms7002m_set_frequency_cgen(self, cgen_freq_Hz);
 }
@@ -1630,6 +1636,7 @@ lime_Result lms7002m_set_clock_frequency(lms7002m_context* self, enum lms7002m_c
     switch (clk_id)
     {
     case LMS7002M_CLK_REFERENCE:
+        return lms7002m_set_reference_clock(self, freq);
         // TODO: recalculate CGEN,SXR/T
         break;
     case LMS7002M_CLK_CGEN:

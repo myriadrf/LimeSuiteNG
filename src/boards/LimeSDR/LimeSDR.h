@@ -1,8 +1,9 @@
 #ifndef LIME_LIMESDR_H
 #define LIME_LIMESDR_H
 
-#include "LMS7002M_SDRDevice.h"
+#include "boards/LMS7002M_SDRDevice.h"
 #include "protocols/LMS64CProtocol.h"
+#include "chips/ADF4002/ADF4002.h"
 
 #include <vector>
 #include <memory>
@@ -10,14 +11,13 @@
 namespace lime {
 
 class IUSB;
-class IComms;
 
 /** @brief Class for managing the LimeSDR-USB device. */
 class LimeSDR : public LMS7002M_SDRDevice
 {
   public:
-    LimeSDR(std::shared_ptr<IComms> spiLMS,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeSDR(std::shared_ptr<ISPI> spiLMS,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR();
@@ -49,6 +49,8 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
     OpStatus MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data) override;
 
+    std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;
+
   private:
     SDRDescriptor GetDeviceInfo();
     void ResetUSBFIFO();
@@ -66,8 +68,9 @@ class LimeSDR : public LMS7002M_SDRDevice
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<IComms> mlms7002mPort;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::shared_ptr<ISPI> mlms7002mPort;
+    std::shared_ptr<ISPI> mfpgaPort;
+    std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };
 

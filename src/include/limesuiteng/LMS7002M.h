@@ -854,7 +854,6 @@ class LIME_API LMS7002M
         bool mNeedsRestore; ///< Whether the channel needs restoring or not
     };
 
-  private:
     ///enumeration to indicate module registers intervals
     enum class MemorySection : uint8_t {
         LimeLight = 0,
@@ -891,6 +890,7 @@ class LIME_API LMS7002M
         RSSI_DC_CONFIG,
     };
 
+  private:
     /*!
      * @brief Sets given module registers to default values
      * @return The status of the operation
@@ -911,10 +911,6 @@ class LIME_API LMS7002M
         uint16_t address;
         uint16_t mask;
     };
-
-    static const std::vector<ReadOnlyRegister> readOnlyRegisters;
-
-    static const std::map<MemorySection, std::array<uint16_t, 2>> MemorySectionAddresses;
 
     uint32_t GetRSSI();
 

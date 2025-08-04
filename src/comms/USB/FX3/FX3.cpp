@@ -5,7 +5,7 @@
 using namespace lime;
 using namespace std::literals::string_literals;
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     #ifdef __GNUC__
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wpedantic"
@@ -48,7 +48,7 @@ const int FX3::CTR_READ_REQUEST_VALUE = 1;
 
 std::vector<USBDescriptor> FX3::enumerateDevices(const std::set<VendorProductId>& ids)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.enumerateDevices(ids);
 #else
     std::vector<USBDescriptor> devDescriptors;
@@ -87,7 +87,7 @@ std::vector<USBDescriptor> FX3::enumerateDevices(const std::set<VendorProductId>
 }
 
 FX3::FX3()
-#ifndef __unix__
+#ifdef _MSC_VER
     : fx3device(new CCyFX3Device())
 #endif
 {
@@ -101,7 +101,7 @@ FX3::~FX3()
 bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
 {
     Disconnect();
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.Connect(vid, pid, serial);
 #else // windows
     if (fx3device->DeviceCount() == 0)
@@ -123,7 +123,7 @@ bool FX3::Connect(uint16_t vid, uint16_t pid, const char* serial)
 
 void FX3::Disconnect()
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     libusb_impl.Disconnect();
 #else
     if (!fx3device)
@@ -136,7 +136,7 @@ void FX3::Disconnect()
 
 bool FX3::IsConnected()
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.IsConnected();
 #else
     return fx3device ? fx3device->IsOpen() : false;
@@ -145,7 +145,7 @@ bool FX3::IsConnected()
 
 int32_t FX3::BulkTransfer(uint8_t endPoint, uint8_t* data, size_t length, int32_t timeout_ms)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.BulkTransfer(endPoint, data, length, timeout_ms);
 #else
     LONG longLength = static_cast<LONG>(length);
@@ -158,7 +158,7 @@ int32_t FX3::BulkTransfer(uint8_t endPoint, uint8_t* data, size_t length, int32_
 
 int32_t FX3::ControlTransfer(int requestType, int request, int value, int index, uint8_t* data, size_t length, int32_t timeout_ms)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.ControlTransfer(requestType, request, value, index, data, length, timeout_ms);
 #else
     LONG longLength{ static_cast<LONG>(length) };
@@ -185,9 +185,36 @@ int32_t FX3::ControlTransfer(int requestType, int request, int value, int index,
 #endif
 }
 
+void FX3::FlushEndpoint()
+{
+    constexpr int CTR_W_REQCODE = 0xC1;
+    constexpr int CTR_W_VALUE = 0x0000;
+    constexpr int CTR_W_INDEX = 0x0000;
+
+    constexpr int length = 64;
+    uint8_t packet[length];
+    // command to reset bulk endpoint fifos
+    packet[0] = 0x40; // https://github.com/myriadrf/LimeSDR-USB_FX3/blob/27435fbecdf1950897311079d764090b56a8ae9d/main.c#L767
+
+    ControlTransfer(FX3::CTR_WRITE_REQUEST_VALUE,
+        CTR_W_REQCODE,
+        CTR_W_VALUE,
+        CTR_W_INDEX,
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+        const_cast<uint8_t*>(packet),
+        length,
+        100);
+
+    constexpr int CTR_R_REQCODE = 0xC0;
+    constexpr int CTR_R_VALUE = 0x0000;
+    constexpr int CTR_R_INDEX = 0x0000;
+
+    ControlTransfer(FX3::CTR_READ_REQUEST_VALUE, CTR_R_REQCODE, CTR_R_VALUE, CTR_R_INDEX, packet, length, 100);
+}
+
 void* FX3::AllocateAsyncContext()
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.AllocateAsyncContext();
 #else
     return new FX3AsyncContext();
@@ -196,7 +223,7 @@ void* FX3::AllocateAsyncContext()
 
 OpStatus FX3::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8_t endPointAddr)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.BeginDataXfer(context, buffer, length, endPointAddr);
 #else
     FX3AsyncContext* async = reinterpret_cast<FX3AsyncContext*>(context);
@@ -210,7 +237,7 @@ OpStatus FX3::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uint8
 
 OpStatus FX3::WaitForXfer(void* context, int32_t timeout_ms)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.WaitForXfer(context, timeout_ms);
 #else
     FX3AsyncContext* async = reinterpret_cast<FX3AsyncContext*>(context);
@@ -221,7 +248,7 @@ OpStatus FX3::WaitForXfer(void* context, int32_t timeout_ms)
 
 size_t FX3::FinishDataXfer(void* context)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.FinishDataXfer(context);
 #else
     FX3AsyncContext* async = reinterpret_cast<FX3AsyncContext*>(context);
@@ -233,7 +260,7 @@ size_t FX3::FinishDataXfer(void* context)
 
 OpStatus FX3::AbortXfer(void* context)
 {
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     return libusb_impl.AbortXfer(context);
 #else
     FX3AsyncContext* async = reinterpret_cast<FX3AsyncContext*>(context);
@@ -244,7 +271,7 @@ OpStatus FX3::AbortXfer(void* context)
 void FX3::FreeAsyncContext(void* context)
 {
     assert(context);
-#ifdef __unix__
+#if defined(__unix__) || defined(__GNUC__)
     libusb_impl.FreeAsyncContext(context);
 #else
     delete reinterpret_cast<FX3AsyncContext*>(context);

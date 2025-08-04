@@ -6,12 +6,12 @@
 #include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
-#include "comms/IComms.h"
 #include "comms/ISerialPort.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/IUSB.h"
 #include "comms/USB/USBDMAEmulation.h"
-#include "comms/SPI_utilities.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "comms/SPI/ISPI.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
 
@@ -23,6 +23,7 @@
 #include <set>
 #include <stdexcept>
 #include <cmath>
+#include <cinttypes>
 
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
@@ -94,8 +95,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param streamPort The communications port to send and receive sample data.
 /// @param commsPort The communications port for direct communications with the device.
-LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
-    std::shared_ptr<IComms> spiFPGA,
+LimeNET_Micro::LimeNET_Micro(std::shared_ptr<ISPI> spiLMS,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
@@ -103,10 +104,11 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
 {
+    mStreamers.resize(1);
     SDRDescriptor& descriptor = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw);
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, descriptor);
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
@@ -135,16 +137,6 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         mLMSChips.push_back(std::move(chip));
     }
-    {
-        mStreamers.reserve(mLMSChips.size());
-        constexpr uint8_t rxBulkEndpoint = 0x83;
-        constexpr uint8_t txBulkEndpoint = 0x03;
-        auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
-        auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
-
-        mStreamers.push_back(std::make_unique<TRXLooper>(
-            std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0));
-    }
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, limenetmicro::SPI_LMS7002M }, { "FPGA"s, limenetmicro::SPI_FPGA } };
 
@@ -161,22 +153,24 @@ LimeNET_Micro::~LimeNET_Micro()
 
 OpStatus LimeNET_Micro::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
 {
-    OpStatus status = OpStatus::Success;
-    std::vector<std::string> errors;
-    bool isValidConfig = LMS7002M_Validate(cfg, errors, 1);
+    auto& chip = mLMSChips.at(0);
 
-    if (!isValidConfig)
+    mConfigInProgress = true;
+    if (!cfg.skipDefaults)
     {
-        std::stringstream ss;
-
-        for (const auto& err : errors)
-        {
-            ss << err << std::endl;
-        }
-
-        return lime::ReportError(OpStatus::Error, "LimeNET-Micro: "s + ss.str());
+        Init();
     }
+    // enabled ADC/DAC is required for FPGA to work
+    chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
+    chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
 
+    OpStatus status = LMS7002M_Configure(*chip, cfg);
+    mConfigInProgress = false;
+
+    if (status != OpStatus::Success)
+        return status;
+
+    double sampleRate{ 0 };
     bool rxUsed = false;
     bool txUsed = false;
     for (int i = 0; i < 2; ++i)
@@ -185,77 +179,30 @@ OpStatus LimeNET_Micro::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         rxUsed |= ch.rx.enabled;
         txUsed |= ch.tx.enabled;
     }
+    if (rxUsed)
+        sampleRate = cfg.channel[0].rx.sampleRate;
+    else if (txUsed)
+        sampleRate = cfg.channel[0].tx.sampleRate;
 
-    // config validation complete, now do the actual configuration
-    try
+    if (sampleRate > 0)
     {
-        mConfigInProgress = true;
-        auto& chip = mLMSChips.at(0);
-        if (!cfg.skipDefaults)
-        {
-            status = Init();
-            if (status != OpStatus::Success)
-                return status;
-        }
-
-        status = LMS7002LOConfigure(*chip, cfg);
+        status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
         if (status != OpStatus::Success)
-            return lime::ReportError(OpStatus::Error, "LimeNET_Micro: LO configuration failed."s);
-        for (int i = 0; i < 2; ++i)
-        {
-            status = LMS7002ChannelConfigure(*chip, cfg.channel[i], i);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeNET_Micro: channel%i configuration failed.", i);
-            LMS7002TestSignalConfigure(*chip, cfg.channel[i], i);
+            return status;
+    }
 
-            if (i == 0) // only channel A is connected to RF ports
-            {
-                SetRFSwitch(TRXDir::Rx, cfg.channel[0].rx.path);
-                SetRFSwitch(TRXDir::Tx, cfg.channel[0].tx.path);
-            }
-        }
-
-        // enabled ADC/DAC is required for FPGA to work
-        chip->Modify_SPI_Reg_bits(PD_RX_AFE1, 0);
-        chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0);
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        double sampleRate{ 0 };
-        if (rxUsed)
-            sampleRate = cfg.channel[0].rx.sampleRate;
-        else if (txUsed)
-            sampleRate = cfg.channel[0].tx.sampleRate;
-
-        if (sampleRate > 0)
-        {
-            status = SetSampleRate(0, TRXDir::Rx, 0, sampleRate, cfg.channel[0].rx.oversample);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeNET_Micro: failed to set sampling rate."s);
-        }
-
-        for (int i = 0; i < 2; ++i)
-        {
-            const ChannelConfig& ch = cfg.channel[i];
-            LMS7002ChannelCalibration(*chip, ch, i);
-            // TODO: should report calibration failure, but configuration can
-            // still work after failed calibration.
-        }
-        chip->SetActiveChannel(LMS7002M::Channel::ChA);
-
-        mConfigInProgress = false;
-        if (sampleRate > 0)
-        {
-            status = UpdateFPGAInterface(this);
-            if (status != OpStatus::Success)
-                return lime::ReportError(OpStatus::Error, "LimeNET_Micro: failed to update FPGA interface frequency."s);
-        }
-    } //try
-    catch (std::logic_error& e)
+    for (int c = 0; c < 2; ++c)
     {
-        return ReportError(OpStatus::Error, "LimeNET_Micro config: "s + e.what());
-    } catch (std::runtime_error& e)
+        SetAntenna(0, TRXDir::Tx, c, cfg.channel[c].tx.path);
+        SetAntenna(0, TRXDir::Rx, c, cfg.channel[c].rx.path);
+        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+    }
+
+    if (sampleRate > 0)
     {
-        return ReportError(OpStatus::Error, "LimeNET_Micro config: "s + e.what());
+        status = UpdateFPGAInterface(this);
+        if (status != OpStatus::Success)
+            return lime::ReportError(OpStatus::Error, "Failed to update FPGA interface frequency."s);
     }
     return OpStatus::Success;
 }
@@ -306,9 +253,9 @@ OpStatus LimeNET_Micro::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t*
     switch (chipSelect)
     {
     case limenetmicro::SPI_LMS7002M:
-        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+        return mlms7002mPort->Transact(MOSI, MISO, count);
     case limenetmicro::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     default:
         throw std::logic_error("LimeNET_Micro SPI invalid SPI chip select"s);
     }
@@ -329,62 +276,14 @@ double LimeNET_Micro::GetTemperature(uint8_t moduleIndex)
 
 OpStatus LimeNET_Micro::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    const bool bypass = (oversample <= 1);
-    uint8_t decimation = 7; // HBD_OVR_RXTSP=7 - bypass
-    uint8_t interpolation = 7; // HBI_OVR_TXTSP=7 - bypass
-    double cgenFreq = sampleRate * 4; // AI AQ BI BQ
-    // TODO:
-    // for (uint8_t i = 0; i < GetNumChannels(false) ;i++)
-    // {
-    //     if (rx_channels[i].cF_offset_nco != 0.0 || tx_channels[i].cF_offset_nco != 0.0)
-    //     {
-    //         bypass = false;
-    //         break;
-    //     }
-    // }
-
-    if (bypass)
-    {
-        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: bypass, Interp: bypass", sampleRate / 1e6, cgenFreq / 1e6);
-    }
-    else
-    {
-        if (oversample == 0)
-        {
-            const int n = lime::LMS7002M::CGEN_MAX_FREQ / (cgenFreq);
-            oversample = (n >= 32) ? 32 : (n >= 16) ? 16 : (n >= 8) ? 8 : (n >= 4) ? 4 : 2;
-        }
-
-        decimation = 4;
-        if (oversample <= 16)
-        {
-            constexpr std::array<int, 17> decimationTable{ 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
-            decimation = decimationTable.at(oversample);
-        }
-        interpolation = decimation;
-        cgenFreq *= 2 << decimation;
-
-        lime::info("Sampling rate set(%.3f MHz): CGEN:%.3f MHz, Decim: 2^%i, Interp: 2^%i",
-            sampleRate / 1e6,
-            cgenFreq / 1e6,
-            decimation + 1,
-            interpolation + 1); // dec/inter ratio is 2^(value+1)
-    }
-
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML1_SISODDR, 1);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::LML2_SISODDR, 1);
+    const bool bypass = ((oversample == 1 || oversample == 0) && sampleRate > 61.44e6);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CDSN_RXALML, !bypass);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::EN_ADCCLKH_CLKGN, 0);
     mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::CLKH_OV_CLKL_CGEN, 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 2);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBD_OVR_RXTSP, decimation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::HBI_OVR_TXTSP, interpolation);
-    mLMSChips.at(moduleIndex)->Modify_SPI_Reg_bits(LMS7002MCSR_Data::MAC, 1);
-    if (bypass)
-        return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(sampleRate * 4, 7, 7);
-    else
-        return mLMSChips.at(moduleIndex)->SetInterfaceFrequency(cgenFreq, interpolation, decimation);
+
+    return LMS7002M_SDRDevice::LMS7002M_SetSampleRate(sampleRate, oversample, oversample);
 }
 
 OpStatus LimeNET_Micro::GPIODirRead(uint8_t* buffer, const size_t bufLength)
@@ -447,18 +346,18 @@ OpStatus LimeNET_Micro::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 
 OpStatus LimeNET_Micro::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeNET_Micro::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
 }
 
 void LimeNET_Micro::SetSerialNumber(const std::string& number)
 {
     uint64_t sn = 0;
-    sscanf(number.c_str(), "%16lX", &sn);
+    sscanf(number.c_str(), "%16" SCNx64 "", &sn);
     mDeviceDescriptor.serialNumber = sn;
 }
 
@@ -560,6 +459,26 @@ OpStatus LimeNET_Micro::SetRFSwitch(TRXDir dir, uint8_t path)
         }
     }
     return OpStatus::Success;
+}
+
+std::unique_ptr<lime::RFStream> LimeNET_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
+{
+    constexpr uint8_t rxBulkEndpoint = 0x83;
+    constexpr uint8_t txBulkEndpoint = 0x03;
+    auto rxdma = std::make_shared<USBDMAEmulation>(mStreamPort, rxBulkEndpoint, DataTransferDirection::DeviceToHost);
+    auto txdma = std::make_shared<USBDMAEmulation>(mStreamPort, txBulkEndpoint, DataTransferDirection::HostToDevice);
+
+    std::unique_ptr<TRXLooper> streamer = std::make_unique<TRXLooper>(
+        std::static_pointer_cast<IDMA>(rxdma), std::static_pointer_cast<IDMA>(txdma), mFPGA.get(), mLMSChips.at(0).get(), 0);
+    if (!streamer)
+        return streamer;
+
+    if (mCallback_logMessage)
+        streamer->SetMessageLogCallback(mCallback_logMessage);
+    OpStatus status = streamer->Setup(config);
+    if (status != OpStatus::Success)
+        return std::unique_ptr<RFStream>(nullptr);
+    return streamer;
 }
 
 } // namespace lime

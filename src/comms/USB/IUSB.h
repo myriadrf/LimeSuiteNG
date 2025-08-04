@@ -122,6 +122,11 @@ class IUSB
       @param context Pointer to transfer context (retuned by AllocateAsyncContext).
      */
     virtual void FreeAsyncContext(void* context) = 0;
+
+    /**
+      @brief Flush any remaining data from the buffers
+    */
+    virtual void FlushEndpoint() = 0;
 };
 
 } // namespace lime

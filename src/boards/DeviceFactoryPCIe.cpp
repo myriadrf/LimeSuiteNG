@@ -7,16 +7,12 @@
 #include "limesuiteng/Logger.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "protocols/LMSBoards.h"
-#include "comms/PCIe/LMS64C_FPGA_Over_PCIe.h"
-#include "comms/PCIe/LMS64C_LMS7002M_Over_PCIe.h"
-#include "MMX8/LMS64C_ADF_Over_PCIe_MMX8.h"
-#include "MMX8/LMS64C_FPGA_Over_PCIe_MMX8.h"
-#include "MMX8/LMS64C_LMS7002M_Over_PCIe_MMX8.h"
+#include "protocols/LMS64C/SPI.h"
+#include "comms/PCIe/PCIE_CSR_Pipe.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "boards/LimeSDR_X3/LimeSDR_X3.h"
 #include "boards/MMX8/MM_X8.h"
-#include "boards/external/XSDR/XSDR.h"
 
 #include <algorithm>
 
@@ -97,37 +93,24 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
         streamPorts.back()->SetPathName(endpointPath);
     }
 
-    // protocol layer
-    auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_PCIe>(controlPort);
-    auto route_fpga = std::make_shared<LMS64C_FPGA_Over_PCIe>(controlPort);
-
     LMS64CProtocol::FirmwareInfo fw{};
-    int subDeviceIndex = 0;
     auto controlPipe = std::make_shared<PCIE_CSR_Pipe>(controlPort);
-    LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, subDeviceIndex);
+    LMS64CProtocol::GetFirmwareInfo(*controlPipe, fw, 0);
 
     switch (fw.deviceId)
     {
-    case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_LIMESDR_XTRX: {
+        auto route_lms7002m = std::make_shared<LMS64C_SPI>(
+            controlPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
+        auto route_fpga =
+            std::make_shared<LMS64C_SPI>(controlPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
         return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
-    case LMS_DEV_LIMESDR_X3:
-        return new LimeSDR_X3(route_lms7002m, route_fpga, std::move(streamPorts), controlPipe);
-    case LMS_DEV_LIMESDR_MMX8: {
-        auto adfComms = std::make_shared<LMS64C_ADF_Over_PCIe_MMX8>(controlPort, 0);
-        std::vector<std::shared_ptr<IComms>> controls(8);
-        std::vector<std::shared_ptr<IComms>> fpga(8);
-
-        for (size_t i = 0; i < controls.size(); ++i)
-        {
-            controls[i] = std::make_shared<LMS64C_LMS7002M_Over_PCIe_MMX8>(controlPort, i + 1);
-            fpga[i] = std::make_shared<LMS64C_FPGA_Over_PCIe_MMX8>(controlPort, i + 1);
-        }
-        fpga.push_back(std::make_shared<LMS64C_FPGA_Over_PCIe_MMX8>(controlPort, 0));
-
-        return new LimeSDR_MMX8(controls, fpga, std::move(streamPorts), controlPipe, adfComms);
     }
-    case LMS_DEV_EXTERNAL_XSDR:
-        return new XSDR(route_lms7002m, route_fpga, streamPorts.front(), controlPipe);
+    case LMS_DEV_LIMESDR_X3:
+        return new LimeSDR_X3(controlPipe, std::move(streamPorts));
+    case LMS_DEV_LIMESDR_MMX8: {
+        return new LimeSDR_MMX8(controlPipe, std::move(streamPorts));
+    }
     default:
         lime::ReportError(OpStatus::InvalidValue, "Unrecognized device ID (%i)", fw.deviceId);
         return nullptr;

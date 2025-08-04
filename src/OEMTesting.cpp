@@ -3,6 +3,7 @@
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/RFStream.h"
 #include "DSP/FFT/FFT.h"
 
 namespace lime {
