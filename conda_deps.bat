@@ -25,7 +25,7 @@ ECHO # - Starting LimeSuiteNG conda package installation
 WHERE /Q conda
 IF ERRORLEVEL 1 (
    ECHO # - Error: Using invalid prompt. Use radioconda prompt with admin privileges.
-   EXIT /B   
+   GOTO ending   
 )
 
 FOR /f "delims=" %%i in ('conda info ^| findstr /C:"active environment"') do SET CURR_CONDA_ENV=%%i
@@ -103,6 +103,11 @@ ECHO # - ========================================================
 ECHO # -   Checking for Visual Studio Build Tools 2022 package
 ECHO # - ========================================================
 
+WHERE /Q vswhere
+IF ERRORLEVEL 1 (
+   ECHO # - Error: Missing vswhere utility. Skipping Visual Studio installation check.
+   GOTO ending   
+)
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS_INSTALL_DIR=%%i
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property productLineVersion`) do set VS_LINE_VER=%%i
 FOR /f "usebackq tokens=*" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property productDisplayVersion`) do set VS_DISP_VER=%%i
