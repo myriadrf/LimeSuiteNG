@@ -3,6 +3,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/VersionInfo.h"
+#include "OEMTesting.h"
 
 #include <assert.h>
 #include <cstring>
@@ -12,6 +13,7 @@
 #include <filesystem>
 #include "args.hxx"
 
+#include "rang.hpp" // terminal colors
 #include "OEMTesting.h"
 
 using namespace std;
@@ -54,7 +56,7 @@ class PrintOEMTestReporter : public OEMTestReporter
     }
     void OnStart(OEMTestData& test, const std::string& testName = std::string()) override
     {
-        std::cerr << Indent() << "=== " << test.name << " ===" << std::endl;
+        std::cerr << Indent() << "=== " << test.title << " ===" << std::endl;
         ++indentLevel;
     }
     void OnStepUpdate(OEMTestData& test, const std::string& text = std::string()) override
@@ -64,20 +66,19 @@ class PrintOEMTestReporter : public OEMTestReporter
     void OnSuccess(OEMTestData& test) override
     {
         --indentLevel;
-        std::cerr << Indent() << "=== " << test.name << " - PASSED"
-                  << " ===" << std::endl;
+        std::cerr << Indent() << "=== " << rang::fg::green << test.title << " - PASSED" << rang::fg::reset << " ===" << std::endl;
         if (interactiveMode)
             WaitForUserInput();
     }
     void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) override
     {
-        assert(!test.passed);
+        assert(test.status != OpStatus::Success);
         --indentLevel;
-        std::cerr << Indent() << "=== " << test.name << " - FAILED";
+        std::cerr << Indent() << "=== " << rang::fg::red << test.title << " - FAILED";
 
         if (!reasonText.empty())
             std::cerr << " (" << reasonText << ")";
-        std::cerr << " ===" << std::endl;
+        std::cerr << rang::fg::reset << " ===" << std::endl;
         if (interactiveMode)
             WaitForUserInput();
     }
@@ -170,21 +171,22 @@ int main(int argc, char** argv)
     if (runTestsFlag)
     {
         uint64_t serialNumber = device->GetDescriptor().serialNumber;
-        cerr << "Board serial number: " << serialNumber << " (";
         stringstream ss;
-        ss << std::hex << std::setw(2) << std::setfill('0');
-        for (size_t i = 0; i < sizeof(serialNumber); ++i)
-            ss << "0x" << ((serialNumber >> 8 * i) & 0xFF) << " ";
-        cerr << ss.str() << ")" << endl;
+        ss << "Board serial number: " << serialNumber << " (0x" << std::setw(2) << std::setfill('0');
+        for (int i = sizeof(serialNumber) - 1; i >= 0; --i)
+            ss << hex << ((serialNumber >> 8 * i) & 0xFF);
+        ss << ")" << endl;
+        cerr << ss.rdbuf();
 
         PrintOEMTestReporter reporter(serialNumber, reportFilename);
         reporter.ReportColumn("S/N", std::to_string(serialNumber));
         result = device->OEMTest(&reporter);
 
         if (result == OpStatus::Success)
-            cerr << "OEM TEST PASSED" << endl;
+            cerr << rang::fg::green << "OEM TEST PASSED";
         else
-            cerr << "OEM TEST FAILED" << endl;
+            cerr << rang::fg::red << "OEM TEST FAILED";
+        cerr << rang::fg::reset << endl;
     }
 
     DeviceRegistry::freeDevice(device);

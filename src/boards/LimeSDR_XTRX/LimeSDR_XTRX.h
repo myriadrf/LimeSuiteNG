@@ -11,6 +11,7 @@ namespace lime {
 
 class LimePCIe;
 class ISerialPort;
+class OEMTestData;
 class ISPI;
 
 static const float XTRX_DEFAULT_REFERENCE_CLOCK = 26e6;
@@ -78,19 +79,24 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
         RFData lnah[2]{};
     };
 
-    OpStatus ClkTest(OEMTestReporter& reporter, TestData& results);
-    OpStatus VCTCXOTest(OEMTestReporter& reporter, TestData& results);
-    OpStatus GNSSTest(OEMTestReporter& reporter, TestData& results);
-    OpStatus LMS7002_Test(OEMTestReporter& reporter, TestData& results);
-    OpStatus RunTestConfig(OEMTestReporter& reporter,
-        TestData::RFData* results,
-        const std::string& name,
+    using TestResults = std::vector<OEMTestData>;
+
+    OEMTestData PCIeClockTest(OEMTestReporter& reporter);
+    OEMTestData VCTCXOTest(OEMTestReporter& reporter);
+    OEMTestData GNSSTest(OEMTestReporter& reporter);
+    OEMTestData LMS7002_Test(OEMTestReporter& reporter);
+
+    OEMTestData ConfigureAndMeasure(OEMTestReporter& reporter,
+        uint8_t channelIndex,
         double LOFreq,
-        int gain,
-        int rxPath,
-        double expectChA_dBFS,
-        double expectChB_dBFS);
-    OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
+        const std::string& txAntenna,
+        int txGain,
+        const std::string& rxAntenna,
+        int rxGain,
+        double expect_dBFS,
+        double allowed_deviation_dBFS);
+
+    OEMTestData RFTest(OEMTestReporter& reporter);
 
     std::shared_ptr<ISPI> lms7002mPort;
     std::shared_ptr<ISPI> fpgaPort;

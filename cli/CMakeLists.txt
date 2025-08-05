@@ -8,7 +8,7 @@ checkdebianchangelogversion(${PROJECT_NAME})
 
 # common functionality among cli tools
 add_library(cli-shared STATIC common.cpp)
-target_link_libraries(cli-shared PUBLIC limesuiteng taywee-args)
+target_link_libraries(cli-shared PUBLIC limesuiteng taywee-args rang)
 
 target_precompile_headers(cli-shared PRIVATE ${CPP_STL_PCH} \"args.hxx\")
 
