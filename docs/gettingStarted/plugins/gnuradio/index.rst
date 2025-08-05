@@ -1,13 +1,14 @@
 GNURadio
 ========
 
-LimeSDR devices can be used with GNU Radio on Windows and Linux platforms. Below are links for setting up LimeSuiteNG plugin for gnuradio on different operating systems:
+LimeSDR devices can be used with GNU Radio on Windows and Linux platforms. Below are links for setting up LimeSuiteNG plugin for gnuradio on different operating systems and description of provided GNURadio blocks:
 
 .. toctree:: 
    :maxdepth: 1
 
    Linux/index
    Windows/index
+   Plugin blocks <gnuradioBlocks>
 
 More about `GNURadio`_.
 
