@@ -29,13 +29,13 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | Device Handle         | Serial number required to identify selected LimeSDR device. Auto selected when a single LimeSDR device is present in system. | LimeSDR device serial number        |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| LO Frequency          | Local oscilator/center/carrier frequency. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.       | Frequency value, Hz                 |
+| LO Frequency          | Local oscillator/center/carrier frequency. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.      | Frequency value, Hz                 |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | Sample Rate           | Sampling rate of received RF signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.           | Integer                             |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | RF Oversampling       | Oversampling rate of received RF signal.                                                                                     | [ auto | x1 | x2 | x4 | x16 | x32 ] |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| NCO offset            | Numerically controled oscilator offset.                                                                                      | Frequency value, Hz                 |
+| NCO offset            | Numerically controled oscillator offset.                                                                                     | Frequency value, Hz                 |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | Low Pass Filter       | Low pass filter cutoff frequency.                                                                                            | Frequency value, Hz                 |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
