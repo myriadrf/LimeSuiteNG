@@ -750,6 +750,10 @@ OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength)
     pkt.blockCount = bufLength;
 
     OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 200);
+#if DEBUG_SPI
+    std::string msg = PacketToString(pkt);
+    lime::log(LogLevel::Debug, "Rd:"s + msg);
+#endif
     if (status != OpStatus::Success)
         return status;
 
@@ -805,6 +809,11 @@ OpStatus GPIOWrite(ISerialPort& port, const uint8_t* buffer, const size_t bufLen
     {
         pkt.payload[i] = buffer[i];
     }
+
+#if DEBUG_SPI
+    std::string msg = PacketToString(pkt);
+    lime::log(LogLevel::Debug, "Wr:"s + msg);
+#endif
 
     return RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 200);
 }

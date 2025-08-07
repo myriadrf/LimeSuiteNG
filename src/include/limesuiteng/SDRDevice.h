@@ -26,6 +26,7 @@ struct Region;
 struct CustomParameterIO;
 class OEMTestReporter;
 class RFStream;
+class GPIO_Interface;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -603,6 +604,10 @@ class LIME_API SDRDevice
     /// @param serialNumber Device's serial number
     /// @return The operation success state.
     virtual OpStatus WriteSerialNumber(uint64_t serialNumber);
+
+    /// @brief Return GPIO controls interface if available
+    /// @return nullptr if not available
+    virtual GPIO_Interface* GetGPIOControls();
 };
 
 } // namespace lime
