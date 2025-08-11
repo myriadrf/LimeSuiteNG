@@ -60,12 +60,10 @@ void ILMS8001Tab::SetChannel(uint8_t channel)
 
 void ILMS8001Tab::WriteParam(const lime::LMS8Parameter param, uint16_t val)
 {
-    // chip->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
-    chip->Modify_SPI_Reg_bits(param, val);
+    chip->Modify_SPI_Reg_bits(param, val, true, chip->channel, chip->PLLprofile);
 }
 
 uint16_t ILMS8001Tab::ReadParam(const lime::LMS8Parameter param)
 {
-    // chip->SetActiveChannel(mChannel == 0 ? LMS7002M::Channel::ChA : LMS7002M::Channel::ChB);
-    return chip->Get_SPI_Reg_bits(param);
+    return chip->Get_SPI_Reg_bits(param, true, chip->channel, chip->PLLprofile);
 }
