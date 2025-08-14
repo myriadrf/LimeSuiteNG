@@ -21,7 +21,7 @@ LimeSuiteNG Source block is used to set up selected LimeSDR device RX channel. T
 Configuration options of General tab are provided in the table below:
 
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Configuration Options | Description                                                                                                                  | Value(s)                            |
+| Configuration Options | Description                                                                                                                  | Option(s)                           |
 +=======================+==============================================================================================================================+=====================================+
 | Type                  | Sampled and digitized data type.                                                                                             | - Complex Float32                   |
 |                       |                                                                                                                              | - Complex Int16                     |
@@ -38,6 +38,7 @@ Configuration options of General tab are provided in the table below:
 |                       |                                                                                                                              | - x1                                |
 |                       |                                                                                                                              | - x2                                |
 |                       |                                                                                                                              | - x4                                |
+|                       |                                                                                                                              | - x8                                |
 |                       |                                                                                                                              | - x16                               |
 |                       |                                                                                                                              | - x32                               |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
@@ -51,16 +52,16 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | Data channel indexes  |                                                                                                                              |                                     |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Gain (dB)             |  Set antenna gain in decibels                                                                                                | Integer, dB                         |
+| Gain (dB)             | Sets receiver antenna gain in decibels.                                                                                      | Supported range:                    |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Calibrate DC & IQ     |                                                                                                                              | - Enabled                           |
+| Calibrate DC & IQ     | Calibrates Rx DC & IQ imbalance.                                                                                             | - Enabled                           |
 |                       |                                                                                                                              | - Disabled                          |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 
 Configuration options of LMS7002M Advanced tab are provided in the table below:
 
 +----------------------------+------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| Configuration Options      | Description                                                                                                                  | Value(s)                                                |
+| Configuration Options      | Description                                                                                                                  | Options(s)                                              |
 +============================+==============================================================================================================================+=========================================================+
 | LMS7002M Rx Gains override | Overrides limeGUI pre-programmed Rx channel gains options.                                                                   | - Enabled                                               |
 |                            |                                                                                                                              | - Disabled                                              |
@@ -103,7 +104,7 @@ LimeSuiteNG Sink block is used to set up selected LimeSDR device TX channel. To 
 Configuration options of General tab are provided in the table below:
 
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Configuration Options | Description                                                                                                                  | Value(s)                            |
+| Configuration Options | Description                                                                                                                  | Options(s)                          |
 +=======================+==============================================================================================================================+=====================================+
 | Type                  | Sampled and digitized data type.                                                                                             | - Complex Float32                   |
 |                       |                                                                                                                              | - Complex Int16                     |
@@ -114,12 +115,13 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | LO Frequency          | Local oscillator/center/carrier frequency. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.      | Frequency value, Hz                 |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Sample Rate           | Sampling rate of received RF signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.           | Integer                             |
+| Sample Rate           | Sampling rate of transmission signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.          | Integer                             |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| RF Oversampling       | Oversampling rate of received RF signal.                                                                                     | - auto                              |
+| RF Oversampling       | Oversampling rate of transmission signal.                                                                                    | - auto                              |
 |                       |                                                                                                                              | - x1                                |
 |                       |                                                                                                                              | - x2                                |
 |                       |                                                                                                                              | - x4                                |
+|                       |                                                                                                                              | - x8                                |
 |                       |                                                                                                                              | - x16                               |
 |                       |                                                                                                                              | - x32                               |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
@@ -133,8 +135,8 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
 | Data channel indexes  |                                                                                                                              |                                     |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Gain (dB)             |  Set antenna gain in decibels                                                                                                | Integer, dB                         |
+| Gain (dB)             | Sets transmitter antenna gain in decibels.                                                                                   | Supported range:                    |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
-| Calibrate DC & IQ     |                                                                                                                              | - Enabled                           |
+| Calibrate DC & IQ     | Calibrates Tx DC & IQ imbalance.                                                                                             | - Enabled                           |
 |                       |                                                                                                                              | - Disabled                          |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+-------------------------------------+
