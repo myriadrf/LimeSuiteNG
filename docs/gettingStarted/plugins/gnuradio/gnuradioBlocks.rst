@@ -48,10 +48,7 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | GFIR filter           | General Finite Impulse Response filter cutoff frequency.                                                                     | Frequency value, Hz          |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Antenna port          | By default antenna port is selected automatically based on set LO Frequency option. This can be overridden with other        | - NONE                       |
-|                       | antenna port options.                                                                                                        | - LNAH                       |
-|                       |                                                                                                                              | - LNAL_NC                    |
-|                       |                                                                                                                              | - LNAW                       |
+| Antenna port          | By default antenna port is selected automatically based on set LO Frequency option.                                          | \-                           |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | Data channel indexes  | Index(es) of antenna(s) to use for data retrieval. Antenna indexes start from [0].                                           | For SISO only index [0].     |
 |                       |                                                                                                                              |                              |
@@ -136,9 +133,7 @@ Configuration options of General tab are provided in the table below:
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | GFIR filter           | General Finite Impulse Response filter cutoff frequency.                                                                     | Frequency value, Hz          |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Antenna port          | By default antenna port is selected automatically based on set LO Frequency option. This can be overridden with other        | - None                       |
-|                       | antenna port options.                                                                                                        | - Band1                      |
-|                       |                                                                                                                              | - Band2                      |
+| Antenna port          | By default antenna port is selected automatically based on set LO Frequency option.                                          | \-                           |
 +-----------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | Data channel indexes  | Index(es) of antenna(s) to use for data transmission. Antenna indexes start from [0].                                        | For SISO only index [0].     |
 |                       |                                                                                                                              |                              |
