@@ -186,7 +186,7 @@ Full table of limeTRX utility configuration flags:
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-mimo=[channel count]        | Use multiple channels to receive and transmit.                                         | Channel count                                |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-repeater=[dalaySamples]     | Retransmit received samples with a delay.                                              |                                              |
+| \-\-repeater=[delaySamples]     | Retransmit received samples with a delay.                                              |                                              |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-linkFormat=[format]         | Data transfer format. Default: I12.                                                    | Supported formats: I16, I12.                 |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
@@ -245,11 +245,11 @@ Full table of limeSPI utility commands and configuration flags:
 |                     |                                                                                        |                                                                                |
 | \-\-stream=[stream] |                                                                                        | Write command format:                                                          |
 |                     |                                                                                        |                                                                                |
-|                     |                                                                                        | - Register address 2x bytes and 2x data bytes - \-\-stream=[reg addr | data]   |
+|                     |                                                                                        | - Register address 2x bytes and 2x data bytes \-\-stream=[reg addr | data]     |
 |                     |                                                                                        |                                                                                |
 |                     |                                                                                        | Read command format:                                                           |
 |                     |                                                                                        |                                                                                |
-|                     |                                                                                        | - Register address 2x bytes - \-\-stream=[reg addr]                            |
+|                     |                                                                                        | - Register address 2x bytes \-\-stream=[reg addr]                              |
 +---------------------+----------------------------------------------------------------------------------------+--------------------------------------------------------------------------------+
 
 limeFLASH
