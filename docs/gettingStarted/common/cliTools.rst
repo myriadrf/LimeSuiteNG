@@ -57,7 +57,7 @@ Full table of limeConfig utility configuration flags:
 |                                     |                                                                                        |                                              |
 | \-\-device=[device]                 |                                                                                        |                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| -c[chip],                           | Selects destination chip/chips.                                                        | LMS7002M                                     |
+| -c[chip],                           | Selects destination chip to update it's configuration. Chip indexes start form 0.      | Index: 0, 1, ...                             |
 |                                     |                                                                                        |                                              |
 | \-\-chips=[chip]                    |                                                                                        |                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
@@ -71,7 +71,8 @@ Full table of limeConfig utility configuration flags:
 |                                     |                                                                                        |                                              |
 | \-\-initialize                      |                                                                                        |                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-refclk=[reference clock]        | Reference clock in Hz.                                                                 | See :ref:`dev-supp-list-ref`                 |
+| \-\-refclk=[reference clock]        | Selected LimeSDR board reference clock. Set this option only if the actual reference   | See :ref:`dev-supp-list-ref`                 |
+|                                     | clock of the board is changed or modified.                                             |                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-samplerate=[sample rate]        | Sampling rate in Hz.                                                                   | See :ref:`dev-supp-list-ref`                 |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
@@ -91,7 +92,7 @@ Full table of limeConfig utility configuration flags:
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-rxlpf=[Hz]                      | Sets receiver low pass filter bandwidth.                                               | Bandwidth in Hz.                             |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-rxoversample=[value]            | Receiver decimation.                                                                   | - 1                                          |
+| \-\-rxoversample=[value]            | Receiver sample decimation.                                                            | - 1                                          |
 |                                     |                                                                                        | - 2                                          |
 |                                     |                                                                                        | - 4                                          |
 |                                     |                                                                                        | - 8                                          |
@@ -100,9 +101,9 @@ Full table of limeConfig utility configuration flags:
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-rxtestsignal                    | Enables receiver test signal if available.                                             | \-                                           |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-rxgain=[dB]                     | Sets receiver gain in dB.                                                              | Supported range:                             |
+| \-\-rxgain=[dB]                     | Sets generic device RX gain. Gain range is auto clamped.                               | In dB.                                       |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-rxcalibrate                     | Calibrates Rx DC and IQ imbalance.                                                     | \-                                           |
+| \-\-rxcalibrate                     | Calibrates RX DC and IQ imbalance.                                                     | \-                                           |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | **Transmitter configuration flags**                                                                                                                                         |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
@@ -117,7 +118,7 @@ Full table of limeConfig utility configuration flags:
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-txlpf=[Hz]                      | Sets transmitter low pass filter bandwidth.                                            | Bandwidth in Hz.                             |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-txoversample=[value]            | Transmitter interpolation.                                                             | - 1                                          |
+| \-\-txoversample=[value]            | Transmitter sample interpolation.                                                      | - 1                                          |
 |                                     |                                                                                        | - 2                                          |
 |                                     |                                                                                        | - 4                                          |
 |                                     |                                                                                        | - 8                                          |
@@ -126,9 +127,9 @@ Full table of limeConfig utility configuration flags:
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-txtestsignal                    | Enables transmitter test signal if available.                                          | \-                                           |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-txgain=[dB]                     | Sets transmitter gain in dB.                                                           | Supported range:                             |
+| \-\-txgain=[dB]                     | Sets generic device TX gain. Gain range is auto clamped.                               | In dB.                                       |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-txcalibrate                     | Calibrate Tx DC and IQ imbalance.                                                      | \-                                           |
+| \-\-txcalibrate                     | Calibrate TX DC and IQ imbalance.                                                      | \-                                           |
 +-------------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 
 limeTRX
@@ -156,9 +157,9 @@ Full table of limeTRX utility configuration flags:
 |                                 |                                                                                        |                                              |
 | \-\-device=[name]               |                                                                                        |                                              |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| -c[index],                      | Specify chip index, or index list for aggregation [0,1, ...].                          |                                              |
-|                                 |                                                                                        |                                              |
-| \-\-chip=[index]                |                                                                                        |                                              |
+| -c[index],                      | Specify chip(s) for streaming using chip index, or index list for aggregation          | Index: 0, 1, ...                             |
+|                                 | [0,1, ...].                                                                            |                                              |
+| \-\-chip=[index]                |                                                                                        | Index list: [0, 1, ...]                      |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | -i[file path],                  | Samples to transmit from selected waveform file.                                       | Path to waveform file.                       |
 |                                 |                                                                                        |                                              |
@@ -168,7 +169,7 @@ Full table of limeTRX utility configuration flags:
 |                                 |                                                                                        |                                              |
 | \-\-output[file path]           |                                                                                        |                                              |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-looptx                      | Loop tx samples transmission.                                                          | \-                                           |
+| \-\-looptx                      | Transmits input file contents in a loop.                                               | \-                                           |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | -s[sample count],               | Number of samples to receive.                                                          | \-                                           |
 |                                 |                                                                                        |                                              |
@@ -184,21 +185,21 @@ Full table of limeTRX utility configuration flags:
 |                                 |                                                                                        | - verbose                                    |
 |                                 |                                                                                        | - debug                                      |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-mimo=[channel count]        | Use multiple channels to receive and transmit.                                         | Channel count                                |
+| \-\-mimo=[channel count]        | Use multiple channels to receive and transmit.                                         | Channel count. Default is 1.                 |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-repeater=[delaySamples]     | Retransmit received samples with a delay.                                              |                                              |
+| \-\-repeater=[delaySamples]     | Retransmit received samples with a delay.                                              | Number of samples to delay.                  |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-linkFormat=[format]         | Data transfer format. Default: I12.                                                    | Supported formats: I16, I12.                 |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 | \-\-syncPPS                     | Start sampling on the next PPS.                                                        | \-                                           |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-rxSamplesInPacket=[packets] | Number of samples in RX packet.                                                        | \-                                           |
+| \-\-rxSamplesInPacket=[samples] | Size of a single RX packet. Recommended to use only for debugging.                     | Number of IQ samples.                        |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-txSamplesInPacket=[packets] | Number of samples in TX packet.                                                        | \-                                           |
+| \-\-txSamplesInPacket=[samples] | Size of a single TX packet. Recommended to use only for debugging.                     | Number of IQ samples.                        |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-rxSamplesInBatch=[packets]  | Number of RX packets in data stream.                                                   | \-                                           |
+| \-\-rxPacketsInBatch=[packets]  | Size of a single RX data transfer. Recommended to use only for debugging.              | Number of packets.                           |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
-| \-\-txSamplesInBatch=[packets]  | Number of TX packets in data stream.                                                   | \-                                           |
+| \-\-txPacketsInBatch=[packets]  | Size of a single TX data transfer. Recommended to use only for debugging.              | Number of packets.                           |
 +---------------------------------+----------------------------------------------------------------------------------------+----------------------------------------------+
 
 limeSPI
@@ -275,7 +276,7 @@ Full table of limeFLASH utility configuration flags:
 |                     |                                                                                                                      |                                               |
 | \-\-device=[name]   |                                                                                                                      |                                               |
 +---------------------+----------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+
-| -t[TARGET],         | Specifies which target to use.                                                                                       | Checkout `\-l, \-\-list` flag.                |
+| -t[TARGET],         | Specifies which target to use.                                                                                       | Checkout ``\-l, \-\-list`` flag.              |
 |                     |                                                                                                                      |                                               |
 | \-\-target=[TARGET] |                                                                                                                      |                                               |
 +---------------------+----------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+
