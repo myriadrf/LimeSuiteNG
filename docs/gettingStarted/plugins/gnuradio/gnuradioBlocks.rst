@@ -54,7 +54,7 @@ Configurable parameters of General tab are provided in the table below:
 |                          | If selected LimeSDR device has multiple RX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or     |                              |
 |                          | [0, 1] (if you want to use only the 2/3 antennas).                                                                           | For MIMO [0, 1, ...].        |
 +--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Gain (dB)                | Generic device chip gain adjustment. Gain range is auto clamped.                                                             | In dB.                       |
+| Gain (dB)                | Generic device chip gain adjustment. Gain range is auto clamped.                                                             | Gain, dB.                    |
 +--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | Calibrate DC & IQ        | Calibrates Rx DC & IQ imbalance.                                                                                             | - Enabled                    |
 |                          |                                                                                                                              | - Disabled                   |
@@ -65,10 +65,10 @@ Configurable parameters of LMS7002M Advanced tab are provided in the table below
 +----------------------------+------------------------------------------------------------+---------------------------------------------------------+
 | Configurable parameters    | Description                                                | Options(s)                                              |
 +============================+============================================================+=========================================================+
-| LMS7002M Rx Gains override | Overrides limeGUI pre-programmed Rx channel gains options. | - Enabled                                               |
+| LMS7002M Rx Gains override | Overrides pre-programmed RX channel gains options.         | - Enabled                                               |
 |                            |                                                            | - Disabled                                              |
 +----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| Rx LNA                     | Overrides Rx Low Noise Amplifier gain setting.             | Supported gmax gains in dB:                             |
+| RX LNA                     | Overrides RX Low Noise Amplifier gain setting.             | Supported gmax gains in dB:                             |
 |                            |                                                            |  - max 0                                                |
 |                            |                                                            |  - max-1                                                |
 |                            |                                                            |  - max-2                                                |
@@ -85,9 +85,9 @@ Configurable parameters of LMS7002M Advanced tab are provided in the table below
 |                            |                                                            |  - max-27                                               |
 |                            |                                                            |  - max-30                                               |
 +----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| Rx PGA                     | Overrides Rx Programmable Gain Amplifier gain setting.     | Supported gain range from -12 to 19 dB with 1 dB step.  |
+| RX PGA                     | Overrides RX Programmable Gain Amplifier gain setting.     | Supported gain range from -12 to 19 dB with 1 dB step.  |
 +----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| Rx TIA                     | Overrides Rx Transimpedance Amplifier gain setting.        | Supported gmax gains in dB:                             |
+| RX TIA                     | Overrides RX Transimpedance Amplifier gain setting.        | Supported gmax gains in dB:                             |
 |                            |                                                            |  - max 0                                                |
 |                            |                                                            |  - max-3                                                |
 |                            |                                                            |  - max-12                                               |
@@ -139,7 +139,7 @@ Configurable parameters of General tab are provided in the table below:
 |                         | If selected LimeSDR device has multiple TX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or       |                              |
 |                         | [0, 1] (if you want to use only the 2/3 antennas).                                                                             | For MIMO [0, 1, ...].        |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Gain (dB)               | Generic device chip gain adjustment. Gain range is auto clamped.                                                               | In dB.                       |
+| Gain (dB)               | Generic device chip gain adjustment. Gain range is auto clamped.                                                               | Gain, dB.                    |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
 | Calibrate DC & IQ       | Calibrates Tx DC & IQ imbalance.                                                                                               | - Enabled                    |
 |                         |                                                                                                                                | - Disabled                   |
