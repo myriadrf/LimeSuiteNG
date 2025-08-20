@@ -20,78 +20,60 @@ LimeSuiteNG Source block is used to set up selected LimeSDR device RX channel. T
 
 Configurable parameters of General tab are provided in the table below:
 
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Configurable parameters  | Description                                                                                                                  | Option(s)                    |
-+==========================+==============================================================================================================================+==============================+
-| Type                     | Sampled and digitized data type.                                                                                             | - Complex Float32            |
-|                          |                                                                                                                              | - Complex Int16              |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Custom config file       | LMS7002M .ini configuration file.                                                                                            | Absolute path to .ini file.  |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Device Handle            | Serial number required to identify selected LimeSDR device. Auto selected when a single LimeSDR device is present in system. | LimeSDR device serial number |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| LO Frequency             | Local oscillator/center/carrier frequency. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.      | Frequency value, Hz          |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Sample Rate              | Sampling rate of received RF signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.           | Integer                      |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| RF Oversampling          | ADC decimation compared to IQ sample rate. Specifies required amount of samples to produce a single sample in the output.    | - auto                       |
-|                          |                                                                                                                              | - x1                         |
-|                          |                                                                                                                              | - x2                         |
-|                          |                                                                                                                              | - x4                         |
-|                          |                                                                                                                              | - x8                         |
-|                          |                                                                                                                              | - x16                        |
-|                          |                                                                                                                              | - x32                        |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| NCO offset               | Numerically controled oscillator offset.                                                                                     | Frequency value, Hz          |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Low Pass Filter          | Low pass filter cutoff frequency.                                                                                            | Frequency value, Hz          |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| GFIR filter              | General Finite Impulse Response filter cutoff frequency.                                                                     | Frequency value, Hz          |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Antenna port             | By default antenna port is selected automatically based on set LO Frequency option.                                          | \-                           |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Data channel indexes     | Index(es) of antenna(s) to use for data retrieval. Antenna indexes start from 0. To use a single antenna specify index [0].  | For SISO only index [0].     |
-|                          | If selected LimeSDR device has multiple RX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or     |                              |
-|                          | [0, 1] (if you want to use only the 2/3 antennas).                                                                           | For MIMO [0, 1, ...].        |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Gain (dB)                | Generic device chip gain adjustment. Gain range is auto clamped.                                                             | Gain, dB.                    |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Calibrate DC & IQ        | Calibrates Rx DC & IQ imbalance.                                                                                             | - Enabled                    |
-|                          |                                                                                                                              | - Disabled                   |
-+--------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------+
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Configurable parameters  | Description                                                                                                                   |
++==========================+===============================================================================================================================+
+| Type                     | Sampled and digitized data type.                                                                                              |
+|                          |                                                                                                                               |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Custom config file       | LMS7002M .ini configuration file.                                                                                             |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Device Handle            | Serial number required to identify selected LimeSDR device. Auto selected when a single LimeSDR device is present in system.  |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| LO Frequency             | Local oscillator/center/carrier frequency in Hz. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards. |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Sample Rate              | Sampling rate of received RF signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.            |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| RF Oversampling          | ADC decimation compared to IQ sample rate. Specifies required amount of samples to produce a single sample in the output.     |
+|                          |                                                                                                                               |
+|                          |                                                                                                                               |
+|                          |                                                                                                                               |
+|                          |                                                                                                                               |
+|                          |                                                                                                                               |
+|                          |                                                                                                                               |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| NCO offset               | Numerically controled oscillator frequency offset in Hz.                                                                      |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Low Pass Filter          | Low pass filter cutoff frequency in Hz.                                                                                       |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| GFIR filter              | General Finite Impulse Response filter cutoff frequency in Hz.                                                                |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Antenna port             | By default antenna port is selected automatically based on set LO Frequency option.                                           |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Data channel indexes     | Index(es) of antenna(s) to use for data retrieval. Antenna indexes start from 0. To use a single antenna specify index [0].   |
+|                          | If selected LimeSDR device has multiple RX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or      |
+|                          | [0, 1] (if you want to use only the 2/3 antennas).                                                                            |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Gain (dB)                | Generic device chip gain adjustment. Gain range is auto clamped.                                                              |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Calibrate DC & IQ        | Calibrates Rx DC & IQ imbalance.                                                                                              |
+|                          |                                                                                                                               |
++--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
 
 Configurable parameters of LMS7002M Advanced tab are provided in the table below:
 
-+----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| Configurable parameters    | Description                                                | Options(s)                                              |
-+============================+============================================================+=========================================================+
-| LMS7002M Rx Gains override | Overrides pre-programmed RX channel gains options.         | - Enabled                                               |
-|                            |                                                            | - Disabled                                              |
-+----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| RX LNA                     | Overrides RX Low Noise Amplifier gain setting.             | Supported gmax gains in dB:                             |
-|                            |                                                            |  - max 0                                                |
-|                            |                                                            |  - max-1                                                |
-|                            |                                                            |  - max-2                                                |
-|                            |                                                            |  - max-3                                                |
-|                            |                                                            |  - max-4                                                |
-|                            |                                                            |  - max-5                                                |
-|                            |                                                            |  - max-6                                                |
-|                            |                                                            |  - max-9                                                |
-|                            |                                                            |  - max-12                                               |
-|                            |                                                            |  - max-15                                               |
-|                            |                                                            |  - max-18                                               |
-|                            |                                                            |  - max-21                                               |
-|                            |                                                            |  - max-24                                               |
-|                            |                                                            |  - max-27                                               |
-|                            |                                                            |  - max-30                                               |
-+----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| RX PGA                     | Overrides RX Programmable Gain Amplifier gain setting.     | Supported gain range from -12 to 19 dB with 1 dB step.  |
-+----------------------------+------------------------------------------------------------+---------------------------------------------------------+
-| RX TIA                     | Overrides RX Transimpedance Amplifier gain setting.        | Supported gmax gains in dB:                             |
-|                            |                                                            |  - max 0                                                |
-|                            |                                                            |  - max-3                                                |
-|                            |                                                            |  - max-12                                               |
-+----------------------------+------------------------------------------------------------+---------------------------------------------------------+
++----------------------------+--------------------------------------------------------+
+| Configurable parameters    | Description                                            |
++============================+========================================================+
+| LMS7002M Rx Gains override | Overrides pre-programmed RX channel gains options.     |
+|                            |                                                        |
++----------------------------+--------------------------------------------------------+
+| RX LNA                     | Overrides RX Low Noise Amplifier gain setting.         |
++----------------------------+--------------------------------------------------------+
+| RX PGA                     | Overrides RX Programmable Gain Amplifier gain setting. |
++----------------------------+--------------------------------------------------------+
+| RX TIA                     | Overrides RX Transimpedance Amplifier gain setting.    |
++----------------------------+--------------------------------------------------------+ 
 
 
 
@@ -105,42 +87,42 @@ LimeSuiteNG Sink block is used to set up selected LimeSDR device TX channel. To 
 
 Configurable parameters of General tab are provided in the table below:
 
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Configurable parameters | Description                                                                                                                    | Options(s)                   |
-+=========================+================================================================================================================================+==============================+
-| Type                    | Sampled and digitized data type.                                                                                               | - Complex Float32            |
-|                         |                                                                                                                                | - Complex Int16              |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Custom config file      | LMS7002M .ini configuration file.                                                                                              | Absolute path to .ini file.  |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Device Handle           | Serial number required to identify selected LimeSDR device. Auto selected when a single LimeSDR device is present in system.   | LimeSDR device serial number |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| LO Frequency            | Local oscillator/center/carrier frequency. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.        | Frequency value, Hz          |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Sample Rate             | Sampling rate of transmission signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.            | Integer                      |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| RF Oversampling         | DAC interpolation compared to IQ sample rate. Specifies how many new samples to add between the two nearest input samples.     | - auto                       |
-|                         |                                                                                                                                | - x1                         |
-|                         |                                                                                                                                | - x2                         |
-|                         |                                                                                                                                | - x4                         |
-|                         |                                                                                                                                | - x8                         |
-|                         |                                                                                                                                | - x16                        |
-|                         |                                                                                                                                | - x32                        |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| NCO offset              | Numerically controled oscillator offset.                                                                                       | Frequency value, Hz          |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Low Pass Filter         | Low pass filter cutoff frequency.                                                                                              | Frequency value, Hz          |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| GFIR filter             | General Finite Impulse Response filter cutoff frequency.                                                                       | Frequency value, Hz          |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Antenna port            | By default antenna port is selected automatically based on set LO Frequency option.                                            | \-                           |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Data channel indexes    | Index(es) of antenna(s) to use for data transmission. Antenna indexes start from 0. To use a single antenna specify index [0]. | For SISO only index [0].     |
-|                         | If selected LimeSDR device has multiple TX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or       |                              |
-|                         | [0, 1] (if you want to use only the 2/3 antennas).                                                                             | For MIMO [0, 1, ...].        |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Gain (dB)               | Generic device chip gain adjustment. Gain range is auto clamped.                                                               | Gain, dB.                    |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
-| Calibrate DC & IQ       | Calibrates Tx DC & IQ imbalance.                                                                                               | - Enabled                    |
-|                         |                                                                                                                                | - Disabled                   |
-+-------------------------+--------------------------------------------------------------------------------------------------------------------------------+------------------------------+
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Configurable parameters | Description                                                                                                                    |
++=========================+================================================================================================================================+
+| Type                    | Sampled and digitized data type.                                                                                               |
+|                         |                                                                                                                                |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Custom config file      | LMS7002M .ini configuration file.                                                                                              |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Device Handle           | Serial number required to identify selected LimeSDR device. Auto selected when a single LimeSDR device is present in system.   |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| LO Frequency            | Local oscillator/center/carrier frequency in Hz. See :ref:`dev-supp-list-ref` for supported frequencies of individual boards.  |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Sample Rate             | Sampling rate of transmission signal. See :ref:`dev-supp-list-ref` for supported sample rates of individual boards.            |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| RF Oversampling         | DAC interpolation compared to IQ sample rate. Specifies how many new samples to add between the two nearest input samples.     |
+|                         |                                                                                                                                |
+|                         |                                                                                                                                |
+|                         |                                                                                                                                |
+|                         |                                                                                                                                |
+|                         |                                                                                                                                |
+|                         |                                                                                                                                |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| NCO offset              | Numerically controled oscillator frequency offset in Hz.                                                                       |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Low Pass Filter         | Low pass filter cutoff frequency in Hz.                                                                                        |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| GFIR filter             | General Finite Impulse Response filter cutoff frequency in Hz.                                                                 |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Antenna port            | By default antenna port is selected automatically based on set LO Frequency option.                                            |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Data channel indexes    | Index(es) of antenna(s) to use for data transmission. Antenna indexes start from 0. To use a single antenna specify index [0]. |
+|                         | If selected LimeSDR device has multiple TX antennas, specify indexes of all required antennas. For example: [0, 1, 2] or       |
+|                         | [0, 1] (if you want to use only the 2/3 antennas).                                                                             |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Gain (dB)               | Generic device chip gain adjustment. Gain range is auto clamped.                                                               |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Calibrate DC & IQ       | Calibrates Tx DC & IQ imbalance.                                                                                               |
+|                         |                                                                                                                                |
++-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
