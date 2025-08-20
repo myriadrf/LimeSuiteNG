@@ -238,8 +238,8 @@ Full table of limeSPI utility commands and configuration flags:
 +---------------------+----------------------------------------------------------------------------------------+--------------------------------------------------------------------------------+
 | **Data options**                                                                                                                                                                              |
 +---------------------+----------------------------------------------------------------------------------------+--------------------------------------------------------------------------------+
-| \-f[file],          | Sequence of write/read commands from a file.                                           | Path to file.                                                                  |
-|                     |                                                                                        |                                                                                |
+| \-f[file],          | Sequence of register address and data bytes for write command or sequence of register  | Path to file.                                                                  |
+|                     | adress bytes for read command.                                                         |                                                                                |
 | \-\-file=[file]     |                                                                                        |                                                                                |
 +---------------------+----------------------------------------------------------------------------------------+--------------------------------------------------------------------------------+
 | \-s[stream],        | Data stream.                                                                           | User specified register address and data bytes.                                |
