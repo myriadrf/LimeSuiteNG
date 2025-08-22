@@ -6,10 +6,13 @@ package:
   version:  1.0.0
 
 source:
-  path: "../.."
+  {% if local_build is defined %}
+  path: "../../../.."               # Copy entire project for build compatibility on local machine and GitHub Actions. Refer to bld.bat script cmake launch sequence.
+  {% else %}
   git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
   git_rev: docs-upgrade
+  {% endif %}
 
 build:
   number: 0
@@ -26,14 +29,14 @@ requirements:
     - python                              # [build_platform != target_platform]
     - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - numpy                               # [build_platform != target_platform]
-    - pybind11       1                    # [build_platform != target_platform]
+    - pybind11                            # [build_platform != target_platform]
     - vs2022_win-64
 
   host:
     - gmp  # [linux]
     # the following two entries are for generating builds against specific GR versions
-    - gnuradio-core                             # [not gnuradio_extra_pin]
-    - gnuradio-core {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
+    - gnuradio-core =3.10.11.0                            # [not gnuradio_extra_pin]
+    - gnuradio-core =3.10.11.0 {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
     - boost
     - limesuiteng
     - pip
@@ -62,7 +65,7 @@ test:
     - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1
     - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1
 
-    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.cp312-win_amd64.pyd exit 1
+    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1
     - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1
 
     - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1
