@@ -17,7 +17,7 @@ Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. T
    cd <repo root>\plugins\gr-limesuiteng
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. After successfull build conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``gnuradio-limesuiteng-version-build_number.conda``.
+Conda will start building package. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``gnuradio-limesuiteng-version-build_number.conda``.
 
 .. note::
 
