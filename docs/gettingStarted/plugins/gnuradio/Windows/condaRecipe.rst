@@ -9,7 +9,7 @@ Build using conda recipe
    
    Check out radioconda and conda environment setup. See :ref:`radioconda-setup-ref`.
 
-Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. To build the plugin LimeSuiteNG conda package must be built and installed localy inside the current conda environment. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory. To start the build process execute the following commands:
+Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. To build the plugin, LimeSuiteNG conda package must be built and installed localy inside the current conda environment. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory. To start the build process, execute the following commands:
 
 .. code-block:: bash
 
@@ -25,7 +25,7 @@ Conda will start building package. After successfull build, conda package is pop
 
 .. warning::
 
-   Currently gnuradio-limsuiteng plugin package cannot be built for ``gnuradio =3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. In order to pass the plugin build user must specify gnuradio version in .yaml file as stated below in important note.
+   Currently gnuradio-limsuiteng plugin package cannot be built for ``gnuradio =3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. In order to pass the plugin build, user must specify gnuradio version in meta.yaml file as stated below in important note.
 
 
 .. important::

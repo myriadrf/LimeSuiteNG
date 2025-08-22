@@ -9,7 +9,7 @@ Build using conda recipe
    
    Check out radioconda and conda environment setup. See :ref:`radioconda-setup-ref`.
 
-LimeSuiteNG library can also be built using conda recipe. Plugin recipe files are provided in ``<repo root>\.conda\`` directory. To start the build process execute the following commands:
+LimeSuiteNG library can also be built using conda recipe. Library recipe files are provided in ``<repo root>\.conda\`` directory. To start the build process, execute the following commands:
 
 .. code-block:: bash
 
