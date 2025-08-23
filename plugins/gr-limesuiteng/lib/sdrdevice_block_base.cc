@@ -285,7 +285,7 @@ GetAntennaForFrequency(double frequencyHz,
 
         const double mid = range.min + (range.max - range.min) / 2;
         const double d = std::abs(mid - frequencyHz);
-        if (d <= deviation) {
+        if (d < deviation) {
             name = name_range.first;
             deviation = d;
         }
@@ -301,7 +301,6 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
     const auto& antennas =
         devContext->device->GetDescriptor().rfSOC.at(chipIndex).pathNames.at(direction);
     auto antennaFind = antennas.begin();
-
     autoAntenna = antenna_name.empty() || (antenna_name == "auto");
 
     if (autoAntenna) {
@@ -321,8 +320,7 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
             antennas,
             devContext->device->GetDescriptor().rfSOC.at(chipIndex).antennaRange.at(
                 direction));
-        GR_LOG_DEBUG(debuglogger,
-                     fmt::format("auto selected antenna: {:s}", bestAntenna));
+        GR_LOG_INFO(baselogger, fmt::format("auto selected antenna: {:s}", bestAntenna));
         antennaFind = std::find(antennas.begin(), antennas.end(), bestAntenna);
     } else
         antennaFind = std::find(antennas.begin(), antennas.end(), antenna_name);
@@ -332,14 +330,21 @@ bool sdrdevice_block_base::set_antenna(const std::string& antenna_name)
         ss << "Antenna " << antenna_name << " not found. Available:" << std::endl;
         for (const auto& iter : antennas)
             ss << "\t\"" << iter << "\"" << std::endl;
-        GR_LOG_ERROR(debuglogger, ss.str());
+        GR_LOG_ERROR(baselogger, ss.str());
         return false;
     }
 
     const int antennaIndex = std::distance(antennas.begin(), antennaFind);
     for (const int ch : devContext->streamCfg.channels.at(direction)) {
         if (devContext->stream) {
-            devContext->device->SetAntenna(chipIndex, direction, ch, antennaIndex);
+            if (devContext->device->SetAntenna(chipIndex, direction, ch, antennaIndex) !=
+                OpStatus::Success) {
+                GR_LOG_ERROR(baselogger,
+                             fmt::format("Failed to set ch{:d} antenna to {:s}.",
+                                         ch,
+                                         antenna_name.c_str()));
+                return false;
+            }
         } else {
             if (direction == TRXDir::Tx)
                 devContext->deviceConfig.channel[ch].tx.path = antennaIndex;

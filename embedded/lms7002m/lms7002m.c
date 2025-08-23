@@ -734,7 +734,7 @@ lime_Result lms7002m_set_path_rfe(lms7002m_context* self, const enum lms7002m_pa
         break;
     default:
         sel_path_rfe = 0;
-        break;
+        return lime_Result_InvalidValue;
     }
 
     lms7002m_spi_modify_csr(self, LMS7002M_SEL_PATH_RFE, sel_path_rfe);

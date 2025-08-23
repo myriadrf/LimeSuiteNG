@@ -321,7 +321,10 @@ uint8_t LMS7002M_SDRDevice::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t 
 OpStatus LMS7002M_SDRDevice::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
 {
     if (path >= mDeviceDescriptor.rfSOC.at(moduleIndex).pathNames.at(trx).size())
+    {
         lime::error("Out of bounds antenna path");
+        return OpStatus::InvalidValue;
+    }
 
     auto& lms = mLMSChips.at(moduleIndex);
 
@@ -957,8 +960,9 @@ RFSOCDescriptor LMS7002M_SDRDevice::GetDefaultLMS7002MDescriptor()
     soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 2e9, 2.6e9 };
     soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 700e6, 900e6 };
     soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 700e6, 2.6e9 };
-    soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
-    soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
+    // TODO: separate loopbacks from antennas
+    // soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
+    // soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
     soc.antennaRange[TRXDir::Tx]["Band1"s] = { 2e9, 2.6e9 };
     soc.antennaRange[TRXDir::Tx]["Band2"s] = { 30e6, 1.9e9 };
 
