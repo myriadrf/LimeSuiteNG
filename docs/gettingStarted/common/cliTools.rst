@@ -265,3 +265,47 @@ Full table of limeFLASH utility configuration flags:
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | "\-\-"              | Can be used to terminate flag options and force all following arguments to be treated as positional options. |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
+
+
+limeOEM
+-------
+
+Utility for device testing and custom device specific operations.
+
+.. warning::
+	This software utility is designed for developers. Users should only use ``--test`` and optionally (if multiple devices are pluged in to system) ``--device`` flag to run basic device tests.
+
+.. note::
+	Currently limeOEM can only perform tests for LimeSDR XTRX device.
+
+.. code-block:: bash
+
+	user@computer:~$ limeOEM --test
+
+Full table of limeOEM utility configuration flags:
+
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| Configuration flags               | Description                                                                               |
++===================================+===========================================================================================+
+| -h, \-\-help                      | Prints list of all posible limeOEM utility flags.                                         |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| -d[device],                       | Specifies which device to use. Auto selects device if only a single device is present.    |
+|                                   |                                                                                           |
+| \-\-device=[device]               |                                                                                           |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| -l[level],                        | Log verbosity: info, warning, error, verbose, debug.                                      |
+|                                   |                                                                                           |
+| \-\-log=[level]                   |                                                                                           |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| -o[path],                         | File to append test results. File must be created prior to utility launch.                |
+|                                   |                                                                                           |
+| \-\-output=[path]                 |                                                                                           |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| \-\-write-serial-number=[decimal] | One time programmable serial number to be written to device.                              |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| \-\-test                          | Run tests to check device functionality.                                                  |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| \-\-version                       | Prints limeOEM version.                                                                   |
++-----------------------------------+-------------------------------------------------------------------------------------------+
+| \-\-interactive                   | Wait for user input after each test.                                                      |
++-----------------------------------+-------------------------------------------------------------------------------------------+
