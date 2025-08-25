@@ -414,9 +414,37 @@ OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint
 /// @param data The data to write to the chip.
 /// @param count Input data count.
 /// @return The operation status.
-OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count)
+OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_address, const uint8_t* data, uint32_t length)
 {
-    return OpStatus::NotImplemented;
+    LMS64CPacket pkt;
+    pkt.cmd = Command::I2C_WR;
+    pkt.status = CommandStatus::Undefined;
+    pkt.periphID = soc_address;
+    pkt.subDevice = 0;
+    pkt.reserved[0] = register_address;
+
+    size_t srcIndex = 0;
+    constexpr int maxBlocks = 28;
+    const int blockSize = 1;
+
+    pkt.blockCount = 0;
+    OpStatus status = OpStatus::Success;
+    while (srcIndex < length)
+    {
+        for (int i = 0; i < maxBlocks && srcIndex < length; ++i)
+        {
+            int payloadOffset = pkt.blockCount * blockSize;
+            pkt.payload[payloadOffset] = data[srcIndex];
+            ++pkt.blockCount;
+            ++srcIndex;
+        }
+        status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
+        if (status != OpStatus::Success)
+            return status;
+
+        pkt.blockCount = 0;
+    }
+    return status;
 }
 
 /// @brief The function for reading data via Inter-Integrated Circuit.
@@ -425,9 +453,39 @@ OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, siz
 /// @param data The data buffer to read to from the chip.
 /// @param count Output buffer size.
 /// @return The operation status.
-OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count)
+OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_address, uint8_t* data, uint32_t length)
 {
-    return OpStatus::NotImplemented;
+    LMS64CPacket pkt;
+    pkt.cmd = Command::I2C_RD;
+    pkt.status = CommandStatus::Undefined;
+    pkt.periphID = soc_address;
+    pkt.subDevice = 0;
+    pkt.reserved[0] = register_address;
+
+    size_t destIndex = 0;
+    constexpr int maxBlocks = 56;
+
+    pkt.blockCount = 0;
+    OpStatus status = OpStatus::Success;
+    while (destIndex < length)
+    {
+        int addressToCopy = std::min(static_cast<uint32_t>(maxBlocks), length);
+        memcpy(pkt.payload, data, addressToCopy);
+
+        pkt.blockCount = addressToCopy;
+        status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
+        if (status != OpStatus::Success)
+            return status;
+
+        for (int i = 0; i < addressToCopy; ++i)
+        {
+            data[destIndex] = pkt.payload[i];
+            ++destIndex;
+        }
+
+        pkt.blockCount = 0;
+    }
+    return status;
 }
 
 /// @brief Writes the given custom parameters to the chip.

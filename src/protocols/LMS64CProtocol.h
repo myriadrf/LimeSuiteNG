@@ -50,6 +50,9 @@ enum class Command : uint8_t {
     ///Reads data from LMS6002 chip via SPI
     LMS6002_RD = 0x24,
 
+    I2C_WR = 0x25,
+    I2C_RD = 0x26,
+
     LMS_LNA = 0x2A,
     LMS_PA = 0x2B,
 
@@ -122,8 +125,8 @@ OpStatus LMS7002M_SPI(
 OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* mosi, size_t count, uint32_t subDevice = 0);
 
-OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count);
-OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count);
+OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_address, const uint8_t* data, uint32_t count);
+OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_address, uint8_t* data, uint32_t count);
 
 OpStatus GPIODirRead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);
 OpStatus GPIORead(ISerialPort& port, uint8_t* buffer, const size_t bufLength);

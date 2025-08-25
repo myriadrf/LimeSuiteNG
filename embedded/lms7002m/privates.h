@@ -18,7 +18,7 @@ extern "C" {
     #define FORMAT_ATTR(type, fmt_str, fmt_param)
 #endif
 
-#define LMS7002M_LOG_ENABLE 1
+#define LMS7002M_LOG_ENABLE 0
 #if LMS7002M_LOG_ENABLE
 void FORMAT_ATTR(printf, 3, 4) lms7002m_log(struct lms7002m_context* context, lime_LogLevel level, const char* format, ...);
 

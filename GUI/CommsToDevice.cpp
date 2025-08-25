@@ -33,12 +33,12 @@ I2CToSDR::I2CToSDR(lime::SDRDevice& sdr)
 
 OpStatus I2CToSDR::I2CWrite(int address, const uint8_t* data, uint32_t length)
 {
-    return device.I2CWrite(address, data, length);
+    return device.I2CWrite(0, address, 0, data, length);
 }
 
 OpStatus I2CToSDR::I2CRead(int address, uint8_t* dest, uint32_t length)
 {
-    return device.I2CRead(address, dest, length);
+    return device.I2CRead(0, address, 0, dest, length);
 }
 
 } // namespace lime

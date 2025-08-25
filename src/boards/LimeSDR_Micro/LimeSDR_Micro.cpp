@@ -1,0 +1,613 @@
+#include "LimeSDR_Micro.h"
+
+#include <cmath>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sstream>
+
+#include "limesuiteng/Logger.h"
+#include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
+
+#include "boards/LimeSDR_Micro/LimeSDR_Micro.h"
+#include "chips/LMS7002M/validation.h"
+#include "comms/PCIe/LimePCIe.h"
+#include "comms/PCIe/LimePCIeDMA.h"
+#include "comms/IDMA.h"
+#include "DeviceTreeNode.h"
+
+#include "protocols/LMS64CProtocol.h"
+#include "protocols/LMS64C/SPI.h"
+#include "streaming/TRXLooper.h"
+
+// Linux headers
+#include <fcntl.h> // Contains file controls like O_RDWR
+#include <errno.h> // Error integer and strerror() function
+#include <termios.h> // Contains POSIX terminal control definitions
+#include <unistd.h> // write(), read(), close()
+
+#include "chips/LMS7002M/validation.h"
+#include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "comms/I2Cbus.h"
+#include "protocols/LMS64CProtocol.h"
+#include "streaming/TRXLooper.h"
+
+#include "CommonFunctions.h"
+#include "DeviceTreeNode.h"
+
+#include "LA9310_TRX.h"
+
+using namespace std::literals::string_literals;
+using namespace lime::LMS7002MCSR_Data;
+
+namespace lime {
+
+namespace limesdrmicro {
+// XTRX board specific devices ids and data
+static const uint8_t SPI_LMS7002M = 0;
+
+// Fairwaves XTRX rev.5 requires specific LDO configuration to work properly
+static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_LimeSDR_Micro = {};
+
+} // namespace limesdrmicro
+
+/// @brief Constructs a new LimeSDR_Micro object
+///
+/// @param spiRFsoc The communications port to the LMS7002M chip.
+/// @param spiFPGA The communications port to the device's FPGA.
+/// @param sampleStream The communications port to send and receive sample data.
+/// @param control The serial port communication of the device.
+/// @param refClk The reference clock of the device.
+LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
+    std::shared_ptr<LimePCIe> sampleStream,
+    std::shared_ptr<ISerialPort> control,
+    std::shared_ptr<ShivaPCIE_lime> streamingPort,
+    //std::shared_ptr<I2C_bus> i2c_bus,
+    double refClk)
+    : LMS7002M_SDRDevice()
+    , lmsSPI(spiRFsoc)
+    , mSerialPort(control)
+    , mStreamingPort(streamingPort)
+    // , mI2C(i2c_bus)
+    , mConfigInProgress(false)
+{
+    mStreamers.resize(1);
+    /// Do not perform any unnecessary configuring to device in constructor, so you
+    /// could read back it's state for debugging purposes.
+    SDRDescriptor& desc = mDeviceDescriptor;
+    desc.name = GetDeviceName(LMS_DEV_LIMESDR_MICRO);
+
+    LMS64CProtocol::FirmwareInfo fw{};
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
+    LMS64CProtocol::FirmwareToDescriptor(fw, desc);
+
+    desc.spiSlaveIds = { { "LMS7002M"s, limesdrmicro::SPI_LMS7002M } };
+    desc.i2cBusIds = { { "LA9310"s, 0 } };
+
+    {
+        RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
+        soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 3.3e9, 3.8e9 };
+        soc.antennaRange[TRXDir::Rx]["LNAL"s] = { 0.3e9, 2.2e9 };
+        soc.antennaRange[TRXDir::Rx]["LNAW"s] = { 0.7e9, 2.6e9 };
+        soc.antennaRange[TRXDir::Rx]["LB1"s] = soc.antennaRange[TRXDir::Rx]["LNAL"s];
+        soc.antennaRange[TRXDir::Rx]["LB2"s] = soc.antennaRange[TRXDir::Rx]["LNAW"s];
+        soc.antennaRange[TRXDir::Tx]["Band1"s] = { 3.3e9, 3.8e9 };
+        soc.antennaRange[TRXDir::Tx]["Band2"s] = { 0.03e9, 1.9e9 };
+
+        desc.rfSOC.push_back(soc);
+
+        std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(lmsSPI);
+
+        chip->ModifyRegistersDefaults(limesdrmicro::lms7002defaultsOverrides_LimeSDR_Micro);
+        // chip->SetOnCGENChangeCallback(LMS1_UpdateFPGAInterface, this);
+        chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
+        chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, refClk);
+        mLMSChips.push_back(std::move(chip));
+    }
+
+    desc.memoryDevices[ToString(eMemoryDevice::FPGA_RAM)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
+
+    desc.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
+    desc.socTree->children.push_back(
+        std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
+}
+
+LimeSDR_Micro::~LimeSDR_Micro()
+{
+}
+
+static OpStatus InitLMS1(LMS7002M& lms, bool skipTune = false)
+{
+    return OpStatus::Success;
+}
+
+OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
+{
+    // auto& chip = mLMSChips.at(0);
+
+    // mConfigInProgress = true;
+    // if (!cfg.skipDefaults)
+    // {
+    //     const bool skipTune = true;
+    //     InitLMS1(*chip, skipTune);
+    // }
+
+    // OpStatus status = LMS7002M_Configure(*chip, cfg);
+    // mConfigInProgress = false;
+
+    // if (status != OpStatus::Success)
+    //     return status;
+
+    // for (int c = 0; c < 2; ++c)
+    // {
+    //     LMSSetPath(TRXDir::Tx, c, cfg.channel[c].tx.path);
+    //     LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
+    //     LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+    // }
+    return OpStatus::NotImplemented;
+}
+
+const SDRDescriptor& LimeSDR_Micro::GetDescriptor() const
+{
+    return mDeviceDescriptor;
+}
+
+OpStatus LimeSDR_Micro::Init()
+{
+    const bool skipTune = true;
+    return InitLMS1(*mLMSChips.at(0), skipTune);
+}
+
+OpStatus LimeSDR_Micro::Reset()
+{
+    return OpStatus::NotImplemented;
+}
+
+double LimeSDR_Micro::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
+{
+    return OpStatus::NotImplemented;
+}
+
+double LimeSDR_Micro::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetNCOFrequency(
+    uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset)
+{
+    return OpStatus::NotImplemented;
+}
+
+int LimeSDR_Micro::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
+{
+    return OpStatus::NotImplemented;
+}
+
+double LimeSDR_Micro::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
+{
+    return OpStatus::NotImplemented;
+}
+
+double LimeSDR_Micro::GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf)
+{
+    return OpStatus::NotImplemented;
+}
+
+uint8_t LimeSDR_Micro::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return 0;
+}
+
+double LimeSDR_Micro::GetClockFreq(uint8_t clk_id, uint8_t channel)
+{
+    auto& chip = mLMSChips.at(channel / 2);
+    return chip->GetClockFreq(static_cast<LMS7002M::ClockID>(clk_id));
+}
+
+OpStatus LimeSDR_Micro::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel)
+{
+    auto& chip = mLMSChips.at(channel / 2);
+    return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
+}
+
+OpStatus LimeSDR_Micro::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
+{
+    return OpStatus::NotImplemented;
+}
+
+bool LimeSDR_Micro::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return false;
+}
+
+OpStatus LimeSDR_Micro::SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic)
+{
+    return OpStatus::NotImplemented;
+}
+
+complex64f_t LimeSDR_Micro::GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return complex64f_t();
+}
+
+OpStatus LimeSDR_Micro::SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset)
+{
+    return OpStatus::NotImplemented;
+}
+
+complex64f_t LimeSDR_Micro::GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
+{
+    return complex64f_t();
+}
+
+OpStatus LimeSDR_Micro::SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance)
+{
+    return OpStatus::NotImplemented;
+}
+
+bool LimeSDR_Micro::GetCGENLocked(uint8_t moduleIndex)
+{
+    return false;
+}
+
+double LimeSDR_Micro::GetTemperature(uint8_t moduleIndex)
+{
+    return 0;
+}
+
+bool LimeSDR_Micro::GetSXLocked(uint8_t moduleIndex, TRXDir trx)
+{
+    return false;
+}
+
+unsigned int LimeSDR_Micro::ReadRegister(uint8_t moduleIndex, unsigned int address, bool useFPGA)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::WriteRegister(uint8_t moduleIndex, unsigned int address, unsigned int value, bool useFPGA)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::LoadConfig(uint8_t moduleIndex, const std::string& filename)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::SaveConfig(uint8_t moduleIndex, const std::string& filename)
+{
+    return OpStatus::NotImplemented;
+}
+
+uint16_t LimeSDR_Micro::GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey, uint16_t value)
+{
+    return OpStatus::NotImplemented;
+}
+
+uint16_t LimeSDR_Micro::GetParameter(uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetParameter(
+    uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::Synchronize(bool toChip)
+{
+    return OpStatus::NotImplemented;
+}
+
+void LimeSDR_Micro::EnableCache(bool enable)
+{
+}
+
+OpStatus LimeSDR_Micro::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::ConfigureGFIR(
+    uint8_t moduleIndex, TRXDir trx, uint8_t channel, ChannelConfig::Direction::GFIRFilter settings)
+{
+    return OpStatus::NotImplemented;
+}
+
+std::vector<double> LimeSDR_Micro::GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID)
+{
+    return std::vector<double>();
+}
+
+OpStatus LimeSDR_Micro::SetGFIRCoefficients(
+    uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, std::vector<double> coefficients)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, bool enabled)
+{
+    return OpStatus::NotImplemented;
+}
+
+uint64_t LimeSDR_Micro::GetHardwareTimestamp(uint8_t moduleIndex)
+{
+    return 0;
+}
+
+OpStatus LimeSDR_Micro::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::SetTestSignal(uint8_t moduleIndex,
+    TRXDir direction,
+    uint8_t channel,
+    ChannelConfig::Direction::TestSignal signalConfiguration,
+    int16_t dc_i,
+    int16_t dc_q)
+{
+    return OpStatus::NotImplemented;
+}
+
+uint32_t LimeSDR_Micro::StreamRx(
+    uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+uint32_t LimeSDR_Micro::StreamRx(
+    uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+uint32_t LimeSDR_Micro::StreamRx(
+    uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
+    const lime::complex32f_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
+    const lime::complex16_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
+    const lime::complex12_t* const* samples,
+    uint32_t count,
+    const StreamMeta* meta,
+    std::chrono::microseconds timeout)
+{
+    return 0;
+}
+
+void LimeSDR_Micro::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
+{
+}
+
+ChannelConfig::Direction::TestSignal LimeSDR_Micro::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
+{
+    return ChannelConfig::Direction::TestSignal();
+}
+
+OpStatus LimeSDR_Micro::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count)
+{
+    return lmsSPI->Transact(MOSI, MISO, count);
+}
+
+void LimeSDR_Micro::SetMessageLogCallback(LogCallbackType callback)
+{
+    mCallback_logMessage = callback;
+}
+
+void* LimeSDR_Micro::GetInternalChip(uint32_t index)
+{
+    return nullptr;
+}
+
+OpStatus LimeSDR_Micro::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
+{
+    return OpStatus::NotImplemented;
+}
+
+void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
+{
+    auto& lms = mLMSChips.at(0);
+    LMS7002M::ChannelScope scope(lms.get(), chan);
+
+    const uint8_t i2c_expander_address = 0x20;
+    uint8_t value = 0;
+    I2CRead(0, i2c_expander_address, 0x19, &value, 1);
+    if (dir == TRXDir::Tx)
+    {
+        lms->SetBandTRF(pathId);
+        value &= ~(1 << 1); // clear TX_SW
+        if (pathId == 1)
+            value |= (1 << 1); // set TX_SW, Band1
+        else
+            value |= (0 << 1); // set TX_SW, Band2
+        I2CWrite(0, i2c_expander_address, 0x19, &value, 1);
+    }
+    else
+    {
+        lime::LMS7002M::PathRFE path{ pathId };
+        // first configure chip path or loopback
+        lms->SetPathRFE(lime::LMS7002M::PathRFE(path));
+        value &= ~(0x5); // clear RX_SW2, RX_SW3
+        uint8_t rxsw2 = 0;
+        uint8_t rxsw3 = 0;
+        if (path == LMS7002M::PathRFE::NONE)
+        {
+            rxsw2 = 1;
+            rxsw3 = 1;
+        }
+        else if (path == LMS7002M::PathRFE::LNAH)
+        {
+            rxsw2 = 1;
+            rxsw3 = 0;
+        }
+        else if (path == LMS7002M::PathRFE::LNAL)
+        {
+            rxsw2 = 0;
+            rxsw3 = 1;
+        }
+        else if (path == LMS7002M::PathRFE::LNAW)
+        {
+            rxsw2 = 0;
+            rxsw3 = 0;
+        }
+        value |= (rxsw2 << 0) | (rxsw3 << 2); // set TX_SW, Band2
+        I2CWrite(0, i2c_expander_address, 0x19, &value, 1);
+    }
+}
+
+OpStatus LimeSDR_Micro::UploadMemory(
+    eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
+{
+    return OpStatus::NotImplemented;
+    // return LMS64CProtocol::FirmwareWrite(*mSerialPort, data, length, progMode, target, callback, mSubDeviceIndex);
+}
+
+OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
+{
+    if (storage == nullptr || storage->ownerDevice != this)
+        return OpStatus::InvalidValue;
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
+{
+    if (storage == nullptr || storage->ownerDevice != this)
+        return OpStatus::InvalidValue;
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::GetGPSLock(GPS_Lock* status)
+{
+    return OpStatus::NotImplemented;
+}
+
+// GPIO_Interface* LimeSDR_Micro::GetGPIOControls()
+// {
+//     return mGPIO.get();
+// }
+
+OpStatus LimeSDR_Micro::GPIORead(uint8_t* buffer, const size_t bufLength)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus LimeSDR_Micro::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
+{
+    OpStatus status = LMS7002M_SDRDevice::SetAntenna(moduleIndex, trx, channel, path);
+    if (status != OpStatus::Success)
+        return status;
+    LMSSetPath(trx, channel, path);
+    return OpStatus::Success;
+}
+
+std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
+{
+    auto stream = std::make_unique<LA9310_TRX>(mStreamingPort);
+    stream->Setup(config);
+    return stream;
+}
+
+OpStatus LimeSDR_Micro::I2CWrite(uint32_t bus, uint32_t soc, uint32_t offset, const uint8_t* data, uint32_t length)
+{
+    return LMS64CProtocol::I2C_Write(*mSerialPort, soc, offset, data, length);
+}
+
+OpStatus LimeSDR_Micro::I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t* data, uint32_t length)
+{
+    return LMS64CProtocol::I2C_Read(*mSerialPort, soc, offset, data, length);
+}
+
+OpStatus LimeSDR_Micro::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)
+{
+    return OpStatus::Error;
+}
+
+void LimeSDR_Micro::StreamStart(uint8_t moduleIndex)
+{
+}
+void LimeSDR_Micro::StreamStop(uint8_t moduleIndex)
+{
+}
+void LimeSDR_Micro::StreamDestroy(uint8_t moduleIndex)
+{
+}
+
+double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
+{
+    return 122.88e6;
+}
+
+} //namespace lime

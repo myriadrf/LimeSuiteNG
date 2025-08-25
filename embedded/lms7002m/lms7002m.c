@@ -127,24 +127,24 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enu
     //--- ADC/DAC ---
     lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_AFE, 1);
 
-    if (!enable)
-    {
-        bool disable;
-        if (channel == LMS7002M_CHANNEL_A)
-            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
-        else
-            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_A : LMS7002M_RXEN_A) == 0;
-        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
-    }
-    else
-        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, 0);
+    // if (!enable)
+    // {
+    //     bool disable;
+    //     if (channel == LMS7002M_CHANNEL_A)
+    //         disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
+    //     else
+    //         disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_A : LMS7002M_RXEN_A) == 0;
+    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
+    // }
+    // else
+    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, 0);
 
-    if (channel == LMS7002M_CHANNEL_B)
-        lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, enable ? 0 : 1);
+    // if (channel == LMS7002M_CHANNEL_B)
+    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, enable ? 0 : 1);
 
     int disabledChannels = (lms7002m_spi_read_bits(self, LMS7002M_PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
-    lms7002m_spi_modify_csr(self, LMS7002M_PD_AFE, disabledChannels == 0xF ? 1 : 0);
+    // lms7002m_spi_modify_csr(self, LMS7002M_EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
+    // lms7002m_spi_modify_csr(self, LMS7002M_PD_AFE, disabledChannels == 0xF ? 1 : 0);
 
     //--- digital ---
     if (isTx)

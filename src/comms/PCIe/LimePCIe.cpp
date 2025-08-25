@@ -15,6 +15,7 @@
     #include <sys/mman.h>
     #include <sys/ioctl.h>
     #include "drivers/linux/limepcie/limepcie.h"
+    #include "drivers/linux/la9310_limesdr/la9310_ioctl.h"
 #endif
 
 using namespace std;
@@ -26,7 +27,7 @@ std::vector<std::string> LimePCIe::GetEndpointsWithPattern(const std::string& de
     std::vector<std::string> devices;
     FILE* lsPipe;
 
-    std::string cmd = "ls -1 "s + devicePath + "/"s + regex;
+    std::string cmd = "ls -1 "s + devicePath + "/"s + regex + " 2> /dev/null";
     lsPipe = popen(cmd.c_str(), "r");
     char tempBuffer[512];
     while (fscanf(lsPipe, "%s", tempBuffer) == 1)
@@ -177,4 +178,14 @@ int LimePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
     if ((status & 0xFF00) == 0)
         ReportError(OpStatus::Timeout, "CMD %02X Read timeout", status & 0xFF);
     return read(mFileDescriptor, buffer, length);
+}
+
+OpStatus LimePCIe::UploadFirmware(const uint8_t* buffer, size_t size)
+{
+    LA9310_IOCTL_firmware fw;
+    fw.firmware_data = buffer;
+    fw.size = size;
+
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_FIRMWARE_UPLOAD, &fw);
+    return ret == 0 ? OpStatus::Success : OpStatus::Error;
 }

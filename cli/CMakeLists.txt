@@ -22,6 +22,11 @@ set_target_properties(limeSPI PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_link_libraries(limeSPI PRIVATE cli-shared)
 target_precompile_headers(limeSPI REUSE_FROM cli-shared)
 
+add_executable(limeI2C limeI2C.cpp)
+set_target_properties(limeI2C PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(limeI2C PRIVATE cli-shared)
+target_precompile_headers(limeI2C REUSE_FROM cli-shared)
+
 add_executable(limeConfig limeConfig.cpp)
 set_target_properties(limeConfig PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries(limeConfig PRIVATE cli-shared)
@@ -43,6 +48,8 @@ target_link_libraries(limeOEM PRIVATE cli-shared)
 target_precompile_headers(limeOEM REUSE_FROM cli-shared)
 
 install(
-    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM
+    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM limeI2C
     COMPONENT cli
     DESTINATION bin)
+
+add_subdirectory(iq_monitor)

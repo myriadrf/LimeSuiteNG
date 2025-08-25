@@ -2,10 +2,13 @@
 #cmakedefine01 LIMESUITENG_USB_FX3
 #cmakedefine01 LIMESUITENG_USB_FTDI
 #cmakedefine01 LIMESUITENG_PCIE
+#cmakedefine01 LIMESUITENG_shiva
 
 void __loadFX3();
 void __loadFTDI();
 void __loadDeviceFactoryPCIe();
+void __loadDeviceFactoryLA9310();
+void __loadDeviceFactoryPCIe_shiva();
 
 void __loadBoardSupport()
 {
@@ -19,5 +22,10 @@ void __loadBoardSupport()
 
 #if LIMESUITENG_PCIE
     __loadDeviceFactoryPCIe();
+    __loadDeviceFactoryLA9310();
+#endif
+
+#if LIMESUITENG_shiva
+    __loadDeviceFactoryPCIe_shiva();
 #endif
 }

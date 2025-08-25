@@ -530,10 +530,10 @@ class LIME_API SDRDevice
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);
 
     /// @copydoc II2C::I2CWrite()
-    virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length);
+    virtual OpStatus I2CWrite(uint32_t bus, uint32_t soc, uint32_t offset, const uint8_t* data, uint32_t length);
 
     /// @copydoc II2C::I2CRead()
-    virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length);
+    virtual OpStatus I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t* data, uint32_t length);
 
     /***********************************************************************
      * GPIO API

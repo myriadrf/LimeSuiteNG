@@ -1,0 +1,32 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
+/*
+ * Copyright 2024 NXP
+ */
+
+
+#ifndef __LA9310_REGS_H__
+#define __LA9310_REGS_H__
+
+#define VSPA_VCPU_DMEM_OFF 0x400000
+#define VSPA_IPPU_DMEM_OFF 0x500000
+#define VSPA_CCSR 0x1000000
+#define CYC_COUNTER_MSB 0x98
+#define CYC_COUNTER_LSB 0x9C
+#define DMA_DMEM_PRAM_ADDR 0xB0
+#define GP_IN0 0x500
+#define GP_OUT0 0x580
+
+/*
+root@imx8mp-rfnm:~# memtool -32 0x1B400900=3
+root@imx8mp-rfnm:~#  memtool -32 0x1B400900 10
+0x1B400900:  00000003 00000000 80000000 B0001000
+0x1B400910:  00000000 BD000FFF 96400000 00000000
+*/
+
+#define IATU_VIEWPORT_OFF 0x03400900
+#define ATU_LWR_BASE_ADDR_OFF_OUTBOUND_0  0x0340090C
+#define ATU_LWR_TARGET_ADDR_OFF_INBOUND_0 0x03400918
+
+
+#endif

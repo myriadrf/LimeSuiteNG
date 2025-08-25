@@ -62,6 +62,8 @@ struct SDRDescriptor {
     /** Descriptions of all memory storage devices on this device */
     std::map<std::string, std::shared_ptr<DataStorage>> memoryDevices;
     std::shared_ptr<DeviceTreeNode> socTree; ///< The device's subdevices tree view representation
+
+    std::map<std::string, uint32_t> i2cBusIds; ///< Names and indexes of I2C buses
 };
 
 } // namespace lime

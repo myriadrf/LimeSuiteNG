@@ -99,6 +99,7 @@ OpStatus LMS7002M_SDRDevice::Reset()
 
 OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
 {
+    assert(mFPGA);
     uint16_t regValue = mFPGA->ReadRegister(0x114);
     status->glonass = static_cast<GPS_Lock::LockStatus>((regValue >> 0) & 0x3);
     status->gps = static_cast<GPS_Lock::LockStatus>((regValue >> 4) & 0x3);
@@ -996,11 +997,13 @@ OpStatus LMS7002M_SDRDevice::UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& f
 
 int LMS7002M_SDRDevice::ReadFPGARegister(uint32_t address)
 {
+    assert(mFPGA);
     return mFPGA->ReadRegister(address);
 }
 
 OpStatus LMS7002M_SDRDevice::WriteFPGARegister(uint32_t address, uint32_t value)
 {
+    assert(mFPGA);
     return mFPGA->WriteRegister(address, value);
 }
 
@@ -1197,11 +1200,14 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
     {
         // TODO: verify if every FPGA gateware has this
         // configure FPGA to do TDD switching
-        uint16_t reg000A = mFPGA->ReadRegister(0x000A);
-        reg000A &= ~(1 << 11);
-        if (tddMode)
-            reg000A |= (1 << 11);
-        mFPGA->WriteRegister(0x000A, reg000A);
+        if (mFPGA)
+        {
+            uint16_t reg000A = mFPGA->ReadRegister(0x000A);
+            reg000A &= ~(1 << 11);
+            if (tddMode)
+                reg000A |= (1 << 11);
+            mFPGA->WriteRegister(0x000A, reg000A);
+        }
     }
     // Rx PLL is not used in TDD mode
     if (cfg.channel[0].rx.centerFrequency > 0)

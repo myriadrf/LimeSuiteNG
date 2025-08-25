@@ -34,10 +34,10 @@ class LIME_API LimePCIe
     /// @param deviceFilename The filename of the device to open.
     /// @param flags The flags to pass to `open()`.
     /// @return The status of the operation.
-    OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
+    virtual OpStatus Open(const std::filesystem::path& deviceFilename, uint32_t flags);
 
     /// @brief Closes this PCIe device.
-    void Close();
+    virtual void Close();
 
     /// @brief Checks if the communication to the device is open.
     /// @return True of can communicate to the device.
@@ -68,6 +68,8 @@ class LIME_API LimePCIe
     /// @brief Sets the path of the file to use to communicate with a device.
     /// @param filePath The new file to use for communications with a device.
     void SetPathName(const std::filesystem::path& filePath) { mFilePath = filePath; };
+
+    virtual OpStatus UploadFirmware(const uint8_t* buffer, size_t size);
 
   private:
     std::filesystem::path mFilePath;
