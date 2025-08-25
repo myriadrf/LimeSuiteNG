@@ -4,7 +4,7 @@ Build using conda recipe
 Notice
 ------
 
-This section of documentation is reserved for project developers, package maintainers and other contributors. Users are recommended to build Lime Suite NG from source (See :ref:`windows-lib-build-ref`) or install as a conda package from conda package manager (See :ref:`limesuiteng-install-ref`).
+This section of documentation describes how to run conda-build tool, update recipes and is reserved for project developers, package maintainers and other contributors. Users are recommended to build Lime Suite NG from source (See :ref:`windows-lib-build-ref`) or install as a conda package from conda package manager (See :ref:`limesuiteng-install-ref`).
 
 .. important::
 
@@ -25,7 +25,7 @@ LimeSuiteNG library can also be built using conda recipe. Library recipe files a
    cd <repo root>
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``limesuiteng-version-build_number.conda``.
+Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``limesuiteng-version-build_number.conda``.
 
 .. note::
 
