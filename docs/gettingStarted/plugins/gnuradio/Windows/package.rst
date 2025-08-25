@@ -1,3 +1,5 @@
+.. _gnuradio-plugin-install-ref:
+
 Conda package
 =============
 

@@ -1,6 +1,11 @@
 Build using conda recipe
 ========================
 
+Notice
+------
+
+This section of documentation describes how to run conda-build tool, update recipes and is reserved for project developers, package maintainers and other contributors. Users are recommended to build Gnuradio-limesuiteng plugin from source (See :ref:`windows-plugin-build-ref`) or install as a conda package from conda package manager (See :ref:`gnuradio-plugin-install-ref`).
+
 .. important::
 
    Compared to standard build procedure, building plugin package using conda-build tool takes more time (5-8 min.) and resources. For development purposes it is advised to build from source using CMake. See :ref:`windows-plugin-build-ref`.
@@ -9,7 +14,11 @@ Build using conda recipe
    
    Check out radioconda and conda environment setup. See :ref:`radioconda-setup-ref`.
 
-Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. To build the plugin, LimeSuiteNG conda package must be built and installed localy inside the current conda environment. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory. To start the build process, execute the following commands:
+
+Recipe build steps
+------------------
+
+Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. To build the plugin, LimeSuiteNG conda package must be built and installed inside the current conda environment. Plugin recipe files are provided in ``<project>\plugins\gr-limesuiteng\.conda\`` directory. To start the build process, execute the following commands:
 
 .. code-block:: bash
 
@@ -17,7 +26,7 @@ Gnuradio-limesuiteng plugin for GNURadio can also be built using conda recipe. T
    cd <repo root>\plugins\gr-limesuiteng
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``gnuradio-limesuiteng-version-build_number.conda``.
+Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``gnuradio-limesuiteng-version-build_number.conda``.
 
 .. note::
 
