@@ -1,3 +1,5 @@
+.. _limesuiteng-install-ref:
+
 Install from packages
 =====================
 
