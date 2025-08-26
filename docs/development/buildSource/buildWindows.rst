@@ -39,13 +39,19 @@ Activate your conda enivronment:
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 .. Add reference to radioconda and conda setup
 
-Install conda packages:
+Install all necessary build components by executing the following script in repository root directory:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning vs2022_win-64 cmake ninja
+   conda_deps.bat [--v] [required-gnuradio-version]
 
-Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+Script will check the conda environment for missing packages and install all conda packages required to build LimeSuiteNG library. Additionally, GNURadio version flag can be supplied to install appropriate version of GNURadio and additional dependencies required to build `gnuradio-limesuiteng` plugin. Example:
+
+.. code-block:: bash
+
+   conda_deps.bat --v 3.10.11.0
+
+After successful component install restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
 .. code-block:: bash
 

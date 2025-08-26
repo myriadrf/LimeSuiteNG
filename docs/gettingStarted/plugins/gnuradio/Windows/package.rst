@@ -1,3 +1,5 @@
+.. _gnuradio-plugin-install-ref:
+
 Conda package
 =============
 
@@ -10,9 +12,9 @@ Prerequisites
 Conda packages required to run the gnuradio plugin:
 
 #. LimeSuiteNG
-#. Python=3.12
-#. Numpy=1.26.4
-#. gnuradio=3.10.9.2
+#. Python
+#. Numpy
+#. gnuradio
 
 .. tip::
    You can check if packages are present by using ``conda list <package name>``.
