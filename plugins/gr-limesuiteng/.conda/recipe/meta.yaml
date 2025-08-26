@@ -25,10 +25,10 @@ requirements:
     - ninja
     - pkg-config
     # cross-compilation requirements
-    - python                              # [build_platform != target_platform]
+    - python =3.12.9                      # [build_platform != target_platform]
     - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - numpy >=2.0                         # [build_platform != target_platform]
-    - pybind11                            # [build_platform != target_platform]
+    - pybind11 =2.13.6                    # [build_platform != target_platform]
     - vs2022_win-64
 
   host:
@@ -36,17 +36,17 @@ requirements:
     # the following two entries are for generating builds against specific GR versions
     - gnuradio-core =3.10.11.0                             # [not gnuradio_extra_pin]
     - gnuradio-core =3.10.11.0 {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
-    - boost
+    - boost =1.84
     - limesuiteng
     - pip
-    - pybind11
-    - python
+    - pybind11 =2.13.6 
+    - python =3.12.9 
     - numpy >=2.0
-    - volk
+    - volk =3.1.2
 
   run:
     - numpy >=2.0
-    - python
+    - python =3.12.9
     - gnuradio-core
 
 test:
