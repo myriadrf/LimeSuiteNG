@@ -1,0 +1,302 @@
+package:
+  name:  limesuiteng
+  version: 25.1.0
+
+source:
+  {% if local_build is defined %}
+  path: ../..
+  {% else %}
+  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
+  git_url: https://github.com/myriadrf/LimeSuiteNG.git
+  {% endif %}
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler("c") }}
+    - {{ compiler("cxx") }}
+    - cmake
+    - git
+    - ninja
+    - pkg-config
+    - vs2022_win-64 #[win]
+    # cross-compilation requirements
+    - python                              # [build_platform != target_platform]
+    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
+    - numpy                               # [build_platform != target_platform]
+    - pybind11                            # [build_platform != target_platform]
+  
+  host:
+    - gmp  # [linux]
+    - gnuradio-core
+    - boost
+    - pip
+    - pybind11
+    - python
+    - numpy
+    - volk
+
+  run:
+  # This metapackage depends on the following LimeSuiteNG sub-packages
+    - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+    - {{ pin_subpackage('liblimesuiteng-dev', exact=True) }}
+    - {{ pin_subpackage('limesuiteng-cli', exact=True) }}
+    - {{ pin_subpackage('limesuiteng-gui', exact=True) }}
+    - {{ pin_subpackage('gnuradio-limesuiteng', exact=True) }}
+
+outputs:
+  - name: liblimesuiteng
+    version: 0.3.0
+    files:
+      - Library/include/lime
+      - Library/bin/limesuiteng.dll
+      - Library/lib/limesuiteng.lib
+      - Library/lib/limesuiteng-legacyapi.lib
+      - Library/lib/limesuiteng-legacyapi.dll
+    requirements:
+      build:
+        - {{ compiler("c") }}
+        - {{ compiler("cxx") }}
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+        - vs2022_win-64 #[win]
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\include\\lime\\LimeSuite.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\lime\\LMS7002M_parameters.h exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1 
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1
+
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: Conda package that contains release files of Lime Suite NG core library for interaction with LimeSDR based devices.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+
+  - name: liblimesuiteng-dev
+    version: 0.3.0
+    files:
+      - Library/include/limesuiteng
+      - Library/lib/cmake/limesuiteng
+      - Library/lib/pkgconfig/limesuiteng.pc
+    requirements:
+      build:
+        - {{ compiler("c") }}
+        - {{ compiler("cxx") }}
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+        - vs2022_win-64 #[win]
+
+      run:
+        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1
+        - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: Conda package that contains development files of Lime Suite NG core library for interaction with LimeSDR based devices.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+  
+  - name: limesuiteng-cli
+    version: 1.0.0
+    files:
+      - Library/bin/limeConfig.exe
+      - Library/bin/limeDevice.exe
+      - Library/bin/limeTRX.exe
+      - Library/bin/limeOEM.exe
+      - Library/bin/limeSPI.exe
+      - Library/bin/limeFLASH.exe
+      - Library/bin/examples/legacy/basicRX.exe
+      - Library/bin/examples/legacy/basicTX.exe
+      - Library/bin/examples/legacy/dualRXTX.exe
+      - Library/bin/examples/legacy/gpio_example.exe
+      - Library/bin/examples/legacy/singleRX.exe
+      - Library/bin/examples/basicRX.exe
+      - Library/bin/examples/legacy/basicTX.exe
+      - Library/bin/examples/legacy/dualRXTX.exe
+    requirements:
+      build:
+        - {{ compiler("c") }}
+        - {{ compiler("cxx") }}
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+        - vs2022_win-64 #[win]
+
+      run:
+        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1
+
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: Conda package that contains Lime Suite NG Command Line Interface applications.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+
+  - name: limesuiteng-gui
+    version: 1.0.0
+    files:
+      - Library/bin/limeGUI.exe
+      - Library/bin/wxmsw32u_gl_vc14x_x64.dll
+      - Library/bin/wxmsw32u_core_vc14x_x64.dll
+      - Library/bin/wxbase32u_vc14x_x64.dll
+    requirements:
+      build:
+        - {{ compiler("c") }}
+        - {{ compiler("cxx") }}
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+        - vs2022_win-64 #[win]
+
+      run:
+        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_gl_vc14x_x64.dll exit 1
+        - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_core_vc14x_x64.dll exit 1
+        - if not exist %PREFIX%\\Library\\bin\\wxbase32u_vc14x_x64.dll exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeGUI.exe exit 1
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: Conda package that contains Lime Suite NG graphical user interface application.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+
+  - name: gnuradio-limesuiteng
+    version: 1.0.0
+    files:
+      - Lib/site-packages/gnuradio/limesuiteng
+      - Library/bin/gnuradio-limesuiteng.dll
+      - Library/include/gnuradio/limesuiteng
+      - Library/lib/gnuradio-limesuiteng.lib
+      - Library/lib/cmake/gnuradio-limesuiteng
+      - Library/share/gnuradio/examples/limesuiteng
+      - Library/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml
+      - Library/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml
+      - Library/share/gnuradio/manifests/limesuiteng
+    requirements:
+      build:
+        - {{ compiler("c") }}
+        - {{ compiler("cxx") }}
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+        # cross-compilation requirements
+        - python                              # [build_platform != target_platform]
+        - cross-python_{{ target_platform }}  # [build_platform != target_platform]
+        - numpy                               # [build_platform != target_platform]
+        - pybind11                            # [build_platform != target_platform]
+        - vs2022_win-64 #[win]
+
+      host:
+        - gmp  # [linux]
+        - gnuradio-core
+        - boost
+        - pip
+        - pybind11
+        - python
+        - numpy
+        - volk
+
+      run:
+        - numpy
+        - python
+        - gnuradio-core
+
+      test:
+        commands:
+          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1
+          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1
+          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1
+
+          - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1
+          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1
+          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1
+          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1
+          - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1
+          - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1
+          - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1
+          - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1
+
+          - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1
+          - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1
+
+          - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1
+      
+      about:
+        home: https://github.com/myriadrf/LimeSuiteNG
+        license: Apache-2.0
+        license_file: COPYING
+        license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+        summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the Lime Suite NG new generation software suite designed for working with LimeSDR family devices.
+        dev_url: https://github.com/myriadrf/LimeSuiteNG
+        doc_url: https://limesuiteng.myriadrf.org/
+
+about:
+  home: https://github.com/myriadrf/LimeSuiteNG
+  license: Apache-2.0
+  license_file: COPYING
+  license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+  summary: Lime Suite NG is a new generation software suite designed for working with LimeSDR family devices.
+  dev_url: https://github.com/myriadrf/LimeSuiteNG
+  doc_url: https://limesuiteng.myriadrf.org/
