@@ -29,7 +29,7 @@ Optional components that add specific functionality:
 Compilation
 -----------
 
-Activate your conda enivronment:
+Open radioconda with administrative privileges and activate your conda enivronment:
 
 .. code-block:: bash
 
@@ -51,7 +51,7 @@ Script will check the conda environment for missing packages and install all con
 
    conda_deps.bat --v 3.10.11.0
 
-After successful component install restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+List of verified plugin builds against different GNURadio versions is provided in ``conda_requirements.txt`` file. After successful component install, restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
 .. code-block:: bash
 
@@ -81,9 +81,7 @@ Built suite files are located in ``build\lib`` directory and executables are loc
 Installing the built software
 -----------------------------
 
-Optionally library can be installed into system, installation requires to be ran with Administrative privileges.
-
-Continuing on from the previous command block, execute:
+Optionally library can be installed into system. Continuing on from the previous command block, execute:
 
 .. code-block:: bash
 

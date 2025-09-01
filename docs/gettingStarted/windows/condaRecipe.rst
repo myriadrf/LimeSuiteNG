@@ -4,7 +4,7 @@ Build using conda recipe
 Notice
 ------
 
-This section of documentation describes how to run conda-build tool, update recipes and is reserved for project developers, package maintainers and other contributors. Users are recommended to build Lime Suite NG from source (See :ref:`windows-lib-build-ref`) or install as a conda package from conda package manager (See :ref:`limesuiteng-install-ref`).
+This section of documentation describes how to run conda-build tool, update recipes and is reserved for project developers, package maintainers and other contributors. Users are recommended to build LimeSuiteNG from source (See :ref:`windows-lib-build-ref`) or install as a conda package from conda package manager (See :ref:`limesuiteng-install-ref`).
 
 .. important::
 
@@ -31,7 +31,7 @@ Conda will start building package. The ``build_config.yaml`` file alongside the 
 
    To store built package in another directory, add ``--output-folder=[path]`` flag to conda-build tool. Directory must exist prior to using conda-build.
 
-To use built LimeSuiteNG library components, package must be installed using the conda install command as shown below. Specified path to package must be absolute.
+To access LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command as shown below. Specified path to package must be absolute.
 
 .. code-block:: bash
 
