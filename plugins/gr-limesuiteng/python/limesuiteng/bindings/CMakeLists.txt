@@ -19,7 +19,7 @@ endif(NOT limesuiteng_sources)
 gr_python_check_module_raw("pygccxml" "import pygccxml" PYGCCXML_FOUND)
 
 # GrPybind cmake scripts that were before 3.10.7 had wrong paths when used from nested project
-if(${Gnuradio_VERSION} VERSION_LESS_EQUAL "3.10.7.0")
+if(${Gnuradio_VERSION} VERSION_LESS "3.10.7.0")
     message(
         AUTHOR_WARNING "host GnuRadio version ${Gnuradio_VERSION}, overriding it's GrPybind cmake file to work for nested projects."
     )
