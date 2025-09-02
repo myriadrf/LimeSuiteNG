@@ -25,17 +25,22 @@ LimeSuiteNG library can also be built using conda recipe. Library recipe files a
    cd <repo root>
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``limesuiteng-version-build_number.conda``.
-
-.. note::
-
-   To store built package in another directory, add ``--output-folder=[path]`` flag to conda-build tool. Directory must exist prior to using conda-build.
-
-To access LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command as shown below. Specified path to package must be absolute.
+Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``limesuiteng-version-build_string.conda``. Radioconda install root can be found using the following conda command:
 
 .. code-block:: bash
 
-   conda install <absolute_path>\limesuiteng-version-build_number.conda
+   conda config --show root_prefix
+
+Installing built package
+------------------------
+
+To access LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built LimeSuiteNG package, execute the following command:
+
+.. code-block:: bash
+
+   conda install limesuiteng
+
+Optionally, you can specify version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hb7fb3a4_0`` if there are multiple versions of the same package.
 
 .. hint::
 
