@@ -1,23 +1,31 @@
-Build using conda recipe
-========================
-
-Notice
-------
-
-This section of documentation describes how to run conda-build tool, update recipes and is reserved for project developers, package maintainers and other contributors. Users are recommended to build LimeSuiteNG from source (See :ref:`windows-lib-build-ref`) or install as a conda package from conda package manager (See :ref:`limesuiteng-install-ref`).
+Minimal LimeSuiteNG recipe
+==========================
 
 .. important::
 
    Compared to standard build procedure, building library package using conda-build tool takes more time (5-8 min.) and resources. For development purposes it is advised to build from source using CMake. See :ref:`windows-lib-build-ref`.
 
-.. hint::
-   
-   Check out radioconda and conda environment setup. See :ref:`radioconda-setup-ref`.
+.. note::
+
+   Conda packaging has only been tested on Windows platform.
+
+Recipe structure
+----------------
+
+A full conda recipe is made out of three main files:
+
+#. meta.yaml
+#. bld.bat (For Windows platform)
+#. bld.sh (For Linux/MacOS platforms)
+
+Meta.yaml file is used to specify required dependencies for build. Since most of dependencies in LimeSuiteNG are resolved internally (through CMake scripts), you will only need to modify any required build tools, such as compilers and build generators. Scripts bld.bat and bld.sh are used for the actual build. Inside the scripts you can add additional CMake flags and any other commands that will be executed in command line/terminal environment.
+
+More details about `conda recipes`_.
 
 Recipe build steps
 ------------------
 
-LimeSuiteNG library can also be built using conda recipe. Library recipe files are provided in ``<repo root>\.conda\`` directory. To start the build process, execute the following commands:
+To start the build process, execute the following commands:
 
 .. code-block:: bash
 
@@ -34,7 +42,7 @@ Conda will start building package. The ``build_config.yaml`` file alongside the 
 Installing built package
 ------------------------
 
-To access LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built LimeSuiteNG package, execute the following command:
+To access and test LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built LimeSuiteNG package, execute the following command:
 
 .. code-block:: bash
 
@@ -42,6 +50,4 @@ To access LimeSuiteNG binaries or library for other builds, package must be inst
 
 Optionally, you can specify version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hb7fb3a4_0`` if there are multiple versions of the same package.
 
-.. hint::
-
-   After successful install of LimeSuiteNG library package, various command line utilities and development components are available for use. See :ref:`cli-tools-ref`.  
+.. _conda recipes: https://docs.conda.io/projects/conda-build/en/stable/resources/index.html
