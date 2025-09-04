@@ -9,4 +9,8 @@ This section provides necessary information for maintaining conda packages and i
 
 More about each recipe here:
 
+.. toctree::
 
+   Minimal LimeSuiteNG recipe <condaSuiteRecipe.rst>
+   Gnuradio-limesuiteng recipe <condaPluginRecipe.rst>
+   Metapackage recipe <condaMetaPkgRecipe.rst>
