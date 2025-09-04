@@ -8,6 +8,7 @@ This section contains information about development process and various tools.
    :maxdepth: 1
    :hidden:
 
+   packaging/index
    buildSource/index
    diagrams/index
    documentation
