@@ -17,6 +17,10 @@ Optionally, you can specify metapackage version ``limesuiteng=25.1.0`` or versio
 
 .. note::
 
+   When installing metapackage, conda will attempt to resolve any missing dependencies. Since ``gnuradio-limesuiteng`` sub-package is pinned in metapackage, installing ``limesuiteng`` metapackage will also install required GNURadio version. If you want to install the metapackage with all of it's components and target a specific GNURadio version, you must first install appropriate GNURadio version. 
+
+.. note::
+
    You can check out limesuiteng versions by executing the following command - ``conda search limesuiteng``.
 
 If you only need certain LimeSuiteNG components, for example, development files, you can install a metapackage sub-package as a standalone package:
