@@ -24,15 +24,19 @@ Conda packages required to run the gnuradio plugin:
 Installing
 ----------
 
+If gnuradio package in the current conda environment is already installed, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+
 .. code-block:: bash
 
    conda activate <environment>
    conda install gnuradio-limesuiteng
 
-Optionally, you can specify metapackage version ``gnuradio-limesuiteng=1.0.0`` or version and build string ``gnuradio-limesuiteng=1.0.0=py312hf2d996d_0`` to install exact plugin package version.
+If gnuradio package is missing in the current conda environment, execute the folowing commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
 
-.. note::
+.. code-block:: bash
 
-   You can check out gnuradio-limesuiteng versions by executing the following command - ``conda search gnuradio-limesuiteng``.
+   conda install gnuradio=[version] gnuradio-limesuiteng
+
+This will ensure that the correct GNURadio plugin version is installed alongside GNURadio package.
 
 Check out :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` sections for demonstration and plugin block documentation.
