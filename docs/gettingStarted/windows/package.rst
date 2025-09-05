@@ -6,18 +6,25 @@ Install from packages
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 
-LimeSuiteNG library can also be installed as a conda package. LimeSuiteNG provides multiple packages for installation. You can install all possible LimeSuiteNG components by installing the LimeSuiteNG metapackage:
+LimeSuiteNG library can also be installed as a conda package. LimeSuiteNG provides multiple packages for installation. You can install all possible LimeSuiteNG components by installing the LimeSuiteNG metapackage. If you want to install entire LimeSuiteNG metapackage and already have a gnuradio package in your current environment, execute the following commands:
 
 .. code-block:: bash
 
    conda activate <environment>
-   conda install limesuiteng
+   conda install limesuiteng=[version]
 
-Optionally, you can specify metapackage version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hba12d79_0`` to install exact metapackage version and it's components.
+If you want to install entire LimeSuiteNG metapackage, but you are missing gnuradio package in your current environment, execute the following commands:
+
+.. code-block:: bash
+
+   conda activate <environment>
+   conda install gnuradio=[version] limesuiteng=[version]
+
+This ensures, that metapackage install pulls the correct ``gnuradio-limesuiteng`` plugin sub-package version.
 
 .. note::
 
-   When installing metapackage, conda will attempt to resolve any missing dependencies. Since ``gnuradio-limesuiteng`` sub-package is pinned in metapackage, installing ``limesuiteng`` metapackage will also install required GNURadio version. If you want to install the metapackage with all of it's components and target a specific GNURadio version, you must first install appropriate GNURadio version. 
+   Optionally, you can specify metapackage version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hba12d79_0`` to install exact metapackage version and it's components.
 
 .. note::
 
@@ -36,6 +43,6 @@ LimeSuiteNG metapackage links the following packages together:
 #. liblimesuiteng-dev - Development libraries, files and library API files.
 #. limesuiteng-cli - command line tools for LimeSDR devices.
 #. limesuiteng-gui - LimeSDR device configuration tool with GUI support.
-#. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. 
+#. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. To install plugin as a separate package check out :ref:`gnuradio-plugin-install-ref` section.
 
 All of the above listed packages can be installed and used independently.
