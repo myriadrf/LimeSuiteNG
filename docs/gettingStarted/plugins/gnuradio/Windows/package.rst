@@ -1,7 +1,7 @@
 .. _gnuradio-plugin-install-ref:
 
-Conda package
-=============
+GNURadio plugin conda package
+=============================
 
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
