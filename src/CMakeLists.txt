@@ -11,6 +11,8 @@ project(
     LANGUAGES C CXX)
 checkdebianchangelogversion(${PROJECT_NAME})
 
+option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
+
 add_library(limesuiteng)
 # namespaced target for use in plugins build
 add_library(limesuiteng::limesuiteng ALIAS limesuiteng)
@@ -151,7 +153,6 @@ add_subdirectory(legacyapi)
 
 add_subdirectory(examples)
 
-option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
 add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
 if(INSTALL_DEVELOPMENT)
     install(
