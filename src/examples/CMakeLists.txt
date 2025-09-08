@@ -6,8 +6,6 @@ if(NOT BUILD_EXAMPLES)
     return()
 endif()
 
-find_package(kissfft CONFIG REQUIRED)
-
 if(UNIX)
     find_package(Gnuplot)
     set_package_properties(Gnuplot PROPERTIES TYPE OPTIONAL)
@@ -23,7 +21,7 @@ set_target_properties(basicRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutp
 target_link_libraries(
     basicRX
     PRIVATE limesuiteng
-    PRIVATE cli-shared kissfft)
+    PRIVATE cli-shared)
 
 add_executable(dualRXTX dualRXTX.cpp)
 set_target_properties(dualRXTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutputDir})
@@ -34,6 +32,6 @@ set_target_properties(basicTX PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${examplesOutp
 target_link_libraries(
     basicTX
     PRIVATE limesuiteng
-    PRIVATE cli-shared kissfft taywee-args)
+    PRIVATE cli-shared taywee-args)
 
 add_subdirectory(legacy)

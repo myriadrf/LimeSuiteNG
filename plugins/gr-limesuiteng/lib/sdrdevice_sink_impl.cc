@@ -81,11 +81,15 @@ sdrdevice_sink_impl::sdrdevice_sink_impl(const std::string& alias,
                            sampleRate,
                            rf_oversampling,
                            d_logger,
-                           d_logger)
+                           d_debug_logger)
 {
+    // GNU radio can start feeding Sink Work() with 1 sample chunks, somehow that makes
+    // the gnu radio boost thread to die. Setting the output granularity seems to
+    // workaround that.
+    set_output_multiple(256);
 }
 
-sdrdevice_sink_impl::~sdrdevice_sink_impl() { GR_LOG_DEBUG(d_logger, __func__); }
+sdrdevice_sink_impl::~sdrdevice_sink_impl() { GR_LOG_DEBUG(d_debug_logger, __func__); }
 
 bool sdrdevice_sink_impl::start() { return sdrdevice_block_base::start(); }
 
@@ -96,12 +100,18 @@ int sdrdevice_sink_impl::work(int noutput_items,
                               gr_vector_void_star& output_items)
 {
     if (!canWork) {
-        GR_LOG_DEBUG(d_logger, "WORK_DONE");
+        GR_LOG_DEBUG(d_debug_logger, "WORK_DONE");
         return gr::block::work_return_t::WORK_DONE;
     }
 
     assert(devContext);
     assert(devContext->stream);
+
+    // start actual data streaming only when work starts, stream is shared by Rx/Tx
+    // so start should be done once from either of them.
+    if (!devContext->streamIsActive.exchange(true)) {
+        StartRFStreaming();
+    }
 
     const lime::complex32f_t* samples[8];
     for (size_t i = 0; i < devContext->streamCfg.channels.at(direction).size(); ++i)
@@ -136,6 +146,11 @@ double sdrdevice_sink_impl::set_lpf_bandwidth(double bandwidthHz)
     return sdrdevice_block_base::set_lpf_bandwidth(bandwidthHz);
 }
 
+double sdrdevice_sink_impl::set_gfir_bandwidth(double bandwidthHz)
+{
+    return sdrdevice_block_base::set_gfir_bandwidth(bandwidthHz);
+}
+
 bool sdrdevice_sink_impl::set_antenna(const std::string& antenna_name)
 {
     return sdrdevice_block_base::set_antenna(antenna_name);
@@ -149,6 +164,11 @@ double sdrdevice_sink_impl::set_gain_generic(double gain_dB)
 double sdrdevice_sink_impl::set_nco_frequency(double frequency_offset_Hz)
 {
     return sdrdevice_block_base::set_nco_frequency(frequency_offset_Hz);
+}
+
+void sdrdevice_sink_impl::set_calibration_enable(int flags)
+{
+    sdrdevice_block_base::set_calibration_enable(flags);
 }
 
 } /* namespace limesuiteng */

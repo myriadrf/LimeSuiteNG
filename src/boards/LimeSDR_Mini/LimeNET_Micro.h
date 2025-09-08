@@ -9,15 +9,15 @@
 
 namespace lime {
 
-class IComms;
+class ISPI;
 class IUSB;
 
 /** @brief Class for managing the LimeNET Micro device. */
 class LimeNET_Micro : public LMS7002M_SDRDevice
 {
   public:
-    LimeNET_Micro(std::shared_ptr<IComms> spiLMS,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeNET_Micro(std::shared_ptr<ISPI> spiLMS,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeNET_Micro();
@@ -58,8 +58,8 @@ class LimeNET_Micro : public LMS7002M_SDRDevice
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<IComms> mlms7002mPort;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::shared_ptr<ISPI> mlms7002mPort;
+    std::shared_ptr<ISPI> mfpgaPort;
     bool mConfigInProgress{};
 };
 

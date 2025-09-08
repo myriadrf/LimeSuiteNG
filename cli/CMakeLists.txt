@@ -6,8 +6,6 @@ project(
 
 checkdebianchangelogversion(${PROJECT_NAME})
 
-find_package(kissfft CONFIG REQUIRED)
-
 # common functionality among cli tools
 add_library(cli-shared STATIC common.cpp)
 target_link_libraries(cli-shared PUBLIC limesuiteng taywee-args)
@@ -36,7 +34,7 @@ target_precompile_headers(limeFLASH REUSE_FROM cli-shared)
 
 add_executable(limeTRX limeTRX.cpp)
 set_target_properties(limeTRX PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-target_link_libraries(limeTRX PRIVATE cli-shared kissfft)
+target_link_libraries(limeTRX PRIVATE cli-shared nlohmann_json)
 target_precompile_headers(limeTRX REUSE_FROM cli-shared)
 
 add_executable(limeOEM limeOEM.cpp)

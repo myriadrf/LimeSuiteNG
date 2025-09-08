@@ -1,5 +1,5 @@
 #include "FPGA/FPGA_common.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include "protocols/LMSBoards.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -11,6 +11,7 @@
 #include <cmath>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 using namespace std;
 using namespace std::literals::string_literals;
@@ -95,12 +96,10 @@ FPGA::FPGA(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms7002mSPI)
     : fpgaPort(fpgaSPI)
     , lms7002mPort(lms7002mSPI)
 {
-    uint32_t addr[3] = { 0x0001, 0x0002, 0x0003 }; // version, revision, hardwareVersion
-    uint32_t vals[3];
-    ReadRegisters(addr, vals, 3);
-    mGatewareVersion = vals[0];
-    mGatewareRevision = vals[1];
-    mHardwareVersion = vals[2];
+    const FPGA::GatewareInfo gw = GetGatewareInfo();
+    mGatewareVersion = gw.version;
+    mGatewareRevision = gw.revision;
+    mHardwareVersion = gw.hardwareVersion;
 }
 
 /// @brief Writes the specified value into the specified address into the FPGA.
@@ -131,7 +130,7 @@ OpStatus FPGA::WriteRegisters(const uint32_t* addrs, const uint32_t* data, unsig
     std::vector<uint32_t> spiBuffer(cnt);
     for (unsigned i = 0; i < cnt; i++)
         spiBuffer[i] = ((1 << 31) | (addrs[i]) << 16 | data[i]);
-    return fpgaPort->SPI(spiBuffer.data(), nullptr, spiBuffer.size());
+    return fpgaPort->Transact(spiBuffer.data(), nullptr, spiBuffer.size());
 }
 
 /// @brief Writes the given data blocks into LMS7002M chip.
@@ -144,7 +143,7 @@ OpStatus FPGA::WriteLMS7002MSPI(const uint32_t* data, uint32_t length)
     for (uint32_t i = 0; i < length; ++i)
         assert(data[i] & (1 << 31));
 #endif
-    return lms7002mPort->SPI(data, nullptr, length);
+    return lms7002mPort->Transact(data, nullptr, length);
 }
 
 /// @brief Reads the given addresses from the LMS7002M's memory.
@@ -154,7 +153,7 @@ OpStatus FPGA::WriteLMS7002MSPI(const uint32_t* data, uint32_t length)
 /// @return The status of the operation.
 OpStatus FPGA::ReadLMS7002MSPI(const uint32_t* writeData, uint32_t* readData, uint32_t length)
 {
-    return lms7002mPort->SPI(writeData, readData, length);
+    return lms7002mPort->Transact(writeData, readData, length);
 }
 
 /// @brief Reads the given registers from the FPGA's memory.
@@ -168,7 +167,7 @@ OpStatus FPGA::ReadRegisters(const uint32_t* addrs, uint32_t* data, unsigned cnt
     for (unsigned i = 0; i < cnt; i++)
         spiBuffer[i] = addrs[i];
     std::vector<uint32_t> reg_val(spiBuffer.size());
-    OpStatus status = fpgaPort->SPI(spiBuffer.data(), reg_val.data(), spiBuffer.size());
+    OpStatus status = fpgaPort->Transact(spiBuffer.data(), reg_val.data(), spiBuffer.size());
     for (unsigned i = 0; i < cnt; i++)
         data[i] = reg_val[i] & 0xFFFF;
     return status;
@@ -881,7 +880,8 @@ FPGA::GatewareInfo FPGA::GetGatewareInfo()
     info.boardID = data[0];
     info.version = data[1];
     info.revision = data[2];
-    info.hardwareVersion = data[3] & 0x7F;
+    info.hardwareVersion = data[3] & 0xF;
+    // const uint8_t BOM_version = (data[3] >> 4) & 0x7; // bill of materials
     return info;
 }
 

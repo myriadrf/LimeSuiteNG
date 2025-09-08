@@ -14,6 +14,8 @@ TYPE=""
 
 if [[ $ID == "ubuntu" || $ID == "debian" ]]; then
   TYPE=$ID
+elif [[ $ID == "fedora" ]]; then
+  TYPE="fedora"
 fi
 
 if [[ $TYPE == "" ]]; then
@@ -46,6 +48,9 @@ if [[ $TYPE == "ubuntu" ]]; then
   headers="linux-headers-generic-hwe-${VERSION_ID}"
 elif [[ $TYPE == "debian" ]]; then
   headers="linux-headers-generic"
+elif [[ $TYPE == "fedora" ]]; then
+  headers="kernel-devel"
+  libwx="wxBase-devel wxGTK-devel"
 fi
 
 yes=""
@@ -53,11 +58,22 @@ if [[ ${1-} == "-y" ]]; then
   yes="-y"
 fi
 
-apt-get install $yes --no-install-recommends \
-  build-essential \
-  cmake \
-  $headers \
-  libglew-dev \
-  libsoapysdr-dev \
-  libusb-1.0-0-dev \
-  $libwx
+if [[ $TYPE == "fedora" ]]; then
+  dnf install $yes \
+    @development-tools \
+    cmake \
+    $headers \
+    glew-devel \
+    SoapySDR-devel \
+    libusb1-devel \
+    $libwx
+else
+  apt-get install $yes --no-install-recommends \
+    build-essential \
+    cmake \
+    $headers \
+    libglew-dev \
+    libsoapysdr-dev \
+    libusb-1.0-0-dev \
+    $libwx
+fi

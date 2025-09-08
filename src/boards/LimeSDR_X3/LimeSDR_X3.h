@@ -3,7 +3,6 @@
 
 #include "chips/CDCM6208/CDCM6208.h"
 #include "boards/LMS7002M_SDRDevice.h"
-#include "protocols/LMS64CProtocol.h"
 
 #include <vector>
 #include <array>
@@ -13,19 +12,15 @@ namespace lime {
 
 class LimePCIe;
 class CrestFactorReduction;
-class SlaveSelectShim;
 class ISerialPort;
-class IComms;
+class ISPI;
 
 /** @brief Class for managing the LimeSDR X3 device. */
 class LimeSDR_X3 : public LMS7002M_SDRDevice
 {
   public:
     LimeSDR_X3() = delete;
-    LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
-        std::shared_ptr<IComms> spiFPGA,
-        std::vector<std::shared_ptr<LimePCIe>> trxStreams,
-        std::shared_ptr<ISerialPort> control);
+    LimeSDR_X3(std::shared_ptr<ISerialPort> control, std::vector<std::shared_ptr<LimePCIe>> trxStreams);
     ~LimeSDR_X3();
 
     OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
@@ -77,12 +72,13 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     void SetLMSPath(const TRXDir dir, const ChannelConfig::Direction& trx, const int ch, const uint8_t socIndex);
 
+    std::shared_ptr<ISerialPort> controlPort;
     std::unique_ptr<CDCM_Dev> mClockGeneratorCDCM;
     std::vector<std::shared_ptr<LimePCIe>> mTRXStreamPorts;
     std::unique_ptr<CrestFactorReduction> mEqualizer;
 
-    std::array<std::shared_ptr<SlaveSelectShim>, 3> mLMS7002Mcomms;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::array<std::shared_ptr<ISPI>, 3> mLMS7002Mcomms;
+    std::shared_ptr<ISPI> mfpgaPort;
     bool mConfigInProgress;
 };
 

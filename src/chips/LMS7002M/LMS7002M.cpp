@@ -27,14 +27,13 @@
 
 #include "INI.h"
 #include "limesuiteng/types.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "LMS7002MCSR_Data.h"
 #include "limesuiteng/LMS7002MCSR.h"
 #include "limesuiteng/Logger.h"
 #include "mcu_programs.h"
 #include "MCU_BD.h"
-#include "utilities/toString.h"
 
 #include "lms7002m/csr_data.h"
 #include "lms7002m/spi.h"
@@ -47,6 +46,8 @@ using namespace lime;
 using namespace LMS7002MCSR_Data;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
+
+namespace lime {
 
 // converts [-1:1] into [-32768:32767]
 static constexpr int16_t NormalFloatToInt16(const float value)
@@ -75,8 +76,13 @@ constexpr LMS7002M::Channel IntToChannel(int channel)
     return channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
 }
 
+struct ReadOnlyRegister {
+    uint16_t address;
+    uint16_t mask;
+};
+
 // Module addresses needs to be sorted in ascending order
-const std::vector<LMS7002M::ReadOnlyRegister> LMS7002M::readOnlyRegisters{
+static const std::vector<ReadOnlyRegister> readOnlyRegisters{
     { 0x002F, 0x0000 },
     { 0x008C, 0x0FFF },
     { 0x00A8, 0x007F },
@@ -92,7 +98,7 @@ const std::vector<LMS7002M::ReadOnlyRegister> LMS7002M::readOnlyRegisters{
     { 0x040F, 0x0000 },
 };
 
-const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> LMS7002M::MemorySectionAddresses{
+static const std::map<LMS7002M::MemorySection, std::array<uint16_t, 2>> MemorySectionAddresses{
     { LMS7002M::MemorySection::LimeLight, { 0x0020, 0x002F } },
     { LMS7002M::MemorySection::EN_DIR, { 0x0081, 0x0081 } },
     { LMS7002M::MemorySection::AFE, { 0x0082, 0x0082 } },
@@ -1330,7 +1336,7 @@ OpStatus LMS7002M::SPI_write_batch(const uint16_t* spiAddr, const uint16_t* spiD
             return OpStatus::Success;
         return ReportError(OpStatus::IOFailure, "No device connected"s);
     }
-    controlPort->SPI(data.data(), nullptr, data.size());
+    controlPort->Transact(data.data(), nullptr, data.size());
     return OpStatus::Success;
 }
 
@@ -1348,7 +1354,7 @@ OpStatus LMS7002M::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, ui
         dataWr[i] = spiAddr[i];
     }
 
-    controlPort->SPI(dataWr.data(), dataRd.data(), cnt);
+    controlPort->Transact(dataWr.data(), dataRd.data(), cnt);
 
     int mac = mRegistersMap->GetValue(0, MAC.address) & 0x0003;
 
@@ -1634,7 +1640,7 @@ bool LMS7002M::IsSynced()
     std::vector<uint32_t> dataRd(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataWr[i] = (static_cast<uint32_t>(addrToRead[i]) << 16);
-    controlPort->SPI(dataWr.data(), dataRd.data(), dataWr.size());
+    controlPort->Transact(dataWr.data(), dataRd.data(), dataWr.size());
 
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
@@ -1670,7 +1676,7 @@ bool LMS7002M::IsSynced()
     dataRd.resize(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataWr[i] = (static_cast<uint32_t>(addrToRead[i]) << 16);
-    controlPort->SPI(dataWr.data(), dataRd.data(), dataWr.size());
+    controlPort->Transact(dataWr.data(), dataRd.data(), dataWr.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
     SetActiveChannel(Channel::ChB);
@@ -2161,3 +2167,5 @@ LMS7002M::ChannelScope::~ChannelScope()
     if (mNeedsRestore)
         mChip->SetActiveChannel(mStoredValue);
 }
+
+} // namespace lime

@@ -14,7 +14,6 @@
 
 namespace lime {
 
-class IComms;
 class LimePCIe;
 class LimeSDR_XTRX;
 class RFStream_X8;
@@ -24,11 +23,7 @@ class LimeSDR_MMX8 : public SDRDevice
 {
   public:
     LimeSDR_MMX8() = delete;
-    LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
-        std::vector<std::shared_ptr<IComms>>& spiFPGA,
-        std::vector<std::shared_ptr<LimePCIe>> trxStreams,
-        std::shared_ptr<ISerialPort> control,
-        std::shared_ptr<ISPI> adfComms);
+    LimeSDR_MMX8(std::shared_ptr<ISerialPort> control, std::vector<std::shared_ptr<LimePCIe>> trxStreams);
     ~LimeSDR_MMX8();
 
     OpStatus Configure(const SDRConfig& config, uint8_t socIndex) override;
@@ -180,7 +175,8 @@ class LimeSDR_MMX8 : public SDRDevice
     void StreamEnable(uint8_t moduleIndex, bool ready);
 
   private:
-    std::shared_ptr<IComms> mMainFPGAcomms;
+    std::shared_ptr<ISerialPort> controlPort;
+    std::shared_ptr<ISPI> mainFPGAspi;
     SDRDescriptor mDeviceDescriptor;
     std::vector<std::shared_ptr<LimePCIe>> mTRXStreamPorts;
     std::vector<std::unique_ptr<LimeSDR_XTRX>> mSubDevices;

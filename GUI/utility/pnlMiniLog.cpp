@@ -60,6 +60,19 @@ pnlMiniLog::pnlMiniLog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
 
     mDefaultStyle = txtMessageField->GetDefaultStyle();
     wxUpdateUIEvent::SetUpdateInterval(100);
+
+    // Explicitly set the text color. Without this setting the style back to the
+    // default will always use the black color. Explicitly setting the color to
+    // the color provided via the default attribute makes the text colored
+    // correctly on both dark and light modes.
+    //
+    // Do it for both foreground and background, so that the style can be fully
+    // restored after it has been altered for the error or warning.
+    const wxVisualAttributes attr = txtMessageField->GetDefaultAttributes();
+    if (!mDefaultStyle.HasTextColour())
+        mDefaultStyle.SetTextColour(attr.colFg);
+    if (!mDefaultStyle.HasBackgroundColour())
+        mDefaultStyle.SetBackgroundColour(attr.colBg);
 }
 
 static const char* logLevelToName(const LogLevel level)

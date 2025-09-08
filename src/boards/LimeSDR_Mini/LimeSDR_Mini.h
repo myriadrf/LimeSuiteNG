@@ -8,7 +8,7 @@
 
 namespace lime {
 
-class IComms;
+class ISPI;
 class ISerialPort;
 class IUSB;
 
@@ -16,8 +16,8 @@ class IUSB;
 class LimeSDR_Mini : public LMS7002M_SDRDevice
 {
   public:
-    LimeSDR_Mini(std::shared_ptr<IComms> spiLMS,
-        std::shared_ptr<IComms> spiFPGA,
+    LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
+        std::shared_ptr<ISPI> spiFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR_Mini();
@@ -60,8 +60,8 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
 
     std::shared_ptr<IUSB> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<IComms> mlms7002mPort;
-    std::shared_ptr<IComms> mfpgaPort;
+    std::shared_ptr<ISPI> mlms7002mPort;
+    std::shared_ptr<ISPI> mfpgaPort;
     bool mConfigInProgress{};
 };
 

@@ -76,6 +76,13 @@ public:
     virtual double set_lpf_bandwidth(double bandwidthHz) = 0;
 
     /**
+     * Set Digital general finite impulse response filter bandwidth
+     *
+     * @param   bandwidthHz filter bandwidth in Hz
+     */
+    virtual double set_gfir_bandwidth(double bandwidthHz) = 0;
+
+    /**
      * Set which antenna port to use
      *
      * @param   antenna_name Name of the antenna to use, the names can be different among
@@ -93,6 +100,15 @@ public:
     virtual double set_gain_generic(double gain_dB) = 0;
 
     /**
+     * Set receiver gain
+     *
+     * @param   type Gain type
+     * @param   gain_value Gain value
+     * @return  value that was set
+     */
+    virtual double set_gain(int type, double gain_value) = 0;
+
+    /**
      * Set Numerically controlled oscilator frequency
      *
      * @param   frequency_offset_Hz Frequency offset, negative to downconvert, positive to
@@ -100,6 +116,13 @@ public:
      * @return  value that was set
      */
     virtual double set_nco_frequency(double frequency_offset_Hz) = 0;
+
+    /**
+     * Enable calibration at startup
+     *
+     * @param   flags calibration mode flags
+     */
+    virtual void set_calibration_enable(int flags) = 0;
 };
 
 } // namespace limesuiteng

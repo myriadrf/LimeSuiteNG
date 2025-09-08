@@ -82,7 +82,7 @@ struct ChannelConfig {
         uint8_t oversample; ///< The oversample ratio of this direction.
         GFIRFilter gfir; ///< The general finite impulse response (FIR) filter settings of this direction.
         bool enabled; ///< Denotes whether this direction of a channel is enabled or not.
-        uint32_t calibrate; ///< Which calibration to perform.
+        uint32_t calibrate; ///< Which calibration to perform (a bitmask of CalibrationFlag).
         TestSignal testSignal; ///< Denotes whether the signal being sent is a test signal or not.
     };
 

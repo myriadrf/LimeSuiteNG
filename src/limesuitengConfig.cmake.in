@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(Threads REQUIRED)
+# TODO: add conditional dependencies like libusb...
+
+include("${CMAKE_CURRENT_LIST_DIR}/limesuitengTargets.cmake")

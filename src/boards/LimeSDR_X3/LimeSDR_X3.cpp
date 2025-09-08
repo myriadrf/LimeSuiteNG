@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "limesuiteng/LMS7002M.h"
@@ -14,13 +15,13 @@
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
-#include "SlaveSelectShim.h"
-#include "utilities/toString.h"
 #include "streaming/TRXLooper.h"
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
+
+#include "protocols/LMS64C/SPI.h"
 
 #include <cmath>
 
@@ -77,9 +78,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms1defaultsOverride = {
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x200F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -127,9 +128,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms2and3defaultsOverride
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x200F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -161,13 +162,10 @@ OpStatus LimeSDR_X3::LMS1_UpdateFPGAInterface(void* userData)
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param trxStreams The communications ports to send and receive sample data.
 /// @param control The serial port of the device for retrieving device firmware information.
-LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
-    std::shared_ptr<IComms> spiFPGA,
-    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
-    std::shared_ptr<ISerialPort> control)
+LimeSDR_X3::LimeSDR_X3(std::shared_ptr<ISerialPort> controlPort, std::vector<std::shared_ptr<LimePCIe>> trxStreams)
     : LMS7002M_SDRDevice()
+    , controlPort(controlPort)
     , mTRXStreamPorts(trxStreams)
-    , mfpgaPort(spiFPGA)
     , mConfigInProgress(false)
 {
     mStreamers.resize(3);
@@ -176,12 +174,14 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     SDRDescriptor& desc = mDeviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*control, fw);
+    LMS64CProtocol::GetFirmwareInfo(*controlPort, fw, 0);
     LMS64CProtocol::FirmwareToDescriptor(fw, desc);
 
-    mLMS7002Mcomms[0] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_1);
-
-    mFPGA = std::make_unique<lime::FPGA_X3>(spiFPGA, mLMS7002Mcomms[0]);
+    mLMS7002Mcomms[0] = std::make_shared<LMS64C_SPI>(
+        controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, limesdrx3::SPI_LMS7002M_1);
+    mfpgaPort =
+        std::make_shared<LMS64C_SPI>(controlPort, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
+    mFPGA = std::make_unique<lime::FPGA_X3>(mfpgaPort, mLMS7002Mcomms[0]);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
 
@@ -200,8 +200,8 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
     desc.customParameters.push_back(limesdrx3::cp_vctcxo_dac);
     desc.customParameters.push_back(limesdrx3::cp_temperature);
 
-    mEqualizer = std::make_unique<CrestFactorReduction>(std::make_shared<SlaveSelectShim>(spiFPGA, limesdrx3::SPI_FPGA));
-    mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(spiFPGA, CDCM2_BASE_ADDR);
+    mEqualizer = std::make_unique<CrestFactorReduction>(mfpgaPort);
+    mClockGeneratorCDCM = std::make_unique<CDCM_Dev>(mfpgaPort, CDCM2_BASE_ADDR);
     // TODO: read back cdcm values or mClockGeneratorCDCM->Reset(30.72e6, 25e6);
 
     // LMS#1
@@ -224,7 +224,8 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         soc.pathNames[TRXDir::Tx] = { "None"s, "TDD"s, "FDD"s };
 
         desc.rfSOC.push_back(soc);
-        mLMS7002Mcomms[1] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_2);
+        mLMS7002Mcomms[1] = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, limesdrx3::SPI_LMS7002M_2);
         std::unique_ptr<LMS7002M> lms2 = std::make_unique<LMS7002M>(mLMS7002Mcomms[1]);
         lms2->ModifyRegistersDefaults(limesdrx3::lms2and3defaultsOverride);
         mLMSChips.push_back(std::move(lms2));
@@ -237,7 +238,8 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<IComms> spiLMS7002M,
         soc.pathNames[TRXDir::Rx] = { "None"s, "LNAH"s, "Calibration(LMS2)"s };
         soc.pathNames[TRXDir::Tx] = { "None"s, "Band1"s };
         desc.rfSOC.push_back(soc);
-        mLMS7002Mcomms[2] = std::make_shared<SlaveSelectShim>(spiLMS7002M, limesdrx3::SPI_LMS7002M_3);
+        mLMS7002Mcomms[2] = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, limesdrx3::SPI_LMS7002M_3);
         std::unique_ptr<LMS7002M> lms3 = std::make_unique<LMS7002M>(mLMS7002Mcomms[2]);
         lms3->ModifyRegistersDefaults(limesdrx3::lms2and3defaultsOverride);
         mLMSChips.push_back(std::move(lms3));
@@ -400,6 +402,8 @@ OpStatus LimeSDR_X3::InitLMS2(bool skipTune)
 {
     LMS2_PA_LNA_Enable(0, false, false);
     LMS2_PA_LNA_Enable(1, false, false);
+    LMS2SetPath(TRXDir::Tx, 0, 0); // Tx RF Switch to ground
+    LMS2SetPath(TRXDir::Tx, 1, 0); // Tx RF Switch to ground
 
     struct regVal {
         uint16_t adr;
@@ -500,6 +504,8 @@ OpStatus LimeSDR_X3::ConfigureLMS1(const SDRConfig& cfg)
     {
         SetLMSPath(TRXDir::Tx, cfg.channel[c].tx, c, socIndex);
         SetLMSPath(TRXDir::Rx, cfg.channel[c].rx, c, socIndex);
+        SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
+        SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
         LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
     }
 
@@ -737,7 +743,7 @@ OpStatus LimeSDR_X3::Reset()
     OpStatus status = OpStatus::Success;
     for (uint32_t i = 0; i < mLMSChips.size(); ++i)
     {
-        status = mLMS7002Mcomms[i]->ResetDevice();
+        status = LMS64CProtocol::DeviceReset(*controlPort, i, 0);
         if (status != OpStatus::Success)
             return status;
     }
@@ -828,13 +834,13 @@ OpStatus LimeSDR_X3::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MI
     switch (chipSelect)
     {
     case limesdrx3::SPI_LMS7002M_1:
-        return mLMS7002Mcomms[0]->SPI(MOSI, MISO, count);
+        return mLMS7002Mcomms[0]->Transact(MOSI, MISO, count);
     case limesdrx3::SPI_LMS7002M_2:
-        return mLMS7002Mcomms[1]->SPI(MOSI, MISO, count);
+        return mLMS7002Mcomms[1]->Transact(MOSI, MISO, count);
     case limesdrx3::SPI_LMS7002M_3:
-        return mLMS7002Mcomms[2]->SPI(MOSI, MISO, count);
+        return mLMS7002Mcomms[2]->Transact(MOSI, MISO, count);
     case limesdrx3::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     default:
         throw std::logic_error("invalid SPI chip select"s);
     }
@@ -961,6 +967,13 @@ void LimeSDR_X3::LMS2SetPath(TRXDir dir, uint8_t chan, uint8_t path)
     uint16_t shift = chan == 0 ? 0 : 2;
     if (path == 0)
     {
+        if (tx)
+        {
+            if (chan == 0)
+                sw_val |= 1 << 7; // TRX1T to ground
+            else
+                sw_val &= ~(1 << 9); // TRX2T to ground
+        }
     }
     else if (tx && ePathLMS2_Tx(path) == ePathLMS2_Tx::TDD) // TDD_TX
     {
@@ -1069,12 +1082,12 @@ void LimeSDR_X3::LMS3_SetSampleRate_ExternalDAC(double chA_Hz, double chB_Hz)
 
 OpStatus LimeSDR_X3::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*controlPort, parameters, 0);
 }
 
 OpStatus LimeSDR_X3::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*controlPort, parameters, 0);
 }
 
 OpStatus LimeSDR_X3::UploadMemory(
@@ -1095,7 +1108,7 @@ OpStatus LimeSDR_X3::UploadMemory(
         return OpStatus::InvalidValue;
     }
 
-    return mfpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
+    return LMS64CProtocol::FirmwareWrite(*controlPort, data, length, progMode, target, callback, 0);
 }
 
 OpStatus LimeSDR_X3::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
@@ -1104,8 +1117,8 @@ OpStatus LimeSDR_X3::MemoryWrite(std::shared_ptr<DataStorage> storage, Region re
     {
         return OpStatus::Error;
     }
-
-    return mfpgaPort->MemoryWrite(region.address, data, region.size);
+    return LMS64CProtocol::MemoryWrite(
+        *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
@@ -1114,8 +1127,8 @@ OpStatus LimeSDR_X3::MemoryRead(std::shared_ptr<DataStorage> storage, Region reg
     {
         return OpStatus::Error;
     }
-
-    return mfpgaPort->MemoryRead(region.address, data, region.size);
+    return LMS64CProtocol::MemoryRead(
+        *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 OpStatus LimeSDR_X3::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)

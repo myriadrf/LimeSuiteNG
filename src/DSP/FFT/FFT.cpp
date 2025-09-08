@@ -4,23 +4,22 @@
 #include <cstring>
 #include <chrono>
 
+#include "kiss_fft.h"
+
 namespace lime {
 
 FFT::FFT(uint8_t channelCount, uint32_t size, WindowFunctionType windowType)
     : samplesFIFO(channelCount)
     , channelCount(channelCount)
     , currentWindowType(windowType)
-    , m_fftCalcPlan(kiss_fft_alloc(size, 0, nullptr, nullptr))
+    , mFFTSize(size)
 {
-    m_fftCalcIn.resize(size);
-    m_fftCalcOut.resize(size);
-
     std::for_each(samplesFIFO.begin(), samplesFIFO.end(), [&](auto& vec) { vec.Resize(size * 2); });
 
     doWork.store(true, std::memory_order_relaxed);
     mWorkerThread = std::thread(&FFT::ProcessLoop, this);
 
-    GenerateWindowCoefficients(windowType, m_fftCalcIn.size(), mWindowCoeffs);
+    GenerateWindowCoefficients(windowType, size, mWindowCoeffs);
 }
 
 FFT::~FFT()
@@ -29,7 +28,6 @@ FFT::~FFT()
     inputAvailable.notify_all();
     if (mWorkerThread.joinable())
         mWorkerThread.join();
-    kiss_fft_free(m_fftCalcPlan);
 }
 
 std::size_t FFT::PushSamples(const complex32f_t* const* const samples, std::size_t count, std::size_t samplesToSkip)
@@ -74,7 +72,7 @@ void FFT::SetWindowFunction(WindowFunctionType windowFunction)
     if (currentWindowType != windowFunction)
     {
         currentWindowType = windowFunction;
-        GenerateWindowCoefficients(windowFunction, m_fftCalcIn.size(), mWindowCoeffs);
+        GenerateWindowCoefficients(windowFunction, mFFTSize, mWindowCoeffs);
     }
 }
 
@@ -114,7 +112,24 @@ void FFT::ConvertToDBFS(std::vector<float>& bins)
         amplitude = amplitude > 0 ? 10 * log10(amplitude) : -150;
 }
 
-template<typename T> void FFT::Calculate(const std::vector<std::vector<T>>& src, std::vector<std::vector<float>>& outputBins)
+struct FFT_WorkData {
+    FFT_WorkData(uint32_t fftSize)
+    {
+        plan = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
+        CalcIn.resize(fftSize);
+        CalcOut.resize(fftSize);
+    }
+    ~FFT_WorkData() { kiss_fft_free(plan); }
+    kiss_fft_cfg plan;
+    std::vector<kiss_fft_cpx> CalcIn;
+    std::vector<kiss_fft_cpx> CalcOut;
+};
+
+template<typename T>
+void FFT_Calculate(FFT_WorkData& fft,
+    const std::vector<std::vector<T>>& src,
+    std::vector<std::vector<float>>& outputBins,
+    const std::vector<float>& windowCoefs)
 {
     constexpr double div = []() {
         if constexpr (std::is_same_v<T, complex16_t>)
@@ -128,21 +143,21 @@ template<typename T> void FFT::Calculate(const std::vector<std::vector<T>>& src,
 
     for (std::size_t ch = 0; ch < src.size(); ++ch)
     {
-        assert(src.at(ch).size() == m_fftCalcIn.size());
+        assert(src.at(ch).size() == fft.CalcIn.size());
         for (std::size_t i = 0; i < src.at(ch).size(); ++i)
         {
-            m_fftCalcIn.at(i).r = src.at(ch).at(i).real() / div * mWindowCoeffs.at(i);
-            m_fftCalcIn.at(i).i = src.at(ch).at(i).imag() / div * mWindowCoeffs.at(i);
+            fft.CalcIn.at(i).r = src.at(ch).at(i).real() / div * windowCoefs.at(i);
+            fft.CalcIn.at(i).i = src.at(ch).at(i).imag() / div * windowCoefs.at(i);
         }
-        kiss_fft(m_fftCalcPlan, m_fftCalcIn.data(), m_fftCalcOut.data());
+        kiss_fft(fft.plan, fft.CalcIn.data(), fft.CalcOut.data());
         outputBins.at(ch).resize(src.at(ch).size());
 
         std::size_t output_index = 0;
-        for (std::size_t i = m_fftCalcIn.size() / 2 + 1; i < m_fftCalcIn.size(); ++i)
-            outputBins.at(ch).at(output_index++) += m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
+        for (std::size_t i = fft.CalcIn.size() / 2 + 1; i < fft.CalcIn.size(); ++i)
+            outputBins.at(ch).at(output_index++) += fft.CalcOut[i].r * fft.CalcOut[i].r + fft.CalcOut[i].i * fft.CalcOut[i].i;
 
-        for (std::size_t i = 0; i < m_fftCalcIn.size() / 2 + 1; ++i)
-            outputBins.at(ch).at(output_index++) += m_fftCalcOut[i].r * m_fftCalcOut[i].r + m_fftCalcOut[i].i * m_fftCalcOut[i].i;
+        for (std::size_t i = 0; i < fft.CalcIn.size() / 2 + 1; ++i)
+            outputBins.at(ch).at(output_index++) += fft.CalcOut[i].r * fft.CalcOut[i].r + fft.CalcOut[i].i * fft.CalcOut[i].i;
     }
 }
 
@@ -153,12 +168,14 @@ void FFT::ProcessLoop()
     std::vector<std::vector<float>> avgOutput;
     std::vector<std::size_t> samplesReady(channelCount, 0);
 
+    FFT_WorkData fftdata(mFFTSize);
+
     std::size_t resultsDone = 0;
     while (doWork.load(std::memory_order_relaxed) == true)
     {
         for (uint8_t ch = 0; ch < channelCount; ++ch)
         {
-            samples.at(ch).resize(m_fftCalcIn.size());
+            samples.at(ch).resize(mFFTSize);
             {
                 std::unique_lock lk{ inputMutex };
                 inputAvailable.wait(lk, [&]() { return samplesFIFO[ch].Size() != 0 || !doWork.load(); });
@@ -178,7 +195,7 @@ void FFT::ProcessLoop()
         }
 
         // auto t1 = std::chrono::high_resolution_clock::now();
-        Calculate(samples, fftBins);
+        FFT_Calculate(fftdata, samples, fftBins, mWindowCoeffs);
         avgOutput.resize(fftBins.size());
         ++resultsDone;
 

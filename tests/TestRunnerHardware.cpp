@@ -83,6 +83,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    device->SetMessageLogCallback(lime::cli::LogCallback);
+    lime::registerLogHandler(lime::cli::LogCallback);
+
     const lime::SDRDescriptor d = device->GetDescriptor();
     cout << "Using " << d.name << " HW:" << d.hardwareVersion << " GW:" << d.gatewareVersion << "." << d.gatewareRevision
          << " FW:" << d.firmwareVersion << endl;

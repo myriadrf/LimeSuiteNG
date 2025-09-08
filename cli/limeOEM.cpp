@@ -10,7 +10,6 @@
 #include <ctime>
 #include <string_view>
 #include <filesystem>
-#include "utilities/toString.h"
 #include "args.hxx"
 
 #include "OEMTesting.h"

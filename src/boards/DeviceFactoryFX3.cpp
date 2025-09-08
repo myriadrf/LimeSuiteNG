@@ -4,12 +4,14 @@
 #include <string_view>
 
 #include "limesuiteng/DeviceHandle.h"
+
 #include "LimeSDR/LimeSDR.h"
+
+#include "comms/USB/FX3/FX3_SerialPort.h"
 #include "comms/USB/FX3/FX3.h"
-#include "LimeSDR/USB_CSR_Pipe_SDR.h"
-#include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
-#include "comms/USB/LMS64C_FPGA_Over_USB.h"
 #include "CommonFunctions.h"
+
+#include "protocols/LMS64C/SPI.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -65,11 +67,13 @@ SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, uint16_t v
         throw std::runtime_error(reason);
     }
 
-    auto usbPipe = std::make_shared<USB_CSR_Pipe_SDR>(*usbComms);
+    auto usbPipe = std::make_shared<FX3_SerialPort>(*usbComms);
 
     // protocol layer
-    auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_USB>(usbPipe);
-    auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
+    auto route_lms7002m =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
+    auto route_fpga =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
 
     return new LimeSDR(route_lms7002m, route_fpga, usbComms, usbPipe);
 }

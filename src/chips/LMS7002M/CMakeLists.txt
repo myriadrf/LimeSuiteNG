@@ -11,7 +11,7 @@ set(LMS7002M_SOURCES
     MCU_File.cpp)
 
 target_sources(limesuiteng PRIVATE ${LMS7002M_SOURCES})
-target_link_libraries(limesuiteng PRIVATE $<BUILD_INTERFACE:lms7002m>)
-target_link_libraries(limesuiteng PRIVATE $<TARGET_OBJECTS:lms_gfir>)
+target_link_libraries(limesuiteng PRIVATE lms7002m)
+target_link_libraries(limesuiteng PRIVATE lms_gfir)
 
 target_include_directories(limesuiteng PRIVATE ${PROJECT_SOURCE_DIR}/embedded/include)

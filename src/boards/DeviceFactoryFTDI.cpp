@@ -5,11 +5,10 @@
 #include "LimeSDR_Mini/LimeSDR_Mini.h"
 #include "LimeSDR_Mini/LimeNET_Micro.h"
 #include "limesuiteng/DeviceHandle.h"
-#include "LimeSDR_Mini/USB_CSR_Pipe_Mini.h"
-#include "comms/USB/LMS64C_LMS7002M_Over_USB.h"
-#include "comms/USB/LMS64C_FPGA_Over_USB.h"
+#include "comms/USB/FT601/FTDI_SerialPort.h"
 #include "CommonFunctions.h"
 #include "comms/USB/FT601/FT601.h"
+#include "protocols/LMS64C/SPI.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -65,11 +64,13 @@ static SDRDevice* make_LimeSDR_Mini(const DeviceHandle& handle, uint16_t vid, ui
         throw std::runtime_error(reason);
     }
 
-    auto usbPipe = std::make_shared<USB_CSR_Pipe_Mini>(*usbComms);
+    auto usbPipe = std::make_shared<FTDI_SerialPort>(*usbComms);
 
     // protocol layer
-    auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_USB>(usbPipe);
-    auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
+    auto route_lms7002m =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
+    auto route_fpga =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
 
     auto board = new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
     // LimeSDR-Mini serial number is taken from USB chip's descriptor.
@@ -87,11 +88,13 @@ static SDRDevice* make_LimeNET_Micro(const DeviceHandle& handle, uint16_t vid, u
         throw std::runtime_error(reason);
     }
 
-    auto usbPipe = std::make_shared<USB_CSR_Pipe_Mini>(*usbComms);
+    auto usbPipe = std::make_shared<FTDI_SerialPort>(*usbComms);
 
     // protocol layer
-    auto route_lms7002m = std::make_shared<LMS64C_LMS7002M_Over_USB>(usbPipe);
-    auto route_fpga = std::make_shared<LMS64C_FPGA_Over_USB>(usbPipe);
+    auto route_lms7002m =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
+    auto route_fpga =
+        std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
 
     auto board = new LimeNET_Micro(route_lms7002m, route_fpga, usbComms, usbPipe);
     // LimeNET Micro serial number is taken from USB chip's descriptor.
@@ -122,8 +125,8 @@ SDRDevice* DeviceFactoryFTDI::make(const DeviceHandle& handle)
         auto usbComms = std::make_shared<FT601>();
         if (!usbComms->Connect(vid, pid, handle.serial.c_str()))
             return nullptr;
-        auto usbPipe = std::make_shared<USB_CSR_Pipe_Mini>(*usbComms);
-        LMS64CProtocol::GetFirmwareInfo(*usbPipe.get(), fw);
+        auto usbPipe = std::make_shared<FTDI_SerialPort>(*usbComms);
+        LMS64CProtocol::GetFirmwareInfo(*usbPipe.get(), fw, 0);
     }
 
     switch (fw.deviceId)

@@ -75,12 +75,20 @@ class LIME_API StreamComposite : public RFStream
     /// @copydoc RFStream::StreamStatus()
     void StreamStatus(StreamStats* rx, StreamStats* tx) override;
 
+    uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+
+    uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+
     uint64_t GetHardwareTimestamp() const override;
 
   private:
-    template<class T> uint32_t StreamRx_T(T* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout);
+    template<class T> uint32_t StreamRx_T(T* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout);
     template<class T>
-    uint32_t StreamTx_T(const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
+    uint32_t StreamTx_T(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
 
     std::vector<StreamConfig> SplitAggregateStreamSetup(const StreamConfig& cfg);
     std::vector<RFStream*> mAggregate;

@@ -12,7 +12,6 @@
 
 #include <memory>
 
-#include "limesuiteng/types.h"
 #include "sdrdevice_block_base.h"
 
 namespace gr {
@@ -43,9 +42,11 @@ public:
     void set_config_file(const std::string& file_path) override;
     double set_lo_frequency(double frequencyHz) override;
     double set_lpf_bandwidth(double bandwidthHz) override;
+    double set_gfir_bandwidth(double bandwidthHz) override;
     bool set_antenna(const std::string& antenna_name) override;
     double set_gain_generic(double gain_dB) override;
     double set_nco_frequency(double frequency_offset_Hz) override;
+    void set_calibration_enable(int flags) override;
 };
 
 } // namespace limesuiteng

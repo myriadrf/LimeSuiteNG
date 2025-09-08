@@ -166,7 +166,7 @@ static void limeuart_start_tx(struct uart_port *port)
 
 // https://github.com/torvalds/linux/commit/4e2a44c1408b6a6a46122704511234f68cf012b8
 // before kfifo was added to tty_port
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
     struct circ_buf *xmit = &port->state->xmit;
     if (unlikely(port->x_char))
     {

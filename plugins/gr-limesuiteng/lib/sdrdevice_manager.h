@@ -33,6 +33,7 @@ struct sdrdevice_context {
     bool sinkConfigReady{ false };
     bool sourceConfigReady{ false };
     std::string customBaseConfigFilepath;
+    std::atomic<bool> streamIsActive{ false };
 };
 
 /// @brief class managing SDR devices and acting as intermediary between Sink/Source
@@ -55,7 +56,6 @@ private:
 
     std::list<std::shared_ptr<sdrdevice_context>> m_contexts;
     std::vector<lime::DeviceHandle> enumeratedHandles;
-    gr::logger _logger;
 };
 
 } // namespace limesuiteng

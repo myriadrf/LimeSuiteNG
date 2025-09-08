@@ -15,9 +15,11 @@ using namespace std;
 #include <list>
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
-#include "comms/ISPI.h"
+#include "comms/SPI/ISPI.h"
 #include <functional>
 #include <string_view>
+#include <chrono>
+#include <cinttypes>
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -154,7 +156,7 @@ void MCU_BD::mSPI_write(unsigned short addr_reg, // takes 16 bit address
     if (m_serPort == nullptr)
         return;
     uint32_t wrdata = (1 << 31) | addr_reg << 16 | data_reg;
-    m_serPort->SPI(&wrdata, nullptr, 1);
+    m_serPort->Transact(&wrdata, nullptr, 1);
 }
 
 unsigned short MCU_BD::mSPI_read(unsigned short addr_reg) // takes 16 bit address
@@ -163,7 +165,7 @@ unsigned short MCU_BD::mSPI_read(unsigned short addr_reg) // takes 16 bit addres
         return 0;
     uint32_t wrdata = addr_reg;
     uint32_t rddata = 0;
-    m_serPort->SPI(&wrdata, &rddata, 1);
+    m_serPort->Transact(&wrdata, &rddata, 1);
 
     return rddata & 0xFFFF;
 }
@@ -523,7 +525,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
         wrdata[0] = (1 << 31) | controlAddr << 16 | 0;
         wrdata[1] = (1 << 31) | controlAddr << 16 | (static_cast<uint32_t>(mode) & 0x3);
 
-        m_serPort->SPI(wrdata, nullptr, 2);
+        m_serPort->Transact(wrdata, nullptr, 2);
 
         if (m_callback)
             abort = m_callback(0, byte_array_size, "");
@@ -537,7 +539,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             auto t2 = t1;
             do
             {
-                m_serPort->SPI(wrdata, &rddata, 1);
+                m_serPort->Transact(wrdata, &rddata, 1);
                 fifoEmpty = rddata & EMTPY_WRITE_BUFF;
                 t2 = std::chrono::high_resolution_clock::now();
             } while ((!fifoEmpty) && (t2 - t1) < timeout);
@@ -549,7 +551,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
             for (uint8_t j = 0; j < fifoLen; ++j)
                 wrdata[j] = (1 << 31) | addrDTM << 16 | buffer[i + j];
 
-            m_serPort->SPI(wrdata, nullptr, fifoLen);
+            m_serPort->Transact(wrdata, nullptr, fifoLen);
             if (m_callback)
                 abort = m_callback(i + fifoLen, byte_array_size, "");
 #ifndef NDEBUG
@@ -566,7 +568,7 @@ OpStatus MCU_BD::Program_MCU(const uint8_t* buffer, const MCU_BD::MCU_PROG_MODE 
         auto t2 = t1;
         do
         {
-            m_serPort->SPI(wrdata, &rddata, 1);
+            m_serPort->Transact(wrdata, &rddata, 1);
             programmed = rddata & PROGRAMMED;
             t2 = std::chrono::high_resolution_clock::now();
         } while ((!programmed) && (t2 - t1) < timeout);
@@ -974,7 +976,7 @@ int MCU_BD::WaitForMCU(uint32_t timeout_ms)
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() < timeout_ms);
     mSPI_write(0x0006, 0); //return SPI control to PC
     //if((value & 0x7f) != 0)
-    lime::debug("MCU algorithm time: %li ms", std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
+    lime::debug("MCU algorithm time: %" PRIi64 " ms", std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
     return value & 0x7F;
 }
 

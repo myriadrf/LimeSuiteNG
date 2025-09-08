@@ -6,14 +6,16 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/ToString.h"
 #include "FPGA/FPGA_common.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
 #include "chips/LMS7002M/validation.h"
-#include "comms/IComms.h"
 #include "comms/PCIe/LimePCIe.h"
+#include "comms/SPI/SPI_utilities.h"
+#include "protocols/LMS64C/SPI.h"
+#include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "DeviceTreeNode.h"
-#include "utilities/toString.h"
 
 #include "RFStream_X8.h"
 
@@ -37,12 +39,8 @@ static double X8ReferenceClock = 30.72e6;
 /// @param trxStreams The communications ports to send and receive sample data.
 /// @param control The serial port communication of the device.
 /// @param adfComms The communications port to the device's ADF4002 chip.
-LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
-    std::vector<std::shared_ptr<IComms>>& spiFPGA,
-    std::vector<std::shared_ptr<LimePCIe>> trxStreams,
-    std::shared_ptr<ISerialPort> control,
-    std::shared_ptr<ISPI> adfComms)
-    : mMainFPGAcomms(spiFPGA[8])
+LimeSDR_MMX8::LimeSDR_MMX8(std::shared_ptr<ISerialPort> controlPort, std::vector<std::shared_ptr<LimePCIe>> trxStreams)
+    : controlPort(controlPort)
     , mTRXStreamPorts(trxStreams)
     , mADF(std::make_unique<ADF4002>())
 {
@@ -65,7 +63,7 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
 
     // TODO: read-back board's reference clock
-    mADF->Initialize(adfComms, 30.72e6);
+    mADF->Initialize(std::make_shared<LMS64C_ADF4002_SPI>(controlPort, 0), 30.72e6);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF.get()));
 
     mSubDevices.reserve(8);
@@ -79,8 +77,14 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::vector<std::shared_ptr<IComms>>& spiLMS7002M,
     desc.customParameters.push_back(limemmx8::cp_vctcxo_dac);
     for (size_t i = 0; i < 8; ++i)
     {
+        int subDeviceId = i + 1;
+        auto lms_spi = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, subDeviceId, 0);
+        auto fpga_spi = std::make_shared<LMS64C_SPI>(
+            controlPort, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, subDeviceId, 0);
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(spiLMS7002M[i], spiFPGA[i], trxStreams[i], control, limemmx8::X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, trxStreams[i], controlPort, limemmx8::X8ReferenceClock);
+        xtrx->SetSubDeviceIndex(subDeviceId);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
         for (const auto& soc : subdeviceDescriptor.rfSOC)
@@ -729,7 +733,7 @@ OpStatus LimeSDR_MMX8::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
 {
     if (chipSelect == 0)
     {
-        return mMainFPGAcomms->SPI(MOSI, MISO, count);
+        return mainFPGAspi->Transact(MOSI, MISO, count);
     }
 
     SDRDevice* dev = chipSelectToDevice.at(chipSelect);
@@ -763,11 +767,7 @@ OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-
-        if (subModuleIndex >= 0)
-            status = mSubDevices[subModuleIndex]->CustomParameterWrite(parameter);
-        else
-            status = mMainFPGAcomms->CustomParameterWrite(parameter);
+        status = LMS64CProtocol::CustomParameterWrite(*controlPort, parameters, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
@@ -785,11 +785,7 @@ OpStatus LimeSDR_MMX8::CustomParameterRead(std::vector<CustomParameterIO>& param
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-
-        if (subModuleIndex >= 0)
-            status = mSubDevices[subModuleIndex]->CustomParameterRead(parameter);
-        else
-            status = mMainFPGAcomms->CustomParameterRead(parameter);
+        status = LMS64CProtocol::CustomParameterRead(*controlPort, parameters, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
@@ -809,7 +805,7 @@ OpStatus LimeSDR_MMX8::UploadMemory(
         int progMode = 1;
         LMS64CProtocol::ALTERA_FPGA_GW_WR_targets target;
         target = LMS64CProtocol::ALTERA_FPGA_GW_WR_targets::FPGA;
-        return mMainFPGAcomms->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
+        return LMS64CProtocol::FirmwareWrite(*controlPort, data, length, progMode, target, callback, 0);
     }
 
     auto& dev = mSubDevices.at(moduleIndex);
@@ -825,7 +821,8 @@ OpStatus LimeSDR_MMX8::MemoryWrite(std::shared_ptr<DataStorage> storage, Region 
         return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
-        return mMainFPGAcomms->MemoryWrite(region.address, data, region.size);
+        return LMS64CProtocol::MemoryWrite(
+            *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
@@ -840,7 +837,8 @@ OpStatus LimeSDR_MMX8::MemoryRead(std::shared_ptr<DataStorage> storage, Region r
         return ReportError(OpStatus::InvalidValue, "Invalid storage"s);
 
     if (storage->ownerDevice == this)
-        return mMainFPGAcomms->MemoryRead(region.address, data, region.size);
+        return LMS64CProtocol::MemoryRead(
+            *controlPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 
     SDRDevice* dev = storage->ownerDevice;
     if (dev == nullptr)
@@ -858,14 +856,13 @@ OpStatus LimeSDR_MMX8::StreamsTrigger()
 {
     // X8 board has two stage stream start.
     // start stream for expected subdevices, they will wait for secondary enable from main fpga register
-    FPGA tempFPGA(mMainFPGAcomms, nullptr);
-    uint32_t interface_ctrl_000A = tempFPGA.ReadRegister(0x000A);
+    uint32_t interface_ctrl_000A = ReadSPI(mainFPGAspi.get(), 0x000A);
     if (interface_ctrl_000A == maskStreamIsSetup)
         return OpStatus::Success;
 
     interface_ctrl_000A = maskStreamIsSetup;
     lime::debug("MMX8: streams enable %04X", interface_ctrl_000A);
-    tempFPGA.WriteRegister(0x000A, interface_ctrl_000A);
+    WriteSPI(mainFPGAspi.get(), 0x000A, interface_ctrl_000A);
     return OpStatus::Success;
 }
 

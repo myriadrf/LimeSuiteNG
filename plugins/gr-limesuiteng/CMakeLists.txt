@@ -20,7 +20,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(
     gr-limesuiteng
-    VERSION 1.0.0
+    VERSION 1.0.1
     LANGUAGES CXX C)
 message(STATUS "##### <${PROJECT_NAME}> #####")
 # CheckDebianChangelogVersion(${PROJECT_NAME})

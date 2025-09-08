@@ -3,7 +3,7 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "utilities/toString.h"
+#include "limesuiteng/ToString.h"
 #include <wx/msgdlg.h>
 
 #include <iomanip>
@@ -257,7 +257,7 @@ void SOCConfig_view::SubmitConfig(const wxCommandEvent& event)
 
     SDRConfig config;
 
-    config.referenceClockFreq = 30.72e6;
+    config.referenceClockFreq = sdrDevice->GetClockFreq(0, 0);
 
     auto parseGuiValue = [](const wxString& str) {
         double value = 0;

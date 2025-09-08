@@ -1,4 +1,4 @@
-#include "toString.h"
+#include "limesuiteng/ToString.h"
 
 #include <string>
 #include <unordered_map>
@@ -47,7 +47,7 @@ static const std::unordered_map<eGainTypes, const std::string> GAIN_TYPES_TEXT{
     { eGainTypes::LoopbackPAD, "LB_PAD"s },
     { eGainTypes::IAMP, "IAMP"s },
     { eGainTypes::PA, "PA"s },
-    { eGainTypes::UNKNOWN, ""s },
+    { eGainTypes::UNKNOWN, "GENERIC"s },
 };
 
 const std::string& ToString(eGainTypes value)

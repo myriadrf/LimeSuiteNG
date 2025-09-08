@@ -71,9 +71,10 @@ void RFStream_X8::Stop()
     if (!isActive)
         return;
 
-    stream->Stop();
+    // X8 FPGA has to be stopped first, otherwise stream data can become misaligneed.
     parentDevice->StreamEnable(moduleIndex, false);
     parentDevice->StreamsTrigger();
+    stream->Stop();
     isActive = false;
 }
 
@@ -123,4 +124,35 @@ void RFStream_X8::StreamStatus(StreamStats* rx, StreamStats* tx)
 {
     stream->StreamStatus(rx, tx);
 }
+
+uint32_t RFStream_X8::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return stream->Receive(samples, count, meta);
+}
+
+uint32_t RFStream_X8::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return stream->Receive(samples, count, meta);
+}
+
+uint32_t RFStream_X8::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
+{
+    return stream->Receive(samples, count, meta);
+}
+
+uint32_t RFStream_X8::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return stream->Transmit(samples, count, meta);
+}
+
+uint32_t RFStream_X8::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return stream->Transmit(samples, count, meta);
+}
+
+uint32_t RFStream_X8::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+{
+    return stream->Transmit(samples, count, meta);
+}
+
 } // namespace lime

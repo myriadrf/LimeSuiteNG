@@ -539,26 +539,20 @@ class LIME_API SDRDevice
      * GPIO API
      **********************************************************************/
 
-    /// @copydoc IComms::GPIOWrite()
     virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIORead()
     virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIODirWrite()
     virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength);
 
-    /// @copydoc IComms::GPIODirRead()
     virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength);
 
     /***********************************************************************
      * Arbitrary settings API
      **********************************************************************/
 
-    /// @copydoc IComms::CustomParameterWrite()
     virtual OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters);
 
-    /// @copydoc IComms::CustomParameterRead()
     virtual OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters);
 
     /// @brief The definition of a function to call when a log message is generated.

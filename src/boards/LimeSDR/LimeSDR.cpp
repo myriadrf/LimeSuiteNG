@@ -3,8 +3,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 
-#include "boards/LimeSDR/LMS64C_ADF_Over_USB.h"
-#include "comms/IComms.h"
+#include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "comms/ISerialPort.h"
 #include "comms/USB/FX3/FX3.h"
 #include "comms/USB/IUSB.h"
@@ -17,7 +16,7 @@
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
-#include "utilities/toString.h"
+#include "limesuiteng/ToString.h"
 
 #include "DeviceTreeNode.h"
 
@@ -75,9 +74,9 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x011C, 0x8941 },
     { 0x011D, 0x0000 },
     { 0x011E, 0x0984 },
-    { 0x0120, 0xE6C0 },
+    { 0x0120, 0x29DC },
     { 0x0121, 0x3638 },
-    { 0x0122, 0x0514 },
+    { 0x0122, 0x0FFF },
     { 0x0123, 0x200F },
     { 0x0200, 0x00E1 },
     { 0x0208, 0x017B },
@@ -96,8 +95,8 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param spiFPGA The communications port to the device's FPGA.
 /// @param streamPort The communications port to send and receive sample data.
 /// @param commsPort The communications port for direct communications with the device.
-LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
-    std::shared_ptr<IComms> spiFPGA,
+LimeSDR::LimeSDR(std::shared_ptr<ISPI> spiLMS,
+    std::shared_ptr<ISPI> spiFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
@@ -120,7 +119,7 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(mlms7002mPort);
         chip->ModifyRegistersDefaults(limesdrusb::lms7002defaultsOverrides);
-        chip->SetConnection(mlms7002mPort);
+        // chip->SetConnection(mlms7002mPort);
         chip->SetOnCGENChangeCallback(UpdateFPGAInterface, this);
         mLMSChips.push_back(std::move(chip));
     }
@@ -131,7 +130,7 @@ LimeSDR::LimeSDR(std::shared_ptr<IComms> spiLMS,
     descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-USB"s, eDeviceTreeNodeClass::SDRDevice, this);
     descriptor.socTree->children.push_back(fpgaNode);
 
-    auto ADFComms = std::make_shared<LMS64C_ADF_Over_USB>(mSerialPort, 0);
+    auto ADFComms = std::make_shared<LMS64C_ADF4002_SPI>(mSerialPort, 0);
     mADF->Initialize(ADFComms, 30.72e6);
     descriptor.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF.get()));
 
@@ -218,6 +217,8 @@ OpStatus LimeSDR::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
     {
         LMS7002M_SDRDevice::SetAntenna(0, TRXDir::Tx, c, cfg.channel[c].tx.path);
         LMS7002M_SDRDevice::SetAntenna(0, TRXDir::Rx, c, cfg.channel[c].rx.path);
+        SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
+        SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
         LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
     }
 
@@ -264,7 +265,7 @@ SDRDescriptor LimeSDR::GetDeviceInfo(void)
     SDRDescriptor deviceDescriptor;
 
     LMS64CProtocol::FirmwareInfo info{};
-    OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info);
+    OpStatus returnCode = LMS64CProtocol::GetFirmwareInfo(*mSerialPort, info, 0);
 
     if (returnCode != OpStatus::Success)
     {
@@ -325,9 +326,9 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
     switch (chipSelect)
     {
     case limesdrusb::SPI_LMS7002M:
-        return mlms7002mPort->SPI(0, MOSI, MISO, count);
+        return mlms7002mPort->Transact(MOSI, MISO, count);
     case limesdrusb::SPI_FPGA:
-        return mfpgaPort->SPI(MOSI, MISO, count);
+        return mfpgaPort->Transact(MOSI, MISO, count);
     case limesdrusb::SPI_ADF4002:
         return LMS64CProtocol::ADF4002_SPI(*mSerialPort, MOSI, count);
     default:
@@ -362,32 +363,32 @@ void LimeSDR::ResetUSBFIFO()
 
 OpStatus LimeSDR::GPIODirRead(uint8_t* buffer, const size_t bufLength)
 {
-    return mfpgaPort->GPIODirRead(buffer, bufLength);
+    return LMS64CProtocol::GPIODirRead(*mSerialPort, buffer, bufLength);
 }
 
 OpStatus LimeSDR::GPIORead(uint8_t* buffer, const size_t bufLength)
 {
-    return mfpgaPort->GPIORead(buffer, bufLength);
+    return LMS64CProtocol::GPIORead(*mSerialPort, buffer, bufLength);
 }
 
 OpStatus LimeSDR::GPIODirWrite(const uint8_t* buffer, const size_t bufLength)
 {
-    return mfpgaPort->GPIODirWrite(buffer, bufLength);
+    return LMS64CProtocol::GPIODirWrite(*mSerialPort, buffer, bufLength);
 }
 
 OpStatus LimeSDR::GPIOWrite(const uint8_t* buffer, const size_t bufLength)
 {
-    return mfpgaPort->GPIOWrite(buffer, bufLength);
+    return LMS64CProtocol::GPIOWrite(*mSerialPort, buffer, bufLength);
 }
 
 OpStatus LimeSDR::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterWrite(parameters);
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return mfpgaPort->CustomParameterRead(parameters);
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR::UploadMemory(
@@ -409,21 +410,24 @@ OpStatus LimeSDR::UploadMemory(
         return OpStatus::InvalidValue;
     }
 
-    return mfpgaPort->ProgramWrite(data, length, progMode, static_cast<int>(target), callback);
+    return LMS64CProtocol::FirmwareWrite(
+        *mSerialPort, data, length, progMode, static_cast<LMS64CProtocol::ALTERA_FPGA_GW_WR_targets>(target), callback, 0);
 }
 
 OpStatus LimeSDR::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
         return OpStatus::Error;
-    return mfpgaPort->MemoryWrite(region.address, data, region.size);
+    return LMS64CProtocol::MemoryWrite(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 OpStatus LimeSDR::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
     if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
         return OpStatus::Error;
-    return mfpgaPort->MemoryRead(region.address, data, region.size);
+    return LMS64CProtocol::MemoryRead(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 std::unique_ptr<lime::RFStream> LimeSDR::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)

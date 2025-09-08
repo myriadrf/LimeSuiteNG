@@ -19,7 +19,6 @@
 #include "events.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
-#include "utilities/toString.h"
 
 using namespace std;
 using namespace lime;

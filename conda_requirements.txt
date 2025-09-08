@@ -1,0 +1,9 @@
+This file is used by conda_deps.bat script.
+List of required dependencies for building gnuradio-limesuiteng plugin from source alongside selected GNURadio version.
+
+GNURadio
+version
+3.10.8.0  boost=1.82 pybind11=2.13.6 python=3.12.11
+3.10.9.2  boost=1.82 pybind11=2.11.1 python=3.12.11
+3.10.10.0 boost=1.84 pybind11=2.13.6 python=3.12.11
+3.10.11.0 boost=1.84 pybind11=2.13.6 python=3.12.11

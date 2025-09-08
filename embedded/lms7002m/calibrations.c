@@ -6,6 +6,8 @@
 #include "privates.h"
 #include "spi.h"
 
+#include <string.h>
+
 #ifdef __KERNEL__
 // TODO: add linux kernel headers
 #else
@@ -26,9 +28,9 @@ static const char* const get_lna_name(uint16_t value)
     case 1:
         return "LNAH";
     case 2:
-        return "LNAW";
-    case 3:
         return "LNAL";
+    case 3:
+        return "LNAW";
     }
 }
 
@@ -256,9 +258,9 @@ static lime_Result lms7002m_calibrate_rx_setup(lms7002m_context* self, uint32_t 
     const uint16_t x0020val = lms7002m_spi_read(self, 0x0020);
     //rfe
     {
-        const uint16_t RxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x010C, 0x010D, 0x0113, 0x0115, 0x0119 };
-        const uint16_t RxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0000, 0x0046, 0x000C, 0x0000, 0x0000 };
-        const uint16_t RxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x001A, 0x0046, 0x003C, 0xC000, 0x8000 };
+        const uint16_t RxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x010C, 0x010D, 0x0113, 0x0115, 0x0119, 0x0020 };
+        const uint16_t RxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0000, 0x0046, 0x000C, 0x0000, 0x0000, 0xFFFC };
+        const uint16_t RxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x001A, 0x0046, 0x003C, 0xC000, 0x8000, 0xFFFC };
         const uint16_t RxSetupWrOnlyAddr[] = { 0x0100,
             0x0101,
             0x0102,
@@ -621,12 +623,14 @@ static lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const ui
     const int32_t failureRSSI_level = 285; // dbfs_to_chip_rssi(-50)
     if (rssi < expectedRSSI_level)
     {
+        char expectedRSSI_string[32];
+        strcpy(expectedRSSI_string, rssi_to_string(expectedRSSI_level));
         LMS7002M_LOG(self,
             rssi > failureRSSI_level ? lime_LogLevel_Warning : lime_LogLevel_Error,
             "Low calibration test signal level %s, expected to be more than %s."
             " Calibration results might be impacted. Try re-calibrating or adjusting the RX gains.",
             rssi_to_string(rssi),
-            rssi_to_string(expectedRSSI_level));
+            expectedRSSI_string);
     }
     return rssi > failureRSSI_level ? lime_Result_Success : lime_Result_Error;
 }
@@ -784,6 +788,7 @@ lime_Result lms7002m_calibrate_rx(lms7002m_context* self, uint32_t bandwidthRF, 
         }
     }
 
+    const uint8_t mac = x0020val & 0x0003;
     lms7002m_spi_modify_csr(self, LMS7002M_MAC, 2);
     if (lms7002m_spi_read_csr(self, LMS7002M_PD_LOCH_T2RBUF) == false)
     {
@@ -792,7 +797,7 @@ lime_Result lms7002m_calibrate_rx(lms7002m_context* self, uint32_t bandwidthRF, 
         lms7002m_spi_modify_csr(self, LMS7002M_MAC, 1);
         lms7002m_spi_modify_csr(self, LMS7002M_PD_VCO, 0);
     }
-    lms7002m_spi_write(self, 0x0020, x0020val);
+    lms7002m_spi_modify_csr(self, LMS7002M_MAC, mac);
     status = lms7002m_check_saturation_rx(self, bandwidthRF, extLoopback);
     if (status != lime_Result_Success)
         goto RxCalibrationEndStage;
@@ -849,9 +854,9 @@ static lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, uint32_t 
     else
         lms7002m_spi_modify_csr(self, LMS7002M_PD_RX_AFE2, 0);
     {
-        const uint16_t TxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x0101, 0x0200, 0x0201, 0x0202, 0x0208 };
-        const uint16_t TxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0001, 0x000C, 0x07FF, 0x07FF, 0x0000 };
-        const uint16_t TxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x1801, 0x000C, 0x07FF, 0x07FF, 0xF10B };
+        const uint16_t TxSetupAddr[] = { 0x0084, 0x0085, 0x00AE, 0x0101, 0x0200, 0x0201, 0x0202, 0x0208, 0x0020 };
+        const uint16_t TxSetupData[] = { 0x0400, 0x0001, 0xF000, 0x0001, 0x000C, 0x07FF, 0x07FF, 0x0000, 0xFFFC };
+        const uint16_t TxSetupMask[] = { 0xF8FF, 0x0007, 0xF000, 0x1801, 0x000C, 0x07FF, 0x07FF, 0xF10B, 0xFFFC };
         const uint16_t TxSetupWrOnlyAddr[] = { 0x010C,
             0x010D,
             0x010E,
@@ -921,6 +926,7 @@ static lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, uint32_t 
     if (status != lime_Result_Success)
         return status;
     //SXR
+    const uint8_t mac = x0020val & 0x0003;
     lms7002m_spi_modify_csr(self, LMS7002M_MAC, 1); //switch to ch. A
     lms7002m_set_defaults_sx(self);
     lms7002m_spi_modify_csr(self, LMS7002M_ICT_VCO, 255);
@@ -945,7 +951,7 @@ static lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, uint32_t 
         return lime_Result_Error;
     }
 
-    lms7002m_spi_write(self, 0x0020, x0020val); //restore used channel
+    lms7002m_spi_modify_csr(self, LMS7002M_MAC, mac); //restore used channel
 
     lms7002m_load_dc_reg_tx_iq(self);
     lms7002m_set_nco_frequency(self, true, 0, bandwidthRF / calibUserBwDivider);
@@ -1068,12 +1074,14 @@ static lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, uint3
     const int32_t failureRSSI_level = 285; // dbfs_to_chip_rssi(-50)
     if (rssi < expectedRSSI_level)
     {
+        char expectedRSSI_string[32];
+        strcpy(expectedRSSI_string, rssi_to_string(expectedRSSI_level));
         LMS7002M_LOG(self,
             rssi > failureRSSI_level ? lime_LogLevel_Warning : lime_LogLevel_Error,
             "Low calibration test signal level %s, expected to be more than %s."
             " Calibration results might be impacted. Try re-calibrating or adjusting the TX gains.",
             rssi_to_string(rssi),
-            rssi_to_string(expectedRSSI_level));
+            expectedRSSI_string);
         if (rssi < failureRSSI_level)
             return lime_Result_Error;
     }

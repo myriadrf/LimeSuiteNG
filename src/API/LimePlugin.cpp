@@ -9,6 +9,7 @@
 #include <mutex>
 #include <sstream>
 #include <string_view>
+#include <cinttypes>
 
 #include "streaming/StreamComposite.h"
 
@@ -18,6 +19,7 @@
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "protocols/LMSBoards.h"
 
 #ifdef _MSC_VER
     #define strncasecmp _strnicmp
@@ -448,7 +450,11 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         const auto& desc = node.device->GetDescriptor();
         if (node.chipIndex >= desc.rfSOC.size())
         {
-            Log(LogLevel::Error, "Invalid chipIndex (%i). dev%li has only %li chips.", node.chipIndex, i, desc.rfSOC.size());
+            Log(LogLevel::Error,
+                "Invalid chipIndex (%i). dev%" PRIuPTR " has only %" PRIuPTR " chips.",
+                node.chipIndex,
+                i,
+                desc.rfSOC.size());
             return OpStatus::OutOfRange;
         }
 
@@ -465,12 +471,12 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
 
         if (chip->LoadConfig(configFilepath, false) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "dev%li chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
+            Log(LogLevel::Error, "dev%" PRIuPTR " chip%i Error loading file: %s", i, node.chipIndex, configFilepath.c_str());
             return OpStatus::Error;
         }
 
         node.config.skipDefaults = true;
-        Log(LogLevel::Info, "dev%li chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
+        Log(LogLevel::Info, "dev%" PRIuPTR " chip%i loaded with: %s", i, node.chipIndex, configFilepath.c_str());
     }
     return OpStatus::Success;
 }
@@ -800,7 +806,7 @@ static void TransferRuntimeParametersToConfig(
         const auto& paths = desc.pathNames.at(isTx ? TRXDir::Tx : TRXDir::Rx);
 
         Log(LogLevel::Verbose,
-            "%s channel%li: dev%i chip%i ch%i , LO: %.3f MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
+            "%s channel%" PRIuPTR ": dev%i chip%i ch%i , LO: %.3lf MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
             isTx ? "Tx" : "Rx",
             i,
             channelMap[i].parent->devIndex,
@@ -846,12 +852,14 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             if (!dev->assignedToPort)
                 continue;
 
+            streamCfg.channels[TRXDir::Rx].clear();
             for (int i = 0; i < dev->configInputs.maxChannelsToUse && rx_channel_remaining > 0; ++i)
             {
                 streamCfg.channels[TRXDir::Rx].push_back(i);
                 --rx_channel_remaining;
             }
 
+            streamCfg.channels[TRXDir::Tx].clear();
             for (int i = 0; i < dev->configInputs.maxChannelsToUse && tx_channel_remaining > 0; ++i)
             {
                 streamCfg.channels[TRXDir::Tx].push_back(i);
@@ -876,14 +884,14 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             streamCfg.channels[TRXDir::Tx].push_back(ch);
 
         Log(LogLevel::Debug,
-            "Port[%li] Stream samples format: %s , link: %s %s",
+            "Port[%" PRIuPTR "] Stream samples format: %s , link: %s %s",
             p,
             streamCfg.format == DataFormat::F32 ? "F32" : "I16",
             streamCfg.linkFormat == DataFormat::I12 ? "I12" : "I16",
             (streamCfg.extraConfig.negateQ ? ", Negating Q samples" : ""));
         if (composite->Setup(streamCfg) != OpStatus::Success)
         {
-            Log(LogLevel::Error, "Port%li stream setup failed.", p);
+            Log(LogLevel::Error, "Port%" PRIuPTR " stream setup failed.", p);
             return OpStatus::Error;
         }
         port.stream = std::move(composite);
@@ -952,6 +960,21 @@ static void SetCalibrationDevicesParams(LimePluginContext* context, const LimeRu
     }
 }
 
+static OpStatus ConfigureCalibrationDevices(LimePluginContext* context)
+{
+    OpStatus status = OpStatus::Success;
+    for (auto& port : context->ports)
+    {
+        if (port.calibrationNode)
+        {
+            status = port.calibrationNode->device->Configure(port.calibrationNode->config, port.calibrationNode->chipIndex);
+            if (status != OpStatus::Success)
+                return status;
+        }
+    }
+    return OpStatus::Success;
+}
+
 int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* params)
 {
     OpStatus status = MapChannelsToDevices(context->rxChannels, context->ports, *params, TRXDir::Rx);
@@ -976,12 +999,12 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                 continue;
             else if (node.device != nullptr && !node.assignedToPort)
             {
-                Log(LogLevel::Warning, "dev%li is not assigned to any port.", i);
+                Log(LogLevel::Warning, "dev%" PRIuPTR " is not assigned to any port.", i);
                 continue;
             }
             try
             {
-                Log(LogLevel::Debug, "dev%li configure.", i);
+                Log(LogLevel::Debug, "dev%" PRIuPTR " configure.", i);
                 OpStatus status = node.device->Configure(node.config, node.chipIndex);
                 if (status != OpStatus::Success)
                     return -1;
@@ -993,8 +1016,36 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
             if (node.fpgaRegisterWrites.size() > 0)
             {
                 const auto slaves = node.device->GetDescriptor().spiSlaveIds;
-                node.device->SPI(slaves.at("FPGA"s), node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
+                int spiid = 0;
+                std::string spiname = "FPGA";
+                if (node.device->GetDescriptor().name == GetDeviceName(LMS_DEV_LIMESDR_MMX8))
+                {
+                    spiname += "@" + std::to_string(node.chipIndex + 1);
+                }
+                const auto spiiter = slaves.find(spiname);
+                if (spiiter != slaves.end())
+                    spiid = spiiter->second;
+                else
+                    spiid = slaves.at("FPGA"s);
+
+                {
+                    std::stringstream ss;
+                    for (const auto& reg : node.fpgaRegisterWrites)
+                    {
+                        char datastring[64];
+                        sprintf(datastring, " %08X", reg);
+                        ss << datastring;
+                    }
+                    Log(LogLevel::Info, "SPI write[%s](%s)", spiname.c_str(), ss.str().c_str());
+                }
+                node.device->SPI(spiid, node.fpgaRegisterWrites.data(), nullptr, node.fpgaRegisterWrites.size());
             }
+        }
+
+        if (ConfigureCalibrationDevices(context) != OpStatus::Success)
+        {
+            log(LogLevel::Error, "Failed to configure calibration devices");
+            return -1;
         }
 
         // override gains after device Configure
@@ -1062,6 +1113,12 @@ int LimePlugin_Write_complex16(
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
+int LimePlugin_Write_complex12(
+    LimePluginContext* context, const lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
+{
+    return LimePlugin_Write(context, samples, count, port, meta);
+}
+
 template<class T> static int LimePlugin_Read(LimePluginContext* context, T* const* samples, int count, int port, StreamMeta& meta)
 {
     meta.waitForTimestamp = false;
@@ -1090,6 +1147,11 @@ int LimePlugin_Read_complex32f(
 }
 
 int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
+{
+    return LimePlugin_Read(context, samples, count, port, meta);
+}
+
+int LimePlugin_Read_complex12(LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }

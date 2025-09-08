@@ -66,8 +66,8 @@ TestConfigType generateTestConfig(bool mimo, float sampleRate)
         config.channel[i].rx.gfir.bandwidth = config.channel[i].rx.lpf;
         config.channel[i].rx.path = 2; // Loopback_1 // TODO: replace with string names
         config.channel[i].tx.path = 2; // band1 // TODO: replace with string names
-        config.channel[i].rx.calibrate = false;
-        config.channel[i].tx.calibrate = false;
+        config.channel[i].rx.calibrate = CalibrationFlag::NONE;
+        config.channel[i].tx.calibrate = CalibrationFlag::NONE;
         config.channel[i].rx.testSignal.enabled = false;
         config.channel[i].tx.testSignal.enabled = false;
     }

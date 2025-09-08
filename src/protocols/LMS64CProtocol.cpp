@@ -21,6 +21,7 @@
 
 #define DEBUG_SPI 0
 
+#if DEBUG_SPI
 static std::string PacketToString(const lime::LMS64CPacket& pkt)
 {
     std::stringstream ss;
@@ -34,6 +35,7 @@ static std::string PacketToString(const lime::LMS64CPacket& pkt)
         ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
     return ss.str();
 }
+#endif
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -202,7 +204,7 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* data, size_t lengt
     return RunControlCommand(port, data, data, length, timeout_ms);
 }
 
-static OpStatus SPI16(ISerialPort& port,
+OpStatus SPI16(ISerialPort& port,
     uint8_t chipSelect,
     Command writeCmd,
     const uint32_t* MOSI,

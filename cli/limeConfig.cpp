@@ -33,16 +33,22 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         rxloFlag(parser, "rxlo", "Receiver center frequency in Hz", {"rxlo"});
     args::ValueFlag<std::string>    rxpathFlag(parser, "antenna name", "Receiver antenna path", {"rxpath"}, "");
     args::ValueFlag<double>         rxlpfFlag(parser, "Hz", "Receiver low pass filter bandwidth in Hz", {"rxlpf"});
+    args::ValueFlag<double>         rxgfirFlag(parser, "Hz", "Receiver digital GFIR low pass filter bandwidth in Hz", {"rxgfir"});
     args::ValueFlag<uint32_t>       rxoversampleFlag(parser, "", "Receiver decimation 1,2,4,8...", {"rxoversample"});
     args::ValueFlag<bool>           rxtestsignalFlag(parser, "", "Enables receiver test signal if available", {"rxtestsignal"});
+    args::ValueFlag<double>         rxGainFlag(parser, "", "Rx gain", {"rxgain"});
+    args::Flag                      rxCalibrateFlag(parser, "", "Calibrates Rx DC and IQ imbalance", {"rxcalibrate"});
 
     args::Group                     txGroup(parser, "Transmitter"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           txenFlag(parser, "tx enable", "Enable transmitter", {"txen"});
     args::ValueFlag<double>         txloFlag(parser, "txlo", "Transmitter center frequency in Hz", {"txlo"});
     args::ValueFlag<std::string>    txpathFlag(parser, "antenna name", "Transmitter antenna path", {"txpath"}, "");
     args::ValueFlag<double>         txlpfFlag(parser, "Hz", "Transmitter low pass filter bandwidth in Hz", {"txlpf"});
+    args::ValueFlag<double>         txgfirFlag(parser, "Hz", "Transmitter digital GFIR low pass filter bandwidth in Hz", {"txgfir"});
     args::ValueFlag<uint32_t>       txoversampleFlag(parser, "", "Transmitter interpolation 1,2,4,8...", {"txoversample"});
     args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
+    args::ValueFlag<double>         txGainFlag(parser, "", "Tx gain", {"txgain"});
+    args::Flag                      txCalibrateFlag(parser, "", "Calibrates Tx DC and IQ imbalance", {"txcalibrate"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
     // clang-format on
@@ -67,7 +73,8 @@ int main(int argc, char** argv)
     }
 
     bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
-                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag;
+                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag ||
+                       rxgfirFlag || txgfirFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
@@ -94,14 +101,28 @@ int main(int argc, char** argv)
     if (rxenFlag)           config.channel[0].rx.enabled = args::get(rxenFlag);
     if (rxloFlag)           config.channel[0].rx.centerFrequency = args::get(rxloFlag);
     if (rxlpfFlag)          config.channel[0].rx.lpf = args::get(rxlpfFlag);
+    if (rxgfirFlag)
+    {
+        config.channel[0].rx.gfir.bandwidth = args::get(rxgfirFlag);
+        config.channel[0].rx.gfir.enabled = true;
+    }
     if (rxoversampleFlag)   config.channel[0].rx.oversample = args::get(rxoversampleFlag);
     if (rxtestsignalFlag)   config.channel[0].rx.testSignal.enabled = args::get(rxtestsignalFlag);
+    if (rxGainFlag)         config.channel[0].rx.gain[eGainTypes::GENERIC] = args::get(rxGainFlag);
+    if (rxCalibrateFlag)    config.channel[0].rx.calibrate = CalibrationFlag::DCIQ;
 
     if (txenFlag)           config.channel[0].tx.enabled = args::get(txenFlag);
     if (txloFlag)           config.channel[0].tx.centerFrequency = args::get(txloFlag);
     if (txlpfFlag)          config.channel[0].tx.lpf = args::get(txlpfFlag);
+    if (txgfirFlag)
+    {
+        config.channel[0].tx.gfir.bandwidth = args::get(txgfirFlag);
+        config.channel[0].tx.gfir.enabled = true;
+    }
     if (txoversampleFlag)   config.channel[0].tx.oversample = args::get(txoversampleFlag);
     if (txtestsignalFlag)   config.channel[0].tx.testSignal.enabled = args::get(txtestsignalFlag);
+    if (txGainFlag)         config.channel[0].tx.gain[eGainTypes::GENERIC] = args::get(txGainFlag);
+    if (txCalibrateFlag)    config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
     // clang-format on
 
     auto handles = DeviceRegistry::enumerate();

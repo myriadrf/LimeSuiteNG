@@ -8,7 +8,6 @@
 #include <condition_variable>
 #include <functional>
 #include "RingBuffer.h"
-#include "kiss_fft.h"
 
 namespace lime {
 
@@ -66,7 +65,6 @@ class LIME_API FFT
     static void ConvertToDBFS(std::vector<float>& bins);
 
   private:
-    template<typename T> void Calculate(const std::vector<std::vector<T>>& src, std::vector<std::vector<float>>& outputBins);
     void ProcessLoop();
 
     std::vector<RingBuffer<complex32f_t>> samplesFIFO;
@@ -77,10 +75,6 @@ class LIME_API FFT
     WindowFunctionType currentWindowType;
     std::vector<float> mWindowCoeffs;
 
-    kiss_fft_cfg m_fftCalcPlan;
-    std::vector<kiss_fft_cpx> m_fftCalcIn;
-    std::vector<kiss_fft_cpx> m_fftCalcOut;
-
     std::atomic<bool> doWork{};
     std::condition_variable inputAvailable;
     std::mutex inputMutex;
@@ -89,6 +83,7 @@ class LIME_API FFT
     void* mUserData{};
 
     std::size_t avgCount = 100;
+    std::size_t mFFTSize;
 };
 
 } // namespace lime

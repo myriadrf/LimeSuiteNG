@@ -1,5 +1,5 @@
-limesuiteng (0.1.9) UNRELEASED; urgency=low
+limesuiteng (0.1.10) UNRELEASED; urgency=low
 
-  * Initial Release
+  * Fix UART on Linux Kernel 6.8
 
  -- Lime Microsystems <apps@limemicro.com>  Sun, 26 Jan 2025 01:21:06 +0200

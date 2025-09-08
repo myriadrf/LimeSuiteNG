@@ -11,6 +11,8 @@ project(
     LANGUAGES C CXX)
 checkdebianchangelogversion(${PROJECT_NAME})
 
+option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
+
 add_library(limesuiteng)
 # namespaced target for use in plugins build
 add_library(limesuiteng::limesuiteng ALIAS limesuiteng)
@@ -50,39 +52,12 @@ endif()
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-option(INSTALL_DEVELOPMENT "Install limesuiteng headers & development files" ON)
-add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
-if(INSTALL_DEVELOPMENT)
-    install(
-        FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
-        COMPONENT dev
-        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
-
-    install(
-        FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
-        COMPONENT dev
-        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
-
-    install(
-        EXPORT limesuitengTarget
-        NAMESPACE limesuiteng::
-        FILE limesuitengConfig.cmake
-        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng
-        COMPONENT dev)
-endif(INSTALL_DEVELOPMENT)
-
 add_subdirectory(include)
 
 option(ENABLE_NEW_GAIN_BEHAVIOUR "Enable new gain functionality" OFF)
 if(ENABLE_NEW_GAIN_BEHAVIOUR)
     target_compile_definitions(limesuiteng PRIVATE NEW_GAIN_BEHAVIOUR)
 endif()
-
-########################################################################
-# CMake Project config files
-########################################################################
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake COMPATIBILITY SameMinorVersion)
 
 ########################################################################
 # Build pkg config file
@@ -113,7 +88,6 @@ target_sources(
             FPGA/FPGA_common.cpp
             FPGA/WriteRegistersBatch.cpp
             threadHelper/threadHelper.cpp
-            memory/MemoryPool.cpp
             API/LimePlugin.cpp
             include/limesuiteng/SDRDevice.cpp
             utilities/toString.cpp
@@ -122,6 +96,13 @@ target_sources(
 if(NOT MSVC)
     set_source_files_properties(include/limesuiteng/SDRDevice.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
+
+# if(MINGW)
+#     set_source_files_properties(
+#         limesuiteng
+#         PROPERTIES COMPILE_FLAGS -D__USE_MINGW_ANSI_STDIO=1
+#     )
+# endif()
 
 set_source_files_properties(mcu_program/common_src/lms7002m_controls.c PROPERTIES LANGUAGE CXX)
 
@@ -160,6 +141,7 @@ if(WIN32) # Windows don't have RPATH support, so need to place the DLLs into sam
     set_target_properties(limesuiteng PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 endif()
 
+add_subdirectory(protocols)
 # comms has to be processed before boards, to set up cmake variables needed for board support
 add_subdirectory(comms)
 add_subdirectory(boards)
@@ -170,3 +152,30 @@ add_subdirectory(streaming)
 add_subdirectory(legacyapi)
 
 add_subdirectory(examples)
+
+add_feature_info("INSTALL_DEVELOPMENT" INSTALL_DEVELOPMENT "Install limesuiteng headers & development files")
+if(INSTALL_DEVELOPMENT)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+
+    install(
+        FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
+        COMPONENT dev
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+
+    install(
+        EXPORT limesuitengTarget
+        NAMESPACE limesuiteng::
+        FILE limesuitengTargets.cmake
+        DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng
+        COMPONENT dev)
+
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake COMPATIBILITY SameMinorVersion)
+    configure_package_config_file(
+        ${CMAKE_CURRENT_LIST_DIR}/limesuitengConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake
+        INSTALL_DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuitengConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/limesuiteng)
+endif(INSTALL_DEVELOPMENT)

@@ -54,6 +54,18 @@ void PrintDeviceDetails(SDRDevice* device)
          << "Galileo - " << GPSLockToString(gpsStatus.galileo) << endl;
     cout << "\t\t"
          << "Beidou - " << GPSLockToString(gpsStatus.beidou) << endl;
+    cout << "\tSensors:\n";
+    for (size_t i = 0; i < d.rfSOC.size(); ++i)
+        cout << "\t\tTemperature(LMS7002) : " << device->GetTemperature(i) << "°C" << endl;
+
+    for (const auto& param : d.customParameters)
+    {
+        std::vector<CustomParameterIO> customValues;
+        CustomParameterIO& io = customValues.emplace_back();
+        io.id = param.id;
+        device->CustomParameterRead(customValues);
+        cout << "\t\t" << param.name << " : " << customValues.front().value << customValues.front().units << endl;
+    }
 }
 
 int main(int argc, char* argv[])

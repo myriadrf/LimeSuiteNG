@@ -40,7 +40,6 @@ class USBDMAEmulation : public IDMA
   private:
     struct AsyncXfer {
         void* xfer;
-        std::vector<uint8_t> buffer;
         uint32_t requestedSize;
         uint32_t size;
         uint8_t id;
