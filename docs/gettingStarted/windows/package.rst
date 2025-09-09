@@ -24,11 +24,11 @@ This ensures, that metapackage install pulls the correct ``gnuradio-limesuiteng`
 
 .. note::
 
-   Optionally, you can specify metapackage version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hba12d79_0`` to install exact metapackage version and it's components.
+   Metapackage and gnuradio package version specification is optional. You can specify version ``limesuiteng=25.1.0`` or version and build string ``limesuiteng=25.1.0=hba12d79_0`` to install exact metapackage or gnuradio package version and it's components. If version is not specified, conda will install the latest most compatible package versions.
 
 .. note::
 
-   You can check out limesuiteng versions by executing the following command - ``conda search limesuiteng``.
+   You can check out limesuiteng versions by executing the following command - ``conda search limesuiteng``. To search for gnuradio versions use - ``conda search gnuradio``.
 
 If you only need certain LimeSuiteNG components, for example, development files, you can install a metapackage sub-package as a standalone package:
 

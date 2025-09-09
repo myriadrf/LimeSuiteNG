@@ -41,11 +41,11 @@ This will ensure that the correct GNURadio plugin version is installed alongside
 
 .. note::
 
-   Optionally, you can specify plugin version ``gnuradio-limesuiteng=1.0.0`` or version and build string ``gnuradio-limesuiteng=1.0.0=py312hfdb1c45_0`` to install exact plugin package version and it's components.
+   Plugin and gnuradio package version specification is optional. You can specify version ``gnuradio-limesuiteng=1.0.0`` or version and build string ``gnuradio-limesuiteng=1.0.0=py312hfdb1c45_0`` to install exact plugin and gnuradio package version. If version is not specified, conda will install the latest most compatible package versions.
 
 .. note::
 
-   You can check out plugin versions by executing the following command - ``conda search gnuradio-limesuiteng``.
+   You can check out plugin versions by executing the following command - ``conda search gnuradio-limesuiteng``. To search for gnuradio versions use - ``conda search gnuradio``.
 
 
 Check out :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` sections for demonstration and plugin block documentation.
