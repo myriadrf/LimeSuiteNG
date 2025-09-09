@@ -102,7 +102,7 @@ Since ``gnuradio-limesuiteng`` sub-package must be built against different versi
   - volk
   - gnuradio_core
 
-Dependency versions per ``gnuradio-limesuiteng`` sub-package build are grouped using ``zip_keys:`` statement which is located at the end of the ``conda_build_config.yaml`` file. ``zip_keys:`` statement creates multiple different version dependency groups that will then be used to build multiple ``gnuradio-limesuiteng`` sub-packages. Grouping is performed starting from the top of a single dependency version list by taking a single dependency version entry from a dependency version list and grouping them into a single variant. From the provided ``conda_build_config.yaml`` excerpt, first ``gnuradio-limesuiteng`` sub-package build variant will have the following dependency variant ``{python=3.12.*, numpy=2.0.2, ..., gnuradio_core=3.10.11.0}``, second dependency variant ``{python=3.11.*, numpy=2.0.2, ..., gnuradio_core=3.10.11.0}`` and etc. This approach allows to build for multiple ``gnuradio-limesuiteng`` sub-package versions, that are linked to different dependency versions, and pin them to respective metapackages in a single build run. These dependency lists can be updated, but be aware that all dependency lists must contain identical amount of version entries. Otherwise the build will fail.
+Dependency versions for ``gnuradio-limesuiteng`` sub-package build are grouped using ``zip_keys:`` statement which is located at the end of the ``conda_build_config.yaml`` file. ``zip_keys:`` statement creates multiple different version dependency groups that will then be used to build multiple ``gnuradio-limesuiteng`` sub-packages. Grouping is performed starting from the top of a each dependency version list by taking a single dependency version entry from each dependency version list and grouping them into a single variant. From the provided ``conda_build_config.yaml`` excerpt, first ``gnuradio-limesuiteng`` sub-package build variant will have the following dependency variant ``{python=3.12.*, numpy=2.0.2, ..., gnuradio_core=3.10.11.0}``, second dependency variant ``{python=3.11.*, numpy=2.0.2, ..., gnuradio_core=3.10.11.0}`` and etc. This approach allows to build for multiple ``gnuradio-limesuiteng`` sub-package versions, that are linked to different dependency versions, and pin them to respective metapackages in a single build run. These dependency lists can be updated, but be aware that all dependency lists must contain identical amount of version entries. Otherwise the build will fail.
 
 More about `conda recipes`_ and `conda build variants`_.
 
@@ -122,6 +122,10 @@ Conda will start building metapackages and sub-packages. The ``build_config.yaml
 .. code-block:: bash
 
    conda config --show root_prefix
+
+.. note::
+
+   Metapackage build typically lasts several hours.
 
 Installing built packages
 -------------------------
