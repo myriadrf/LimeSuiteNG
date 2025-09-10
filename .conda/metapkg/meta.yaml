@@ -91,7 +91,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains release files of LimeSuiteNG core library for interaction with LimeSDR based devices.
+      summary: Conda package that contains LimeSuiteNG core libraries for interaction with LimeSDR based devices.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
@@ -148,7 +148,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains development files of LimeSuiteNG core library for interaction with LimeSDR based devices.
+      summary: Conda package that contains LimeSuiteNG core libraries for interaction with LimeSDR based devices, API and development header files.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
   
