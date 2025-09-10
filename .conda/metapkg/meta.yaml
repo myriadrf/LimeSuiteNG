@@ -161,14 +161,6 @@ outputs:
       - Library/bin/limeOEM.exe
       - Library/bin/limeSPI.exe
       - Library/bin/limeFLASH.exe
-      - Library/bin/examples/legacy/basicRX.exe
-      - Library/bin/examples/legacy/basicTX.exe
-      - Library/bin/examples/legacy/dualRXTX.exe
-      - Library/bin/examples/legacy/gpio_example.exe
-      - Library/bin/examples/legacy/singleRX.exe
-      - Library/bin/examples/basicRX.exe
-      - Library/bin/examples/basicTX.exe
-      - Library/bin/examples/dualRXTX.exe
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
