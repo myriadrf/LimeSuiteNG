@@ -223,7 +223,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains LimeSuiteNG graphical user interface application.
+      summary: Conda package that contains LimeSuiteNG LimeSDR device configuration application with graphical user interface.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
