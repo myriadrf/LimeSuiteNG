@@ -91,7 +91,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains release files of Lime Suite NG core library for interaction with LimeSDR based devices.
+      summary: Conda package that contains release files of LimeSuiteNG core library for interaction with LimeSDR based devices.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
@@ -148,7 +148,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains development files of Lime Suite NG core library for interaction with LimeSDR based devices.
+      summary: Conda package that contains development files of LimeSuiteNG core library for interaction with LimeSDR based devices.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
   
@@ -188,7 +188,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains Lime Suite NG Command Line Interface applications.
+      summary: Conda package that contains LimeSuiteNG Command Line Interface applications.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
@@ -223,7 +223,7 @@ outputs:
       license: Apache-2.0
       license_file: COPYING
       license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-      summary: Conda package that contains Lime Suite NG graphical user interface application.
+      summary: Conda package that contains LimeSuiteNG graphical user interface application.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
@@ -298,7 +298,7 @@ outputs:
         license: Apache-2.0
         license_file: COPYING
         license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-        summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the Lime Suite NG new generation software suite designed for working with LimeSDR family devices.
+        summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the LimeSuiteNG new generation software suite designed for working with LimeSDR family devices.
         dev_url: https://github.com/myriadrf/LimeSuiteNG
         doc_url: https://limesuiteng.myriadrf.org/
 
@@ -307,6 +307,6 @@ about:
   license: Apache-2.0
   license_file: COPYING
   license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-  summary: Lime Suite NG is a new generation software suite designed for working with LimeSDR family devices.
+  summary: LimeSuiteNG is a new generation software suite designed for working with LimeSDR family devices.
   dev_url: https://github.com/myriadrf/LimeSuiteNG
   doc_url: https://limesuiteng.myriadrf.org/
