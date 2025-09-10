@@ -64,7 +64,6 @@ outputs:
   - name: liblimesuiteng
     version: {{ lib_ver }}
     files:
-      - Library/include/lime
       - Library/bin/limesuiteng.dll
       - Library/lib/limesuiteng.lib
       - Library/lib/limesuiteng-legacyapi.lib
@@ -99,6 +98,7 @@ outputs:
   - name: liblimesuiteng-dev
     version: {{ lib_ver }}
     files:
+      - Library/include/lime
       - Library/include/limesuiteng
       - Library/lib/cmake/limesuiteng
       - Library/lib/pkgconfig/limesuiteng.pc
