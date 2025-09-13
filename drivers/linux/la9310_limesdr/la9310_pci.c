@@ -23,24 +23,6 @@ static const struct pci_device_id la9310_limesdr_pci_ids[] = {
 
 MODULE_DEVICE_TABLE(pci, la9310_limesdr_pci_ids);
 
-#define CSR_BASE 0
-uint32_t la9310_readl(struct la9310_dev *s, uint32_t addr)
-{
-    uint32_t val = readl(s->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + addr - CSR_BASE);
-#ifdef DEBUG_CSR
-    dev_dbg(&s->dev->dev, "csr_read: 0x%08x @ 0x%08x", val, addr);
-#endif
-    return val;
-}
-
-void la9310_writel(struct la9310_dev *s, uint32_t addr, uint32_t val)
-{
-#ifdef DEBUG_CSR
-    dev_dbg(&s->dev->dev, "csr_write: 0x%08x @ 0x%08x", val, addr);
-#endif
-    return writel(val, s->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + addr - CSR_BASE);
-}
-
 // set dma address mask and check if buffer allocation and mapping is within the mask
 static int try_set_dma_bitmask(struct device *sysDev, uint32_t bitCount)
 {
@@ -51,6 +33,7 @@ static int try_set_dma_bitmask(struct device *sysDev, uint32_t bitCount)
         dev_warn(sysDev, "Failed dma_set_mask_and_coherent %ubit\n", bitCount);
         return -1;
     }
+    return ret;
     void *memoryBuffer = kmalloc(PAGE_SIZE, GFP_KERNEL);
     if (!memoryBuffer)
     {
@@ -269,8 +252,7 @@ static int la9310_dev_set_interrupt_capability(struct la9310_dev *la9310_dev, in
                    LA9310_MSI_MAX_CNT,
                    PCI_IRQ_MSI, NULL);
         if (ret < LA9310_MSI_MAX_CNT) {
-            dev_err(la9310_dev->dev,
-                "Cannot complete request for multiple MSI");
+            dev_err(la9310_dev->dev, "Cannot complete request for multiple MSI. ret=%i", ret);
             goto msi_error;
         } else {
             dev_info(la9310_dev->dev,

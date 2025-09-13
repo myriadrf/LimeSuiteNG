@@ -34,8 +34,7 @@ using namespace std;
 using namespace std::chrono;
 
 static int RxChanID = 0;
-static uint32_t rx_modem_ddr_fifo_start = 0x6800000;
-static uint32_t modem_ddr_fifo_size = 1024 * 1024; //4915200;
+static uint32_t rx_fifo_start_offset_in_iqflood = 0;
 
 static constexpr bool showStats{ true };
 
@@ -79,11 +78,14 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<ShivaPCIE_lime> port)
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
 
     auto dmem_proxy = port->GetBar(LA9310_WINDOW_IPC);
+    uint32_t* dmem_ptr = reinterpret_cast<uint32_t*>(dmem_proxy.vaddr) + 768;
+
+    lime::debug("LA9310_TRX: IQFLOOD size: %lu", v_iqflood_ddr.size);
 
     int ret = iq_player_init(reinterpret_cast<uint32_t*>(v_iqflood_ddr.vaddr),
         v_iqflood_ddr.size,
         reinterpret_cast<uint32_t*>(v_la9310_bar2.vaddr),
-        reinterpret_cast<uint32_t*>(dmem_proxy.vaddr));
+        dmem_ptr);
     if (!ret)
     {
         printf("\n TRX : iq_player_init failed\n");
@@ -176,13 +178,14 @@ OpStatus LA9310_TRX::Start()
         mStreamEnabled = true;
         streamActive.notify_all();
     }
-    uint32_t addr = 0x06900000 + (modem_ddr_fifo_size / 4096);
-    mailbox.Send(0, 0, uint64_t(addr) << 32 | 0xB6801000);
-    mailbox.Receive(0, 0);
-    // char cmd[256];
-    // sprintf(cmd, "vspa_mbox send 0 0 0x%X 0xB6801000", addr);
-    // system(cmd);
-    // system("vspa_mbox recv 0 0");
+
+    auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
+    const int rxFIFOsize = v_iqflood_ddr.size;
+
+    int ret = mailbox.StartRx(rxFIFOsize, LA9310_IQFLOOD_PHYS_ADDR + rx_fifo_start_offset_in_iqflood);
+    if (ret)
+        return OpStatus::Error;
+
     return OpStatus::Success;
 }
 
@@ -231,14 +234,10 @@ void LA9310_TRX::Stop()
         }
     }
 
-    // system("vspa_mbox send 0 0 0x06000000 0");
-    // system("vspa_mbox recv 0 0");
-    mailbox.Send(0, 0, 0x06000000l << 32 | 0);
-    mailbox.Receive(0, 0);
+    mailbox.StopRx();
     // system("vspa_mbox send 0 0 0x05000000 0");
     // system("vspa_mbox recv 0 0");
-    mailbox.Send(0, 0, 0x05000000l << 32 | 0);
-    mailbox.Receive(0, 0);
+    // mailbox.StopTx();
 
     if (mRx.stagingPacket != nullptr)
     {
@@ -277,18 +276,18 @@ void LA9310_TRX::Teardown()
 
 OpStatus LA9310_TRX::RxSetup()
 {
+    mailbox.StopRx();
     // init tx channel
-    printf("FIFO size: %u\n", modem_ddr_fifo_size);
     int la9310chan = mConfig.channels.at(TRXDir::Rx).front() == 0 ? 3 : 1;
+    mailbox.SelectRxChannel(la9310chan);
+
+    auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
+    const int rxFIFOsize = v_iqflood_ddr.size;
+
+    printf("Rx FIFO size: %u\n", rxFIFOsize);
     printf("channels %i\n", mConfig.channels.at(TRXDir::Rx).front());
-    // sprintf(tempcmd, "vspa_mbox send 0 0 0xD000000 %i", la9310chan);
 
-    // system(tempcmd);
-    // system("vspa_mbox recv 0 0");
-    mailbox.Send(0, 0, 0xD000000l << 32 | la9310chan);
-    mailbox.Receive(0, 0);
-
-    int ret = iq_player_init_rx(RxChanID, rx_modem_ddr_fifo_start, modem_ddr_fifo_size);
+    int ret = iq_player_init_rx(RxChanID, rx_fifo_start_offset_in_iqflood, rxFIFOsize);
     if (!ret)
     {
         printf("\n RX : iq_player_init_rx failed\n");
@@ -412,8 +411,8 @@ void LA9310_TRX::ReceivePacketsLoop()
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
-    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
-    const int32_t packetSize = mRxArgs.packetSize;
+    // const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    // const int32_t packetSize = mRxArgs.packetSize;
 
     StreamStats& stats = mRx.stats;
     auto& fifo = mRx.fifo;
@@ -430,14 +429,13 @@ void LA9310_TRX::ReceivePacketsLoop()
     assert(mRx.stagingPacket == nullptr); // should be clean start
     assert(fifo->empty());
 
-    uint32_t ddr_wr_offset = 0, size_received = 0;
     std::vector<uint32_t> buffer(1024 * 1024 * 4);
 
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
         // prepare next transmit
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        size_received = iq_player_receive_data(RxChanID, buffer.data(), 65536);
+        uint32_t size_received = iq_player_receive_data(RxChanID, buffer.data(), 65536);
         // size_received = iq_player_receive_data(RxChanID, buffer.data(), buffer.size());
         // printf("Got bytes: %li\n", size_received);
         Bps += size_received;

@@ -6,11 +6,6 @@ struct LA9310_IOCTL_firmware {
     uint32_t size;
 };
 
-struct LA9310_IOCTL_register {
-    uint64_t addr; // physical address on the chip
-    uint32_t value;
-};
-
 typedef enum {
     LA9310_WINDOW_BAR0,
     LA9310_WINDOW_BAR1,
@@ -36,7 +31,6 @@ struct LA9310_IOCTL_memory_layout {
 
 #define LA9310_IOCTL 'S'
 
-#define LA9310_IOCTL_FIRMWARE_UPLOAD _IOW(LA9310_IOCTL, 24, struct LA9310_IOCTL_firmware)
 #define LA9310_IOCTL_GET_MEMORY_LAYOUT _IOR(LA9310_IOCTL, 25, struct LA9310_IOCTL_memory_layout)
 
 long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg);

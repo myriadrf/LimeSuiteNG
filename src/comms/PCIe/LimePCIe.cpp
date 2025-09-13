@@ -186,6 +186,6 @@ OpStatus LimePCIe::UploadFirmware(const uint8_t* buffer, size_t size)
     fw.firmware_data = buffer;
     fw.size = size;
 
-    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_FIRMWARE_UPLOAD, &fw);
+    int ret = -1; // TODO: ioctl(mFileDescriptor, LA9310_IOCTL_FIRMWARE_UPLOAD, &fw);
     return ret == 0 ? OpStatus::Success : OpStatus::Error;
 }

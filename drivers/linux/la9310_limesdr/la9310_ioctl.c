@@ -2,12 +2,9 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include "la9310_ioctl.h"
-#include "common_headers/la9310_modinfo.h"
 
 #include "la9310_character_device.h"
 #include "la9310_limesdr_device.h"
-
-void la9310_modinfo_get(struct la9310_dev* la9310_dev, modinfo_t* mi);
 
 static int la9310_get_memory_layout(const struct la9310_dev* la9310_dev, struct LA9310_IOCTL_memory_layout* layout)
 {
@@ -41,35 +38,8 @@ long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
         return -ENODEV;
     }
 
-    struct device *sysDev = &myDevice->pdev->dev;
-
     switch (cmd)
     {
-    case LA9310_IOCTL_FIRMWARE_UPLOAD: {
-        struct LA9310_IOCTL_firmware m;
-
-        if (copy_from_user(&m, (void *)arg, sizeof(m)))
-        {
-            ret = -EFAULT;
-            break;
-        }
-
-        void* buffer = kmalloc(m.size, GFP_KERNEL);
-        if (!buffer)
-        {
-            dev_err(sysDev, "%s: IOCTL Failed to allocate temporary buffer for firmware\n", __func__);
-        }
-
-        if (copy_from_user(buffer, m.firmware_data, m.size))
-        {
-            ret = -EFAULT;
-            kfree(buffer);
-            break;
-        }
-        ret = custom_la9310_load_rtos_img(myDevice, buffer, m.size);
-        kfree(buffer);
-        return ret;
-    }
     case LA9310_IOCTL_GET_MEMORY_LAYOUT: {
         struct LA9310_IOCTL_memory_layout layout;
 

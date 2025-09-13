@@ -4,7 +4,6 @@
 #include <linux/file.h>
 
 #include "la9310_limesdr_device.h"
-#include "la9310_memory.h"
 #include "la9310_base.h"
 
 #include "common_headers/la9310_host_if.h"
@@ -221,12 +220,8 @@ int la9310_load_rtos_img(struct la9310_dev *la9310_dev)
    dma_wmb();
    writel(PREAMBLE, &boot_header->preamble);
    dev_info(la9310_dev->dev, "Waiting for FreeRTOS boot.\n");
-
-   dev_info(la9310_dev->dev, "Waiting.\n");
    set_current_state(TASK_INTERRUPTIBLE);
-   //schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-   schedule_timeout(msecs_to_jiffies(3000));
-   dev_info(la9310_dev->dev, "Waiting done.\n");
+   schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
 
    dma_rmb();
    scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
@@ -292,116 +287,6 @@ int la9310_load_rtos_img(struct la9310_dev *la9310_dev)
           "LA9310 FreeRTOS booted succesfully: 0x%x",
           scratch_val);
    }
-
-out:
-   return rc;
-}
-
-// Copies firmware image into device and boots it.
-int custom_la9310_load_rtos_img(struct la9310_dev *la9310, const uint8_t *rtos_img, uint32_t rtos_img_size)
-{
-    struct device* sysDev = &la9310->pdev->dev;
-    int rc = 0;
-
-    struct la9310_mem_region_info *ccsr_region = &la9310->mem_regions[LA9310_MEM_REGION_CCSR];
-    struct la9310_mem_region_info *tcm_region = &la9310->mem_regions[LA9310_MEM_REGION_TCMU];
-#if NXP_ERRATUM_A008822
-    {
-    // Before writing boot header,write 0000_9401h at ccsr adrress 0x34008d0h
-    u32 pcie_amba_err_offset = PCIE_RHOM_DBI_BASE + AMBA_ERROR_RESPONSE_DEFAULT_OFF;
-    writel(AMBA_ERROR_RESPONSE_DEFAULT_VALUE, ccsr_region->vaddr + pcie_amba_err_offset);
-    }
-#endif
-
-   // ROM code polls the contents of offset 0x0 from the TCM Data Memory
-   // base address, 0x2000_0000 for a valid Boot Header Preamble.
-   struct la9310_boot_header __iomem *boot_header = (struct la9310_boot_header *)((uint8_t *)tcm_region->vaddr + LA9310_EP_BOOT_HDR_OFFSET);
-
-   struct la9310_mem_region_info dma_region;// = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW);
-   dma_region.vaddr = kmalloc(rtos_img_size, GFP_KERNEL);
-   if (!dma_region.vaddr)
-   {
-      dev_err(sysDev, "%s: Failed to allocate temporary buffer for firmware\n", __func__);
-   }
-   dma_region.size = rtos_img_size;
-   dma_region.phys_addr = virt_to_phys(dma_region.vaddr);
-
-   memcpy_toio(dma_region.vaddr, rtos_img, rtos_img_size);
-
-   dma_addr_t dma_bus = dma_map_single(sysDev, dma_region.vaddr, dma_region.size, DMA_TO_DEVICE);
-   if (dma_mapping_error(sysDev, dma_bus))
-   {
-      dev_err(sysDev,
-         "%s: dma_map_single error @ va:%p pa:%llx bus:%llx\n",
-         __func__,
-         dma_region.vaddr,
-         dma_region.phys_addr,
-         dma_bus);
-      kfree(dma_region.vaddr);
-      return -3;
-   }
-
-   // dev_info(sysDev, "load_firmware - Addr %px, size %d, pa:%px bus:0x%lx\n", dma_region.vaddr, rtos_img_size, dma_region.phys_addr, dma_bus);
-   dev_dbg(sysDev, "BootHDR: bl_src_offset [0x%p]: 0x%llx\n", &boot_header->bl_src_offset, dma_region.phys_addr);
-   dev_dbg(sysDev, "BootHDR: bl_size [0x%p]: %d\n", &boot_header->bl_size, rtos_img_size);
-   dev_dbg(sysDev, "BootHDR: preamble [0x%p]: 0x%x\n", &boot_header->preamble, PREAMBLE);
-
-   // Update Firmware pointers + size in boot header
-   const uint32_t ep_dma_offset = LA9310_EP_DMA_PHYS_OFFSET(dma_bus);
-   pr_info("ep_dma_offset %X\n", ep_dma_offset);
-   writel(dma_bus, &boot_header->bl_src_offset);
-   writel(rtos_img_size, &boot_header->bl_size);
-   writel(LA9310_EP_FREERTOS_LOAD_ADDR, &boot_header->bl_dest);
-   writel(LA9310_EP_FREERTOS_LOAD_ADDR, &boot_header->bl_entry);
-
-   // Write reserved to tell bootrom to pull Image using memcpy instead of edma
-   uint32_t rsvd_ctrl = LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN;
-#if !defined(BOOTROM_USE_EDMA)
-   rsvd_ctrl |= LA9310_BOOT_HDR_BYPASS_BOOT_EDMA;
-#endif
-   writel(rsvd_ctrl, &boot_header->reserved);
-   dma_wmb();
-
-   writel(PREAMBLE, &boot_header->preamble);
-   dev_info(sysDev, "Waiting for FreeRTOS boot.\n");
-
-   set_current_state(TASK_INTERRUPTIBLE);
-   schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-
-   dma_rmb();
-   uint8_t * __iomem ccs_dcr_ptr = ccsr_region->vaddr + DCR_OFFSET;
-   struct la9310_ccsr_dcr *ccsr_dcr = (struct la9310_ccsr_dcr *) ccs_dcr_ptr;
-   uint32_t *scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
-
-   dev_info(sysDev, "[Sync fw upgrade] Waiting for FreeRTOS to write %d\n", LA9310_HOST_START_CLOCK_CONFIG);
-
-   // Wait for FreeRTOS to ask for clock configuration
-   set_current_state(TASK_INTERRUPTIBLE);
-   schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-
-   int retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
-   uint32_t scratch_val = readl(scratch_reg);
-   while ((scratch_val != LA9310_HOST_START_CLOCK_CONFIG) && retries)
-   {
-      dev_info(sysDev, "Wait start clock, retries: %i\n", retries);
-      set_current_state(TASK_INTERRUPTIBLE);
-      schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-      --retries;
-      scratch_val = readl(scratch_reg);
-      dma_rmb();
-   }
-
-   if (scratch_val != LA9310_HOST_START_CLOCK_CONFIG)
-   {
-      dev_err(sysDev, "LA9310 FreeRTOS boot failed: 0x%x\n", scratch_val);
-      rc = -EINVAL;
-      goto out;
-   }
-
-   dev_info(sysDev, "LA9310 FreeRTOS booted succesfully: 0x%x", scratch_val);
-
-   dma_unmap_single(sysDev, dma_bus, dma_region.size, DMA_TO_DEVICE);
-   kfree(dma_region.vaddr);
 
 out:
    return rc;

@@ -49,35 +49,27 @@ typedef struct s_stats {
 
 #if !defined(__VSPA__) && !defined(__M7__)
 
-static char *VSPA_stat_rx_string[STATS_RX_MAX+1] = {
-	"DMA_AXIQ_RD",
-	"DMA_DDR_WR", 
-	"EXT_DDR_WR", 
-	"DDR_WR_OVR", 
-	"FIFO_RX_UDR",
-	"FIFO_RX_OVR",
-	"DMA_RX_CMD_OVR",
-	"EXT_DDR_WR_OVR",
-	"STATS_RX_MAX"
-};
+static const char* VSPA_stat_rx_string[STATS_RX_MAX + 1] = { "DMA_AXIQ_RD",
+    "DMA_DDR_WR",
+    "EXT_DDR_WR",
+    "DDR_WR_OVR",
+    "FIFO_RX_UDR",
+    "FIFO_RX_OVR",
+    "DMA_RX_CMD_OVR",
+    "EXT_DDR_WR_OVR",
+    "STATS_RX_MAX" };
 
-static char *VSPA_stat_tx_string[STATS_TX_MAX+1] = {
-	"DMA_AXIQ_WR",
-	"DMA_DDR_RD", 
-	"EXT_DDR_RD", 
-	"DDR_RD_UDR", 
-	"FIFO_TX_UDR",
-	"FIFO_TX_OVR",
-	"DMA_TX_CMD_UDR",
-	"EXT_DDR_RD_UDR",
-	"STATS_TX_MAX"
-};
+static const char* VSPA_stat_tx_string[STATS_TX_MAX + 1] = { "DMA_AXIQ_WR",
+    "DMA_DDR_RD",
+    "EXT_DDR_RD",
+    "DDR_RD_UDR",
+    "FIFO_TX_UDR",
+    "FIFO_TX_OVR",
+    "DMA_TX_CMD_UDR",
+    "EXT_DDR_RD_UDR",
+    "STATS_TX_MAX" };
 
-static char *VSPA_stat_gbl_string[STATS_GBL_MAX+1] = {
-	"DMA_CFG_ERROR",
-	"DMA_XFER_ERROR", 
-	"STATS_GBL_MAX"
-};
+static const char* VSPA_stat_gbl_string[STATS_GBL_MAX + 1] = { "DMA_CFG_ERROR", "DMA_XFER_ERROR", "STATS_GBL_MAX" };
 
 #endif
 

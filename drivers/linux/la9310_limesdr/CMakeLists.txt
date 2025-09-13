@@ -42,7 +42,6 @@ add_kernel_module(
     la9310_firmware.c
     la9310_limesdr_module.c
     la9310_irq_mux.c
-    la9310_modinfo.c
     la9310_base.h
     la9310_base.c
     la9310_vspa.h
@@ -56,15 +55,11 @@ add_kernel_module(
     la9310_character_device.h
     la9310_character_device.c
     la9310_ioctl.h
-    la9310_memory.h
-    la9310_memory.c
     common_headers/la9310_pci_def.h
     common_headers/la9310_host_if.h
     common_headers/rfic_hif.h
     common_headers/rfic_sw_cmd.h
     common_headers/la9310_v2h_if.h
-    common_headers/la93xx_ipc_ioctl.h
-    common_headers/la9310_modinfo.h
     CONFIGURED_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/version.h
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf)

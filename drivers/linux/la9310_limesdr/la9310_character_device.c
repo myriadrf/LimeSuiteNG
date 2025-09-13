@@ -39,8 +39,7 @@ static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
     la9310_window_t window_id = vma->vm_pgoff;
     bool isDMA = false;
 
-    struct la9310_mem_region_info *region;
-    // region = &la9310_dev->dma_info.host_buf;
+    struct la9310_mem_region_info* region;
     switch(window_id)
     {
     case LA9310_WINDOW_BAR0:
@@ -78,23 +77,30 @@ static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
 #else
     vm_flags_set(vma, add_flags);
 #endif
-
     vma->vm_pgoff = 0;
     const size_t mapSize = vma->vm_end - vma->vm_start;
     if (mapSize > region->size)
     {
-        dev_err(sysDev, "mmap window %lu: invalid size (%lu), expected (%li)\n", window_id, mapSize, region->size);
+        dev_err(sysDev, "mmap window %u: invalid size (%lu), expected (%lu)\n", window_id, mapSize, region->size);
         return -EINVAL;
     }
 
     int remapRet = 0;
     if (isDMA)
     {
-        dev_info(sysDev, "MMAP %i - vm_start:%lx cpu:%lx bus:%lx size:%lu\n", window_id, vma->vm_start, region->vaddr, region->phys_addr, mapSize);
+        // dynamically allocated mappings
+        dev_info(sysDev,
+            "MMAP %i - vm_start:%lu cpu:%p bus:%llx size:%lu\n",
+            window_id,
+            vma->vm_start,
+            region->vaddr,
+            region->phys_addr,
+            mapSize);
         remapRet = dma_mmap_coherent(sysDev, vma, region->vaddr, region->phys_addr, mapSize);
     }
     else
     {
+        // BAR mappings
         unsigned long pfn = region->phys_addr >> PAGE_SHIFT;
         dev_info(sysDev, "MMAP %i - vm_start:%lx pfn:%lx size:%lu\n", window_id, vma->vm_start, pfn, mapSize);
         remapRet = remap_pfn_range(vma, vma->vm_start, pfn, mapSize, vma->vm_page_prot);

@@ -9,7 +9,7 @@
 #include "version.h"
 #include "la9310_pci.h"
 #include "la9310_character_device.h"
-#include "la9310_memory.h"
+#include "la9310_base.h"
 
 struct class *la9310_limesdr_class = NULL;
 
@@ -17,13 +17,6 @@ static int __init la9310_limesdr_module_init(void)
 {
     int ret = 0;
     pr_info("%s : v%s-g%s\n", __func__, LA9310_LIMESDR_VERSION, LA9310_LIMESDR_GIT_HASH);
-
-    ret = la9310_initialize_reserved_memory_allocator();
-    if (ret)
-    {
-        pr_err("%s (%i) Failed to initialize memory\n", __func__, ret);
-        return ret;
-    }
 
     ret = la9310_subdrv_mod_init();
     if (ret)
@@ -68,7 +61,6 @@ static void __exit la9310_limesdr_module_exit(void)
 
     la9310_subdrv_mod_exit();
 
-    la9310_free_reserved_memory_allocator();
     pr_info("%s\n", __func__);
 }
 

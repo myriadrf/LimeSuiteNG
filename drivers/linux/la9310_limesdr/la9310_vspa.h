@@ -703,12 +703,12 @@ extern const struct attribute_group attr_group;
 
 static inline void vspa_reg_write(void __iomem *addr, u32 val)
 {
-	return iowrite32(val, addr);
+    return writel(val, addr);
 }
 
 static inline unsigned int vspa_reg_read(void __iomem *addr)
 {
-	return ioread32(addr);
+    return readl(addr);
 }
 
 int full_state(struct vspa_device *vspadev);

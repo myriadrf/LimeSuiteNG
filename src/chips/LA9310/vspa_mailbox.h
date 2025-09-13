@@ -16,6 +16,11 @@ class VSPA_MailBox
 
     void Clear(uint32_t core_idx, uint32_t mbox_id);
 
+    int SelectRxChannel(uint32_t rx_channel_index);
+    int StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr);
+    int StopRx();
+    int StopTx();
+
   private:
     void iowrite32(uint32_t value, uint64_t addr);
     uint32_t ioread32(uint64_t addr);

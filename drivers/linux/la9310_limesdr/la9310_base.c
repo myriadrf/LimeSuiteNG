@@ -23,7 +23,6 @@
 #include "common_headers/la9310_pci_def.h"
 #include "la9310_base.h"
 #include "la9310_vspa.h"
-#include "la9310_memory.h"
 
 // #include "la9310_wdog.h"
 // #include "la9310_v2h_if.h"
@@ -308,6 +307,8 @@ la9310_create_rfnm_iqflood_outbound(struct la9310_dev *la9310_dev)
 #define VSPA_DMEM_PROXY_SIZE 1024
 #define VSPA_DMEM_PROXY_ADDR (IQFLOOD_OUTBOUND_ADDR + IQFLOOD_OUTBOUND_SIZE - VSPA_DMEM_PROXY_SIZE)
 
+// Currently using IPC outbound window to map VSPA DMEM PROXY address, which is at IQFLOOD + 256MB
+// using this window so that IQFLOOD would not need allocation of 256MB, to gain access to DMEM PROXY
 static void la9310_create_ipc_outbound(struct la9310_dev* la9310_dev)
 {
     struct la9310_mem_region_info* ccsr_region;
@@ -323,7 +324,7 @@ static void la9310_create_ipc_outbound(struct la9310_dev* la9310_dev)
     dev_info(la9310_dev->dev,
         "DMEM PROXY Buff:0x%x[H]-0x%llx[M],size %d\n",
         VSPA_DMEM_PROXY_ADDR,
-        la9310_dev->iq_mem_addr,
+        la9310_dev->dmem_proxy.phys_addr,
         VSPA_DMEM_PROXY_SIZE);
 }
 
@@ -440,27 +441,8 @@ la9310_scratch_dma_buf(struct la9310_dev *la9310_dev)
     }
     dev_info(la9310_dev->dev, "Scratch buf size: %i, va:0x%px pa:0x%llx bus:0x%llx\n", la9310_dev->scratch_buf_size, scratch_buffer_va, virt_to_phys(scratch_buffer_va), scratch_buffer_bus);
 
-    const int min_alloc_order = 6; // 2^6
-	const int nodeid = -1; // don't care
-	struct gen_pool *pool = gen_pool_create(min_alloc_order, nodeid);
-	if (!pool)
-	{
-		dev_err(la9310_dev->dev, "Failed to create scratch buffer pool\n");
-		return -ENOMEM;
-	}
-
-	rc = gen_pool_add_virt(pool, (long unsigned)scratch_buffer_va, scratch_buffer_bus, la9310_dev->scratch_buf_size, nodeid);
-	if (rc)
-	{
-		dev_err(la9310_dev->dev, "Failed to add memory to scratch buffer pool\n");
-		gen_pool_destroy(pool);
-		pool = NULL;
-		return rc;
-	}
-	la9310_dev->scratch_mem_pool = pool;
-
-	host_region->vaddr = scratch_buffer_va;
-	host_region->phys_addr = scratch_buffer_bus;
+    host_region->vaddr = scratch_buffer_va;
+    host_region->phys_addr = scratch_buffer_bus;
 	host_region->size = la9310_dev->scratch_buf_size;
 
     la9310_dev->scratch_buf_phys_addr = scratch_buffer_bus;
@@ -766,19 +748,17 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 		goto out;
 	}
 
-	la9310_dev->iq_mem_size = 8*1024*1024;
+    la9310_dev->iq_mem_size = 4 * 1024 * 1024;
 
-	dma_addr_t iq_mem_Handle;
-
-    //void *scratchBuffer = devm_kzalloc(&pdev->dev, la9310_dev->scratch_buf_size, GFP_KERNEL);
+    dma_addr_t iq_mem_Handle;
     void *iq_mem_data = dma_alloc_coherent(la9310_dev->dev, la9310_dev->iq_mem_size, &iq_mem_Handle, GFP_KERNEL);
     if (!iq_mem_data)
     {
         dev_err(la9310_dev->dev, "Failed to allocate iq_mem_data buffer\n");
         return -ENOMEM;
     }
-    dev_info(la9310_dev->dev, "iq_mem_data buf size: %i, va:%px pa:%llx bus:%llx\n", la9310_dev->iq_mem_size, iq_mem_data, virt_to_phys(iq_mem_data), iq_mem_Handle);
-    la9310_dev->iq_mem_addr = iq_mem_Handle;//virt_to_phys(iq_mem_data);
+    dev_info(la9310_dev->dev, "iq_mem_data buf size: %i, va:%px bus:%llx\n", la9310_dev->iq_mem_size, iq_mem_data, iq_mem_Handle);
+    la9310_dev->iq_mem_addr = iq_mem_Handle;
 
     la9310_dev->iqflood_region.vaddr = iq_mem_data;
     la9310_dev->iqflood_region.phys_addr = iq_mem_Handle;
@@ -811,14 +791,14 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
         return -ENOMEM;
     }
     dev_info(la9310_dev->dev,
-        "dmem proxy buf size: %i, va:%px pa:%llx bus:%llx\n",
+        "vspa dmem proxy buf size: %li, va:%px pa:%llx bus:%llx\n",
         la9310_dev->dmem_proxy.size,
         la9310_dev->dmem_proxy.vaddr,
         virt_to_phys(la9310_dev->dmem_proxy.vaddr),
         la9310_dev->dmem_proxy.phys_addr);
-	la9310_create_ipc_outbound(la9310_dev);
+    la9310_create_ipc_outbound(la9310_dev);
 
-	rc = la9310_init_hif(la9310_dev);
+    rc = la9310_init_hif(la9310_dev);
 	if (rc)
 		goto out;
 	la9310_init_msg_unit_ptrs(la9310_dev);
@@ -1034,13 +1014,12 @@ la9310_base_remove(struct la9310_dev *la9310_dev)
 
 	pci_disable_msi(la9310_dev->pdev);
 
-	if (la9310_dev->scratch_mem_pool)
-		gen_pool_destroy(la9310_dev->scratch_mem_pool);
+    dma_free_coherent(la9310_dev->dev,
+        la9310_dev->scratch_buf_size,
+        la9310_dev->dma_info.host_buf.vaddr,
+        la9310_dev->dma_info.host_buf.phys_addr);
 
-	dma_free_coherent(la9310_dev->dev, la9310_dev->scratch_buf_size, la9310_dev->dma_info.host_buf.vaddr,
-			  la9310_dev->dma_info.host_buf.phys_addr);
-
-	la9310_unmap_mem_regions(la9310_dev);
+    la9310_unmap_mem_regions(la9310_dev);
 
 	// la9310_remove_sysfs(la9310_dev);
 

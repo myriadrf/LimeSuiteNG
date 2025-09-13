@@ -11,6 +11,7 @@
 #define LA9310_SUBDEV_NAME(B) LA9310_DEV_NAME_PREFIX ## B
 
 #define LA9310_MAX_SCRATCH_BUF_SIZE	(256 * 1024 * 1024)
+#define PCIE_MSI_OB_SIZE (4 * 1024) /* 4K */
 
 /*Common Addresses and offsets*/
 /* PCIe outbound window base address for address allocator */

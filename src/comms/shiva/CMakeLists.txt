@@ -15,7 +15,7 @@ endif()
 ## Add to library
 ########################################################################
 target_sources(
-    limesuiteng PRIVATE shiva.cpp shiva_lime.cpp)
+    limesuiteng PRIVATE shiva_lime.cpp)
 
 # to allow including header from drivers
 target_include_directories(limesuiteng PRIVATE ${limesuiteng_SOURCE_DIR})

@@ -9,8 +9,7 @@
 #include <linux/semaphore.h>
 #include "common_headers/la9310_host_if.h"
 #include <linux/firmware.h>
-// #include "common_headers/la9310_pci.h"
-// #include <la9310_modinfo.h>
+
 #ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 #include <linux/completion.h>
 #endif
@@ -345,13 +344,10 @@ struct la9310_dev {
 	uint64_t iq_mem_addr;
 	int modem_rf_data_size;
 	uint64_t scratch_buf_phys_addr;
-	char firmware_name[128];
-	// char vspa_fw_name[];
-	char la9310_dev_name[128];
+    char firmware_name[128];
+    char la9310_dev_name[128];
 
     struct la9310_mem_region_info dmem_proxy;
-
-    struct gen_pool *scratch_mem_pool;
 };
 
 /*la9310_dev->flags*/

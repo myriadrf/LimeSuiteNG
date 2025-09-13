@@ -48,11 +48,21 @@ OpStatus ShivaPCIE_lime::RunControlCommand(uint8_t* request, uint8_t* response, 
         hif->sw_cmd_desc.data[i] = arr32[i];
     }
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+    auto t1 = std::chrono::high_resolution_clock::now();
     do
     {
+        auto t2 = std::chrono::high_resolution_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(1000))
+        {
+            lime::error("ShivaPCIE_lime: RunControlCommand timeout\n");
+        }
         // sleep is required otherwise received data is not always as expected
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     } while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED);
+
+    // auto t2 = std::chrono::high_resolution_clock::now();
+    // int duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    // printf("cmd time: %ius\n", duration);
 
     volatile uint32_t* rarr32 = reinterpret_cast<uint32_t*>(temp);
     for (int i = 0; i < words; ++i)
@@ -103,20 +113,19 @@ OpStatus ShivaPCIE_lime::Open(const std::filesystem::path& deviceFilename, uint3
         mapped_ranges[w].size = memoryLayout.window_size[w];
         const size_t offset =
             w * page_size; // Ubuntu 24.04 does not continue into the drivers mmap() if the offset is not page multiple
-        printf("map sz: %i\n", mapped_ranges[w].size);
+        // printf("map %i sz: %i\n", w, mapped_ranges[w].size);
         mapped_ranges[w].vaddr = mmap(NULL, mapped_ranges[w].size, PROT_READ | PROT_WRITE, MAP_SHARED, mFileDescriptor, offset);
         if (mapped_ranges[w].vaddr == MAP_FAILED)
         {
             lime::error("Mapping window[%i] buffer failed errno: %i\n", w, errno);
             return OpStatus::Error;
         }
-        printf("Mapped: %llx, sz:%li\n", mapped_ranges[w].vaddr, mapped_ranges[w].size);
+        // printf("Mapped: %llx, sz:%li\n", mapped_ranges[w].vaddr, mapped_ranges[w].size);
     }
 
-    hostInterfaceAddr = mapped_ranges[LA9310_WINDOW_BAR1].vaddr + memoryLayout.host_interface.start_offset;
+    hostInterfaceAddr = mapped_ranges[memoryLayout.host_interface.window_id].vaddr + memoryLayout.host_interface.start_offset;
     volatile struct la9310_hif* hif = static_cast<struct la9310_hif*>(hostInterfaceAddr);
     hif->host_ready |= LA9310_HIF_STATUS_IPC_APP_READY;
-
     return OpStatus::Success;
 }
 
@@ -125,7 +134,10 @@ void ShivaPCIE_lime::Close()
     for (const mmaped_region& region : mapped_ranges)
     {
         if (region.vaddr && region.size)
+        {
+            // printf("Unmap %llx sz: %llu\n", region.vaddr, region.size);
             munmap(region.vaddr, region.size);
+        }
     }
 
     if (mFileDescriptor >= 0)

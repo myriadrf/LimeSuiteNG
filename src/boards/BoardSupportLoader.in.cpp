@@ -24,8 +24,4 @@ void __loadBoardSupport()
     __loadDeviceFactoryPCIe();
     __loadDeviceFactoryLA9310();
 #endif
-
-#if LIMESUITENG_shiva
-    __loadDeviceFactoryPCIe_shiva();
-#endif
 }

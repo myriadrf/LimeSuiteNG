@@ -18,4 +18,4 @@ class LA9310
 
 } // namespace lime
 
-#endif LIME_LA9310_H
+#endif // LIME_LA9310_H
