@@ -6,7 +6,7 @@
 #include "CommonFunctions.h"
 #include "limesuiteng/Logger.h"
 #include "comms/PCIe/LimePCIe.h"
-#include "comms/shiva/shiva_lime.h"
+#include "comms/PCIe/LA9310_PCIe.h"
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64C/SPI.h"
 #include "comms/PCIe/PCIE_CSR_Pipe.h"
@@ -72,7 +72,7 @@ std::vector<DeviceHandle> DeviceFactoryLA9310::enumerate(const DeviceHandle& hin
 
         handle.addr = "/dev/"s + nodeName.substr(0, nameEnd); // removed _control postfix
 
-        std::shared_ptr<ShivaPCIE_lime> pcidev = std::make_shared<ShivaPCIE_lime>();
+        std::shared_ptr<LA9310_PCIe> pcidev = std::make_shared<LA9310_PCIe>();
         if (pcidev->Open(handle.addr + "/control0", O_RDWR) != OpStatus::Success)
             continue;
 
@@ -95,8 +95,8 @@ std::vector<DeviceHandle> DeviceFactoryLA9310::enumerate(const DeviceHandle& hin
 SDRDevice* DeviceFactoryLA9310::make(const DeviceHandle& handle)
 {
     // Data transmission layer
-    std::shared_ptr<ShivaPCIE_lime> controlPort = std::make_shared<ShivaPCIE_lime>();
-    std::vector<std::shared_ptr<ShivaPCIE_lime>> streamPorts;
+    std::shared_ptr<LA9310_PCIe> controlPort = std::make_shared<LA9310_PCIe>();
+    std::vector<std::shared_ptr<LA9310_PCIe>> streamPorts;
 
     std::string controlFile(handle.addr + "/control0");
     OpStatus connectionStatus = controlPort->Open(controlFile, O_RDWR);
@@ -111,7 +111,7 @@ SDRDevice* DeviceFactoryLA9310::make(const DeviceHandle& handle)
         streamEndpoints.begin(), streamEndpoints.end()); // TODO: Fix potential sorting problem if there would be trx1 and trx11
     for (const std::string& endpointPath : streamEndpoints)
     {
-        streamPorts.push_back(std::make_shared<ShivaPCIE_lime>());
+        streamPorts.push_back(std::make_shared<LA9310_PCIe>());
         streamPorts.back()->SetPathName(endpointPath);
     }
 

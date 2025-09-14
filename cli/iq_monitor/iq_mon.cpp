@@ -37,11 +37,11 @@
 // #include "imx8-host.h"
 #include "chips/LA9310/vspa_dmem_proxy.h"
 
-#include "comms/shiva/shiva_lime.h"
+#include "comms/PCIe/LA9310_PCIe.h"
 
 using namespace lime;
 
-ShivaPCIE_lime port;
+LA9310_PCIe port;
 
 static void dccivac(uint32_t* addr)
 {

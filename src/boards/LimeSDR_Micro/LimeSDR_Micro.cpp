@@ -61,7 +61,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
-    std::shared_ptr<ShivaPCIE_lime> streamingPort,
+    std::shared_ptr<LA9310_PCIe> streamingPort,
     //std::shared_ptr<I2C_bus> i2c_bus,
     double refClk)
     : LMS7002M_SDRDevice()

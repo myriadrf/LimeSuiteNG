@@ -25,6 +25,7 @@
 #include <cinttypes>
 
 #include "chips/LA9310/libiqplayer.h"
+#include "la9310_host_if.h"
 
 using namespace std::literals::string_literals;
 
@@ -67,9 +68,9 @@ int LA9310_TRX::map_physical_regions()
 /// @param f The FPGA to use in this stream.
 /// @param chip The LMS7002M chip to use in this stream.
 /// @param moduleIndex The ID of the chip to use.
-LA9310_TRX::LA9310_TRX(std::shared_ptr<ShivaPCIE_lime> port)
+LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
-    , mailbox(port)
+    , vspa(port)
     , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
 {
@@ -182,9 +183,9 @@ OpStatus LA9310_TRX::Start()
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     const int rxFIFOsize = v_iqflood_ddr.size;
 
-    int ret = mailbox.StartRx(rxFIFOsize, LA9310_IQFLOOD_PHYS_ADDR + rx_fifo_start_offset_in_iqflood);
-    if (ret)
-        return OpStatus::Error;
+    OpStatus status = vspa.StartRx(rxFIFOsize, LA9310_IQFLOOD_PHYS_ADDR + rx_fifo_start_offset_in_iqflood);
+    if (status != OpStatus::Success)
+        return status;
 
     return OpStatus::Success;
 }
@@ -234,10 +235,10 @@ void LA9310_TRX::Stop()
         }
     }
 
-    mailbox.StopRx();
+    vspa.StopRx();
     // system("vspa_mbox send 0 0 0x05000000 0");
     // system("vspa_mbox recv 0 0");
-    // mailbox.StopTx();
+    // vspa.StopTx();
 
     if (mRx.stagingPacket != nullptr)
     {
@@ -276,10 +277,10 @@ void LA9310_TRX::Teardown()
 
 OpStatus LA9310_TRX::RxSetup()
 {
-    mailbox.StopRx();
+    vspa.StopRx();
     // init tx channel
     int la9310chan = mConfig.channels.at(TRXDir::Rx).front() == 0 ? 3 : 1;
-    mailbox.SelectRxChannel(la9310chan);
+    vspa.SelectRxChannel(la9310chan);
 
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     const int rxFIFOsize = v_iqflood_ddr.size;

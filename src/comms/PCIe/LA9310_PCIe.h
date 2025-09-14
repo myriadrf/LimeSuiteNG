@@ -1,5 +1,5 @@
-#ifndef LIME_ShivaPCIE_lime_lime_H
-#define LIME_ShivaPCIE_lime_lime_H
+#ifndef LIME_LA9310_PCIe_lime_H
+#define LIME_LA9310_PCIe_lime_H
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
@@ -22,11 +22,11 @@ struct mmaped_region {
 };
 
 /// @brief Class for communicating with a PCIe device.
-class LIME_API ShivaPCIE_lime : public LimePCIe
+class LIME_API LA9310_PCIe : public LimePCIe
 {
   public:
-    ShivaPCIE_lime();
-    virtual ~ShivaPCIE_lime();
+    LA9310_PCIe();
+    virtual ~LA9310_PCIe();
 
     /// @brief Opens the specified PCIe device for communications.
     /// @param deviceFilename The filename of the device to open.
@@ -68,4 +68,4 @@ class LIME_API ShivaPCIE_lime : public LimePCIe
 
 } // namespace lime
 
-#endif // LIME_ShivaPCIE_lime_lime_H
+#endif // LIME_LA9310_PCIe_lime_H

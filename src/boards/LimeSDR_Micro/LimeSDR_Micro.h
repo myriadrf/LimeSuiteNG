@@ -34,7 +34,7 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         std::shared_ptr<LimePCIe> sampleStream,
         std::shared_ptr<ISerialPort> control,
-        std::shared_ptr<ShivaPCIE_lime> streamingPort,
+        std::shared_ptr<LA9310_PCIe> streamingPort,
         double refClk);
     ~LimeSDR_Micro();
 
@@ -201,7 +201,7 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
 
     std::shared_ptr<ISPI> lmsSPI;
     std::shared_ptr<ISerialPort> mSerialPort;
-    std::shared_ptr<ShivaPCIE_lime> mStreamingPort;
+    std::shared_ptr<LA9310_PCIe> mStreamingPort;
     std::shared_ptr<I2C_bus> mI2C;
 
     bool mConfigInProgress;

@@ -1,4 +1,4 @@
-#include "comms/shiva/shiva_lime.h"
+#include "LA9310_PCIe.h"
 
 #include "limesuiteng/Logger.h"
 
@@ -10,6 +10,8 @@
 #include <thread>
 #include "protocols/LMS64CProtocol.h"
 
+#include "la9310_host_if.h"
+
 #ifdef __unix__
     #include <unistd.h>
     #include <fcntl.h>
@@ -18,23 +20,21 @@
     #include <sys/ioctl.h>
 #endif
 
-#include "la9310_modinfo.h"
-
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
 
-ShivaPCIE_lime::ShivaPCIE_lime()
+LA9310_PCIe::LA9310_PCIe()
     : LimePCIe()
 {
 }
 
-ShivaPCIE_lime::~ShivaPCIE_lime()
+LA9310_PCIe::~LA9310_PCIe()
 {
     Close();
 }
 
-OpStatus ShivaPCIE_lime::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
+OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
 {
     uint8_t temp[64];
     volatile struct la9310_hif* hif = static_cast<struct la9310_hif*>(hostInterfaceAddr);
@@ -54,7 +54,7 @@ OpStatus ShivaPCIE_lime::RunControlCommand(uint8_t* request, uint8_t* response, 
         auto t2 = std::chrono::high_resolution_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(1000))
         {
-            lime::error("ShivaPCIE_lime: RunControlCommand timeout\n");
+            lime::error("LA9310_PCIe: RunControlCommand timeout\n");
         }
         // sleep is required otherwise received data is not always as expected
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -78,12 +78,12 @@ OpStatus ShivaPCIE_lime::RunControlCommand(uint8_t* request, uint8_t* response, 
     return OpStatus::NotImplemented;
 }
 
-OpStatus ShivaPCIE_lime::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
+OpStatus LA9310_PCIe::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
 {
     return RunControlCommand(data, data, length, timeout_ms);
 }
 
-OpStatus ShivaPCIE_lime::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
+OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
 {
     mFilePath = deviceFilename;
     // use O_RDWR for now, because MMAP PROT_WRITE implies PROT_READ and will fail if file is opened write only
@@ -92,7 +92,7 @@ OpStatus ShivaPCIE_lime::Open(const std::filesystem::path& deviceFilename, uint3
     mFileDescriptor = open(mFilePath.c_str(), flags);
     if (mFileDescriptor < 0)
     {
-        lime::error("ShivaPCIE_lime: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
+        lime::error("LA9310_PCIe: Failed to open (%s), errno(%i) %s", mFilePath.c_str(), errno, strerror(errno));
         // TODO: convert errno to OpStatus
         return OpStatus::FileNotFound;
     }
@@ -129,7 +129,7 @@ OpStatus ShivaPCIE_lime::Open(const std::filesystem::path& deviceFilename, uint3
     return OpStatus::Success;
 }
 
-void ShivaPCIE_lime::Close()
+void LA9310_PCIe::Close()
 {
     for (const mmaped_region& region : mapped_ranges)
     {
@@ -145,17 +145,17 @@ void ShivaPCIE_lime::Close()
     mFileDescriptor = -1;
 }
 
-int ShivaPCIE_lime::WriteControl(const uint8_t* buffer, const int length, int timeout_ms)
+int LA9310_PCIe::WriteControl(const uint8_t* buffer, const int length, int timeout_ms)
 {
     return -1;
 }
 
-int ShivaPCIE_lime::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
+int LA9310_PCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 {
     return -1;
 }
 
-mmaped_region ShivaPCIE_lime::GetBar(uint8_t i)
+mmaped_region LA9310_PCIe::GetBar(uint8_t i)
 {
     return mapped_ranges[i];
 }

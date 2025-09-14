@@ -14,11 +14,8 @@
 #include "streaming/PacketsFIFO.h"
 #include "streaming/StreamPacket.h"
 
-#include "la9310_modinfo.h"
-#include "la9310_host_if.h"
-
-#include "comms/shiva/shiva_lime.h"
-#include "chips/LA9310/vspa_mailbox.h"
+#include "comms/PCIe/LA9310_PCIe.h"
+#include "chips/LA9310/VSPA_iqplayer.h"
 
 namespace lime {
 
@@ -26,7 +23,7 @@ namespace lime {
 class LA9310_TRX : public RFStream
 {
   public:
-    LA9310_TRX(std::shared_ptr<ShivaPCIE_lime> port);
+    LA9310_TRX(std::shared_ptr<LA9310_PCIe> port);
     virtual ~LA9310_TRX();
 
     uint64_t GetHardwareTimestamp() const override;
@@ -83,8 +80,8 @@ class LA9310_TRX : public RFStream
     };
 
   private:
-    std::shared_ptr<ShivaPCIE_lime> port;
-    VSPA_MailBox mailbox;
+    std::shared_ptr<LA9310_PCIe> port;
+    VSPA_iqplayer vspa;
 
     OpStatus RxSetup();
     void RxWorkLoop();
