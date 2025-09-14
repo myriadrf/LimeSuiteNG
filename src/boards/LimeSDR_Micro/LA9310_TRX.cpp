@@ -24,18 +24,12 @@
 #include <queue>
 #include <cinttypes>
 
-#include "chips/LA9310/libiqplayer.h"
-#include "la9310_host_if.h"
-
 using namespace std::literals::string_literals;
 
 namespace lime {
 
 using namespace std;
 using namespace std::chrono;
-
-static int RxChanID = 0;
-static uint32_t rx_fifo_start_offset_in_iqflood = 0;
 
 static constexpr bool showStats{ true };
 
@@ -74,26 +68,6 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_PCIe> port)
     , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
 {
-    // auto v_scratch_ddr = port->GetBar(LA9310_WINDOW_SCRATCH);
-    auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
-    auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
-
-    auto dmem_proxy = port->GetBar(LA9310_WINDOW_IPC);
-    uint32_t* dmem_ptr = reinterpret_cast<uint32_t*>(dmem_proxy.vaddr) + 768;
-
-    lime::debug("LA9310_TRX: IQFLOOD size: %lu", v_iqflood_ddr.size);
-
-    int ret = iq_player_init(reinterpret_cast<uint32_t*>(v_iqflood_ddr.vaddr),
-        v_iqflood_ddr.size,
-        reinterpret_cast<uint32_t*>(v_la9310_bar2.vaddr),
-        dmem_ptr);
-    if (!ret)
-    {
-        printf("\n TRX : iq_player_init failed\n");
-        fflush(stdout);
-        throw std::runtime_error("");
-    }
-
     mTimestampOffset = 0;
 }
 
@@ -158,7 +132,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     if (status != OpStatus::Success)
         return status;
 
-    return OpStatus::Success;
+    return vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
 }
 
 const StreamConfig& LA9310_TRX::GetConfig() const
@@ -180,14 +154,7 @@ OpStatus LA9310_TRX::Start()
         streamActive.notify_all();
     }
 
-    auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
-    const int rxFIFOsize = v_iqflood_ddr.size;
-
-    OpStatus status = vspa.StartRx(rxFIFOsize, LA9310_IQFLOOD_PHYS_ADDR + rx_fifo_start_offset_in_iqflood);
-    if (status != OpStatus::Success)
-        return status;
-
-    return OpStatus::Success;
+    return vspa.StartRx();
 }
 
 OpStatus LA9310_TRX::StageStart()
@@ -222,6 +189,7 @@ void LA9310_TRX::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
     }
+    vspa.StopRx();
 
     // wait for loop ends
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
@@ -234,11 +202,7 @@ void LA9310_TRX::Stop()
                 mTx.cv.wait(lck);
         }
     }
-
-    vspa.StopRx();
-    // system("vspa_mbox send 0 0 0x05000000 0");
-    // system("vspa_mbox recv 0 0");
-    // vspa.StopTx();
+    vspa.StopTx();
 
     if (mRx.stagingPacket != nullptr)
     {
@@ -281,20 +245,6 @@ OpStatus LA9310_TRX::RxSetup()
     // init tx channel
     int la9310chan = mConfig.channels.at(TRXDir::Rx).front() == 0 ? 3 : 1;
     vspa.SelectRxChannel(la9310chan);
-
-    auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
-    const int rxFIFOsize = v_iqflood_ddr.size;
-
-    printf("Rx FIFO size: %u\n", rxFIFOsize);
-    printf("channels %i\n", mConfig.channels.at(TRXDir::Rx).front());
-
-    int ret = iq_player_init_rx(RxChanID, rx_fifo_start_offset_in_iqflood, rxFIFOsize);
-    if (!ret)
-    {
-        printf("\n RX : iq_player_init_rx failed\n");
-        fflush(stdout);
-        throw std::runtime_error("");
-    }
 
     mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
@@ -436,7 +386,7 @@ void LA9310_TRX::ReceivePacketsLoop()
     {
         // prepare next transmit
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        uint32_t size_received = iq_player_receive_data(RxChanID, buffer.data(), 65536);
+        uint32_t size_received = vspa.Receive(0, buffer.data(), 65536);
         // size_received = iq_player_receive_data(RxChanID, buffer.data(), buffer.size());
         // printf("Got bytes: %li\n", size_received);
         Bps += size_received;

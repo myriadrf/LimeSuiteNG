@@ -24,7 +24,7 @@
 #include "la9310_regs.h"
 // #include "imx8-host.h"
 #include "stats.h"
-#include "chips/LA9310/vspa_dmem_proxy.h"
+#include "vspa_dmem_proxy.h"
 
 #define pr_info printf
 void print_vspa_stats(void);

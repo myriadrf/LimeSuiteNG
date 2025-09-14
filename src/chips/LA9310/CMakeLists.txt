@@ -1,6 +1,5 @@
 set(LA9310_SOURCES
   LA9310.cpp
-  libiqplayer.cpp
   VSPA_mailbox.cpp
   VSPA_iqplayer.cpp
 )

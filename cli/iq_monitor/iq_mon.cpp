@@ -35,7 +35,7 @@
 #include "stats.h"
 // #include "iq_streamer.h"
 // #include "imx8-host.h"
-#include "chips/LA9310/vspa_dmem_proxy.h"
+#include "vspa_dmem_proxy.h"
 
 #include "comms/PCIe/LA9310_PCIe.h"
 
