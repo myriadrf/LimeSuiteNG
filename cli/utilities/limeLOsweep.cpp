@@ -127,14 +127,14 @@ int main(int argc, char** argv)
 
     lime::registerLogHandler(log_func);
     int delay_ms = args::get(stepDurationFlag);
-    for (double freq = LOstart; freq < LOend; freq += LOstep)
+    for (double freq = LOstart; freq <= LOend; freq += LOstep)
     {
         if (log_level >= LogLevel::Verbose)
             std::cerr << "LO: " << freq << " Hz, tune time: ";
         auto t1 = std::chrono::high_resolution_clock::now();
         if (device->SetFrequency(0, TRXDir::Tx, 0, freq) != OpStatus::Success)
         {
-            std::cerr << "Failed to tune LO freq: %f" << freq << std::endl;
+            std::cerr << "Failed to tune LO freq: " << freq << std::endl;
         }
         auto t2 = std::chrono::high_resolution_clock::now();
 
