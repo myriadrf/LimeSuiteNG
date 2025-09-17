@@ -46,3 +46,5 @@ install(
     TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM
     COMPONENT cli
     DESTINATION bin)
+
+add_subdirectory(utilities)
