@@ -71,6 +71,8 @@ int main(int argc, char** argv)
     args::Group                     group(parser, "This group is all exclusive:"s, args::Group::Validators::AtMostOne);
     args::ValueFlag<std::string>    iniFlag(group, "config"s, "Path to LMS7002M .ini configuration file to use as a base"s, {'c', "config"s}, ""s);
     args::Flag                      initFlag(group, "init"s, "Just initialize the device"s, {'i', "init"s}, false);
+    args::Flag                      dirRx(group, "rx"s, "Rx LO"s, {"rx"s}, false);
+    args::Flag                      dirTx(group, "tx"s, "Tx LO"s, {"tx"s}, false);
     // clang-format on
 
     try
@@ -127,12 +129,16 @@ int main(int argc, char** argv)
 
     lime::registerLogHandler(log_func);
     int delay_ms = args::get(stepDurationFlag);
+    lime::TRXDir direction = TRXDir::Tx;
+    if (args::get(dirRx))
+        direction = TRXDir::Rx;
+
     for (double freq = LOstart; freq <= LOend; freq += LOstep)
     {
         if (log_level >= LogLevel::Verbose)
-            std::cerr << "LO: " << freq << " Hz, tune time: ";
+            std::cerr << (direction == TRXDir::Tx ? "Tx" : "Rx") << " LO: " << freq << " Hz, tune time: ";
         auto t1 = std::chrono::high_resolution_clock::now();
-        if (device->SetFrequency(0, TRXDir::Tx, 0, freq) != OpStatus::Success)
+        if (device->SetFrequency(0, direction, 0, freq) != OpStatus::Success)
         {
             std::cerr << "Failed to tune LO freq: " << freq << std::endl;
         }
