@@ -7,6 +7,7 @@
 #include <wx/msgdlg.h>
 
 #include "chips/LMS7002M/lms7002_mainPanel.h"
+#include "chips/LMS8001/lms8001_mainPanel.h"
 
 #include "limeGUIFrame.h"
 #include "dlgAbout.h"
@@ -477,6 +478,11 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
         sdrPanel->Setup(reinterpret_cast<SDRDevice*>(socPtr));
         sdrPanel->Hide();
         return sdrPanel;
+    }
+    case eDeviceTreeNodeClass::LMS8001: {
+        lms8001_mainPanel* lmsPanel = new lms8001_mainPanel(parent, wxNewId());
+        lmsPanel->Initialize(reinterpret_cast<LMS8001*>(socPtr));
+        return lmsPanel;
     }
     default:
         // lime::warning("No GUI available for this device node class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));
