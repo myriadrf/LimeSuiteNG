@@ -143,8 +143,8 @@ OpStatus LMS8001::SaveConfig(const std::string& filename)
 
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
     {
-        sprintf(addr, "0x%04X", addrToRead[i]);
-        sprintf(value, "0x%04X", dataReceived[i]);
+        snprintf(addr, sizeof(addr), "0x%04X", addrToRead[i]);
+        snprintf(value, sizeof(value), "0x%04X", dataReceived[i]);
         parser.set(addr, value);
     }
 

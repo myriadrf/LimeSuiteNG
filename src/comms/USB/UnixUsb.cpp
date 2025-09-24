@@ -388,7 +388,7 @@ void UnixUsb::FreeAsyncContext(void* context)
 {
     assert(context);
     AsyncContext* xfer = reinterpret_cast<AsyncContext*>(context);
-    delete reinterpret_cast<AsyncContext*>(context);
+    delete xfer;
 }
 
 OpStatus UnixUsb::ClaimInterface(int32_t interface_number)

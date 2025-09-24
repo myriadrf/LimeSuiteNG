@@ -11,7 +11,7 @@ class LMS8001;
 
 namespace lime {
 class LMS8001;
-class LMS8Parameter;
+struct LMS8Parameter;
 } // namespace lime
 
 namespace LMS8001_WXGUI {

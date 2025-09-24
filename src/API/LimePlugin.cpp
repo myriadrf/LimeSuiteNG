@@ -1033,7 +1033,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                     for (const auto& reg : node.fpgaRegisterWrites)
                     {
                         char datastring[64];
-                        sprintf(datastring, " %08X", reg);
+                        snprintf(datastring, sizeof(datastring), " %08X", reg);
                         ss << datastring;
                     }
                     Log(LogLevel::Info, "SPI write[%s](%s)", spiname.c_str(), ss.str().c_str());

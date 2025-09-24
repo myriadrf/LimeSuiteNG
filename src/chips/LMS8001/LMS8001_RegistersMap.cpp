@@ -58,7 +58,7 @@ void LMS8001_RegistersMap::SetValue(const uint16_t address, const uint16_t value
 
 uint16_t LMS8001_RegistersMap::GetValue(uint16_t address) const
 {
-    std::map<const uint16_t, Register>::const_iterator iter;
+    std::map<uint16_t, Register>::const_iterator iter;
     iter = mRegMap.find(address);
     if (iter != mRegMap.end())
         return iter->second.value;

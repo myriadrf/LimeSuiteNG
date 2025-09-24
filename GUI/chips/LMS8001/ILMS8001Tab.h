@@ -7,7 +7,7 @@
 
 namespace lime {
 class LMS8001;
-class LMS8Parameter;
+struct LMS8Parameter;
 } // namespace lime
 
 class ILMS8001Tab : public wxPanel

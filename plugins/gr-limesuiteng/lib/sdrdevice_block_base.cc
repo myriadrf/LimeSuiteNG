@@ -150,7 +150,7 @@ bool sdrdevice_block_base::start()
 
     // Start the actual streaming in work(), otherwise multiple devices won't be started
     // at the same time
-    OpStatus status = devContext->stream->StageStart();
+    devContext->stream->StageStart();
     GR_LOG_DEBUG(debuglogger, "Device configured and ready.");
     canWork = true;
     return true;

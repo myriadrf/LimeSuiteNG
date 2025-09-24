@@ -28,7 +28,7 @@ class LMS8001_RegistersMap
     std::vector<uint16_t> GetUsedAddresses() const;
 
   protected:
-    std::map<const uint16_t, Register> mRegMap;
+    std::map<uint16_t, Register> mRegMap;
 };
 
 } // namespace lime
