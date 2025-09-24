@@ -303,7 +303,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     cerr << "Tx file size : "sv << fileSize << " bytes."sv << endl;
 
-    const int samplesBatchSize = 256 * 32;
+    const int samplesBatchSize = 4 * 256 * 32;
     complex16_t* txSamples[16];
     std::vector<complex16_t> channelSamples[16];
     for (int i = 0; i < args->channelCount; ++i)
@@ -316,6 +316,11 @@ static void TransmitLoop(TransmitLoopArgs* args)
     txMeta.flags = 0;
     txMeta.timestamp = 0;
     txMeta.hasTimestamp = false; // transmit immediately
+
+    std::vector<complex16_t> interleavedBuffer;
+    if (args->channelCount > 1)
+        interleavedBuffer.resize(samplesBatchSize * args->channelCount);
+
     do
     {
         int samplesRemaining = txSamplesCountTotal;
@@ -329,8 +334,8 @@ static void TransmitLoop(TransmitLoopArgs* args)
             }
             else
             {
-                complex16_t interleavedBuffer[samplesBatchSize];
-                fin->read(reinterpret_cast<char*>(interleavedBuffer), args->channelCount * samplesToSend * sizeof(complex16_t));
+                fin->read(
+                    reinterpret_cast<char*>(interleavedBuffer.data()), args->channelCount * samplesToSend * sizeof(complex16_t));
                 int srcIndex = 0;
                 for (int s = 0; s < samplesToSend; ++s)
                 {
