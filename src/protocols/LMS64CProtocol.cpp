@@ -22,6 +22,16 @@
 #define DEBUG_SPI 0
 
 #if DEBUG_SPI
+
+static std::string BufferToString(const uint8_t* bytes, int length)
+{
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (int i = 0; i < length; ++i) // payload
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]);
+    return ss.str();
+}
+
 static std::string PacketToString(const lime::LMS64CPacket& pkt)
 {
     std::stringstream ss;
@@ -31,7 +41,24 @@ static std::string PacketToString(const lime::LMS64CPacket& pkt)
     for (; i < 8; ++i) // header
         ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
     ss << " |";
-    for (; i < 8 + pkt.blockCount * 4; ++i) // payload
+    for (; i < 8 + pkt.blockCount; ++i) // payload
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
+    return ss.str();
+}
+
+static std::string GenericSPIToString(const lime::LMS64CPacket& pkt)
+{
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&pkt);
+    int i = 0;
+    for (; i < 8; ++i) // header
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
+    ss << " |";
+    for (; i < 16; ++i) // spi config
+        ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
+    ss << " |";
+    for (; i < 16 + pkt.blockCount * 8; ++i) // payload
         ss << ' ' << std::setw(2) << static_cast<uint32_t>(bytes[i]); // need to cast otherwise prints bytes as characters
     return ss.str();
 }
@@ -171,7 +198,14 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* 
     OpStatus status;
     do
     {
+#if DEBUG_SPI
+        lime::log(LogLevel::Debug, "Wr:"s + BufferToString(request, length));
+#endif
         status = port.RunControlCommand(request, response, length, timeout_ms);
+#if DEBUG_SPI
+
+        lime::log(LogLevel::Debug, "Rd:"s + BufferToString(response, length));
+#endif
     } while (status == OpStatus::Busy);
 
     if (status != OpStatus::Success)
@@ -998,6 +1032,79 @@ OpStatus ReadSerialNumber(ISerialPort& port, std::vector<uint8_t>& serialBytes)
         return OpStatus::Error;
     serialBytes.clear();
     payloadView.GetSerial(serialBytes);
+    return OpStatus::Success;
+}
+
+OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, size_t count)
+{
+    size_t srcIndex = 0;
+    size_t destIndex = 0;
+    const int blockSize = 8;
+    const int preambleSize = 8;
+    const int bytesInSPI = 4;
+    constexpr int maxBlocks = (LMS64CPacket::payloadSize - preambleSize) / blockSize; // = 14
+
+    LMS64CPacket pkt;
+
+    if (MISO)
+        memset(MISO, 0, pkt.payload[2] * count);
+    while (srcIndex < count)
+    {
+        pkt.cmd = Command::PERIPHSPI_TRNSF;
+        pkt.subDevice = 0;
+        pkt.periphID = busIndex;
+        pkt.payload[0] = chipSelect;
+        pkt.payload[2] = bytesInSPI;
+        pkt.status = CommandStatus::Undefined;
+        pkt.blockCount = 0;
+
+        for (int i = 0; i < maxBlocks && srcIndex < count; ++i)
+        {
+            int payloadOffset = preambleSize + pkt.blockCount * blockSize;
+            bool isWrite = MOSI[srcIndex] & (1 << 31);
+            memset(&pkt.payload[payloadOffset], 0, blockSize);
+            if (isWrite)
+            {
+                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 24;
+                pkt.payload[payloadOffset + 1] = MOSI[srcIndex] >> 16;
+                pkt.payload[payloadOffset + 2] = MOSI[srcIndex] >> 8;
+                pkt.payload[payloadOffset + 3] = MOSI[srcIndex];
+            }
+            else
+            {
+                pkt.payload[payloadOffset + 0] = MOSI[srcIndex] >> 8;
+                pkt.payload[payloadOffset + 1] = MOSI[srcIndex];
+            }
+            ++pkt.blockCount;
+            ++srcIndex;
+        }
+
+#if DEBUG_SPI
+        std::string msg = GenericSPIToString(pkt);
+        lime::log(LogLevel::Debug, "Wr:"s + msg);
+#endif
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+#if DEBUG_SPI
+        msg = GenericSPIToString(pkt);
+        lime::log(LogLevel::Debug, "Rd:"s + msg);
+#endif
+        if (status != OpStatus::Success)
+            return status;
+
+        for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
+        {
+            int payloadOffset = preambleSize + i * blockSize;
+            uint32_t value = 0;
+            for (int b = 0; b < 2; ++b)
+            {
+                value <<= 8;
+                value |= pkt.payload[payloadOffset + b];
+            }
+            MISO[destIndex] = value;
+            ++destIndex;
+        }
+    }
+
     return OpStatus::Success;
 }
 

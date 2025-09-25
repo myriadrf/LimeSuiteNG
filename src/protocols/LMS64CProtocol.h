@@ -77,6 +77,7 @@ enum class Command : uint8_t {
     BRDCONF_WR = 0x5D, //write config data to board
     BRDCONF_RD = 0x5E, //read config data from board
 
+    PERIPHSPI_TRNSF = 0x60, // Direct SPI use
     ANALOG_VAL_WR = 0x61, //write analog value
     ANALOG_VAL_RD = 0x62, //read analog value
 
