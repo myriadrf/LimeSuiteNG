@@ -304,7 +304,7 @@ la9310_create_rfnm_iqflood_outbound(struct la9310_dev *la9310_dev)
 
 #define IQFLOOD_OUTBOUND_ADDR 0xB0001000
 #define IQFLOOD_OUTBOUND_SIZE 0xD000000
-#define VSPA_DMEM_PROXY_SIZE 1024
+#define VSPA_DMEM_PROXY_SIZE 4096
 #define VSPA_DMEM_PROXY_ADDR (IQFLOOD_OUTBOUND_ADDR + IQFLOOD_OUTBOUND_SIZE - VSPA_DMEM_PROXY_SIZE)
 
 // Currently using IPC outbound window to map VSPA DMEM PROXY address, which is at IQFLOOD + 256MB
@@ -782,7 +782,7 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	la9310_create_rfnm_iqflood_outbound(la9310_dev);
 
 	dma_addr_t dmem_proxy_Handle;
-    la9310_dev->dmem_proxy.size = 4096;
+    la9310_dev->dmem_proxy.size = VSPA_DMEM_PROXY_SIZE;
     la9310_dev->dmem_proxy.vaddr = dma_alloc_coherent(la9310_dev->dev, la9310_dev->dmem_proxy.size, &dmem_proxy_Handle, GFP_KERNEL);
     la9310_dev->dmem_proxy.phys_addr = dmem_proxy_Handle;
     if (!la9310_dev->dmem_proxy.vaddr)

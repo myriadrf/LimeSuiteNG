@@ -3,7 +3,7 @@
 
 #define VSPA_RX_NUM_MAX_CHAN 4
 
-// #include "vspa_stats.h"
+#include "cli/iq_monitor/stats.h"
 
 typedef struct s_tx_ch_host_proxy {
     uint32_t la9310_fifo_enqueued_size;
@@ -31,9 +31,9 @@ typedef struct s_rx_ch_host_proxy {
 typedef struct s_vspa_dmem_proxy {
     t_tx_ch_host_proxy tx_state_readonly;
     t_rx_ch_host_proxy rx_state_readonly[VSPA_RX_NUM_MAX_CHAN];
-    // t_stats vspa_stats;
-    // t_stats host_stats;
-    // t_stats app_stats;
+    t_stats vspa_stats;
+    t_stats host_stats;
+    t_stats app_stats;
 } t_vspa_dmem_proxy;
 
 #endif // LIME_VSPA_DMEM_PROXY_H_

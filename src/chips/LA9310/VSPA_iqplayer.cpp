@@ -6,7 +6,7 @@
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
-#if 1 // print debug messages
+#if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \
         { \
@@ -53,28 +53,28 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
 
     // use last 1024 bytes of iqflood as shared vspa dmem proxy , vspa will write mirrored dmem value to avoid PCI read from host
     uint32_t* dmem_ptr = reinterpret_cast<uint32_t*>(dmem_proxy.vaddr) + 768;
-    v_vspa_dmem_proxy_ro = reinterpret_cast<const volatile t_vspa_dmem_proxy*>(dmem_ptr);
+    v_vspa_dmem_proxy_ro = reinterpret_cast<volatile t_vspa_dmem_proxy*>(dmem_ptr);
     rx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->rx_state_readonly[0]);
     tx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->tx_state_readonly);
-
-    // app_stats = &(((t_vspa_dmem_proxy*)v_vspa_dmem_proxy_ro)->app_stats);
+    app_stats = &(((t_vspa_dmem_proxy*)v_vspa_dmem_proxy_ro)->app_stats);
 
     // use dmem structure at hardcoded address to write host status/request
     // dccivac((uint32_t*)tx_vspa_proxy_ro);
     void* tx_proxy_wo = nullptr;
-    // volatile uint32_t* v_rx_vspa_proxy_wo = nullptr;
+    void* rx_proxy_wo = nullptr;
     uint8_t* BAR2_addr = reinterpret_cast<uint8_t*>(v_la9310_bar2.vaddr);
     if (tx_vspa_proxy_ro->rx_num_chan == 1)
     {
         tx_proxy_wo = BAR2_addr + 0x400000 + 0x00000000;
-        // v_rx_vspa_proxy_wo = (uint32_t*)(BAR2_addr + 0x400000 + 0x00000040);
+        rx_proxy_wo = BAR2_addr + 0x400000 + 0x00000040;
     }
     else
     {
         tx_proxy_wo = BAR2_addr + 0x500000 + 0x00004000;
-        // v_rx_vspa_proxy_wo = (uint32_t*)(BAR2_addr + 0x500000 + 0x00004040);
+        rx_proxy_wo = BAR2_addr + 0x500000 + 0x00004040;
     }
     tx_vspa_proxy_wo = reinterpret_cast<volatile t_tx_ch_host_proxy*>(tx_proxy_wo);
+    rx_vspa_proxy_wo = reinterpret_cast<volatile t_tx_ch_host_proxy*>(rx_proxy_wo);
     printf_dbg_log("VSPA_iqplayer: IQFLOOD size: %lu, Rx channels %u\n", v_iqflood_ddr.size, tx_vspa_proxy_ro->rx_num_chan);
 }
 
@@ -88,7 +88,51 @@ OpStatus VSPA_iqplayer::SelectRxChannel(uint32_t rx_channel_index)
 
 OpStatus VSPA_iqplayer::StartRx()
 {
-    return StartRx(iqflood_size, LA9310_IQFLOOD_PHYS_ADDR + rx_fifo_start_offset_in_iqflood);
+    return StartRx(iqflood_size / 8, LA9310_IQFLOOD_PHYS_ADDR + iqflood_size / 2);
+}
+
+OpStatus VSPA_iqplayer::StartTx()
+{
+    return StartTx(iqflood_size / 8, LA9310_IQFLOOD_PHYS_ADDR);
+}
+
+OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr)
+{
+    const mbox_opc_e command = MBOX_OPC_IQ_MOD_TX;
+    const bool start = true;
+    const bool test_load_start = false;
+
+    const uint8_t ddr_rd_dma_ch_nb = 1;
+    const bool ddr_rd_dma_mBurst = false;
+    const bool host_flow_control_disable = false;
+
+    assert(fifo_size / 4096 < 0x10000);
+    assert(fifo_size / 4096 > 0);
+    const uint16_t chunkCount4k = fifo_size / 4096;
+
+    uint32_t loword = fifo_base_la9310_phys_addr;
+    uint32_t hiword = 0;
+    hiword |= command << 24;
+    hiword |= host_flow_control_disable ? 0x00400000 : 0;
+    hiword |= test_load_start ? 0x00200000 : 0;
+    hiword |= start ? 0x00100000 : 0;
+    hiword |= ddr_rd_dma_mBurst ? 0x00080000 : 0;
+    hiword |= (ddr_rd_dma_ch_nb << 16) & 0x00070000;
+    hiword |= chunkCount4k & 0x0000FFFF;
+
+    uint64_t value = uint64_t(hiword) << 32 | loword;
+
+    printf_dbg_log("IQPlayer: Start Tx, fifo_size:%u\n", fifo_size);
+    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
+    OpStatus status = mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    VSPA_FIFO_State& txState = mTx;
+
+    txState.bytes_consumed = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
+    txState.bytes_produced = 4096; //txState.bytes_consumed + 4096;//txState.bytes_consumed;
+
+    tx_vspa_proxy_wo->host_produced_size = txState.bytes_produced;
+    tx_vspa_proxy_wo->la9310_fifo_enqueued_size = 0; //tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
+    return status;
 }
 
 OpStatus VSPA_iqplayer::StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr)
@@ -100,7 +144,6 @@ OpStatus VSPA_iqplayer::StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     const uint8_t ddr_wr_dma_ch_nb = 1;
     const bool host_flow_control_disable = false;
 
-    assert((fifo_size & 0xFFFF) == 0);
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
     const uint16_t chunkCount4k = fifo_size / 4096;
@@ -140,7 +183,20 @@ OpStatus VSPA_iqplayer::StopTx()
 
 OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount)
 {
-    return SetupRx(0, 0, iqflood_size);
+    OpStatus status = OpStatus::Success;
+    if (txCount)
+    {
+        status = SetupTx(0, iqflood_size / 8);
+        if (status != OpStatus::Success)
+            return status;
+    }
+    if (rxCount)
+    {
+        status = SetupRx(0, iqflood_size / 8, iqflood_size / 2);
+        if (status != OpStatus::Success)
+            return status;
+    }
+    return status;
 }
 
 OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, uint32_t fifo_size)
@@ -176,15 +232,19 @@ OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size)
     //  return 0;
     //}
 
+    //dccivac((uint32_t*)(tx_vspa_proxy_ro));
+
     // init fifo pointers
     txState.fifo_start_addr = fifo_start_offset;
     txState.fifo_size = fifo_size;
     txState.fifo_offset = tx_vspa_proxy_ro->la9310_fifo_enqueued_size % fifo_size;
-    tx_vspa_proxy_wo->host_produced_size = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
 
     // init flow control
     txState.bytes_consumed = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
     txState.bytes_produced = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
+
+    tx_vspa_proxy_wo->host_produced_size = 0; //tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
+    tx_vspa_proxy_wo->la9310_fifo_enqueued_size = 0; //tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
 
     return OpStatus::Success;
 }
@@ -194,16 +254,6 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     VSPA_FIFO_State& rxState = mRx[channel];
 
     // dccivac((uint32_t*)(rx_vspa_proxy_ro));
-
-    // check stop/restart
-    if (rx_vspa_proxy_ro[channel].DDR_wr_base_address == 0xdeadbeef)
-    {
-        rxState.bytes_produced = 0;
-        rxState.bytes_consumed = 0;
-        rxState.fifo_offset = 0;
-        tx_vspa_proxy_wo->host_consumed_size[channel] = 0;
-        return 0;
-    }
 
     // Check new transfer
     rxState.bytes_produced = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
@@ -230,7 +280,7 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
 
     // ready to fetch new data
     rxState.bytes_consumed += data_size;
-    // app_stats->rx_stats[chan][STAT_EXT_DMA_DDR_WR] += data_size / rx_ddr_step;
+    // app_stats->rx_stats[channel][STAT_EXT_DMA_DDR_WR] += data_size / rx_ddr_step;
 
     // xfer data
     auto ddr_src = vl_iqflood_ddr_addr + rxState.fifo_start_addr + rxState.fifo_offset;
@@ -249,25 +299,15 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     return data_size;
 }
 
-int32_t VSPA_iqplayer::Transmit(const uint32_t* src, uint32_t write_size)
+int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size)
 {
     VSPA_FIFO_State& txState = mTx;
 
     //dccivac((uint32_t*)(tx_vspa_proxy_ro));
 
-    // check stop/restart
-    if (tx_vspa_proxy_ro->DDR_rd_base_address == 0xdeadbeef)
-    {
-        txState.fifo_offset = 0;
-        txState.bytes_consumed = 0;
-        txState.bytes_produced = 0;
-        tx_vspa_proxy_wo->host_produced_size = 0;
-        return 0;
-    }
-
     // Check new transfer opty
     txState.bytes_consumed = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
-    uint32_t fifo_filled_bytes = txState.bytes_produced - txState.bytes_consumed;
+    int32_t fifo_filled_bytes = txState.bytes_produced - txState.bytes_consumed;
     if (fifo_filled_bytes > txState.fifo_size)
     {
         printf("\n TX underrun , exit (busy=0x%08x txState.bytes_produced=0x%08x txState.bytes_consumed=0x%08x)\n",
@@ -289,7 +329,7 @@ int32_t VSPA_iqplayer::Transmit(const uint32_t* src, uint32_t write_size)
 
     // ready to send new data
     txState.bytes_produced += write_size;
-    // app_stats->tx_stats[STAT_EXT_DMA_DDR_RD] += empty_size / tx_ddr_step;
+    app_stats->tx_stats[STAT_EXT_DMA_DDR_RD] += write_size / tx_ddr_step;
 
     // xfer data
     auto ddr_dst = vl_iqflood_ddr_addr + txState.fifo_start_addr + txState.fifo_offset;

@@ -154,7 +154,20 @@ OpStatus LA9310_TRX::Start()
         streamActive.notify_all();
     }
 
-    return vspa.StartRx();
+    OpStatus status = OpStatus::InvalidValue;
+    if (mConfig.channels.at(TRXDir::Tx).size() > 0)
+    {
+        status = vspa.StartTx();
+        if (status != OpStatus::Success)
+            return status;
+    }
+    if (mConfig.channels.at(TRXDir::Rx).size() > 0)
+    {
+        status = vspa.StartRx();
+        if (status != OpStatus::Success)
+            return status;
+    }
+    return status;
 }
 
 OpStatus LA9310_TRX::StageStart()
@@ -606,61 +619,36 @@ uint32_t LA9310_TRX::StreamRx(
 
 OpStatus LA9310_TRX::TxSetup()
 {
-    /*
-    OpStatus status = mTxArgs.dma->Initialize();
-    if (status != OpStatus::Success)
-        return status;
-
-    mTx.samplesInPkt = defaultSamplesInPkt;
+    vspa.StopTx();
+    const int chipId = 0;
     mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mTx.terminate.store(false, std::memory_order_relaxed);
 
     mTx.lastTimestamp.store(0, std::memory_order_relaxed);
-    const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
-    const int sampleSize = (mConfig.linkFormat == DataFormat::I16 ? 4 : 3); // sizeof IQ pair
+    const int chCount = 1;
 
-    const GatewareFeatures gw = fpga->GetFeatures();
-    uint32_t packetSize;
-    if (gw.hasConfigurableStreamPacketSize)
-    {
-        mTx.samplesInPkt = 256;
-        packetSize = sizeof(StreamHeader) + sampleSize * mTx.samplesInPkt * chCount;
-    }
-    else
-    {
-        // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
-        mTx.samplesInPkt = 4080 / sampleSize / chCount;
-        packetSize = 4096;
-    }
+    uint32_t packetSize = 4096;
+    mTx.samplesInPkt = 1024;
 
-    if (mConfig.extraConfig.tx.samplesInPacket != 0)
-    {
-        mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples override %i", mTx.samplesInPkt);
-    }
+    // if (mConfig.extraConfig.tx.samplesInPacket != 0)
+    // {
+    //     mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
+    //     lime::debug("Tx samples override %i", mTx.samplesInPkt);
+    // }
 
-    mTx.packetsToBatch = 8; // Tx packets can be flushed early without filling whole batch
+    mTx.packetsToBatch = 16; // Tx packets can be flushed early without filling whole batch
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
         mTx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mTx.samplesInPkt);
 
     if (mConfig.extraConfig.tx.packetsInBatch != 0)
-    {
         mTx.packetsToBatch = mConfig.extraConfig.tx.packetsInBatch;
-    }
 
-    const auto dmaChunks{ mTxArgs.dma->GetBuffers() };
-    const auto dmaBufferSize = dmaChunks.front().size;
+    // const auto dmaChunks{ mTxArgs.dma->GetBuffers() };
+    const auto dmaBufferSize = 65536; //dmaChunks.front().size;
 
     mTx.packetsToBatch = std::clamp<uint8_t>(mTx.packetsToBatch, 1, dmaBufferSize / packetSize);
 
-    std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
-    for (uint32_t i = 0; i < dmaChunks.size(); ++i)
-    {
-        dmaBuffers[i] = dmaChunks[i].buffer;
-    }
-
-    mTxArgs.buffers = std::move(dmaBuffers);
     mTxArgs.bufferSize = dmaBufferSize;
     mTxArgs.packetSize = packetSize;
     mTxArgs.packetsToBatch = mTx.packetsToBatch;
@@ -688,7 +676,7 @@ OpStatus LA9310_TRX::TxSetup()
 
     mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(1024);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
-    for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
+    for (uint32_t i = 0; i < mTx.packetsPool->max_size(); ++i)
         mTx.packetsPool->push(new StreamPacket(mTx.packetsToBatch * mTx.samplesInPkt, chCount, userSampleSize));
 
     mTx.terminate.store(false, std::memory_order_relaxed);
@@ -705,7 +693,7 @@ OpStatus LA9310_TRX::TxSetup()
 #endif
 
     // Initialize DMA
-    mTxArgs.dma->Enable(true);
+    // mTxArgs.dma->Enable(true);
 
     lime::debug("TxSetup wait for Tx worker.");
     // wait for Tx thread to be ready
@@ -714,8 +702,7 @@ OpStatus LA9310_TRX::TxSetup()
         while (mTx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
             mTx.cv.wait(lck);
     }
-    return OpStatus::Success;*/
-    return OpStatus::Error;
+    return OpStatus::Success;
 }
 
 void LA9310_TRX::TxWorkLoop()
@@ -753,7 +740,153 @@ void LA9310_TRX::TxWorkLoop()
 
 void LA9310_TRX::TransmitPacketsLoop()
 {
+    const int chipId = 0;
     lime::debug("Tx transmit loop start.");
+    StreamStats& stats = mTx.stats;
+
+    auto& fifo = mTx.fifo;
+    int64_t totalBytesSent = 0; //for data rate calculation
+
+    StreamPacket* srcPkt = nullptr;
+
+    auto t1{ std::chrono::steady_clock::now() };
+    auto t2 = t1;
+
+    DeltaVariable<int32_t> underrun(0);
+    DeltaVariable<int32_t> loss(0);
+
+    bool outputReady = false;
+    uint8_t dmaBuffer[65536];
+    uint32_t dmaFilled = 0;
+    uint32_t samplesFilled = 0;
+    uint32_t packetsCounter = 0;
+
+    uint32_t bytesRemaining = 0;
+
+    while (mTx.terminate.load(std::memory_order_relaxed) == false)
+    {
+        t2 = std::chrono::steady_clock::now();
+        const auto timePeriod{ std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() };
+        if (timePeriod >= statsPeriod_ms || mTx.terminate.load(std::memory_order_relaxed))
+        {
+            t1 = t2;
+            double dataRate = 1000.0 * totalBytesSent / timePeriod;
+            mTx.stats.dataRate_Bps = dataRate;
+            loss.set(stats.loss);
+            if (showStats || mCallback_logMessage)
+            {
+                char msg[512];
+                std::snprintf(msg,
+                    sizeof(msg) - 1,
+                    "%s Tx%i: %3.3f MB/s | TS:%s pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) f:%" PRIuPTR,
+                    "la9310", // mTxArgs.dma->GetName().c_str(),
+                    chipId,
+                    dataRate / 1000000.0,
+                    "noTS",
+                    stats.packets,
+                    underrun.value(),
+                    underrun.delta(),
+                    loss.value(),
+                    loss.delta(),
+                    fifo->size());
+                if (showStats)
+                    lime::info("%s", msg);
+                if (mCallback_logMessage)
+                {
+                    bool showAsWarning = underrun.delta() || loss.delta();
+                    LogLevel level = showAsWarning ? LogLevel::Warning : LogLevel::Debug;
+                    mCallback_logMessage(level, msg);
+                }
+            }
+            loss.checkpoint();
+            underrun.checkpoint();
+            totalBytesSent = 0;
+        }
+
+        bool reportProblems = false;
+        // collect and transform samples data to output buffer
+        while (!outputReady && !mTx.terminate.load(std::memory_order_relaxed))
+        {
+            if (!srcPkt)
+            {
+                if (!fifo->pop(&srcPkt, true, chrono::microseconds(100000)))
+                {
+                    std::this_thread::yield();
+                    break;
+                }
+            }
+            uint32_t bytesForFrame = 4;
+            uint32_t samplesToConsume = std::min(mTxArgs.samplesInPacket - samplesFilled, srcPkt->samples.size());
+
+            DataConversion conversion;
+            conversion.srcFormat = mConfig.format; //DataFormat::F32;
+            conversion.destFormat = DataFormat::I16;
+            conversion.channelCount = 1;
+
+            int samplesDataSize = Interleave(
+                reinterpret_cast<uint8_t*>(&dmaBuffer[dmaFilled]), srcPkt->samples.front(), samplesToConsume, conversion);
+            srcPkt->samples.pop(samplesToConsume);
+            srcPkt->meta.timestamp.AddTicks(samplesToConsume);
+            dmaFilled += samplesDataSize;
+            samplesFilled += samplesDataSize / bytesForFrame;
+
+            // samplesFilled = payloadSize / bytesForFrame;
+            bool isPacketFull = samplesFilled == mTxArgs.samplesInPacket;
+            bool doFlush = srcPkt->meta.flush && srcPkt->samples.size() == 0;
+
+            if (isPacketFull || doFlush)
+            {
+                samplesFilled = 0;
+                // const int producedDataSize = sizeof(StreamHeader) + tempPacket.GetPayloadSize();
+                // memcpy(outputTail, &tempPacket, producedDataSize);
+                ++packetsCounter;
+            }
+
+            doFlush |= packetsCounter == mTxArgs.packetsToBatch;
+
+            if (srcPkt->samples.empty())
+            {
+                mTx.packetsPool->push(srcPkt, true);
+                srcPkt = nullptr;
+            }
+
+            if (doFlush)
+            {
+                outputReady = true;
+                break;
+            }
+            bytesRemaining = dmaFilled;
+        }
+
+        // one callback for the entire batch
+        if (reportProblems && mConfig.statusCallback)
+            mConfig.statusCallback(true, &stats, mConfig.userData);
+
+        if (!outputReady)
+            continue;
+
+        while (bytesRemaining > 0)
+        {
+            int32_t sent = vspa.Transmit(&dmaBuffer[dmaFilled - bytesRemaining], bytesRemaining);
+
+            if (sent == 0)
+            {
+                ++stats.overrun;
+                // std::this_thread::yield();
+                break;
+            }
+            bytesRemaining -= sent;
+            totalBytesSent += sent;
+        }
+
+        if (bytesRemaining == 0)
+        {
+            stats.packets += packetsCounter;
+            outputReady = false;
+            dmaFilled = 0;
+            packetsCounter = 0;
+        }
+    }
     lime::debug("Tx transmit loop end.");
 }
 
@@ -817,15 +950,18 @@ template<class T>
 uint32_t LA9310_TRX::StreamTxTemplate(
     const T* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    /*
     const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;
-    const bool useTimestamp = meta ? meta->waitForTimestamp : false;
-    const bool flush = meta && meta->flushPartialPacket;
-    int64_t ts = meta ? meta->timestamp : 0;
+    const bool useTimestamp = meta ? (meta->hasTimestamp) : false;
+    const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
+
+    Timespec ts = meta->timestamp;
+    ts.SetTickRate(mConfig.hintSampleRate);
 
     uint32_t samplesRemaining = count;
 
-    if (mTx.stagingPacket && mTx.stagingPacket->meta.timestamp + mTx.stagingPacket->samples.size() != meta->timestamp)
+    bool timeGap = true; // expectedTS != lime::Timespec(meta->timestamp);
+
+    if (mTx.stagingPacket && timeGap)
     {
         if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
             return 0;
@@ -857,13 +993,18 @@ uint32_t LA9310_TRX::StreamTxTemplate(
             src[1] += consumed;
 
         samplesRemaining -= consumed;
-        ts += consumed;
+        ts.AddTicks(consumed);
 
-        if (mTx.stagingPacket->samples.isFull() || flush)
+        bool pushPacket = mTx.stagingPacket->samples.isFull();
+
+        if (samplesRemaining == 0 && flush)
         {
-            if (samplesRemaining == 0)
-                mTx.stagingPacket->meta.flush = flush;
+            mTx.stagingPacket->meta.flush = flush;
+            pushPacket = true;
+        }
 
+        if (pushPacket)
+        {
             if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
                 break;
 
@@ -871,8 +1012,7 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         }
     }
 
-    return count - samplesRemaining;*/
-    return 0;
+    return count - samplesRemaining;
 }
 
 /// @brief Transmits packets from from this specific stream.

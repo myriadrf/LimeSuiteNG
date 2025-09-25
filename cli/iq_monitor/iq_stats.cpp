@@ -134,6 +134,18 @@ void print_vspa_stats(void)
         }
         ((uint32_t*)cur_stats)[i] = *((uint32_t*)(host_stats) + i) + *((uint32_t*)(vspa_stats) + i) + *((uint32_t*)(app_stats) + i);
     }
+    t_vspa_dmem_proxy* proxy_ro = (t_vspa_dmem_proxy*)v_vspa_dmem_proxy_ro;
+    t_tx_ch_host_proxy* txproxy = &proxy_ro->tx_state_readonly;
+    printf("addr: %08X\n", txproxy->DDR_rd_base_address);
+    printf("dmemoffset: %i\n", txproxy->dmemProxyOffset);
+    printf("la9310_fifo_enqueued_size: %09i\n", txproxy->la9310_fifo_enqueued_size);
+    printf("la9310_fifo_consumed_size: %09i\n", txproxy->la9310_fifo_consumed_size);
+    printf("host_produced_size: %09i\n", txproxy->host_produced_size);
+    printf("host_consumed_size[0]: %09i\n", txproxy->host_consumed_size[0]);
+    printf("host_consumed_size[1]: %09i\n", txproxy->host_consumed_size[1]);
+    printf("rx_ddr_step: %09i\n", txproxy->rx_ddr_step);
+    printf("tx_ddr_step: %09i\n", txproxy->tx_ddr_step);
+
     printf("\nRX stats :");
     auto rxstate = &((t_vspa_dmem_proxy*)v_vspa_dmem_proxy_ro)->rx_state_readonly[0];
     printf("\naddr: %08X sz: %u P: %10u C: %10u\n",
@@ -196,16 +208,7 @@ void print_vspa_stats(void)
     printf("\n");
 
     // dump dmem proxy
-    // v_iqflood_ddr_addr[1] = 0xaabbccdd;
-    for (int b = 0; b < VSPA_DMEM_PROXY_SIZE / sizeof(uint32_t); ++b)
-    {
-        if (b % 8 == 0)
-            printf("\n");
-
-        printf("%08X ", v_vspa_dmem_proxy_ro[b]);
-        // printf("%08X ", v_iqflood_ddr_addr[b]);
-    }
-    printf("\n");
+    la9310_hexdump(v_vspa_dmem_proxy_ro, 256);
 
     return;
 }
