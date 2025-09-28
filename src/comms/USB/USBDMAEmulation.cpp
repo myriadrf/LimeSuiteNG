@@ -12,7 +12,6 @@ static constexpr int maxAsyncTransfers = 16;
 USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir)
     : port(port)
     , counters{}
-    , lastRequestIndex(0)
     , endpoint(endpoint)
     , dir(dir)
     , continuous(false)
@@ -99,7 +98,6 @@ OpStatus USBDMAEmulation::Enable(bool enable)
     }
 
     counters.transfersCompleted = 0;
-    lastRequestIndex = 0;
 
     // for USB nothing is needed to be done to just enable DMA
     isEnabled = true;
@@ -121,7 +119,7 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
         return OpStatus::Success;
     // For continuous transferring, preemptively request data to be transferred
     std::unique_lock lck{ queuesMutex };
-    lastRequestIndex = 0;
+    int lastRequestIndex = 0;
     port->FlushEndpoint();
     while (!transfers.empty())
     {
@@ -144,7 +142,7 @@ void USBDMAEmulation::UpdateProducerStates()
     {
         AsyncXfer* async = pendingXfers.front();
         assert(async);
-        int timeout_ms = 100; // just checking if the transfer is complete, not waiting.
+        const int timeout_ms = 0; // just check if transfer is completed. Do not wait.
         OpStatus status = port->WaitForXfer(async->xfer, timeout_ms);
         if (status != OpStatus::Success)
             break;
@@ -154,8 +152,6 @@ void USBDMAEmulation::UpdateProducerStates()
         ++counters.transfersCompleted;
         counters.transfersCompleted &= 0xFFFF;
     }
-    if (!continuous)
-        return;
 }
 
 USBDMAEmulation::State USBDMAEmulation::GetCounters()
@@ -172,20 +168,16 @@ OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, Dat
     assert(bytesCount > 0);
     assert(index < mappings.size());
 
-    int count = 1;
     std::unique_lock lck{ queuesMutex };
-    count = std::min(size_t(count), transfers.size());
-    if (!transfers.empty() && count > 0)
+    if (!transfers.empty())
     {
         AsyncXfer* async = transfers.front();
         async->requestedSize = bytesCount;
         OpStatus status = port->BeginDataXfer(async->xfer, mappings[index].buffer, async->requestedSize, endpoint);
-        lastRequestIndex = index; //(lastRequestIndex + 1) % mappings.size();
         if (status != OpStatus::Success)
             return OpStatus::Error;
         transfers.pop();
         pendingXfers.push(async);
-        --count;
         return OpStatus::Success;
     }
     return OpStatus::Error;

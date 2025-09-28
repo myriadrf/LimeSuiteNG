@@ -812,11 +812,11 @@ void TRXLooper::ReceivePacketsLoop()
                         fpgaTicks,
                         static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 }
-                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
+                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %+li, timeDiff:%+lins",
                     stats.packets + i,
                     expectedTimestamp.GetTicks(),
                     hwts.GetTicks(),
-                    expectedTimestamp.GetTicks() - hwts.GetTicks(),
+                    hwts.GetTicks() - expectedTimestamp.GetTicks(),
                     static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 ++stats.loss;
                 loss.add(1);
