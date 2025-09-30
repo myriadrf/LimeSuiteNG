@@ -49,16 +49,15 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     }
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
     auto t1 = std::chrono::high_resolution_clock::now();
-    do
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
     {
         auto t2 = std::chrono::high_resolution_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(1000))
         {
             lime::error("LA9310_PCIe: RunControlCommand timeout\n");
+            break;
         }
-        // sleep is required otherwise received data is not always as expected
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    } while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED);
+    }
 
     // auto t2 = std::chrono::high_resolution_clock::now();
     // int duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
