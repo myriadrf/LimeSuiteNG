@@ -58,6 +58,14 @@ class VSPA_iqplayer
     volatile t_stats* app_stats = nullptr;
 
     uint32_t rx_fifo_start_offset_in_iqflood;
+
+    struct FIFO_config {
+        uint32_t start_offset;
+        uint32_t size;
+    };
+
+    FIFO_config rxFIFO;
+    FIFO_config txFIFO;
 };
 
 } // namespace lime

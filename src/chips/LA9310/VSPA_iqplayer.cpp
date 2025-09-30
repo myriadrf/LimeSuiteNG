@@ -88,7 +88,7 @@ OpStatus VSPA_iqplayer::SelectRxChannel(uint32_t rx_channel_index)
 
 OpStatus VSPA_iqplayer::StartRx()
 {
-    return StartRx(iqflood_size / 8, LA9310_IQFLOOD_PHYS_ADDR + iqflood_size / 2);
+    return StartRx(rxFIFO.size, LA9310_IQFLOOD_PHYS_ADDR + rxFIFO.start_offset);
 }
 
 OpStatus VSPA_iqplayer::StartTx()
@@ -186,13 +186,13 @@ OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount)
     OpStatus status = OpStatus::Success;
     if (txCount)
     {
-        status = SetupTx(0, iqflood_size / 8);
+        status = SetupTx(0, iqflood_size / 4);
         if (status != OpStatus::Success)
             return status;
     }
     if (rxCount)
     {
-        status = SetupRx(0, iqflood_size / 8, iqflood_size / 2);
+        status = SetupRx(0, iqflood_size / 4, iqflood_size / 4);
         if (status != OpStatus::Success)
             return status;
     }
@@ -215,6 +215,9 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
     rxState.bytes_consumed = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
     rxState.bytes_produced = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
     tx_vspa_proxy_wo->host_consumed_size[channel] = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
+
+    rxFIFO.start_offset = fifo_start_offset;
+    rxFIFO.size = fifo_size;
 
     return OpStatus::Success;
 }
@@ -280,7 +283,7 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
 
     // ready to fetch new data
     rxState.bytes_consumed += data_size;
-    // app_stats->rx_stats[channel][STAT_EXT_DMA_DDR_WR] += data_size / rx_ddr_step;
+    app_stats->rx_stats[channel][STAT_EXT_DMA_DDR_WR] += data_size / rx_ddr_step;
 
     // xfer data
     auto ddr_src = vl_iqflood_ddr_addr + rxState.fifo_start_addr + rxState.fifo_offset;
