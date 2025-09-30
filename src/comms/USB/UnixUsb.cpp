@@ -199,6 +199,28 @@ std::vector<USBDescriptor> UnixUsb::enumerateDevices(const std::set<IUSB::Vendor
 
         USBDescriptor dest;
         TransferUSBDescriptor(devs[i], dest, desc);
+
+        const int speed = libusb_get_device_speed(devs[i]);
+        switch (speed)
+        {
+        case LIBUSB_SPEED_LOW:
+            dest.speed = USBSpeed::USB1_0;
+            break;
+        case LIBUSB_SPEED_FULL:
+            dest.speed = USBSpeed::USB1_1;
+            break;
+        case LIBUSB_SPEED_HIGH:
+            dest.speed = USBSpeed::USB2_0;
+            break;
+        case LIBUSB_SPEED_SUPER:
+            dest.speed = USBSpeed::USB3_0;
+            break;
+        case LIBUSB_SPEED_SUPER_PLUS:
+            dest.speed = USBSpeed::USB3_1;
+            break;
+        default:
+            dest.speed = USBSpeed::Unknown;
+        }
         devDescriptors.push_back(dest);
     }
     libusb_free_device_list(devs, 1);
