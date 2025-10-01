@@ -122,6 +122,7 @@ OpStatus LMS7002M_SPI(
     ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* mosi, size_t count, uint32_t subDevice = 0);
+OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, size_t count);
 
 OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count);
 OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count);
