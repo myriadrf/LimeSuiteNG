@@ -151,7 +151,7 @@ sSDR::sSDR(std::shared_ptr<ISPI> spiRFsoc,
     }
     {
         const int spi_bus_index = 0;
-        const int chipSelect = 2;
+        const int chipSelect = 1;
         lms8spi = std::make_shared<LMS64C_SPI>(mSerialPort,
             LMS64CProtocol::Command::PERIPHSPI_TRNSF,
             LMS64CProtocol::Command::PERIPHSPI_TRNSF,
