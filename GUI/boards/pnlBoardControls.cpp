@@ -12,6 +12,7 @@
 #include "pnlX3.h"
 #include "pnlX8.h"
 #include "pnlXTRX.h"
+#include "pnlsSDR.h"
 
 #include "protocols/ADCUnits.h"
 #include <cassert>
@@ -99,6 +100,7 @@ const std::vector<eLMS_DEV> pnlBoardControls::board_list = { LMS_DEV_UNKNOWN,
     LMS_DEV_LIMESDRMINI_V2,
     LMS_DEV_LIMESDR_X3,
     LMS_DEV_LIMESDR_XTRX,
+    LMS_DEV_EXTERNAL_SSDR,
     LMS_DEV_LIMESDR_MMX8 };
 
 pnlBoardControls::pnlBoardControls(
@@ -621,6 +623,13 @@ void pnlBoardControls::SetupControls(const std::string_view boardID)
     else if (boardID == GetDeviceName(LMS_DEV_LIMESDR_XTRX))
     {
         pnlXTRX* pnl = new pnlXTRX(this, wxNewId());
+        pnl->Initialize(mDevice);
+        additionalControls = pnl;
+        sizerAdditionalControls->Add(additionalControls);
+    }
+    else if (boardID == GetDeviceName(LMS_DEV_EXTERNAL_SSDR))
+    {
+        pnlsSDR* pnl = new pnlsSDR(this, wxNewId());
         pnl->Initialize(mDevice);
         additionalControls = pnl;
         sizerAdditionalControls->Add(additionalControls);
