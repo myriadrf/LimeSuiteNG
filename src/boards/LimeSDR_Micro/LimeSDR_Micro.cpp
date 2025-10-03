@@ -116,35 +116,32 @@ LimeSDR_Micro::~LimeSDR_Micro()
 {
 }
 
-static OpStatus InitLMS1(LMS7002M& lms, bool skipTune = false)
+static OpStatus InitLMS7002M(LMS7002M& lms, bool skipTune = false)
 {
     return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
-    // auto& chip = mLMSChips.at(0);
+    auto& rfsoc = mLMSChips.at(0);
 
-    // mConfigInProgress = true;
-    // if (!cfg.skipDefaults)
-    // {
-    //     const bool skipTune = true;
-    //     InitLMS1(*chip, skipTune);
-    // }
+    if (!cfg.skipDefaults)
+    {
+        const bool skipTune = true;
+        InitLMS7002M(*rfsoc, skipTune);
+    }
 
-    // OpStatus status = LMS7002M_Configure(*chip, cfg);
-    // mConfigInProgress = false;
+    OpStatus status = LMS7002M_Configure(*rfsoc, cfg);
+    if (status != OpStatus::Success)
+        return status;
 
-    // if (status != OpStatus::Success)
-    //     return status;
-
-    // for (int c = 0; c < 2; ++c)
-    // {
-    //     LMSSetPath(TRXDir::Tx, c, cfg.channel[c].tx.path);
-    //     LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
-    //     LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
-    // }
-    return OpStatus::NotImplemented;
+    for (int c = 0; c < 2; ++c)
+    {
+        LMSSetPath(TRXDir::Tx, c, cfg.channel[c].tx.path);
+        LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
+        // LMS7002ChannelCalibration(*rfsoc, cfg.channel[c], c);
+    }
+    return status;
 }
 
 const SDRDescriptor& LimeSDR_Micro::GetDescriptor() const
@@ -155,7 +152,7 @@ const SDRDescriptor& LimeSDR_Micro::GetDescriptor() const
 OpStatus LimeSDR_Micro::Init()
 {
     const bool skipTune = true;
-    return InitLMS1(*mLMSChips.at(0), skipTune);
+    return InitLMS7002M(*mLMSChips.at(0), skipTune);
 }
 
 OpStatus LimeSDR_Micro::Reset()
@@ -231,15 +228,15 @@ OpStatus LimeSDR_Micro::SetClockFreq(uint8_t clk_id, double freq, uint8_t channe
     return chip->SetClockFreq(static_cast<LMS7002M::ClockID>(clk_id), freq);
 }
 
-OpStatus LimeSDR_Micro::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
-{
-    return OpStatus::NotImplemented;
-}
+// OpStatus LimeSDR_Micro::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
+// {
+//     return OpStatus::NotImplemented;
+// }
 
-OpStatus LimeSDR_Micro::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
-{
-    return OpStatus::NotImplemented;
-}
+// OpStatus LimeSDR_Micro::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
+// {
+//     return OpStatus::NotImplemented;
+// }
 
 bool LimeSDR_Micro::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
@@ -576,6 +573,7 @@ OpStatus LimeSDR_Micro::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
 {
     auto stream = std::make_unique<LA9310_TRX>(mStreamingPort);
+    assert(config.hintSampleRate > 0);
     stream->Setup(config);
     return stream;
 }
@@ -607,7 +605,7 @@ void LimeSDR_Micro::StreamDestroy(uint8_t moduleIndex)
 
 double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
-    return 122.88e6;
+    return 40e6;
 }
 
 } //namespace lime

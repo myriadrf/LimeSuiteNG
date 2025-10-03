@@ -2092,7 +2092,8 @@ OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
         return status;
 
     // do not calibrate tx gain if custom config file is loaded to maintain custom values
-    if (customConfigFileIsLoaded)
+    // TODO: Micro
+    //if (customConfigFileIsLoaded)
     {
         lime::warning("Custom .ini configuration file is loaded, SetTxLPF will not calibrate CG_IAMP_TBB");
         return status;
