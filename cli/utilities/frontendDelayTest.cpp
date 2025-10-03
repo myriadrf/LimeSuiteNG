@@ -187,36 +187,36 @@ class TransmitterThread : public WorkerThread
     {
         constexpr auto timeout = std::chrono::microseconds(1000000);
 
-        // const int channelCount = 1;
-        // std::vector<const complex32f_t*> nullSamples;
-        // const float coef = 0.1;
-        // constexpr complex32f_t pattern[4] = {
-        //     complex32f_t(0, 1.0 * coef), complex32f_t(1.0 * coef, 0), complex32f_t(0, -1.0 * coef), complex32f_t(-1.0 * coef, 0)
-        // };
-        // for (size_t i = 0; i < nulldata.size(); ++i)
-        // {
-        //     nulldata[i] = complex32f_t(0, 0);
-        //     // nulldata[i] = pattern[i % 4];
-        // }
-        // for (int i = 0; i < channelCount; ++i)
-        //     nullSamples.push_back(nulldata.data());
+        const int channelCount = 1;
+        std::vector<const complex32f_t*> nullSamples;
+        constexpr float coef = 0.1;
+        constexpr complex32f_t pattern[4] = {
+            complex32f_t(0, 1.0 * coef), complex32f_t(1.0 * coef, 0), complex32f_t(0, -1.0 * coef), complex32f_t(-1.0 * coef, 0)
+        };
+        for (size_t i = 0; i < nulldata.size(); ++i)
+        {
+            nulldata[i] = complex32f_t(0, 0);
+            // nulldata[i] = pattern[i % 4];
+        }
+        for (int i = 0; i < channelCount; ++i)
+            nullSamples.push_back(nulldata.data());
 
         // stream zeroes if timestamps synchronization not available
-        // int64_t txSize = chirpStart;
-        // while (txSize > 0)
-        // {
-        //     StreamMeta txMeta{};
-        //     txMeta.waitForTimestamp = true;
-        //     txMeta.timestamp = chirpStart - txSize;
+        int64_t txSize = chirpStart;
+        while (txSize > 0)
+        {
+            StreamMeta txMeta{};
+            txMeta.waitForTimestamp = true;
+            txMeta.timestamp = chirpStart - txSize;
 
-        //     int dummyDataSize = 4 * 512;
-        //     const size_t toSend = dummyDataSize > txSize ? txSize : dummyDataSize;
-        //     txSize -= toSend;
-        //     txMeta.flushPartialPacket = false; //txSize <= dummyDataSize;
-        //     uint32_t samplesSent = stream->StreamTx(nullSamples.data(), toSend, &txMeta, timeout);
-        //     if (samplesSent != toSend)
-        //         return false;
-        // }
+            int dummyDataSize = 4 * 512;
+            const size_t toSend = dummyDataSize > txSize ? txSize : dummyDataSize;
+            txSize -= toSend;
+            txMeta.flushPartialPacket = false; //txSize <= dummyDataSize;
+            uint32_t samplesSent = stream->StreamTx(nullSamples.data(), toSend, &txMeta, timeout);
+            if (samplesSent != toSend)
+                return false;
+        }
 
         {
             StreamMeta txMeta{};
