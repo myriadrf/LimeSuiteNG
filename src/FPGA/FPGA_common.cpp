@@ -70,6 +70,7 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
     case LMS_DEV_LIMESDRMINI_V2:
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_EXTERNAL_SSDR:
         return true;
     default:
         return false;
