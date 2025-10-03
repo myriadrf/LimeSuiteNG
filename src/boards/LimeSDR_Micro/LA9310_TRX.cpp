@@ -117,6 +117,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return OpStatus::Success;
 
     OpStatus status = OpStatus::Success;
+    vspa.ClearStats();
 
     RxTeardown();
     if (needRx)
@@ -268,13 +269,19 @@ OpStatus LA9310_TRX::RxSetup()
 
     constexpr std::size_t headerSize{ 0 };
 
+    const int dmaBufferSize = 65536;
     uint32_t packetSize = 4096;
     mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+
+    // aim batch size to desired data output period, ~100us should be good enough
+    if (mConfig.hintSampleRate > 0)
+        mRx.packetsToBatch = std::floor((0.0001 * mConfig.hintSampleRate) / mRx.samplesInPkt);
 
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
-    mRx.packetsToBatch = 4;
+    mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
+
     char msg[256];
     std::snprintf(msg,
         sizeof(msg),
@@ -375,7 +382,7 @@ void LA9310_TRX::ReceivePacketsLoop()
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
-    // const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
     // const int32_t packetSize = mRxArgs.packetSize;
 
     StreamStats& stats = mRx.stats;
@@ -395,13 +402,11 @@ void LA9310_TRX::ReceivePacketsLoop()
 
     std::vector<uint32_t> buffer(1024 * 1024 * 4);
 
+    uint64_t timestamp = 0;
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
         // prepare next transmit
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        uint32_t size_received = vspa.Receive(0, buffer.data(), 65536);
-        // size_received = iq_player_receive_data(RxChanID, buffer.data(), buffer.size());
-        // printf("Got bytes: %li\n", size_received);
+        uint32_t size_received = vspa.Receive(0, buffer.data(), readSize, &timestamp);
         Bps += size_received;
 
         // print stats
@@ -441,7 +446,7 @@ void LA9310_TRX::ReceivePacketsLoop()
 
         if (size_received == 0)
         {
-            // std::this_thread::yield();
+            std::this_thread::yield();
             continue;
         }
 
@@ -453,12 +458,15 @@ void LA9310_TRX::ReceivePacketsLoop()
                 continue;
             }
             outputPkt->Reset();
+            assert(mConfig.hintSampleRate > 0);
+            outputPkt->meta.timestamp = Timespec(0, timestamp, mConfig.hintSampleRate);
         }
 
         int samplesProduced =
             Deinterleave(outputPkt->samples.back(), reinterpret_cast<uint8_t*>(buffer.data()), size_received, conversion);
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
 
+        stats.timestamp = timestamp + samplesProduced;
         if (fifo->push(outputPkt, false))
         {
             outputPkt = nullptr;
@@ -828,6 +836,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             srcPkt->samples.pop(samplesToConsume);
             srcPkt->meta.timestamp.AddTicks(samplesToConsume);
             dmaFilled += samplesDataSize;
+            bytesRemaining = dmaFilled;
             samplesFilled += samplesDataSize / bytesForFrame;
 
             // samplesFilled = payloadSize / bytesForFrame;
@@ -853,9 +862,18 @@ void LA9310_TRX::TransmitPacketsLoop()
             if (doFlush)
             {
                 outputReady = true;
+                // in firmware the data is processed in 2048
+                constexpr int ddr_step = 2048;
+                int partialFill = (dmaFilled % ddr_step);
+                if (partialFill > 0)
+                {
+                    int bytesToPad = ddr_step - partialFill;
+                    memset(&dmaBuffer[dmaFilled], 0, bytesToPad);
+                    dmaFilled += bytesToPad;
+                    bytesRemaining = dmaFilled;
+                }
                 break;
             }
-            bytesRemaining = dmaFilled;
         }
 
         // one callback for the entire batch
@@ -863,7 +881,9 @@ void LA9310_TRX::TransmitPacketsLoop()
             mConfig.statusCallback(true, &stats, mConfig.userData);
 
         if (!outputReady)
+        {
             continue;
+        }
 
         while (bytesRemaining > 0)
         {
@@ -872,7 +892,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             if (sent == 0)
             {
                 ++stats.overrun;
-                // std::this_thread::yield();
+                std::this_thread::yield();
                 break;
             }
             bytesRemaining -= sent;
@@ -959,7 +979,7 @@ uint32_t LA9310_TRX::StreamTxTemplate(
 
     uint32_t samplesRemaining = count;
 
-    bool timeGap = true; // expectedTS != lime::Timespec(meta->timestamp);
+    bool timeGap = false; // expectedTS != lime::Timespec(meta->timestamp);
 
     if (mTx.stagingPacket && timeGap)
     {
@@ -1005,7 +1025,7 @@ uint32_t LA9310_TRX::StreamTxTemplate(
 
         if (pushPacket)
         {
-            if (!mTx.fifo->push(mTx.stagingPacket, true, chrono::microseconds(1000000)))
+            if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
                 break;
 
             mTx.stagingPacket = nullptr;

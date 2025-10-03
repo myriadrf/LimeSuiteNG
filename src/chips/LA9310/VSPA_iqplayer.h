@@ -33,8 +33,10 @@ class VSPA_iqplayer
 
     OpStatus Setup(uint32_t rxCount, uint32_t txCount);
 
-    int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size);
+    int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp);
     int32_t Transmit(const void* src, uint32_t write_size);
+
+    OpStatus ClearStats();
 
   private:
     OpStatus StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr);
@@ -58,14 +60,6 @@ class VSPA_iqplayer
     volatile t_stats* app_stats = nullptr;
 
     uint32_t rx_fifo_start_offset_in_iqflood;
-
-    struct FIFO_config {
-        uint32_t start_offset;
-        uint32_t size;
-    };
-
-    FIFO_config rxFIFO;
-    FIFO_config txFIFO;
 };
 
 } // namespace lime
