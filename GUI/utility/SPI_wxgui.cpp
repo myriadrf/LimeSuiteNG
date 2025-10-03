@@ -4,6 +4,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/ToString.h"
 
 #include "numericSlider/numericSlider.h"
 
@@ -218,14 +219,8 @@ void SPI_wxgui::onSPIwrite(wxCommandEvent& event)
 
         const uint32_t mosi = (1 << 31) | addr << 16 | value;
 
-        try
-        {
-            mDevice->SPI(devAddr, &mosi, nullptr, 1);
-            fields.status->SetLabel("OK");
-        } catch (std::runtime_error& e)
-        {
-            fields.status->SetLabel(e.what());
-        }
+        OpStatus status = mDevice->SPI(devAddr, &mosi, nullptr, 1);
+        fields.status->SetLabel(ToString(status));
     } catch (...)
     {
         lime::error("No spi controls created for event id: %i", event.GetId());
@@ -277,23 +272,20 @@ void SPI_wxgui::onQuickSPIwrite(wxSpinEvent& event)
         }
         devAddr = iter->second;
 
-        try
-        {
-            uint32_t read_mosi = addr;
-            uint32_t regValue = 0;
-            mDevice->SPI(devAddr, &read_mosi, &regValue, 1);
+        uint32_t read_mosi = addr;
+        uint32_t regValue = 0;
+        OpStatus status = mDevice->SPI(devAddr, &read_mosi, &regValue, 1);
+        fields.status->SetLabel(ToString(status));
+        if (status != OpStatus::Success)
+            return;
 
-            regValue &= 0xFFFF;
-            regValue &= ~mask;
-            regValue |= ((value << lsb) & mask);
+        regValue &= 0xFFFF;
+        regValue &= ~mask;
+        regValue |= ((value << lsb) & mask);
 
-            const uint32_t mosi = (1 << 31) | addr << 16 | regValue;
-            mDevice->SPI(devAddr, &mosi, nullptr, 1);
-            fields.status->SetLabel(wxString::Format("%04X", regValue));
-        } catch (std::runtime_error& e)
-        {
-            fields.status->SetLabel(e.what());
-        }
+        const uint32_t mosi = (1 << 31) | addr << 16 | regValue;
+        status = mDevice->SPI(devAddr, &mosi, nullptr, 1);
+        fields.status->SetLabel(wxString::Format("%04X", regValue));
     } catch (...)
     {
         lime::error("No spi controls created for event id: %i", event.GetId());
@@ -338,8 +330,10 @@ void SPI_wxgui::onSPIread(wxCommandEvent& event)
 
         try
         {
-            mDevice->SPI(devAddr, &mosi, &miso, 1);
-            fields.status->SetLabel("OK");
+            OpStatus status = mDevice->SPI(devAddr, &mosi, &miso, 1);
+            fields.status->SetLabel(ToString(status));
+            if (status != OpStatus::Success)
+                return;
             fields.value->SetValue(wxString::Format("%04X", miso));
         } catch (std::runtime_error& e)
         {

@@ -50,6 +50,7 @@ std::vector<DeviceHandle> DeviceFactoryFX3::enumerate(const DeviceHandle& hint)
         handle.name = dev.product;
         handle.serial = dev.serial;
         handle.addr = intToHex(dev.vid) + ':' + intToHex(dev.pid);
+        handle.media = ToString(dev.speed);
 
         if (handle.IsEqualIgnoringEmpty(hint))
             handles.push_back(handle);

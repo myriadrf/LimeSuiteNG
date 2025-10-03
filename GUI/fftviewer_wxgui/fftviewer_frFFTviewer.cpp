@@ -39,6 +39,9 @@ bool fftviewer_frFFTviewer::Initialize(SDRDevice* pDataPort)
     cmbRFSOC->Clear();
     const SDRDescriptor& desc = device->GetDescriptor();
 
+    if (desc.rfSOC.size() == 0)
+        return false;
+
     for (size_t i = 0; i < desc.rfSOC.size(); ++i)
     {
         cmbRFSOC->Append(desc.rfSOC[i].name);

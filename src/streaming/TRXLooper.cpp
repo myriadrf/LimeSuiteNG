@@ -812,11 +812,11 @@ void TRXLooper::ReceivePacketsLoop()
                         fpgaTicks,
                         static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 }
-                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
+                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %+li, timeDiff:%+lins",
                     stats.packets + i,
                     expectedTimestamp.GetTicks(),
                     hwts.GetTicks(),
-                    expectedTimestamp.GetTicks() - hwts.GetTicks(),
+                    hwts.GetTicks() - expectedTimestamp.GetTicks(),
                     static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 ++stats.loss;
                 loss.add(1);
@@ -1194,23 +1194,17 @@ static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat, ui
     // in gateware data is transferred on 128 bit bus
     // Tx data transfers have to be multiple of the bus size
     constexpr uint16_t busWidthBytes = 16;
-    uint16_t minPayloadSize = busWidthBytes;
+    const int frameSize = (linkFormat == DataFormat::I12 ? 3 : 4) * channelCount;
+
+    uint16_t minPayloadSize = std::lcm(busWidthBytes, frameSize);
 
     uint16_t payloadSize = packet.GetPayloadSize();
 
     uint16_t paddingSize = 0;
-    uint16_t bytesRemainder = payloadSize % busWidthBytes;
-    if (bytesRemainder > 0)
+    uint16_t extraBytes = payloadSize % minPayloadSize;
+    if (extraBytes > 0)
     {
-        paddingSize = busWidthBytes - bytesRemainder;
-        const int frameSize = (linkFormat == DataFormat::I12 ? 3 : 4) * channelCount;
-        minPayloadSize = std::lcm(busWidthBytes, frameSize);
-    }
-    if (payloadSize + paddingSize < minPayloadSize)
-        paddingSize = minPayloadSize - payloadSize;
-
-    if (paddingSize > 0)
-    {
+        paddingSize = minPayloadSize - extraBytes;
         std::memset(&packet.data[payloadSize], 0, paddingSize); // pad with zeroes
         packet.SetPayloadSize(payloadSize + paddingSize);
     }

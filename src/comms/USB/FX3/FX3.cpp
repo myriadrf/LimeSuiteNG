@@ -79,6 +79,12 @@ std::vector<USBDescriptor> FX3::enumerateDevices(const std::set<VendorProductId>
         desc.pid = device.ProductID;
         desc.product = device.DeviceName;
         desc.serial = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(device.SerialNumber);
+        if (device.bSuperSpeed == true)
+            desc.speed = USBSpeed::USB3_0;
+        else if (device.bHighSpeed == true)
+            desc.speed = USBSpeed::USB2_0;
+        else
+            desc.speed = USBSpeed::Unknown;
         devDescriptors.push_back(desc);
         device.Close();
     }

@@ -9,5 +9,4 @@ Gnuradio-limesuiteng plugin on Windows can be installed as a conda package in a 
 
    package
    buildWindows
-   Conda recipe <condaRecipe>
     

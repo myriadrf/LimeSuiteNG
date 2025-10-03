@@ -1,0 +1,10 @@
+add_executable(limeLOsweep limeLOsweep.cpp)
+set_target_properties(limeLOsweep PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(limeLOsweep PRIVATE cli-shared)
+target_precompile_headers(limeLOsweep REUSE_FROM cli-shared)
+target_include_directories(limeLOsweep PRIVATE "${CMAKE_CURRENT_LIST_DIR}/..")
+
+add_executable(frontendDelayTest frontendDelayTest.cpp)
+set_target_properties(frontendDelayTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(frontendDelayTest PRIVATE cli-shared)
+target_precompile_headers(frontendDelayTest REUSE_FROM cli-shared)

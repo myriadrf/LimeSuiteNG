@@ -128,3 +128,8 @@ OpStatus SDRDevice::WriteSerialNumber(uint64_t serialNumber)
 {
     return OpStatus::NotImplemented;
 }
+
+GPIO_Interface* SDRDevice::GetGPIOControls()
+{
+    return nullptr;
+}

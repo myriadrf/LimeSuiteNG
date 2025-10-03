@@ -7,6 +7,7 @@
 #include <wx/msgdlg.h>
 
 #include "chips/LMS7002M/lms7002_mainPanel.h"
+#include "chips/LMS8001/lms8001_mainPanel.h"
 
 #include "limeGUIFrame.h"
 #include "dlgAbout.h"
@@ -20,6 +21,7 @@
 #include <wx/string.h>
 #include <functional>
 #include "boards/pnlBoardControls.h"
+#include "boards/pnlGPIO_Interface.h"
 #include "protocols/LMSBoards.h"
 #include "utility/SPI_wxgui.h"
 #include "events.h"
@@ -477,6 +479,16 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
         sdrPanel->Setup(reinterpret_cast<SDRDevice*>(socPtr));
         sdrPanel->Hide();
         return sdrPanel;
+    }
+    case eDeviceTreeNodeClass::LMS8001: {
+        lms8001_mainPanel* lmsPanel = new lms8001_mainPanel(parent, wxNewId());
+        lmsPanel->Initialize(reinterpret_cast<LMS8001*>(socPtr));
+        return lmsPanel;
+    }
+    case eDeviceTreeNodeClass::GPIO: {
+        pnlGPIO_Interface* gpioPanel = new pnlGPIO_Interface(parent, wxNewId());
+        gpioPanel->Initialize(reinterpret_cast<GPIO_Interface*>(socPtr));
+        return gpioPanel;
     }
     default:
         // lime::warning("No GUI available for this device node class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));

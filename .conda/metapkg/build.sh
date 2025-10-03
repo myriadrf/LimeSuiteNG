@@ -14,6 +14,8 @@ cmake_config_args=(
     -DENABLE_DOXYGEN=OFF
     -DENABLE_TESTING=ON
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15
+    -DINSTALL_DEVELOPMENT=ON
+    -DBUILD_PLUGINS=ON
 )
 
 cmake ${CMAKE_ARGS} -G "Ninja" .. "${cmake_config_args[@]}"

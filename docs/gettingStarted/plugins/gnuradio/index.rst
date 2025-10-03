@@ -1,13 +1,14 @@
 GNURadio
 ========
 
-LimeSDR devices can be used with GNU Radio on Windows and Linux platforms. Below are links for setting up LimeSuiteNG plugin for gnuradio on different operating systems:
+LimeSDR devices can be used with GNU Radio on Windows and Linux platforms. Below are links for setting up LimeSuiteNG plugin for gnuradio on different operating systems and description of provided GNURadio blocks:
 
 .. toctree:: 
    :maxdepth: 1
 
    Linux/index
    Windows/index
+   Plugin blocks <gnuradioBlocks>
 
 More about `GNURadio`_.
 
@@ -36,7 +37,7 @@ Launch gnuradio in conda environment (or in linux terminal) by executing the fol
    
    If the ``FM_receiver.grc`` does not open when launching GNURadio, open example from one of the following directories: ``<repo root>\plugin\gr-limesuiteng\examples``, ``<radioconda install dir>\envs\<your env>\Library\share\gnuradio\examples\limesuiteng`` (on Windows) or ``/usr/local/share/gnuradio/examples/limesuiteng`` (on Linux).
 
-If a single LimeSDR device is pluged in, run the example by pressing the play button. The software will automatically detect the LimeSDR device and use it to run the example. If multiple LimeSDR devices are present, to run the example you must enter serial number of appropriate LimeSDR device as shown in figure below.
+If a single LimeSDR device is pluged in, run the example by pressing the play button. The software will automatically detect the LimeSDR device and use it to run the example. If multiple LimeSDR devices are present, you must enter serial number of appropriate LimeSDR device as shown in figure below.
 
 .. image:: settingUpSdr.png
 

@@ -29,7 +29,7 @@ Optional components that add specific functionality:
 Compilation
 -----------
 
-Activate your conda enivronment:
+Open radioconda with administrative privileges and activate your conda enivronment:
 
 .. code-block:: bash
 
@@ -39,13 +39,19 @@ Activate your conda enivronment:
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 .. Add reference to radioconda and conda setup
 
-Install conda packages:
+Install all necessary build components by executing the following script in repository root directory:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning vs2022_win-64 cmake ninja
+   conda_deps.bat [--v] [required-gnuradio-version]
 
-Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+Script will check the conda environment for missing packages and install all conda packages required to build LimeSuiteNG library. Additionally, GNURadio version flag can be supplied to install appropriate version of GNURadio and additional dependencies required to build `gnuradio-limesuiteng` plugin. Example:
+
+.. code-block:: bash
+
+   conda_deps.bat --v 3.10.11.0
+
+List of verified plugin builds against different GNURadio versions is provided in ``conda_requirements.txt`` file. After successful component install, restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
 .. code-block:: bash
 
@@ -75,9 +81,7 @@ Built suite files are located in ``build\lib`` directory and executables are loc
 Installing the built software
 -----------------------------
 
-Optionally library can be installed into system, installation requires to be ran with Administrative privileges.
-
-Continuing on from the previous command block, execute:
+Optionally library can be installed into system. Continuing on from the previous command block, execute:
 
 .. code-block:: bash
 

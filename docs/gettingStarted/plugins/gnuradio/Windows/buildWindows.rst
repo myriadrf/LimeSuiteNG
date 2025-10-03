@@ -18,8 +18,8 @@ Required components to compile gnuradio-limesuiteng plugin:
 
    #. conda-build
    #. conda-forge-pinning
-   #. gnuradio=3.10.9.2
-   #. boost=1.82
+   #. gnuradio
+   #. boost
    #. vs2022_win-64
    #. LimeSuiteNG (Manually built and installed)
    #. cmake
@@ -37,7 +37,7 @@ Required components to compile gnuradio-limesuiteng plugin:
 Compilation
 -----------
 
-Activate your conda enivronment:
+Open radioconda with administrative privileges and activate your conda enivronment:
 
 .. code-block:: bash
 
@@ -46,13 +46,19 @@ Activate your conda enivronment:
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 
-Install conda packages:
+Install all necessary build components by executing the following script in repository root directory:
 
 .. code-block:: bash
 
-   conda install conda-build conda-forge-pinning gnuradio=3.10.9.2 boost=1.82 vs2022_win-64 cmake python=3.12.9 pybind11=2.11.1
+   conda_deps.bat --v <required-gnuradio-version>
 
-Restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+Script will check the conda environment for missing packages and install all conda packages required to build gnuradio-limesuiteng plugin alongside requested GNURadio version. Example:
+
+.. code-block:: bash
+
+   conda_deps.bat --v 3.10.11.0
+
+List of verified plugin builds against different GNURadio versions is provided in ``conda_requirements.txt`` file. After successful component install restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
 
 .. code-block:: bash
 

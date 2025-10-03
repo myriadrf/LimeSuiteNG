@@ -52,4 +52,5 @@ install(
     COMPONENT cli
     DESTINATION bin)
 
+add_subdirectory(utilities)
 add_subdirectory(iq_monitor)

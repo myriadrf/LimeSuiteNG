@@ -1,13 +1,14 @@
-
 package:
   name:  limesuiteng
   version: 25.1.0
 
 source:
-  path: "../.."
+  {% if local_build is defined %}
+  path: ../..
+  {% else %}
   git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}
   git_url: https://github.com/myriadrf/LimeSuiteNG.git
-  git_rev: docs-upgrade
+  {% endif %}
 
 build:
   number: 0
@@ -20,18 +21,7 @@ requirements:
     - git
     - ninja
     - pkg-config
-    - python =3.12.9
-    - numpy
     - vs2022_win-64
-
-  host:
-    - pip
-    - python =3.12.9
-    - numpy
-
-  run:
-    - numpy
-    - python =3.12.9
 
 test:
   commands:

@@ -17,4 +17,4 @@ endif(UNIX OR MINGW)
 add_subdirectory(FT601)
 add_subdirectory(FX3)
 
-target_sources(limesuiteng PRIVATE USBDMAEmulation.cpp)
+target_sources(limesuiteng PRIVATE USBDMAEmulation.cpp IUSB.cpp)

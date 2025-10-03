@@ -56,7 +56,6 @@ class USBDMAEmulation : public IDMA
     std::string name;
     std::shared_ptr<IUSB> port;
     State counters;
-    uint16_t lastRequestIndex;
     uint8_t endpoint;
     DataTransferDirection dir;
     bool continuous;
