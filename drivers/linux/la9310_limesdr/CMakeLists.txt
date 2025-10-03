@@ -64,7 +64,7 @@ add_kernel_module(
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/version.h
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf)
 
-option(LA9310_LIMESDR_INSTALL "Install Linux la9310_limesdr kernel module" ON)
+option(LA9310_LIMESDR_INSTALL "Install Linux la9310_limesdr kernel module" OFF)
 add_feature_info("LA9310_LIMESDR_INSTALL" LA9310_LIMESDR_INSTALL "Install la9310_limesdr kernel module to system")
 if(NOT LA9310_LIMESDR_INSTALL)
     return()
