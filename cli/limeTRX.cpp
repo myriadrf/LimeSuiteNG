@@ -492,6 +492,9 @@ int main(int argc, char** argv)
         streamCfg.extraConfig.tx.packetsInBatch = txPacketsInBatch;
     }
 
+    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
+    streamCfg.hintSampleRate = sampleRate;
+
     std::unique_ptr<StreamComposite> stream = std::make_unique<StreamComposite>();
     for (size_t index : chipIndexes)
     {
@@ -539,8 +542,6 @@ int main(int argc, char** argv)
         DeviceRegistry::freeDevice(device);
         return EXIT_FAILURE;
     }
-
-    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
 
     signal(SIGINT, intHandler);
 
