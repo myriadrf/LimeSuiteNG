@@ -86,7 +86,7 @@ uint64_t Timespec::GetTicks() const
 {
     if (seconds < 0)
         return 0;
-    return seconds * ticksPerSecond + fracSeconds * ticksPerSecond;
+    return round(seconds * ticksPerSecond + fracSeconds * ticksPerSecond);
 }
 
 double Timespec::GetRealSeconds() const
