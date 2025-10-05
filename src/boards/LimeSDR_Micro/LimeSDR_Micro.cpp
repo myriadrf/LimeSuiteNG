@@ -404,11 +404,6 @@ void LimeSDR_Micro::SetMessageLogCallback(LogCallbackType callback)
     mCallback_logMessage = callback;
 }
 
-void* LimeSDR_Micro::GetInternalChip(uint32_t index)
-{
-    return nullptr;
-}
-
 OpStatus LimeSDR_Micro::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
     return OpStatus::NotImplemented;

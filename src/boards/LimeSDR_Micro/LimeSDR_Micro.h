@@ -142,8 +142,6 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
 
     void SetMessageLogCallback(LogCallbackType callback) override;
 
-    void* GetInternalChip(uint32_t index) override;
-
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
     OpStatus MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data) override;
