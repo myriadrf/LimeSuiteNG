@@ -588,43 +588,6 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
     return samplesProduced;
 }
 
-/// @brief Receives samples from this specific stream.
-/// @param samples The buffer to put the received samples in.
-/// @param count The amount of samples to receive.
-/// @param meta The metadata of the packets of the stream.
-/// @return The amount of samples received.
-uint32_t LA9310_TRX::StreamRx(
-    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
-/// @copydoc LA9310_TRX::StreamRx()
-uint32_t LA9310_TRX::StreamRx(
-    lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
-/// @copydoc LA9310_TRX::StreamRx()
-uint32_t LA9310_TRX::StreamRx(
-    lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
 OpStatus LA9310_TRX::TxSetup()
 {
     vspa.StopTx();
@@ -959,7 +922,7 @@ uint32_t LA9310_TRX::StreamMetaToStreamTxMeta(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(int64_t(meta->timestamp / mConfig.hintSampleRate));
         else
             txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
@@ -1033,31 +996,6 @@ uint32_t LA9310_TRX::StreamTxTemplate(
     }
 
     return count - samplesRemaining;
-}
-
-/// @brief Transmits packets from from this specific stream.
-/// @param samples The buffer of the samples to transmit.
-/// @param count The amount of samples to transmit.
-/// @param meta The metadata of the packets of the stream.
-/// @return The amount of samples transmitted.
-uint32_t LA9310_TRX::StreamTx(
-    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
-}
-
-/// @copydoc LA9310_TRX::StreamTx()
-uint32_t LA9310_TRX::StreamTx(
-    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
-}
-
-/// @copydoc LA9310_TRX::StreamTx()
-uint32_t LA9310_TRX::StreamTx(
-    const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
 /// @brief Gets Rx/Tx data transfer statistics.

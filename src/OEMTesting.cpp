@@ -27,8 +27,8 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
         std::unique_ptr<RFStream> rfstream = device.StreamCreate(stream, input.moduleIndex);
         rfstream->Start();
         // ignore first batch of samples, just in case there would be instability from digital DC corrector
-        rfstream->StreamRx(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
-        rfstream->StreamRx(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
+        rfstream->Receive(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
+        rfstream->Receive(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
 
         rfstream->Stop();
     }

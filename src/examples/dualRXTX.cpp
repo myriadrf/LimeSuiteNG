@@ -128,10 +128,10 @@ int main(int argc, char** argv)
     uint32_t totalSamplesSent = 0;
     float maxSignalAmplitude = 0;
 
-    StreamMeta rxMeta{};
+    StreamRxMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
-        uint32_t samplesRead = stream->StreamRx(rxSamples, samplesInBuffer, &rxMeta);
+        uint32_t samplesRead = stream->Receive(rxSamples, samplesInBuffer, &rxMeta);
         totalSamplesReceived += samplesRead;
 
         // process samples
@@ -142,11 +142,11 @@ int main(int argc, char** argv)
                 maxSignalAmplitude = amplitude;
         }
 
-        StreamMeta txMeta{};
+        StreamTxMeta txMeta{};
         txMeta.timestamp = rxMeta.timestamp + samplesInBuffer * 64;
-        txMeta.waitForTimestamp = true;
-        txMeta.flushPartialPacket = false;
-        uint32_t samplesSent = stream->StreamTx(rxSamples, samplesInBuffer, &txMeta);
+        txMeta.hasTimestamp = true;
+        txMeta.flags = StreamTxMeta::EndOfBurst;
+        uint32_t samplesSent = stream->Transmit(rxSamples, samplesInBuffer, &txMeta);
         if (samplesSent < 0)
         {
             std::cout << "Failure to send\n"sv;

@@ -1,6 +1,7 @@
 #include "limesuiteng/StreamConfig.h"
 #include "streaming/StreamComposite.h"
 #include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/StreamMeta.h"
 #include "limesuiteng/OpStatus.h"
 #include <iostream>
 #include <chrono>
@@ -143,7 +144,7 @@ class ReceiverThread : public WorkerThread
 
     bool Work() override
     {
-        StreamMeta rxMeta{};
+        StreamRxMeta rxMeta{};
         constexpr auto timeout = std::chrono::microseconds(1000000);
 
         // skip all samples until the expected time
@@ -151,13 +152,13 @@ class ReceiverThread : public WorkerThread
         {
             const size_t toRead = samplesToSkip > rxSize ? rxSize : samplesToSkip;
             rxMeta.timestamp = 0;
-            const uint32_t samplesRead = stream->StreamRx(rxBuffers, toRead, &rxMeta, timeout);
+            const uint32_t samplesRead = stream->Receive(rxBuffers, toRead, &rxMeta);
             if (samplesRead != toRead)
                 return false;
             samplesToSkip -= samplesRead;
         }
 
-        stream->StreamRx(rxBuffers, rxSize, &rxMeta);
+        stream->Receive(rxBuffers, rxSize, &rxMeta);
         return false;
     }
 
@@ -205,27 +206,27 @@ class TransmitterThread : public WorkerThread
         int64_t txSize = chirpStart;
         while (txSize > 0)
         {
-            StreamMeta txMeta{};
-            txMeta.waitForTimestamp = true;
-            txMeta.timestamp = chirpStart - txSize;
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = true;
+            txMeta.timestamp = Timespec(0, chirpStart - txSize, 1);
 
             int dummyDataSize = 4 * 512;
             const size_t toSend = dummyDataSize > txSize ? txSize : dummyDataSize;
             txSize -= toSend;
-            txMeta.flushPartialPacket = false; //txSize <= dummyDataSize;
-            uint32_t samplesSent = stream->StreamTx(nullSamples.data(), toSend, &txMeta, timeout);
+            txMeta.flags = 0; //StreamTxMeta::EndOfBurst;
+            uint32_t samplesSent = stream->Transmit(nullSamples.data(), toSend, &txMeta);
             if (samplesSent != toSend)
                 return false;
         }
 
         {
-            StreamMeta txMeta{};
-            txMeta.waitForTimestamp = true;
-            txMeta.timestamp = chirpStart;
-            txMeta.flushPartialPacket = true;
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = true;
+            txMeta.timestamp = Timespec(0, chirpStart, 1);
+            txMeta.flags = StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
-            stream->StreamTx(txSamples.data(), toSend, &txMeta);
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
         }
 
         return false;

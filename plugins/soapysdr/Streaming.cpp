@@ -16,6 +16,7 @@
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/StreamMeta.h"
 
 using namespace lime;
 
@@ -273,7 +274,7 @@ int Soapy_limesuiteng::readStream(
     if ((flags & SOAPY_SDR_ONE_PACKET) != 0)
         numElems = std::min(numElems, icstream->elemMTU);
 
-    StreamMeta metadata{};
+    StreamRxMeta metadata{};
     const uint64_t requestedBurstStart =
         ((icstream->rxBurstRequest) ? SoapySDR::timeNsToTicks(icstream->rxBurstStart_timeNs, sampleRate[SOAPY_SDR_RX]) : 0);
 
@@ -290,17 +291,15 @@ int Soapy_limesuiteng::readStream(
             {
             case DataFormat::I16:
             case DataFormat::I12:
-                samplesReceived = rfstream->StreamRx(
-                    reinterpret_cast<complex16_t* const*>(buffs), samplesToSkip, &metadata, std::chrono::microseconds(timeoutUs));
+                samplesReceived = rfstream->Receive(reinterpret_cast<complex16_t* const*>(buffs), samplesToSkip, &metadata);
                 break;
             case DataFormat::F32:
-                samplesReceived = rfstream->StreamRx(
-                    reinterpret_cast<complex32f_t* const*>(buffs), samplesToSkip, &metadata, std::chrono::microseconds(timeoutUs));
+                samplesReceived = rfstream->Receive(reinterpret_cast<complex32f_t* const*>(buffs), samplesToSkip, &metadata);
                 break;
             }
             if (samplesReceived <= 0)
                 return SOAPY_SDR_STREAM_ERROR;
-            rxNow = metadata.timestamp + samplesReceived;
+            rxNow = metadata.timestamp.GetTicks() + samplesReceived;
         }
     }
 
@@ -317,12 +316,10 @@ int Soapy_limesuiteng::readStream(
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        samplesReceived = rfstream->StreamRx(
-            reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
+        samplesReceived = rfstream->Receive(reinterpret_cast<complex16_t* const*>(buffs), numElems, &metadata);
         break;
     case DataFormat::F32:
-        samplesReceived = rfstream->StreamRx(
-            reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
+        samplesReceived = rfstream->Receive(reinterpret_cast<complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
 
@@ -341,7 +338,7 @@ int Soapy_limesuiteng::readStream(
         {
             SoapySDR::log(SOAPY_SDR_ERROR,
                 "readStream() rx burst overflow, expected tick:" + std::to_string(requestedBurstStart) +
-                    ", got: " + std::to_string(metadata.timestamp));
+                    ", got: " + std::to_string(metadata.timestamp.GetTicks()));
             return SOAPY_SDR_OVERFLOW;
         }
     }
@@ -355,7 +352,7 @@ int Soapy_limesuiteng::readStream(
 
     // LimeSDR always return Rx timestamp
     flags |= SOAPY_SDR_HAS_TIME;
-    timeNs = SoapySDR::ticksToTimeNs(metadata.timestamp, sampleRate[SOAPY_SDR_RX]);
+    timeNs = SoapySDR::ticksToTimeNs(metadata.timestamp.GetTicks(), sampleRate[SOAPY_SDR_RX]);
 
     // Return num read or error code
     return (samplesReceived >= 0) ? samplesReceived : SOAPY_SDR_STREAM_ERROR;
@@ -376,22 +373,20 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
 
     // Input metadata
-    StreamMeta metadata{};
-    metadata.timestamp = SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX]);
-    metadata.waitForTimestamp = (flags & SOAPY_SDR_HAS_TIME);
-    metadata.flushPartialPacket = (flags & SOAPY_SDR_END_BURST);
+    StreamTxMeta metadata{};
+    metadata.timestamp = Timespec(int64_t(SoapySDR::timeNsToTicks(timeNs, sampleRate[SOAPY_SDR_RX])));
+    metadata.hasTimestamp = (flags & SOAPY_SDR_HAS_TIME);
+    metadata.flags = (flags & SOAPY_SDR_END_BURST) ? StreamTxMeta::EndOfBurst : 0;
 
     int samplesSent = 0;
     switch (icstream->streamConfig.format)
     {
     case DataFormat::I16:
     case DataFormat::I12:
-        samplesSent = rfstream->StreamTx(
-            reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
+        samplesSent = rfstream->Transmit(reinterpret_cast<const complex16_t* const*>(buffs), numElems, &metadata);
         break;
     case DataFormat::F32:
-        samplesSent = rfstream->StreamTx(
-            reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata, std::chrono::microseconds(timeoutUs));
+        samplesSent = rfstream->Transmit(reinterpret_cast<const complex32f_t* const*>(buffs), numElems, &metadata);
         break;
     }
 

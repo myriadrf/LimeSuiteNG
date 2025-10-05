@@ -40,38 +40,6 @@ class LIME_API StreamComposite : public RFStream
     /// @copydoc RFStream::Teardown()
     void Teardown() override;
 
-    /// @copydoc RFStream::StreamRx()
-    uint32_t StreamRx(lime::complex32f_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-    /// @copydoc RFStream::StreamRx()
-    uint32_t StreamRx(lime::complex16_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-    /// @copydoc RFStream::StreamRx()
-    uint32_t StreamRx(lime::complex12_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-
-    /// @copydoc RFStream::StreamTx()
-    uint32_t StreamTx(const lime::complex32f_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-    /// @copydoc RFStream::StreamTx()
-    uint32_t StreamTx(const lime::complex16_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-    /// @copydoc RFStream::StreamTx()
-    uint32_t StreamTx(const lime::complex12_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
-
     /// @copydoc RFStream::StreamStatus()
     void StreamStatus(StreamStats* rx, StreamStats* tx) override;
 

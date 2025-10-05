@@ -98,6 +98,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
         }
     } streamData;
 
+    double sampleRate;
     std::vector<float> fftFreqAxis;
     std::vector<float> timeXAxis;
     std::atomic<bool> mStreamRunning;

@@ -167,17 +167,17 @@ int main(int argc, char** argv)
     auto t1 = startTime;
     auto t2 = t1;
 
-    StreamMeta txMeta{};
-    txMeta.timestamp = 0;
-    txMeta.waitForTimestamp = true;
-    txMeta.flushPartialPacket = true;
+    StreamTxMeta txMeta{};
+    txMeta.timestamp = Timespec(0, 0, sampleRate);
+    txMeta.hasTimestamp = true;
+    txMeta.flags = StreamTxMeta::EndOfBurst;
 
     uint32_t totalSamplesSent = 0;
 
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram) //run for 10 seconds
     {
         uint32_t samplesToSend = samplesInPkt * txPacketCount;
-        uint32_t samplesSent = stream->StreamTx(src, samplesToSend, &txMeta);
+        uint32_t samplesSent = stream->Transmit(src, samplesToSend, &txMeta);
         if (samplesSent < 0)
         {
             std::cout << "Failure to send\n"sv;
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
         }
         if (samplesSent > 0)
         {
-            txMeta.timestamp += samplesSent;
+            txMeta.timestamp.AddTicks(samplesSent);
             totalSamplesSent += samplesSent;
         }
         //Print data rate (once per second)

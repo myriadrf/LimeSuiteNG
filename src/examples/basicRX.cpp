@@ -163,10 +163,10 @@ int main(int argc, char** argv)
     // kiss_fft_cpx m_fftCalcIn[fftSize];
     // kiss_fft_cpx m_fftCalcOut[fftSize];
 
-    StreamMeta rxMeta{};
+    StreamRxMeta rxMeta{};
     while (std::chrono::high_resolution_clock::now() - startTime < std::chrono::seconds(10) && !stopProgram)
     {
-        uint32_t samplesRead = stream->StreamRx(rxSamples, fftSize, &rxMeta);
+        uint32_t samplesRead = stream->Receive(rxSamples, fftSize, &rxMeta);
         if (samplesRead == 0)
             continue;
 

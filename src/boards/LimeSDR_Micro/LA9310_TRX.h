@@ -38,24 +38,6 @@ class LA9310_TRX : public RFStream
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
     constexpr inline bool IsStreamRunning() const { return mStreamEnabled; }
-    uint32_t StreamRx(
-        lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
-    uint32_t StreamRx(
-        lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
-    uint32_t StreamRx(
-        lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(const lime::complex32f_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(const lime::complex16_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(const lime::complex12_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
 
     uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
     uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;

@@ -11,6 +11,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/StreamMeta.h"
 #include "limesuiteng/RFStream.h"
 #include "limesuiteng/complex.h"
 #include <array>
@@ -84,6 +85,7 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
     , mStreamRunning(false)
     , device(nullptr)
     , mGUIupdater(new wxTimer(this, wxID_ANY))
+    , sampleRate(0)
 {
     captureSamples.store(false);
     averageCount.store(50);
@@ -433,12 +435,12 @@ void fftviewer_frFFTviewer::StreamingLoop(
     pthis->stream->Start();
 
     pthis->mStreamRunning.store(true);
-    StreamMeta txMeta{};
-    txMeta.waitForTimestamp = syncTx;
-    txMeta.flushPartialPacket = true;
+    StreamTxMeta txMeta{};
+    txMeta.hasTimestamp = syncTx;
+    txMeta.flags = StreamTxMeta::EndOfBurst;
     int fftCounter = 0;
 
-    StreamMeta rxMeta{};
+    StreamRxMeta rxMeta{};
 
     lime::complex32f_t** buffers = new lime::complex32f_t*[channelsCount];
     FFT fft{ channelsCount, fftSize, wndFunction };
@@ -467,16 +469,16 @@ void fftviewer_frFFTviewer::StreamingLoop(
     while (pthis->stopProcessing.load() == false)
     {
         uint32_t samplesPopped;
-        samplesPopped = pthis->stream->StreamRx(buffers, fftSize, &rxMeta);
+        samplesPopped = pthis->stream->Receive(buffers, fftSize, &rxMeta);
         if (samplesPopped <= 0)
             continue;
 
-        int64_t rxTS = rxMeta.timestamp;
+        int64_t rxTS = rxMeta.timestamp.GetTicks();
 
         if (runTx)
         {
-            txMeta.timestamp = rxTS + 1020 * 128;
-            pthis->stream->StreamTx(buffers, fftSize, &txMeta);
+            txMeta.timestamp = Timespec(0, rxTS + 1020 * 128, pthis->sampleRate);
+            pthis->stream->Transmit(buffers, fftSize, &txMeta);
         }
 
         if (pthis->captureSamples.load())
@@ -574,6 +576,7 @@ void fftviewer_frFFTviewer::SetNyquistFrequency()
         freqHz = device->GetSampleRate(index, TRXDir::Rx, 0);
     if (freqHz <= 0)
         return;
+    sampleRate = freqHz;
     txtNyquistFreqMHz->SetValue(wxString::Format(_("%2.5f"), freqHz / 2e6));
     mFFTpanel->SetInitialDisplayArea(-freqHz / 2, freqHz / 2, -115, 0);
 }

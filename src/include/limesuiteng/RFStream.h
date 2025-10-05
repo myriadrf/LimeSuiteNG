@@ -54,46 +54,6 @@ class LIME_API RFStream
     /// After Teardown(), stream needs to be Setup() before it can be started.
     virtual void Teardown() = 0;
 
-    /// @brief Receives RF samples data.
-    /// @param samples The buffer to put the received samples in.
-    /// @param count The number of samples to receive into the buffer.
-    /// @param meta The metadata of the packets of the stream.
-    /// @return The amount of samples received.
-    virtual uint32_t StreamRx(lime::complex32f_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc RFStream::StreamRx()
-    virtual uint32_t StreamRx(lime::complex16_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc RFStream::StreamRx()
-    virtual uint32_t StreamRx(lime::complex12_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-
-    /// @brief Transmits RF samples data.
-    /// @param samples The buffer of the samples to transmit.
-    /// @param count The number of samples to transmit.
-    /// @param meta The metadata of the packets of the stream.
-    /// @return The amount of samples transmitted.
-    virtual uint32_t StreamTx(const lime::complex32f_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc RFStream::StreamTx()
-    virtual uint32_t StreamTx(const lime::complex16_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc RFStream::StreamRx()
-    virtual uint32_t StreamTx(const lime::complex12_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-
     /// @brief Retrieves the current stream statistics.
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.

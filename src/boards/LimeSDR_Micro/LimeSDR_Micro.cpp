@@ -385,51 +385,6 @@ OpStatus LimeSDR_Micro::SetTestSignal(uint8_t moduleIndex,
     return OpStatus::NotImplemented;
 }
 
-uint32_t LimeSDR_Micro::StreamRx(
-    uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
-uint32_t LimeSDR_Micro::StreamRx(
-    uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
-uint32_t LimeSDR_Micro::StreamRx(
-    uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
-uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
-    const lime::complex32f_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
-uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
-    const lime::complex16_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
-uint32_t LimeSDR_Micro::StreamTx(uint8_t moduleIndex,
-    const lime::complex12_t* const* samples,
-    uint32_t count,
-    const StreamMeta* meta,
-    std::chrono::microseconds timeout)
-{
-    return 0;
-}
-
 void LimeSDR_Micro::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
 }

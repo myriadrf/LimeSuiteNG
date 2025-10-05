@@ -13,9 +13,10 @@ class LIME_API Timespec
 {
   public:
     Timespec();
-    Timespec(double realSeconds);
+    //Timespec(double realSeconds);
     Timespec(int64_t int_seconds, double frac_seconds);
     Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second);
+    Timespec(int64_t ticks);
 
     void AddTicks(uint64_t ticks);
     uint64_t GetTicks() const;

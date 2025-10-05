@@ -131,36 +131,6 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     //void StreamStop(const std::vector<uint8_t>& moduleIndexes) override;
     void StreamDestroy(uint8_t moduleIndex) override;
 
-    uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex32f_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex16_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex12_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex32f_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex16_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
-    uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex12_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout) override;
     void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) override;
 
     std::unique_ptr<lime::RFStream> StreamCreate(const StreamConfig& config, uint8_t moduleIndex) override;

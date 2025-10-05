@@ -4,6 +4,7 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/RFStream.h"
 #include "limesuiteng/ToString.h"
+#include "limesuiteng/StreamMeta.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "utilities/DeltaVariable.h"
 
@@ -828,12 +829,13 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
     if (stage->maskDataPresentInBuffer == 0)
     {
         // if staging buffers are depleted request new batch
-        lime::StreamMeta metadata{ 0, false, false };
+        lime::StreamRxMeta metadata;
         T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
-        size_t samplesProduced = handle->parent->stream->StreamRx(reinterpret_cast<T**>(dest), sample_count, &metadata, timeout);
+        size_t samplesProduced = handle->parent->stream->Receive(reinterpret_cast<T**>(dest), sample_count, &metadata);
         samplesToReturn = samplesProduced;
         stage->maskDataPresentInBuffer = stage->maskChannelsActive;
         stage->bufferBytesFilled = samplesProduced * sampleSize;
+        stage->timestamp = metadata.timestamp.GetTicks();
     }
 
     // take samples from staging buffer
@@ -919,16 +921,16 @@ int SendStream(
     if (stage->maskDataPresentInBuffer == stage->maskChannelsActive)
     {
         // all staging buffers ready, submit the batch
-        lime::StreamMeta metadata{ 0, false, false };
+        lime::StreamTxMeta metadata;
         if (meta != nullptr)
         {
-            metadata.flushPartialPacket = meta->flushPartialPacket;
-            metadata.waitForTimestamp = meta->waitForTimestamp;
-            metadata.timestamp = meta->timestamp;
+            metadata.flags = meta->flushPartialPacket ? lime::StreamTxMeta::EndOfBurst : 0;
+            metadata.hasTimestamp = meta->waitForTimestamp;
+            metadata.timestamp = lime::Timespec(meta->timestamp);
         }
 
         T* src[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
-        size_t samplesSent = handle->parent->stream->StreamTx(reinterpret_cast<T**>(src), sample_count, &metadata, timeout);
+        size_t samplesSent = handle->parent->stream->Transmit(reinterpret_cast<T**>(src), sample_count, &metadata);
         stage->maskDataPresentInBuffer = 0;
         stage->bufferBytesFilled = 0;
 

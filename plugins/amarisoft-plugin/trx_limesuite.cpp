@@ -4,6 +4,7 @@
  */
 #include "limesuiteng/LimePlugin.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/StreamMeta.h"
 
 #include <stdarg.h>
 
@@ -121,10 +122,10 @@ static void limesuiteng_trx_write_func(
     if (!samples) // Nothing to transmit
         return;
 
-    StreamMeta meta{};
+    StreamTxMeta meta;
     meta.timestamp = timestamp;
-    meta.waitForTimestamp = true;
-    meta.flushPartialPacket = (flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
+    meta.hasTimestamp = true;
+    meta.flags = (flags & TRX_WRITE_MD_FLAG_END_OF_BURST) ? StreamTxMeta::EndOfBurst : 0;
 
     // samples format conversion is done internally
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
@@ -140,10 +141,10 @@ static void limesuiteng_trx_write_func2(
     if (!samples) // Nothing to transmit
         return;
 
-    StreamMeta meta{};
+    StreamTxMeta meta;
     meta.timestamp = timestamp;
-    meta.waitForTimestamp = true;
-    meta.flushPartialPacket = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST);
+    meta.hasTimestamp = true;
+    meta.flags = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST) ? StreamTxMeta::EndOfBurst : 0;
 
     // samples format conversion is done internally
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
@@ -157,13 +158,10 @@ static void limesuiteng_trx_write_func2(
 
 static int limesuiteng_trx_read_func(TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int rx_port_index)
 {
-    StreamMeta meta{};
-    meta.waitForTimestamp = false;
-    meta.flushPartialPacket = false;
-
+    StreamRxMeta meta;
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
     int samplesGot = LimePlugin_Read_complex32f(lime, reinterpret_cast<lime::complex32f_t**>(samples), count, rx_port_index, meta);
-    *ptimestamp = meta.timestamp; // if timestamp is not updated, amarisoft will freeze
+    *ptimestamp = meta.timestamp.GetTicks(); // if timestamp is not updated, amarisoft will freeze
     return samplesGot;
 }
 
@@ -173,14 +171,12 @@ static int limesuiteng_trx_read_func(TRXState* s, trx_timestamp_t* ptimestamp, v
 static int limesuiteng_trx_read_func2(
     TRXState* s, trx_timestamp_t* ptimestamp, void** samples, int count, int port, TRXReadMetadata* md)
 {
-    StreamMeta meta{};
-    meta.waitForTimestamp = false;
-    meta.flushPartialPacket = false;
+    StreamRxMeta meta{};
     md->flags = 0;
 
     LimePluginContext* lime = static_cast<LimePluginContext*>(s->opaque);
     int samplesGot = LimePlugin_Read_complex32f(lime, reinterpret_cast<lime::complex32f_t**>(samples), count, port, meta);
-    *ptimestamp = meta.timestamp; // if timestamp is not updated, amarisoft will freeze
+    *ptimestamp = meta.timestamp.GetTicks(); // if timestamp is not updated, amarisoft will freeze
     return samplesGot;
 }
 

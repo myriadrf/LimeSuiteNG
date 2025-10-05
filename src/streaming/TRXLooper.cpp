@@ -992,41 +992,6 @@ uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMet
     return samplesProduced;
 }
 
-/// @brief Receives samples from this specific stream.
-/// @param samples The buffer to put the received samples in.
-/// @param count The amount of samples to receive.
-/// @param meta The metadata of the packets of the stream.
-/// @return The amount of samples received.
-uint32_t TRXLooper::StreamRx(
-    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
-/// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
-/// @copydoc TRXLooper::StreamRx()
-uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamRxMeta rxmeta;
-    uint32_t samplesRead = StreamRxTemplate(samples, count, &rxmeta, timeout);
-    if (meta)
-        meta->timestamp = rxmeta.timestamp.GetTicks();
-    return samplesRead;
-}
-
 uint32_t TRXLooper::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
 {
     return StreamRxTemplate<complex32f_t>(samples, count, meta, chrono::microseconds(1000000));
@@ -1227,7 +1192,7 @@ void TRXLooper::TransmitPacketsLoop()
     auto& fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    Timespec lastTS = 0;
+    Timespec lastTS(0l);
 
     struct PendingWrite {
         uint32_t id;
@@ -1619,31 +1584,6 @@ uint32_t TRXLooper::StreamTxTemplate(
     }
 
     return count - samplesRemaining;
-}
-
-/// @brief Transmits packets from from this specific stream.
-/// @param samples The buffer of the samples to transmit.
-/// @param count The amount of samples to transmit.
-/// @param meta The metadata of the packets of the stream.
-/// @return The amount of samples transmitted.
-uint32_t TRXLooper::StreamTx(
-    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
-}
-
-/// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(
-    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
-}
-
-/// @copydoc TRXLooper::StreamTx()
-uint32_t TRXLooper::StreamTx(
-    const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
 uint32_t TRXLooper::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)

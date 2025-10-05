@@ -84,42 +84,6 @@ void RFStream_X8::Teardown()
     stream->Teardown();
 }
 
-uint32_t RFStream_X8::StreamRx(
-    lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamRx(samples, count, meta, timeout);
-}
-
-uint32_t RFStream_X8::StreamRx(
-    lime::complex16_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamRx(samples, count, meta, timeout);
-}
-
-uint32_t RFStream_X8::StreamRx(
-    lime::complex12_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamRx(samples, count, meta, timeout);
-}
-
-uint32_t RFStream_X8::StreamTx(
-    const lime::complex32f_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamTx(samples, count, meta, timeout);
-}
-
-uint32_t RFStream_X8::StreamTx(
-    const lime::complex16_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamTx(samples, count, meta, timeout);
-}
-
-uint32_t RFStream_X8::StreamTx(
-    const lime::complex12_t* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    return stream->StreamTx(samples, count, meta, timeout);
-}
-
 void RFStream_X8::StreamStatus(StreamStats* rx, StreamStats* tx)
 {
     stream->StreamStatus(rx, tx);

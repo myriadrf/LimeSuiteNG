@@ -10,6 +10,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/StreamMeta.h"
 #include "limesuiteng/VersionInfo.h"
 
 #endif

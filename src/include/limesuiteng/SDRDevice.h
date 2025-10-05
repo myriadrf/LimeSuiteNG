@@ -456,56 +456,6 @@ class LIME_API SDRDevice
     /// @param moduleIndex The index of the device to stop the streams on.
     [[deprecated]] virtual void StreamDestroy(uint8_t moduleIndex) = 0;
 
-    /// @brief Receives samples from all the active streams in the device.
-    /// @param moduleIndex The index of the device to receive the samples from.
-    /// @param samples The buffer to put the received samples in.
-    /// @param count The amount of samples to receive.
-    /// @param meta The metadata of the packets of the stream.
-    /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
-    /// @return The amount of samples received.
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex32f_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex16_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
-        lime::complex12_t* const* samples,
-        uint32_t count,
-        StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-
-    /// @brief Transmits packets from all the active streams in the device.
-    /// @param moduleIndex The index of the device to transmit the samples with.
-    /// @param samples The buffer of the samples to transmit.
-    /// @param count The amount of samples to transmit.
-    /// @param meta The metadata of the packets of the stream.
-    /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
-    /// @return The amount of samples transmitted.
-    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex32f_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc SDRDevice::StreamTx()
-    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex16_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-    /// @copydoc SDRDevice::StreamRx()
-    [[deprecated]] virtual uint32_t StreamTx(uint8_t moduleIndex,
-        const lime::complex12_t* const* samples,
-        uint32_t count,
-        const StreamMeta* meta,
-        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
-
     /// @brief Retrieves the current stream statistics.
     /// @param moduleIndex The index of the device to retrieve the status from.
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
