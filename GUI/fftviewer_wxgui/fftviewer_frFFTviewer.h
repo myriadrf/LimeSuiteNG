@@ -98,7 +98,6 @@ class fftviewer_frFFTviewer : public frFFTviewer
         }
     } streamData;
 
-    double sampleRate;
     std::vector<float> fftFreqAxis;
     std::vector<float> timeXAxis;
     std::atomic<bool> mStreamRunning;
@@ -110,6 +109,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
     std::unique_ptr<lime::RFStream> stream;
     wxTimer* mGUIupdater;
     unsigned lmsIndex{};
+    double sampleRate;
 };
 
 #endif // __fftviewer_frFFTviewer__

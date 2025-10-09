@@ -34,7 +34,7 @@ class VSPA_iqplayer
     OpStatus Setup(uint32_t rxCount, uint32_t txCount);
 
     int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp);
-    int32_t Transmit(const void* src, uint32_t write_size);
+    int32_t Transmit(const void* src, uint32_t write_size, uint64_t timestamp);
 
     OpStatus ClearStats();
 
@@ -48,6 +48,7 @@ class VSPA_iqplayer
 
     VSPA_FIFO_State mRx[4];
     VSPA_FIFO_State mTx;
+    bool firstTx;
 
     uint8_t* vl_iqflood_ddr_addr;
     size_t iqflood_size;

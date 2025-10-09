@@ -151,7 +151,7 @@ class ReceiverThread : public WorkerThread
         while (samplesToSkip > 0)
         {
             const size_t toRead = samplesToSkip > rxSize ? rxSize : samplesToSkip;
-            rxMeta.timestamp = 0;
+            rxMeta.timestamp = Timespec(0l);
             const uint32_t samplesRead = stream->Receive(rxBuffers, toRead, &rxMeta);
             if (samplesRead != toRead)
                 return false;
@@ -196,39 +196,48 @@ class TransmitterThread : public WorkerThread
         };
         for (size_t i = 0; i < nulldata.size(); ++i)
         {
-            nulldata[i] = complex32f_t(0, 0);
-            // nulldata[i] = pattern[i % 4];
+            //nulldata[i] = complex32f_t(0, 0);
+            nulldata[i] = pattern[i % 4];
         }
         for (int i = 0; i < channelCount; ++i)
             nullSamples.push_back(nulldata.data());
 
         // stream zeroes if timestamps synchronization not available
-        int64_t txSize = chirpStart;
-        while (txSize > 0)
+        // int64_t txSize = chirpStart;
+        // while (txSize > 0)
+        // {
+        //     StreamTxMeta txMeta{};
+        //     txMeta.hasTimestamp = true;
+        //     txMeta.timestamp = Timespec(int64_t(chirpStart - txSize));
+        //     // printf("TTS: %li, src: %li\n", txMeta.timestamp.GetTicks(), int64_t(chirpStart - txSize));
+
+        //     int dummyDataSize = 4 * 512;
+        //     const size_t toSend = dummyDataSize > txSize ? txSize : dummyDataSize;
+        //     txSize -= toSend;
+        //     txMeta.flags = 0; //StreamTxMeta::EndOfBurst;
+        //     uint32_t samplesSent = stream->Transmit(nullSamples.data(), toSend, &txMeta);
+        //     if (samplesSent != toSend)
+        //         return false;
+        // }
+
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = true;
-            txMeta.timestamp = Timespec(0, chirpStart - txSize, 1);
-
-            int dummyDataSize = 4 * 512;
-            const size_t toSend = dummyDataSize > txSize ? txSize : dummyDataSize;
-            txSize -= toSend;
-            txMeta.flags = 0; //StreamTxMeta::EndOfBurst;
-            uint32_t samplesSent = stream->Transmit(nullSamples.data(), toSend, &txMeta);
-            if (samplesSent != toSend)
-                return false;
-        }
-
-        {
-            StreamTxMeta txMeta{};
-            txMeta.hasTimestamp = true;
-            txMeta.timestamp = Timespec(0, chirpStart, 1);
+            txMeta.timestamp = Timespec(int64_t(chirpStart));
             txMeta.flags = StreamTxMeta::EndOfBurst;
-
             const size_t toSend = chirp.size();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
         }
 
+        // {
+        //     StreamTxMeta txMeta{};
+        //     txMeta.hasTimestamp = true;
+        //     txMeta.timestamp = Timespec(int64_t(2*chirpStart));
+        //     txMeta.flags = StreamTxMeta::EndOfBurst;
+
+        //     const size_t toSend = chirp.size();
+        //     stream->Transmit(txSamples.data(), toSend, &txMeta);
+        // }
         return false;
     }
 
@@ -253,13 +262,15 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
 
     const int64_t chirpStart = sampleRate / 1000; // 1ms
     const uint32_t transmitSamplesCount = chirp.size();
-    const int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (0.25 * sampleRate / 1000);
+    const int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (0.5 * sampleRate / 1000);
 
     ReceiverThread rx(rxComposite, receiveSamplesCount, 0);
     TransmitterThread tx(txComposite, chirp, chirpStart);
 
     tx.Start();
     rx.Start();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     rxComposite->Start();
     txComposite->Start();

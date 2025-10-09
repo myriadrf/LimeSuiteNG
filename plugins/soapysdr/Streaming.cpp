@@ -334,7 +334,7 @@ int Soapy_limesuiteng::readStream(
     if (icstream->rxBurstRequest && ((icstream->flags & SOAPY_SDR_HAS_TIME) != 0))
     {
         icstream->flags &= ~SOAPY_SDR_HAS_TIME; // clear for next read
-        if (metadata.timestamp != requestedBurstStart)
+        if (metadata.timestamp.GetTicks() != requestedBurstStart)
         {
             SoapySDR::log(SOAPY_SDR_ERROR,
                 "readStream() rx burst overflow, expected tick:" + std::to_string(requestedBurstStart) +

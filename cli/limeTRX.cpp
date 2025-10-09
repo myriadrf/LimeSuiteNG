@@ -314,7 +314,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     StreamTxMeta txMeta{};
     txMeta.flags = 0;
-    txMeta.timestamp = 0;
+    txMeta.timestamp = Timespec(0l);
     txMeta.hasTimestamp = false; // transmit immediately
 
     std::vector<complex16_t> interleavedBuffer;
@@ -582,7 +582,7 @@ int main(int argc, char** argv)
     txMeta.flags = StreamTxMeta::EndOfBurst;
 
     lime::Timespec ts(0, sampleRate / 100, tickRatio * sampleRate);
-    txMeta.timestamp = ts.GetTicks(); //sampleRate / 100; // send tx samples 10ms after start
+    txMeta.timestamp = ts; //sampleRate / 100; // send tx samples 10ms after start
 
 #ifdef USE_GNU_PLOT
     if (showFFT)

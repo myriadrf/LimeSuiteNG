@@ -40,9 +40,12 @@ namespace lime {
 static const uint32_t vspa_cpu_id = 0;
 static const uint32_t vspa_mbox_id = 0;
 
+static const double refClk = 30.72e6;
+
 VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
     , mailbox(port)
+    , firstTx(true)
 {
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
@@ -106,7 +109,7 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
 
     const uint8_t ddr_rd_dma_ch_nb = 1;
     const bool ddr_rd_dma_mBurst = false;
-    const bool host_flow_control_disable = false;
+    const bool host_flow_control_disable = true;
 
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
@@ -127,6 +130,11 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     printf_dbg_log("IQPlayer: Start Tx, fifo_size:%u\n", fifo_size);
     mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
     OpStatus status = mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    if (status != OpStatus::Success)
+    {
+        printf("Start Tx failed: %i\n", status);
+        // return status;
+    }
     VSPA_FIFO_State& txState = mTx;
 
     txState.bytes_consumed = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
@@ -151,7 +159,7 @@ OpStatus VSPA_iqplayer::StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     const bool test_load_start = false;
     const bool continuous = true;
     const uint8_t ddr_wr_dma_ch_nb = 1;
-    const bool host_flow_control_disable = false;
+    const bool host_flow_control_disable = true;
 
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
@@ -187,6 +195,7 @@ OpStatus VSPA_iqplayer::StopTx()
     printf_dbg_log("IQPlayer: Stop Tx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_TX) << (24 + 32);
     mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
+    firstTx = true;
     return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
 }
 
@@ -232,6 +241,7 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
 
 OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size)
 {
+    firstTx = true;
     VSPA_FIFO_State& txState = mTx;
     assert(tx_vspa_proxy_ro);
     // dccivac((uint32_t*)(tx_vspa_proxy_ro));
@@ -322,27 +332,30 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     return data_size;
 }
 
-int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size)
+int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size, uint64_t timestamp)
 {
     volatile VSPA_FIFO_State& txState = mTx;
 
-    //dccivac((uint32_t*)(tx_vspa_proxy_ro));
+    if (firstTx)
+    {
+        uint64_t bytesOffset = (timestamp * 4) % txState.fifo_size;
+        txState.fifo_offset = bytesOffset;
+        firstTx = false;
+        txState.bytes_produced = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
+    }
 
     // Check new transfer opty
     txState.bytes_consumed = tx_vspa_proxy_ro->la9310_fifo_enqueued_size;
     const int32_t fifo_filled_bytes = txState.bytes_produced - txState.bytes_consumed;
     if (fifo_filled_bytes > txState.fifo_size)
     {
-        printf("\n TX underrun , exit (busy=0x%08x txState.bytes_produced=0x%08x txState.bytes_consumed=0x%08x)\n",
-            fifo_filled_bytes,
-            txState.bytes_produced,
-            txState.bytes_consumed);
     }
+
     const uint32_t contiguousBytesSize = txState.fifo_size - txState.fifo_offset;
     uint32_t empty_size = txState.fifo_size - fifo_filled_bytes;
     const uint32_t tx_ddr_step = tx_vspa_proxy_ro->tx_ddr_step;
-    if (empty_size < tx_ddr_step)
-        return 0;
+    // if (empty_size < tx_ddr_step)
+    //     return 0;
 
     if (empty_size > contiguousBytesSize)
         empty_size = contiguousBytesSize;
@@ -350,8 +363,16 @@ int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size)
     if (write_size > empty_size)
         write_size = empty_size;
 
-    if (write_size < tx_ddr_step)
-        return 0;
+    if (fifo_filled_bytes > txState.fifo_size)
+    {
+        printf("\n TX underrun , exit (busy=0x%08x txState.bytes_produced=0x%08x txState.bytes_consumed=0x%08x)\n",
+            fifo_filled_bytes,
+            txState.bytes_produced,
+            txState.bytes_consumed);
+    }
+
+    // if (write_size < tx_ddr_step)
+    //     return 0;
 
     // xfer data
     auto ddr_dst = vl_iqflood_ddr_addr + txState.fifo_start_addr + txState.fifo_offset;

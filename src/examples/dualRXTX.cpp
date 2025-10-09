@@ -143,7 +143,8 @@ int main(int argc, char** argv)
         }
 
         StreamTxMeta txMeta{};
-        txMeta.timestamp = rxMeta.timestamp + samplesInBuffer * 64;
+        txMeta.timestamp = rxMeta.timestamp;
+        txMeta.timestamp.AddTicks(samplesInBuffer * 64);
         txMeta.hasTimestamp = true;
         txMeta.flags = StreamTxMeta::EndOfBurst;
         uint32_t samplesSent = stream->Transmit(rxSamples, samplesInBuffer, &txMeta);

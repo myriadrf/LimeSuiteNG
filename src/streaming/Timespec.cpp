@@ -1,6 +1,7 @@
 #include "limesuiteng/Timespec.h"
 
 #include <math.h>
+#include <assert.h>
 
 namespace lime {
 
@@ -64,7 +65,7 @@ Timespec::Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second)
 }
 
 Timespec::Timespec(int64_t ticks)
-    : seconds(0)
+    : seconds(ticks)
     , fracSeconds(0)
     , ticksPerSecond(0)
     , hasTickRate(false)
@@ -103,7 +104,7 @@ uint64_t Timespec::GetTicks() const
 
     if (seconds < 0)
         return 0;
-    return seconds * ticksPerSecond + fracSeconds * ticksPerSecond;
+    return round(seconds * ticksPerSecond + fracSeconds * ticksPerSecond);
 }
 
 double Timespec::GetRealSeconds() const
@@ -121,6 +122,8 @@ void Timespec::SetTickRate(double tps)
 
 bool operator==(const Timespec& lhs, const Timespec& rhs)
 {
+    assert(lhs.hasTickRate == rhs.hasTickRate);
+
     bool fracSecondsMatch = fabs(lhs.fracSeconds - rhs.fracSeconds) < 1.0e-9;
     return (lhs.seconds == rhs.seconds) && fracSecondsMatch;
 }

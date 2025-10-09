@@ -31,7 +31,7 @@ namespace lime {
 using namespace std;
 using namespace std::chrono;
 
-static constexpr bool showStats{ true };
+static constexpr bool showStats{ false };
 
 static constexpr int statsPeriod_ms{ 1000 };
 
@@ -67,6 +67,7 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_PCIe> port)
     , vspa(port)
     , mCallback_logMessage(nullptr)
     , mStreamEnabled(false)
+    , phytimer(reinterpret_cast<uint64_t>(port->GetBar(LA9310_WINDOW_BAR0).vaddr) + 0x1020000)
 {
     mTimestampOffset = 0;
 }
@@ -119,6 +120,27 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     OpStatus status = OpStatus::Success;
     vspa.ClearStats();
 
+    // stop PHYTimers
+    phytimer.Enable(false);
+    phytimer.SetTickRate(cfg.hintSampleRate);
+    phytimer.Divisor(1);
+    phytimer.SoftReset(true);
+
+    auto timercfg = phytimer.GetTimer(11);
+    timercfg.capture_current_value = false;
+    // timercfg.firmware_trigger_mode = 0;//0x2;
+    timercfg.comparator_trigger_mode = 1; // 0x2;
+    timercfg.comparator_enable_value = 1; // disables the comparator
+    timercfg.interrupt_flag = 1; // clear flag
+
+    uint8_t ids[] = { 3, 4, 5, 6 };
+    for (auto id : ids)
+    {
+        phytimer.SetTimer(id, timercfg);
+    }
+    timercfg.comparator_trigger_mode = 1; // resets trigger to 0
+    phytimer.SetTimer(11, timercfg);
+
     RxTeardown();
     if (needRx)
         status = RxSetup();
@@ -160,14 +182,39 @@ OpStatus LA9310_TRX::Start()
     {
         status = vspa.StartTx();
         if (status != OpStatus::Success)
+        {
+            lime::error("LA9310 Tx start failed\n");
             return status;
+        }
     }
     if (mConfig.channels.at(TRXDir::Rx).size() > 0)
     {
         status = vspa.StartRx();
         if (status != OpStatus::Success)
+        {
+            lime::error("LA9310 Rx start failed\n");
             return status;
+        }
     }
+
+    // configure PHYTimers to start Rx and Tx DMA at the same time
+    auto cfg = phytimer.GetTimer(11);
+    cfg.comparator_enable_value = false;
+    cfg.capture_current_value = false;
+    cfg.firmware_trigger_mode = 2;
+    cfg.comparator_trigger_mode = 2;
+
+    uint32_t value = 3000; // arbitrary start time in the future
+    const uint8_t ids[] = { 11, 3, 4, 5, 6 };
+
+    for (auto id : ids)
+    {
+        phytimer.SetTimer(id, cfg);
+        phytimer.SetTimerValue(id, value);
+    }
+
+    phytimer.SoftReset(false);
+    phytimer.Enable(true);
     return status;
 }
 
@@ -734,6 +781,7 @@ void LA9310_TRX::TransmitPacketsLoop()
 
     uint32_t bytesRemaining = 0;
 
+    int64_t batchTimestamp = -1;
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
         t2 = std::chrono::steady_clock::now();
@@ -749,11 +797,11 @@ void LA9310_TRX::TransmitPacketsLoop()
                 char msg[512];
                 std::snprintf(msg,
                     sizeof(msg) - 1,
-                    "%s Tx%i: %3.3f MB/s | TS:%s pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) f:%" PRIuPTR,
+                    "%s Tx%i: %3.3f MB/s | TS:%li pkt:%" PRIi64 " u:%i(%+i) l:%i(%+i) f:%" PRIuPTR,
                     "la9310", // mTxArgs.dma->GetName().c_str(),
                     chipId,
                     dataRate / 1000000.0,
-                    "noTS",
+                    batchTimestamp,
                     stats.packets,
                     underrun.value(),
                     underrun.delta(),
@@ -785,6 +833,10 @@ void LA9310_TRX::TransmitPacketsLoop()
                     std::this_thread::yield();
                     break;
                 }
+                if (batchTimestamp < 0)
+                {
+                    batchTimestamp = srcPkt->meta.timestamp.GetTicks();
+                }
             }
             uint32_t bytesForFrame = 4;
             uint32_t samplesToConsume = std::min(mTxArgs.samplesInPacket - samplesFilled, srcPkt->samples.size());
@@ -802,7 +854,6 @@ void LA9310_TRX::TransmitPacketsLoop()
             bytesRemaining = dmaFilled;
             samplesFilled += samplesDataSize / bytesForFrame;
 
-            // samplesFilled = payloadSize / bytesForFrame;
             bool isPacketFull = samplesFilled == mTxArgs.samplesInPacket;
             bool doFlush = srcPkt->meta.flush && srcPkt->samples.size() == 0;
 
@@ -850,13 +901,16 @@ void LA9310_TRX::TransmitPacketsLoop()
 
         while (bytesRemaining > 0)
         {
-            int32_t sent = vspa.Transmit(&dmaBuffer[dmaFilled - bytesRemaining], bytesRemaining);
-
+            int32_t sent = vspa.Transmit(&dmaBuffer[dmaFilled - bytesRemaining], bytesRemaining, batchTimestamp);
             if (sent == 0)
             {
                 ++stats.overrun;
                 std::this_thread::yield();
                 break;
+            }
+            else
+            {
+                batchTimestamp += sent / 4;
             }
             bytesRemaining -= sent;
             totalBytesSent += sent;
@@ -864,6 +918,7 @@ void LA9310_TRX::TransmitPacketsLoop()
 
         if (bytesRemaining == 0)
         {
+            batchTimestamp = -1;
             stats.packets += packetsCounter;
             outputReady = false;
             dmaFilled = 0;
@@ -938,7 +993,8 @@ uint32_t LA9310_TRX::StreamTxTemplate(
     const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
 
     Timespec ts = meta->timestamp;
-    ts.SetTickRate(mConfig.hintSampleRate);
+    // TODO:
+    // ts.SetTickRate(mConfig.hintSampleRate);
 
     uint32_t samplesRemaining = count;
 

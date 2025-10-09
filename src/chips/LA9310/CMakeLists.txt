@@ -1,3 +1,3 @@
-set(LA9310_SOURCES LA9310.cpp VSPA_mailbox.cpp VSPA_iqplayer.cpp)
+set(LA9310_SOURCES LA9310.cpp VSPA_mailbox.cpp VSPA_iqplayer.cpp PHYTimer.cpp)
 
 target_sources(limesuiteng PRIVATE ${LA9310_SOURCES})

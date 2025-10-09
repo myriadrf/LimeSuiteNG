@@ -123,7 +123,7 @@ static void limesuiteng_trx_write_func(
         return;
 
     StreamTxMeta meta;
-    meta.timestamp = timestamp;
+    meta.timestamp = Timespec(timestamp);
     meta.hasTimestamp = true;
     meta.flags = (flags & TRX_WRITE_MD_FLAG_END_OF_BURST) ? StreamTxMeta::EndOfBurst : 0;
 
@@ -142,7 +142,7 @@ static void limesuiteng_trx_write_func2(
         return;
 
     StreamTxMeta meta;
-    meta.timestamp = timestamp;
+    meta.timestamp = Timespec(timestamp);
     meta.hasTimestamp = true;
     meta.flags = (md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST) ? StreamTxMeta::EndOfBurst : 0;
 

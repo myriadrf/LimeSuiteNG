@@ -16,6 +16,7 @@
 
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "chips/LA9310/VSPA_iqplayer.h"
+#include "chips/LA9310/PHYTimer.h"
 
 namespace lime {
 
@@ -142,6 +143,8 @@ class LA9310_TRX : public RFStream
     uint32_t StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout);
     template<class T>
     uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
+
+    PHYTimer phytimer;
 };
 
 } // namespace lime
