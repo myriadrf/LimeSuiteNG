@@ -442,42 +442,55 @@ OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* MOSI, size_t count, uint
     return OpStatus::Success;
 }
 
+template<class T> void InsertBigEndian(uint8_t* dest, const T variable, uint8_t byteCount)
+{
+    for (uint8_t i = 0; i < byteCount; ++i)
+    {
+        *dest = (variable >> 8 * (byteCount - 1 - i)) & 0xFF;
+        ++dest;
+    }
+}
+
 /// @brief The function for reading data via Inter-Integrated Circuit.
 /// @param port The communications port to use.
 /// @param address The address to which to write the data.
 /// @param data The data to write to the chip.
 /// @param count Input data count.
 /// @return The operation status.
-OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_address, const uint8_t* data, uint32_t length)
+OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_offset, const uint8_t* data, uint32_t length)
 {
     LMS64CPacket pkt;
     pkt.cmd = Command::I2C_WR;
     pkt.status = CommandStatus::Undefined;
-    pkt.periphID = soc_address;
+    pkt.periphID = 0;
     pkt.subDevice = 0;
-    pkt.reserved[0] = register_address;
-
-    size_t srcIndex = 0;
-    constexpr int maxBlocks = 28;
-    const int blockSize = 1;
-
-    pkt.blockCount = 0;
     OpStatus status = OpStatus::Success;
-    while (srcIndex < length)
-    {
-        for (int i = 0; i < maxBlocks && srcIndex < length; ++i)
-        {
-            int payloadOffset = pkt.blockCount * blockSize;
-            pkt.payload[payloadOffset] = data[srcIndex];
-            ++pkt.blockCount;
-            ++srcIndex;
-        }
-        status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
-        if (status != OpStatus::Success)
-            return status;
 
-        pkt.blockCount = 0;
+    // I2C configuration
+    uint8_t addr_length = 1;
+    uint8_t register_offset_length = 1;
+    pkt.payload[0] = addr_length; // IC address length
+    pkt.payload[1] = register_offset_length; // register offset length
+    pkt.payload[2] = length; // data length
+    pkt.payload[3] = 0; // reserved
+
+    int payloadOffset = 4;
+    InsertBigEndian(&pkt.payload[payloadOffset], soc_address, addr_length);
+    payloadOffset += addr_length;
+    InsertBigEndian(&pkt.payload[payloadOffset], register_offset, register_offset_length);
+    payloadOffset += register_offset_length;
+
+    for (uint32_t i = 0; i < length; ++i)
+    {
+        pkt.payload[payloadOffset] = data[i];
+        ++payloadOffset;
     }
+
+    pkt.blockCount = payloadOffset; // just for verification of the total payload length
+
+    status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
+    if (status != OpStatus::Success)
+        return status;
     return status;
 }
 
@@ -487,38 +500,37 @@ OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_ad
 /// @param data The data buffer to read to from the chip.
 /// @param count Output buffer size.
 /// @return The operation status.
-OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_address, uint8_t* data, uint32_t length)
+OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_offset, uint8_t* data, uint32_t length)
 {
     LMS64CPacket pkt;
     pkt.cmd = Command::I2C_RD;
     pkt.status = CommandStatus::Undefined;
-    pkt.periphID = soc_address;
+    pkt.periphID = 0;
     pkt.subDevice = 0;
-    pkt.reserved[0] = register_address;
-
-    size_t destIndex = 0;
-    constexpr int maxBlocks = 56;
-
     pkt.blockCount = 0;
     OpStatus status = OpStatus::Success;
-    while (destIndex < length)
-    {
-        int addressToCopy = std::min(static_cast<uint32_t>(maxBlocks), length);
-        memcpy(pkt.payload, data, addressToCopy);
 
-        pkt.blockCount = addressToCopy;
-        status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
-        if (status != OpStatus::Success)
-            return status;
+    // I2C configuration
+    uint8_t addr_length = 1;
+    uint8_t register_offset_length = 1;
+    pkt.payload[0] = addr_length; // IC address length
+    pkt.payload[1] = register_offset_length; // register offset length
+    pkt.payload[2] = length; // data length
+    pkt.payload[3] = 0; // reserved
+    int payloadOffset = 4;
+    InsertBigEndian(&pkt.payload[payloadOffset], soc_address, addr_length);
+    payloadOffset += addr_length;
+    InsertBigEndian(&pkt.payload[payloadOffset], register_offset, register_offset_length);
+    payloadOffset += register_offset_length;
 
-        for (int i = 0; i < addressToCopy; ++i)
-        {
-            data[destIndex] = pkt.payload[i];
-            ++destIndex;
-        }
+    pkt.blockCount = payloadOffset;
 
-        pkt.blockCount = 0;
-    }
+    status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 1100);
+    if (status != OpStatus::Success)
+        return status;
+
+    for (uint32_t i = 0; i < length; ++i)
+        data[i] = pkt.payload[payloadOffset + i];
     return status;
 }
 

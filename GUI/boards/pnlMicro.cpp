@@ -115,10 +115,10 @@ void pnlMicro::UpdatePanel()
     const uint8_t i2c_expander_address = 0x20;
     uint8_t value = 0;
     device->I2CRead(0, i2c_expander_address, 0x19, &value, 1);
-
     cmbTxPath->SetSelection((value >> 1) & 1);
-    int rxIndex = ((value >> 2) & 1) | (value & 1);
-    cmbRxPath->SetSelection(rxIndex);
+    int rx_sw_value = ((value >> 1) & 0x2) | (value & 1);
+    int rx_sw_to_combobox[4] = { 0, 2, 1, 3 };
+    cmbRxPath->SetSelection(rx_sw_to_combobox[rx_sw_value]);
 }
 
 void pnlMicro::OnReadAll(wxCommandEvent& event)

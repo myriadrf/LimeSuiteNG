@@ -296,7 +296,6 @@ void pnlBoardControls::OnReadAll(wxCommandEvent& event)
     if (status != OpStatus::Success)
     {
         wxMessageBox(_("Error reading board parameters"), _("Warning"));
-        return;
     }
 
     for (size_t i = 0; i < mParameters.size(); ++i)
