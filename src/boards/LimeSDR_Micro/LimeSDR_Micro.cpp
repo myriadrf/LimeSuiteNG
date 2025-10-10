@@ -526,6 +526,9 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
     StreamConfig config_mod = config;
     if (config.hintSampleRate <= 0)
         config_mod.hintSampleRate = GetSampleRate(0, TRXDir::Rx, 0);
+
+    if (mCallback_logMessage)
+        stream->SetMessageLogCallback(mCallback_logMessage);
     stream->Setup(config_mod);
     return stream;
 }
