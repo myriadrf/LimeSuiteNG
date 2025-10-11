@@ -46,7 +46,8 @@ namespace limesdrmicro {
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 
-static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static const CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+static const CustomParameter cp_board_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_LimeSDR_Micro = {};
 
@@ -85,7 +86,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     desc.spiSlaveIds = { { "LMS7002M"s, limesdrmicro::SPI_LMS7002M } };
     desc.i2cBusIds = { { "LA9310"s, 0 } };
 
-    desc.customParameters = { limesdrmicro::cp_vctcxo_dac };
+    desc.customParameters = { limesdrmicro::cp_vctcxo_dac, limesdrmicro::cp_board_temperature };
 
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
