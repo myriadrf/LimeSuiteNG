@@ -21,7 +21,7 @@ class LIME_API II2C
       @param length Output data length.
       @return The operation status.
      */
-    virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length) = 0;
+    virtual OpStatus I2CWrite(uint16_t address, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t data_length) = 0;
 
     /**
       @brief Read from an available Inter-Integrated Circuit slave.
@@ -34,7 +34,7 @@ class LIME_API II2C
       @param length Number of bytes to read.
       @return The operation status.
      */
-    virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length) = 0;
+    virtual OpStatus I2CRead(uint16_t address, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t data_length) = 0;
 };
 
 } // namespace lime

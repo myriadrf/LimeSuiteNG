@@ -46,7 +46,8 @@ namespace limesdrmicro {
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 
-// Fairwaves XTRX rev.5 requires specific LDO configuration to work properly
+static CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 65535, false };
+
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_LimeSDR_Micro = {};
 
 } // namespace limesdrmicro
@@ -84,6 +85,8 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     desc.spiSlaveIds = { { "LMS7002M"s, limesdrmicro::SPI_LMS7002M } };
     desc.i2cBusIds = { { "LA9310"s, 0 } };
 
+    desc.customParameters = { limesdrmicro::cp_vctcxo_dac };
+
     {
         RFSOCDescriptor soc = GetDefaultLMS7002MDescriptor();
         soc.antennaRange[TRXDir::Rx]["LNAH"s] = { 3.3e9, 3.8e9 };
@@ -105,7 +108,13 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         mLMSChips.push_back(std::move(chip));
     }
 
-    desc.memoryDevices[ToString(eMemoryDevice::FPGA_RAM)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_RAM);
+    // const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
+    desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM);
+    {
+        const std::unordered_map<std::string, Region> eepromMap = { { "XO_DAC"s, { 0xFFFE, 2 } } };
+        desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] =
+            std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, std::move(eepromMap));
+    }
 
     desc.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
     desc.socTree->children.push_back(
@@ -406,12 +415,12 @@ void LimeSDR_Micro::SetMessageLogCallback(LogCallbackType callback)
 
 OpStatus LimeSDR_Micro::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
-    return OpStatus::NotImplemented;
+    return LMS64CProtocol::CustomParameterWrite(*mSerialPort, parameters, 0);
 }
 
 OpStatus LimeSDR_Micro::CustomParameterRead(std::vector<CustomParameterIO>& parameters)
 {
-    return OpStatus::NotImplemented;
+    return LMS64CProtocol::CustomParameterRead(*mSerialPort, parameters, 0);
 }
 
 void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
@@ -421,7 +430,7 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 
     const uint8_t i2c_expander_address = 0x20;
     uint8_t value = 0;
-    I2CRead(0, i2c_expander_address, 0x19, &value, 1);
+    I2CRead(0, i2c_expander_address, 0x19, 1, &value, 1);
     if (dir == TRXDir::Tx)
     {
         lms->SetBandTRF(pathId);
@@ -430,7 +439,7 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             value |= (1 << 1); // set TX_SW, Band1
         else
             value |= (0 << 1); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, 0x19, &value, 1);
+        I2CWrite(0, i2c_expander_address, 0x19, 1, &value, 1);
     }
     else
     {
@@ -461,7 +470,7 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             rxsw3 = 0;
         }
         value |= (rxsw2 << 0) | (rxsw3 << 2); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, 0x19, &value, 1);
+        I2CWrite(0, i2c_expander_address, 0x19, 1, &value, 1);
     }
 }
 
@@ -474,16 +483,22 @@ OpStatus LimeSDR_Micro::UploadMemory(
 
 OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
 {
-    if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::InvalidValue;
-    return OpStatus::NotImplemented;
+    if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
+    {
+        return OpStatus::Error;
+    }
+    return LMS64CProtocol::MemoryWrite(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 OpStatus LimeSDR_Micro::MemoryRead(std::shared_ptr<DataStorage> storage, Region region, void* data)
 {
-    if (storage == nullptr || storage->ownerDevice != this)
-        return OpStatus::InvalidValue;
-    return OpStatus::NotImplemented;
+    if (storage == nullptr || storage->ownerDevice != this || storage->memoryDeviceType != eMemoryDevice::EEPROM)
+    {
+        return OpStatus::Error;
+    }
+    return LMS64CProtocol::MemoryRead(
+        *mSerialPort, LMS64CProtocol::MEMORY_WR_targets::EEPROM, region.address, data, region.size, 0);
 }
 
 OpStatus LimeSDR_Micro::UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count)
@@ -533,14 +548,15 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
     return stream;
 }
 
-OpStatus LimeSDR_Micro::I2CWrite(uint32_t bus, uint32_t soc, uint32_t offset, const uint8_t* data, uint32_t length)
+OpStatus LimeSDR_Micro::I2CWrite(
+    uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t length)
 {
-    return LMS64CProtocol::I2C_Write(*mSerialPort, soc, offset, data, length);
+    return LMS64CProtocol::I2C_Write(*mSerialPort, soc, offset, offset_len, data, length);
 }
 
-OpStatus LimeSDR_Micro::I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t* data, uint32_t length)
+OpStatus LimeSDR_Micro::I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t length)
 {
-    return LMS64CProtocol::I2C_Read(*mSerialPort, soc, offset, data, length);
+    return LMS64CProtocol::I2C_Read(*mSerialPort, soc, offset, offset_len, data, length);
 }
 
 OpStatus LimeSDR_Micro::StreamSetup(const StreamConfig& config, uint8_t moduleIndex)

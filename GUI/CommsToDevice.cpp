@@ -31,14 +31,14 @@ I2CToSDR::I2CToSDR(lime::SDRDevice& sdr)
 {
 }
 
-OpStatus I2CToSDR::I2CWrite(int address, const uint8_t* data, uint32_t length)
+OpStatus I2CToSDR::I2CWrite(uint16_t address, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t data_length)
 {
-    return device.I2CWrite(0, address, 0, data, length);
+    return device.I2CWrite(0, address, offset, offset_len, data, data_length);
 }
 
-OpStatus I2CToSDR::I2CRead(int address, uint8_t* dest, uint32_t length)
+OpStatus I2CToSDR::I2CRead(uint16_t address, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t data_length)
 {
-    return device.I2CRead(0, address, 0, dest, length);
+    return device.I2CRead(0, address, offset, offset_len, data, data_length);
 }
 
 } // namespace lime

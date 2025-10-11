@@ -134,7 +134,7 @@ Si5351C::Status Si5351C::UploadConfiguration()
 
     try
     {
-        comms.I2CWrite(addrSi5351, outBuffer.data(), outBuffer.size());
+        comms.I2CWrite(addrSi5351, 0, 0, outBuffer.data(), outBuffer.size());
         return Status::SUCCESS;
     } catch (std::runtime_error& e)
     {
@@ -607,7 +607,7 @@ Si5351C::StatusBits Si5351C::GetStatusBits()
 
     try
     {
-        comms.I2CRead(addrSi5351, dataIo.data(), 2);
+        comms.I2CRead(addrSi5351, 0, 0, dataIo.data(), 2);
     } catch (std::runtime_error& e)
     {
         return stat;
@@ -634,7 +634,7 @@ Si5351C::Status Si5351C::ClearStatus()
 
     try
     {
-        comms.I2CWrite(addrSi5351, dataWr.data(), dataWr.size());
+        comms.I2CWrite(addrSi5351, 0, 0, dataWr.data(), dataWr.size());
         return Status::SUCCESS;
     } catch (std::runtime_error& e)
     {

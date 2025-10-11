@@ -152,8 +152,9 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
 
-    OpStatus I2CWrite(uint32_t bus, uint32_t soc, uint32_t offset, const uint8_t* data, uint32_t length) override;
-    OpStatus I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t* data, uint32_t length) override;
+    OpStatus I2CWrite(
+        uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t length) override;
+    OpStatus I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t length) override;
 
   private:
     // SDRDescriptor mDeviceDescriptor;

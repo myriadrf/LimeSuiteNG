@@ -30,8 +30,9 @@ class I2CToSDR : public lime::II2C
 {
   public:
     I2CToSDR(lime::SDRDevice& sdr);
-    virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length);
-    virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length);
+    virtual OpStatus I2CWrite(
+        uint16_t address, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t data_length) override;
+    virtual OpStatus I2CRead(uint16_t address, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t data_length) override;
 
   private:
     lime::SDRDevice& device;

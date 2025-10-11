@@ -457,7 +457,8 @@ template<class T> void InsertBigEndian(uint8_t* dest, const T variable, uint8_t 
 /// @param data The data to write to the chip.
 /// @param count Input data count.
 /// @return The operation status.
-OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_offset, const uint8_t* data, uint32_t length)
+OpStatus I2C_Write(
+    ISerialPort& port, uint32_t soc_address, uint16_t register_offset, uint8_t offset_len, const uint8_t* data, uint32_t length)
 {
     LMS64CPacket pkt;
     pkt.cmd = Command::I2C_WR;
@@ -468,7 +469,7 @@ OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_of
 
     // I2C configuration
     uint8_t addr_length = 1;
-    uint8_t register_offset_length = 1;
+    uint8_t register_offset_length = offset_len;
     pkt.payload[0] = addr_length; // IC address length
     pkt.payload[1] = register_offset_length; // register offset length
     pkt.payload[2] = length; // data length
@@ -500,7 +501,8 @@ OpStatus I2C_Write(ISerialPort& port, uint32_t soc_address, uint16_t register_of
 /// @param data The data buffer to read to from the chip.
 /// @param count Output buffer size.
 /// @return The operation status.
-OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_offset, uint8_t* data, uint32_t length)
+OpStatus I2C_Read(
+    ISerialPort& port, uint32_t soc_address, uint16_t register_offset, uint8_t offset_len, uint8_t* data, uint32_t length)
 {
     LMS64CPacket pkt;
     pkt.cmd = Command::I2C_RD;
@@ -512,7 +514,7 @@ OpStatus I2C_Read(ISerialPort& port, uint32_t soc_address, uint16_t register_off
 
     // I2C configuration
     uint8_t addr_length = 1;
-    uint8_t register_offset_length = 1;
+    uint8_t register_offset_length = offset_len;
     pkt.payload[0] = addr_length; // IC address length
     pkt.payload[1] = register_offset_length; // register offset length
     pkt.payload[2] = length; // data length
