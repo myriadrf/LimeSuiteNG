@@ -117,6 +117,12 @@ double Timespec::GetRealSeconds() const
 void Timespec::SetTickRate(double tps)
 {
     ticksPerSecond = tps;
+    if (!hasTickRate)
+    {
+        fracSeconds = (double(seconds) / ticksPerSecond);
+        fracSeconds = fmod(fracSeconds, 1.0);
+        seconds /= ticksPerSecond;
+    }
     hasTickRate = true;
 }
 
