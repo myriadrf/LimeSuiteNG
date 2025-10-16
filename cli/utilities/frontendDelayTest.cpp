@@ -5,7 +5,6 @@
 #include "limesuiteng/OpStatus.h"
 #include <iostream>
 #include <chrono>
-#include <cmath>
 #include <signal.h>
 #include <thread>
 #include <condition_variable>
@@ -17,6 +16,9 @@
 #include "../src/DSP/FFT/FFT.h"
 #include "../src/DSP/math/math.h"
 #include "../src/utilities/WorkerThread.h"
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #define USE_GNU_PLOT 1
 #ifdef USE_GNU_PLOT
