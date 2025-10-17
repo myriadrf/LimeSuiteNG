@@ -291,6 +291,7 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
             data_size,
             rxState.bytes_produced,
             rxState.bytes_consumed);
+        rxState.bytes_consumed = rxState.bytes_produced;
         return 0;
     }
 

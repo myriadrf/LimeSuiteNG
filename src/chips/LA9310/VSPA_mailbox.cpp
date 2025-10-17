@@ -71,14 +71,17 @@ OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* va
                 *value |= lsb;
             }
             t2 = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
             printf_mailbox_log(
-                "Received VSPA[%d], MBox:%d, value: 0x%08x_x%08x. t=%lims\n", core_idx, mbox_id, msb, lsb, duration.count());
+                "Recv VSPA[%d] MBox:%d, value: 0x%08x_%08x. t=%lius\n", core_idx, mbox_id, msb, lsb, duration.count());
+
+            Clear(core_idx, mbox_id);
             return OpStatus::Success;
         }
         t2 = std::chrono::high_resolution_clock::now();
     } while (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) < std::chrono::milliseconds(1000));
-    printf_mailbox_log("Timeout VSPA[%d] MBox:%d is not responding!\n", core_idx, mbox_id);
+    printf("\n\t!Timeout VSPA[%d] MBox:%d is not responding!\n", core_idx, mbox_id);
+
     return OpStatus::Timeout;
 }
 

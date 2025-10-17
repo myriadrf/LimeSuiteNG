@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <iostream>
 
 #include "streaming/BufferInterleaving.h"
 
@@ -118,29 +119,6 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return OpStatus::Success;
 
     OpStatus status = OpStatus::Success;
-    vspa.ClearStats();
-
-    // stop PHYTimers
-    phytimer.Enable(false);
-    phytimer.SetTickRate(cfg.hintSampleRate);
-    phytimer.Divisor(1);
-    phytimer.SoftReset(true);
-
-    auto timercfg = phytimer.GetTimer(11);
-    timercfg.capture_current_value = false;
-    // timercfg.firmware_trigger_mode = 0;//0x2;
-    timercfg.comparator_trigger_mode = 1; // 0x2;
-    timercfg.comparator_enable_value = 1; // disables the comparator
-    timercfg.interrupt_flag = 1; // clear flag
-
-    uint8_t ids[] = { 3, 4, 5, 6 };
-    for (auto id : ids)
-    {
-        phytimer.SetTimer(id, timercfg);
-    }
-    timercfg.comparator_trigger_mode = 1; // resets trigger to 0
-    phytimer.SetTimer(11, timercfg);
-
     RxTeardown();
     if (needRx)
         status = RxSetup();
@@ -155,6 +133,21 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     if (status != OpStatus::Success)
         return status;
 
+    // stop PHYTimers
+    phytimer.Enable(false);
+    phytimer.SoftReset(true);
+    phytimer.SetTickRate(cfg.hintSampleRate);
+    phytimer.Divisor(1);
+
+    // Disable all Rx and Tx DMA triggers
+    constexpr uint8_t ids[] = { 3, 4, 11 };
+    for (const auto id : ids)
+    {
+        PHYTimerControl timer = phytimer.GetTimerControl(id);
+        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+    }
+
+    vspa.ClearStats();
     return vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
 }
 
@@ -197,20 +190,15 @@ OpStatus LA9310_TRX::Start()
         }
     }
 
-    // configure PHYTimers to start Rx and Tx DMA at the same time
-    auto cfg = phytimer.GetTimer(11);
-    cfg.comparator_enable_value = false;
-    cfg.capture_current_value = false;
-    cfg.firmware_trigger_mode = 2;
-    cfg.comparator_trigger_mode = 2;
-
-    uint32_t value = 3000; // arbitrary start time in the future
-    const uint8_t ids[] = { 11, 3, 4, 5, 6 };
-
-    for (auto id : ids)
+    // Use timer to enable all Rx and Tx DMA at the same moment
+    PHYTimerControl timer = phytimer.GetTimerControl(21);
+    uint32_t startTime = timer.CaptureCounter();
+    startTime += 3000; // arbitrary start time in the future
+    constexpr uint8_t ids[] = { 3, 4, 11 };
+    for (const auto id : ids)
     {
-        phytimer.SetTimer(id, cfg);
-        phytimer.SetTimerValue(id, value);
+        PHYTimerControl timer = phytimer.GetTimerControl(id);
+        timer.TriggerAtCounter(PHYTimerControl::TriggerLogic::ForceOne, startTime);
     }
 
     phytimer.SoftReset(false);
@@ -228,7 +216,6 @@ void LA9310_TRX::Stop()
 {
     if (!mStreamEnabled)
         return;
-    lime::debug("LA9310_TRX::Stop()");
     mStreamEnabled = false;
 
     // wait for loop ends
@@ -236,7 +223,6 @@ void LA9310_TRX::Stop()
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mRx.terminate.store(true, std::memory_order_relaxed);
-        lime::debug("LA9310_TRX: wait for Rx loop end.");
         {
             std::unique_lock lck{ mRx.mutex };
             while (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
@@ -249,21 +235,20 @@ void LA9310_TRX::Stop()
             std::snprintf(msg, sizeof(msg), "Rx%i stop: packetsIn: %" PRIi64, 0, mRx.stats.packets);
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
+        vspa.StopRx();
     }
-    vspa.StopRx();
 
     // wait for loop ends
     if (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
         mTx.terminate.store(true, std::memory_order_relaxed);
-        lime::debug("LA9310_TRX: wait for Tx loop end."s);
         {
             std::unique_lock lck{ mTx.mutex };
             while (mTx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
                 mTx.cv.wait(lck);
         }
+        vspa.StopTx();
     }
-    vspa.StopTx();
 
     if (mRx.stagingPacket != nullptr)
     {
@@ -291,6 +276,13 @@ void LA9310_TRX::Stop()
     }
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
+
+    constexpr uint8_t ids[] = { 3, 4, 11 };
+    for (const auto id : ids)
+    {
+        PHYTimerControl timer = phytimer.GetTimerControl(id);
+        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+    }
 }
 
 /// @brief Stops all the running streams and clears up the memory.
@@ -375,7 +367,6 @@ OpStatus LA9310_TRX::RxSetup()
 #endif
 
     // wait for Rx thread to be ready
-    lime::debug("RxSetup wait for Rx worker thread."s);
     {
         std::unique_lock lck{ mRx.mutex };
         while (mRx.stage.load(std::memory_order_relaxed) < Stream::ReadyStage::WorkerReady)
@@ -387,7 +378,6 @@ OpStatus LA9310_TRX::RxSetup()
 
 void LA9310_TRX::RxWorkLoop()
 {
-    lime::debug("Rx worker thread ready.");
     // signal that thread is ready for work
     {
         std::unique_lock lck{ mRx.mutex };
@@ -416,14 +406,11 @@ void LA9310_TRX::RxWorkLoop()
         mRx.cv.notify_all();
     }
     mRx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
-    lime::debug("Rx worker thread shutdown.");
 }
 
 /** @brief Function dedicated for receiving data samples from board */
 void LA9310_TRX::ReceivePacketsLoop()
 {
-    lime::debug("Rx receive loop start.");
-
     DataConversion conversion{};
     conversion.srcFormat = mConfig.linkFormat;
     conversion.destFormat = mConfig.format;
@@ -530,14 +517,12 @@ void LA9310_TRX::ReceivePacketsLoop()
         //     mConfig.statusCallback(false, &stats, mConfig.userData);
         // std::this_thread::yield();
     }
-    lime::debug("Rx receive loop end.");
 }
 
 void LA9310_TRX::RxTeardown()
 {
     if (mRx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        lime::debug("RxTeardown wait for Rx worker shutdown.");
         mRx.terminateWorker.store(true, std::memory_order_relaxed);
         {
             std::unique_lock lck{ streamMutex };
@@ -713,7 +698,6 @@ OpStatus LA9310_TRX::TxSetup()
     // Initialize DMA
     // mTxArgs.dma->Enable(true);
 
-    lime::debug("TxSetup wait for Tx worker.");
     // wait for Tx thread to be ready
     {
         std::unique_lock lck{ mTx.mutex };
@@ -725,7 +709,6 @@ OpStatus LA9310_TRX::TxSetup()
 
 void LA9310_TRX::TxWorkLoop()
 {
-    lime::debug("Tx worker thread ready.");
     // signal that thread is ready for work
     {
         std::unique_lock lck{ mTx.mutex };
@@ -753,13 +736,11 @@ void LA9310_TRX::TxWorkLoop()
         }
     }
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
-    lime::debug("Tx worker thread shutdown.");
 }
 
 void LA9310_TRX::TransmitPacketsLoop()
 {
     const int chipId = 0;
-    lime::debug("Tx transmit loop start.");
     StreamStats& stats = mTx.stats;
 
     auto& fifo = mTx.fifo;
@@ -925,14 +906,12 @@ void LA9310_TRX::TransmitPacketsLoop()
             packetsCounter = 0;
         }
     }
-    lime::debug("Tx transmit loop end.");
 }
 
 void LA9310_TRX::TxTeardown()
 {
     if (mTx.stage.load(std::memory_order_relaxed) != Stream::ReadyStage::Disabled)
     {
-        lime::debug("TxTeardown wait for Tx worker shutdown.");
         mTx.terminateWorker.store(true, std::memory_order_relaxed);
         {
             std::unique_lock lck{ streamMutex };

@@ -1,5 +1,9 @@
 #include "PHYTimer.h"
 #include <stdio.h>
+
+#include <iostream>
+#include <sstream>
+
 namespace lime {
 
 static inline void iowrite32(uint32_t value, uint64_t addr)
@@ -46,173 +50,81 @@ void PHYTimer::Divisor(uint8_t value)
     iowrite32(regvalue, vaddr_base);
 }
 
-void PHYTimer::SetTimer(uint8_t id, const PHYTimer::Timer& cfg)
-{
-    uint32_t regvalue = 0; //ioread32(vaddr_base + 4 + id * 8);
-    regvalue &= ~(0x1F);
-
-    regvalue |= cfg.capture_on_falling_edge << 8;
-    regvalue |= cfg.interrupt_flag << 7;
-    regvalue |= cfg.comparator_enable_value << 6;
-    regvalue |= cfg.capture_current_value << 5;
-    regvalue |= cfg.cross_trigger_enable << 4;
-    regvalue |= cfg.firmware_trigger_mode << 2;
-    regvalue |= cfg.comparator_trigger_mode;
-    iowrite32(regvalue, vaddr_base + 4 + id * 8);
-}
-
-PHYTimer::Timer PHYTimer::GetTimer(uint8_t id) const
-{
-    Timer cfg;
-    const uint32_t regvalue = ioread32(vaddr_base + 4 + id * 8);
-    cfg.trigger_output_value = regvalue & (1 << 31);
-    cfg.capture_on_falling_edge = regvalue & (1 << 8);
-    cfg.interrupt_flag = regvalue & (1 << 7);
-    cfg.comparator_enable_value = regvalue & (1 << 6);
-    cfg.capture_current_value = regvalue & (1 << 5);
-    cfg.cross_trigger_enable = regvalue & (1 << 4);
-    cfg.firmware_trigger_mode = (regvalue & 0x3) >> 2;
-    cfg.comparator_trigger_mode = regvalue & 0x3;
-    return cfg;
-}
-
-uint32_t PHYTimer::GetValue(uint8_t id)
-{
-    uint64_t addr = vaddr_base + 4 + id * 8;
-    return ioread32(addr + 4);
-}
-
-void PHYTimer::SetValue(uint32_t value, uint8_t id)
-{
-    uint64_t addr = vaddr_base + 4 + id * 8;
-    iowrite32(value, addr + 4);
-}
-
-uint32_t PHYTimer::GetTriggerState(uint8_t id, bool* trigger)
-{
-    uint64_t addr = vaddr_base + 4 + id * 8;
-    uint32_t regvalue = ioread32(addr);
-    uint32_t tempvalue = regvalue & ~(1 << 7); // 0, to not clear CIF
-    iowrite32(regvalue & ~(1 << 5), addr);
-    iowrite32(regvalue | (1 << 6), addr);
-    uint32_t counter = ioread32(addr + 4);
-    regvalue = ioread32(addr);
-    bool wasTriggered = regvalue & (1 << 7);
-    // iowrite32(regvalue & ~(1<<6), addr);
-    if (wasTriggered)
-    {
-        iowrite32(regvalue | (1 << 7), addr); // clear CIF
-        if (trigger)
-            *trigger = wasTriggered;
-    }
-    return counter;
-}
-
-uint32_t PHYTimer::GetStatusControl(uint8_t id)
-{
-    return ioread32(vaddr_base + 4 + id * 8);
-}
-void PHYTimer::SetStatusControl(uint8_t id, uint32_t value)
-{
-    iowrite32(value, vaddr_base + 4 + id * 8);
-}
-
-void PHYTimer::SetTimerValue(uint8_t id, uint32_t value)
-{
-    iowrite32(value, vaddr_base + 8 + id * 8);
-}
-
 void PHYTimer::DumpMem()
 {
     uint64_t addr = vaddr_base;
-    printf("base: %08X\n", ioread32(addr));
-    addr += 4;
-    for (int i = 0; i < 12; ++i)
-    {
-        printf("T%i %08X %08X\n", i, ioread32(addr), ioread32(addr + 4));
-        addr += 8;
-    }
+    uint32_t csr = ioread32(addr);
+    std::cerr << "PHYTimer enable:" << bool(csr & 0x1) << " softReset:" << bool(csr & 0x8) << " divisor:" << ((csr >> 8) & 0x3f)
+              << std::endl;
+    for (int i = 0; i < 23; ++i)
+        std::cerr << "TM" << i << "\t" << GetTimerControl(i).ToString() << std::endl;
 }
 
-PPS_Timer::PPS_Timer(PHYTimer* phy, uint8_t clkId)
-    : phy(phy)
-    , clkId(clkId)
-    , nextTrigger(0)
+PHYTimerControl PHYTimer::GetTimerControl(uint8_t id) const
 {
-    nextTrigger = phy->tickRate;
-    t1 = std::chrono::steady_clock::now();
+    return PHYTimerControl(vaddr_base + 4 + id * 8);
 }
 
-void PPS_Timer::Begin()
+PHYTimerControl::PHYTimerControl(uint64_t vaddr_status_control)
+    : vaddr_status_control(vaddr_status_control)
 {
-    PHYTimer::Timer cfg;
-    cfg.capture_on_falling_edge = false;
-    cfg.capture_current_value = false;
-    cfg.cross_trigger_enable = false;
-    cfg.interrupt_flag = false;
-    cfg.firmware_trigger_mode = 0;
-    cfg.comparator_trigger_mode = 2;
-    cfg.comparator_enable_value = false;
-    phy->SetTimer(clkId, cfg);
-    phy->SetValue(nextTrigger, clkId);
-    cfg.comparator_enable_value = true;
-    phy->SetTimer(clkId, cfg);
 }
 
-bool PPS_Timer::Update(bool capture)
+void PHYTimerControl::TriggerDirectly(TriggerLogic output)
 {
-    uint32_t regvalue = phy->GetStatusControl(clkId);
-    bool wasTriggered = regvalue & (1 << 7);
-    regvalue &= 0x11F;
-    if (capture)
-    {
-        phy->SetStatusControl(clkId, regvalue | (1 << 5));
-    }
-    regvalue = phy->GetStatusControl(clkId);
-    uint32_t counter = phy->GetValue(clkId);
-    if (wasTriggered)
-    {
-        auto t2 = std::chrono::steady_clock::now();
-        phy->SetStatusControl(clkId, regvalue | (1 << 7)); // clear CIF
-        t1 = t2;
-    }
+    uint32_t regvalue = ioread32(vaddr_status_control);
+    regvalue &= ~0xC; // clear DIR_TRIG;
 
-    uint64_t lastSeconds = currentTime.GetSeconds();
-    if (wasTriggered)
-    {
-        ++lastSeconds;
-    }
-    uint32_t counterRemainder = counter % uint32_t(phy->tickRate);
-    currentTime = Timespec(lastSeconds, counterRemainder, phy->tickRate);
-    return wasTriggered;
+    // The value of DIR_TRIG should always be written as 00 when writing to TM_PHY_CnSC while the corresponding
+    // comparator is enabled. If the comparator is not known to be disabled and a direct trigger needs to be performed the
+    // comparator should be disabled by writing CMPE=1 with DIR_TRIG=00 at least one instruction before writing a non-
+    // zero value to DIR_TRIG.
+
+    // Writing 1 to CMPE bit disables the comparator, writing 0 has no effect.
+    iowrite32(regvalue, vaddr_status_control); // disable comparator
+
+    regvalue &= ~CMPE;
+    regvalue |= (output << 2); // DIR_TRIG
+    iowrite32(regvalue, vaddr_status_control);
 }
 
-Timespec PPS_Timer::Now()
+void PHYTimerControl::TriggerAtCounter(TriggerLogic output, uint32_t counter)
 {
-    return currentTime;
+    uint32_t regvalue = ioread32(vaddr_status_control);
+    regvalue &= ~0xF; // clear DIR_TRIG, CMP_TRIG;
+    regvalue |= output; // CMP_TRIG
+
+    regvalue &= ~CAP;
+    regvalue |= CIF; // writing 1 clears CIF
+    regvalue |= CMPE; // writing 1 disabled comparator
+    iowrite32(regvalue, vaddr_status_control);
+    regvalue &= ~CMPE; // writing 1 disabled comparator
+    iowrite32(regvalue, vaddr_status_control);
+
+    iowrite32(counter, vaddr_status_control + 4); // writing counter enables comparator
 }
 
-bool PPS_Timer::GetTriggerState()
+std::string PHYTimerControl::ToString() const
 {
-    uint32_t regvalue = phy->GetStatusControl(clkId);
-    return regvalue & 0x80000000;
+    char ctemp[128];
+    uint32_t csr = ioread32(vaddr_status_control);
+    snprintf(ctemp, sizeof(ctemp), "CSR:%08X CNT:%08X | ", csr, ioread32(vaddr_status_control + 4));
+    std::stringstream ss;
+    ss << ctemp;
+    ss << " Trig:" << (csr & TVAL ? 1 : 0);
+    ss << " CIF:" << (csr & CIF ? 1 : 0);
+    ss << " CMPE:" << (csr & CMPE ? 1 : 0);
+    ss << " CAP:" << (csr & CAP ? 1 : 0);
+
+    return ss.str();
 }
 
-void PPS_Timer::ScheduleAt(Timespec tm, uint8_t value)
+uint32_t PHYTimerControl::CaptureCounter()
 {
-    PHYTimer::Timer cfg;
-    cfg.capture_on_falling_edge = false;
-    cfg.capture_current_value = false;
-    cfg.cross_trigger_enable = false;
-    cfg.interrupt_flag = true; // clears flag if was set
-    cfg.firmware_trigger_mode = value;
-    cfg.comparator_trigger_mode = value;
-    cfg.comparator_enable_value = false;
-    phy->SetTimer(clkId, cfg);
-    uint32_t trigValue = tm.GetTicks() & 0xFFFFFFFF;
-    phy->SetValue(trigValue, clkId);
-    // cfg.comparator_enable_value = true;
-    // phy->SetTimer(clkId, cfg);
+    uint32_t regvalue = ioread32(vaddr_status_control);
+    regvalue |= CAP;
+    iowrite32(regvalue, vaddr_status_control);
+    return ioread32(vaddr_status_control + 4);
 }
 
 } // namespace lime

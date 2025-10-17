@@ -604,7 +604,13 @@ int main(int argc, char** argv)
     rxcaptures.reserve(1024 * 1024);
 
     stream->StageStart();
-    stream->Start();
+    status = stream->Start();
+    if (status != OpStatus::Success)
+    {
+        std::cerr << "Failed to start streaming" << std::endl;
+        DeviceRegistry::freeDevice(device);
+        return EXIT_FAILURE;
+    }
 
     auto startTime = std::chrono::high_resolution_clock::now();
     auto t1 = startTime - std::chrono::seconds(2); // rewind t1 to do update on first loop
