@@ -925,6 +925,7 @@ class LIME_API LMS7002M
     int16_t ReadAnalogDC(const uint16_t addr);
     uint16_t GetRSSIDelayCounter();
 
+  public:
     lms7002m_context* mC_impl;
     bool skipExternalDataInterfaceUpdate;
     bool customConfigFileIsLoaded;

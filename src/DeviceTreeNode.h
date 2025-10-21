@@ -17,6 +17,7 @@ enum class eDeviceTreeNodeClass {
     SDRDevice,
     LMS8001,
     GPIO,
+    LA9310,
 };
 
 /// @brief Structure describing a device node in the device node tree.

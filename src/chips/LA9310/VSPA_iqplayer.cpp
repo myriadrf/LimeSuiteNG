@@ -1,7 +1,13 @@
 #include "VSPA_iqplayer.h"
 
+#include "limesuiteng/types.h"
+
 #include <assert.h>
 #include <cstring>
+#include <iostream>
+
+#include "interface/IDCCorrector.h"
+#include "interface/IQuadratureErrorCorrector.h"
 
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
@@ -15,6 +21,27 @@
 #else
     #define printf_dbg_log(format, ...)
 #endif
+
+enum {
+    MBOX_EMPTY = 0, // 0x0
+    MBOX_IQ_CORR_FTAP0, // 0x1
+    MBOX_IQ_CORR_FTAP1, // 0x2
+    MBOX_IQ_CORR_FTAP2, // 0x3
+    MBOX_IQ_CORR_FTAP3, // 0x4
+    MBOX_IQ_CORR_FTAP4, // 0x5
+    MBOX_IQ_CORR_FTAP5, // 0x6
+    MBOX_IQ_CORR_FTAP6, // 0x7
+    MBOX_IQ_CORR_FTAP7, // 0x8
+    MBOX_IQ_CORR_FTAP8, // 0x9
+    MBOX_IQ_CORR_FTAP9, // 0xA
+    MBOX_IQ_CORR_FTAP10, // 0xB
+    MBOX_IQ_CORR_FTAP11, // 0xC
+    MBOX_IQ_CORR_FTAP12, // 0xD
+    MBOX_IQ_CORR_DC_I, // 0xE
+    MBOX_IQ_CORR_DC_Q, // 0xF
+    MBOX_IQ_CORR_FDELAY, // 0x10
+    MBOX_IQ_CORR_MAX, // 0x11
+};
 
 enum mbox_opc_e {
     MBOX_OPC_EMPTY_0, // 0x0
@@ -44,7 +71,7 @@ static const double refClk = 30.72e6;
 
 VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
-    , mailbox(port)
+    , mailbox(std::make_shared<VSPA_mailbox>(port))
     , firstTx(true)
 {
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
@@ -85,14 +112,14 @@ OpStatus VSPA_iqplayer::SelectRxChannel(uint32_t rx_channel_index)
 {
     printf_dbg_log("IQPlayer: select ADC channel %i\n", rx_channel_index);
     uint64_t value = (uint64_t(MBOX_OPC_RX_CHAN_SELECT) << (24 + 32)) | rx_channel_index;
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
-    return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
 }
 
 OpStatus VSPA_iqplayer::StartRx()
 {
     VSPA_FIFO_State& rxState = mRx[0];
-    return StartRx(rxState.fifo_size, LA9310_IQFLOOD_PHYS_ADDR + rxState.fifo_start_addr);
+    return StartRx(0, rxState.fifo_size, LA9310_IQFLOOD_PHYS_ADDR + rxState.fifo_start_addr);
 }
 
 OpStatus VSPA_iqplayer::StartTx()
@@ -128,8 +155,8 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     uint64_t value = uint64_t(hiword) << 32 | loword;
 
     printf_dbg_log("IQPlayer: Start Tx, fifo_size:%u\n", fifo_size);
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
-    OpStatus status = mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    OpStatus status = mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
     if (status != OpStatus::Success)
     {
         printf("Start Tx failed: %i\n", status);
@@ -152,7 +179,7 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     return status;
 }
 
-OpStatus VSPA_iqplayer::StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr)
+OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr)
 {
     const mbox_opc_e command = MBOX_OPC_IQ_MOD_RX;
     const bool start = true;
@@ -178,25 +205,38 @@ OpStatus VSPA_iqplayer::StartRx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
     uint64_t value = uint64_t(hiword) << 32 | loword;
 
     printf_dbg_log("IQPlayer: Start Rx, fifo_size:%u\n", fifo_size);
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
-    return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    if (!continuous) // firmware does not post response mailbox
+        return OpStatus::Success;
+
+    return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
 }
 
 OpStatus VSPA_iqplayer::StopRx()
 {
     printf_dbg_log("IQPlayer: Stop Rx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_RX) << (24 + 32);
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
-    return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    OpStatus status = mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+
+    VSPA_FIFO_State& rxState = mRx[0];
+    auto ddr_dst = vl_iqflood_ddr_addr + rxState.fifo_start_addr;
+    memset(ddr_dst, 0, rxState.fifo_size); // clear RAM, not to confuse old data is something goes wrong with restarting streaming
+    return status;
 }
 
 OpStatus VSPA_iqplayer::StopTx()
 {
     printf_dbg_log("IQPlayer: Stop Tx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_TX) << (24 + 32);
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
     firstTx = true;
-    return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    OpStatus status = mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+
+    VSPA_FIFO_State& txState = mTx;
+    auto ddr_dst = vl_iqflood_ddr_addr + txState.fifo_start_addr;
+    memset(ddr_dst, 0, txState.fifo_size); // clear RAM, not to confuse old data is something goes wrong with restarting streaming
+    return status;
 }
 
 OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount)
@@ -406,8 +446,175 @@ OpStatus VSPA_iqplayer::ClearStats()
     uint32_t hiword = command << 24 | reset_counter | (counter_idx & 0xFFFF);
     uint32_t loword = 0;
     uint64_t value = (uint64_t(hiword) << 32) | loword;
-    mailbox.Send(vspa_cpu_id, vspa_mbox_id, value);
-    return mailbox.Receive(vspa_cpu_id, vspa_mbox_id);
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+}
+
+OpStatus VSPA_iqplayer::SetDCOffset(complex16_t offset)
+{
+    printf_dbg_log("IQPlayer: SetDCOffset %i %i\n", offset.real(), offset.imag());
+    const mbox_opc_e command = MBOX_OPC_RX_DCO_CORR;
+    uint32_t hiword = command << 24;
+    uint32_t loword = int32_t(offset.real()) << 16;
+    loword |= offset.imag() & 0xFFFF;
+    uint64_t value = (uint64_t(hiword) << 32) | loword;
+    mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+    return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+}
+
+class VSPA_DC_Offset : public IDCCorrector
+{
+  public:
+    VSPA_DC_Offset(std::shared_ptr<VSPA_mailbox> mailbox, mbox_opc_e command)
+        : mailbox(mailbox)
+        , command(command)
+    {
+    }
+
+    virtual ~VSPA_DC_Offset() {}
+
+    OpStatus SetDCOffset(complex16_t offset) override
+    {
+        printf_dbg_log("IQPlayer: SetDCOffset %i %i\n", offset.real(), offset.imag());
+        OpStatus status = SetDCI(offset.real());
+        if (status != OpStatus::Success)
+            return status;
+        return SetDCQ(offset.imag());
+    }
+
+    OpStatus SetDCI(int16_t offset) override
+    {
+        printf_dbg_log("IQPlayer: SetDCOffsetI %i\n", offset);
+        uint32_t iq_channel_id = 0;
+        bool iq_tx_rx = command == MBOX_OPC_TX_DCO_CORR;
+        bool iq_rst = false;
+
+        uint32_t hiword = MBOX_OPC_IQ_CORR << 24;
+        hiword |= (iq_channel_id & 0x3) << 16;
+        hiword |= iq_tx_rx << 21;
+        hiword |= iq_rst << 20;
+
+        uint32_t loword = 0;
+        float fval = float(offset / 32768.0);
+        memcpy(&loword, &fval, sizeof(uint32_t));
+        uint64_t value = (uint64_t(hiword | (MBOX_IQ_CORR_DC_I & 0xFFFF)) << 32) | loword;
+        mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+        return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+    }
+    OpStatus SetDCQ(int16_t offset) override
+    {
+        printf_dbg_log("IQPlayer: SetDCOffsetQ %i\n", offset);
+        uint32_t iq_channel_id = 0;
+        bool iq_tx_rx = command == MBOX_OPC_TX_DCO_CORR;
+        bool iq_rst = false;
+
+        uint32_t hiword = MBOX_OPC_IQ_CORR << 24;
+        hiword |= (iq_channel_id & 0x3) << 16;
+        hiword |= iq_tx_rx << 21;
+        hiword |= iq_rst << 20;
+
+        uint32_t loword = 0;
+        float fval = float(offset / 32768.0);
+        memcpy(&loword, &fval, sizeof(uint32_t));
+        uint64_t value = (uint64_t(hiword | (MBOX_IQ_CORR_DC_Q & 0xFFFF)) << 32) | loword;
+        mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+        return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+    }
+
+    complex16_t GetDCOffset() override { return complex16_t(0, 0); }
+
+  private:
+    std::shared_ptr<VSPA_mailbox> mailbox;
+    const mbox_opc_e command;
+};
+
+std::shared_ptr<IDCCorrector> VSPA_iqplayer::GetRxDCCorrector()
+{
+    return std::make_shared<VSPA_DC_Offset>(mailbox, MBOX_OPC_RX_DCO_CORR);
+}
+
+std::shared_ptr<IDCCorrector> VSPA_iqplayer::GetTxDCCorrector()
+{
+    return std::make_shared<VSPA_DC_Offset>(mailbox, MBOX_OPC_TX_DCO_CORR);
+}
+
+class VSPA_QEC : public IQuadratureErrorCorrector
+{
+  public:
+    VSPA_QEC(std::shared_ptr<VSPA_mailbox> mailbox, lime::TRXDir dir)
+        : mailbox(mailbox)
+        , dir(dir)
+    {
+    }
+
+    virtual ~VSPA_QEC() {}
+    OpStatus SetImbalance(float iq_gain_imb, float phase_imb_deg)
+    {
+        float f1, f2, f4;
+        if (dir == TRXDir::Rx)
+        {
+            float gamma = pow(10.0, (iq_gain_imb / 20.0));
+            float theta_z = phase_imb_deg * (M_PI / 180.0);
+            f1 = 1.0 / gamma;
+            f2 = std::tan(theta_z) / gamma;
+            f4 = 1.0 / std::cos(theta_z);
+        }
+        else
+        {
+            float alpha = pow(10.0, (iq_gain_imb / 20.0));
+            float phi_z = phase_imb_deg * (M_PI / 180.0);
+
+            f1 = 1.0 / std::cos(phi_z);
+            f2 = -std::tan(phi_z) / alpha;
+            f4 = 1.0 / alpha;
+        }
+        printf_dbg_log("IQPlayer: SetIQImbalance %f %f\nf1:%f f2:%f f4:%f\n", iq_gain_imb, phase_imb_deg, f1, f2, f4);
+
+        const uint32_t iq_channel_id = 0;
+        const bool iq_tx_rx = dir == TRXDir::Tx;
+        const bool iq_rst = false;
+
+        uint32_t hiword = MBOX_OPC_IQ_CORR << 24;
+        hiword |= (iq_channel_id & 0x3) << 16;
+        hiword |= iq_tx_rx << 21;
+        hiword |= iq_rst << 20;
+
+        uint32_t loword = 0;
+        uint64_t value = 0;
+
+        memcpy(&loword, &f2, sizeof(uint32_t));
+        value = (uint64_t(hiword | (MBOX_IQ_CORR_FTAP1 & 0xFFFF)) << 32) | loword;
+        mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+        mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+
+        memcpy(&loword, &f1, sizeof(uint32_t));
+        value = (uint64_t(hiword | (MBOX_IQ_CORR_FTAP2 & 0xFFFF)) << 32) | loword;
+        mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+        mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+
+        memcpy(&loword, &f4, sizeof(uint32_t));
+        value = (uint64_t(hiword | (MBOX_IQ_CORR_FTAP3 & 0xFFFF)) << 32) | loword;
+        mailbox->Send(vspa_cpu_id, vspa_mbox_id, value);
+        return mailbox->Receive(vspa_cpu_id, vspa_mbox_id);
+    }
+
+    OpStatus SetPhaseCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
+
+    OpStatus SetGainCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
+
+  private:
+    std::shared_ptr<VSPA_mailbox> mailbox;
+    const lime::TRXDir dir;
+};
+
+std::shared_ptr<IQuadratureErrorCorrector> VSPA_iqplayer::GetRxQEC()
+{
+    return std::make_shared<VSPA_QEC>(mailbox, TRXDir::Rx);
+}
+
+std::shared_ptr<IQuadratureErrorCorrector> VSPA_iqplayer::GetTxQEC()
+{
+    return std::make_shared<VSPA_QEC>(mailbox, TRXDir::Tx);
 }
 
 } // namespace lime

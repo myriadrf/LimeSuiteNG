@@ -728,30 +728,30 @@ void lms7002_pnlR3_view::OnReadDC(wxCommandEvent& event)
 void lms7002_pnlR3_view::ParameterChangeHandlerCMPRead(wxCommandEvent& event)
 {
     ParameterChangeHandler(event);
-    UpdateGUISlow();
+    // UpdateGUISlow();
 }
 
 void lms7002_pnlR3_view::UpdateGUISlow()
 {
-    if (!lmsControl)
-        return;
-    vector<uint16_t> addrs = { 0x0640, 0x0641 };
-    vector<uint16_t> rez;
-    for (auto i : addrs)
-    {
-        lmsControl->SPI_write(0x002D, i);
-        uint16_t value = 0;
-        MCU_RunProcedure(8);
-        MCU_WaitForStatus(100);
-        value = lmsControl->SPI_read(0x040B);
-        rez.push_back(value);
-    }
-    rssidc_cmpstatus->SetLabel(std::to_string((rez[0] >> 15)));
-    cmbRSEL->SetSelection((rez[0] >> 4) & 0x1F);
-    cmbRSSIDC_HYSCMP->SetValue((rez[0] >> 1) & 0x7);
-    chkRSSI_PD->SetValue(rez[0] & 0x1);
-    spinDCO2->SetValue((rez[1] >> 7) & 0x7F);
-    spinDCO1->SetValue((rez[1] >> 0) & 0x7F);
+    // if (!lmsControl)
+    //     return;
+    // vector<uint16_t> addrs = { 0x0640, 0x0641 };
+    // vector<uint16_t> rez;
+    // for (auto i : addrs)
+    // {
+    //     lmsControl->SPI_write(0x002D, i);
+    //     uint16_t value = 0;
+    //     MCU_RunProcedure(8);
+    //     MCU_WaitForStatus(100);
+    //     value = lmsControl->SPI_read(0x040B);
+    //     rez.push_back(value);
+    // }
+    // rssidc_cmpstatus->SetLabel(std::to_string((rez[0] >> 15)));
+    // cmbRSEL->SetSelection((rez[0] >> 4) & 0x1F);
+    // cmbRSSIDC_HYSCMP->SetValue((rez[0] >> 1) & 0x7);
+    // chkRSSI_PD->SetValue(rez[0] & 0x1);
+    // spinDCO2->SetValue((rez[1] >> 7) & 0x7F);
+    // spinDCO1->SetValue((rez[1] >> 0) & 0x7F);
 }
 
 void lms7002_pnlR3_view::OnCalibrateAnalogRSSI(wxCommandEvent& event)

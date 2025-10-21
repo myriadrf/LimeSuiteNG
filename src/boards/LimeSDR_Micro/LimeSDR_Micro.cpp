@@ -28,6 +28,7 @@
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
+#include "chips/LA9310/LA9310.h"
 #include "comms/I2Cbus.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
@@ -70,6 +71,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     , lmsSPI(spiRFsoc)
     , mSerialPort(control)
     , mStreamingPort(streamingPort)
+    , la9310(std::make_shared<LA9310>(streamingPort))
     // , mI2C(i2c_bus)
     , mConfigInProgress(false)
 {
@@ -118,6 +120,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     }
 
     desc.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("LA9310"s, eDeviceTreeNodeClass::LA9310, la9310.get()));
     desc.socTree->children.push_back(
         std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
 }
@@ -150,6 +153,12 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
         LMSSetPath(TRXDir::Tx, c, cfg.channel[c].tx.path);
         LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
         // LMS7002ChannelCalibration(*rfsoc, cfg.channel[c], c);
+    }
+    if ((cfg.channel[0].rx.calibrate & CalibrationFlag::DCIQ) && cfg.channel[0].rx.enabled)
+    {
+        status = CalibrateRx();
+        if (status != OpStatus::Success)
+            return status;
     }
     return status;
 }
@@ -350,7 +359,7 @@ OpStatus LimeSDR_Micro::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t c
 
 OpStatus LimeSDR_Micro::Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth)
 {
-    return OpStatus::NotImplemented;
+    return trx == TRXDir::Rx ? CalibrateRx() : OpStatus::NotImplemented;
 }
 
 OpStatus LimeSDR_Micro::ConfigureGFIR(

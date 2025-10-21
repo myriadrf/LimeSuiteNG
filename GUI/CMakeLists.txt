@@ -137,6 +137,7 @@ target_include_directories(limeGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} numericSl
 add_subdirectory(boards)
 add_subdirectory(chips)
 add_subdirectory(oglGraph)
+add_subdirectory(widgets)
 
 target_link_libraries(limeGUI PUBLIC limesuiteng ${wxWidgets_LIBRARIES})
 

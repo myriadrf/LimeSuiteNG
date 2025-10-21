@@ -298,8 +298,8 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
         const int signalExpectedAtTimestamp = chirpStart;
         const int signalFoundAtTimestamp = skipRxSamples + ci;
         std::cerr << "Ch0 chirp @ " << signalFoundAtTimestamp
-                  << ", time offset: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us\n"
-                  << std::endl;
+                  << ", time offset: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us "
+                  << "correlation: " << correlation[ci] << std::endl;
         sampleOffset.push_back(signalFoundAtTimestamp - signalExpectedAtTimestamp);
     }
     return status;

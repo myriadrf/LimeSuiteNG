@@ -140,7 +140,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     phytimer.Divisor(1);
 
     // Disable all Rx and Tx DMA triggers
-    constexpr uint8_t ids[] = { 3, 4, 11 };
+    constexpr uint8_t ids[] = { 3, 4, 5, 6, 11 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = phytimer.GetTimerControl(id);
@@ -194,7 +194,7 @@ OpStatus LA9310_TRX::Start()
     PHYTimerControl timer = phytimer.GetTimerControl(21);
     uint32_t startTime = timer.CaptureCounter();
     startTime += 3000; // arbitrary start time in the future
-    constexpr uint8_t ids[] = { 3, 4, 11 };
+    constexpr uint8_t ids[] = { 3, 4, 5, 6, 11 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = phytimer.GetTimerControl(id);
@@ -277,7 +277,7 @@ void LA9310_TRX::Stop()
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
 
-    constexpr uint8_t ids[] = { 3, 4, 11 };
+    constexpr uint8_t ids[] = { 3, 4, 5, 6, 11 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = phytimer.GetTimerControl(id);

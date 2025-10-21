@@ -1239,20 +1239,20 @@ OpStatus LMS7002M::GetGFIRCoefficients(TRXDir dir, uint8_t gfirIndex, float_type
 
 OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
 {
-    if (address != 0x0640 && address != 0x0641)
+    // if (address != 0x0640 && address != 0x0641)
     {
         return SPI_write_batch(&address, &data, 1, toChip);
     }
 
-    MCU_BD* mcu = GetMCUControls();
-    mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
-    if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
-        mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-    SPI_write(0x002D, address);
-    SPI_write(0x020C, data);
-    mcu->RunProcedure(7);
-    mcu->WaitForMCU(50);
-    return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
+    // MCU_BD* mcu = GetMCUControls();
+    // mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
+    // if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
+    //     mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+    // SPI_write(0x002D, address);
+    // SPI_write(0x020C, data);
+    // mcu->RunProcedure(7);
+    // mcu->WaitForMCU(50);
+    // return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
 }
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
@@ -1276,20 +1276,20 @@ uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 
     uint16_t data = 0;
     OpStatus st;
-    if (address == 0x0640 || address == 0x0641)
-    {
-        MCU_BD* mcu = GetMCUControls();
-        mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
-        if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
-            mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
-        SPI_write(0x002D, address);
-        mcu->RunProcedure(8);
-        mcu->WaitForMCU(50);
-        uint16_t rdVal = SPI_read(0x040B, true, status);
-        return rdVal;
-    }
-    else
-        st = SPI_read_batch(&address, &data, 1);
+    // if (address == 0x0640 || address == 0x0641)
+    // {
+    //     MCU_BD* mcu = GetMCUControls();
+    //     mcu->RunProcedure(MCU_FUNCTION_GET_PROGRAM_ID);
+    //     if (mcu->WaitForMCU(100) != MCU_ID_CALIBRATIONS_SINGLE_IMAGE)
+    //         mcu->Program_MCU(mcu_program_lms7_dc_iq_calibration_bin, MCU_BD::MCU_PROG_MODE::SRAM);
+    //     SPI_write(0x002D, address);
+    //     mcu->RunProcedure(8);
+    //     mcu->WaitForMCU(50);
+    //     uint16_t rdVal = SPI_read(0x040B, true, status);
+    //     return rdVal;
+    // }
+    // else
+    st = SPI_read_batch(&address, &data, 1);
     if (status != nullptr)
         *status = st;
     return data;

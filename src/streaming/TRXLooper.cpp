@@ -1501,23 +1501,6 @@ void TRXLooper::TxTeardown()
 }
 
 template<class T>
-uint32_t TRXLooper::StreamMetaToStreamTxMeta(
-    const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout)
-{
-    StreamTxMeta txmeta;
-    txmeta.hasTimestamp = meta ? meta->waitForTimestamp : false;
-    txmeta.flags = meta ? (meta->flushPartialPacket ? StreamTxMeta::EndOfBurst : 0) : 0;
-    if (txmeta.hasTimestamp)
-    {
-        if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
-        else
-            txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
-    }
-    return StreamTxTemplate(samples, count, &txmeta, timeout);
-}
-
-template<class T>
 uint32_t TRXLooper::StreamTxTemplate(
     const T* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {

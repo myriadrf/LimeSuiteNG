@@ -15,6 +15,7 @@
 #include "chips/ADF4002/ADF4002_wxgui.h"
 #include "chips/Si5351C/Si5351C_wxgui.h"
 #include "chips/CDCM6208/CDCM6208_wxgui.h"
+#include "chips/LA9310/LA9310_wxgui.h"
 #include "LMS_Programming/LMS_Programming_wxgui.h"
 #include "utility/pnlMiniLog.h"
 #include "utility/SPI_wxgui.h"
@@ -489,6 +490,11 @@ ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass,
         pnlGPIO_Interface* gpioPanel = new pnlGPIO_Interface(parent, wxNewId());
         gpioPanel->Initialize(reinterpret_cast<GPIO_Interface*>(socPtr));
         return gpioPanel;
+    }
+    case eDeviceTreeNodeClass::LA9310: {
+        LA9310_wxgui* la9310panel = new LA9310_wxgui(parent, wxNewId());
+        la9310panel->Initialize(reinterpret_cast<LA9310*>(socPtr));
+        return la9310panel;
     }
     default:
         // lime::warning("No GUI available for this device node class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));

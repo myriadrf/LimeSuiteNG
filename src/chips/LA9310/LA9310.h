@@ -2,18 +2,26 @@
 #define LIME_LA9310_H
 
 #include <string>
+#include <memory>
+
+#include "PHYTimer.h"
+#include "VSPA_iqplayer.h"
 
 namespace lime {
+
+class LA9310_PCIe;
 
 class LA9310
 {
   public:
-    LA9310(const std::string& device_path);
+    LA9310(std::shared_ptr<LA9310_PCIe> port);
     ~LA9310();
 
+    PHYTimer phytimer;
+    VSPA_iqplayer vspa;
+
   private:
-    const std::string mDevice_path;
-    int mFileDescriptor;
+    std::shared_ptr<LA9310_PCIe> pcie;
 };
 
 } // namespace lime

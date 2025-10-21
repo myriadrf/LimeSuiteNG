@@ -87,7 +87,7 @@ OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* va
 
 void VSPA_mailbox::Clear(uint32_t core_idx, uint32_t mbox_id)
 {
-    printf_mailbox_log("Clear VSPA[%d] MBox:%d\n", core_idx, mbox_id);
+    // printf_mailbox_log("Clear VSPA[%d] MBox:%d\n", core_idx, mbox_id);
     if (mbox_id == 0)
         iowrite32(1 << 14, (vspa_ccsr_base + 0x10 + 0x4000 * core_idx));
     else
