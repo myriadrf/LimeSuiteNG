@@ -35,6 +35,8 @@ class LIME_API VSPA_iqplayer
     OpStatus StopRx();
     OpStatus StopTx();
 
+    OpStatus StartTxTone(bool enabled);
+
     OpStatus Setup(uint32_t rxCount, uint32_t txCount);
 
     int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp);

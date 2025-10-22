@@ -160,6 +160,12 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
         if (status != OpStatus::Success)
             return status;
     }
+    if ((cfg.channel[0].tx.calibrate & CalibrationFlag::DCIQ) && cfg.channel[0].tx.enabled)
+    {
+        status = CalibrateTx();
+        if (status != OpStatus::Success)
+            return status;
+    }
     return status;
 }
 
@@ -359,7 +365,7 @@ OpStatus LimeSDR_Micro::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t c
 
 OpStatus LimeSDR_Micro::Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth)
 {
-    return trx == TRXDir::Rx ? CalibrateRx() : OpStatus::NotImplemented;
+    return trx == TRXDir::Rx ? CalibrateRx() : CalibrateTx();
 }
 
 OpStatus LimeSDR_Micro::ConfigureGFIR(

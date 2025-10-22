@@ -9,6 +9,8 @@
 #include "interface/IDCCorrector.h"
 #include "interface/IQuadratureErrorCorrector.h"
 
+#include "streaming/samplesConversion.h"
+
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -177,6 +179,57 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
 
     tx_vspa_proxy_wo->host_produced_size = txState.bytes_produced;
     return status;
+}
+
+OpStatus VSPA_iqplayer::StartTxTone(bool enabled)
+{
+    OpStatus status;
+
+    if (!enabled)
+        return StopTx();
+
+    status = SetupTx(0, iqflood_size / 4);
+    if (status != OpStatus::Success)
+    {
+        printf("Start Tx Tone setup failed: %i\n", status);
+        // return status;
+    }
+
+    std::vector<complex16_t> samples(iqflood_size / 4 / sizeof(complex16_t));
+    constexpr float coef = 0.9;
+    // constexpr complex32f_t pattern[8] = {
+    //     complex32f_t(0, 1.0 * coef), complex32f_t(1.0 * coef, 0), complex32f_t(0, -1.0 * coef), complex32f_t(-1.0 * coef, 0)
+    // };
+    constexpr uint16_t data[16] = { 0xb045,
+        0x6068,
+        0x80e7,
+        0x107b,
+        0x9097,
+        0xb045,
+        0xe084,
+        0x80e7,
+        0x40ba,
+        0x9097,
+        0x7018,
+        0xe084,
+        0x6068,
+        0x40ba,
+        0x107b,
+        0x7018 };
+    const complex16_t* pattern = reinterpret_cast<const complex16_t*>(data);
+    for (size_t i = 0; i < samples.size(); ++i)
+    {
+        //samples[i] = complex16_t(pattern[i % 4].real() * 32767, pattern[i % 4].imag() * 32767);
+        samples[i] = pattern[i % 8];
+    }
+
+    // fill fifos
+    int filled = Transmit(samples.data(), samples.size() * sizeof(complex16_t), 0);
+    printf("Tone samples filled %i\n", filled);
+
+    // start tx
+    VSPA_FIFO_State& txState = mTx;
+    return StartTx(txState.fifo_size, LA9310_IQFLOOD_PHYS_ADDR + txState.fifo_start_addr);
 }
 
 OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr)

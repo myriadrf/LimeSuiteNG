@@ -159,6 +159,7 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
 
   private:
     OpStatus CalibrateRx();
+    OpStatus CalibrateTx();
     // SDRDescriptor mDeviceDescriptor;
     // LogCallbackType mCallback_logMessage;
 
