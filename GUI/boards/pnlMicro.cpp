@@ -53,6 +53,22 @@ pnlMicro::pnlMicro(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wx
     mainBoxSizer = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, "RF controls " + name), wxHORIZONTAL);
     mainBoxSizer->Add(mainSizer, 0, 0, 5);
 
+    rgrEXT_CLK_CTRL = new wxRadioBox(this,
+        wxNewId(),
+        wxT("EXT_CLK_CTRL"),
+        wxDefaultPosition,
+        wxDefaultSize,
+        { wxT("CLK_XO"), wxT("CLK_IN") },
+        2,
+        wxRA_SPECIFY_COLS);
+    rgrEXT_CLK_CTRL->SetSelection(0);
+    mainBoxSizer->Add(rgrEXT_CLK_CTRL, 0, 0, 5);
+    Connect(rgrEXT_CLK_CTRL->GetId(),
+        wxEVT_COMMAND_RADIOBOX_SELECTED,
+        wxCommandEventHandler(pnlMicro::OnClockSourceChanged),
+        nullptr,
+        this);
+
     mainBoxSizer->Fit(this);
     mainBoxSizer->SetSizeHints(this);
     SetSizer(mainBoxSizer);
@@ -110,6 +126,16 @@ void pnlMicro::OnInputChange(wxCommandEvent& event)
     device->I2CWrite(0, i2c_expander_address, 0x19, 1, &value, 1);
 }
 
+void pnlMicro::OnClockSourceChanged(wxCommandEvent& event)
+{
+    const uint8_t i2c_expander_address = 0x20;
+    uint8_t gpioa = 0;
+    device->I2CRead(0, i2c_expander_address, 0x09, 1, &gpioa, 1);
+    gpioa &= ~(1 << 5);
+    gpioa |= ((rgrEXT_CLK_CTRL->GetSelection() & 1) << 5);
+    device->I2CWrite(0, i2c_expander_address, 0x09, 1, &gpioa, 1);
+}
+
 void pnlMicro::UpdatePanel()
 {
     const uint8_t i2c_expander_address = 0x20;
@@ -119,6 +145,10 @@ void pnlMicro::UpdatePanel()
     int rx_sw_value = ((value >> 1) & 0x2) | (value & 1);
     int rx_sw_to_combobox[4] = { 0, 2, 1, 3 };
     cmbRxPath->SetSelection(rx_sw_to_combobox[rx_sw_value]);
+
+    uint8_t gpioa = 0;
+    device->I2CRead(0, i2c_expander_address, 0x09, 1, &gpioa, 1);
+    rgrEXT_CLK_CTRL->SetSelection((gpioa >> 5) & 1);
 }
 
 void pnlMicro::OnReadAll(wxCommandEvent& event)

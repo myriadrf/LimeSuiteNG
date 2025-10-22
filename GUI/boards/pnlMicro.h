@@ -29,10 +29,12 @@ class pnlMicro : public wxPanel
 
   protected:
     void OnInputChange(wxCommandEvent& event);
+    void OnClockSourceChanged(wxCommandEvent& event);
 
     wxCheckBox* TDDCntrl;
     wxChoice* cmbTxPath;
     wxChoice* cmbRxPath;
+    wxRadioBox* rgrEXT_CLK_CTRL;
 
     int chipSelect;
     lime::SDRDevice* device;
