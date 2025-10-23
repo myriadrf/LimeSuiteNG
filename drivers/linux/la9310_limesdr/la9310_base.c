@@ -911,6 +911,27 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	la9310_init_ep_pcie_allocator(la9310_dev);
 	// rc = la9310_modinfo_init(la9310_dev);
 
+	struct resource *tty_res = NULL;
+    tty_res = devm_kzalloc(la9310_dev->dev, sizeof(struct resource), GFP_KERNEL);
+    if (!tty_res)
+    {
+        dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
+        return -1;
+    }
+    {
+        tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
+    }
+    tty_res->flags = IORESOURCE_REG;
+    char *devSymlink = devm_kzalloc(la9310_dev->dev, 64, GFP_KERNEL);
+    snprintf(devSymlink, 64, "limesdr_micro_uart");
+    tty_res->name = devSymlink;
+    la9310_dev->uart = platform_device_register_simple("la9310uart", 1, tty_res, 1);
+    if (IS_ERR(la9310_dev->uart))
+    {
+        dev_err(la9310_dev->dev, "Failed to register UART\n");
+        return -1;
+    }
+
 out:
 	if (rc)
 		la9310_base_deinit(la9310_dev, init_stage, i);

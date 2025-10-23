@@ -348,6 +348,7 @@ struct la9310_dev {
     char la9310_dev_name[128];
 
     struct la9310_mem_region_info dmem_proxy;
+    struct platform_device *uart;
 };
 
 /*la9310_dev->flags*/
