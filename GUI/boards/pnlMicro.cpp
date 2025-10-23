@@ -58,7 +58,7 @@ pnlMicro::pnlMicro(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wx
         wxT("EXT_CLK_CTRL"),
         wxDefaultPosition,
         wxDefaultSize,
-        { wxT("CLK_XO"), wxT("CLK_IN") },
+        { 2, {wxT("CLK_XO"), wxT("CLK_IN") }},
         2,
         wxRA_SPECIFY_COLS);
     rgrEXT_CLK_CTRL->SetSelection(0);
