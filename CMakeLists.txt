@@ -301,6 +301,15 @@ if(BUILD_DOCS)
     add_subdirectory(docs/doxygen)
 endif()
 
+########################################################################
+## Firmwares
+########################################################################
+option(INSTALL_FIRMWARE "Add device firmwares to host system" ON)
+add_feature_info("INSTALL_FIRMWARE" INSTALL_FIRMWARE "Install firmware files")
+if(INSTALL_FIRMWARE)
+    add_subdirectory(firmware)
+endif()
+
 #########################################################################
 # summary
 #########################################################################
