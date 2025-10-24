@@ -297,9 +297,11 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
         int ci = GetMaxElementIndex(correlation);
         const int signalExpectedAtTimestamp = chirpStart;
         const int signalFoundAtTimestamp = skipRxSamples + ci;
-        std::cerr << "Ch0 chirp @ " << signalFoundAtTimestamp
-                  << ", time offset: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us "
-                  << "correlation: " << correlation[ci] << std::endl;
+        std::cerr << "Tx chirp sent @ " << chirpStart << std::endl;
+        std::cerr << "Rx Ch0 chirp found @ " << signalFoundAtTimestamp
+                  << ", samples diff:" << signalFoundAtTimestamp - signalExpectedAtTimestamp
+                  << ", time diff: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us "
+                  << ", signal correlation: " << correlation[ci] << std::endl;
         sampleOffset.push_back(signalFoundAtTimestamp - signalExpectedAtTimestamp);
     }
     return status;
@@ -395,10 +397,10 @@ int main(int argc, char** argv)
     if (ret != OpStatus::Success)
         printf("Error\n");
 
-    printf("Tx%i ", 0);
-    for (const auto& v : sampleOffsets)
-        printf("\t %4i", v);
-    printf("\n");
+    // printf("Tx%i ", 0);
+    // for (const auto& v : sampleOffsets)
+    //     printf("\t %4i", v);
+    // printf("\n");
 
     DeviceRegistry::freeDevice(device);
     return 0;

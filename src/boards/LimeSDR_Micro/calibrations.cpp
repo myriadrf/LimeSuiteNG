@@ -19,7 +19,8 @@
 
 #include "chips/LA9310/LA9310.h"
 
-#if 1 // print debug messages
+#define PLOT_GRAPHS 0
+#if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \
         { \
@@ -41,8 +42,10 @@ static const uint32_t calibrationSXOffset_Hz = 1000000;
 
 static const bool showPlots = true;
 
+#if PLOT_GRAPHS
 GNUPlotPipe plot;
 GNUPlotPipe plotSamples;
+#endif
 
 struct CalibrationContext {
     VSPA_iqplayer* vspa;
@@ -53,6 +56,7 @@ struct CalibrationContext {
 
 static void PlotSamples(const complex16_t* samples, size_t count)
 {
+#if PLOT_GRAPHS
     if (!showPlots)
         return;
 
@@ -67,10 +71,12 @@ static void PlotSamples(const complex16_t* samples, size_t count)
         plotSamples.writef("%i %i\n", i, samples[i].imag());
     plotSamples.write("e\n");
     plotSamples.flush();
+#endif
 }
 
 static void PlotBins(std::vector<float> bins)
 {
+#if PLOT_GRAPHS
     if (!showPlots)
         return;
 
@@ -84,6 +90,7 @@ static void PlotBins(std::vector<float> bins)
         plot.writef("%f %f\n", sampleRate * j / fftSize, bins[j]);
     plot.write("e\n");
     plot.flush();
+#endif
 }
 
 static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
