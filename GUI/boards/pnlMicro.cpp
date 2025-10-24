@@ -53,12 +53,15 @@ pnlMicro::pnlMicro(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wx
     mainBoxSizer = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, "RF controls " + name), wxHORIZONTAL);
     mainBoxSizer->Add(mainSizer, 0, 0, 5);
 
+    wxString rgrEXT_CLK_CTRLChoices[] = { wxT("CLK_XO"), wxT("CLK_IN") };
+    int rgrEXT_CLK_CTRLChoices_count = sizeof(rgrEXT_CLK_CTRLChoices) / sizeof(wxString);
     rgrEXT_CLK_CTRL = new wxRadioBox(this,
         wxNewId(),
         wxT("EXT_CLK_CTRL"),
         wxDefaultPosition,
         wxDefaultSize,
-        { 2, {wxT("CLK_XO"), wxT("CLK_IN") }},
+        rgrEXT_CLK_CTRLChoices_count,
+        rgrEXT_CLK_CTRLChoices,
         2,
         wxRA_SPECIFY_COLS);
     rgrEXT_CLK_CTRL->SetSelection(0);
