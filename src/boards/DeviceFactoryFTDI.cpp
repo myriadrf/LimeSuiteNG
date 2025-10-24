@@ -20,7 +20,7 @@ void __loadFTDI(void) // TODO: fixme replace with LoadLibrary/dlopen
 }
 
 // Device identifier vendor ID and product ID pairs.
-static const std::set<IUSB::VendorProductId> ids{ { 0x0403, 0x601F } };
+static const std::set<IUSB::VendorProductId> ids{ { 0x0403, 0x601F }, {0x374D, 0x0011}, {0x374D, 0x0019} };
 
 DeviceFactoryFTDI::DeviceFactoryFTDI()
     : DeviceRegistryEntry("FTDI"s)
