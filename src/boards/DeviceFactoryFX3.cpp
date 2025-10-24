@@ -23,7 +23,7 @@ void __loadFX3(void) //TODO fixme replace with LoadLibrary/dlopen
 }
 
 // Device identifier vendor ID and product ID pairs.
-static const std::set<IUSB::VendorProductId> ids{ { 0x04B4, 0x00F1 }, { 0x04B4, 0x00F3 }, { 0x1D50, 0x6108 } };
+static const std::set<IUSB::VendorProductId> ids{ { 0x04B4, 0x00F1 }, { 0x04B4, 0x00F3 }, { 0x1D50, 0x6108 }, {0x374D, 0x000E} };
 
 DeviceFactoryFX3::DeviceFactoryFX3()
     : DeviceRegistryEntry("FX3"s)
