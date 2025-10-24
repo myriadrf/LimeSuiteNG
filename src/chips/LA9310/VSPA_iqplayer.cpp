@@ -142,6 +142,9 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_ph
 
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
+    if (fifo_size == 0)
+        return OpStatus::InvalidValue;
+
     const uint16_t chunkCount4k = fifo_size / 4096;
 
     uint32_t loword = fifo_base_la9310_phys_addr;
@@ -243,6 +246,8 @@ OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size, uint32_t fi
 
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
+    if (fifo_size == 0)
+        return OpStatus::InvalidValue;
     const uint16_t chunkCount4k = fifo_size / 4096;
 
     uint32_t loword = fifo_base_la9310_phys_addr;

@@ -133,22 +133,42 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     if (status != OpStatus::Success)
         return status;
 
+    vspa.ClearStats();
+    status = vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
+
     // stop PHYTimers
     phytimer.Enable(false);
     phytimer.SoftReset(true);
     phytimer.SetTickRate(cfg.hintSampleRate);
     phytimer.Divisor(1);
 
-    // Disable all Rx and Tx DMA triggers
-    constexpr uint8_t ids[] = { 3, 4, 5, 6, 11 };
-    for (const auto id : ids)
+    if (!cfg.channels.at(TRXDir::Tx).empty())
     {
-        PHYTimerControl timer = phytimer.GetTimerControl(id);
+        // Bug in VSPA?
+        // After initial VSPA bootup, if PHYTimer 11 trigger value is 0
+        // and then Tx is started, tx dma will do nothing unless the timer is first set to 1
+        // and only then Tx is started
+        PHYTimerControl timer = phytimer.GetTimerControl(11);
+        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceOne);
+        status = vspa.StartTx();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        status = vspa.StopTx();
+
+        // Disable all Tx DMA trigger
         timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
     }
 
-    vspa.ClearStats();
-    return vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
+    if (!cfg.channels.at(TRXDir::Rx).empty())
+    {
+        // Disable all Rx DMA triggers
+        constexpr uint8_t ids[] = { 3, 4, 5, 6 };
+        for (const auto id : ids)
+        {
+            PHYTimerControl timer = phytimer.GetTimerControl(id);
+            timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+        }
+    }
+    return status;
 }
 
 const StreamConfig& LA9310_TRX::GetConfig() const
