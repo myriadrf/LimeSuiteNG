@@ -7,8 +7,9 @@ project(
 
 checkdebianchangelogversion(${PROJECT_NAME})
 
+option(CONDA_UDEV_RULES "Install UDEV RULES into conda package" OFF)
 set(UDEV_RULES_INSTALL_PATH
-    "/etc/udev/rules.d"
+    "$<IF:$<BOOL:${CONDA_UDEV_RULES}>,${CMAKE_INSTALL_PREFIX}/etc/udev/rules.d,/etc/udev/rules.d>"
     CACHE STRING "Path where to install udev rules")
 
 install(
