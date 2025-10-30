@@ -257,7 +257,8 @@ endif()
 ########################################################################
 ## graphical interface
 ########################################################################
-cmake_dependent_option(BUILD_GUI "Build limeGUI application" ON "BUILD_CORE" OFF)
+option(GUI_TOGGLE "Manual switch to include/remove GUI components into/from project build" ON)
+cmake_dependent_option(BUILD_GUI "Build limeGUI application" ON "GUI_TOGGLE AND BUILD_CORE" OFF)
 add_feature_info("BUILD_GUI" BUILD_GUI "graphical user interface application (limeGUI)")
 if(BUILD_GUI)
     add_subdirectory(GUI)
