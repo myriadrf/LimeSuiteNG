@@ -310,7 +310,11 @@ OpStatus LimeSDR_Mini::Init()
     lms->SetTxLPF(20e6);
     lms->SetRxLPF(20e6);
 
-    return OpStatus::Success;
+    // FPGA interface clocks needs to have phases configured to work properly,
+    // phase configuration is not being performed when sample rate is set <5MHz
+    // so just configure it at least once, so that samples rates <5MHz would be guaranteed
+    // to work properly after cold boot.
+    return LMS7002M_SDRDevice::LMS7002M_SetSampleRate(20e6, 2, 2);
 }
 
 OpStatus LimeSDR_Mini::Reset()

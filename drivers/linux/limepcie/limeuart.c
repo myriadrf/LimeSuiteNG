@@ -101,7 +101,11 @@ static struct uart_driver limeuart_driver = {
 
 static void limeuart_timer(struct timer_list *t)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
     struct limeuart_port *uart = from_timer(uart, t, timer);
+#else
+    struct limeuart_port *uart = timer_container_of(uart, t, timer);
+#endif
     struct uart_port *port = &uart->port;
     unsigned char __iomem *membase = port->membase;
     unsigned int flg = TTY_NORMAL;
@@ -215,7 +219,11 @@ static void limeuart_stop_rx(struct uart_port *port)
     struct limeuart_port *uart = to_limeuart_port(port);
 
     /* just delete timer */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
     del_timer(&uart->timer);
+#else
+    timer_delete(&uart->timer);
+#endif
 }
 
 static void limeuart_break_ctl(struct uart_port *port, int break_state)
