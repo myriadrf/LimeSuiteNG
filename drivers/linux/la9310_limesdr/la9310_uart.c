@@ -78,7 +78,11 @@ static inline void la9310_write8(void __iomem *addr, uint8_t val)
 
 static void la9310uart_timer(struct timer_list *t)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
     struct la9310uart_port *uart = from_timer(uart, t, timer);
+#else
+    struct la9310uart_port *uart = timer_container_of(uart, t, timer);
+#endif
     struct uart_port *port = &uart->port;
     // dev_info(port->dev, "%s\n", __func__);
     unsigned char __iomem *membase = port->membase;
@@ -201,7 +205,11 @@ static void la9310uart_stop_rx(struct uart_port *port)
     struct la9310uart_port *uart = to_la9310uart_port(port);
 
     /* just delete timer */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
     del_timer(&uart->timer);
+#else
+    timer_delete(&uart->timer);
+#endif
 }
 
 static void la9310uart_break_ctl(struct uart_port *port, int break_state)
