@@ -1367,9 +1367,9 @@ void TRXLooper::TransmitPacketsLoop()
             uint32_t payloadOffset = tempPacket.GetPayloadSize();
             uint8_t* payload = &tempPacket.data[payloadOffset];
 
-            tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
             if (payloadOffset == 0)
             {
+                tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
                 if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
                     tempPacket.counter = srcPkt->meta.timestamp.GetTicks();
                 else
