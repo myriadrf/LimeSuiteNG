@@ -1227,7 +1227,7 @@ void TRXLooper::TransmitPacketsLoop()
     auto& fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    Timespec lastTS = 0;
+    Timespec lastTS;
 
     struct PendingWrite {
         uint32_t id;

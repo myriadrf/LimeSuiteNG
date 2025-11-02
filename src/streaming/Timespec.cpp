@@ -1,6 +1,7 @@
 #include "limesuiteng/Timespec.h"
 
 #include <math.h>
+#include <assert.h>
 
 namespace lime {
 
@@ -34,14 +35,6 @@ Timespec::Timespec()
 {
 }
 
-Timespec::Timespec(double realSeconds)
-    : seconds(realSeconds)
-    , fracSeconds(realSeconds - seconds)
-    , ticksPerSecond(1000000000.0)
-    , hasTickRate(false)
-{
-}
-
 Timespec::Timespec(int64_t int_seconds, double frac_seconds)
     : seconds(int_seconds)
     , fracSeconds(frac_seconds)
@@ -55,7 +48,7 @@ Timespec::Timespec(int64_t int_seconds, double frac_seconds)
     }
 }
 
-Timespec::Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second)
+Timespec::Timespec(int64_t seconds, int64_t ticks, double ticks_per_second)
     : seconds(seconds)
     , fracSeconds(double(ticks) / ticks_per_second)
     , ticksPerSecond(ticks_per_second)
@@ -63,8 +56,22 @@ Timespec::Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second)
 {
 }
 
-void Timespec::AddTicks(uint64_t tick_increment)
+Timespec::Timespec(int64_t ticks)
+    : seconds(ticks)
+    , fracSeconds(0)
+    , ticksPerSecond(0)
+    , hasTickRate(false)
 {
+}
+
+void Timespec::AddTicks(int64_t tick_increment)
+{
+    if (!hasTickRate)
+    {
+        seconds += tick_increment;
+        return;
+    }
+
     double secToAdd = tick_increment / ticksPerSecond;
     secToAdd += fracSeconds;
 
@@ -84,6 +91,9 @@ double Timespec::GetFracSeconds() const
 
 uint64_t Timespec::GetTicks() const
 {
+    if (!hasTickRate)
+        return seconds;
+
     if (seconds < 0)
         return 0;
     return round(seconds * ticksPerSecond + fracSeconds * ticksPerSecond);
@@ -99,10 +109,24 @@ double Timespec::GetRealSeconds() const
 void Timespec::SetTickRate(double tps)
 {
     ticksPerSecond = tps;
+    if (!hasTickRate)
+    {
+        fracSeconds = (double(seconds) / ticksPerSecond);
+        fracSeconds = fmod(fracSeconds, 1.0);
+        seconds /= ticksPerSecond;
+    }
+    hasTickRate = true;
+}
+
+double Timespec::GetTickRate() const
+{
+    return ticksPerSecond;
 }
 
 bool operator==(const Timespec& lhs, const Timespec& rhs)
 {
+    assert(lhs.hasTickRate == rhs.hasTickRate);
+
     bool fracSecondsMatch = fabs(lhs.fracSeconds - rhs.fracSeconds) < 1.0e-9;
     return (lhs.seconds == rhs.seconds) && fracSecondsMatch;
 }
