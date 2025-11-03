@@ -2,6 +2,7 @@
 {% set min_gnuradio_ver_list = [3, 10, 9, 2] %}
 {% set prefix = "Library/" if win else "" %}
 {% set postfix = ".exe" if win else "" %}
+{% set target_platform = "win" if win else "unix" %}
 
 # Set package and sub-package versions here
 {% set metapkg_ver = "25.1.0" %}
@@ -61,7 +62,7 @@ requirements:
     - {{ pin_subpackage('liblimesuiteng', exact=True) }}
     - {{ pin_subpackage('liblimesuiteng-dev', exact=True) }}
     - {{ pin_subpackage('limesuiteng-cli', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-gui', exact=True) }}
+    - {{ pin_subpackage('limesuiteng-gui', exact=True) }}       #[win]
     - {{ pin_subpackage('gnuradio-limesuiteng', exact=True) }}
 
 outputs:
@@ -240,7 +241,7 @@ outputs:
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
-{% if not target_platform == 'linux' %}
+{% if not target_platform == "unix" %}
 
   - name: limesuiteng-gui
     version: {{ gui_ver }}
@@ -326,6 +327,7 @@ outputs:
         - numpy
         - python
         - gnuradio-core
+        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
 
       test:
         commands:
@@ -355,7 +357,9 @@ outputs:
           - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml                                      #[linux]
           - test -f $PREFIX/share/gnuradio/manifests/limesuiteng/MANIFEST-1.0.01.yml                                            #[linux]
           - test -f $SP_DIR/gnuradio/limesuiteng/limesuiteng_python.*.so                                                        #[linux]
-          - test -f $SP_DIR/gnuradio/limesuiteng/__init__.py                                                                    #[linux]  
+          - test -f $SP_DIR/gnuradio/limesuiteng/__init__.py                                                                    #[linux]
+        imports:
+          - gnuradio.limesuiteng  
       
       about:
         home: https://github.com/myriadrf/LimeSuiteNG
