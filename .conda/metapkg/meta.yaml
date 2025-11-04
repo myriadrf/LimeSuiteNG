@@ -75,8 +75,8 @@ outputs:
       - Library/lib/limesuiteng-legacyapi.dll      #[win]
       - lib/liblimesuiteng.so*                     #[linux]
       - lib/liblimesuiteng-legacyapi.so*           #[linux]
-      - bin/.limesuiteng-post-link.sh              #[linux]
-      - bin/.limesuiteng-pre-unlink.sh             #[linux]
+      - bin/.liblimesuiteng-post-link.sh           #[linux]
+      - bin/.liblimesuiteng-pre-unlink.sh          #[linux]
       - etc/udev/rules.d/65-limesuiteng-pcie.rules #[linux]
       - etc/udev/rules.d/65-limesuiteng-usb.rules  #[linux]
     requirements:
@@ -98,10 +98,8 @@ outputs:
         - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1 #[win]
         - test -f $PREFIX/lib/liblimesuiteng.so                                 #[linux]
         - test -f $PREFIX/lib/liblimesuiteng-legacyapi.so                       #[linux]
-        - test -f $PREFIX/bin/.limesuiteng-post-link.sh                         #[linux]
-        - test -f $PREFIX/bin/.limesuiteng-pre-unlink.sh                        #[linux]
-        - test -f $PREFIX/etc/udev/rules.d/65-limesuiteng-pcie.rules            #[linux]
-        - test -f $PREFIX/etc/udev/rules.d/65-limesuiteng-usb.rules             #[linux]
+        - test -f $PREFIX/bin/.liblimesuiteng-post-link.sh                      #[linux]
+        - test -f $PREFIX/bin/.liblimesuiteng-pre-unlink.sh                     #[linux]
 
     about:
       home: https://github.com/myriadrf/LimeSuiteNG
