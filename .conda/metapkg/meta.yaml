@@ -2,7 +2,6 @@
 {% set min_gnuradio_ver_list = [3, 10, 9, 2] %}
 {% set prefix = "Library/" if win else "" %}
 {% set postfix = ".exe" if win else "" %}
-{% set target_platform = "win" if win else "unix" %}
 
 # Set package and sub-package versions here
 {% set metapkg_ver = "25.1.0" %}
@@ -239,8 +238,6 @@ outputs:
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
 
-{% if not target_platform == "unix" %}
-
   - name: limesuiteng-gui
     version: {{ gui_ver }}
     files:
@@ -248,6 +245,8 @@ outputs:
       - Library/bin/wxmsw32u_gl_vc14x_x64.dll
       - Library/bin/wxmsw32u_core_vc14x_x64.dll
       - Library/bin/wxbase32u_vc14x_x64.dll
+    build:
+      skip: true #[linux]
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
@@ -275,8 +274,6 @@ outputs:
       summary: Conda package that contains LimeSuiteNG LimeSDR device configuration application with graphical user interface.
       dev_url: https://github.com/myriadrf/LimeSuiteNG
       doc_url: https://limesuiteng.myriadrf.org/
-
-{% endif %}
 
   - name: gnuradio-limesuiteng
     version: {{ gnuradio_plugin_ver }}
