@@ -65,6 +65,7 @@ requirements:
     - {{ pin_subpackage('limesuiteng-cli', exact=True) }}
     - {{ pin_subpackage('limesuiteng-gui', exact=True) }}       #[win]
     - {{ pin_subpackage('gnuradio-limesuiteng', exact=True) }}
+    - {{ pin_subpackage('limesuiteng-soapy', exact=True )}}
 
 outputs:
   - name: liblimesuiteng
