@@ -9,6 +9,7 @@
 {% set cli_ver = "1.0.0" %}
 {% set gui_ver = "1.0.0" %}
 {% set gnuradio_plugin_ver = "1.0.0" %}
+{% set soapy_plugin_ver = "1.0.0" %}
 
 package:
   name:  limesuiteng
@@ -48,6 +49,7 @@ requirements:
   host:
     - libusb #[linux]
     - gmp    #[linux]
+    - soapysdr
     - gnuradio-core
     - boost
     - pip
@@ -364,6 +366,43 @@ outputs:
         summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the LimeSuiteNG new generation software suite designed for working with LimeSDR family devices.
         dev_url: https://github.com/myriadrf/LimeSuiteNG
         doc_url: https://limesuiteng.myriadrf.org/
+  
+  - name: limesuiteng-soapy
+    version: {{ soapy_plugin_ver }}
+    files:
+      - {{ prefix }}lib/SoapySDR/modules0.8
+
+    requirements:
+      build:
+        - {{ compiler("c") }}   #[not win]
+        - {{ compiler("cxx") }} #[not win]
+        - vs2022_win-64 #[win]
+        - cmake
+        - git
+        - ninja
+        - pkg-config
+
+      host:
+        - libusb #[linux]
+        - soapysdr
+
+      run:
+        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+
+      test:
+        commands:
+          - if not exist %PREFIX%\\Library\\lib\\SoapySDR\\modules0.8\\limesuitengSupport.dll exit 1  #[win]
+          - test -f $PREFIX/lib/SoapySDR/modules0.8/liblimesuitengSupport.so  #[linux]
+      
+      about:
+        home: https://github.com/myriadrf/LimeSuiteNG
+        license: Apache-2.0
+        license_file: COPYING
+        license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+        summary: LimeSuiteNG bindings for SoapySDR.
+        dev_url: https://github.com/myriadrf/LimeSuiteNG
+        doc_url: https://limesuiteng.myriadrf.org/
+
 
 about:
   home: https://github.com/myriadrf/LimeSuiteNG
