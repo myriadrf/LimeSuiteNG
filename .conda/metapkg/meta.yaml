@@ -60,12 +60,13 @@ requirements:
 
   run:
   # This metapackage depends on the following LimeSuiteNG sub-packages
-    - {{ pin_subpackage('liblimesuiteng', exact=True) }}
-    - {{ pin_subpackage('liblimesuiteng-dev', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-cli', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-gui', exact=True) }}       #[win]
+    - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
+    - {{ pin_subpackage('liblimesuiteng-dev', max_pin='x.x') }}
+    - {{ pin_subpackage('limesuiteng-cli', max_pin='x.x') }}
+    - {{ pin_subpackage('limesuiteng-gui', max_pin='x.x') }}       #[win]
     - {{ pin_subpackage('gnuradio-limesuiteng', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-soapy', exact=True )}}
+    - {{ pin_subpackage('limesuiteng-soapy', max_pin='x.x')}}
+    - python
 
 outputs:
   - name: liblimesuiteng
@@ -130,7 +131,7 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
         
     test:
       commands:
@@ -215,7 +216,7 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
 
     test:
       commands:
@@ -261,7 +262,7 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
         
     test:
       commands:
@@ -325,7 +326,7 @@ outputs:
         - numpy
         - python
         - gnuradio-core
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
 
       test:
         commands:
@@ -388,7 +389,7 @@ outputs:
         - soapysdr
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
 
       test:
         commands:
