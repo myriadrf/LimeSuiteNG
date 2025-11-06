@@ -74,4 +74,4 @@ All of the above listed packages can be installed and used independently.
 
 .. note::
 
-	Currently limeGUI application is not included in conda linux LimeSuiteNG packages. To use limeGUI install LimeSuiteNG from apt store or build LimeSuiteNG from source.
+	Currently none of the above listed LimeSuiteNG conda sub-packages contain limeGUI application for conda environment on Linux. To use limeGUI install LimeSuiteNG from apt store or build LimeSuiteNG from source.

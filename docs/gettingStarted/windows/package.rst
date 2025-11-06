@@ -37,7 +37,7 @@ If you only need certain LimeSuiteNG components, for example, development files,
    conda activate <environment>
    conda install liblimesuiteng-dev
 
-LimeSuiteNG metapackage links the following packages together:
+On Windows LimeSuiteNG conda metapackage links the following sub-packages together:
 
 #. liblimesuiteng - runtime libraries.
 #. liblimesuiteng-dev  - runtime libraries, API and development files.
