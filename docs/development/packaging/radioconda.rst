@@ -4,10 +4,25 @@
 Radioconda environment
 ======================
 
-Conda environment set up
-------------------------
+Initial set up
+---------------
 
-Install radioconda terminal using windows installer from radioconda `release page`_. Search for **radioconda prompt** and run it as administrator. Create new conda environment and activate it using the following commands:
+Radioconda installation files can be found in radioconda github `release page`_.
+
+For Windows, install radioconda terminal using ``radioconda-<release-date>-Windows-x86_64.exe`` installer. For Linux, download ``radioconda-<release-date>-Linux-x86_64.sh``, open terminal and install the radioconda environment:
+
+.. code-block:: bash
+
+   cd Downloads
+   bash radioconda-<release-date>-Linux-x86_64.sh
+
+To access radioconda environment on Windows, search for **radioconda terminal** and open it with administrator privileges. On Linux radioconda base environment loads automatically once the terminal is opened.
+
+.. tip::
+
+   Linux only. If you want to exit radioconda base environment in terminal, enter ``conda deactivate`` command.
+
+Create new radioconda environment with a custom name and activate it using the following commands:
 
 .. code-block:: bash
    
@@ -20,7 +35,7 @@ Install the following packages that contain necessary build tools for the curren
 
    conda install conda-build conda-forge-pinning
 
-Initial conda environment set up is complete.
+Custom radioconda environment set up is complete.
 
 .. tip::
 
@@ -28,14 +43,18 @@ Initial conda environment set up is complete.
 
 .. _conda-local-channel-setup:
 
-Local package channel set up
-----------------------------
+Local channel set up
+---------------------
 
-Setting up local conda channel is usefull for testing locally built conda packages. This step is optional for casual users, but is recommend for project developers and package maintainers since it will greatly simplify testing of locally built conda packages. Conda tool uses channels to pull requested packages when using ``conda install`` tool. If the local channel is not added to the list, conda will most likely fail to install the built package. To set up a local channel, where all the ``conda-build`` tool localy built packages are stored, the following command must be executed:
+.. note::
+
+   This step is only recommend for project developers and package maintainers.
+
+Setting up local conda channel is usefull for testing locally built conda packages. Conda tool uses channels to pull requested packages when using ``conda install`` tool. If the local channel is not added to the list, conda will most likely fail to install the built package. To set up a local channel, where all the ``conda-build`` tool localy built packages are stored, the following command must be executed:
 
 .. code-block:: bash
 
-   conda config --append channels <radioconda install root>\envs\<your custom env name>\conda-bld\win-64
+   conda config --append channels <radioconda install root>\envs\<your custom env name>\conda-bld\
 
 To double check if the channel was added use the following command:
 
@@ -55,23 +74,23 @@ If you are not sure where the root installation of your radioconda is, you can e
 
    conda config --show root_prefix
 
-To get the full path to local channel add ``\envs\<your custom env name>\conda-bld\win-64`` to the received ``root_prefix`` value. Once the channel is added to the list, you will be able to install locally built conda packages using the following command:
+To get the full path to local channel add ``\envs\<your custom env name>\conda-bld\`` to the received ``root_prefix`` value. Once the channel is added to the list, you can install locally built conda packages using the following command:
 
 .. code-block:: bash
 
    conda install built_package_name
 
-When installing package, you can also specify package version ``built_pacakge_name=1.0.0`` or version and build string ``built_package_name=1.0.0=hb7fb3a4_0`` to install a specific package if more than one variant of the package exists in the local channel. When performing package install, built package build string specification can also help prevent installing already existing packages from the public conda-forge channel. By default ``conda install`` tool searches for packages through different channels that are listed in the channels list starting from the top (refer to **Figure 1**). If abstracted package name is supplied, it is possible that conda will install a package from public channel (if it exists in the public channel) instead of local. By specifying the exact version and build string it is possible to bypass the install from the public channel. A more permanent solution for avoiding incorrect package installs, is to move the local channel to the top of the channel list. If you already added the channel, then remove it with the following command:
+When installing package, you can also specify package version ``built_pacakge_name=1.0.0`` or version and build string ``built_package_name=1.0.0=hb7fb3a4_0`` to install a specific package if more than one variant of the package exists in the local channel. When performing package install, built package build string specification can also help prevent installing already existing packages from the public conda-forge channel. By default ``conda install`` tool searches for packages through different channels that are listed in the channels list starting from the top (refer to **Figure 1**). If abstracted package name is supplied, it is possible that conda will install a package from public channel (if it exists in the public channel) instead of local. By specifying the exact version and build string it is possible to bypass the install from the public channel. A more permanent solution for avoiding incorrect test package installs, is to move the local channel to the top of the channel list. If you already added the channel, then remove it with the following command:
 
 .. code-block:: bash
    
-   conda config --remove channels <radioconda install root>\envs\<your custom env name>\conda-bld\win-64
+   conda config --remove channels <radioconda install root>\envs\<your custom env name>\conda-bld\
 
 And add it to the top of the list:
 
 .. code-block:: bash
 
-   conda config --add channels <radioconda install root>\envs\<your custom env name>\conda-bld\win-64
+   conda config --add channels <radioconda install root>\envs\<your custom env name>\conda-bld\
 
 Now modify ``channel_priority`` to ``flexible``:
 
