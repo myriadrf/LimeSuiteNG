@@ -3,7 +3,7 @@ Metapackage recipe
 
 .. note::
 
-   Conda metapackage packaging has only been tested on Windows platform.
+   Recipe build was tested on in radioconda environment for Windows and Linux.
 
 Recipe structure
 ----------------

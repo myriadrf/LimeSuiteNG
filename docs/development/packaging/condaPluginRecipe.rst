@@ -7,7 +7,7 @@ Gnuradio-limesuiteng recipe
 
 .. note::
 
-   Conda packaging has only been tested on Windows platform.
+   Recipe build was tested on in radioconda environment for Windows and Linux.
 
 Recipe structure
 ----------------

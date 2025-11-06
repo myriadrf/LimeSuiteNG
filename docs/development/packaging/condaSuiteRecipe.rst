@@ -7,7 +7,7 @@ Minimal LimeSuiteNG recipe
 
 .. note::
 
-   Conda packaging has only been tested on Windows platform.
+   Recipe build was tested in radioconda environment for Windows and Linux.
 
 Recipe structure
 ----------------
