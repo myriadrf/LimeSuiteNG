@@ -39,10 +39,11 @@ If you only need certain LimeSuiteNG components, for example, development files,
 
 LimeSuiteNG metapackage links the following packages together:
 
-#. liblimesuiteng - Release libraries and library API files.
-#. liblimesuiteng-dev - Development libraries, files and library API files.
-#. limesuiteng-cli - command line tools for LimeSDR devices.
+#. liblimesuiteng - runtime libraries.
+#. liblimesuiteng-dev  - runtime libraries, API and development files.
+#. limesuiteng-cli - command line tools for LimeSDR device control.
 #. limesuiteng-gui - LimeSDR device configuration tool with GUI support.
 #. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. To install plugin as a separate package check out :ref:`gnuradio-plugin-install-ref` section.
+#. limesuiteng-soapy - LimeSuiteNG bindings for SoapySDR.
 
 All of the above listed packages can be installed and used independently.
