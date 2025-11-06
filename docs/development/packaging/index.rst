@@ -12,6 +12,7 @@ More about each recipe here:
 .. toctree::
    :maxdepth: 1
 
+   Radioconda environment <radioconda.rst>
    Minimal LimeSuiteNG recipe <condaSuiteRecipe.rst>
    Gnuradio-limesuiteng recipe <condaPluginRecipe.rst>
    Metapackage recipe <condaMetaPkgRecipe.rst>
