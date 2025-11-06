@@ -117,7 +117,7 @@ To start the build process, execute the following commands:
    cd <repo root>
    conda-build .conda\metapkg\ -m .conda\build_config.yaml
 
-Conda will start building metapackages and sub-packages. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda packages are populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\win-64`` directory. Radioconda install root can be found using the following conda command:
+Conda will start building metapackages and sub-packages. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda packages are populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\`` directory. Radioconda install root can be found using the following conda command:
 
 .. code-block:: bash
 
