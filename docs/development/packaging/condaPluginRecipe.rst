@@ -7,7 +7,7 @@ Gnuradio-limesuiteng recipe
 
 .. note::
 
-   Recipe build was tested on in radioconda environment for Windows and Linux.
+   Recipe build was tested in radioconda environment for Windows and Linux platforms.
 
 Recipe structure
 ----------------
