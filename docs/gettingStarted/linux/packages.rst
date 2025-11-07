@@ -67,7 +67,7 @@ On Linux LimeSuiteNG conda metapackage links the following sub-packages together
 #. liblimesuiteng - runtime libraries.
 #. liblimesuiteng-dev - runtime libraries, API and development files.
 #. limesuiteng-cli - command line tools for LimeSDR device control.
-#. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. To install plugin as a separate package check out :ref:`gnuradio-plugin-install-ref` section.
+#. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. To install plugin as a separate package check out :ref:`linux-gnuradio-plugin-install-ref` section.
 #. limesuiteng-soapy - LimeSuiteNG bindings for SoapySDR.
 
 All of the above listed packages can be installed and used independently.
