@@ -326,7 +326,8 @@ outputs:
         - numpy
         - python
         - gnuradio-core
-        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
+        - {{ pin_subpackage('liblimesuiteng-dev', max_pin='x.x') }}
+        - spdlog #[linux]
 
       test:
         commands:
@@ -340,7 +341,7 @@ outputs:
           - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1                      #[win]
           - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1         #[win]
           - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1           #[win]
-          - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1                 #[win]
+          - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-*.yml exit 1                      #[win]
           - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1                   #[win]
           - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1                                #[win]
           - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1                                                #[win]
@@ -354,7 +355,7 @@ outputs:
           - test -f $PREFIX/share/gnuradio/examples/limesuiteng/FM_receiver.grc                                                 #[linux]
           - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml                                    #[linux]
           - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml                                      #[linux]
-          - test -f $PREFIX/share/gnuradio/manifests/limesuiteng/MANIFEST-1.0.01.yml                                            #[linux]
+          - test -f $PREFIX/share/gnuradio/manifests/limesuiteng/MANIFEST-*.yml                                                 #[linux]
           - test -f $SP_DIR/gnuradio/limesuiteng/limesuiteng_python.*.so                                                        #[linux]
           - test -f $SP_DIR/gnuradio/limesuiteng/__init__.py                                                                    #[linux]
         imports:
