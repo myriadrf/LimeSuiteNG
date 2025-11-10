@@ -321,6 +321,7 @@ outputs:
         - python
         - numpy
         - volk
+        - spdlog #[linux]
 
       run:
         - numpy
