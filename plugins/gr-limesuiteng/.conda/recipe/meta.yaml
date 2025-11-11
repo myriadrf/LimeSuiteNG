@@ -15,6 +15,7 @@ source:
 
 build:
   number: 0
+  skip: true #[osx]
 
 requirements:
   build:
@@ -29,7 +30,7 @@ requirements:
     - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - numpy >=2.0                         # [build_platform != target_platform]
     - pybind11 =2.13.6                    # [build_platform != target_platform]
-    - vs2022_win-64
+    - vs2022_win-64 #[win]
 
   host:
     - gmp  # [linux]
@@ -51,23 +52,34 @@ requirements:
 
 test:
   commands:
-    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1 #[win]
+    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1 #[win]
+    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1 #[win]
 
-    - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1
-    - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1
-    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1
-    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1
-    - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1
-
-    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1
-    - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1
-
-    - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1
+    - test -f $PREFIX/include/gnuradio/limesuiteng/api.h #[linux]
+    - test -f $PREFIX/include/gnuradio/limesuiteng/sdrdevice_source.h #[linux]
+    - test -f $PREFIX/include/gnuradio/limesuiteng/sdrdevice_sink.h #[linux]
+    - test -f $PREFIX/lib/libgnuradio-limesuiteng.so #[linux]
+    - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengTargets.cmake #[linux]
+    - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengTargets-release.cmake #[linux]
+    - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengConfig.cmake #[linux]
+    - test -f $PREFIX/share/gnuradio/examples/limesuiteng/FM_receiver.grc #[linux]
+    - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml #[linux]
+    - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml #[linux]
+    - test -f $PREFIX/share/gnuradio/manifests/limesuiteng/MANIFEST-1.0.01.yml #[linux]
+    - test -f $SP_DIR/gnuradio/limesuiteng/limesuiteng_python.*.so #[linux]
+    - test -f $SP_DIR/gnuradio/limesuiteng/__init__.py #[linux]    
 
 about:
   home: https://github.com/myriadrf/LimeSuiteNG

@@ -7,7 +7,7 @@ Gnuradio-limesuiteng recipe
 
 .. note::
 
-   Conda packaging has only been tested on Windows platform.
+   Recipe build was tested in radioconda environment for Windows and Linux platforms.
 
 Recipe structure
 ----------------
@@ -41,7 +41,7 @@ To build the plugin, LimeSuiteNG conda package must be built and installed insid
    cd <repo root>\plugins\gr-limesuiteng
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``gnuradio-limesuiteng-version-build_string.conda``.
+Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\`` directory with the following name structure ``gnuradio-limesuiteng-version-build_string.conda``.
 
 .. warning::
 

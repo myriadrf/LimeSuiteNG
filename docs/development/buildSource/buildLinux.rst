@@ -17,7 +17,7 @@ Optional packages that can be installed to enable specific functionality:
 - `wxWidgets`_ : enables graphical user interface
 - `libsoapysdr-dev`_ : enables building of limesuiteng plugin for SoapySDR
 - `linux-kernel-headers` : enables building of PCIe driver module for Linux kernel.
-- `gnuradio-dev`_ : enables building of plugin for GNU Radio.
+- `gnuradio-dev`_ : enables building of plugin for GNURadio.
 
 .. note::
     If you are on Ubuntu 20.04 or newer or Debian 11 or newer,

@@ -6,7 +6,7 @@ LimeSuiteNG can be built from source or installed as package in conda environmen
 .. toctree::
    :maxdepth: 1
 
-   radioconda
+   Radioconda environment  <../../development/packaging/radioconda>
    Build from Source <../../development/buildSource/buildWindows>
    package
    Drivers <drivers>

@@ -8,6 +8,7 @@ LimeSuiteNG on Linux can be installed either using package manager or built from
 .. toctree::
    :maxdepth: 2
 
+   Radioconda environment <../../development/packaging/radioconda>
    packages
    Build from source <../../development/buildSource/buildLinux>
    drivers
