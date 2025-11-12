@@ -1,0 +1,17 @@
+/** 
+@mainpage LimeSuiteNG 25.1.0 library manual
+
+<h1> Introduction </h1>
+
+<p> LimeSuiteNG library is a component of LimeSuiteNG suite, which provides various LimeSDR utility and development components. For more information about the suite, visit the main <A HREF="https://limesuiteng.myriadrf.org/">  LimeSuiteNG documentation</A> page. LimeSuiteNG library is designed to provide access to LimeSDR devices in the user space.</p>
+
+<p> This documentation is for application developers who wish to communicate with LimeSDR devices using custom built applications.</p>
+
+<h1> Application Programming Interface (API) </h1>
+
+<p> TODO: Add text and API page link. </p>
+
+<h1> Library features </h1>
+
+<p> TODO: Add list of supported library features. </p>
+*/

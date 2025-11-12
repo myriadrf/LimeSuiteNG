@@ -1,0 +1,15 @@
+/**
+@page api Application Programming Interface
+
+<p> This page provides a complete list of functions, enumerations, structures that can be accessed through public API:</p>
+
+<h1> Functions </h1>
+<ol>
+   <li> lime::DeviceRegistry::enumerate() </li>
+   <li> lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) </li>
+</ol>
+
+<h1> Structures </h1>
+
+<h1> Enumerations </h1>
+*/
