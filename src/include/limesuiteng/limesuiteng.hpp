@@ -167,12 +167,30 @@
  * 
  * <h3> SDR Device stream control </h3>
  * <ul>
- *    <li> </li>
+ *    <li>lime::RFStream::GetHardwareTimestamp() </li>
+ *    <li>lime::RFStream::Setup(const lime::StreamConfig&) </li>
+ *    <li>lime::RFStream::GetConfig() </li>
+ *    <li>lime::RFStream::Start() </li>
+ *    <li>lime::RFStream::StageStart() </li>
+ *    <li>lime::RFStream::Stop() </li>
+ *    <li>lime::RFStream::Teardown() </li>
+ *    <li>lime::RFStream::StreamRx(lime::complex32f_t* const*, uint32_t, lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamRx(lime::complex16_t* const*, uint32_t, lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamRx(lime::complex12_t* const*, uint32_t, lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamTx(const lime::complex32f_t* const*, uint32_t, const lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamTx(const lime::complex16_t* const*, uint32_t, const lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamTx(const lime::complex12_t* const*, uint32_t, const lime::StreamMeta*, std::chrono::microseconds) </li>
+ *    <li>lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) </li>
  * </ul>
  * 
  * @section class Classes
  * 
- * TODO: Add a list of public classes.
+ * <h3> Interface classes </h3>
+ * <ul>
+ *    <li>lime::DeviceRegistry</li>
+ *    <li>lime::SDRDevice</li>
+ *    <li>lime::RFStream</li>
+ * </ul>
  * 
  * @section struct Structures
  * 
@@ -180,5 +198,16 @@
  * 
  * @section enums Enumerations 
  * 
- * TODO: Add a list of public enumerations.
+ * <ul>
+ *    <li>lime::LogLevel</li>
+ *    <li>lime::OpStatus</li>
+ *    <li>lime::Divide</li>
+ *    <li>lime::Scale</li>
+ *    <li>lime::LockStatus</li>
+ *    <li>lime::TimestampType</li>
+ *    <li>lime::TRXDir</li>
+ *    <li>lime::DataFormat</li>
+ *    <li>lime::eGainTypes</li>
+ *    <li>lime::eMemoryDevice</li>
+ * </ul>
 */
