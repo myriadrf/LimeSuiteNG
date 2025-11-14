@@ -40,26 +40,21 @@
  * 
  * To start using LimeSuiteNG library public API, include the library header file:
  * 
- * @code
- * #include <limesuiteng/limesuiteng.hpp>
- * @endcode
+ * TODO: Add include headers for access to public API.
  * 
- * Link your application against limesuiteng library in cmake:
- * 
- * @code{.cmake}
- * find_package(limesuiteng REQUIRED)
- * @endcode
- * 
- * To get started using LimeSuiteNG library public API, visit Topics page. For a full list of public API members, visit @ref api "API" page.
+ * To get started using LimeSuiteNG library public API, visit Topics page. For a full list of public
+ * API members, visit @ref api "API" page.
  */
 
  
 /**
  * @page api Application Programming Interface
  * 
- * <p> This page provides a complete list of functions, enumerations, structures that can be accessed through public API:</p>
+ * This page provides a complete list of functions, enumerations, structures that can be accessed 
+ * through public API:
  * 
- * <h1> Functions </h1>
+ * @section funcs Functions 
+ * 
  * <h3> SDR Device registration </h3>
  * <ul>
  *    <li> lime::DeviceRegistry::enumerate() </li>
@@ -71,50 +66,119 @@
  * 
  * <h3> SDR Device control and configuration </h3>
  * <ul>
- *    <li> lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) </li>
- *    <li> lime::SDRDevice::GetDescriptor() </li>
  *    <li> lime::SDRDevice::Init() </li>
  *    <li> lime::SDRDevice::Reset() </li>
- *    <li> lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) </li>
  *    <li> lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) </li>
- *    <li> lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) </li>
- *    <li> lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) </li>
- *    <li> lime::SDRDevice::GetFrequency(uint8_t,lime::TRXDir,uint8_t) </li>
- *    <li> lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) </li>
- *    <li> lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) </li>
- *    <li> lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) </li>
- *    <li> lime::SDRDevice::GetNCOOffset(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) </li>
- *    <li> lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) </li>
- *    <li> lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) </li>
- *    <li> lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) </li>
- *    <li> lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) </li>
- *    <li> lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) </li>
- *    <li> lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) </li>
- *    <li> lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) </li>
- *    <li> lime::SDRDevice::GetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t, bool) </li>
- *    <li> lime::SDRDevice::GetDCOffset(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetDCOffset(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) </li>
- *    <li> lime::SDRDevice::GetIQBalance(uint8_t, lime::TRXDir, uint8_t) </li>
- *    <li> lime::SDRDevice::SetIQBalance(uint8_t, lime::TRXDir, uint8_t, const complex64f_t&) </li>
- *    <li> lime::SDRDevice::GetCGENLocked(uint8_t) </li>
- *    <li> lime::SDRDevice::GetTemperature(uint8_t) </li>
- *    <li> lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) </li>
- *    <li> lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) </li>
- *    <li> lime::SDRDevice::WriteRegister(uint8_t, unsigned int, bool) </li>
+ *    <li> lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) </li>
+ *    <li> lime::SDRDevice::UploadTxWaveform(const lime::StreamConfig&, uint8_t, const void**, uint32_t) </li>
+ *    <li> lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) </li>
+ *    <li> lime::SDRDevice::Synchronize(bool) </li>
+ *    <li><b>Configuration:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) </li>
+ *          <li> lime::SDRDevice::LoadConfig(uint8_t, const std::string&) </li>
+ *          <li> lime::SDRDevice::SaveConfig(uint8_t, const std::string&) </li>
+ *          <li> lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) </li>
+ *          <li> lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) </li>
+ *          <li> lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) </li>
+ *       </ul>
+ *    </li>
+ *    <li> <b> Filter configuration:</b>
+ *       <ul>
+ *        <li> lime::SDRDevice::ConfigureGFIR(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::GFIRFilter) </li>
+ *        <li> lime::SDRDevice::GetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t) </li>
+ *        <li> lime::SDRDevice::SetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t, std::vector<double>) </li>
+ *        <li> lime::SDRDevice::SetGFIR(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) </li>
+ *        <li> lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) </li>
+ *        <li> lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) </li>
+ *       </ul>
+ *    </li>
+ *    <li><b> Additional info:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::GetDescriptor() </li>
+ *          <li> lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) </li>
+ *          <li> lime::SDRDevice::GetCGENLocked(uint8_t) </li>
+ *          <li> lime::SDRDevice::GetTemperature(uint8_t) </li>
+ *          <li> lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) </li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Configuration by parameter:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) </li>
+ *          <li> lime::SDRDevice::GetFrequency(uint8_t,lime::TRXDir,uint8_t) </li>
+ *          <li> lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) </li>
+ *          <li> lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) </li>
+ *          <li> lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) </li>
+ *          <li> lime::SDRDevice::GetNCOOffset(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) </li>
+ *          <li> lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) </li>
+ *          <li> lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) </li>
+ *          <li> lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) </li>
+ *          <li> lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) </li>
+ *          <li> lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) </li>
+ *          <li> lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) </li>
+ *          <li> lime::SDRDevice::GetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t, bool) </li>
+ *          <li> lime::SDRDevice::GetDCOffset(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetDCOffset(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) </li>
+ *          <li> lime::SDRDevice::GetIQBalance(uint8_t, lime::TRXDir, uint8_t) </li>
+ *          <li> lime::SDRDevice::SetIQBalance(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) </li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Register access:<b>
+ *       <ul>
+ *          <li> lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) </li>
+ *          <li> lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) </li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Low speed interfaces:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) </li>
+ *          <li> lime::SDRDevice::I2CWrite(int, const uint8_t*, uint32_t) </li>
+ *          <li> lime::SDRDevice::I2CRead(int, uint8_t*, uint32_t) </li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Utility:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::EnableCache(bool) </li>
+ *          <li> lime::SDRDevice::GetHardwareTimestamp(uint8_t) </li>
+ *          <li> lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) </li>
+ *       </ul>
+ *    </li>
+ * @if SPECIAL_API
+ *    <li><b>Special:</b>
+ *       <ul>
+ *          <li> lime::SDRDevice::SetMessageLogCallback(lime::SDRDevice::LogCallbackType) </li>
+ *          <li> lime::SDRDevice::GetInternalChip(uint32_t) </li>
+ *          <li> lime::SDRDevice::UploadMemory(lime::eMemoryDevice, uint8_t, const char*, size_t, lime::SDRDevice::UploadMemoryCallback) </li>
+ *          <li> lime::SDRDevice::MemoryWrite(std::shared_ptr<lime::DataStorage>, lime::Region, const void*) </li>
+ *          <li> lime::SDRDevice::MemoryRead(std::shared_ptr<lime::DataStorage>, lime::Region, void*) </li>
+ *          <li> lime::SDRDevice::WriteSerialNumber(uint64_t) </li>
+ *          <li> lime::SDRDevice::GetGPIOControls() </li>
+ *       </ul>
+ *    </li>
+ * @endif
  * </ul>
  * 
- * <h3> Device chip control </h3>
+ * <h3> SDR Device stream control </h3>
  * <ul>
  *    <li> </li>
  * </ul>
  * 
- * <h1> Structures </h1>
+ * @section class Classes
  * 
- * <h1> Enumerations </h1>
+ * TODO: Add a list of public classes.
+ * 
+ * @section struct Structures
+ * 
+ * TODO: Add a list of public structures.
+ * 
+ * @section enums Enumerations 
+ * 
+ * TODO: Add a list of public enumerations.
 */
