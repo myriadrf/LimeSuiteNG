@@ -18,6 +18,9 @@ class wxRadioButton;
 
 class lms7002_mainPanel : public ISOCPanel
 {
+  public:
+    static ISOCPanel* Create(wxWindow* parent, wxWindowID id);
+
   protected:
     // Handlers for mainPanel events.
     void OnNewProject(wxCommandEvent& event);
@@ -45,7 +48,8 @@ class lms7002_mainPanel : public ISOCPanel
     ~lms7002_mainPanel();
     void UpdateVisiblePanel();
     void UpdateGUI() override;
-    void Initialize(lime::LMS7002M* socPtr);
+    bool Initialize(lime::LMS7002M* socPtr);
+    bool Initialize(void* socPtr) override;
 
     std::unordered_map<wxWindowID, ILMS7002MTab*> mTabs;
 

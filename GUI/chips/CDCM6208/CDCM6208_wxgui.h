@@ -34,13 +34,15 @@ class SDRDevice;
 class CDCM6208_panelgui : public ISOCPanel
 {
   public:
+    static ISOCPanel* Create(wxWindow* parent, wxWindowID id);
     CDCM6208_panelgui(wxWindow* parent,
         wxWindowID id,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = 0);
     ~CDCM6208_panelgui();
-    void Initialize(lime::CDCM_Dev* cdcm);
+    bool Initialize(lime::CDCM_Dev* cdcm);
+    bool Initialize(void* cdcm) override;
     void UpdateGUI() override;
 
     double primaryFreq = 30.72 * 1e6;

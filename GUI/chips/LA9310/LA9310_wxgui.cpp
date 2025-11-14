@@ -1,10 +1,19 @@
 #include "LA9310_wxgui.h"
 #include "limesuiteng/Logger.h"
 
+#include "SOC_GUIFactory.h"
+
 #include "chips/LA9310/LA9310.h"
 
 #include "widgets/DCCorrectorPanel.h"
 #include "widgets/QECPanel.h"
+
+static bool isRegistered = RegisterToFactory<SOC_GUIFactory, &LA9310_wxgui::Create>("LA9310");
+
+ISOCPanel* LA9310_wxgui::Create(wxWindow* parent, wxWindowID id)
+{
+    return new LA9310_wxgui(parent, id);
+}
 
 LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ISOCPanel(parent, id, pos, size, style)
@@ -41,13 +50,22 @@ LA9310_wxgui::~LA9310_wxgui()
     // m_PrimaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(LA9310_wxgui::OnChange), nullptr, this);
 }
 
-void LA9310_wxgui::Initialize(lime::LA9310* soc)
+bool LA9310_wxgui::Initialize(lime::LA9310* soc)
 {
+    if (!soc)
+        return false;
+
     la9310 = soc;
     rxdcpanel->Initialize(soc->vspa.GetRxDCCorrector());
     txdcpanel->Initialize(soc->vspa.GetTxDCCorrector());
     rxqecpanel->Initialize(soc->vspa.GetRxQEC());
     txqecpanel->Initialize(soc->vspa.GetTxQEC());
+    return true;
+}
+
+bool LA9310_wxgui::Initialize(void* soc)
+{
+    return Initialize(reinterpret_cast<lime::LA9310*>(soc));
 }
 
 void LA9310_wxgui::UpdateGUI()

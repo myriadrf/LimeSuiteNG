@@ -15,13 +15,15 @@ class QECPanel;
 class LA9310_wxgui : public ISOCPanel
 {
   public:
+    static ISOCPanel* Create(wxWindow* parent, wxWindowID id);
     LA9310_wxgui(wxWindow* parent,
         wxWindowID id,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = 0);
     ~LA9310_wxgui();
-    void Initialize(lime::LA9310* soc);
+    bool Initialize(lime::LA9310* soc);
+    bool Initialize(void* soc) override;
     void UpdateGUI() override;
 
   private:

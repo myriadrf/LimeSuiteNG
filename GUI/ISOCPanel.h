@@ -13,8 +13,8 @@ class ISOCPanel : public wxPanel
         : wxPanel(parent, id, pos, size, styles){};
     virtual ~ISOCPanel(){};
 
-    virtual void ChangeSOC(void* socPtr){};
-    virtual void UpdateGUI(){};
+    virtual bool Initialize(void* soc) = 0;
+    virtual void UpdateGUI() = 0;
 
   private:
     ISOCPanel() = delete;

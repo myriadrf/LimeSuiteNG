@@ -314,7 +314,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     StreamTxMeta txMeta{};
     txMeta.flags = 0;
-    txMeta.timestamp = Timespec(0l);
+    txMeta.timestamp = Timespec(int64_t(0));
     txMeta.hasTimestamp = false; // transmit immediately
 
     std::vector<complex16_t> interleavedBuffer;

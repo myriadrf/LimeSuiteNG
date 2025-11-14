@@ -35,14 +35,6 @@ Timespec::Timespec()
 {
 }
 
-// Timespec::Timespec(double realSeconds)
-//     : seconds(realSeconds)
-//     , fracSeconds(realSeconds - seconds)
-//     , ticksPerSecond(1000000000.0)
-//     , hasTickRate(false)
-// {
-// }
-
 Timespec::Timespec(int64_t int_seconds, double frac_seconds)
     : seconds(int_seconds)
     , fracSeconds(frac_seconds)
@@ -56,7 +48,7 @@ Timespec::Timespec(int64_t int_seconds, double frac_seconds)
     }
 }
 
-Timespec::Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second)
+Timespec::Timespec(int64_t seconds, int64_t ticks, double ticks_per_second)
     : seconds(seconds)
     , fracSeconds(double(ticks) / ticks_per_second)
     , ticksPerSecond(ticks_per_second)
@@ -72,7 +64,7 @@ Timespec::Timespec(int64_t ticks)
 {
 }
 
-void Timespec::AddTicks(uint64_t tick_increment)
+void Timespec::AddTicks(int64_t tick_increment)
 {
     if (!hasTickRate)
     {
@@ -124,6 +116,11 @@ void Timespec::SetTickRate(double tps)
         seconds /= ticksPerSecond;
     }
     hasTickRate = true;
+}
+
+double Timespec::GetTickRate() const
+{
+    return ticksPerSecond;
 }
 
 bool operator==(const Timespec& lhs, const Timespec& rhs)

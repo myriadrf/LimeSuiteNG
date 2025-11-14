@@ -119,10 +119,9 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, std::move(eepromMap));
     }
 
-    desc.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("LA9310"s, eDeviceTreeNodeClass::LA9310, la9310.get()));
-    desc.socTree->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice", "LimeSDR-Micro"s);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(la9310.get(), "LA9310"s));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
 }
 
 LimeSDR_Micro::~LimeSDR_Micro()
