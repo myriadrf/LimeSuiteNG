@@ -35,6 +35,22 @@
  * @section lib_feat_section Library features
  * 
  * TODO: Add list of supported library features.
+ * 
+ * @section getting_started Getting started
+ * 
+ * To start using LimeSuiteNG library public API, include the library header file:
+ * 
+ * @code
+ * #include <limesuiteng/limesuiteng.hpp>
+ * @endcode
+ * 
+ * Link your application against limesuiteng library in cmake:
+ * 
+ * @code{.cmake}
+ * find_package(limesuiteng REQUIRED)
+ * @endcode
+ * 
+ * To get started using LimeSuiteNG library public API, visit Topics page. For a full list of public API members, visit @ref api "API" page.
  */
 
  
