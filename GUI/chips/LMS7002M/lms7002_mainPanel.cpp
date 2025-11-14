@@ -27,6 +27,7 @@
 #include <wx/bookctrl.h>
 #include "lms7002_pnlMCU_BD_view.h"
 #include "lms7002_pnlR3.h"
+#include "SOC_GUIFactory.h"
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/LMS7002M.h"
@@ -35,6 +36,13 @@
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
+
+static bool isRegistered = RegisterToFactory<SOC_GUIFactory, &lms7002_mainPanel::Create>("LMS7002M");
+
+ISOCPanel* lms7002_mainPanel::Create(wxWindow* parent, wxWindowID id)
+{
+    return new lms7002_mainPanel(parent, id);
+}
 
 lms7002_mainPanel::lms7002_mainPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ISOCPanel(parent, id, pos, size, style)
@@ -248,14 +256,14 @@ void lms7002_mainPanel::UpdateVisiblePanel()
 #endif
 }
 
-void lms7002_mainPanel::Initialize(lime::LMS7002M* socPtr)
+bool lms7002_mainPanel::Initialize(lime::LMS7002M* socPtr)
 {
     soc = socPtr;
     if (soc == nullptr)
     {
         for (auto& tab : mTabs)
             tab.second->Initialize(nullptr);
-        return;
+        return false;
     }
     cmbLmsDevice->SetSelection(0);
     cmbLmsDevice->Hide();
@@ -267,6 +275,12 @@ void lms7002_mainPanel::Initialize(lime::LMS7002M* socPtr)
         tab.second->Initialize(soc);
     UpdateGUI();
     Layout();
+    return true;
+}
+
+bool lms7002_mainPanel::Initialize(void* socPtr)
+{
+    return Initialize(reinterpret_cast<lime::LMS7002M*>(socPtr));
 }
 
 void lms7002_mainPanel::OnResetChip(wxCommandEvent& event)

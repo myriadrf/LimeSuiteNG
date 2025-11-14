@@ -1,9 +1,18 @@
 #include "CDCM6208_wxgui.h"
 #include "limesuiteng/Logger.h"
 
+#include "SOC_GUIFactory.h"
+
 #include "chips/CDCM6208/CDCM6208.h"
 
 using namespace lime;
+
+static bool isRegistered = RegisterToFactory<SOC_GUIFactory, &CDCM6208_panelgui::Create>("CDCM6208");
+
+ISOCPanel* CDCM6208_panelgui::Create(wxWindow* parent, wxWindowID id)
+{
+    return new CDCM6208_panelgui(parent, id);
+}
 
 CDCM6208_panelgui::CDCM6208_panelgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ISOCPanel(parent, id, pos, size, style)
@@ -725,14 +734,23 @@ CDCM6208_panelgui::~CDCM6208_panelgui()
     m_Y5_DIV->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(CDCM6208_panelgui::OnChange), nullptr, this);
 }
 
-void CDCM6208_panelgui::Initialize(CDCM_Dev* cdcm)
+bool CDCM6208_panelgui::Initialize(CDCM_Dev* cdcm)
 {
     assert(cdcm);
+    if (!cdcm)
+        return false;
+
     CDCM = cdcm;
     CDCM->DownloadConfiguration();
     UpdateGUI();
 
     m_Baseaddr->SetValue(std::to_string(CDCM->GetSPIBaseAddr()));
+    return true;
+}
+
+bool CDCM6208_panelgui::Initialize(void* cdcm)
+{
+    return Initialize(reinterpret_cast<CDCM_Dev*>(cdcm));
 }
 
 bool CDCM6208_panelgui::Initialize(lime::SDRDevice* device)
