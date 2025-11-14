@@ -111,6 +111,8 @@ target_sources(
     limeGUI
     PRIVATE limeGUI.cpp
             limeGUIFrame.cpp
+            ISOCPanel.cpp
+            SOC_GUIFactory.cpp
             LMS_Programming/LMS_Programming_wxgui.cpp
             utility/pnlMiniLog.cpp
             utility/SPI_wxgui.cpp

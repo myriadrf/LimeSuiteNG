@@ -60,11 +60,11 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::shared_ptr<ISerialPort> controlPort, std::vector
     // FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     // FPGA::GatewareToDescriptor(gw, desc);
 
-    desc.socTree = std::make_shared<DeviceTreeNode>("X8"s, eDeviceTreeNodeClass::SDRDevice, this);
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "X8"s);
 
     // TODO: read-back board's reference clock
     mADF->Initialize(std::make_shared<LMS64C_ADF4002_SPI>(controlPort, 0), 30.72e6);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002"s, eDeviceTreeNodeClass::ADF4002, mADF.get()));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mADF.get(), "ADF4002"s));
 
     mSubDevices.reserve(8);
     desc.spiSlaveIds["FPGA"s] = 0;
