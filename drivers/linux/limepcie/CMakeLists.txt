@@ -32,9 +32,6 @@ configure_file(dkms.conf.in ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf
 find_program(DKMS_EXECUTABLE NAMES dkms)
 mark_as_advanced(DKMS_EXECUTABLE)
 
-cmake_dependent_option(LIMEPCIE_DKMS "Use DKMS when installing the kernel module" ON "DKMS_EXECUTABLE" OFF)
-add_feature_info("LIMEPCIE_DKMS" LIMEPCIE_DKMS "Use DKMS system to build/install limepcie module")
-
 # sources must include header files with relative path, so they would be copied into system
 add_kernel_module(
     NAME
@@ -64,6 +61,9 @@ add_feature_info("LIMEPCIE_INSTALL" LIMEPCIE_INSTALL "Install limepcie kernel mo
 if(NOT LIMEPCIE_INSTALL)
     return()
 endif()
+
+cmake_dependent_option(LIMEPCIE_DKMS "Use DKMS when installing the kernel module" ON "DKMS_EXECUTABLE;LIMEPCIE_INSTALL" OFF)
+add_feature_info("LIMEPCIE_DKMS" LIMEPCIE_DKMS "Use DKMS system to build/install limepcie module")
 
 option(LIMEPCIE_RELOAD_ON_INSTALL "After install reload kernel driver modules" ON)
 add_feature_info("LIMEPCIE_RELOAD_ON_INSTALL" LIMEPCIE_RELOAD_ON_INSTALL "Reload limepcie kernel module after install")
