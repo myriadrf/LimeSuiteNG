@@ -32,7 +32,13 @@ struct StreamStats {
     uint32_t late{ 0 }; ///< The amount of packets that arrived late for transmitting and were dropped.
 };
 
-enum class TimestampType { SAMPLE_TICKS, REALTIME_SECONDS, UNIX_EPOCH };
+/// @brief Enumeration describing possible stream timestamp types.
+enum class TimestampType 
+{
+    SAMPLE_TICKS,       ///< Increments timestamp on received sample.
+    REALTIME_SECONDS,   ///< Increments timestamp on received PPS.
+    UNIX_EPOCH          ///< Increments timestamp on received PPS with reference to current unix epoch.
+};
 
 /// @brief Configuration settings for a stream.
 struct LIME_API StreamConfig {
