@@ -130,7 +130,7 @@
  *          <li> lime::SDRDevice::SetIQBalance(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) </li>
  *       </ul>
  *    </li>
- *    <li><b>Register access:<b>
+ *    <li><b>Register access:</b>
  *       <ul>
  *          <li> lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) </li>
  *          <li> lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) </li>
@@ -201,13 +201,17 @@
  * <ul>
  *    <li>lime::LogLevel</li>
  *    <li>lime::OpStatus</li>
- *    <li>lime::Divide</li>
- *    <li>lime::Scale</li>
- *    <li>lime::LockStatus</li>
+ *    <li>lime::SDRDevice::GPS_Lock::LockStatus</li>
  *    <li>lime::TimestampType</li>
  *    <li>lime::TRXDir</li>
  *    <li>lime::DataFormat</li>
  *    <li>lime::eGainTypes</li>
  *    <li>lime::eMemoryDevice</li>
+ *    <li><b>SDR test signal options:</b>
+ *       <ul>
+ *          <li> lime::ChannelConfig::Direction::TestSignal::Divide</li>
+ *          <li> lime::ChannelConfig::Direction::TestSignal::Scale</li>
+ *       </ul>
+ *    </li>
  * </ul>
 */
