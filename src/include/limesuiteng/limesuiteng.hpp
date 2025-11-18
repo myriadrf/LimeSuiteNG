@@ -201,12 +201,20 @@
  * <ul>
  *    <li>lime::LogLevel</li>
  *    <li>lime::OpStatus</li>
- *    <li>lime::SDRDevice::GPS_Lock::LockStatus</li>
- *    <li>lime::TimestampType</li>
- *    <li>lime::TRXDir</li>
- *    <li>lime::DataFormat</li>
- *    <li>lime::eGainTypes</li>
- *    <li>lime::eMemoryDevice</li>
+ *    <li><b>SDR device options</b>
+ *       <ul>
+ *          <li>lime::SDRDevice::GPS_Lock::LockStatus</li>
+ *          <li>lime::TRXDir</li>
+ *          <li>lime::DataFormat</li>
+ *          <li>lime::eGainTypes</li>
+ *          <li>lime::eMemoryDevice</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>SDR stream options</b>
+ *       <ul>
+ *          <li>lime::TimestampType</li>
+ *       </ul>
+ *    </li>
  *    <li><b>SDR test signal options:</b>
  *       <ul>
  *          <li> lime::ChannelConfig::Direction::TestSignal::Divide</li>
