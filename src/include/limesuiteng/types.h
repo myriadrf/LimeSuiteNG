@@ -62,7 +62,16 @@ struct Region {
     int32_t size; ///< The size of the memory region
 };
 
-enum class eMemoryDevice : uint8_t { FPGA_RAM = 0, FPGA_FLASH, EEPROM, GATEWARE_GOLD_IMAGE, GATEWARE_USER_IMAGE, COUNT };
+/// @brief Available memory options on device.
+enum class eMemoryDevice : uint8_t 
+{
+    FPGA_RAM = 0,           ///< FPGA RAM memory option.
+    FPGA_FLASH,             ///< FPGA flash memory. Points to the start of the flash. Depending on SDR GW version, can also point to flash GW user image location.
+    EEPROM,                 ///< EEPROM memory option.
+    GATEWARE_GOLD_IMAGE,    ///< Starting location of backup GW image in FPGA flash.
+    GATEWARE_USER_IMAGE,    ///< Starting location of the custom GW image in FPGA flash.
+    COUNT
+};
 
 /// @brief The structure for writing and reading custom parameters
 struct CustomParameterIO {
