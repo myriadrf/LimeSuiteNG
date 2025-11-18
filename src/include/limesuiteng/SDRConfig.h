@@ -56,15 +56,15 @@ struct ChannelConfig {
             /// @brief The enumeration describing the divide mode of the test signal.
             enum class Divide : uint8_t 
             {
-              Div8,  ///< Test signal frequency division by 8, when NCO is selected as source test signal.
-              Div4   ///< Test signal frequency division by 4, when NCO is selected as source test signal.
+              Div8,  ///< Test signal frequency division by 8, when NCO (dcMode is disabled) is selected as source test signal.
+              Div4   ///< Test signal frequency division by 4, when NCO (dcMode is disabled) is selected as source test signal.
             };
 
             /// @brief The enumeration describing the scale of the test signal.
             enum class Scale : uint8_t 
             { 
-              Full,  ///< Test signal strength set to 0 dB.
-              Half   ///< Test signal strength set to -6 dB. 
+              Full,  ///< Test signal strength set to 0 dB, when NCO (dcMode is disabled) is selected as source test signal.
+              Half   ///< Test signal strength set to -6 dB, when NCO (dcMode is disabled) is selected as source test signal. 
             };
 
             complex16_t dcValue; ///< The value to use when in DC mode.
