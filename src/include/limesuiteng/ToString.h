@@ -1,5 +1,11 @@
 #pragma once
 
+/**
+* @file limesuiteng/ToString.h
+* @author Lime Microsystems
+* @brief File with string manipulation function declarations.
+*/
+
 #include "limesuiteng/types.h"
 #include "limesuiteng/OpStatus.h"
 
