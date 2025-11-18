@@ -24,40 +24,53 @@ enum class LogLevel : std::uint8_t {
     Debug, //!< A debugging message, only shown in Debug configuration.
 };
 
-//! Typedef for the registered log handler function.
+//! Typedef for the registered log handler function pointer with support for C-style messages.
 typedef void (*LogHandlerCString)(const LogLevel level, const char* message);
+
+//! Typedef for the registered log handler function pointer with support for std::string type messages.
 typedef std::function<void(const LogLevel level, const std::string& message)> LogHandler;
 
 /*!
- * Register a new system log handler.
+ * Register a new system log handler that supports C-style messages.
  * Platforms should call this to replace the default stdio handler.
  */
 LIME_API void registerLogHandler(const LogHandlerCString handler);
+
+/*!
+ * Register a new system log handler that supports std::string type messages.
+ * Platforms should call this to replace the default stdio handler.
+ */
 LIME_API void registerLogHandler(const LogHandler handler);
 
 //! Get the error code to string + any optional message reported.
+
+/// @brief Gets the error code to string + any optional message reported.
+/// @return Returns a C-style string.
 LIME_API const char* GetLastErrorMessageCString(void);
+
+/// @brief Gets the error code to string + any optional message reported.
+/// @return Returns a std::string type string.
 LIME_API const std::string& GetLastErrorMessage(void);
 
 // C-string versions
-LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a critical error message with formatting
-LIME_API void critical(const std::string& text); //!< Log a critical error message
+LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a critical error message with formatting using C-style string.
+LIME_API void critical(const std::string& text); //!< Log a critical error message using std::string type string.
 
-LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an error message with formatting
-LIME_API int error(const std::string& text); //!< Log an error message
+LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an error message with formatting using C-style string.
+LIME_API int error(const std::string& text); //!< Log an error message using std::string type string.
 
-LIME_API void warning [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a warning message with formatting
-LIME_API void warning(const std::string& text); //!< Log a warning message
+LIME_API void warning [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a warning message with formatting using C-style string.
+LIME_API void warning(const std::string& text); //!< Log a warning message using std::string type string.
 
-LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an information message with formatting
-LIME_API void info(const std::string& text); //!< Log an information message
+LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an information message with formatting using C-style string.
+LIME_API void info(const std::string& text); //!< Log an information message using std::string type string.
 
-LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting
-LIME_API void debug(const std::string& text); //!< Log a debug message
+LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting using C-style string.
+LIME_API void debug(const std::string& text); //!< Log a debug message using std::string type string.
 
-//! Log a message with formatting and specified logging level
+//! Log a C-style message with formatting and specified logging level
 LIME_API void log [[gnu::format(printf, 2, 3)]] (const LogLevel level, const char* format, ...);
-//! Log a message with specified logging level
+//! Log a std::string type message with specified logging level
 LIME_API void log(const LogLevel level, const std::string& text);
 
 /*!
