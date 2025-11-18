@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_TYPES_H
 #define LIMESUITENG_TYPES_H
 
+/**
+* @file limesuiteng/types.h
+* @author Lime Microsystems
+* @brief File with API types definitions.
+*/
+
 #include "limesuiteng/config.h"
 #include <cstdint>
 #include <string>
@@ -8,7 +14,11 @@
 namespace lime {
 
 /// @brief The direction of the transmission
-enum class TRXDir : bool { Rx, Tx };
+enum class TRXDir : bool 
+{ 
+    Rx, ///< Receiver direction.
+    Tx  ///< Transmiter direction.
+};
 
 /// @brief Enumerator describing the data formats.
 enum class DataFormat : uint8_t {
@@ -19,16 +29,16 @@ enum class DataFormat : uint8_t {
 
 /// @brief Available gain types on the devices.
 enum class eGainTypes : uint8_t {
-    LNA, ///< Low Noise Amplifier
-    LoopbackLNA,
-    PGA, ///< Programmable Gain Amplifier
-    TIA, ///< Trans Impedance Amplifier
-    PAD,
-    LoopbackPAD,
-    IAMP,
-    PA, ///< On-board Power Amplifier
-    UNKNOWN,
-    GENERIC = UNKNOWN,
+    LNA,                ///< Receiver Low Noise Amplifier.
+    LoopbackLNA,        ///< Receiver with loopback buffer Low Noise Amplifier.
+    PGA,                ///< Receiver Programmable Gain Amplifier.
+    TIA,                ///< Receiver Trans Impedance Amplifier.
+    PAD,                ///< Transmitter Programmable Amplifier Driver.
+    LoopbackPAD,        ///< Transmitter loopback Programmable Amplifier Driver.
+    IAMP,               ///< TBB (Transmitter baseband) frontend amplifier.
+    PA,                 ///< On-board Power Amplifier.
+    UNKNOWN,            ///< Not supported by API.
+    GENERIC = UNKNOWN,  ///< Not supported by API.
 };
 
 /// @brief Structure describing the range possible.
