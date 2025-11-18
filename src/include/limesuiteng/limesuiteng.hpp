@@ -183,6 +183,40 @@
  *    <li>lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) </li>
  * </ul>
  * 
+  * <h3> Logger </h3>
+ * <ul>
+ *    <li>lime::registerLogHandler(const lime::LogHandlerCString)</li>
+ *    <li>lime::registerLogHandler(const lime::LogHandler)</li>
+ *    <li>lime::GetLastErrorMessageCString(void)</li>
+ *    <li>lime::GetLastErrorMessage(void)</li>
+ *    <li>lime::critical(const char*, ...)</li>
+ *    <li>lime::critical(const std::string&)</li>
+ *    <li>lime::error(const char*, ...)</li>
+ *    <li>lime::error(const std::string&)</li>
+ *    <li>lime::warning(const char*, ...)</li>
+ *    <li>lime::warning(const std::string&)</li>
+ *    <li>lime::info(const char*, ...)</li>
+ *    <li>lime::info(const std::string&)</li>
+ *    <li>lime::debug(const char*, ...)</li>
+ *    <li>lime::debug(const std::string&)</li>
+ *    <li>lime::log(const lime::LogLevel, const char*, ...)</li>
+ *    <li>lime::log(const lime::LogLevel, const std::string&)</li>
+ *    <li>lime::ReportError(const lime::OpStatus)</li>
+ *    <li>lime::ReportError(const lime::OpStatus, const char*, ...)</li>
+ *    <li>lime::ReportError(const lime::OpStatus, const std::string&)</li>
+ *    <li>lime::ReportError(const int, const char*, ...)</li>
+ *    <li>lime::ReportError(const int, const std::string&)</li>
+ * </ul>
+ * 
+ * <h3> String manipulation </h3>
+ * <ul>
+ *    <li>lime::ToString(lime::TRXDir)</li>
+ *    <li>lime::ToString(lime::OpStatus)</li>
+ *    <li>lime::ToString(lime::eGainTypes)</li>
+ *    <li>lime::ToString(lime::eMemoryDevice)</li>
+ * </ul>
+ * 
+ * 
  * @section class Classes
  * 
  * <h3> Interface classes </h3>
@@ -192,9 +226,79 @@
  *    <li>lime::RFStream</li>
  * </ul>
  * 
+ * <h3> Storage classes </h3>
+ * <ul>
+ *    <li><b>SDR device description</b>
+ *       <ul>
+ *          <li>lime::DeviceHandle</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Stream meta data</b>
+ *       <ul>
+ *          <li>lime::StreamTxMeta</li>
+ *          <li>lime::StreamRxMeta</li>
+ *       </ul>
+ *    </li>
+ * </ul>
+ * 
  * @section struct Structures
  * 
- * TODO: Add a list of public structures.
+ * <ul>
+ *    <li><b>SDR description</b>
+ *       <ul>
+ *          <li>lime::SDRDescriptor</li>
+ *          <li>lime::DataStorage</li>
+ *          <li>lime::CustomParameter</li>
+ *          <li>lime::SDRDevice::GPS_Lock</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>SDR device configuration</b>
+ *       <ul>
+ *          <li>lime::SDRConfig</li>
+ *          <li>lime::ChannelConfig</li>
+ *          <li>lime::ChannelConfig::Direction</li>
+ *          <li>lime::ChannelConfig::Direction::GFIRFilter</li>
+ *          <li>lime::ChannelConfig::Direction::TestSignal</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>SDR Stream</b>
+ *       <ul>
+ *          <li>lime::StreamConfig</li>
+ *          <li>lime::StreamConfig::Extras</li>
+ *          <li>lime::StreamConfig::Extras::PacketTransmission</li>
+ *          <li>lime::StreamStats</li>
+ *          <li>lime::StreamStats::FIFOStats</li>
+ *          <li>lime::StreamMeta</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>RF SoC description</b>
+ *       <ul>
+ *          <li>lime::GainValue</li>
+ *          <li>lime::RFSOCDescriptor</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Registers</b>
+ *       <ul>
+ *          <li>lime::CSRegister</li>
+ *          <li>lime::Register</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Complex types</b>
+ *       <ul>
+ *          <li>lime::complex64f_t</li>
+ *          <li>lime::complex32f_t</li>
+ *          <li>lime::complex16_t</li>
+ *          <li>lime::complex12_t</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Utility</b>
+ *       <ul>
+ *          <li>lime::Range</li>
+ *          <li>lime::Region</li>
+ *          <li>lime::CustomParameterIO</li>
+ *       </ul>
+ *    </li> 
+ * </ul>
  * 
  * @section enums Enumerations 
  * 
