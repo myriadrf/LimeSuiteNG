@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_SDRSTREAMCONFIG_H
 #define LIMESUITENG_SDRSTREAMCONFIG_H
 
+/**
+* @file limesuiteng/StreamConfig.h
+* @author Lime Microsystems
+* @brief File with SDR stream configuration structure definitions.
+*/
+
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
 
