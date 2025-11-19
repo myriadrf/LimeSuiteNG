@@ -1,6 +1,12 @@
 #ifndef LIME_Timespec_H
 #define LIME_Timespec_H
 
+/**
+ * @file limesuiteng/Timespec.h
+ * @author Lime Microsystems
+ * @brief Timestamp storage class definition.
+ */
+
 #include <chrono>
 #include <math.h>
 #include <time.h>
