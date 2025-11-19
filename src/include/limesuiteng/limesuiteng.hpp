@@ -183,7 +183,29 @@
  *    <li>lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) </li>
  * </ul>
  * 
-  * <h3> Logger </h3>
+ * <h3>Timestamp management</h3>
+ * <ul>
+ *    <li>lime::Timespec::AddTicks(int64_t)</li>
+ *    <li>lime::Timespec::GetTicks()</li>
+ *    <li>lime::Timespec::GetSeconds()</li>
+ *    <li>lime::Timespec::GetFracSeconds()</li>
+ *    <li>lime::Timespec::GetRealSeconds()</li>
+ *    <li>lime::Timespec::SetTickRate(double)</li>
+ *    <li>lime::Timespec::GetTickRate()</li>
+ *    <li><b>Operators</b>
+ *       <ul>
+ *          <li>lime::operator==(const lime::Timespec&, const lime::Timespec&)</li>
+ *          <li>lime::operator!=(const lime::Timespec&, const lime::Timespec&)</li>
+ *          <li>lime::operator<(const lime::Timespec&, const lime::Timespec&)</li>
+ *          <li>lime::operator>(const lime::Timespec&, const lime::Timespec&)</li>
+ *          <li>lime::operator+(lime::Timespec, const lime::Timespec&)</li>
+ *          <li>lime::operator-(lime::Timespec, const lime::Timespec&)</li>
+ *          <li>lime::abs(const lime::Timespec&)</li>
+ *       </ul>
+ *    </li>
+ * </ul>
+ * 
+ * <h3> Logger </h3>
  * <ul>
  *    <li>lime::registerLogHandler(const lime::LogHandlerCString)</li>
  *    <li>lime::registerLogHandler(const lime::LogHandler)</li>
@@ -237,6 +259,7 @@
  *       <ul>
  *          <li>lime::StreamTxMeta</li>
  *          <li>lime::StreamRxMeta</li>
+ *          <li>lime::Timespec</li>
  *       </ul>
  *    </li>
  * </ul>
