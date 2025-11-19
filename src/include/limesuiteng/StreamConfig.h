@@ -54,6 +54,9 @@ struct LIME_API StreamConfig {
 
         bool negateQ; ///< Whether to negate the Q element before sending the data or not.
         bool waitPPS; ///< Start sampling from next following PPS.
+
+        int64_t txonoffset{ 0 };
+        int64_t txoffoffset{ 0 };
     };
 
     /// @brief The definition of the function that gets called whenever a stream status changes.

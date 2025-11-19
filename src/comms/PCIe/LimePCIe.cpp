@@ -182,10 +182,11 @@ int LimePCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 
 OpStatus LimePCIe::UploadFirmware(const uint8_t* buffer, size_t size)
 {
-    LA9310_IOCTL_firmware fw;
-    fw.firmware_data = buffer;
-    fw.size = size;
+    // LA9310_IOCTL_firmware fw;
+    // fw.firmware_data = buffer;
+    // fw.size = size;
 
-    int ret = -1; // TODO: ioctl(mFileDescriptor, LA9310_IOCTL_FIRMWARE_UPLOAD, &fw);
-    return ret == 0 ? OpStatus::Success : OpStatus::Error;
+    // int ret = -1; // TODO: ioctl(mFileDescriptor, LA9310_IOCTL_FIRMWARE_UPLOAD, &fw);
+    // return ret == 0 ? OpStatus::Success : OpStatus::Error;
+    return OpStatus::NotImplemented;
 }

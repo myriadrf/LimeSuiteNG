@@ -7,14 +7,14 @@
 
 using namespace lime;
 
-QECPanel::QECPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
+QECPanel::QECPanel(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
 {
     constexpr int margins = 0;
     const int textFlags = wxALIGN_LEFT | wxLEFT | wxALIGN_CENTER_VERTICAL;
 
     Create(parent, id, pos, size, style);
 
-    wxStaticBoxSizer* sbSizerDC = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("QEC")), wxVERTICAL);
+    wxStaticBoxSizer* sbSizerDC = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, title), wxVERTICAL);
 
     wxFlexGridSizer* fgSizer45 = new wxFlexGridSizer(0, 2, 0, margins);
     fgSizer45->AddGrowableCol(1);

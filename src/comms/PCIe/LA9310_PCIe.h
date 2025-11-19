@@ -14,6 +14,8 @@
 
 #include "drivers/linux/la9310_limesdr/la9310_ioctl.h"
 
+struct la9310_hif;
+
 namespace lime {
 
 struct mmaped_region {
@@ -60,7 +62,7 @@ class LIME_API LA9310_PCIe : public LimePCIe
   private:
     std::filesystem::path mFilePath;
     int mFileDescriptor;
-    void* hostInterfaceAddr;
+    volatile struct la9310_hif* hostInterface;
     LA9310_IOCTL_memory_layout memoryLayout;
 
     std::array<mmaped_region, LA9310_WINDOW_COUNT> mapped_ranges;

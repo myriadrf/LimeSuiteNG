@@ -14,9 +14,8 @@
 #include "streaming/PacketsFIFO.h"
 #include "streaming/StreamPacket.h"
 
-#include "comms/PCIe/LA9310_PCIe.h"
-#include "chips/LA9310/VSPA_iqplayer.h"
-#include "chips/LA9310/PHYTimer.h"
+#include "TransmitControl.h"
+#include "chips/LA9310/LA9310.h"
 
 namespace lime {
 
@@ -24,7 +23,7 @@ namespace lime {
 class LA9310_TRX : public RFStream
 {
   public:
-    LA9310_TRX(std::shared_ptr<LA9310_PCIe> port);
+    LA9310_TRX(std::shared_ptr<LA9310> la9310);
     virtual ~LA9310_TRX();
 
     uint64_t GetHardwareTimestamp() const override;
@@ -63,8 +62,7 @@ class LA9310_TRX : public RFStream
     };
 
   private:
-    std::shared_ptr<LA9310_PCIe> port;
-    VSPA_iqplayer vspa;
+    std::shared_ptr<LA9310> la9310;
 
     OpStatus RxSetup();
     void RxWorkLoop();
@@ -130,6 +128,7 @@ class LA9310_TRX : public RFStream
         }
     };
 
+    std::vector<uint32_t> rxbuffer;
     Stream mRx;
     Stream mTx;
 
@@ -144,7 +143,7 @@ class LA9310_TRX : public RFStream
     template<class T>
     uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
 
-    PHYTimer phytimer;
+    TransmitControl tx_tdd_switcher;
 };
 
 } // namespace lime

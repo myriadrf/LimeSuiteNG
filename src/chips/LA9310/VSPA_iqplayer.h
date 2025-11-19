@@ -2,6 +2,7 @@
 #define LIME_VSPA_IQPLAYER_H
 
 #include <memory>
+#include <mutex>
 
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/complex.h"
@@ -17,11 +18,13 @@ class IQuadratureErrorCorrector;
 class LA9310_PCIe;
 
 struct VSPA_FIFO_State {
+    uint64_t bytes_consumed{ 0 }; // software counter, Bytes copied from modem rx Fifo
+    uint64_t bytes_produced{ 0 }; // software counter, Bytes received in modem rx Fifo
+    uint32_t last_consumed{ 0 }; // firmware counter, overflowing
+    uint32_t last_produced{ 0 }; // firmware counter, overflowing
     uint32_t fifo_start_addr{ 0 }; // fifo start address offset in iqflood region
     uint32_t fifo_size{ 0 };
     uint32_t fifo_offset{ 0 };
-    uint32_t bytes_consumed{ 0 }; // Bytes copied from modem rx Fifo
-    uint32_t bytes_produced{ 0 }; // Bytes received in modem rx Fifo
 };
 
 class LIME_API VSPA_iqplayer
@@ -43,6 +46,11 @@ class LIME_API VSPA_iqplayer
     int32_t Transmit(const void* src, uint32_t write_size, uint64_t timestamp);
 
     OpStatus ClearStats();
+    OpStatus ResetTxStats();
+    OpStatus TxRstPtr();
+    OpStatus TxAxiqEnable(bool enable);
+    OpStatus TxAbort();
+    void WriteVSPA_IPReg(uint16_t addr, uint32_t value);
 
     std::shared_ptr<IDCCorrector> GetRxDCCorrector();
     std::shared_ptr<IDCCorrector> GetTxDCCorrector();
@@ -51,8 +59,8 @@ class LIME_API VSPA_iqplayer
     OpStatus SetDCOffset(complex16_t offset);
 
     // private:
-    OpStatus StartRx(uint8_t channel, uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr);
-    OpStatus StartTx(uint32_t fifo_size, uint32_t fifo_base_la9310_phys_addr);
+    OpStatus StartRx(uint8_t channel, uint32_t fifo_size);
+    OpStatus StartTx(uint32_t fifo_size);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
     std::shared_ptr<LA9310_PCIe> port;
@@ -73,6 +81,8 @@ class LIME_API VSPA_iqplayer
     volatile t_stats* app_stats = nullptr;
 
     uint32_t rx_fifo_start_offset_in_iqflood;
+
+    std::mutex mx;
 };
 
 } // namespace lime

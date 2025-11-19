@@ -552,7 +552,7 @@ OpStatus LimeSDR_Micro::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
 {
-    auto stream = std::make_unique<LA9310_TRX>(mStreamingPort);
+    auto stream = std::make_unique<LA9310_TRX>(la9310);
     StreamConfig config_mod = config;
     if (config.hintSampleRate <= 0)
         config_mod.hintSampleRate = GetSampleRate(0, TRXDir::Rx, 0);
@@ -595,7 +595,7 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     auto& rfsoc = mLMSChips.at(0);
     const double cgenFrequency = rfsoc->GetFrequencyCGEN();
     const int CLKL_divider = (1 << rfsoc->Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, true));
-    const double MCLK1_frequency = cgenFrequency / CLKL_divider;
+    const double MCLK1_frequency = cgenFrequency / CLKL_divider / 2.0;
 
     // TODO: get LA9310 ADC/DAC clock divider
     if (rf_samplerate)
