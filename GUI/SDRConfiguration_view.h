@@ -65,7 +65,8 @@ class SDRConfiguration_view : public ISOCPanel
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL);
-    void Setup(lime::SDRDevice* device);
+    bool Initialize(void* device) override;
+    void UpdateGUI() override {};
 
   protected:
     SDRConfiguration_view() = delete;

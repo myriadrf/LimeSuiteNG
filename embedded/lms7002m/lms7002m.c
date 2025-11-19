@@ -6,6 +6,7 @@
 #include "lms7002m_context.h"
 #include "privates.h"
 #include "spi.h"
+#include "spi_batch.h"
 
 #ifdef FLOATING_POINT_AVAILABLE
     #include "lms_gfir.h"
@@ -367,10 +368,15 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
 
     integerPart -= 1;
 
-    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM_CGEN, integerPart); //INT_SDM_CGEN
-    lms7002m_spi_modify(self, 0x0087, 15, 0, fractionalPart & 0xFFFF); //INT_SDM_CGEN[15:0]
-    lms7002m_spi_modify(self, 0x0088, 3, 0, fractionalPart >> 16); //INT_SDM_CGEN[19:16]
-    lms7002m_spi_modify_csr(self, LMS7002M_DIV_OUTCH_CGEN, div_outch_cgen); //DIV_OUTCH_CGEN
+    spi_batch_t batch;
+    spi_batch_init(&batch);
+    // shadowed registers take effect at the end of SPI transaction.
+    // write registers in same SPI transaction to avoid intermediate PLL state changes
+    spi_batch_modify_csr(&batch, LMS7002M_INT_SDM_CGEN, integerPart); //INT_SDM_CGEN
+    spi_batch_modify(&batch, 0x0087, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM_CGEN[15:0]
+    spi_batch_modify(&batch, 0x0088, 3, 0, fractionalPart >> 16); //FRAC_SDM_CGEN[19:16]
+    spi_batch_modify_csr(&batch, LMS7002M_DIV_OUTCH_CGEN, div_outch_cgen); //DIV_OUTCH_CGEN
+    lms7002m_spi_batch_flush(&batch, self);
 
     LMS7002M_LOG(self, lime_LogLevel_Debug, "INT %d, FRAC %d, DIV_OUTCH_CGEN %d", integerPart, fractionalPart, div_outch_cgen);
     LMS7002M_LOG(self, lime_LogLevel_Debug, "CGEN_VCO %lu Hz, RefClk %u Hz", vco, refClk);
@@ -1022,12 +1028,17 @@ static lime_Result lms7002m_write_sx_registers(
     uint32_t fractionalPart = ((VCOfreq_hz - integerPart * divider) << 20) / divider;
     integerPart -= 4;
 
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_INTONLY_SDM, 0);
-    lms7002m_spi_modify_csr(self, LMS7002M_INT_SDM, integerPart); //INT_SDM
-    lms7002m_spi_modify(self, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
-    lms7002m_spi_modify(self, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
-    lms7002m_spi_modify_csr(self, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
-    lms7002m_spi_modify_csr(self, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
+    spi_batch_t batch;
+    spi_batch_init(&batch);
+    // shadowed registers take effect at the end of SPI transaction.
+    // write registers in same SPI transaction to avoid intermediate PLL state changes
+    spi_batch_modify_csr(&batch, LMS7002M_EN_INTONLY_SDM, 0);
+    spi_batch_modify_csr(&batch, LMS7002M_INT_SDM, integerPart); //INT_SDM
+    spi_batch_modify(&batch, 0x011D, 15, 0, fractionalPart & 0xFFFF); //FRAC_SDM[15:0]
+    spi_batch_modify(&batch, 0x011E, 3, 0, (fractionalPart >> 16)); //FRAC_SDM[19:16]
+    spi_batch_modify_csr(&batch, LMS7002M_DIV_LOCH, div_loch); //DIV_LOCH
+    spi_batch_modify_csr(&batch, LMS7002M_EN_DIV2_DIVPROG, (VCOfreq_hz > m_dThrF)); //EN_DIV2_DIVPROG
+    lms7002m_spi_batch_flush(&batch, self);
 
     LMS7002M_LOG(self,
         lime_LogLevel_Debug,

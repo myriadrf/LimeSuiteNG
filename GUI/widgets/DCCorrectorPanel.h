@@ -19,6 +19,7 @@ class DCCorrectorsPanel : public wxPanel
   public:
     DCCorrectorsPanel(wxWindow* parent,
         wxWindowID id = wxID_ANY,
+        const wxString& title = wxT("DC"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = 0);

@@ -211,10 +211,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
         mLMSChips.push_back(std::move(chip));
     }
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_XTRX, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    desc.socTree = std::make_shared<DeviceTreeNode>("XTRX"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_XTRX"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "XTRX"s);
     desc.socTree->children.push_back(fpgaNode);
 }
 

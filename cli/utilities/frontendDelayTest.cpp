@@ -75,7 +75,7 @@ static std::vector<lime::complex32f_t> GenerateChirp(double duration, double sam
     double angularF = w1 * 2 * M_PI * sampleRate / 2;
     double angularF2 = w2 * 2 * M_PI * sampleRate / 2;
     double amplitude = 0.5;
-    for (double t = 0; t < duration; t += step)
+    for (double t = 0; t <= duration; t += step)
     {
         auto v = Chirp(angularF, angularF2, amplitude, duration, t);
         values.push_back(v);
@@ -83,21 +83,22 @@ static std::vector<lime::complex32f_t> GenerateChirp(double duration, double sam
     return values;
 }
 
-static void PlotSamples(const complex32f_t* samples, size_t count)
+static void PlotSamples(const complex32f_t* samples, size_t count, int xoffset = 0)
 {
     if (!showPlots)
         return;
 
     GNUPlotPipe plot;
+    plot.writef("set terminal x11\n");
     plot.writef("set yrange[%f:%f]\n", -1.0, 1.0);
     plot.write("plot '-' with lines, '-' with lines\n");
     uint32_t i = 0;
     for (; i < count; ++i)
-        plot.writef("%i %f\n", i, samples[i].real());
+        plot.writef("%i %f\n", i + xoffset, samples[i].real());
     plot.write("e\n");
     i = 0;
     for (; i < count; ++i)
-        plot.writef("%i %f\n", i, samples[i].imag());
+        plot.writef("%i %f\n", i + xoffset, samples[i].imag());
     plot.write("e\n");
     plot.flush();
 }
@@ -204,6 +205,7 @@ class TransmitterThread : public WorkerThread
         for (int i = 0; i < channelCount; ++i)
             nullSamples.push_back(nulldata.data());
 
+        std::vector<complex32f_t> modsamples(chirp.size());
         // stream zeroes if timestamps synchronization not available
         // int64_t txSize = chirpStart;
         // while (txSize > 0)
@@ -222,24 +224,61 @@ class TransmitterThread : public WorkerThread
         //         return false;
         // }
 
+        bool useTimestamp = true;
         {
             StreamTxMeta txMeta{};
-            txMeta.hasTimestamp = true;
+            txMeta.hasTimestamp = useTimestamp;
             txMeta.timestamp = Timespec(int64_t(chirpStart));
             txMeta.flags = StreamTxMeta::EndOfBurst;
             const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i];
+            modsamples[0] = complex32f_t(1.0, 0);
+            modsamples[0] = complex32f_t(1.0 / 2, 0);
+            // modsamples[0] = complex32f_t(1.0/4, 0);
+            // modsamples[0] = complex32f_t(1.0/2, 0);
+            // modsamples[0] = complex32f_t(1.0, 0);
+            // modsamples[chirp.size()-4] = complex32f_t(0, -1.0);
+            // modsamples[chirp.size()-3] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
         }
 
-        // {
-        //     StreamTxMeta txMeta{};
-        //     txMeta.hasTimestamp = true;
-        //     txMeta.timestamp = Timespec(int64_t(2*chirpStart));
-        //     txMeta.flags = StreamTxMeta::EndOfBurst;
+        /*{
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = useTimestamp;
+            txMeta.timestamp = Timespec(int64_t(2 * chirpStart));
+            txMeta.flags = StreamTxMeta::EndOfBurst;
 
-        //     const size_t toSend = chirp.size();
-        //     stream->Transmit(txSamples.data(), toSend, &txMeta);
-        // }
+            const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i] * 0.6f;
+            modsamples[0] = complex32f_t(1.0, 0);
+            modsamples[0] = complex32f_t(1.0 / 2, 0);
+            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            txSamples[0] = modsamples.data();
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
+        }
+
+        {
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = useTimestamp;
+            txMeta.timestamp = Timespec(int64_t(3 * chirpStart));
+            txMeta.flags = StreamTxMeta::EndOfBurst;
+
+            const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i] * 0.3f;
+            modsamples[0] = complex32f_t(1.0, 0);
+            modsamples[0] = complex32f_t(1.0 / 2, 0);
+            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            txSamples[0] = modsamples.data();
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
+        }*/
         return false;
     }
 
@@ -264,18 +303,18 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
 
     const int64_t chirpStart = sampleRate / 1000; // 1ms
     const uint32_t transmitSamplesCount = chirp.size();
-    const int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (0.5 * sampleRate / 1000);
+    const int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (2.2 * sampleRate / 1000);
 
-    ReceiverThread rx(rxComposite, receiveSamplesCount, 0);
+    const int RxSamplesToSkip = 0;
+    ReceiverThread rx(rxComposite, receiveSamplesCount, RxSamplesToSkip);
     TransmitterThread tx(txComposite, chirp, chirpStart);
-
-    tx.Start();
-    rx.Start();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     rxComposite->Start();
     txComposite->Start();
+    tx.Start();
+    rx.Start();
 
     rx.Wait();
     tx.Wait();
@@ -283,21 +322,26 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
     rxComposite->Stop();
     txComposite->Stop();
 
-    const int skipRxSamples = 0; //std::max(0l, chirpStart - transmitSamplesCount / 4); // approximate point of the expected data
-
     for (int c = 0; c < channelCount; ++c)
     {
+        // Draw whole receive buffer
+        // PlotSamples(rx.rxBuffers[c], 20000);
+        PlotSamples(rx.rxBuffers[c], receiveSamplesCount);
+
+        const int skipRxSamples = std::max(0l, chirpStart - transmitSamplesCount / 8); // approximate point of the expected data
         const int rxWindowSize = receiveSamplesCount - skipRxSamples;
         const complex32f_t* rxWindow = rx.rxBuffers[c] + skipRxSamples;
-        PlotSamples(rxWindow, rxWindowSize);
+
+        PlotSamples(rxWindow, chirp.size() * 1.2, skipRxSamples);
 
         std::vector<complex32f_t> inputs(rxWindowSize);
         memcpy(inputs.data(), rxWindow, sizeof(complex32f_t) * rxWindowSize);
         auto correlation = CrossCorrelation(inputs, chirp);
         int ci = GetMaxElementIndex(correlation);
         const int signalExpectedAtTimestamp = chirpStart;
+        std::cerr << "Chirp expected @ " << chirpStart << std::endl;
         const int signalFoundAtTimestamp = skipRxSamples + ci;
-        std::cerr << "Tx chirp sent @ " << chirpStart << std::endl;
+        std::cerr << "Tx chirp sent @ " << chirpStart << " length: " << chirp.size() << std::endl;
         std::cerr << "Rx Ch0 chirp found @ " << signalFoundAtTimestamp
                   << ", samples diff:" << signalFoundAtTimestamp - signalExpectedAtTimestamp
                   << ", time diff: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us "
@@ -316,7 +360,8 @@ int main(int argc, char** argv)
     args::ValueFlag<std::string>        deviceFlag(parser, "name", "Specifies which device to use", {'d', "device"});
     args::NargsValueFlag<int>           chipFlag(parser, "index", "Specify chip index, or index list for aggregation [0,1...]", {'c', "chip"}, args::Nargs{1, static_cast<size_t>(-1)}); // Arg count range [1, size_t::maxValue]
 
-    args::ValueFlag<int64_t>            timeFlag(parser, "ms", "Time duration in milliseconds to receive", {"time"}, 0, args::Options{});
+    args::ValueFlag<int64_t>            txonoffset(parser, "samples", "TxOn offset", {"txon"}, 0, args::Options{});
+    args::ValueFlag<int64_t>            txoffoffset(parser, "samples", "TxOff offset", {"txoff"}, 0, args::Options{});
 
     args::ValueFlag<std::string>        logFlag(parser, "", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error", args::Options{});
     args::ImplicitValueFlag<int>        mimoFlag(parser, "channel count", "use multiple channels", {"mimo"}, 1, args::Options{});
@@ -367,10 +412,22 @@ int main(int argc, char** argv)
     if (sampleRate <= 0)
         sampleRate = 1e6; // sample rate read-back not available, assign default value
 
-    int chirp_len = 1360 / 2;
+    int chirp_len = 10 * 1024; //1360 / 2;
     double fs = 1e6;
     double chirpTime = chirp_len / fs;
     auto chirp = GenerateChirp(chirpTime, fs, 0.005, 0.04);
+
+    double c = 0;
+    for (size_t i = 0; i < chirp.size(); ++i)
+    {
+        chirp[i] = complex32f_t(chirp[i].real() * c, chirp[i].imag() * c);
+        if (i < chirp.size() / 2)
+            c += 2.0 / chirp.size();
+        else
+            c -= 2.0 / chirp.size();
+    }
+
+    // PlotSamples(chirp.data(), chirp.size());
 
     //PlotSamples(chirpSamples);
     // std::vector<float> window;
@@ -389,6 +446,9 @@ int main(int argc, char** argv)
     stream.format = DataFormat::F32;
     stream.linkFormat = DataFormat::I12;
     stream.hintSampleRate = device->GetSampleRate(0, TRXDir::Rx, 0);
+    stream.extraConfig.txonoffset = args::get(txonoffset);
+    stream.extraConfig.txoffoffset = args::get(txoffoffset);
+    printf("TDD switch offsets on:%li off:%li\n", stream.extraConfig.txonoffset, stream.extraConfig.txoffoffset);
 
     auto trx = device->StreamCreate(stream, 0);
 
@@ -396,11 +456,6 @@ int main(int argc, char** argv)
     OpStatus ret = MeasureChannelDelays(trx.get(), trx.get(), chirp, channelCount, sampleRate, 0, sampleOffsets);
     if (ret != OpStatus::Success)
         printf("Error\n");
-
-    // printf("Tx%i ", 0);
-    // for (const auto& v : sampleOffsets)
-    //     printf("\t %4i", v);
-    // printf("\n");
 
     DeviceRegistry::freeDevice(device);
     return 0;

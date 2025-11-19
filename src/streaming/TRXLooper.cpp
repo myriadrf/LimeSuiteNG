@@ -1192,7 +1192,7 @@ void TRXLooper::TransmitPacketsLoop()
     auto& fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    Timespec lastTS(0l);
+    Timespec lastTS;
 
     struct PendingWrite {
         uint32_t id;
@@ -1332,9 +1332,9 @@ void TRXLooper::TransmitPacketsLoop()
             uint32_t payloadOffset = tempPacket.GetPayloadSize();
             uint8_t* payload = &tempPacket.data[payloadOffset];
 
-            tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
             if (payloadOffset == 0)
             {
+                tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
                 if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
                     tempPacket.counter = srcPkt->meta.timestamp.GetTicks();
                 else

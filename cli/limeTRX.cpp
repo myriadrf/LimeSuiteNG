@@ -303,7 +303,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     cerr << "Tx file size : "sv << fileSize << " bytes."sv << endl;
 
-    const int samplesBatchSize = 4 * 256 * 32;
+    const int samplesBatchSize = 4 * 256 * 16;
     complex16_t* txSamples[16];
     std::vector<complex16_t> channelSamples[16];
     for (int i = 0; i < args->channelCount; ++i)
@@ -314,7 +314,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     StreamTxMeta txMeta{};
     txMeta.flags = 0;
-    txMeta.timestamp = Timespec(0l);
+    txMeta.timestamp = Timespec(int64_t(0));
     txMeta.hasTimestamp = false; // transmit immediately
 
     std::vector<complex16_t> interleavedBuffer;
@@ -399,7 +399,7 @@ int main(int argc, char** argv)
     const std::string devName = args::get(deviceFlag);
     const std::string rxFilename = args::get(outputFlag);
     const std::string txFilename = args::get(inputFlag);
-    const bool rx = outputFlag || repeaterFlag || (!repeaterFlag && !inputFlag);
+    const bool rx = true; // outputFlag || repeaterFlag || (!repeaterFlag && !inputFlag);
     const bool tx = inputFlag || repeaterFlag;
     const bool showFFT = fftFlag;
 #ifdef USE_GNU_PLOT
@@ -744,7 +744,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                std::cerr << "Samples received: " << totalSamplesReceived << endl;
+                // std::cerr << "Samples received: " << totalSamplesReceived << endl;
             }
         }
 

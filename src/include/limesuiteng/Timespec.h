@@ -15,10 +15,10 @@ class LIME_API Timespec
     Timespec();
     //Timespec(double realSeconds);
     Timespec(int64_t int_seconds, double frac_seconds);
-    Timespec(int64_t seconds, uint64_t ticks, double ticks_per_second);
+    Timespec(int64_t seconds, int64_t ticks, double ticks_per_second);
     explicit Timespec(int64_t ticks);
 
-    void AddTicks(uint64_t ticks);
+    void AddTicks(int64_t ticks);
     uint64_t GetTicks() const;
 
     int64_t GetSeconds() const;
@@ -26,6 +26,7 @@ class LIME_API Timespec
 
     double GetRealSeconds() const;
     void SetTickRate(double ticksPerSecond);
+    double GetTickRate() const;
 
     friend bool LIME_API operator==(const Timespec& lhs, const Timespec& rhs);
     friend bool LIME_API operator!=(const Timespec& lhs, const Timespec& rhs);

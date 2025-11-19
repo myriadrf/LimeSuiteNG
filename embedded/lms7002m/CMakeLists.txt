@@ -1,4 +1,4 @@
-add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c save_state.c spi.c)
+add_library(lms7002m STATIC lms7002m.c calibrations.c privates.c save_state.c spi.c spi_batch.c)
 
 set_target_properties(lms7002m PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 

@@ -321,10 +321,8 @@ static struct la9310_dev *la9310_pci_priv_init(struct pci_dev *pdev)
     la9310_dev->sdr_board = 0;
     la9310_dev->dac_mask = 0x1;
     la9310_dev->adc_mask = 0xF;
-    la9310_dev->adc_rate_mask = 0;
-    la9310_dev->dac_rate_mask = 0;
-
-
+    la9310_dev->adc_rate_mask = 0xF;
+    la9310_dev->dac_rate_mask = 1;
 
     la9310_dev->modem_rf_data_size = 0;
 

@@ -245,15 +245,14 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<ISerialPort> controlPort, std::vector<std
         mLMSChips.push_back(std::move(lms3));
     }
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_X3, mFPGA.get());
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_1"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_2"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(1).get()));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS_3"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(2).get()));
-    desc.socTree = std::make_shared<DeviceTreeNode>("X3"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_X3"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s, "LMS_1"s));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(1).get(), "LMS7002M"s, "LMS_2"s));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(2).get(), "LMS7002M"s, "LMS_3"s));
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "X3"s);
     desc.socTree->children.push_back(fpgaNode);
 
-    desc.socTree->children.push_back(
-        std::make_shared<DeviceTreeNode>("CDCM6208"s, eDeviceTreeNodeClass::CDCM6208, mClockGeneratorCDCM.get()));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mClockGeneratorCDCM.get(), "CDCM6208"s));
 }
 
 LimeSDR_X3::~LimeSDR_X3()

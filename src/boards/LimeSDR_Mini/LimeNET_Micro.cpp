@@ -139,10 +139,9 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<ISPI> spiLMS,
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, limenetmicro::SPI_LMS7002M }, { "FPGA"s, limenetmicro::SPI_FPGA } };
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeNET-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_Mini"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeNET-Micro"s);
     descriptor.socTree->children.push_back(fpgaNode);
 }
 

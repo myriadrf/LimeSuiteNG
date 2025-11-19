@@ -37,7 +37,7 @@ LA9310_PCIe::~LA9310_PCIe()
 OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms)
 {
     uint8_t temp[64];
-    volatile struct la9310_hif* hif = static_cast<struct la9310_hif*>(hostInterfaceAddr);
+    volatile struct la9310_hif* hif = hostInterface;
 
     hif->sw_cmd_desc.cmd = 1;
 
@@ -122,9 +122,9 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
         // printf("Mapped: %llx, sz:%li\n", mapped_ranges[w].vaddr, mapped_ranges[w].size);
     }
 
-    hostInterfaceAddr = mapped_ranges[memoryLayout.host_interface.window_id].vaddr + memoryLayout.host_interface.start_offset;
-    volatile struct la9310_hif* hif = static_cast<struct la9310_hif*>(hostInterfaceAddr);
-    hif->host_ready |= LA9310_HIF_STATUS_IPC_APP_READY;
+    hostInterface = reinterpret_cast<volatile struct la9310_hif*>(
+        size_t(mapped_ranges[memoryLayout.host_interface.window_id].vaddr) + memoryLayout.host_interface.start_offset);
+    hostInterface->host_ready |= LA9310_HIF_STATUS_IPC_APP_READY;
     return OpStatus::Success;
 }
 

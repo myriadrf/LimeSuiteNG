@@ -119,10 +119,9 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, std::move(eepromMap));
     }
 
-    desc.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Micro"s, eDeviceTreeNodeClass::SDRDevice, this);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>("LA9310"s, eDeviceTreeNodeClass::LA9310, la9310.get()));
-    desc.socTree->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice", "LimeSDR-Micro"s);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(la9310.get(), "LA9310"s));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
 }
 
 LimeSDR_Micro::~LimeSDR_Micro()
@@ -553,7 +552,7 @@ OpStatus LimeSDR_Micro::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
 {
-    auto stream = std::make_unique<LA9310_TRX>(mStreamingPort);
+    auto stream = std::make_unique<LA9310_TRX>(la9310);
     StreamConfig config_mod = config;
     if (config.hintSampleRate <= 0)
         config_mod.hintSampleRate = GetSampleRate(0, TRXDir::Rx, 0);
@@ -596,7 +595,7 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     auto& rfsoc = mLMSChips.at(0);
     const double cgenFrequency = rfsoc->GetFrequencyCGEN();
     const int CLKL_divider = (1 << rfsoc->Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, true));
-    const double MCLK1_frequency = cgenFrequency / CLKL_divider;
+    const double MCLK1_frequency = cgenFrequency / CLKL_divider / 2.0;
 
     // TODO: get LA9310 ADC/DAC clock divider
     if (rf_samplerate)

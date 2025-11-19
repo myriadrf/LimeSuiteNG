@@ -6,7 +6,7 @@
 
 namespace lime {
 
-class PHYTimerControl
+class LIME_API PHYTimerControl
 {
   public:
     enum Flags {
@@ -20,18 +20,20 @@ class PHYTimerControl
 
     enum TriggerLogic { NoChange = 0, ForceZero = 1, ForceOne = 2, Invert = 3 };
 
-    PHYTimerControl(uint64_t vaddr_status_control);
+    PHYTimerControl(uint64_t vaddr_status_control, const std::string& name);
     void TriggerDirectly(TriggerLogic output);
     void TriggerAtCounter(TriggerLogic output, uint32_t counter);
     uint32_t CaptureCounter();
+    uint32_t ReadCounter();
 
     std::string ToString() const;
 
   private:
+    std::string name;
     uint64_t vaddr_status_control;
 };
 
-class PHYTimer
+class LIME_API PHYTimer
 {
   private:
     double tickRate;
@@ -39,7 +41,8 @@ class PHYTimer
 
   public:
     PHYTimer(uint64_t vaddr_base);
-    void SetTickRate(double tickRate);
+    void SetReferenceClock(double reference_clock_hz);
+    double GetTickRate() const;
 
     void SoftReset(bool reset_active);
     void Enable(bool enable);

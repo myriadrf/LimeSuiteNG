@@ -19,7 +19,6 @@ class wxStaticBoxSizer;
 
 namespace lime {
 class ADF4002;
-class SDRDevice;
 } // namespace lime
 
 #include "ISOCPanel.h"
@@ -27,12 +26,15 @@ class SDRDevice;
 class ADF4002_wxgui : public ISOCPanel
 {
   public:
+    static ISOCPanel* Create(wxWindow* parent, wxWindowID id);
     ADF4002_wxgui(wxWindow* parent,
         wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         int styles = 0);
-    void Initialize(lime::ADF4002* soc);
+    bool Initialize(lime::ADF4002* soc);
+    bool Initialize(void* soc) override;
+    void UpdateGUI() {};
     virtual ~ADF4002_wxgui();
 
     void SetGuiDefaults();

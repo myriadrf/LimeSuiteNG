@@ -22,7 +22,7 @@ class LIME_API WorkerThread
     virtual bool Work() = 0;
 
   protected:
-    void WorkLoop();
+    virtual void WorkLoop();
     std::thread mThread;
     std::condition_variable work_cv;
     std::atomic<bool> doWork;

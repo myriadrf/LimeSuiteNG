@@ -28,6 +28,7 @@
 #include <argp.h>
 
 #include "boards/LimeSDR_Micro/common_headers/la9310_host_if.h"
+#include "chips/LA9310/PHYTimer.h"
 
 //#include "kpage_ncache_api.h"
 
@@ -157,6 +158,8 @@ void print_cmd_help(void)
     return;
 }
 
+std::unique_ptr<PHYTimer> phytimer;
+
 /* need following vspa symbols to be exported (vspa_exported_symbols.h)*/
 int main(int argc, char *argv[])
 {
@@ -207,6 +210,8 @@ int main(int argc, char *argv[])
     //         *((uint32_t*)(host_stats)+i) = 0;
     //     }
     // }
+
+    phytimer = std::make_unique<lime::PHYTimer>(reinterpret_cast<uint64_t>(port.GetBar(LA9310_WINDOW_BAR0).vaddr) + 0x1020000);
 
     // if (command == OP_MONITOR) {
     monitor_vspa_stats();

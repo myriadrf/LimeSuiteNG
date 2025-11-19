@@ -42,6 +42,8 @@ inline static uint64_t GetMailboxOffset(size_t mbox, VSPA_MBox_direction directi
 
 void VSPA_mailbox::Send(uint32_t core_idx, uint32_t mbox_id, uint64_t value)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
+
     const uint64_t addr = vspa_ccsr_base + GetMailboxOffset(mbox_id, VSPA_MBox_direction::Send, core_idx);
     const uint32_t msb = value >> 32;
     const uint32_t lsb = value;
@@ -53,6 +55,8 @@ void VSPA_mailbox::Send(uint32_t core_idx, uint32_t mbox_id, uint64_t value)
 
 OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* value)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
+
     const std::chrono::milliseconds timeout{ 1000 };
     const uint64_t status_addr = vspa_ccsr_base + 0x660 + 0x4000 * core_idx;
 
@@ -87,11 +91,24 @@ OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* va
 
 void VSPA_mailbox::Clear(uint32_t core_idx, uint32_t mbox_id)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
     // printf_mailbox_log("Clear VSPA[%d] MBox:%d\n", core_idx, mbox_id);
     if (mbox_id == 0)
         iowrite32(1 << 14, (vspa_ccsr_base + 0x10 + 0x4000 * core_idx));
     else
         iowrite32(1 << 15, (vspa_ccsr_base + 0x10 + 0x4000 * core_idx));
+}
+
+OpStatus VSPA_mailbox::Message(uint32_t core_id, uint32_t mbox_id, uint64_t message, uint64_t* response)
+{
+    const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    Send(core_id, mbox_id, message);
+    OpStatus status = Receive(core_id, mbox_id, response);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    printf_mailbox_log("MBOX duration: %lius\n", std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count());
+    return status;
 }
 
 } // namespace lime

@@ -6,20 +6,6 @@
 
 namespace lime {
 
-enum class eDeviceTreeNodeClass {
-    ADF4002,
-    CDCM6208,
-    FPGA,
-    FPGA_MINI,
-    FPGA_X3,
-    FPGA_XTRX,
-    LMS7002M,
-    SDRDevice,
-    LMS8001,
-    GPIO,
-    LA9310,
-};
-
 /// @brief Structure describing a device node in the device node tree.
 struct DeviceTreeNode {
     /// @brief Default constructor for the node.
@@ -29,15 +15,16 @@ struct DeviceTreeNode {
     /// @param name The name of the node.
     /// @param nodeClass The device class of the node.
     /// @param ptr The pointer to the device.
-    DeviceTreeNode(const std::string& name, eDeviceTreeNodeClass nodeClass, void* ptr)
-        : name(name)
-        , DeviceTreeNodeClass(nodeClass)
-        , ptr(ptr)
+    DeviceTreeNode(void* module, std::string_view moduleClass, const std::string& name = "")
+        : module(module)
+        , moduleClass(moduleClass)
+        , name(name)
     {
     }
-    std::string name; ///< The name of the node.
-    eDeviceTreeNodeClass DeviceTreeNodeClass; ///< The device class of the node.
-    void* ptr; ///< The pointer to the device.
+
+    void* module; ///< The pointer to the device module.
+    std::string moduleClass; ///< unique identifier of device class type
+    std::string name; ///< user friendly name, name on the schematic, etc...
     std::vector<std::shared_ptr<DeviceTreeNode>> children; ///< The children of this node in the device tree.
 };
 

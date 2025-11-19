@@ -7,6 +7,7 @@
 #include "ADF4002_wxgui.h"
 #include "chips/ADF4002/ADF4002.h"
 #include "limesuiteng/SDRDevice.h"
+#include "SOC_GUIFactory.h"
 
 #include <vector>
 #include <wx/msgdlg.h>
@@ -77,6 +78,13 @@ const long ADF4002_wxgui::ID_BUTTON2 = wxNewId();
 
 BEGIN_EVENT_TABLE(ADF4002_wxgui, wxPanel)
 END_EVENT_TABLE()
+
+static bool isRegistered = RegisterToFactory<SOC_GUIFactory, &ADF4002_wxgui::Create>("ADF4002");
+
+ISOCPanel* ADF4002_wxgui::Create(wxWindow* parent, wxWindowID id)
+{
+    return new ADF4002_wxgui(parent, id);
+}
 
 ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, int styles)
     : ISOCPanel(parent, id, pos, size, styles)
@@ -562,9 +570,15 @@ ADF4002_wxgui::ADF4002_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos
     //*)
 }
 
-void ADF4002_wxgui::Initialize(lime::ADF4002* soc)
+bool ADF4002_wxgui::Initialize(lime::ADF4002* soc)
 {
     m_pModule = soc;
+    return m_pModule != nullptr;
+}
+
+bool ADF4002_wxgui::Initialize(void* soc)
+{
+    return Initialize(reinterpret_cast<lime::ADF4002*>(soc));
 }
 
 ADF4002_wxgui::~ADF4002_wxgui()
