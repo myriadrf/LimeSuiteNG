@@ -24,73 +24,91 @@ enum class LogLevel : std::uint8_t {
     Debug, //!< A debugging message, only shown in Debug configuration.
 };
 
-//! Typedef for the registered log handler function pointer with support for C-style messages.
+//! Typedef for C string log handler function pointer type.
 typedef void (*LogHandlerCString)(const LogLevel level, const char* message);
 
-//! Typedef for the registered log handler function pointer with support for std::string type messages.
+//! Typedef for C++ string log handler function pointer type.
 typedef std::function<void(const LogLevel level, const std::string& message)> LogHandler;
 
 /*!
- * Register a new system log handler that supports C-style messages.
+ * Register a new system log handler that supports C style string format.
  * Platforms should call this to replace the default stdio handler.
  */
 LIME_API void registerLogHandler(const LogHandlerCString handler);
 
 /*!
- * Register a new system log handler that supports std::string type messages.
+ * Register a new system log handler that supports C++ style string format.
  * Platforms should call this to replace the default stdio handler.
  */
 LIME_API void registerLogHandler(const LogHandler handler);
 
-//! Get the error code to string + any optional message reported.
-
 /// @brief Gets the error code to string + any optional message reported.
-/// @return Returns a C-style string.
+/// @return Returns a C style string.
 LIME_API const char* GetLastErrorMessageCString(void);
 
 /// @brief Gets the error code to string + any optional message reported.
-/// @return Returns a std::string type string.
+/// @return Returns a C++ style string.
 LIME_API const std::string& GetLastErrorMessage(void);
 
 // C-string versions
-LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a critical error message with formatting using C-style string.
-LIME_API void critical(const std::string& text); //!< Log a critical error message using std::string type string.
+LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted critical error message to log handler.
+LIME_API void critical(const std::string& text); //!< Log a critical error message to log handler.
 
-LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an error message with formatting using C-style string.
-LIME_API int error(const std::string& text); //!< Log an error message using std::string type string.
+LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted error message to log handler.
+LIME_API int error(const std::string& text); //!< Log an error message to log handler.
 
-LIME_API void warning [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a warning message with formatting using C-style string.
-LIME_API void warning(const std::string& text); //!< Log a warning message using std::string type string.
+LIME_API void warning [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted warning message to log handler.
+LIME_API void warning(const std::string& text); //!< Log a warning message to log handler.
 
-LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an information message with formatting using C-style string.
-LIME_API void info(const std::string& text); //!< Log an information message using std::string type string.
+LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted information message to log handler.
+LIME_API void info(const std::string& text); //!< Log an information message to log handler.
 
-LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting using C-style string.
-LIME_API void debug(const std::string& text); //!< Log a debug message using std::string type string.
+LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted debug message to log handler.
+LIME_API void debug(const std::string& text); //!< Log a debug message to log handler.
 
-//! Log a C-style message with formatting and specified logging level
+//! Log a C-style format message with specified logging level to log handler.
 LIME_API void log [[gnu::format(printf, 2, 3)]] (const LogLevel level, const char* format, ...);
-//! Log a std::string type message with specified logging level
+//! Log a string type message with specified logging level to log handler.
 LIME_API void log(const LogLevel level, const std::string& text);
 
 /*!
- * Report a typical errno style error.
+ * Report a typical errno style error to log handler.
  * The resulting error message comes from strerror().
- * \param errnum a recognized error code
- * \return passthrough errnum
+ * \param errnum a recognized error code.
+ * \return passthrough errnum.
  */
 LIME_API OpStatus ReportError(const OpStatus errnum);
 
 /*!
- * Report an error as an integer code and a formatted message string.
- * \param errnum a recognized error code
- * \param format a format string followed by args
- * \return passthrough errnum
+ * Reports operation status code as error and a formatted message string to log handler.
+ * \param errnum a recognized error code.
+ * \param format a format string followed by args.
+ * \return passthrough errnum.
  */
 LIME_API OpStatus ReportError [[gnu::format(printf, 2, 3)]] (const OpStatus errnum, const char* format, ...);
+
+/**
+ * @brief Reports operation status code and error message to log handler.
+ * @param errnum Operation status enumeration code.
+ * @param text Error message.
+ * @return Operation status error code.
+ */
 LIME_API OpStatus ReportError(const OpStatus errnum, const std::string& text);
 
+/**
+ * @brief Reports error code as an integer code and a formated message string to log handler.
+ * @param errnum Any error code as an integer.
+ * @param format Error message format.
+ * @return Reported error code. 
+ */
 LIME_API int ReportError [[gnu::format(printf, 2, 3)]] (const int errnum, const char* format, ...);
+
+/**
+ * @brief Reports error code as an integer code and error message to log handler.
+ * @param errnum Any error code as an integer.
+ * @param text Error message.
+ * @return Reported error code.
+ */
 LIME_API int ReportError(const int errnum, const std::string& text);
 
 } // namespace lime
