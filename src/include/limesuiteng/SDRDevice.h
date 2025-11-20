@@ -64,12 +64,20 @@ class LIME_API SDRDevice
     /// @return The Descriptor of the device.
     virtual const SDRDescriptor& GetDescriptor() const = 0;
 
-    /// @brief Initializes the device with initial settings.
-    /// @return The success status of the initialization.
+    /** 
+     * @brief Initializes the device with initial settings.
+     * This function loads SDR device and chip default and stable configurations.
+     * Recommended to use this function if the device is registered for the first
+     * time or before starting any new device re-configuration.
+     * @return The success status of the initialization.
+     */ 
     virtual OpStatus Init() = 0;
 
-    /// @brief Resets the device.
-    /// @return The status of the operation.
+    /**
+     * @brief Resets the device.
+     * Sends a reset signal to the onboard LMS7002M chip reset pin.
+     * @return The status of the operation.
+     */
     virtual OpStatus Reset() = 0;
 
     /// @brief Gets the current status of the GPS locks.
