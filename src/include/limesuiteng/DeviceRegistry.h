@@ -42,7 +42,7 @@ class LIME_API DeviceRegistry
     static SDRDevice* makeDevice(const DeviceHandle& handle);
 
     /*!
-     * Free an connection created by makeConnection().
+     * Free an connection created by makeDevice().
      * \param conn The connection to free.
      */
     static void freeDevice(SDRDevice* conn);
