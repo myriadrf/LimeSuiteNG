@@ -526,14 +526,14 @@ class LIME_API SDRDevice
     /// @return Operation status.
     virtual OpStatus UploadTxWaveform(const StreamConfig& config, uint8_t moduleIndex, const void** samples, uint32_t count);
 
-    /// @copydoc ISPI::SPI()
+    /// @copydoc lime::ISPI::Transact()
     /// @param spiBusAddress The SPI address of the device to use.
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);
 
-    /// @copydoc II2C::I2CWrite()
+    /// @copydoc lime::II2C::I2CWrite()
     virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length);
 
-    /// @copydoc II2C::I2CRead()
+    /// @copydoc lime::II2C::I2CRead()
     virtual OpStatus I2CRead(int address, uint8_t* dest, uint32_t length);
 
     /***********************************************************************
