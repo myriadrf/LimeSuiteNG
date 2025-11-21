@@ -132,9 +132,9 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enu
     {
         bool disable;
         if (channel == LMS7002M_CHANNEL_A)
-            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
-        else
             disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_A : LMS7002M_RXEN_A) == 0;
+        else
+            disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
         lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
     }
     else
