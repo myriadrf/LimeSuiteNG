@@ -27,7 +27,7 @@
 #include <signal.h>
 #include <argp.h>
 
-#include "boards/LimeSDR_Micro/common_headers/la9310_host_if.h"
+#include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 #include "chips/LA9310/PHYTimer.h"
 
 //#include "kpage_ncache_api.h"

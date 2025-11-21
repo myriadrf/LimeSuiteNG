@@ -10,7 +10,7 @@
 #include <thread>
 #include "protocols/LMS64CProtocol.h"
 
-#include "la9310_host_if.h"
+#include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
 #ifdef __unix__
     #include <unistd.h>
