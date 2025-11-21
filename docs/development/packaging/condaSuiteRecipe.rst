@@ -7,7 +7,7 @@ Minimal LimeSuiteNG recipe
 
 .. note::
 
-   Conda packaging has only been tested on Windows platform.
+   Recipe build was tested in radioconda environment for Windows and Linux platforms.
 
 Recipe structure
 ----------------
@@ -33,7 +33,7 @@ To start the build process, execute the following commands:
    cd <repo root>
    conda-build .conda\recipe\ -m .conda\build_config.yaml
 
-Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\win-64`` directory with the following name structure ``limesuiteng-version-build_string.conda``. Radioconda install root can be found using the following conda command:
+Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\`` directory with the following name structure ``limesuiteng-version-build_string.conda``. Radioconda install root can be found using the following conda command:
 
 .. code-block:: bash
 

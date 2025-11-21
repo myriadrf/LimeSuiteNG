@@ -12,64 +12,106 @@ source:
 
 build:
   number: 0
+  skip: true #[osx]
 
 requirements:
   build:
     - {{ compiler("c") }}
     - {{ compiler("cxx") }}
+    - make #[linux]
     - cmake
     - git
     - ninja
+    - vs2022_win-64 #[win]
     - pkg-config
-    - vs2022_win-64
+  host:
+    - libusb #[linux]
 
 test:
   commands:
-    - if not exist %PREFIX%\\Library\\include\\lime\\LimeSuite.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\lime\\LMS7002M_parameters.h exit 1
+    - if not exist %PREFIX%\\Library\\include\\lime\\LimeSuite.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\lime\\LMS7002M_parameters.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_gl_vc14x_x64.dll exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_core_vc14x_x64.dll exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\wxbase32u_vc14x_x64.dll exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeGUI.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1 #[win]
+    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1 #[win]
 
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1
-    - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1
-
-    - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_gl_vc14x_x64.dll exit 1
-    - if not exist %PREFIX%\\Library\\bin\\wxmsw32u_core_vc14x_x64.dll exit 1
-    - if not exist %PREFIX%\\Library\\bin\\wxbase32u_vc14x_x64.dll exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeGUI.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1
-    - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1 
-
-    - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1
-    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1
-    - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1
-    - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1
-    - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1
+    - test -f $PREFIX/include/lime/LimeSuite.h  #[linux]
+    - test -f $PREFIX/include/lime/LMS7002M_parameters.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/complex.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/config.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/CSRegister.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/DeviceHandle.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/DeviceRegistry.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/LimePlugin.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/limesuiteng.hpp  #[linux]
+    - test -f $PREFIX/include/limesuiteng/LMS7002M.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/LMS7002MCSR.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/Logger.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/OpStatus.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/Register.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/RFSOCDescriptor.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/RFStream.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/SDRConfig.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/SDRDescriptor.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/SDRDevice.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/StreamConfig.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/StreamMeta.h #[linux]
+    - test -f $PREFIX/include/limesuiteng/Timespec.h #[linux]
+    - test -f $PREFIX/include/limesuiteng/ToString.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/types.h  #[linux]
+    - test -f $PREFIX/include/limesuiteng/VersionInfo.h  #[linux]
+    - test -f $PREFIX/bin/limeConfig  #[linux]
+    - test -f $PREFIX/bin/limeDevice  #[linux]
+    - test -f $PREFIX/bin/limeFLASH  #[linux]
+    - test -f $PREFIX/bin/limeOEM  #[linux]
+    - test -f $PREFIX/bin/limeSPI  #[linux]
+    - test -f $PREFIX/bin/limeTRX  #[linux]
+    - test -f $PREFIX/bin/.limesuiteng-post-link.sh  #[linux]
+    - test -f $PREFIX/bin/.limesuiteng-pre-unlink.sh  #[linux]
+    - test -f $PREFIX/lib/liblimesuiteng.so  #[linux]
+    - test -f $PREFIX/lib/liblimesuiteng-legacyapi.so  #[linux]
+    - test -f $PREFIX/lib/pkgconfig/limesuiteng.pc  #[linux]
+    - test -f $PREFIX/lib/cmake/limesuiteng/limesuitengConfigVersion.cmake  #[linux]
+    - test -f $PREFIX/lib/cmake/limesuiteng/limesuitengTargets.cmake  #[linux]
+    - test -f $PREFIX/lib/cmake/limesuiteng/limesuitengTargets-release.cmake  #[linux]
+    - test -f $PREFIX/lib/cmake/limesuiteng/limesuitengConfig.cmake  #[linux]
 
 about:
   home: https://github.com/myriadrf/LimeSuiteNG
