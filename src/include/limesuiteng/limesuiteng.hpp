@@ -350,3 +350,14 @@
  *    </li>
  * </ul>
 */
+
+/**
+ * @page Device_index Device indexes
+ * 
+ * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called `moduleIndex`. The `moduleIndex` 
+ * parameter specifies an index of a device which will be configured. Typicaly device index points to RF chip (LMS7002M), but in the case
+ * of LimeSDR MMX8 this parameter points to the onboard LimeSDR XTRXs and allows to configure the specific parameter for the
+ * individual LimeSDR XTRX board.
+ *
+ * Device indexes always start with index <b>0</b>. The last device on a system is indexed as <b>total device count - 1</b>.
+ */
