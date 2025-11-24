@@ -6,6 +6,13 @@ struct LA9310_IOCTL_firmware {
     uint32_t size;
 };
 
+struct LA9310_IOCTL_flush_cache {
+	uint32_t offset;
+	uint32_t size;
+	uint8_t dir;
+	uint8_t sync_to_cpu;
+};
+
 typedef enum {
     LA9310_WINDOW_BAR0,
     LA9310_WINDOW_BAR1,
@@ -32,6 +39,8 @@ struct LA9310_IOCTL_memory_layout {
 #define LA9310_IOCTL 'S'
 
 #define LA9310_IOCTL_GET_MEMORY_LAYOUT _IOR(LA9310_IOCTL, 25, struct LA9310_IOCTL_memory_layout)
+#define LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM _IOR(LA9310_IOCTL, 26, struct LA9310_IOCTL_flush_cache)
+#define LA9310_IOCTL_FLUSH_CACHE_IQFLOOD _IOR(LA9310_IOCTL, 27, struct LA9310_IOCTL_flush_cache)
 
 long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 

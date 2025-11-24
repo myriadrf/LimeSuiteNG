@@ -56,6 +56,27 @@ class LIME_API LA9310_PCIe : public LimePCIe
     virtual int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
     virtual OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms = 100);
     virtual OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100);
+    // Methods for cache coherency
+
+    /// @brief Clean & invalidate cache for DMEM Proxy before a read access
+    /// @param pointer to address to sync
+    /// @param data size to sync
+    void sync_dmem_proxy_before_read(uint8_t *addr, uint32_t data_size);
+
+    /// @brief Clean & invalidate cache for DMEM Proxy after a write access
+    /// @param pointer to address to sync
+    /// @param data size to sync
+    void sync_dmem_proxy_after_write(uint8_t *addr, uint32_t data_size);
+
+    /// @brief Clean & invalidate cache for IQ Flood before a read access
+    /// @param pointer to address to sync
+    /// @param data size to sync
+    void sync_iq_flood_before_read(uint8_t *addr, uint32_t data_size);
+
+    /// @brief Clean & invalidate cache for IQ Flood after a write access
+    /// @param pointer to address to sync
+    /// @param data size to sync
+    void sync_iq_flood_after_write(uint8_t *addr, uint32_t data_size);
 
     mmaped_region GetBar(uint8_t i);
 

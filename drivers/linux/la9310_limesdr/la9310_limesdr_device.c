@@ -25,7 +25,7 @@ int la9310_limesdr_device_init(struct la9310_dev *la9310, struct pci_dev *pciCon
 
     void *drvdata = la9310;
     struct device *trxDev = device_create(la9310_limesdr_class, sysDev, cdev_major_minor, drvdata, "%s", cdev_name);
-    if (trxDev == ERR_PTR)
+    if (IS_ERR(trxDev))
     {
         dev_err(sysDev, "Failed to create device\n");
         la9310_cdev_destroy(la9310);

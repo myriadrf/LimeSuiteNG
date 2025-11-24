@@ -20,6 +20,16 @@
     #include <sys/ioctl.h>
 #endif
 
+#if 0 // print debug messages
+    #define printf_dbg_log(...) \
+        do \
+        { \
+            printf(__VA_ARGS__); \
+        } while (0)
+#else
+    #define printf_dbg_log(format, ...)
+#endif
+
 using namespace std;
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -157,4 +167,68 @@ int LA9310_PCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 mmaped_region LA9310_PCIe::GetBar(uint8_t i)
 {
     return mapped_ranges[i];
+}
+
+void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t *addr, uint32_t data_size)
+{
+       struct LA9310_IOCTL_flush_cache cache_entry;
+       auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IPC].vaddr;
+
+       // Fill struct with information
+       cache_entry.sync_to_cpu = 1;
+       cache_entry.size = data_size;
+       cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_dmem_proxy_addr));
+
+       printf_dbg_log("sync_dmem_proxy_before_read called for offset: 0x%08x\n", cache_entry.offset);
+
+       // Fire ioctl
+       ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
+}
+
+void LA9310_PCIe::sync_dmem_proxy_after_write(uint8_t *addr, uint32_t data_size)
+{
+       struct LA9310_IOCTL_flush_cache cache_entry;
+       auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IPC].vaddr;
+
+       // Fill struct with information
+       cache_entry.sync_to_cpu = 0;
+       cache_entry.size = data_size;
+       cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_dmem_proxy_addr));
+
+       printf_dbg_log("sync_dmem_proxy_after_write called for offset: 0x%08x\n", cache_entry.offset);
+
+       // Fire ioctl
+       ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
+}
+
+void LA9310_PCIe::sync_iq_flood_before_read(uint8_t *addr, uint32_t data_size)
+{
+       struct LA9310_IOCTL_flush_cache cache_entry;
+       auto vl_iqflood_ddr_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
+
+       // Fill struct with information
+       cache_entry.sync_to_cpu = 1;
+       cache_entry.size = data_size;
+       cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_iqflood_ddr_addr));
+
+       printf_dbg_log("sync_iq_flood_before_read called for offset: 0x%08x\n", cache_entry.offset);
+
+       // Fire ioctl
+       ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
+}
+
+void LA9310_PCIe::sync_iq_flood_after_write(uint8_t *addr, uint32_t data_size)
+{
+       struct LA9310_IOCTL_flush_cache cache_entry;
+       auto vl_iqflood_ddr_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
+
+       // Fill struct with information
+       cache_entry.sync_to_cpu = 0;
+       cache_entry.size = data_size;
+       cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_iqflood_ddr_addr));
+
+       printf_dbg_log("sync_iq_flood_after_write called for offset: 0x%08x\n", cache_entry.offset);
+
+       // Fire ioctl
+       ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
 }
