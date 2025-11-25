@@ -52,6 +52,44 @@ long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
         break;
     }
+    case LA9310_IOCTL_CSR_OP: {
+        struct LA9310_IOCTL_CSR_op op;
+        if (copy_from_user(&op, (void*)arg, sizeof(op)))
+            return -EFAULT;
+
+        switch (op.window_id)
+        {
+        case LA9310_WINDOW_BAR0:
+        case LA9310_WINDOW_BAR1:
+        case LA9310_WINDOW_BAR2: {
+            struct la9310_mem_region_info* ccsr_region = &myDevice->mem_regions[op.window_id];
+            if (op.offset < 0 || op.offset > ccsr_region->size)
+            {
+                dev_err(myDevice->dev, "CSR offset %08X out of bounds\n", op.offset);
+                return -EINVAL;
+            }
+            if (op.write)
+            {
+                //dev_info(myDevice->dev, "CSR Write window:%i + 0x%08lX, value: %08X\n", op.window_id, op.offset, op.value);
+                writel(op.value, ccsr_region->vaddr + op.offset);
+                wmb();
+            }
+            else
+            {
+                rmb();
+                op.value = readl(ccsr_region->vaddr + op.offset);
+                //dev_info(myDevice->dev, "CSR Read window:%i + 0x%08lX, value: %08X\n", op.window_id, op.offset, op.value);
+            }
+            ret = 0;
+            break;
+        }
+        }
+
+        if (copy_to_user((void*)arg, &op, sizeof(op)))
+            return -EFAULT;
+
+        break;
+    }
     default:
         return -ENOTTY;
     }

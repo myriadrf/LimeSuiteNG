@@ -42,8 +42,6 @@
 
 using namespace lime;
 
-LA9310_PCIe port;
-
 static void dccivac(uint32_t* addr)
 {
 
@@ -69,9 +67,9 @@ uint32_t *v_rx_vspa_proxy_wo;
 uint32_t *BAR0_addr;
 uint32_t *BAR2_addr;
 
-int map_physical_regions(void)
+int map_physical_regions(std::shared_ptr<lime::LA9310_PCIe> port)
 {
-    auto iqflood = port.GetBar(LA9310_WINDOW_IQFLOOD);
+    auto iqflood = port->GetBar(LA9310_WINDOW_IQFLOOD);
     v_iqflood_ddr_addr = reinterpret_cast<uint32_t*>(iqflood.vaddr);
     if (v_iqflood_ddr_addr == MAP_FAILED)
     {
@@ -79,14 +77,14 @@ int map_physical_regions(void)
         return -1;
     }
 
-    BAR0_addr = reinterpret_cast<uint32_t*>(port.GetBar(LA9310_WINDOW_BAR0).vaddr);
+    BAR0_addr = reinterpret_cast<uint32_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
     if (BAR0_addr == MAP_FAILED)
     {
         perror("Mapping BAR0_addr buffer failed\n");
         return -1;
     }
 
-    BAR2_addr = reinterpret_cast<uint32_t*>(port.GetBar(LA9310_WINDOW_BAR2).vaddr);
+    BAR2_addr = reinterpret_cast<uint32_t*>(port->GetBar(LA9310_WINDOW_BAR2).vaddr);
     if (BAR2_addr == MAP_FAILED)
     {
         perror("Mapping BAR2_addr buffer failed\n");
@@ -99,7 +97,7 @@ int map_physical_regions(void)
     // vproxy -= VSPA_DMEM_PROXY_SIZE;
     // v_vspa_dmem_proxy_ro = (uint32_t *)(v_iqflood_ddr_addr + (iqflood.size - VSPA_DMEM_PROXY_SIZE)/4);
 
-    auto dmem = port.GetBar(LA9310_WINDOW_IPC);
+    auto dmem = port->GetBar(LA9310_WINDOW_IPC);
     auto dmem_va = reinterpret_cast<uint32_t*>(dmem.vaddr);
     if (dmem_va == MAP_FAILED)
     {
@@ -163,6 +161,7 @@ std::unique_ptr<PHYTimer> phytimer;
 /* need following vspa symbols to be exported (vspa_exported_symbols.h)*/
 int main(int argc, char *argv[])
 {
+    std::shared_ptr<lime::LA9310_PCIe> port = std::make_shared<lime::LA9310_PCIe>();
     int32_t c;
     // command_e command = OP_MONITOR;
 
@@ -185,7 +184,7 @@ int main(int argc, char *argv[])
 
     running = 1;
 
-    OpStatus status = port.Open("/dev/limesdr_micro0/control0", O_RDWR);
+    OpStatus status = port->Open("/dev/limesdr_micro0/control0", O_RDWR);
     if (status != OpStatus::Success)
     {
         perror("Fail to get modem_info \r\n");
@@ -194,7 +193,7 @@ int main(int argc, char *argv[])
     /*
     * map memory regions
     */
-    if (map_physical_regions())
+    if (map_physical_regions(port))
     {
         perror("map_physical_regions failed:");
         exit(EXIT_FAILURE);
@@ -211,7 +210,7 @@ int main(int argc, char *argv[])
     //     }
     // }
 
-    phytimer = std::make_unique<lime::PHYTimer>(reinterpret_cast<uint64_t>(port.GetBar(LA9310_WINDOW_BAR0).vaddr) + 0x1020000);
+    phytimer = std::make_unique<lime::PHYTimer>(port);
 
     // if (command == OP_MONITOR) {
     monitor_vspa_stats();

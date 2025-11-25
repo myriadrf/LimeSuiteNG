@@ -9,6 +9,7 @@
 namespace lime {
 
 class LA9310_PCIe;
+class PCIe_CSR_Access;
 
 class VSPA_mailbox
 {
@@ -24,8 +25,8 @@ class VSPA_mailbox
 
   private:
     std::shared_ptr<LA9310_PCIe> port;
-    uint64_t vspa_ccsr_base;
     std::recursive_mutex mailbox_mutex;
+    std::shared_ptr<PCIe_CSR_Access> vspa_ccsr_base;
 };
 
 } // namespace lime

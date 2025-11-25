@@ -5,7 +5,7 @@
 namespace lime {
 
 LA9310::LA9310(std::shared_ptr<LA9310_PCIe> port)
-    : phytimer(reinterpret_cast<uint64_t>(port->GetBar(LA9310_WINDOW_BAR0).vaddr) + 0x1020000)
+    : phytimer(port)
     , vspa(port)
     , pcie(port)
 {

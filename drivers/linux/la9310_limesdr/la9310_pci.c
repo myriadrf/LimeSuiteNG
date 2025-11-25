@@ -178,13 +178,12 @@ static int la9310_configure_pci(struct pci_dev *pciContext)
         return ret;
     }
 
-    pci_set_master(pciContext);
-
     const uint32_t bitCountOrder[] = {64, 32};
     if ((ret = set_dma_addressing_mask(sysDev, bitCountOrder, 2)))
         return ret;
 
     pcidev_tune_caps(pciContext);
+    pci_set_master(pciContext);
 
     // for (int i = 0; i < 3; i++)
     // {
@@ -206,7 +205,6 @@ static int la9310_configure_pci(struct pci_dev *pciContext)
 //     if (ret < 0)
 //         return ret;
 
-    pci_set_master(pciContext);
     pcie_print_link_status(pciContext);
     return 0;
 }
