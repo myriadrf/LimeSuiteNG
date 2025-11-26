@@ -1,4 +1,7 @@
 message(STATUS "##### <external> #####")
+
+cmake_minimum_required(VERSION 3.18)
+
 # Download and compile needed externals
 include(FetchContent)
 
