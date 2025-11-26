@@ -81,6 +81,9 @@ enum class Command : uint8_t {
     ANALOG_VAL_WR = 0x61, //write analog value
     ANALOG_VAL_RD = 0x62, //read analog value
 
+    CMD_BRDCSR_WR = 0x71,   // Write board configuration space register value
+    CMD_BRDCSR_RD = 0x72,   // Read board configuration space register value
+
     MYRIAD_RST = 0x80,
     MYRIAD_WR = 0x81,
     MYRIAD_RD = 0x82,
@@ -159,6 +162,15 @@ OpStatus SPI16(ISerialPort& port,
     const uint32_t* MOSI,
     LMS64CProtocol::Command readCmd,
     uint32_t* MISO,
+    size_t count,
+    uint32_t subDevice);
+
+OpStatus CSRegisterTransction(ISerialPort& port,
+    uint8_t chipSelect,
+    LMS64CProtocol::Command writeCmd,
+    const uint64_t* data_wr,
+    LMS64CProtocol::Command readCmd,
+    uint64_t* data_rd,
     size_t count,
     uint32_t subDevice);
 

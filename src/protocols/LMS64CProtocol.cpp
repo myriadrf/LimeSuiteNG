@@ -312,6 +312,104 @@ OpStatus SPI16(ISerialPort& port,
     return OpStatus::Success;
 }
 
+OpStatus CSRegisterTransaction(ISerialPort& port,
+    uint8_t chipSelect,
+    Command writeCmd,
+    const uint64_t* data_wr,
+    Command readCmd,
+    uint64_t* data_rd,
+    size_t count,
+    uint32_t subDevice)
+{
+    LMS64CPacket pkt;
+
+    size_t srcIndex = 0;
+    size_t destIndex = 0;
+    constexpr int maxBlocks = LMS64CPacket::payloadSize / (sizeof(uint64_t) * sizeof(uint16_t)); // = 3
+    bool isWrite = data_rd == nullptr ? true : false;
+    
+    if(isWrite)
+        pkt.cmd = writeCmd;
+    else 
+        pkt.cmd = readCmd;
+
+    while (srcIndex < count)
+    {
+        pkt.status = CommandStatus::Undefined;
+        pkt.blockCount = 0;
+        pkt.periphID = chipSelect;
+        pkt.subDevice = subDevice;
+
+        for (int i = 0; i < maxBlocks && srcIndex < count; ++i)
+        {
+            if (isWrite)
+            {
+                int payloadOffset = pkt.blockCount * 16;
+                pkt.payload[payloadOffset + 0] = data_wr[srcIndex] >> 56;
+                pkt.payload[payloadOffset + 1] = data_wr[srcIndex] >> 48;
+                pkt.payload[payloadOffset + 2] = data_wr[srcIndex] >> 40;
+                pkt.payload[payloadOffset + 3] = data_wr[srcIndex] >> 32;
+                pkt.payload[payloadOffset + 4] = data_wr[srcIndex] >> 24;
+                pkt.payload[payloadOffset + 5] = data_wr[srcIndex] >> 16;
+                pkt.payload[payloadOffset + 6] = data_wr[srcIndex] >> 8;
+                pkt.payload[payloadOffset + 7] = data_wr[srcIndex];
+                pkt.payload[payloadOffset + 8] = data_wr[srcIndex + 1] >> 56;
+                pkt.payload[payloadOffset + 9] = data_wr[srcIndex + 1] >> 48;
+                pkt.payload[payloadOffset + 10] = data_wr[srcIndex + 1] >> 40;
+                pkt.payload[payloadOffset + 11] = data_wr[srcIndex + 1] >> 32;
+                pkt.payload[payloadOffset + 12] = data_wr[srcIndex + 1] >> 24;
+                pkt.payload[payloadOffset + 13] = data_wr[srcIndex + 1] >> 16;
+                pkt.payload[payloadOffset + 14] = data_wr[srcIndex + 1] >> 8;
+                pkt.payload[payloadOffset + 15] = data_wr[srcIndex + 1];
+            }
+            else
+            {
+                int payloadOffset = pkt.blockCount * 8;
+                pkt.payload[payloadOffset + 0] = data_wr[srcIndex] >> 56;
+                pkt.payload[payloadOffset + 1] = data_wr[srcIndex] >> 48;
+                pkt.payload[payloadOffset + 2] = data_wr[srcIndex] >> 40;
+                pkt.payload[payloadOffset + 3] = data_wr[srcIndex] >> 32;
+                pkt.payload[payloadOffset + 4] = data_wr[srcIndex] >> 24;
+                pkt.payload[payloadOffset + 5] = data_wr[srcIndex] >> 16;
+                pkt.payload[payloadOffset + 6] = data_wr[srcIndex] >> 8;
+                pkt.payload[payloadOffset + 7] = data_wr[srcIndex];
+            }
+            ++pkt.blockCount;
+            ++srcIndex;
+        }
+
+#if DEBUG_SPI
+        std::string msg = PacketToString(pkt);
+        lime::log(LogLevel::Debug, "CSR Wr:"s + msg);
+#endif
+        OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+#if DEBUG_SPI
+        msg = PacketToString(pkt);
+        lime::log(LogLevel::Debug, "CSR Rd:"s + msg);
+#endif
+        if (status != OpStatus::Success)
+            return status;
+
+        for (int i = 0; !isWrite && i < pkt.blockCount && destIndex < count; ++i)
+        {
+            //MISO[destIndex] = 0;
+            //MISO[destIndex] = pkt.payload[0] << 24;
+            //MISO[destIndex] |= pkt.payload[1] << 16;
+            data_rd[destIndex] = (pkt.payload[i * 16 + 8] << 56)  | 
+                                 (pkt.payload[i * 16 + 9] << 48)  |
+                                 (pkt.payload[i * 16 + 10] << 40) |
+                                 (pkt.payload[i * 16 + 11] << 32) |
+                                 (pkt.payload[i * 16 + 12] << 24) |
+                                 (pkt.payload[i * 16 + 13] << 16) |
+                                 (pkt.payload[i * 16 + 14] << 8)  |
+                                 pkt.payload[i * 16 + 15];
+            ++destIndex;
+        }
+    }
+
+    return OpStatus::Success;
+}
+
 /// @brief Gets the firmware information of the device.
 /// @param port The communications port to use.
 /// @param info The structure to store the received information into.
