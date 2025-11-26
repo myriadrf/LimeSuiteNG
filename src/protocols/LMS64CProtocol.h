@@ -165,7 +165,7 @@ OpStatus SPI16(ISerialPort& port,
     size_t count,
     uint32_t subDevice);
 
-OpStatus CSRegisterTransction(ISerialPort& port,
+OpStatus CSRegisterTransaction(ISerialPort& port,
     uint8_t chipSelect,
     LMS64CProtocol::Command writeCmd,
     const uint64_t* data_wr,
