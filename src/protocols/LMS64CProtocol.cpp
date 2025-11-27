@@ -345,22 +345,22 @@ OpStatus CSRegisterTransaction(ISerialPort& port,
             if (isWrite)
             {
                 int payloadOffset = pkt.blockCount * 16;
-                pkt.payload[payloadOffset + 0] = data_wr[srcIndex] >> 56;
-                pkt.payload[payloadOffset + 1] = data_wr[srcIndex] >> 48;
-                pkt.payload[payloadOffset + 2] = data_wr[srcIndex] >> 40;
-                pkt.payload[payloadOffset + 3] = data_wr[srcIndex] >> 32;
-                pkt.payload[payloadOffset + 4] = data_wr[srcIndex] >> 24;
-                pkt.payload[payloadOffset + 5] = data_wr[srcIndex] >> 16;
-                pkt.payload[payloadOffset + 6] = data_wr[srcIndex] >> 8;
-                pkt.payload[payloadOffset + 7] = data_wr[srcIndex];
-                pkt.payload[payloadOffset + 8] = data_wr[srcIndex + 1] >> 56;
-                pkt.payload[payloadOffset + 9] = data_wr[srcIndex + 1] >> 48;
-                pkt.payload[payloadOffset + 10] = data_wr[srcIndex + 1] >> 40;
-                pkt.payload[payloadOffset + 11] = data_wr[srcIndex + 1] >> 32;
-                pkt.payload[payloadOffset + 12] = data_wr[srcIndex + 1] >> 24;
-                pkt.payload[payloadOffset + 13] = data_wr[srcIndex + 1] >> 16;
-                pkt.payload[payloadOffset + 14] = data_wr[srcIndex + 1] >> 8;
-                pkt.payload[payloadOffset + 15] = data_wr[srcIndex + 1];
+                pkt.payload[payloadOffset + 0] = data_wr[srcIndex + i] >> 56;
+                pkt.payload[payloadOffset + 1] = data_wr[srcIndex + i] >> 48;
+                pkt.payload[payloadOffset + 2] = data_wr[srcIndex + i] >> 40;
+                pkt.payload[payloadOffset + 3] = data_wr[srcIndex + i] >> 32;
+                pkt.payload[payloadOffset + 4] = data_wr[srcIndex + i] >> 24;
+                pkt.payload[payloadOffset + 5] = data_wr[srcIndex + i] >> 16;
+                pkt.payload[payloadOffset + 6] = data_wr[srcIndex + i] >> 8;
+                pkt.payload[payloadOffset + 7] = data_wr[srcIndex + i];
+                pkt.payload[payloadOffset + 8] = data_wr[srcIndex + i + 1] >> 56;
+                pkt.payload[payloadOffset + 9] = data_wr[srcIndex + i + 1] >> 48;
+                pkt.payload[payloadOffset + 10] = data_wr[srcIndex + i + 1] >> 40;
+                pkt.payload[payloadOffset + 11] = data_wr[srcIndex + i + 1] >> 32;
+                pkt.payload[payloadOffset + 12] = data_wr[srcIndex + i + 1] >> 24;
+                pkt.payload[payloadOffset + 13] = data_wr[srcIndex + i + 1] >> 16;
+                pkt.payload[payloadOffset + 14] = data_wr[srcIndex + i + 1] >> 8;
+                pkt.payload[payloadOffset + 15] = data_wr[srcIndex + i + 1];
             }
             else
             {
