@@ -127,12 +127,10 @@ void CSR_wxgui::onCSRwrite(wxCommandEvent& event)
       unsigned long long addr = 0;
       strAddress.ToULongLong(&addr, 16);
 
-      lime::log(LogLevel::Warning, "addr: %08X\n", addr);
 
       const wxString strValue = fields.value->GetValue();
       unsigned long long value = 0;
       strValue.ToULongLong(&value, 16);
-      lime::log(LogLevel::Warning, "value: %08X\n", value);
 
       const uint64_t data_wr[2] = {addr, value};
 
@@ -174,7 +172,7 @@ void CSR_wxgui::onCSRread(wxCommandEvent& event)
             fields.status->SetLabel(ToString(status));
             if (status != OpStatus::Success)
                return;
-            fields.value->SetValue(wxString::Format("%16X", data_rd));
+            fields.value->SetValue(wxString::Format("%0llX", data_rd));
 
          } catch (std::runtime_error& e)
          {
