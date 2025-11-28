@@ -529,7 +529,12 @@ class LIME_API SDRDevice
     /// @copydoc ISPI::SPI()
     /// @param spiBusAddress The SPI address of the device to use.
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);
-
+    
+    /// @brief Write/Read Configuration Space Registers for FPGA.
+    /// @param data_wr Register address and data pairs for CSR write operation. Register address sequence for CSR read operation. 
+    /// @param data_rd Read register data. Register data is stored in the same sequence as requested register addresses. Pass nullptr when performing CSR write operation.
+    /// @param count Number of registers to modify.
+    /// @return Operation status.
     virtual OpStatus CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count);
 
     /// @copydoc II2C::I2CWrite()
