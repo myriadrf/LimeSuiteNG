@@ -18,6 +18,7 @@
 #include "LMS_Programming/LMS_Programming_wxgui.h"
 #include "utility/pnlMiniLog.h"
 #include "utility/SPI_wxgui.h"
+#include "utility/CSR_wxgui.h"
 #include <wx/string.h>
 #include <functional>
 #include "boards/pnlBoardControls.h"
@@ -222,6 +223,9 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
 
     SPI_wxgui* spigui = new SPI_wxgui(this, wxNewId());
     AddModule(spigui, "SPI"s);
+
+    CSR_wxgui* csrgui = new CSR_wxgui(this, wxNewId());
+    AddModule(csrgui, "CSR"s);
 
     boardControlsGui = new pnlBoardControls(this, wxNewId());
     AddModule(boardControlsGui, "Board controls"s);
