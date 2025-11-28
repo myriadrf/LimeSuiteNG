@@ -530,6 +530,8 @@ class LIME_API SDRDevice
     /// @param spiBusAddress The SPI address of the device to use.
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);
 
+    virtual OpStatus CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count);
+
     /// @copydoc II2C::I2CWrite()
     virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length);
 
