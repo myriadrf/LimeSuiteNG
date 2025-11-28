@@ -17,6 +17,7 @@
 #include "comms/SPI/SPI_utilities.h"
 #include "comms/SPI/ISPI.h"
 #include "comms/USB/IUSB.h"
+#include "comms/ICSR.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/USBDMAEmulation.h"
 
@@ -164,12 +165,14 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param commsPort The communications port for direct communications with the device.
 LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
     std::shared_ptr<ISPI> spiFPGA,
+    std::shared_ptr<ICSR> csrFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
     , mSerialPort(commsPort)
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
+    , mfpgaCsrPort(csrFPGA)
 {
     mStreamers.resize(1);
     SDRDescriptor& descriptor = mDeviceDescriptor;
@@ -355,6 +358,11 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     default:
         return ReportError(OpStatus::InvalidValue, "LimeSDR_Mini SPI invalid SPI chip select"s);
     }
+}
+
+OpStatus LimeSDR_Mini::CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count)
+{
+    return mfpgaCsrPort->Transact(data_wr, data_rd, count);
 }
 
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified

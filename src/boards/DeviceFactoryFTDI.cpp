@@ -9,6 +9,7 @@
 #include "CommonFunctions.h"
 #include "comms/USB/FT601/FT601.h"
 #include "protocols/LMS64C/SPI.h"
+#include "protocols/LMS64C/CSR.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -72,8 +73,10 @@ static SDRDevice* make_LimeSDR_Mini(const DeviceHandle& handle, uint16_t vid, ui
         std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
     auto route_fpga =
         std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
+    auto route_fpga_csr = 
+        std::make_shared<LMS64C_CSR>(usbPipe, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, 0, 0);
 
-    auto board = new LimeSDR_Mini(route_lms7002m, route_fpga, usbComms, usbPipe);
+    auto board = new LimeSDR_Mini(route_lms7002m, route_fpga, route_fpga_csr, usbComms, usbPipe);
     // LimeSDR-Mini serial number is taken from USB chip's descriptor.
     // TODO: add serial number getter into UnixUsb, and use it inside LimeSDR_mini
     board->SetSerialNumber(handle.serial);
