@@ -8,6 +8,7 @@
 #include "comms/PCIe/LimePCIe.h"
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64C/SPI.h"
+#include "protocols/LMS64C/CSR.h"
 #include "comms/PCIe/PCIE_CSR_Pipe.h"
 
 #include "boards/LimeSDR_XTRX/LimeSDR_XTRX.h"
@@ -104,7 +105,9 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
             controlPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
         auto route_fpga =
             std::make_shared<LMS64C_SPI>(controlPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
-        return new LimeSDR_XTRX(route_lms7002m, route_fpga, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
+        auto route_fpga_csr = 
+            std::make_shared<LMS64C_CSR>(usbPipe, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, 0, 0);
+        return new LimeSDR_XTRX(route_lms7002m, route_fpga, route_fpga_csr, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
     }
     case LMS_DEV_LIMESDR_X3:
         return new LimeSDR_X3(controlPipe, std::move(streamPorts));
