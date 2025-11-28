@@ -7,6 +7,7 @@
 #include "comms/ISerialPort.h"
 #include "comms/USB/FX3/FX3.h"
 #include "comms/USB/IUSB.h"
+#include "comms/ICSR.h"
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
@@ -97,12 +98,14 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 /// @param commsPort The communications port for direct communications with the device.
 LimeSDR::LimeSDR(std::shared_ptr<ISPI> spiLMS,
     std::shared_ptr<ISPI> spiFPGA,
+    std::shared_ptr<ICSR> csrFPGA,
     std::shared_ptr<IUSB> streamPort,
     std::shared_ptr<ISerialPort> commsPort)
     : mStreamPort(streamPort)
     , mSerialPort(commsPort)
     , mlms7002mPort(spiLMS)
     , mfpgaPort(spiFPGA)
+    , mfpgaCsrPort(csrFPGA)
     , mADF(std::make_unique<ADF4002>())
     , mConfigInProgress(false)
 {
@@ -333,6 +336,11 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
     default:
         throw std::logic_error("LimeSDR SPI invalid SPI chip select"s);
     }
+}
+
+OpStatus LimeSDR::CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count)
+{
+    return mfpgaCsrPort->Transact(data_wr, data_rd, count);
 }
 
 // There might be some leftover samples data still buffered in USB device
