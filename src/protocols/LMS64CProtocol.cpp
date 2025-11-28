@@ -171,6 +171,11 @@ constexpr size_t LMS64CPacketSerialCommandView::GetMaxSerialLength()
 
 namespace LMS64CProtocol {
 
+static inline uint64_t castTo64bits(uint8_t input, int bitOffset)
+{
+    return (static_cast<uint64_t>(input) << bitOffset);
+}
+
 static constexpr std::array<const std::string_view, static_cast<size_t>(CommandStatus::Count)> COMMAND_STATUS_TEXT = {
     "Undefined/Failure"sv,
     "Completed"sv,
@@ -395,14 +400,14 @@ OpStatus CSRegisterTransaction(ISerialPort& port,
             //MISO[destIndex] = 0;
             //MISO[destIndex] = pkt.payload[0] << 24;
             //MISO[destIndex] |= pkt.payload[1] << 16;
-            data_rd[destIndex] = (pkt.payload[i * 16 + 8] << 56)  | 
-                                 (pkt.payload[i * 16 + 9] << 48)  |
-                                 (pkt.payload[i * 16 + 10] << 40) |
-                                 (pkt.payload[i * 16 + 11] << 32) |
-                                 (pkt.payload[i * 16 + 12] << 24) |
-                                 (pkt.payload[i * 16 + 13] << 16) |
-                                 (pkt.payload[i * 16 + 14] << 8)  |
-                                 pkt.payload[i * 16 + 15];
+            data_rd[destIndex] = castTo64bits(pkt.payload[i * 16 + 8], 56)  |
+                                 castTo64bits(pkt.payload[i * 16 + 9], 48)  |
+                                 castTo64bits(pkt.payload[i * 16 + 10], 40) |
+                                 castTo64bits(pkt.payload[i * 16 + 11], 32) |
+                                 castTo64bits(pkt.payload[i * 16 + 12], 24) |
+                                 castTo64bits(pkt.payload[i * 16 + 13], 16) |
+                                 castTo64bits(pkt.payload[i * 16 + 14], 8)  |
+                                 castTo64bits(pkt.payload[i * 16 + 15], 0);
             ++destIndex;
         }
     }
