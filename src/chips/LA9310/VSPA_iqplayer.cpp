@@ -16,6 +16,10 @@
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846 /* pi */
+#endif
+
 #if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \

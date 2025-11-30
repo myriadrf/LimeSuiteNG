@@ -328,7 +328,8 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
         // PlotSamples(rx.rxBuffers[c], 20000);
         PlotSamples(rx.rxBuffers[c], receiveSamplesCount);
 
-        const int skipRxSamples = std::max(0l, chirpStart - transmitSamplesCount / 8); // approximate point of the expected data
+        const int skipRxSamples =
+            std::max(int64_t(0), chirpStart - transmitSamplesCount / 8); // approximate point of the expected data
         const int rxWindowSize = receiveSamplesCount - skipRxSamples;
         const complex32f_t* rxWindow = rx.rxBuffers[c] + skipRxSamples;
 

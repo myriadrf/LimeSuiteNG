@@ -69,7 +69,8 @@ if(NOT LA9310_LIMESDR_INSTALL)
     return()
 endif()
 
-cmake_dependent_option(LA9310_LIMESDR_DKMS "Use DKMS when installing the kernel module" ON "DKMS_EXECUTABLE;LA9310_LIMESDR_INSTALL" OFF)
+cmake_dependent_option(
+    LA9310_LIMESDR_DKMS "Use DKMS when installing the kernel module" ON "DKMS_EXECUTABLE;LA9310_LIMESDR_INSTALL" OFF)
 add_feature_info("LA9310_LIMESDR_DKMS" LA9310_LIMESDR_DKMS "Use DKMS system to build/install la9310_limesdr module")
 
 option(LA9410_LIMESDR_RELOAD_ON_INSTALL "After install reload kernel driver modules" ON)

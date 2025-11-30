@@ -53,4 +53,7 @@ install(
     DESTINATION bin)
 
 add_subdirectory(utilities)
-add_subdirectory(iq_monitor)
+
+if(UNIX AND NOT APPLE)
+    add_subdirectory(iq_monitor)
+endif()
