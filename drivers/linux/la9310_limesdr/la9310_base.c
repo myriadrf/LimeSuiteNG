@@ -795,18 +795,18 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 
 	rc = la9310_init_hif(la9310_dev);
 	if (rc)
-		goto out;
+		goto free_ipc;
 	la9310_init_msg_unit_ptrs(la9310_dev);
 	la9310_init_ep_logger(la9310_dev);
 
 	// rc = la9310_init_sysfs(la9310_dev);
 	// if (rc)
-	// 	goto out;
+	// 	goto free_ipc;
 	init_stage = LA9310_SYSFS_INIT_STAGE;
 
 	// rc = la9310_register_ep_stats_ops(la9310_dev);
 	// if (rc)
-	// 	goto out;
+	// 	goto free_ipc;
 
 	dev_info(la9310_dev->dev, "%s: Loading RTOS image\n",
 			la9310_dev->name);
@@ -814,14 +814,14 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (rc) {
 		dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d",
 				rc);
-		goto out;
+		goto free_ipc;
 	}
 
 #ifndef	LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 	if (rc) {
 		pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-		goto out;
+		goto free_ipc;
 	}
 
 	/*scrach register handshake request irq */
@@ -839,20 +839,20 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (rc) {
 		dev_err(la9310_dev->dev, "Reset handshake failed, err %d",
 				rc);
-		goto out;
+		goto free_ipc;
 	}
 
 	/* Verify that Host and target are using same version of HIF */
 	rc = la9310_verify_hif_compatibility(la9310_dev);
 	if (rc)
-		goto out;
+		goto free_ipc;
 
 	init_stage = LA9310_IRQ_INIT_STAGE;
 #ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 	if (rc) {
 		pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-		goto out;
+		goto free_ipc;
 	}
 #endif
 	/* WDOG request_irq */
@@ -899,7 +899,7 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 			if (rc) {
 				pr_err("%s: %s: probe failed, err %d\n",
 						__func__, &subdrv->name[0], rc);
-				goto out;
+				goto free_ipc;
 			}
 		}
 	}
@@ -911,7 +911,8 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (!tty_res)
 	{
 		dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
-		return -1;
+		rc = -1;
+		goto free_ipc;
 	}
 	{
 		tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
@@ -924,10 +925,13 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (IS_ERR(la9310_dev->uart))
 	{
 		dev_err(la9310_dev->dev, "Failed to register UART\n");
-		return -1;
+		rc = -1;
+		goto free_ipc;
 	}
 
 	return 0;
+free_ipc:
+	la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
 free_iqflood:
 	la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
 out:
@@ -1039,6 +1043,10 @@ la9310_base_remove(struct la9310_dev *la9310_dev)
 #endif
     la9310_unmap_mem_regions(la9310_dev);
 
+	// la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, DMA_BIDIRECTIONAL);
 	// la9310_remove_sysfs(la9310_dev);
 
 	return 0;
