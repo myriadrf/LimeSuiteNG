@@ -45,6 +45,7 @@ THE SOFTWARE
 #include <limesuiteng/SDRDevice.h>
 #include <limesuiteng/SDRDescriptor.h>
 #include <limesuiteng/StreamConfig.h>
+#include <limesuiteng/RFStream.h>
 #include <limesuiteng/VersionInfo.h>
 //---------------------------------------------------------------------------
 #include <array>
@@ -101,6 +102,7 @@ std::array<lime::complex16_t, EXT_BLOCKLEN> buffer;
 
 std::vector<lime::DeviceHandle> deviceList;
 lime::SDRDevice* device = nullptr;
+std::unique_ptr<lime::RFStream> rfstream;
 lime::LogHandler logHandler = nullptr;
 
 HANDLE threadHandle = INVALID_HANDLE_VALUE;
@@ -128,7 +130,7 @@ static void RecvThread(void* p)
 {
     while (isRunning) {
         lime::complex16_t* bufferPointer = buffer.data();
-        uint32_t samplesRead = device->StreamRx(0, &bufferPointer, EXT_BLOCKLEN, nullptr);
+        uint32_t samplesRead = rfstream->Receive(&bufferPointer, EXT_BLOCKLEN, nullptr);
         if (ExtIOCallback != nullptr) {
             ExtIOCallback(samplesRead * 2, 0, 0, buffer.data());
         }
@@ -903,11 +905,12 @@ int EXTIO_API StartHW64(int64_t LOfreq)
     config.bufferSize = 1024 * 128;
     config.format = lime::DataFormat::I16;
 
-    if (device->StreamSetup(config, 0) != lime::OpStatus::Success) {
+    rfstream = device->StreamCreate(config, 0);
+    if (rfstream->Setup(config) != lime::OpStatus::Success) {
         return -1;
     }
 
-    device->StreamStart(0);
+    rfstream->Start();
 
     isRunning = true;
 
@@ -928,12 +931,16 @@ void EXTIO_API StopHW(void)
     WaitForSingleObject(threadHandle, INFINITE);
     threadHandle = INVALID_HANDLE_VALUE;
 
-    device->StreamStop(0);
-    device->StreamDestroy(0);
+    if (!rfstream)
+        return;
+
+    rfstream->Stop();
+    rfstream->Teardown();
 }
 //---------------------------------------------------------------------------
 void EXTIO_API CloseHW(void)
 {
+    rfstream.reset();
     lime::DeviceRegistry::freeDevice(device);
     DestroyWindow(dialogWindowHandle);
 }
