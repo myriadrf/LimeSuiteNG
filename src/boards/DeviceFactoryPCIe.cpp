@@ -106,7 +106,7 @@ SDRDevice* DeviceFactoryPCIe::make(const DeviceHandle& handle)
         auto route_fpga =
             std::make_shared<LMS64C_SPI>(controlPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
         auto route_fpga_csr = 
-            std::make_shared<LMS64C_CSR>(usbPipe, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, 0, 0);
+            std::make_shared<LMS64C_CSR>(controlPipe, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, 0, 0);
         return new LimeSDR_XTRX(route_lms7002m, route_fpga, route_fpga_csr, streamPorts.empty() ? nullptr : streamPorts.front(), controlPipe);
     }
     case LMS_DEV_LIMESDR_X3:
