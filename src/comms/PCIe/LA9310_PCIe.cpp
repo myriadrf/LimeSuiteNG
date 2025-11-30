@@ -232,3 +232,54 @@ void LA9310_PCIe::sync_iq_flood_after_write(uint8_t *addr, uint32_t data_size)
        // Fire ioctl
        ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
 }
+
+OpStatus LA9310_PCIe::iowrite32(uint32_t window_id, uint32_t value, uint64_t address)
+{
+    // printf("iowr: %08X v: %08X\n", address, value);
+    struct LA9310_IOCTL_CSR_op op;
+    op.window_id = static_cast<la9310_window_t>(window_id);
+    op.offset = address;
+    op.value = value;
+    op.write = 1;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_CSR_OP, reinterpret_cast<LA9310_IOCTL_CSR_op*>(&op));
+    if (ret < 0)
+    {
+        lime::error("LA9310_IOCTL_CSR_OP failed. errno: %i\n", errno);
+        close(mFileDescriptor);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+uint32_t LA9310_PCIe::ioread32(uint32_t window_id, uint64_t address)
+{
+    struct LA9310_IOCTL_CSR_op op;
+    op.window_id = static_cast<la9310_window_t>(window_id);
+    op.offset = address;
+    op.value = 0;
+    op.write = 0;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_CSR_OP, reinterpret_cast<LA9310_IOCTL_CSR_op*>(&op));
+    if (ret < 0)
+    {
+        lime::error("LA9310_IOCTL_CSR_OP failed. errno: %i\n", errno);
+        return 0xFFFFFFFF;
+    }
+    return op.value;
+}
+
+PCIe_CSR_Access::PCIe_CSR_Access(LA9310_PCIe* port, uint32_t window_id, size_t base_offset)
+    : port(port)
+    , window_id(window_id)
+    , base_offset(base_offset)
+{
+}
+
+void PCIe_CSR_Access::iowrite32(uint32_t value, size_t offset)
+{
+    port->iowrite32(window_id, value, base_offset + offset);
+}
+
+uint32_t PCIe_CSR_Access::ioread32(size_t offset)
+{
+    return port->ioread32(window_id, base_offset + offset);
+}

@@ -6,6 +6,8 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "comms/PCIe/LA9310_PCIe.h"
+
 #if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \
@@ -38,18 +40,11 @@ static std::unordered_map<uint8_t, std::string> phytimer_names = {
 
 namespace lime {
 
-static inline void iowrite32(uint32_t value, uint64_t addr)
-{
-    *reinterpret_cast<volatile uint32_t*>(addr) = value;
-}
+static constexpr size_t la9310_phytimer_base_addr = 0x1020000;
 
-static inline uint32_t ioread32(uint64_t addr)
-{
-    return *reinterpret_cast<volatile uint32_t*>(addr);
-}
-
-PHYTimer::PHYTimer(uint64_t vaddr_base)
-    : vaddr_base(vaddr_base)
+PHYTimer::PHYTimer(std::shared_ptr<LA9310_PCIe> port)
+    : port(port)
+    , phytimer_ccsr_base(port->GetCSRAccess(LA9310_WINDOW_BAR0, la9310_phytimer_base_addr))
 {
 }
 
@@ -65,32 +60,31 @@ double PHYTimer::GetTickRate() const
 
 void PHYTimer::SoftReset(bool reset_active)
 {
-    uint32_t regvalue = ioread32(vaddr_base);
+    uint32_t regvalue = phytimer_ccsr_base->ioread32(0);
     regvalue &= ~(1 << 4);
     regvalue |= (reset_active << 4);
-    iowrite32(regvalue, vaddr_base);
+    phytimer_ccsr_base->iowrite32(regvalue, 0);
 }
 
 void PHYTimer::Enable(bool enable)
 {
-    uint32_t regvalue = ioread32(vaddr_base);
+    uint32_t regvalue = phytimer_ccsr_base->ioread32(0);
     regvalue &= ~(1 << 0);
     regvalue |= (enable << 0);
-    iowrite32(regvalue, vaddr_base);
+    phytimer_ccsr_base->iowrite32(regvalue, 0);
 }
 
 void PHYTimer::Divisor(uint8_t value)
 {
-    uint32_t regvalue = ioread32(vaddr_base);
+    uint32_t regvalue = phytimer_ccsr_base->ioread32(0);
     regvalue &= ~(0x3f << 8);
     regvalue |= (int32_t(value) << 8);
-    iowrite32(regvalue, vaddr_base);
+    phytimer_ccsr_base->iowrite32(regvalue, 0);
 }
 
 void PHYTimer::DumpMem()
 {
-    uint64_t addr = vaddr_base;
-    uint32_t csr = ioread32(addr);
+    uint32_t csr = phytimer_ccsr_base->ioread32(0);
     std::cerr << "PHYTimer enable:" << bool(csr & 0x1) << " softReset:" << bool(csr & 0x8) << " divisor:" << ((csr >> 8) & 0x3f)
               << "\n";
     for (int i = 0; i < 23; ++i)
@@ -111,18 +105,18 @@ PHYTimerControl PHYTimer::GetTimerControl(uint8_t id) const
         name << phytimer_names.at(id);
     else
         name << "T" << int(id);
-    return PHYTimerControl(vaddr_base + 4 + id * 8, name.str());
+    return PHYTimerControl(port->GetCSRAccess(LA9310_WINDOW_BAR0, la9310_phytimer_base_addr + 4 + id * 8), name.str());
 }
 
-PHYTimerControl::PHYTimerControl(uint64_t vaddr_status_control, const std::string& name)
+PHYTimerControl::PHYTimerControl(std::shared_ptr<PCIe_CSR_Access> status_control_csr, const std::string& name)
     : name(name)
-    , vaddr_status_control(vaddr_status_control)
+    , TM_PHY_TMR_CnSC(status_control_csr)
 {
 }
 
 void PHYTimerControl::TriggerDirectly(TriggerLogic output)
 {
-    uint32_t regvalue = ioread32(vaddr_status_control);
+    uint32_t regvalue = TM_PHY_TMR_CnSC->ioread32(0);
     regvalue &= ~0xC; // clear DIR_TRIG;
     regvalue |= CIF;
     regvalue |= CMPE;
@@ -133,37 +127,37 @@ void PHYTimerControl::TriggerDirectly(TriggerLogic output)
     // zero value to DIR_TRIG.
 
     // Writing 1 to CMPE bit disables the comparator, writing 0 has no effect.
-    iowrite32(regvalue, vaddr_status_control); // disable comparator
+    TM_PHY_TMR_CnSC->iowrite32(regvalue, 0); // disable comparator
 
     regvalue &= ~CMPE;
     regvalue &= ~CIF;
     regvalue |= (output << 2); // DIR_TRIG
-    iowrite32(regvalue, vaddr_status_control);
-    printf_dbg_log("PHYTimer %s software Trigger %i\n", name.c_str(), bool(ioread32(vaddr_status_control) & TVAL));
+    TM_PHY_TMR_CnSC->iowrite32(regvalue, 0);
+    printf_dbg_log("PHYTimer %s software Trigger %i\n", name.c_str(), bool(TM_PHY_TMR_CnSC->ioread32(0) & TVAL));
 }
 
 void PHYTimerControl::TriggerAtCounter(TriggerLogic output, uint32_t counter)
 {
-    uint32_t regvalue = ioread32(vaddr_status_control);
+    uint32_t regvalue = TM_PHY_TMR_CnSC->ioread32(0);
     regvalue &= ~0xF; // clear DIR_TRIG, CMP_TRIG;
     regvalue |= output; // CMP_TRIG
 
     regvalue &= ~CAP;
     regvalue |= CIF; // writing 1 clears CIF
     regvalue |= CMPE; // writing 1 disabled comparator
-    iowrite32(regvalue, vaddr_status_control);
+    TM_PHY_TMR_CnSC->iowrite32(regvalue, 0);
     regvalue &= ~CMPE; // writing 1 disabled comparator
-    iowrite32(regvalue, vaddr_status_control);
+    TM_PHY_TMR_CnSC->iowrite32(regvalue, 0);
 
-    iowrite32(counter, vaddr_status_control + 4); // writing counter enables comparator
+    TM_PHY_TMR_CnSC->iowrite32(counter, 4); // writing counter enables comparator
     printf_dbg_log("PHYTimer %s schedule comparator TriggerLogic %i @ phy:0x%08X\n", name.c_str(), output, counter);
 }
 
 std::string PHYTimerControl::ToString() const
 {
     char ctemp[128];
-    uint32_t csr = ioread32(vaddr_status_control);
-    snprintf(ctemp, sizeof(ctemp), "CSR:%08X CNT:%08X | ", csr, ioread32(vaddr_status_control + 4));
+    uint32_t csr = TM_PHY_TMR_CnSC->ioread32(0);
+    snprintf(ctemp, sizeof(ctemp), "CSR:%08X CNT:%08X | ", csr, TM_PHY_TMR_CnSC->ioread32(4));
     std::stringstream ss;
     ss << ctemp;
     ss << " Trig:" << (csr & TVAL ? 1 : 0);
@@ -176,15 +170,15 @@ std::string PHYTimerControl::ToString() const
 
 uint32_t PHYTimerControl::CaptureCounter()
 {
-    uint32_t regvalue = ioread32(vaddr_status_control);
+    uint32_t regvalue = TM_PHY_TMR_CnSC->ioread32(0);
     regvalue |= CAP;
-    iowrite32(regvalue, vaddr_status_control);
-    return ioread32(vaddr_status_control + 4);
+    TM_PHY_TMR_CnSC->iowrite32(regvalue, 0);
+    return TM_PHY_TMR_CnSC->ioread32(4);
 }
 
 uint32_t PHYTimerControl::ReadCounter()
 {
-    return ioread32(vaddr_status_control + 4);
+    return TM_PHY_TMR_CnSC->ioread32(4);
 }
 
 } // namespace lime

@@ -23,6 +23,21 @@ struct mmaped_region {
     size_t size{ 0 };
 };
 
+class LA9310_PCIe;
+
+class PCIe_CSR_Access
+{
+  public:
+    PCIe_CSR_Access(LA9310_PCIe* port, uint32_t window_id, size_t base_offset);
+    void iowrite32(uint32_t value, size_t offset);
+    uint32_t ioread32(size_t offset);
+
+  private:
+    LA9310_PCIe* port;
+    uint32_t window_id;
+    size_t base_offset;
+};
+
 /// @brief Class for communicating with a PCIe device.
 class LIME_API LA9310_PCIe : public LimePCIe
 {
@@ -79,6 +94,13 @@ class LIME_API LA9310_PCIe : public LimePCIe
     void sync_iq_flood_after_write(uint8_t *addr, uint32_t data_size);
 
     mmaped_region GetBar(uint8_t i);
+    std::shared_ptr<PCIe_CSR_Access> GetCSRAccess(uint32_t window_id, size_t base_offset = 0)
+    {
+        return std::make_shared<PCIe_CSR_Access>(this, window_id, base_offset);
+    }
+
+    OpStatus iowrite32(uint32_t window_id, uint32_t value, uint64_t address);
+    uint32_t ioread32(uint32_t window_id, uint64_t address);
 
   private:
     std::filesystem::path mFilePath;

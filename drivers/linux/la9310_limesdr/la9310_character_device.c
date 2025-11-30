@@ -31,6 +31,12 @@ struct char_dev_data
 
 static struct char_dev_data la9310_cdevs[LA9310_LIMESDR_MINOR_COUNT];
 
+static const struct vm_operations_struct mmap_mem_ops = {
+#ifdef CONFIG_HAVE_IOREMAP_PROT
+    .access = generic_access_phys
+#endif
+};
+
 static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
 {
     struct la9310_dev *la9310_dev = file->private_data;
@@ -101,8 +107,11 @@ static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
     else
     {
         // BAR mappings
-        unsigned long pfn = region->phys_addr >> PAGE_SHIFT;
+        size_t pfn = region->phys_addr >> PAGE_SHIFT;
         dev_info(sysDev, "MMAP %i - vm_start:%lx pfn:%lx size:%lu\n", window_id, vma->vm_start, pfn, mapSize);
+        vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+        vma->vm_ops = &mmap_mem_ops;
+
         remapRet = remap_pfn_range(vma, vma->vm_start, pfn, mapSize, vma->vm_page_prot);
     }
     if (remapRet)

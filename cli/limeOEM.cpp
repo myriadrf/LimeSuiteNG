@@ -3,6 +3,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/ToString.h"
 
 #include <assert.h>
 #include <cstring>
@@ -184,7 +185,7 @@ int main(int argc, char** argv)
         if (result == OpStatus::Success)
             cerr << "OEM TEST PASSED" << endl;
         else
-            cerr << "OEM TEST FAILED" << endl;
+            cerr << "OEM TEST FAILED (" << lime::ToString(result) << ")" << endl;
     }
 
     DeviceRegistry::freeDevice(device);

@@ -2,9 +2,13 @@
 
 #include <stdint.h>
 #include <string>
+#include <memory>
 #include "limesuiteng/Timespec.h"
 
 namespace lime {
+
+class LA9310_PCIe;
+class PCIe_CSR_Access;
 
 class LIME_API PHYTimerControl
 {
@@ -20,7 +24,7 @@ class LIME_API PHYTimerControl
 
     enum TriggerLogic { NoChange = 0, ForceZero = 1, ForceOne = 2, Invert = 3 };
 
-    PHYTimerControl(uint64_t vaddr_status_control, const std::string& name);
+    PHYTimerControl(std::shared_ptr<PCIe_CSR_Access> status_control_csr, const std::string& name);
     void TriggerDirectly(TriggerLogic output);
     void TriggerAtCounter(TriggerLogic output, uint32_t counter);
     uint32_t CaptureCounter();
@@ -30,17 +34,18 @@ class LIME_API PHYTimerControl
 
   private:
     std::string name;
-    uint64_t vaddr_status_control;
+    std::shared_ptr<PCIe_CSR_Access> TM_PHY_TMR_CnSC;
 };
 
 class LIME_API PHYTimer
 {
   private:
     double tickRate;
-    uint64_t vaddr_base;
+    std::shared_ptr<LA9310_PCIe> port;
+    std::shared_ptr<PCIe_CSR_Access> phytimer_ccsr_base;
 
   public:
-    PHYTimer(uint64_t vaddr_base);
+    PHYTimer(std::shared_ptr<LA9310_PCIe> port);
     void SetReferenceClock(double reference_clock_hz);
     double GetTickRate() const;
 

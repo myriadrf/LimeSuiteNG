@@ -36,11 +36,19 @@ struct LA9310_IOCTL_memory_layout {
     struct la9310_vm_layout host_interface;
 };
 
+struct LA9310_IOCTL_CSR_op {
+    la9310_window_t window_id; // which memory window
+    size_t offset;
+    uint32_t value;
+    bool write;
+};
+
 #define LA9310_IOCTL 'S'
 
 #define LA9310_IOCTL_GET_MEMORY_LAYOUT _IOR(LA9310_IOCTL, 25, struct LA9310_IOCTL_memory_layout)
 #define LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM _IOR(LA9310_IOCTL, 26, struct LA9310_IOCTL_flush_cache)
 #define LA9310_IOCTL_FLUSH_CACHE_IQFLOOD _IOR(LA9310_IOCTL, 27, struct LA9310_IOCTL_flush_cache)
+#define LA9310_IOCTL_CSR_OP _IOR(LA9310_IOCTL, 26, struct LA9310_IOCTL_CSR_op)
 
 long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 
