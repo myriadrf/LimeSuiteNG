@@ -14,6 +14,7 @@
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/SPI/SPI_utilities.h"
 #include "protocols/LMS64C/SPI.h"
+#include "protocols/LMS64C/CSR.h"
 #include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "DeviceTreeNode.h"
 
