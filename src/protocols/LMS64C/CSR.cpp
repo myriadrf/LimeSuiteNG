@@ -2,24 +2,17 @@
 
 namespace lime {
 
-LMS64C_CSR::LMS64C_CSR(std::shared_ptr<ISerialPort> port,
-    LMS64CProtocol::Command write_command,
-    LMS64CProtocol::Command read_command,
-    uint32_t subdeviceIndex,
-    uint32_t peripheralId)
-    : port(port)
-    , write_command(write_command)
-    , read_command(read_command)
-    , subdeviceIndex(subdeviceIndex)
-    , peripheralId(peripheralId)
+LMS64C_CSR::LMS64C_CSR(std::shared_ptr<ISerialPort> port)
+    : port(port) {}
+
+OpStatus LMS64C_CSR::ioWrite64(uint64_t address, uint64_t value)
 {
+    return LMS64CProtocol::CSRegIoWrite(*port, address, value);
 }
 
-OpStatus LMS64C_CSR::Transact(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count)
+uint64_t LMS64C_CSR::ioRead64(uint64_t address, OpStatus * status)
 {
-   // subdeviceIndex - index of daughter board
-   // peripheralId - within the board
-   return LMS64CProtocol::CSRegisterTransaction(*port, peripheralId, write_command, data_wr, read_command, data_rd, count, subdeviceIndex);
+    return LMS64CProtocol::CSRegIoRead(*port, address, status);
 }
 
 } // namespace lime

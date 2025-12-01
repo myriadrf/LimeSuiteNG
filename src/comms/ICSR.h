@@ -14,14 +14,22 @@ class LIME_API ICSR
 {
   public:
     virtual ~ICSR() {}
+
     /**
-      @brief Default path for writing/reading CSRegisters.
-      @param data_wr Buffer with register address and register data blocks for writing CSRegisters.
-      @param data_rd Buffer for storing read data from CSRegisters. Pass nullptr when wrinting only to CSRegisters.
-      @param count Number of CSRegisters to write/read. Not the size of data_wr buffer!
+      @brief Configuration Space Register write function.
+      @param address Register address.
+      @param data_rd New register value.
       @returns The operation status.
      */
-    virtual OpStatus Transact(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count) = 0;
+    virtual OpStatus ioWrite64(uint64_t address, uint64_t value) = 0;
+
+    /**
+      @brief Configuration Space Register read function.
+      @param address Register address.
+      @param status Read operation status.
+      @returns Value of CSRegister.
+     */
+    virtual uint64_t ioRead64(uint64_t address, OpStatus * status = nullptr) = 0;
 };
 
 } // namespace lime

@@ -12,23 +12,18 @@ namespace lime
 
 class ISerialPort;
 
-/** @brief Communication helper to divert data read/writes to Configuration Space Registers. */
+/** @brief Communication helper to divert data writes/reads to/from Configuration Space Registers. */
 class LMS64C_CSR : public ICSR
 {
   public:
-    LMS64C_CSR(std::shared_ptr<ISerialPort> port,
-        LMS64CProtocol::Command write_command,
-        LMS64CProtocol::Command read_command,
-        uint32_t subdeviceIndex,
-        uint32_t peripheralId);
-    OpStatus Transact(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count) override;
+    LMS64C_CSR(std::shared_ptr<ISerialPort> port);
+
+    OpStatus ioWrite64(uint64_t address, uint64_t value) override;
+
+    uint64_t ioRead64(uint64_t address, OpStatus * status = nullptr) override;
 
   private:
     std::shared_ptr<ISerialPort> port;
-    const LMS64CProtocol::Command write_command;
-    const LMS64CProtocol::Command read_command;
-    const uint32_t subdeviceIndex;
-    const uint32_t peripheralId;
 };
 
 
