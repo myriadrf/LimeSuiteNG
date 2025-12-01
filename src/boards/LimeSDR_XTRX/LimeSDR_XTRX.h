@@ -12,6 +12,7 @@ namespace lime {
 class LimePCIe;
 class ISerialPort;
 class ISPI;
+class ICSR;
 
 static const float XTRX_DEFAULT_REFERENCE_CLOCK = 26e6;
 
@@ -40,6 +41,8 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
+
+    ICSR * getICSR() override;
 
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
