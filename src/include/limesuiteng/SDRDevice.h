@@ -27,6 +27,7 @@ struct CustomParameterIO;
 class OEMTestReporter;
 class RFStream;
 class GPIO_Interface;
+class ICSR;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -529,7 +530,7 @@ class LIME_API SDRDevice
     /// @copydoc ISPI::SPI()
     /// @param spiBusAddress The SPI address of the device to use.
     virtual OpStatus SPI(uint32_t spiBusAddress, const uint32_t* MOSI, uint32_t* MISO, uint32_t count);
-    
+
     /// @copydoc II2C::I2CWrite()
     virtual OpStatus I2CWrite(int address, const uint8_t* data, uint32_t length);
 
@@ -608,6 +609,10 @@ class LIME_API SDRDevice
     /// @brief Return GPIO controls interface if available
     /// @return nullptr if not available
     virtual GPIO_Interface* GetGPIOControls();
+
+    /// @brief Creates CSR interface to manage SDR specific Configuration Space Registers.
+    /// @return Address to SDR CSR interface.
+    virtual ICSR * getICSR();
 };
 
 } // namespace lime
