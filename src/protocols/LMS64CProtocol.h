@@ -165,14 +165,9 @@ OpStatus SPI16(ISerialPort& port,
     size_t count,
     uint32_t subDevice);
 
-OpStatus CSRegisterTransaction(ISerialPort& port,
-    uint8_t chipSelect,
-    LMS64CProtocol::Command writeCmd,
-    const uint64_t* data_wr,
-    LMS64CProtocol::Command readCmd,
-    uint64_t* data_rd,
-    size_t count,
-    uint32_t subDevice);
+OpStatus CSRegIoWrite(ISerialPort& port, uint64_t address, uint64_t value, int wordLength = 64);
+
+uint64_t CSRegIoRead(ISerialPort& port, uint64_t address, OpStatus * status, int wordLength = 64);
 
 } // namespace LMS64CProtocol
 
