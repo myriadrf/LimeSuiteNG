@@ -7,7 +7,7 @@
 #include "comms/ISerialPort.h"
 #include "comms/USB/FX3/FX3.h"
 #include "comms/USB/IUSB.h"
-#include "comms/ICSR.h"
+#include "protocols/LMS64C/CSR.h"
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
@@ -450,6 +450,11 @@ std::unique_ptr<lime::RFStream> LimeSDR::StreamCreate(const StreamConfig& config
     if (status != OpStatus::Success)
         return std::unique_ptr<RFStream>(nullptr);
     return streamer;
+}
+
+ICSR * LimeSDR::getICSR()
+{
+    return new LMS64C_CSR(mSerialPort);
 }
 
 } // namespace lime
