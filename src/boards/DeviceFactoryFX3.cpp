@@ -12,7 +12,6 @@
 #include "CommonFunctions.h"
 
 #include "protocols/LMS64C/SPI.h"
-#include "protocols/LMS64C/CSR.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
@@ -76,10 +75,8 @@ SDRDevice* DeviceFactoryFX3::make_LimeSDR(const DeviceHandle& handle, uint16_t v
         std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, 0, 0);
     auto route_fpga =
         std::make_shared<LMS64C_SPI>(usbPipe, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, 0, 0);
-    auto route_fpga_csr = 
-        std::make_shared<LMS64C_CSR>(usbPipe, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, 0, 0);
 
-    return new LimeSDR(route_lms7002m, route_fpga, route_fpga_csr, usbComms, usbPipe);
+    return new LimeSDR(route_lms7002m, route_fpga, usbComms, usbPipe);
 }
 
 SDRDevice* DeviceFactoryFX3::make(const DeviceHandle& handle)

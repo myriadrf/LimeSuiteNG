@@ -11,7 +11,6 @@
 namespace lime {
 
 class IUSB;
-class ICSR;
 
 /** @brief Class for managing the LimeSDR-USB device. */
 class LimeSDR : public LMS7002M_SDRDevice
@@ -19,7 +18,6 @@ class LimeSDR : public LMS7002M_SDRDevice
   public:
     LimeSDR(std::shared_ptr<ISPI> spiLMS,
         std::shared_ptr<ISPI> spiFPGA,
-        std::shared_ptr<ICSR> csrFPGA,
         std::shared_ptr<IUSB> mStreamPort,
         std::shared_ptr<ISerialPort> commsPort);
     ~LimeSDR();
@@ -37,8 +35,6 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-
-    OpStatus CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count) override;
 
     OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
@@ -74,7 +70,6 @@ class LimeSDR : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<ISPI> mlms7002mPort;
     std::shared_ptr<ISPI> mfpgaPort;
-    std::shared_ptr<ICSR> mfpgaCsrPort;
     std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };

@@ -47,11 +47,6 @@ OpStatus SDRDevice::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MIS
     return ReportError(OpStatus::NotImplemented, "TransactSPI not implemented"s);
 }
 
-OpStatus SDRDevice::CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count)
-{
-    return ReportError(OpStatus::NotImplemented, "TransactCSR not implemented"s);
-}
-
 OpStatus SDRDevice::I2CWrite(int address, const uint8_t* data, uint32_t length)
 {
     return ReportError(OpStatus::NotImplemented, "WriteI2C not implemented"s);

@@ -114,14 +114,12 @@ OpStatus LimeSDR_XTRX::LMS1_UpdateFPGAInterface(void* userData)
 /// @param refClk The reference clock of the device.
 LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
     std::shared_ptr<ISPI> spiFPGA,
-    std::shared_ptr<ICSR> csrFPGA,
     std::shared_ptr<LimePCIe> sampleStream,
     std::shared_ptr<ISerialPort> control,
     double refClk)
     : LMS7002M_SDRDevice()
     , lms7002mPort(spiRFsoc)
     , fpgaPort(spiFPGA)
-    , mfpgaCsrPort(csrFPGA)
     , mStreamPort(sampleStream)
     , mSerialPort(control)
     , mConfigInProgress(false)
@@ -357,11 +355,6 @@ OpStatus LimeSDR_XTRX::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     default:
         throw std::logic_error("invalid SPI chip select"s);
     }
-}
-
-OpStatus LimeSDR_XTRX::CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count)
-{
-    return mfpgaCsrPort->Transact(data_wr, data_rd, count);
 }
 
 OpStatus LimeSDR_XTRX::LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation)

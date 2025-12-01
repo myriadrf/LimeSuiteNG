@@ -12,7 +12,6 @@ namespace lime {
 class LimePCIe;
 class ISerialPort;
 class ISPI;
-class ICSR;
 
 static const float XTRX_DEFAULT_REFERENCE_CLOCK = 26e6;
 
@@ -23,7 +22,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     LimeSDR_XTRX() = delete;
     LimeSDR_XTRX(std::shared_ptr<ISPI> spiLMS7002M,
         std::shared_ptr<ISPI> spiFPGA,
-        std::shared_ptr<ICSR> csrFPGA,
         std::shared_ptr<LimePCIe> sampleStream,
         std::shared_ptr<ISerialPort> control,
         double refClk = XTRX_DEFAULT_REFERENCE_CLOCK);
@@ -39,8 +37,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
     OpStatus SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, uint32_t count) override;
-
-    OpStatus CSR(const uint64_t* data_wr, uint64_t* data_rd, uint32_t count) override;
 
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;
@@ -98,7 +94,6 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
 
     std::shared_ptr<ISPI> lms7002mPort;
     std::shared_ptr<ISPI> fpgaPort;
-    std::shared_ptr<ICSR> mfpgaCsrPort;
     std::shared_ptr<LimePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
 

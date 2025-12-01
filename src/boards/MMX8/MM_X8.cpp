@@ -14,7 +14,6 @@
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/SPI/SPI_utilities.h"
 #include "protocols/LMS64C/SPI.h"
-#include "protocols/LMS64C/CSR.h"
 #include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "DeviceTreeNode.h"
 
@@ -83,10 +82,8 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::shared_ptr<ISerialPort> controlPort, std::vector
             controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, subDeviceId, 0);
         auto fpga_spi = std::make_shared<LMS64C_SPI>(
             controlPort, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, subDeviceId, 0);
-        auto fpga_csr = 
-            std::make_shared<LMS64C_CSR>(controlPort, LMS64CProtocol::Command::CMD_BRDCSR_WR, LMS64CProtocol::Command::CMD_BRDCSR_RD, subDeviceId, 0);
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, fpga_csr, trxStreams[i], controlPort, limemmx8::X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, trxStreams[i], controlPort, limemmx8::X8ReferenceClock);
         xtrx->SetSubDeviceIndex(subDeviceId);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
