@@ -5,6 +5,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
+#include "comms/ICSR.h"
 
 #include "numericSlider/numericSlider.h"
 
@@ -77,6 +78,7 @@ CSR_wxgui::CSR_wxgui(wxWindow* parent, wxWindowID id, const wxString& title, con
     : IModuleFrame(parent, id, title, pos, size, styles)
 {
    mDevice = nullptr;
+   CSR_interface = nullptr;
 
    wxFlexGridSizer* mainSizer;
    mainSizer = new wxFlexGridSizer(0, 1, 0, 0);
@@ -93,13 +95,29 @@ CSR_wxgui::CSR_wxgui(wxWindow* parent, wxWindowID id, const wxString& title, con
    Centre(wxBOTH);
 }
 
+CSR_wxgui::~CSR_wxgui() { delete CSR_interface; }
+
 bool CSR_wxgui::Initialize(SDRDevice* pCtrPort)
 {
     mDevice = pCtrPort;
+    CSR_interface = pCtrPort->getICSR();
+
     if (mDevice == nullptr)
     {
         wxArrayString emptyList;
         emptyList.Add("No comms");
+        for (auto iter : mCSRselection)
+        {
+            if (iter)
+                iter->Set(emptyList);
+        }
+        return false;
+    }
+
+    if (CSR_interface == nullptr)
+    {
+        wxArrayString emptyList;
+        emptyList.Add("No CSR interface");
         for (auto iter : mCSRselection)
         {
             if (iter)
@@ -119,8 +137,14 @@ void CSR_wxgui::onCSRwrite(wxCommandEvent& event)
       CSRFields& fields = mCSRElements.at(event.GetId());
       if (!mDevice)
       {
-         fields.status->SetLabel("Not connected");
-         return;
+        fields.status->SetLabel("Not connected");
+        return;
+      }
+
+      if (!CSR_interface)
+      {
+        fields.status->SetLabel("CSR interface not available!");
+        return;
       }
 
       const wxString strAddress = fields.address->GetValue();
@@ -132,9 +156,7 @@ void CSR_wxgui::onCSRwrite(wxCommandEvent& event)
       unsigned long long value = 0;
       strValue.ToULongLong(&value, 16);
 
-      const uint64_t data_wr[2] = {addr, value};
-
-      OpStatus status = mDevice->CSR(data_wr, nullptr, 1);
+      OpStatus status = CSR_interface->ioWrite64(addr, value);
       fields.status->SetLabel(ToString(status));
 
     } catch (...)
@@ -147,37 +169,44 @@ void CSR_wxgui::onCSRread(wxCommandEvent& event)
 {
     try
     {
-         CSRFields& fields = mCSRElements.at(event.GetId());
-         if (!mDevice)
-         {
-               fields.status->SetLabel("Not connected");
-               return;
-         }
+        CSRFields& fields = mCSRElements.at(event.GetId());
+        if (!mDevice)
+        {
+            fields.status->SetLabel("Not connected");
+            return;
+        }
+
+        if (!CSR_interface)
+        {
+            fields.status->SetLabel("CSR interface not available!");
+            return;
+        }
+
+        const wxString strAddress = fields.address->GetValue();
+        unsigned long long addr = 0;
+        strAddress.ToULongLong(&addr, 16);
    
-         const wxString strAddress = fields.address->GetValue();
-         unsigned long long addr = 0;
-         strAddress.ToULongLong(&addr, 16);
-   
-         const wxString strValue = fields.value->GetValue();
-         unsigned long long value = 0;
-         strValue.ToULongLong(&value, 16);
+        //  const wxString strValue = fields.value->GetValue();
+        //  unsigned long long value = 0;
+        //  strValue.ToULongLong(&value, 16);
 
 
-         uint64_t data_wr = addr;
-         uint64_t data_rd = 0;
+        //  uint64_t data_wr = addr;
+        uint64_t value = 0;
+        OpStatus status = OpStatus::Success;
 
-         try
-         {
-            OpStatus status = mDevice->CSR(&data_wr, &data_rd, 1);
-            fields.status->SetLabel(ToString(status));
-            if (status != OpStatus::Success)
-               return;
-            fields.value->SetValue(wxString::Format("%0llX", data_rd));
+        try
+        {
+        value = CSR_interface->ioRead64(addr, &status);
+        fields.status->SetLabel(ToString(status));
+        if (status != OpStatus::Success)
+            return;
+        fields.value->SetValue(wxString::Format("%0llX", value));
 
-         } catch (std::runtime_error& e)
-         {
-            fields.status->SetLabel(e.what());
-         }
+        } catch (std::runtime_error& e)
+        {
+        fields.status->SetLabel(e.what());
+        }
     } catch (...)
     {
         lime::error("No csr controls created for event id: %i", event.GetId());
