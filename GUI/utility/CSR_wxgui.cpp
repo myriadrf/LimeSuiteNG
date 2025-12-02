@@ -95,15 +95,13 @@ CSR_wxgui::CSR_wxgui(wxWindow* parent, wxWindowID id, const wxString& title, con
    Centre(wxBOTH);
 }
 
-CSR_wxgui::~CSR_wxgui() { delete CSR_interface; }
-
 bool CSR_wxgui::Initialize(SDRDevice* pCtrPort)
 {
     mDevice = pCtrPort;
-    CSR_interface = pCtrPort->getICSR();
-
     if (mDevice == nullptr)
     {
+        delete CSR_interface;
+        CSR_interface = nullptr;
         wxArrayString emptyList;
         emptyList.Add("No comms");
         for (auto iter : mCSRselection)
@@ -114,18 +112,7 @@ bool CSR_wxgui::Initialize(SDRDevice* pCtrPort)
         return false;
     }
 
-    if (CSR_interface == nullptr)
-    {
-        wxArrayString emptyList;
-        emptyList.Add("No CSR interface");
-        for (auto iter : mCSRselection)
-        {
-            if (iter)
-                iter->Set(emptyList);
-        }
-        return false;
-    }
-
+    CSR_interface = pCtrPort->getICSR();
     return true;
 }
 

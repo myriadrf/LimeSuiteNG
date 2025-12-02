@@ -47,7 +47,6 @@ class CSR_wxgui : public IModuleFrame
         const wxSize& size = wxDefaultSize,
         long styles = wxDEFAULT_DIALOG_STYLE);
     
-    ~CSR_wxgui();
     virtual bool Initialize(lime::SDRDevice* device);
     virtual void Update(){};
 
