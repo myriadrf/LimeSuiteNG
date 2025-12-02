@@ -323,7 +323,7 @@ OpStatus CSRegIoWrite(ISerialPort& port, uint64_t address, uint64_t value, int w
 
     pkt.cmd = Command::CMD_BRDCSR_WR;
     pkt.status = CommandStatus::Undefined;
-    pkt.blockCount = 0;
+    pkt.blockCount = 1;
     pkt.periphID = 0;
     pkt.subDevice = 0;
 
@@ -350,7 +350,7 @@ uint64_t CSRegIoRead(ISerialPort& port, uint64_t address, OpStatus * status, int
     LMS64CPacket pkt;
     pkt.cmd = Command::CMD_BRDCSR_RD;
     pkt.status = CommandStatus::Undefined;
-    pkt.blockCount = 0;
+    pkt.blockCount = 1;
     pkt.periphID = 0;
     pkt.subDevice = 0;
 
