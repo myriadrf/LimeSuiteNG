@@ -22,6 +22,11 @@ set_target_properties(limeSPI PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_link_libraries(limeSPI PRIVATE cli-shared)
 target_precompile_headers(limeSPI REUSE_FROM cli-shared)
 
+add_executable(limeCSR limeCSR.cpp)
+set_target_properties(limeCSR PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(limeCSR PRIVATE cli-shared)
+target_precompile_headers(limeCSR REUSE_FROM cli-shared)
+
 add_executable(limeConfig limeConfig.cpp)
 set_target_properties(limeConfig PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries(limeConfig PRIVATE cli-shared)
