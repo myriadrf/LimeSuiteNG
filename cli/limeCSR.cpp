@@ -15,10 +15,11 @@ using namespace lime::cli;
 
 
 static void PrintCSRegReadResults(std::ostream& stream, const std::vector<uint64_t>& rd_data, const std::vector<uint64_t>& wr_data)
-{
+{ 
+   stream << "CSR data read out (address | value):" << endl;
    stream << std::hex << std::setfill('0');
-   for(int i = 0; wr_data.size(); ++i)
-      stream << std::setw(16) << wr_data[i] << std::setw(16) << rd_data[i] << std::endl;
+   for(int i = 0; i < wr_data.size(); ++i)
+      stream << "0x" << std::setw(16) << wr_data[i] << " 0x" << std::setw(16) << rd_data[i] << std::endl;
 }
 
 static uint64_t hex2ULLint(const std::string_view hexstr)
@@ -170,18 +171,19 @@ int main(int argc, char** argv)
       parseReadInput(hexInput, wr_data);
       rd_data.resize(wr_data.size());
    }
-   
+
    ICSR * CSR_interface = device->getICSR();
 
    try
    {   
+      cerr << setfill('0');
       if(write)
       {
          for(int i = 0; i < wr_data.size(); i+=2)
          {
             OpStatus status = CSR_interface->ioWrite64(wr_data[i], wr_data[i+1]);
             if(status != OpStatus::Success)
-               cerr << "CSR write failed for register address 0x" << hex << wr_data[i] << dec << " with error: " << ToString(status) << endl;
+               cerr << "CSR write failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
          }
       }
       else if(read)
@@ -191,7 +193,7 @@ int main(int argc, char** argv)
          {
             rd_data[i] = CSR_interface->ioRead64(wr_data[i], &status);
             if(status != OpStatus::Success)
-               cerr << "CSR read failed for register address 0x" << hex << wr_data[i] << dec << " with error: " << ToString(status) << endl;
+               cerr << "CSR read failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
          }
       }
       
