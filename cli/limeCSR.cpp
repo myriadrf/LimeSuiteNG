@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/ToString.h"
 #include "comms/ICSR.h"
 
 #include <cassert>
@@ -39,7 +40,6 @@ static int parseWriteInput(std::string_view hexstr, std::vector<uint64_t>& wr_da
       position = hexstr.find_first_of(delimiters);
       std::string_view token = hexstr.substr(0, position);
       int tokenLength = token.size();
-      cout << "Parsed token " << token << " size is " << tokenLength << endl;
       if (tokenLength <= 32 && tokenLength > 16) // write instruction
       {
          uint64_t addr = hex2ULLint(token.substr(0,16));
@@ -47,7 +47,29 @@ static int parseWriteInput(std::string_view hexstr, std::vector<uint64_t>& wr_da
          wr_data.push_back(addr);
          wr_data.push_back(value);
       }
-      else if (tokenLength <= 16 && tokenLength > 0) // Read instruction
+      else if (tokenLength != 0)
+      {
+         std::cerr << "Invalid input value: "sv << token << std::endl;
+      }
+      ++tokenCount;
+      hexstr = hexstr.substr(position + 1);
+   }
+   return tokenCount;
+}
+
+static int parseReadInput(std::string_view hexstr, std::vector<uint64_t>& wr_data)
+{
+   static const std::string_view delimiters = " \n,"sv;
+   wr_data.clear();
+   int tokenCount = 0;
+
+   std::size_t position = 0;
+   while (position != std::string_view::npos)
+   {
+      position = hexstr.find_first_of(delimiters);
+      std::string_view token = hexstr.substr(0, position);
+      int tokenLength = token.size();
+      if (tokenLength <= 16 && tokenLength > 0) // read instruction
       {
          uint64_t addr = hex2ULLint(token);
          wr_data.push_back(addr);
@@ -140,14 +162,15 @@ int main(int argc, char** argv)
 
    std::vector<uint64_t> wr_data;
    std::vector<uint64_t> rd_data;
-   parseWriteInput(hexInput, wr_data);
-
-   // for(int i = 0; i < wr_data.size(); ++i)
-   //    cout << "wr_data[" << i << "]=" << hex << setw(16) << wr_data[i] << endl;
-
-   if(read)
+   
+   if(write)
+      parseWriteInput(hexInput, wr_data);
+   else if(read)
+   {
+      parseReadInput(hexInput, wr_data);
       rd_data.resize(wr_data.size());
-
+   }
+   
    ICSR * CSR_interface = device->getICSR();
 
    try
@@ -159,7 +182,6 @@ int main(int argc, char** argv)
             OpStatus status = CSR_interface->ioWrite64(wr_data[i], wr_data[i+1]);
             if(status != OpStatus::Success)
                cerr << "CSR write failed for register address 0x" << hex << wr_data[i] << dec << " with error: " << ToString(status) << endl;
-
          }
       }
       else if(read)
@@ -170,13 +192,13 @@ int main(int argc, char** argv)
             rd_data[i] = CSR_interface->ioRead64(wr_data[i], &status);
             if(status != OpStatus::Success)
                cerr << "CSR read failed for register address 0x" << hex << wr_data[i] << dec << " with error: " << ToString(status) << endl;
-
          }
       }
       
 
    } catch (std::runtime_error& e)
    {
+      delete CSR_interface;
       DeviceRegistry::freeDevice(device);
       cerr << "CSR failed: "sv << e.what() << endl;
       return EXIT_FAILURE;
