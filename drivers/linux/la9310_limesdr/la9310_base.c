@@ -424,6 +424,45 @@ la9310_init_subdrv_dma_buf(struct la9310_dev *la9310_dev)
 }
 
 static int
+la9310_alloc_dma_buf(struct device *dev, const char *buf_name, struct la9310_mem_region_info *buf_info, int buf_size, enum dma_data_direction dma_dir)
+{
+	int status;
+
+	buf_info->vaddr = kmalloc(buf_size, GFP_KERNEL);
+	if (!buf_info->vaddr) {
+		dev_err(dev, "Failed to allocate %s\n", buf_name);
+		return -ENOMEM;
+	}
+
+	buf_info->size = buf_size;
+	
+	buf_info->phys_addr = dma_map_single(dev, buf_info->vaddr, buf_size, dma_dir);
+	status = dma_mapping_error(dev, buf_info->phys_addr);
+	if (status) {
+		dev_err(dev, "dma_map_single error @ va:%p pa:%llX for %s\n", buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_name);
+		kfree(buf_info->vaddr);	       
+		return status;
+	}
+
+	dev_info(dev, "%s size: %i, va:0x%px pa:0x%llx bus:0x%llx\n", buf_name, buf_size, buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_info->phys_addr);
+	return 0;
+}
+
+static int
+la9310_free_dma_buf(struct device *dev, const char *buf_name, struct la9310_mem_region_info *buf_info, enum dma_data_direction dma_dir)
+{
+	dev_info(dev, "Unmap and free %s size: %ll, va:0x%px pa:0x%llx bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_info->phys_addr);
+	if (buf_info->phys_addr)
+		dma_unmap_single(dev, buf_info->phys_addr, buf_info->size, dma_dir);
+	if (buf_info->vaddr)
+		kfree(buf_info->vaddr);
+
+	dev_info(dev, "Unmapped and freed %s\n", buf_name);
+
+	return 0;
+}
+
+static int
 la9310_scratch_dma_buf(struct la9310_dev *la9310_dev)
 {
 	struct la9310_dma_info *dma_info = &la9310_dev->dma_info;
@@ -432,20 +471,12 @@ la9310_scratch_dma_buf(struct la9310_dev *la9310_dev)
 
 	la9310_dev->scratch_buf_size = 4 * (1024 * 1024);
 
-	dma_addr_t scratch_buffer_bus;
-    void *scratch_buffer_va = dma_alloc_coherent(la9310_dev->dev, la9310_dev->scratch_buf_size, &scratch_buffer_bus, GFP_KERNEL);
-    if (!scratch_buffer_va)
-    {
-        dev_err(la9310_dev->dev, "Failed to allocate scratch buffer\n");
-        return -ENOMEM;
-    }
-    dev_info(la9310_dev->dev, "Scratch buf size: %i, va:0x%px pa:0x%llx bus:0x%llx\n", la9310_dev->scratch_buf_size, scratch_buffer_va, virt_to_phys(scratch_buffer_va), scratch_buffer_bus);
+	rc = la9310_alloc_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, la9310_dev->scratch_buf_size, DMA_BIDIRECTIONAL);
 
-    host_region->vaddr = scratch_buffer_va;
-    host_region->phys_addr = scratch_buffer_bus;
-	host_region->size = la9310_dev->scratch_buf_size;
+	if (rc)
+		return rc;
 
-    la9310_dev->scratch_buf_phys_addr = scratch_buffer_bus;
+	la9310_dev->scratch_buf_phys_addr = host_region->phys_addr;
 
 	if ((!host_region->vaddr) || (la9310_dev->scratch_buf_size < LA9310_DMA_BUF_SIZE)) {
 		dev_err(la9310_dev->dev, "ERR: ioremap DDR Address Failed\n");
@@ -459,7 +490,7 @@ la9310_scratch_dma_buf(struct la9310_dev *la9310_dev)
 	rc = la9310_scratch_outbound_create(la9310_dev);
 	if (rc) {
 		dev_err(la9310_dev->dev,
-			"scratch buf outbound window creation failed\n");
+				"scratch buf outbound window creation failed\n");
 		goto out;
 	}
 
@@ -748,70 +779,34 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 		goto out;
 	}
 
-    la9310_dev->iq_mem_size = 4 * 1024 * 1024;
+	la9310_dev->iq_mem_size = 4 * 1024 * 1024;
 
-    dma_addr_t iq_mem_Handle;
-    void *iq_mem_data = dma_alloc_coherent(la9310_dev->dev, la9310_dev->iq_mem_size, &iq_mem_Handle, GFP_KERNEL);
-    if (!iq_mem_data)
-    {
-        dev_err(la9310_dev->dev, "Failed to allocate iq_mem_data buffer\n");
-        return -ENOMEM;
-    }
-    dev_info(la9310_dev->dev, "iq_mem_data buf size: %i, va:%px bus:%llx\n", la9310_dev->iq_mem_size, iq_mem_data, iq_mem_Handle);
-    la9310_dev->iq_mem_addr = iq_mem_Handle;
-
-    la9310_dev->iqflood_region.vaddr = iq_mem_data;
-    la9310_dev->iqflood_region.phys_addr = iq_mem_Handle;
-    la9310_dev->iqflood_region.size = la9310_dev->iq_mem_size;
-
-	// if (la9310_dev->iq_mem_addr ==0) {
-	// 	np = of_find_node_by_name(NULL, "iqflood");
-	// 	if (!np)
-	// 		np = of_find_node_by_name(NULL, "iq");
-
-	// 	if (np) {
-	// 		rc = of_address_to_resource(np, 0, &mem_addr);
-	// 		if (!rc) {
-	// 			la9310_dev->iq_mem_addr = mem_addr.start;
-	// 			la9310_dev->iq_mem_size = resource_size(&mem_addr);
-	// 		}
-	// 		of_node_put(np);
-	// 	}
-	// }
-
-	la9310_create_rfnm_iqflood_outbound(la9310_dev);
-
-	dma_addr_t dmem_proxy_Handle;
-    la9310_dev->dmem_proxy.size = VSPA_DMEM_PROXY_SIZE;
-    la9310_dev->dmem_proxy.vaddr = dma_alloc_coherent(la9310_dev->dev, la9310_dev->dmem_proxy.size, &dmem_proxy_Handle, GFP_KERNEL);
-    la9310_dev->dmem_proxy.phys_addr = dmem_proxy_Handle;
-    if (!la9310_dev->dmem_proxy.vaddr)
-    {
-        dev_err(la9310_dev->dev, "Failed to allocate dmem proxy buffer\n");
-        return -ENOMEM;
-    }
-    dev_info(la9310_dev->dev,
-        "vspa dmem proxy buf size: %li, va:%px pa:%llx bus:%llx\n",
-        la9310_dev->dmem_proxy.size,
-        la9310_dev->dmem_proxy.vaddr,
-        virt_to_phys(la9310_dev->dmem_proxy.vaddr),
-        la9310_dev->dmem_proxy.phys_addr);
-    la9310_create_ipc_outbound(la9310_dev);
-
-    rc = la9310_init_hif(la9310_dev);
+	rc = la9310_alloc_dma_buf(la9310_dev->dev, "IQ Flood Buffer", &la9310_dev->iqflood_region, la9310_dev->iq_mem_size, DMA_BIDIRECTIONAL);
 	if (rc)
 		goto out;
+	la9310_dev->iq_mem_addr = la9310_dev->iqflood_region.phys_addr;
+
+	la9310_create_rfnm_iqflood_outbound(la9310_dev);
+	rc = la9310_alloc_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, VSPA_DMEM_PROXY_SIZE, DMA_BIDIRECTIONAL);
+	if (rc)
+		goto free_iqflood;
+
+	la9310_create_ipc_outbound(la9310_dev);
+
+	rc = la9310_init_hif(la9310_dev);
+	if (rc)
+		goto free_ipc;
 	la9310_init_msg_unit_ptrs(la9310_dev);
 	la9310_init_ep_logger(la9310_dev);
 
 	// rc = la9310_init_sysfs(la9310_dev);
 	// if (rc)
-	// 	goto out;
+	// 	goto free_ipc;
 	init_stage = LA9310_SYSFS_INIT_STAGE;
 
 	// rc = la9310_register_ep_stats_ops(la9310_dev);
 	// if (rc)
-	// 	goto out;
+	// 	goto free_ipc;
 
 	dev_info(la9310_dev->dev, "%s: Loading RTOS image\n",
 			la9310_dev->name);
@@ -819,14 +814,14 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (rc) {
 		dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d",
 				rc);
-		goto out;
+		goto free_ipc;
 	}
 
 #ifndef	LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 	if (rc) {
 		pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-		goto out;
+		goto free_ipc;
 	}
 
 	/*scrach register handshake request irq */
@@ -844,20 +839,20 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	if (rc) {
 		dev_err(la9310_dev->dev, "Reset handshake failed, err %d",
 				rc);
-		goto out;
+		goto free_ipc;
 	}
 
 	/* Verify that Host and target are using same version of HIF */
 	rc = la9310_verify_hif_compatibility(la9310_dev);
 	if (rc)
-		goto out;
+		goto free_ipc;
 
 	init_stage = LA9310_IRQ_INIT_STAGE;
 #ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 	if (rc) {
 		pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-		goto out;
+		goto free_ipc;
 	}
 #endif
 	/* WDOG request_irq */
@@ -904,7 +899,7 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 			if (rc) {
 				pr_err("%s: %s: probe failed, err %d\n",
 						__func__, &subdrv->name[0], rc);
-				goto out;
+				goto free_ipc;
 			}
 		}
 	}
@@ -912,32 +907,37 @@ la9310_base_probe(struct la9310_dev *la9310_dev)
 	// rc = la9310_modinfo_init(la9310_dev);
 
 	struct resource *tty_res = NULL;
-    tty_res = devm_kzalloc(la9310_dev->dev, sizeof(struct resource), GFP_KERNEL);
-    if (!tty_res)
-    {
-        dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
-        return -1;
-    }
-    {
-        tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
-    }
-    tty_res->flags = IORESOURCE_REG;
-    char *devSymlink = devm_kzalloc(la9310_dev->dev, 64, GFP_KERNEL);
-    snprintf(devSymlink, 64, "limesdr_micro_uart");
-    tty_res->name = devSymlink;
-    la9310_dev->uart = platform_device_register_simple("la9310uart", 1, tty_res, 1);
-    if (IS_ERR(la9310_dev->uart))
-    {
-        dev_err(la9310_dev->dev, "Failed to register UART\n");
-        return -1;
-    }
+	tty_res = devm_kzalloc(la9310_dev->dev, sizeof(struct resource), GFP_KERNEL);
+	if (!tty_res)
+	{
+		dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
+		rc = -1;
+		goto free_ipc;
+	}
+	{
+		tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
+	}
+	tty_res->flags = IORESOURCE_REG;
+	char *devSymlink = devm_kzalloc(la9310_dev->dev, 64, GFP_KERNEL);
+	snprintf(devSymlink, 64, "limesdr_micro_uart");
+	tty_res->name = devSymlink;
+	la9310_dev->uart = platform_device_register_simple("la9310uart", 1, tty_res, 1);
+	if (IS_ERR(la9310_dev->uart))
+	{
+		dev_err(la9310_dev->dev, "Failed to register UART\n");
+		rc = -1;
+		goto free_ipc;
+	}
 
+	return 0;
+free_ipc:
+	la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
+free_iqflood:
+	la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
 out:
 	if (rc)
 		la9310_base_deinit(la9310_dev, init_stage, i);
-
 	return rc;
-
 }
 
 static int
@@ -1035,13 +1035,18 @@ la9310_base_remove(struct la9310_dev *la9310_dev)
 
 	pci_disable_msi(la9310_dev->pdev);
 
+#if 0
     dma_free_coherent(la9310_dev->dev,
         la9310_dev->scratch_buf_size,
         la9310_dev->dma_info.host_buf.vaddr,
         la9310_dev->dma_info.host_buf.phys_addr);
-
+#endif
     la9310_unmap_mem_regions(la9310_dev);
 
+	// la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
+	// la9310_free_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, DMA_BIDIRECTIONAL);
 	// la9310_remove_sysfs(la9310_dev);
 
 	return 0;
