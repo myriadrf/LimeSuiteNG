@@ -451,7 +451,7 @@ la9310_alloc_dma_buf(struct device *dev, const char *buf_name, struct la9310_mem
 static int
 la9310_free_dma_buf(struct device *dev, const char *buf_name, struct la9310_mem_region_info *buf_info, enum dma_data_direction dma_dir)
 {
-	dev_info(dev, "Unmap and free %s size: %ll, va:0x%px pa:0x%llx bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_info->phys_addr);
+	dev_info(dev, "Unmap and free %s size: %llu, va:0x%px pa:0x%llx bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_info->phys_addr);
 	if (buf_info->phys_addr)
 		dma_unmap_single(dev, buf_info->phys_addr, buf_info->size, dma_dir);
 	if (buf_info->vaddr)
