@@ -118,8 +118,15 @@ int main(int argc, char** argv)
    args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {'d', "device"}, "");
    args::Group                             writeGroup(arguments, "Data options");
-   args::ValueFlag<std::string>            fileFlag(arguments, "file", "File", {'f', "file"});
-   args::ValueFlag<std::string>            streamFlag(arguments, "stream", "Stream", {'s', "stream"});
+   args::ValueFlag<std::string>            fileFlag(arguments, "file", "Stream from File. For word format in file, checkout --stream flag description.\n", {'f', "file"});
+   args::ValueFlag<std::string>            streamFlag(arguments, "stream", "Stream from CLI. For write command, provide 16 byte word"
+                                                                           " (address + data) in hex format without prefix '0x'." 
+                                                                           " For read command, provide 8 byte word (address) in hex format without" 
+                                                                           " prefix '0x'. Multiple words can be separated using comma."
+                                                                           " Files also support space and newline delimiters.\n  Write"
+                                                                           " command example:\n --stream=100cc000007000801a0000e00000feed,"
+                                                                           "0000000000700080000000e00000feed\n  Read command example:\n "
+                                                                           "--stream=100cc00000700080,0000000000700080\n", {'s', "stream"});
    // clang-format on
 
    try
