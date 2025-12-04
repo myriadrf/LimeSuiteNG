@@ -48,7 +48,7 @@ target_link_libraries(limeOEM PRIVATE cli-shared)
 target_precompile_headers(limeOEM REUSE_FROM cli-shared)
 
 install(
-    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM
+    TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM limeCSR
     COMPONENT cli
     DESTINATION bin)
 
