@@ -156,6 +156,7 @@ class LMS7002M_SDRDevice : public SDRDevice
 
     OpStatus LMS7002M_Configure(LMS7002M& chip, const SDRConfig& config);
     OpStatus LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
+    OpStatus LMS7002M_SetDigitalInterfaceSampleRate(double rx_Hz, double tx_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     OpStatus LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& config);
     OpStatus LMS7002ChannelConfigure(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);
     OpStatus LMS7002ChannelCalibration(LMS7002M& chip, const ChannelConfig& config, uint8_t channelIndex);

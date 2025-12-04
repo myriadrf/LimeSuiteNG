@@ -26,7 +26,8 @@ int main(int argc, char** argv)
     args::Flag                      initializeFlag(parser, "", "Reset and initialize entire device", {'i', "initialize"});
 
     args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
-    args::ValueFlag<double>         samplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"samplerate"});
+    args::ValueFlag<double>         txsamplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"txsamplerate"});
+    args::ValueFlag<double>         rxsamplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"rxsamplerate"});
 
     args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
     args::ValueFlag<bool>           rxenFlag(parser, "rx enable", "Enable receiver [0, 1]", {"rxen"});
@@ -72,9 +73,9 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
-    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
-                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag ||
-                       rxgfirFlag || txgfirFlag;
+    bool doConfigure = refclkFlag || rxsamplerateFlag || txsamplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag ||
+                       rxoversampleFlag || rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag ||
+                       txtestsignalFlag || rxgfirFlag || txgfirFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
@@ -90,12 +91,9 @@ int main(int argc, char** argv)
     config.channel[0].rx.oversample = 2;
     config.channel[0].tx.oversample = 2;
 
-    if (samplerateFlag)
-    {
-        double sampleRate = args::get(samplerateFlag);
-        config.channel[0].rx.sampleRate = sampleRate;
-        config.channel[0].tx.sampleRate = sampleRate;
-    }
+    config.channel[0].rx.sampleRate = args::get(rxsamplerateFlag);
+    config.channel[0].tx.sampleRate = args::get(txsamplerateFlag);
+
     // clang-format off
     if (refclkFlag)         config.referenceClockFreq = args::get(refclkFlag);
     if (rxenFlag)           config.channel[0].rx.enabled = args::get(rxenFlag);

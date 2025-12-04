@@ -1183,6 +1183,54 @@ OpStatus LMS7002M_SDRDevice::LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecim
     return mLMSChip->SetInterfaceFrequency(cgenFreq, hbi_ovr, hbd_ovr);
 }
 
+OpStatus LMS7002M_SDRDevice::LMS7002M_SetDigitalInterfaceSampleRate(
+    double rx_fs_Hz, double tx_fs_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
+{
+    if (rxDecimation == 0)
+        rxDecimation = 2;
+    if (txInterpolation == 0)
+        txInterpolation = 2;
+
+    double rxtsp_hz = 2 * rx_fs_Hz * rxDecimation;
+    double txtsp_hz = 2 * tx_fs_Hz * txInterpolation;
+
+    double txrxratio = txtsp_hz / rxtsp_hz;
+    double cgenHz = 0;
+
+    auto& mLMSChip = mLMSChips.at(0);
+
+    if (txrxratio <= 4)
+    {
+        cgenHz = rxtsp_hz * 4;
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
+        const int clkh_oversample = std::log2(cgenHz / txtsp_hz);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, clkh_oversample);
+    }
+    else
+    {
+        cgenHz = txtsp_hz * 4;
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 1);
+        const int clkh_oversample = std::log2(cgenHz / rxtsp_hz);
+        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, clkh_oversample);
+    }
+
+    uint8_t hbd_ovr = std::log2(rxDecimation);
+    uint8_t hbi_ovr = std::log2(txInterpolation);
+
+    lime::debug(
+        "Sampling rate: cgen(%f), rxtsp(%f) dec:2^%i, txtsp(%f) int:2^%i", cgenHz, rxtsp_hz, 1 + hbd_ovr, txtsp_hz, 1 + hbi_ovr);
+
+    LMS7002M::ChannelScope scope(mLMSChip.get());
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 1);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
+
+    return mLMSChip->SetInterfaceFrequency(cgenHz, hbi_ovr, hbd_ovr);
+}
+
 OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& cfg)
 {
     OpStatus status = OpStatus::Success;
