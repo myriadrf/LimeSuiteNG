@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# MyriadRF conf.py v1.2.0
+# MyriadRF conf.py v1.2.0 + customised to add Mermaid + Breathe
 
 import sys
 import sphinx_rtd_theme
@@ -51,7 +51,8 @@ extensions = [
     'sphinx_code_tabs',
     'sphinx_rtd_theme',
     'notfound.extension',
-    'myst_parser'
+    'myst_parser',
+    'sphinxcontrib.mermaid'
 ]
 
 # Allow same section headings and thus labels to be used across documents.
@@ -198,3 +199,14 @@ html_last_updated_fmt = '%b %d, %Y'
 
 root_doc = 'index'
 
+## This config added from existing Sphinx setup
+## Extensions updated also
+
+breathe_projects = {
+    "Lime Suite NG" : ( "../build/docs/doxygen/xml" )
+}
+
+breathe_default_project = "Lime Suite NG"
+
+mermaid_version = "10.6.1"
+mermaid_d3_zoom = True
