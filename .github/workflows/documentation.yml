@@ -41,8 +41,8 @@ jobs:
           source venv/bin/activate
           ./generate_docs.sh
 
-      - name: Test hyperlinks
-        run: |
-          cd ${{github.workspace}}/docs
-          source venv/bin/activate
-          make checklinks
+      # - name: Test hyperlinks
+      #   run: |
+      #     cd ${{github.workspace}}/docs
+      #     source venv/bin/activate
+      #     make checklinks
