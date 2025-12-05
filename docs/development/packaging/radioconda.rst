@@ -104,4 +104,4 @@ This will allow conda to resolve any other dependencies that are not present in 
 
    Once the development and testing phase of the conda packages is over, it is highly recommended to revert the ``channel_priority`` back to ``strict`` and move the local channel to the bottom of the list (use commands ``conda config --remove channels ...`` and ``conda config --append channels ...``) or completely remove it from the list (use only ``conda config --remove channels ...``) to avoid package installation problems in the future.
 
-.. _`release page`: https://github.com/ryanvolz/radioconda/releases
+.. _`release page`: https://github.com/radioconda/radioconda-installer/releases
