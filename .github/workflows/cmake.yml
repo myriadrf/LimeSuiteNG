@@ -23,7 +23,7 @@ jobs:
         compiler: [ {cpp: g++, c: gcc}, {cpp: clang++, c: clang} ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install GNURadio
         if: ${{ matrix.os != 'ubuntu-20.04'}} # 20.04 has GNURadio 3.8.1, it's python bindings are not using pybind11, so not compatible
@@ -54,16 +54,19 @@ jobs:
         arch: [x64, Win32]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Install SoapySDR from source
+      - name: Checkout SoapySDR
+        uses: actions/checkout@v6
+        with:
+          repository: pothosware/SoapySDR
+          path: ${{github.workspace}}/SoapySDR
+
+      - name: Build/Install SoapySDR from source
         run: |
-          git clone -b master --depth 1 https://github.com/pothosware/SoapySDR.git
-          cd SoapySDR
-          mkdir build && cd build
-          cmake ../ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON3=OFF -DENABLE_CSHARP=OFF
-          cmake --build . --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}
-          cmake --build . --target install
+          cmake -S ${{github.workspace}}/SoapySDR -B ${{github.workspace}}/SoapySDR/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_APPS=OFF -DENABLE_TESTS=OFF -DENABLE_PYTHON2=OFF -DENABLE_PYTHON3=OFF -DENABLE_CSHARP=OFF -DENABLE_DOCS=OFF
+          cmake --build ${{github.workspace}}/SoapySDR/build --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}}
+          cmake --build ${{github.workspace}}/SoapySDR/build --target install
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -A${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{env.CMAKE_OPTIONS}}
@@ -78,7 +81,7 @@ jobs:
     name: MacOS build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install dependencies
       # GNURadio plugin fails to build due to issues with spdlog dependency
