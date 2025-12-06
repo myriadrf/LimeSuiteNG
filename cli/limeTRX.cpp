@@ -296,7 +296,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
     assert(fin);
 
     fin->seekg(0, fin->end);
-    std::streamoff fileSize = (std::streamoff)fin->tellg();
+    std::streamsize fileSize = fin->tellg();
     fin->seekg(0, fin->beg);
 
     const int64_t txSamplesCountTotal = fileSize / sizeof(complex16_t) / args->channelCount;
@@ -323,7 +323,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     do
     {
-        int64_t samplesRemaining = txSamplesCountTotal;
+        std::streamsize samplesRemaining = txSamplesCountTotal;
         txMeta.flags = 0;
         while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
         {
