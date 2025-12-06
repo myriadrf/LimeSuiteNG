@@ -28,6 +28,7 @@ endif(GITHASH)
 set(OBJECTS_DIR ${PROJECT_NAME}-${PROJECT_VERSION})
 configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/version.h @ONLY)
 configure_file(dkms.conf.in ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf @ONLY)
+configure_file(${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf ${CMAKE_SOURCE_DIR}/debian/${PROJECT_NAME}-dkms.dkms COPYONLY)
 
 find_program(DKMS_EXECUTABLE NAMES dkms)
 mark_as_advanced(DKMS_EXECUTABLE)
