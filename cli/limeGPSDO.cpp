@@ -8,12 +8,26 @@
 #include <cstring>
 #include <filesystem>
 #include <array>
+#include <csignal>
 #include "args.hxx"
 
 using namespace std;
 using namespace lime;
 using namespace lime::cli;
 
+//  Status bit fields.
+#define STATUS_STATE_OFFSET    0
+#define STATUS_STATE_SIZE      4
+#define STATUS_ACCURACY_OFFSET 4
+#define STATUS_ACCURACY_SIZE   4
+#define STATUS_TPULSE_OFFSET   8
+#define STATUS_TPULSE_SIZE     1
+
+//  Control bit fields
+#define CONTROL_EN_OFFSET      0
+#define CONTROL_EN_SIZE        1
+#define CONTROL_CLK_SEL_OFFSET 1
+#define CONTROL_CLK_SEL_SIZE   1
 
 class GPSDODriver
 {
@@ -48,12 +62,20 @@ class GPSDODriver
    uint64_t get_10s_error(OpStatus * status);
    uint64_t get_100s_error(OpStatus * status);
    uint64_t getDacValue(OpStatus * status);
-   std::string getStatus();
-   uint64_t getEnabled(OpStatus * status);
-   uint64_t setEnabled(OpStatus * status);
+   OpStatus getStatus(array<string,3>& GPSDOStatus);
+   bool getEnabled(OpStatus * status);
+   OpStatus setEnabled(bool enable);
+   string getDriverErr();
+   void setDriverErr(string& msg);
 
    private:
+   uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
+   uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
+   void formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus);
+
    ICSR * mCSR_interface;
+   std::string mGetStatusMsg;
+   std::string mCurrDriverErrMsg;
 };
 
 // ##################################################
@@ -74,7 +96,7 @@ uint64_t GPSDODriver::getSigned32bit(uint64_t address, OpStatus * status)
 {
    uint64_t value = this->readRegister(address, status);
    if(*status != OpStatus::Success)
-      return 0LL;
+      return 0ULL;
    
    if(value & (1 << 31))
       value -= (1ULL << 32);
@@ -102,72 +124,97 @@ uint64_t GPSDODriver::getDacValue(OpStatus * status)
    return this->readRegister(GPSDODriver::reg_dac_tuned_val, status);
 }
 
-std::string GPSDODriver::getStatus()
+OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
 {
    OpStatus status = OpStatus::Success;
-   std::string statusMsg;
    uint64_t state = this->readRegister(GPSDODriver::reg_status_state, &status);
    if(status != OpStatus::Success)
    {
-      statusMsg += "Failed to read PPSDO_STATUS_STATE register with error:";
-      statusMsg += ToString(status);
-      statusMsg += "\n";
-      return statusMsg;
+      mGetStatusMsg = "Failed to read PPSDO_STATUS_STATE register ";
+      return status;
    }
 
    uint64_t accuracy = this->readRegister(GPSDODriver::reg_status_accuracy, &status);
    if(status != OpStatus::Success)
    {
-      statusMsg += "Failed to read PPSDO_STATUS_ACCURACY register with error:";
-      statusMsg += ToString(status);
-      statusMsg += "\n";
-      return statusMsg;
+      mGetStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register ";
+      return status;
    }
 
    uint64_t tpulse = this->readRegister(GPSDODriver::reg_status_pps_active, &status);
    if(status != OpStatus::Success)
    {
-      statusMsg += "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error:";
-      statusMsg += ToString(status);
-      statusMsg += "\n";
-      return statusMsg;
+      mGetStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register ";
+      return status;
    }
 
-   // TODO: Move this to formating function
-   statusMsg += "state: ";
-   if(state == 1ULL)
-      statusMsg += "Fine tune\n";
-   else if(state == 0ULL)
-      statusMsg += "Coarse tune\n";
-   else
-      statusMsg += "Unknown\n";
+   this->formatGPSDOStatus(state, accuracy, tpulse, GPSDOStatus);
+   return status;   
+}
+
+
+bool GPSDODriver::getEnabled(OpStatus * status)
+{
+   uint64_t value = this->readRegister(GPSDODriver::reg_control, status);
+   return static_cast<bool>(value & 1ULL);
+}
+
+OpStatus GPSDODriver::setEnabled(bool enable)
+{
+   OpStatus status = OpStatus::Success;
+   uint64_t currRegValue = this->readRegister(GPSDODriver::reg_control, &status);
+   if(status != OpStatus::Success)
+      return status;
    
-   statusMsg += "accuracy: ";
+   currRegValue = this->setField(currRegValue, static_cast<uint64_t>(enable), CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
+   status = this->writeRegister(GPSDODriver::reg_control, currRegValue);
+
+   return status;
+}
+
+string GPSDODriver::getDriverErr()
+{ 
+   auto tmp = mCurrDriverErrMsg;
+   mCurrDriverErrMsg.clear();
+   return tmp; 
+}
+
+void GPSDODriver::setDriverErr(string& msg)
+{
+   mCurrDriverErrMsg = msg;
+}
+
+uint64_t GPSDODriver::setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
+{
+   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
+   return ((currRegValue & ~mask) | ((newBitValue << bitOffset) & mask));
+}
+
+uint64_t GPSDODriver::getField(uint64_t currRegValue, int bitOffset, int size)
+{
+   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
+   return ((currRegValue & mask) >> bitOffset);
+}
+
+void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus)
+{
+   if(state == 1ULL)
+      GPSDOStatus[0] = "Fine tune";
+   else if(state == 0ULL)
+      GPSDOStatus[0] = "Coarse tune";
+   else
+      GPSDOStatus[0] = "Unknown";
+   
    if(accuracy < 4)
-      statusMsg += GPSDODriver::accuracyLevelList[accuracy];
+      GPSDOStatus[1] = GPSDODriver::accuracyLevelList[accuracy];
    else
    {
-      statusMsg += "Unknown(";
-      statusMsg += std::to_string(accuracy);
-      statusMsg +=")\n";
+      GPSDOStatus[1] += "Unknown(";
+      GPSDOStatus[1] += std::to_string(accuracy);
+      GPSDOStatus[1] += ")";
    }
 
-   statusMsg += "tpulse_active: ";
-   statusMsg += tpulse ? "true\n" : "false\n";
-   
-   return statusMsg;   
-}
-
-uint64_t GPSDODriver::getEnabled(OpStatus * status)
-{
-   uint64_t value;
-   return value;
-}
-
-uint64_t GPSDODriver::setEnabled(OpStatus * status)
-{
-   uint64_t value;
-   return value;
+   GPSDOStatus[2] = tpulse ? "true" : "false";
 }
 
 // ###############################################
@@ -251,6 +298,7 @@ int main(int argc, char** argv)
 
    GPSDODriver driver(device->getICSR());
 
+   OpStatus runStatus = OpStatus::Success;
    try
    {
       if(dump)
@@ -278,6 +326,9 @@ int main(int argc, char** argv)
       DeviceRegistry::freeDevice(device);
       std::cerr << e.what() << '\n';
    }
+
+   if(runStatus != OpStatus::Success)
+      cerr << driver.getDriverErr();
       
    driver.~GPSDODriver();
    DeviceRegistry::freeDevice(device);
