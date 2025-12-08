@@ -95,9 +95,10 @@ static int FixBARResources(struct pci_dev *pciContext)
     // hence the device is enumerated, but BARs are left unassigned.
 
     int ret = 0;
-    struct resource* bar0 = &pciContext->resource[0];
-    if (bar0->start == 0) // BAR is unassigned
-        bar0->end = 0x3ffffff; // Default BAR0 size is 256MB, some systems can't map that much, so reduce BAR0 size to 64MB,
+    // Depending on host system, artificially reducing BAR size, can result in "Imprecise bus access" fault on the LA9310 M4 core during firmware boot.
+    // struct resource* bar0 = &pciContext->resource[0];
+    // if (bar0->start == 0) // BAR is unassigned
+    //     bar0->end = 0x3ffffff; // Default BAR0 size is 256MB, some systems can't map that much, so reduce BAR0 size to 64MB,
 
     for (int i=0; i<3; ++i)
     {
