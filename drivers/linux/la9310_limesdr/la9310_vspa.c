@@ -572,6 +572,7 @@ vspa_fw_dma_write(struct la9310_dev *la9310_dev, struct dma_param *linfo,
 // 		pci_map_single(vspadev->dev, vspa_dma_region->vaddr,
 // 				dma_req.byte_cnt, PCI_DMA_TODEVICE);
 // #endif
+		dma_sync_single_for_device(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 		dma_wmb();
 		dma_req.axi_addr = vspa_dma_region->phys_addr;
 		dev_dbg(la9310_dev->dev, "vspa%d: ctrl %08x, dmem %08x,\
@@ -585,6 +586,7 @@ vspa_fw_dma_write(struct la9310_dev *la9310_dev, struct dma_param *linfo,
 				"ERR: Timeout in Raw transmit\n");
 			return -ECOMM;
 		}
+		dma_sync_single_for_cpu(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
 	} while (linfo->size != 0 && err == 0);
 
@@ -621,6 +623,8 @@ fw_read_and_load_sections(struct la9310_dev *la9310_dev,
 		dev_err(la9310_dev->dev, "Load sections: file start is NULL");
 		return -EEXIST;
 	}
+
+	dma_sync_single_for_cpu(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
 	/*Fetching Section header from firmware file */
 	sec_header = (struct section_header *) (file_start + sec_header_off);
@@ -907,6 +911,7 @@ vspa_get_fw_image(struct la9310_dev *la9310_dev)
 		goto OUT;
 	}
 
+	dma_sync_single_for_cpu(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 	ret = la9310_udev_load_firmware(la9310_dev, vspa_fw_region->vaddr,
 			buf_size, vspadev->eld_filename);
 	if (ret < 0) {
@@ -914,6 +919,7 @@ vspa_get_fw_image(struct la9310_dev *la9310_dev)
 				__func__);
 		goto OUT;
 	}
+	dma_sync_single_for_device(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
 	vspa_fw_size = la9310_dev->firmware_info.size;
 	la9310_dev_free_firmware(la9310_dev);

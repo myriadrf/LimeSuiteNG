@@ -168,8 +168,10 @@ int la9310_load_rtos_img(struct la9310_dev *la9310_dev)
       goto out;
    }
 
+   dma_sync_single_for_cpu(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
    rc  = la9310_udev_load_firmware(la9310_dev, dma_region->vaddr,
                  size, freertos_img);
+   dma_sync_single_for_device(la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
    la9310_dev_free_firmware(la9310_dev);
    if (rc) {
       dev_err(la9310_dev->dev, "load_firmware [%s] request failed\n",

@@ -428,7 +428,7 @@ la9310_alloc_dma_buf(struct device *dev, const char *buf_name, struct la9310_mem
 {
 	int status;
 
-	buf_info->vaddr = kmalloc(buf_size, GFP_KERNEL);
+	buf_info->vaddr = kzalloc(buf_size, GFP_KERNEL);
 	if (!buf_info->vaddr) {
 		dev_err(dev, "Failed to allocate %s\n", buf_name);
 		return -ENOMEM;
@@ -484,7 +484,6 @@ la9310_scratch_dma_buf(struct la9310_dev *la9310_dev)
 			dev_err(la9310_dev->dev, "Scratch buffer to small (%i), expected >= %i\n", la9310_dev->scratch_buf_size, LA9310_DMA_BUF_SIZE);
 		return -ENOMEM;
 	}
-	memset_io(host_region->vaddr, 0, la9310_dev->scratch_buf_size);
 	dma_info->dma_region_used = 0;
 
 	rc = la9310_scratch_outbound_create(la9310_dev);
