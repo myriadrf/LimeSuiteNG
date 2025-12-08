@@ -76,22 +76,22 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @brief Clean & invalidate cache for DMEM Proxy before a read access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_dmem_proxy_before_read(uint8_t *addr, uint32_t data_size);
+    void sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size);
 
     /// @brief Clean & invalidate cache for DMEM Proxy after a write access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_dmem_proxy_after_write(uint8_t *addr, uint32_t data_size);
+    void sync_dmem_proxy_after_write(uint8_t* addr, uint32_t data_size);
 
     /// @brief Clean & invalidate cache for IQ Flood before a read access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_iq_flood_before_read(uint8_t *addr, uint32_t data_size);
+    void sync_iq_flood_before_read(uint8_t* addr, uint32_t data_size);
 
     /// @brief Clean & invalidate cache for IQ Flood after a write access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_iq_flood_after_write(uint8_t *addr, uint32_t data_size);
+    void sync_iq_flood_after_write(uint8_t* addr, uint32_t data_size);
 
     mmaped_region GetBar(uint8_t i);
     std::shared_ptr<PCIe_CSR_Access> GetCSRAccess(uint32_t window_id, size_t base_offset = 0)

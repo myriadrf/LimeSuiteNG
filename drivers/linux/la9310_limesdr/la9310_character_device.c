@@ -23,9 +23,8 @@ static int la9310_limesdr_major;
 static int la9310_limesdr_minor_idx;
 static dev_t la9310_limesdr_dev_t;
 
-struct char_dev_data
-{
-    struct la9310_dev *myDevice;
+struct char_dev_data {
+    struct la9310_dev* myDevice;
     struct cdev cdev_node;
 };
 
@@ -37,16 +36,16 @@ static const struct vm_operations_struct mmap_mem_ops = {
 #endif
 };
 
-static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
+static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
 {
-    struct la9310_dev *la9310_dev = file->private_data;
-    struct device *sysDev = la9310_dev->dev;
+    struct la9310_dev* la9310_dev = file->private_data;
+    struct device* sysDev = la9310_dev->dev;
 
     la9310_window_t window_id = vma->vm_pgoff;
     bool isDMA = false;
 
     struct la9310_mem_region_info* region;
-    switch(window_id)
+    switch (window_id)
     {
     case LA9310_WINDOW_BAR0:
         region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
@@ -122,17 +121,17 @@ static int la9310_mmap(struct file *file, struct vm_area_struct *vma)
     return 0;
 }
 
-static int la9310_limesdr_open(struct inode *inode, struct file *file)
+static int la9310_limesdr_open(struct inode* inode, struct file* file)
 {
-    struct char_dev_data *node_data = container_of(inode->i_cdev, struct char_dev_data, cdev_node);
+    struct char_dev_data* node_data = container_of(inode->i_cdev, struct char_dev_data, cdev_node);
     file->private_data = node_data->myDevice;
     dev_info(&node_data->myDevice->pdev->dev, "Open %s\n", file->f_path.dentry->d_iname);
     return 0;
 }
 
-static int la9310_limesdr_release(struct inode *inode, struct file *file)
+static int la9310_limesdr_release(struct inode* inode, struct file* file)
 {
-    struct la9310_dev *myDevice = file->private_data;
+    struct la9310_dev* myDevice = file->private_data;
     if (myDevice == NULL)
     {
         return 0;
@@ -153,7 +152,7 @@ static const struct file_operations limepcie_fops_control = {
     // .mmap = la9310_modinfo_mmap,
 };
 
-dev_t la9310_cdev_create(struct la9310_dev *myDevice)
+dev_t la9310_cdev_create(struct la9310_dev* myDevice)
 {
     int index = la9310_limesdr_minor_idx;
 
@@ -169,10 +168,10 @@ dev_t la9310_cdev_create(struct la9310_dev *myDevice)
     return major_minor;
 }
 
-void la9310_cdev_destroy(struct la9310_dev *myDevice)
+void la9310_cdev_destroy(struct la9310_dev* myDevice)
 {
     struct char_dev_data* node_data;
-    for (int i=0; i<LA9310_LIMESDR_MINOR_COUNT && i < la9310_limesdr_minor_idx; ++i)
+    for (int i = 0; i < LA9310_LIMESDR_MINOR_COUNT && i < la9310_limesdr_minor_idx; ++i)
     {
         if (la9310_cdevs[i].myDevice == myDevice)
         {
@@ -200,9 +199,9 @@ void la9310_limesdr_unregister_chrdev_region()
     unregister_chrdev_region(la9310_limesdr_dev_t, LA9310_LIMESDR_MINOR_COUNT);
 }
 
-dev_t la9310_get_major_minor(struct la9310_dev *myDevice)
+dev_t la9310_get_major_minor(struct la9310_dev* myDevice)
 {
-    for (int i=0; i<LA9310_LIMESDR_MINOR_COUNT && i < la9310_limesdr_minor_idx; ++i)
+    for (int i = 0; i < LA9310_LIMESDR_MINOR_COUNT && i < la9310_limesdr_minor_idx; ++i)
     {
         if (la9310_cdevs[i].myDevice == myDevice)
             return la9310_cdevs[i].cdev_node.dev;

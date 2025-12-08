@@ -5,7 +5,7 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+    #define _GNU_SOURCE
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,6 @@ using namespace lime;
 
 static void dccivac(uint32_t* addr)
 {
-
 }
 
 void print_vspa_stats(void);
@@ -52,20 +51,19 @@ void monitor_vspa_stats(void);
 void print_vspa_trace(void);
 void print_m7_trace(void);
 
-
 volatile uint32_t running;
 
-uint32_t *v_iqflood_ddr_addr;
+uint32_t* v_iqflood_ddr_addr;
 
-uint32_t *v_vspa_dmem_proxy_ro;
-t_stats *host_stats;
-t_tx_ch_host_proxy *tx_vspa_proxy_ro;
-t_rx_ch_host_proxy *rx_vspa_proxy_ro;
-uint32_t *v_tx_vspa_proxy_wo;
-uint32_t *v_rx_vspa_proxy_wo;
+uint32_t* v_vspa_dmem_proxy_ro;
+t_stats* host_stats;
+t_tx_ch_host_proxy* tx_vspa_proxy_ro;
+t_rx_ch_host_proxy* rx_vspa_proxy_ro;
+uint32_t* v_tx_vspa_proxy_wo;
+uint32_t* v_rx_vspa_proxy_wo;
 
-uint32_t *BAR0_addr;
-uint32_t *BAR2_addr;
+uint32_t* BAR0_addr;
+uint32_t* BAR2_addr;
 
 int map_physical_regions(std::shared_ptr<lime::LA9310_PCIe> port)
 {
@@ -133,7 +131,7 @@ int map_physical_regions(std::shared_ptr<lime::LA9310_PCIe> port)
  */
 void terminate_process(int sig)
 {
-     running = 0;
+    running = 0;
 }
 
 void sigusr1_process(int sig)
@@ -143,7 +141,8 @@ void sigusr1_process(int sig)
 
 void print_cmd_help(void)
 {
-    fprintf(stderr, "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    fprintf(stderr,
+        "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     fprintf(stderr, "\n|    iq_monitor");
     fprintf(stderr, "\n|");
     fprintf(stderr, "\n| ./iq_monitor");
@@ -152,14 +151,16 @@ void print_cmd_help(void)
     fprintf(stderr, "\n|\t-h    help");
     fprintf(stderr, "\n|\t-c    clear host stats");
     fprintf(stderr, "\n|\t-v    version");
-    fprintf(stderr, "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+    fprintf(stderr,
+        "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        "\n");
     return;
 }
 
 std::unique_ptr<PHYTimer> phytimer;
 
 /* need following vspa symbols to be exported (vspa_exported_symbols.h)*/
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     std::shared_ptr<lime::LA9310_PCIe> port = std::make_shared<lime::LA9310_PCIe>();
     int32_t c;
@@ -218,6 +219,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
-

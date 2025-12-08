@@ -7,10 +7,10 @@ struct LA9310_IOCTL_firmware {
 };
 
 struct LA9310_IOCTL_flush_cache {
-	uint32_t offset;
-	uint32_t size;
-	uint8_t dir;
-	uint8_t sync_to_cpu;
+    uint32_t offset;
+    uint32_t size;
+    uint8_t dir;
+    uint8_t sync_to_cpu;
 };
 
 typedef enum {
@@ -50,6 +50,6 @@ struct LA9310_IOCTL_CSR_op {
 #define LA9310_IOCTL_FLUSH_CACHE_IQFLOOD _IOR(LA9310_IOCTL, 27, struct LA9310_IOCTL_flush_cache)
 #define LA9310_IOCTL_CSR_OP _IOR(LA9310_IOCTL, 26, struct LA9310_IOCTL_CSR_op)
 
-long la9310_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg);
 
 #endif /* _LINUX_LIMEPCIE_H */

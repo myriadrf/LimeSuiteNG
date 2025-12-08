@@ -5,12 +5,12 @@
 
 static int gDeviceCounter = 0;
 
-extern struct class *la9310_limesdr_class;
+extern struct class* la9310_limesdr_class;
 
-int la9310_limesdr_device_init(struct la9310_dev *la9310, struct pci_dev *pciContext)
+int la9310_limesdr_device_init(struct la9310_dev* la9310, struct pci_dev* pciContext)
 {
     WARN_ON(la9310 == NULL);
-    struct device *sysDev = &la9310->pdev->dev;
+    struct device* sysDev = &la9310->pdev->dev;
 
     char cdev_name[128];
     snprintf(cdev_name, sizeof(cdev_name), "limesdr_micro%i/control0", gDeviceCounter);
@@ -23,8 +23,8 @@ int la9310_limesdr_device_init(struct la9310_dev *la9310, struct pci_dev *pciCon
         return -EINVAL;
     }
 
-    void *drvdata = la9310;
-    struct device *trxDev = device_create(la9310_limesdr_class, sysDev, cdev_major_minor, drvdata, "%s", cdev_name);
+    void* drvdata = la9310;
+    struct device* trxDev = device_create(la9310_limesdr_class, sysDev, cdev_major_minor, drvdata, "%s", cdev_name);
     if (IS_ERR(trxDev))
     {
         dev_err(sysDev, "Failed to create device\n");
@@ -38,12 +38,12 @@ int la9310_limesdr_device_init(struct la9310_dev *la9310, struct pci_dev *pciCon
     return 0;
 }
 
-void la9310_limesdr_device_destroy(struct la9310_dev *la9310)
+void la9310_limesdr_device_destroy(struct la9310_dev* la9310)
 {
     // Disable all interrupts
     // FreeIRQs(myDevice);
 
-    struct device *sysDev = &la9310->pdev->dev;
+    struct device* sysDev = &la9310->pdev->dev;
     dev_info(sysDev, "%s\n", __func__);
 
     dev_t major_minor = la9310_get_major_minor(la9310);

@@ -7,10 +7,7 @@
 
 #pragma pack(push)
 
-enum rf_state {
-    RF_NOT_READY,
-    RF_READY
-};
+enum rf_state { RF_NOT_READY, RF_READY };
 
 /* RFIC Host SWCMD  interface */
 typedef struct rf_common_mdata {

@@ -20,13 +20,13 @@
 
 #define DRIVER_NAME "la9310uart"
 
-static struct resource *local_platform_get_mem_or_io(struct platform_device *dev, unsigned int num)
+static struct resource* local_platform_get_mem_or_io(struct platform_device* dev, unsigned int num)
 {
     u32 i;
 
     for (i = 0; i < dev->num_resources; i++)
     {
-        struct resource *r = &dev->resource[i];
+        struct resource* r = &dev->resource[i];
 
         if ((resource_type(r) & (IORESOURCE_MEM | IORESOURCE_IO)) && num-- == 0)
             return r;
@@ -66,26 +66,26 @@ static struct uart_driver la9310uart_driver = {
 #endif
 };
 
-static inline uint8_t la9310_read8(void __iomem *addr)
+static inline uint8_t la9310_read8(void __iomem* addr)
 {
     return readb(addr);
 }
 
-static inline void la9310_write8(void __iomem *addr, uint8_t val)
+static inline void la9310_write8(void __iomem* addr, uint8_t val)
 {
     writeb(val, addr);
 }
 
-static void la9310uart_timer(struct timer_list *t)
+static void la9310uart_timer(struct timer_list* t)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
-    struct la9310uart_port *uart = from_timer(uart, t, timer);
+    struct la9310uart_port* uart = from_timer(uart, t, timer);
 #else
-    struct la9310uart_port *uart = timer_container_of(uart, t, timer);
+    struct la9310uart_port* uart = timer_container_of(uart, t, timer);
 #endif
-    struct uart_port *port = &uart->port;
+    struct uart_port* port = &uart->port;
     // dev_info(port->dev, "%s\n", __func__);
-    unsigned char __iomem *membase = port->membase;
+    unsigned char __iomem* membase = port->membase;
     unsigned int flg = TTY_NORMAL;
     int ch;
     unsigned long status;
@@ -112,7 +112,7 @@ static void la9310uart_timer(struct timer_list *t)
     mod_timer(&uart->timer, jiffies + uart_poll_timeout(port));
 }
 
-static void la9310uart_putchar(struct uart_port *port, int ch)
+static void la9310uart_putchar(struct uart_port* port, int ch)
 {
     dev_dbg(port->dev, "%s (%i)(%02X)(%c)\n", __func__, ch, ch, (char)ch);
     while ((la9310_read8(port->membase + ULSR1) & TEMT) == false)
@@ -121,7 +121,7 @@ static void la9310uart_putchar(struct uart_port *port, int ch)
     la9310_write8(port->membase + UTHR1, ch);
 }
 
-static unsigned int la9310uart_tx_empty(struct uart_port *port)
+static unsigned int la9310uart_tx_empty(struct uart_port* port)
 {
     bool isEmpty = (la9310_read8(port->membase + ULSR1) & TEMT);
     dev_dbg(port->dev, "%s %i\n", __func__, isEmpty);
@@ -132,24 +132,24 @@ static unsigned int la9310uart_tx_empty(struct uart_port *port)
     return 0;
 }
 
-static void la9310uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+static void la9310uart_set_mctrl(struct uart_port* port, unsigned int mctrl)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     // modem control register is not present in LiteUART
 }
 
-static unsigned int la9310uart_get_mctrl(struct uart_port *port)
+static unsigned int la9310uart_get_mctrl(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     return TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
 }
 
-static void la9310uart_stop_tx(struct uart_port *port)
+static void la9310uart_stop_tx(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
 }
 
-static void la9310uart_start_tx(struct uart_port *port)
+static void la9310uart_start_tx(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     unsigned char ch;
@@ -157,7 +157,7 @@ static void la9310uart_start_tx(struct uart_port *port)
 // https://github.com/torvalds/linux/commit/4e2a44c1408b6a6a46122704511234f68cf012b8
 // before kfifo was added to tty_port
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
-    struct circ_buf *xmit = &port->state->xmit;
+    struct circ_buf* xmit = &port->state->xmit;
     if (unlikely(port->x_char))
     {
         la9310_write8(port->membase + UTHR1, port->x_char);
@@ -178,7 +178,7 @@ static void la9310uart_start_tx(struct uart_port *port)
     if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
         uart_write_wakeup(port);
 #else
-    struct tty_port *tport = &port->state->port;
+    struct tty_port* tport = &port->state->port;
     if (unlikely(port->x_char))
     {
         la9310_write8(port->membase + UTHR1, port->x_char);
@@ -199,10 +199,10 @@ static void la9310uart_start_tx(struct uart_port *port)
 #endif
 }
 
-static void la9310uart_stop_rx(struct uart_port *port)
+static void la9310uart_stop_rx(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
-    struct la9310uart_port *uart = to_la9310uart_port(port);
+    struct la9310uart_port* uart = to_la9310uart_port(port);
 
     /* just delete timer */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
@@ -212,16 +212,16 @@ static void la9310uart_stop_rx(struct uart_port *port)
 #endif
 }
 
-static void la9310uart_break_ctl(struct uart_port *port, int break_state)
+static void la9310uart_break_ctl(struct uart_port* port, int break_state)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     // LiteUART doesn't support sending break signal
 }
 
-static int la9310uart_startup(struct uart_port *port)
+static int la9310uart_startup(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
-    struct la9310uart_port *uart = to_la9310uart_port(port);
+    struct la9310uart_port* uart = to_la9310uart_port(port);
 
     // verify if UART is functioning, otherwise Rx polling will get stuck in infinite loop
     // uint32_t txfull = la9310_read8(port->membase + OFF_TXFULL);
@@ -246,17 +246,17 @@ static int la9310uart_startup(struct uart_port *port)
     return 0;
 }
 
-static void la9310uart_shutdown(struct uart_port *port)
+static void la9310uart_shutdown(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
 }
 
-static void la9310uart_set_termios(struct uart_port *port,
-    struct ktermios *new,
+static void la9310uart_set_termios(struct uart_port* port,
+    struct ktermios* new,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
-    struct ktermios *old)
+    struct ktermios* old)
 #else
-    const struct ktermios *old)
+    const struct ktermios* old)
 #endif
 {
     dev_dbg(port->dev, "%s\n", __func__);
@@ -272,23 +272,23 @@ static void la9310uart_set_termios(struct uart_port *port,
     spin_unlock_irqrestore(&port->lock, flags);
 }
 
-static const char *la9310uart_type(struct uart_port *port)
+static const char* la9310uart_type(struct uart_port* port)
 {
     return DRIVER_NAME;
 }
 
-static void la9310uart_release_port(struct uart_port *port)
+static void la9310uart_release_port(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
 }
 
-static int la9310uart_request_port(struct uart_port *port)
+static int la9310uart_request_port(struct uart_port* port)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     return 0;
 }
 
-static void la9310uart_config_port(struct uart_port *port, int flags)
+static void la9310uart_config_port(struct uart_port* port, int flags)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     /*
@@ -299,7 +299,7 @@ static void la9310uart_config_port(struct uart_port *port, int flags)
     port->type = 1;
 }
 
-static int la9310uart_verify_port(struct uart_port *port, struct serial_struct *ser)
+static int la9310uart_verify_port(struct uart_port* port, struct serial_struct* ser)
 {
     dev_dbg(port->dev, "%s\n", __func__);
     if (port->type != PORT_UNKNOWN && ser->type != 1)
@@ -327,10 +327,10 @@ static const struct uart_ops la9310uart_ops = {
 };
 
 static int la9310uart_uart_port_init(
-    struct uart_port *uport, struct device *parent, struct resource *res, int line_id, int ctrl_id, int port_id)
+    struct uart_port* uport, struct device* parent, struct resource* res, int line_id, int ctrl_id, int port_id)
 {
     if (res->flags & IORESOURCE_REG)
-        uport->membase = (unsigned char __iomem *)res->start;
+        uport->membase = (unsigned char __iomem*)res->start;
     else
     {
         uport->membase = devm_ioremap_resource(parent, res);
@@ -368,17 +368,17 @@ static int la9310uart_uart_port_init(
     return 0;
 }
 
-static int la9310uart_probe(struct platform_device *pdev)
+static int la9310uart_probe(struct platform_device* pdev)
 {
     int ret;
     dev_info(&pdev->dev, "%s\n", __func__);
 
-    struct resource *res = local_platform_get_mem_or_io(pdev, 0);
+    struct resource* res = local_platform_get_mem_or_io(pdev, 0);
     if (!res)
         return -ENODEV;
     dev_dbg(&pdev->dev, "resource %s @ %llx\n", res->name, res->start);
 
-    struct la9310uart_port *luart = devm_kzalloc(&pdev->dev, sizeof(struct la9310uart_port), GFP_KERNEL);
+    struct la9310uart_port* luart = devm_kzalloc(&pdev->dev, sizeof(struct la9310uart_port), GFP_KERNEL);
     if (!luart)
     {
         dev_dbg(&pdev->dev, "Failed to allocate memroy\n");
@@ -412,14 +412,14 @@ err_erase_id:
 
 // https://github.com/torvalds/linux/commit/0edb555a65d1ef047a9805051c36922b52a38a9d
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 11, 0)
-static int la9310uart_remove(struct platform_device *pdev)
+static int la9310uart_remove(struct platform_device* pdev)
 #else
-static void la9310uart_remove(struct platform_device *pdev)
+static void la9310uart_remove(struct platform_device* pdev)
 #endif
 {
     dev_dbg(&pdev->dev, "%s\n", __func__);
-    struct uart_port *port = platform_get_drvdata(pdev);
-    struct la9310uart_port *luart = to_la9310uart_port(port);
+    struct uart_port* port = platform_get_drvdata(pdev);
+    struct la9310uart_port* luart = to_la9310uart_port(port);
 
     platform_set_drvdata(pdev, NULL);
 
@@ -431,27 +431,27 @@ static void la9310uart_remove(struct platform_device *pdev)
 #endif
 }
 
-static ssize_t driver_dev_symlink_name_show(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t driver_dev_symlink_name_show(struct device* dev, struct device_attribute* attr, char* buf)
 {
-    struct uart_port *port = dev_get_drvdata(dev);
-    struct la9310uart_port *luart = to_la9310uart_port(port);
+    struct uart_port* port = dev_get_drvdata(dev);
+    struct la9310uart_port* luart = to_la9310uart_port(port);
     return snprintf(buf, PAGE_SIZE, "%s\n", luart->suggestedSymlink);
 }
 
 static DEVICE_ATTR(driver_dev_symlink_name, 0444, driver_dev_symlink_name_show, NULL);
 
-static struct attribute *la9310uart_dev_attrs[] = {&dev_attr_driver_dev_symlink_name.attr, NULL};
+static struct attribute* la9310uart_dev_attrs[] = { &dev_attr_driver_dev_symlink_name.attr, NULL };
 
 static struct attribute_group dev_attr_group = {
     .attrs = la9310uart_dev_attrs,
 };
 
-static const struct attribute_group *dev_groups[] = {
+static const struct attribute_group* dev_groups[] = {
     &dev_attr_group,
     NULL,
 };
 
-static const struct of_device_id la9310uart_of_match[] = {{.compatible = "la9310_limesdr,la9310uart"}, {}};
+static const struct of_device_id la9310uart_of_match[] = { { .compatible = "la9310_limesdr,la9310uart" }, {} };
 // MODULE_DEVICE_TABLE(of, la9310uart_of_match);
 
 static struct platform_driver la9310uart_platform_driver = {

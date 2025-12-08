@@ -38,10 +38,10 @@ typedef enum {
 typedef enum { ERROR_DMA_CONFIG_ERROR, ERROR_DMA_XFER_ERROR, STATS_GBL_MAX } stats_gbl_e;
 
 typedef struct s_stats {
-	uint32_t gbl_stats[STATS_GBL_MAX];
-	uint32_t unused[8-STATS_GBL_MAX];
-	uint32_t tx_stats[STATS_TX_MAX];
-	uint32_t rx_stats[RX_NUM_MAX_CHAN][STATS_RX_MAX];
+    uint32_t gbl_stats[STATS_GBL_MAX];
+    uint32_t unused[8 - STATS_GBL_MAX];
+    uint32_t tx_stats[STATS_TX_MAX];
+    uint32_t rx_stats[RX_NUM_MAX_CHAN][STATS_RX_MAX];
 } t_stats;
 
 #if !defined(__VSPA__) && !defined(__M7__)

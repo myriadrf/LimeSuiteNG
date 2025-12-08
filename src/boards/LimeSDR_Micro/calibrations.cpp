@@ -896,7 +896,7 @@ OpStatus LimeSDR_Micro::CalibrateRx()
         // lms7002m_set_nco_frequency(rfsoc, false, 0, bandwidthRF / calibUserBwDivider + offsetNCO);
         lms7002m_calibrate_iq_imbalance(&context, false);
     }
-RxCalibrationEndStage: {
+RxCalibrationEndStage : {
     lms7002m_save_chip_state(rfsoc, true);
     lms7002m_spi_write(rfsoc, 0x0020, x0020val);
     if (status != lime_Result_Success)
@@ -1300,7 +1300,7 @@ OpStatus LimeSDR_Micro::CalibrateTx()
     // context.vspa->StartTxTone(true);
     lms7002m_calibrate_iq_imbalance(&context, true);
     context.vspa->StartTxTone(false);
-TxCalibrationEnd: {
+TxCalibrationEnd : {
     lms7002m_save_chip_state(rfsoc, true);
     lms7002m_spi_write(rfsoc, 0x0020, x0020val);
     if (status != lime_Result_Success)

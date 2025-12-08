@@ -5,16 +5,10 @@
 #define __RFIC_SW_CMD_H
 
 #pragma pack(push)
-#define RF_SWCMD_DATA_SIZE    12
+#define RF_SWCMD_DATA_SIZE 12
 
 /* Supported RF Band */
-typedef enum rf_band {
-    RF_SW_BAND_N77,
-    RF_SW_BAND_B13,
-    RF_SW_BAND_B3,
-    RF_SW_BAND_GNSS,
-    RF_SW_BAND_MAX
-}rf_band_t;
+typedef enum rf_band { RF_SW_BAND_N77, RF_SW_BAND_B13, RF_SW_BAND_B3, RF_SW_BAND_GNSS, RF_SW_BAND_MAX } rf_band_t;
 
 /* Supported Bandwidth */
 typedef enum rf_bw {
@@ -26,7 +20,7 @@ typedef enum rf_bw {
     RF_BW_576MHZ,
     RF_BW_720MHZ,
     RF_BW_BYPASS
-}rf_bw_t;
+} rf_bw_t;
 
 /* RFIC Software commands */
 typedef enum RfSwCmdId {
@@ -68,17 +62,10 @@ typedef enum rf_sw_cmd_result {
     RF_SW_CMD_RESULT_NOT_IMPLEMENTED
 } rf_sw_cmd_result_t;
 
-typedef enum rf_sw_cmd_type {
-    RF_SW_CMD_LOCAL = 1,
-    RF_SW_CMD_REMOTE
-} rf_sw_cmd_type_t;
+typedef enum rf_sw_cmd_type { RF_SW_CMD_LOCAL = 1, RF_SW_CMD_REMOTE } rf_sw_cmd_type_t;
 
 /* RFIC Loopback types */
-typedef enum loopback_type{
-    NO_LOOPBACK = 0,
-    AXIQ_LOOPBACK,
-    LOOPBACK_END
-} rf_loopback_type_t;
+typedef enum loopback_type { NO_LOOPBACK = 0, AXIQ_LOOPBACK, LOOPBACK_END } rf_loopback_type_t;
 
 /* CMD: RF_SWCMD_SET_BAND */
 struct sw_cmddata_set_band {
@@ -139,19 +126,17 @@ struct sw_cmddata_set_loopback {
     uint32_t loopback_type;
 };
 
-
 /* Software commands parameters */
 typedef struct rf_sw_cmd_desc {
-    uint32_t cmd;        /* command id */
-    uint32_t flags;      /* remote or local */
-    uint32_t timeout;    /* command specific timeout in us */
-    uint32_t core_id;    /* Descriptor owner */
+    uint32_t cmd; /* command id */
+    uint32_t flags; /* remote or local */
+    uint32_t timeout; /* command specific timeout in us */
+    uint32_t core_id; /* Descriptor owner */
     uint32_t ipi_event_id;
-    uint32_t status;     /* desc status */
+    uint32_t status; /* desc status */
     uint32_t result;
-    uint8_t  data[RF_SWCMD_DATA_SIZE]; /* command specific data */
+    uint8_t data[RF_SWCMD_DATA_SIZE]; /* command specific data */
 } rf_sw_cmd_desc_t;
 
 #pragma pack(pop)
 #endif //__RFIC_SW_CMD_H
-

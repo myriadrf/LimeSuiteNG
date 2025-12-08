@@ -11,7 +11,7 @@
 #include "la9310_character_device.h"
 #include "la9310_base.h"
 
-struct class *la9310_limesdr_class = NULL;
+struct class* la9310_limesdr_class = NULL;
 
 static int __init la9310_limesdr_module_init(void)
 {

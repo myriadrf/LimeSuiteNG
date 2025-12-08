@@ -37,16 +37,15 @@ void print_vspa_trace(void);
 
 extern uint32_t* v_iqflood_ddr_addr;
 extern uint32_t* v_rx_vspa_proxy_wo;
-extern uint32_t *v_vspa_dmem_proxy_ro;
-extern uint32_t *v_tx_vspa_proxy_wo;
-extern uint32_t *BAR0_addr;
-extern uint32_t *BAR2_addr;
+extern uint32_t* v_vspa_dmem_proxy_ro;
+extern uint32_t* v_tx_vspa_proxy_wo;
+extern uint32_t* BAR0_addr;
+extern uint32_t* BAR2_addr;
 extern volatile uint32_t running;
 extern std::unique_ptr<lime::PHYTimer> phytimer;
 
 static void dccivac(uint32_t* addr)
 {
-
 }
 
 #define TX_DDR_STEP (reinterpret_cast<t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->tx_state_readonly.tx_ddr_step)
@@ -276,5 +275,3 @@ void monitor_vspa_stats(void)
     }
     return;
 }
-
-
