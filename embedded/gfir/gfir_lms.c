@@ -138,6 +138,9 @@ int gfir_lms(struct dfilter* hr,
     free(weights);
     free(desired);
     free(w);
+    hr->w = NULL;
+    hi->w = NULL;
+    hcsd->w = NULL;
     for (int i = 0; i < n; i++)
     {
         free(bincode[i]);
@@ -175,8 +178,15 @@ int gfir_lms(struct dfilter* hr,
 void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coeffs)
 {
     struct dfilter hr, hi, hcsd; /* Filter transfer functions */
+    dfilter_init(&hr);
+    dfilter_init(&hi);
+    dfilter_init(&hcsd);
     /* Find the filter coefficients */
     gfir_lms(&hr, &hi, &hcsd, n, w1, w2, a1, a2, CPREC, CSDPREC, NONE);
     for (int i = 0; i < n; i++)
         coeffs[i] = hi.a[i];
+
+    dfilter_destroy(&hr);
+    dfilter_destroy(&hi);
+    dfilter_destroy(&hcsd);
 }
