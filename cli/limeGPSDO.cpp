@@ -29,6 +29,11 @@ using namespace lime::cli;
 #define CONTROL_CLK_SEL_OFFSET 1
 #define CONTROL_CLK_SEL_SIZE   1
 
+// GPSDOStatus array IDs
+#define GPSDO_STATE    0
+#define GPSDO_ACCURACY 1
+#define GPSDO_TPULSE   2
+
 class GPSDODriver
 {
    public:
@@ -62,11 +67,14 @@ class GPSDODriver
    uint64_t get_10s_error(OpStatus * status);
    uint64_t get_100s_error(OpStatus * status);
    uint64_t getDacValue(OpStatus * status);
-   OpStatus getStatus(array<string,3>& GPSDOStatus);
+   OpStatus getStatus(array<string, 3>& GPSDOStatus);
    bool getEnabled(OpStatus * status);
    OpStatus setEnabled(bool enable);
+
+   // Logger members
    string getDriverErr();
    void setDriverErr(string& msg);
+   string getGPSDOStatusMsg();
 
    private:
    uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
@@ -74,7 +82,7 @@ class GPSDODriver
    void formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus);
 
    ICSR * mCSR_interface;
-   std::string mGetStatusMsg;
+   std::string mGPSDOStatusMsg;
    std::string mCurrDriverErrMsg;
 };
 
@@ -130,21 +138,21 @@ OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
    uint64_t state = this->readRegister(GPSDODriver::reg_status_state, &status);
    if(status != OpStatus::Success)
    {
-      mGetStatusMsg = "Failed to read PPSDO_STATUS_STATE register ";
+      mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_STATE register with error: ";
       return status;
    }
 
    uint64_t accuracy = this->readRegister(GPSDODriver::reg_status_accuracy, &status);
    if(status != OpStatus::Success)
    {
-      mGetStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register ";
+      mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register with error: ";
       return status;
    }
 
    uint64_t tpulse = this->readRegister(GPSDODriver::reg_status_pps_active, &status);
    if(status != OpStatus::Success)
    {
-      mGetStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register ";
+      mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error: ";
       return status;
    }
 
@@ -174,14 +182,17 @@ OpStatus GPSDODriver::setEnabled(bool enable)
 
 string GPSDODriver::getDriverErr()
 { 
-   auto tmp = mCurrDriverErrMsg;
-   mCurrDriverErrMsg.clear();
-   return tmp; 
+   return mCurrDriverErrMsg; 
 }
 
 void GPSDODriver::setDriverErr(string& msg)
 {
    mCurrDriverErrMsg = msg;
+}
+
+string GPSDODriver::getGPSDOStatusMsg()
+{
+   return mGPSDOStatusMsg;
 }
 
 uint64_t GPSDODriver::setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
@@ -199,31 +210,101 @@ uint64_t GPSDODriver::getField(uint64_t currRegValue, int bitOffset, int size)
 void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus)
 {
    if(state == 1ULL)
-      GPSDOStatus[0] = "Fine tune";
+      GPSDOStatus[GPSDO_STATE] = "Fine tune";
    else if(state == 0ULL)
-      GPSDOStatus[0] = "Coarse tune";
+      GPSDOStatus[GPSDO_STATE] = "Coarse tune";
    else
-      GPSDOStatus[0] = "Unknown";
+      GPSDOStatus[GPSDO_STATE] = "Unknown";
    
    if(accuracy < 4)
-      GPSDOStatus[1] = GPSDODriver::accuracyLevelList[accuracy];
+      GPSDOStatus[GPSDO_ACCURACY] = GPSDODriver::accuracyLevelList[accuracy];
    else
    {
-      GPSDOStatus[1] += "Unknown(";
-      GPSDOStatus[1] += std::to_string(accuracy);
-      GPSDOStatus[1] += ")";
+      GPSDOStatus[GPSDO_ACCURACY] += "Unknown(";
+      GPSDOStatus[GPSDO_ACCURACY] += std::to_string(accuracy);
+      GPSDOStatus[GPSDO_ACCURACY] += ")";
    }
 
-   GPSDOStatus[2] = tpulse ? "true" : "false";
+   GPSDOStatus[GPSDO_TPULSE] = tpulse ? "true" : "false";
 }
 
 // ###############################################
 // #### limeGPSDO helper function definitions ####
 // ###############################################
 
-void runMonitoring(GPSDODriver * pDriver)
+static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::milliseconds delay, int banner_interval)
 {
+   OpStatus status = OpStatus::Success;
+   string formatedMsg;
+   const string header = "Dump | Enabled | 1s Error | 10s Error | 100s Error | DAC Value | State | Accuracy | TPulse";
+   cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
+   cout << header << endl;
+   int dumpCount = 0;
+   do
+   {
+      bool enableStatus = pDriver->getEnabled(&status);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO enable status with error: " + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
 
+      uint64_t error_1s = pDriver->get_1s_error(&status);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 1s error value with error: " + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
+
+      uint64_t error_10s = pDriver->get_10s_error(&status);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 10s error value with error: " + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
+
+      uint64_t error_100s = pDriver->get_100s_error(&status);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 100s error value with error: " + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
+
+      uint64_t dac = pDriver->getDacValue(&status);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO DAC value with error: " + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
+      
+      array<string, 3> GPSDOStatus;
+      status = pDriver->getStatus(GPSDOStatus);
+      if(status != OpStatus::Success)
+      {
+         formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO Status values. Reason: " + pDriver->getGPSDOStatusMsg() + ToString(status) + "\n";
+         pDriver->setDriverErr(formatedMsg);
+         return status;
+      }
+
+      cout << dumpCount << (enableStatus ? "true"s : "false"s) << error_1s << error_10s << error_100s << dac << GPSDOStatus[GPSDO_STATE] << GPSDOStatus[GPSDO_ACCURACY] << GPSDOStatus[GPSDO_TPULSE] << endl;
+
+      ++dumpCount;
+      if(dumpCount % banner_interval == 0)
+         cout << header << endl;
+      
+      std::this_thread::sleep_for(delay);
+
+   } while (dumpCount < numDumps);
+
+   // TODO: Add Ctrl+C signal handler
+
+   cout << "Monitoring finished\n";
+   return status;
 }
 
 void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps = 1, int delay = 1)
@@ -310,7 +391,7 @@ int main(int argc, char** argv)
       else if(reset)
          resetGPSDO(&driver);
       else if(check)
-         runMonitoring(&driver);
+        runStatus = runMonitoring(&driver, 0, std::chrono::milliseconds(1000), 1);     // TODO: Pass the actual arguments
       else
       {
          cerr << "No command specified! Aborting limeGPSDO execution!";
