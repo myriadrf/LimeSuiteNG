@@ -5,9 +5,13 @@ endif()
 include(FeatureSummary)
 include(CMakeDependentOption)
 
+# Read driver version from VERSION file
+file(READ "${CMAKE_CURRENT_LIST_DIR}/VERSION" LIMEPCIE_VERSION_RAW)
+string(STRIP "${LIMEPCIE_VERSION_RAW}" LIMEPCIE_VERSION)
+
 project(
     limepcie
-    VERSION 0.1.10
+    VERSION ${LIMEPCIE_VERSION}
     DESCRIPTION "Linux kernel module for LimeSDR PCIe based devices"
     LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -28,7 +32,6 @@ endif(GITHASH)
 set(OBJECTS_DIR ${PROJECT_NAME}-${PROJECT_VERSION})
 configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/version.h @ONLY)
 configure_file(dkms.conf.in ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf @ONLY)
-configure_file(${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf ${CMAKE_SOURCE_DIR}/debian/${PROJECT_NAME}-dkms.dkms COPYONLY)
 
 find_program(DKMS_EXECUTABLE NAMES dkms)
 mark_as_advanced(DKMS_EXECUTABLE)
