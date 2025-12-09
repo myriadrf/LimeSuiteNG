@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <array>
 #include <csignal>
+#include <cmath>
 #include "args.hxx"
 
 using namespace std;
@@ -33,6 +34,9 @@ using namespace lime::cli;
 #define GPSDO_STATE    0
 #define GPSDO_ACCURACY 1
 #define GPSDO_TPULSE   2
+
+static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
+static uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
 
 class GPSDODriver
 {
@@ -77,8 +81,6 @@ class GPSDODriver
    string getGPSDOStatusMsg();
 
    private:
-   uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
-   uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
    void formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus);
 
    ICSR * mCSR_interface;
@@ -174,7 +176,7 @@ OpStatus GPSDODriver::setEnabled(bool enable)
    if(status != OpStatus::Success)
       return status;
    
-   currRegValue = this->setField(currRegValue, static_cast<uint64_t>(enable), CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
+   currRegValue = setField(currRegValue, static_cast<uint64_t>(enable), CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
    status = this->writeRegister(GPSDODriver::reg_control, currRegValue);
 
    return status;
@@ -195,13 +197,13 @@ string GPSDODriver::getGPSDOStatusMsg()
    return mGPSDOStatusMsg;
 }
 
-uint64_t GPSDODriver::setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
+uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
 {
    uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
    return ((currRegValue & ~mask) | ((newBitValue << bitOffset) & mask));
 }
 
-uint64_t GPSDODriver::getField(uint64_t currRegValue, int bitOffset, int size)
+uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
 {
    uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
    return ((currRegValue & mask) >> bitOffset);
@@ -307,24 +309,129 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
    return status;
 }
 
-void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps = 1, int delay = 1)
+static void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps = 1, int delay = 1)
 {
-
+   cout << "Note: Raw register dump not available via named CSRs — use --check for full status\n";
 }
 
-void resetGPSDO(GPSDODriver * pDriver, int rstDelay = 2)
+static OpStatus resetGPSDO(GPSDODriver * pDriver, std::chrono::milliseconds rstDelay)
 {
-
+   string formatedMsg;
+   cout << "Resetting GPSDO...\n";
+   OpStatus status = pDriver->setEnabled(false);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "Failed to reset GPSDO with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+   
+   std::this_thread::sleep_for(rstDelay);
+   cout << "GPSDO reset complete (re-enabled)\n";
+   return status;
 }
 
-void enableGPSDO(GPSDODriver * pDriver, double clk = 30.72, double ppm = 0.1)
+static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk = 30.72, double ppm = 0.1)
 {
+   OpStatus status = OpStatus::Success;
+   string formatedMsg;
+   double freq = clk * 1e6;
+   cout << "freq = " << freq << endl;
 
+   uint64_t target_1s = static_cast<uint64_t>(freq);
+   cout << "target_1s = " << target_1s << endl;
+   uint64_t target_10s = static_cast<uint64_t>(freq * 10);
+   cout << "target_10s = " << target_10s << endl;
+   uint64_t target_100s = static_cast<uint64_t>(freq * 100);
+   cout << "target_100s = " << target_100s << endl;
+
+   uint64_t tol_1s_hz = static_cast<uint64_t>(round(freq * ppm / 1e6));
+   cout << "tol_1s_hz = " << tol_1s_hz << endl;
+   uint64_t tol_10s_hz = tol_1s_hz * 10;
+   cout << "tol_10s_hz = " << tol_10s_hz << endl;
+   uint64_t tol_100s_hz = tol_1s_hz * 100;
+   cout << "tol_100s_hz = " << tol_100s_hz << endl;
+
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_1s_target, target_1s);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_ONE_S_TARGET register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+      
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_1s_err_tol, tol_1s_hz);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_ONE_S_TOL register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_10s_target, target_10s);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_TEN_S_TARGET register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_10s_err_tol, tol_10s_hz);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_TEN_S_TOL register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_100s_target, target_100s);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TARGET register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+   
+   status = pDriver->writeRegister(GPSDODriver::reg_pps_100s_err_tol, tol_100s_hz);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TOL register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+
+   uint64_t control = 0;
+   uint64_t clk_sel = (ceil(clk) == 10.0f || floor(clk) == 10.0f ) ? 1ULL : 0ULL;
+   control = setField(control, clk_sel, CONTROL_CLK_SEL_OFFSET, CONTROL_CLK_SEL_SIZE);
+   control = setField(control, 1ULL, CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
+
+   status = pDriver->writeRegister(GPSDODriver::reg_control, control);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO enable failed to write PPSDO_ENABLE register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
+
+   cout << "GPSDO enabled: CLK_SEL = " << clk_sel << "(" << clk << "MHz), " << ppm << "ppm tolerance (1s tol = " << tol_1s_hz << " Hz, 10s = "
+        << tol_10s_hz << " Hz, 100s = " << tol_100s_hz << " Hz).\n";
+
+   return status;
 }
 
-void disableGPSDO(GPSDODriver * pDriver)
+static OpStatus disableGPSDO(GPSDODriver * pDriver)
 {
+   string formatedMsg;
+   OpStatus status = pDriver->writeRegister(GPSDODriver::reg_control, 0ULL);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "GPSDO disable failed to write PPSDO_ENABLE register with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
 
+   cout << "GPSDO disabled\n";
+   return status;
 }
 
 int main(int argc, char** argv)
@@ -385,11 +492,11 @@ int main(int argc, char** argv)
       if(dump)
          dumpRegisters(&driver);
       else if(enable)
-         enableGPSDO(&driver);
+        runStatus = enableGPSDO(&driver);
       else if(disable)
-         disableGPSDO(&driver);
+        runStatus = disableGPSDO(&driver);
       else if(reset)
-         resetGPSDO(&driver);
+        runStatus = resetGPSDO(&driver, std::chrono::milliseconds(1000));
       else if(check)
         runStatus = runMonitoring(&driver, 0, std::chrono::milliseconds(1000), 1);     // TODO: Pass the actual arguments
       else
