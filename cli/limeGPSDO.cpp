@@ -10,6 +10,7 @@
 #include <array>
 #include <csignal>
 #include <cmath>
+#include <atomic>
 #include "args.hxx"
 
 using namespace std;
@@ -37,12 +38,18 @@ using namespace lime::cli;
 
 static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
 static uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
+atomic<bool> cleanUp(false);
+
+void keyBoardInt(int param)
+{
+   cleanUp = true;
+}
 
 class GPSDODriver
 {
    public:
 
-   const array<string,4> accuracyLevelList = {"Disabled/Lowest\n", "1s Tune\n", "2s Tune\n", "3s Tune (Highest)\n"}; 
+   const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"}; 
    static constexpr uint64_t reg_control            = 0x00000000F000B000;
    static constexpr uint64_t reg_pps_1s_target      = 0x00000000F000B004;
    static constexpr uint64_t reg_pps_1s_err_tol     = 0x00000000F000B008;
@@ -234,13 +241,19 @@ void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t 
 // #### limeGPSDO helper function definitions ####
 // ###############################################
 
+static void printHeader()
+{
+   const string header = "Dump | Enabled | 1s Error | 10s Error | 100s Error | DAC Value |    State     |      Accuracy      | TPulse |";
+   cout << setw(header.size()) << setfill('-') << "-" << setfill(' ') << endl;
+   cout << header << endl;
+   cout << setw(header.size()) << setfill('-') << "-" << setfill(' ') << endl;
+}
+
 static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::milliseconds delay, int banner_interval)
 {
    OpStatus status = OpStatus::Success;
    string formatedMsg;
-   const string header = "Dump | Enabled | 1s Error | 10s Error | 100s Error | DAC Value | State | Accuracy | TPulse";
    cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
-   cout << header << endl;
    int dumpCount = 0;
    do
    {
@@ -293,25 +306,24 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      cout << dumpCount << (enableStatus ? "true"s : "false"s) << error_1s << error_10s << error_100s << dac << GPSDOStatus[GPSDO_STATE] << GPSDOStatus[GPSDO_ACCURACY] << GPSDOStatus[GPSDO_TPULSE] << endl;
+      if((dumpCount % banner_interval == 0 && dumpCount != numDumps))
+         printHeader();
 
       ++dumpCount;
-      if(dumpCount % banner_interval == 0)
-         cout << header << endl;
+      cout << setw(3) << dumpCount << setw(11) << (enableStatus ? "true"s : "false"s) << setw(8) << error_1s <<  setw(12) << error_10s << setw(12) << error_100s 
+           << setw(14) << hex << "0x" << dac << dec << setw(16) << GPSDOStatus[GPSDO_STATE] <<  setw(20) << GPSDOStatus[GPSDO_ACCURACY] << setw(10) << GPSDOStatus[GPSDO_TPULSE] << endl;
       
       std::this_thread::sleep_for(delay);
 
-   } while (dumpCount < numDumps);
-
-   // TODO: Add Ctrl+C signal handler
+   } while (dumpCount < numDumps && !cleanUp);
 
    cout << "Monitoring finished\n";
    return status;
 }
 
-static void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps = 1, int delay = 1)
+static void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps, double delay)
 {
-   cout << "Note: Raw register dump not available via named CSRs — use --check for full status\n";
+   cout << "Note: Raw register dump not available via named CSRs, use --check for full status\n";
 }
 
 static OpStatus resetGPSDO(GPSDODriver * pDriver, std::chrono::milliseconds rstDelay)
@@ -331,26 +343,19 @@ static OpStatus resetGPSDO(GPSDODriver * pDriver, std::chrono::milliseconds rstD
    return status;
 }
 
-static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk = 30.72, double ppm = 0.1)
+static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk, double ppm)
 {
    OpStatus status = OpStatus::Success;
    string formatedMsg;
    double freq = clk * 1e6;
-   cout << "freq = " << freq << endl;
 
    uint64_t target_1s = static_cast<uint64_t>(freq);
-   cout << "target_1s = " << target_1s << endl;
    uint64_t target_10s = static_cast<uint64_t>(freq * 10);
-   cout << "target_10s = " << target_10s << endl;
    uint64_t target_100s = static_cast<uint64_t>(freq * 100);
-   cout << "target_100s = " << target_100s << endl;
 
    uint64_t tol_1s_hz = static_cast<uint64_t>(round(freq * ppm / 1e6));
-   cout << "tol_1s_hz = " << tol_1s_hz << endl;
    uint64_t tol_10s_hz = tol_1s_hz * 10;
-   cout << "tol_10s_hz = " << tol_10s_hz << endl;
    uint64_t tol_100s_hz = tol_1s_hz * 100;
-   cout << "tol_100s_hz = " << tol_100s_hz << endl;
 
    status = pDriver->writeRegister(GPSDODriver::reg_pps_1s_target, target_1s);
    if(status != OpStatus::Success)
@@ -401,7 +406,7 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk = 30.72, double pp
    }
 
    uint64_t control = 0;
-   uint64_t clk_sel = (ceil(clk) == 10.0f || floor(clk) == 10.0f ) ? 1ULL : 0ULL;
+   uint64_t clk_sel = (ceil(clk) == 10.0 || floor(clk) == 10.0 ) ? 1ULL : 0ULL;
    control = setField(control, clk_sel, CONTROL_CLK_SEL_OFFSET, CONTROL_CLK_SEL_SIZE);
    control = setField(control, 1ULL, CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
 
@@ -413,7 +418,7 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk = 30.72, double pp
       return status;
    }
 
-   cout << "GPSDO enabled: CLK_SEL = " << clk_sel << "(" << clk << "MHz), " << ppm << "ppm tolerance (1s tol = " << tol_1s_hz << " Hz, 10s = "
+   cout << "GPSDO enabled: CLK_SEL = " << clk_sel << " (" << clk << " MHz), " << ppm << " ppm tolerance (1s tol = " << tol_1s_hz << " Hz, 10s = "
         << tol_10s_hz << " Hz, 100s = " << tol_100s_hz << " Hz).\n";
 
    return status;
@@ -436,6 +441,7 @@ static OpStatus disableGPSDO(GPSDODriver * pDriver)
 
 int main(int argc, char** argv)
 {
+   signal(SIGINT, keyBoardInt);
    // clang-format off
    args::ArgumentParser                    parser("limeGPSDO - \"Insert description here\"", "");
    args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
@@ -450,12 +456,12 @@ int main(int argc, char** argv)
 
    args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
-   args::ValueFlag<std::string>            num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, "");
-   args::ValueFlag<std::string>            delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, "");
-   args::ValueFlag<std::string>            banner(arguments, "interval", "Banner repeat interval (for --check)", {'b', "banner"}, "");
-   args::ValueFlag<std::string>            reset_delay(arguments, "time", "Delay after disable before re-enable (seconds, for --reset)", {'r', "reset-delay"}, "");
-   args::ValueFlag<std::string>            clk_freq(arguments, "Mhz", "Clock frequency in MHz (10 or 30.72)", {'c', "clk_freq"}, "");
-   args::ValueFlag<std::string>            ppm(arguments, "ppm", "Tolerance in ppm", {'p', "ppm"}, "");
+   args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 1);
+   args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
+   args::ValueFlag<int>                    banner(arguments, "interval", "Banner repeat interval (for --check)", {'b', "banner"}, 10);
+   args::ValueFlag<double>                 reset_delay(arguments, "time", "Delay after disable before re-enable (seconds, for --reset)", {'r', "reset-delay"}, 2.0);
+   args::ValueFlag<double>                 clk_freq(arguments, "MHz", "Clock frequency in MHz (10 or 30.72)", {'c', "clk-freq"}, 30.72);
+   args::ValueFlag<double>                 ppm(arguments, "ppm", "Tolerance in ppm", {'p', "ppm"}, 0.1);
    // // clang-format on
 
    try
@@ -490,23 +496,35 @@ int main(int argc, char** argv)
    try
    {
       if(dump)
-         dumpRegisters(&driver);
+         dumpRegisters(&driver, args::get(num), args::get(delay));
       else if(enable)
-        runStatus = enableGPSDO(&driver);
-      else if(disable)
-        runStatus = disableGPSDO(&driver);
-      else if(reset)
-        runStatus = resetGPSDO(&driver, std::chrono::milliseconds(1000));
-      else if(check)
-        runStatus = runMonitoring(&driver, 0, std::chrono::milliseconds(1000), 1);     // TODO: Pass the actual arguments
-      else
       {
-         cerr << "No command specified! Aborting limeGPSDO execution!";
-         driver.~GPSDODriver();
-         DeviceRegistry::freeDevice(device);
-         return EXIT_FAILURE;
-      }
+         double clk = args::get(clk_freq);
+         if ((clk != 30.72 && clk != 10.0))
+         {
+            cout << "Warning: Requested clock frequency of " << clk << " MHz is not supported! "; 
+            clk = 30.72;
+            cout << "Defaulting to " << clk << " MHz clock.\n";
+         }
+         
+         double m_ppm = args::get(ppm);
+         if(m_ppm < 0.1)
+            cout << "Warning: Selected " << m_ppm << " ppm may yield to incorrect error tolerance values! Recommended minimum ppm is 0.1!\n";
 
+         runStatus = enableGPSDO(&driver, clk, m_ppm);
+      }
+      else if(disable)
+         runStatus = disableGPSDO(&driver);
+      else if(reset)
+      {
+         int resetDelay = static_cast<int>(args::get(reset_delay) * 1000.0);
+         runStatus = resetGPSDO(&driver, std::chrono::milliseconds(resetDelay));
+      }
+      else if(check)
+      {
+         int convDelay = static_cast<int>(args::get(delay) * 1000.0);
+         runStatus = runMonitoring(&driver, args::get(num), std::chrono::milliseconds(convDelay), args::get(banner));
+      }
    }
    catch(const std::exception& e)
    {
@@ -514,6 +532,9 @@ int main(int argc, char** argv)
       DeviceRegistry::freeDevice(device);
       std::cerr << e.what() << '\n';
    }
+
+   if(cleanUp)
+      cerr << "Keyboard interrupt Ctrl+C detected! Cleaning up ...\n";
 
    if(runStatus != OpStatus::Success)
       cerr << driver.getDriverErr();
