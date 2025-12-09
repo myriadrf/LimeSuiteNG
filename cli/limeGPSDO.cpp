@@ -68,7 +68,7 @@ class GPSDODriver
 
    GPSDODriver() : mCSR_interface(nullptr) {}
    GPSDODriver(ICSR * interface) : mCSR_interface(interface) {}
-   ~GPSDODriver() { if (mCSR_interface != nullptr) delete mCSR_interface;}
+   void destroyCSR();
 
    uint64_t readRegister(uint64_t address, OpStatus * status);
    OpStatus writeRegister(uint64_t address, uint64_t value);
@@ -98,6 +98,12 @@ class GPSDODriver
 // ##################################################
 // #### GPSDODriver member functions definitions ####
 // ##################################################
+
+void GPSDODriver::destroyCSR()
+{
+   if (mCSR_interface != nullptr) 
+      delete mCSR_interface;
+}
 
 uint64_t GPSDODriver::readRegister(uint64_t address, OpStatus * status)
 {
@@ -528,7 +534,7 @@ int main(int argc, char** argv)
    }
    catch(const std::exception& e)
    {
-      driver.~GPSDODriver();
+      driver.destroyCSR();
       DeviceRegistry::freeDevice(device);
       std::cerr << e.what() << '\n';
    }
@@ -539,7 +545,7 @@ int main(int argc, char** argv)
    if(runStatus != OpStatus::Success)
       cerr << driver.getDriverErr();
       
-   driver.~GPSDODriver();
+   driver.destroyCSR();
    DeviceRegistry::freeDevice(device);
    return EXIT_SUCCESS;
 }
