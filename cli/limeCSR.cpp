@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <cinttypes>
 #include <filesystem>
 #include "args.hxx"
 
@@ -18,14 +19,14 @@ static void PrintCSRegReadResults(std::ostream& stream, const std::vector<uint64
 { 
    stream << "CSR data read out (address | value):" << endl;
    stream << std::hex << std::setfill('0');
-   for(int i = 0; i < wr_data.size(); ++i)
+   for(uint64_t i = 0; i < wr_data.size(); ++i)
       stream << "0x" << std::setw(16) << wr_data[i] << " 0x" << std::setw(16) << rd_data[i] << std::endl;
 }
 
 static uint64_t hex2ULLint(const std::string_view hexstr)
 {
    uint64_t value = 0;
-   sscanf(hexstr.data(), "%016llX", &value);
+   sscanf(hexstr.data(), "%016" SCNx64 "", &value);
    return value;
 }
 
@@ -186,7 +187,7 @@ int main(int argc, char** argv)
       cerr << setfill('0');
       if(write)
       {
-         for(int i = 0; i < wr_data.size(); i+=2)
+         for(uint64_t i = 0; i < wr_data.size(); i+=2)
          {
             OpStatus status = CSR_interface->ioWrite64(wr_data[i], wr_data[i+1]);
             if(status != OpStatus::Success)
@@ -196,7 +197,7 @@ int main(int argc, char** argv)
       else if(read)
       {
          OpStatus status = OpStatus::Success;
-         for(int i = 0; i < wr_data.size(); ++i)
+         for(uint64_t i = 0; i < wr_data.size(); ++i)
          {
             rd_data[i] = CSR_interface->ioRead64(wr_data[i], &status);
             if(status != OpStatus::Success)
