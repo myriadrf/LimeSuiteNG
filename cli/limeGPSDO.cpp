@@ -1,99 +1,4 @@
-#include "common.h"
-
-#include "limesuiteng/SDRDescriptor.h"
-#include "limesuiteng/ToString.h"
-#include "comms/ICSR.h"
-
-#include <cassert>
-#include <cstring>
-#include <filesystem>
-#include <array>
-#include <csignal>
-#include <cmath>
-#include <atomic>
-#include "args.hxx"
-
-using namespace std;
-using namespace lime;
-using namespace lime::cli;
-
-//  Status bit fields.
-#define STATUS_STATE_OFFSET    0
-#define STATUS_STATE_SIZE      4
-#define STATUS_ACCURACY_OFFSET 4
-#define STATUS_ACCURACY_SIZE   4
-#define STATUS_TPULSE_OFFSET   8
-#define STATUS_TPULSE_SIZE     1
-
-//  Control bit fields
-#define CONTROL_EN_OFFSET      0
-#define CONTROL_EN_SIZE        1
-#define CONTROL_CLK_SEL_OFFSET 1
-#define CONTROL_CLK_SEL_SIZE   1
-
-// GPSDOStatus array IDs
-#define GPSDO_STATE    0
-#define GPSDO_ACCURACY 1
-#define GPSDO_TPULSE   2
-
-static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
-static uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
-atomic<bool> cleanUp(false);
-
-void keyBoardInt(int param)
-{
-   cleanUp = true;
-}
-
-class GPSDODriver
-{
-   public:
-
-   const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"}; 
-   static constexpr uint64_t reg_control            = 0x00000000F000B000;
-   static constexpr uint64_t reg_pps_1s_target      = 0x00000000F000B004;
-   static constexpr uint64_t reg_pps_1s_err_tol     = 0x00000000F000B008;
-   static constexpr uint64_t reg_pps_10s_target     = 0x00000000F000B00C;
-   static constexpr uint64_t reg_pps_10s_err_tol    = 0x00000000F000B010;
-   static constexpr uint64_t reg_pps_100s_target    = 0x00000000F000B014;
-   static constexpr uint64_t reg_pps_100s_err_tol   = 0x00000000F000B018;
-
-   static constexpr uint64_t reg_pps_1s_err         = 0x00000000F000B01C;
-   static constexpr uint64_t reg_pps_10s_err        = 0x00000000F000B020;
-   static constexpr uint64_t reg_pps_100s_err       = 0x00000000F000B024;
-   static constexpr uint64_t reg_dac_tuned_val      = 0x00000000F000B028;
-   static constexpr uint64_t reg_status_accuracy    = 0x00000000F000B02C;
-   static constexpr uint64_t reg_status_pps_active  = 0x00000000F000B030;
-   static constexpr uint64_t reg_status_state       = 0x00000000F000B034;
-
-   GPSDODriver() : mCSR_interface(nullptr) {}
-   GPSDODriver(ICSR * interface) : mCSR_interface(interface) {}
-   void destroyCSR();
-
-   uint64_t readRegister(uint64_t address, OpStatus * status);
-   OpStatus writeRegister(uint64_t address, uint64_t value);
-   uint64_t getSigned32bit(uint64_t address, OpStatus * status);
-
-   uint64_t get_1s_error(OpStatus * status);
-   uint64_t get_10s_error(OpStatus * status);
-   uint64_t get_100s_error(OpStatus * status);
-   uint64_t getDacValue(OpStatus * status);
-   OpStatus getStatus(array<string, 3>& GPSDOStatus);
-   bool getEnabled(OpStatus * status);
-   OpStatus setEnabled(bool enable);
-
-   // Logger members
-   string getDriverErr();
-   void setDriverErr(string& msg);
-   string getGPSDOStatusMsg();
-
-   private:
-   void formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus);
-
-   ICSR * mCSR_interface;
-   std::string mGPSDOStatusMsg;
-   std::string mCurrDriverErrMsg;
-};
+#include "limeGPSDO.hpp"
 
 // ##################################################
 // #### GPSDODriver member functions definitions ####
@@ -220,6 +125,16 @@ uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
 {
    uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
    return ((currRegValue & mask) >> bitOffset);
+}
+
+uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
+{
+   return (*mpGPSDORegisterList)[id];
+}
+
+void GPSDODriver::updateGPSDORegList(string& devName)
+{
+   mpGPSDORegisterList = &SDR_GPSDO_Registers[devName];
 }
 
 void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus)
@@ -412,7 +327,7 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk, double ppm)
    }
 
    uint64_t control = 0;
-   uint64_t clk_sel = (ceil(clk) == 10.0 || floor(clk) == 10.0 ) ? 1ULL : 0ULL;
+   uint64_t clk_sel = 0; //(ceil(clk) == 10.0 || floor(clk) == 10.0 ) ? 1ULL : 0ULL;   // TODO: Update this later with the new revision of data sheet, for now defaulting to clk_sel 0
    control = setField(control, clk_sel, CONTROL_CLK_SEL_OFFSET, CONTROL_CLK_SEL_SIZE);
    control = setField(control, 1ULL, CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
 
@@ -483,7 +398,7 @@ int main(int argc, char** argv)
       return EXIT_FAILURE;
    }
 
-   const std::string devName = args::get(deviceFlag);
+   std::string devName = args::get(deviceFlag);
 
    auto handles = DeviceRegistry::enumerate();
    if (handles.size() == 0)
@@ -496,7 +411,12 @@ int main(int argc, char** argv)
    if (!device)
       return EXIT_FAILURE;
 
+   // In case device name is not specified, select the SDR name of the first device handle
+   if(devName.empty())
+      devName = handles.front().name;
+
    GPSDODriver driver(device->getICSR());
+   GPSDODriver::updateGPSDORegList(devName);
 
    OpStatus runStatus = OpStatus::Success;
    try
@@ -506,13 +426,6 @@ int main(int argc, char** argv)
       else if(enable)
       {
          double clk = args::get(clk_freq);
-         if ((clk != 30.72 && clk != 10.0))
-         {
-            cout << "Warning: Requested clock frequency of " << clk << " MHz is not supported! "; 
-            clk = 30.72;
-            cout << "Defaulting to " << clk << " MHz clock.\n";
-         }
-         
          double m_ppm = args::get(ppm);
          if(m_ppm < 0.1)
             cout << "Warning: Selected " << m_ppm << " ppm may yield to incorrect error tolerance values! Recommended minimum ppm is 0.1!\n";
