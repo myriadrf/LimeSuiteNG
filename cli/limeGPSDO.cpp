@@ -26,7 +26,7 @@ uint64_t GPSDODriver::getSigned32bit(uint64_t address, OpStatus * status)
    if(*status != OpStatus::Success)
       return 0ULL;
    
-   if(value & (1 << 31))
+   if(value & (1ULL << 31))
       value -= (1ULL << 32);
 
    return value;
@@ -186,7 +186,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      uint64_t error_1s = pDriver->get_1s_error(&status);
+      int64_t error_1s = static_cast<int64_t>(pDriver->get_1s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 1s error value with error: " + ToString(status) + "\n";
@@ -194,7 +194,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      uint64_t error_10s = pDriver->get_10s_error(&status);
+      int64_t error_10s = static_cast<int64_t>(pDriver->get_10s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 10s error value with error: " + ToString(status) + "\n";
@@ -202,7 +202,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      uint64_t error_100s = pDriver->get_100s_error(&status);
+      int64_t error_100s = static_cast<int64_t>(pDriver->get_100s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 100s error value with error: " + ToString(status) + "\n";
