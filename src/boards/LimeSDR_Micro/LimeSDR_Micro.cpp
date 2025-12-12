@@ -112,6 +112,8 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     }
 
     // const std::unordered_map<std::string, Region> flashMap = { { "VCTCXO_DAC"s, { 0x01FF0000, 2 } } };
+    desc.memoryDevices[ToString(eMemoryDevice::ARM_M4)] = std::make_shared<DataStorage>(this, eMemoryDevice::ARM_M4);
+    desc.memoryDevices[ToString(eMemoryDevice::VSPA)] = std::make_shared<DataStorage>(this, eMemoryDevice::VSPA);
     desc.memoryDevices[ToString(eMemoryDevice::EEPROM)] = std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM);
     {
         const std::unordered_map<std::string, Region> eepromMap = { { "XO_DAC"s, { 0xFFFE, 2 } } };
@@ -492,8 +494,13 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 OpStatus LimeSDR_Micro::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
-    return OpStatus::NotImplemented;
-    // return LMS64CProtocol::FirmwareWrite(*mSerialPort, data, length, progMode, target, callback, mSubDeviceIndex);
+    switch (device)
+    {
+    case eMemoryDevice::ARM_M4:
+    case eMemoryDevice::VSPA:
+    default:
+        return OpStatus::NotImplemented;
+    }
 }
 
 OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)

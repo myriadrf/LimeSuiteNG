@@ -195,11 +195,12 @@ int main(int argc, char** argv)
     inputFile.read(data.data(), cnt);
     inputFile.close();
 
-    if (memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack) !=
-        OpStatus::Success)
+    OpStatus status =
+        memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack);
+    if (status != OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);
-        cout << "Device programming failed."sv << endl;
+        cout << "Device programming failed. ("sv << int(status) << ")" << endl;
         return EXIT_FAILURE;
     }
     if (terminateProgress)
