@@ -364,36 +364,59 @@ int main(int argc, char** argv)
 {
    signal(SIGINT, keyBoardInt);
    // clang-format off
-   args::ArgumentParser                    parser("limeGPSDO - \"Insert description here\"", "");
+   args::ArgumentParser                    parser("limeGPSDO - GPS Disciplined Oscilator control and monitoring", "");
    args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
 
-   args::Group                             commands(parser, "commands"); // NOLINT(cppcoreguidelines-slicing) 
-   args::Command                           check(commands, "check", "Run monitoring mode");
-   args::Command                           dump(commands, "dump", "Dump registers");
-   args::Command                           reset(commands, "reset", "Reset GPSDO");
-   args::Command                           enable(commands, "enable", "Configure and enable GPSDO");
-   args::Command                           disable(commands, "disable", "Disable GPSDO");
+   // Note: Using commands as flags, because we need support for multi command invocation, which is not possible using args::Commands.
+   // Note: Using group validator: AtLeastOne to throw incase no command is selected.
+   args::Group                             commands(parser, "COMMANDS", args::Group::Validators::AtLeastOne); // NOLINT(cppcoreguidelines-slicing)
+   args::Flag                              check(commands, "check", "Run monitoring mode", {"check"} );
+   args::Flag                              dump(commands, "dump", "Dump registers", {"dump"});
+   args::Flag                              reset(commands, "reset", "Reset GPSDO", {"reset"});
+   args::Flag                              enable(commands, "enable", "Configure and enable GPSDO", {"enable"});
+   args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
 
-
-   args::Group                             arguments(parser, "arguments", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
+   args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
-   args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 1);
+   args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
    args::ValueFlag<int>                    banner(arguments, "interval", "Banner repeat interval (for --check)", {'b', "banner"}, 10);
    args::ValueFlag<double>                 reset_delay(arguments, "time", "Delay after disable before re-enable (seconds, for --reset)", {'r', "reset-delay"}, 2.0);
-   args::ValueFlag<double>                 clk_freq(arguments, "MHz", "Clock frequency in MHz (10 or 30.72)", {'c', "clk-freq"}, 30.72);
-   args::ValueFlag<double>                 ppm(arguments, "ppm", "Tolerance in ppm", {'p', "ppm"}, 0.1);
-   // // clang-format on
+   args::ValueFlag<double>                 clk_freq(arguments, "MHz", "Clock frequency in MHz", {'c', "clk-freq"});
+   args::ValueFlag<double>                 ppm(arguments, "ppm", "Tolerance in ppm", {'p', "ppm"});
+   // clang-format on
 
    try
    {
       parser.ParseCLI(argc, argv);
+
+      if(enable)
+      {
+         double clk = args::get(clk_freq);
+         double m_ppm = args::get(ppm);
+         if(clk == 0 && m_ppm == 0)
+            throw args::UsageError("Error: Enable command requires flags --clk-freq and --ppm to be set for each LimeSDR device!");
+      }
+
    } catch (args::Help&)
    {
       cout << parser << endl;
       return EXIT_SUCCESS;
-   } catch (const std::exception& e)
+   }
+   catch (args::ValidationError& e)
    {
+      std::cout << "Error: Select atleast one COMMAND from the list!" << endl;
+      cout << parser << endl;
+      return EXIT_SUCCESS;
+   }
+   catch (args::UsageError& e)
+   {
+      std::cout << e.what() << endl;
+      return EXIT_SUCCESS;
+   }
+   catch (const std::exception& e)
+   {
+      cerr << parser << endl;
       cerr << e.what() << std::endl;
       return EXIT_FAILURE;
    }
@@ -421,9 +444,13 @@ int main(int argc, char** argv)
    OpStatus runStatus = OpStatus::Success;
    try
    {
-      if(dump)
-         dumpRegisters(&driver, args::get(num), args::get(delay));
-      else if(enable)
+      if(reset)
+      {
+         int resetDelay = static_cast<int>(args::get(reset_delay) * 1000.0);
+         runStatus = resetGPSDO(&driver, std::chrono::milliseconds(resetDelay));
+      }
+
+      if(enable && runStatus == OpStatus::Success)
       {
          double clk = args::get(clk_freq);
          double m_ppm = args::get(ppm);
@@ -432,24 +459,30 @@ int main(int argc, char** argv)
 
          runStatus = enableGPSDO(&driver, clk, m_ppm);
       }
-      else if(disable)
-         runStatus = disableGPSDO(&driver);
-      else if(reset)
-      {
-         int resetDelay = static_cast<int>(args::get(reset_delay) * 1000.0);
-         runStatus = resetGPSDO(&driver, std::chrono::milliseconds(resetDelay));
-      }
-      else if(check)
+
+      if(check && runStatus == OpStatus::Success)
       {
          int convDelay = static_cast<int>(args::get(delay) * 1000.0);
          runStatus = runMonitoring(&driver, args::get(num), std::chrono::milliseconds(convDelay), args::get(banner));
       }
+
+      if(dump && runStatus == OpStatus::Success)
+      {
+         dumpRegisters(&driver, args::get(num), args::get(delay));
+      }
+
+      if(disable && runStatus == OpStatus::Success)
+      {
+         runStatus = disableGPSDO(&driver);
+      }
+
    }
    catch(const std::exception& e)
    {
       driver.destroyCSR();
       DeviceRegistry::freeDevice(device);
       std::cerr << e.what() << '\n';
+      return EXIT_FAILURE;
    }
 
    if(cleanUp)
