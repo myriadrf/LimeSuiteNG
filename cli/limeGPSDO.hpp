@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <atomic>
+#include <limits>
 #include "args.hxx"
 
 using namespace std;

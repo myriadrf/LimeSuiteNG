@@ -176,6 +176,10 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
    string formatedMsg;
    cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
    int dumpCount = 0;
+   bool continueLoop = false;
+   if(numDumps == 0)
+      printHeader();
+
    do
    {
       bool enableStatus = pDriver->getEnabled(&status);
@@ -235,8 +239,13 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
            << setw(14) << hex << "0x" << dac << dec << setw(16) << GPSDOStatus[GPSDO_STATE] <<  setw(20) << GPSDOStatus[GPSDO_ACCURACY] << setw(10) << GPSDOStatus[GPSDO_TPULSE] << endl;
       
       std::this_thread::sleep_for(delay);
+      continueLoop = (dumpCount < numDumps || numDumps == 0);
 
-   } while (dumpCount < numDumps && !cleanUp);
+      // This is for infinite loop. To prevent UB, reset counter
+      if(dumpCount == std::numeric_limits<int>::max())
+         dumpCount = 0;
+
+   } while (continueLoop && !cleanUp);
 
    cout << "Monitoring finished\n";
    return status;
