@@ -1,5 +1,15 @@
 #include "limeGPSDO.hpp"
 
+MonitorResults::MonitorResults()
+{
+   dumpCount = 0;
+   enableStatus = "false";
+   error_1s = 0;
+   error_10s = 0;
+   error_100s = 0;
+   dac = 0;
+}
+
 // ##################################################
 // #### GPSDODriver member functions definitions ####
 // ##################################################
@@ -162,27 +172,42 @@ void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t 
 // #### limeGPSDO helper function definitions ####
 // ###############################################
 
-static void printHeader()
+static int printHeader()
 {
-   const string header = "Dump | Enabled | 1s Error | 10s Error | 100s Error | DAC Value |    State     |      Accuracy      | TPulse |";
+   string header = "|    Dump    | Enabled |   1s Error   |  10s Error  |  100s Error  |  DAC Value  |    State    |      Accuracy      | TPulse |";
    cout << setw(header.size()) << setfill('-') << "-" << setfill(' ') << endl;
    cout << header << endl;
    cout << setw(header.size()) << setfill('-') << "-" << setfill(' ') << endl;
+   return header.size();
+}
+
+static string formatToFit(MonitorResults * results, int length)
+{
+   string formatedMessage(length, ' ');
+   const char * format = "  %10i    %5s    %11" PRIi64 "    %11" PRIi64 "   %11"  PRIi64 "    0x%08" PRIX64 "    %11s   %18s   %5s";
+   snprintf(formatedMessage.data(), formatedMessage.size(), format,
+             results->dumpCount, results->enableStatus.c_str(), results->error_1s,
+             results->error_10s, results->error_100s, results->dac, results->gpsdoState.c_str(),
+             results->gpsdoAccuracy.c_str(), results->gpsdoTpulse.c_str());
+   
+   return formatedMessage;
 }
 
 static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::milliseconds delay, int banner_interval)
 {
    OpStatus status = OpStatus::Success;
+   MonitorResults results;
    string formatedMsg;
    cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
    int dumpCount = 0;
    bool continueLoop = false;
+   int headerLength = 0;
    if(numDumps == 0)
-      printHeader();
+      headerLength = printHeader();
 
    do
    {
-      bool enableStatus = pDriver->getEnabled(&status);
+      results.enableStatus = (pDriver->getEnabled(&status) ? "true" : "false");
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO enable status with error: " + ToString(status) + "\n";
@@ -190,7 +215,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      int64_t error_1s = static_cast<int64_t>(pDriver->get_1s_error(&status));
+      results.error_1s = static_cast<int64_t>(pDriver->get_1s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 1s error value with error: " + ToString(status) + "\n";
@@ -198,7 +223,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      int64_t error_10s = static_cast<int64_t>(pDriver->get_10s_error(&status));
+      results.error_10s = static_cast<int64_t>(pDriver->get_10s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 10s error value with error: " + ToString(status) + "\n";
@@ -206,7 +231,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      int64_t error_100s = static_cast<int64_t>(pDriver->get_100s_error(&status));
+      results.error_100s = static_cast<int64_t>(pDriver->get_100s_error(&status));
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO 100s error value with error: " + ToString(status) + "\n";
@@ -214,7 +239,7 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          return status;
       }
 
-      uint64_t dac = pDriver->getDacValue(&status);
+      results.dac = pDriver->getDacValue(&status);
       if(status != OpStatus::Success)
       {
          formatedMsg = formatedMsg + "Monitoring mode failed to read GPSDO DAC value with error: " + ToString(status) + "\n";
@@ -230,13 +255,15 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
          pDriver->setDriverErr(formatedMsg);
          return status;
       }
+      results.gpsdoState = GPSDOStatus[GPSDO_STATE];
+      results.gpsdoAccuracy = GPSDOStatus[GPSDO_ACCURACY];
+      results.gpsdoTpulse = GPSDOStatus[GPSDO_TPULSE];
 
       if((dumpCount % banner_interval == 0 && dumpCount != numDumps))
-         printHeader();
+         headerLength = printHeader();
 
-      ++dumpCount;
-      cout << setw(3) << dumpCount << setw(11) << (enableStatus ? "true"s : "false"s) << setw(8) << error_1s <<  setw(12) << error_10s << setw(12) << error_100s 
-           << setw(14) << hex << "0x" << dac << dec << setw(16) << GPSDOStatus[GPSDO_STATE] <<  setw(20) << GPSDOStatus[GPSDO_ACCURACY] << setw(10) << GPSDOStatus[GPSDO_TPULSE] << endl;
+      results.dumpCount = ++dumpCount;
+      cout << formatToFit(&results, headerLength) << endl;
       
       std::this_thread::sleep_for(delay);
       continueLoop = (dumpCount < numDumps || numDumps == 0);

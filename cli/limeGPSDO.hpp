@@ -16,6 +16,8 @@
 #include <cmath>
 #include <atomic>
 #include <limits>
+#include <cstdio>
+#include <cinttypes>
 #include "args.hxx"
 
 using namespace std;
@@ -109,6 +111,21 @@ class GPSDODriver
    std::string mGPSDOStatusMsg;
    std::string mCurrDriverErrMsg;
    static gpsdo_reg_list_t * mpGPSDORegisterList;
+};
+
+struct MonitorResults
+{
+   MonitorResults();
+
+   int dumpCount;
+   string enableStatus;
+   int64_t error_1s;
+   int64_t error_10s;
+   int64_t error_100s;
+   uint64_t dac;
+   string gpsdoState;
+   string gpsdoAccuracy;
+   string gpsdoTpulse;
 };
 
 gpsdo_reg_list_t * GPSDODriver::mpGPSDORegisterList = nullptr;
