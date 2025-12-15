@@ -639,7 +639,7 @@ struct lms7002m_decibel lms7002m_get_rfetia_db(lms7002m_context* self, const enu
     const uint8_t g_tia_rfe = lms7002m_spi_read_csr(self, LMS7002M_G_TIA_RFE);
 
     // g_tia_rfe value 0 is invalid
-    const int32_t tia_lookup_table[4] = { 0, -12, -3, 0 };
+    const int32_t tia_lookup_table[4] = { 0, 0, 9, 12 };
     const int32_t dbmax = tia_lookup_table[g_tia_rfe];
 
     lms7002m_set_active_channel(self, savedChannel);
