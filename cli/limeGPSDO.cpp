@@ -22,11 +22,14 @@ void GPSDODriver::destroyCSR()
 
 uint64_t GPSDODriver::readRegister(uint64_t address, OpStatus * status)
 {
-   return mCSR_interface->ioRead64(address, status);
+   uint64_t value = mCSR_interface->ioRead64(address, status);
+   lime::debug("Read 0x%016" PRIx64 " from register 0x%016" PRIx64 "", value, address);
+   return value;
 }
 
 OpStatus GPSDODriver::writeRegister(uint64_t address, uint64_t value)
 {
+   lime::debug("Writing 0x%016" PRIx64 " value to register 0x%016" PRIx64 "", value, address);
    return mCSR_interface->ioWrite64(address, value);
 }
 
@@ -473,7 +476,7 @@ int main(int argc, char** argv)
    args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
 
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
-   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations in limeGPSDO app.", {'l', "log"}, "error");
+   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations in limeGPSDO app. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
    args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
@@ -543,6 +546,7 @@ int main(int argc, char** argv)
    logVerbosity = strToLogLevel(args::get(logFlag));
    device->SetMessageLogCallback(lime::cli::LogCallback);
    lime::registerLogHandler(lime::cli::LogCallback);
+   registerLogHandler(lime::cli::CStyleLogCallback);
 
    if(!GPSDODriver::updateGPSDORegList(handles, devName))
    {
