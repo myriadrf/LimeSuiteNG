@@ -33,6 +33,13 @@ void LogCallback(LogLevel lvl, const std::string& msg)
     std::cerr << msg << std::endl;
 }
 
+void CStyleLogCallback(LogLevel lvl, const char * msg)
+{
+    if (lvl > logVerbosity)
+        return;
+    std::cerr << msg << std::endl;
+}
+
 std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag)
 {
     std::vector<int> numbers;
