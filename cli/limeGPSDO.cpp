@@ -424,7 +424,7 @@ int main(int argc, char** argv)
    args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
 
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
-   args::ValueFlag<std::string>            logFlag(arguments, "", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error");
+   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log debug level prints intermediate calculations in limeGPSDO app.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
    args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
