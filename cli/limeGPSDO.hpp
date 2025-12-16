@@ -85,8 +85,6 @@ class GPSDODriver
    static bool updateGPSDORegList(vector<DeviceHandle>& handles, string& devName);
 
    // Logger members
-   string getDriverErr();
-   void setDriverErr(string& msg);
    string getGPSDOStatusMsg();
 
    private:
@@ -94,7 +92,6 @@ class GPSDODriver
 
    ICSR * mCSR_interface;
    std::string mGPSDOStatusMsg;
-   std::string mCurrDriverErrMsg;
    static gpsdo_reg_list_t * mpGPSDORegisterList;
 };
 
