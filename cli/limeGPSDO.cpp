@@ -147,9 +147,9 @@ uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
 
 static MediaType getDeviceMediaType(string& media)
 {
-   if(media.find("USB"))
+   if(media.find("USB") != string::npos)
       return MediaType::USB;
-   else if(media.find("PCIe"))
+   else if(media.find("PCIe") != string::npos)
       return MediaType::PCIE;
    
    return MediaType::UNDEFINED;
@@ -183,6 +183,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
          mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_MINI_V2];
          regListUpdated = true;
       }
+      lime::debug("Selected CSR register list for LimeSDR Mini V2");
       break;
    
    case MediaType::PCIE:
@@ -191,6 +192,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
          mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_XTRX];
          regListUpdated = true;
       }
+      lime::debug("Selected CSR register list for LimeSDR XTRX");
       break;
    
    default:
