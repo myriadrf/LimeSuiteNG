@@ -435,6 +435,13 @@ int main(int argc, char** argv)
             throw args::UsageError("Error: Enable command requires flags --clk-freq and --ppm to be set for each LimeSDR device!");
       }
 
+      if(check)
+      {
+         int mbanner = args::get(banner);
+         if (mbanner == 0)
+            throw args::UsageError("Error: Check command --banner flag cannot be set to 0!");
+      }
+
    } catch (args::Help&)
    {
       cout << parser << endl;
