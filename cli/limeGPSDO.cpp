@@ -342,8 +342,9 @@ static void dumpRegisters(GPSDODriver * pDriver, int numberOfDumps, double delay
 static OpStatus resetGPSDO(GPSDODriver * pDriver, std::chrono::milliseconds rstDelay)
 {
    string formatedMsg;
+   OpStatus status = OpStatus::Success;
    cout << "Resetting GPSDO...\n";
-   OpStatus status = pDriver->setEnabled(false);
+   status = pDriver->setEnabled(false);
    if(status != OpStatus::Success)
    {
       formatedMsg = formatedMsg + "Failed to reset GPSDO with error: " + ToString(status) + "\n";
@@ -352,6 +353,13 @@ static OpStatus resetGPSDO(GPSDODriver * pDriver, std::chrono::milliseconds rstD
    }
    
    std::this_thread::sleep_for(rstDelay);
+   status = pDriver->setEnabled(true);
+   if(status != OpStatus::Success)
+   {
+      formatedMsg = formatedMsg + "Failed to reset GPSDO with error: " + ToString(status) + "\n";
+      pDriver->setDriverErr(formatedMsg);
+      return status;
+   }
    cout << "GPSDO reset complete (re-enabled)\n";
    return status;
 }
