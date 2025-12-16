@@ -305,14 +305,25 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk, double ppm)
    OpStatus status = OpStatus::Success;
    string formatedMsg;
    double freq = clk * 1e6;
+   lime::debug("Selected frequency: "s + to_string(freq) + " Hz;"s);
 
    uint64_t target_1s = static_cast<uint64_t>(freq);
+   lime::debug("target_1s = freq = "s + to_string(target_1s) + ";"s);
+
    uint64_t target_10s = static_cast<uint64_t>(freq * 10);
+   lime::debug("target_10s = freq * 10 = "s + to_string(freq) + " * 10 = "s + to_string(target_10s) + ";"s);
+
    uint64_t target_100s = static_cast<uint64_t>(freq * 100);
+   lime::debug("target_100s = freq * 100 = "s + to_string(freq) + " * 100 = "s + to_string(target_100s) + ";"s);
 
    uint64_t tol_1s_hz = static_cast<uint64_t>(round(freq * ppm / 1e6));
+   lime::debug("tol_1s_hz = round(freq * ppm / 1e6) = round("s + to_string(freq) + " * "s + to_string(ppm) + " / 1e6) = "s + to_string(tol_1s_hz) + " Hz;"s);
+
    uint64_t tol_10s_hz = tol_1s_hz * 10;
+   lime::debug("tol_10s_hz = tol_1s_hz * 10 = "s + to_string(tol_1s_hz) + " * 10 = "s + to_string(tol_10s_hz) + " Hz;"s);
+
    uint64_t tol_100s_hz = tol_1s_hz * 100;
+   lime::debug("tol_100s_hz = tol_1s_hz * 100 = "s + to_string(tol_1s_hz) + " * 100 = "s + to_string(tol_100s_hz) + " Hz;"s);
 
    status = pDriver->writeRegister(GPSDODriver::reg_pps_1s_target, target_1s);
    if(status != OpStatus::Success)
