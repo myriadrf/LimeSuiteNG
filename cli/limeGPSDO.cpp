@@ -356,25 +356,25 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk, double ppm)
    OpStatus status = OpStatus::Success;
    string formatedMsg;
    double freq = clk * 1e6;
-   lime::debug("Selected frequency: "s + to_string(freq) + " Hz;"s);
+   lime::info("Selected frequency: "s + to_string(freq) + " Hz;"s);
 
    uint64_t target_1s = static_cast<uint64_t>(freq);
-   lime::debug("target_1s = freq = "s + to_string(target_1s) + ";"s);
+   lime::info("target_1s = freq = "s + to_string(target_1s) + ";"s);
 
    uint64_t target_10s = static_cast<uint64_t>(freq * 10);
-   lime::debug("target_10s = freq * 10 = "s + to_string(freq) + " * 10 = "s + to_string(target_10s) + ";"s);
+   lime::info("target_10s = freq * 10 = "s + to_string(freq) + " * 10 = "s + to_string(target_10s) + ";"s);
 
    uint64_t target_100s = static_cast<uint64_t>(freq * 100);
-   lime::debug("target_100s = freq * 100 = "s + to_string(freq) + " * 100 = "s + to_string(target_100s) + ";"s);
+   lime::info("target_100s = freq * 100 = "s + to_string(freq) + " * 100 = "s + to_string(target_100s) + ";"s);
 
    uint64_t tol_1s_hz = static_cast<uint64_t>(round(freq * ppm / 1e6));
-   lime::debug("tol_1s_hz = round(freq * ppm / 1e6) = round("s + to_string(freq) + " * "s + to_string(ppm) + " / 1e6) = "s + to_string(tol_1s_hz) + " Hz;"s);
+   lime::info("tol_1s_hz = round(freq * ppm / 1e6) = round("s + to_string(freq) + " * "s + to_string(ppm) + " / 1e6) = "s + to_string(tol_1s_hz) + " Hz;"s);
 
    uint64_t tol_10s_hz = tol_1s_hz * 10;
-   lime::debug("tol_10s_hz = tol_1s_hz * 10 = "s + to_string(tol_1s_hz) + " * 10 = "s + to_string(tol_10s_hz) + " Hz;"s);
+   lime::info("tol_10s_hz = tol_1s_hz * 10 = "s + to_string(tol_1s_hz) + " * 10 = "s + to_string(tol_10s_hz) + " Hz;"s);
 
    uint64_t tol_100s_hz = tol_1s_hz * 100;
-   lime::debug("tol_100s_hz = tol_1s_hz * 100 = "s + to_string(tol_1s_hz) + " * 100 = "s + to_string(tol_100s_hz) + " Hz;"s);
+   lime::info("tol_100s_hz = tol_1s_hz * 100 = "s + to_string(tol_1s_hz) + " * 100 = "s + to_string(tol_100s_hz) + " Hz;"s);
 
    status = pDriver->writeRegister(GPSDODriver::getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET), target_1s);
    if(status != OpStatus::Success)
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
    args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
 
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
-   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log debug level prints intermediate calculations in limeGPSDO app.", {'l', "log"}, "error");
+   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations in limeGPSDO app.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
    args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
