@@ -20,6 +20,11 @@ void GPSDODriver::destroyCSR()
       delete mCSR_interface;
 }
 
+bool GPSDODriver::isCSRImplemented()
+{
+   return (mCSR_interface != nullptr ? true : false);
+}
+
 uint64_t GPSDODriver::readRegister(uint64_t address, OpStatus * status)
 {
    uint64_t value = mCSR_interface->ioRead64(address, status);
@@ -519,9 +524,18 @@ int main(int argc, char** argv)
 
    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
    if (!device)
+   {
+      cerr << "Failed to connect to SDR device!\n";
       return EXIT_FAILURE;
+   }
 
    GPSDODriver driver(device->getICSR());
+   if(!driver.isCSRImplemented())
+   {
+      cerr << "Selected SDR device does not support CSR interface!\n";
+      DeviceRegistry::freeDevice(device);
+      return EXIT_FAILURE;
+   }
 
    logVerbosity = strToLogLevel(args::get(logFlag));
    device->SetMessageLogCallback(lime::cli::LogCallback);

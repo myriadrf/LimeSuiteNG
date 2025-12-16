@@ -65,6 +65,7 @@ class GPSDODriver
    GPSDODriver() : mCSR_interface(nullptr) {}
    GPSDODriver(ICSR * interface) : mCSR_interface(interface) {}
    void destroyCSR();
+   bool isCSRImplemented();
 
    // CSR interface access
    uint64_t readRegister(uint64_t address, OpStatus * status);
