@@ -97,7 +97,7 @@ class GPSDODriver
 
    // GPSDO Register address list manipulation
    static uint64_t getGPSDORegAddress(GPSDORegistersID id);
-   static void updateGPSDORegList(string& devName);
+   static bool updateGPSDORegList(vector<DeviceHandle>& handles, string& devName);
 
    // Logger members
    string getDriverErr();
@@ -128,8 +128,6 @@ struct MonitorResults
    string gpsdoTpulse;
 };
 
-gpsdo_reg_list_t * GPSDODriver::mpGPSDORegisterList = nullptr;
-
 enum class GPSDORegistersID : int
 {
    PPSDO_ENABLE = 0,
@@ -148,9 +146,22 @@ enum class GPSDORegistersID : int
    PPSDO_STATUS_STATE = 13
 };
 
-static unordered_map<string, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
+enum class DeviceID : uint8_t
 {
-   {"LimeSDR XTRX", 
+   LIMESDR_XTRX = 0,
+   LIMESDR_MINI_V2 = 1
+};
+
+enum class MediaType : uint8_t
+{
+   USB = 0,
+   PCIE = 1,
+   UNDEFINED = 2
+};
+
+static unordered_map<DeviceID, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
+{
+   {DeviceID::LIMESDR_XTRX, 
       {
          {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F000B000},
          {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F000B004},
@@ -168,7 +179,7 @@ static unordered_map<string, gpsdo_reg_list_t> SDR_GPSDO_Registers =
          {GPSDORegistersID::PPSDO_STATUS_STATE,             0x00000000F000B034},
       }
    },
-   {"LimeSDR Mini V2", 
+   {DeviceID::LIMESDR_MINI_V2, 
       {
          {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F0002800},
          {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F0002804},

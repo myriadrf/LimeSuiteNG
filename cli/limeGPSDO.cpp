@@ -142,9 +142,60 @@ uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
    return (*mpGPSDORegisterList)[id];
 }
 
-void GPSDODriver::updateGPSDORegList(string& devName)
+static MediaType getDeviceMediaType(string& media)
 {
-   mpGPSDORegisterList = &SDR_GPSDO_Registers[devName];
+   if(media.find("USB"))
+      return MediaType::USB;
+   else if(media.find("PCIe"))
+      return MediaType::PCIE;
+   
+   return MediaType::UNDEFINED;
+}
+
+gpsdo_reg_list_t * GPSDODriver::mpGPSDORegisterList = nullptr;
+
+bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devName)
+{
+   bool regListUpdated = false;
+   DeviceHandle& mHandle = handles.front();
+
+   // Select the correct handle from list
+   if(!devName.empty())
+   {
+      for(auto& iter : handles)
+      {
+         if(iter.name == devName)
+         {
+            mHandle = iter;
+            break;
+         }  
+      }
+   }
+
+   switch (getDeviceMediaType(mHandle.media))
+   {
+   case MediaType::USB:
+      if(mHandle.addr == "0403:601f"s || mHandle.addr == "374d:0019"s)
+      {   
+         mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_MINI_V2];
+         regListUpdated = true;
+      }
+      break;
+   
+   case MediaType::PCIE:
+      if(mHandle.name.find("XTRX"s))
+      {
+         mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_XTRX];
+         regListUpdated = true;
+      }
+      break;
+   
+   default:
+      mpGPSDORegisterList = nullptr;
+      break;
+   }
+
+   return regListUpdated;
 }
 
 void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus)
@@ -414,8 +465,6 @@ int main(int argc, char** argv)
    args::ArgumentParser                    parser("limeGPSDO - GPS Disciplined Oscilator control and monitoring", "");
    args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
 
-   // Note: Using commands as flags, because we need support for multi command invocation, which is not possible using args::Commands.
-   // Note: Using group validator: AtLeastOne to throw incase no command is selected.
    args::Group                             commands(parser, "COMMANDS", args::Group::Validators::AtLeastOne); // NOLINT(cppcoreguidelines-slicing)
    args::Flag                              check(commands, "check", "Run monitoring mode", {"check"} );
    args::Flag                              dump(commands, "dump", "Dump registers", {"dump"});
@@ -489,16 +538,19 @@ int main(int argc, char** argv)
    if (!device)
       return EXIT_FAILURE;
 
-   // In case device name is not specified, select the SDR name of the first device handle
-   if(devName.empty())
-      devName = handles.front().name;
-
-   GPSDODriver driver(device->getICSR());
-   GPSDODriver::updateGPSDORegList(devName);
+    GPSDODriver driver(device->getICSR());
 
    logVerbosity = strToLogLevel(args::get(logFlag));
    device->SetMessageLogCallback(lime::cli::LogCallback);
    lime::registerLogHandler(lime::cli::LogCallback);
+
+   if(!GPSDODriver::updateGPSDORegList(handles, devName))
+   {
+      driver.destroyCSR();
+      DeviceRegistry::freeDevice(device);
+      lime::error("Failed to select CSR register list for selected device!");
+      return EXIT_FAILURE;
+   }
 
    OpStatus runStatus = OpStatus::Success;
    try
