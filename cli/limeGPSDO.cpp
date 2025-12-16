@@ -521,7 +521,7 @@ int main(int argc, char** argv)
    if (!device)
       return EXIT_FAILURE;
 
-    GPSDODriver driver(device->getICSR());
+   GPSDODriver driver(device->getICSR());
 
    logVerbosity = strToLogLevel(args::get(logFlag));
    device->SetMessageLogCallback(lime::cli::LogCallback);
