@@ -61,21 +61,6 @@ class GPSDODriver
    public:
 
    const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"}; 
-   static constexpr uint64_t reg_control            = 0x00000000F000B000;
-   static constexpr uint64_t reg_pps_1s_target      = 0x00000000F000B004;
-   static constexpr uint64_t reg_pps_1s_err_tol     = 0x00000000F000B008;
-   static constexpr uint64_t reg_pps_10s_target     = 0x00000000F000B00C;
-   static constexpr uint64_t reg_pps_10s_err_tol    = 0x00000000F000B010;
-   static constexpr uint64_t reg_pps_100s_target    = 0x00000000F000B014;
-   static constexpr uint64_t reg_pps_100s_err_tol   = 0x00000000F000B018;
-
-   static constexpr uint64_t reg_pps_1s_err         = 0x00000000F000B01C;
-   static constexpr uint64_t reg_pps_10s_err        = 0x00000000F000B020;
-   static constexpr uint64_t reg_pps_100s_err       = 0x00000000F000B024;
-   static constexpr uint64_t reg_dac_tuned_val      = 0x00000000F000B028;
-   static constexpr uint64_t reg_status_accuracy    = 0x00000000F000B02C;
-   static constexpr uint64_t reg_status_pps_active  = 0x00000000F000B030;
-   static constexpr uint64_t reg_status_state       = 0x00000000F000B034;
 
    GPSDODriver() : mCSR_interface(nullptr) {}
    GPSDODriver(ICSR * interface) : mCSR_interface(interface) {}
