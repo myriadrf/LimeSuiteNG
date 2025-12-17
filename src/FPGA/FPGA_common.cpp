@@ -48,6 +48,7 @@ static constexpr bool HasWaitForDone(uint8_t targetDevice)
     case LMS_DEV_LIMESDR_QPCIE:
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_EXTERNAL_SSDR:
         return true;
     default:
         return false;
@@ -71,19 +72,6 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
     case LMS_DEV_EXTERNAL_SSDR:
-        return true;
-    default:
-        return false;
-    }
-}
-
-static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
-{
-    switch (static_cast<eLMS_DEV>(targetDevice))
-    {
-    case LMS_DEV_LIMESDR_X3:
-    case LMS_DEV_LIMESDR_XTRX:
-    case LMS_DEV_LIMESDR_MMX8:
         return true;
     default:
         return false;
@@ -932,11 +920,6 @@ void FPGA::SetFeatures(const GatewareFeatures& flags)
 /// @return The packet size after the changes (returns @p packetSize if not supported)
 uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId)
 {
-    if (!HasVariableRxPacketSize(ReadRegister(0)))
-    {
-        return packetSize;
-    }
-
     // iqSamplesCount must be N*16, or N*8 depending on device BUS width
     const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
     packetSize = (iqSamplesCount * sampleSize * 2) + sizeof(StreamHeader);
