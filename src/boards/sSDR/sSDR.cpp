@@ -117,6 +117,8 @@ sSDR::sSDR(std::shared_ptr<ISPI> spiRFsoc,
 
     desc.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
 
+    desc.customParameters = { ssdr::cp_temperature };
+
     mFPGA = std::make_unique<lime::FPGA_XTRX>(spiFPGA, spiRFsoc);
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, desc);
