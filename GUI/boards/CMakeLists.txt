@@ -1,1 +1,11 @@
-target_sources(limeGUI PRIVATE pnlBoardControls.cpp pnlGPIO.cpp pnlX3.cpp pnlX8.cpp pnlXTRX.cpp pnluLimeSDR.cpp pnlLimeSDR.cpp pnlGPIO_Interface.cpp pnlsSDR.cpp)
+target_sources(
+    limeGUI
+    PRIVATE pnlBoardControls.cpp
+            pnlGPIO.cpp
+            pnlX3.cpp
+            pnlX8.cpp
+            pnlXTRX.cpp
+            pnluLimeSDR.cpp
+            pnlLimeSDR.cpp
+            pnlGPIO_Interface.cpp
+            pnlsSDR.cpp)
