@@ -65,6 +65,8 @@ html_context = {
     'github_version': 'main/'
 }
 
+cpp_id_attributes = ['LIME_API']
+
 # This is where we place substitutions, such as for Unicode characters.
 rst_epilog = """
 .. include:: /substitutions.txt
