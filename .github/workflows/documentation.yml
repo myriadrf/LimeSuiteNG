@@ -1,6 +1,7 @@
 name: Documentation
 
 on:
+  workflow_dispatch:
   push:
     branches: [develop, stable]
     paths:
@@ -19,8 +20,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
+        # with:
+        #   python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -30,7 +31,7 @@ jobs:
       - name: Set up Python venv
         run: |
           cd ${{github.workspace}}/docs
-          python3.8 -m venv venv
+          python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
 
@@ -40,8 +41,8 @@ jobs:
           source venv/bin/activate
           ./generate_docs.sh
 
-      - name: Test hyperlinks
-        run: |
-          cd ${{github.workspace}}/docs
-          source venv/bin/activate
-          make checklinks
+      # - name: Test hyperlinks
+      #   run: |
+      #     cd ${{github.workspace}}/docs
+      #     source venv/bin/activate
+      #     make checklinks

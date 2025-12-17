@@ -22,6 +22,7 @@ jobs:
 
       - name: Run clang-format
         run: |
+          git config --local clangFormat.extensions c,h,cc,hh,cpp,hpp
           clang-format --version
           base_hash="${{ github.event.pull_request.base.sha }}"
           # if base is not provided, do whole source formatting

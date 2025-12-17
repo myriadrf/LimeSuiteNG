@@ -91,6 +91,6 @@ Optionally library can be installed into system. Continuing on from the previous
    To uninstall library from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
 
 .. _`CMake`: https://cmake.org/
-.. _`wxWidgets`: https://www.wxwidgets.org/
+.. _`wxWidgets`: https://wxwidgets.org/
 .. _`SoapySDR`: https://github.com/pothosware/SoapySDR
 .. _`FX3SDK`: https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbfx3sdk

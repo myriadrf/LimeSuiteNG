@@ -8,4 +8,5 @@ target_sources(
             pnluLimeSDR.cpp
             pnlLimeSDR.cpp
             pnlGPIO_Interface.cpp
-            pnlMicro.cpp)
+            pnlMicro.cpp
+            pnlsSDR.cpp)
