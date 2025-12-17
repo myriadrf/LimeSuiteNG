@@ -50,6 +50,9 @@ std::vector<USBDescriptor> FT601::enumerateDevices(const std::set<VendorProductI
 
             desc.product = Description;
             desc.serial = SerialNumber;
+            desc.speed = Flags & FT_FLAGS_SUPERSPEED ? USBSpeed::USB3_0
+                         : Flags & FT_FLAGS_HISPEED  ? USBSpeed::USB2_0
+                                                     : USBSpeed::Unknown;
             devDescriptors.push_back(desc);
         }
     }

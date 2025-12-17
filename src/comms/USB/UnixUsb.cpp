@@ -16,6 +16,7 @@
 #endif
 
 #include "limesuiteng/Logger.h"
+#include "threadHelper.h"
 
 using namespace std::literals::string_literals;
 
@@ -47,7 +48,6 @@ static int SessionRefCountIncrement()
         int returnCode = libusb_init(&gContextLibUsb); // Initialize the library for the session we just declared
         if (returnCode < 0)
             lime::error("UnixUsb::libusb_init Error %i", returnCode); // There was an error
-
 #if LIBUSBX_API_VERSION < 0x01000106
         libusb_set_debug(gContextLibUsb, 3); // Set verbosity level to 3, as suggested in the documentation
 #else
@@ -56,7 +56,14 @@ static int SessionRefCountIncrement()
             LIBUSB_LOG_LEVEL_INFO); // Set verbosity level to info, as suggested in the documentation
 #endif
         if (gContextLibUsb)
+        {
             gUSBProcessingThread = std::thread(HandleLibusbEvents, gContextLibUsb);
+            SetOSThreadPriority(ThreadPriority::HIGHEST, ThreadPolicy::REALTIME, &gUSBProcessingThread);
+#ifdef __linux__
+            char threadName[16] = "limeUSB"; // limited to 16 chars, including null byte.
+            pthread_setname_np(gUSBProcessingThread.native_handle(), threadName);
+#endif
+        }
     }
     return activeUSBconnections;
 }
@@ -192,6 +199,28 @@ std::vector<USBDescriptor> UnixUsb::enumerateDevices(const std::set<IUSB::Vendor
 
         USBDescriptor dest;
         TransferUSBDescriptor(devs[i], dest, desc);
+
+        const int speed = libusb_get_device_speed(devs[i]);
+        switch (speed)
+        {
+        case LIBUSB_SPEED_LOW:
+            dest.speed = USBSpeed::USB1_0;
+            break;
+        case LIBUSB_SPEED_FULL:
+            dest.speed = USBSpeed::USB1_1;
+            break;
+        case LIBUSB_SPEED_HIGH:
+            dest.speed = USBSpeed::USB2_0;
+            break;
+        case LIBUSB_SPEED_SUPER:
+            dest.speed = USBSpeed::USB3_0;
+            break;
+        case LIBUSB_SPEED_SUPER_PLUS:
+            dest.speed = USBSpeed::USB3_1;
+            break;
+        default:
+            dest.speed = USBSpeed::Unknown;
+        }
         devDescriptors.push_back(dest);
     }
     libusb_free_device_list(devs, 1);

@@ -8,12 +8,24 @@
 
 namespace lime {
 
+enum class USBSpeed : uint8_t {
+    Unknown,
+    USB1_0, // low speed (1.5MBit/s)
+    USB1_1, // full speed (12MBit/s)
+    USB2_0, // high speed (480MBit/s)
+    USB3_0, // super speed (5000MBit/s)
+    USB3_1, // super speed plus (10000MBit/s).
+};
+
+std::string_view ToString(USBSpeed speed);
+
 /// @brief The description of a given USB device.
 struct USBDescriptor {
     std::string product; ///< The Product Name of the device.
     std::string serial; ///< The serial number of the device.
     uint16_t vid; ///< The Vendor ID of the device.
     uint16_t pid; ///< The Product ID of the device.
+    USBSpeed speed;
 };
 
 /// @brief A generic class to communicate with a USB devices.

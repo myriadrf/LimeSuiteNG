@@ -296,7 +296,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
     assert(fin);
 
     fin->seekg(0, fin->end);
-    int fileSize = fin->tellg();
+    std::streamoff fileSize = (std::streamoff)fin->tellg();
     fin->seekg(0, fin->beg);
 
     const int64_t txSamplesCountTotal = fileSize / sizeof(complex16_t) / args->channelCount;
@@ -314,7 +314,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     StreamTxMeta txMeta{};
     txMeta.flags = 0;
-    txMeta.timestamp = 0;
+    txMeta.timestamp = Timespec(int64_t(0));
     txMeta.hasTimestamp = false; // transmit immediately
 
     std::vector<complex16_t> interleavedBuffer;
@@ -323,7 +323,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     do
     {
-        int samplesRemaining = txSamplesCountTotal;
+        int64_t samplesRemaining = txSamplesCountTotal;
         txMeta.flags = 0;
         while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
         {
@@ -581,7 +581,7 @@ int main(int argc, char** argv)
     txMeta.flags = StreamTxMeta::EndOfBurst;
 
     lime::Timespec ts(0, sampleRate / 100, tickRatio * sampleRate);
-    txMeta.timestamp = ts.GetTicks(); //sampleRate / 100; // send tx samples 10ms after start
+    txMeta.timestamp = ts; //sampleRate / 100; // send tx samples 10ms after start
 
 #ifdef USE_GNU_PLOT
     if (showFFT)

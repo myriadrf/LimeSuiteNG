@@ -17,6 +17,11 @@ RELEASE_NUM = $(VERSION_MAJOR).$(VERSION_MINOR)
 %:
 	dh $@ --with dkms --buildsystem=cmake --parallel --builddirectory=build
 
+LIMEPCIE_DKMS_VERSION := $(shell sed -n '1s/[[:space:]]//gp' drivers/linux/limepcie/VERSION)
+
+override_dh_dkms:
+	dh_dkms -V $(LIMEPCIE_DKMS_VERSION)
+
 override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCMAKE_BUILD_TYPE="Release" \

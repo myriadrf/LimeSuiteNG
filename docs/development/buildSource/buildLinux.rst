@@ -17,7 +17,7 @@ Optional packages that can be installed to enable specific functionality:
 - `wxWidgets`_ : enables graphical user interface
 - `libsoapysdr-dev`_ : enables building of limesuiteng plugin for SoapySDR
 - `linux-kernel-headers` : enables building of PCIe driver module for Linux kernel.
-- `gnuradio-dev`_ : enables building of plugin for GNU Radio.
+- `gnuradio-dev`_ : enables building of plugin for GNURadio.
 
 .. note::
     If you are on Ubuntu 20.04 or newer or Debian 11 or newer,
@@ -53,7 +53,7 @@ Continuing on from the previous command block, in the ``build`` folder, execute:
     sudo ldconfig
 
 .. _`CMake`: https://cmake.org/
-.. _`wxWidgets`: https://www.wxwidgets.org/
+.. _`wxWidgets`: https://wxwidgets.org/
 .. _`libusb-1.0-dev`: https://libusb.info/
 .. _`libsoapysdr-dev`: https://github.com/pothosware/SoapySDR
 .. _`gnuradio-dev`: https://www.gnuradio.org/

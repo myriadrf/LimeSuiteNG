@@ -11,7 +11,6 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
 
-#include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "comms/ISerialPort.h"
@@ -219,10 +218,9 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrmini::SPI_LMS7002M }, { "FPGA"s, limesdrmini::SPI_FPGA } };
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Mini"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_Mini"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeSDR-Mini"s);
     descriptor.socTree->children.push_back(fpgaNode);
 }
 
@@ -309,7 +307,11 @@ OpStatus LimeSDR_Mini::Init()
     lms->SetTxLPF(20e6);
     lms->SetRxLPF(20e6);
 
-    return OpStatus::Success;
+    // FPGA interface clocks needs to have phases configured to work properly,
+    // phase configuration is not being performed when sample rate is set <5MHz
+    // so just configure it at least once, so that samples rates <5MHz would be guaranteed
+    // to work properly after cold boot.
+    return LMS7002M_SDRDevice::LMS7002M_SetSampleRate(20e6, 2, 2);
 }
 
 OpStatus LimeSDR_Mini::Reset()

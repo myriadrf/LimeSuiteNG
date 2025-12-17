@@ -812,11 +812,11 @@ void TRXLooper::ReceivePacketsLoop()
                         fpgaTicks,
                         static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 }
-                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %li, timeDiff:%lins",
+                lime::debug("Loss: pkt:%li exp: %016lx, got: %016lx, diff: %+li, timeDiff:%+lins",
                     stats.packets + i,
                     expectedTimestamp.GetTicks(),
                     hwts.GetTicks(),
-                    expectedTimestamp.GetTicks() - hwts.GetTicks(),
+                    hwts.GetTicks() - expectedTimestamp.GetTicks(),
                     static_cast<int64_t>((diff.GetSeconds() + diff.GetFracSeconds()) * 1e9));
                 ++stats.loss;
                 loss.add(1);
@@ -1227,7 +1227,7 @@ void TRXLooper::TransmitPacketsLoop()
     auto& fifo = mTx.fifo;
 
     int64_t totalBytesSent = 0; //for data rate calculation
-    Timespec lastTS = 0;
+    Timespec lastTS;
 
     struct PendingWrite {
         uint32_t id;
@@ -1367,9 +1367,9 @@ void TRXLooper::TransmitPacketsLoop()
             uint32_t payloadOffset = tempPacket.GetPayloadSize();
             uint8_t* payload = &tempPacket.data[payloadOffset];
 
-            tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
             if (payloadOffset == 0)
             {
+                tempPacket.ignoreTimestamp(!srcPkt->meta.useTimestamp);
                 if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
                     tempPacket.counter = srcPkt->meta.timestamp.GetTicks();
                 else

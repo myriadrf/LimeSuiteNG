@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include "limesuiteng/complex.h"
+#include "complex12packed_t.h"
 
 namespace lime {
 
@@ -40,45 +41,38 @@ template<class Dest, class Src> constexpr float GetScalingRatio()
 template<class D, class S> constexpr void Rescale(D& dest, const S& src)
 {
     constexpr float ratio = GetScalingRatio<D, S>();
-    dest.real(src.real() * ratio);
-    dest.imag(src.imag() * ratio);
+    dest = D(src.real() * ratio, src.imag() * ratio);
 }
 
 // Specialized cases to utilize bit-shifting or direct copy
 template<> constexpr void Rescale(complex12_t& dest, const complex16_t& src)
 {
-    dest.real(src.real() >> 4);
-    dest.imag(src.imag() >> 4);
+    dest = complex12_t(src.real() >> 4, src.imag() >> 4);
 }
 
 template<> constexpr void Rescale(complex16_t& dest, const complex12_t& src)
 {
-    dest.real(src.real() << 4);
-    dest.imag(src.imag() << 4);
+    dest = complex16_t(src.real() << 4, src.imag() << 4);
 }
 
 template<> constexpr void Rescale(complex12packed_t& dest, const complex12_t& src)
 {
-    dest.real(src.real());
-    dest.imag(src.imag());
+    dest = complex12packed_t(src.real(), src.imag());
 }
 
 template<> constexpr void Rescale(complex12_t& dest, const complex12packed_t& src)
 {
-    dest.real(src.real());
-    dest.imag(src.imag());
+    dest = complex12_t(src.real(), src.imag());
 }
 
 template<> constexpr void Rescale(complex12packed_t& dest, const complex16_t& src)
 {
-    dest.real(src.real() >> 4);
-    dest.imag(src.imag() >> 4);
+    dest = complex12packed_t(src.real() >> 4, src.imag() >> 4);
 }
 
 template<> constexpr void Rescale(complex16_t& dest, const complex12packed_t& src)
 {
-    dest.real(src.real() << 4);
-    dest.imag(src.imag() << 4);
+    dest = complex16_t(src.real() << 4, src.imag() << 4);
 }
 
 // compile time known iteration/element count

@@ -55,9 +55,9 @@ int lime::SetOSThreadPriority(ThreadPriority priority, ThreadPolicy policy, std:
     {
         lime::debug("SetOSThreadPriority: Failed to set priority(%d), sched_prio(%d), policy(%d), ret(%d)",
             static_cast<int>(priority),
+            sch.sched_priority,
             sched_policy,
-            ret,
-            sch.sched_priority);
+            ret);
         return -1;
     }
 
@@ -100,9 +100,9 @@ int lime::SetOSCurrentThreadPriority(ThreadPriority priority, ThreadPolicy polic
     {
         lime::debug("SetOSCurrentThreadPriority: Failed to set priority(%d), sched_prio(%d), policy(%d), ret(%d)",
             static_cast<int>(priority),
+            sch.sched_priority,
             sched_policy,
-            ret,
-            sch.sched_priority);
+            ret);
         return -1;
     }
 

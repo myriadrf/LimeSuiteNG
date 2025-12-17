@@ -1,7 +1,7 @@
-.. _gnuradio-plugin-install-ref:
+.. _windows-gnuradio-plugin-install-ref:
 
-GNURadio plugin conda package
-=============================
+Conda package
+=============
 
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
@@ -31,7 +31,7 @@ If gnuradio package in the current conda environment is already installed, execu
    conda activate <environment>
    conda install gnuradio-limesuiteng=[version]
 
-If gnuradio package is missing in the current conda environment, execute the folowing commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+If gnuradio package is missing in the current conda environment, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
 
 .. code-block:: bash
 

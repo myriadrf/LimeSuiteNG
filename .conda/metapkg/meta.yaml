@@ -1,5 +1,7 @@
 {% set gnuradio_core_list = gnuradio_core.split('.') | map('int') | list %}
 {% set min_gnuradio_ver_list = [3, 10, 9, 2] %}
+{% set prefix = "Library/" if win else "" %}
+{% set postfix = ".exe" if win else "" %}
 
 # Set package and sub-package versions here
 {% set metapkg_ver = "25.1.0" %}
@@ -7,6 +9,7 @@
 {% set cli_ver = "1.0.0" %}
 {% set gui_ver = "1.0.0" %}
 {% set gnuradio_plugin_ver = "1.0.0" %}
+{% set soapy_plugin_ver = "1.0.0" %}
 
 package:
   name:  limesuiteng
@@ -22,6 +25,7 @@ source:
 
 build:
   number: 0
+  skip: true #[osx]
 
 requirements:
   build:
@@ -43,7 +47,9 @@ requirements:
     - pybind11                            # [build_platform != target_platform]
   
   host:
-    - gmp  # [linux]
+    - libusb #[linux]
+    - gmp    #[linux]
+    - soapysdr
     - gnuradio-core
     - boost
     - pip
@@ -54,20 +60,28 @@ requirements:
 
   run:
   # This metapackage depends on the following LimeSuiteNG sub-packages
-    - {{ pin_subpackage('liblimesuiteng', exact=True) }}
-    - {{ pin_subpackage('liblimesuiteng-dev', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-cli', exact=True) }}
-    - {{ pin_subpackage('limesuiteng-gui', exact=True) }}
+    - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
+    - {{ pin_subpackage('liblimesuiteng-dev', max_pin='x.x') }}
+    - {{ pin_subpackage('limesuiteng-cli', max_pin='x.x') }}
+    - {{ pin_subpackage('limesuiteng-gui', max_pin='x.x') }}       #[win]
     - {{ pin_subpackage('gnuradio-limesuiteng', exact=True) }}
+    - {{ pin_subpackage('limesuiteng-soapy', max_pin='x.x')}}
+    - python
 
 outputs:
   - name: liblimesuiteng
     version: {{ lib_ver }}
     files:
-      - Library/bin/limesuiteng.dll
-      - Library/lib/limesuiteng.lib
-      - Library/lib/limesuiteng-legacyapi.lib
-      - Library/lib/limesuiteng-legacyapi.dll
+      - Library/bin/limesuiteng.dll                #[win]
+      - Library/lib/limesuiteng.lib                #[win]
+      - Library/lib/limesuiteng-legacyapi.lib      #[win]
+      - Library/lib/limesuiteng-legacyapi.dll      #[win]
+      - lib/liblimesuiteng.so*                     #[linux]
+      - lib/liblimesuiteng-legacyapi.so*           #[linux]
+      - bin/.liblimesuiteng-post-link.sh           #[linux]
+      - bin/.liblimesuiteng-pre-unlink.sh          #[linux]
+      - etc/udev/rules.d/65-limesuiteng-pcie.rules #[linux]
+      - etc/udev/rules.d/65-limesuiteng-usb.rules  #[linux]
     requirements:
       build:
         - {{ compiler("c") }}    #[not win]
@@ -77,14 +91,18 @@ outputs:
         - git
         - ninja
         - pkg-config
+      host:
+        - libusb #[linux]
     test:
       commands:
-        - if not exist %PREFIX%\\Library\\include\\lime\\LimeSuite.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\lime\\LMS7002M_parameters.h exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1 
-        - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1
-        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1
-        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limesuiteng.dll exit 1           #[win]
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng.lib exit 1           #[win]
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.lib exit 1 #[win]
+        - if not exist %PREFIX%\\Library\\lib\\limesuiteng-legacyapi.dll exit 1 #[win]
+        - test -f $PREFIX/lib/liblimesuiteng.so                                 #[linux]
+        - test -f $PREFIX/lib/liblimesuiteng-legacyapi.so                       #[linux]
+        - test -f $PREFIX/bin/.liblimesuiteng-post-link.sh                      #[linux]
+        - test -f $PREFIX/bin/.liblimesuiteng-pre-unlink.sh                     #[linux]
 
     about:
       home: https://github.com/myriadrf/LimeSuiteNG
@@ -98,10 +116,10 @@ outputs:
   - name: liblimesuiteng-dev
     version: {{ lib_ver }}
     files:
-      - Library/include/lime
-      - Library/include/limesuiteng
-      - Library/lib/cmake/limesuiteng
-      - Library/lib/pkgconfig/limesuiteng.pc
+      - {{ prefix }}include/lime
+      - {{ prefix }}include/limesuiteng
+      - {{ prefix }}lib/cmake/limesuiteng
+      - {{ prefix }}lib/pkgconfig/limesuiteng.pc
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
@@ -113,36 +131,62 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
         
     test:
       commands:
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1
-        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1
-        - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1
-        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1
-        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1
-        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1
-        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\complex.h exit 1                            #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\config.h exit 1                             #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\CSRegister.h exit 1                         #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceHandle.h exit 1                       #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\DeviceRegistry.h exit 1                     #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LimePlugin.h exit 1                         #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\limesuiteng.hpp exit 1                      #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002M.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\LMS7002MCSR.h exit 1                        #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Logger.h exit 1                             #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\OpStatus.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\Register.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFSOCDescriptor.h exit 1                    #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\RFStream.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRConfig.h exit 1                          #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDescriptor.h exit 1                      #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\SDRDevice.h exit 1                          #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\StreamConfig.h exit 1                       #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\ToString.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\types.h exit 1                              #[win]
+        - if not exist %PREFIX%\\Library\\include\\limesuiteng\\VersionInfo.h exit 1                        #[win]
+        - if not exist %PREFIX%\\Library\\lib\\pkgconfig\\limesuiteng.pc exit 1                             #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfigVersion.cmake exit 1    #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets.cmake exit 1          #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengTargets-release.cmake exit 1  #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\limesuiteng\\limesuitengConfig.cmake exit 1           #[win]
+        - test -f $PREFIX/include/lime/LimeSuite.h              #[linux]
+        - test -f $PREFIX/include/lime/LMS7002M_parameters.h    #[linux]
+        - test -f $PREFIX/include/limesuiteng/complex.h         #[linux]
+        - test -f $PREFIX/include/limesuiteng/config.h          #[linux]
+        - test -f $PREFIX/include/limesuiteng/CSRegister.h      #[linux]
+        - test -f $PREFIX/include/limesuiteng/DeviceHandle.h    #[linux]
+        - test -f $PREFIX/include/limesuiteng/DeviceRegistry.h  #[linux]
+        - test -f $PREFIX/include/limesuiteng/LimePlugin.h      #[linux]
+        - test -f $PREFIX/include/limesuiteng/limesuiteng.hpp   #[linux]
+        - test -f $PREFIX/include/limesuiteng/LMS7002M.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/LMS7002MCSR.h     #[linux]
+        - test -f $PREFIX/include/limesuiteng/Logger.h          #[linux]
+        - test -f $PREFIX/include/limesuiteng/OpStatus.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/Register.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/RFSOCDescriptor.h #[linux]
+        - test -f $PREFIX/include/limesuiteng/RFStream.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/SDRConfig.h       #[linux]
+        - test -f $PREFIX/include/limesuiteng/SDRDescriptor.h   #[linux]
+        - test -f $PREFIX/include/limesuiteng/SDRDevice.h       #[linux]
+        - test -f $PREFIX/include/limesuiteng/StreamConfig.h    #[linux]
+        - test -f $PREFIX/include/limesuiteng/StreamMeta.h      #[linux]
+        - test -f $PREFIX/include/limesuiteng/Timespec.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/ToString.h        #[linux]
+        - test -f $PREFIX/include/limesuiteng/types.h           #[linux]
+        - test -f $PREFIX/include/limesuiteng/VersionInfo.h     #[linux]
+
     about:
       home: https://github.com/myriadrf/LimeSuiteNG
       license: Apache-2.0
@@ -155,12 +199,12 @@ outputs:
   - name: limesuiteng-cli
     version: {{ cli_ver }}
     files:
-      - Library/bin/limeConfig.exe
-      - Library/bin/limeDevice.exe
-      - Library/bin/limeTRX.exe
-      - Library/bin/limeOEM.exe
-      - Library/bin/limeSPI.exe
-      - Library/bin/limeFLASH.exe
+      - {{ prefix }}bin/limeConfig{{ postfix }}
+      - {{ prefix }}bin/limeDevice{{ postfix }}
+      - {{ prefix }}bin/limeTRX{{ postfix }}
+      - {{ prefix }}bin/limeOEM{{ postfix }}
+      - {{ prefix }}bin/limeSPI{{ postfix }}
+      - {{ prefix }}bin/limeFLASH{{ postfix }}
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
@@ -172,16 +216,22 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
 
     test:
       commands:
-        - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1
-        - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1
+        - if not exist %PREFIX%\\Library\\bin\\limeOEM.exe exit 1    #[win]
+        - if not exist %PREFIX%\\Library\\bin\\limeSPI.exe exit 1    #[win]
+        - if not exist %PREFIX%\\Library\\bin\\limeTRX.exe exit 1    #[win]
+        - if not exist %PREFIX%\\Library\\bin\\limeConfig.exe exit 1 #[win]
+        - if not exist %PREFIX%\\Library\\bin\\limeDevice.exe exit 1 #[win]
+        - if not exist %PREFIX%\\Library\\bin\\limeFLASH.exe exit 1  #[win]
+        - test -f $PREFIX/bin/limeConfig  #[linux]
+        - test -f $PREFIX/bin/limeDevice  #[linux]
+        - test -f $PREFIX/bin/limeFLASH   #[linux]
+        - test -f $PREFIX/bin/limeOEM     #[linux]
+        - test -f $PREFIX/bin/limeSPI     #[linux]
+        - test -f $PREFIX/bin/limeTRX     #[linux]
 
     about:
       home: https://github.com/myriadrf/LimeSuiteNG
@@ -199,6 +249,8 @@ outputs:
       - Library/bin/wxmsw32u_gl_vc14x_x64.dll
       - Library/bin/wxmsw32u_core_vc14x_x64.dll
       - Library/bin/wxbase32u_vc14x_x64.dll
+    build:
+      skip: true #[linux]
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
@@ -210,7 +262,7 @@ outputs:
         - pkg-config
 
       run:
-        - {{ pin_subpackage('liblimesuiteng', exact=True) }}
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
         
     test:
       commands:
@@ -230,15 +282,17 @@ outputs:
   - name: gnuradio-limesuiteng
     version: {{ gnuradio_plugin_ver }}
     files:
-      - Lib/site-packages/gnuradio/limesuiteng
-      - Library/bin/gnuradio-limesuiteng.dll
-      - Library/include/gnuradio/limesuiteng
-      - Library/lib/gnuradio-limesuiteng.lib
-      - Library/lib/cmake/gnuradio-limesuiteng
-      - Library/share/gnuradio/examples/limesuiteng
-      - Library/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml
-      - Library/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml
-      - Library/share/gnuradio/manifests/limesuiteng
+      - Lib/site-packages/gnuradio/limesuiteng                    #[win]
+      - Library/bin/gnuradio-limesuiteng.dll                      #[win]
+      - Library/lib/gnuradio-limesuiteng.lib                      #[win]
+      - lib/libgnuradio-limesuiteng.so*                           #[linux]
+      - lib/python{{ PY_VER }}/site-packages/gnuradio/limesuiteng #[linux]
+      - {{ prefix }}include/gnuradio/limesuiteng
+      - {{ prefix }}lib/cmake/gnuradio-limesuiteng
+      - {{ prefix }}share/gnuradio/examples/limesuiteng
+      - {{ prefix }}share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml
+      - {{ prefix }}share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml
+      - {{ prefix }}share/gnuradio/manifests/limesuiteng
     requirements:
       build:
         - {{ compiler("c") }}   #[not win]
@@ -267,40 +321,92 @@ outputs:
         - python
         - numpy
         - volk
+        - spdlog #[linux]
 
       run:
         - numpy
         - python
         - gnuradio-core
+        - {{ pin_subpackage('liblimesuiteng-dev', max_pin='x.x') }}
+        - spdlog #[linux]
 
-      test:
-        commands:
-          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1
-          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1
-          - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\api.h exit 1                                        #[win]
+        - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_source.h exit 1                           #[win]
+        - if not exist %PREFIX%\\Library\\include\\gnuradio\\limesuiteng\\sdrdevice_sink.h exit 1                             #[win]
+        - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1                                                #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1          #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1  #[win]
+        - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1           #[win]
+        - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1                      #[win]
+        - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1         #[win]
+        - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1           #[win]
+        - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-*.yml exit 1                      #[win]
+        - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1                   #[win]
+        - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1                                #[win]
+        - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1                                                #[win]
+        - test -f $PREFIX/include/gnuradio/limesuiteng/api.h                                                                  #[linux]
+        - test -f $PREFIX/include/gnuradio/limesuiteng/sdrdevice_source.h                                                     #[linux]
+        - test -f $PREFIX/include/gnuradio/limesuiteng/sdrdevice_sink.h                                                       #[linux]
+        - test -f $PREFIX/lib/libgnuradio-limesuiteng.so                                                                      #[linux]
+        - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengTargets.cmake                                    #[linux]
+        - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengTargets-release.cmake                            #[linux]
+        - test -f $PREFIX/lib/cmake/gnuradio-limesuiteng/gnuradio-limesuitengConfig.cmake                                     #[linux]
+        - test -f $PREFIX/share/gnuradio/examples/limesuiteng/FM_receiver.grc                                                 #[linux]
+        - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_source.block.yml                                    #[linux]
+        - test -f $PREFIX/share/gnuradio/grc/blocks/limesuiteng_sdrdevice_sink.block.yml                                      #[linux]
+        - test -f $PREFIX/share/gnuradio/manifests/limesuiteng/MANIFEST-*.yml                                                 #[linux]
+        - test -f $SP_DIR/gnuradio/limesuiteng/limesuiteng_python.*.so                                                        #[linux]
+        - test -f $SP_DIR/gnuradio/limesuiteng/__init__.py                                                                    #[linux]
+      imports:
+        - gnuradio.limesuiteng  
+    
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the LimeSuiteNG new generation software suite designed for working with LimeSDR family devices.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+  
+  - name: limesuiteng-soapy
+    version: {{ soapy_plugin_ver }}
+    files:
+      - {{ prefix }}lib/SoapySDR/modules0.8
 
-          - if not exist %PREFIX%\\Library\\lib\\gnuradio-limesuiteng.lib exit 1
-          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets.cmake exit 1
-          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengTargets-release.cmake exit 1
-          - if not exist %PREFIX%\\Library\\lib\\cmake\\gnuradio-limesuiteng\\gnuradio-limesuitengConfig.cmake exit 1
-          - if not exist %PREFIX%\\Library\\share\\gnuradio\\examples\\limesuiteng\\FM_receiver.grc exit 1
-          - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_source.block.yml exit 1
-          - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\limesuiteng_sdrdevice_sink.block.yml exit 1
-          - if not exist %PREFIX%\\Library\\share\\gnuradio\\manifests\\limesuiteng\\MANIFEST-1.0.01.yml exit 1
+    requirements:
+      build:
+        - {{ compiler("c") }}   #[not win]
+        - {{ compiler("cxx") }} #[not win]
+        - vs2022_win-64 #[win]
+        - cmake
+        - git
+        - ninja
+        - pkg-config
 
-          - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\limesuiteng_python.*.pyd exit 1
-          - if not exist %PREFIX%\\Lib\\site-packages\\gnuradio\\limesuiteng\\__init__.py exit 1
+      host:
+        - libusb #[linux]
+        - soapysdr
 
-          - if not exist %PREFIX%\\Library\\bin\\gnuradio-limesuiteng.dll exit 1
-      
-      about:
-        home: https://github.com/myriadrf/LimeSuiteNG
-        license: Apache-2.0
-        license_file: COPYING
-        license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
-        summary: Gnuradio-limesuiteng is a GNURadio compatible plugin based on the LimeSuiteNG new generation software suite designed for working with LimeSDR family devices.
-        dev_url: https://github.com/myriadrf/LimeSuiteNG
-        doc_url: https://limesuiteng.myriadrf.org/
+      run:
+        - {{ pin_subpackage('liblimesuiteng', max_pin='x.x') }}
+
+    test:
+      commands:
+        - if not exist %PREFIX%\\Library\\lib\\SoapySDR\\modules0.8\\limesuitengSupport.dll exit 1  #[win]
+        - test -f $PREFIX/lib/SoapySDR/modules0.8/liblimesuitengSupport.so  #[linux]
+    
+    about:
+      home: https://github.com/myriadrf/LimeSuiteNG
+      license: Apache-2.0
+      license_file: COPYING
+      license_url: https://github.com/myriadrf/LimeSuiteNG?tab=Apache-2.0-1-ov-file#readme
+      summary: LimeSuiteNG bindings for SoapySDR.
+      dev_url: https://github.com/myriadrf/LimeSuiteNG
+      doc_url: https://limesuiteng.myriadrf.org/
+
 
 about:
   home: https://github.com/myriadrf/LimeSuiteNG

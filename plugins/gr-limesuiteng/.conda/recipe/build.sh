@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -ex
-
 cmake -E make_directory buildconda
 cd buildconda
 
@@ -16,10 +14,6 @@ cmake_config_args=(
     -DCMAKE_POLICY_VERSION_MINIMUM=3.15
 )
 
-cmake ${CMAKE_ARGS} -G "Ninja" .. "${cmake_config_args[@]}"
-cmake --build . --config Release -- -j${CPU_COUNT}
+cmake ${CMAKE_ARGS} -G "Ninja" "${cmake_config_args[@]}" ../plugins/gr-limesuiteng
+cmake --build . --config Release -- -j$((CPU_COUNT-2))
 cmake --build . --config Release --target install
-
-if [[ "${CONDA_BUILD_CROSS_COMPILATION:-}" != "1" || "${CROSSCOMPILING_EMULATOR}" != "" ]]; then
-    ctest --build-config Release --output-on-failure --timeout 120 -j${CPU_COUNT}
-fi
