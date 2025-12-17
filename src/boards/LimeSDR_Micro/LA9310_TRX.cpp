@@ -33,6 +33,7 @@ using namespace std;
 using namespace std::chrono;
 
 static constexpr bool showStats{ false };
+static constexpr bool addZeroesToBurstEnds = true;
 
 static constexpr int statsPeriod_ms{ 1000 };
 
@@ -138,42 +139,27 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     status = vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
 
     // stop PHYTimers
-    // phytimer.Enable(false);
-    phytimer.SoftReset(true);
-    phytimer.SoftReset(false);
+    phytimer.Enable(true);
     phytimer.SetReferenceClock(cfg.hintSampleRate * 2);
     phytimer.Divisor(1);
 
     if (!cfg.channels.at(TRXDir::Rx).empty())
     {
         // Disable all Rx DMA triggers
-        constexpr uint8_t ids[] = { 1, 4, 5, 6 };
+        constexpr uint8_t ids[] = { 1, 3, 4, 5, 6 };
         for (const auto id : ids)
         {
             PHYTimerControl timer = phytimer.GetTimerControl(id);
             timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
         }
-        phytimer.GetTimerControl(2).TriggerDirectly(
-            PHYTimerControl::TriggerLogic::ForceOne); // Keep one Rx channel running, otherwise AXIQ will be in power saving mode
     }
-    vspa.ClearStats();
 
     if (!cfg.channels.at(TRXDir::Tx).empty())
     {
-        // Bug in VSPA?
-        // After initial VSPA bootup, if PHYTimer 11 trigger value is 0
-        // and then Tx is started, tx dma will do nothing unless the timer is first set to 1
-        // and only then Tx is started
-        PHYTimerControl timer = phytimer.GetTimerControl(11);
-        // timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
-        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceOne);
-        status = vspa.StartTx();
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        status = vspa.StopTx();
-
-        // // Disable all Tx DMA trigger
-        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+        PHYTimerControl tx_dma_allowed = phytimer.GetTimerControl(11);
+        tx_dma_allowed.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
     }
+    vspa.ClearStats();
 
     return status;
 }
@@ -200,6 +186,9 @@ OpStatus LA9310_TRX::Start()
     VSPA_iqplayer& vspa = la9310->vspa;
     PHYTimer& phytimer = la9310->phytimer;
 
+    phytimer.SoftReset(true);
+    phytimer.SoftReset(false);
+
     OpStatus status = OpStatus::InvalidValue;
     if (mConfig.channels.at(TRXDir::Tx).size() > 0)
     {
@@ -223,7 +212,7 @@ OpStatus LA9310_TRX::Start()
     // Use timer to enable all Rx and Tx DMA at the same moment
     PHYTimerControl timer = phytimer.GetTimerControl(10);
     uint32_t startTime = timer.CaptureCounter();
-    startTime += phytimer.GetTickRate() / 10; // start delay 100ms
+    startTime += phytimer.GetTickRate() * 0.005; // start delay 5ms
     constexpr uint8_t ids[] = { 3, 4 };
     for (const auto id : ids)
     {
@@ -251,6 +240,7 @@ void LA9310_TRX::Stop()
     PHYTimer& phytimer = la9310->phytimer;
 
     // wait for loop ends
+    tx_tdd_switcher.Stop();
 
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
@@ -268,6 +258,12 @@ void LA9310_TRX::Stop()
             mCallback_logMessage(LogLevel::Verbose, msg);
         }
         vspa.StopRx();
+        constexpr uint8_t ids[] = { 3 };
+        for (const auto id : ids)
+        {
+            PHYTimerControl timer = phytimer.GetTimerControl(id);
+            timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+        }
     }
 
     // wait for loop ends
@@ -281,8 +277,6 @@ void LA9310_TRX::Stop()
         }
         vspa.StopTx();
     }
-
-    tx_tdd_switcher.Stop();
 
     if (mRx.stagingPacket != nullptr)
     {
@@ -310,13 +304,6 @@ void LA9310_TRX::Stop()
     }
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
-
-    constexpr uint8_t ids[] = { 3, 11 }; //, 4, 5, 6};
-    for (const auto id : ids)
-    {
-        PHYTimerControl timer = phytimer.GetTimerControl(id);
-        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
-    }
 }
 
 /// @brief Stops all the running streams and clears up the memory.
@@ -900,12 +887,15 @@ void LA9310_TRX::TransmitPacketsLoop()
                     tx_tdd_switcher.ScheduleEvent(event);
 
                     // burst start
-                    // LA9310 DAC, transmits first queued sample, until the PHYTimer trigger enables further DMA transactions.
+                    // LA9310 DAC, preloads first queued sample, until the PHYTimer trigger enables further DMA transactions.
                     // Prepend single sample of zero, so that DAC would be set to 0 while waiting for PHYTimer trigger
                     dmaFilled = 0;
-                    const int bytesToPrepend = 4;
-                    memset(&dmaBuffer[dmaFilled], 0, bytesToPrepend);
-                    dmaFilled += bytesToPrepend;
+                    if (addZeroesToBurstEnds)
+                    {
+                        const int bytesToPrepend = 4;
+                        memset(&dmaBuffer[dmaFilled], 0, bytesToPrepend);
+                        dmaFilled += bytesToPrepend;
+                    }
                 }
             }
             uint32_t bytesForFrame = 4;
@@ -951,8 +941,11 @@ void LA9310_TRX::TransmitPacketsLoop()
                 {
                     // Append single sample of zero, so that DAC last values would be 0 while data is not provided
                     const int bytesToAppend = 4;
-                    memset(&dmaBuffer[dmaFilled], 0, bytesToAppend);
-                    dmaFilled += bytesToAppend;
+                    if (addZeroesToBurstEnds)
+                    {
+                        memset(&dmaBuffer[dmaFilled], 0, bytesToAppend);
+                        dmaFilled += bytesToAppend;
+                    }
 
                     // in firmware the data is processed in 2048 chunks
                     constexpr int ddr_step = 2048;

@@ -181,4 +181,10 @@ uint32_t PHYTimerControl::ReadCounter()
     return TM_PHY_TMR_CnSC->ioread32(4);
 }
 
+bool PHYTimerControl::GetTriggerValue()
+{
+    uint32_t csr = TM_PHY_TMR_CnSC->ioread32(0);
+    return (csr & TVAL ? 1 : 0);
+}
+
 } // namespace lime

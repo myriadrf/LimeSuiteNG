@@ -11,7 +11,7 @@ namespace lime {
 
 class LA9310_PCIe;
 
-class LA9310
+class LIME_API LA9310
 {
   public:
     LA9310(std::shared_ptr<LA9310_PCIe> port);

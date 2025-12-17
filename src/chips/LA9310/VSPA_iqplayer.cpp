@@ -99,7 +99,7 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     v_vspa_dmem_proxy_ro = reinterpret_cast<volatile t_vspa_dmem_proxy*>(dmem_ptr);
     rx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->rx_state_readonly[0]);
     tx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->tx_state_readonly);
-    app_stats = &(reinterpret_cast<volatile t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->app_stats);
+    app_stats = &(reinterpret_cast<volatile t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->vspa_stats);
 
     // use dmem structure at hardcoded address to write host status/request
     // dccivac((uint32_t*)tx_vspa_proxy_ro);
@@ -142,10 +142,10 @@ OpStatus VSPA_iqplayer::StartRx()
 OpStatus VSPA_iqplayer::StartTx()
 {
     VSPA_FIFO_State& txState = mTx;
-    return StartTx(txState.fifo_size);
+    return StartTx(txState.fifo_size, true);
 }
 
-OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size)
+OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, bool flow_control)
 {
     // // const std::lock_guard<std::mutex> lock(mx);
 
@@ -155,7 +155,7 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size)
 
     const uint8_t ddr_rd_dma_ch_nb = 0;
     const bool ddr_rd_dma_mBurst = false;
-    const bool host_flow_control_disable = false;
+    const bool host_flow_control_disable = !flow_control;
 
     assert(fifo_size / 4096 < 0x10000);
     assert(fifo_size / 4096 > 0);
@@ -224,7 +224,7 @@ OpStatus VSPA_iqplayer::StartTxTone(bool enabled)
     Transmit(samples.data(), samples.size() * sizeof(complex16_t), 0);
     // start tx
     VSPA_FIFO_State& txState = mTx;
-    return StartTx(txState.fifo_size);
+    return StartTx(txState.fifo_size, false);
 }
 
 OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
@@ -267,7 +267,17 @@ OpStatus VSPA_iqplayer::StopRx()
     if (rx_vspa_proxy_ro->DDR_wr_base_address == 0xDEADBEEF) // Rx is not active
         return OpStatus::Success;
 
-    printf_dbg_log("IQPlayer: Stop Rx\n");
+    // printf_dbg_log("IQPlayer: Stop Rx\n");
+    // t_stats stats = GetStats();
+    // const uint32_t app_ddr = mRx[0].bytes_produced / tx_vspa_proxy_ro->rx_ddr_step;
+    // printf("Rx AXIQ_WR:%08X\n"
+    //     "Rx DDR_RD :%08X\n"
+    //     "Rx APP_RD :%08X\n",
+    //     stats.rx_stats[0][STAT_DMA_AXIQ_WRITE],
+    //     stats.rx_stats[0][STAT_DMA_DDR_RD],
+    //     app_ddr
+    //     );
+
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_RX) << (24 + 32);
     OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 
@@ -286,6 +296,8 @@ OpStatus VSPA_iqplayer::StopTx()
     if (tx_vspa_proxy_ro->DDR_rd_base_address == 0xDEADBEEF) // Tx is not active
         return OpStatus::Success;
 
+    const uint32_t app_ddr = mTx.bytes_produced / tx_vspa_proxy_ro->tx_ddr_step;
+
     printf_dbg_log("IQPlayer: Stop Tx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_TX) << (24 + 32);
     firstTx = true;
@@ -293,7 +305,7 @@ OpStatus VSPA_iqplayer::StopTx()
     OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
     mTx.fifo_offset = 0;
 
-    tx_vspa_proxy_wo->host_produced_size = 0;
+    // tx_vspa_proxy_wo->host_produced_size = 0;
 
     // clear tx buffer
     // auto ddr_dst = vl_iqflood_ddr_addr + mTx.fifo_start_addr;
@@ -305,6 +317,17 @@ OpStatus VSPA_iqplayer::StopTx()
     mTx.bytes_consumed = 0;
     mTx.bytes_produced = 0;
     mTx.fifo_offset = 0;
+
+    // t_stats stats = GetStats();
+    // printf("Tx AXIQ_WR:%08X\n"
+    //     "Tx DDR_RD :%08X\n"
+    //     "Tx APP_WR :%08X\n"
+    //     "Tx DDR_UDR:%08X\n",
+    //     stats.tx_stats[STAT_DMA_AXIQ_WRITE],
+    //     stats.tx_stats[STAT_DMA_DDR_RD],
+    //     app_ddr,
+    //     stats.tx_stats[ERROR_DMA_DDR_RD_UNDERRUN]
+    //     );
     return status;
 }
 
@@ -351,15 +374,8 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
     rxState.last_consumed = 0;
     tx_vspa_proxy_wo->host_consumed_size[0] = 0;
 
-    app_stats->rx_stats[channel][STAT_EXT_DMA_DDR_WR] = 0;
-    app_stats->rx_stats[channel][STAT_APP_DDR_WR] = 0;
-
     auto ddr_dst = vl_iqflood_ddr_addr + rxState.fifo_start_addr;
     memset(ddr_dst, 0, rxState.fifo_size); // clear RAM, not to confuse with old data from previous runs
-
-    // complex16_t* ps = reinterpret_cast<complex16_t*>(ddr_dst);
-    // for (size_t i = 0; i < rxState.fifo_size / sizeof(complex16_t); ++i)
-    //     ps[i] = complex16_t(32000 + (i % 512), -32020 + (i % 512));
 
     auto nv_app_stats = const_cast<t_stats*>(app_stats);
     port->sync_dmem_proxy_after_write(reinterpret_cast<uint8_t*>(nv_app_stats), sizeof(t_stats));
@@ -403,12 +419,10 @@ OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size)
     //     ps[i] = complex16_t(0, 32700 * (i & 1));
 
     // init flow control
-    tx_vspa_proxy_wo->host_produced_size = 0;
     txState.bytes_consumed = 0;
     txState.bytes_produced = 0;
 
     tx_vspa_proxy_wo->host_produced_size = 0;
-    app_stats->tx_stats[STAT_EXT_DMA_DDR_RD] = 0;
     app_stats->tx_stats[STAT_APP_DDR_RD] = 0;
 
     auto nv_app_stats = const_cast<t_stats*>(app_stats);
@@ -483,10 +497,6 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     port->sync_iq_flood_before_read(ddr_src, data_size);
     memcpy(destination, ddr_src, data_size);
 
-    // complex16_t* ps = reinterpret_cast<complex16_t*>(ddr_src);
-    // for (int i = 0; i < data_size / sizeof(complex16_t); ++i)
-    //     ps[i] = complex16_t(32000 + (i % 512), -32020 + (i % 512));
-
     // update flow control
     tx_vspa_proxy_wo->host_consumed_size[channel] = rxState.bytes_consumed;
 
@@ -546,6 +556,7 @@ int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size, uint64_t t
     txState.bytes_produced += write_size;
     tx_vspa_proxy_wo->host_produced_size = txState.bytes_produced;
     app_stats->tx_stats[STAT_APP_DDR_RD] = txState.bytes_produced / tx_ddr_step;
+    // printf("ss %i %i\n", txState.bytes_produced, txState.bytes_produced / tx_ddr_step);
 
     auto nv_app_stats = const_cast<t_stats*>(app_stats);
     port->sync_dmem_proxy_after_write(reinterpret_cast<uint8_t*>(nv_app_stats), sizeof(t_stats));
@@ -569,9 +580,8 @@ OpStatus VSPA_iqplayer::ClearStats()
     uint32_t loword = 0;
     uint64_t value = (uint64_t(hiword) << 32) | loword;
 
-    app_stats->tx_stats[STAT_EXT_DMA_DDR_RD] = 0;
     app_stats->tx_stats[STAT_APP_DDR_RD] = 0;
-    tx_vspa_proxy_wo->host_produced_size = 0;
+    // tx_vspa_proxy_wo->host_produced_size = 0;
 
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 }
@@ -585,6 +595,43 @@ OpStatus VSPA_iqplayer::SetDCOffset(complex16_t offset)
     loword |= offset.imag() & 0xFFFF;
     uint64_t value = (uint64_t(hiword) << 32) | loword;
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
+}
+
+t_stats VSPA_iqplayer::GetStats()
+{
+    t_stats stats_snapshot;
+    memset(&stats_snapshot, 0, sizeof(t_stats));
+    tx_vspa_proxy_wo->gbl_stats_fetch = 1;
+
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    volatile uint32_t* src = (reinterpret_cast<volatile uint32_t*>(&v_vspa_dmem_proxy_ro->vspa_stats));
+    uint32_t* dest = reinterpret_cast<uint32_t*>(&stats_snapshot);
+    for (size_t i = 0; i < sizeof(t_stats) / sizeof(uint32_t); ++i)
+    {
+        *dest += *src;
+        ++dest;
+        ++src;
+    }
+
+    src = (reinterpret_cast<volatile uint32_t*>(&v_vspa_dmem_proxy_ro->host_stats));
+    dest = reinterpret_cast<uint32_t*>(&stats_snapshot);
+    for (size_t i = 0; i < sizeof(t_stats) / sizeof(uint32_t); ++i)
+    {
+        *dest += *src;
+        ++dest;
+        ++src;
+    }
+
+    src = (reinterpret_cast<volatile uint32_t*>(&v_vspa_dmem_proxy_ro->app_stats));
+    dest = reinterpret_cast<uint32_t*>(&stats_snapshot);
+    for (size_t i = 0; i < sizeof(t_stats) / sizeof(uint32_t); ++i)
+    {
+        *dest += *src;
+        ++dest;
+        ++src;
+    }
+    return stats_snapshot;
 }
 
 class VSPA_DC_Offset : public IDCCorrector

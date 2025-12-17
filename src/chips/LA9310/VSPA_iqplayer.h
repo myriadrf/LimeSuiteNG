@@ -58,9 +58,11 @@ class LIME_API VSPA_iqplayer
     std::shared_ptr<IQuadratureErrorCorrector> GetTxQEC();
     OpStatus SetDCOffset(complex16_t offset);
 
+    t_stats GetStats();
+
     // private:
     OpStatus StartRx(uint8_t channel, uint32_t fifo_size);
-    OpStatus StartTx(uint32_t fifo_size);
+    OpStatus StartTx(uint32_t fifo_size, bool flow_control);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
     std::shared_ptr<LA9310_PCIe> port;

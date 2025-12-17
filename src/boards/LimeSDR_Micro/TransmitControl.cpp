@@ -105,7 +105,6 @@ bool TransmitControl::Work()
             {
                 printf_dbg_log("Event Late\n");
                 phytimer->GetTimerControl(tx_timer_id).TriggerDirectly(trigger);
-                events_fifo.pop();
                 if (evt.action == Action::TxOn)
                 {
                     OpStatus status = vspa->StartTx();
@@ -118,10 +117,10 @@ bool TransmitControl::Work()
                     if (status != OpStatus::Success)
                         printf("FAILED TO STARTTX\n");
                 }
+                events_fifo.pop();
                 continue;
             }
 
-            PHYTimerControl dac_trigger = phytimer->GetTimerControl(tx_timer_id);
             if (evt.action == Action::TxOn)
             {
                 OpStatus status = vspa->StartTx();

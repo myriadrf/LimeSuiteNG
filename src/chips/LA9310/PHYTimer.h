@@ -29,6 +29,7 @@ class LIME_API PHYTimerControl
     void TriggerAtCounter(TriggerLogic output, uint32_t counter);
     uint32_t CaptureCounter();
     uint32_t ReadCounter();
+    bool GetTriggerValue();
 
     std::string ToString() const;
 
