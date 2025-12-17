@@ -55,7 +55,7 @@
  * 
  * @section funcs Functions 
  * 
- * <h3> SDR Device registration </h3>
+ * @subsection registration SDR Device registration
  * <ul>
  *    <li> lime::DeviceRegistry::enumerate() </li>
  *    <li> lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) </li>
@@ -64,7 +64,7 @@
  *    <li> lime::DeviceRegistry::moduleNames(void) </li>
  * </ul>
  * 
- * <h3> SDR Device control and configuration </h3>
+ * @subsection control_adn_config SDR Device control and configuration
  * <ul>
  *    <li> lime::SDRDevice::Init() </li>
  *    <li> lime::SDRDevice::Reset() </li>
@@ -165,7 +165,7 @@
  * @endif
  * </ul>
  * 
- * <h3> SDR Device stream control </h3>
+ * @subsection stream_control SDR Device stream control
  * <ul>
  *    <li>lime::RFStream::GetHardwareTimestamp() </li>
  *    <li>lime::RFStream::Setup(const lime::StreamConfig&) </li>
@@ -183,7 +183,7 @@
  *    <li>lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) </li>
  * </ul>
  * 
- * <h3>Timestamp management</h3>
+ * @subsection timestamp Timestamp management
  * <ul>
  *    <li>lime::Timespec::AddTicks(int64_t)</li>
  *    <li>lime::Timespec::GetTicks()</li>
@@ -205,7 +205,7 @@
  *    </li>
  * </ul>
  * 
- * <h3> Logger </h3>
+ * @subsection logging Logger
  * <ul>
  *    <li>lime::registerLogHandler(const lime::LogHandlerCString)</li>
  *    <li>lime::registerLogHandler(const lime::LogHandler)</li>
@@ -230,7 +230,7 @@
  *    <li>lime::ReportError(const int, const std::string&)</li>
  * </ul>
  * 
- * <h3> String manipulation </h3>
+ * @subsection string_manip String manipulation
  * <ul>
  *    <li>lime::ToString(lime::TRXDir)</li>
  *    <li>lime::ToString(lime::OpStatus)</li>
@@ -241,14 +241,14 @@
  * 
  * @section class Classes
  * 
- * <h3> Interface classes </h3>
+ * @subsection If_classes Interface classes
  * <ul>
  *    <li>lime::DeviceRegistry</li>
  *    <li>lime::SDRDevice</li>
  *    <li>lime::RFStream</li>
  * </ul>
  * 
- * <h3> Storage classes </h3>
+ * @subsection strg_classes Storage classes
  * <ul>
  *    <li><b>SDR device description</b>
  *       <ul>
@@ -352,12 +352,14 @@
 */
 
 /**
- * @page Device_index Device indexes
+ * @page common_parameters Common public API parameters
  * 
- * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called `moduleIndex`. The `moduleIndex` 
+ * @section Device_index Device indexes
+ * 
+ * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called <b>moduleIndex</b>. The <b>moduleIndex</b> 
  * parameter specifies an index of a device which will be configured. Typicaly device index points to RF chip (LMS7002M), but in the case
  * of LimeSDR MMX8 this parameter points to the onboard LimeSDR XTRXs and allows to configure the specific parameter for the
- * individual LimeSDR XTRX board.
+ * individual LimeSDR XTRX board RF chip.
  *
  * Device indexes always start with index <b>0</b>. The last device on a system is indexed as <b>total device count - 1</b>.
  */
