@@ -162,11 +162,11 @@ sSDR::sSDR(std::shared_ptr<ISPI> spiRFsoc,
         rfsoc_lms8001 = std::make_unique<LMS8001>(lms8spi);
     }
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_XTRX, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002M"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>("LMS8001"s, eDeviceTreeNodeClass::LMS8001, rfsoc_lms8001.get()));
-    desc.socTree = std::make_shared<DeviceTreeNode>(desc.name, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_XTRX"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(rfsoc_lms8001.get(), "LMS8001"s));
+    desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, desc.name);
     desc.socTree->children.push_back(fpgaNode);
 }
 
