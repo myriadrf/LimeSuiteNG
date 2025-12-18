@@ -358,6 +358,13 @@ static OpStatus enableGPSDO(GPSDODriver * pDriver, double clk, double ppm)
    uint64_t target_1s = static_cast<uint64_t>(freq);
    lime::info("target_1s = freq = "s + to_string(target_1s) + ";"s);
 
+   if(target_1s > std::numeric_limits<uint32_t>::max())
+   {
+      lime::error("ERROR: Calculated frequency target values are not achievable. Please check --clk-freq argument."s);
+      status = OpStatus::Error;
+      return status;
+   }
+
    uint64_t target_10s = static_cast<uint64_t>(freq * 10);
    lime::info("target_10s = freq * 10 = "s + to_string(freq) + " * 10 = "s + to_string(target_10s) + ";"s);
 
