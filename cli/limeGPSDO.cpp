@@ -487,14 +487,14 @@ int main(int argc, char** argv)
          double clk = args::get(clk_freq);
          double m_ppm = args::get(ppm);
          if(clk == 0 && m_ppm == 0)
-            throw args::UsageError("Error: Enable command requires flags --clk-freq and --ppm to be set for each LimeSDR device!");
+            throw args::UsageError("ERROR: Enable command requires flags --clk-freq and --ppm to be set for each LimeSDR device!");
       }
 
       if(check)
       {
          int mbanner = args::get(banner);
          if (mbanner == 0)
-            throw args::UsageError("Error: Check command --banner flag cannot be set to 0!");
+            throw args::UsageError("ERROR: Check command --banner flag cannot be set to 0!");
       }
 
    } catch (args::Help&)
@@ -504,7 +504,7 @@ int main(int argc, char** argv)
    }
    catch (args::ValidationError& e)
    {
-      std::cout << "Error: Select atleast one COMMAND from the list!" << endl;
+      std::cout << "ERROR: Select atleast one COMMAND from the list!" << endl;
       cout << parser << endl;
       return EXIT_SUCCESS;
    }
