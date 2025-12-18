@@ -561,12 +561,7 @@ int main(int argc, char** argv)
 
       if(enable && runStatus == OpStatus::Success)
       {
-         double clk = args::get(clk_freq);
-         double m_ppm = args::get(ppm);
-         if(m_ppm < 0.1)
-            cout << "Warning: Selected " << m_ppm << " ppm may yield to incorrect error tolerance values! Recommended minimum ppm is 0.1!\n";
-
-         runStatus = enableGPSDO(&driver, clk, m_ppm);
+         runStatus = enableGPSDO(&driver, args::get(clk_freq), args::get(ppm));
       }
 
       if(check && runStatus == OpStatus::Success)
