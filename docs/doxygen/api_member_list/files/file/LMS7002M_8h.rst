@@ -1,0 +1,4 @@
+File LMS7002M.h
+===============
+
+.. doxygenfile:: LMS7002M.h
