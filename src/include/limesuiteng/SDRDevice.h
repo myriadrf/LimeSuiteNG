@@ -66,16 +66,15 @@ class LIME_API SDRDevice
 
     /** 
      * @brief Initializes the device with initial settings.
-     * This function loads SDR device and chip default and stable configurations.
-     * Recommended to use this function if the device is registered for the first
-     * time or before starting any new device re-configuration.
+     * This function completely resets SDR device and RF chip configuration to default values.
+     * Recommended to use this function if the device is new and is registered for the first time.
      * @return The success status of the initialization.
      */ 
     virtual OpStatus Init() = 0;
 
     /**
      * @brief Resets the device.
-     * Sends a reset signal to the onboard LMS7002M chip reset pin.
+     * Sends a reset signal to the device RF chip reset pin.
      * @return The status of the operation.
      */
     virtual OpStatus Reset() = 0;
@@ -86,55 +85,71 @@ class LIME_API SDRDevice
     virtual OpStatus GetGPSLock(GPS_Lock* status) = 0;
 
     /// @brief Enables or disables the specified channel.
-    /// @param moduleIndex The device index to configure.
+    /// This powers on or off device harware for selected 
+    /// channel direction: TSP, BB, AFE, SXT, RFE.
+    /// @param moduleIndex The device index to configure. More about @ref Device_index "device indexes."
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
     /// @param enable Whether to enable the channel or not.
     /// @return The status of the operation.
     virtual OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) = 0;
 
     /// @brief Gets the frequency of a specified clock.
-    /// @param clk_id The clock ID to get the frequency of.
-    /// @param channel The channel to get the frequency of.
+    /// Can Return device reference clock, TX/RX local oscillator clock, clock generator clock,
+    /// RX/TX transceiver signal processor clock. To get local oscillator clock for a specific 
+    /// direction of a channel, consider using GetFrequency() function.
+    /// @param clk_id The clock ID to get the frequency of. Supported @ref lime::LMS7002M::ClockID "clock IDs".
+    /// @param channel The channel to get the frequency of. Supported @ref lime::LMS7002M::Channel "channels".
     /// @return The frequency of the specified clock (in Hz).
     virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) = 0;
 
     /// @brief Sets the frequency of a specified clock.
-    /// @param clk_id The clock ID to set the frequency of.
+    /// Can set device reference clock, TX/RX local oscillator clock, clock generator 
+    /// clock. To set local oscillator clock for a specific direction of a channel, consider 
+    /// using SetFrequency() function.
+    /// @note TX/RX transceiver signal processor clock values are read-only.
+    /// @param clk_id The clock ID to set the frequency of. Supported @ref lime::LMS7002M::ClockID "clock IDs".
     /// @param freq The new frequency of the specified clock (in Hz).
-    /// @param channel The channel to set the frequency of.
+    /// @param channel The channel to set the frequency of. Supported @ref lime::LMS7002M::Channel "channels".
     /// @return The status of the operation.
     virtual OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) = 0;
 
-    /// @brief Gets the current frequency of the given channel.
-    /// @param moduleIndex The device index to read from.
+    ///@brief Gets the current frequency of local oscillator for the selected direction of a channel.
+    /// If the device is configured for TDD mode, this will always return current TX local oscillator frequency for all channels. 
+    /// @param moduleIndex The device index to read from. More about @ref Device_index "device indexes."
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
-    /// @return The current radio frequency of the channel (in Hz).
+    /// @param channel The channel to read from. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @return The current local oscillator frequency for the selected channel and direction (in Hz).
     virtual double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
-    /// @brief Sets the radio frequency of the given channel.
-    /// @param moduleIndex The device index to configure.
+    /// @brief Sets new frequency of local oscillator for the selected direction of a channel.
+    /// @param moduleIndex The device index to configure. More about @ref Device_index "device indexes."
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
     /// @param frequency The frequency to set the channel to (in Hz).
     /// @return The status of the operation.
     virtual OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) = 0;
 
     /// @brief Gets the current frequency of the NCO.
-    /// @param moduleIndex The device index to read from.
+    /// Gets NCO frequency entry from NCO memory table using index.
+    /// @note To get the frequency that is currently being used by the NCO, 
+    /// first obtain the index using GetNCOIndex() function.
+    /// @param moduleIndex The device index to read from. More about @ref Device_index "device indexes."
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
-    /// @param index The index of the NCO to read from.
+    /// @param channel The channel to read from. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param index The index of NCO frequency entry to read from NCO memory table [0-15].
     /// @param phaseOffset [out] The phase offset of the NCO (in degrees)
     /// @return The current frequency of the NCO (in Hz)
     virtual double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) = 0;
 
     /// @brief Sets the frequency and the phase angle of the NCO.
-    /// @param moduleIndex The device index to configure.
+    /// Sets NCO frequency/phase entry of NCO memory table using index.
+    /// @note To feed the new frequency into NCO, set the new frequency 
+    /// entry index as active using SetNCOIndex().
+    /// @param moduleIndex The device index to configure. More about @ref Device_index "device indexes."
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
-    /// @param index The index of the NCO to use.
+    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param index The index of NCO frequency entry to overwrite in NCO memory table [0-15].
     /// @param frequency The frequency of the NCO to set (in Hz).
     /// @param phaseOffset Phase offset angle (in degrees)
     /// @return The status of the operation.
@@ -149,17 +164,19 @@ class LIME_API SDRDevice
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Gets the current index of the NCO.
-    /// @param moduleIndex The device index to read from.
+    /// Returns the index of the NCO memory table entry that contains the frequency currently being used by NCO.
+    /// @param moduleIndex The device index to read from. More about @ref Device_index "device indexes."
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
-    /// @return The current index of the NCO [0-15]
+    /// @return The current index of the active NCO [0-15].
     virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets the index of the NCO.
-    /// @param moduleIndex The device index to configure.
+    /// Selects NCO frequency entry from NCO memory table to be used by NCO.
+    /// @param moduleIndex The device index to configure. More about @ref Device_index "device indexes."
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
-    /// @param index The index of the NCO to use.
+    /// @param index The index of NCO memory table entry to use for NCO [0-15].
     /// @param downconv The spectrum control of the CMIX (true = downconvert, false = upconvert)
     /// @return The status of the operation.
     virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) = 0;
@@ -215,6 +232,7 @@ class LIME_API SDRDevice
     virtual OpStatus SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf) = 0;
 
     /// @brief Gets the currently set antenna of the device.
+    /// Returns antenna path ID that identifies currently active antenna type for selected direction of a channel.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
@@ -222,6 +240,7 @@ class LIME_API SDRDevice
     virtual uint8_t GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets the current antenna of the device.
+    /// Activates a specific antenna type for a selected direction of a channel using antenna path ID.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
