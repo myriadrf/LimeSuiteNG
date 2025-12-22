@@ -4,6 +4,46 @@ using namespace std;
 using namespace lime;
 using namespace lime::cli;
 
+static const std::unordered_map<lime::eLMS_DEV, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
+{
+   {lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX, 
+      {
+         {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F000B000},
+         {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F000B004},
+         {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL,         0x00000000F000B008},
+         {GPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET,      0x00000000F000B00C},
+         {GPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL,         0x00000000F000B010},
+         {GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET,  0x00000000F000B014},
+         {GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL,     0x00000000F000B018},
+         {GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR,       0x00000000F000B01C},
+         {GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR,       0x00000000F000B020},
+         {GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR,   0x00000000F000B024},
+         {GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL,     0x00000000F000B028},
+         {GPSDORegistersID::PPSDO_STATUS_ACCURACY,          0x00000000F000B02C},
+         {GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE,        0x00000000F000B030},
+         {GPSDORegistersID::PPSDO_STATUS_STATE,             0x00000000F000B034},
+      }
+   },
+   {lime::eLMS_DEV::LMS_DEV_LIMESDRMINI_V2, 
+      {
+         {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F0002800},
+         {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F0002804},
+         {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL,         0x00000000F0002808},
+         {GPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET,      0x00000000F000280C},
+         {GPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL,         0x00000000F0002810},
+         {GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET,  0x00000000F0002814},
+         {GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL,     0x00000000F0002818},
+         {GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR,       0x00000000F000281C},
+         {GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR,       0x00000000F0002820},
+         {GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR,   0x00000000F0002824},
+         {GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL,     0x00000000F0002828},
+         {GPSDORegistersID::PPSDO_STATUS_ACCURACY,          0x00000000F000282C},
+         {GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE,        0x00000000F0002830},
+         {GPSDORegistersID::PPSDO_STATUS_STATE,             0x00000000F0002834},
+      }
+   }
+};
+
 MonitorResults::MonitorResults()
 {
    dumpCount = 0;
@@ -199,7 +239,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
    case MediaType::USB:
       if(mHandle.addr == "0403:601f"s || mHandle.addr == "374d:0019"s)
       {   
-         mpGPSDORegisterList = &SDR_GPSDO_Registers[eLMS_DEV::LMS_DEV_LIMESDRMINI_V2];
+         mpGPSDORegisterList = &SDR_GPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDRMINI_V2)->second;
          regListUpdated = true;
       }
       lime::debug("DEBUG: Selected CSR register list for LimeSDR Mini V2");
@@ -208,7 +248,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
    case MediaType::PCIE:
       if(mHandle.name.find("XTRX"s) != string::npos)
       {
-         mpGPSDORegisterList = &SDR_GPSDO_Registers[eLMS_DEV::LMS_DEV_LIMESDR_XTRX];
+         mpGPSDORegisterList = &SDR_GPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR_XTRX)->second;
          regListUpdated = true;
       }
       lime::debug("DEBUG: Selected CSR register list for LimeSDR XTRX");
