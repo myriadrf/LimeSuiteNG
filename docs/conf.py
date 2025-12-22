@@ -112,7 +112,7 @@ root_doc = 'index'
 html_static_path = ['_static']
 
 breathe_projects = {
-    "Lime Suite NG" : ( "../build/docs/doxygen/xml" )
+    "Lime Suite NG" : ( "../docs/doxygen/output/xml" )
 }
 
 breathe_default_project = "Lime Suite NG"
