@@ -180,7 +180,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
       break;
    
    case MediaType::PCIE:
-      if(mHandle.name.find("XTRX"s))
+      if(mHandle.name.find("XTRX"s) != string::npos)
       {
          mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_XTRX];
          regListUpdated = true;
