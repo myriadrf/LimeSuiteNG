@@ -39,8 +39,6 @@ enum class GPSDORegistersID;
 
 using gpsdo_reg_list_t = std::unordered_map<GPSDORegistersID, uint64_t>;
 
-static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
-static uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
 std::atomic<bool> cleanUp(false);
 
 void keyBoardInt(int param)

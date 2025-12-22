@@ -54,6 +54,18 @@ MonitorResults::MonitorResults()
    dac = 0;
 }
 
+static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
+{
+   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
+   return ((currRegValue & ~mask) | ((newBitValue << bitOffset) & mask));
+}
+
+static uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
+{
+   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
+   return ((currRegValue & mask) >> bitOffset);
+}
+
 // ##################################################
 // #### GPSDODriver member functions definitions ####
 // ##################################################
@@ -187,18 +199,6 @@ OpStatus GPSDODriver::setEnabled(bool enable)
 string GPSDODriver::getGPSDOStatusMsg()
 {
    return mGPSDOStatusMsg;
-}
-
-uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size)
-{
-   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
-   return ((currRegValue & ~mask) | ((newBitValue << bitOffset) & mask));
-}
-
-uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
-{
-   uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
-   return ((currRegValue & mask) >> bitOffset);
 }
 
 uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
