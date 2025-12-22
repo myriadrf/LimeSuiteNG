@@ -1,5 +1,9 @@
 #include "limeGPSDO.hpp"
 
+using namespace std;
+using namespace lime;
+using namespace lime::cli;
+
 MonitorResults::MonitorResults()
 {
    dumpCount = 0;

@@ -20,10 +20,6 @@
 #include <cinttypes>
 #include "args.hxx"
 
-using namespace std;
-using namespace lime;
-using namespace lime::cli;
-
 //  Status bit fields.
 #define STATUS_STATE_OFFSET    0
 #define STATUS_STATE_SIZE      4
