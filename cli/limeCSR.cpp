@@ -51,7 +51,7 @@ static int parseWriteInput(std::string_view hexstr, std::vector<uint64_t>& wr_da
       }
       else if (tokenLength != 0)
       {
-         std::cerr << "Invalid input value: "sv << token << std::endl;
+         std::cerr << "ERROR: Invalid input value: "sv << token << std::endl;
       }
       ++tokenCount;
       hexstr = hexstr.substr(position + 1);
@@ -78,7 +78,7 @@ static int parseReadInput(std::string_view hexstr, std::vector<uint64_t>& wr_dat
       }
       else if (tokenLength != 0)
       {
-         std::cerr << "Invalid input value: "sv << token << std::endl;
+         std::cerr << "ERROR: Invalid input value: "sv << token << std::endl;
       }
       ++tokenCount;
       hexstr = hexstr.substr(position + 1);
@@ -92,7 +92,7 @@ static std::string ReadFile(const std::string& fileName)
    std::ifstream inputFile(fileName);
    if (!inputFile.is_open())
    {
-      cerr << "Failed to open file: "sv << fileName << endl;
+      cerr << "ERROR: Failed to open file: "sv << fileName << endl;
       exit(EXIT_FAILURE);
    }
    inputFile.seekg(0, std::ios::end);
@@ -139,13 +139,13 @@ int main(int argc, char** argv)
       return EXIT_SUCCESS;
    } catch (const std::exception& e)
    {
-      cerr << e.what() << std::endl;
+      cerr << "ERROR: " << e.what() << std::endl;
       return EXIT_FAILURE;
    }
 
    if (fileFlag == streamFlag)
    {
-      cerr << "Either -s or -f must be provided ONCE" << endl;
+      cerr << "ERROR: Either -s or -f must be provided ONCE" << endl;
       return EXIT_FAILURE;
    }
 
@@ -154,14 +154,14 @@ int main(int argc, char** argv)
 
    if (hexInput.empty())
    {
-      cerr << "No input provided"sv << endl;
+      cerr << "ERROR: No input provided"sv << endl;
       return EXIT_FAILURE;
    }
 
    auto handles = DeviceRegistry::enumerate();
    if (handles.size() == 0)
    {
-      cerr << "No devices found"sv << endl;
+      cerr << "ERROR: No devices found"sv << endl;
       return EXIT_FAILURE;
    }
 
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
          {
             OpStatus status = CSR_interface->ioWrite64(wr_data[i], wr_data[i+1]);
             if(status != OpStatus::Success)
-               cerr << "CSR write failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
+               cerr << "ERROR: CSR write failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
          }
       }
       else if(read)
@@ -210,7 +210,7 @@ int main(int argc, char** argv)
          {
             rd_data[i] = CSR_interface->ioRead64(wr_data[i], &status);
             if(status != OpStatus::Success)
-               cerr << "CSR read failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
+               cerr << "ERROR: CSR read failed for register address 0x" << hex << setw(16) << wr_data[i] << dec << " with error: " << ToString(status) << endl;
          }
       }
       
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
    {
       delete CSR_interface;
       DeviceRegistry::freeDevice(device);
-      cerr << "CSR failed: "sv << e.what() << endl;
+      cerr << "ERROR: CSR operation failed: "sv << e.what() << endl;
       return EXIT_FAILURE;
    }
 
