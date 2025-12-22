@@ -167,7 +167,18 @@ int main(int argc, char** argv)
 
    SDRDevice* device = ConnectToFilteredOrDefaultDevice(devName);
    if (!device)
+   {
+      cerr << "ERROR: Failed to connect to SDR device!\n";
       return EXIT_FAILURE;
+   }
+
+   ICSR * CSR_interface = device->getICSR();
+   if(CSR_interface == nullptr)
+   {
+      cerr << "ERROR: Selected SDR device does not support CSR interface!\n";
+      DeviceRegistry::freeDevice(device);
+      return EXIT_FAILURE;
+   }
 
    std::vector<uint64_t> wr_data;
    std::vector<uint64_t> rd_data;
@@ -179,8 +190,6 @@ int main(int argc, char** argv)
       parseReadInput(hexInput, wr_data);
       rd_data.resize(wr_data.size());
    }
-
-   ICSR * CSR_interface = device->getICSR();
 
    try
    {   
