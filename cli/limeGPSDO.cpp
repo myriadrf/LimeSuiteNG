@@ -199,7 +199,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
    case MediaType::USB:
       if(mHandle.addr == "0403:601f"s || mHandle.addr == "374d:0019"s)
       {   
-         mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_MINI_V2];
+         mpGPSDORegisterList = &SDR_GPSDO_Registers[eLMS_DEV::LMS_DEV_LIMESDRMINI_V2];
          regListUpdated = true;
       }
       lime::debug("DEBUG: Selected CSR register list for LimeSDR Mini V2");
@@ -208,7 +208,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
    case MediaType::PCIE:
       if(mHandle.name.find("XTRX"s) != string::npos)
       {
-         mpGPSDORegisterList = &SDR_GPSDO_Registers[DeviceID::LIMESDR_XTRX];
+         mpGPSDORegisterList = &SDR_GPSDO_Registers[eLMS_DEV::LMS_DEV_LIMESDR_XTRX];
          regListUpdated = true;
       }
       lime::debug("DEBUG: Selected CSR register list for LimeSDR XTRX");

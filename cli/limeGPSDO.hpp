@@ -6,6 +6,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/ToString.h"
 #include "comms/ICSR.h"
+#include "protocols/LMSBoards.h"
 
 #include <cassert>
 #include <cstring>
@@ -36,11 +37,11 @@
 
 enum class GPSDORegistersID;
 
-using gpsdo_reg_list_t = unordered_map<GPSDORegistersID, uint64_t>;
+using gpsdo_reg_list_t = std::unordered_map<GPSDORegistersID, uint64_t>;
 
 static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOffset, int size);
 static uint64_t getField(uint64_t currRegValue, int bitOffset, int size);
-atomic<bool> cleanUp(false);
+std::atomic<bool> cleanUp(false);
 
 void keyBoardInt(int param)
 {
@@ -51,33 +52,33 @@ class GPSDODriver
 {
    public:
    GPSDODriver() : mCSR_interface(nullptr), mpGPSDORegisterList(nullptr) {}
-   GPSDODriver(ICSR * interface) : mCSR_interface(interface), mpGPSDORegisterList(nullptr) {}
+   GPSDODriver(lime::ICSR * interface) : mCSR_interface(interface), mpGPSDORegisterList(nullptr) {}
    void destroyCSR();
    bool isCSRImplemented();
 
    // CSR interface access
-   uint64_t readRegister(uint64_t address, OpStatus * status);
-   OpStatus writeRegister(uint64_t address, uint64_t value);
-   uint64_t getSigned32bit(uint64_t address, OpStatus * status);
+   uint64_t readRegister(uint64_t address, lime::OpStatus * status);
+   lime::OpStatus writeRegister(uint64_t address, uint64_t value);
+   uint64_t getSigned32bit(uint64_t address, lime::OpStatus * status);
 
    // Register access
-   uint64_t get_1s_error(OpStatus * status);
-   uint64_t get_10s_error(OpStatus * status);
-   uint64_t get_100s_error(OpStatus * status);
-   uint64_t getDacValue(OpStatus * status);
-   OpStatus getStatus(string& prState, string& prAccuracy, string& prTpulse);
-   bool getEnabled(OpStatus * status);
-   OpStatus setEnabled(bool enable);
+   uint64_t get_1s_error(lime::OpStatus * status);
+   uint64_t get_10s_error(lime::OpStatus * status);
+   uint64_t get_100s_error(lime::OpStatus * status);
+   uint64_t getDacValue(lime::OpStatus * status);
+   lime::OpStatus getStatus(std::string& prState, std::string& prAccuracy, std::string& prTpulse);
+   bool getEnabled(lime::OpStatus * status);
+   lime::OpStatus setEnabled(bool enable);
 
    // GPSDO Register address list manipulation
    uint64_t getGPSDORegAddress(GPSDORegistersID id);
-   bool updateGPSDORegList(vector<DeviceHandle>& handles, string& devName);
+   bool updateGPSDORegList(std::vector<lime::DeviceHandle>& handles, std::string& devName);
 
    // Logger members
-   string getGPSDOStatusMsg();
+   std::string getGPSDOStatusMsg();
 
    private:
-   ICSR * mCSR_interface;
+   lime::ICSR * mCSR_interface;
    std::string mGPSDOStatusMsg;
    const gpsdo_reg_list_t * mpGPSDORegisterList;
 };
@@ -87,14 +88,14 @@ struct MonitorResults
    MonitorResults();
 
    uint32_t dumpCount;
-   string enableStatus;
+   std::string enableStatus;
    int64_t error_1s;
    int64_t error_10s;
    int64_t error_100s;
    uint64_t dac;
-   string gpsdoState;
-   string gpsdoAccuracy;
-   string gpsdoTpulse;
+   std::string gpsdoState;
+   std::string gpsdoAccuracy;
+   std::string gpsdoTpulse;
 };
 
 enum class GPSDORegistersID : int
@@ -115,12 +116,6 @@ enum class GPSDORegistersID : int
    PPSDO_STATUS_STATE = 13
 };
 
-enum class DeviceID : uint8_t
-{
-   LIMESDR_XTRX = 0,
-   LIMESDR_MINI_V2 = 1
-};
-
 enum class MediaType : uint8_t
 {
    USB = 0,
@@ -128,9 +123,9 @@ enum class MediaType : uint8_t
    UNDEFINED = 2
 };
 
-static unordered_map<DeviceID, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
+static std::unordered_map<lime::eLMS_DEV, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
 {
-   {DeviceID::LIMESDR_XTRX, 
+   {lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX, 
       {
          {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F000B000},
          {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F000B004},
@@ -148,7 +143,7 @@ static unordered_map<DeviceID, gpsdo_reg_list_t> SDR_GPSDO_Registers =
          {GPSDORegistersID::PPSDO_STATUS_STATE,             0x00000000F000B034},
       }
    },
-   {DeviceID::LIMESDR_MINI_V2, 
+   {lime::eLMS_DEV::LMS_DEV_LIMESDRMINI_V2, 
       {
          {GPSDORegistersID::PPSDO_ENABLE,                   0x00000000F0002800},
          {GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET,      0x00000000F0002804},
