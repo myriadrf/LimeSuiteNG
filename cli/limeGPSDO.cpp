@@ -284,7 +284,7 @@ static int printHeader()
 static string formatToFit(MonitorResults * results, int length)
 {
    string formatedMessage(length, ' ');
-   const char * format = "  %10i    %5s    %11" PRIi64 "    %11" PRIi64 "   %11"  PRIi64 "    0x%08" PRIX64 "    %11s   %18s   %5s";
+   const char * format = "  %10" PRIu32 "    %5s    %11" PRIi64 "    %11" PRIi64 "   %11"  PRIi64 "    0x%08" PRIX64 "    %11s   %18s   %5s";
    snprintf(formatedMessage.data(), formatedMessage.size(), format,
              results->dumpCount, results->enableStatus.c_str(), results->error_1s,
              results->error_10s, results->error_100s, results->dac, results->gpsdoState.c_str(),
