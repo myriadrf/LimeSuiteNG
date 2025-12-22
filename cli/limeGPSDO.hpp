@@ -62,8 +62,8 @@ class GPSDODriver
 
    const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"}; 
 
-   GPSDODriver() : mCSR_interface(nullptr) {}
-   GPSDODriver(ICSR * interface) : mCSR_interface(interface) {}
+   GPSDODriver() : mCSR_interface(nullptr), mpGPSDORegisterList(nullptr) {}
+   GPSDODriver(ICSR * interface) : mCSR_interface(interface), mpGPSDORegisterList(nullptr) {}
    void destroyCSR();
    bool isCSRImplemented();
 
@@ -82,8 +82,8 @@ class GPSDODriver
    OpStatus setEnabled(bool enable);
 
    // GPSDO Register address list manipulation
-   static uint64_t getGPSDORegAddress(GPSDORegistersID id);
-   static bool updateGPSDORegList(vector<DeviceHandle>& handles, string& devName);
+   uint64_t getGPSDORegAddress(GPSDORegistersID id);
+   bool updateGPSDORegList(vector<DeviceHandle>& handles, string& devName);
 
    // Logger members
    string getGPSDOStatusMsg();
@@ -93,7 +93,7 @@ class GPSDODriver
 
    ICSR * mCSR_interface;
    std::string mGPSDOStatusMsg;
-   static gpsdo_reg_list_t * mpGPSDORegisterList;
+   const gpsdo_reg_list_t * mpGPSDORegisterList;
 };
 
 struct MonitorResults
