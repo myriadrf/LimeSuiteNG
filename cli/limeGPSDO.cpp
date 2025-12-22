@@ -70,7 +70,27 @@ uint64_t GPSDODriver::getDacValue(OpStatus * status)
    return this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL)->second, status);
 }
 
-OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
+static const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"};
+
+static string stateToStr(uint64_t state)
+{
+   if(state == 1ULL)
+      return "Fine tune"s;
+   else if(state == 0ULL)
+      return "Coarse tune"s;
+   
+   return "Unknown"s;
+}
+
+static string accToStr(uint64_t accuracy)
+{
+   if(accuracy < 4)
+      return accuracyLevelList[accuracy];
+   
+   return string("Unknown("s + std::to_string(accuracy) + ")"s);
+}
+
+OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prTpulse)
 {
    OpStatus status = OpStatus::Success;
    uint64_t state = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_STATE)->second, &status);
@@ -79,6 +99,7 @@ OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_STATE register with error: ";
       return status;
    }
+   prState = stateToStr(state);
 
    uint64_t accuracy = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_ACCURACY)->second, &status);
    if(status != OpStatus::Success)
@@ -86,6 +107,7 @@ OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register with error: ";
       return status;
    }
+   prAccuracy = accToStr(accuracy);
 
    uint64_t tpulse = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE)->second, &status);
    if(status != OpStatus::Success)
@@ -93,8 +115,8 @@ OpStatus GPSDODriver::getStatus(array<string, 3>& GPSDOStatus)
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error: ";
       return status;
    }
+   prTpulse = (tpulse ? "true" : "false");
 
-   this->formatGPSDOStatus(state, accuracy, tpulse, GPSDOStatus);
    return status;   
 }
 
@@ -196,27 +218,6 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
    return regListUpdated;
 }
 
-void GPSDODriver::formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus)
-{
-   if(state == 1ULL)
-      GPSDOStatus[GPSDO_STATE] = "Fine tune";
-   else if(state == 0ULL)
-      GPSDOStatus[GPSDO_STATE] = "Coarse tune";
-   else
-      GPSDOStatus[GPSDO_STATE] = "Unknown";
-   
-   if(accuracy < 4)
-      GPSDOStatus[GPSDO_ACCURACY] = GPSDODriver::accuracyLevelList[accuracy];
-   else
-   {
-      GPSDOStatus[GPSDO_ACCURACY] += "Unknown(";
-      GPSDOStatus[GPSDO_ACCURACY] += std::to_string(accuracy);
-      GPSDOStatus[GPSDO_ACCURACY] += ")";
-   }
-
-   GPSDOStatus[GPSDO_TPULSE] = tpulse ? "true" : "false";
-}
-
 // ###############################################
 // #### limeGPSDO helper function definitions ####
 // ###############################################
@@ -290,16 +291,12 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, uint32_t numDumps, std::chr
          return status;
       }
       
-      array<string, 3> GPSDOStatus;
-      status = pDriver->getStatus(GPSDOStatus);
+      status = pDriver->getStatus(results.gpsdoState, results.gpsdoAccuracy, results.gpsdoTpulse);
       if(status != OpStatus::Success)
       {
          lime::error("ERROR: Monitoring mode failed to read GPSDO Status values. Reason: "s + pDriver->getGPSDOStatusMsg() + ToString(status));
          return status;
       }
-      results.gpsdoState = GPSDOStatus[GPSDO_STATE];
-      results.gpsdoAccuracy = GPSDOStatus[GPSDO_ACCURACY];
-      results.gpsdoTpulse = GPSDOStatus[GPSDO_TPULSE];
 
       if((dumpCount % banner_interval == 0 && dumpCount != numDumps))
          headerLength = printHeader();

@@ -38,11 +38,6 @@ using namespace lime::cli;
 #define CONTROL_CLK_SEL_OFFSET 1
 #define CONTROL_CLK_SEL_SIZE   1
 
-// GPSDOStatus array IDs
-#define GPSDO_STATE    0
-#define GPSDO_ACCURACY 1
-#define GPSDO_TPULSE   2
-
 enum class GPSDORegistersID;
 
 using gpsdo_reg_list_t = unordered_map<GPSDORegistersID, uint64_t>;
@@ -59,9 +54,6 @@ void keyBoardInt(int param)
 class GPSDODriver
 {
    public:
-
-   const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"}; 
-
    GPSDODriver() : mCSR_interface(nullptr), mpGPSDORegisterList(nullptr) {}
    GPSDODriver(ICSR * interface) : mCSR_interface(interface), mpGPSDORegisterList(nullptr) {}
    void destroyCSR();
@@ -77,7 +69,7 @@ class GPSDODriver
    uint64_t get_10s_error(OpStatus * status);
    uint64_t get_100s_error(OpStatus * status);
    uint64_t getDacValue(OpStatus * status);
-   OpStatus getStatus(array<string, 3>& GPSDOStatus);
+   OpStatus getStatus(string& prState, string& prAccuracy, string& prTpulse);
    bool getEnabled(OpStatus * status);
    OpStatus setEnabled(bool enable);
 
@@ -89,8 +81,6 @@ class GPSDODriver
    string getGPSDOStatusMsg();
 
    private:
-   void formatGPSDOStatus(uint64_t state, uint64_t accuracy, uint64_t tpulse, array<string, 3>& GPSDOStatus);
-
    ICSR * mCSR_interface;
    std::string mGPSDOStatusMsg;
    const gpsdo_reg_list_t * mpGPSDORegisterList;
@@ -100,7 +90,7 @@ struct MonitorResults
 {
    MonitorResults();
 
-   int dumpCount;
+   uint32_t dumpCount;
    string enableStatus;
    int64_t error_1s;
    int64_t error_10s;
