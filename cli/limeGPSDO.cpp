@@ -242,12 +242,12 @@ static string formatToFit(MonitorResults * results, int length)
    return formatedMessage;
 }
 
-static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::milliseconds delay, int banner_interval)
+static OpStatus runMonitoring(GPSDODriver * pDriver, uint32_t numDumps, std::chrono::milliseconds delay, int banner_interval)
 {
    OpStatus status = OpStatus::Success;
    MonitorResults results;
    cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
-   int dumpCount = 0;
+   uint32_t dumpCount = 0;
    bool continueLoop = false;
    int headerLength = 0;
    if(numDumps == 0)
@@ -309,10 +309,6 @@ static OpStatus runMonitoring(GPSDODriver * pDriver, int numDumps, std::chrono::
       
       std::this_thread::sleep_for(delay);
       continueLoop = (dumpCount < numDumps || numDumps == 0);
-
-      // This is for infinite loop. To prevent UB, reset counter
-      if(dumpCount == std::numeric_limits<int>::max())
-         dumpCount = 0;
 
    } while (continueLoop && !cleanUp);
 
@@ -468,7 +464,7 @@ int main(int argc, char** argv)
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
    args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations in limeGPSDO app. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
-   args::ValueFlag<int>                    num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
+   args::ValueFlag<uint32_t>               num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
    args::ValueFlag<int>                    banner(arguments, "interval", "Banner repeat interval (for --check)", {'b', "banner"}, 10);
    args::ValueFlag<double>                 reset_delay(arguments, "time", "Delay after disable before re-enable (seconds, for --reset)", {'r', "reset-delay"}, 2.0);
