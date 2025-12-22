@@ -886,6 +886,51 @@ OUT:
     return -EFAULT;
 }
 
+int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, const char *dsp_fw_name)
+{
+	int err;
+
+	dev_info(la9310_dev->dev, "INFO:%s : VSPA Loading firmware initiated-\n", __func__);
+
+	vspadev->state = VSPA_STATE_LOADING;
+
+	err = vspa_mem_initialization(vspadev);
+	if (err < 0) {
+		dev_err(vspadev->dev, "Memory Zeroise failed\n");
+		return err;
+	}
+	dev_info(la9310_dev->dev, "mem init done\n");
+
+	// snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", vspa_fw_name);
+	snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", dsp_fw_name);
+
+	/* Call the LA9310 base APIs to request_firmware */
+	if (vspa_get_fw_image(la9310_dev)) {
+		dev_err(la9310_dev->dev, "ERR %s : Loading VSPA FW failed\n", __func__);
+		err = -EBADRQC;
+		return err;
+	}
+
+	dev_info(la9310_dev->dev, "INFO:%s :VSPA FW image %s loading finished\n", __func__, vspadev->eld_filename);
+
+	/* Initiate the VSPA_GO to start VSPA booting */
+	if (startup(la9310_dev)) {
+		dev_err(la9310_dev->dev, "ERR %s: VSPA failed to start VSPA\n", __func__);
+		err = -EBADRQC;
+		return err;
+	}
+
+	err = la9310_vspa_stats_init(la9310_dev);
+	if (err < 0) {
+		dev_err(la9310_dev->dev, "ERR: VSPA stats error\n");
+		return err;
+	}
+
+	dev_dbg(la9310_dev->dev, "DBG: Fw image name saved: %s", vspadev->eld_filename);
+
+	return 0;
+}
+
 /************************* Probe / Remove ***********************************/
 
 int vspa_probe(struct la9310_dev* la9310_dev, int vspa_irq_count, struct virq_evt_map* vspa_virq_map)
@@ -1005,47 +1050,9 @@ int vspa_probe(struct la9310_dev* la9310_dev, int vspa_irq_count, struct virq_ev
         hw->arithmetic_units,
         hw->dmem_bytes);
 
-    dev_info(la9310_dev->dev, "INFO:%s : VSPA Loading firmware initiated-\n", __func__);
-
-    vspadev->state = VSPA_STATE_LOADING;
-
-    err = vspa_mem_initialization(vspadev);
-    if (err < 0)
-    {
-        dev_err(vspadev->dev, "Memory Zeroise failed\n");
-        goto err_out;
-    }
-    dev_info(la9310_dev->dev, "mem init done\n");
-
-    // snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", vspa_fw_name);
-    snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", "apm-iqplayer.eld");
-
-    /* Call the LA9310 base APIs to request_firmware */
-    if (vspa_get_fw_image(la9310_dev))
-    {
-        dev_err(la9310_dev->dev, "ERR %s : Loading VSPA FW failed\n", __func__);
-        err = -EBADRQC;
-        goto err_out;
-    }
-
-    dev_info(la9310_dev->dev, "INFO:%s :VSPA FW image %s loading finished\n", __func__, vspadev->eld_filename);
-
-    /* Initiate the VSPA_GO to start VSPA booting */
-    if (startup(la9310_dev))
-    {
-        dev_err(la9310_dev->dev, "ERR %s: VSPA failed to start VSPA\n", __func__);
-        err = -EBADRQC;
-        goto err_out;
-    }
-
-    err = la9310_vspa_stats_init(la9310_dev);
-    if (err < 0)
-    {
-        dev_err(la9310_dev->dev, "ERR: VSPA stats error\n");
-        goto err_out;
-    }
-
-    dev_dbg(la9310_dev->dev, "DBG: Fw image name saved: %s", vspadev->eld_filename);
+//    err = vspa_load_dsp(la9310_dev, vspadev, "apm-iqplayer.eld");
+//    if (err)
+//	    goto err_out;
 
     /*Clearing the VCPU_TO_HOST MBOXs */
     vspa_reg_write(vspadev->regs + HOST_FLAGS0_REG_OFFSET, 0xFFFFFFFFUL);

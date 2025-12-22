@@ -430,6 +430,7 @@ void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index,
 ssize_t la9310_show_global_status(char* buf);
 
 int la9310_modinfo_init(struct la9310_dev* dev);
+int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char *m4_fw_name);
 // int la9310_modinfo_exit(struct la9310_dev *dev);
 // void la9310_modinfo_get(struct la9310_dev *la9310_dev, modinfo_t *mi);
 #endif

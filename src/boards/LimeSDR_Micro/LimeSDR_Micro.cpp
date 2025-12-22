@@ -1,9 +1,10 @@
 #include "LimeSDR_Micro.h"
 
 #include <cmath>
-#include <fcntl.h>
-#include <unistd.h>
 #include <sstream>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
@@ -20,11 +21,13 @@
 #include "protocols/LMS64C/SPI.h"
 #include "streaming/TRXLooper.h"
 
+#ifdef __unix__
 // Linux headers
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
+#endif
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
@@ -37,6 +40,7 @@
 #include "DeviceTreeNode.h"
 
 #include "LA9310_TRX.h"
+#include "comms/PCIe/LA9310_PCIe.h"
 
 using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;
@@ -494,13 +498,45 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 OpStatus LimeSDR_Micro::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
+    int status;
+    std::string filename, devfile;
+    std::ofstream file;
+
     switch (device)
     {
     case eMemoryDevice::ARM_M4:
+        filename = "/lib/firmware/arm_m4_fw.bin";
+
+        /* Write firmware to temporary binary file */
+        file.open(filename, std::ios::binary);
+        file.write(data, length);
+        file.close();
+
+	filename = "arm_m4_fw.bin";
+
+        status = mStreamingPort->LoadArmM4Fw(filename.c_str());
+	    break;
     case eMemoryDevice::VSPA:
+        filename = "/lib/firmware/vspa_fw.bin";
+
+        /* Write firmware to temporary binary file */
+        file.open(filename, std::ios::binary);
+        file.write(data, length);
+        file.close();
+
+	filename = "vspa_fw.bin";
+
+        status = mStreamingPort->LoadVspaFw(filename.c_str());
+	    break;
     default:
         return OpStatus::NotImplemented;
     }
+
+
+    if (status)
+        return OpStatus::IOFailure;
+    else
+    	return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
