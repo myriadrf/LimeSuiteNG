@@ -4,6 +4,12 @@ using namespace std;
 using namespace lime;
 using namespace lime::cli;
 
+static std::atomic<bool> cleanUp(false);
+static void keyBoardInt(int param)
+{
+   cleanUp = true;
+}
+
 static const std::unordered_map<lime::eLMS_DEV, gpsdo_reg_list_t> SDR_GPSDO_Registers = 
 {
    {lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX, 

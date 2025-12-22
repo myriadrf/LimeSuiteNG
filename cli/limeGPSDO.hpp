@@ -39,13 +39,6 @@ enum class GPSDORegistersID;
 
 using gpsdo_reg_list_t = std::unordered_map<GPSDORegistersID, uint64_t>;
 
-std::atomic<bool> cleanUp(false);
-
-void keyBoardInt(int param)
-{
-   cleanUp = true;
-}
-
 class GPSDODriver
 {
    public:
