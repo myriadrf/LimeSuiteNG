@@ -5,4 +5,4 @@ usr/bin/limeSPI
 usr/bin/limeFLASH
 usr/bin/limeOEM
 usr/bin/limeCSR
-usr/bin/limeGPSDO
+usr/bin/limePPSDO
