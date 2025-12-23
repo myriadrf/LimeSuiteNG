@@ -47,7 +47,7 @@ class CSR_wxgui : public IModuleFrame
         long styles = wxDEFAULT_DIALOG_STYLE);
 
     virtual bool Initialize(lime::SDRDevice* device);
-    virtual void Update() {};
+    virtual void Update(){};
 
   protected:
     std::vector<wxChoice*> mCSRselection;
