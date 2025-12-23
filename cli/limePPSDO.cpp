@@ -1,4 +1,4 @@
-#include "limeGPSDO.hpp"
+#include "limePPSDO.hpp"
 
 using namespace std;
 using namespace lime;
@@ -10,40 +10,40 @@ static void keyBoardInt(int param)
     cleanUp = true;
 }
 
-static const std::unordered_map<lime::eLMS_DEV, gpsdo_reg_list_t> SDR_GPSDO_Registers = {
+static const std::unordered_map<lime::eLMS_DEV, ppsdo_reg_list_t> SDR_PPSDO_Registers = {
     { lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX,
         {
-            { GPSDORegistersID::PPSDO_ENABLE, 0x00000000F000B000 },
-            { GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F000B004 },
-            { GPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F000B008 },
-            { GPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000B00C },
-            { GPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F000B010 },
-            { GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F000B014 },
-            { GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F000B018 },
-            { GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000B01C },
-            { GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F000B020 },
-            { GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F000B024 },
-            { GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F000B028 },
-            { GPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000B02C },
-            { GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F000B030 },
-            { GPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F000B034 },
+            { PPSDORegistersID::PPSDO_ENABLE, 0x00000000F000B000 },
+            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F000B004 },
+            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F000B008 },
+            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000B00C },
+            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F000B010 },
+            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F000B014 },
+            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F000B018 },
+            { PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000B01C },
+            { PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F000B020 },
+            { PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F000B024 },
+            { PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F000B028 },
+            { PPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000B02C },
+            { PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F000B030 },
+            { PPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F000B034 },
         } },
     { lime::eLMS_DEV::LMS_DEV_LIMESDRMINI_V2,
         {
-            { GPSDORegistersID::PPSDO_ENABLE, 0x00000000F0002800 },
-            { GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F0002804 },
-            { GPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F0002808 },
-            { GPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000280C },
-            { GPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F0002810 },
-            { GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F0002814 },
-            { GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F0002818 },
-            { GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000281C },
-            { GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F0002820 },
-            { GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F0002824 },
-            { GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F0002828 },
-            { GPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000282C },
-            { GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F0002830 },
-            { GPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F0002834 },
+            { PPSDORegistersID::PPSDO_ENABLE, 0x00000000F0002800 },
+            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F0002804 },
+            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F0002808 },
+            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000280C },
+            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F0002810 },
+            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F0002814 },
+            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F0002818 },
+            { PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000281C },
+            { PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F0002820 },
+            { PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F0002824 },
+            { PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F0002828 },
+            { PPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000282C },
+            { PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F0002830 },
+            { PPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F0002834 },
         } }
 };
 
@@ -70,34 +70,34 @@ static uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
 }
 
 // ##################################################
-// #### GPSDODriver member functions definitions ####
+// #### PPSDODriver member functions definitions ####
 // ##################################################
 
-void GPSDODriver::destroyCSR()
+void PPSDODriver::destroyCSR()
 {
     if (mCSR_interface != nullptr)
         delete mCSR_interface;
 }
 
-bool GPSDODriver::isCSRImplemented()
+bool PPSDODriver::isCSRImplemented()
 {
     return (mCSR_interface != nullptr ? true : false);
 }
 
-uint64_t GPSDODriver::readRegister(uint64_t address, OpStatus* status)
+uint64_t PPSDODriver::readRegister(uint64_t address, OpStatus* status)
 {
     uint64_t value = mCSR_interface->ioRead64(address, status);
     lime::debug("DEBUG: Read 0x%016" PRIx64 " from register 0x%016" PRIx64 "", value, address);
     return value;
 }
 
-OpStatus GPSDODriver::writeRegister(uint64_t address, uint64_t value)
+OpStatus PPSDODriver::writeRegister(uint64_t address, uint64_t value)
 {
     lime::debug("DEBUG: Writing 0x%016" PRIx64 " value to register 0x%016" PRIx64 "", value, address);
     return mCSR_interface->ioWrite64(address, value);
 }
 
-uint64_t GPSDODriver::getSigned32bit(uint64_t address, OpStatus* status)
+uint64_t PPSDODriver::getSigned32bit(uint64_t address, OpStatus* status)
 {
     uint64_t value = this->readRegister(address, status);
     if (*status != OpStatus::Success)
@@ -109,24 +109,24 @@ uint64_t GPSDODriver::getSigned32bit(uint64_t address, OpStatus* status)
     return value;
 }
 
-uint64_t GPSDODriver::get_1s_error(OpStatus* status)
+uint64_t PPSDODriver::get_1s_error(OpStatus* status)
 {
-    return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR), status);
+    return this->getSigned32bit(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR), status);
 }
 
-uint64_t GPSDODriver::get_10s_error(OpStatus* status)
+uint64_t PPSDODriver::get_10s_error(OpStatus* status)
 {
-    return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR), status);
+    return this->getSigned32bit(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR), status);
 }
 
-uint64_t GPSDODriver::get_100s_error(OpStatus* status)
+uint64_t PPSDODriver::get_100s_error(OpStatus* status)
 {
-    return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR), status);
+    return this->getSigned32bit(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR), status);
 }
 
-uint64_t GPSDODriver::getDacValue(OpStatus* status)
+uint64_t PPSDODriver::getDacValue(OpStatus* status)
 {
-    return this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL), status);
+    return this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL), status);
 }
 
 static const array<string, 4> accuracyLevelList = { "Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)" };
@@ -149,29 +149,29 @@ static string accToStr(uint64_t accuracy)
     return string("Unknown("s + std::to_string(accuracy) + ")"s);
 }
 
-OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prTpulse)
+OpStatus PPSDODriver::getStatus(string& prState, string& prAccuracy, string& prTpulse)
 {
     OpStatus status = OpStatus::Success;
-    uint64_t state = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_STATE), &status);
+    uint64_t state = this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_STATE), &status);
     if (status != OpStatus::Success)
     {
-        mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_STATE register with error: ";
+        mPPSDOStatusMsg = "Failed to read PPSDO_STATUS_STATE register with error: ";
         return status;
     }
     prState = stateToStr(state);
 
-    uint64_t accuracy = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_ACCURACY), &status);
+    uint64_t accuracy = this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_ACCURACY), &status);
     if (status != OpStatus::Success)
     {
-        mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register with error: ";
+        mPPSDOStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register with error: ";
         return status;
     }
     prAccuracy = accToStr(accuracy);
 
-    uint64_t tpulse = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE), &status);
+    uint64_t tpulse = this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE), &status);
     if (status != OpStatus::Success)
     {
-        mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error: ";
+        mPPSDOStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error: ";
         return status;
     }
     prTpulse = (tpulse ? "true" : "false");
@@ -179,33 +179,33 @@ OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prT
     return status;
 }
 
-bool GPSDODriver::getEnabled(OpStatus* status)
+bool PPSDODriver::getEnabled(OpStatus* status)
 {
-    uint64_t value = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), status);
+    uint64_t value = this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_ENABLE), status);
     return static_cast<bool>(value & 1ULL);
 }
 
-OpStatus GPSDODriver::setEnabled(bool enable)
+OpStatus PPSDODriver::setEnabled(bool enable)
 {
     OpStatus status = OpStatus::Success;
-    uint64_t currRegValue = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), &status);
+    uint64_t currRegValue = this->readRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_ENABLE), &status);
     if (status != OpStatus::Success)
         return status;
 
     currRegValue = setField(currRegValue, static_cast<uint64_t>(enable), CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
-    status = this->writeRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), currRegValue);
+    status = this->writeRegister(mpPPSDORegisterList->at(PPSDORegistersID::PPSDO_ENABLE), currRegValue);
 
     return status;
 }
 
-string GPSDODriver::getGPSDOStatusMsg()
+string PPSDODriver::getPPSDOStatusMsg()
 {
-    return mGPSDOStatusMsg;
+    return mPPSDOStatusMsg;
 }
 
-uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
+uint64_t PPSDODriver::getPPSDORegAddress(PPSDORegistersID id)
 {
-    return mpGPSDORegisterList->at(id);
+    return mpPPSDORegisterList->at(id);
 }
 
 static MediaType getDeviceMediaType(string& media)
@@ -218,7 +218,7 @@ static MediaType getDeviceMediaType(string& media)
     return MediaType::UNDEFINED;
 }
 
-bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devName)
+bool PPSDODriver::updatePPSDORegList(vector<DeviceHandle>& handles, string& devName)
 {
     bool regListUpdated = false;
     DeviceHandle& mHandle = handles.front();
@@ -241,7 +241,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
     case MediaType::USB:
         if (mHandle.addr == "0403:601f"s || mHandle.addr == "374d:0019"s)
         {
-            mpGPSDORegisterList = &SDR_GPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDRMINI_V2)->second;
+            mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDRMINI_V2)->second;
             regListUpdated = true;
         }
         lime::debug("DEBUG: Selected CSR register list for LimeSDR Mini V2");
@@ -250,14 +250,14 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
     case MediaType::PCIE:
         if (mHandle.name.find("XTRX"s) != string::npos)
         {
-            mpGPSDORegisterList = &SDR_GPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR_XTRX)->second;
+            mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR_XTRX)->second;
             regListUpdated = true;
         }
         lime::debug("DEBUG: Selected CSR register list for LimeSDR XTRX");
         break;
 
     default:
-        mpGPSDORegisterList = nullptr;
+        mpPPSDORegisterList = nullptr;
         break;
     }
 
@@ -265,7 +265,7 @@ bool GPSDODriver::updateGPSDORegList(vector<DeviceHandle>& handles, string& devN
 }
 
 // ###############################################
-// #### limeGPSDO helper function definitions ####
+// #### limePPSDO helper function definitions ####
 // ###############################################
 
 static int printHeader()
@@ -292,18 +292,18 @@ static string formatToFit(MonitorResults* results, int length)
         results->error_10s,
         results->error_100s,
         results->dac,
-        results->gpsdoState.c_str(),
-        results->gpsdoAccuracy.c_str(),
-        results->gpsdoTpulse.c_str());
+        results->ppsdoState.c_str(),
+        results->ppsdoAccuracy.c_str(),
+        results->ppsdoTpulse.c_str());
 
     return formatedMessage;
 }
 
-static OpStatus runMonitoring(GPSDODriver* pDriver, uint32_t numDumps, std::chrono::milliseconds delay, int banner_interval)
+static OpStatus runMonitoring(PPSDODriver* pDriver, uint32_t numDumps, std::chrono::milliseconds delay, int banner_interval)
 {
     OpStatus status = OpStatus::Success;
     MonitorResults results;
-    cout << "Monitoring GPSDO regulation loop (press Ctrl+C to stop):\n";
+    cout << "Monitoring PPSDO regulation loop (press Ctrl+C to stop):\n";
     uint32_t dumpCount = 0;
     bool continueLoop = false;
     int headerLength = 0;
@@ -315,42 +315,42 @@ static OpStatus runMonitoring(GPSDODriver* pDriver, uint32_t numDumps, std::chro
         results.enableStatus = (pDriver->getEnabled(&status) ? "true" : "false");
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO enable status with error: "s + ToString(status));
+            lime::error("ERROR: Monitoring mode failed to read PPSDO enable status with error: "s + ToString(status));
             return status;
         }
 
         results.error_1s = static_cast<int64_t>(pDriver->get_1s_error(&status));
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO 1s error value with error: "s + ToString(status));
+            lime::error("ERROR: Monitoring mode failed to read PPSDO 1s error value with error: "s + ToString(status));
             return status;
         }
 
         results.error_10s = static_cast<int64_t>(pDriver->get_10s_error(&status));
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO 10s error value with error: "s + ToString(status));
+            lime::error("ERROR: Monitoring mode failed to read PPSDO 10s error value with error: "s + ToString(status));
             return status;
         }
 
         results.error_100s = static_cast<int64_t>(pDriver->get_100s_error(&status));
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO 100s error value with error: "s + ToString(status));
+            lime::error("ERROR: Monitoring mode failed to read PPSDO 100s error value with error: "s + ToString(status));
             return status;
         }
 
         results.dac = pDriver->getDacValue(&status);
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO DAC value with error: "s + ToString(status));
+            lime::error("ERROR: Monitoring mode failed to read PPSDO DAC value with error: "s + ToString(status));
             return status;
         }
 
-        status = pDriver->getStatus(results.gpsdoState, results.gpsdoAccuracy, results.gpsdoTpulse);
+        status = pDriver->getStatus(results.ppsdoState, results.ppsdoAccuracy, results.ppsdoTpulse);
         if (status != OpStatus::Success)
         {
-            lime::error("ERROR: Monitoring mode failed to read GPSDO Status values. Reason: "s + pDriver->getGPSDOStatusMsg() +
+            lime::error("ERROR: Monitoring mode failed to read PPSDO Status values. Reason: "s + pDriver->getPPSDOStatusMsg() +
                         ToString(status));
             return status;
         }
@@ -370,19 +370,19 @@ static OpStatus runMonitoring(GPSDODriver* pDriver, uint32_t numDumps, std::chro
     return status;
 }
 
-static void dumpRegisters(GPSDODriver* pDriver, int numberOfDumps, double delay)
+static void dumpRegisters(PPSDODriver* pDriver, int numberOfDumps, double delay)
 {
     cout << "Note: Raw register dump not available via named CSRs, use --check for full status\n";
 }
 
-static OpStatus resetGPSDO(GPSDODriver* pDriver, std::chrono::milliseconds rstDelay)
+static OpStatus resetPPSDO(PPSDODriver* pDriver, std::chrono::milliseconds rstDelay)
 {
     OpStatus status = OpStatus::Success;
-    cout << "Resetting GPSDO...\n";
+    cout << "Resetting PPSDO...\n";
     status = pDriver->setEnabled(false);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: Failed to reset GPSDO with error: "s + ToString(status));
+        lime::error("ERROR: Failed to reset PPSDO with error: "s + ToString(status));
         return status;
     }
 
@@ -390,14 +390,14 @@ static OpStatus resetGPSDO(GPSDODriver* pDriver, std::chrono::milliseconds rstDe
     status = pDriver->setEnabled(true);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: Failed to reset GPSDO with error: "s + ToString(status));
+        lime::error("ERROR: Failed to reset PPSDO with error: "s + ToString(status));
         return status;
     }
-    cout << "GPSDO reset complete (re-enabled)\n";
+    cout << "PPSDO reset complete (re-enabled)\n";
     return status;
 }
 
-static OpStatus enableGPSDO(GPSDODriver* pDriver, double clk, double ppm)
+static OpStatus enablePPSDO(PPSDODriver* pDriver, double clk, double ppm)
 {
     OpStatus status = OpStatus::Success;
     double freq = clk * 1e6;
@@ -431,45 +431,45 @@ static OpStatus enableGPSDO(GPSDODriver* pDriver, double clk, double ppm)
     lime::info("INFO: tol_100s_hz = ceil(freq * ppm / 1e4) = ceil("s + to_string(freq) + " * "s + to_string(ppm) + " / 1e4) = "s +
                to_string(tol_100s_hz) + " Hz;"s);
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET), target_1s);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET), target_1s);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_ONE_S_TARGET register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_ONE_S_TARGET register with error: "s + ToString(status));
         return status;
     }
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL), tol_1s_hz);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL), tol_1s_hz);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_ONE_S_TOL register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_ONE_S_TOL register with error: "s + ToString(status));
         return status;
     }
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET), target_10s);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET), target_10s);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_TEN_S_TARGET register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_TEN_S_TARGET register with error: "s + ToString(status));
         return status;
     }
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL), tol_10s_hz);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL), tol_10s_hz);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_TEN_S_TOL register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_TEN_S_TOL register with error: "s + ToString(status));
         return status;
     }
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET), target_100s);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET), target_100s);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TARGET register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TARGET register with error: "s + ToString(status));
         return status;
     }
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL), tol_100s_hz);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL), tol_100s_hz);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TOL register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_CONFIG_HUNDRED_S_TOL register with error: "s + ToString(status));
         return status;
     }
 
@@ -479,29 +479,29 @@ static OpStatus enableGPSDO(GPSDODriver* pDriver, double clk, double ppm)
     control = setField(control, clk_sel, CONTROL_CLK_SEL_OFFSET, CONTROL_CLK_SEL_SIZE);
     control = setField(control, 1ULL, CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
 
-    status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_ENABLE), control);
+    status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_ENABLE), control);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO enable failed to write PPSDO_ENABLE register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO enable failed to write PPSDO_ENABLE register with error: "s + ToString(status));
         return status;
     }
 
-    cout << "GPSDO enabled: CLK_SEL = " << clk_sel << " (" << clk << " MHz), " << ppm << " ppm tolerance (1s tol = " << tol_1s_hz
+    cout << "PPSDO enabled: CLK_SEL = " << clk_sel << " (" << clk << " MHz), " << ppm << " ppm tolerance (1s tol = " << tol_1s_hz
          << " Hz, 10s = " << tol_10s_hz << " Hz, 100s = " << tol_100s_hz << " Hz).\n";
 
     return status;
 }
 
-static OpStatus disableGPSDO(GPSDODriver* pDriver)
+static OpStatus disablePPSDO(PPSDODriver* pDriver)
 {
-    OpStatus status = pDriver->writeRegister(pDriver->getGPSDORegAddress(GPSDORegistersID::PPSDO_ENABLE), 0ULL);
+    OpStatus status = pDriver->writeRegister(pDriver->getPPSDORegAddress(PPSDORegistersID::PPSDO_ENABLE), 0ULL);
     if (status != OpStatus::Success)
     {
-        lime::error("ERROR: GPSDO disable failed to write PPSDO_ENABLE register with error: "s + ToString(status));
+        lime::error("ERROR: PPSDO disable failed to write PPSDO_ENABLE register with error: "s + ToString(status));
         return status;
     }
 
-    cout << "GPSDO disabled\n";
+    cout << "PPSDO disabled\n";
     return status;
 }
 
@@ -509,18 +509,18 @@ int main(int argc, char** argv)
 {
     signal(SIGINT, keyBoardInt);
     // clang-format off
-   args::ArgumentParser                    parser("limeGPSDO - GPS Disciplined Oscilator control and monitoring", "");
+   args::ArgumentParser                    parser("limePPSDO - PPS Disciplined Oscilator control and monitoring. Currently supported PPS sources - GPS", "");
    args::HelpFlag                          help(parser, "help", "This help", {'h', "help"});
 
    args::Group                             commands(parser, "COMMANDS", args::Group::Validators::AtLeastOne); // NOLINT(cppcoreguidelines-slicing)
    args::Flag                              check(commands, "check", "Run monitoring mode", {"check"} );
    args::Flag                              dump(commands, "dump", "Dump registers", {"dump"});
-   args::Flag                              reset(commands, "reset", "Reset GPSDO", {"reset"});
-   args::Flag                              enable(commands, "enable", "Configure and enable GPSDO", {"enable"});
-   args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
+   args::Flag                              reset(commands, "reset", "Reset PPSDO", {"reset"});
+   args::Flag                              enable(commands, "enable", "Configure and enable PPSDO", {"enable"});
+   args::Flag                              disable(commands, "disable", "Disable PPSDO", {"disable"});
 
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
-   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
+   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limePPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
    args::ValueFlag<uint32_t>               num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
@@ -586,7 +586,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    GPSDODriver driver(device->getICSR());
+    PPSDODriver driver(device->getICSR());
     if (!driver.isCSRImplemented())
     {
         cerr << "ERROR: Selected SDR device does not support CSR interface!\n";
@@ -599,7 +599,7 @@ int main(int argc, char** argv)
     lime::registerLogHandler(lime::cli::LogCallback);
     registerLogHandler(lime::cli::CStyleLogCallback);
 
-    if (!driver.updateGPSDORegList(handles, devName))
+    if (!driver.updatePPSDORegList(handles, devName))
     {
         driver.destroyCSR();
         DeviceRegistry::freeDevice(device);
@@ -613,12 +613,12 @@ int main(int argc, char** argv)
         if (reset)
         {
             int resetDelay = static_cast<int>(args::get(reset_delay) * 1000.0);
-            runStatus = resetGPSDO(&driver, std::chrono::milliseconds(resetDelay));
+            runStatus = resetPPSDO(&driver, std::chrono::milliseconds(resetDelay));
         }
 
         if (enable && runStatus == OpStatus::Success)
         {
-            runStatus = enableGPSDO(&driver, args::get(clk_freq), args::get(ppm));
+            runStatus = enablePPSDO(&driver, args::get(clk_freq), args::get(ppm));
         }
 
         if (check && runStatus == OpStatus::Success)
@@ -634,7 +634,7 @@ int main(int argc, char** argv)
 
         if (disable && runStatus == OpStatus::Success)
         {
-            runStatus = disableGPSDO(&driver);
+            runStatus = disablePPSDO(&driver);
         }
 
     } catch (const std::exception& e)

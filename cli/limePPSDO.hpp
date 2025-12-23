@@ -1,5 +1,5 @@
-#ifndef __LIME_GPSDO__
-#define __LIME_GPSDO__
+#ifndef __LIME_PPSDO__
+#define __LIME_PPSDO__
 
 #include "common.h"
 
@@ -35,21 +35,21 @@
 #define CONTROL_CLK_SEL_OFFSET 1
 #define CONTROL_CLK_SEL_SIZE 1
 
-enum class GPSDORegistersID;
+enum class PPSDORegistersID;
 
-using gpsdo_reg_list_t = std::unordered_map<GPSDORegistersID, uint64_t>;
+using ppsdo_reg_list_t = std::unordered_map<PPSDORegistersID, uint64_t>;
 
-class GPSDODriver
+class PPSDODriver
 {
   public:
-    GPSDODriver()
+    PPSDODriver()
         : mCSR_interface(nullptr)
-        , mpGPSDORegisterList(nullptr)
+        , mpPPSDORegisterList(nullptr)
     {
     }
-    GPSDODriver(lime::ICSR* interface)
+    PPSDODriver(lime::ICSR* interface)
         : mCSR_interface(interface)
-        , mpGPSDORegisterList(nullptr)
+        , mpPPSDORegisterList(nullptr)
     {
     }
     void destroyCSR();
@@ -69,17 +69,17 @@ class GPSDODriver
     bool getEnabled(lime::OpStatus* status);
     lime::OpStatus setEnabled(bool enable);
 
-    // GPSDO Register address list manipulation
-    uint64_t getGPSDORegAddress(GPSDORegistersID id);
-    bool updateGPSDORegList(std::vector<lime::DeviceHandle>& handles, std::string& devName);
+    // PPSDO Register address list manipulation
+    uint64_t getPPSDORegAddress(PPSDORegistersID id);
+    bool updatePPSDORegList(std::vector<lime::DeviceHandle>& handles, std::string& devName);
 
     // Logger members
-    std::string getGPSDOStatusMsg();
+    std::string getPPSDOStatusMsg();
 
   private:
     lime::ICSR* mCSR_interface;
-    std::string mGPSDOStatusMsg;
-    const gpsdo_reg_list_t* mpGPSDORegisterList;
+    std::string mPPSDOStatusMsg;
+    const ppsdo_reg_list_t* mpPPSDORegisterList;
 };
 
 struct MonitorResults {
@@ -91,12 +91,12 @@ struct MonitorResults {
     int64_t error_10s;
     int64_t error_100s;
     uint64_t dac;
-    std::string gpsdoState;
-    std::string gpsdoAccuracy;
-    std::string gpsdoTpulse;
+    std::string ppsdoState;
+    std::string ppsdoAccuracy;
+    std::string ppsdoTpulse;
 };
 
-enum class GPSDORegistersID : int {
+enum class PPSDORegistersID : int {
     PPSDO_ENABLE = 0,
     PPSDO_CONFIG_ONE_S_TARGET = 1,
     PPSDO_CONFIG_ONE_S_TOL = 2,
