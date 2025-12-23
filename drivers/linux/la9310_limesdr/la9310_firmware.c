@@ -11,24 +11,6 @@
 
 #define NXP_ERRATUM_A008822 1
 
-static int check_file(const char* filename)
-{
-    struct file* file;
-    char path[FIRMWARE_NAME_SIZE];
-
-    if (!filename || !*filename)
-        return -EINVAL;
-
-    sprintf(path, "/lib/firmware/%s", filename);
-
-    file = filp_open(path, O_RDONLY, 0);
-    if (IS_ERR(file))
-        return PTR_ERR(file);
-
-    fput(file);
-    return 0;
-}
-
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
 {
 #ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
@@ -110,7 +92,7 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     return rc;
 }
 
-int la9310_load_rtos_img(struct la9310_dev* la9310_dev)
+int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user *fw_data, size_t fw_length)
 {
     int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
     struct la9310_mem_region_info* tcm_region;
@@ -153,20 +135,14 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev)
     rc = la9310_dev_reserve_firmware(la9310_dev);
     if (rc)
         goto out;
-    sprintf(freertos_img, "%s", la9310_dev->firmware_name);
-    rc = check_file(freertos_img);
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "FreeRTOS Image file(%s) not present", freertos_img);
-        goto out;
-    }
 
     dma_sync_single_for_cpu(
         la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
-    rc = la9310_udev_load_firmware(la9310_dev, dma_region->vaddr, size, freertos_img);
+    rc = la9310_load_firmware(la9310_dev, dma_region->vaddr, size, fw_data, fw_length);
     dma_sync_single_for_device(
         la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
     la9310_dev_free_firmware(la9310_dev);
+
     if (rc)
     {
         dev_err(la9310_dev->dev, "load_firmware [%s] request failed\n", freertos_img);

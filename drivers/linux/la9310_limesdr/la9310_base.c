@@ -152,47 +152,27 @@ void la9310_dev_free_firmware(struct la9310_dev* la9310_dev)
  * return success. After you are done with using firmware call
  * la9310_dev_free_firmware
  */
-int la9310_udev_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, char* name)
+int la9310_load_firmware(struct la9310_dev *la9310_dev, char *buf, int buff_sz, const char __user *fw_data, size_t fw_size)
 {
-    int rc = 0, size;
-    struct la9310_firmware_info* fw_info = &la9310_dev->firmware_info;
+	struct la9310_firmware_info* fw_info = &la9310_dev->firmware_info;
+	int rc;
 
-    if (strlen(name) < FIRMWARE_NAME_SIZE)
-    {
-        strcpy(fw_info->name, name);
-    }
-    else
-    {
-        dev_err(la9310_dev->dev, "Invalid firmware name %s\n", name);
-        rc = -ENODEV;
-        goto out;
-    }
+	/* Copy firmware from userspace to DMA region */
+	if (buff_sz < fw_size) {
+		dev_err(la9310_dev->dev, "Insufficient fw buff %p: size %ld\n", fw_data, fw_size);
+		return -ENOBUFS;
+	}
 
-    rc = request_firmware(&fw_info->fw, name, la9310_dev->dev);
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "Failed to load %s, %d\n", name, rc);
-        goto out;
-    }
+	dev_info(la9310_dev->dev, "Copy fw to %px, size %ld\n", fw_data, fw_size);
+	rc = copy_from_user(buf, fw_data, fw_size);
 
-    size = fw_info->fw->size;
-    dev_info(la9310_dev->dev, "Downloaded f/w at 0x%px size: %d\n", fw_info->fw->data, size);
+	if (rc) {
+		dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
+		return -EIO;
+	}
+	la9310_dev->firmware_info.size = fw_size;
 
-    if (buff_sz < size)
-    {
-        dev_err(la9310_dev->dev, "Insufficient fw buff %p: siz %d\n", buf, size);
-        rc = -ENOBUFS;
-    }
-    else
-    {
-        dev_info(la9310_dev->dev, "Copy fw to %px, size %d\n", buf, size);
-        memcpy_toio(buf, fw_info->fw->data, size);
-        la9310_dev->firmware_info.size = size;
-    }
-
-    release_firmware(fw_info->fw);
-out:
-    return rc;
+	return 0;
 }
 
 static void ls_pcie_iatu_outbound_set(void __iomem* dbi, int idx, int type, u64 cpu_addr, u64 pci_addr, u32 size)
@@ -804,13 +784,12 @@ free_subdrv:
 	return rc;
 }
 
-int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char *m4_fw_name)
+int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char __user *fw_data, size_t fw_length)
 {
 	int rc;
 
-	strncpy(la9310_dev->firmware_name, m4_fw_name, sizeof(la9310_dev->firmware_name));
-	dev_info(la9310_dev->dev, "%s: Loading RTOS image\n", la9310_dev->name);
-	rc = la9310_load_rtos_img(la9310_dev);
+	dev_info(la9310_dev->dev, "Loading RTOS image\n");
+	rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
 	if (rc)	{
 		dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d", rc);
 		return rc;

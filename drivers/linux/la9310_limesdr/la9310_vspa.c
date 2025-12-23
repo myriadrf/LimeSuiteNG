@@ -829,7 +829,7 @@ int overlay_initiate(struct device* dev, struct overlay_section overlay_sec)
     return 0;
 }
 
-static int vspa_get_fw_image(struct la9310_dev* la9310_dev)
+static int vspa_get_fw_image(struct la9310_dev* la9310_dev, const char __user *fw_data, size_t fw_length)
 {
     int ret = 0;
     int buf_size, vspa_fw_size;
@@ -853,7 +853,7 @@ static int vspa_get_fw_image(struct la9310_dev* la9310_dev)
 
     dma_sync_single_for_cpu(
         la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
-    ret = la9310_udev_load_firmware(la9310_dev, vspa_fw_region->vaddr, buf_size, vspadev->eld_filename);
+    ret = la9310_load_firmware(la9310_dev, vspa_fw_region->vaddr, buf_size, fw_data, fw_length);
     if (ret < 0)
     {
         dev_err(la9310_dev->dev, "%s: load_firmware request failed\n", __func__);
@@ -886,7 +886,7 @@ OUT:
     return -EFAULT;
 }
 
-int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, const char *dsp_fw_name)
+int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, const char __user *fw_data, size_t fw_length)
 {
 	int err;
 
@@ -901,11 +901,8 @@ int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, co
 	}
 	dev_info(la9310_dev->dev, "mem init done\n");
 
-	// snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", vspa_fw_name);
-	snprintf(vspadev->eld_filename, VSPA_MAX_ELD_FILENAME, "%s", dsp_fw_name);
-
 	/* Call the LA9310 base APIs to request_firmware */
-	if (vspa_get_fw_image(la9310_dev)) {
+	if (vspa_get_fw_image(la9310_dev, fw_data, fw_length)) {
 		dev_err(la9310_dev->dev, "ERR %s : Loading VSPA FW failed\n", __func__);
 		err = -EBADRQC;
 		return err;

@@ -94,14 +94,16 @@ class LIME_API LA9310_PCIe : public LimePCIe
     void sync_iq_flood_after_write(uint8_t* addr, uint32_t data_size);
 
     /// @brief Downloads the Firmware for the ARM M4 core on the LA9310 device
-    /// @param File name of the firmware file
+    /// @param Firmware data
+    /// @param size of firmware data 
     /// @return 0 on success, error code else
-    int LoadArmM4Fw(const char *fw_name);
+    int LoadArmM4Fw(const char *data, size_t length);
 
     /// @brief Downloads the Firmware for the VSPA core on the LA9310 device
-    /// @param File name of the firmware file
+    /// @param Firmware data
+    /// @param size of firmware data 
     /// @return 0 on success, error code else
-    int LoadVspaFw(const char *fw_name);
+    int LoadVspaFw(const char *data, size_t length);
 
     mmaped_region GetBar(uint8_t i);
     std::shared_ptr<PCIe_CSR_Access> GetCSRAccess(uint32_t window_id, size_t base_offset = 0)

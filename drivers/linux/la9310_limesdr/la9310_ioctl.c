@@ -37,11 +37,11 @@ void la9310_flush_cache(struct la9310_dev* la9310_dev, struct LA9310_IOCTL_flush
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
-    char fw_name[128];
 
     struct la9310_dev* la9310_dev = file->private_data;
     struct vspa_device* vspadev = (struct vspa_device*) la9310_dev->vspa_priv;
     struct LA9310_IOCTL_flush_cache cache_entry;
+    struct LA9310_IOCTL_firmware fw;
 
     WARN_ON(la9310_dev == NULL);
 
@@ -81,20 +81,20 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         ret = 0;
         break;
     case LA9310_IOCTL_LOAD_M4_FW:
-        ret = copy_from_user(fw_name, (char *) arg, sizeof(fw_name));
+        ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware *) arg, sizeof(fw));
 	if (ret < 0) {
-            dev_err(la9310_dev->dev, "%s copy_from_user, err %d\n", __func__, ret);
+            dev_err(la9310_dev->dev, "%s copy_from_user, err %ld\n", __func__, ret);
             return ret;
         }
-        ret = la9310_load_m4_firmware(la9310_dev, fw_name);
+        ret = la9310_load_m4_firmware(la9310_dev, fw.firmware_data, fw.size);
         break;
     case LA9310_IOCTL_LOAD_VSPA_FW:
-        ret = copy_from_user(fw_name, (char *) arg, sizeof(fw_name));
+        ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware *) arg, sizeof(fw));
 	if (ret < 0) {
-            dev_err(la9310_dev->dev, "%s copy_from_user, err %d\n", __func__, ret);
+            dev_err(la9310_dev->dev, "%s copy_from_user, err %ld\n", __func__, ret);
             return ret;
         }
-        ret = vspa_load_dsp(la9310_dev, vspadev, fw_name);
+        ret = vspa_load_dsp(la9310_dev, vspadev, fw.firmware_data, fw.size);
         break;
     case LA9310_IOCTL_CSR_OP: {
         struct LA9310_IOCTL_CSR_op op;

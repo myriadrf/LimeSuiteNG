@@ -499,44 +499,23 @@ OpStatus LimeSDR_Micro::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
     int status;
-    std::string filename, devfile;
-    std::ofstream file;
 
     switch (device)
     {
     case eMemoryDevice::ARM_M4:
-        filename = "/lib/firmware/arm_m4_fw.bin";
-
-        /* Write firmware to temporary binary file */
-        file.open(filename, std::ios::binary);
-        file.write(data, length);
-        file.close();
-
-	filename = "arm_m4_fw.bin";
-
-        status = mStreamingPort->LoadArmM4Fw(filename.c_str());
-	    break;
+        status = mStreamingPort->LoadArmM4Fw(data, length);
+        break;
     case eMemoryDevice::VSPA:
-        filename = "/lib/firmware/vspa_fw.bin";
-
-        /* Write firmware to temporary binary file */
-        file.open(filename, std::ios::binary);
-        file.write(data, length);
-        file.close();
-
-	filename = "vspa_fw.bin";
-
-        status = mStreamingPort->LoadVspaFw(filename.c_str());
-	    break;
+        status = mStreamingPort->LoadVspaFw(data, length);
+        break;
     default:
         return OpStatus::NotImplemented;
     }
 
-
     if (status)
         return OpStatus::IOFailure;
     else
-    	return OpStatus::Success;
+        return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)
