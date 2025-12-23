@@ -4,3 +4,5 @@ usr/bin/limeTRX
 usr/bin/limeSPI
 usr/bin/limeFLASH
 usr/bin/limeOEM
+usr/bin/limeCSR
+usr/bin/limePPSDO

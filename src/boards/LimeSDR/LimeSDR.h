@@ -11,6 +11,7 @@
 namespace lime {
 
 class IUSB;
+class ICSR;
 
 /** @brief Class for managing the LimeSDR-USB device. */
 class LimeSDR : public LMS7002M_SDRDevice
@@ -40,6 +41,8 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus GPIORead(uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
+
+    ICSR* getICSR() override;
 
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;

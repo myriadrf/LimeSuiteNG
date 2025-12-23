@@ -17,6 +17,7 @@
 #include "comms/SPI/SPI_utilities.h"
 #include "comms/SPI/ISPI.h"
 #include "comms/USB/IUSB.h"
+#include "protocols/LMS64C/CSR.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/USBDMAEmulation.h"
 
@@ -601,6 +602,11 @@ std::unique_ptr<lime::RFStream> LimeSDR_Mini::StreamCreate(const StreamConfig& c
     if (status != OpStatus::Success)
         return std::unique_ptr<RFStream>(nullptr);
     return streamer;
+}
+
+ICSR* LimeSDR_Mini::getICSR()
+{
+    return new LMS64C_CSR(mSerialPort);
 }
 
 } // namespace lime

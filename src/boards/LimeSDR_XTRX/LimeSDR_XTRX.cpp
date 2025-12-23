@@ -19,6 +19,7 @@
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "comms/SPI/ISPI.h"
+#include "protocols/LMS64C/CSR.h"
 #include "FPGA/FPGA_common.h"
 #include "FPGA_XTRX.h"
 #include "protocols/LMS64CProtocol.h"
@@ -1004,6 +1005,11 @@ std::unique_ptr<lime::RFStream> LimeSDR_XTRX::StreamCreate(const StreamConfig& c
     if (status != OpStatus::Success)
         return std::unique_ptr<RFStream>(nullptr);
     return streamer;
+}
+
+ICSR* LimeSDR_XTRX::getICSR()
+{
+    return new LMS64C_CSR(mSerialPort);
 }
 
 } //namespace lime
