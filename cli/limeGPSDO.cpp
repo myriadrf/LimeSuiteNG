@@ -114,22 +114,22 @@ uint64_t GPSDODriver::getSigned32bit(uint64_t address, OpStatus * status)
 
 uint64_t GPSDODriver::get_1s_error(OpStatus * status)
 {
-   return this->getSigned32bit((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR)->second, status);
+   return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR), status);
 }
 
 uint64_t GPSDODriver::get_10s_error(OpStatus * status)
 {
-   return this->getSigned32bit((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR)->second, status);
+   return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR), status);
 }
 
 uint64_t GPSDODriver::get_100s_error(OpStatus * status)
 {
-   return this->getSigned32bit((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR)->second, status);
+   return this->getSigned32bit(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR), status);
 }
 
 uint64_t GPSDODriver::getDacValue(OpStatus * status)
 {
-   return this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL)->second, status);
+   return this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL), status);
 }
 
 static const array<string,4> accuracyLevelList = {"Disabled/Lowest", "1s Tune", "2s Tune", "3s Tune (Highest)"};
@@ -155,7 +155,7 @@ static string accToStr(uint64_t accuracy)
 OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prTpulse)
 {
    OpStatus status = OpStatus::Success;
-   uint64_t state = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_STATE)->second, &status);
+   uint64_t state = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_STATE), &status);
    if(status != OpStatus::Success)
    {
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_STATE register with error: ";
@@ -163,7 +163,7 @@ OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prT
    }
    prState = stateToStr(state);
 
-   uint64_t accuracy = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_ACCURACY)->second, &status);
+   uint64_t accuracy = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_ACCURACY), &status);
    if(status != OpStatus::Success)
    {
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_ACCURACY register with error: ";
@@ -171,7 +171,7 @@ OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prT
    }
    prAccuracy = accToStr(accuracy);
 
-   uint64_t tpulse = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE)->second, &status);
+   uint64_t tpulse = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE), &status);
    if(status != OpStatus::Success)
    {
       mGPSDOStatusMsg = "Failed to read PPSDO_STATUS_PPS_ACTIVE register with error: ";
@@ -185,19 +185,19 @@ OpStatus GPSDODriver::getStatus(string& prState, string& prAccuracy, string& prT
 
 bool GPSDODriver::getEnabled(OpStatus * status)
 {
-   uint64_t value = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_ENABLE)->second, status);
+   uint64_t value = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), status);
    return static_cast<bool>(value & 1ULL);
 }
 
 OpStatus GPSDODriver::setEnabled(bool enable)
 {
    OpStatus status = OpStatus::Success;
-   uint64_t currRegValue = this->readRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_ENABLE)->second, &status);
+   uint64_t currRegValue = this->readRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), &status);
    if(status != OpStatus::Success)
       return status;
    
    currRegValue = setField(currRegValue, static_cast<uint64_t>(enable), CONTROL_EN_OFFSET, CONTROL_EN_SIZE);
-   status = this->writeRegister((*mpGPSDORegisterList).find(GPSDORegistersID::PPSDO_ENABLE)->second, currRegValue);
+   status = this->writeRegister(mpGPSDORegisterList->at(GPSDORegistersID::PPSDO_ENABLE), currRegValue);
 
    return status;
 }
@@ -209,7 +209,7 @@ string GPSDODriver::getGPSDOStatusMsg()
 
 uint64_t GPSDODriver::getGPSDORegAddress(GPSDORegistersID id)
 {
-   return (*mpGPSDORegisterList).find(id)->second;
+   return mpGPSDORegisterList->at(id);
 }
 
 static MediaType getDeviceMediaType(string& media)
@@ -509,7 +509,7 @@ int main(int argc, char** argv)
    args::Flag                              disable(commands, "disable", "Disable GPSDO", {"disable"});
 
    args::Group                             arguments(parser, "ARGUMENTS", args::Group::Validators::DontCare, args::Options::Global); // NOLINT(cppcoreguidelines-slicing)
-   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations in limeGPSDO app. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
+   args::ValueFlag<std::string>            logFlag(arguments, "", "Enable additional device, API and limeGPSDO app log output. Log verbosity: info, warning, error, verbose, debug. Log level \'info\' prints intermediate calculations. Log level \'debug\' prints detailed CSR register R/W operations.", {'l', "log"}, "error");
    args::ValueFlag<std::string>            deviceFlag(arguments, "name", "Specifies which device to use", {"device"}, "");
    args::ValueFlag<uint32_t>               num(arguments, "iter", "Number of iterations (for --check: 0 for infinite; for --dump: default 1 if not specified)", {'n', "num"}, 0);
    args::ValueFlag<double>                 delay(arguments, "time", "Delay between iterations (seconds, for --check and --dump)", {'d', "delay"}, 1.0);
