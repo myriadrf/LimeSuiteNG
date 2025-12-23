@@ -33,7 +33,7 @@ void LogCallback(LogLevel lvl, const std::string& msg)
     std::cerr << msg << std::endl;
 }
 
-void CStyleLogCallback(LogLevel lvl, const char * msg)
+void CStyleLogCallback(LogLevel lvl, const char* msg)
 {
     if (lvl > logVerbosity)
         return;

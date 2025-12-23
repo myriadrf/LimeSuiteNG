@@ -58,7 +58,6 @@ wxFlexGridSizer* CSR_wxgui::CreateCsrControls(wxWindow* parent, uint8_t rowCount
     mainSizer->SetFlexibleDirection(wxBOTH);
     mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-
     wxFlexGridSizer* szRows = new wxFlexGridSizer(0, 8, 0, 0);
     szRows->SetFlexibleDirection(wxBOTH);
     szRows->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
@@ -77,22 +76,22 @@ wxFlexGridSizer* CSR_wxgui::CreateCsrControls(wxWindow* parent, uint8_t rowCount
 CSR_wxgui::CSR_wxgui(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long styles)
     : IModuleFrame(parent, id, title, pos, size, styles)
 {
-   mDevice = nullptr;
-   CSR_interface = nullptr;
+    mDevice = nullptr;
+    CSR_interface = nullptr;
 
-   wxFlexGridSizer* mainSizer;
-   mainSizer = new wxFlexGridSizer(0, 1, 0, 0);
-   mainSizer->SetFlexibleDirection(wxBOTH);
-   mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
+    wxFlexGridSizer* mainSizer;
+    mainSizer = new wxFlexGridSizer(0, 1, 0, 0);
+    mainSizer->SetFlexibleDirection(wxBOTH);
+    mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-   wxFlexGridSizer* csrControls = CreateCsrControls(this, 4);
-   mainSizer->Add(csrControls, 0, wxALIGN_LEFT, 0);
+    wxFlexGridSizer* csrControls = CreateCsrControls(this, 4);
+    mainSizer->Add(csrControls, 0, wxALIGN_LEFT, 0);
 
-   SetSizer(mainSizer);
-   Layout();
-   mainSizer->Fit(this);
+    SetSizer(mainSizer);
+    Layout();
+    mainSizer->Fit(this);
 
-   Centre(wxBOTH);
+    Centre(wxBOTH);
 }
 
 bool CSR_wxgui::Initialize(SDRDevice* pCtrPort)
@@ -121,30 +120,29 @@ void CSR_wxgui::onCSRwrite(wxCommandEvent& event)
     try
     {
 
-      CSRFields& fields = mCSRElements.at(event.GetId());
-      if (!mDevice)
-      {
-        fields.status->SetLabel("Not connected");
-        return;
-      }
+        CSRFields& fields = mCSRElements.at(event.GetId());
+        if (!mDevice)
+        {
+            fields.status->SetLabel("Not connected");
+            return;
+        }
 
-      if (!CSR_interface)
-      {
-        fields.status->SetLabel("CSR interface not available!");
-        return;
-      }
+        if (!CSR_interface)
+        {
+            fields.status->SetLabel("CSR interface not available!");
+            return;
+        }
 
-      const wxString strAddress = fields.address->GetValue();
-      unsigned long long addr = 0;
-      strAddress.ToULongLong(&addr, 16);
+        const wxString strAddress = fields.address->GetValue();
+        unsigned long long addr = 0;
+        strAddress.ToULongLong(&addr, 16);
 
+        const wxString strValue = fields.value->GetValue();
+        unsigned long long value = 0;
+        strValue.ToULongLong(&value, 16);
 
-      const wxString strValue = fields.value->GetValue();
-      unsigned long long value = 0;
-      strValue.ToULongLong(&value, 16);
-
-      OpStatus status = CSR_interface->ioWrite64(addr, value);
-      fields.status->SetLabel(ToString(status));
+        OpStatus status = CSR_interface->ioWrite64(addr, value);
+        fields.status->SetLabel(ToString(status));
 
     } catch (...)
     {
@@ -172,11 +170,10 @@ void CSR_wxgui::onCSRread(wxCommandEvent& event)
         const wxString strAddress = fields.address->GetValue();
         unsigned long long addr = 0;
         strAddress.ToULongLong(&addr, 16);
-   
+
         //  const wxString strValue = fields.value->GetValue();
         //  unsigned long long value = 0;
         //  strValue.ToULongLong(&value, 16);
-
 
         //  uint64_t data_wr = addr;
         uint64_t value = 0;
@@ -184,15 +181,15 @@ void CSR_wxgui::onCSRread(wxCommandEvent& event)
 
         try
         {
-        value = CSR_interface->ioRead64(addr, &status);
-        fields.status->SetLabel(ToString(status));
-        if (status != OpStatus::Success)
-            return;
-        fields.value->SetValue(wxString::Format("%0llX", value));
+            value = CSR_interface->ioRead64(addr, &status);
+            fields.status->SetLabel(ToString(status));
+            if (status != OpStatus::Success)
+                return;
+            fields.value->SetValue(wxString::Format("%0llX", value));
 
         } catch (std::runtime_error& e)
         {
-        fields.status->SetLabel(e.what());
+            fields.status->SetLabel(e.what());
         }
     } catch (...)
     {

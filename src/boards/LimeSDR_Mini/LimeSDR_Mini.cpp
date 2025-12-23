@@ -358,7 +358,6 @@ OpStatus LimeSDR_Mini::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* 
     }
 }
 
-
 // Callback for updating FPGA's interface clocks when LMS7002M CGEN is manually modified
 OpStatus LimeSDR_Mini::UpdateFPGAInterface(void* userData)
 {
@@ -605,7 +604,7 @@ std::unique_ptr<lime::RFStream> LimeSDR_Mini::StreamCreate(const StreamConfig& c
     return streamer;
 }
 
-ICSR * LimeSDR_Mini::getICSR()
+ICSR* LimeSDR_Mini::getICSR()
 {
     return new LMS64C_CSR(mSerialPort);
 }

@@ -1007,7 +1007,7 @@ std::unique_ptr<lime::RFStream> LimeSDR_XTRX::StreamCreate(const StreamConfig& c
     return streamer;
 }
 
-ICSR * LimeSDR_XTRX::getICSR()
+ICSR* LimeSDR_XTRX::getICSR()
 {
     return new LMS64C_CSR(mSerialPort);
 }

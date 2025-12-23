@@ -336,7 +336,6 @@ OpStatus LimeSDR::SPI(uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO,
     }
 }
 
-
 // There might be some leftover samples data still buffered in USB device
 // clear the USB buffers before streaming samples to avoid old data
 void LimeSDR::ResetUSBFIFO()
@@ -452,7 +451,7 @@ std::unique_ptr<lime::RFStream> LimeSDR::StreamCreate(const StreamConfig& config
     return streamer;
 }
 
-ICSR * LimeSDR::getICSR()
+ICSR* LimeSDR::getICSR()
 {
     return new LMS64C_CSR(mSerialPort);
 }

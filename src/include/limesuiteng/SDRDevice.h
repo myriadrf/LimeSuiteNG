@@ -612,7 +612,7 @@ class LIME_API SDRDevice
 
     /// @brief Creates CSR interface to manage SDR specific Configuration Space Registers.
     /// @return Address to SDR CSR interface.
-    virtual ICSR * getICSR();
+    virtual ICSR* getICSR();
 };
 
 } // namespace lime

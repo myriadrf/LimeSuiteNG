@@ -42,7 +42,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength) override;
     OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength) override;
 
-    ICSR * getICSR() override;
+    ICSR* getICSR() override;
 
     OpStatus CustomParameterWrite(const std::vector<CustomParameterIO>& parameters) override;
     OpStatus CustomParameterRead(std::vector<CustomParameterIO>& parameters) override;

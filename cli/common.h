@@ -24,7 +24,7 @@ namespace lime::cli {
 extern LogLevel logVerbosity;
 LogLevel strToLogLevel(const std::string_view str);
 void LogCallback(LogLevel lvl, const std::string& msg);
-void CStyleLogCallback(LogLevel lvl, const char * msg);
+void CStyleLogCallback(LogLevel lvl, const char* msg);
 std::vector<int> ParseIntArray(args::NargsValueFlag<int>& flag);
 
 bool FuzzyHandleMatch(const DeviceHandle& handle, const std::string_view text);

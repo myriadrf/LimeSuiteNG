@@ -134,7 +134,7 @@ GPIO_Interface* SDRDevice::GetGPIOControls()
     return nullptr;
 }
 
-ICSR * SDRDevice::getICSR()
+ICSR* SDRDevice::getICSR()
 {
     return nullptr;
 }

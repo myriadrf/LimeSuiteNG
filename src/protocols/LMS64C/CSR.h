@@ -7,8 +7,7 @@
 #include "comms/ICSR.h"
 #include "protocols/LMS64CProtocol.h"
 
-namespace lime
-{
+namespace lime {
 
 class ISerialPort;
 
@@ -20,14 +19,12 @@ class LMS64C_CSR : public ICSR
 
     OpStatus ioWrite64(uint64_t address, uint64_t value) override;
 
-    uint64_t ioRead64(uint64_t address, OpStatus * status = nullptr) override;
+    uint64_t ioRead64(uint64_t address, OpStatus* status = nullptr) override;
 
   private:
     std::shared_ptr<ISerialPort> port;
 };
 
-
 } // namespace lime
-
 
 #endif

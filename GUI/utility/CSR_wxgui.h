@@ -10,7 +10,7 @@
 namespace lime {
 class SDRDevice;
 class ICSR;
-}
+} // namespace lime
 
 #include <wx/combobox.h>
 
@@ -35,7 +35,6 @@ class CSR_wxgui : public IModuleFrame
     void onCSRwrite(wxCommandEvent& event);
     void onCSRread(wxCommandEvent& event);
 
-
     wxFlexGridSizer* CreateCsrControls(wxWindow* parent, uint8_t rowCount);
     void InsertCsrControlsRow(wxWindow* parent, wxWindowID id, wxFlexGridSizer* row, CSR_wxgui::CSRFields* controls);
 
@@ -46,14 +45,14 @@ class CSR_wxgui : public IModuleFrame
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long styles = wxDEFAULT_DIALOG_STYLE);
-    
+
     virtual bool Initialize(lime::SDRDevice* device);
-    virtual void Update(){};
+    virtual void Update() {};
 
   protected:
     std::vector<wxChoice*> mCSRselection;
     std::unordered_map<wxWindowID, CSRFields> mCSRElements;
-    lime::ICSR * CSR_interface;
+    lime::ICSR* CSR_interface;
 };
 
 #endif // __CSR_wxgui__

@@ -29,7 +29,7 @@ class LIME_API ICSR
       @param status Read operation status.
       @returns Value of CSRegister.
      */
-    virtual uint64_t ioRead64(uint64_t address, OpStatus * status = nullptr) = 0;
+    virtual uint64_t ioRead64(uint64_t address, OpStatus* status = nullptr) = 0;
 };
 
 } // namespace lime
