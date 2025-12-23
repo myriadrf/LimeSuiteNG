@@ -890,6 +890,15 @@ int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, co
 {
 	int err;
 
+	if (!la9310_dev->arm_m4_fw_loaded) {
+		dev_err(la9310_dev->dev, "Firmware for M4 is not loaded yet but required for VSPA DSP loading!\n");
+		return -EPERM;
+	}
+
+	if (la9310_dev->vspa_fw_loaded) {
+		dev_err(la9310_dev->dev, "Firmware for VSPA DSP is already loaded!\n");
+		return -EBUSY;
+	}
 	dev_info(la9310_dev->dev, "INFO:%s : VSPA Loading firmware initiated-\n", __func__);
 
 	vspadev->state = VSPA_STATE_LOADING;
@@ -925,6 +934,7 @@ int vspa_load_dsp(struct la9310_dev *la9310_dev, struct vspa_device* vspadev, co
 
 	dev_dbg(la9310_dev->dev, "DBG: Fw image name saved: %s", vspadev->eld_filename);
 
+	la9310_dev->vspa_fw_loaded = 1;
 	return 0;
 }
 

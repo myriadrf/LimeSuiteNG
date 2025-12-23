@@ -788,6 +788,11 @@ int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char __user *fw
 {
 	int rc;
 
+	if (la9310_dev->arm_m4_fw_loaded) {
+		dev_err(la9310_dev->dev, "Firmware for ARM M4 is already loaded!\n");
+		return -EBUSY;
+	}
+
 	dev_info(la9310_dev->dev, "Loading RTOS image\n");
 	rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
 	if (rc)	{
@@ -837,7 +842,8 @@ int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char __user *fw
 	rc = la9310_subdrv_init(la9310_dev);
 	if (rc)
 		goto free_msi_irq;
-
+	
+	la9310_dev->arm_m4_fw_loaded = 1;
 	return 0;
 
 free_msi_irq:
