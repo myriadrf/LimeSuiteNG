@@ -3,7 +3,7 @@
 
 struct LA9310_IOCTL_firmware {
     void const* firmware_data;
-    uint32_t size;
+    size_t size;
 };
 
 struct LA9310_IOCTL_flush_cache {

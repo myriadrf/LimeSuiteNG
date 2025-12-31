@@ -396,14 +396,14 @@ extern void la9310_subdrv_mod_exit(void);
 
 void la9310_subdrv_remove(struct la9310_dev* la9310_dev);
 int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index);
-int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user *fw_data, size_t fw_length);
+int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev);
 void la9310_hexdump(const void* ptr, size_t sz);
 int la9310_map_mem_regions(struct la9310_dev* la9310_dev);
 void la9310_unmap_mem_regions(struct la9310_dev* la9310_dev);
 int la9310_base_probe(struct la9310_dev* la9310_dev);
 int la9310_base_remove(struct la9310_dev* la9310_dev);
-int la9310_load_firmware(struct la9310_dev *la9310_dev, char *buf, int buff_sz, const char __user *fw_data, size_t fw_size);
+int la9310_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, const char __user* fw_data, size_t fw_size);
 int la9310_udev_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, char* name);
 struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_dev, enum la9310_mem_region_t type);
 int la9310_dev_reserve_firmware(struct la9310_dev* la9310_dev);
@@ -434,7 +434,7 @@ void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index,
 ssize_t la9310_show_global_status(char* buf);
 
 int la9310_modinfo_init(struct la9310_dev* dev);
-int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char __user *fw_data, size_t fw_length);
+int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
 // int la9310_modinfo_exit(struct la9310_dev *dev);
 // void la9310_modinfo_get(struct la9310_dev *la9310_dev, modinfo_t *mi);
 #endif

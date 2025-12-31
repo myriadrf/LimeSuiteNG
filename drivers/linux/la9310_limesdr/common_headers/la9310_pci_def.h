@@ -43,9 +43,9 @@
 #define PCIE_ATU_UPPER_BASE 0x910
 #define PCIE_ATU_LIMIT 0x914
 #define PCIE_ATU_LOWER_TARGET 0x918
-#define PCIE_ATU_BUS(x) (((x)&0xff) << 24)
-#define PCIE_ATU_DEV(x) (((x)&0x1f) << 19)
-#define PCIE_ATU_FUNC(x) (((x)&0x7) << 16)
+#define PCIE_ATU_BUS(x) (((x) & 0xff) << 24)
+#define PCIE_ATU_DEV(x) (((x) & 0x1f) << 19)
+#define PCIE_ATU_FUNC(x) (((x) & 0x7) << 16)
 #define PCIE_ATU_UPPER_TARGET 0x91C
 
 #define AMBA_ERROR_RESPONSE_DEFAULT_OFF 0x8D0

@@ -152,27 +152,29 @@ void la9310_dev_free_firmware(struct la9310_dev* la9310_dev)
  * return success. After you are done with using firmware call
  * la9310_dev_free_firmware
  */
-int la9310_load_firmware(struct la9310_dev *la9310_dev, char *buf, int buff_sz, const char __user *fw_data, size_t fw_size)
+int la9310_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, const char __user* fw_data, size_t fw_size)
 {
-	struct la9310_firmware_info* fw_info = &la9310_dev->firmware_info;
-	int rc;
+    struct la9310_firmware_info* fw_info = &la9310_dev->firmware_info;
+    int rc;
 
-	/* Copy firmware from userspace to DMA region */
-	if (buff_sz < fw_size) {
-		dev_err(la9310_dev->dev, "Insufficient fw buff %p: size %ld\n", fw_data, fw_size);
-		return -ENOBUFS;
-	}
+    /* Copy firmware from userspace to DMA region */
+    if (buff_sz < fw_size)
+    {
+        dev_err(la9310_dev->dev, "Insufficient fw buff %p: size %ld\n", fw_data, fw_size);
+        return -ENOBUFS;
+    }
 
-	dev_info(la9310_dev->dev, "Copy fw to %px, size %ld\n", fw_data, fw_size);
-	rc = copy_from_user(buf, fw_data, fw_size);
+    dev_info(la9310_dev->dev, "Copy fw to %px, size %ld\n", fw_data, fw_size);
+    rc = copy_from_user(buf, fw_data, fw_size);
 
-	if (rc) {
-		dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
-		return -EIO;
-	}
-	la9310_dev->firmware_info.size = fw_size;
+    if (rc)
+    {
+        dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
+        return -EIO;
+    }
+    la9310_dev->firmware_info.size = fw_size;
 
-	return 0;
+    return 0;
 }
 
 static void ls_pcie_iatu_outbound_set(void __iomem* dbi, int idx, int type, u64 cpu_addr, u64 pci_addr, u32 size)
@@ -749,111 +751,118 @@ static int la9310_base_cleanup_subdrv(struct la9310_dev* la9310_dev, int drv_ind
     return rc;
 }
 
-static int la9310_subdrv_init(struct la9310_dev *la9310_dev)
+static int la9310_subdrv_init(struct la9310_dev* la9310_dev)
 {
-	int i, virq_count, rc;
-	struct la9310_sub_driver* subdrv;
-	struct la9310_sub_driver_ops* ops;
-	struct virq_evt_map subdrv_virqmap[IRQ_REAL_MSI_BIT];
-	struct virq_evt_map* subdrv_virqmap_ptr;
+    int i, virq_count, rc;
+    struct la9310_sub_driver* subdrv;
+    struct la9310_sub_driver_ops* ops;
+    struct virq_evt_map subdrv_virqmap[IRQ_REAL_MSI_BIT];
+    struct virq_evt_map* subdrv_virqmap_ptr;
 
-	dev_info(la9310_dev->dev, "%s: Initiating sub-drivers\n", la9310_dev->name);
-	for (i = 0; i < la9310_subdrv_cnt_g; i++) {
-		subdrv = la9310_get_subdrv(i);
-		ops = &subdrv->ops;
-		if (ops->probe) {
-			pr_info("%s: subdrv probe : %s\n", __func__, &subdrv->name[0]);
+    dev_info(la9310_dev->dev, "%s: Initiating sub-drivers\n", la9310_dev->name);
+    for (i = 0; i < la9310_subdrv_cnt_g; i++)
+    {
+        subdrv = la9310_get_subdrv(i);
+        ops = &subdrv->ops;
+        if (ops->probe)
+        {
+            pr_info("%s: subdrv probe : %s\n", __func__, &subdrv->name[0]);
 
-			memset(&subdrv_virqmap[0], 0, sizeof(subdrv_virqmap));
-			virq_count = la9310_get_subdrv_virqmap(la9310_dev, subdrv, &subdrv_virqmap[0], IRQ_REAL_MSI_BIT);
-			if (virq_count)
-				subdrv_virqmap_ptr = &subdrv_virqmap[0];
-			else
-				subdrv_virqmap_ptr = NULL;
-			rc = ops->probe(la9310_dev, virq_count, subdrv_virqmap_ptr);
-			if (rc) {
-				pr_err("%s: %s: probe failed, err %d\n", __func__, &subdrv->name[0], rc);
-				goto free_subdrv;
-			}
-		}
-	}
+            memset(&subdrv_virqmap[0], 0, sizeof(subdrv_virqmap));
+            virq_count = la9310_get_subdrv_virqmap(la9310_dev, subdrv, &subdrv_virqmap[0], IRQ_REAL_MSI_BIT);
+            if (virq_count)
+                subdrv_virqmap_ptr = &subdrv_virqmap[0];
+            else
+                subdrv_virqmap_ptr = NULL;
+            rc = ops->probe(la9310_dev, virq_count, subdrv_virqmap_ptr);
+            if (rc)
+            {
+                pr_err("%s: %s: probe failed, err %d\n", __func__, &subdrv->name[0], rc);
+                goto free_subdrv;
+            }
+        }
+    }
 
-	return 0;
+    return 0;
 free_subdrv:
-        la9310_base_cleanup_subdrv(la9310_dev, i);
-	return rc;
+    la9310_base_cleanup_subdrv(la9310_dev, i);
+    return rc;
 }
 
-int la9310_load_m4_firmware(struct la9310_dev *la9310_dev, const char __user *fw_data, size_t fw_length)
+int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
 {
-	int rc;
+    int rc;
 
-	if (la9310_dev->arm_m4_fw_loaded) {
-		dev_err(la9310_dev->dev, "Firmware for ARM M4 is already loaded!\n");
-		return -EBUSY;
-	}
+    if (la9310_dev->arm_m4_fw_loaded)
+    {
+        dev_err(la9310_dev->dev, "Firmware for ARM M4 is already loaded!\n");
+        return -EBUSY;
+    }
 
-	dev_info(la9310_dev->dev, "Loading RTOS image\n");
-	rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
-	if (rc)	{
-		dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d", rc);
-		return rc;
-	}
+    dev_info(la9310_dev->dev, "Loading RTOS image\n");
+    rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
+    if (rc)
+    {
+        dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d", rc);
+        return rc;
+    }
 
 #ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-	if (rc)
-	{
-		dev_err(la9310_dev->dev, "%s: probe irq req failed, err %d\n", __func__, rc);
-		return rc;
-	}
+    rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
+    if (rc)
+    {
+        dev_err(la9310_dev->dev, "%s: probe irq req failed, err %d\n", __func__, rc);
+        return rc;
+    }
 
-	/* scrach register handshake request irq */
-	init_completion(&ScratchRegisterHandshake);
-	rc = request_irq(
-			la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), host_handshake_handler, 0, "Host Handshake interrupt", la9310_dev);
-	if (rc) {
-		dev_err(la9310_dev->dev, "%s: request_irq failed, err %d\n", __func__, rc);
-		goto free_hs_irq;
-	}
+    /* scrach register handshake request irq */
+    init_completion(&ScratchRegisterHandshake);
+    rc = request_irq(
+        la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), host_handshake_handler, 0, "Host Handshake interrupt", la9310_dev);
+    if (rc)
+    {
+        dev_err(la9310_dev->dev, "%s: request_irq failed, err %d\n", __func__, rc);
+        goto free_hs_irq;
+    }
 
 #endif
-	dev_info(la9310_dev->dev, "%s: Initiating Reset handshake\n", la9310_dev->name);
-	rc = la9310_do_reset_handshake(la9310_dev);
-	if (rc)
-	{
-		dev_err(la9310_dev->dev, "Reset handshake failed, err %d", rc);
-		goto free_msi_irq;
-	}
+    dev_info(la9310_dev->dev, "%s: Initiating Reset handshake\n", la9310_dev->name);
+    rc = la9310_do_reset_handshake(la9310_dev);
+    if (rc)
+    {
+        dev_err(la9310_dev->dev, "Reset handshake failed, err %d", rc);
+        goto free_msi_irq;
+    }
 
-	/* Verify that Host and target are using same version of HIF */
-	rc = la9310_verify_hif_compatibility(la9310_dev);
-	if (rc)
-		goto free_msi_irq;
+    /* Verify that Host and target are using same version of HIF */
+    rc = la9310_verify_hif_compatibility(la9310_dev);
+    if (rc)
+        goto free_msi_irq;
 
 #ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-	rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-	if (rc)	{
-		pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-		goto free_msi_irq;
-	}
+    rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
+    if (rc)
+    {
+        pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
+        goto free_msi_irq;
+    }
 #endif
 
-	rc = la9310_subdrv_init(la9310_dev);
-	if (rc)
-		goto free_msi_irq;
-	
-	la9310_dev->arm_m4_fw_loaded = 1;
-	return 0;
+    rc = la9310_subdrv_init(la9310_dev);
+    if (rc)
+        goto free_msi_irq;
+
+    la9310_dev->arm_m4_fw_loaded = 1;
+    return 0;
 
 free_msi_irq:
 #ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-	free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
 free_hs_irq:
-	la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-	free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
+    la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
-	return rc;
+    return rc;
 }
 
 int la9310_base_probe(struct la9310_dev* la9310_dev)
@@ -870,7 +879,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     if (rc)
     {
         dev_err(la9310_dev->dev, "Failed to init DMA buf for outbound, err %d\n", rc);
-	return rc;
+        return rc;
     }
 
     la9310_dev->iq_mem_size = 4 * 1024 * 1024;
@@ -903,9 +912,9 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     // if (rc)
     // 	goto free_ipc;
 
-//    rc = la9310_load_m4_firmware(la9310_dev, "la9310.bin");
-//    if (rc)
-//	    goto free_ipc;
+    //    rc = la9310_load_m4_firmware(la9310_dev, "la9310.bin");
+    //    if (rc)
+    //	    goto free_ipc;
 
     /* WDOG request_irq */
     // wdog_msi_irq = la9310_get_msi_irq(la9310_dev, MSI_IRQ_WDOG);
@@ -936,7 +945,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     {
         dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
         rc = -1;
-        goto free_la_irq;;
+        goto free_la_irq;
     }
     {
         tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
@@ -950,20 +959,20 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     {
         dev_err(la9310_dev->dev, "Failed to register UART\n");
         rc = -1;
-        goto free_la_irq;;
+        goto free_la_irq;
     }
 
     return 0;
 
 free_la_irq:
-        la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
+    la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 free_handshake:
 #ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-        free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
-        free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
 //free_sysfs:
-        // la9310_remove_sysfs(la9310_dev);
+// la9310_remove_sysfs(la9310_dev);
 free_ipc:
     la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
 free_iqflood:

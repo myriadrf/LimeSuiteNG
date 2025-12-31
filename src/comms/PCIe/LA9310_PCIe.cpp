@@ -284,21 +284,15 @@ uint32_t PCIe_CSR_Access::ioread32(size_t offset)
     return port->ioread32(window_id, base_offset + offset);
 }
 
-int LA9310_PCIe::LoadArmM4Fw(const char *data, size_t length)
+int LA9310_PCIe::LoadArmM4Fw(const char* data, size_t length)
 {
-    struct LA9310_IOCTL_firmware fw = {
-        data,
-        length
-    };
+    const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_M4_FW, &fw);
 }
 
-int LA9310_PCIe::LoadVspaFw(const char *data, size_t length)
+int LA9310_PCIe::LoadVspaFw(const char* data, size_t length)
 {
-    struct LA9310_IOCTL_firmware fw = {
-        data,
-        length
-    };
+    const struct LA9310_IOCTL_firmware fw = { data, length };
 
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw);
 }

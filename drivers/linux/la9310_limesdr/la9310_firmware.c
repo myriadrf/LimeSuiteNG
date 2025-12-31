@@ -92,7 +92,7 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     return rc;
 }
 
-int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user *fw_data, size_t fw_length)
+int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
 {
     int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
     struct la9310_mem_region_info* tcm_region;
