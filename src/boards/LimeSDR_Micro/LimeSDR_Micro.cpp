@@ -540,8 +540,16 @@ OpStatus LimeSDR_Micro::UploadMemory(
 {
     switch (device)
     {
-    case eMemoryDevice::ARM_M4:
-        return mStreamingPort->LoadArmM4Firmware(data, length);
+    case eMemoryDevice::ARM_M4: {
+        OpStatus status = mStreamingPort->LoadArmM4Firmware(data, length);
+        if (status != OpStatus::Success)
+            return status;
+
+        // Update firmware information after firmware change
+        LMS64CProtocol::FirmwareInfo fw{};
+        LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
+        LMS64CProtocol::FirmwareToDescriptor(fw, mDeviceDescriptor);
+    }
     case eMemoryDevice::VSPA:
         return mStreamingPort->LoadVSPAFirmware(data, length);
     default:

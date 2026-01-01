@@ -110,7 +110,7 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     auto nv_tx_vspa_proxy_ro = const_cast<t_tx_ch_host_proxy*>(tx_vspa_proxy_ro);
     port->sync_dmem_proxy_after_write(reinterpret_cast<uint8_t*>(nv_tx_vspa_proxy_ro), sizeof(t_tx_ch_host_proxy));
 
-    if (tx_vspa_proxy_ro->rx_num_chan == 1)
+    if (tx_vspa_proxy_ro->rx_num_chan <= 1)
     {
         tx_proxy_wo = BAR2_addr + 0x400000 + 0x00000000;
         rx_proxy_wo = BAR2_addr + 0x400000 + 0x00000040;
