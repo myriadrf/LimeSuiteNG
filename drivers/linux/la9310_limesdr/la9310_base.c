@@ -26,13 +26,13 @@
 
 // #include "la9310_wdog.h"
 // #include "la9310_v2h_if.h"
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
     #include <linux/completion.h>
 #endif
 
 static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 struct completion ScratchRegisterHandshake;
 #endif
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
@@ -55,7 +55,7 @@ static int la9310_get_subdrv_virqmap(
 
 // }
 
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
 static irqreturn_t host_handshake_handler(int irq, void* dev)
 {
     struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
@@ -808,7 +808,7 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
         return rc;
     }
 
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
     rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     if (rc)
     {
@@ -829,6 +829,11 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
 #endif
     dev_info(la9310_dev->dev, "%s: Initiating Reset handshake\n", la9310_dev->name);
     rc = la9310_do_reset_handshake(la9310_dev);
+
+#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+#endif
+
     if (rc)
     {
         dev_err(la9310_dev->dev, "Reset handshake failed, err %d", rc);
@@ -840,7 +845,7 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     if (rc)
         goto free_msi_irq;
 
-#ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
     rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     if (rc)
     {
@@ -857,8 +862,7 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     return 0;
 
 free_msi_irq:
-#ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 free_hs_irq:
     la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
@@ -968,8 +972,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
 free_la_irq:
     la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 free_handshake:
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
 //free_sysfs:
@@ -991,7 +994,7 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
     {
     case LA9310_SUBDRV_PROBE_STAGE:
         la9310_base_cleanup_subdrv(la9310_dev, drv_index);
-#ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
         free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
         __attribute__((__fallthrough__));
@@ -1001,8 +1004,7 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_HANDSHAKE_INIT_STAGE:
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-        free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
         free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
         __attribute__((__fallthrough__));
@@ -1035,10 +1037,7 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     la9310_subdrv_remove(la9310_dev);
 
     la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
-#endif
+    pci_free_irq_vectors(la9310_dev->pdev);
     dev_info(la9310_dev->dev, "%s: Removing sub-drivers\n", la9310_dev->name);
 
     pci_disable_msi(la9310_dev->pdev);

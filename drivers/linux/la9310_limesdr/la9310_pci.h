@@ -18,9 +18,6 @@
 #define GUL_MMAP_PEBM_SIZE 0x200000
 
 #define LA9310_UART_SEL_GPIO 1
-#if defined(SEEVE)
-    #define LA9310_RESET_HANDSHAKE_POLLING_ENABLE 1
-#endif
 
 #define LA9310_LIMESDR_DRIVER_NAME "la9310_limesdr"
 
