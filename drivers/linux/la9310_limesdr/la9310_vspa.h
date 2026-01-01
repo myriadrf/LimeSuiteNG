@@ -10,6 +10,7 @@
 #include <linux/list.h>
 #include <linux/completion.h>
 #include "la9310_pci.h"
+#include "la9310_base.h"
 
 #ifndef __VSPA_H_
     #define __VSPA_H_
@@ -220,7 +221,7 @@ struct vspa_event_read {
 
     #define _align_mask(x, mask) (((x) + (mask)) & ~(mask))
 
-    #define align(x, a) _align_mask(x, (typeof(x))(a)-1)
+    #define align(x, a) _align_mask(x, (typeof(x))(a) - 1)
 
     /* Debug and error reporting macros */
     #define ERR(...) \
@@ -702,4 +703,6 @@ static inline unsigned int vspa_reg_read(void __iomem* addr)
 
 int full_state(struct vspa_device* vspadev);
 int overlay_initiate(struct device* dev, struct overlay_section overlay_sec);
+int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, const char __user* fw_data, size_t fw_length);
+
 #endif /* _VSPA_H */

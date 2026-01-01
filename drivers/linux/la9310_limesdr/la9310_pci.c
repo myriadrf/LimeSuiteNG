@@ -316,7 +316,7 @@ static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
 
     la9310_dev->modem_rf_data_size = 0;
 
-    sprintf(la9310_dev->firmware_name, "la9310.bin");
+    //sprintf(la9310_dev->firmware_name, "la9310.bin");
     // char vspa_fw_name[];
     // sprintf(la9310_dev_name, "devname");
 

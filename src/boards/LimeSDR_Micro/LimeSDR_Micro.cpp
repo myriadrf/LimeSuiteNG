@@ -1,9 +1,10 @@
 #include "LimeSDR_Micro.h"
 
 #include <cmath>
-#include <fcntl.h>
-#include <unistd.h>
 #include <sstream>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/LMS7002M.h"
@@ -20,11 +21,13 @@
 #include "protocols/LMS64C/SPI.h"
 #include "streaming/TRXLooper.h"
 
-// Linux headers
-#include <fcntl.h> // Contains file controls like O_RDWR
-#include <errno.h> // Error integer and strerror() function
-#include <termios.h> // Contains POSIX terminal control definitions
-#include <unistd.h> // write(), read(), close()
+#ifdef __unix__
+    // Linux headers
+    #include <fcntl.h> // Contains file controls like O_RDWR
+    #include <errno.h> // Error integer and strerror() function
+    #include <termios.h> // Contains POSIX terminal control definitions
+    #include <unistd.h> // write(), read(), close()
+#endif
 
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
@@ -37,6 +40,7 @@
 #include "DeviceTreeNode.h"
 
 #include "LA9310_TRX.h"
+#include "comms/PCIe/LA9310_PCIe.h"
 
 using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;
@@ -51,6 +55,21 @@ static const CustomParameter cp_vctcxo_dac = { "VCTCXO DAC (volatile)"s, 0, 0, 6
 static const CustomParameter cp_board_temperature = { "Board Temperature"s, 1, 0, 65535, true };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_LimeSDR_Micro = {};
+
+static OpStatus ReadFileIntoVector(const std::string& filepath, std::vector<char>& data)
+{
+    std::ifstream inputFile;
+    inputFile.open(filepath, std::ifstream::in | std::ifstream::binary);
+    if (!inputFile)
+        return OpStatus::FileNotFound;
+    inputFile.seekg(0, std::ios_base::end);
+    auto cnt = inputFile.tellg();
+    inputFile.seekg(0, std::ios_base::beg);
+    data.resize(cnt);
+    inputFile.read(data.data(), cnt);
+    inputFile.close();
+    return OpStatus::Success;
+}
 
 } // namespace limesdrmicro
 
@@ -81,9 +100,12 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MICRO);
 
-    LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
-    LMS64CProtocol::FirmwareToDescriptor(fw, desc);
+    if (la9310->IsM4CoreProgrammed())
+    {
+        LMS64CProtocol::FirmwareInfo fw{};
+        LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
+        LMS64CProtocol::FirmwareToDescriptor(fw, desc);
+    }
 
     desc.spiSlaveIds = { { "LMS7002M"s, limesdrmicro::SPI_LMS7002M } };
     desc.i2cBusIds = { { "LA9310"s, 0 } };
@@ -137,6 +159,28 @@ static OpStatus InitLMS7002M(LMS7002M& lms, bool skipTune = false)
 
 OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
+    OpStatus status;
+    if (!la9310->IsM4CoreProgrammed())
+    {
+        std::vector<char> firmware;
+        const std::string m4firmware_path = "/lib/firmware/la9310.bin";
+        status = limesdrmicro::ReadFileIntoVector(m4firmware_path, firmware);
+        if (status != OpStatus::Success)
+            return status;
+        lime::info("Programming LimeSDR-Micro " + m4firmware_path);
+        const std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+        status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
+        status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
+        if (status != OpStatus::Success)
+            return status;
+        lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
+        status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 VSPA firmware");
+    }
+
     auto& rfsoc = mLMSChips.at(0);
 
     if (!cfg.skipDefaults)
@@ -145,7 +189,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
         InitLMS7002M(*rfsoc, skipTune);
     }
 
-    OpStatus status = LMS7002M_Configure(*rfsoc, cfg);
+    status = LMS7002M_Configure(*rfsoc, cfg);
     if (status != OpStatus::Success)
         return status;
 
@@ -496,8 +540,18 @@ OpStatus LimeSDR_Micro::UploadMemory(
 {
     switch (device)
     {
-    case eMemoryDevice::ARM_M4:
+    case eMemoryDevice::ARM_M4: {
+        OpStatus status = mStreamingPort->LoadArmM4Firmware(data, length);
+        if (status != OpStatus::Success)
+            return status;
+
+        // Update firmware information after firmware change
+        LMS64CProtocol::FirmwareInfo fw{};
+        LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
+        LMS64CProtocol::FirmwareToDescriptor(fw, mDeviceDescriptor);
+    }
     case eMemoryDevice::VSPA:
+        return mStreamingPort->LoadVSPAFirmware(data, length);
     default:
         return OpStatus::NotImplemented;
     }

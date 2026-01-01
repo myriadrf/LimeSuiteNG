@@ -2,6 +2,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include "la9310_ioctl.h"
+#include "la9310_vspa.h"
 
 #include "la9310_character_device.h"
 #include "la9310_limesdr_device.h"
@@ -38,7 +39,9 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
     long ret = 0;
 
     struct la9310_dev* la9310_dev = file->private_data;
+    struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
     struct LA9310_IOCTL_flush_cache cache_entry;
+    struct LA9310_IOCTL_firmware fw;
 
     WARN_ON(la9310_dev == NULL);
 
@@ -76,6 +79,24 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         cache_entry.dir = DMA_BIDIRECTIONAL;
         la9310_flush_cache(la9310_dev, &cache_entry, la9310_dev->iqflood_region.phys_addr);
         ret = 0;
+        break;
+    case LA9310_IOCTL_LOAD_M4_FW:
+        ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware*)arg, sizeof(fw));
+        if (ret < 0)
+        {
+            dev_err(la9310_dev->dev, "%s copy_from_user, err %ld\n", __func__, ret);
+            return ret;
+        }
+        ret = la9310_load_m4_firmware(la9310_dev, fw.firmware_data, fw.size);
+        break;
+    case LA9310_IOCTL_LOAD_VSPA_FW:
+        ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware*)arg, sizeof(fw));
+        if (ret < 0)
+        {
+            dev_err(la9310_dev->dev, "%s copy_from_user, err %ld\n", __func__, ret);
+            return ret;
+        }
+        ret = vspa_load_dsp(la9310_dev, vspadev, fw.firmware_data, fw.size);
         break;
     case LA9310_IOCTL_CSR_OP: {
         struct LA9310_IOCTL_CSR_op op;
