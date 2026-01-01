@@ -56,6 +56,21 @@ static const CustomParameter cp_board_temperature = { "Board Temperature"s, 1, 0
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_LimeSDR_Micro = {};
 
+static OpStatus ReadFileIntoVector(const std::string& filepath, std::vector<char>& data)
+{
+    std::ifstream inputFile;
+    inputFile.open(filepath, std::ifstream::in | std::ifstream::binary);
+    if (!inputFile)
+        return OpStatus::FileNotFound;
+    inputFile.seekg(0, std::ios_base::end);
+    auto cnt = inputFile.tellg();
+    inputFile.seekg(0, std::ios_base::beg);
+    data.resize(cnt);
+    inputFile.read(data.data(), cnt);
+    inputFile.close();
+    return OpStatus::Success;
+}
+
 } // namespace limesdrmicro
 
 /// @brief Constructs a new LimeSDR_Micro object
@@ -85,9 +100,12 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MICRO);
 
-    LMS64CProtocol::FirmwareInfo fw{};
-    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
-    LMS64CProtocol::FirmwareToDescriptor(fw, desc);
+    if (la9310->IsM4CoreProgrammed())
+    {
+        LMS64CProtocol::FirmwareInfo fw{};
+        LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
+        LMS64CProtocol::FirmwareToDescriptor(fw, desc);
+    }
 
     desc.spiSlaveIds = { { "LMS7002M"s, limesdrmicro::SPI_LMS7002M } };
     desc.i2cBusIds = { { "LA9310"s, 0 } };
@@ -141,6 +159,28 @@ static OpStatus InitLMS7002M(LMS7002M& lms, bool skipTune = false)
 
 OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
+    OpStatus status;
+    if (!la9310->IsM4CoreProgrammed())
+    {
+        std::vector<char> firmware;
+        const std::string m4firmware_path = "/lib/firmware/la9310.bin";
+        status = limesdrmicro::ReadFileIntoVector(m4firmware_path, firmware);
+        if (status != OpStatus::Success)
+            return status;
+        lime::info("Programming LimeSDR-Micro " + m4firmware_path);
+        const std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+        status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
+        status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
+        if (status != OpStatus::Success)
+            return status;
+        lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
+        status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 VSPA firmware");
+    }
+
     auto& rfsoc = mLMSChips.at(0);
 
     if (!cfg.skipDefaults)
@@ -149,7 +189,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
         InitLMS7002M(*rfsoc, skipTune);
     }
 
-    OpStatus status = LMS7002M_Configure(*rfsoc, cfg);
+    status = LMS7002M_Configure(*rfsoc, cfg);
     if (status != OpStatus::Success)
         return status;
 
@@ -498,24 +538,15 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 OpStatus LimeSDR_Micro::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
-    int status;
-
     switch (device)
     {
     case eMemoryDevice::ARM_M4:
-        status = mStreamingPort->LoadArmM4Fw(data, length);
-        break;
+        return mStreamingPort->LoadArmM4Firmware(data, length);
     case eMemoryDevice::VSPA:
-        status = mStreamingPort->LoadVspaFw(data, length);
-        break;
+        return mStreamingPort->LoadVSPAFirmware(data, length);
     default:
         return OpStatus::NotImplemented;
     }
-
-    if (status)
-        return OpStatus::IOFailure;
-    else
-        return OpStatus::Success;
 }
 
 OpStatus LimeSDR_Micro::MemoryWrite(std::shared_ptr<DataStorage> storage, Region region, const void* data)

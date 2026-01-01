@@ -17,6 +17,8 @@ class LIME_API LA9310
     LA9310(std::shared_ptr<LA9310_PCIe> port);
     ~LA9310();
 
+    bool IsM4CoreProgrammed();
+
     PHYTimer phytimer;
     VSPA_iqplayer vspa;
 
