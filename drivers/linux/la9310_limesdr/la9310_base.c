@@ -30,6 +30,7 @@
     #include <linux/completion.h>
 #endif
 
+static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 #ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 struct completion ScratchRegisterHandshake;
@@ -954,7 +955,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     char* devSymlink = devm_kzalloc(la9310_dev->dev, 64, GFP_KERNEL);
     snprintf(devSymlink, 64, "limesdr_micro_uart");
     tty_res->name = devSymlink;
-    la9310_dev->uart = platform_device_register_simple("la9310uart", 1, tty_res, 1);
+    la9310_dev->uart = platform_device_register_simple("la9310uart", ++la9310_uart_id_counter, tty_res, 1);
     if (IS_ERR(la9310_dev->uart))
     {
         dev_err(la9310_dev->dev, "Failed to register UART\n");
@@ -1023,6 +1024,9 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     struct la9310_mem_region_info* host_region;
 
     dev_info(la9310_dev->dev, "%s: Removing LA9310 dev\n", la9310_dev->name);
+
+    platform_device_unregister(la9310_dev->uart);
+
     host_region = &dma_info->host_buf;
     // iounmap(host_region->vaddr);
     host_region->vaddr = NULL;
