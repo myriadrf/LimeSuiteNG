@@ -278,8 +278,8 @@ static void la9310_create_rfnm_iqflood_outbound(struct la9310_dev* la9310_dev)
 
 #define IQFLOOD_OUTBOUND_ADDR 0xB0001000
 #define IQFLOOD_OUTBOUND_SIZE 0xD000000
-#define VSPA_DMEM_PROXY_SIZE 4096
-#define VSPA_DMEM_PROXY_ADDR (IQFLOOD_OUTBOUND_ADDR + IQFLOOD_OUTBOUND_SIZE - VSPA_DMEM_PROXY_SIZE)
+#define VSPA_DMEM_PROXY_SIZE PAGE_SIZE
+#define VSPA_DMEM_PROXY_ADDR (IQFLOOD_OUTBOUND_ADDR + IQFLOOD_OUTBOUND_SIZE - 4096)
 
 // Currently using IPC outbound window to map VSPA DMEM PROXY address, which is at IQFLOOD + 256MB
 // using this window so that IQFLOOD would not need allocation of 256MB, to gain access to DMEM PROXY

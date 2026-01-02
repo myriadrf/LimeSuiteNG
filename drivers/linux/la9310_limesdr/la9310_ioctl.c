@@ -16,7 +16,7 @@ static int la9310_get_memory_layout(const struct la9310_dev* la9310_dev, struct 
     layout->window_size[LA9310_WINDOW_BAR2] = la9310_dev->mem_regions[LA9310_MEM_REGION_TCMU].size;
     layout->window_size[LA9310_WINDOW_SCRATCH] = la9310_dev->scratch_buf_size;
     layout->window_size[LA9310_WINDOW_MSI] = PCIE_MSI_OB_SIZE;
-    layout->window_size[LA9310_WINDOW_IPC] = 4096;
+    layout->window_size[LA9310_WINDOW_IPC] = PAGE_SIZE;
     layout->window_size[LA9310_WINDOW_IQFLOOD] = la9310_dev->iqflood_region.size;
 
     layout->host_interface.window_id = LA9310_WINDOW_BAR1;
