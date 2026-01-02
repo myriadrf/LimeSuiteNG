@@ -182,14 +182,18 @@ class LIME_API SDRDevice
     virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) = 0;
 
     /// @brief Gets the current sample rate of the device.
+    /// Returns device RF chip TSP and optionally RFE sample rate of selected channel direction. For RX direction, 
+    /// this will return RXTSP and RXRFE ADC sample rates. For TX direction, this will return TXTSP and TXRFE DAC sample rates.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
-    /// @param rf_samplerate [out] RF sampling rate.
+    /// @param rf_samplerate [out] RF sampling rate. This parameter is optional.
     /// @return The current device sample rate (in Hz)
     virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) = 0;
 
     /// @brief Sets the sample rate of the device.
+    /// Sets device RF chip TSP and RFE sample rates for selected channel direction. For RX direction, 
+    /// this will set RXTSP and RXRFE ADC sample rates. For TX direction, this will set TXTSP and TXRFE DAC sample rates. 
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
@@ -198,25 +202,28 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) = 0;
 
-    /// @brief Gets the current value of the specified gain.
+    /// @brief Gets the current gain value of amplifier.
+    /// Returns the current gain setting value for the specified amplifier type within device RF chip.
     /// @param moduleIndex The device index to read from.
     /// @param direction The direction to read from.
     /// @param channel The channel to read from.
-    /// @param gain The type of gain to get the data of.
-    /// @param value The value of the gain (in dB).
+    /// @param gain Internal RF chip amplifier type. Check out all possible @ref lime::eGainTypes "amplifier types".
+    /// @param value The current gain value of the specified amplifier type (in dB).
     /// @return The status code of the operation.
     virtual OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) = 0;
 
-    /// @brief Sets the gain level of a specified gain.
+    /// @brief Sets the gain level for amplifier.
+    /// Sets a new gain setting value for specified amplifier type within device RF chip.
     /// @param moduleIndex The device index to configure.
     /// @param direction The direction to configure.
     /// @param channel The channel to configure.
-    /// @param gain The type of gain to set.
-    /// @param value The amount of gain to set (in dB).
+    /// @param gain Internal RF chip amplifier type. Check out all possible @ref lime::eGainTypes "amplifier types".
+    /// @param value The new specified amplifier gain value (in dB).
     /// @return The status code of the operation.
     virtual OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) = 0;
 
     /// @brief Gets the current frequency of the Low Pass Filter.
+    /// Returns currently active Low Pass filter bandwidth frequency of device RF chip RFE (RXLPF or TXLPF).
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
@@ -224,6 +231,7 @@ class LIME_API SDRDevice
     virtual double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets the Low Pass Filter to a specified frequency.
+    /// Sets the new Low Pass filter bandwidth frequency value for device RF chip RFE (RXLPF or TXLPF).
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
@@ -249,13 +257,17 @@ class LIME_API SDRDevice
     virtual OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) = 0;
 
     /// @brief Gets the current status of the test signal mode.
+    /// Provides information about the test signal that is being generated within device RF chip TSP.
     /// @param moduleIndex The device index to read from.
     /// @param direction The direction to read from.
     /// @param channel The channel to read from.
-    /// @return The current status of the test signal mode.
+    /// @return A structure which describes the current status of the test signal mode.
+    /// @see To find out more about the test signal parameters, check out 
+    /// @ref lime::ChannelConfig::Direction::TestSignal "test signal structure members".
     virtual ChannelConfig::Direction::TestSignal GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel) = 0;
 
     /// @brief Sets the test signal mode.
+    /// Updates test signal parameters within device RF chip TSP for selected channel direction.
     /// @param moduleIndex The device index to configure.
     /// @param direction The direction to configure.
     /// @param channel The channel to configure.
@@ -263,6 +275,7 @@ class LIME_API SDRDevice
     /// @param dc_i The I value of the test mode to send (0 for defaults)
     /// @param dc_q The Q value of the test mode to send (0 for defaults)
     /// @return The status of the operation.
+    /// @see More about test signal @ref lime::ChannelConfig::Direction::TestSignal "parameters".
     virtual OpStatus SetTestSignal(uint8_t moduleIndex,
         TRXDir direction,
         uint8_t channel,
@@ -270,14 +283,14 @@ class LIME_API SDRDevice
         int16_t dc_i = 0,
         int16_t dc_q = 0) = 0;
 
-    /// @brief Gets if the DC corrector bypass is enabled or not.
+    /// @brief Gets the current DC corrector status from device RF chip TSP.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
     /// @return Whether the DC corrector bypass is enabled or not (false = bypass the corrector, true = use the corrector)
     virtual bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
-    /// @brief Enables or disables the DC corrector bypass.
+    /// @brief Enables or disables the DC corrector bypass of device RF chip TSP.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
@@ -285,14 +298,14 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic) = 0;
 
-    /// @brief Gets the DC I and Q corrector values.
+    /// @brief Gets the current DC I and Q corrector values from device RF chip TSP.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
     /// @return The current DC I and Q corrector values.
     virtual complex64f_t GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
-    /// @brief Sets the DC I and Q corrector values.
+    /// @brief Sets the new DC I and Q corrector values for device RF chip TSP.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
@@ -300,14 +313,14 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset) = 0;
 
-    /// @brief Gets the current I and Q gain corrector values.
+    /// @brief Gets the current I and Q gain corrector values from device RF chip TSP.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @param channel The channel to read from.
     /// @return The current I and Q gain corrector values.
     virtual complex64f_t GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
-    /// @brief Sets the I and Q gain corrector values.
+    /// @brief Sets the new I and Q gain corrector values for device RF chip TSP.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction to configure.
     /// @param channel The channel to configure.
@@ -315,23 +328,31 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance) = 0;
 
-    /// @brief Gets whether the VCO comparators of the clock generator are locked or not.
+    /// @brief Gets whether the VCO comparators of the main clock generator are locked or not.
+    /// Returns the value (lock status: true or false) which describes if the main
+    /// clock source within device RF chip is generating clock that matches the phase and frequency of reference clock.
     /// @param moduleIndex The device index to read from.
     /// @return A value indicating whether the VCO comparators of the clock generator are locked or not.
     virtual bool GetCGENLocked(uint8_t moduleIndex) = 0;
 
     /// @brief Gets the temperature of the device.
+    /// Provides information about the device RF chip internal temperature.
     /// @param moduleIndex The device index to get the temperature of.
     /// @return The temperature of the device (in degrees Celsius)
     virtual double GetTemperature(uint8_t moduleIndex) = 0;
 
     /// @brief Gets whether the VCO comparators of the LO synthesizer are locked or not.
+    /// Returns the value (lock status: true or false) which describes if the synthesizer LO clock
+    /// within device RF chip RFE is generating clock that matches the phase and frequency of reference clock.
     /// @param moduleIndex The device index to read from.
     /// @param trx The direction to read from.
     /// @return A value indicating whether the VCO comparators of the clock generator are locked or not.
     virtual bool GetSXLocked(uint8_t moduleIndex, TRXDir trx) = 0;
 
     /// @brief Reads the value of the given register.
+    /// Allows to read entire register value of RF or FPGA chip.
+    /// FPGA is addressed using 32 bit addresses.
+    /// RF chip is addressed using 16 bit addresses. Pad the remaining bits with 0.
     /// @param moduleIndex The device index to read from.
     /// @param address The memory address to read from.
     /// @param useFPGA Whether to read memory from the FPGA or not.
@@ -339,6 +360,9 @@ class LIME_API SDRDevice
     virtual unsigned int ReadRegister(uint8_t moduleIndex, unsigned int address, bool useFPGA = false) = 0;
 
     /// @brief Writes the given register value to the given address.
+    /// Allows to write entire register value to RF or FPGA chip.
+    /// FPGA is addressed using 32 bit addresses.
+    /// RF chip is addressed using 16 bit addresses. Pad the remaining bits with 0.
     /// @param moduleIndex The device index to configure.
     /// @param address The address of the memory to write to.
     /// @param value The value to write to the device's memory.
@@ -347,18 +371,24 @@ class LIME_API SDRDevice
     virtual OpStatus WriteRegister(uint8_t moduleIndex, unsigned int address, unsigned int value, bool useFPGA = false) = 0;
 
     /// @brief Loads the configuration of a device from a given file.
+    /// Loads device RF chip configuration from a .ini file which can be generated
+    /// using LimeSuiteNG GUI configuration software. Supports legacy 
+    /// configuration file format.
     /// @param moduleIndex The device index to write the configuration into.
     /// @param filename The file to read the data from.
     /// @return The status of the operation.
     virtual OpStatus LoadConfig(uint8_t moduleIndex, const std::string& filename) = 0;
 
     /// @brief Saves the current configuration of the device into a given file.
+    /// Saves device RF chip configuration to a .ini file, that can be reviewed 
+    /// using LimeSuiteNG GUI configuration software or re-used to configure other devices.
     /// @param moduleIndex The device index to save the data from.
     /// @param filename The file to save the information to.
     /// @return The status of the operation.
     virtual OpStatus SaveConfig(uint8_t moduleIndex, const std::string& filename) = 0;
 
     /// @brief Gets the given parameter from the device.
+    /// Returns the current value of device parameter from device register space using only parameter name. 
     /// @param moduleIndex The device index to configure.
     /// @param channel The channel to configure.
     /// @param parameterKey The key of the parameter to read from.
@@ -366,6 +396,7 @@ class LIME_API SDRDevice
     virtual uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey) = 0;
 
     /// @brief Sets the given parameter in the device.
+    /// Sets a new value for specified parameter within device register space using only parameter name.
     /// @param moduleIndex The device index to configure.
     /// @param channel The channel to configure.
     /// @param parameterKey The key of the parameter to write to.
@@ -373,7 +404,7 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus SetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey, uint16_t value) = 0;
 
-    /// @brief Gets the given parameter from the device.
+    /// @brief Reads specified parameter bit-field from register and returns its value.
     /// @param moduleIndex The device index to get the data from.
     /// @param channel The channel to get the data from.
     /// @param address The memory address of the device to read.
@@ -382,7 +413,7 @@ class LIME_API SDRDevice
     /// @return The value read from the parameter.
     virtual uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb) = 0;
 
-    /// @brief Sets the given parameter in the device.
+    /// @brief Writes new value to specified register parameter bit-field.
     /// @param moduleIndex The device index to configure.
     /// @param channel The channel to configure.
     /// @param address The memory address in the device to change.
@@ -401,38 +432,47 @@ class LIME_API SDRDevice
     /// @return The status of the operation.
     virtual OpStatus Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth) = 0;
 
-    /// @brief Configures the GFIR with the settings.
+    /// @brief Auto toggle and configure all GFIR filters for specified channel direction.
+    /// Allows to disable or enable all 3 available GFIR filters for a specified channel direction at once.
+    /// If GFIR filters are disabled, the last GFIR filter configurations are saved and the filters are bypassed in processing stage.
+    /// If GFIR filters are enabled, new GFIR filter coefficients will be obtained and loaded into device registers. New GFIR filter
+    /// values are automatically calculated by using the provided bandwidth setting. Bandwidth setting value is provided through the 
+    /// function parameter "settings".
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction of the channel to configure.
     /// @param channel The channel to configure.
-    /// @param settings The settings of the GFIR to set.
+    /// @param settings The settings of the GFIR filter. More about GFIR filter @ref ChannelConfig::Direction::GFIRFilter "settings". 
     /// @return The status of the operation.
     virtual OpStatus ConfigureGFIR(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, ChannelConfig::Direction::GFIRFilter settings) = 0;
 
-    /// @brief Gets the current coefficients of a GFIR.
+    /// @brief Gets the current coefficients of a single GFIR filter for channel direction.
+    /// Each channel direction has 3 GFIR filters. The GFIR filters with IDs 0 and 1 store up to 40 coefficients.
+    /// The GFIR filter with ID 2 can store up to 120 coefficients.  
     /// @param moduleIndex The device index to get the coefficients from.
     /// @param trx The direction of the channel to get the data from.
     /// @param channel The channel to get the data from.
-    /// @param gfirID The ID of the GFIR to get the coefficients from.
+    /// @param gfirID The ID of the GFIR. Supported ID range [0; 2].
     /// @return The current coefficients (normalized in the range [-1; 1]) of the GFIR.
     virtual std::vector<double> GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID) = 0;
 
-    /// @brief Sets the coefficients of a given GFIR
+    /// @brief Sets the coefficients of a single GFIR filter for channel direction.
+    /// Each channel direction has 3 GFIR filters. The GFIR filters with IDs 0 and 1 store up to 40 coefficients.
+    /// The GFIR filter with ID 2 can store up to 120 coefficients.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction of the channel to configure.
     /// @param channel The channel to set the filter of.
-    /// @param gfirID The ID of the GFIR to set.
+    /// @param gfirID The ID of the GFIR. Supported ID range [0; 2].
     /// @param coefficients The coefficients (normalized in the range [-1; 1]) to set the GFIR to.
     /// @return The status of the operation.
     virtual OpStatus SetGFIRCoefficients(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, std::vector<double> coefficients) = 0;
 
-    /// @brief Sets the GFIR to use.
+    /// @brief Toggles the use of a single GFIR filter in processing stage for specified channel direction.
     /// @param moduleIndex The device index to configure.
     /// @param trx The direction of the channel to configure.
     /// @param channel The channel to set the filter of.
-    /// @param gfirID The ID of the GFIR to set.
+    /// @param gfirID The ID of the GFIR to set. Supported ID range [0; 2].
     /// @param enabled Whether the specifed GFIR should be enabled or disabled.
     /// @return The status of the operation.
     virtual OpStatus SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, bool enabled) = 0;
