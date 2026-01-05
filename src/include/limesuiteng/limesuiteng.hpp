@@ -363,5 +363,5 @@
  *
  * Device indexes always start with index <b>0</b>. The last device on a system is indexed as <b>total device count - 1</b>.
  * 
- * For typical LimeSDR devices this parameter should be set to device index <b>0</b>.
+ * Parameter <b>moduleIndex</b> should always be set to device index <b>0</b> for LimeSDR devices that use a single RF chip.
  */
