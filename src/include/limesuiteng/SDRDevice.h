@@ -54,7 +54,9 @@ class LIME_API SDRDevice
 
     virtual ~SDRDevice();
 
-    /// @brief Configures the device using the given configuration.
+    /// @brief Configures the device using the given configuration structure.
+    /// Configures all device channels with default values or custom values as 
+    /// specified in @ref lime::SDRConfig "SDRConfig" structure.
     /// @param config The configuration to set up the device with.
     /// @param moduleIndex The device index to configure.
     /// @return The status of the operation.
@@ -68,6 +70,8 @@ class LIME_API SDRDevice
      * @brief Initializes the device with initial settings.
      * This function completely resets SDR device and RF chip configuration to default values.
      * Recommended to use this function if the device is new and is registered for the first time.
+     * Initialization is performed by default, if @ref lime::SDRDevice::Configure "Configure"
+     * function is called with default configuration on.  
      * @return The success status of the initialization.
      */ 
     virtual OpStatus Init() = 0;
