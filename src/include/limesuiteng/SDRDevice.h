@@ -93,7 +93,7 @@ class LIME_API SDRDevice
     /// channel direction: TSP, BB, AFE, SXT, RFE.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param enable Whether to enable the channel or not.
     /// @return The status of the operation.
     virtual OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) = 0;
@@ -103,7 +103,7 @@ class LIME_API SDRDevice
     /// RX/TX transceiver signal processor clock. To get local oscillator clock for a specific 
     /// direction of a channel, consider using GetFrequency() function.
     /// @param clk_id The @ref lime::LMS7002M::ClockID "clock ID" to get the frequency of.
-    /// @param channel The channel to get the frequency of. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to get the frequency of.
     /// @return The frequency of the specified clock (in Hz).
     virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) = 0;
 
@@ -114,7 +114,7 @@ class LIME_API SDRDevice
     /// @note TX/RX transceiver signal processor clock values are read-only.
     /// @param clk_id The clock ID to set the frequency of. Supported @ref lime::LMS7002M::ClockID "clock IDs".
     /// @param freq The new frequency of the specified clock (in Hz).
-    /// @param channel The channel to set the frequency of. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to set the frequency of.
     /// @return The status of the operation.
     virtual OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) = 0;
 
@@ -122,14 +122,14 @@ class LIME_API SDRDevice
     /// If the device is configured for TDD mode, this will always return current TX local oscillator frequency for all channels. 
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The current local oscillator frequency for the selected channel and direction (in Hz).
     virtual double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets new frequency of local oscillator for the selected direction of a channel.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param frequency The frequency to set the channel to (in Hz).
     /// @return The status of the operation.
     virtual OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) = 0;
@@ -140,7 +140,7 @@ class LIME_API SDRDevice
     /// first obtain the index using GetNCOIndex() function.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @param index The index of NCO frequency entry to read from NCO memory table [0-15].
     /// @param phaseOffset [out] The phase offset of the NCO (in degrees)
     /// @return The current frequency of the NCO (in Hz)
@@ -152,7 +152,7 @@ class LIME_API SDRDevice
     /// entry index as active using SetNCOIndex().
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure. Supported @ref lime::LMS7002M::Channel "channels".
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param index The index of NCO frequency entry to overwrite in NCO memory table [0-15].
     /// @param frequency The frequency of the NCO to set (in Hz).
     /// @param phaseOffset Phase offset angle (in degrees)
@@ -163,7 +163,7 @@ class LIME_API SDRDevice
     /// @brief Gets the current offset of the NCO compared to the main frequency.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The delta between the current device frequency and the current device NCO frequency (in Hz).
     virtual double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
@@ -171,7 +171,7 @@ class LIME_API SDRDevice
     /// Returns the index of the NCO memory table entry that contains the frequency currently being used by NCO.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The current index of the active NCO [0-15].
     virtual int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
@@ -179,7 +179,7 @@ class LIME_API SDRDevice
     /// Selects NCO frequency entry from NCO memory table to be used by NCO.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param index The index of NCO memory table entry to use for NCO [0-15].
     /// @param downconv The spectrum control of the CMIX (true = downconvert, false = upconvert)
     /// @return The status of the operation.
@@ -190,7 +190,7 @@ class LIME_API SDRDevice
     /// this will return RXTSP and RXRFE ADC sample rates. For TX direction, this will return TXTSP and TXRFE DAC sample rates.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @param rf_samplerate [out] RF sampling rate. This parameter is optional.
     /// @return The current device sample rate (in Hz)
     virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) = 0;
@@ -200,7 +200,7 @@ class LIME_API SDRDevice
     /// this will set RXTSP and RXRFE ADC sample rates. For TX direction, this will set TXTSP and TXRFE DAC sample rates. 
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param sampleRate The target sample rate (in Hz)
     /// @param oversample The RF oversampling ratio.
     /// @return The status of the operation.
@@ -210,7 +210,7 @@ class LIME_API SDRDevice
     /// Returns the current gain setting value for the specified amplifier type within device RF chip.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param direction The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @param gain Internal RF chip amplifier type. Check out all possible @ref lime::eGainTypes "amplifier types".
     /// @param value The current gain value of the specified amplifier type (in dB).
     /// @return The status code of the operation.
@@ -220,7 +220,7 @@ class LIME_API SDRDevice
     /// Sets a new gain setting value for specified amplifier type within device RF chip.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param direction The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param gain Internal RF chip amplifier type. Check out all possible @ref lime::eGainTypes "amplifier types".
     /// @param value The new specified amplifier gain value (in dB).
     /// @return The status code of the operation.
@@ -230,7 +230,7 @@ class LIME_API SDRDevice
     /// Returns currently active Low Pass filter bandwidth frequency of device RF chip RFE (RXLPF or TXLPF).
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The current frequency of the Low Pass Filter (in Hz).
     virtual double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
@@ -238,7 +238,7 @@ class LIME_API SDRDevice
     /// Sets the new Low Pass filter bandwidth frequency value for device RF chip RFE (RXLPF or TXLPF).
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param lpf The bandwidth of the Low Pass Filter to set it to (in Hz).
     /// @return The status of the operation.
     virtual OpStatus SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf) = 0;
@@ -247,7 +247,7 @@ class LIME_API SDRDevice
     /// Returns antenna path ID that identifies currently active antenna type for selected direction of a channel.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The ID of the currently set antenna.
     virtual uint8_t GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
@@ -255,7 +255,7 @@ class LIME_API SDRDevice
     /// Activates a specific antenna type for a selected direction of a channel using antenna path ID.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param path The ID of the antenna to set the device to use.
     /// @return The status of the operation.
     virtual OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) = 0;
@@ -264,7 +264,7 @@ class LIME_API SDRDevice
     /// Provides information about the test signal that is being generated within device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param direction The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return A structure which describes the current status of the test signal mode.
     /// @see To find out more about the test signal parameters, check out 
     /// @ref lime::ChannelConfig::Direction::TestSignal "test signal structure members".
@@ -274,7 +274,7 @@ class LIME_API SDRDevice
     /// Updates test signal parameters within device RF chip TSP for selected channel direction.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param direction The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param signalConfiguration The configuration of the test mode to set.
     /// @param dc_i The I value of the test mode to send (0 for defaults)
     /// @param dc_q The Q value of the test mode to send (0 for defaults)
@@ -290,7 +290,7 @@ class LIME_API SDRDevice
     /// @brief Gets the current DC corrector status from device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return Whether the DC corrector bypass is enabled or not (false = bypass the corrector, true = use the corrector)
     virtual bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
@@ -305,14 +305,14 @@ class LIME_API SDRDevice
     /// @brief Gets the current DC I and Q corrector values from device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The current DC I and Q corrector values.
     virtual complex64f_t GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets the new DC I and Q corrector values for device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param offset The offsets of the I and Q channels.
     /// @return The status of the operation.
     virtual OpStatus SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset) = 0;
@@ -320,14 +320,14 @@ class LIME_API SDRDevice
     /// @brief Gets the current I and Q gain corrector values from device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
-    /// @param channel The channel to read from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return The current I and Q gain corrector values.
     virtual complex64f_t GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel) = 0;
 
     /// @brief Sets the new I and Q gain corrector values for device RF chip TSP.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param balance The I and Q corrector values to set.
     /// @return The status of the operation.
     virtual OpStatus SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance) = 0;
@@ -394,7 +394,7 @@ class LIME_API SDRDevice
     /// @brief Gets the given parameter from the device.
     /// Returns the current value of device parameter from device register space using only parameter name. 
     /// @param moduleIndex The @ref Device_index "device index" to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param parameterKey The key of the parameter to read from.
     /// @return The value read from the parameter.
     virtual uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey) = 0;
@@ -402,7 +402,7 @@ class LIME_API SDRDevice
     /// @brief Sets the given parameter in the device.
     /// Sets a new value for specified parameter within device register space using only parameter name.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param parameterKey The key of the parameter to write to.
     /// @param value The value to write to the address.
     /// @return The status of the operation.
@@ -410,7 +410,7 @@ class LIME_API SDRDevice
 
     /// @brief Reads specified parameter bit-field from register and returns its value.
     /// @param moduleIndex The @ref Device_index "device index" to get the data from.
-    /// @param channel The channel to get the data from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to get the data from.
     /// @param address The memory address of the device to read.
     /// @param msb The index of the most significant bit of the address to read. (16-bit register)
     /// @param lsb The index of the least significant bit of the address to read. (16-bit register)
@@ -419,7 +419,7 @@ class LIME_API SDRDevice
 
     /// @brief Writes new value to specified register parameter bit-field.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param address The memory address in the device to change.
     /// @param msb The index of the most significant bit of the address to modify. (16-bit register)
     /// @param lsb The index of the least significant bit of the address to modify. (16-bit register)
@@ -431,7 +431,7 @@ class LIME_API SDRDevice
     /// @brief Calibrates the given channel for a given bandwidth.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param bandwidth The bandwidth of the channel to calibrate for (in Hz).
     /// @return The status of the operation.
     virtual OpStatus Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth) = 0;
@@ -444,7 +444,7 @@ class LIME_API SDRDevice
     /// function parameter "settings".
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to configure.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param settings The settings of the GFIR filter. More about GFIR filter @ref ChannelConfig::Direction::GFIRFilter "settings". 
     /// @return The status of the operation.
     virtual OpStatus ConfigureGFIR(
@@ -455,7 +455,7 @@ class LIME_API SDRDevice
     /// The GFIR filter with ID 2 can store up to 120 coefficients.  
     /// @param moduleIndex The @ref Device_index "device index" to get the coefficients from.
     /// @param trx The direction of the channel to get the data from.
-    /// @param channel The channel to get the data from.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to get the data from.
     /// @param gfirID The ID of the GFIR. Supported ID range [0; 2].
     /// @return The current coefficients (normalized in the range [-1; 1]) of the GFIR.
     virtual std::vector<double> GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID) = 0;
@@ -465,7 +465,7 @@ class LIME_API SDRDevice
     /// The GFIR filter with ID 2 can store up to 120 coefficients.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to set the filter of.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to set the filter of.
     /// @param gfirID The ID of the GFIR. Supported ID range [0; 2].
     /// @param coefficients The coefficients (normalized in the range [-1; 1]) to set the GFIR to.
     /// @return The status of the operation.
@@ -475,7 +475,7 @@ class LIME_API SDRDevice
     /// @brief Toggles the use of a single GFIR filter in processing stage for specified channel direction.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
-    /// @param channel The channel to set the filter of.
+    /// @param channel The @ref lime::LMS7002M::Channel "channel" to set the filter of.
     /// @param gfirID The ID of the GFIR to set. Supported ID range [0; 2].
     /// @param enabled Whether the specifed GFIR should be enabled or disabled.
     /// @return The status of the operation.
