@@ -611,12 +611,64 @@ class LIME_API SDRDevice
      * GPIO API
      **********************************************************************/
 
+    /// @brief Change device GPIO pin state.
+    /// Writes data to a single or multiple device GPIO pins at once.
+    /// Single bit in GPIO register controls output of a single GPIO pin.
+    /// GPIO indexing starts from register LSB in ascending order.
+    /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
+    /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
+    /// then the next register continues to index GPIOs in ascending order, 
+    /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
+    /// GPIO registers and register count is specific to a device and its GW.
+    /// Value - 1 == HIGH state, 0 == LOW state.
+    /// @param buffer buffer with new GPIO pin output values.
+    /// @param bufLength Number of GPIO registers to update.
+    /// @return Status of operation.
     virtual OpStatus GPIOWrite(const uint8_t* buffer, const size_t bufLength);
 
+    /// @brief Read device GPIO pin state.
+    /// Reads the status of all GPIO pins for a specified number of GPIO registers.
+    /// Single bit in GPIO register shows status of a single GPIO pin.
+    /// GPIO indexing starts from register LSB in ascending order.
+    /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
+    /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
+    /// then the next register continues to index GPIOs in ascending order, 
+    /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
+    /// GPIO registers and register count is specific to a device and its GW.
+    /// Value - 1 == HIGH state, 0 == LOW state.
+    /// @param buffer empty buffer of sufficient length. 
+    /// @param bufLength Number of GPIO registers to read.
+    /// @return Status of operation.
     virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength);
 
+    /// @brief Change device GPIO pin direction.
+    /// Changes direction of a single or multiple device GPIO pins at once.
+    /// Single bit in GPIO register controls a single GPIO pin direction.
+    /// GPIO indexing starts from register LSB in ascending order.
+    /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
+    /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
+    /// then the next register continues to index GPIOs in ascending order, 
+    /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
+    /// GPIO registers and register count is specific to a device and its GW.
+    /// Value - 1 == OUTPUT direction, 0 == INPUT direction. 
+    /// @param buffer buffer with new GPIO pin direction settings.
+    /// @param bufLength Number of GPIO pin direction registers to update.
+    /// @return Status of operation.
     virtual OpStatus GPIODirWrite(const uint8_t* buffer, const size_t bufLength);
 
+    /// @brief Read device GPIO pin direction.
+    /// Reads the current direction of all GPIO pins for specified number of GPIO direction registers.
+    /// Single bit in GPIO register shows direction status of a single GPIO pin.
+    /// GPIO indexing starts from register LSB in ascending order.
+    /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
+    /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
+    /// then the next register continues to index GPIOs in ascending order, 
+    /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
+    /// GPIO registers and register count is specific to a device and its GW.
+    /// Value - 1 == OUTPUT direction, 0 == INPUT direction. 
+    /// @param buffer empty data buffer of sufficient length.
+    /// @param bufLength Number of GPIO pin direction registers to read.
+    /// @return Status of operation.
     virtual OpStatus GPIODirRead(uint8_t* buffer, const size_t bufLength);
 
     /***********************************************************************
