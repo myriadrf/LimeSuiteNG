@@ -102,7 +102,7 @@ class LIME_API SDRDevice
     /// Can Return device reference clock, TX/RX local oscillator clock, clock generator clock,
     /// RX/TX transceiver signal processor clock. To get local oscillator clock for a specific 
     /// direction of a channel, consider using GetFrequency() function.
-    /// @param clk_id The clock ID to get the frequency of. Supported @ref lime::LMS7002M::ClockID "clock IDs".
+    /// @param clk_id The @ref lime::LMS7002M::ClockID "clock ID" to get the frequency of.
     /// @param channel The channel to get the frequency of. Supported @ref lime::LMS7002M::Channel "channels".
     /// @return The frequency of the specified clock (in Hz).
     virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) = 0;
