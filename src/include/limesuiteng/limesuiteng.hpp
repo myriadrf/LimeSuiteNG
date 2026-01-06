@@ -71,19 +71,19 @@
  *    <li> @ref lime::SDRDevice::Init() "Init()"</li>
  *    <li> @ref lime::SDRDevice::Reset() "Reset()"</li>
  *    <li> @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()"</li>
- *    <li> @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()"</li>
- *    <li> @ref lime::SDRDevice::UploadTxWaveform(const lime::StreamConfig&, uint8_t, const void**, uint32_t) "UploadTxWaveform()"</li>
  *    <li> @ref lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) "Calibrate()"</li>
- *    <li> @ref lime::SDRDevice::Synchronize(bool) "Synchronize()"</li>
+ *    <li> @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()"</li>
  *    <li><b>Configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()"</li>
  *          <li> @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()"</li>
  *          <li> @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()"</li>
  *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)"</li>
- *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint16_t value)"</li>
+ *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint8_t msb, uint8_t lsb, uint16_t value)"</li>
  *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address)"</li>
- *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint16_t value)"</li>
+ *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)"</li>
+ *          <li> @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister()"</li>
+ *          <li> @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister()"</li>
  *       </ul>
  *    </li>
  *    <li> <b> Filter configuration:</b>
@@ -132,12 +132,6 @@
  *          <li> @ref lime::SDRDevice::SetIQBalance(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) "SetIQBalance()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Register access:</b>
- *       <ul>
- *          <li> @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister"</li>
- *          <li> @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister"</li>
- *       </ul>
- *    </li>
  *    <li><b>Low speed interfaces:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()"</li>
@@ -147,7 +141,9 @@
  *    </li>
  *    <li><b>Utility:</b>
  *       <ul>
+ *          <li> @ref lime::SDRDevice::UploadTxWaveform(const lime::StreamConfig&, uint8_t, const void**, uint32_t) "UploadTxWaveform()"</li>
  *          <li> @ref lime::SDRDevice::EnableCache(bool) "EnableCache()"</li>
+ *          <li> @ref lime::SDRDevice::Synchronize(bool) "Synchronize()"</li>
  *          <li> @ref lime::SDRDevice::GetHardwareTimestamp(uint8_t) "GetHardwareTimestamp()"</li>
  *          <li> @ref lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) "SetHardwareTimestamp()"</li>
  *       </ul>
