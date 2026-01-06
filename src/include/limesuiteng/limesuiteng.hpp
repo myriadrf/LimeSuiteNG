@@ -79,8 +79,8 @@
  *          <li> @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()"</li>
  *          <li> @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()"</li>
  *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)"</li>
- *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint8_t msb, uint8_t lsb, uint16_t value)"</li>
- *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address)"</li>
+ *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint16_t value)"</li>
+ *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address, uint8_t msb, uint8_t lsb)"</li>
  *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)"</li>
  *          <li> @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister()"</li>
  *          <li> @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister()"</li>
@@ -137,6 +137,14 @@
  *          <li> @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()"</li>
  *          <li> @ref lime::SDRDevice::I2CWrite(int, const uint8_t*, uint32_t) "I2CWrite()"</li>
  *          <li> @ref lime::SDRDevice::I2CRead(int, uint8_t*, uint32_t) "I2CRead()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>GPIO control</b>
+ *       <ul>
+ *          <li> @ref lime::SDRDevice::GPIOWrite(const uint8_t*, const size_t) "GPIOWrite()"</li>
+ *          <li> @ref lime::SDRDevice::GPIORead(uint8_t*, const size_t) "GPIORead()"</li>
+ *          <li> @ref lime::SDRDevice::GPIODirWrite(const uint8_t*, const size_t) "GPIODirWrite()"</li>
+ *          <li> @ref lime::SDRDevice::GPIODirRead(uint8_t*, const size_t) "GPIODirRead()"</li>
  *       </ul>
  *    </li>
  *    <li><b>Utility:</b>
