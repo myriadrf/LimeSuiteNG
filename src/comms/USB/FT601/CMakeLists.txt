@@ -1,26 +1,27 @@
 if(WIN32 AND NOT MINGW)
-    file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/external/FTD3XXLibrary.zip DESTINATION ${FETCHCONTENT_BASE_DIR}/)
+    file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/external/WU_FTD3XXLib.zip DESTINATION ${FETCHCONTENT_BASE_DIR}/)
     set(FTDI_FOUND TRUE)
-    set(FTDI_INCLUDE_DIRS ${FETCHCONTENT_BASE_DIR}/FTD3XXLibrary)
+    set(FTDI_INCLUDE_DIRS ${FETCHCONTENT_BASE_DIR}/WU_FTD3XXLib/Lib)
 
     #library directory based on x64 vs x86
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(FTD3XX_LIB_DIR ${FTDI_INCLUDE_DIRS}/x64)
+        set(ARCH x64)
     else()
-        set(FTD3XX_LIB_DIR ${FTDI_INCLUDE_DIRS}/Win32)
+        set(ARCH x86)
     endif()
 
     #default is to use static libs
     option(FTD3XX_STATIC "Use static libs for FTD3XX" TRUE)
 
     #when using static libs specify FTD3XX_STATIC
+    set(FTD3XX_LIB_DIR ${FETCHCONTENT_BASE_DIR}/WU_FTD3XXLib/Lib)
     if(FTD3XX_STATIC)
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static_Lib/FTD3XX.lib setupapi)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Static/${ARCH}/FTD3XXWU.lib setupapi)
         target_compile_definitions(limesuiteng PRIVATE FTD3XX_STATIC)
     else()
         #when using dynamic libs install the dll to bin/
-        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.lib setupapi)
-        install(FILES ${FTD3XX_LIB_DIR}/DLL/FTD3XX.dll DESTINATION bin)
+        set(FTDI_LIBRARIES ${FTD3XX_LIB_DIR}/Dynamic/${ARCH}/FTD3XXWU.lib setupapi)
+        install(FILES ${FTD3XX_LIB_DIR}/Dynamic/${ARCH}/FTD3XXWU.dll DESTINATION bin)
     endif()
 
     message(STATUS "FTDI_INCLUDE_DIRS: ${FTDI_INCLUDE_DIRS}")
