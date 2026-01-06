@@ -1017,7 +1017,7 @@ void Soapy_limesuiteng::writeSetting(const int direction, const size_t channel, 
         settingsCache.at(direction).at(channel).DCTestAmplitude = ampl;
     }
 
-    else if (key == "CALIBRATE_TX" or (dir == TRXDir::Tx and key == "CALIBRATE"))
+    else if (key == "CALIBRATE_TX" || (dir == TRXDir::Tx && key == "CALIBRATE"))
     {
         double bw = std::stof(value);
         SoapySDR::logf(SOAPY_SDR_INFO, "Calibrate Tx %f", bw);
@@ -1026,7 +1026,7 @@ void Soapy_limesuiteng::writeSetting(const int direction, const size_t channel, 
         settingsCache.at(direction).at(channel).calibrationBandwidth = bw;
     }
 
-    else if (key == "CALIBRATE_RX" or (dir == TRXDir::Rx and key == "CALIBRATE"))
+    else if (key == "CALIBRATE_RX" || (dir == TRXDir::Rx && key == "CALIBRATE"))
     {
         double bw = std::stof(value);
         SoapySDR::logf(SOAPY_SDR_INFO, "CalibrateRx %f", bw);
