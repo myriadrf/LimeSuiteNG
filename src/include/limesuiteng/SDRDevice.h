@@ -500,7 +500,8 @@ class LIME_API SDRDevice
     /// @param now What the definition of the current time should be.
     /// @return The @ref lime::OpStatus "status" of the operation.
     virtual OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) = 0;
-
+    
+    /// @cond DEPRECATED
     /// @brief Sets up all the streams on a device.
     /// @param config The configuration to use for setting the streams up.
     /// @param moduleIndex The index of the device to set up.
@@ -582,6 +583,7 @@ class LIME_API SDRDevice
     /// @param rx The pointer (or nullptr if not needed) to store the receive statistics to.
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
     [[deprecated]] virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
+    /// @endcond
 
     /// @brief Creates a RF data streaming interface for selected RF module.
     /// @param config The configuration to use for setting the streams up.
