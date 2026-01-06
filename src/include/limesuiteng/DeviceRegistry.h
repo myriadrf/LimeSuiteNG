@@ -1,6 +1,12 @@
 #ifndef LIME_DEVICES_REGISTRY_H
 #define LIME_DEVICES_REGISTRY_H
 
+/**
+@file limesuiteng/DeviceRegistry.h
+@author Lime Microsystems
+@brief Defines SDR device registry class and its publicly accessible members used to discover and register devices
+*/
+
 #include <string>
 #include <vector>
 
@@ -59,6 +65,9 @@ class LIME_API DeviceRegistry
  * The registry API is intended for device developers.
  ******************************************************************/
 
+// Hiding device developer API from doxygen output
+/// @cond SPECIAL_DEV_REGISTRY
+
 /*!
  * Create an overloaded instance of a DeviceRegistryEntry
  * to register discovery and factory functions into the system.
@@ -101,6 +110,8 @@ class LIME_API DeviceRegistryEntry
   private:
     std::string _name;
 };
+
+///@endcond
 
 } // namespace lime
 #endif

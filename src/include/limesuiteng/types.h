@@ -4,7 +4,7 @@
 /**
 * @file limesuiteng/types.h
 * @author Lime Microsystems
-* @brief File with API types definitions.
+* @brief Defines custom library types for use with public API members
 */
 
 #include "limesuiteng/config.h"

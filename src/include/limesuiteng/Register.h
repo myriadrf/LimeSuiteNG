@@ -1,6 +1,12 @@
 #ifndef LIME_REGISTER_H
 #define LIME_REGISTER_H
 
+/**
+@file limesuiteng/Register.h
+@author Lime Microsystems
+@brief Defines register structure
+*/
+
 #include <cstdint>
 #include "limesuiteng/config.h"
 

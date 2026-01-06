@@ -4,7 +4,7 @@
 /**
 @file limesuiteng/OpStatus.h
 @author Lime Microsystems
-@brief File with API operation status code list.
+@brief Enumerates a list of all possible states of operation for the members of public API
 */
 
 #ifdef Success

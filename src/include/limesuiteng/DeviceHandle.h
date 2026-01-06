@@ -1,6 +1,12 @@
 #ifndef LIME_DEVICE_HANDLE_H
 #define LIME_DEVICE_HANDLE_H
 
+/**
+@file limesuiteng/DeviceHandle.h
+@author Lime Microsystems
+@brief Defines SDR device handle class used to provide SDR device connection hints
+*/
+
 #include <string>
 
 #include "limesuiteng/config.h"

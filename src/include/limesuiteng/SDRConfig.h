@@ -4,7 +4,7 @@
 /**
 * @file limesuiteng/SDRConfig.h
 * @author Lime Microsystems
-* @brief File with SDR configuration structure definitions.
+* @brief Defines SDR configuration structures
 */
 
 #include "limesuiteng/types.h"

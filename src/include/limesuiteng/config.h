@@ -4,7 +4,7 @@
 /**
 @file limesuiteng/config.h
 @author Lime Microsystems
-@brief Configuration constants and macros for lime suite library.
+@brief Defines storage class macros for library. Ignore this header
 */
 
 // Generic helper definitions for shared library support

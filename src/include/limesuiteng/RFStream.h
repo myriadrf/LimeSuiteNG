@@ -1,6 +1,12 @@
 #ifndef LIME_RFSTREAM_H
 #define LIME_RFSTREAM_H
 
+/**
+@file limesuiteng/RFStream.h
+@author Lime Microsystems
+@brief Defines SDR device RF Stream class and its publicly accessible stream set up and control members
+*/
+
 #include <chrono>
 
 #include "limesuiteng/config.h"

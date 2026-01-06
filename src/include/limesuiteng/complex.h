@@ -4,7 +4,7 @@
 /**
 * @file limesuiteng/complex.h
 * @author Lime Microsystems
-* @brief File with complex structure definitions.
+* @brief Defines complex data types
 */
 
 #include <cstdint>

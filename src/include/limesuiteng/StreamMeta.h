@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_STREAMMETA_H
 #define LIMESUITENG_STREAMMETA_H
 
+/**
+@file limesuiteng/StreamMeta.h
+@author Lime Microsystems
+@brief Defines structures for Stream TX and RX meta data collection
+*/
+
 #include "limesuiteng/Timespec.h"
 
 namespace lime {

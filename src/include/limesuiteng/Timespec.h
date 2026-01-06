@@ -4,7 +4,7 @@
 /**
  * @file limesuiteng/Timespec.h
  * @author Lime Microsystems
- * @brief Timestamp storage class definition.
+ * @brief Defines Timespec storage class for operating with SDR device stream time stamps
  */
 
 #include <chrono>

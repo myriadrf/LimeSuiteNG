@@ -2,9 +2,9 @@
 #define LIMESUITENG_SDRSTREAMCONFIG_H
 
 /**
-* @file limesuiteng/StreamConfig.h
-* @author Lime Microsystems
-* @brief File with SDR stream configuration structure definitions.
+@file limesuiteng/StreamConfig.h
+@author Lime Microsystems
+@brief Defines structures used for SDR device stream configuration.
 */
 
 #include "limesuiteng/config.h"

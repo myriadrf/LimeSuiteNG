@@ -3,7 +3,7 @@
 /**
 * @file limesuiteng/ToString.h
 * @author Lime Microsystems
-* @brief File with string manipulation function declarations.
+* @brief Defines string manipulation functions used to convert library enumerations into std::string format
 */
 
 #include "limesuiteng/types.h"

@@ -1,11 +1,11 @@
+#ifndef LIMESUITE_LOGGER_H
+#define LIMESUITE_LOGGER_H
+
 /**
 @file limesuiteng/Logger.h
 @author Lime Microsystems
-@brief API for logging library status messages.
+@brief Defines publicly accessible logger members
 */
-
-#ifndef LIMESUITE_LOGGER_H
-#define LIMESUITE_LOGGER_H
 
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"

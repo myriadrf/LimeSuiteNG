@@ -1,6 +1,12 @@
 #ifndef LIME_SDRDevice_H
 #define LIME_SDRDevice_H
 
+/**
+@file limesuiteng/SDRDevice.h
+@author Lime Microsystems
+@brief Defines SDR device class and its publicly accessible members used to configure and set up SDR devices
+*/
+
 #include <cstring>
 #include <chrono>
 #include <functional>
