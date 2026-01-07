@@ -4,7 +4,7 @@
 /**
 @file   LMS7002M.h
 @author Lime Microsystems (www.limemicro.com)
-@brief  Defines LMS7002M transceiver configuration interface and its publicly accessible members
+@brief  Defines LMS7002M transceiver configuration interface class
 */
 
 #include "limesuiteng/types.h"

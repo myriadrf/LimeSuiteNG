@@ -4,7 +4,7 @@
 /**
 @file limesuiteng/SDRDevice.h
 @author Lime Microsystems
-@brief Defines SDR device class and its publicly accessible members used to configure and set up SDR devices
+@brief Defines SDR device configuration and control interface class
 */
 
 #include <cstring>

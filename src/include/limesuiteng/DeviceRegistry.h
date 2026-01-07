@@ -4,7 +4,7 @@
 /**
 @file limesuiteng/DeviceRegistry.h
 @author Lime Microsystems
-@brief Defines SDR device registry class and its publicly accessible members used to discover and register devices
+@brief Defines SDR device registry class and its static functions used to discover and register SDR devices
 */
 
 #include <string>

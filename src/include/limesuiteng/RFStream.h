@@ -4,7 +4,7 @@
 /**
 @file limesuiteng/RFStream.h
 @author Lime Microsystems
-@brief Defines SDR device RF Stream class and its publicly accessible stream set up and control members
+@brief Defines SDR device RF Stream set up and control interface class
 */
 
 #include <chrono>
