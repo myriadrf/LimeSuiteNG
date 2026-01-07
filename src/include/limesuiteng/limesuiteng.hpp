@@ -28,22 +28,30 @@
  * the library installation for different platforms and other components of LimeSuiteNG suite, 
  * visit the main <A HREF="https://limesuiteng.myriadrf.org/">  LimeSuiteNG documentation</A> page.
  * 
- * @section api_section Application Programming Interface (API)
- * 
- * See @ref api "Application Programming Interface" for a full list of LimeSuiteNG library functions.
  * 
  * @section lib_feat_section Library features
  * 
- * TODO: Add list of supported library features.
+ * TODO: Update the list of supported library features.  
+ * 
+ * <ul>
+ *    <li>Loading SDR device configuration from/to file (Configuration file generated with LimeSuiteNG GUI application)</li>
+ *    <li></li>
+ * </ul>
+ * 
+ * 
  * 
  * @section getting_started Getting started
  * 
- * To start using LimeSuiteNG library public API, include the library header file:
+ * If you are completely new to the LimeSDR software environment, it is recommended to start with
+ * example tutorials which guide through the LimeSDR device configuration and communication set up 
+ * processes step by step.  
  * 
- * TODO: Add include headers for access to public API.
+ * @ref examples "Go to LimeSuiteNG library examples page"  
  * 
- * To get started using LimeSuiteNG library public API, visit Topics page. For a full list of public
- * API members, visit @ref api "API" page.
+ * @section api_section Application Programming Interface (API)
+ * 
+ * Check out @ref api "Application Programming Interface" for a full list of LimeSuiteNG library functions.
+ * 
  */
 
  
