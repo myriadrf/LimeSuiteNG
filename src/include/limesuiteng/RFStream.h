@@ -35,11 +35,11 @@ class LIME_API RFStream
     virtual uint64_t GetHardwareTimestamp() const = 0;
 
     /// @brief Configures data streaming parameters
-    /// @param config The configuration to use for setting the streams up.
+    /// @param config The @ref lime::StreamConfig "configuration" to use for setting the streams up.
     /// @return The status code of the operation.
     virtual OpStatus Setup(const StreamConfig& config) = 0;
 
-    /// @brief Returns current stream configuration.
+    /// @brief Returns current stream @ref lime::StreamConfig "configuration".
     virtual const StreamConfig& GetConfig() const = 0;
 
     /// @brief Starts RF data streaming.
