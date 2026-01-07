@@ -381,3 +381,100 @@
  * 
  * Parameter <b>moduleIndex</b> should always be set to device index <b>0</b> for LimeSDR devices that use a single RF chip.
  */
+
+/**
+ * @page examples Library examples
+ * 
+ * This is the main page of LimeSuiteNG library examples. Here you will find an organized list of example subpages which will help you get started with LimeSDR public API.
+ * The example topics in the list cover: library set up steps in a custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
+ * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
+ * code which can be used as template for further development.
+ * 
+ * List of examples:
+ * <ul>
+ *    <li> @ref cmake_set_up </li>
+ *    <li> @ref dev_discovery </li>
+ *    <li> @ref dev_config </li>
+ *    <li> @ref dev_streaming </li>
+ *    <li> @ref hello_world_example </li>
+ * </ul>
+ * 
+ */
+
+// This is the starting point of subpages for example page
+/**
+ * @addtogroup cmake_set_up CMake set up
+ * 
+ * @ref examples "Back to the list of example topics"  
+ * 
+ * In this example we explore basic library set up requirements for CMake based projects. To link against LimeSuiteNG library, 
+ * include the following CMake code in your CMakeLists.txt file:
+ * @code{cmake}
+ * 
+ * @endcode
+ * 
+ * Once the project CMake files are set up, you can include the following headers
+ * into your project source files:
+ * 
+ * @code{cpp}
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * @endcode
+ * 
+ * Check out the following example topic which explains how to @ref dev_discovery "discover and register" SDR devices in your custom application. 
+ */
+
+/**
+ * @addtogroup dev_discovery SDR device discovery and registration
+ * 
+ * @ref examples "Back to the list of example topics"  
+ * 
+ * This example explains how LimeSDR devices are discovered and registered in your custom application.
+ * Example code:
+ * @code{cpp} 
+ * @endcode
+ * 
+ * Check out the following example topic which explains how to @ref dev_config "configure" SDR device parameters.
+ */
+
+/**
+ * @addtogroup dev_config SDR device configuration
+ * 
+ * @ref examples "Back to the list of example topics"  
+ * 
+ * This example explains how to configure LimeSDR devices in your custom application.
+ * Example code:
+ * 
+ * @code{cpp}
+ * @endcode
+ * 
+ * Check out following example topic which explains how to @ref dev_streaming "set up and stream" data through RF medium using LimeSDR devices. 
+ */
+
+/**
+ * @addtogroup dev_streaming SDR device stream set up and streaming
+ * 
+ * @ref examples "Back to the list of example topics"  
+ * 
+ * This example explains how to set up a stream between two LimeSDR devices and send data over RF medium.
+ * Example code:
+ * 
+ * @code{cpp}
+ * @endcode
+ * 
+ * Check out @ref hello_world_example "hello world example" which provides a minimal template code that can be used for further development.
+ */
+
+/**
+ * @addtogroup hello_world_example Hello World example
+ * 
+ * @ref examples "Back to the list of example topics"  
+ * 
+ * This is a minimal example code that can be used as a starting point for further development. Public API members presented in this code have been reviewed in previous example topics.
+ * Example code:
+ * @code{cpp}
+ * @endcode
+ *  
+ */
+// This is the end point of subpages for example page
