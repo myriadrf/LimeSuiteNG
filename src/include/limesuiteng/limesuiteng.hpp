@@ -394,7 +394,7 @@
  * @page examples Library examples
  * 
  * This is the main page of LimeSuiteNG library examples. Here you will find an organized list of example subpages which will help you get started with LimeSDR public API.
- * The example topics in the list cover: library set up steps in a custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
+ * The example topics in the list cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
  * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
  * code which can be used as template for further development.
  * 
@@ -415,22 +415,38 @@
  * 
  * @ref examples "Back to the list of example topics"  
  * 
- * In this example we explore basic library set up requirements for CMake based projects. To link against LimeSuiteNG library, 
- * include the following CMake code in your CMakeLists.txt file:
- * @code{cmake}
- * 
+ * In this example we explore LimeSuiteNG library set up requirements for CMake based projects. The following CMakeLists.txt code is the minimum required
+ * project set up code which allows to use LimeSuiteNG API in custom applications:
+ * @code{.cmake}
+ * cmake_minimum_required(VERSION 3.26)
+ *
+ * project(LimeSuiteNG_examples LANGUAGES C CXX)
+ *
+ * add_executable(example main.cpp)
+ *
+ * target_link_libraries(example PUBLIC limesuiteng)
  * @endcode
  * 
- * Once the project CMake files are set up, you can include the following headers
- * into your project source files:
+ * When setting up a basic CMake project, it is important to set up the minimum required CMake version (version can be different 
+ * from the one shown in example, but not lower than 3.15). Next, create project and specify its name and supported languages.
+ * Once the basic project settings are set up, specify build type: executable or library. In this series of examples we will 
+ * only build executable files, therefore we add the <b>add_executable()</b> CMake command. Specify command arguments: custom executable 
+ * name ('example') and the source files that make up the executable (If executable consists of more than one source file, add
+ * them to the list and seperate each source file with space). Finally, LimeSuiteNG library must be linked to the executable in order to 
+ * use the control API. To link the library code to our executable, target the library using cmake <b>target_link_libraries()</b> CMake
+ * command. Once the project CMake files are set up, include the following headers into project source files for access to LimeSuiteNG API:
  * 
- * @code{cpp}
- * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
- * #include <limesuiteng/RFStream.h>
+ * @code{.cpp}
+ * #include <limesuiteng/limesuiteng.hpp>
  * @endcode
  * 
- * Check out the following example topic which explains how to @ref dev_discovery "discover and register" SDR devices in your custom application. 
+ * To configure and build project, run commands in command line/terminal environment:
+ * @code{.bash}
+ * cmake ..
+ * cmake --build .
+ * @endcode
+ * 
+ * Check out the next example topic which explains how to @ref dev_discovery "discover and register" SDR devices in custom applications.
  */
 
 /**
@@ -438,12 +454,91 @@
  * 
  * @ref examples "Back to the list of example topics"  
  * 
- * This example explains how LimeSDR devices are discovered and registered in your custom application.
- * Example code:
- * @code{cpp} 
+ * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
+ * functions that can be used to discover and manage SDR device connectivity.  
+ * 
+ * @ref registration "Click here to view the SDR device discovery and connectivity management functions"  
+ * 
+ * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
+ * are currently connected to PC:
+ * @code{.cpp}
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ * 
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No SDR devices detected!\n";
+ *       return 1;
+ *    }
+ * 
+ *    std::cout << "Found " << listOfDevices.size() << " devices:\n";
+ *    
+ *     for(const auto& singleDevHandle : listOfDevices)
+ *        std::cout << singleDevHandle.Serialize() << std::endl;
+ *
+ *    return 0;
+ * }
  * @endcode
  * 
- * Check out the following example topic which explains how to @ref dev_config "configure" SDR device parameters.
+ * @important All LimeSuiteNG API functions are part of namespace <b>lime</b>. API members can be accessed with scope resolution operator <b>lime::</b>.
+ * Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class
+ * must also be specified using the scope resolution operator <b>DeviceRegistry::</b>.  
+ * 
+ * In this example code, API function enumerate() returns a vector with items of @ref lime::DeviceHandle "DeviceHandle" type, which is a type that provides the 
+ * base information about connected SDR devices:
+ * <ol>
+ *    <li>Device name</li>
+ *    <li>Device connection media (USB, PCIe, Ethernet and etc.)</li>
+ *    <li>Device address (USB VID:PID, IP address and etc.) </li>
+ *    <li>Device serial number</li>
+ * </ol>
+ * 
+ * If no devices are detected, function returns an empty device list which can be tested with `.empty()` or `.size()` methods. If the device list is not empty,
+ * a range-for loop can be used to print items of the device list to standard output. To obtain basic device information in std::string format, a method 
+ * @ref lime::DeviceHandle::Serialize() "Serialize()" or @ref lime::DeviceHandle::ToString() "ToString()" must be called for each item of @ref lime::DeviceHandle "DeviceHandle" type 
+ * in device list. Both methods return string of arguments that identify the device, but the Serialize() method also appends complementary text that identifies the device argument.
+ * First example code for @ref lime::DeviceRegistry::enumerate() "enumerate()" API function produces output:
+ * 
+ * @image{inline} html dev_registration_dev_enum.png
+ * @image{inline} xml dev_registration_dev_enum.png
+ * 
+ * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
+ * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock which is not compliant with USB 3.0 standard.
+ * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
+ * 
+ * Discovery function @ref lime::DeviceRegistry::enumerate() "enumerate()" also has an overloaded version @ref lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) "enumerate(const DeviceHandle&)"
+ * function that can accept a @ref lime::DeviceHandle "DeviceHandle" type object which can act as a device filter. If all arguments from device handle matches specified device filter arguments (unspecified 
+ * filter arguments are ignored), the SDR device is included in the final device list:
+ * @code{.cpp}
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ * 
+ *    std::vector<lime::DeviceHandle> listOfLimeSDR_Mini = lime::DeviceRegistry::enumerate(lime::DeviceHandle("LimeSDR Mini V2"));
+ *    std::vector<lime::DeviceHandle> listOfLimeSDR_USB = lime::DeviceRegistry::enumerate(lime::DeviceHandle("LimeSDR-USB"));
+ * 
+ *    std::cout << "List of LimeSDR Mini devices:\n";
+ *    for(const auto& singleDevHandle : listOfLimeSDR_Mini)
+ *       std::cout << singleDevHandle.Serialize() << std::endl;
+ * 
+ *    std::cout << std::endl << "List of LimeSDR USB devices:\n";
+ *    for(const auto& singleDevHandle : listOfLimeSDR_USB)
+ *       std::cout << singleDevHandle.Serialize() << std::endl;
+ * 
+ *    return 0;
+ * }
+ * @endcode
+ *
+ * The output of the second example:
+ * 
+ * @image{inline} html dev_registration_dev_filtering.png
+ * @image{inline} xml dev_registration_dev_filtering.png 
+ *  
+ * 
+ * 
+ * Check out the next example topic which explains how to @ref dev_config "configure" SDR devices.
  */
 
 /**
@@ -454,7 +549,7 @@
  * This example explains how to configure LimeSDR devices in your custom application.
  * Example code:
  * 
- * @code{cpp}
+ * @code{.cpp}
  * @endcode
  * 
  * Check out following example topic which explains how to @ref dev_streaming "set up and stream" data through RF medium using LimeSDR devices. 
@@ -468,7 +563,7 @@
  * This example explains how to set up a stream between two LimeSDR devices and send data over RF medium.
  * Example code:
  * 
- * @code{cpp}
+ * @code{.cpp}
  * @endcode
  * 
  * Check out @ref hello_world_example "hello world example" which provides a minimal template code that can be used for further development.
@@ -481,7 +576,7 @@
  * 
  * This is a minimal example code that can be used as a starting point for further development. Public API members presented in this code have been reviewed in previous example topics.
  * Example code:
- * @code{cpp}
+ * @code{.cpp}
  * @endcode
  *  
  */
