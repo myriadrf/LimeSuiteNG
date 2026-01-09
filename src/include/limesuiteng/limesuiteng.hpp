@@ -607,15 +607,63 @@
  * @ref examples "Back to the list of example topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
- * This example explains how to configure LimeSDR devices in your custom application.
- * Example code:
- * 
+ * When setting up a new or out of the box SDR device it is always recommended to perform initial device configuration:
  * @code{.cpp}
+ * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *
+ * device->Init();
+ *
+ * ... // Other program code
+ *
+ * lime::DeviceRegistry::freeDevice(device);
  * @endcode
+ * 
+ * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
+ *
+ * Here is a list of sub-topics that will help to learn more about SDR device configuration options:
+ * <ul>
+ *    <li> @ref quick_config "Quick configuration"</li>
+ *    <li> @ref filter_config "Filter configuration"</li>
+ *    <li> @ref frequency_config "Frequency configuration"</li>
+ *    <li> @ref nco_frequency_config "NCO frequency configuration"</li>
+ * </ul>
  * 
  * @ref examples "Back to the list of example topics"  
  * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
+
+// ###########################################################
+// This is the starting point of sub-topic pages for SDR 
+// configuration topic
+// ###########################################################
+/**
+ * @addtogroup quick_config Quick configuration
+ * 
+ * 
+ */
+
+/**
+ * @addtogroup filter_config Filter configuration
+ * 
+ * 
+ */
+
+/**
+ * @addtogroup frequency_config Frequency configuration
+ * 
+ * 
+*/
+
+/**
+ * @addtogroup nco_frequency_config NCO frequency configuration
+ * 
+ * 
+ */
+
+// ###########################################################
+// This is the ending point of sub-topic pages for SDR 
+// configuration topic
+// ###########################################################
 
 /**
  * @addtogroup dev_streaming SDR device stream set up and streaming
