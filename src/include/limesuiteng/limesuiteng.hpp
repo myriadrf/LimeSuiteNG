@@ -453,6 +453,7 @@
  * @addtogroup dev_discovery SDR device discovery and registration
  * 
  * @ref examples "Back to the list of example topics"  
+ * @ref cmake_set_up "Back to CMake project set up example topic"  
  * 
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
  * functions that can be used to discover and manage SDR device connectivity.  
@@ -596,8 +597,7 @@
  * @image{inline} html dev_registration_dev_connection.png
  * @image{inline} xml dev_registration_dev_connection.png  
  * 
- * @ref examples "Back to the list of example topics"
- * 
+ * @ref examples "Back to the list of example topics"  
  * @ref dev_config "Go to SDR device configuration example topic"
  */
 
@@ -605,6 +605,7 @@
  * @addtogroup dev_config SDR device configuration
  * 
  * @ref examples "Back to the list of example topics"  
+ * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
  * This example explains how to configure LimeSDR devices in your custom application.
  * Example code:
@@ -612,13 +613,15 @@
  * @code{.cpp}
  * @endcode
  * 
- * Check out following example topic which explains how to @ref dev_streaming "set up and stream" data through RF medium using LimeSDR devices. 
+ * @ref examples "Back to the list of example topics"  
+ * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
 
 /**
  * @addtogroup dev_streaming SDR device stream set up and streaming
  * 
  * @ref examples "Back to the list of example topics"  
+ * @ref dev_config "Back to SDR device configuration example topic"  
  * 
  * This example explains how to set up a stream between two LimeSDR devices and send data over RF medium.
  * Example code:
@@ -626,7 +629,8 @@
  * @code{.cpp}
  * @endcode
  * 
- * Check out @ref hello_world_example "hello world example" which provides a minimal template code that can be used for further development.
+ * @ref examples "Back to the list of example topics"  
+ * @ref hello_world_example "Go to minimal development template example"
  */
 
 /**
@@ -638,6 +642,7 @@
  * Example code:
  * @code{.cpp}
  * @endcode
- *  
+ *
+ * @ref examples "Back to the list of example topics"
  */
 // This is the end point of subpages for example page
