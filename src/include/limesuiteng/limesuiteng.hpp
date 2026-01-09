@@ -446,7 +446,7 @@
  * cmake --build .
  * @endcode
  * 
- * Check out the next example topic which explains how to @ref dev_discovery "discover and register" SDR devices in custom applications.
+ * @ref dev_discovery "Go to SDR device discovery and registration example topic"
  */
 
 /**
@@ -535,10 +535,70 @@
  * 
  * @image{inline} html dev_registration_dev_filtering.png
  * @image{inline} xml dev_registration_dev_filtering.png 
- *  
  * 
  * 
- * Check out the next example topic which explains how to @ref dev_config "configure" SDR devices.
+ * Alternatively, it is also possible to filter requested devices from enumerated device list using @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method: 
+ * @code
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ * 
+ *    std::cout << "Found " << listOfDevices.size() << " devices\n";
+ *    if(listOfDevices.size() == 0)
+ *    {
+ *       std::cout << "No SDR devices detected\n";
+ *       return 1;
+ *    }
+ * 
+ *    for(const auto& item : listOfDevices)
+ *       std::cout << item.Serialize() << std::endl;
+ * 
+ *    lime::DeviceHandle reqDevice("LimeSDR Mini V2");
+ *    int reqDevID = -1;
+ *    std::cout << std::endl << "Searching for requested device " << reqDevice.ToString() << " in device list\n";
+ *    for(int itemID = 0; itemID < listOfDevices.size(); ++itemID)
+ *    {  
+ *       if(listOfDevices[itemID].IsEqualIgnoringEmpty(reqDevice))
+ *       {
+ *          reqDevID = itemID;
+ *          std::cout << "Device " << reqDevice.ToString() << " found.\n";
+ *          break;
+ *       }
+ *    }
+ * 
+ *    if(reqDevID == -1)
+ *    {
+ *       std::cout << "Requested device not found in enumerated device list!\n";
+ *       return 1;
+ *    }
+ * 
+ *    std::cout << "Connecting to requested device: " << reqDevice.ToString() << std::endl;
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.at(reqDevID));
+ * 
+ *    std::cout << "Connection established. Disconnecting!\n";
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ * 
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * Just like in the very first example, device enumeration without any device filters is used. Once device list is enumerated
+ * and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle" type is created. Only device name is 
+ * selected as a filtering argument. Device filter object is used as an argument for @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method
+ * which compares the arguments of device handles in the list with the given device filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device.
+ * Establishing connection with the device is done using @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. 
+ * If the device creation is successful, adress of the device object is returned and needs to be stored in @ref lime::SDRDevice "SDRDevice" type pointer. Finally, device object must be freed using 
+ * @ref lime::DeviceRegistry::freeDevice(lime::SDRDevice*) "freeDevice()" API function in order to release dynamically allocated memory to avoid application memory leaks on application termination. 
+ * Output of the example code:
+ * 
+ * @image{inline} html dev_registration_dev_connection.png
+ * @image{inline} xml dev_registration_dev_connection.png  
+ * 
+ * @ref examples "Back to the list of example topics"
+ * 
+ * @ref dev_config "Go to SDR device configuration example topic"
  */
 
 /**
