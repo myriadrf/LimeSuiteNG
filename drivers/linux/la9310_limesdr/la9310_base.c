@@ -830,7 +830,7 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     dev_info(la9310_dev->dev, "%s: Initiating Reset handshake\n", la9310_dev->name);
     rc = la9310_do_reset_handshake(la9310_dev);
 
-#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
+#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
 #endif
 
