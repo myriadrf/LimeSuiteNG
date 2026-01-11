@@ -549,6 +549,7 @@ OpStatus LimeSDR_Micro::UploadMemory(
         LMS64CProtocol::FirmwareInfo fw{};
         LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
         LMS64CProtocol::FirmwareToDescriptor(fw, mDeviceDescriptor);
+        return status;
     }
     case eMemoryDevice::VSPA:
         return mStreamingPort->LoadVSPAFirmware(data, length);
