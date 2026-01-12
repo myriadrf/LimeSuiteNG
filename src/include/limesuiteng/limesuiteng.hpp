@@ -608,7 +608,7 @@
  * @image{inline} html dev_registration_dev_connection.png
  * @image{inline} xml dev_registration_dev_connection.png  
  * 
- * @note In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device on enumerated device list:
+ * @note In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list:
  * @code{.cpp}
  * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
  * @endcode
