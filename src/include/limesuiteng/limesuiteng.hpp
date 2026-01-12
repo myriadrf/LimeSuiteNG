@@ -76,16 +76,30 @@
  * 
  * @subsection control_adn_config SDR Device control and configuration
  * <ul>
- *    <li> @ref lime::SDRDevice::Init() "Init()"</li>
- *    <li> @ref lime::SDRDevice::Reset() "Reset()"</li>
- *    <li> @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()"</li>
- *    <li> @ref lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) "Calibrate()"</li>
- *    <li> @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()"</li>
- *    <li><b>Configuration:</b>
+ *    <li><b>Generic device control and configuration:</b>
+ *       <ul>
+ *          <li> @ref lime::SDRDevice::Init() "Init()"</li>
+ *          <li> @ref lime::SDRDevice::Reset() "Reset()"</li>
+ *          <li> @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()"</li>
+ *          <li> @ref lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) "Calibrate()"</li>
+ *          <li> @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()"</li>
+ *          <li> @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()"</li>
+ *          <li> @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()"</li>
+ *          <li> @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()"</li>
+ *          <li> @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()"</li>
+ *          <li> @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()"</li>
+ *          <li> @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Quick configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()"</li>
  *          <li> @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()"</li>
  *          <li> @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Configuration by parameter or register address:</b>
+ *       <ul>
  *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)"</li>
  *          <li> @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint16_t value)"</li>
  *          <li> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address, uint8_t msb, uint8_t lsb)"</li>
@@ -104,16 +118,7 @@
  *        <li> @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()"</li>
  *       </ul>
  *    </li>
- *    <li><b> Additional info:</b>
- *       <ul>
- *          <li> @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()"</li>
- *          <li> @ref lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) "GetGPSLock()"</li>
- *          <li> @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()"</li>
- *          <li> @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()"</li>
- *          <li> @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()"</li>
- *       </ul>
- *    </li>
- *    <li><b>Configuration by parameter:</b>
+ *    <li><b>Frequency configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
  *          <li> @ref lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) "SetClockFreq()"</li>
@@ -124,20 +129,22 @@
  *          <li> @ref lime::SDRDevice::GetNCOOffset(uint8_t, lime::TRXDir, uint8_t) "GetNCOOffset()"</li>
  *          <li> @ref lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) "GetNCOIndex()"</li>
  *          <li> @ref lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetNCOIndex()"</li>
- *          <li> @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()"</li>
- *          <li> @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()"</li>
- *          <li> @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()"</li>
- *          <li> @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()"</li>
- *          <li> @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()"</li>
- *          <li> @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()"</li>
- *          <li> @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()"</li>
- *          <li> @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Signal processor corrector configuration:</b>
+ *       <ul>
  *          <li> @ref lime::SDRDevice::GetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t) "GetDCOffsetMode()"</li>
  *          <li> @ref lime::SDRDevice::SetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t, bool) "SetDCOffsetMode()"</li>
  *          <li> @ref lime::SDRDevice::GetDCOffset(uint8_t, lime::TRXDir, uint8_t) "GetDCOffset()"</li>
  *          <li> @ref lime::SDRDevice::SetDCOffset(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) "SetDCOffset()"</li>
  *          <li> @ref lime::SDRDevice::GetIQBalance(uint8_t, lime::TRXDir, uint8_t) "GetIQBalance()"</li>
  *          <li> @ref lime::SDRDevice::SetIQBalance(uint8_t, lime::TRXDir, uint8_t, const lime::complex64f_t&) "SetIQBalance()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Test signal configuration:</b>
+ *       <ul>
+ *          <li> @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()"</li>
+ *          <li> @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()"</li>
  *       </ul>
  *    </li>
  *    <li><b>Low speed interfaces:</b>
@@ -162,6 +169,15 @@
  *          <li> @ref lime::SDRDevice::Synchronize(bool) "Synchronize()"</li>
  *          <li> @ref lime::SDRDevice::GetHardwareTimestamp(uint8_t) "GetHardwareTimestamp()"</li>
  *          <li> @ref lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) "SetHardwareTimestamp()"</li>
+ *       </ul>
+ *    </li>
+ *    <li><b>Additional device info:</b>
+ *       <ul>
+ *          <li> @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()"</li>
+ *          <li> @ref lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) "GetGPSLock()"</li>
+ *          <li> @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()"</li>
+ *          <li> @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()"</li>
+ *          <li> @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()"</li>
  *       </ul>
  *    </li>
  * @if SPECIAL_API
@@ -623,6 +639,11 @@
  * @ref examples "Back to the list of example topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
+ * This example topic explains and provides information about various SDR device configuration options. In general SDR devices can be quick configured or configuration can be performed
+ * by changing individual SDR device parameters. Click the link below, to check out a sorted list of API functions used for configuring SDR devices.  
+ * 
+ * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
+ * 
  * When setting up a new or out of the box SDR device it is always recommended to perform initial device configuration:
  * @code{.cpp}
  * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
@@ -634,7 +655,7 @@
  * lime::DeviceRegistry::freeDevice(device);
  * @endcode
  * 
- * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
+ 
  *
  * Here is a list of sub-topics that will help to learn more about SDR device configuration options:
  * <ul>
