@@ -83,6 +83,8 @@
  *          <li> @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()"</li>
  *          <li> @ref lime::SDRDevice::GetFrequency(uint8_t,lime::TRXDir,uint8_t) "GetFrequency()"</li>
  *          <li> @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()"</li>
+ *          <li> @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()"</li>
+ *          <li> @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()"</li>
  *          <li> @ref lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) "Calibrate()"</li>
  *          <li> @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()"</li>
  *          <li> @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()"</li>
@@ -110,14 +112,12 @@
  *          <li> @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister()"</li>
  *       </ul>
  *    </li>
- *    <li> <b> Filter configuration:</b>
+ *    <li> <b> FIR filter options:</b>
  *       <ul>
  *        <li> @ref lime::SDRDevice::ConfigureGFIR(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::GFIRFilter) "ConfigureGFIR()"</li>
  *        <li> @ref lime::SDRDevice::GetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t) "GetGFIRCoefficients()"</li>
  *        <li> @ref lime::SDRDevice::SetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t, std::vector<double>) "SetGFIRCoefficients()"</li>
  *        <li> @ref lime::SDRDevice::SetGFIR(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetGFIR()"</li>
- *        <li> @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()"</li>
- *        <li> @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()"</li>
  *       </ul>
  *    </li>
  *    <li><b>Additional frequency configuration:</b>
