@@ -22,6 +22,8 @@ namespace lime {
 class ISPI;
 struct SDRDescriptor;
 
+uint32_t GetPacketSizeForBusSize(uint32_t requestSamplesCount, uint32_t sampleSize, uint32_t channelCount, uint32_t busWidth);
+
 /** @brief Class for interfacing with a field-programmable gate array (FPGA). */
 class FPGA
 {

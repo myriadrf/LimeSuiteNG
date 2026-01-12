@@ -147,6 +147,7 @@ OpStatus LimeSDR_MMX8::Init()
 {
     OpStatus status = OpStatus::Success;
     maskStreamIsSetup = 0;
+    maskStreamNeedsTrigger = 0;
     StreamsTrigger();
 
     for (size_t i = 0; i < mSubDevices.size(); ++i)
@@ -860,12 +861,17 @@ OpStatus LimeSDR_MMX8::StreamsTrigger()
     // X8 board has two stage stream start.
     // start stream for expected subdevices, they will wait for secondary enable from main fpga register
     uint32_t interface_ctrl_000A = ReadSPI(mainFPGAspi.get(), 0x000A);
-    if (interface_ctrl_000A == maskStreamIsSetup)
-        return OpStatus::Success;
+    // if (interface_ctrl_000A == maskStreamIsSetup)
+    //     return OpStatus::Success;
 
-    interface_ctrl_000A = maskStreamIsSetup;
+    // disable streams that were previously active, keep state of streams not touched by this application
+    interface_ctrl_000A &= ~maskStreamNeedsTrigger;
+    interface_ctrl_000A |= maskStreamIsSetup;
+    maskStreamNeedsTrigger = maskStreamIsSetup;
+
     lime::debug("MMX8: streams enable %04X", interface_ctrl_000A);
     WriteSPI(mainFPGAspi.get(), 0x000A, interface_ctrl_000A);
+
     return OpStatus::Success;
 }
 
@@ -876,6 +882,7 @@ void LimeSDR_MMX8::StreamEnable(uint8_t moduleIndex, bool ready)
         maskStreamIsSetup |= mask;
     else
         maskStreamIsSetup &= ~mask;
+    maskStreamNeedsTrigger |= mask;
 }
 
 } //namespace lime
