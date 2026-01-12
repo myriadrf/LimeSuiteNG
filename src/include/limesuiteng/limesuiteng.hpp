@@ -76,7 +76,7 @@
  * 
  * @subsection control_adn_config SDR Device control and configuration
  * <ul>
- *    <li><b>Generic device control and configuration:</b>
+ *    <li><b>Common device control and configuration options:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::Init() "Init()"</li>
  *          <li> @ref lime::SDRDevice::Reset() "Reset()"</li>
@@ -639,33 +639,19 @@
  * @ref examples "Back to the list of example topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
- * This example topic explains and provides information about various SDR device configuration options. In general SDR devices can be quick configured or configuration can be performed
- * by changing individual SDR device parameters. Click the link below, to check out a sorted list of API functions used for configuring SDR devices.  
+ * Since SDR devices are highly customizible, this example topic is separated into different sub-topics which provide specific information and examples for various SDR control and configuration options.
+ * The link below, redirects to the full API function list for SDR device control and configuration.   
  * 
  * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
  * 
- * When setting up a new or out of the box SDR device it is always recommended to perform initial device configuration:
- * @code{.cpp}
- * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
- *
- * device->Init();
- *
- * ... // Other program code
- *
- * lime::DeviceRegistry::freeDevice(device);
- * @endcode
- * 
- 
- *
- * Here is a list of sub-topics that will help to learn more about SDR device configuration options:
+ * List of sub-topics to learn more about specific SDR device control and configuration options:
  * <ul>
+ *    <li> @ref generic_config "Common control and configuration options"
  *    <li> @ref quick_config "Quick configuration"</li>
- *    <li> @ref filter_config "Filter configuration"</li>
+ *    <li> @ref fir_filter_config "FIR filter configuration"</li>
  *    <li> @ref frequency_config "Frequency configuration"</li>
- *    <li> @ref nco_frequency_config "NCO frequency configuration"</li>
  * </ul>
  * 
- * @ref examples "Back to the list of example topics"  
  * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
 
@@ -673,6 +659,66 @@
 // This is the starting point of sub-topic pages for SDR 
 // configuration topic
 // ###########################################################
+
+/**
+ * @addtogroup generic_config Common control and configuration options
+ * 
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
+ * 
+ * This sub-topic explores common SDR configuration options for configuring basic SDR parameters. Code examples shown below skip device discovery steps. When a new or out of the box SDR device is registered,
+ * it is recommended to perform initial SDR device configuration with default configuration values using @ref lime::SDRDevice::Init() "Init()" function.
+ * 
+ * Minimal SDR RX set up:
+ * @code{.cpp} 
+ * int main()
+ * {
+ *    ... // Device handle discovery code
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connnect to SDR device\n";
+ *       return 1;
+ *    }
+ *    
+ *    lime::OpStatus configStatus = lime::OpStatus::Success;
+ *    double centerFreq = 95.9e6;
+ *    double cutOffFreq = 5e6;
+ *    double sampRate = 2e6;
+ *    uint8_t overSampRatio = 2;
+ * 
+ *    configStatus = device->Init();
+ *    if(configStatus != lime::OpStatus::Success)
+ *    {
+ *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    }
+ * 
+ *    configStatus = device->SetFrequency(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, centerFreq);
+ *    if(configStatus != lime::OpStatus::Success)
+ *    {
+ *       std::cout << "Device center frequency configuration failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    }
+ *    
+ *    configStatus = device->SetLowPassFilter(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, cutOffFreq);
+ *    if(configStatus != lime::OpStatus::Success)
+ *    {
+ *       std::cout << "Device low pass filter configuration failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    }
+ * 
+ *    configStatus = device->SetSampleRate(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, sampRate, overSampRatio);
+ *    if(configStatus != lime::OpStatus::Success)
+ *    {
+ *       std::cout << "Device sample rate configuration failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    }
+ *    
+ *    ... // Other program code
+ * 
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * 
+ */
+
 /**
  * @addtogroup quick_config Quick configuration
  * 
@@ -680,7 +726,7 @@
  */
 
 /**
- * @addtogroup filter_config Filter configuration
+ * @addtogroup fir_filter_config FIR filter configuration
  * 
  * 
  */
@@ -690,12 +736,6 @@
  * 
  * 
 */
-
-/**
- * @addtogroup nco_frequency_config NCO frequency configuration
- * 
- * 
- */
 
 // ###########################################################
 // This is the ending point of sub-topic pages for SDR 
