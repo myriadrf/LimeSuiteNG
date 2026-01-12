@@ -81,6 +81,8 @@
  *          <li> @ref lime::SDRDevice::Init() "Init()"</li>
  *          <li> @ref lime::SDRDevice::Reset() "Reset()"</li>
  *          <li> @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()"</li>
+ *          <li> @ref lime::SDRDevice::GetFrequency(uint8_t,lime::TRXDir,uint8_t) "GetFrequency()"</li>
+ *          <li> @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()"</li>
  *          <li> @ref lime::SDRDevice::Calibrate(uint8_t, lime::TRXDir, uint8_t, double) "Calibrate()"</li>
  *          <li> @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()"</li>
  *          <li> @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()"</li>
@@ -118,12 +120,10 @@
  *        <li> @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Frequency configuration:</b>
+ *    <li><b>Additional frequency configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
  *          <li> @ref lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) "SetClockFreq()"</li>
- *          <li> @ref lime::SDRDevice::GetFrequency(uint8_t,lime::TRXDir,uint8_t) "GetFrequency()"</li>
- *          <li> @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()"</li>
  *          <li> @ref lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) "GetNCOFrequency()"</li>
  *          <li> @ref lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) "SetNCOFrequency()"</li>
  *          <li> @ref lime::SDRDevice::GetNCOOffset(uint8_t, lime::TRXDir, uint8_t) "GetNCOOffset()"</li>
