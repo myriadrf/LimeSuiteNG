@@ -476,6 +476,8 @@
  * 
  * @ref registration "Click here to view the SDR device discovery and connectivity management functions"  
  * 
+ * <h2>Device discovery</h2>
+ * 
  * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
  * are currently connected to PC:
  * @code{.cpp}
@@ -524,6 +526,8 @@
  * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
  * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock which is not compliant with USB 3.0 standard.
  * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
+ * 
+ * <h2>Filtering device lists and device registration</h2>
  * 
  * Discovery function @ref lime::DeviceRegistry::enumerate() "enumerate()" also has an overloaded version @ref lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) "enumerate(const DeviceHandle&)"
  * function that can accept a @ref lime::DeviceHandle "DeviceHandle" type object which can act as a device filter. If all arguments from device handle matches specified device filter arguments (unspecified 
@@ -665,8 +669,45 @@
  * 
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * 
- * This sub-topic explores common SDR configuration options for configuring basic SDR parameters. Code examples shown below skip device discovery steps. When a new or out of the box SDR device is registered,
- * it is recommended to perform initial SDR device configuration with default configuration values using @ref lime::SDRDevice::Init() "Init()" function.
+ * Common SDR device control and configuration options allow to set up the communication channel structure and the base streaming parameters of individual channel directions (Tx/Rx).
+ * This sub-topic explains how to:
+ * <ol>
+ *    <li>set up channel structure</li>
+ *    <li>configure channel directions (Sample rate, LO frequency and etc.)</li>
+ *    <li>TODO: update this list</li>
+ * </ol>  
+ * 
+ * A full example code for configuring SDR device is provided at the end of the page.  
+ * 
+ * <h2>Default initialization</h2>
+ * 
+ * Before starting any SDR device channel configurations it is recommended to perform default SDR device initialization using @ref lime::SDRDevice::Init() "Init()" function:
+ * @code{.cpp}
+ *    ... // Device discovery and registration code
+ *    
+ *    configStatus = device->Init();
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    
+ *    ... // Other SDR device configurations  
+ * @endcode
+ * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
+ * default and stable/tested device configuration which can then be freely customized to support project requirements. Also most SDR device control and configuration functions return
+ * @ref lime::OpStatus "operation status" which can be used to check and log appropriate status of device configuration as shown in the above example.
+ * 
+ * <h2>Setting up stream channels</h2>
+ * 
+ * SDR device stream channels are set up using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
+ * @code{.cpp}
+ *    ... // Device default initialization
+ *    
+ *    configStatus = device->EnableChannel(0, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, true);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;    
+ * 
+ *    ... // Other SDR device configurations
+ * @endcode
+ * 
  * 
  * Minimal SDR RX set up:
  * @code{.cpp} 
@@ -688,27 +729,19 @@
  * 
  *    configStatus = device->Init();
  *    if(configStatus != lime::OpStatus::Success)
- *    {
  *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
- *    }
  * 
  *    configStatus = device->SetFrequency(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, centerFreq);
  *    if(configStatus != lime::OpStatus::Success)
- *    {
  *       std::cout << "Device center frequency configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- *    }
  *    
  *    configStatus = device->SetLowPassFilter(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, cutOffFreq);
  *    if(configStatus != lime::OpStatus::Success)
- *    {
  *       std::cout << "Device low pass filter configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- *    }
  * 
  *    configStatus = device->SetSampleRate(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, sampRate, overSampRatio);
  *    if(configStatus != lime::OpStatus::Success)
- *    {
  *       std::cout << "Device sample rate configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- *    }
  *    
  *    ... // Other program code
  * 
