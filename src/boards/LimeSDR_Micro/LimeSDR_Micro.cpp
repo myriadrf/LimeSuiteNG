@@ -538,10 +538,12 @@ void LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
 OpStatus LimeSDR_Micro::UploadMemory(
     eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback)
 {
+    OpStatus status;
+
     switch (device)
     {
     case eMemoryDevice::ARM_M4: {
-        OpStatus status = mStreamingPort->LoadArmM4Firmware(data, length);
+        status = mStreamingPort->LoadArmM4Firmware(data, length);
         if (status != OpStatus::Success)
             return status;
 
@@ -552,6 +554,11 @@ OpStatus LimeSDR_Micro::UploadMemory(
         return status;
     }
     case eMemoryDevice::VSPA:
+        // Make sure the VCPU is stopped
+        status = la9310->vspa.ResetVCPU();
+        if (status != OpStatus::Success)
+            return status;
+	// (Re-)programm the firmware
         return mStreamingPort->LoadVSPAFirmware(data, length);
     default:
         return OpStatus::NotImplemented;

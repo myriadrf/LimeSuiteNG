@@ -335,7 +335,6 @@ struct la9310_dev {
     struct platform_device* uart;
 
     u8 arm_m4_fw_loaded;
-    u8 vspa_fw_loaded;
 };
 
 /*la9310_dev->flags*/

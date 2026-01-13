@@ -37,6 +37,9 @@ class LIME_API VSPA_iqplayer
     OpStatus StartTx();
     OpStatus StopRx();
     OpStatus StopTx();
+    /// @brief Resets the VCPU core if it is running
+    /// @return 0 on success, error code else
+    OpStatus ResetVCPU();
 
     OpStatus StartTxTone(bool enabled);
 
