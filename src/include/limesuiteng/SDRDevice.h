@@ -95,8 +95,11 @@ class LIME_API SDRDevice
     virtual OpStatus GetGPSLock(GPS_Lock* status) = 0;
 
     /// @brief Enables or disables the specified channel.
-    /// This powers on or off device harware for selected 
-    /// channel direction: TSP, BB, AFE, SXT, RFE.
+    /// This powers on or off device hardware of individual
+    /// channel direction. Toggling off a channel direction
+    /// reduces the consumption of device current and power.
+    /// To completely disable channel, both channel directions Tx
+    /// and Rx must be disabled.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
