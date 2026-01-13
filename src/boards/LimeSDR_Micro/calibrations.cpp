@@ -96,6 +96,10 @@ static void PlotBins(std::vector<float> bins)
 static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
 {
     OpStatus status;
+    status = ctx->vspa->StopRx();
+    if (status != OpStatus::Success)
+        printf("Failed stop rx\n");
+    ctx->vspa->ClearStats();
     status = ctx->vspa->StartRx();
     if (status != OpStatus::Success)
         printf("Failed start rx\n");
@@ -418,7 +422,7 @@ static void limesdrmicro_calibrate_rx_dc(CalibrationContext* ctx)
     }
 
     LMS7002M_LOG(rfsoc,
-        lime_LogLevel_Debug,
+        lime_LogLevel_Verbose,
         "RxDC offset (analog) I:%3i, Q:%3i, %s",
         lms7002m_read_analog_dc(rfsoc, dcRegAddr),
         lms7002m_read_analog_dc(rfsoc, dcRegAddr + 1),
@@ -445,7 +449,7 @@ static void limesdrmicro_calibrate_rx_dc(CalibrationContext* ctx)
         dcq = search.result;
 
         LMS7002M_LOG(rfsoc,
-            lime_LogLevel_Debug,
+            lime_LogLevel_Verbose,
             "RxDC offset (digital) I:%3i, Q:%3i, %s",
             dci,
             dcq,
@@ -819,7 +823,8 @@ static void lms7002m_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx)
     else
         ctx->vspa->GetRxQEC()->SetImbalance(imbalance_db, phase_deg);
     const float rssi = la9310_get_rssi(ctx, -1e6);
-    printf_dbg_log("QEC gain: %gdb, phase: %gdeg, rssi : %fdBFS\n", imbalance_db, phase_deg, rssi);
+    LMS7002M_LOG(
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, phase: %g deg, (RSSI: %f dBFS)\n", imbalance_db, phase_deg, rssi);
 }
 
 OpStatus LimeSDR_Micro::CalibrateRx()
@@ -845,7 +850,7 @@ OpStatus LimeSDR_Micro::CalibrateRx()
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
 
     LMS7002M_LOG(rfsoc,
-        lime_LogLevel_Debug,
+        lime_LogLevel_Verbose,
         "Rx calibrate ch.%s @ %lu Hz, BW: %u Hz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         (x0020val & 0x3) == 1 ? "A" : "B",
         lms7002m_get_frequency_sx(rfsoc, false),
@@ -910,7 +915,7 @@ RxCalibrationEndStage : {
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_RXA, 0);
     else
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_RXB, 0);
-    LMS7002M_LOG(rfsoc, lime_LogLevel_Info, "%s", "Rx calibration finished");
+    LMS7002M_LOG(rfsoc, lime_LogLevel_Verbose, "%s", "Rx calibration finished");
     return ResultToStatus(lime_Result_Success);
 }
 
@@ -1265,7 +1270,7 @@ OpStatus LimeSDR_Micro::CalibrateTx()
 
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020);
     LMS7002M_LOG(rfsoc,
-        lime_LogLevel_Debug,
+        lime_LogLevel_Verbose,
         "Tx ch.%s , BW: %u Hz, RF output: %s, Gain: %i, loopb: %s",
         (x0020val & 3) == 0x1 ? "A" : "B",
         bandwidthRF,

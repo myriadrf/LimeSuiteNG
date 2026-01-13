@@ -231,6 +231,13 @@ OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
 {
     // const std::lock_guard<std::mutex> lock(mx);
 
+    VSPA_FIFO_State& rxState = mRx[channel];
+    rxState.bytes_consumed = 0;
+    rxState.bytes_produced = 0;
+    rxState.last_produced = 0;
+    rxState.last_consumed = 0;
+    tx_vspa_proxy_wo->host_consumed_size[0] = 0;
+
     const mbox_opc_e command = MBOX_OPC_IQ_MOD_RX;
     const bool start = true;
     const bool test_load_start = false;
@@ -267,7 +274,7 @@ OpStatus VSPA_iqplayer::StopRx()
     if (rx_vspa_proxy_ro->DDR_wr_base_address == 0xDEADBEEF) // Rx is not active
         return OpStatus::Success;
 
-    // printf_dbg_log("IQPlayer: Stop Rx\n");
+    printf_dbg_log("IQPlayer: Stop Rx\n");
     // t_stats stats = GetStats();
     // const uint32_t app_ddr = mRx[0].bytes_produced / tx_vspa_proxy_ro->rx_ddr_step;
     // printf("Rx AXIQ_WR:%08X\n"
@@ -443,10 +450,12 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     // Check new transfer
     const uint32_t dev_produced = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
     const uint32_t produceDiff = dev_produced - rxState.last_produced;
+    printf_dbg_log("devp:%u diff:%u\n", dev_produced, produceDiff);
     rxState.last_produced = dev_produced;
 
     rxState.bytes_produced += produceDiff;
     uint32_t data_size = rxState.bytes_produced - rxState.bytes_consumed;
+    printf_dbg_log("Receive - p:%i c:%i, sz:%i\n", rxState.bytes_produced, rxState.bytes_consumed, data_size);
     if (data_size >= rxState.fifo_size)
     {
         lime::error("VSPA RX overrun, (data_size=0x%08x app_RX_total_produced_size=0x%08lx app_RX_total_consumed_size=0x%08lx)\n",

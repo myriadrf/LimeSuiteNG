@@ -35,6 +35,15 @@ void Logger::defaultLogHandler(const LogLevel level, const std::string& message)
     case LogLevel::Warning:
         std::cerr << rang::fg::yellow << message << rang::fg::reset << std::endl;
         break;
+    case LogLevel::Info:
+        std::cerr << rang::fg::green << message << rang::fg::reset << std::endl;
+        break;
+    case LogLevel::Verbose:
+        std::cerr << message << rang::fg::reset << std::endl;
+        break;
+    case LogLevel::Debug:
+        std::cerr << rang::fg::gray << message << rang::fg::reset << std::endl;
+        break;
     default:
         std::cerr << message << std::endl;
     }
