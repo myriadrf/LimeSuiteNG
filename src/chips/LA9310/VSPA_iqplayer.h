@@ -49,11 +49,6 @@ class LIME_API VSPA_iqplayer
     int32_t Transmit(const void* src, uint32_t write_size, uint64_t timestamp);
 
     OpStatus ClearStats();
-    OpStatus ResetTxStats();
-    OpStatus TxRstPtr();
-    OpStatus TxAxiqEnable(bool enable);
-    OpStatus TxAbort();
-    void WriteVSPA_IPReg(uint16_t addr, uint32_t value);
 
     std::shared_ptr<IDCCorrector> GetRxDCCorrector();
     std::shared_ptr<IDCCorrector> GetTxDCCorrector();
@@ -63,11 +58,12 @@ class LIME_API VSPA_iqplayer
 
     t_stats GetStats();
 
-    // private:
     OpStatus StartRx(uint8_t channel, uint32_t fifo_size);
     OpStatus StartTx(uint32_t fifo_size, bool flow_control);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
+
+  private:
     std::shared_ptr<LA9310_PCIe> port;
     std::shared_ptr<VSPA_mailbox> mailbox;
 

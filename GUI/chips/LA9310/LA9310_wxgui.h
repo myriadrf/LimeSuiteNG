@@ -27,16 +27,6 @@ class LA9310_wxgui : public ISOCPanel
     void UpdateGUI() override;
 
   private:
-    void TxToneToggle(wxCommandEvent& event);
-    void ToggleT11(wxCommandEvent& event);
-    void ToggleTx(wxCommandEvent& event);
-    void SendData(wxCommandEvent& event);
-    void ClearStats(wxCommandEvent& event);
-    void WriteVSPAAddr(wxCommandEvent& event);
-    void ResetTxStats(wxCommandEvent& event);
-    void ResetPtr(wxCommandEvent& event);
-    void AxiqEn(wxCommandEvent& event);
-    void TxAbort(wxCommandEvent& event);
     std::unique_ptr<DCCorrectorsPanel> rxdcpanel;
     std::unique_ptr<DCCorrectorsPanel> txdcpanel;
 

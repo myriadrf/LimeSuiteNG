@@ -788,76 +788,7 @@ std::shared_ptr<IQuadratureErrorCorrector> VSPA_iqplayer::GetTxQEC()
     return std::make_shared<VSPA_QEC>(mailbox, TRXDir::Tx);
 }
 
-#define VSPA_VCPU_DMEM_OFF 0x400000
-#define VSPA_IPPU_DMEM_OFF 0x500000
 #define VSPA_CCSR 0x1000000
-#define CYC_COUNTER_MSB 0x98
-#define CYC_COUNTER_LSB 0x9C
-#define DMA_DMEM_PRAM_ADDR 0xB0
-#define GP_IN0 0x500
-#define GP_OUT0 0x580
-
-void VSPA_iqplayer::WriteVSPA_IPReg(uint16_t addr, uint32_t value)
-{
-    volatile uint8_t* BAR0_addr = reinterpret_cast<uint8_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
-    auto _VSPA_DMA_regs = reinterpret_cast<volatile uint32_t*>(BAR0_addr + VSPA_CCSR);
-
-    if (addr < DMA_DMEM_PRAM_ADDR || addr > 0xDC)
-        return;
-
-    _VSPA_DMA_regs[addr / 4] = value;
-    printf("VSPA wr: %02X %08X\n", addr / 4, value);
-}
-
-OpStatus VSPA_iqplayer::ResetTxStats()
-{
-    // const std::lock_guard<std::mutex> lock(mx);
-    printf_dbg_log("IQPlayer: ResetTxStats\n");
-    const mbox_opc_e command = MBOX_OPC_Tx_reset_counter;
-    uint32_t hiword = command << 24;
-    uint32_t loword = 0;
-    uint64_t value = (uint64_t(hiword) << 32) | loword;
-
-    return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
-}
-
-OpStatus VSPA_iqplayer::TxRstPtr()
-{
-    // const std::lock_guard<std::mutex> lock(mx);
-    printf_dbg_log("IQPlayer: TxRstPtr\n");
-    const mbox_opc_e command = MBOX_OPC_Tx_rst_ptr;
-    uint32_t hiword = command << 24;
-    uint32_t loword = 0;
-    uint64_t value = (uint64_t(hiword) << 32) | loword;
-    uint64_t result = 0;
-    OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &result);
-    return status;
-}
-
-OpStatus VSPA_iqplayer::TxAxiqEnable(bool enabled)
-{
-    // const std::lock_guard<std::mutex> lock(mx);
-    printf_dbg_log("IQPlayer: TxAxiqEnable %i\n", enabled);
-    const mbox_opc_e command = MBOX_OPC_Tx_qxiq_enable;
-    uint32_t hiword = command << 24;
-    uint32_t loword = enabled;
-    uint64_t value = (uint64_t(hiword) << 32) | loword;
-
-    return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
-}
-
-OpStatus VSPA_iqplayer::TxAbort()
-{
-    // const std::lock_guard<std::mutex> lock(mx);
-    printf_dbg_log("IQPlayer: TxAbort\n");
-    const mbox_opc_e command = MBOX_OPC_Tx_abort;
-    uint32_t hiword = command << 24;
-    uint32_t loword = 0;
-    uint64_t value = (uint64_t(hiword) << 32) | loword;
-
-    return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
-}
-
 OpStatus VSPA_iqplayer::ResetVCPU()
 {
     OpStatus status;
