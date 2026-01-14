@@ -723,7 +723,42 @@
  * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
  * of correct device LMS7002M module.
  * 
+ * <h2>Setting up LO frequency</h2>
  * 
+ * To set new synthesizer LO generator frequency for a specific SDR device channel direction use @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double frequency = 95.9e6; // Hz
+ *    configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, frequency);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To retrieve current synthesizer LO generator frequency of specified SDR device channel direction, use @ref lime::SDRDevice::GetFrequency(uint8_t, lime::TRXDir, uint8_t) "GetFrequency()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double frequency = 0;
+ *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA);
+ *    std::cout << "Current LO frequency on ChA Tx = " << frequency << " Hz\n";
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * When configuring new synthesizer LO generator frequency, it is always recommended to check for operation errors. Possible error reasons:
+ * <ul>
+ *    <li>Specified LO generator frequency is not supported by VCO</li>
+ *    <li>LO generator VCO tuning failed to lock to synthesizer reference clock</li>
+ *    <li>LO generator VCO tuning failed, required tuning bias current too high</li>
+ * </ul>
+ * 
+ * LO generator frequency is shared between the same directions (Rx or Tx) on different channels, when SDR device is set to operate in MIMO mode. Therefore, in MIMO mode, it is 
+ * enough to set LO generator frequency once per stream direction (Rx or Tx) using @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function.
  * 
  * 
  * Minimal SDR RX set up:
