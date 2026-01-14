@@ -87,9 +87,6 @@ int main(int argc, char** argv)
     std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
     SDRConfig config;
-    config.channel[0].rx.oversample = 2;
-    config.channel[0].tx.oversample = 2;
-
     if (samplerateFlag)
     {
         double sampleRate = args::get(samplerateFlag);
