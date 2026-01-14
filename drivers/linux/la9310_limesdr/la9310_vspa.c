@@ -787,7 +787,7 @@ static int la9310_load_vspa_image(struct la9310_dev* la9310_dev, char* vaddr, in
         return -ENOEXEC;
     }
 
-    /*FW image parsing and load sections */
+    /* FW image parsing and load sections */
     if (fw_read_and_load_sections(
             la9310_dev, vaddr, hd->fh_phoff, hd->fh_shoff, hd->fh_shnum, hd->fh_shstrndx, vspa_fw_size, hd->fh_phnum, &hardware))
     {
@@ -896,11 +896,13 @@ int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, co
         return -EPERM;
     }
 
-    if (la9310_dev->vspa_fw_loaded)
+    /* Check if VCPU is busy */
+    if (vspa_reg_read(vspadev->regs + STATUS_REG_OFFSET) & STATUS_REG_BUSY)
     {
-        dev_err(la9310_dev->dev, "Firmware for VSPA DSP is already loaded!\n");
+        dev_err(la9310_dev->dev, "Firmware for VSPA DSP is already loaded and VCPU is running!\n");
         return -EBUSY;
     }
+
     dev_info(la9310_dev->dev, "INFO:%s : VSPA Loading firmware initiated-\n", __func__);
 
     vspadev->state = VSPA_STATE_LOADING;
@@ -940,7 +942,6 @@ int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, co
 
     dev_dbg(la9310_dev->dev, "DBG: Fw image name saved: %s", vspadev->eld_filename);
 
-    la9310_dev->vspa_fw_loaded = 1;
     return 0;
 }
 

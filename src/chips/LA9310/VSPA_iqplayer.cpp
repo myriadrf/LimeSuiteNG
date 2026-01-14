@@ -72,7 +72,7 @@ enum mbox_opc_e {
     MBOX_OPC_Tx_reset_counter, // 0x11
     MBOX_OPC_Tx_rst_ptr, // 0x12
     MBOX_OPC_Tx_qxiq_enable, // 0x13
-    MBOX_OPC_Tx_abort
+    MBOX_OPC_Tx_abort,
 };
 
 namespace lime {
@@ -856,6 +856,31 @@ OpStatus VSPA_iqplayer::TxAbort()
     uint64_t value = (uint64_t(hiword) << 32) | loword;
 
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
+}
+
+OpStatus VSPA_iqplayer::ResetVCPU()
+{
+    OpStatus status;
+    volatile uint8_t* BAR0_addr = reinterpret_cast<uint8_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
+    auto _VSPA_STATUS_reg = reinterpret_cast<volatile uint32_t*>(BAR0_addr + VSPA_CCSR + 0x10);
+    const uint32_t vcpu_busy = (1 << 8);
+
+    if (*_VSPA_STATUS_reg & vcpu_busy)
+    {
+        printf_dbg_log("IQPlayer: Reset VCPU\n");
+        const mbox_opc_e command = MBOX_OPC_DONE_SWRESET;
+        uint32_t hiword = command << 24;
+        uint32_t loword = 0;
+        uint64_t value = (uint64_t(hiword) << 32) | loword;
+        uint64_t result = 0;
+        status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &result);
+    }
+    else
+    {
+        printf_dbg_log("IQPlayer: VCPU not running\n");
+        status = OpStatus::Success;
+    }
+    return status;
 }
 
 } // namespace lime
