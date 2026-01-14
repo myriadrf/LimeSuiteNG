@@ -759,6 +759,38 @@
  * 
  * LO generator frequency is shared between the same directions (Rx or Tx) on different channels, when SDR device is set to operate in MIMO mode. Therefore, in MIMO mode, it is 
  * enough to set LO generator frequency once per stream direction (Rx or Tx) using @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function.
+ *
+ * <h2>Setting up low pass filters</h2>
+ *
+ * To set new low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double bandwidth = 2e6; // Hz
+ *    configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, bandwidth);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set channel A Tx direction low pass filter bandwidth with error: " << lime::ToString(configStatus) << std::endl;
+ *
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double bandwidth = 0; // Hz
+ *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA);
+ *    std::cout << "Current low pass filter bandwith value for channel A, Tx direction is " << bandwidth << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To bypass low pass filter in transceiver baseband for a specified SDR device channel direction, set the bandwidth value to zero. If Low pass filter is bypassed in Rx direction,
+ * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
+ * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
+ * minimum or maximum possible low pass filter bandwidth value. Therefore, when setting new low pass filter bandwidth value, it is recommended to check if the actual value was set in HW.
  * 
  * 
  * Minimal SDR RX set up:
