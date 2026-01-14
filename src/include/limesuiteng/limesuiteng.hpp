@@ -697,16 +697,33 @@
  * 
  * <h2>Setting up stream channels</h2>
  * 
- * SDR device stream channels are set up using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
+ * SDR device stream channels can be configured by using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
  * @code{.cpp}
  *    ... // Device default initialization
  *    
- *    configStatus = device->EnableChannel(0, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, true);
+ *    uint8_t moduleIndex = 0;
+ *    bool directionEnabled = true;
+ *    configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, directionEnabled);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;    
  * 
  *    ... // Other SDR device configurations
  * @endcode
+ * 
+ * The @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function performs hardware re-configuration of specified device channel direction. If device channel
+ * direction is disabled, all of the internal hardware components (transceiver signal processor, analog front end, radio front end and etc.) used for that particular direction are also disabled. Enabling 
+ * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and devices are configured to work in MIMO mode. Therefore, if a single 
+ * channel and SISO mode is enough for a data stream, it is recommended to disable other unused channel directions to reduce SDR device current and power consumption. When configuring device for SISO
+ * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
+ * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index the multiple LMS7002M  modules 
+ * for single SDR devices or integrated systems that can have multiple LMS7002M modules or integrate multiple SDR devices, which contain a single LMS7002M module. When working with standard LimeSDR devices
+ * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M module, appropriate index should be
+ * specified to target the correct LMS7002M module. More about module indexes, can be found @ref common_parameters "here".
+ * 
+ * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
+ * of correct device LMS7002M module.
+ * 
+ * 
  * 
  * 
  * Minimal SDR RX set up:
