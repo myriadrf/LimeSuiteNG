@@ -800,15 +800,20 @@ std::shared_ptr<IQuadratureErrorCorrector> VSPA_iqplayer::GetTxQEC()
     return std::make_shared<VSPA_QEC>(mailbox, TRXDir::Tx);
 }
 
-#define VSPA_CCSR 0x1000000
+bool VSPA_iqplayer::IsFirmwareLoaded() const
+{
+    constexpr uint32_t VSPA_CCSR_offset = 0x1000000;
+    constexpr uint32_t vcpu_busy = (1 << 8);
+
+    const volatile uint8_t* BAR0_addr = reinterpret_cast<const uint8_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
+    const auto VSPA_STATUS_reg = reinterpret_cast<const volatile uint32_t*>(BAR0_addr + VSPA_CCSR_offset + 0x10);
+    return (*VSPA_STATUS_reg) & vcpu_busy;
+}
+
 OpStatus VSPA_iqplayer::ResetVCPU()
 {
     OpStatus status;
-    volatile uint8_t* BAR0_addr = reinterpret_cast<uint8_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
-    auto _VSPA_STATUS_reg = reinterpret_cast<volatile uint32_t*>(BAR0_addr + VSPA_CCSR + 0x10);
-    const uint32_t vcpu_busy = (1 << 8);
-
-    if (*_VSPA_STATUS_reg & vcpu_busy)
+    if (IsFirmwareLoaded())
     {
         printf_dbg_log("IQPlayer: Reset VCPU\n");
         const mbox_opc_e command = MBOX_OPC_DONE_SWRESET;

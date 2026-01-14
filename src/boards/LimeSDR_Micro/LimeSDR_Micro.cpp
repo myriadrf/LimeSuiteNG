@@ -100,7 +100,21 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     SDRDescriptor& desc = mDeviceDescriptor;
     desc.name = GetDeviceName(LMS_DEV_LIMESDR_MICRO);
 
-    if (la9310->IsM4CoreProgrammed())
+    OpStatus status = OpStatus::Success;
+    if (!la9310->IsM4CoreProgrammed())
+    {
+        std::vector<char> firmware;
+        const std::string m4firmware_path = "/lib/firmware/la9310.bin";
+        status = limesdrmicro::ReadFileIntoVector(m4firmware_path, firmware);
+        if (status == OpStatus::Success)
+        {
+            lime::info("Programming LimeSDR-Micro " + m4firmware_path);
+            status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
+            if (status != OpStatus::Success)
+                lime::error("Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
+        }
+    }
+    if (status == OpStatus::Success)
     {
         LMS64CProtocol::FirmwareInfo fw{};
         LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fw, 0);
@@ -203,27 +217,6 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310> la9310, const SDRC
 OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
     OpStatus status;
-    if (!la9310->IsM4CoreProgrammed())
-    {
-        std::vector<char> firmware;
-        const std::string m4firmware_path = "/lib/firmware/la9310.bin";
-        status = limesdrmicro::ReadFileIntoVector(m4firmware_path, firmware);
-        if (status != OpStatus::Success)
-            return status;
-        lime::info("Programming LimeSDR-Micro " + m4firmware_path);
-        const std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
-        status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
-        if (status != OpStatus::Success)
-            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
-        status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
-        if (status != OpStatus::Success)
-            return status;
-        lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
-        status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
-        if (status != OpStatus::Success)
-            return ReportError(status, "Failed to program LimeSDR-Micro LA9310 VSPA firmware");
-    }
-
     auto& rfsoc = mLMSChips.at(0);
 
     status = SetLA9310SamplingRate(la9310, cfg);
@@ -668,6 +661,22 @@ OpStatus LimeSDR_Micro::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& config, uint8_t moduleIndex)
 {
+    if (!la9310->vspa.IsFirmwareLoaded())
+    {
+        std::vector<char> firmware;
+        std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+        OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
+        if (status != OpStatus::Success)
+        {
+            lime::error("File not found: "s + vspafirmware_path);
+            return nullptr;
+        }
+        lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
+        status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+        if (status != OpStatus::Success)
+            return nullptr;
+    }
+
     auto stream = std::make_unique<LA9310_TRX>(la9310);
     StreamConfig config_mod = config;
     if (config.hintSampleRate <= 0)
