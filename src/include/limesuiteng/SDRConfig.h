@@ -4,6 +4,7 @@
 #include "limesuiteng/types.h"
 #include "limesuiteng/complex.h"
 
+#include <array>
 #include <unordered_map>
 
 namespace lime {
@@ -125,7 +126,7 @@ struct SDRConfig {
         : referenceClockFreq(0)
         , skipDefaults(false){};
     double referenceClockFreq; ///< The reference clock frequency of the device.
-    ChannelConfig channel[MAX_CHANNEL_COUNT]; ///< The configuration settings for each of the channels.
+    std::array<ChannelConfig, MAX_CHANNEL_COUNT> channel; ///< The configuration settings for each of the channels.
     // Loopback setup?
     bool skipDefaults; ///< Skip default values initialization and write on top of current config.
 };

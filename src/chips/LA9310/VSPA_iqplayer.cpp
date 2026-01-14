@@ -153,8 +153,11 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, bool flow_control)
     const bool start = true;
     const bool test_load_start = false;
 
-    const uint8_t ddr_rd_dma_ch_nb = 0;
-    const bool ddr_rd_dma_mBurst = false;
+    // TODO: choose 1 or 2 based on system clock frequency
+    // When 2 is used VSPA Tx DMA transfer migth get stuck in running state when system clock <30MHz
+    // Needs power cycle to recover from that.
+    const uint8_t ddr_rd_dma_ch_nb = 1;
+    const bool ddr_rd_dma_mBurst = false; // use burst to improve performance
     const bool host_flow_control_disable = !flow_control;
 
     assert(fifo_size / 4096 < 0x10000);
@@ -242,7 +245,7 @@ OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
     const bool start = true;
     const bool test_load_start = false;
     const bool continuous = true;
-    const uint8_t ddr_wr_dma_ch_nb = 1;
+    const uint8_t ddr_wr_dma_ch_nb = 2;
     const bool host_flow_control_disable = false;
 
     assert(fifo_size / 4096 < 0x10000);

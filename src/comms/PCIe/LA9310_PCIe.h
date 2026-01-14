@@ -114,6 +114,8 @@ class LIME_API LA9310_PCIe : public LimePCIe
     OpStatus iowrite32(uint32_t window_id, uint32_t value, uint64_t address);
     uint32_t ioread32(uint32_t window_id, uint64_t address);
 
+    OpStatus SetReferenceClock(uint32_t reference_clk_hz, int timeout_ms = 100);
+
   private:
     std::filesystem::path mFilePath;
     int mFileDescriptor;

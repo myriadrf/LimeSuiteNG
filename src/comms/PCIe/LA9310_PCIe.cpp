@@ -295,3 +295,31 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
     const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
 }
+
+OpStatus LA9310_PCIe::SetReferenceClock(uint32_t reference_clk_hz, int timeout_ms)
+{
+    volatile struct la9310_hif* hif = hostInterface;
+
+    hif->sw_cmd_desc.cmd = 2;
+    hif->sw_cmd_desc.data[0] = reference_clk_hz;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = std::chrono::high_resolution_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(1000))
+        {
+            lime::error("LA9310_PCIe: SetReferenceClock timeout\n");
+            break;
+        }
+    }
+
+    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
+    {
+        int32_t status = hif->sw_cmd_desc.data[0];
+        return status == int32_t(OpStatus::Success) ? OpStatus::Success : OpStatus::Error;
+    }
+    else
+        return OpStatus::Error;
+}
