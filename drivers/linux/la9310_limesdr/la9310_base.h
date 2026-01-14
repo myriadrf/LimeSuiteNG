@@ -333,8 +333,6 @@ struct la9310_dev {
 
     struct la9310_mem_region_info dmem_proxy;
     struct platform_device* uart;
-
-    u8 arm_m4_fw_loaded;
 };
 
 /*la9310_dev->flags*/
@@ -434,6 +432,7 @@ ssize_t la9310_show_global_status(char* buf);
 
 int la9310_modinfo_init(struct la9310_dev* dev);
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
+int la9310_is_m4_booted(struct la9310_dev* la9310_dev);
 // int la9310_modinfo_exit(struct la9310_dev *dev);
 // void la9310_modinfo_get(struct la9310_dev *la9310_dev, modinfo_t *mi);
 #endif

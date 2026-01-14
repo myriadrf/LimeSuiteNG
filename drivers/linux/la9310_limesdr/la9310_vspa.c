@@ -890,7 +890,7 @@ int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, co
 {
     int err;
 
-    if (!la9310_dev->arm_m4_fw_loaded)
+    if (!la9310_is_m4_booted(la9310_dev))
     {
         dev_err(la9310_dev->dev, "Firmware for M4 is not loaded yet but required for VSPA DSP loading!\n");
         return -EPERM;

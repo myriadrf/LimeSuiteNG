@@ -794,7 +794,7 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
 {
     int rc;
 
-    if (la9310_dev->arm_m4_fw_loaded)
+    if (la9310_is_m4_booted(la9310_dev))
     {
         dev_err(la9310_dev->dev, "Firmware for ARM M4 is already loaded!\n");
         return -EBUSY;
@@ -858,7 +858,6 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     if (rc)
         goto free_msi_irq;
 
-    la9310_dev->arm_m4_fw_loaded = 1;
     return 0;
 
 free_msi_irq:
@@ -868,6 +867,22 @@ free_hs_irq:
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 #endif
     return rc;
+}
+
+int la9310_is_m4_booted(struct la9310_dev* la9310_dev)
+{
+    struct la9310_mem_region_info* tcm_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_TCMU];
+    struct la9310_boot_header __iomem* boot_header =
+        (struct la9310_boot_header*)((u8*)tcm_region->vaddr + LA9310_EP_BOOT_HDR_OFFSET);
+    uint32_t boot_preamble = readl(&boot_header->preamble);
+    if (boot_preamble != PREAMBLE)
+        return 0;
+
+    struct la9310_ccsr_dcr* ccsr_dcr =
+        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    uint32_t* scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
+    uint32_t scratch_val = readl(scratch_reg);
+    return scratch_val == LA9310_HOST_START_DRIVER_INIT;
 }
 
 int la9310_base_probe(struct la9310_dev* la9310_dev)
