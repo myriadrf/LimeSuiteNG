@@ -85,6 +85,14 @@ void info(const char* format, ...)
     va_end(args);
 }
 
+void verbose(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    log(LogLevel::Verbose, format, args);
+    va_end(args);
+}
+
 void debug(const char* format, ...)
 {
     va_list args;

@@ -626,7 +626,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     };
     const int bakRegCnt = spiAddr.size() - 4;
 
-    if (rxRate_Hz >= 5e6 && txRate_Hz >= 5e6)
+    if (rxRate_Hz >= 5e6 || txRate_Hz >= 5e6)
     {
         uint32_t addr[3] = { 0, 1, 2 }; // TargetDevice, version, revision
         uint32_t vals[3];
@@ -686,44 +686,47 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     }
 
     bool phaseSearchSuccess = false;
-    // FPGA Rx PLL, needs to have two clocks configured.
-    // CLK1 needs to do phase search
-    std::vector<lime::FPGA::FPGA_PLL_clock> rxClocks(2);
-    rxClocks[0].index = 0;
-    rxClocks[0].outFrequency = bypassRx ? 2 * rxRate_Hz : rxRate_Hz;
-    rxClocks[0].phaseShift_deg = rxPhC1 + rxPhC2 * rxRate_Hz;
-    rxClocks[0].findPhase = false;
-
-    rxClocks[1] = rxClocks[0];
-    rxClocks[1].index = 1;
-    rxClocks[1].findPhase = true;
-
     const int pllConfigRetryCount = 2;
-    for (int i = 0; i < pllConfigRetryCount; i++) // attempt phase search multiple times
+    if (rxRate_Hz > 0)
     {
-        if (SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) == OpStatus::Success)
-        {
-            phaseSearchSuccess = true;
-            break;
-        }
-        else
-        {
-            lime::debug("Retry%i: SetPllFrequency", i);
-            std::this_thread::sleep_for(busyPollPeriod);
-        }
-    }
-
-    if (!phaseSearchSuccess)
-    {
-        lime::error("LML RX phase search FAIL"s);
-        status = OpStatus::Error;
+        // FPGA Rx PLL, needs to have two clocks configured.
+        // CLK1 needs to do phase search
+        std::vector<lime::FPGA::FPGA_PLL_clock> rxClocks(2);
         rxClocks[0].index = 0;
-        rxClocks[0].phaseShift_deg = 0;
+        rxClocks[0].outFrequency = bypassRx ? 2 * rxRate_Hz : rxRate_Hz;
+        rxClocks[0].phaseShift_deg = rxPhC1 + rxPhC2 * rxRate_Hz;
         rxClocks[0].findPhase = false;
-        rxClocks[1].findPhase = false;
-        OpStatus status = SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks);
-        if (status != OpStatus::Success)
-            return status;
+
+        rxClocks[1] = rxClocks[0];
+        rxClocks[1].index = 1;
+        rxClocks[1].findPhase = true;
+
+        for (int i = 0; i < pllConfigRetryCount; i++) // attempt phase search multiple times
+        {
+            if (SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) == OpStatus::Success)
+            {
+                phaseSearchSuccess = true;
+                break;
+            }
+            else
+            {
+                lime::debug("Retry%i: SetPllFrequency", i);
+                std::this_thread::sleep_for(busyPollPeriod);
+            }
+        }
+
+        if (!phaseSearchSuccess)
+        {
+            lime::error("LML RX phase search FAIL"s);
+            status = OpStatus::Error;
+            rxClocks[0].index = 0;
+            rxClocks[0].phaseShift_deg = 0;
+            rxClocks[0].findPhase = false;
+            rxClocks[1].findPhase = false;
+            OpStatus status = SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks);
+            if (status != OpStatus::Success)
+                return status;
+        }
     }
 
     uint16_t reg_000A = ReadRegister(0x000A);
@@ -742,42 +745,45 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     }
 
     phaseSearchSuccess = false;
-    // FPGA Tx PLL, needs to have two clocks configured.
-    // any one of the clocks needs to do phase search
-    std::vector<lime::FPGA::FPGA_PLL_clock> txClocks(2);
-    txClocks[0].index = 0;
-    txClocks[0].outFrequency = bypassTx ? 2 * txRate_Hz : txRate_Hz;
-    txClocks[0].phaseShift_deg = txPhC1 + txPhC2 * txRate_Hz;
-    txClocks[0].findPhase = false;
-
-    txClocks[1] = txClocks[0];
-    txClocks[1].index = 1;
-    txClocks[1].findPhase = true;
-    WriteRegister(0x000A, reg_000A | TX_PTRN_EN);
-
-    for (int i = 0; i < pllConfigRetryCount; i++)
+    if (txRate_Hz > 0)
     {
-        if (SetPllFrequency(txPLLindex, txRate_Hz, txClocks) == OpStatus::Success)
+        // FPGA Tx PLL, needs to have two clocks configured.
+        // any one of the clocks needs to do phase search
+        std::vector<lime::FPGA::FPGA_PLL_clock> txClocks(2);
+        txClocks[0].index = 0;
+        txClocks[0].outFrequency = bypassTx ? 2 * txRate_Hz : txRate_Hz;
+        txClocks[0].phaseShift_deg = txPhC1 + txPhC2 * txRate_Hz;
+        txClocks[0].findPhase = false;
+
+        txClocks[1] = txClocks[0];
+        txClocks[1].index = 1;
+        txClocks[1].findPhase = true;
+        WriteRegister(0x000A, reg_000A | TX_PTRN_EN);
+
+        for (int i = 0; i < pllConfigRetryCount; i++)
         {
-            phaseSearchSuccess = true;
-            break;
+            if (SetPllFrequency(txPLLindex, txRate_Hz, txClocks) == OpStatus::Success)
+            {
+                phaseSearchSuccess = true;
+                break;
+            }
+
+            lime::debug("Retry%i: SetPllFrequency", i);
+            std::this_thread::sleep_for(busyPollPeriod);
         }
 
-        lime::debug("Retry%i: SetPllFrequency", i);
-        std::this_thread::sleep_for(busyPollPeriod);
-    }
-
-    if (!phaseSearchSuccess)
-    {
-        lime::error("LML TX phase search FAIL"s);
-        status = OpStatus::Error;
-        txClocks[0].phaseShift_deg = 0;
-        txClocks[0].findPhase = false;
-        txClocks[1].phaseShift_deg = 0;
-        txClocks[1].findPhase = false;
-        OpStatus status = SetPllFrequency(txPLLindex, txRate_Hz, txClocks);
-        if (status != OpStatus::Success)
-            return status;
+        if (!phaseSearchSuccess)
+        {
+            lime::error("LML TX phase search FAIL"s);
+            status = OpStatus::Error;
+            txClocks[0].phaseShift_deg = 0;
+            txClocks[0].findPhase = false;
+            txClocks[1].phaseShift_deg = 0;
+            txClocks[1].findPhase = false;
+            OpStatus status = SetPllFrequency(txPLLindex, txRate_Hz, txClocks);
+            if (status != OpStatus::Success)
+                return status;
+        }
     }
 
     //Restore registers

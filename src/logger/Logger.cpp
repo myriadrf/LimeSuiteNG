@@ -77,6 +77,11 @@ void info(const std::string& text)
     log(LogLevel::Info, text);
 }
 
+void verbose(const std::string& text)
+{
+    log(LogLevel::Verbose, text);
+}
+
 void debug(const std::string& text)
 {
     log(LogLevel::Debug, text);

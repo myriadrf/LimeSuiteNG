@@ -18,52 +18,36 @@ FPGA_XTRX::FPGA_XTRX(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms700
     SetFeatures(f);
 }
 
-OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPhase, double rxPhase, int chipIndex)
-{
-    lime::debug("FPGA_XTRX"s);
-    lime::info("Phases: tx phase %f rx phase %f", txPhase, rxPhase);
-    const int txPLLindex = 0;
-    const int rxPLLindex = 1;
-
-    std::vector<FPGA_PLL_clock> rxClocks(2);
-    rxClocks[0].index = 0;
-    rxClocks[0].outFrequency = rxRate_Hz;
-    rxClocks[1].index = 1;
-    rxClocks[1].outFrequency = rxRate_Hz;
-    rxClocks[1].phaseShift_deg = rxPhase;
-    if (FPGA_XTRX::SetPllFrequency(rxPLLindex, rxRate_Hz, rxClocks) != OpStatus::Success)
-        return OpStatus::Error;
-
-    std::vector<FPGA_PLL_clock> txClocks(2);
-    txClocks[0].index = 0;
-    txClocks[0].outFrequency = txRate_Hz;
-    txClocks[1].index = 1;
-    txClocks[1].outFrequency = txRate_Hz;
-    txClocks[1].phaseShift_deg = txPhase;
-    if (FPGA_XTRX::SetPllFrequency(txPLLindex, txRate_Hz, txClocks) != OpStatus::Success)
-        return OpStatus::Error;
-
-    return OpStatus::Success;
-}
-
-OpStatus FPGA_XTRX::EnableDirectClocking(bool enabled)
+OpStatus FPGA_XTRX::EnableDirectClocking(bool rxDirectClocking, bool txDirectClocking)
 {
     const bool isFairwavesRev5 = mHardwareVersion == 0;
     const bool noDirectClocking =
         mGatewareVersion == 1 && ((isFairwavesRev5 && mGatewareRevision < 4) || (!isFairwavesRev5 && mGatewareRevision < 15));
-    if (enabled && noDirectClocking)
+    if ((rxDirectClocking || txDirectClocking) && noDirectClocking)
     {
         return ReportError(
             OpStatus::NotSupported, "FPGA_XTRX: current gateware does not support sample rates <5 MHz, please update gateware."s);
     }
-    return WriteRegister(0x0005, enabled ? 0x3 : 0);
+    uint16_t reg = (rxDirectClocking << 1) | txDirectClocking;
+    return WriteRegister(0x0005, reg);
 }
 
 OpStatus FPGA_XTRX::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipIndex)
 {
-    const bool useDirectClocking = rxRate_Hz < 5e6 && txRate_Hz < 5e6;
-    OpStatus status = EnableDirectClocking(useDirectClocking);
-    if (useDirectClocking)
+    const bool rxDirectClock = rxRate_Hz < 5e6;
+    const bool txDirectClock = txRate_Hz < 5e6;
+    OpStatus status = EnableDirectClocking(rxDirectClock, txDirectClock);
+    if (rxDirectClock)
+    {
+        lime::info("FPGA Rx direct clocking: %g", rxRate_Hz);
+        rxRate_Hz = 0;
+    }
+    if (txDirectClock)
+    {
+        lime::info("FPGA Tx direct clocking: %g", txRate_Hz);
+        txRate_Hz = 0;
+    }
+    if (rxDirectClock && txDirectClock)
         return status;
 
     return FPGA::SetInterfaceFreq(txRate_Hz, rxRate_Hz, chipIndex);

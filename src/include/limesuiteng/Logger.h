@@ -52,6 +52,9 @@ LIME_API void warning(const std::string& text); //!< Log a warning message
 LIME_API void info [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log an information message with formatting
 LIME_API void info(const std::string& text); //!< Log an information message
 
+LIME_API void verbose [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting
+LIME_API void verbose(const std::string& text); //!< Log a debug message
+
 LIME_API void debug [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a debug message with formatting
 LIME_API void debug(const std::string& text); //!< Log a debug message
 

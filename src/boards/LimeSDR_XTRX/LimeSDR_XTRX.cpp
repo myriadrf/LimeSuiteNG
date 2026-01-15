@@ -277,8 +277,12 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
     else if (txUsed)
         sampleRate = cfg.channel[0].tx.sampleRate;
 
-    LMS7002M_SetDigitalInterfaceSampleRate(
+    mConfigInProgress = true;
+    status = LMS7002M_SetDigitalInterfaceSampleRate(
         cfg.channel[0].rx.sampleRate, cfg.channel[0].tx.sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+    mConfigInProgress = false;
+    if (status != OpStatus::Success)
+        return status;
 
     for (int c = 0; c < 2; ++c)
     {

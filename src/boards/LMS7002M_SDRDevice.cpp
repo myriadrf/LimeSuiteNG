@@ -15,6 +15,17 @@
 #include <complex>
 
 using namespace std::literals::string_literals;
+using std::ceil;
+using std::clamp;
+using std::floor;
+using std::log2;
+using std::max;
+using std::min;
+
+inline int pow2(int p)
+{
+    return 1 << p;
+}
 
 namespace lime {
 using namespace lime::LMS7002MCSR_Data;
@@ -987,6 +998,10 @@ OpStatus LMS7002M_SDRDevice::UpdateFPGAInterfaceFrequency(LMS7002M& soc, FPGA& f
         fpgaRxPLL /= std::pow(2, dec + siso);
     }
 
+    bool clkh_to_dac = soc.Get_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN);
+    uint8_t clkh_oversample_pow2 = soc.Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN);
+
+    lime::verbose("FPGA interface, Rx:%g Tx:%g", fpgaRxPLL, fpgaTxPLL);
     OpStatus status = fpga.SetInterfaceFreq(fpgaTxPLL, fpgaRxPLL, chipIndex);
     if (status != OpStatus::Success)
         return status;
@@ -1186,39 +1201,138 @@ OpStatus LMS7002M_SDRDevice::LMS7002M_SetSampleRate(double f_Hz, uint8_t rxDecim
 OpStatus LMS7002M_SDRDevice::LMS7002M_SetDigitalInterfaceSampleRate(
     double rx_fs_Hz, double tx_fs_Hz, uint8_t rxDecimation, uint8_t txInterpolation)
 {
-    if (rxDecimation == 0)
-        rxDecimation = 2;
-    if (txInterpolation == 0)
-        txInterpolation = 2;
+    lime::verbose("Requested sample rate: Rx:%g Tx:%g", rx_fs_Hz, tx_fs_Hz);
+    lime::verbose("Requested Decimation:%i Interpolation:%i", rxDecimation, txInterpolation);
 
-    double rxtsp_hz = 2 * rx_fs_Hz * rxDecimation;
-    double txtsp_hz = 2 * tx_fs_Hz * txInterpolation;
+    struct TSPclocking {
+        double samplerate;
+        int min_oversample_pow2;
+        int max_oversample_pow2;
+        int clk_fixed_div;
+        double clk;
+    };
 
-    double txrxratio = txtsp_hz / rxtsp_hz;
-    double cgenHz = 0;
+    // if only one of sample rates is provided, make both equal
+    if (rx_fs_Hz == 0)
+        rx_fs_Hz = tx_fs_Hz;
+    if (tx_fs_Hz == 0)
+        tx_fs_Hz = rx_fs_Hz;
 
+    if (rx_fs_Hz <= 0 || tx_fs_Hz <= 0)
+    {
+        lime::error("Invalid sample rate Rx(%g) Tx(%g)", rx_fs_Hz, tx_fs_Hz);
+        return OpStatus::InvalidValue;
+    }
+
+    TSPclocking rxtsp;
+    rxtsp.min_oversample_pow2 = rxDecimation > 0 ? std::log2(rxDecimation) : 0; // rx_fs_Hz <= 61.44e6 ? 2 : 0;
+    rxtsp.max_oversample_pow2 = 5;
+    rxtsp.samplerate = rx_fs_Hz;
+    rxtsp.clk_fixed_div = 4;
+
+    TSPclocking txtsp;
+    txtsp.min_oversample_pow2 = txInterpolation > 0 ? std::log2(txInterpolation) : 0; //tx_fs_Hz <= 61.44e6 ? 2 : 0;
+    txtsp.max_oversample_pow2 = 5;
+    txtsp.samplerate = tx_fs_Hz;
+    txtsp.clk_fixed_div = 1;
+
+    double txrxratio = tx_fs_Hz / rx_fs_Hz;
+    double FCLKL = 0;
+    double FCLKH = 0;
+    constexpr double cgen_limit_low = 30e6;
+    constexpr double cgen_limit_high = 640e6;
+    constexpr int clkh_ovr_max = 8;
+
+    double cgen_min;
+    double cgen_max;
+
+    const bool clkh_to_dac = txrxratio > 4;
+    lime::verbose("clkh_to_dac:%i", clkh_to_dac);
+    // calculate possible decimation,interpolation ranges based on CLKH mux
+    // for low sample rates need to ensure dec,int is high enough to bring CGEN into supported frequency range
+    TSPclocking* clkh_tsp = clkh_to_dac ? &txtsp : &rxtsp;
+    TSPclocking* clkl_tsp = clkh_to_dac ? &rxtsp : &txtsp;
+
+    clkh_tsp->min_oversample_pow2 =
+        max(clkh_tsp->min_oversample_pow2, int(ceil(log2(cgen_limit_low / clkh_tsp->clk_fixed_div / clkh_tsp->samplerate))));
+    cgen_min = clkh_tsp->clk_fixed_div * clkh_tsp->samplerate * pow2(clkh_tsp->min_oversample_pow2);
+    clkh_tsp->max_oversample_pow2 = int(floor(log2(cgen_limit_high / clkh_tsp->clk_fixed_div / clkh_tsp->samplerate)));
+    if (clkh_tsp->max_oversample_pow2 < clkh_tsp->min_oversample_pow2)
+    {
+        lime::error("Unable to satisfy requested decimation");
+        return OpStatus::Error;
+    }
+    clkh_tsp->max_oversample_pow2 = clamp(clkh_tsp->max_oversample_pow2, clkh_tsp->min_oversample_pow2, 5);
+    cgen_max = clkh_tsp->clk_fixed_div * clkh_tsp->samplerate * pow2(clkh_tsp->max_oversample_pow2);
+
+    int requiredInt_pow2 = int(ceil(log2(cgen_min / clkh_ovr_max / clkl_tsp->samplerate)));
+    if (requiredInt_pow2 > 5)
+    {
+        lime::error("Unable to satisfy requested interpolation");
+        return OpStatus::Error;
+    }
+
+    clkl_tsp->min_oversample_pow2 = clamp(requiredInt_pow2, clkl_tsp->min_oversample_pow2, 5);
+    clkl_tsp->max_oversample_pow2 = clamp(int(floor(log2(cgen_max / clkl_tsp->samplerate))), clkl_tsp->min_oversample_pow2, 5);
+
+    lime::verbose("CGEN - min:%g max:%g", cgen_min, cgen_max);
+    lime::verbose("Dec - min:2^%i max:2^%i", rxtsp.min_oversample_pow2, rxtsp.max_oversample_pow2);
+    lime::verbose("Int - min:2^%i max:2^%i", txtsp.min_oversample_pow2, txtsp.max_oversample_pow2);
+
+    int clkh_oversample_pow2 = 0;
+    cgen_min = clkh_tsp->clk_fixed_div * clkh_tsp->samplerate * pow2(clkh_tsp->min_oversample_pow2);
+    cgen_max = clkh_tsp->clk_fixed_div * clkh_tsp->samplerate * pow2(clkh_tsp->max_oversample_pow2);
+
+    if (clkl_tsp->min_oversample_pow2 < clkh_tsp->min_oversample_pow2 &&
+        clkh_tsp->min_oversample_pow2 < clkl_tsp->max_oversample_pow2)
+        clkl_tsp->min_oversample_pow2 = clkh_tsp->min_oversample_pow2; // prefer that Tx/Rx oversampling be the same
+
+    FCLKL = clkl_tsp->samplerate * pow2(clkl_tsp->min_oversample_pow2);
+    clkh_oversample_pow2 = log2(cgen_min / FCLKL);
+    if (clkh_oversample_pow2 > 3)
+    {
+        lime::verbose("need less interp");
+        clkl_tsp->min_oversample_pow2 -= clkh_oversample_pow2 - 3;
+        clkh_oversample_pow2 = 3;
+    }
+
+    if (rxDecimation == 0 && txInterpolation == 0)
+    {
+        int diff = min(clkh_tsp->max_oversample_pow2 - clkh_tsp->min_oversample_pow2,
+            clkl_tsp->max_oversample_pow2 - clkl_tsp->min_oversample_pow2);
+        clkh_tsp->min_oversample_pow2 += diff;
+        clkl_tsp->min_oversample_pow2 += diff;
+        cgen_min *= pow2(diff);
+
+        int moreInt = min(clkh_oversample_pow2, clkl_tsp->max_oversample_pow2 - clkl_tsp->min_oversample_pow2);
+        txtsp.min_oversample_pow2 += moreInt;
+        clkh_oversample_pow2 -= moreInt;
+    }
+
+    FCLKH = cgen_min / 4;
+    FCLKL = cgen_min / pow2(clkh_oversample_pow2);
+
+    lime::verbose("CGEN:%g CLKH_OV_CLKL_CGEN: 2^%i", cgen_min, clkh_oversample_pow2);
     auto& mLMSChip = mLMSChips.at(0);
 
-    if (txrxratio <= 4)
-    {
-        cgenHz = rxtsp_hz * 4;
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 0);
-        const int clkh_oversample = std::log2(cgenHz / txtsp_hz);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, clkh_oversample);
-    }
-    else
-    {
-        cgenHz = txtsp_hz * 4;
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, 1);
-        const int clkh_oversample = std::log2(cgenHz / rxtsp_hz);
-        mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, clkh_oversample);
-    }
+    lime::verbose("RxTSP: %s ADC(%g), dec:2^%i interface: %g",
+        (clkh_to_dac ? "CLKL" : "CLKH"),
+        (clkh_to_dac ? FCLKL : FCLKH),
+        rxtsp.min_oversample_pow2,
+        (clkh_to_dac ? FCLKL : FCLKH) / (1 << rxtsp.min_oversample_pow2));
+    lime::verbose("TxTSP: %s DAC(%g), int:2^%i interface: %g",
+        (clkh_to_dac ? "CLKH" : "CLKL"),
+        (clkh_to_dac ? FCLKH : FCLKL),
+        txtsp.min_oversample_pow2,
+        (clkh_to_dac ? FCLKH : FCLKL) / (1 << txtsp.min_oversample_pow2));
 
-    uint8_t hbd_ovr = std::log2(rxDecimation);
-    uint8_t hbi_ovr = std::log2(txInterpolation);
+    // HBD/HBI value 7 means bypass
+    uint8_t hbd_ovr = (rxtsp.min_oversample_pow2 == 0) ? 7 : rxtsp.min_oversample_pow2 - 1;
+    uint8_t hbi_ovr = (txtsp.min_oversample_pow2 == 0) ? 7 : txtsp.min_oversample_pow2 - 1;
+    lime::verbose("hbd:%i hbi:%i", hbd_ovr, hbi_ovr);
 
-    lime::debug(
-        "Sampling rate: cgen(%f), rxtsp(%f) dec:2^%i, txtsp(%f) int:2^%i", cgenHz, rxtsp_hz, 1 + hbd_ovr, txtsp_hz, 1 + hbi_ovr);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::EN_ADCCLKH_CLKGN, clkh_to_dac ? 1 : 0);
+    mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, clkh_oversample_pow2);
 
     LMS7002M::ChannelScope scope(mLMSChip.get());
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::MAC, 2);
@@ -1228,7 +1342,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002M_SetDigitalInterfaceSampleRate(
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBD_OVR_RXTSP, hbd_ovr);
     mLMSChip->Modify_SPI_Reg_bits(LMS7002MCSR::HBI_OVR_TXTSP, hbi_ovr);
 
-    return mLMSChip->SetInterfaceFrequency(cgenHz, hbi_ovr, hbd_ovr);
+    return mLMSChip->SetInterfaceFrequency(cgen_min, hbi_ovr, hbd_ovr);
 }
 
 OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig& cfg)
