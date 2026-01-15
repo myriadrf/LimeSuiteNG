@@ -136,7 +136,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     VSPA_iqplayer& vspa = la9310->vspa;
     PHYTimer& phytimer = la9310->phytimer;
 
-    status = vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size());
+    status = vspa.Setup(cfg.channels.at(TRXDir::Rx).size(), cfg.channels.at(TRXDir::Tx).size(), cfg.hintSampleRate * 4);
 
     // stop PHYTimers
     phytimer.Enable(true);

@@ -44,7 +44,7 @@ class LIME_API VSPA_iqplayer
 
     OpStatus StartTxTone(bool enabled);
 
-    OpStatus Setup(uint32_t rxCount, uint32_t txCount);
+    OpStatus Setup(uint32_t rxCount, uint32_t txCount, double expectedTxDataRate);
 
     int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp);
     int32_t Transmit(const void* src, uint32_t write_size, uint64_t timestamp);
@@ -62,7 +62,7 @@ class LIME_API VSPA_iqplayer
     OpStatus StartRx(uint8_t channel, uint32_t fifo_size);
     OpStatus StartTx(uint32_t fifo_size, bool flow_control);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
-    OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
+    OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size, double expectedTxDataRate = 0);
 
   private:
     std::shared_ptr<LA9310_PCIe> port;
@@ -70,7 +70,6 @@ class LIME_API VSPA_iqplayer
 
     VSPA_FIFO_State mRx[4];
     VSPA_FIFO_State mTx;
-    bool firstTx;
 
     uint8_t* vl_iqflood_ddr_addr;
     size_t iqflood_size;
@@ -83,6 +82,7 @@ class LIME_API VSPA_iqplayer
     volatile t_stats* app_stats = nullptr;
 
     uint32_t rx_fifo_start_offset_in_iqflood;
+    uint8_t tx_dma_channel_count;
 
     std::mutex mx;
 };

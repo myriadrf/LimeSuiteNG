@@ -85,7 +85,7 @@ static const double refClk = 30.72e6;
 VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
     , mailbox(std::make_shared<VSPA_mailbox>(port))
-    , firstTx(true)
+    , tx_dma_channel_count(1)
 {
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
@@ -153,10 +153,7 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, bool flow_control)
     const bool start = true;
     const bool test_load_start = false;
 
-    // TODO: choose 1 or 2 based on system clock frequency
-    // When 2 is used VSPA Tx DMA transfer migth get stuck in running state when system clock <30MHz
-    // Needs power cycle to recover from that.
-    const uint8_t ddr_rd_dma_ch_nb = 1;
+    const uint8_t ddr_rd_dma_ch_nb = tx_dma_channel_count;
     const bool ddr_rd_dma_mBurst = false; // use burst to improve performance
     const bool host_flow_control_disable = !flow_control;
 
@@ -310,7 +307,6 @@ OpStatus VSPA_iqplayer::StopTx()
 
     printf_dbg_log("IQPlayer: Stop Tx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_TX) << (24 + 32);
-    firstTx = true;
 
     OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
     mTx.fifo_offset = 0;
@@ -341,12 +337,12 @@ OpStatus VSPA_iqplayer::StopTx()
     return status;
 }
 
-OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount)
+OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount, double expectedTxDataRate)
 {
     OpStatus status = OpStatus::Success;
     if (txCount)
     {
-        status = SetupTx(0, iqflood_size / 4);
+        status = SetupTx(0, iqflood_size / 4, expectedTxDataRate);
         if (status != OpStatus::Success)
             return status;
     }
@@ -392,15 +388,22 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
     return OpStatus::Success;
 }
 
-OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size)
+OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size, double expectedTxDataRate)
 {
     // const std::lock_guard<std::mutex> lock(mx);
-    firstTx = true;
     VSPA_FIFO_State& txState = mTx;
     assert(tx_vspa_proxy_ro);
 
     if (fifo_size == 0)
         return OpStatus::InvalidValue;
+
+    // TODO: choose 1 or 2 based on system clock frequency
+    // When 2 is used VSPA Tx DMA transfer migth get stuck in running state when system clock <30MHz
+    // Needs power cycle to recover from that.
+    if (expectedTxDataRate < 200e6)
+        tx_dma_channel_count = 1;
+    else
+        tx_dma_channel_count = 2;
 
     // dccivac((uint32_t*)(tx_vspa_proxy_ro));
     auto nv_tx_vspa_proxy_ro = const_cast<t_tx_ch_host_proxy*>(tx_vspa_proxy_ro);
