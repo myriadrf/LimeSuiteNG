@@ -703,7 +703,7 @@
  *    
  *    uint8_t moduleIndex = 0;
  *    bool directionEnabled = true;
- *    configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, directionEnabled);
+ *    configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, directionEnabled);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;    
  * 
@@ -731,7 +731,7 @@
  * 
  *    uint8_t moduleIndex = 0;
  *    double frequency = 95.9e6; // Hz
- *    configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, frequency);
+ *    configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, frequency);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;
  * 
@@ -744,7 +744,7 @@
  * 
  *    uint8_t moduleIndex = 0;
  *    double frequency = 0;
- *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA);
+ *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
  *    std::cout << "Current LO frequency on ChA Tx = " << frequency << " Hz\n";
  * 
  *    ... // Other program code
@@ -768,7 +768,7 @@
  * 
  *    uint8_t moduleIndex = 0;
  *    double bandwidth = 2e6; // Hz
- *    configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA, bandwidth);
+ *    configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, bandwidth);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to set channel A Tx direction low pass filter bandwidth with error: " << lime::ToString(configStatus) << std::endl;
  *
@@ -781,7 +781,7 @@
  * 
  *    uint8_t moduleIndex = 0;
  *    double bandwidth = 0; // Hz
- *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channels:ChA);
+ *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
  *    std::cout << "Current low pass filter bandwith value for channel A, Tx direction is " << bandwidth << std::endl;
  * 
  *    ... // Other program code
@@ -791,6 +791,56 @@
  * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
  * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
  * minimum or maximum possible low pass filter bandwidth value. Therefore, when setting new low pass filter bandwidth value, it is recommended to check if the actual value was set in HW.
+ * 
+ * <h2>Setting up sample rate</h2>
+ * 
+ * To set new sample rate value for SDR device, use @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double sampleRate = 2e6; // Hz
+ *    uint8_t oversampleRatio = 0;
+ *    configStatus = device->SetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, sampleRate, oversampleRatio);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device sample rate with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current sample rate of SDR device, use @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double sampleRate = 0; // Hz
+ *    uint32_t rf_sampleRate = 0; // Hz
+ *    sampleRate = device->GetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, &rf_sampleRate);
+ *    std::cout << "Current SDR device sample rate is " << sampleRate << " Hz";
+ *    if(rf_sampleRate > 0)
+ *       std::cout << "RF sample rate is " << rf_sampleRate << " Hz\n";
+ *    else
+ *       std::cout << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * SDR device sample rate configuration is not dependant on selected SDR device channel and direction. Sample rate setting is updated for all internal ADCs and DACs of all active channel directions. The
+ * actual RF sample rate is much higher than the specified sample rate and depends on the selected oversampling ratio parameter. 
+ * In example code above, function @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" accepts argument <b>oversampleRatio</b> which specifies the sample
+ * interpolation and decimation ratios. If oversampling ratio parameter is set to value 0 and specified sample rate is lower or equal to 61.44 MHz, ratios are auto calculated based on specified sample rate.
+ * If specified sample rate is higher than 61.44 MHz and oversamplnig ratio is set to value 0, then interpolation and decimation stage is bypassed. Alternatively, oversampling ratio can be set manually.
+ * Supported oversampling ratios:
+ * <ul>
+ *    <li>x2  (oversampleRatio == 2)</li>
+ *    <li>x4  (oversampleRatio == 4)</li>
+ *    <li>x8  (oversampleRatio == 8)</li>
+ *    <li>x16 (oversampleRatio == 16)</li>
+ *    <li>x32 (oversampleRatio == 32)</li>
+ * </ul>
+ * 
+ * To get the actual RF sample rate value, the last parameter of <b>GetSampleRate()</b> must accept an address of a variable where the actual RF sample rate will be stored (example code above). If the argument
+ * is omitted, then only the sample rate is returned.
  * 
  * 
  * Minimal SDR RX set up:
