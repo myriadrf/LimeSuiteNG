@@ -195,8 +195,8 @@ class LIME_API SDRDevice
     virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) = 0;
 
     /// @brief Gets the current sample rate of the device.
-    /// Returns device RF chip TSP and optionally RFE sample rate of selected channel direction. For RX direction, 
-    /// this will return RXTSP and RXRFE ADC sample rates. For TX direction, this will return TXTSP and TXRFE DAC sample rates.
+    /// Returns device sample rate and optionally, the actual RF sample rate used in AFE ADCs and DACs.
+    /// The actual RF sample rate in AFE ADCs and DACs is much higher than the true sample rate due to oversampling ratio.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
@@ -205,13 +205,12 @@ class LIME_API SDRDevice
     virtual double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) = 0;
 
     /// @brief Sets the sample rate of the device.
-    /// Sets device RF chip TSP and RFE sample rates for selected channel direction. For RX direction, 
-    /// this will set RXTSP and RXRFE ADC sample rates. For TX direction, this will set TXTSP and TXRFE DAC sample rates. 
+    /// Calculates and sets the RF sample rate of ADCs and DACs based on specified sample rate and oversampling ratio.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param sampleRate The target sample rate (in Hz)
-    /// @param oversample The RF oversampling ratio.
+    /// @param oversample The RF oversampling ratio. Pass 0 to auto select oversampling ratio based on specified sample rate.
     /// @return The @ref lime::OpStatus "status" of the operation.
     virtual OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) = 0;
 
