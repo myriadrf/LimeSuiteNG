@@ -818,7 +818,7 @@
  *    sampleRate = device->GetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, &rf_sampleRate);
  *    std::cout << "Current SDR device sample rate is " << sampleRate << " Hz";
  *    if(rf_sampleRate > 0)
- *       std::cout << "RF sample rate is " << rf_sampleRate << " Hz\n";
+ *       std::cout << ", RF sample rate is " << rf_sampleRate << " Hz\n";
  *    else
  *       std::cout << std::endl;
  * 
@@ -842,6 +842,92 @@
  * To get the actual RF sample rate value, the last parameter of <b>GetSampleRate()</b> must accept an address of a variable where the actual RF sample rate will be stored (example code above). If the argument
  * is omitted, then only the sample rate is returned.
  * 
+ * <h2>Setting up antenna</h2>
+ * 
+ * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t pathID = 1;  // Tx Band1
+ *    configStatus = device->SetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, pathID);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device antenna path with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current antenna path of SDR device, use @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()" function:
+ * @code{.cpp} 
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t pathID = 0;
+ *    pathID = device->GetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    std::cout << "Current SDR device antenna path is " << pathID << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ *
+ * Depending on SDR device model, different antennas can be used both for Tx and Rx directions of each channel. If a unexpected antenna path ID is specified, the path ID is ignored and 
+ * antenna is not changed. Below are lists of common antenna paths for Tx and Rx directions.
+ * 
+ * List of antenna path IDs for Tx direction on each channel:
+ * <ul>
+ *    <li> Band1 path ID is 1</li>
+ *    <li> Band2 path ID is 2</li>
+ * </ul>
+ * 
+ * List of antenna path IDs for Rx direction in each channel:
+ * <ul>
+ *    <li>LNAL path ID is 2</li>
+ *    <li>LNAW path ID is 3</li>
+ *    <li>LNAH path ID is 1</li>
+ *    <li>LB1 path ID is 4</li>
+ *    <li>LB2 path ID is 5</li>
+ * </ul>
+ * 
+ * Not all SDR devices can support the listed antennas. It is recommended to check antenna support of each SDR device by retrieving SDR device descriptor:
+ * @code{.cpp}
+ *  int main()
+ *  {
+ *     std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *  
+ *     lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *     if(device == nullptr)
+ *     {
+ *        std::cout << "Failed to connect to SDR device\n";
+ *        return 1;
+ *     }
+ *     
+ *     lime::OpStatus configStatus = lime::OpStatus::Success;
+ *     uint8_t moduleIndex = 0;
+ *     auto SDRDescriptor = device->GetDescriptor();
+ *     auto& paths = SDRDescriptor.rfSOC.at(0).pathNames;
+ *  
+ *     std::cout << SDRDescriptor.name << " supported antennas\n";
+ *     std::cout << "Tx antennas:\n";
+ *     for(int i = 0; i < paths.at(lime::TRXDir::Tx).size(); ++i)
+ *        std::cout << "\t" << paths.at(lime::TRXDir::Tx)[i] << std::endl;
+ *     std::cout << std::endl;
+ *  
+ *     std::cout << "Rx antennas:\n";
+ *     for(int i = 0; i < paths.at(lime::TRXDir::Rx).size(); ++i)
+ *        std::cout << "\t" << paths.at(lime::TRXDir::Rx)[i] << std::endl;
+ *     std::cout << std::endl;
+ *  
+ *     lime::DeviceRegistry::freeDevice(device);
+ *  
+ *     return 0;
+ *  }
+ * @endcode
+ * 
+ * Output of the example code above for LimeSDR Mini V2:
+ * 
+ * @image{inline} html dev_config_antenna_support.png
+ * @image{inline} xml dev_config_antenna_support.png 
+ * 
+ * Some antenna paths can have a <b>NC</b> postfix which indicates that the internal RF chip antenna path is not physically connected to antenna.
  * 
  * Minimal SDR RX set up:
  * @code{.cpp} 
