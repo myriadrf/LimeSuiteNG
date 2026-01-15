@@ -385,7 +385,7 @@ OpStatus LA9310_TRX::RxSetup()
 
     auto RxLoopFunction = std::bind(&LA9310_TRX::RxWorkLoop, this);
     mRx.thread = std::thread(RxLoopFunction);
-    SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mRx.thread);
+    // SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mRx.thread);
 #ifdef __linux__
     char threadName[16]; // limited to 16 chars, including null byte.
     snprintf(threadName, sizeof(threadName), "lime:Rx%i", 0);
@@ -719,7 +719,7 @@ OpStatus LA9310_TRX::TxSetup()
 
     const auto schedulingPolicy = ThreadPolicy::REALTIME;
     mTx.thread = std::thread(TxLoopFunction);
-    SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mTx.thread);
+    // SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mTx.thread);
 #ifdef __linux__
     char threadName[16]; // limited to 16 chars, including null byte.
     snprintf(threadName, sizeof(threadName), "lime:Tx%i", chipId);
