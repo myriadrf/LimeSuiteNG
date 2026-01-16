@@ -929,6 +929,76 @@
  * 
  * Some antenna paths can have a <b>NC</b> postfix which indicates that the internal RF chip antenna path is not physically connected to antenna.
  * 
+ * <h2>Setting up gain</h2>
+ * 
+ * To set new gain value for a specific SDR device amplifier, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double LNAgain = 9;  // dB
+ *    configStatus = device->SetGain(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::LNA, LNAgain);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code 
+ * @endcode
+ * 
+ * To get the current gain value of a specific SDR device amplifier, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    
+ *    uint8_t moduleIndex = 0;
+ *    double LNAgain = 0; // dB
+ *    configStatus = device->GetGain(moduleIndex, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::LNA, LNAgain);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to get SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ *
+ * @endcode
+ * 
+ * It is possible to set and get the gain of the following SDR device amplifiers:
+ * <table>
+ *    <tr>
+ *       <th>Amplifier type</th>
+ *       <th>Gain range/values, dB</th>
+ *    </tr>
+ *    <tr>
+ *       <td>LNA</td>
+ *       <td> [0; -30] </td>
+ *    </tr>
+ *     <tr>
+ *        <td>Loopback LNA</td>
+ *        <td> [0; -40] </td>
+ *     </tr>
+ *     <tr>
+ *        <td>PGA</td>
+ *        <td> [19; -12] </td>
+ *     </tr>
+ *     <tr>
+ *        <td>TIA</td>
+ *        <td> 0, -3, -12 </td>
+ *     </tr>
+ *     <tr>
+ *        <td>PAD</td>
+ *        <td> [0; -52] </td>
+ *     </tr>
+ *     <tr>
+ *        <td>Loopback PAD</td>
+ *        <td> [] </td>
+ *     </tr>
+ *     <tr>
+ *        <td>IAMP</td>
+ *        <td> [] </td>
+ *     </tr>
+ * </table>
+ * 
+ * Gain ranges for all types of amplifiers are clamped in a fixed range to avoid any unexpected gain values. If the specified gain value is not supported by specified amplifier type,
+ * the nearest gain value is applied. If a unknown amplifier type is specified, generic amplifier gain for a specified channel direction will be updated. If a unknown amplifier type is specified 
+ * for Tx direction, then the PAD amplifier gain is updated. If a unknown amplifier type is specified for Rx direction, then LNA, PGA and TIA amplifier gains are updated.
+ * 
+ * 
  * Minimal SDR RX set up:
  * @code{.cpp} 
  * int main()
