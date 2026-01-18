@@ -14,6 +14,7 @@ class LA9310_PCIe;
 class LA9310_I2C : public II2C
 {
   public:
+    LA9310_I2C() = delete;
     LA9310_I2C(std::shared_ptr<LA9310_PCIe> port);
 
     OpStatus I2CWrite(uint16_t address, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t data_length) override;

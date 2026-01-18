@@ -1,6 +1,7 @@
 #include "EEPROM_I2C.h"
 
 #include <cassert>
+#include <stdio.h>
 
 namespace lime {
 
@@ -33,17 +34,20 @@ OpStatus EEPROM_I2C::Write(uint32_t mem_addr, const void* data, size_t length)
     src += toWrite;
     mem_addr += toWrite;
 
+    printf("Remaining: %8lu\r", length);
     while (length > 0)
     {
         const uint32_t toWrite = length > page_size ? page_size : length;
         OpStatus status = port->I2CWrite(i2c_addr, mem_addr, 2, src, toWrite);
         if (status != OpStatus::Success)
             return status;
+        printf("Remaining: %8lu\r", length);
 
         length -= toWrite;
         src += toWrite;
         mem_addr += toWrite;
     }
+    printf("Remaining: %8lu\n", length);
     return OpStatus::Success;
 }
 

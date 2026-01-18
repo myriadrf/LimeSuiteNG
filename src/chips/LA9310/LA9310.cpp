@@ -10,10 +10,10 @@
 namespace lime {
 
 LA9310::LA9310(std::shared_ptr<LA9310_PCIe> port)
-    : phytimer(port)
-    , vspa(port)
-    , pcie(port)
+    : pcie(port)
     , i2c(std::make_shared<LA9310_I2C>(port))
+    , phytimer(port)
+    , vspa(port)
     , eeprom(i2c, 0x50, 65536, 32)
 {
     volatile uint8_t* BAR1_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR1).vaddr);

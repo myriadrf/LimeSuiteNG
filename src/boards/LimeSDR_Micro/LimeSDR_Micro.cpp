@@ -563,6 +563,10 @@ OpStatus LimeSDR_Micro::UploadMemory(
             return status;
         // (Re-)programm the firmware
         return mStreamingPort->LoadVSPAFirmware(data, length);
+    case eMemoryDevice::EEPROM:
+        if (length > 65532) // Don't overwrite stored board parameters
+            return OpStatus::OutOfRange;
+        return la9310->eeprom.Write(0x0, data, length);
     default:
         return OpStatus::NotImplemented;
     }
