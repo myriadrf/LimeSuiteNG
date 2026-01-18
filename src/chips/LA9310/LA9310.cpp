@@ -5,12 +5,16 @@
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
+#include "I2C.h"
+
 namespace lime {
 
 LA9310::LA9310(std::shared_ptr<LA9310_PCIe> port)
     : phytimer(port)
     , vspa(port)
     , pcie(port)
+    , i2c(std::make_shared<LA9310_I2C>(port))
+    , eeprom(i2c, 0x50, 65536, 32)
 {
     volatile uint8_t* BAR1_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR1).vaddr);
     hif = reinterpret_cast<volatile struct la9310_hif*>(BAR1_addr + LA9310_EP_HIF_OFFSET);

@@ -7,11 +7,14 @@
 #include "PHYTimer.h"
 #include "VSPA_iqplayer.h"
 
+#include "chips/EEPROM/EEPROM_I2C.h"
+
 struct la9310_hif;
 
 namespace lime {
 
 class LA9310_PCIe;
+class LA9310_I2C;
 
 class LIME_API LA9310
 {
@@ -28,6 +31,8 @@ class LIME_API LA9310
 
   private:
     std::shared_ptr<LA9310_PCIe> pcie;
+    std::shared_ptr<LA9310_I2C> i2c;
+    EEPROM_I2C eeprom;
     volatile struct la9310_hif* hif; // host interface
 };
 
