@@ -672,9 +672,13 @@
  * Common SDR device control and configuration options allow to set up the communication channel structure and the base streaming parameters of individual channel directions (Tx/Rx).
  * This sub-topic explains how to:
  * <ol>
- *    <li>set up channel structure</li>
- *    <li>configure channel directions (Sample rate, LO frequency and etc.)</li>
- *    <li>TODO: update this list</li>
+ *    <li>set up channels in MIMO or SISO mode</li>
+ *    <li>configure channel LO frequency</li>
+ *    <li>configure device low pass filter bandwidth</li>
+ *    <li>configure device sample rate bandwidth</li>
+ *    <li>configure device antennas</li>
+ *    <li>configure device gain</li>
+ *    
  * </ol>  
  * 
  * A full example code for configuring SDR device is provided at the end of the page.  
