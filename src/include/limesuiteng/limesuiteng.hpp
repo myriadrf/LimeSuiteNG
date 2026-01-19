@@ -1079,6 +1079,17 @@
 /**
  * @addtogroup quick_config Quick configuration
  * 
+ * SDR device quick configuration can be used to quickly load or save SDR device configuration presets. SDR devices can be quick configured:
+ * <ul>
+ *    <li>from config structure</li>
+ *    <li>from .ini file</li>
+ * </ul>
+ * 
+ * <h2>Quick configure from structure</h2>
+ * 
+ * 
+ * <h2>Quick configure from file</h2>
+ * 
  * 
  */
 
