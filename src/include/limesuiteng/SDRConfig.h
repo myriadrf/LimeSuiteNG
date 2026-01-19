@@ -129,6 +129,7 @@ struct SDRConfig {
     std::array<ChannelConfig, MAX_CHANNEL_COUNT> channel; ///< The configuration settings for each of the channels.
     // Loopback setup?
     bool skipDefaults; ///< Skip default values initialization and write on top of current config.
+    int32_t referenceClockSource{ 0 };
 };
 
 } // namespace lime

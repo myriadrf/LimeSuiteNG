@@ -26,6 +26,7 @@ int main(int argc, char** argv)
     args::Flag                      initializeFlag(parser, "", "Reset and initialize entire device", {'i', "initialize"});
 
     args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
+    args::ValueFlag<std::string>    refclkSourceFlag(parser, "reference clock source", "Reference clock input source (internal/external)", {"refclk_source"});
     args::ValueFlag<double>         samplerateFlag(parser, "sample rate", "Sampling rate in Hz", {"samplerate"});
 
     args::Group                     rxGroup(parser, "Receiver"); // NOLINT(cppcoreguidelines-slicing)
@@ -72,9 +73,9 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
-    bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
-                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag ||
-                       rxgfirFlag || txgfirFlag;
+    bool doConfigure = refclkFlag || refclkSourceFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag ||
+                       rxoversampleFlag || rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag ||
+                       txtestsignalFlag || rxgfirFlag || txgfirFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
@@ -95,6 +96,19 @@ int main(int argc, char** argv)
     }
     // clang-format off
     if (refclkFlag)         config.referenceClockFreq = args::get(refclkFlag);
+    if (refclkSourceFlag)
+    {
+        const std::string clksrc = args::get(refclkSourceFlag);
+        if (clksrc == "internal")
+            config.referenceClockSource = 0;
+        else if (clksrc == "external")
+            config.referenceClockSource = 1;
+        else
+        {
+            cerr << "Invalid reference clock source"sv << endl;
+            return EXIT_FAILURE;
+        }
+    }
     if (rxenFlag)           config.channel[0].rx.enabled = args::get(rxenFlag);
     if (rxloFlag)           config.channel[0].rx.centerFrequency = args::get(rxloFlag);
     if (rxlpfFlag)          config.channel[0].rx.lpf = args::get(rxlpfFlag);

@@ -26,7 +26,7 @@ OpStatus LA9310::SetSystemClock(double sysClk_Hz, uint8_t adc_rate_mask, uint8_t
     hif->dac_rate_mask = dac_rate_mask;
 
     lime::debug("LA9310 set system clock:%g adc_rates:%1x dac_rate:%1x", sysClk_Hz, adc_rate_mask, dac_rate_mask);
-    return pcie->SetReferenceClock(sysClk_Hz, 1000);
+    return pcie->SetSystemClock(sysClk_Hz, 1000);
 }
 
 void LA9310::GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask)
