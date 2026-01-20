@@ -798,32 +798,19 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     if (rc)
     {
         dev_err(la9310_dev->dev, "Reset handshake failed, err %d", rc);
-        goto free_msi_irq;
+        return rc;
     }
 
     /* Verify that Host and target are using same version of HIF */
     rc = la9310_verify_hif_compatibility(la9310_dev);
     if (rc)
-        goto free_msi_irq;
-
-    rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-    if (rc)
-    {
-        pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
-        goto free_msi_irq;
-    }
+        return rc;
 
     rc = la9310_subdrv_init(la9310_dev);
     if (rc)
-        goto free_msi_irq;
+        return rc;
 
     return 0;
-
-free_msi_irq:
-free_hs_irq:
-    la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-    return rc;
 }
 
 int la9310_is_m4_booted(struct la9310_dev* la9310_dev)
@@ -922,7 +909,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     {
         dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
         rc = -1;
-        goto free_la_irq;
+        goto free_handshake;
     }
     {
         tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
@@ -936,13 +923,11 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     {
         dev_err(la9310_dev->dev, "Failed to register UART\n");
         rc = -1;
-        goto free_la_irq;
+        goto free_handshake;
     }
 
     return 0;
 
-free_la_irq:
-    la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 free_handshake:
 //free_sysfs:
 // la9310_remove_sysfs(la9310_dev);
@@ -967,7 +952,6 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_IRQ_INIT_STAGE:
-        la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_HANDSHAKE_INIT_STAGE:
@@ -1000,7 +984,6 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     // la9310_modinfo_exit(la9310_dev);
     la9310_subdrv_remove(la9310_dev);
 
-    la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     pci_free_irq_vectors(la9310_dev->pdev);
     dev_info(la9310_dev->dev, "%s: Removing sub-drivers\n", la9310_dev->name);
 

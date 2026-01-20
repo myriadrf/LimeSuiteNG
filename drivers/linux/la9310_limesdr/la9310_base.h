@@ -402,8 +402,6 @@ void la9310_dev_free_firmware(struct la9310_dev* la9310_dev);
 int la9310_init_global_sysfs(void);
 void la9310_remove_global_sysfs(void);
 int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);
-int la9310_request_irq(struct la9310_dev* la9310_dev, struct irq_evt_regs* irq_evt_regs);
-int la9310_clean_request_irq(struct la9310_dev* la9310_dev, struct irq_evt_regs* irq_evt_regs);
 // int la9310_host_add_stats(struct la9310_dev *la9310_dev,
 // 			  struct la9310_stats_ops *stats_ops);
 int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);
