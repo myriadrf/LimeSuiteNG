@@ -1034,7 +1034,7 @@
  *    <li>from .ini file</li>
  * </ul>
  * 
- * <h2>From structure</h2>
+ * <h1>From structure</h1>
  * 
  * To quick configure SDR device, use @ref lime::SDRConfig "SDRConfig" structure and @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function:
  * @code{.cpp}
@@ -1099,7 +1099,7 @@
  * For GFIR parameter please check out this section. <b>TODO: Link to the actual section.</b>  
  * For Test Signal parameter please check out this section. <b>TODO: Link to the actual section.</b>  
  * 
- * <h3>SDR device configuration example using SDRConfig structure</h3>
+ * <h2>SDR device configuration example using SDRConfig structure</h2>
  * 
  * Example of minimal SDR device configuration for basic streaming using SDRConfig structure:
  * @code{.cpp}
@@ -1150,9 +1150,47 @@
  * }
  * @endcode
  * 
- * <h2>From file</h2>
+ * <h1>From file</h1>
  * 
+ * Quick SDR device configuration can also be performed using <b>.ini</b> files, by using @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()" function:
+ * @code{.cpp}
+ *    ... // Other program code
  * 
+ *    uint8_t moduleIndex = 0; // For SDR devices with single RF chip
+ *    std::string configFile = "LimeSDRMini_V2_config.ini";
+ *    configStatus = device->LoadConfig(moduleIndex, configFile);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to configure SDR device from file with error: " << lime::ToString(configStatus) << std::endl;
+ *
+ *    ... // Other program code
+ * @endcode
+ * 
+ * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the
+ * configuration file name to specify the correct location of file.
+ * 
+ * To generate SDR device <b>.ini</b> file you must perform a first time SDR device configuration (check out "quick configuration from structure" section above) and use the 
+ * @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0; // For SDR devices with single RF chip
+ *    std::string configFile = "LimeSDRMini_V2_config.ini";
+ *    configStatus = device->SaveConfig(moduleIndex, configFile);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to configure SDR device from file with error: " << lime::ToString(configStatus) << std::endl;
+ *
+ *    ... // Other program code
+ * @endcode
+ * 
+ * @important If only the name of configuration file <b>.ini</b> is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different
+ * directory, append a absolute or relative path to the configuration file name.
+ * 
+ * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the LimeSuiteNG suite. The <b>limeGUI</b> application allows to perform 
+ * SDR device configuration using graphical user interface and then generate the final <b>.ini</b> configuration file, which can be loaded with 
+ * @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()" function. The <b>limeGUI</b> application allows to configure the basic SDR device parameters (center frequency, sample rate and etc.)
+ * and other more advanced SDR device parameters, which are not directly exposed through public API and can only be toggled by directly writing and reading SDR device registers. This sub-topic does not provide any 
+ * advice or example use of <b>limeGUI</b> application and is outside of scope of this guide book. Check out the <b>limeGUI</b> application documentation for more information about SDR device configuration options
+ * and <b>.ini</b> file generation steps.
  */
 
 /**
