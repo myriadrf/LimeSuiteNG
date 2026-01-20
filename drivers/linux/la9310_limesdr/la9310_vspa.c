@@ -80,14 +80,6 @@ static const struct _vspa_sec_info {
       { DEFAULT_OVERLAY, ".vpram_overlay" }, { OVERLAY_1, ".IQ_data_ovl_ddr" }, { OVERLAY_2, ".CAL_ovl_ddr" }
   };
 
-static irqreturn_t vspa_irq_handler(int irq, void* data)
-{
-    struct la9310_dev* la9310_dev = (struct la9310_dev*)data;
-
-    dev_info(la9310_dev->dev, "INFO %s: Interrupt received %d\n", __func__, irq);
-    return IRQ_HANDLED;
-}
-
 static ssize_t vspa_show_stats(void* vspa_stats, char* buf, struct la9310_dev* la9310_dev)
 {
     int len = 0;
@@ -947,7 +939,7 @@ int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, co
 
 /************************* Probe / Remove ***********************************/
 
-int vspa_probe(struct la9310_dev* la9310_dev, int vspa_irq_count, struct virq_evt_map* vspa_virq_map)
+int vspa_probe(struct la9310_dev* la9310_dev)
 {
     pr_info("VSPA probe\n");
     struct vspa_device* vspadev = NULL;
@@ -1043,18 +1035,6 @@ int vspa_probe(struct la9310_dev* la9310_dev, int vspa_irq_count, struct virq_ev
     val = (val & CONTROL_REG_MASK) | CONTROL_PDN_EN;
     vspa_reg_write(vspadev->regs + CONTROL_REG_OFFSET, val);
 
-    if (la9310_dev->sdr_board)
-    {
-        // requesting irq increments kernel module ref count, unable to unload then using rmmod
-        err = request_irq(vspa_virq_map->virq, vspa_irq_handler, 0, "vspa_handler", vspadev);
-        if (err < 0)
-        {
-            dev_err(la9310_dev->dev, "ERR %s: request_irq() err = %d\n", name, err);
-            goto err_out;
-        }
-
-        vspadev->vspa_irq_no = vspa_virq_map->virq;
-    }
     /* Make sure all interrupts are disabled */
     vspa_reg_write(vspadev->regs + IRQEN_REG_OFFSET, 0);
     dev_info(la9310_dev->dev,
@@ -1094,8 +1074,6 @@ int vspa_remove(struct la9310_dev* la9310_dev)
 
     /* shutdown timer cleanly */
     vspadev->watchdog_interval_msecs = 0;
-    if (la9310_dev->sdr_board)
-        free_irq(vspadev->vspa_irq_no, vspadev);
 
     kfree(vspadev);
 out_remove:

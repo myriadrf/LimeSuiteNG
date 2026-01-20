@@ -738,11 +738,9 @@ static int la9310_base_cleanup_subdrv(struct la9310_dev* la9310_dev, int drv_ind
 
 static int la9310_subdrv_init(struct la9310_dev* la9310_dev)
 {
-    int i, virq_count, rc;
+    int i, rc;
     struct la9310_sub_driver* subdrv;
     struct la9310_sub_driver_ops* ops;
-    struct virq_evt_map subdrv_virqmap[IRQ_REAL_MSI_BIT];
-    struct virq_evt_map* subdrv_virqmap_ptr;
 
     dev_info(la9310_dev->dev, "%s: Initiating sub-drivers\n", la9310_dev->name);
     for (i = 0; i < la9310_subdrv_cnt_g; i++)
@@ -753,13 +751,7 @@ static int la9310_subdrv_init(struct la9310_dev* la9310_dev)
         {
             pr_info("%s: subdrv probe : %s\n", __func__, &subdrv->name[0]);
 
-            memset(&subdrv_virqmap[0], 0, sizeof(subdrv_virqmap));
-            virq_count = la9310_get_subdrv_virqmap(la9310_dev, subdrv, &subdrv_virqmap[0], IRQ_REAL_MSI_BIT);
-            if (virq_count)
-                subdrv_virqmap_ptr = &subdrv_virqmap[0];
-            else
-                subdrv_virqmap_ptr = NULL;
-            rc = ops->probe(la9310_dev, virq_count, subdrv_virqmap_ptr);
+            rc = ops->probe(la9310_dev);
             if (rc)
             {
                 pr_err("%s: %s: probe failed, err %d\n", __func__, &subdrv->name[0], rc);
@@ -1056,7 +1048,7 @@ void la9310_subdrv_remove(struct la9310_dev* la9310_dev)
  * probe/remove. These functions are defined weak so they will be over-ridden
  * when real guys arive in arena.
  */
-int __attribute__((weak)) la9310_ipc_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map)
+int __attribute__((weak)) la9310_ipc_probe(struct la9310_dev* la9310_dev)
 {
     dev_info(la9310_dev->dev, "[%s]Dummy IPC probe\n", la9310_dev->name);
     return 0;
@@ -1104,7 +1096,7 @@ int __attribute__((weak)) tvd_exit(void)
     return 0;
 }
 
-int __attribute__((weak)) tvd_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map)
+int __attribute__((weak)) tvd_probe(struct la9310_dev* la9310_dev)
 {
     dev_dbg(la9310_dev->dev, "[%s]Dummy TVD probe\n", la9310_dev->name);
     return 0;
@@ -1128,7 +1120,7 @@ int __attribute__((weak)) remove_tti_dev(void)
     return 0;
 }
 
-int __attribute__((weak)) tti_dev_start(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map)
+int __attribute__((weak)) tti_dev_start(struct la9310_dev* la9310_dev)
 {
     dev_dbg(la9310_dev->dev, "[%s]Dummy TTI probe\n", la9310_dev->name);
     return 0;

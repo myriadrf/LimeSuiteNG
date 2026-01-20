@@ -337,7 +337,7 @@ struct la9310_dev {
 #define LA9310_CHK_FLG(flag_var, flg) (flag_var & flg)
 #define LA9310_CLR_FLG(flag_var, flg) (flag_var &= (~flg))
 
-typedef int (*sub_drv_probe_t)(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+typedef int (*sub_drv_probe_t)(struct la9310_dev* la9310_dev);
 
 typedef int (*sub_drv_remove_t)(struct la9310_dev* la9310_dev);
 typedef int (*sub_drv_mod_init_t)(void);
@@ -372,12 +372,12 @@ enum la9310_reset_type {
     LA9310_WARM_RESET,
 };
 
-int vspa_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int vspa_probe(struct la9310_dev* la9310_dev);
 int vspa_remove(struct la9310_dev* la9310_dev);
 
-int la9310_test_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int la9310_test_probe(struct la9310_dev* la9310_dev);
 int la9310_test_remove(struct la9310_dev* la9310_dev);
-int la9310_v2h_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int la9310_v2h_probe(struct la9310_dev* la9310_dev);
 int la9310_v2h_remove(struct la9310_dev* la9310_dev);
 
 extern int la9310_subdrv_mod_init(void);
