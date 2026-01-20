@@ -38,7 +38,6 @@ add_kernel_module(
     SOURCES
     la9310_firmware.c
     la9310_limesdr_module.c
-    la9310_irq_mux.c
     la9310_base.h
     la9310_base.c
     la9310_vspa.h
