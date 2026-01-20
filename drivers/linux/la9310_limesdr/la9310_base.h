@@ -10,10 +10,6 @@
 #include "common_headers/la9310_host_if.h"
 #include <linux/firmware.h>
 
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    #include <linux/completion.h>
-#endif
-
 #define FIRMWARE_RTOS "la9310.bin"
 #define FIRMWARE_NAME_SIZE 100
 
@@ -41,10 +37,6 @@
 
 #define IN_MB(x) ((x) / (1024 * 1024))
 #define IN_KB(x) ((x) / (1024))
-
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-extern struct completion ScratchRegisterHandshake;
-#endif
 
 struct la9310_global {
     bool active;

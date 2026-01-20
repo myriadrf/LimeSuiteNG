@@ -26,15 +26,10 @@
 
 // #include "la9310_wdog.h"
 // #include "la9310_v2h_if.h"
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-    #include <linux/completion.h>
-#endif
 
 static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
-#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 struct completion ScratchRegisterHandshake;
-#endif
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
 static int la9310_get_subdrv_virqmap(
     struct la9310_dev* la9310_dev, struct la9310_sub_driver* subdrv, struct virq_evt_map* subdrv_virqmap, int subdrv_virqmap_size);
@@ -54,17 +49,6 @@ static int la9310_get_subdrv_virqmap(
 // 	return msi_num;
 
 // }
-
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-static irqreturn_t host_handshake_handler(int irq, void* dev)
-{
-    struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
-
-    dev_info(la9310_dev->dev, "Host Handshake interrupt done!! irq num %d\n", irq);
-    complete(&ScratchRegisterHandshake);
-    return IRQ_HANDLED;
-}
-#endif
 
 // void raise_msg_interrupt(struct la9310_dev *la9310_dev,
 // 			 uint32_t msg_unit_index, uint32_t ibs)
@@ -808,31 +792,8 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
         return rc;
     }
 
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-    rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "%s: probe irq req failed, err %d\n", __func__, rc);
-        return rc;
-    }
-
-    /* scrach register handshake request irq */
-    init_completion(&ScratchRegisterHandshake);
-    rc = request_irq(
-        la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), host_handshake_handler, 0, "Host Handshake interrupt", la9310_dev);
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "%s: request_irq failed, err %d\n", __func__, rc);
-        goto free_hs_irq;
-    }
-
-#endif
     dev_info(la9310_dev->dev, "%s: Initiating Reset handshake\n", la9310_dev->name);
     rc = la9310_do_reset_handshake(la9310_dev);
-
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_HOST_HANDSHAKE), la9310_dev);
-#endif
 
     if (rc)
     {
@@ -845,14 +806,12 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     if (rc)
         goto free_msi_irq;
 
-#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
     rc = la9310_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     if (rc)
     {
         pr_err("%s: probe irq req failed, err %d\n", __func__, rc);
         goto free_msi_irq;
     }
-#endif
 
     rc = la9310_subdrv_init(la9310_dev);
     if (rc)
@@ -861,11 +820,9 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     return 0;
 
 free_msi_irq:
-#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
 free_hs_irq:
     la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-#endif
     return rc;
 }
 
@@ -987,9 +944,6 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
 free_la_irq:
     la9310_clean_request_irq(la9310_dev, &la9310_dev->hif->irq_evt_regs);
 free_handshake:
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-#endif
 //free_sysfs:
 // la9310_remove_sysfs(la9310_dev);
 free_ipc:
@@ -1009,9 +963,7 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
     {
     case LA9310_SUBDRV_PROBE_STAGE:
         la9310_base_cleanup_subdrv(la9310_dev, drv_index);
-#if LA9310_RESET_HANDSHAKE_POLLING_ENABLE
         free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-#endif
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_IRQ_INIT_STAGE:
@@ -1019,9 +971,6 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_HANDSHAKE_INIT_STAGE:
-#if !(LA9310_RESET_HANDSHAKE_POLLING_ENABLE)
-        free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
-#endif
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_SYSFS_INIT_STAGE:
