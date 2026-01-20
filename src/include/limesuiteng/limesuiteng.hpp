@@ -643,19 +643,18 @@
  * @ref examples "Back to the list of example topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
- * Since SDR devices are highly customizible, this example topic is separated into different sub-topics which provide specific information and examples for various SDR control and configuration options.
- * The link below, redirects to the full API function list for SDR device control and configuration.   
- * 
- * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
- * 
- * List of sub-topics to learn more about specific SDR device control and configuration options:
+ * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
+ * The quick configuration sub-topic is the main sub-topic that provides the essential steps required to configure the base SDR device parameters that are enough to run a data stream. Other sub-topics 
+ * provide more information about individual SDR device parameter configuration options and other advanced configuration options.  
+ * List of sub-topics:
  * <ul>
- *    <li> @ref generic_config "Common control and configuration options"
  *    <li> @ref quick_config "Quick configuration"</li>
+ *    <li> @ref generic_config "Common control and configuration options"
  *    <li> @ref fir_filter_config "FIR filter configuration"</li>
  *    <li> @ref frequency_config "Frequency configuration"</li>
  * </ul>
  * 
+ * @ref control_adn_config "Click here to go to SDR device control and configuration API function list" 
  * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
 
