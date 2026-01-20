@@ -677,10 +677,7 @@
  *    <li>configure device sample rate bandwidth</li>
  *    <li>configure device antennas</li>
  *    <li>configure device gain</li>
- *    
- * </ol>  
- * 
- * A full example code for configuring SDR device is provided at the end of the page.  
+ * </ol>
  * 
  * <h2>Default initialization</h2>
  * 
@@ -1030,48 +1027,6 @@
  * generic amplifier will be updated.  @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the
  * amplifier types specified in the gain setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal.
  * For PGA, PAD and LoopbackPAD amplifiers, function will return the actual signal strength.
- * 
- * @if HIDDEN
- * Minimal SDR RX set up:
- * @code{.cpp} 
- * int main()
- * {
- *    ... // Device handle discovery code
- *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
- *    if(device == nullptr)
- *    {
- *       std::cout << "Failed to connnect to SDR device\n";
- *       return 1;
- *    }
- *    
- *    lime::OpStatus configStatus = lime::OpStatus::Success;
- *    double centerFreq = 95.9e6;
- *    double cutOffFreq = 5e6;
- *    double sampRate = 2e6;
- *    uint8_t overSampRatio = 2;
- * 
- *    configStatus = device->Init();
- *    if(configStatus != lime::OpStatus::Success)
- *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
- * 
- *    configStatus = device->SetFrequency(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, centerFreq);
- *    if(configStatus != lime::OpStatus::Success)
- *       std::cout << "Device center frequency configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- *    
- *    configStatus = device->SetLowPassFilter(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, cutOffFreq);
- *    if(configStatus != lime::OpStatus::Success)
- *       std::cout << "Device low pass filter configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- * 
- *    configStatus = device->SetSampleRate(0, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, sampRate, overSampRatio);
- *    if(configStatus != lime::OpStatus::Success)
- *       std::cout << "Device sample rate configuration failed with error: " << lime::ToString(configStatus) << std::endl;
- *    
- *    ... // Other program code
- * 
- *    return 0;
- * }
- * @endcode
- * @endif
  * 
  */
 
