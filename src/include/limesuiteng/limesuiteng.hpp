@@ -43,7 +43,7 @@
  * @section getting_started Getting started
  * 
  * If you are completely new to the LimeSDR software environment or looking for information about SDR device control and configuration, it is recommended to visit
- * @ref examples "library API guide book page". Library Guide book page provides code examples, in depth explanations and other information about different library API members.
+ * @ref guide_book_top "library API guide book page". Library Guide book page provides code examples, in depth explanations and other information about different library API members.
  * If you only need to reference library API member list, then @ref api "check out the sorted and ordered list of public API members".
  * 
  */
@@ -401,9 +401,9 @@
  */
 
 /**
- * @page examples Library examples
+ * @page guide_book_top Library guide book
  * 
- * This is the main page of LimeSuiteNG library examples. Here you will find an organized list of example subpages which will help you get started with LimeSDR public API.
+ * This is the main page of LimeSuiteNG library guide book. Here you will find an organized list of topics which will help you get started with LimeSDR public API.
  * The example topics in the list cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
  * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
  * code which can be used as template for further development.
@@ -423,7 +423,7 @@
 /**
  * @addtogroup cmake_set_up CMake set up
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * 
  * In this example we explore LimeSuiteNG library set up requirements for CMake based projects. The following CMakeLists.txt code is the minimum required
  * project set up code which allows to use LimeSuiteNG API in custom applications:
@@ -462,7 +462,7 @@
 /**
  * @addtogroup dev_discovery SDR device discovery and registration
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref cmake_set_up "Back to CMake project set up example topic"  
  * 
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
@@ -627,14 +627,14 @@
  * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
  * @endcode
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_config "Go to SDR device configuration example topic"
  */
 
 /**
  * @addtogroup dev_config SDR device configuration
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
  * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
@@ -648,7 +648,7 @@
  *    <li> @ref frequency_config "Frequency configuration"</li>
  * </ul>
  * 
- * @ref control_adn_config "Click here to go to SDR device control and configuration API function list" 
+ * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
  * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
 
@@ -1175,7 +1175,7 @@
 /**
  * @addtogroup dev_streaming SDR device stream set up and streaming
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_config "Back to SDR device configuration example topic"  
  * 
  * This example explains how to set up a stream between two LimeSDR devices and send data over RF medium.
@@ -1184,20 +1184,20 @@
  * @code{.cpp}
  * @endcode
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref hello_world_example "Go to minimal development template example"
  */
 
 /**
  * @addtogroup hello_world_example Hello World example
  * 
- * @ref examples "Back to the list of example topics"  
+ * @ref guide_book_top "Back to the list of guide book topics"  
  * 
  * This is a minimal example code that can be used as a starting point for further development. Public API members presented in this code have been reviewed in previous example topics.
  * Example code:
  * @code{.cpp}
  * @endcode
  *
- * @ref examples "Back to the list of example topics"
+ * @ref guide_book_top "Back to the list of guide book topics"
  */
 // This is the end point of subpages for example page
