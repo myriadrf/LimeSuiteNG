@@ -34,23 +34,17 @@
  * TODO: Update the list of supported library features.  
  * 
  * <ul>
- *    <li>Loading SDR device configuration from/to file (Configuration file generated with LimeSuiteNG GUI application)</li>
- *    <li></li>
+ *    <li>Quick SDR device configuration (from structure/from file)</li>
+ *    <li>Advanced SDR device configuration from file (Configuration file generated with LimeSuiteNG GUI application)</li>
  * </ul>
  * 
  * 
  * 
  * @section getting_started Getting started
  * 
- * If you are completely new to the LimeSDR software environment, it is recommended to start with
- * example tutorials which guide through the LimeSDR device configuration and communication set up 
- * processes step by step.  
- * 
- * @ref examples "Go to LimeSuiteNG library examples page"  
- * 
- * @section api_section Application Programming Interface (API)
- * 
- * Check out @ref api "Application Programming Interface" for a full list of LimeSuiteNG library functions.
+ * If you are completely new to the LimeSDR software environment or looking for information about SDR device control and configuration, it is recommended to visit
+ * @ref examples "library API guide book page". Library Guide book page provides code examples, in depth explanations and other information about different library API members.
+ * If you only need to reference library API member list, then @ref api "check out the sorted and ordered list of public API members".
  * 
  */
 
