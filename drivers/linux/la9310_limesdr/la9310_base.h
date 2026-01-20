@@ -52,11 +52,6 @@ enum la9310_init_stage {
     LA9310_SUBDRV_PROBE_STAGE
 };
 
-struct virq_evt_map {
-    la9310_irq_evt_bits_t evt;
-    int virq;
-};
-
 struct la9310_dev;
 
 /**
@@ -77,22 +72,6 @@ struct la9310_stats_ops {
 struct la9310_host_stats {
     struct la9310_stats_ops stats_ops;
     struct list_head list;
-};
-struct la9310_irq_mux_stats {
-    unsigned long num_virq_evt_raised;
-    unsigned long num_hw_irq_recv;
-    unsigned long num_msg_unit_irq_evt_raised;
-};
-
-struct la9310_irq_mux_pram {
-    int irq_base;
-    u32* irq_evt_cfg_reg;
-    u32* irq_evt_en_reg;
-    u32* irq_evt_sts_reg;
-    u32* irq_evt_clr_reg;
-    struct la9310_irq_mux_stats irq_stats;
-    u32 num_irq;
-    struct virq_evt_map* virq_map;
 };
 
 /**
@@ -297,7 +276,6 @@ struct la9310_dev {
     struct la9310_ep_log ep_log;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
-    struct la9310_irq_mux_pram* la9310_irq_priv;
     void* vspa_priv;
     void* ipc_priv;
     void* v2h_priv;

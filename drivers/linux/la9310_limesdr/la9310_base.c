@@ -31,8 +31,6 @@ static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 struct completion ScratchRegisterHandshake;
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
-static int la9310_get_subdrv_virqmap(
-    struct la9310_dev* la9310_dev, struct la9310_sub_driver* subdrv, struct virq_evt_map* subdrv_virqmap, int subdrv_virqmap_size);
 
 // int wdog_msi_irq;
 // int get_wdog_msi(int wdog_id)
@@ -1206,80 +1204,6 @@ extern int la9310_get_msi_irq(struct la9310_dev* la9310_dev, enum la9310_msi_id 
 {
     dev_dbg(la9310_dev->dev, "return irq=%d\n", la9310_dev->irq[type].irq_val);
     return la9310_dev->irq[type].irq_val;
-}
-
-static int __la9310_get_subdrv_virqmap(
-    struct la9310_dev* la9310_dev, struct virq_evt_map* subdrv_virqmap, int subdrv_virqmap_size, u32 subdrv_virq_mask)
-{
-    int virq_count = 0, subdrv_virq_idx = 0, i;
-    struct virq_evt_map* virq_map;
-    struct la9310_irq_mux_pram* la9310_irq_priv = la9310_dev->la9310_irq_priv;
-
-    if (subdrv_virq_mask != IRQ_EVT_MSI_MASK)
-    {
-        virq_map = la9310_irq_priv->virq_map;
-        for (i = 0; i < la9310_irq_priv->num_irq; i++)
-        {
-            dev_dbg(la9310_dev->dev,
-                "%s: virq_map: %p, evt: %d, virq: %d\n",
-                __func__,
-                &virq_map[i],
-                virq_map[i].evt,
-                virq_map[i].virq);
-            if (LA9310_IRQ_EVT(virq_map[i].evt) & subdrv_virq_mask)
-            {
-                subdrv_virqmap[subdrv_virq_idx].evt = virq_map[i].evt;
-                subdrv_virqmap[subdrv_virq_idx].virq = virq_map[i].virq;
-                subdrv_virq_idx++;
-                virq_count++;
-            }
-        }
-    }
-    else
-    {
-        subdrv_virqmap->evt = IRQ_REAL_MSI_BIT;
-        dev_dbg(la9310_dev->dev, "evt = %d virq=%d\n", subdrv_virqmap->evt, subdrv_virqmap->virq);
-        virq_count++;
-    }
-
-    dev_info(la9310_dev->dev, "virqmap init, evtmask %x, count %d", subdrv_virq_mask, virq_count);
-    return virq_count;
-}
-
-static int la9310_get_subdrv_virqmap(
-    struct la9310_dev* la9310_dev, struct la9310_sub_driver* subdrv, struct virq_evt_map* subdrv_virqmap, int subdrv_virqmap_size)
-{
-    int virq_count = 0;
-    u32 virq_mask;
-
-    switch (subdrv->type)
-    {
-    case LA9310_SUBDRV_TYPE_IPC:
-        virq_mask = IRQ_EVT_IPC_EVT_MASK;
-        break;
-    case LA9310_SUBDRV_TYPE_VSPA:
-        virq_mask = IRQ_EVT_VSPA_EVT_MASK;
-        break;
-    case LA9310_SUBDRV_TYPE_TEST:
-        virq_mask = IRQ_EVT_TEST_EVT_MASK;
-        break;
-    case LA9310_SUBDRV_TYPE_WDOG:
-        virq_mask = IRQ_EVT_MSI_MASK;
-        subdrv_virqmap->virq = la9310_dev->irq[MSI_IRQ_WDOG].irq_val;
-        break;
-    case LA9310_SUBDRV_TYPE_V2H:
-        virq_mask = IRQ_EVT_MSI_MASK;
-        subdrv_virqmap->virq = la9310_dev->irq[MSI_IRQ_V2H].irq_val;
-        break;
-    default:
-        dev_warn(la9310_dev->dev, "VIRQ MASK not defined for subdrv %s\n", subdrv->name);
-        goto out;
-    }
-
-    dev_dbg(la9310_dev->dev, "subdrv [%s] virqmap init", subdrv->name);
-    virq_count = __la9310_get_subdrv_virqmap(la9310_dev, subdrv_virqmap, subdrv_virqmap_size, virq_mask);
-out:
-    return virq_count;
 }
 
 int la9310_subdrv_mod_init(void)
