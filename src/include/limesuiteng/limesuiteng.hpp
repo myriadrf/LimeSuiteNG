@@ -55,7 +55,8 @@
  * This page provides a complete list of functions, enumerations, structures that can be accessed 
  * through public API.
  * 
- * <b>Warning:</b> All public API members are part of namespace <b>lime</b>. To access individual members use scope resolution operator <b>lime::function()</b>.
+ * @warning All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
+ * additionally specify the scope of device registry interface class: <b>lime::DeviceRegistry::function()</b>.
  * 
  * @section funcs Functions 
  * 
