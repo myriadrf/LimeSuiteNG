@@ -404,8 +404,8 @@
 /**
  * @page guide_book_top Library guide book
  * 
- * This is the main page of LimeSuiteNG library guide book. Here you will find an organized list of topics which will help you get started with LimeSDR public API.
- * The example topics in the list cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
+ * This is the main page of LimeSuiteNG library guide book. Here you will find an organized list of topics which will help you get started with LimeSuiteNG public API.
+ * Guide book topics cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
  * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
  * code which can be used as template for further development.
  * 
@@ -519,7 +519,7 @@
  * @image{inline} xml dev_registration_dev_enum.png
  * 
  * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
- * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock which is not compliant with USB 3.0 standard.
+ * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
  * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
  * 
  * <h2>Filtering device lists and device registration</h2>
@@ -608,8 +608,8 @@
  * Following the first example, device enumeration without any device filters is used. Once device list is enumerated
  * and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle" type is created. Only device name is 
  * selected as a filtering argument. Device filter object is used as an argument for @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method
- * which compares the arguments of device handles in the list with the given device filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device.  
- * Connection with the device can be established using @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. 
+ * which compares the arguments of device handles in the list with the given device filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR 
+ * device. Connection with the device can be established using @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. 
  * To test if the connection to the device is successfull, compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr.
  * Possible (but rare) connection problems:  
  * <ol>
@@ -641,7 +641,6 @@
  * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
  * The quick configuration sub-topic is the main sub-topic that provides the essential steps required to configure the base SDR device parameters that are enough to run a data stream. Other sub-topics 
  * provide more information about individual SDR device parameter configuration options and other advanced configuration options.  
- * List of sub-topics:
  * <ul>
  *    <li> @ref quick_config "Quick configuration"</li>
  *    <li> @ref generic_config "Common control and configuration options"
@@ -664,14 +663,14 @@
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * 
  * Common SDR device control and configuration options allow to set up the communication channel structure and the base streaming parameters of individual channel directions (Tx/Rx).
- * This sub-topic explains how to:
+ * This sub-topic explains how to configure:
  * <ol>
- *    <li>set up channels in MIMO or SISO mode</li>
- *    <li>configure channel LO frequency</li>
- *    <li>configure device low pass filter bandwidth</li>
- *    <li>configure device sample rate bandwidth</li>
- *    <li>configure device antennas</li>
- *    <li>configure device gain</li>
+ *    <li>channel mode: MIMO or SISO </li>
+ *    <li>channel direction LO frequency</li>
+ *    <li>channel direction low pass filter bandwidth</li>
+ *    <li>channel direction sample rate</li>
+ *    <li>channel direction antenna</li>
+ *    <li>channel direction gain</li>
  * </ol>
  * 
  * <h2>Default initialization</h2>
@@ -1169,7 +1168,7 @@
  * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the
  * configuration file name to specify the correct location of file.
  * 
- * To generate SDR device <b>.ini</b> file you must perform a first time SDR device configuration (check out "quick configuration from structure" section above) and use the 
+ * To generate SDR device <b>.ini</b> file you must perform a first time SDR device configuration (check out <b>From structure</b> section above) and use the 
  * @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()" function:
  * @code{.cpp}
  *    ... // Other program code
