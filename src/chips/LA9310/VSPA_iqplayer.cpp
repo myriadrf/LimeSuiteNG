@@ -449,6 +449,8 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     // const std::lock_guard<std::mutex> lock(mx);
     VSPA_FIFO_State& rxState = mRx[channel];
 
+    port->wait_for_new_data();
+
     // dccivac((uint32_t*)(rx_vspa_proxy_ro));
     auto nv_rx_vspa_proxy_ro = const_cast<t_rx_ch_host_proxy*>(rx_vspa_proxy_ro);
     port->sync_dmem_proxy_before_read(reinterpret_cast<uint8_t*>(nv_rx_vspa_proxy_ro), sizeof(t_rx_ch_host_proxy));
