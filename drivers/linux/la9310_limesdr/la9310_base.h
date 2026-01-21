@@ -303,6 +303,8 @@ struct la9310_dev {
 
     struct la9310_mem_region_info dmem_proxy;
     struct platform_device* uart;
+
+    struct completion data_available;
 };
 
 /*la9310_dev->flags*/

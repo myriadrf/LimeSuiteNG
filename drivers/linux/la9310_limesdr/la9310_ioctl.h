@@ -51,6 +51,7 @@ struct LA9310_IOCTL_CSR_op {
 #define LA9310_IOCTL_CSR_OP _IOR(LA9310_IOCTL, 28, struct LA9310_IOCTL_CSR_op)
 #define LA9310_IOCTL_LOAD_M4_FW _IOR(LA9310_IOCTL, 29, struct LA9310_IOCTL_firmware)
 #define LA9310_IOCTL_LOAD_VSPA_FW _IOR(LA9310_IOCTL, 30, struct LA9310_IOCTL_firmware)
+#define LA9310_IOCTL_WAIT_FOR_DATA _IOW(LA9310_IOCTL, 31, unsigned int)
 
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg);
 

@@ -819,6 +819,25 @@ int la9310_is_m4_booted(struct la9310_dev* la9310_dev)
     return scratch_val == LA9310_HOST_START_DRIVER_INIT;
 }
 
+static irqreturn_t la9310_irq_handler(int irq, void* dev)
+{
+    struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
+    complete(&la9310_dev->data_available);
+    return IRQ_HANDLED;
+}
+
+static int la9310_init_irq(struct la9310_dev* la9310_dev)
+{
+    int rc;
+
+    init_completion(&la9310_dev->data_available);
+
+    la9310_create_outbound_msi(la9310_dev);
+    rc = request_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_irq_handler, 0, la9310_dev->name, (void*)la9310_dev);
+
+    return rc;
+}
+
 int la9310_base_probe(struct la9310_dev* la9310_dev)
 {
     int rc = 0;
@@ -893,13 +912,17 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     la9310_init_ep_pcie_allocator(la9310_dev);
     // rc = la9310_modinfo_init(la9310_dev);
 
+    rc = la9310_init_irq(la9310_dev);
+    if (rc)
+        goto free_handshake;
+
     struct resource* tty_res = NULL;
     tty_res = devm_kzalloc(la9310_dev->dev, sizeof(struct resource), GFP_KERNEL);
     if (!tty_res)
     {
         dev_err(la9310_dev->dev, "Failed to allocate memory for UART\n");
         rc = -1;
-        goto free_handshake;
+        goto free_irq;
     }
     {
         tty_res->start = (resource_size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + 0x21c0000;
@@ -913,11 +936,13 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     {
         dev_err(la9310_dev->dev, "Failed to register UART\n");
         rc = -1;
-        goto free_handshake;
+        goto free_irq;
     }
 
     return 0;
 
+free_irq:
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 free_handshake:
 //free_sysfs:
 // la9310_remove_sysfs(la9310_dev);
@@ -938,7 +963,6 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
     {
     case LA9310_SUBDRV_PROBE_STAGE:
         la9310_base_cleanup_subdrv(la9310_dev, drv_index);
-        free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_IRQ_INIT_STAGE:
@@ -964,6 +988,8 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     struct la9310_mem_region_info* host_region;
 
     dev_info(la9310_dev->dev, "%s: Removing LA9310 dev\n", la9310_dev->name);
+
+    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 
     platform_device_unregister(la9310_dev->uart);
 

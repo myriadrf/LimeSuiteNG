@@ -34,6 +34,22 @@ void la9310_flush_cache(struct la9310_dev* la9310_dev, struct LA9310_IOCTL_flush
         dma_sync_single_for_device(la9310_dev->dev, phys_addr + m->offset, m->size, m->dir);
 }
 
+static int la9310_wait_for_data(struct la9310_dev* la9310_dev, unsigned int timeout_ms)
+{
+    long ret;
+
+    ret = wait_for_completion_interruptible_timeout(&la9310_dev->data_available, msecs_to_jiffies(timeout_ms));
+
+    if (!ret)
+        return -ETIMEDOUT;
+    else if (ret < 0)
+        return -ERESTARTSYS;
+
+    // we assume userspace is greedy and consumes all available data each time it wakes up
+    reinit_completion(&la9310_dev->data_available);
+    return 0;
+}
+
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
@@ -42,6 +58,7 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
     struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
     struct LA9310_IOCTL_flush_cache cache_entry;
     struct LA9310_IOCTL_firmware fw;
+    unsigned int timeout_ms;
 
     WARN_ON(la9310_dev == NULL);
 
@@ -135,6 +152,13 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         if (copy_to_user((void*)arg, &op, sizeof(op)))
             return -EFAULT;
 
+        break;
+    }
+    case LA9310_IOCTL_WAIT_FOR_DATA: {
+        if (copy_from_user(&timeout_ms, (unsigned int __user*)arg, sizeof(timeout_ms)))
+            return -EFAULT;
+
+        ret = la9310_wait_for_data(la9310_dev, timeout_ms);
         break;
     }
     default:
