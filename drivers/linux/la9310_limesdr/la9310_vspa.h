@@ -578,8 +578,6 @@ struct vspa_device {
     /*PCI device address*/
     struct pci_dev* pdev;
 
-    /* IRQ numbers */
-    uint32_t vspa_irq_no;
     /* IP registers */
     resource_size_t mem_size; /* size */
     u32 __iomem* mem_addr; /* physical address */

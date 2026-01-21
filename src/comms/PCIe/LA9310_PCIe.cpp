@@ -169,6 +169,23 @@ mmaped_region LA9310_PCIe::GetBar(uint8_t i)
     return mapped_ranges[i];
 }
 
+OpStatus LA9310_PCIe::wait_for_new_data(int timeout_ms)
+{
+    while (1)
+    {
+        if (!ioctl(mFileDescriptor, LA9310_IOCTL_WAIT_FOR_DATA, &timeout_ms))
+            return OpStatus::Success;
+
+        // EINTR may be returned if a signal occured whilst in the ioctl
+        if (errno == EINTR)
+            continue;
+        if (errno == ETIMEDOUT)
+            return OpStatus::Timeout;
+
+        return OpStatus::Error;
+    }
+}
+
 void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
 {
     struct LA9310_IOCTL_flush_cache cache_entry;

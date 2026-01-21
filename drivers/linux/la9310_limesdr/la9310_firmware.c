@@ -13,12 +13,8 @@
 
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
 {
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    int rc = 0;
-#else
     int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
 
-#endif
     struct la9310_ccsr_dcr* ccsr_dcr;
     u32 scratch_val;
     u32* scratch_reg;
@@ -40,7 +36,6 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
         LA9310_HOST_START_DRIVER_INIT,
         scratch_val);
 
-#ifdef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
     set_current_state(TASK_INTERRUPTIBLE);
     /* Wait for FreeRTOS to complete reset hand shake */
     schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
@@ -58,15 +53,6 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
         hif_offset = readl(hif_offset_reg);
         hif_size = readl(hif_size_reg);
     }
-#else
-    /*waiting for interrupt from la9310 to do handshake*/
-    wait_for_completion_timeout(&ScratchRegisterHandshake, msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-
-    dma_rmb();
-    scratch_val = readl(scratch_reg);
-    hif_offset = readl(hif_offset_reg);
-    hif_size = readl(hif_size_reg);
-#endif
     if (scratch_val != LA9310_HOST_START_DRIVER_INIT)
     {
         dev_err(la9310_dev->dev, "LA9310 Reset HandShake failed, scratch 0x%x\n", scratch_val);

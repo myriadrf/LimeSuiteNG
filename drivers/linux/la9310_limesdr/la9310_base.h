@@ -10,10 +10,6 @@
 #include "common_headers/la9310_host_if.h"
 #include <linux/firmware.h>
 
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    #include <linux/completion.h>
-#endif
-
 #define FIRMWARE_RTOS "la9310.bin"
 #define FIRMWARE_NAME_SIZE 100
 
@@ -42,10 +38,6 @@
 #define IN_MB(x) ((x) / (1024 * 1024))
 #define IN_KB(x) ((x) / (1024))
 
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-extern struct completion ScratchRegisterHandshake;
-#endif
-
 struct la9310_global {
     bool active;
     char dev_name[64];
@@ -58,11 +50,6 @@ enum la9310_init_stage {
     LA9310_HANDSHAKE_INIT_STAGE,
     LA9310_IRQ_INIT_STAGE,
     LA9310_SUBDRV_PROBE_STAGE
-};
-
-struct virq_evt_map {
-    la9310_irq_evt_bits_t evt;
-    int virq;
 };
 
 struct la9310_dev;
@@ -85,22 +72,6 @@ struct la9310_stats_ops {
 struct la9310_host_stats {
     struct la9310_stats_ops stats_ops;
     struct list_head list;
-};
-struct la9310_irq_mux_stats {
-    unsigned long num_virq_evt_raised;
-    unsigned long num_hw_irq_recv;
-    unsigned long num_msg_unit_irq_evt_raised;
-};
-
-struct la9310_irq_mux_pram {
-    int irq_base;
-    u32* irq_evt_cfg_reg;
-    u32* irq_evt_en_reg;
-    u32* irq_evt_sts_reg;
-    u32* irq_evt_clr_reg;
-    struct la9310_irq_mux_stats irq_stats;
-    u32 num_irq;
-    struct virq_evt_map* virq_map;
 };
 
 /**
@@ -305,7 +276,6 @@ struct la9310_dev {
     struct la9310_ep_log ep_log;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
-    struct la9310_irq_mux_pram* la9310_irq_priv;
     void* vspa_priv;
     void* ipc_priv;
     void* v2h_priv;
@@ -333,6 +303,8 @@ struct la9310_dev {
 
     struct la9310_mem_region_info dmem_proxy;
     struct platform_device* uart;
+
+    struct completion data_available;
 };
 
 /*la9310_dev->flags*/
@@ -345,7 +317,7 @@ struct la9310_dev {
 #define LA9310_CHK_FLG(flag_var, flg) (flag_var & flg)
 #define LA9310_CLR_FLG(flag_var, flg) (flag_var &= (~flg))
 
-typedef int (*sub_drv_probe_t)(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+typedef int (*sub_drv_probe_t)(struct la9310_dev* la9310_dev);
 
 typedef int (*sub_drv_remove_t)(struct la9310_dev* la9310_dev);
 typedef int (*sub_drv_mod_init_t)(void);
@@ -380,12 +352,12 @@ enum la9310_reset_type {
     LA9310_WARM_RESET,
 };
 
-int vspa_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int vspa_probe(struct la9310_dev* la9310_dev);
 int vspa_remove(struct la9310_dev* la9310_dev);
 
-int la9310_test_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int la9310_test_probe(struct la9310_dev* la9310_dev);
 int la9310_test_remove(struct la9310_dev* la9310_dev);
-int la9310_v2h_probe(struct la9310_dev* la9310_dev, int virq_count, struct virq_evt_map* virq_map);
+int la9310_v2h_probe(struct la9310_dev* la9310_dev);
 int la9310_v2h_remove(struct la9310_dev* la9310_dev);
 
 extern int la9310_subdrv_mod_init(void);
@@ -410,8 +382,6 @@ void la9310_dev_free_firmware(struct la9310_dev* la9310_dev);
 int la9310_init_global_sysfs(void);
 void la9310_remove_global_sysfs(void);
 int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);
-int la9310_request_irq(struct la9310_dev* la9310_dev, struct irq_evt_regs* irq_evt_regs);
-int la9310_clean_request_irq(struct la9310_dev* la9310_dev, struct irq_evt_regs* irq_evt_regs);
 // int la9310_host_add_stats(struct la9310_dev *la9310_dev,
 // 			  struct la9310_stats_ops *stats_ops);
 int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);

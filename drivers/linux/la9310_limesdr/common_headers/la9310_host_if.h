@@ -42,11 +42,7 @@ enum la9310_msi_id {
     MSI_IRQ_MUX = 0,
     MSI_IRQ_V2H,
     MSI_IRQ_WDOG,
-#ifndef LA9310_RESET_HANDSHAKE_POLLING_ENABLE
-    MSI_IRQ_HOST_HANDSHAKE,
-#else
     MSI_IRQ_UNUSED_1,
-#endif
     MSI_IRQ_IPC_1,
     MSI_IRQ_IPC_2,
     MSI_IRQ_UNUSED_2,
