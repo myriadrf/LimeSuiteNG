@@ -1094,6 +1094,20 @@
  *    ... // Other program code
  * @endcode
  * 
+ * To use GFIR filters in digital domain, enable automatic GFIR filter calculation and set up:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;          // For SDR devices with single RF chip 
+ *    lime::SDRConfig LimeSDRMiniConf;
+ *    LimeSDRMiniConf.channel[0].tx.gfir.enabled = true;    // Enable the use of all GFIR filters for channel A, Tx direction. Alternatively, use false to disable all of them
+ *    LimeSDRMiniConf.channel[0].tx.gfir.bandwidth = 2e6;   // Calculate GFIR coefficients for 2 MHz bandwidth
+ * 
+ *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to configure SDR device with error: " << lime::ToString(configStatus) << std::endl;
+ *    ... // Other program code
+ * @endcode
+ * 
  * For more information about the gain parameter and other device parameters, please visit @ref generic_config "Common control and configuration options" topic, which provides more information about individual parameters
  * and ways to set/get those individual parameters.  
  * For GFIR filter set up please check out this @ref fir_filter_config "section".  
@@ -1137,6 +1151,8 @@
  *     LimeSDRMiniConf.channel[0].rx.lpf = 10e6;   // bandwidth in Hz
  *     LimeSDRMiniConf.channel[0].tx.path = 1;  // antenna path - band1
  *     LimeSDRMiniConf.channel[0].rx.path = 2;  // antenna path - LNAL
+ *     LimeSDRMiniConf.channel[0].tx.gfir.enabled = true;    // Enable the use of all GFIR filters for channel A, Tx direction. Alternatively, use false to disable all of them
+ *     LimeSDRMiniConf.channel[0].tx.gfir.bandwidth = 2e6;   // Calculate GFIR coefficients for 2 MHz bandwidth
  * 
  * 
  *     configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
