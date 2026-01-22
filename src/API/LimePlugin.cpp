@@ -554,6 +554,18 @@ static void GatherDirectionalSettings(LimeSettingsProvider* settings, Directiona
 
 static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* settings, const char* prefix)
 {
+    GetSetting(settings, &param->referenceClockFreq, "%s_reference_clock", prefix);
+    std::string refClkSource;
+    GetSetting(settings, &refClkSource, "%s_reference_clock_source", prefix);
+    if (refClkSource == "internal")
+        param->referenceClockSource = 0;
+    else if (refClkSource == "external")
+        param->referenceClockSource = 1;
+    else
+    {
+        Log(LogLevel::Warning, "Unknown value of reference clock source (%s), defaulting to 'internal'", refClkSource.c_str());
+        param->referenceClockSource = 0;
+    }
     GetSetting(settings, &param->iniFilename, "%s_ini", prefix);
     GetSetting(settings, &param->lpfBandwidthScale, "%s_lpf_bandwidth_scale", prefix);
     GetSetting(settings, &param->maxChannelsToUse, "%s_max_channels_to_use", prefix);
@@ -690,6 +702,10 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes, Lim
             continue;
         node.devIndex = i;
         node.assignedToPort = false;
+
+        if (node.configInputs.referenceClockFreq != 0)
+            node.config.referenceClockFreq = node.configInputs.referenceClockFreq;
+        node.config.referenceClockSource = node.configInputs.referenceClockSource;
 
         for (int ch = 0; ch < node.configInputs.maxChannelsToUse; ++ch)
         {

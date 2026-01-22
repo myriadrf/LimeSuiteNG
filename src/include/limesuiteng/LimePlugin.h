@@ -51,6 +51,8 @@ struct LIME_API ConfigSettings {
         , linkFormat(lime::DataFormat::I12)
         , double_freq_conversion_to_lower_side(false)
         , syncPPS(false)
+        , referenceClockFreq(0.0)
+        , referenceClockSource(0)
     {
     }
     DirectionalSettings rx; ///< The settings for the receive direction.
@@ -63,6 +65,8 @@ struct LIME_API ConfigSettings {
     lime::DataFormat linkFormat; ///< The data format to communicate to the device with.
     bool double_freq_conversion_to_lower_side; ///< Denotes whether to invert the Q value or not.
     bool syncPPS; ///< Denotes whether to wait for the next Pulse Per Second impulse before sending the data on supported devices.
+    double referenceClockFreq;
+    int referenceClockSource;
 };
 
 /// @brief Individual RF SoC device configuration
