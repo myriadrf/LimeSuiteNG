@@ -1351,9 +1351,93 @@
 /**
  * @addtogroup fir_filter_config FIR filter configuration
  * 
- * FIR filters in the transceiver signal processing block for individual channel directions can be set automatically or manually.
+ * General FIR (GFIR) filters allow to perform additional filtering or shaping of signal in digital domain and are part of LMS7002M RF chip transceiver signal processing (TSP) block. 
+ * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
+ * Filtering stage control allows to enable only the required filters while preserving the auto calculated or custom loaded GFIR filter coefficients.
  * 
+ * <h1>Auto setting coefficients</h1>
  * 
+ * To auto calculate coefficients and enable all three stages of GFIR filter for a specified channel direction, use
+ * @ref lime::SDRDevice::ConfigureGFIR(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::GFIRFilter) "ConfigureGFIR()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    lime::ChannelConfig::Direction::GFIRFilter TxChaGfirSettings = {true, 2e6};
+ *    configStatus = device->ConfigureGFIR(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, TxChaGfirSettings);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to auto set GFIR coefficients for Ch A, Tx Dir with error: " << lime::ToString(configStatus) << std::endl;
+ *    ... // Other program code
+ * @endcode
+ * 
+ * In the example code above, argument <b>TxChaGfirSettings</b> of @ref lime::ChannelConfig::Direction::GFIRFilter "GFIRFilter" type is declared, defined and is immediately initialized with values `{true, 2e6}`.
+ * The values provided in the argument initialization stage enable the automatic calculation of GFIR filter coefficients for 2 MHz bandwidth. Coefficients for all three stages of GFIR filters (GFIR1, GFIR2 and GFIR3)
+ * are calculated and loaded to a TSP of specified channel direction. Each GFIR1 and GFIR2 stage can store up to 40 coefficients, while the GFIR3 stage can contain up to 120 coefficients. GFIR filter coefficients are 
+ * calculated using <b>"TODO: add the name of GFIR coef algoritm"</b> algorithm. The final GFIR coefficient values are dependent on specified bandwidth and current device TSP intepolation/decimation stage ratio.
+ * 
+ * To bypass all three GFIR filter stages at once, change the @ref lime::ChannelConfig::Direction::GFIRFilter "GFIRFilter" structure parameter @ref lime::ChannelConfig::Direction::GFIRFilter::enabled "enabled" to 
+ * value <b>false</b> and re-run the ConfigureGFIR() function:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    lime::ChannelConfig::Direction::GFIRFilter TxChaGfirSettings = {false, 2e6};     // Now, bypass all of the GFIR filters in TSP
+ *    configStatus = device->ConfigureGFIR(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, TxChaGfirSettings);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to auto set GFIR coefficients for Ch A, Tx Dir with error: " << lime::ToString(configStatus) << std::endl;
+ *    ... // Other program code
+ * @endcode  
+ * 
+ * <h1>Custom loading coefficients</h1>
+ * 
+ * It is also possible to load custom GFIR filter coefficients if the automatically calculated GFIR filter coefficient values are not sufficient. To load the GFIR filter custom coefficients for a single GFIR stage,
+ * use @ref lime::SDRDevice::SetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t, std::vector<double>) "SetGFIRCoefficients()":
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;            // For SDR devices with single RF chip
+ *    uint8_t gfirID = 0;                 // GFIR1 filter stage
+ *    std::vector<double> coeffs(40,0);   // Empty list of coefficients for GFIR1 filter
+ * 
+ *    ... // Calculating custom GFIR filter coefficients. Coefficients must be normalized in the range [-1; 1].
+ * 
+ *    configStatus = device->SetGFIRCoefficients(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, gfirID, coeffs);
+ *    ... // Other program code
+ * @endcode
+ * 
+ * GFIR filter stages (GFIR1, GFIR2 and GFIR3) for each channel direction are addressed using indexes:
+ * <ol>
+ *    <li>GFIR1 - 0</li>
+ *    <li>GFIR2 - 1</li>
+ *    <li>GFIR3 - 2</li>
+ * </ol>
+ * 
+ * On each channel direction, both GFIR filters 1 and 2 can store a up to 40 coefficients, while GFIR filter 3 can store up to 120 coefficients. GFIR coefficients must be normalized in the range [-1; 1].
+ * To get specific GFIR filter coefficients of a channel direction, use @ref lime::SDRDevice::GetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t) "GetGFIRCoefficients()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;            // For SDR devices with single RF chip
+ *    uint8_t gfirID = 0;                 // GFIR1 filter stage
+ *    std::vector<double> coeffs(40,0);   // Empty list of coefficients for GFIR1 filter
+ * 
+ *    coeffs = device->GetGFIRCoefficients(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, gfirID);
+ *    ... // Other program code
+ * @endcode
+ * 
+ * <h1>Controlling filtering stages</h1>
+ * 
+ * Additionally, it is also possible to enable or disable specific GFIR filter stages for each channel direction. This allows to bypass and use specific GFIR filtering stages without removing
+ * the coefficients from the GFIR filters. To toggle GFIR filtering stages, use 
+ * @ref lime::SDRDevice::SetGFIR(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetGFIR()" function. This example code disables GFIR2 and GFIR3 stage filters for channel A, Tx direction:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    uint8_t moduleIndex = 0;   // For SDR devices with single RF chip
+ *    uint8_t gfirOneID = 0;
+ *    uint8_t gfirTwoID = 1;
+ *    uint8_t gfirThreeID = 2;
+ *    device->SetGFIR(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, gfirOneID, true);     // GFIR1 in ChA, Tx Dir TSP is enabled
+ *    device->SetGFIR(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, gfirTwoID, false);    // GFIR2 in ChA, Tx Dir TSP is disabled
+ *    device->SetGFIR(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, gfirThreeID, false);  // GFIR3 in ChA, Tx Dir TSP is disabled
+ *    
+ *    ... // Other program code
+ * @endcode
  */
 
 /**
