@@ -687,8 +687,7 @@
  *    ... // Other SDR device configurations  
  * @endcode
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
- * default and stable/tested device configuration which can then be freely customized to support project requirements. Also most SDR device control and configuration functions return
- * @ref lime::OpStatus "operation status" which can be used to check and log appropriate status of device configuration as shown in the above example.
+ * default and stable/tested device configuration which can then be freely customized to support project requirements.
  * 
  * <h2>Setting up stream channels</h2>
  * 
@@ -707,7 +706,7 @@
  * 
  * The @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function performs hardware re-configuration of specified device channel direction. If device channel
  * direction is disabled, all of the internal hardware components (transceiver signal processor, analog front end, radio front end and etc.) used for that particular direction are also disabled. Enabling 
- * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and devices are configured to work in MIMO mode. Therefore, if a single 
+ * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and device is configured to work in MIMO mode. Therefore, if a single 
  * channel and SISO mode is enough for a data stream, it is recommended to disable other unused channel directions to reduce SDR device current and power consumption. When configuring device for SISO
  * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
  * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index the multiple LMS7002M  modules 
@@ -1351,6 +1350,8 @@
 
 /**
  * @addtogroup fir_filter_config FIR filter configuration
+ * 
+ * FIR filters in the transceiver signal processing block for individual channel directions can be set automatically or manually.
  * 
  * 
  */
