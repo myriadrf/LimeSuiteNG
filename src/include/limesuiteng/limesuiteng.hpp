@@ -1096,7 +1096,7 @@
  * 
  * For more information about the gain parameter and other device parameters, please visit @ref generic_config "Common control and configuration options" topic, which provides more information about individual parameters
  * and ways to set/get those individual parameters.  
- * For GFIR parameter please check out this section. <b>TODO: Link to the actual section.</b>  
+ * For GFIR filter set up please check out this @ref fir_filter_config "section".  
  * For Test Signal parameter please check out this section. <b>TODO: Link to the actual section.</b>  
  * 
  * <h2>SDR device configuration example using SDRConfig structure</h2>
@@ -1350,6 +1350,8 @@
 
 /**
  * @addtogroup fir_filter_config FIR filter configuration
+ * 
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics"
  * 
  * General FIR (GFIR) filters allow to perform additional filtering or shaping of signal in digital domain and are part of LMS7002M RF chip transceiver signal processing (TSP) block. 
  * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
