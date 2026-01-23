@@ -364,11 +364,8 @@ static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
         goto out;
     }
 
-#ifdef LA9310_FLG_PCI_8MSI_EN
-    rc = la9310_dev_set_interrupt_capability(la9310_dev, PCI_INT_MODE_MULTIPLE_MSI);
-#else
     rc = la9310_dev_set_interrupt_capability(la9310_dev, PCI_INT_MODE_MSI);
-#endif
+
     if (rc < 0)
     {
         dev_info(la9310_dev->dev, "Cannot set the capability of device\n");
