@@ -466,7 +466,7 @@
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
  * functions that can be used to discover and manage SDR device connectivity.  
  * 
- * <h2>Device discovery</h2>
+ * @section discovery Discovery
  * 
  * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
  * are currently connected to PC:
@@ -517,7 +517,7 @@
  * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
  * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
  * 
- * <h2>Filtering device lists and device registration</h2>
+ * @section filter_and_register List filtering and registration
  * 
  * Discovery function @ref lime::DeviceRegistry::enumerate() "enumerate()" also has an overloaded version @ref lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) "enumerate(const DeviceHandle&)"
  * function that can accept a @ref lime::DeviceHandle "DeviceHandle" type object which can act as a device filter. If all arguments from device handle matches specified device filter arguments (unspecified 
@@ -666,7 +666,7 @@
  *    <li>channel direction gain</li>
  * </ol>
  * 
- * <h2>Default initialization</h2>
+ * @section default_init Default initialization
  * 
  * Before starting any SDR device channel configurations it is recommended to perform default SDR device initialization using @ref lime::SDRDevice::Init() "Init()" function:
  * @code{.cpp}
@@ -681,7 +681,7 @@
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
  * default and stable/tested device configuration which can then be freely customized to support project requirements.
  * 
- * <h2>Setting up stream channels</h2>
+ * @section channel_conf Stream channels
  * 
  * SDR device stream channels can be configured by using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
  * @code{.cpp}
@@ -709,7 +709,7 @@
  * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
  * of correct device LMS7002M module.
  * 
- * <h2>Setting up LO frequency</h2>
+ * @section lo_freq LO frequency
  * 
  * To set new synthesizer LO generator frequency for a specific SDR device channel direction use @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function:
  * @code{.cpp}
@@ -746,7 +746,7 @@
  * LO generator frequency is shared between the same directions (Rx or Tx) on different channels, when SDR device is set to operate in MIMO mode. Therefore, in MIMO mode, it is 
  * enough to set LO generator frequency once per stream direction (Rx or Tx) using @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function.
  *
- * <h2>Setting up low pass filters</h2>
+ * @section lpf_conf Low pass filters
  *
  * To set new low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()" function:
  * @code{.cpp}
@@ -778,7 +778,7 @@
  * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
  * minimum or maximum possible low pass filter bandwidth value. Therefore, when setting new low pass filter bandwidth value, it is recommended to check if the actual value was set in HW.
  * 
- * <h2>Setting up sample rate</h2>
+ * @section sample_rate Sample rate
  * 
  * To set new sample rate value for SDR device, use @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" function:
  * @code{.cpp}
@@ -828,7 +828,7 @@
  * To get the actual RF sample rate value, the last parameter of <b>GetSampleRate()</b> must accept an address of a variable where the actual RF sample rate will be stored (example code above). If the argument
  * is omitted, then only the sample rate is returned.
  * 
- * <h2>Setting up antenna</h2>
+ * @section antenna_path Antenna path
  * 
  * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function:
  * @code{.cpp}
@@ -915,7 +915,7 @@
  * 
  * Some antenna paths can have a <b>NC</b> postfix which indicates that the internal RF chip antenna path is not physically connected to antenna.
  * 
- * <h2>Setting up gain</h2>
+ * @section dev_gain Gain control
  * 
  * To set new gain value for SDR device amplifiers, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function with amplifier type set as GENERIC:
  * @code{.cpp}
@@ -1026,7 +1026,7 @@
  *    <li>from .ini file</li>
  * </ul>
  * 
- * <h1>From structure</h1>
+ * @section quick_conf_struct From structure
  * 
  * To quick configure SDR device, use @ref lime::SDRConfig "SDRConfig" structure and @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function:
  * @code{.cpp}
@@ -1105,7 +1105,7 @@
  * For GFIR filter set up please check out this @ref fir_filter_config "section".  
  * For Test Signal parameter please check out this section. <b>TODO: Link to the actual section.</b>  
  * 
- * <h2>SDR device configuration example using SDRConfig structure</h2>
+ * @subsection struct_conf_example SDR device configuration example
  * 
  * Example of minimal SDR device configuration for basic streaming using SDRConfig structure:
  * @code{.cpp}
@@ -1158,7 +1158,7 @@
  * }
  * @endcode
  * 
- * <h1>From file</h1>
+ * @section quick_conf_file From file
  * 
  * Quick SDR device configuration can also be performed using <b>.ini</b> files, by using @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()" function:
  * @code{.cpp}
@@ -1219,7 +1219,7 @@
  *    <li>full register reads and writes</li>
  * </ol>
  * 
- * <h1>Parameter key</h1>
+ * @section reg_param_conf Parameter key
  * 
  * To read register parameters by key, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)" function:
  * @code{.cpp}
@@ -1250,7 +1250,7 @@
  * 
  * LMS7002MCSR enumeration contains the names of parameters that can be read or modified.
  * 
- * <h1>Addressing parameter bit fields</h1>
+ * @section reg_bitfield_conf Addressing parameter bit fields
  * 
  * Alternatively, parameters can be accessed by addressing bit fields in registers. This is especially usefull if parameter bit field is multiple bits long. 
  * For example, we can set and get the bit field value of interpolation ratio in a register. To get the parameter bit field
@@ -1296,7 +1296,7 @@
  * In the examples above, the <b>msb</b> and <b>lsb</b> parameters address the ending and starting bit positions of a parameter bit field in a register. The bit field ending and starting positions are obtained from the 
  * register memory map documentation.
  * 
- * <h1>Full read and write</h1>
+ * @section reg_full_conf Full read and write
  * 
  * For full register reads, use @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister(unsigned int address)" function.
  * 
@@ -1365,7 +1365,7 @@
  * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
  * Filtering stage control allows to enable only the required filters while preserving the auto calculated or custom loaded GFIR filter coefficients.
  * 
- * <h1>Auto setting coefficients</h1>
+ * @section auto_gfir Auto setting coefficients
  * 
  * To auto calculate coefficients and enable all three stages of GFIR filter for a specified channel direction, use
  * @ref lime::SDRDevice::ConfigureGFIR(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::GFIRFilter) "ConfigureGFIR()" function:
@@ -1396,7 +1396,7 @@
  *    ... // Other program code
  * @endcode  
  * 
- * <h1>Custom loading coefficients</h1>
+ * @section custom_gfir Custom loading coefficients
  * 
  * It is also possible to load custom GFIR filter coefficients if the automatically calculated GFIR filter coefficient values are not sufficient. To load the GFIR filter custom coefficients for a single GFIR stage,
  * use @ref lime::SDRDevice::SetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t, std::vector<double>) "SetGFIRCoefficients()":
@@ -1431,7 +1431,7 @@
  *    ... // Other program code
  * @endcode
  * 
- * <h1>Controlling filtering stages</h1>
+ * @section gfir_stage_toggle Controlling filtering stages
  * 
  * Additionally, it is also possible to enable or disable specific GFIR filter stages for each channel direction. This allows to bypass and use specific GFIR filtering stages without removing
  * the coefficients from the GFIR filters. To toggle GFIR filtering stages, use 
