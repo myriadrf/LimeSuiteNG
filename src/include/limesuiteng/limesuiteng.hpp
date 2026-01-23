@@ -491,9 +491,16 @@
  * }
  * @endcode
  * 
+ * @if RST_STYLE_NOTES
+ * @verbatim embed:rst:leading-asterisk
+ * .. important::
+ *    All LimeSuiteNG API functions are part of namespace ``lime``. API members can be accessed with scope resolution operator ``lime::``. Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class must also be specified using the scope resolution operator ``DeviceRegistry::``.
+ * @endverbatim
+ * @else
  * @important All LimeSuiteNG API functions are part of namespace <b>lime</b>. API members can be accessed with scope resolution operator <b>lime::</b>.
  * Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class
  * must also be specified using the scope resolution operator <b>DeviceRegistry::</b>.  
+ * @endif
  * 
  * In this example code, API function enumerate() returns a vector with items of @ref lime::DeviceHandle "DeviceHandle" type, which is a type that provides the 
  * base information about connected SDR devices:
