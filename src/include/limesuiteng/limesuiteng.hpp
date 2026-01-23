@@ -511,7 +511,6 @@
  * First example code for @ref lime::DeviceRegistry::enumerate() "enumerate()" API function produces output:
  * 
  * @image{inline} html dev_registration_dev_enum.png
- * @image{inline} xml dev_registration_dev_enum.png
  * 
  * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
  * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
@@ -545,11 +544,10 @@
  * The output of the second example:
  * 
  * @image{inline} html dev_registration_dev_filtering.png
- * @image{inline} xml dev_registration_dev_filtering.png 
  * 
  * 
  * Alternatively, it is also possible to filter requested devices from enumerated device list using @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method: 
- * @code
+ * @code{.cpp}
  * int main()
  * {
  *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
@@ -616,7 +614,6 @@
  * allocated memory to avoid application memory leaks on application termination. Output of the example code:
  * 
  * @image{inline} html dev_registration_dev_connection.png
- * @image{inline} xml dev_registration_dev_connection.png  
  * 
  * @note In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list:
  * @code{.cpp}
@@ -911,7 +908,6 @@
  * Output of the example code above for LimeSDR Mini V2:
  * 
  * @image{inline} html dev_config_antenna_support.png
- * @image{inline} xml dev_config_antenna_support.png 
  * 
  * Some antenna paths can have a <b>NC</b> postfix which indicates that the internal RF chip antenna path is not physically connected to antenna.
  * 
@@ -1321,7 +1317,6 @@
  * Read register default value shown in the image below matches the default value (0b0000001111000011 == 0x03C3) in SDR device register map documentation:
  * 
  * @image{inline} html dev_config_rxgain_mod.png
- * @image{inline} xml dev_config_rxgain_mod.png
  * 
  * For full register writes, use @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister(unsigned int address, unsigned int value)" function.
  * Building on the previous example, we update the Rx amplifier gain settings register value and then check if the register has been set:
@@ -1351,8 +1346,7 @@
  * 
  * Output of the example code above:
  * 
- * @image{inline} html dev_config_rxgain_rw.png 
- * @image{inline} xml dev_config_rxgain_rw.png 
+ * @image{inline} html dev_config_rxgain_rw.png  
  * 
  */
 
