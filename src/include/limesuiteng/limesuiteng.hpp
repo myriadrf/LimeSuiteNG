@@ -409,20 +409,20 @@
  * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
  * code which can be used as template for further development.
  * 
- * List of examples:
+ * List of topics:
  * <ul>
- *    <li> @ref cmake_set_up </li>
- *    <li> @ref dev_discovery </li>
- *    <li> @ref dev_config </li>
- *    <li> @ref dev_streaming </li>
- *    <li> @ref hello_world_example </li>
+ *    <li> @subpage cmake_set_up </li>
+ *    <li> @subpage dev_discovery </li>
+ *    <li> @subpage dev_config </li>
+ *    <li> @subpage dev_streaming </li>
+ *    <li> @subpage hello_world_example </li>
  * </ul>
  * 
  */
 
 // This is the starting point of subpages for example page
 /**
- * @addtogroup cmake_set_up CMake set up
+ * @page cmake_set_up CMake set up
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * 
@@ -461,7 +461,7 @@
  */
 
 /**
- * @addtogroup dev_discovery SDR device discovery and registration
+ * @page dev_discovery SDR device discovery and registration
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref cmake_set_up "Back to CMake project set up example topic"  
@@ -633,7 +633,7 @@
  */
 
 /**
- * @addtogroup dev_config SDR device configuration
+ * @page dev_config SDR device configuration
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
@@ -642,11 +642,11 @@
  * The quick configuration sub-topic is the main sub-topic that provides the essential steps required to configure the base SDR device parameters that are enough to run a data stream. Other sub-topics 
  * provide more information about individual SDR device parameter configuration options and other advanced configuration options.  
  * <ul>
- *    <li> @ref quick_config "Quick configuration"</li>
- *    <li> @ref generic_config "Common control and configuration options"
- *    <li> @ref direct_config "Direct register and parameter access"
- *    <li> @ref fir_filter_config "FIR filter configuration"</li>
- *    <li> @ref frequency_config "Frequency configuration"</li>
+ *    <li> @subpage quick_config "Quick configuration"</li>
+ *    <li> @subpage generic_config "Common control and configuration options"
+ *    <li> @subpage direct_config "Direct register and parameter access"
+ *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
+ *    <li> @subpage frequency_config "Frequency configuration"</li>
  * </ul>
  * 
  * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
@@ -659,7 +659,7 @@
 // ###########################################################
 
 /**
- * @addtogroup generic_config Common control and configuration options
+ * @page generic_config Common control and configuration options
  * 
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * 
@@ -1025,7 +1025,7 @@
  */
 
 /**
- * @addtogroup quick_config Quick configuration
+ * @page quick_config Quick configuration
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
  * 
  * SDR device quick configuration can be used to quickly load or save SDR device configuration presets. SDR devices can be quick configured:
@@ -1210,7 +1210,7 @@
  */
 
 /**
- * @addtogroup direct_config Direct register and parameter access
+ * @page direct_config Direct register and parameter access
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
  * 
  * For more advanced users, a more advanced and precise SDR device configuration is possible by directly accessing individual register parameters or entire registers of SDR device. Direct access to registers
@@ -1365,7 +1365,7 @@
  */
 
 /**
- * @addtogroup fir_filter_config FIR filter configuration
+ * @page fir_filter_config FIR filter configuration
  * 
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"
  * 
@@ -1459,7 +1459,7 @@
  */
 
 /**
- * @addtogroup frequency_config Frequency configuration
+ * @page frequency_config Frequency configuration
  * 
  * 
 */
@@ -1470,7 +1470,7 @@
 // ###########################################################
 
 /**
- * @addtogroup dev_streaming SDR device stream set up and streaming
+ * @page dev_streaming SDR device stream set up and streaming
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_config "Back to SDR device configuration example topic"  
@@ -1486,7 +1486,7 @@
  */
 
 /**
- * @addtogroup hello_world_example Hello World example
+ * @page hello_world_example Hello World example
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * 
