@@ -27,6 +27,9 @@
 // #include "la9310_wdog.h"
 // #include "la9310_v2h_if.h"
 
+int la9310_init_sysfs(struct la9310_dev* la9310_dev);
+void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
+
 static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 struct completion ScratchRegisterHandshake;
@@ -877,9 +880,9 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     la9310_init_msg_unit_ptrs(la9310_dev);
     la9310_init_ep_logger(la9310_dev);
 
-    // rc = la9310_init_sysfs(la9310_dev);
-    // if (rc)
-    // 	goto free_ipc;
+    rc = la9310_init_sysfs(la9310_dev);
+    if (rc)
+        goto free_ipc;
 
     // rc = la9310_register_ep_stats_ops(la9310_dev);
     // if (rc)
@@ -944,8 +947,8 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
 free_irq:
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 free_handshake:
-//free_sysfs:
-// la9310_remove_sysfs(la9310_dev);
+free_sysfs:
+    la9310_remove_sysfs(la9310_dev);
 free_ipc:
     la9310_free_dma_buf(la9310_dev->dev, "VSPA DMEM Proxy Buffer", &la9310_dev->dmem_proxy, DMA_BIDIRECTIONAL);
 free_iqflood:
@@ -972,7 +975,7 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_SYSFS_INIT_STAGE:
-        // la9310_remove_sysfs(la9310_dev);
+        la9310_remove_sysfs(la9310_dev);
         __attribute__((__fallthrough__));
         /*Fallthrough */
     case LA9310_SCRATCH_DMA_INIT_STAGE:
@@ -1017,7 +1020,7 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     // la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
     // la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
     // la9310_free_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, DMA_BIDIRECTIONAL);
-    // la9310_remove_sysfs(la9310_dev);
+    la9310_remove_sysfs(la9310_dev);
 
     return 0;
 }

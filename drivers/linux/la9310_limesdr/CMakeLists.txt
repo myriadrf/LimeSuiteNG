@@ -36,6 +36,7 @@ add_kernel_module(
     GITHASH
     ${GITHASH}
     SOURCES
+    la9310_sysfs.c
     la9310_firmware.c
     la9310_limesdr_module.c
     la9310_base.h
