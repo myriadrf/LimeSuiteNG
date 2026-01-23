@@ -424,8 +424,6 @@
 /**
  * @page cmake_set_up CMake set up
  * 
- * @ref guide_book_top "Back to the list of guide book topics"  
- * 
  * In this example we explore LimeSuiteNG library set up requirements for CMake based projects. The following CMakeLists.txt code is the minimum required
  * project set up code which allows to use LimeSuiteNG API in custom applications:
  * @code{.cmake}
@@ -463,13 +461,10 @@
 /**
  * @page dev_discovery SDR device discovery and registration
  * 
- * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref cmake_set_up "Back to CMake project set up example topic"  
  * 
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
  * functions that can be used to discover and manage SDR device connectivity.  
- * 
- * @ref registration "Click here to view the SDR device discovery and connectivity management functions"  
  * 
  * <h2>Device discovery</h2>
  * 
@@ -628,14 +623,12 @@
  * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
  * @endcode
  * 
- * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_config "Go to SDR device configuration example topic"
  */
 
 /**
  * @page dev_config SDR device configuration
  * 
- * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
  * 
  * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
@@ -649,7 +642,6 @@
  *    <li> @subpage frequency_config "Frequency configuration"</li>
  * </ul>
  * 
- * @ref control_adn_config "Click here to go to SDR device control and configuration API function list"  
  * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
  */
 
@@ -1367,7 +1359,7 @@
 /**
  * @page fir_filter_config FIR filter configuration
  * 
- * @ref dev_config "Back to the list of SDR device configuration sub-topics"
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * 
  * General FIR (GFIR) filters allow to perform additional filtering or shaping of signal in digital domain and are part of LMS7002M RF chip transceiver signal processing (TSP) block. 
  * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
