@@ -29,6 +29,8 @@ class LIME_API DeviceHandle
 
     /**
       @brief Create from serialized string with key=value pairs.
+      Key=value pairs must be separated with commas (,). Example: 
+      "LimeSDR Mini V2, media=USB2.0, addr=0403:601f, serial=5CAB45182685D8"
       @param args A serialized string with key=value pairs.
      */
     DeviceHandle(const std::string& args);
