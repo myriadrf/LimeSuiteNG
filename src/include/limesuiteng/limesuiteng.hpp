@@ -463,13 +463,17 @@
  * cmake --build .
  * @endcode
  * 
+ * @if DOX_NAV
  * @ref dev_discovery "Go to SDR device discovery and registration example topic"
+ * @endif
  */
 
 /**
  * @page dev_discovery SDR device discovery and registration
  * 
+ * @if DOX_NAV
  * @ref cmake_set_up "Back to CMake project set up example topic"  
+ * @endif
  * 
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
  * functions that can be used to discover and manage SDR device connectivity.  
@@ -620,13 +624,13 @@
  *    return 0;
  * }
  * @endcode
- * Following the first example, device enumeration without any device filters is used. Once device list is enumerated
- * and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle" type is created. Only device name is 
- * selected as a filtering argument. Device filter object is used as an argument for @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method
- * which compares the arguments of device handles in the list with the given device filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR 
- * device. Connection with the device can be established using @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. 
- * To test if the connection to the device is successfull, compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr.
- * Possible (but rare) connection problems:  
+ * Following the first example, device enumeration without any device filters is used. Once device list is enumerated and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle"
+ *  type is created. Only device name is selected as a filtering argument. Device filter object is used as an argument for 
+ * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device
+ *  filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
+ * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
+ * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:  
+ * 
  * <ol>
  *    <li>Unexpected SDR device firmware ID</li>
  *    <li>Failed connection to USB port</li>
@@ -649,13 +653,17 @@
  * @endcode
  * @endif
  * 
+ * @if DOX_NAV
  * @ref dev_config "Go to SDR device configuration example topic"
+ * @endif
  */
 
 /**
  * @page dev_config SDR device configuration
  * 
+ * @if DOX_NAV
  * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
+ * @endif
  * 
  * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
  * The quick configuration sub-topic is the main sub-topic that provides the essential steps required to configure the base SDR device parameters that are enough to run a data stream. Other sub-topics 
@@ -668,7 +676,9 @@
  *    <li> @subpage frequency_config "Frequency configuration"</li>
  * </ul>
  * 
- * @ref dev_streaming "Go to SDR device stream set up and data stream example topic" 
+ * @if DOX_NAV
+ * @ref dev_streaming "Go to SDR device stream set up and data stream example topic"
+ * @endif
  */
 
 // ###########################################################
@@ -679,7 +689,9 @@
 /**
  * @page generic_config Common control and configuration options
  * 
+ * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
+ * @endif
  * 
  * Common SDR device control and configuration options allow to set up the communication channel structure and the base streaming parameters of individual channel directions (Tx/Rx).
  * This sub-topic explains how to configure:
@@ -1050,7 +1062,10 @@
 
 /**
  * @page quick_config Quick configuration
+ * 
+ * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
+ * @endif
  * 
  * SDR device quick configuration can be used to quickly load or save SDR device configuration presets. SDR devices can be quick configured:
  * <ul>
@@ -1145,7 +1160,7 @@
  * For more information about the gain parameter and other device parameters, please visit @ref generic_config "Common control and configuration options" topic, which provides more information about individual parameters
  * and ways to set/get those individual parameters.  
  * For GFIR filter set up please check out this @ref fir_filter_config "section".  
- * For Test Signal parameter please check out this section. <b>TODO: Link to the actual section.</b>  
+ * For Test Signal parameter please check out this section. @if DEVELOP <b>TODO: Link to the actual section.</b>  @endif
  * 
  * @subsection struct_conf_example SDR device configuration example
  * 
@@ -1259,11 +1274,14 @@
 
 /**
  * @page direct_config Direct register and parameter access
+ * 
+ * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
+ * @endif
  * 
  * For more advanced users, a more advanced and precise SDR device configuration is possible by directly accessing individual register parameters or entire registers of SDR device. Direct access to registers
  * also allows to configure SDR device features that are not directly exposed through API functions, but are otherwise possible to set up by using <b>limeGUI</b> graphical user interface application, which is 
- * part of LimeSuiteNG suite. Full description of register parameters is available in LMS7002M register map file. <b>TODO: Add the file name or file location for reference</b>
+ * part of LimeSuiteNG suite. Full description of register parameters is available in LMS7002M register map file. @if DEVELOP <b>TODO: Add the file name or file location for reference</b> @endif
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -1433,7 +1451,9 @@
 /**
  * @page fir_filter_config FIR filter configuration
  * 
+ * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
+ * @endif
  * 
  * General FIR (GFIR) filters allow to perform additional filtering or shaping of signal in digital domain and are part of LMS7002M RF chip transceiver signal processing (TSP) block. 
  * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
@@ -1455,8 +1475,9 @@
  * 
  * In the example code above, argument <b>TxChaGfirSettings</b> of @ref lime::ChannelConfig::Direction::GFIRFilter "GFIRFilter" type is declared, defined and is immediately initialized with values `{true, 2e6}`.
  * The values provided in the argument initialization stage enable the automatic calculation of GFIR filter coefficients for 2 MHz bandwidth. Coefficients for all three stages of GFIR filters (GFIR1, GFIR2 and GFIR3)
- * are calculated and loaded to a TSP of specified channel direction. Each GFIR1 and GFIR2 stage can store up to 40 coefficients, while the GFIR3 stage can contain up to 120 coefficients. GFIR filter coefficients are 
- * calculated using <b>"TODO: add the name of GFIR coef algoritm"</b> algorithm. The final GFIR coefficient values are dependent on specified bandwidth and current device TSP intepolation/decimation stage ratio.
+ * are calculated and loaded to a TSP of specified channel direction. Each GFIR1 and GFIR2 stage can store up to 40 coefficients, while the GFIR3 stage can contain up to 120 coefficients. 
+ * @if DEVELOP GFIR filter coefficients are calculated using <b>"TODO: add the name of GFIR coef algoritm"</b>  algorithm. @endif
+ * The final GFIR coefficient values are dependent on specified bandwidth and current device TSP intepolation/decimation stage ratio.
  * 
  * To bypass all three GFIR filter stages at once, change the @ref lime::ChannelConfig::Direction::GFIRFilter "GFIRFilter" structure parameter @ref lime::ChannelConfig::Direction::GFIRFilter::enabled "enabled" to 
  * value <b>false</b> and re-run the ConfigureGFIR() function:
@@ -1537,7 +1558,7 @@
 
 /**
  * @page dev_streaming SDR device stream set up and streaming
- * 
+ * @if DEVELOP
  * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref dev_config "Back to SDR device configuration example topic"  
  * 
@@ -1549,11 +1570,12 @@
  * 
  * @ref guide_book_top "Back to the list of guide book topics"  
  * @ref hello_world_example "Go to minimal development template example"
+ * @endif
  */
 
 /**
  * @page hello_world_example Hello World example
- * 
+ * @if DEVELOP
  * @ref guide_book_top "Back to the list of guide book topics"  
  * 
  * This is a minimal example code that can be used as a starting point for further development. Public API members presented in this code have been reviewed in previous example topics.
@@ -1562,5 +1584,6 @@
  * @endcode
  *
  * @ref guide_book_top "Back to the list of guide book topics"
+ * @endif
  */
 // This is the end point of subpages for example page
