@@ -297,7 +297,9 @@ double LimeSDR_Micro::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 OpStatus LimeSDR_Micro::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
 {
-    return OpStatus::NotImplemented;
+    auto& chip = mLMSChips.at(channel / 2);
+    OpStatus status = chip->SetFrequencySX(trx, frequency);
+    return status;
 }
 
 double LimeSDR_Micro::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset)
