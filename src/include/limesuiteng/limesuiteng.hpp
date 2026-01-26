@@ -59,12 +59,12 @@
  * 
  * @if RST_SUPPORT
  * @verbatim embed:rst:leading-asterisk
- * .. important::
+ * .. attention::
  * 
  *    All public API members are part of namespace ``lime``. To access individual API members, use scope resolution operator ``lime::function()``. To access SDR device registration functions, additionally specify the scope of device registry interface class ``lime::DeviceRegistry::function()``.
  * @endverbatim
  * @else
- * @important All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
+ * @warning All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
  * additionally specify the scope of device registry interface class: <b>lime::DeviceRegistry::function()</b>.
  * @endif
  * 
