@@ -31,18 +31,20 @@
  * 
  * @section lib_feat_section Library features
  * 
+ * @if DEVELOP
  * TODO: Update the list of supported library features.  
+ * @endif
  * 
  * <ul>
  *    <li>Quick SDR device configuration (from structure/from file)</li>
- *    <li>Advanced SDR device configuration from file (Configuration file generated with LimeSuiteNG GUI application)</li>
+ *    <li>Advanced SDR device configuration from file/through registers</li>
  * </ul>
  * 
  * 
  * 
  * @section getting_started Getting started
  * 
- * If you are completely new to the LimeSDR software environment or looking for information about SDR device control and configuration, it is recommended to visit
+ * If you are completely new to the LimeSDR device software environment or looking for information about SDR device control and configuration, it is recommended to visit
  * @ref guide_book_top "library API guide book page". Library Guide book page provides code examples, in depth explanations and other information about different library API members.
  * If you only need to reference library API member list, then @ref api "check out the sorted and ordered list of public API members".
  * 
