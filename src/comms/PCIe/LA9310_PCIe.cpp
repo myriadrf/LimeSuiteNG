@@ -189,7 +189,7 @@ OpStatus LA9310_PCIe::wait_for_new_data(int timeout_ms)
 void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
 {
     struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IPC].vaddr;
+    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
 
     // Fill struct with information
     cache_entry.sync_to_cpu = 1;
@@ -205,7 +205,7 @@ void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
 void LA9310_PCIe::sync_dmem_proxy_after_write(uint8_t* addr, uint32_t data_size)
 {
     struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IPC].vaddr;
+    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
 
     // Fill struct with information
     cache_entry.sync_to_cpu = 0;

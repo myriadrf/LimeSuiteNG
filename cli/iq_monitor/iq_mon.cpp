@@ -95,7 +95,7 @@ int map_physical_regions(std::shared_ptr<lime::LA9310_PCIe> port)
     // vproxy -= VSPA_DMEM_PROXY_SIZE;
     // v_vspa_dmem_proxy_ro = (uint32_t *)(v_iqflood_ddr_addr + (iqflood.size - VSPA_DMEM_PROXY_SIZE)/4);
 
-    auto dmem = port->GetBar(LA9310_WINDOW_IPC);
+    auto dmem = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto dmem_va = reinterpret_cast<uint32_t*>(dmem.vaddr);
     if (dmem_va == MAP_FAILED)
     {
@@ -103,7 +103,7 @@ int map_physical_regions(std::shared_ptr<lime::LA9310_PCIe> port)
         return -1;
     }
 
-    v_vspa_dmem_proxy_ro = &dmem_va[768];
+    v_vspa_dmem_proxy_ro = dmem_va;
     host_stats = &(reinterpret_cast<t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->host_stats);
     rx_vspa_proxy_ro = &(reinterpret_cast<t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->rx_state_readonly[0]);
     tx_vspa_proxy_ro = &(reinterpret_cast<t_vspa_dmem_proxy*>(v_vspa_dmem_proxy_ro)->tx_state_readonly);

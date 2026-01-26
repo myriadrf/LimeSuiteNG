@@ -79,6 +79,7 @@ namespace lime {
 
 static const uint32_t vspa_cpu_id = 0;
 static const uint32_t vspa_mbox_id = 0;
+static constexpr uint32_t dmem_proxy_reserved = 1024;
 
 static const double refClk = 30.72e6;
 
@@ -89,13 +90,13 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
 {
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
-    auto dmem_proxy = port->GetBar(LA9310_WINDOW_IPC);
+    auto dmem_proxy = v_iqflood_ddr; // by default DMEM_PROXY is now at start of IQFLOOD
 
     vl_iqflood_ddr_addr = reinterpret_cast<uint8_t*>(v_iqflood_ddr.vaddr);
     iqflood_size = v_iqflood_ddr.size;
 
     // use last 1024 bytes of iqflood as shared vspa dmem proxy , vspa will write mirrored dmem value to avoid PCI read from host
-    uint32_t* dmem_ptr = reinterpret_cast<uint32_t*>(dmem_proxy.vaddr) + 768;
+    uint32_t* dmem_ptr = reinterpret_cast<uint32_t*>(dmem_proxy.vaddr);
     v_vspa_dmem_proxy_ro = reinterpret_cast<volatile t_vspa_dmem_proxy*>(dmem_ptr);
     rx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->rx_state_readonly[0]);
     tx_vspa_proxy_ro = &(v_vspa_dmem_proxy_ro->tx_state_readonly);
@@ -340,13 +341,15 @@ OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount, double expecte
     OpStatus status = OpStatus::Success;
     if (txCount)
     {
-        status = SetupTx(0, iqflood_size / 4, expectedTxDataRate);
+        const uint32_t mem_offset = dmem_proxy_reserved;
+        status = SetupTx(mem_offset, iqflood_size / 4, expectedTxDataRate);
         if (status != OpStatus::Success)
             return status;
     }
     if (rxCount)
     {
-        status = SetupRx(0, iqflood_size / 4, iqflood_size / 4);
+        const uint32_t mem_offset = dmem_proxy_reserved + iqflood_size / 4;
+        status = SetupRx(0, mem_offset, iqflood_size / 4);
         if (status != OpStatus::Success)
             return status;
     }
