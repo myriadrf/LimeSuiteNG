@@ -37,7 +37,7 @@
  * 
  * <ul>
  *    <li>Quick SDR device configuration (from structure/from file)</li>
- *    <li>Advanced SDR device configuration from file/through registers</li>
+ *    <li>Advanced SDR device configuration from file/using registers</li>
  * </ul>
  * 
  * 
@@ -57,8 +57,16 @@
  * This page provides a complete list of functions, enumerations, structures that can be accessed 
  * through public API.
  * 
- * @warning All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
+ * @if RST_SUPPORT
+ * @verbatim embed:rst:leading-asterisk
+ * .. important::
+ * 
+ *    All public API members are part of namespace ``lime``. To access individual API members, use scope resolution operator ``lime::function()``. To access SDR device registration functions, additionally specify the scope of device registry interface class ``lime::DeviceRegistry::function()``.
+ * @endverbatim
+ * @else
+ * @important All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
  * additionally specify the scope of device registry interface class: <b>lime::DeviceRegistry::function()</b>.
+ * @endif
  * 
  * @section funcs Functions 
  * 
@@ -493,7 +501,7 @@
  * }
  * @endcode
  * 
- * @if RST_STYLE_NOTES
+ * @if RST_SUPPORT
  * @verbatim embed:rst:leading-asterisk
  * .. important::
  *    All LimeSuiteNG API functions are part of namespace ``lime``. API members can be accessed with scope resolution operator ``lime::``. Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class must also be specified using the scope resolution operator ``DeviceRegistry::``.
