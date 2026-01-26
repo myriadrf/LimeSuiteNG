@@ -13,6 +13,8 @@
 # TAG += value [value, ...]
 # Values that contain spaces should be placed between quotes (\" \").
 
+# For project flags, go to ENABALED_SECTIONS tag.
+
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
@@ -718,8 +720,14 @@ GENERATE_DEPRECATEDLIST= YES
 # The ENABLED_SECTIONS tag can be used to enable conditional documentation
 # sections, marked by \if <section_label> ... \endif and \cond <section_label>
 # ... \endcond blocks.
+# List of custom Doxygen configuration flags:
+# RST_SUPPORT - enable swaping of doxygen sections and special commands with RST markup style elements. This flag is used for compatibility with breathe plugin, which translates doxygen output 
+#               to RST markup style when runing Sphinx documentation build. Use this only when the final doxygen output is included in sphinx documentation build.
+# DEVELOP     - enables the output of incomplete doxygen sections and other development marks in the final doxygen output. Remove this flag to hide incomplete doxygen sections or other 
+#               development marks in the final doxygen output.
 
-ENABLED_SECTIONS       =
+ENABLED_SECTIONS       = RST_SUPPORT
+ENABLED_SECTIONS       += DEVELOP
 
 # The MAX_INITIALIZER_LINES tag determines the maximum number of lines that the
 # initial value of a variable or macro / define can have for it to appear in the
