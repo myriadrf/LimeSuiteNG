@@ -33,6 +33,21 @@ using namespace std;
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
 static constexpr int LIME_TRX_MAX_RF_PORT = 16;
 
+static const char* DataFormatString(DataFormat fmt)
+{
+    switch (fmt)
+    {
+    case DataFormat::F32:
+        return "F32";
+    case DataFormat::I16:
+        return "I16";
+    case DataFormat::I12:
+        return "I12";
+    default:
+        return "undefined";
+    }
+}
+
 std::vector<std::string_view> splitString(std::string_view string, std::string_view delimiter)
 {
     std::vector<std::string_view> ret;
@@ -690,7 +705,6 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes, Lim
             continue;
         node.devIndex = i;
         node.assignedToPort = false;
-
         for (int ch = 0; ch < node.configInputs.maxChannelsToUse; ++ch)
         {
             OpStatus status = TransferDeviceDirectionalSettings(node, node.configInputs.rx, node.config.channel[ch].rx, TRXDir::Rx);
@@ -886,8 +900,8 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         Log(LogLevel::Debug,
             "Port[%" PRIuPTR "] Stream samples format: %s , link: %s %s",
             p,
-            streamCfg.format == DataFormat::F32 ? "F32" : "I16",
-            streamCfg.linkFormat == DataFormat::I12 ? "I12" : "I16",
+            DataFormatString(streamCfg.format),
+            DataFormatString(streamCfg.linkFormat),
             (streamCfg.extraConfig.negateQ ? ", Negating Q samples" : ""));
         if (composite->Setup(streamCfg) != OpStatus::Success)
         {
@@ -1082,12 +1096,12 @@ int LimePlugin_Start(LimePluginContext* context)
 }
 
 template<class T>
-static int LimePlugin_Write(LimePluginContext* context, const T* const* samples, int count, int port, StreamMeta& meta)
+static int LimePlugin_Write(LimePluginContext* context, const T* const* samples, int count, int port, StreamTxMeta& meta)
 {
     if (!samples) // Nothing to transmit
         return 0;
 
-    int samplesConsumed = context->ports[port].stream->StreamTx(samples, count, &meta);
+    int samplesConsumed = context->ports[port].stream->Transmit(samples, count, &meta);
     if (logVerbosity == LogLevel::Debug && samplesConsumed != count)
     {
         if (samplesConsumed < 0) // hardware timestamp is already ahead of meta.timestamp by (-samplesConsumed)
@@ -1102,28 +1116,26 @@ static int LimePlugin_Write(LimePluginContext* context, const T* const* samples,
 }
 
 int LimePlugin_Write_complex32f(
-    LimePluginContext* context, const lime::complex32f_t* const* samples, int count, int port, StreamMeta& meta)
+    LimePluginContext* context, const lime::complex32f_t* const* samples, int count, int port, StreamTxMeta& meta)
 {
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
 int LimePlugin_Write_complex16(
-    LimePluginContext* context, const lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
+    LimePluginContext* context, const lime::complex16_t* const* samples, int count, int port, StreamTxMeta& meta)
 {
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
 int LimePlugin_Write_complex12(
-    LimePluginContext* context, const lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
+    LimePluginContext* context, const lime::complex12_t* const* samples, int count, int port, StreamTxMeta& meta)
 {
     return LimePlugin_Write(context, samples, count, port, meta);
 }
 
-template<class T> static int LimePlugin_Read(LimePluginContext* context, T* const* samples, int count, int port, StreamMeta& meta)
+template<class T> static int LimePlugin_Read(LimePluginContext* context, T* const* samples, int count, int port, StreamRxMeta& meta)
 {
-    meta.waitForTimestamp = false;
-    meta.flushPartialPacket = false;
-    int samplesGot = context->ports[port].stream->StreamRx(samples, count, &meta);
+    int samplesGot = context->ports[port].stream->Receive(samples, count, &meta);
 
     if (samplesGot == 0)
     {
@@ -1141,17 +1153,19 @@ template<class T> static int LimePlugin_Read(LimePluginContext* context, T* cons
 }
 
 int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t* const* samples, int count, int port, StreamMeta& meta)
+    LimePluginContext* context, lime::complex32f_t* const* samples, int count, int port, StreamRxMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
 
-int LimePlugin_Read_complex16(LimePluginContext* context, lime::complex16_t* const* samples, int count, int port, StreamMeta& meta)
+int LimePlugin_Read_complex16(
+    LimePluginContext* context, lime::complex16_t* const* samples, int count, int port, StreamRxMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
 
-int LimePlugin_Read_complex12(LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamMeta& meta)
+int LimePlugin_Read_complex12(
+    LimePluginContext* context, lime::complex12_t* const* samples, int count, int port, StreamRxMeta& meta)
 {
     return LimePlugin_Read(context, samples, count, port, meta);
 }
