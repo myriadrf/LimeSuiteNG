@@ -303,8 +303,6 @@ OpStatus VSPA_iqplayer::StopTx()
     if (tx_vspa_proxy_ro->DDR_rd_base_address == 0xDEADBEEF) // Tx is not active
         return OpStatus::Success;
 
-    const uint32_t app_ddr = mTx.bytes_produced / tx_vspa_proxy_ro->tx_ddr_step;
-
     printf_dbg_log("IQPlayer: Stop Tx\n");
     uint64_t value = uint64_t(MBOX_OPC_IQ_MOD_TX) << (24 + 32);
 

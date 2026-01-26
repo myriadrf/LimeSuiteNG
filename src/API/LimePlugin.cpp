@@ -33,6 +33,21 @@ using namespace std;
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
 static constexpr int LIME_TRX_MAX_RF_PORT = 16;
 
+static const char* DataFormatString(DataFormat fmt)
+{
+    switch (fmt)
+    {
+    case DataFormat::F32:
+        return "F32";
+    case DataFormat::I16:
+        return "I16";
+    case DataFormat::I12:
+        return "I12";
+    default:
+        return "undefined";
+    }
+}
+
 std::vector<std::string_view> splitString(std::string_view string, std::string_view delimiter)
 {
     std::vector<std::string_view> ret;
@@ -563,7 +578,8 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
         param->referenceClockSource = 1;
     else
     {
-        Log(LogLevel::Warning, "Unknown value of reference clock source (%s), defaulting to 'internal'", refClkSource.c_str());
+        if (!refClkSource.empty())
+            Log(LogLevel::Warning, "Unknown value of reference clock source (%s), defaulting to 'internal'", refClkSource.c_str());
         param->referenceClockSource = 0;
     }
     GetSetting(settings, &param->iniFilename, "%s_ini", prefix);
@@ -902,8 +918,8 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         Log(LogLevel::Debug,
             "Port[%" PRIuPTR "] Stream samples format: %s , link: %s %s",
             p,
-            streamCfg.format == DataFormat::F32 ? "F32" : "I16",
-            streamCfg.linkFormat == DataFormat::I12 ? "I12" : "I16",
+            DataFormatString(streamCfg.format),
+            DataFormatString(streamCfg.linkFormat),
             (streamCfg.extraConfig.negateQ ? ", Negating Q samples" : ""));
         if (composite->Setup(streamCfg) != OpStatus::Success)
         {
