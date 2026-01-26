@@ -434,27 +434,26 @@
 /**
  * @page cmake_set_up CMake set up
  * 
- * In this example we explore LimeSuiteNG library set up requirements for CMake based projects. The following CMakeLists.txt code is the minimum required
- * project set up code which allows to use LimeSuiteNG API in custom applications:
+ * The following CMakeLists.txt code is the minimum required project set up code which allows to use LimeSuiteNG API in custom applications:
  * @code{.cmake}
  * cmake_minimum_required(VERSION 3.26)
- *
- * project(LimeSuiteNG_examples LANGUAGES C CXX)
- *
- * add_executable(example main.cpp)
- *
- * target_link_libraries(example PUBLIC limesuiteng)
+ * 
+ * project(LimeSuiteNG_example LANGUAGES C CXX)
+ * 
+ * set(PROJECT_SOURCE 
+ *    main.cpp
+ *    # ... If required, more source files separated by newline
+ *    )
+ * 
+ * add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})
+ * target_link_libraries(${PROJECT_NAME} PRIVATE limesuiteng)
  * @endcode
  * 
- * When setting up a basic CMake project, it is important to set up the minimum required CMake version (version can be different 
- * from the one shown in example, but not lower than 3.15). Next, create project and specify its name and supported languages.
- * Once the basic project settings are set up, specify build type: executable or library. In this series of examples we will 
- * only build executable files, therefore we add the <b>add_executable()</b> CMake command. Specify command arguments: custom executable 
- * name ('example') and the source files that make up the executable (If executable consists of more than one source file, add
- * them to the list and seperate each source file with space). Finally, LimeSuiteNG library must be linked to the executable in order to 
- * use the control API. To link the library code to our executable, target the library using cmake <b>target_link_libraries()</b> CMake
- * command. Once the project CMake files are set up, include the following headers into project source files for access to LimeSuiteNG API:
- * 
+ * CMake project always starts with minimum required CMake version and project command. Specify the name of project and supported languages.
+ * Set your list of source files that will be used in the project build. Update the project configuration by specifying the build type as executable.
+ * Specify executable command arguments: executable name (in this case project name) and pass the source file variable that contains the list of source files. Link 
+ * the LimeSuiteNG library to project executable using <b>target_link_libraries()</b> command. Once the project CMake files are set up, include the following headers
+ * into project source files for access to LimeSuiteNG API:
  * @code{.cpp}
  * #include <limesuiteng/limesuiteng.hpp>
  * @endcode
