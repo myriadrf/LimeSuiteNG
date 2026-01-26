@@ -1,5 +1,5 @@
-About
-=====
+Introduction
+############
 
 LimeSuiteNG is a software suite designed for working with LimeSDR family devices, see :doc:`about/deviceSupport`.
 

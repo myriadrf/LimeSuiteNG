@@ -171,6 +171,11 @@ constexpr size_t LMS64CPacketSerialCommandView::GetMaxSerialLength()
 
 namespace LMS64CProtocol {
 
+static inline uint64_t castTo64bits(uint8_t input, int bitOffset)
+{
+    return (static_cast<uint64_t>(input) << bitOffset);
+}
+
 static constexpr std::array<const std::string_view, static_cast<size_t>(CommandStatus::Count)> COMMAND_STATUS_TEXT = {
     "Undefined/Failure"sv,
     "Completed"sv,
@@ -310,6 +315,74 @@ OpStatus SPI16(ISerialPort& port,
     }
 
     return OpStatus::Success;
+}
+
+OpStatus CSRegIoWrite(ISerialPort& port, uint64_t address, uint64_t value, int wordLength)
+{
+    LMS64CPacket pkt;
+
+    pkt.cmd = Command::CMD_BRDCSR_WR;
+    pkt.status = CommandStatus::Undefined;
+    pkt.blockCount = 1;
+    pkt.periphID = 0;
+    pkt.subDevice = 0;
+
+    constexpr const int wordCnt = 2;
+    uint64_t words[wordCnt] = { address, value };
+    int bytesInWord = wordLength / 8;
+
+    for (int wordNr = 0; wordNr < wordCnt; ++wordNr)
+    {
+        int bitShiftCnt = wordLength - 8;
+        for (int byteNr = 0; byteNr < bytesInWord; ++byteNr)
+        {
+            pkt.payload[wordNr * bytesInWord + byteNr] = words[wordNr] >> bitShiftCnt;
+            bitShiftCnt -= 8;
+            // lime::log(LogLevel::Warning, "CSR write pkt.payload[%i]=%0hhX\n", wordNr*bytesInWord + byteNr, pkt.payload[wordNr*bytesInWord + byteNr]);
+        }
+    }
+
+    return RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+}
+
+uint64_t CSRegIoRead(ISerialPort& port, uint64_t address, OpStatus* status, int wordLength)
+{
+    LMS64CPacket pkt;
+    pkt.cmd = Command::CMD_BRDCSR_RD;
+    pkt.status = CommandStatus::Undefined;
+    pkt.blockCount = 1;
+    pkt.periphID = 0;
+    pkt.subDevice = 0;
+
+    int bytesInWord = wordLength / 8;
+    int bitShiftCnt = wordLength - 8;
+
+    for (int byteNr = 0; byteNr < bytesInWord; ++byteNr)
+    {
+        pkt.payload[byteNr] = address >> bitShiftCnt;
+        bitShiftCnt = bitShiftCnt - 8;
+        // lime::log(LogLevel::Warning, "CSR read register request: pkt.payload[%i]=%0hhX;\n", byteNr, pkt.payload[byteNr]);
+    }
+
+    OpStatus runStatus = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
+    if (runStatus != OpStatus::Success)
+    {
+        *status = runStatus;
+        return 0ULL;
+    }
+    *status = runStatus;
+
+    uint64_t value = 0;
+    bitShiftCnt = wordLength - 8;
+    int dataOffset = bytesInWord;
+    for (int byteNr = 0; byteNr < bytesInWord; ++byteNr)
+    {
+        value = value | castTo64bits(pkt.payload[dataOffset + byteNr], bitShiftCnt);
+        bitShiftCnt = bitShiftCnt - 8;
+    }
+    // lime::log(LogLevel::Warning, "CSR read register result 0x%0llX value is 0x%0llX\n", address, value);
+
+    return value;
 }
 
 /// @brief Gets the firmware information of the device.
