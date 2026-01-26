@@ -58,11 +58,10 @@
  * through public API.
  * 
  * @if RST_SUPPORT
- * @verbatim embed:rst:leading-asterisk
- * .. attention::
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
  * 
- *    All public API members are part of namespace ``lime``. To access individual API members, use scope resolution operator ``lime::function()``. To access SDR device registration functions, additionally specify the scope of device registry interface class ``lime::DeviceRegistry::function()``.
- * @endverbatim
+ *    All public API members are part of namespace ``lime``. To access individual API members, use scope resolution operator ``lime::function()``. To access SDR device registration functions, additionally specify the scope of device registry interface class ``lime::DeviceRegistry::function()``.}
  * @else
  * @warning All public API members are part of namespace <b>lime</b>. To access individual API members, use scope resolution operator: <b>lime::function()</b>. To access SDR device registration functions,
  * additionally specify the scope of device registry interface class: <b>lime::DeviceRegistry::function()</b>.
@@ -528,9 +527,16 @@
  * 
  * @image{inline} html dev_registration_dev_enum.png
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard. Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.}
+ * @else
  * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
  * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
  * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
+ * @endif
  * 
  * @section filter_and_register List filtering and registration
  * 
@@ -631,10 +637,17 @@
  * 
  * @image{inline} html dev_registration_dev_connection.png
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list ``lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());``.}
+ * @else
  * @note In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list:
  * @code{.cpp}
  * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
  * @endcode
+ * @endif
  * 
  * @ref dev_config "Go to SDR device configuration example topic"
  */
@@ -719,8 +732,15 @@
  * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M module, appropriate index should be
  * specified to target the correct LMS7002M module. More about module indexes, can be found @ref common_parameters "here".
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    The moduleIndex parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration of correct device LMS7002M module.}
+ * @else
  * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
  * of correct device LMS7002M module.
+ * @endif
  * 
  * @section lo_freq LO frequency
  * 
@@ -1061,7 +1081,14 @@
  * (set to value 0) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR device default initializtion and immediately
  * proceed with custom SDR device configuration, @ref lime::SDRConfig::skipDefaults "skipDefaults" paramter in SDRConfig structure must be set to value <b>true</b>.
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    It is recommended not to modify referenceClockFreq parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.}
+ * @else
  * @warning It is recommended not to modify @ref lime::SDRConfig::referenceClockFreq "referenceClockFreq" parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.  
+ * @endif
  * 
  * @ref lime::SDRConfig "SDRConfig" structure allows to configure up to @ref lime::SDRConfig::MAX_CHANNEL_COUNT "16" different SDR device channels. However, SDR devices based on LMS7002M RF chip only support
  * two channels at a time. If the SDR device uses more than one LMS7002M RF chip, you should instead define multiple configuration structures of @ref lime::SDRConfig "SDRConfig" type and set appropriate
@@ -1080,7 +1107,10 @@
  *    ... // Other program code
  * @endcode
  *
+ * @if RST_SUPPORT
+ * @else
  * @note To find out more about <b>moduleIndexes</b> parameter, @ref common_parameters "click here".  
+ * @endif
  * 
  * SDR device configuration structure @ref lime::SDRConfig "SDRConfig" allows to configure each channel direction (Tx and Rx) individually. @ref lime::ChannelConfig::Direction "Click here" to view the list 
  * of individually configurable parameters for each channel direction. For gain parameter, it is recommended to set the generic gain type:
@@ -1185,8 +1215,15 @@
  *    ... // Other program code
  * @endcode
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ *
+ *    Make sure that the configuration file .ini is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the configuration file name to specify the correct location of file.}
+ * @else
  * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the
  * configuration file name to specify the correct location of file.
+ * @endif
  * 
  * To generate SDR device <b>.ini</b> file you must perform a first time SDR device configuration (check out <b>From structure</b> section above) and use the 
  * @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()" function:
@@ -1202,8 +1239,15 @@
  *    ... // Other program code
  * @endcode
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    If only the name of configuration file .ini is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different directory, append a absolute or relative path to the configuration file name.}
+ * @else
  * @important If only the name of configuration file <b>.ini</b> is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different
  * directory, append a absolute or relative path to the configuration file name.
+ * @endif
  * 
  * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the LimeSuiteNG suite. The <b>limeGUI</b> application allows to perform 
  * SDR device configuration using graphical user interface and then generate the final <b>.ini</b> configuration file, which can be loaded with 
@@ -1221,8 +1265,15 @@
  * also allows to configure SDR device features that are not directly exposed through API functions, but are otherwise possible to set up by using <b>limeGUI</b> graphical user interface application, which is 
  * part of LimeSuiteNG suite. Full description of register parameters is available in LMS7002M register map file. <b>TODO: Add the file name or file location for reference</b>
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    Direct register and parameter access requires advanced knowledge about the SDR device and LMS7002M chip. Activation of advanced features or precise configuration often requires modification of several registers in a defined order. Proceed at your own risk.}
+ * @else
  * @warning Direct register and parameter access requires advanced knowledge about the SDR device and LMS7002M chip. Activation of advanced features or precise configuration often requires modification of several
  * registers in a defined order. Proceed at your own risk.
+ * @endif
  * 
  * Supported register access methods:
  * <ol>
@@ -1312,10 +1363,23 @@
  * 
  * For full register reads, use @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister(unsigned int address)" function.
  * 
+ * @if RST_SUPPORT
+ * 
+ * @embedRstVerbatim{
+ * .. important::
+ *
+ *    Full read and write functions can also be used to read and write FPGA registers.}
+ * 
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    Some SDR device configuration registers have duplicate registers that are addressed using the same address, but are physically located in different memory spaces. When directly accessing those registers, you must ensure that the correct register from the correct memory space is addressed by toggling the MAC parameter in register 0x0020.}
+ * @else
  * @important Full read and write functions can also be used to read and write FPGA registers.
  * 
  * @important Some SDR device configuration registers have duplicate registers that are addressed using the same address, but are physically located in different memory spaces. When directly accessing those registers,
  * you must ensure that the correct register from the correct memory space is addressed by toggling the MAC parameter in register 0x0020.
+ * @endif
  * 
  * Example code that reads the value of a register that contains the configuration of LNA, Loopback LNA and TIA amplifier gain settings for Rx direction:
  * @code{.cpp}
