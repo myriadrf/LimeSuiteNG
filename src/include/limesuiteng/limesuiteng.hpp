@@ -1055,7 +1055,7 @@
  *     </tr>
  * </table>
  * 
- * Not all of the above specified amplifier types support, the setting of gain in 1 dB step. Therefore, if the specified gain value is not supported by specified amplifier type, the nearest gain 
+ * Not all of the above specified amplifier types support the setting of gain in 1 dB step. Therefore, if the specified gain value is not supported by specified amplifier type, the nearest gain 
  * value will be applied. If a unknown amplifier type is specified when setting new gain value, gain of a generic amplifier will be updated. 
  * @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the amplifier types specified in the gain 
  * setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal. For PGA, PAD and LoopbackPAD amplifiers, 
