@@ -423,8 +423,10 @@
  *    <li> @subpage cmake_set_up </li>
  *    <li> @subpage dev_discovery </li>
  *    <li> @subpage dev_config </li>
+ * @if DEVELOP
  *    <li> @subpage dev_streaming </li>
  *    <li> @subpage hello_world_example </li>
+ * @endif
  * </ul>
  * 
  */
@@ -674,7 +676,9 @@
  *    <li> @subpage generic_config "Common control and configuration options"
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
+ *    @if DEVELOP
  *    <li> @subpage frequency_config "Frequency configuration"</li>
+ *    @endif
  * </ul>
  * 
  * @if DOX_NAV
