@@ -398,16 +398,14 @@
 /**
  * @page common_parameters Common public API parameters
  * 
- * @section Device_index Device indexes
+ * @section Device_index Module index
  * 
- * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called <b>moduleIndex</b>. The <b>moduleIndex</b> 
- * parameter specifies an index of a device which will be configured. Typically device index points to RF chip (LMS7002M), but in the case
- * of LimeSDR MMX8 this parameter points to the onboard LimeSDR XTRXs and allows to configure the specific parameter for the
- * individual LimeSDR XTRX board RF chip. 
+ * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called <b>moduleIndex</b>, which addresses a specific module on a SDR device.
+ * Index of a module is used to specify which module will receive the new configuration. A typical example of a module is LMS7002M RF chip, which is present on all LimeSDR boards. 
+ * Therefore, this parameter should always be set to value <b>0</b> for LimeSDR boards that only have a single RF chip. Otherwise, if SDR device or a integrated system has multiple 
+ * RF chips or other modules, this parameter must be set to the appropriate index to target the correct module.
  *
- * Device indexes always start with index <b>0</b>. The last device on a system is indexed as <b>total device count - 1</b>.
- * 
- * Parameter <b>moduleIndex</b> should always be set to device index <b>0</b> for LimeSDR devices that use a single RF chip.
+ * Module indexes always start with value <b>0</b>. The last module on a system or device is indexed as <b>total module count - 1</b>.
  */
 
 /**
@@ -747,8 +745,8 @@
  * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
  * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index LMS7002M  modules 
  * for SDR devices or integrated systems that can have multiple LMS7002M modules or integrate multiple SDR devices. When working with standard LimeSDR devices
- * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M module, appropriate index should be
- * specified to target the correct LMS7002M module. More about module indexes, can be found @ref common_parameters "here".
+ * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M modules or any other modules, then
+ * appropriate module index should be specified to target the correct LMS7002M RF chip or any other module. More about module indexes, can be found @ref Device_index "here".
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -1095,7 +1093,7 @@
  *    
  * @endcode
  * 
- * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user defined structure fields). When an empty SDRConfig structure
+ * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
  * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, a @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
  * configuration with stable and tested SDR device parameters. If at any point the device becomes unstable or behaves in unexpected ways, perform default configuration to restore device. Default SDR device 
  * configuration can also be used alongside custom configuration. Simply define the SDRConfig parameter fields which you want to custom configure. When the default configuration is set up, 
@@ -1113,8 +1111,8 @@
  * @endif
  * 
  * @ref lime::SDRConfig "SDRConfig" structure allows to configure up to @ref lime::SDRConfig::MAX_CHANNEL_COUNT "16" different SDR device channels. However, SDR devices based on LMS7002M RF chip only support
- * two channels at a time. If the SDR device uses more than one LMS7002M RF chip, you should instead define multiple configuration structures of @ref lime::SDRConfig "SDRConfig" type and set appropriate
- * indexes that point to the correct LMS7002M RF chips:
+ * two channels at a time. If the SDR device uses more than one LMS7002M RF chip, you should instead define multiple configuration structures of @ref lime::SDRConfig "SDRConfig" type and set appropriate 
+ * @ref Device_index "module indexes" that point to the correct LMS7002M RF chips:
  * @code{.cpp}
  *    ... // Other program code
  *    uint8_t moduleIndexes[2] = {0, 1};     // SDR device with multiple RF chips
