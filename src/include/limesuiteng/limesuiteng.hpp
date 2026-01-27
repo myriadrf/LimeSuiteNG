@@ -624,18 +624,19 @@
  *    return 0;
  * }
  * @endcode
- * Following the first example, device enumeration without any device filters is used. Once device list is enumerated and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle"
- *  type is created. Only device name is selected as a filtering argument. Device filter object is used as an argument for 
- * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device
- *  filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
- * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
- * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:  
  * 
+ * Following the first example, device enumeration without any device filters is used. Once device list is enumerated and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle" 
+ * type is created. Only device name is selected as a filtering argument. Device filter object is used as an argument for 
+ * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device 
+ * filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
+ * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
+ * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
  * <ol>
  *    <li>Unexpected SDR device firmware ID</li>
  *    <li>Failed connection to USB port</li>
  *    <li>Unexpected SDR device USB VID:PID values</li>
- * </ol> 
+ * </ol>
+ * 
  * Once the device is no longer needed, the device object must be freed using @ref lime::DeviceRegistry::freeDevice(lime::SDRDevice*) "freeDevice(SDRDevice* device)" API function in order to release dynamically 
  * allocated memory to avoid application memory leaks on application termination. Output of the example code:
  * 
@@ -716,6 +717,7 @@
  *    
  *    ... // Other SDR device configurations  
  * @endcode
+ * 
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
  * default and stable/tested device configuration which can then be freely customized to support project requirements.
  * 
