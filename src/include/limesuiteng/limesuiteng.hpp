@@ -741,7 +741,7 @@
  * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and device is configured to work in MIMO mode. Therefore, if a single 
  * channel and SISO mode is enough for a data stream, it is recommended to disable other unused channel directions to reduce SDR device current and power consumption. When configuring device for SISO
  * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
- * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index the multiple LMS7002M  modules 
+ * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index LMS7002M  modules 
  * for SDR devices or integrated systems that can have multiple LMS7002M modules or integrate multiple SDR devices. When working with standard LimeSDR devices
  * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M module, appropriate index should be
  * specified to target the correct LMS7002M module. More about module indexes, can be found @ref common_parameters "here".
@@ -978,7 +978,7 @@
  * 
  * This will auto set the gain of generic amplifiers of specified channel and direction based on specified gain value. For Tx direction, PAD amplifier is considered as generic amplifier. For Rx direction, LNA,
  * PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
- * Specified out of range gain values are clamped to the maximum or minimum possible gain values of each amplifier. 
+ * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type. 
  * 
  * To get the current or udpated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
  * @code{.cpp}
@@ -994,8 +994,8 @@
  *
  * @endcode
  * 
- * For Tx direction, this will return the combined gain value of PAD and IAMP amplifiers. For Rx direction, this will return the combined gain value of LNA, TIA and PGA amplifiers. Alternatively, it is also possible to set
- * the gain of the individual SDR device amplifiers:
+ * For Tx direction, this will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB). For Rx direction, this will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + 
+ * PGA = P in dB). Additionally, if generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
  * <table>
  *    <tr>
  *       <th>Amplifier type</th>
@@ -1055,10 +1055,11 @@
  *     </tr>
  * </table>
  * 
- * If the specified gain value is not supported by specified amplifier type, the nearest gain value is applied. If a unknown amplifier type is specified when setting new gain value, gain of a
- * generic amplifier will be updated.  @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the
- * amplifier types specified in the gain setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal.
- * For PGA, PAD and LoopbackPAD amplifiers, function will return the actual signal strength.
+ * Not all of the above specified amplifier types support, the setting of gain in 1 dB step. Therefore, if the specified gain value is not supported by specified amplifier type, the nearest gain 
+ * value will be applied. If a unknown amplifier type is specified when setting new gain value, gain of a generic amplifier will be updated. 
+ * @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the amplifier types specified in the gain 
+ * setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal. For PGA, PAD and LoopbackPAD amplifiers, 
+ * function will return the actual signal strength.
  * 
  */
 
