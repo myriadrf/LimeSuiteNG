@@ -1,0 +1,190 @@
+/**
+ * @page dev_discovery SDR device discovery and registration
+ * 
+ * @if DOX_NAV
+ * @ref cmake_set_up "Back to CMake project set up example topic"  
+ * @endif
+ * 
+ * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
+ * functions that can be used to discover and manage SDR device connectivity.  
+ * 
+ * @section discovery Discovery
+ * 
+ * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
+ * are currently connected to PC:
+ * @code{.cpp}
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ * 
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No SDR devices detected!\n";
+ *       return 1;
+ *    }
+ * 
+ *    std::cout << "Found " << listOfDevices.size() << " devices:\n";
+ *    
+ *     for(const auto& singleDevHandle : listOfDevices)
+ *        std::cout << singleDevHandle.Serialize() << std::endl;
+ *
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * @if RST_SUPPORT
+ * @verbatim embed:rst:leading-asterisk
+ * .. important::
+ *    All LimeSuiteNG API functions are part of namespace ``lime``. API members can be accessed with scope resolution operator ``lime::``. Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class must also be specified using the scope resolution operator ``DeviceRegistry::``.
+ * @endverbatim
+ * @else
+ * @important All LimeSuiteNG API functions are part of namespace <b>lime</b>. API members can be accessed with scope resolution operator <b>lime::</b>.
+ * Additionally, all device discovery and registration API functions are also a part of DeviceRegistry class, therefore the scope of DeviceRegistry class
+ * must also be specified using the scope resolution operator <b>DeviceRegistry::</b>.  
+ * @endif
+ * 
+ * In this example code, API function enumerate() returns a vector with items of @ref lime::DeviceHandle "DeviceHandle" type, which is a type that provides the 
+ * base information about connected SDR devices:
+ * <ol>
+ *    <li>Device name</li>
+ *    <li>Device connection media (USB, PCIe, Ethernet and etc.)</li>
+ *    <li>Device address (USB VID:PID, IP address and etc.) </li>
+ *    <li>Device serial number</li>
+ * </ol>
+ * 
+ * If no devices are detected, function returns an empty device list which can be tested with `.empty()` or `.size()` methods. If the device list is not empty,
+ * a range-for loop can be used to print items of the device list to standard output. To obtain basic device information in std::string format, a method 
+ * @ref lime::DeviceHandle::Serialize() "Serialize()" or @ref lime::DeviceHandle::ToString() "ToString()" must be called for each item of @ref lime::DeviceHandle "DeviceHandle" type 
+ * in device list. Both methods return string of arguments that identify the device, but the Serialize() method also appends complementary text that identifies the device argument.
+ * First example code for @ref lime::DeviceRegistry::enumerate() "enumerate()" API function produces output:
+ * 
+ * @image{inline} html dev_registration_dev_enum.png
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard. Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.}
+ * @else
+ * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
+ * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
+ * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
+ * @endif
+ * 
+ * @section filter_and_register List filtering and registration
+ * 
+ * Discovery function @ref lime::DeviceRegistry::enumerate() "enumerate()" also has an overloaded version @ref lime::DeviceRegistry::enumerate(const lime::DeviceHandle&) "enumerate(const DeviceHandle&)"
+ * function that can accept a @ref lime::DeviceHandle "DeviceHandle" type object which can act as a device filter. If all arguments from device handle matches specified device filter arguments (unspecified 
+ * filter arguments are ignored), the SDR device is included in the final device list:
+ * @code{.cpp}
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ * 
+ *    std::vector<lime::DeviceHandle> listOfLimeSDR_Mini = lime::DeviceRegistry::enumerate(lime::DeviceHandle("LimeSDR Mini V2"));
+ *    std::vector<lime::DeviceHandle> listOfLimeSDR_USB = lime::DeviceRegistry::enumerate(lime::DeviceHandle("LimeSDR-USB"));
+ * 
+ *    std::cout << "List of LimeSDR Mini devices:\n";
+ *    for(const auto& singleDevHandle : listOfLimeSDR_Mini)
+ *       std::cout << singleDevHandle.Serialize() << std::endl;
+ * 
+ *    std::cout << std::endl << "List of LimeSDR USB devices:\n";
+ *    for(const auto& singleDevHandle : listOfLimeSDR_USB)
+ *       std::cout << singleDevHandle.Serialize() << std::endl;
+ * 
+ *    return 0;
+ * }
+ * @endcode
+ *
+ * The output of the second example:
+ * 
+ * @image{inline} html dev_registration_dev_filtering.png
+ * 
+ * 
+ * Alternatively, it is also possible to filter requested devices from enumerated device list using @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method: 
+ * @code{.cpp}
+ * int main()
+ * {
+ *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.size() == 0)
+ *    {
+ *       std::cout << "No SDR devices detected\n";
+ *       return 1;
+ *    }
+ * 
+ *    std::cout << "Found " << listOfDevices.size() << " devices\n";
+ *    for(const auto& item : listOfDevices)
+ *       std::cout << item.Serialize() << std::endl;
+ * 
+ *    // Filtering and extracting requested device list index by device name
+ *    lime::DeviceHandle reqDevice("LimeSDR Mini V2");
+ *    int reqDevID = -1;
+ *    std::cout << std::endl << "Searching for requested device " << reqDevice.ToString() << " in device list\n";
+ *    for(int itemID = 0; itemID < listOfDevices.size(); ++itemID)
+ *    {  
+ *       if(listOfDevices[itemID].IsEqualIgnoringEmpty(reqDevice))
+ *       {
+ *          reqDevID = itemID;
+ *          std::cout << "Device " << reqDevice.ToString() << " found.\n";
+ *          break;
+ *       }
+ *    }
+ * 
+ *    if(reqDevID == -1)
+ *    {
+ *       std::cout << "Requested device not found in enumerated device list!\n";
+ *       return 1;
+ *    }
+ *    // End of device filtering   
+ * 
+ *    std::cout << "Connecting to requested device: " << reqDevice.ToString() << std::endl;
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.at(reqDevID));
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    std::cout << "Connection established. Disconnecting!\n";
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ * 
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * Following the first example, device enumeration without any device filters is used. Once device list is enumerated and there are devices present in the list, device filter of @ref lime::DeviceHandle "DeviceHandle" 
+ * type is created. Only device name is selected as a filtering argument. Device filter object is used as an argument for 
+ * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device 
+ * filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
+ * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
+ * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
+ * <ol>
+ *    <li>Unexpected SDR device firmware ID</li>
+ *    <li>Failed connection to USB port</li>
+ *    <li>Unexpected SDR device USB VID:PID values</li>
+ * </ol>
+ * 
+ * Once the device is no longer needed, the device object must be freed using @ref lime::DeviceRegistry::freeDevice(lime::SDRDevice*) "freeDevice(SDRDevice* device)" API function in order to release dynamically 
+ * allocated memory to avoid application memory leaks on application termination. Output of the example code:
+ * 
+ * @image{inline} html dev_registration_dev_connection.png
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list ``lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());``.}
+ * @else
+ * @note In the last example code, if the device filtering is not required, device filtering code (between inline comments) can be omitted and connection can be established with the first device from enumerated device list:
+ * @code{.cpp}
+ * lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ * @endcode
+ * @endif
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Go to SDR device configuration example topic"
+ * @endif
+ */

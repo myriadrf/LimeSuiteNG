@@ -1,0 +1,25 @@
+/**
+ * @page dev_config SDR device configuration
+ * 
+ * @if DOX_NAV
+ * @ref dev_discovery "Back to SDR device discovery and registration example topic"  
+ * @endif
+ * 
+ * Since SDR devices are highly customizible, this example topic is separated into different sub-topics, which provide specific information and examples for various SDR control and configuration options. 
+ * The quick configuration sub-topic is the main sub-topic that provides the essential steps required to configure the base SDR device parameters that are enough to run a data stream. Other sub-topics 
+ * provide more information about individual SDR device parameter configuration options and other advanced configuration options.  
+ * <ul>
+ *    <li> @subpage quick_config "Quick configuration"</li>
+ *    <li> @subpage generic_config "Common control and configuration options"
+ *    <li> @subpage direct_config "Direct register and parameter access"
+ *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
+ *    @if DEVELOP
+ *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
+ *    <li> @subpage frequency_config "Frequency configuration"</li>
+ *    @endif
+ * </ul>
+ * 
+ * @if DOX_NAV
+ * @ref dev_streaming "Go to SDR device stream set up and data stream example topic"
+ * @endif
+ */

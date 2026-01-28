@@ -1,0 +1,37 @@
+/**
+ * @page cmake_set_up CMake set up
+ * 
+ * The following CMakeLists.txt code is the minimum required project set up code which allows to use LimeSuiteNG API in custom applications:
+ * @code{.cmake}
+ * cmake_minimum_required(VERSION 3.26)
+ * 
+ * project(LimeSuiteNG_example LANGUAGES C CXX)
+ * 
+ * set(PROJECT_SOURCE 
+ *    main.cpp
+ *    # ... If required, more source files separated by newline
+ *    )
+ * 
+ * add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})
+ * target_link_libraries(${PROJECT_NAME} PRIVATE limesuiteng)
+ * @endcode
+ * 
+ * CMake project always starts with minimum required CMake version and project command. Specify the name of project and supported languages.
+ * Set your list of source files that will be used in the project build. Update the project configuration by specifying the build type as executable.
+ * Specify executable command arguments: executable name (in this case project name) and pass the source file variable that contains the list of source files. Link 
+ * the LimeSuiteNG library to project executable using <b>target_link_libraries()</b> command. Once the project CMake files are set up, include the following headers
+ * into project source files for access to LimeSuiteNG API:
+ * @code{.cpp}
+ * #include <limesuiteng/limesuiteng.hpp>
+ * @endcode
+ * 
+ * To configure and build project, run commands in command line/terminal environment:
+ * @code{.bash}
+ * cmake ..
+ * cmake --build .
+ * @endcode
+ * 
+ * @if DOX_NAV
+ * @ref dev_discovery "Go to SDR device discovery and registration example topic"
+ * @endif
+ */

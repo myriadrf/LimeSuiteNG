@@ -1,0 +1,375 @@
+/**
+ * @page generic_config Common control and configuration options
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
+ * @endif
+ * 
+ * Common SDR device control and configuration options allow to set up the communication channel structure and the base streaming parameters of individual channel directions (Tx/Rx).
+ * This sub-topic explains how to configure:
+ * <ol>
+ *    <li>channel mode: MIMO or SISO </li>
+ *    <li>channel direction LO frequency</li>
+ *    <li>channel direction low pass filter bandwidth</li>
+ *    <li>channel direction sample rate</li>
+ *    <li>channel direction antenna</li>
+ *    <li>channel direction gain</li>
+ * </ol>
+ * 
+ * @section default_init Default initialization
+ * 
+ * Before starting any SDR device channel configurations it is recommended to perform default SDR device initialization using @ref lime::SDRDevice::Init() "Init()" function:
+ * @code{.cpp}
+ *    ... // Device discovery and registration code
+ *    
+ *    configStatus = device->Init();
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
+ *    
+ *    ... // Other SDR device configurations  
+ * @endcode
+ * 
+ * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
+ * default and stable/tested device configuration which can then be freely customized to support project requirements.
+ * 
+ * @section channel_conf Stream channels
+ * 
+ * SDR device stream channels can be configured by using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
+ * @code{.cpp}
+ *    ... // Device default initialization
+ *    
+ *    uint8_t moduleIndex = 0;
+ *    bool directionEnabled = true;
+ *    configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, directionEnabled);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;    
+ * 
+ *    ... // Other SDR device configurations
+ * @endcode
+ * 
+ * The @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function performs hardware re-configuration of specified device channel direction. If device channel
+ * direction is disabled, all of the internal hardware components (transceiver signal processor, analog front end, radio front end and etc.) used for that particular direction are also disabled. Enabling 
+ * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and device is configured to work in MIMO mode. Therefore, if a single 
+ * channel and SISO mode is enough for a data stream, it is recommended to disable other unused channel directions to reduce SDR device current and power consumption. When configuring device for SISO
+ * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
+ * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index LMS7002M  modules 
+ * for SDR devices or integrated systems that can have multiple LMS7002M modules or integrate multiple SDR devices. When working with standard LimeSDR devices
+ * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M modules or any other modules, then
+ * appropriate module index should be specified to target the correct LMS7002M RF chip or any other module. More about module indexes, can be found @ref Device_index "here".
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    The moduleIndex parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration of correct device LMS7002M module.}
+ * @else
+ * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
+ * of correct device LMS7002M module.
+ * @endif
+ * 
+ * @section lo_freq LO frequency
+ * 
+ * To set new synthesizer LO generator frequency for a specific SDR device channel direction use @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double frequency = 95.9e6; // Hz
+ *    configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, frequency);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To retrieve current synthesizer LO generator frequency of specified SDR device channel direction, use @ref lime::SDRDevice::GetFrequency(uint8_t, lime::TRXDir, uint8_t) "GetFrequency()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double frequency = 0;
+ *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    std::cout << "Current LO frequency on ChA Tx = " << frequency << " Hz\n";
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * When configuring new synthesizer LO generator frequency, it is always recommended to check for operation errors. Possible error reasons:
+ * <ul>
+ *    <li>Specified LO generator frequency is not supported by VCO</li>
+ *    <li>LO generator VCO tuning failed to lock to synthesizer reference clock</li>
+ *    <li>LO generator VCO tuning failed, required tuning bias current too high</li>
+ * </ul>
+ * 
+ * LO generator frequency is shared between the same directions (Rx or Tx) on different channels, when SDR device is set to operate in MIMO mode. Therefore, in MIMO mode, it is 
+ * enough to set LO generator frequency once per stream direction (Rx or Tx) using @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function.
+ *
+ * @section lpf_conf Low pass filters
+ *
+ * To set new low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double bandwidth = 2e6; // Hz
+ *    configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, bandwidth);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set channel A Tx direction low pass filter bandwidth with error: " << lime::ToString(configStatus) << std::endl;
+ *
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double bandwidth = 0; // Hz
+ *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    std::cout << "Current low pass filter bandwith value for channel A, Tx direction is " << bandwidth << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To bypass low pass filter in transceiver baseband for a specified SDR device channel direction, set the bandwidth value to zero. If Low pass filter is bypassed in Rx direction,
+ * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
+ * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
+ * minimum or maximum possible low pass filter bandwidth value. Therefore, when setting new low pass filter bandwidth value, it is recommended to check if the actual value was set in HW.
+ * 
+ * @section sample_rate Sample rate
+ * 
+ * To set new sample rate value for SDR device, use @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double sampleRate = 2e6; // Hz
+ *    uint8_t oversampleRatio = 0;
+ *    configStatus = device->SetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, sampleRate, oversampleRatio);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device sample rate with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current sample rate of SDR device, use @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double sampleRate = 0; // Hz
+ *    uint32_t rf_sampleRate = 0; // Hz
+ *    sampleRate = device->GetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, &rf_sampleRate);
+ *    std::cout << "Current SDR device sample rate is " << sampleRate << " Hz";
+ *    if(rf_sampleRate > 0)
+ *       std::cout << ", RF sample rate is " << rf_sampleRate << " Hz\n";
+ *    else
+ *       std::cout << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * SDR device sample rate configuration is not dependant on selected SDR device channel and direction. Sample rate setting is updated for all internal ADCs and DACs of all active channel directions. The
+ * actual RF sample rate is much higher than the specified sample rate and depends on the selected oversampling ratio parameter. 
+ * In example code above, function @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" accepts argument <b>oversampleRatio</b> which specifies the sample
+ * interpolation and decimation ratios. If oversampling ratio parameter is set to value 0 and specified sample rate is lower or equal to 61.44 MHz, ratios are auto calculated based on specified sample rate.
+ * If specified sample rate is higher than 61.44 MHz and oversamplnig ratio is set to value 0, then interpolation and decimation stage is bypassed. Alternatively, oversampling ratio can be set manually.
+ * Supported oversampling ratios:
+ * <ul>
+ *    <li>x2  (oversampleRatio == 2)</li>
+ *    <li>x4  (oversampleRatio == 4)</li>
+ *    <li>x8  (oversampleRatio == 8)</li>
+ *    <li>x16 (oversampleRatio == 16)</li>
+ *    <li>x32 (oversampleRatio == 32)</li>
+ * </ul>
+ * 
+ * To get the actual RF sample rate value, the last parameter of <b>GetSampleRate()</b> must accept an address of a variable where the actual RF sample rate will be stored (example code above). If the argument
+ * is omitted, then only the sample rate is returned.
+ * 
+ * @section antenna_path Antenna path
+ * 
+ * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t pathID = 1;  // Tx Band1
+ *    configStatus = device->SetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, pathID);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device antenna path with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ * 
+ * To get the current antenna path of SDR device, use @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()" function:
+ * @code{.cpp} 
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t pathID = 0;
+ *    pathID = device->GetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    std::cout << "Current SDR device antenna path is " << pathID << std::endl;
+ * 
+ *    ... // Other program code
+ * @endcode
+ *
+ * Depending on SDR device model, different antennas can be used both for Tx and Rx directions of each channel. If a unexpected antenna path ID is specified, the path ID is ignored and 
+ * antenna is not changed. Below are lists of common antenna paths for Tx and Rx directions.
+ * 
+ * List of antenna path IDs for Tx direction on each channel:
+ * <ul>
+ *    <li> Band1 path ID is 1</li>
+ *    <li> Band2 path ID is 2</li>
+ * </ul>
+ * 
+ * List of antenna path IDs for Rx direction in each channel:
+ * <ul>
+ *    <li>LNAL path ID is 2</li>
+ *    <li>LNAW path ID is 3</li>
+ *    <li>LNAH path ID is 1</li>
+ *    <li>LB1 path ID is 4</li>
+ *    <li>LB2 path ID is 5</li>
+ * </ul>
+ * 
+ * Not all SDR devices can support the listed antennas. It is recommended to check antenna support of each SDR device by retrieving SDR device descriptor:
+ * @code{.cpp}
+ *  int main()
+ *  {
+ *     std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *  
+ *     lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *     if(device == nullptr)
+ *     {
+ *        std::cout << "Failed to connect to SDR device\n";
+ *        return 1;
+ *     }
+ *     
+ *     lime::OpStatus configStatus = lime::OpStatus::Success;
+ *     uint8_t moduleIndex = 0;
+ *     auto SDRDescriptor = device->GetDescriptor();
+ *     auto& paths = SDRDescriptor.rfSOC.at(0).pathNames;
+ *  
+ *     std::cout << SDRDescriptor.name << " supported antennas\n";
+ *     std::cout << "Tx antennas:\n";
+ *     for(int i = 0; i < paths.at(lime::TRXDir::Tx).size(); ++i)
+ *        std::cout << "\t" << paths.at(lime::TRXDir::Tx)[i] << std::endl;
+ *     std::cout << std::endl;
+ *  
+ *     std::cout << "Rx antennas:\n";
+ *     for(int i = 0; i < paths.at(lime::TRXDir::Rx).size(); ++i)
+ *        std::cout << "\t" << paths.at(lime::TRXDir::Rx)[i] << std::endl;
+ *     std::cout << std::endl;
+ *  
+ *     lime::DeviceRegistry::freeDevice(device);
+ *  
+ *     return 0;
+ *  }
+ * @endcode
+ * 
+ * Output of the example code above for LimeSDR Mini V2:
+ * 
+ * @image{inline} html dev_config_antenna_support.png
+ * 
+ * Some antenna paths can have a <b>NC</b> postfix which indicates that the internal RF chip antenna path is not physically connected to antenna.
+ * 
+ * @section dev_gain Gain control
+ * 
+ * To set new gain value for SDR device amplifiers, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function with amplifier type set as GENERIC:
+ * @code{.cpp}
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    double gain = 9;  // dB
+ *    configStatus = device->SetGain(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::GENERIC, gain);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to set SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code 
+ * @endcode
+ * 
+ * This will auto set the gain of generic amplifiers of specified channel and direction based on specified gain value. For Tx direction, PAD amplifier is considered as generic amplifier. For Rx direction, LNA,
+ * PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
+ * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type. 
+ * 
+ * To get the current or udpated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
+ * @code{.cpp}
+ *    ... // Other program code
+ *    
+ *    uint8_t moduleIndex = 0;
+ *    double gain = 0; // dB
+ *    configStatus = device->GetGain(moduleIndex, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::GENERIC, gain);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to get SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    ... // Other program code
+ *
+ * @endcode
+ * 
+ * For Tx direction, this will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB). For Rx direction, this will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + 
+ * PGA = P in dB). Additionally, if generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
+ * <table>
+ *    <tr>
+ *       <th>Amplifier type</th>
+ *       <th>Gain range/values, dB</th>
+ *       <th>Default value, dB</th>
+ *       <th>Gain setting behaviour</th>
+ *       <th>Signal strength formula</th>
+ *    </tr>
+ *    <tr>
+ *       <td>LNA</td>
+ *       <td> [0; 30] </td>
+ *       <td> 30 </td>
+ *       <td>Adjusts signal strength by specified amount of gain.</td> 
+ *       <td><b>specified gain - 30 = signal strength dB –> 9 - 30 = -21 dB</b></td>
+ *    </tr>
+ *     <tr>
+ *        <td>Loopback LNA</td>
+ *        <td> [0; 40] </td>
+ *        <td> 0 </td>
+ *        <td>Adjusts signal strength by specified amount of gain.</td> 
+ *        <td><b>specified gain - 40 = signal strength dB –> 23 - 40 = -17 dB</b></td>
+ *     </tr>
+ *     <tr>
+ *        <td>PGA</td>
+ *        <td> [19; -12] </td>
+ *        <td> -11 </td>
+ *        <td>Sets the actual signal strength from the supported gain value range.</td> 
+ *        <td><b>gain value from range = signal strength –> -12 dB = -12 dB</b></td>
+ *     </tr>
+ *     <tr>
+ *        <td>TIA</td>
+ *        <td> 0, 9, 12 </td>
+ *        <td> 12 </td>
+ *        <td>Adjusts signal strength by specified amount of gain.</td> 
+ *        <td><b>specified gain - 12 = signal strength dB –> 9 - 12 = -3 dB</b></td>
+ *     </tr>
+ *     <tr>
+ *        <td>PAD</td>
+ *        <td> [0; 52] </td>
+ *        <td> 52 </td>
+ *        <td>Sets the actual signal strength.</td>
+ *        <td><b>gain value from range = signal strength –> 12 dB = 12 dB</b></td>
+ *     </tr>
+ *     <tr>
+ *        <td>Loopback PAD</td>
+ *        <td> [0; -4] </td>
+ *        <td> -4 </td>
+ *        <td>Sets the actual signal strength according to set gain intervals.</td> 
+ *        <td><b>[x; y] dB = signal strength dB; [0; -0.7] = 0 dB, (-0.7; -2.35] = -1 dB, (-2.35, -3.8] = -3 dB, (-3.8, -inf) = -4 dB.</b></td>
+ *     </tr>
+ *     <tr>
+ *        <td>IAMP</td>
+ *        <td> To be updated </td>
+ *        <td> To be updated </td>
+ *        <td> To be updated </td>
+ *        <td> To be updated </td>
+ *     </tr>
+ * </table>
+ * 
+ * Not all of the above specified amplifier types support the setting of gain in 1 dB step. Therefore, if the specified gain value is not supported by specified amplifier type, the nearest gain 
+ * value will be applied. If a unknown amplifier type is specified when setting new gain value, gain of a generic amplifier will be updated. 
+ * @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the amplifier types specified in the gain 
+ * setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal. For PGA, PAD and LoopbackPAD amplifiers, 
+ * function will return the actual signal strength.
+ * 
+ */
