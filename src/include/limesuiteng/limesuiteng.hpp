@@ -675,6 +675,7 @@
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
  *    @if DEVELOP
+ *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
  *    <li> @subpage frequency_config "Frequency configuration"</li>
  *    @endif
  * </ul>
@@ -1549,6 +1550,12 @@
  *    ... // Other program code
  * @endcode
  */
+
+ /**
+  * @page tsp_correctors Signal corrector configuration
+  * 
+  * 
+  */
 
 /**
  * @page frequency_config Frequency configuration
