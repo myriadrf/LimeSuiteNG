@@ -315,6 +315,7 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
 
 OpStatus LA9310_PCIe::SetSystemClock(uint32_t clk_hz, int timeout_ms)
 {
+    lime::info("LA9310 SetSystemClock %u\n", clk_hz);
     volatile struct la9310_hif* hif = hostInterface;
 
     hif->sw_cmd_desc.cmd = 2;
@@ -370,6 +371,7 @@ uint32_t LA9310_PCIe::GetReferenceClock()
 OpStatus LA9310_PCIe::SetReferenceClock(uint32_t clk_hz, bool external, int timeout_ms)
 {
     volatile struct la9310_hif* hif = hostInterface;
+    lime::info("LA9310 SetReferenceClock %u ext:%i\n", clk_hz, external);
 
     hif->sw_cmd_desc.cmd = 4;
     hif->sw_cmd_desc.data[0] = clk_hz;

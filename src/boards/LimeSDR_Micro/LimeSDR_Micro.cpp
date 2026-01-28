@@ -145,7 +145,10 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
 
         uint32_t boardRefClk = mStreamingPort->GetReferenceClock();
         if (boardRefClk > 0)
+        {
+            lime::info("LimeSDR Micro refclk: %i\n", boardRefClk);
             refClk = boardRefClk;
+        }
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
         chip->SetClockFreq(LMS7002M::ClockID::CLK_REFERENCE, refClk);
         mLMSChips.push_back(std::move(chip));
@@ -230,13 +233,10 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
     if (cfg.referenceClockFreq > 0)
     {
         uint32_t currentRefClk = mStreamingPort->GetReferenceClock();
-        if (currentRefClk != cfg.referenceClockFreq)
-        {
-            bool external = cfg.referenceClockSource != 0;
-            status = mStreamingPort->SetReferenceClock(cfg.referenceClockFreq, external);
-            if (status != OpStatus::Success)
-                return ReportError(status, "Failed to set reference clock");
-        }
+        bool external = cfg.referenceClockSource != 0;
+        status = mStreamingPort->SetReferenceClock(cfg.referenceClockFreq, external);
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to set reference clock");
     }
 
     status = SetLA9310SamplingRate(la9310, cfg);
