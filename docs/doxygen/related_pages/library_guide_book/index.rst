@@ -5,7 +5,7 @@ Library guide book
    :maxdepth: 1
    :hidden:
 
-   cmake_setup
+   project_setup
    device_discovery
    device_config/index.rst
 

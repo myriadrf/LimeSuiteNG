@@ -2,7 +2,7 @@
  * @page dev_discovery SDR device discovery and registration
  * 
  * @if DOX_NAV
- * @ref cmake_set_up "Back to CMake project set up example topic"  
+ * @ref project_set_up "Back to Project set up example topic"  
  * @endif
  * 
  * This example topic explains how LimeSDR devices are discovered and registered in custom applications. In total LimeSuiteNG API contains 5 
