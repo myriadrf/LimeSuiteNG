@@ -28,31 +28,38 @@
  * 
  * @section reg_param_conf Parameter key
  * 
- * To read register parameters by key, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)" function:
+ * To read register parameters by key, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter(const string& parameterKey)" function and 
+ * to set register parameters by key, use @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint16_t value)" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration and registration   
  * 
  *    uint16_t rxen_a = 0;
  *    uint8_t moduleIndex = 0;   // For SDR devices with a single RF chip
+ *    uint8_t ChA = 0;
  *    std::string parameterKey = "RXEN_A";   // Power control for Rx A in MIMO mode parameter
- *    rxen_a = device->GetParameter(moduleIndex, lime::LMS7002M::Channel::ChA, parameterKey);
+ *    rxen_a = device->GetParameter(moduleIndex, ChA, parameterKey);
  *    std::cout << "Power control for Rx MIMO channel A is " << (rxen_a == 1 ? "enabled\n" : "disabled\n");
  * 
- *    ... // Other program code
- * @endcode
- * 
- * To set register parameters by key, use @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, const std::string&, uint16_t) "SetParameter(const string& parameterKey, uint16_t value)" function:
- * @code{.cpp}
- *    ... // Other program code
- * 
- *    uint16_t rxen_a = 0;  // Disabling power control
- *    uint8_t moduleIndex = 0;   // For SDR devices with a single RF chip
- *    std::string parameterKey = "RXEN_A";   // Power control for Rx A in MIMO mode parameter
- *    configStatus = device->SetParameter(moduleIndex, lime::LMS7002M::Channel::ChA, parameterKey, rxen_a);
+ *    rxen_a = 0;  // Disabling power control
+ *    lime::OpStatus configStatus = device->SetParameter(moduleIndex, ChA, parameterKey, rxen_a);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to " << (rxen_a == 1 ? "enable" : "disable") << "Rx MIMO channel A power control with error: " << lime::ToString(configStatus) << std::endl;
  * 
  *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
  * @endcode
  * 
  * LMS7002MCSR enumeration contains the names of parameters that can be read or modified.
@@ -61,16 +68,29 @@
  * 
  * Alternatively, parameters can be accessed by addressing bit fields in registers. This is especially usefull if parameter bit field is multiple bits long. 
  * For example, we can set and get the bit field value of interpolation ratio in a register. To get the parameter bit field
- * value, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address, uint8_t msb, uint16_t lsb)" function. Example code that gets the current
- * value of interpolation ratio bit field:
+ * value, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address, uint8_t msb, uint16_t lsb)" function.
+ * To set the parameter bit field value, use @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)" function.
+ * Example code that gets the current value of interpolation ratio bit field and then sets the new value:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration and registration   
+ * 
  *    uint16_t hbi_ovr = 0;
  *    uint16_t addr = 0x0203;
  *    uint8_t msb = 14;
- *    uint8_t = 12;
+ *    uint8_t lsb = 12;
  *    uint8_t moduleIndex = 0;   // For SDR devices with single RF chip
- *    hbi_ovr = device->GetParameter(moduleIndex, lime::LMS7002M::Channel::ChA, addr, msb, lsb);
+ *    uint8_t ChA = 0;
+ *    hbi_ovr = device->GetParameter(moduleIndex, ChA, addr, msb, lsb);
  *    std::cout << "Current interpolation stage ratio is set to ";
  *    if(hbi_ovr == 0)
  *        std::cout << "2\n";
@@ -84,20 +104,15 @@
  *        std::cout << "32\n";
  *    else
  *        std::cout << "bypass\n";
- *    ... // Other program code
- * @endcode
  * 
- * To set the parameter bit field value, use @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)" function.
- * Example code that sets the new interpolation ratio by modifying interpolation ratio parameter bit field:
- * @code{.cpp}
+ *    hbi_ovr = 3;   // New interpolation ratio is set to 16
+ *    device->SetParameter(moduleIndex, ChA, addr, msb, lsb, hbi_ovr);
+ * 
  *    ... // Other program code
- *    uint16_t hbi_ovr = 3;   // New interpolation ratio is set to 16
- *    uint16_t addr = 0x0203;
- *    uint8_t msb = 14;
- *    uint8_t = 12;
- *    uint8_t moduleIndex = 0;   // For SDR devices with single RF chip
- *    device->SetParameter(moduleIndex, lime::LMS7002M::Channel::ChA, addr, msb, lsb, hbi_ovr);
- *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * } 
  * @endcode
  * 
  * In the examples above, the <b>msb</b> and <b>lsb</b> parameters address the ending and starting bit positions of a parameter bit field in a register. The bit field ending and starting positions are obtained from the 
@@ -105,7 +120,8 @@
  * 
  * @section reg_full_conf Full read and write
  * 
- * For full register reads, use @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister(unsigned int address)" function.
+ * For full register reads, use @ref lime::SDRDevice::ReadRegister(uint8_t, unsigned int, bool) "ReadRegister(unsigned int address)" function and
+ * for full register writes, use @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister(unsigned int address, unsigned int value)" function.
  * 
  * @if RST_SUPPORT
  * 
@@ -125,50 +141,50 @@
  * you must ensure that the correct register from the correct memory space is addressed by toggling the MAC parameter in register 0x0020.
  * @endif
  * 
- * Example code that reads the value of a register that contains the configuration of LNA, Loopback LNA and TIA amplifier gain settings for Rx direction:
+ * Example code that reads the value of a register that contains the configuration of LNA, Loopback LNA and TIA amplifier gain settings for Rx direction and updates only the Rx LNA amplifier gain setting and then 
+ * checks if the register has been set correctly:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <iomanip>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration and registration   
+ * 
  *    unsigned int rxgain = 0;
  *    unsigned int addr = 0x0113;
  *    uint8_t moduleIndex = 0;   // For SDR devices with single RF chip
  *    bool readFPGA = false;     // Reading SDR device LMS7002M RF chip register
  *    rxgain = device->ReadRegister(moduleIndex, addr, readFPGA);
  *    std::cout << "Gain settings for Rx direction: 0x" << std::hex << std::setfill('0') << std::setw(4) << rxgain << std::endl;
- *    
- *    ... // Other program code
- * @endcode
- * 
- * Read register default value shown in the image below matches the default value (0b0000001111000011 == 0x03C3) in SDR device register map documentation:
- * 
- * @image{inline} html dev_config_rxgain_mod.png
- * 
- * For full register writes, use @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister(unsigned int address, unsigned int value)" function.
- * Building on the previous example, we update the Rx amplifier gain settings register value and then check if the register has been set:
- * @code{.cpp}
- *    ... // Other program code
- *    unsigned int rxgain = 0;
- *    unsigned int addr = 0x0113;
- *    uint8_t moduleIndex = 0;   // For SDR devices with single RF chip
- *    bool readFPGA = false;     // Reading SDR device LMS7002M RF chip register
- *    rxgain = device->ReadRegister(moduleIndex, addr, readFPGA);
- *    std::cout << "Default gain settings for Rx direction: 0x" << std::hex << std::setfill('0') << std::setw(4) << rxgain << std::endl;
  * 
  *    // Updating LNA gain setting, reducing from gmax-0 to gmax-5 value
  *    rxgain = rxgain & 0xFC3F;  // Clearing the LNA gain parameter bit field
  *    rxgain = rxgain | 0x0280;  // Setting the LNA gain parameter bit field with new value: 10 == gmax-5
  *    
- *    configStatus = device->WriteRegister(moduleIndex, addr, rxgain);
- *    if(configStatus != lime::OpStatus:Success)
+ *    lime::OpStatus configStatus = device->WriteRegister(moduleIndex, addr, rxgain);
+ *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to update LNA gain setting with error: " << lime::ToString(configStatus) << std::endl;
  *    
  *    rxgain = 0;
  *    rxgain = device->ReadRegister(moduleIndex, addr, readFPGA);
  *    std::cout << "New gain settings for Rx direction: 0x" << std::hex << std::setfill('0') << std::setw(4) << rxgain << std::endl;
- *    
- *    ... // Other program code    
+ * 
+ *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
  * @endcode
  * 
- * Output of the example code above:
+ * Read register default value shown in the image below matches the default value (0b0000001111000011 == 0x03C3) in SDR device register map documentation. The register LNA
+ * amplifier gain parameter bit fields are also updated:
  * 
  * @image{inline} html dev_config_rxgain_rw.png  
  * 

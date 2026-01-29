@@ -13,6 +13,12 @@
  * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
  * are currently connected to PC:
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/ToString.h>
+ * 
  * int main()
  * {
  *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
@@ -78,6 +84,12 @@
  * function that can accept a @ref lime::DeviceHandle "DeviceHandle" type object which can act as a device filter. If all arguments from device handle matches specified device filter arguments (unspecified 
  * filter arguments are ignored), the SDR device is included in the final device list:
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/ToString.h>
+ * 
  * int main()
  * {
  *    std::cout << "This example shows how to discover and register LimeSDR device.\n";
@@ -104,6 +116,12 @@
  * 
  * Alternatively, it is also possible to filter requested devices from enumerated device list using @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method: 
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/ToString.h>
+ * 
  * int main()
  * {
  *    std::cout << "This example shows how to discover and register LimeSDR device.\n";

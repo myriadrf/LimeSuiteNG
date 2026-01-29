@@ -15,22 +15,38 @@
  * 
  * To quick configure SDR device, use @ref lime::SDRConfig "SDRConfig" structure and @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function:
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
  * 
- *    ... // Other program code
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
+ * 
  *    uint8_t moduleIndex = 0;          // For SDR devices with single RF chip
  *    lime::SDRConfig LimeSDRMiniConf;  // Using default configuration
- *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
+ *    lime::OpStatus configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to configure SDR device with error: " << lime::ToString(configStatus) << std::endl;
+ * 
  *    ... // Other program code
- *    
+ * 
+ *    lime::DeviceRegistry::freeDevice(device); // End of code
+ *    return 0;
+ * } 
  * @endcode
  * 
  * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
- * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, a @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
+ * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
  * configuration with stable and tested SDR device parameters. If at any point the device becomes unstable or behaves in unexpected ways, perform default configuration to restore device. Default SDR device 
  * configuration can also be used alongside custom configuration. Simply initialize the SDRConfig parameter fields, which you want to custom configure. When the default configuration is set up, 
- * function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user define parameter values. User undefined parameter values 
+ * function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user initialized parameter values. Uninitialized user parameter values 
  * (set to value 0 by default) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR device default initializtion and immediately
  * proceed with custom SDR device configuration, @ref lime::SDRConfig::skipDefaults "skipDefaults" paramter in SDRConfig structure must be set to value <b>true</b>.
  * 
@@ -47,17 +63,34 @@
  * two channels at a time. If the SDR device uses more than one LMS7002M RF chip, you should instead define multiple configuration structures of @ref lime::SDRConfig "SDRConfig" type and set appropriate 
  * @ref Device_index "module indexes" that point to the correct LMS7002M RF chips:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
+ * 
  *    uint8_t moduleIndexes[2] = {0, 1};     // SDR device with multiple RF chips
  *    lime::SDRConfig LMS7002MConf[2] = {};  // Using default configs of LMS7002M chips
  *    for(int i = 0; i < sizeof(moduleIndexes); ++i)
  *    {
- *       configStatus = device->Configure(LMS7002MConf[i], moduleIndexes[i]);
+ *       lime::OpStatus configStatus = device->Configure(LMS7002MConf[i], moduleIndexes[i]);
  *       if(configStatus != lime::OpStatus::Success)
  *          std::cout << "Failed to configure SDR device RF chip with " << moduleIndexes[i] << " index. Error: " << lime::ToString(configStatus) << std::endl;
  *    } 
  * 
  *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device); // End of code
+ *    return 0;
+ * } 
  * @endcode
  *
  * @if RST_SUPPORT
@@ -68,31 +101,68 @@
  * SDR device configuration structure @ref lime::SDRConfig "SDRConfig" allows to configure each channel direction (Tx and Rx) individually. @ref lime::ChannelConfig::Direction "Click here" to view the list 
  * of individually configurable parameters for each channel direction. For gain parameter, it is recommended to set the generic gain type:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
+ * 
  *    uint8_t moduleIndex = 0;          // For SDR devices with single RF chip
  *    std::pair<lime::eGainTypes, double> TxGenericGain(lime::eGainTypes::GENERIC, 25); // in dB
  * 
  *    lime::SDRConfig LimeSDRMiniConf;
  *    LimeSDRMiniConf.channel[0].tx.gain.insert(TxGenericGain);         // Setting channel A, Tx direction generic gain alongside default device configuration
  * 
- *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
+ *    lime::OpStatus configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to configure SDR device with error: " << lime::ToString(configStatus) << std::endl;
+ * 
  *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device); // End of the code
+ *    return 0;
+ * }
  * @endcode
  * 
  * To use GFIR filters in digital domain, enable automatic GFIR filter calculation and set up:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
+ * 
  *    uint8_t moduleIndex = 0;          // For SDR devices with single RF chip 
  *    lime::SDRConfig LimeSDRMiniConf;
  *    LimeSDRMiniConf.channel[0].tx.gfir.enabled = true;    // Enable the use of all GFIR filters for channel A, Tx direction. Alternatively, use false to disable all of them
  *    LimeSDRMiniConf.channel[0].tx.gfir.bandwidth = 2e6;   // Calculate GFIR coefficients for 2 MHz bandwidth
  * 
- *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
+ *    lime::OpStatus configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to configure SDR device with error: " << lime::ToString(configStatus) << std::endl;
+ * 
  *    ... // Other program code
+ * 
+ *    lime::DeviceRegistry::freeDevice(device); // End of the code
+ *    return 0;
+ * } 
  * @endcode
  * 
  * For more information about the gain parameter and other device parameters, please visit @ref generic_config "Common control and configuration options" topic, which provides more information about individual parameters
@@ -106,6 +176,17 @@
  * 
  * Example of minimal SDR device configuration for basic streaming using SDRConfig structure:
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * 
  * int main()
  * {
  *     std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
@@ -159,15 +240,30 @@
  * 
  * Quick SDR device configuration can also be performed using <b>.ini</b> files, by using @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
  * 
  *    uint8_t moduleIndex = 0; // For SDR devices with single RF chip
  *    std::string configFile = "LimeSDRMini_V2_config.ini";
- *    configStatus = device->LoadConfig(moduleIndex, configFile);
+ *    lime::OpStatus configStatus = device->LoadConfig(moduleIndex, configFile);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to configure SDR device from file with error: " << lime::ToString(configStatus) << std::endl;
  *
  *    ... // Other program code
+ *    lime::DeviceRegistry::freeDevice(device); // End of the code
+ *    return 0;
+ * } 
  * @endcode
  * 
  * @if RST_SUPPORT
@@ -183,15 +279,30 @@
  * To generate SDR device <b>.ini</b> file you must perform a first time SDR device configuration (check out <b>From structure</b> section above) and use the 
  * @ref lime::SDRDevice::SaveConfig(uint8_t, const std::string&) "SaveConfig()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * 
+ * int main()
+ * {
+ * 
+ *    ... // SDR device enumeration and registration
  * 
  *    uint8_t moduleIndex = 0; // For SDR devices with single RF chip
  *    std::string configFile = "LimeSDRMini_V2_config.ini";
- *    configStatus = device->SaveConfig(moduleIndex, configFile);
+ *    lime::OpStatus configStatus = device->SaveConfig(moduleIndex, configFile);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to configure SDR device from file with error: " << lime::ToString(configStatus) << std::endl;
  *
  *    ... // Other program code
+ *    lime::DeviceRegistry::freeDevice(device); // End of the code
+ *    return 0;
+ * } 
  * @endcode
  * 
  * @if RST_SUPPORT

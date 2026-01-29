@@ -16,17 +16,40 @@
  *    <li>channel direction gain</li>
  * </ol>
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    Channels A and B in example code snippets below are indexed as Channel 0 and channel 1.}
+ * @else
+ * @important Channels A and B in example code snippets below are indexed as Channel 0 and channel 1.
+ * @endif
+ * 
  * @section default_init Default initialization
  * 
  * Before starting any SDR device channel configurations it is recommended to perform default SDR device initialization using @ref lime::SDRDevice::Init() "Init()" function:
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
  *    ... // Device discovery and registration code
  *    
- *    configStatus = device->Init();
+ *    lime::OpStatus configStatus = device->Init();
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Default device initializtion failed with error: " << lime::ToString(configStatus) << std::endl;
  *    
  *    ... // Other SDR device configurations  
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
  * @endcode
  * 
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
@@ -36,15 +59,30 @@
  * 
  * SDR device stream channels can be configured by using @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function:
  * @code{.cpp}
- *    ... // Device default initialization
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
  *    
  *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
  *    bool directionEnabled = true;
- *    configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, directionEnabled);
+ *    lime::OpStatus configStatus = device->EnableChannel(moduleIndex, lime::TRXDir::Tx, ChA, directionEnabled);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;    
  * 
- *    ... // Other SDR device configurations
+ *    ... // Other program code 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
  * @endcode
  * 
  * The @ref lime::SDRDevice::EnableChannel(uint8_t, lime::TRXDir, uint8_t, bool) "EnableChannel()" function performs hardware re-configuration of specified device channel direction. If device channel
@@ -67,29 +105,37 @@
  * 
  * @section lo_freq LO frequency
  * 
- * To set new synthesizer LO generator frequency for a specific SDR device channel direction use @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function:
+ * To set new synthesizer LO generator frequency for a specific SDR device channel direction use @ref lime::SDRDevice::SetFrequency(uint8_t, lime::TRXDir, uint8_t, double) "SetFrequency()" function and 
+ * to retrieve current synthesizer LO generator frequency of specified SDR device channel direction, use @ref lime::SDRDevice::GetFrequency(uint8_t, lime::TRXDir, uint8_t) "GetFrequency()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
  * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
+ *  
  *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
  *    double frequency = 95.9e6; // Hz
- *    configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, frequency);
+ *    lime::OpStatus configStatus = device->SetFrequency(moduleIndex, lime::TRXDir::Tx, ChA, frequency);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to toggle channel A Tx direction with error: " << lime::ToString(configStatus) << std::endl;
- * 
- *    ... // Other program code
- * @endcode
- * 
- * To retrieve current synthesizer LO generator frequency of specified SDR device channel direction, use @ref lime::SDRDevice::GetFrequency(uint8_t, lime::TRXDir, uint8_t) "GetFrequency()" function:
- * @code{.cpp}
- *    ... // Other program code
- * 
- *    uint8_t moduleIndex = 0;
- *    double frequency = 0;
- *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    
+ *    frequency = 0;
+ *    frequency = device->GetFrequency(moduleIndex, lime::TRXDir::Tx, ChA);
  *    std::cout << "Current LO frequency on ChA Tx = " << frequency << " Hz\n";
  * 
- *    ... // Other program code
+ *    ... // Other program code 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
  * @endcode
  * 
  * When configuring new synthesizer LO generator frequency, it is always recommended to check for operation errors. Possible error reasons:
@@ -104,31 +150,40 @@
  *
  * @section lpf_conf Low pass filters
  *
- * To set new low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()" function:
+ * To set new low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::SetLowPassFilter(uint8_t, lime::TRXDir, uint8_t, double) "SetLowPassFilter()" function and 
+ * to get the current low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
  * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
+ *  
  *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
  *    double bandwidth = 2e6; // Hz
- *    configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, bandwidth);
+ *    lime::OpStatus configStatus = device->SetLowPassFilter(moduleIndex, lime::TRXDir::Tx, ChA, bandwidth);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to set channel A Tx direction low pass filter bandwidth with error: " << lime::ToString(configStatus) << std::endl;
  *
- *    ... // Other program code
- * @endcode
- * 
- * To get the current low pass filter value for a specified SDR device channel direction, use @ref lime::SDRDevice::GetLowPassFilter(uint8_t, lime::TRXDir, uint8_t) "GetLowPassFilter()" function:
- * @code{.cpp}
- *    ... // Other program code
- * 
- *    uint8_t moduleIndex = 0;
- *    double bandwidth = 0; // Hz
- *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    bandwidth = 0; // Hz
+ *    bandwidth = device->GetLowPassFilter(moduleIndex, lime::TRXDir::Tx, ChA);
  *    std::cout << "Current low pass filter bandwith value for channel A, Tx direction is " << bandwidth << std::endl;
  * 
- *    ... // Other program code
- * @endcode
+ *    ... // Other program code 
  * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
+ * @endcode
+ *  
  * To bypass low pass filter in transceiver baseband for a specified SDR device channel direction, set the bandwidth value to zero. If Low pass filter is bypassed in Rx direction,
  * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
  * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
@@ -136,35 +191,44 @@
  * 
  * @section sample_rate Sample rate
  * 
- * To set new sample rate value for SDR device, use @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" function:
+ * To set new sample rate value for SDR device, use @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" function and
+ * to get the current sample rate of SDR device, use @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
  * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
+ *  
  *    uint8_t moduleIndex = 0;
- *    double sampleRate = 2e6; // Hz
+ *    uint8_t ChA = 0;
+ *    double sampleRate = 10e6; // Hz
  *    uint8_t oversampleRatio = 0;
- *    configStatus = device->SetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, sampleRate, oversampleRatio);
+ *    lime::OpStatus configStatus = device->SetSampleRate(moduleIndex, lime::TRXDir::Tx, ChA, sampleRate, oversampleRatio);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to set SDR device sample rate with error: " << lime::ToString(configStatus) << std::endl;
  * 
- *    ... // Other program code
- * @endcode
- * 
- * To get the current sample rate of SDR device, use @ref lime::SDRDevice::GetSampleRate(uint8_t, lime::TRXDir, uint8_t, uint32_t*) "GetSampleRate()" function:
- * @code{.cpp}
- *    ... // Other program code
- * 
- *    uint8_t moduleIndex = 0;
- *    double sampleRate = 0; // Hz
+ *    sampleRate = 0; // Hz
  *    uint32_t rf_sampleRate = 0; // Hz
- *    sampleRate = device->GetSampleRate(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, &rf_sampleRate);
+ *    sampleRate = device->GetSampleRate(moduleIndex, lime::TRXDir::Tx, ChA, &rf_sampleRate);
  *    std::cout << "Current SDR device sample rate is " << sampleRate << " Hz";
  *    if(rf_sampleRate > 0)
  *       std::cout << ", RF sample rate is " << rf_sampleRate << " Hz\n";
  *    else
  *       std::cout << std::endl;
  * 
- *    ... // Other program code
+ *    ... // Other program code 
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
  * @endcode
  * 
  * SDR device sample rate configuration is not dependant on selected SDR device channel and direction. Sample rate setting is updated for all internal ADCs and DACs of all active channel directions. The
@@ -190,29 +254,38 @@
  * 
  * @section antenna_path Antenna path
  * 
- * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function:
+ * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function and
+ * to get the current antenna path of SDR device, use @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()" function:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
  * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
+ *  
  *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
  *    uint8_t pathID = 1;  // Tx Band1
- *    configStatus = device->SetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, pathID);
+ *    lime::OpStatus configStatus = device->SetAntenna(moduleIndex, lime::TRXDir::Tx, ChA, pathID);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to set SDR device antenna path with error: " << lime::ToString(configStatus) << std::endl;
  * 
- *    ... // Other program code
- * @endcode
- * 
- * To get the current antenna path of SDR device, use @ref lime::SDRDevice::GetAntenna(uint8_t, lime::TRXDir, uint8_t) "GetAntenna()" function:
- * @code{.cpp} 
- *    ... // Other program code
- * 
- *    uint8_t moduleIndex = 0;
- *    uint8_t pathID = 0;
- *    pathID = device->GetAntenna(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA);
+ *    pathID = 0;
+ *    pathID = device->GetAntenna(moduleIndex, lime::TRXDir::Tx, ChA);
  *    std::cout << "Current SDR device antenna path is " << pathID << std::endl;
  * 
- *    ... // Other program code
+ *    ... // Other program code 
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *  
+ *    return 0;
+ * }
  * @endcode
  *
  * Depending on SDR device model, different antennas can be used both for Tx and Rx directions of each channel. If a unexpected antenna path ID is specified, the path ID is ignored and 
@@ -235,37 +308,46 @@
  * 
  * Not all SDR devices can support the listed antennas. It is recommended to check antenna support of each SDR device by retrieving SDR device descriptor:
  * @code{.cpp}
- *  int main()
- *  {
- *     std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
- *  
- *     lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
- *     if(device == nullptr)
- *     {
- *        std::cout << "Failed to connect to SDR device\n";
- *        return 1;
- *     }
- *     
- *     lime::OpStatus configStatus = lime::OpStatus::Success;
- *     uint8_t moduleIndex = 0;
- *     auto SDRDescriptor = device->GetDescriptor();
- *     auto& paths = SDRDescriptor.rfSOC.at(0).pathNames;
- *  
- *     std::cout << SDRDescriptor.name << " supported antennas\n";
- *     std::cout << "Tx antennas:\n";
- *     for(int i = 0; i < paths.at(lime::TRXDir::Tx).size(); ++i)
- *        std::cout << "\t" << paths.at(lime::TRXDir::Tx)[i] << std::endl;
- *     std::cout << std::endl;
- *  
- *     std::cout << "Rx antennas:\n";
- *     for(int i = 0; i < paths.at(lime::TRXDir::Rx).size(); ++i)
- *        std::cout << "\t" << paths.at(lime::TRXDir::Rx)[i] << std::endl;
- *     std::cout << std::endl;
- *  
- *     lime::DeviceRegistry::freeDevice(device);
- *  
- *     return 0;
- *  }
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ *    
+ *    lime::OpStatus configStatus = lime::OpStatus::Success;
+ *    uint8_t moduleIndex = 0;
+ *    auto SDRDescriptor = device->GetDescriptor();
+ *    auto& paths = SDRDescriptor.rfSOC.at(0).pathNames;
+ * 
+ *    std::cout << SDRDescriptor.name << " supported antennas\n";
+ *    std::cout << "Tx antennas:\n";
+ *    for(int i = 0; i < paths.at(lime::TRXDir::Tx).size(); ++i)
+ *       std::cout << "\t" << paths.at(lime::TRXDir::Tx)[i] << std::endl;
+ *    std::cout << std::endl;
+ * 
+ *    std::cout << "Rx antennas:\n";
+ *    for(int i = 0; i < paths.at(lime::TRXDir::Rx).size(); ++i)
+ *       std::cout << "\t" << paths.at(lime::TRXDir::Rx)[i] << std::endl;
+ *    std::cout << std::endl;
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ * 
+ *    return 0;
+ * }
  * @endcode
  * 
  * Output of the example code above for LimeSDR Mini V2:
@@ -276,37 +358,44 @@
  * 
  * @section dev_gain Gain control
  * 
- * To set new gain value for SDR device amplifiers, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function with amplifier type set as GENERIC:
+ * To set new gain value for SDR device amplifiers, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function with amplifier type set as GENERIC and
+ * to get the current or updated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
  * @code{.cpp}
- *    ... // Other program code
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // Device discovery and registration code
  * 
  *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
  *    double gain = 9;  // dB
- *    configStatus = device->SetGain(moduleIndex, lime::TRXDir::Tx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::GENERIC, gain);
+ *    lime::OpStatus configStatus = device->SetGain(moduleIndex, lime::TRXDir::Tx, ChA, lime::eGainTypes::GENERIC, gain);
  *    if(configStatus != lime::OpStatus::Success)
  *       std::cout << "Failed to set SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
  * 
+ *    gain = 0; // dB
+ *    configStatus = device->GetGain(moduleIndex, lime::TRXDir::Tx, ChA, lime::eGainTypes::GENERIC, gain);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to get SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
+ *    std::cout << "ChA, Tx generic gain is set to " << gain << " dB\n";
+ * 
  *    ... // Other program code 
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
  * @endcode
  * 
  * This will auto set the gain of generic amplifiers of specified channel and direction based on specified gain value. For Tx direction, PAD amplifier is considered as generic amplifier. For Rx direction, LNA,
  * PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
  * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type. 
- * 
- * To get the current or updated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
- * @code{.cpp}
- *    ... // Other program code
- *    
- *    uint8_t moduleIndex = 0;
- *    double gain = 0; // dB
- *    configStatus = device->GetGain(moduleIndex, lime::TRXDir::Rx, lime::LMS7002M::Channel::ChA, lime::eGainTypes::GENERIC, gain);
- *    if(configStatus != lime::OpStatus::Success)
- *       std::cout << "Failed to get SDR device LNA gain with error: " << lime::ToString(configStatus) << std::endl;
- * 
- *    ... // Other program code
- *
- * @endcode
- * 
  * For Tx direction, this will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB). For Rx direction, this will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + 
  * PGA = P in dB). Additionally, if generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
  * <table>
@@ -368,7 +457,7 @@
  *     </tr>
  * </table>
  * 
- * Not all of the above specified amplifier types support the setting of gain in 1 dB step. Therefore, if the specified gain value is not supported by specified amplifier type, the nearest gain 
+ * Not all of the above specified amplifier types support the setting of gain in 1 dB step. If the specified gain value is not supported by specified amplifier type, the nearest gain 
  * value will be applied. If a unknown amplifier type is specified when setting new gain value, gain of a generic amplifier will be updated. 
  * @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function can retrieve the gain setting values of the amplifier types specified in the gain 
  * setting table above. For LNA, LoopbackLNA and TIA amplifiers, function will return the amount of gain which is used to strengthen the received signal. For PGA, PAD and LoopbackPAD amplifiers, 
