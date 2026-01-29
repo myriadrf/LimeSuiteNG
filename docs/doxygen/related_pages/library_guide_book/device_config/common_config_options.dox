@@ -52,19 +52,17 @@
  * device channel direction has the reverse effect of the channel direction disable. By default all device channels are enabled and device is configured to work in MIMO mode. Therefore, if a single 
  * channel and SISO mode is enough for a data stream, it is recommended to disable other unused channel directions to reduce SDR device current and power consumption. When configuring device for SISO
  * mode, it is recommended to use channel A as the default streaming channel, since some of LimeSDR devices (in particular LimeSDR Mini V2 and V1) do not have a physical connection to channel B. When 
- * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index LMS7002M  modules 
- * for SDR devices or integrated systems that can have multiple LMS7002M modules or integrate multiple SDR devices. When working with standard LimeSDR devices
- * that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. If SDR device or integrated systems have more than one LMS7002M modules or any other modules, then
- * appropriate module index should be specified to target the correct LMS7002M RF chip or any other module. More about module indexes, can be found @ref Device_index "here".
+ * configuring SDR device channels it is also important to specify the correct argument for <b>moduleIndex</b> parameter. The <b>moduleIndex</b> parameter is used to index modules of SDR devices or integrated 
+ * systems that can have multiple modules or integrate multiple devices. When working with standard LimeSDR devices that use a single LMS7002M RF chip, parameter <b>moduleIndex</b> should always be set to <b>0</b>. 
+ * More about module indexes, can be found @ref Device_index "here".
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
  * .. admonition:: Note
  * 
- *    The moduleIndex parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration of correct device LMS7002M module.}
+ *    The moduleIndex parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target the correct device module.}
  * @else
- * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target configuration
- * of correct device LMS7002M module.
+ * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target the correct device module.
  * @endif
  * 
  * @section lo_freq LO frequency
@@ -186,6 +184,10 @@
  * To get the actual RF sample rate value, the last parameter of <b>GetSampleRate()</b> must accept an address of a variable where the actual RF sample rate will be stored (example code above). If the argument
  * is omitted, then only the sample rate is returned.
  * 
+ * @if DEVELOP
+ *    TODO: Add RF sample rate calculation formula
+ * @endif 
+ * 
  * @section antenna_path Antenna path
  * 
  * To set new antenna path for SDR device, use @ref lime::SDRDevice::SetAntenna(uint8_t, lime::TRXDir, uint8_t, uint8_t) "SetAntenna()" function:
@@ -291,7 +293,7 @@
  * PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
  * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type. 
  * 
- * To get the current or udpated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
+ * To get the current or updated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
  * @code{.cpp}
  *    ... // Other program code
  *    

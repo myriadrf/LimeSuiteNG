@@ -29,9 +29,9 @@
  * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
  * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, a @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
  * configuration with stable and tested SDR device parameters. If at any point the device becomes unstable or behaves in unexpected ways, perform default configuration to restore device. Default SDR device 
- * configuration can also be used alongside custom configuration. Simply define the SDRConfig parameter fields which you want to custom configure. When the default configuration is set up, 
+ * configuration can also be used alongside custom configuration. Simply initialize the SDRConfig parameter fields, which you want to custom configure. When the default configuration is set up, 
  * function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user define parameter values. User undefined parameter values 
- * (set to value 0) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR device default initializtion and immediately
+ * (set to value 0 by default) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR device default initializtion and immediately
  * proceed with custom SDR device configuration, @ref lime::SDRConfig::skipDefaults "skipDefaults" paramter in SDRConfig structure must be set to value <b>true</b>.
  * 
  * @if RST_SUPPORT
@@ -97,8 +97,10 @@
  * 
  * For more information about the gain parameter and other device parameters, please visit @ref generic_config "Common control and configuration options" topic, which provides more information about individual parameters
  * and ways to set/get those individual parameters.  
+ * 
  * For GFIR filter set up please check out this @ref fir_filter_config "section".  
- * For Test Signal parameter please check out this section. @if DEVELOP <b>TODO: Link to the actual section.</b>  @endif
+ * 
+ * For Test Signal parameter please check out this section. @if DEVELOP <b>TODO: Link to the actual section.</b>  @endif  
  * 
  * @subsection struct_conf_example SDR device configuration example
  * 
@@ -172,9 +174,9 @@
  * @embedRstVerbatim{
  * .. important::
  *
- *    Make sure that the configuration file .ini is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the configuration file name to specify the correct location of file.}
+ *    Make sure that the configuration file .ini is in the same directory as your executable (as is the case in the example above) or append absolute or relative path to the configuration file name to specify the correct location of file.}
  * @else
- * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append a absolute or relative path to the
+ * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append absolute or relative path to the
  * configuration file name to specify the correct location of file.
  * @endif
  * 
@@ -196,10 +198,10 @@
  * @embedRstVerbatim{
  * .. important::
  * 
- *    If only the name of configuration file .ini is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different directory, append a absolute or relative path to the configuration file name.}
+ *    If only the name of configuration file .ini is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different directory, append absolute or relative path to the configuration file name.}
  * @else
  * @important If only the name of configuration file <b>.ini</b> is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different
- * directory, append a absolute or relative path to the configuration file name.
+ * directory, append absolute or relative path to the configuration file name.
  * @endif
  * 
  * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the LimeSuiteNG suite. The <b>limeGUI</b> application allows to perform 
