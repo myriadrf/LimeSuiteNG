@@ -269,7 +269,6 @@ struct la9310_dev {
     struct la9310_msg_unit* msg_units[LA9310_MSG_UNIT_CNT];
     struct la9310_dma_info dma_info;
     struct la9310_mem_region_info iqflood_region;
-    struct la9310_boot_header __iomem* boot_header;
     struct la9310_hif* hif;
     u32 hif_offset;
     u32 hif_size;
