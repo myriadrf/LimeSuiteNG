@@ -151,7 +151,10 @@ int la9310_load_firmware_to_dma(
         return -ENOBUFS;
     }
 
-    dma_sync_single_for_cpu(la9310_dev->dev, firmware_dma->phys_addr, firmware_dma->size, DMA_BIDIRECTIONAL);
+    // Syncing the whole dma mapped buffer, even though only part of it is used for firmware loading.
+    // IMX8MP page faults if sync is attempted for subsection of the mapped buffer.
+    dma_sync_single_for_cpu(
+        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
     // Copy firmware from userspace to DMA region
     dev_dbg(la9310_dev->dev, "Copying firmware to 0x%ldx, size %ld\n", (size_t)firmware_dma->phys_addr, fw_size);
@@ -162,7 +165,8 @@ int la9310_load_firmware_to_dma(
         return -EIO;
     }
     // la9310_dev->firmware_info.size = fw_size;
-    dma_sync_single_for_device(la9310_dev->dev, firmware_dma->phys_addr, firmware_dma->size, DMA_BIDIRECTIONAL);
+    dma_sync_single_for_device(
+        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
     return 0;
 }
 
