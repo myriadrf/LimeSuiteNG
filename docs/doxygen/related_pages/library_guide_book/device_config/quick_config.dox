@@ -77,7 +77,7 @@
  *    ... // SDR device enumeration and registration
  * 
  *    uint8_t moduleIndexes[2] = {0, 1};     // SDR device with multiple RF chips
- *    lime::SDRConfig SDRModuleConfs[2] = {};  // Using default configs of LMS7002M chips
+ *    lime::SDRConfig SDRModuleConfs[2] = {};  // Using default module configs
  *    for(int i = 0; i < sizeof(moduleIndexes); ++i)
  *    {
  *       lime::OpStatus configStatus = device->Configure(SDRModuleConfs[i], moduleIndexes[i]);
@@ -171,7 +171,7 @@
  * 
  * For Test Signal parameter please check out this section. @if DEVELOP <b>TODO: Link to the actual section.</b>  @endif  
  * 
- * @subsection struct_conf_example Essential device configuration example
+ * @subsection struct_conf_example Minimal device configuration example
  * 
  * Example of minimal SDR device configuration for basic streaming using SDRConfig structure:
  * @code{.cpp}
