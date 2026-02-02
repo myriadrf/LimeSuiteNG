@@ -20,7 +20,7 @@
  * @embedRstVerbatim{
  * .. important::
  * 
- *    Channels A and B in example code snippets below are indexed as Channel 0 and channel 1.}
+ *    Channels A and B in example code snippets below are respectively indexed as Channel 0 and channel 1.}
  * @else
  * @important Channels A and B in example code snippets below are indexed as Channel 0 and channel 1.
  * @endif
@@ -53,7 +53,7 @@
  * @endcode
  * 
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
- * default and stable/tested device configuration which can then be freely customized to support project requirements.
+ * default and stable device configuration, which can then be freely customized to support project requirements.
  * 
  * @section channel_conf Stream channels
  * 
@@ -98,7 +98,7 @@
  * @embedRstVerbatim{
  * .. admonition:: Note
  * 
- *    The moduleIndex parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target the correct device module.}
+ *    The ``moduleIndex`` parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target the correct device module.}
  * @else
  * @note The <b>moduleIndex</b> parameter is present in most of SDR device configuration functions. The purpose of the parameter, as described in stream channel set up paragraph, is to target the correct device module.
  * @endif
@@ -187,7 +187,7 @@
  * To bypass low pass filter in transceiver baseband for a specified SDR device channel direction, set the bandwidth value to zero. If Low pass filter is bypassed in Rx direction,
  * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
  * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
- * minimum or maximum possible low pass filter bandwidth value. Therefore, when setting new low pass filter bandwidth value, it is recommended to check if the actual value was set in HW.
+ * minimum or maximum possible low pass filter bandwidth value.
  * 
  * @section sample_rate Sample rate
  * 
@@ -359,7 +359,7 @@
  * @section dev_gain Gain control
  * 
  * To set new gain value for SDR device amplifiers, use @ref lime::SDRDevice::SetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double) "SetGain()" function with amplifier type set as GENERIC and
- * to get the current or updated gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
+ * to get the gain value of SDR device amplifiers, use @ref lime::SDRDevice::GetGain(uint8_t, lime::TRXDir, uint8_t, lime::eGainTypes, double&) "GetGain()" function with amplifier type set as GENERIC:
  * @code{.cpp}
  * #include <iostream>
  * #include <vector>
@@ -393,11 +393,14 @@
  * }
  * @endcode
  * 
- * This will auto set the gain of generic amplifiers of specified channel and direction based on specified gain value. For Tx direction, PAD amplifier is considered as generic amplifier. For Rx direction, LNA,
- * PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
- * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type. 
- * For Tx direction, this will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB). For Rx direction, this will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + 
- * PGA = P in dB). Additionally, if generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
+ * Function <b>SetGain()</b> will auto set the gain of generic amplifiers of specified channel and direction based on specified gain value. For Tx direction, PAD amplifier is considered as generic amplifier. 
+ * For Rx direction, LNA, PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
+ * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type.  
+ * 
+ * Function <b>GetGain()</b> for Tx direction will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB) and for Rx direction, function <b>GetGain()</b> will return the combined gain 
+ * value of LNA, TIA and PGA amplifiers (LNA + TIA + PGA = P in dB).  
+ * 
+ * If generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
  * <table>
  *    <tr>
  *       <th>Amplifier type</th>

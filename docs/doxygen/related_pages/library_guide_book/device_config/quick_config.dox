@@ -44,17 +44,16 @@
  * 
  * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
  * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
- * configuration with stable and tested SDR device parameters. If at any point the device becomes unstable or behaves in unexpected ways, perform default configuration to restore device. Default SDR device 
- * configuration can also be used alongside custom configuration. Simply initialize the SDRConfig parameter fields, which you want to custom configure. When the default configuration is set up, 
- * function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user initialized parameter values. Uninitialized user parameter values 
- * (set to value 0 by default) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR device default initializtion and immediately
- * proceed with custom SDR device configuration, @ref lime::SDRConfig::skipDefaults "skipDefaults" paramter in SDRConfig structure must be set to value <b>true</b>.
+ * configuration with stable SDR device parameters. Default SDR device configuration can also be used alongside custom configuration. Simply initialize the SDRConfig parameter fields, which you want to custom configure. 
+ * When the default configuration set up is finished, function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user initialized parameter 
+ * values. Uninitialized user parameter values (set to value 0 by default) are not configured for SDR device. This set up allows to simultaneously reset SDR device and load SDR device custom configuration. To skip SDR 
+ * device reset, default parameter initializtion and immediately proceed with custom SDR device configuration, set the @ref lime::SDRConfig::skipDefaults "skipDefaults" paramter in SDRConfig structure to value <b>true</b>. 
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
  * .. admonition:: Warning
  * 
- *    It is recommended not to modify referenceClockFreq parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.}
+ *    It is recommended not to modify ``referenceClockFreq`` parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.}
  * @else
  * @warning It is recommended not to modify @ref lime::SDRConfig::referenceClockFreq "referenceClockFreq" parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.  
  * @endif
@@ -78,10 +77,10 @@
  *    ... // SDR device enumeration and registration
  * 
  *    uint8_t moduleIndexes[2] = {0, 1};     // SDR device with multiple RF chips
- *    lime::SDRConfig LMS7002MConf[2] = {};  // Using default configs of LMS7002M chips
+ *    lime::SDRConfig SDRModuleConfs[2] = {};  // Using default configs of LMS7002M chips
  *    for(int i = 0; i < sizeof(moduleIndexes); ++i)
  *    {
- *       lime::OpStatus configStatus = device->Configure(LMS7002MConf[i], moduleIndexes[i]);
+ *       lime::OpStatus configStatus = device->Configure(SDRModuleConfs[i], moduleIndexes[i]);
  *       if(configStatus != lime::OpStatus::Success)
  *          std::cout << "Failed to configure SDR device RF chip with " << moduleIndexes[i] << " index. Error: " << lime::ToString(configStatus) << std::endl;
  *    } 
@@ -172,7 +171,7 @@
  * 
  * For Test Signal parameter please check out this section. @if DEVELOP <b>TODO: Link to the actual section.</b>  @endif  
  * 
- * @subsection struct_conf_example SDR device configuration example
+ * @subsection struct_conf_example Essential device configuration example
  * 
  * Example of minimal SDR device configuration for basic streaming using SDRConfig structure:
  * @code{.cpp}
@@ -270,9 +269,9 @@
  * @embedRstVerbatim{
  * .. important::
  *
- *    Make sure that the configuration file .ini is in the same directory as your executable (as is the case in the example above) or append absolute or relative path to the configuration file name to specify the correct location of file.}
+ *    Make sure that the configuration file .ini is in the same directory as your executable (as is the case in the example above) or append an absolute or a relative path to the configuration file name to specify the correct location of file.}
  * @else
- * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append absolute or relative path to the
+ * @important Make sure that the configuration file <b>.ini</b> is in the same directory as your executable (as is the case in the example above) or append an absolute or a relative path to the
  * configuration file name to specify the correct location of file.
  * @endif
  * 
@@ -309,10 +308,10 @@
  * @embedRstVerbatim{
  * .. important::
  * 
- *    If only the name of configuration file .ini is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different directory, append absolute or relative path to the configuration file name.}
+ *    If only the name of configuration file .ini is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different directory, append an absolute or a relative path to the configuration file name.}
  * @else
  * @important If only the name of configuration file <b>.ini</b> is specified, generated file is saved in the same directory as your executable (as is the case in the example above). To save file in a different
- * directory, append absolute or relative path to the configuration file name.
+ * directory, append an absolute or a relative path to the configuration file name.
  * @endif
  * 
  * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the LimeSuiteNG suite. The <b>limeGUI</b> application allows to perform 

@@ -11,7 +11,7 @@
  * 
  * set(PROJECT_SOURCE 
  *    main.cpp
- *    # ... If required, more source files separated by newline
+ *    # ... If required, specify more source files separated by newline
  *    )
  * 
  * add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})

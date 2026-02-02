@@ -71,11 +71,11 @@
  * @embedRstVerbatim{
  * .. admonition:: Note
  * 
- *    LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard. Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.}
+ *    LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to faulty USB connection (for example, device is not fully inserted into USB port) or if a SDR device is connected through USB extender or a USB dock that is not compliant with USB 3.0 standard. Try re-connecting the SDR device to PC or bypass any USB extenders or USB docks for maximum connectivity speed.}
  * @else
  * @note LimeSDR devices that use USB port to connect to PC are typically USB 3.0 compliant. Here LimeSDR devices are detected as USB 2.0 devices. This can occur due to 
- * faulty USB connection (device is not fully inserted into USB port) or if a SDR device is connected through USB extender or dock that is not compliant with USB 3.0 standard.
- * Try re-connecting the SDR device to PC or bypass any USB extenders or docs for maximum connectivity speed.  
+ * faulty USB connection (for example, device is not fully inserted into USB port) or if a SDR device is connected through USB extender or a USB dock that is not compliant with USB 3.0 standard.
+ * Try re-connecting the SDR device to PC or bypass any USB extenders or USB docks for maximum connectivity speed.  
  * @endif
  * 
  * @section filter_and_register List filtering and registration

@@ -141,8 +141,8 @@
  * you must ensure that the correct register from the correct memory space is addressed by toggling the MAC parameter in register 0x0020.
  * @endif
  * 
- * Example code that reads the value of a register that contains the configuration of LNA, Loopback LNA and TIA amplifier gain settings for Rx direction and updates only the Rx LNA amplifier gain setting and then 
- * checks if the register has been set correctly:
+ * Example code for reading and writing the register, which contains the LNA, Loopback LNA and TIA amplifier gain settings for Rx direction. Example code reads the register, modifies only the Rx LNA amplifier gain parameter 
+ * bit field, updates the register with the new value and checks if the register has been set correctly:
  * @code{.cpp}
  * #include <iostream>
  * #include <vector>
@@ -182,9 +182,7 @@
  *    return 0;
  * }
  * @endcode
- * 
- * Read register default value shown in the image below matches the default value (0b0000001111000011 == 0x03C3) in SDR device register map documentation. The register LNA
- * amplifier gain parameter bit fields are also updated:
+ * After the modification of the register LNA amplifier gain parameter bit field, register value is updated as shown in the above output:
  * 
  * @image{inline} html dev_config_rxgain_rw.png  
  * 
