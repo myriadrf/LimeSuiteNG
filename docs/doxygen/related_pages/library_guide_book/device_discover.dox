@@ -178,7 +178,7 @@
  * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device 
  * filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
  * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
- * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
+ * compare device pointer to <b>nullptr</b>. If connection is successfull, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
  * <ol>
  *    <li>Unexpected SDR device firmware ID</li>
  *    <li>Failed connection to USB port</li>

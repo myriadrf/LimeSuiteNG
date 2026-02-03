@@ -42,7 +42,7 @@
  * } 
  * @endcode
  * 
- * As shown in the above example code, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
+ * As shown in the example code above, default SDR device configuration can be loaded using empty SDRConfig structure (with no user initialized structure fields). When a default initialized SDRConfig structure
  * is passed as an argument to @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" function, @ref lime::SDRDevice::Init() "Init()" function is called to load specific SDR device default 
  * configuration with stable SDR device parameters. Default SDR device configuration can also be used alongside custom configuration. Simply initialize the SDRConfig parameter fields, which you want to custom configure. 
  * When the default configuration set up is finished, function @ref lime::SDRDevice::Configure(const lime::SDRConfig&, uint8_t) "Configure()" continues by updating SDR device configuration with user initialized parameter 

@@ -53,7 +53,7 @@
  * @endcode
  * 
  * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
- * default and stable device configuration, which can then be freely customized to support project requirements.
+ * default and stable device configuration, which can then be freely customized to support project requirements.  
  * 
  * @section channel_conf Stream channels
  * 
@@ -397,8 +397,8 @@
  * For Rx direction, LNA, PGA and TIA are considered as generic amplifiers. When setting the gain of Rx direction generic amplifiers, the nearest gain values will be auto selected based on specified gain value.
  * If the specified gain value is out of range, it is repectively clamped to the maximum or minimum possible gain value of each amplifier type.  
  * 
- * Function <b>GetGain()</b> for generic amplifier of Tx direction will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = P in dB) and for Rx direction, function <b>GetGain()</b> for generic 
- * amplifier will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + PGA = P in dB).  
+ * Function <b>GetGain()</b> for generic amplifier of Tx direction will return the combined gain value of PAD and IAMP amplifiers (PAD + IAMP = Gain in dB) and for Rx direction, function <b>GetGain()</b> for generic 
+ * amplifier will return the combined gain value of LNA, TIA and PGA amplifiers (LNA + TIA + PGA = Gain in dB).  
  * 
  * If generic gain control is not enough, it is also possible to set and get the gain of the individual SDR device amplifiers:
  * <table>
