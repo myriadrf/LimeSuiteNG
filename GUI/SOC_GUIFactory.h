@@ -15,7 +15,7 @@ class SOC_GUIFactory
     static ISOCPanel* make(const std::string_view name, wxWindow* parent, wxWindowID id);
 
   protected:
-    static std::unordered_map<std::string, panelConstructorFunc> RegisteredNames;
+    static std::unordered_map<std::string, panelConstructorFunc>& RegisteredNames();
 };
 
 template<class FactoryT, panelConstructorFunc CreateMethod> bool RegisterToFactory(std::string_view name)
