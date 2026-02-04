@@ -46,11 +46,6 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     OpStatus Reset() override;
     OpStatus GetGPSLock(GPS_Lock* status) override;
 
-    OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) override;
-
-    double GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
-    OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) override;
-
     double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) override;
     OpStatus SetNCOFrequency(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset = -1.0) override;
@@ -63,10 +58,6 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     double GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate = nullptr) override;
     OpStatus SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample) override;
 
-    double GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
-    OpStatus SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf) override;
-
-    uint8_t GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path) override;
 
     OpStatus SetTestSignal(uint8_t moduleIndex,
@@ -80,9 +71,6 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     double GetClockFreq(uint8_t clk_id, uint8_t channel) override;
     OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) override;
 
-    // OpStatus GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value) override;
-    // OpStatus SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value) override;
-
     bool GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic) override;
 
@@ -92,26 +80,8 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
     complex64f_t GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
     OpStatus SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance) override;
 
-    bool GetCGENLocked(uint8_t moduleIndex) override;
-    double GetTemperature(uint8_t moduleIndex) override;
-
-    bool GetSXLocked(uint8_t moduleIndex, TRXDir trx) override;
-
     unsigned int ReadRegister(uint8_t moduleIndex, unsigned int address, bool useFPGA = false) override;
     OpStatus WriteRegister(uint8_t moduleIndex, unsigned int address, unsigned int value, bool useFPGA = false) override;
-
-    OpStatus LoadConfig(uint8_t moduleIndex, const std::string& filename) override;
-    OpStatus SaveConfig(uint8_t moduleIndex, const std::string& filename) override;
-
-    uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey) override;
-    OpStatus SetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey, uint16_t value) override;
-
-    uint16_t GetParameter(uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb) override;
-    OpStatus SetParameter(
-        uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value) override;
-
-    OpStatus Synchronize(bool toChip) override;
-    void EnableCache(bool enable) override;
 
     OpStatus Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth) override;
     OpStatus ConfigureGFIR(
@@ -165,7 +135,7 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
 
     std::vector<std::shared_ptr<LimePCIe>> trxStreams;
 
-    void LMSSetPath(TRXDir dir, uint8_t chan, uint8_t path);
+    OpStatus LMSSetPath(TRXDir dir, uint8_t chan, uint8_t path);
     OpStatus LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     static OpStatus LMS1_UpdateFPGAInterface(void* userData);
 
