@@ -264,9 +264,13 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
         LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
     }
 
-    status = SetLA9310SamplingRate(la9310, CalculateCommonSampleRate(cfg), 1);
-    if (status != OpStatus::Success)
-        return status;
+    double sampleRate = CalculateCommonSampleRate(cfg);
+    if (sampleRate > 0)
+    {
+        status = SetLA9310SamplingRate(la9310, sampleRate, 1);
+        if (status != OpStatus::Success)
+            return status;
+    }
 
     if ((cfg.channel[0].rx.calibrate & CalibrationFlag::DCIQ) && cfg.channel[0].rx.enabled)
     {
