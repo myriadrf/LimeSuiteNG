@@ -81,6 +81,9 @@ enum class Command : uint8_t {
     ANALOG_VAL_WR = 0x61, //write analog value
     ANALOG_VAL_RD = 0x62, //read analog value
 
+    CMD_BRDCSR_WR = 0x71, // Write board configuration space register value
+    CMD_BRDCSR_RD = 0x72, // Read board configuration space register value
+
     MYRIAD_RST = 0x80,
     MYRIAD_WR = 0x81,
     MYRIAD_RD = 0x82,
@@ -122,6 +125,7 @@ OpStatus LMS7002M_SPI(
     ISerialPort& port, uint8_t chipSelect, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus FPGA_SPI(ISerialPort& port, const uint32_t* mosi, uint32_t* miso, size_t count, uint32_t subDevice);
 OpStatus ADF4002_SPI(ISerialPort& port, const uint32_t* mosi, size_t count, uint32_t subDevice = 0);
+OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, const uint32_t* MOSI, uint32_t* MISO, size_t count);
 
 OpStatus I2C_Write(ISerialPort& port, uint32_t address, const uint8_t* data, size_t count);
 OpStatus I2C_Read(ISerialPort& port, uint32_t address, uint8_t* data, size_t count);
@@ -161,6 +165,10 @@ OpStatus SPI16(ISerialPort& port,
     uint32_t* MISO,
     size_t count,
     uint32_t subDevice);
+
+OpStatus CSRegIoWrite(ISerialPort& port, uint64_t address, uint64_t value, int wordLength = 64);
+
+uint64_t CSRegIoRead(ISerialPort& port, uint64_t address, OpStatus* status, int wordLength = 64);
 
 } // namespace LMS64CProtocol
 

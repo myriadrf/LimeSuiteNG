@@ -1,3 +1,8 @@
+#ifndef LIME_GFIR_DFILTER_H
+#define LIME_GFIR_DFILTER_H
+
+#include <string.h>
+
 /* ************************************************************************ 
    FILE:	dfilter.h
    COMMENT:	Define some structures used in DSP calculations.
@@ -22,3 +27,25 @@ struct dfilter {
     float logamp[POINTS]; ///< Amplitude in log scale
     float max; ///< Maximum of amplitude
 };
+
+void dfilter_init(struct dfilter* f)
+{
+    memset(f, 0, sizeof(struct dfilter));
+}
+
+void dfilter_destroy(struct dfilter* f)
+{
+    if (f->a)
+        free(f->a);
+    f->a = NULL;
+
+    if (f->b)
+        free(f->b);
+    f->b = NULL;
+
+    if (f->w)
+        free(f->w);
+    f->w = NULL;
+}
+
+#endif // LIME_GFIR_DFILTER_H

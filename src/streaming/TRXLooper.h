@@ -84,8 +84,8 @@ class TRXLooper : public RFStream
         std::vector<uint8_t*> buffers; ///< The memory buffers to use.
         uint32_t bufferSize; ///< The size of a single buffer.
         uint32_t samplesInPacket; ///< The amount of samples in a single packet.
-        uint16_t packetSize; ///< The size of a single packet.
-        uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
+        uint32_t packetSize; ///< The size of a single packet.
+        uint32_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
     };
 
   private:
@@ -131,8 +131,8 @@ class TRXLooper : public RFStream
         std::condition_variable cv;
         // how many packets to batch in data transaction
         // lower count will give better latency, but can cause problems with really high data rates
-        uint16_t samplesInPkt;
-        uint8_t packetsToBatch;
+        uint32_t samplesInPkt;
+        uint32_t packetsToBatch;
 
         Stream()
             : packetsPool(nullptr)

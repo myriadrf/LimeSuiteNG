@@ -48,6 +48,7 @@ static constexpr bool HasWaitForDone(uint8_t targetDevice)
     case LMS_DEV_LIMESDR_QPCIE:
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_EXTERNAL_SSDR:
         return true;
     default:
         return false;
@@ -70,23 +71,28 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
     case LMS_DEV_LIMESDRMINI_V2:
     case LMS_DEV_LIMESDR_X3:
     case LMS_DEV_LIMESDR_XTRX:
+    case LMS_DEV_EXTERNAL_SSDR:
         return true;
     default:
         return false;
     }
 }
 
-static constexpr bool HasVariableRxPacketSize(uint8_t targetDevice)
+uint32_t GetPacketSizeForBusSize(uint32_t requestSamplesCount, uint32_t sampleSize, uint32_t channelCount, uint32_t busWidth)
 {
-    switch (static_cast<eLMS_DEV>(targetDevice))
+    const int frameSize = sampleSize * channelCount;
+    const int headerSize = sizeof(StreamHeader);
+    const uint32_t maxPacketSize = 4096;
+    uint32_t samplesCount = std::min((maxPacketSize - headerSize) / frameSize, requestSamplesCount);
+
+    uint32_t packetSize = headerSize + requestSamplesCount * frameSize;
+    // reduce samples count until the whole packet is multiple of bus width
+    while (packetSize % busWidth && packetSize > 0)
     {
-    case LMS_DEV_LIMESDR_X3:
-    case LMS_DEV_LIMESDR_XTRX:
-    case LMS_DEV_LIMESDR_MMX8:
-        return true;
-    default:
-        return false;
+        --samplesCount;
+        packetSize -= frameSize;
     }
+    return packetSize;
 }
 
 /// @brief Constructs the FPGA object.
@@ -929,19 +935,13 @@ void FPGA::SetFeatures(const GatewareFeatures& flags)
 /// @param sampleSize The size of a single sample
 /// @param chipId The ID of the chip to set up
 /// @return The packet size after the changes (returns @p packetSize if not supported)
-uint32_t FPGA::SetUpVariableRxSize(uint32_t packetSize, int payloadSize, int sampleSize, uint8_t chipId)
+uint32_t FPGA::SetUpVariableRxSize(uint32_t requestSamplesCount, int sampleSize, int channelCount, uint8_t chipId)
 {
-    if (!HasVariableRxPacketSize(ReadRegister(0)))
-    {
-        return packetSize;
-    }
+    const int busSize = 32; // 256bit
+    uint32_t packetSize = GetPacketSizeForBusSize(requestSamplesCount, sampleSize, channelCount, busSize);
 
-    // iqSamplesCount must be N*16, or N*8 depending on device BUS width
-    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2)) & ~0xF; //magic number needed for fpga's FSMs
-    packetSize = (iqSamplesCount * sampleSize * 2) + sizeof(StreamHeader);
-
-    // Request fpga to provide Rx packets with desired payloadSize
-    // Two writes are needed
+    int32_t payloadSize = packetSize - 16;
+    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2));
     SelectModule(chipId);
     uint32_t requestAddr[] = { 0x0019, 0x000E };
     uint32_t requestData[] = { packetSize, iqSamplesCount };

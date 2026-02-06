@@ -53,7 +53,7 @@ Continuing on from the previous command block, in the ``build`` folder, execute:
     sudo ldconfig
 
 .. _`CMake`: https://cmake.org/
-.. _`wxWidgets`: https://www.wxwidgets.org/
+.. _`wxWidgets`: https://wxwidgets.org/
 .. _`libusb-1.0-dev`: https://libusb.info/
 .. _`libsoapysdr-dev`: https://github.com/pothosware/SoapySDR
 .. _`gnuradio-dev`: https://www.gnuradio.org/

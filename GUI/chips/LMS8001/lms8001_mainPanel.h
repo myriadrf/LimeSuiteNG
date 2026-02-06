@@ -19,6 +19,7 @@ class lms8001_pnlPLLConfig_view;
 class lms8001_mainPanel : public ISOCPanel
 {
   public:
+    static ISOCPanel* Create(wxWindow* parent, wxWindowID id);
     lms8001_mainPanel(wxWindow* parent,
         wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
@@ -27,7 +28,8 @@ class lms8001_mainPanel : public ISOCPanel
     void UpdateVisiblePanel();
     virtual ~lms8001_mainPanel();
     void UpdateGUI();
-    void Initialize(lime::LMS8001* pControl);
+    bool Initialize(lime::LMS8001* pControl);
+    bool Initialize(void* pControl) override;
 
   protected:
     lime::LMS8001* lmsControl;

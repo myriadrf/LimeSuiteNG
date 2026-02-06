@@ -7,6 +7,7 @@
 #include "comms/ISerialPort.h"
 #include "comms/USB/FX3/FX3.h"
 #include "comms/USB/IUSB.h"
+#include "protocols/LMS64C/CSR.h"
 #include "comms/USB/USBDMAEmulation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/validation.h"
@@ -124,15 +125,14 @@ LimeSDR::LimeSDR(std::shared_ptr<ISPI> spiLMS,
         mLMSChips.push_back(std::move(chip));
     }
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-USB"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeSDR-USB"s);
     descriptor.socTree->children.push_back(fpgaNode);
 
     auto ADFComms = std::make_shared<LMS64C_ADF4002_SPI>(mSerialPort, 0);
     mADF->Initialize(ADFComms, 30.72e6);
-    descriptor.socTree->children.push_back(std::make_shared<DeviceTreeNode>("ADF4002", eDeviceTreeNodeClass::ADF4002, mADF.get()));
+    descriptor.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mADF.get(), "ADF4002"s));
 
     descriptor.memoryDevices[ToString(eMemoryDevice::FPGA_FLASH)] = std::make_shared<DataStorage>(this, eMemoryDevice::FPGA_FLASH);
     const std::unordered_map<std::string, Region> eepromMap = { { "VCTCXO_DAC"s, { 0x0010, 1 } } };
@@ -449,6 +449,11 @@ std::unique_ptr<lime::RFStream> LimeSDR::StreamCreate(const StreamConfig& config
     if (status != OpStatus::Success)
         return std::unique_ptr<RFStream>(nullptr);
     return streamer;
+}
+
+ICSR* LimeSDR::getICSR()
+{
+    return new LMS64C_CSR(mSerialPort);
 }
 
 } // namespace lime

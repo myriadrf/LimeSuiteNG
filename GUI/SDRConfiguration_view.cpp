@@ -359,17 +359,17 @@ SDRConfiguration_view::SDRConfiguration_view(wxWindow* parent, wxWindowID id, co
     SetSizerAndFit(mainSizer);
 }
 
-void SDRConfiguration_view::Setup(lime::SDRDevice* device)
+bool SDRConfiguration_view::Initialize(void* device)
 {
-    sdrDevice = device;
+    sdrDevice = reinterpret_cast<lime::SDRDevice*>(device);
     if (!sdrDevice)
     {
         for (auto& panel : socGUI)
             panel->Hide();
-        return;
+        return false;
     }
 
-    const SDRDescriptor& desc = device->GetDescriptor();
+    const SDRDescriptor& desc = sdrDevice->GetDescriptor();
 
     wxSizerFlags ctrlFlags(0);
     ctrlFlags = ctrlFlags.Left().Top();
@@ -394,4 +394,5 @@ void SDRConfiguration_view::Setup(lime::SDRDevice* device)
             socGUI[i]->Hide();
     }
     SetSizerAndFit(mainSizer);
+    return true;
 }

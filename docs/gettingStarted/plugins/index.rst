@@ -15,4 +15,4 @@ LimeSuiteNG provides integration with other software packages
 
 .. _HDSDR: https://www.hdsdr.de/
 .. _Amarisoft: https://www.amarisoft.com/
-.. _OpenAirInterface5G: https://gitlab.com/rjonaitis/openairinterface5g
+.. _OpenAirInterface5G: https://github.com/myriadrf/openairinterface5g

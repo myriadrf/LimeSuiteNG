@@ -185,6 +185,7 @@ class LimeSDR_MMX8 : public SDRDevice
     std::map<uint32_t, LimeSDR_XTRX*> customParameterToDevice;
     std::unique_ptr<lime::ADF4002> mADF;
     uint32_t maskStreamIsSetup{ 0 };
+    uint32_t maskStreamNeedsTrigger{ 0 };
 };
 
 } // namespace lime

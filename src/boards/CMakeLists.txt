@@ -8,6 +8,7 @@ if(LIMESUITENG_PCIE)
     add_subdirectory(LimeSDR_X3)
     add_subdirectory(LimeSDR_XTRX)
     add_subdirectory(MMX8)
+    add_subdirectory(sSDR)
 endif()
 
 if(LIMESUITENG_USB_FX3)

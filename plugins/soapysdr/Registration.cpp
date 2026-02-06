@@ -69,22 +69,22 @@ static SoapySDR::Kwargs handleToArgs(const DeviceHandle& handle)
     SoapySDR::Kwargs args;
 
     // Convert the handle into key/value pairs
-    if (not handle.media.empty())
+    if (!handle.media.empty())
     {
         args["media"] = handle.media;
     }
 
-    if (not handle.name.empty())
+    if (!handle.name.empty())
     {
         args["name"] = handle.name;
     }
 
-    if (not handle.addr.empty())
+    if (!handle.addr.empty())
     {
         args["addr"] = handle.addr;
     }
 
-    if (not handle.serial.empty())
+    if (!handle.serial.empty())
     {
         args["serial"] = handle.serial;
     }

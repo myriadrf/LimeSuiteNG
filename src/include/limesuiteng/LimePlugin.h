@@ -150,17 +150,17 @@ LIME_API int LimePlugin_Stop(LimePluginContext* context);
 LIME_API int LimePlugin_Destroy(LimePluginContext* context);
 
 LIME_API int LimePlugin_Write_complex32f(
-    LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, const lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamTxMeta& meta);
 LIME_API int LimePlugin_Write_complex16(
-    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, const lime::complex16_t* const* samples, int nsamples, int port, lime::StreamTxMeta& meta);
 LIME_API int LimePlugin_Write_complex12(
-    LimePluginContext* context, const lime::complex12_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, const lime::complex12_t* const* samples, int nsamples, int port, lime::StreamTxMeta& meta);
 LIME_API int LimePlugin_Read_complex32f(
-    LimePluginContext* context, lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, lime::complex32f_t* const* samples, int nsamples, int port, lime::StreamRxMeta& meta);
 LIME_API int LimePlugin_Read_complex16(
-    LimePluginContext* context, lime::complex16_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, lime::complex16_t* const* samples, int nsamples, int port, lime::StreamRxMeta& meta);
 LIME_API int LimePlugin_Read_complex12(
-    LimePluginContext* context, lime::complex12_t* const* samples, int nsamples, int port, lime::StreamMeta& meta);
+    LimePluginContext* context, lime::complex12_t* const* samples, int nsamples, int port, lime::StreamRxMeta& meta);
 
 template<class T> void CopyCArrayToVector(std::vector<T>& vec, const T* arr, size_t count)
 {

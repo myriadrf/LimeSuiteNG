@@ -33,6 +33,7 @@ struct CustomParameterIO;
 class OEMTestReporter;
 class RFStream;
 class GPIO_Interface;
+class ICSR;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -741,6 +742,10 @@ class LIME_API SDRDevice
     /// @brief Return GPIO controls interface if available
     /// @return nullptr if not available
     virtual GPIO_Interface* GetGPIOControls();
+
+    /// @brief Creates CSR interface to manage SDR specific Configuration Space Registers.
+    /// @return Address to SDR CSR interface.
+    virtual ICSR* getICSR();
 };
 
 } // namespace lime

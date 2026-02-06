@@ -11,13 +11,13 @@
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
 
-#include "chips/Si5351C/Si5351C.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "comms/ISerialPort.h"
 #include "comms/SPI/SPI_utilities.h"
 #include "comms/SPI/ISPI.h"
 #include "comms/USB/IUSB.h"
+#include "protocols/LMS64C/CSR.h"
 #include "comms/USB/FT601/FT601.h"
 #include "comms/USB/USBDMAEmulation.h"
 
@@ -219,10 +219,9 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
 
     descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrmini::SPI_LMS7002M }, { "FPGA"s, limesdrmini::SPI_FPGA } };
 
-    auto fpgaNode = std::make_shared<DeviceTreeNode>("FPGA"s, eDeviceTreeNodeClass::FPGA_MINI, mFPGA.get());
-    fpgaNode->children.push_back(
-        std::make_shared<DeviceTreeNode>("LMS7002"s, eDeviceTreeNodeClass::LMS7002M, mLMSChips.at(0).get()));
-    descriptor.socTree = std::make_shared<DeviceTreeNode>("LimeSDR-Mini"s, eDeviceTreeNodeClass::SDRDevice, this);
+    auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_Mini"s, "FPGA"s);
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeSDR-Mini"s);
     descriptor.socTree->children.push_back(fpgaNode);
 }
 
@@ -603,6 +602,11 @@ std::unique_ptr<lime::RFStream> LimeSDR_Mini::StreamCreate(const StreamConfig& c
     if (status != OpStatus::Success)
         return std::unique_ptr<RFStream>(nullptr);
     return streamer;
+}
+
+ICSR* LimeSDR_Mini::getICSR()
+{
+    return new LMS64C_CSR(mSerialPort);
 }
 
 } // namespace lime

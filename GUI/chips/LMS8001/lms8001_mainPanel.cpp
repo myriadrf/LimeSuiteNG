@@ -8,6 +8,8 @@
 #include "lms8001_pnlPLLConfig_view.h"
 #include "lms8001_pnlPLLProfiles_view.h"
 
+#include "SOC_GUIFactory.h"
+
 #include "chips/LMS8001/LMS8001.h"
 #include <wx/time.h>
 #include <wx/msgdlg.h>
@@ -19,6 +21,13 @@
 
 using namespace std;
 using namespace lime;
+
+static bool isRegistered = RegisterToFactory<SOC_GUIFactory, &lms8001_mainPanel::Create>("LMS8001");
+
+ISOCPanel* lms8001_mainPanel::Create(wxWindow* parent, wxWindowID id)
+{
+    return new lms8001_mainPanel(parent, id);
+}
 
 lms8001_mainPanel::lms8001_mainPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ISOCPanel(parent, id, pos, size, style)
@@ -151,9 +160,12 @@ void lms8001_mainPanel::UpdateVisiblePanel()
 #endif
 }
 
-void lms8001_mainPanel::Initialize(lime::LMS8001* pControl)
+bool lms8001_mainPanel::Initialize(lime::LMS8001* pControl)
 {
     assert(pControl != nullptr);
+    if (!pControl)
+        return false;
+
     lmsControl = pControl;
     //msavic ABCD
     lmsControl->channel = rgrChannel->GetSelection();
@@ -167,6 +179,12 @@ void lms8001_mainPanel::Initialize(lime::LMS8001* pControl)
     mTabPLLConfig->Initialize(lmsControl);
     mTabPLLProfiles->Initialize(lmsControl);
     UpdateGUI();
+    return true;
+}
+
+bool lms8001_mainPanel::Initialize(void* pControl)
+{
+    return Initialize(reinterpret_cast<lime::LMS8001*>(pControl));
 }
 
 void lms8001_mainPanel::OnResetChip(wxCommandEvent& event)

@@ -439,10 +439,12 @@ OpStatus TRXLooper::RxSetup()
     uint32_t packetSize = 4096;
     if (gw.hasConfigurableStreamPacketSize)
     {
-        const int requestSamplesInPkt = 256 / chCount;
-        const int payloadSize = requestSamplesInPkt * sampleSize * chCount;
-        packetSize = payloadSize + headerSize;
-        packetSize = fpga->SetUpVariableRxSize(packetSize, payloadSize, sampleSize, chipId);
+        int requestSamplesInPkt = 256 / chCount;
+        if (mConfig.extraConfig.rx.samplesInPacket > 0)
+        {
+            requestSamplesInPkt = mConfig.extraConfig.rx.samplesInPacket;
+        }
+        packetSize = fpga->SetUpVariableRxSize(requestSamplesInPkt, sampleSize, chCount, chipId);
         mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
     }
     else
@@ -471,7 +473,7 @@ OpStatus TRXLooper::RxSetup()
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
-    mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBufferSize / packetSize);
+    mRx.packetsToBatch = std::clamp<uint32_t>(mRx.packetsToBatch, 1u, dmaBufferSize / packetSize);
 
     float bufferTimeDuration;
     if (mConfig.hintSampleRate)
@@ -1061,19 +1063,20 @@ OpStatus TRXLooper::TxSetup()
     if (gw.hasConfigurableStreamPacketSize)
     {
         mTx.samplesInPkt = 256 / chCount;
-        packetSize = sizeof(StreamHeader) + sampleSize * mTx.samplesInPkt * chCount;
+        if (mConfig.extraConfig.tx.samplesInPacket != 0)
+        {
+            mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
+            lime::debug("Tx samples override %i", mTx.samplesInPkt);
+        }
+        packetSize = GetPacketSizeForBusSize(mTx.samplesInPkt, sampleSize, chCount, 32);
+        const int headerSize = sizeof(StreamHeader);
+        mTx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
     }
     else
     {
         // FT601 USB encounters random BUS and IOMMU errors if transmitting not in 4096 byte chunks
         mTx.samplesInPkt = 4080 / sampleSize / chCount;
         packetSize = 4096;
-    }
-
-    if (mConfig.extraConfig.tx.samplesInPacket != 0)
-    {
-        mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
-        lime::debug("Tx samples override %i", mTx.samplesInPkt);
     }
 
     mTx.packetsToBatch = 16; // Tx packets can be flushed early without filling whole batch
@@ -1191,20 +1194,32 @@ void TRXLooper::TxWorkLoop()
 
 static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat, uint8_t channelCount)
 {
-    // in gateware data is transferred on 128 bit bus
     // Tx data transfers have to be multiple of the bus size
-    constexpr uint16_t busWidthBytes = 16;
+    constexpr uint16_t busWidthBytes = 32;
     const int frameSize = (linkFormat == DataFormat::I12 ? 3 : 4) * channelCount;
-
-    uint16_t minPayloadSize = std::lcm(busWidthBytes, frameSize);
+    const int headerSize = sizeof(StreamHeader);
+    const int maxPacketSize = 4096;
 
     uint16_t payloadSize = packet.GetPayloadSize();
+    uint32_t samplesCount = payloadSize / frameSize;
+    uint32_t packetSize = headerSize + payloadSize;
 
-    uint16_t paddingSize = 0;
-    uint16_t extraBytes = payloadSize % minPayloadSize;
-    if (extraBytes > 0)
+    while (packetSize % busWidthBytes)
     {
-        paddingSize = minPayloadSize - extraBytes;
+        packetSize += frameSize;
+        ++samplesCount;
+
+        if (packetSize >= maxPacketSize)
+            break;
+    }
+    if (packetSize % busWidthBytes)
+    {
+        printf("Failed to pad Tx packet\n");
+    }
+
+    uint16_t paddingSize = packetSize - headerSize - packet.GetPayloadSize();
+    if (paddingSize > 0)
+    {
         std::memset(&packet.data[payloadSize], 0, paddingSize); // pad with zeroes
         packet.SetPayloadSize(payloadSize + paddingSize);
     }

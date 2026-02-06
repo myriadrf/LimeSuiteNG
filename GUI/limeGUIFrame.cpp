@@ -18,6 +18,7 @@
 #include "LMS_Programming/LMS_Programming_wxgui.h"
 #include "utility/pnlMiniLog.h"
 #include "utility/SPI_wxgui.h"
+#include "utility/CSR_wxgui.h"
 #include <wx/string.h>
 #include <functional>
 #include "boards/pnlBoardControls.h"
@@ -33,6 +34,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/Logger.h"
+#include "SOC_GUIFactory.h"
 
 using namespace std;
 using namespace lime;
@@ -222,6 +224,9 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     SPI_wxgui* spigui = new SPI_wxgui(this, wxNewId());
     AddModule(spigui, "SPI"s);
 
+    CSR_wxgui* csrgui = new CSR_wxgui(this, wxNewId());
+    AddModule(csrgui, "CSR"s);
+
     boardControlsGui = new pnlBoardControls(this, wxNewId());
     AddModule(boardControlsGui, "Board controls"s);
 
@@ -326,7 +331,13 @@ void limeGUIFrame::OnDeviceDisconnect()
 
 void CreateBranch(wxTreeCtrl* treeRoot, wxTreeItemId parentId, const std::shared_ptr<DeviceTreeNode> node)
 {
-    wxTreeItemId branchId = treeRoot->AppendItem(parentId, node->name, 0, 0, new DeviceTreeItemData(node));
+    wxString title;
+    if (node->name.empty())
+        title = node->moduleClass;
+    else
+        title = node->name;
+
+    wxTreeItemId branchId = treeRoot->AppendItem(parentId, title, 0, 0, new DeviceTreeItemData(node));
     if (node->children.size() == 0)
         return;
 
@@ -340,7 +351,7 @@ void FillDeviceTree(wxTreeCtrl* root, lime::SDRDevice* device, wxWindow* parentW
         return;
 
     SDRConfiguration_view* sdrUI = new SDRConfiguration_view(parentWindow, wxNewId());
-    sdrUI->Setup(device);
+    sdrUI->Initialize(device);
     sdrUI->Hide();
 
     std::shared_ptr<DeviceTreeNode> node = device->GetDescriptor().socTree;
@@ -455,45 +466,14 @@ void limeGUIFrame::OnShowModule(wxCommandEvent& event)
     }
 }
 
-ISOCPanel* CreateGUI(wxWindow* parent, eDeviceTreeNodeClass DeviceTreeNodeClass, void* socPtr)
+static ISOCPanel* CreateGUI(wxWindow* parent, std::string_view nodeClass, void* node)
 {
-    switch (DeviceTreeNodeClass)
-    {
-    case eDeviceTreeNodeClass::ADF4002: {
-        ADF4002_wxgui* adfPanel = new ADF4002_wxgui(parent, wxNewId());
-        adfPanel->Initialize(reinterpret_cast<lime::ADF4002*>(socPtr));
-        return adfPanel;
-    }
-    case eDeviceTreeNodeClass::CDCM6208: {
-        CDCM6208_panelgui* cdcmPanel = new CDCM6208_panelgui(parent, wxNewId());
-        cdcmPanel->Initialize(reinterpret_cast<CDCM_Dev*>(socPtr));
-        return cdcmPanel;
-    }
-    case eDeviceTreeNodeClass::LMS7002M: {
-        lms7002_mainPanel* lmsPanel = new lms7002_mainPanel(parent, wxNewId());
-        lmsPanel->Initialize(reinterpret_cast<LMS7002M*>(socPtr));
-        return lmsPanel;
-    }
-    case eDeviceTreeNodeClass::SDRDevice: {
-        SDRConfiguration_view* sdrPanel = new SDRConfiguration_view(parent, wxNewId());
-        sdrPanel->Setup(reinterpret_cast<SDRDevice*>(socPtr));
-        sdrPanel->Hide();
-        return sdrPanel;
-    }
-    case eDeviceTreeNodeClass::LMS8001: {
-        lms8001_mainPanel* lmsPanel = new lms8001_mainPanel(parent, wxNewId());
-        lmsPanel->Initialize(reinterpret_cast<LMS8001*>(socPtr));
-        return lmsPanel;
-    }
-    case eDeviceTreeNodeClass::GPIO: {
-        pnlGPIO_Interface* gpioPanel = new pnlGPIO_Interface(parent, wxNewId());
-        gpioPanel->Initialize(reinterpret_cast<GPIO_Interface*>(socPtr));
-        return gpioPanel;
-    }
-    default:
-        // lime::warning("No GUI available for this device node class(%u)", static_cast<uint8_t>(DeviceTreeNodeClass));
+    ISOCPanel* gui = SOC_GUIFactory::make(nodeClass, parent, wxNewId());
+    if (!gui)
         return nullptr;
-    }
+
+    gui->Initialize(node);
+    return gui;
 }
 
 void limeGUIFrame::DeviceTreeSelectionChanged(wxTreeEvent& event)
@@ -505,7 +485,9 @@ void limeGUIFrame::DeviceTreeSelectionChanged(wxTreeEvent& event)
     }
 
     if (item->gui == nullptr)
-        item->gui = CreateGUI(m_scrolledWindow1, item->soc->DeviceTreeNodeClass, item->soc->ptr);
+    {
+        item->gui = CreateGUI(m_scrolledWindow1, item->soc->moduleClass, item->soc->module);
+    }
 
     if (mContent && mContent != item->gui)
     {
