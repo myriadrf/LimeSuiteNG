@@ -28,7 +28,7 @@ class LIME_API RFStream
   public:
     static constexpr std::chrono::microseconds DEFAULT_TIMEOUT{ std::chrono::microseconds(1000000) };
 
-    virtual ~RFStream() {};
+    virtual ~RFStream(){};
 
     /// @brief Gets the hardware timestamp.
     /// @return The most recent timestamp of the hardware in samples count.
