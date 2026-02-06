@@ -44,6 +44,7 @@ def _read_local(path: Path) -> str:
 
 # Sphinx extensions
 extensions = [
+    'breathe',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
@@ -55,7 +56,9 @@ extensions = [
     'sphinxcontrib.mermaid'
 ]
 
-suppress_warnings = "duplicate_declaration.cpp"
+# Flags related to breathe extension and Sphinx C++ domain
+suppress_warnings = ["duplicate_declaration.cpp"]
+cpp_id_attributes = ['LIME_API']
 
 # Add any paths that contain templates here, relative to this directory.
 # Allow same section headings and thus labels to be used across documents.
@@ -97,8 +100,6 @@ html_context = {
     'github_version': project_cfg.github_repo_path,
     'archived': project_cfg.archived
 }
-
-cpp_id_attributes = ['LIME_API']
 
 # This is where we place substitutions, such as for Unicode characters.
 
