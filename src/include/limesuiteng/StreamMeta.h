@@ -15,23 +15,23 @@ namespace lime {
 class StreamTxMeta
 {
   public:
-
     /// @brief Transmit stream flag options.
     enum Flags {
-        EndOfBurst = (1 << 0),  ///< Tx stream burst status. 1 - Tx stream burst is disabled (default), 0 - Tx stream burst is enabled.
+        EndOfBurst =
+            (1 << 0), ///< Tx stream burst status. 1 - Tx stream burst is disabled (default), 0 - Tx stream burst is enabled.
     };
-    lime::Timespec timestamp;   ///< Latest transmit stream timestamp.
-    bool hasTimestamp;          ///< Timestamp availability status in transmit stream.
+    lime::Timespec timestamp; ///< Latest transmit stream timestamp.
+    bool hasTimestamp; ///< Timestamp availability status in transmit stream.
 
-    uint32_t flags;             ///< Transmit stream flags status.
+    uint32_t flags; ///< Transmit stream flags status.
 };
 
 /// @brief Receive stream meta data storage class.
 class StreamRxMeta
 {
   public:
-    lime::Timespec timestamp;   ///< Latest receive stream timestamp.
-    bool hasTimestamp;          ///< Timestamp availability status in receive stream.
+    lime::Timespec timestamp; ///< Latest receive stream timestamp.
+    bool hasTimestamp; ///< Timestamp availability status in receive stream.
 };
 
 } // namespace lime

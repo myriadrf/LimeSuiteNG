@@ -28,7 +28,7 @@ class LIME_API RFStream
   public:
     static constexpr std::chrono::microseconds DEFAULT_TIMEOUT{ std::chrono::microseconds(1000000) };
 
-    virtual ~RFStream(){};
+    virtual ~RFStream() {};
 
     /// @brief Gets the hardware timestamp.
     /// @return The most recent timestamp of the hardware in samples count.
@@ -124,10 +124,10 @@ class LIME_API RFStream
 
     /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
     virtual uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
-    
+
     /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
     virtual uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
-    
+
     /// @brief Transmits RF samples data.
     /// @param samples The buffer of the samples to transmit.
     /// @param count The number of samples to transmit.

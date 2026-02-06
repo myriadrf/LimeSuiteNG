@@ -62,7 +62,7 @@ class LIME_API SDRDevice
     virtual ~SDRDevice();
 
     /// @brief Configures the device using the given configuration structure.
-    /// Configures all device channels with default values or custom values as 
+    /// Configures all device channels with default values or custom values as
     /// specified in @ref lime::SDRConfig "SDRConfig" structure.
     /// @param config The configuration to set up the device with.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
@@ -80,7 +80,7 @@ class LIME_API SDRDevice
      * Initialization is performed by default, if @ref lime::SDRDevice::Configure "Configure"
      * function is called with default configuration on.  
      * @return The success status of the initialization.
-     */ 
+     */
     virtual OpStatus Init() = 0;
 
     /**
@@ -110,7 +110,7 @@ class LIME_API SDRDevice
 
     /// @brief Gets the frequency of a specified clock.
     /// Can Return device reference clock, TX/RX local oscillator clock, clock generator clock,
-    /// RX/TX transceiver signal processor clock. To get local oscillator clock for a specific 
+    /// RX/TX transceiver signal processor clock. To get local oscillator clock for a specific
     /// direction of a channel, consider using GetFrequency() function.
     /// @param clk_id The @ref lime::LMS7002M::ClockID "clock ID" to get the frequency of.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to get the frequency of.
@@ -118,8 +118,8 @@ class LIME_API SDRDevice
     virtual double GetClockFreq(uint8_t clk_id, uint8_t channel) = 0;
 
     /// @brief Sets the frequency of a specified clock.
-    /// Can set device reference clock, TX/RX local oscillator clock, clock generator 
-    /// clock. To set local oscillator clock for a specific direction of a channel, consider 
+    /// Can set device reference clock, TX/RX local oscillator clock, clock generator
+    /// clock. To set local oscillator clock for a specific direction of a channel, consider
     /// using SetFrequency() function.
     /// @note TX/RX transceiver signal processor clock values are read-only.
     /// @param clk_id The clock ID to set the frequency of. Supported @ref lime::LMS7002M::ClockID "clock IDs".
@@ -129,7 +129,7 @@ class LIME_API SDRDevice
     virtual OpStatus SetClockFreq(uint8_t clk_id, double freq, uint8_t channel) = 0;
 
     ///@brief Gets the current frequency of local oscillator for the selected direction of a channel.
-    /// If the device is configured for TDD mode, this will always return current TX local oscillator frequency for all channels. 
+    /// If the device is configured for TDD mode, this will always return current TX local oscillator frequency for all channels.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
@@ -146,7 +146,7 @@ class LIME_API SDRDevice
 
     /// @brief Gets the current frequency of the NCO.
     /// Gets NCO frequency entry from NCO memory table using index.
-    /// @note To get the frequency that is currently being used by the NCO, 
+    /// @note To get the frequency that is currently being used by the NCO,
     /// first obtain the index using GetNCOIndex() function.
     /// @param moduleIndex The @ref Device_index "device index" to read from.
     /// @param trx The direction to read from.
@@ -158,7 +158,7 @@ class LIME_API SDRDevice
 
     /// @brief Sets the frequency and the phase angle of the NCO.
     /// Sets NCO frequency/phase entry of NCO memory table using index.
-    /// @note To feed the new frequency into NCO, set the new frequency 
+    /// @note To feed the new frequency into NCO, set the new frequency
     /// entry index as active using SetNCOIndex().
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
@@ -275,7 +275,7 @@ class LIME_API SDRDevice
     /// @param direction The direction to read from.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to read from.
     /// @return A structure which describes the current status of the test signal mode.
-    /// @see To find out more about the test signal parameters, check out 
+    /// @see To find out more about the test signal parameters, check out
     /// @ref lime::ChannelConfig::Direction::TestSignal "test signal structure members".
     virtual ChannelConfig::Direction::TestSignal GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel) = 0;
 
@@ -385,7 +385,7 @@ class LIME_API SDRDevice
 
     /// @brief Loads the configuration of a device from a given file.
     /// Loads device RF chip configuration from a .ini file which can be generated
-    /// using LimeSuiteNG GUI configuration software. Supports legacy 
+    /// using LimeSuiteNG GUI configuration software. Supports legacy
     /// configuration file format.
     /// @param moduleIndex The @ref Device_index "device index" to write the configuration into.
     /// @param filename The file to read the data from.
@@ -393,7 +393,7 @@ class LIME_API SDRDevice
     virtual OpStatus LoadConfig(uint8_t moduleIndex, const std::string& filename) = 0;
 
     /// @brief Saves the current configuration of the device into a given file.
-    /// Saves device RF chip configuration to a .ini file, that can be reviewed 
+    /// Saves device RF chip configuration to a .ini file, that can be reviewed
     /// using LimeSuiteNG GUI configuration software or re-used to configure other devices.
     /// @param moduleIndex The @ref Device_index "device index" to save the data from.
     /// @param filename The file to save the information to.
@@ -401,7 +401,7 @@ class LIME_API SDRDevice
     virtual OpStatus SaveConfig(uint8_t moduleIndex, const std::string& filename) = 0;
 
     /// @brief Gets the given parameter from the device.
-    /// Returns the current value of device parameter from device register space using only parameter name. 
+    /// Returns the current value of device parameter from device register space using only parameter name.
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
     /// @param parameterKey The key of the parameter to read from.
@@ -449,19 +449,19 @@ class LIME_API SDRDevice
     /// Allows to disable or enable all 3 available GFIR filters for a specified channel direction at once.
     /// If GFIR filters are disabled, the last GFIR filter configurations are saved and the filters are bypassed in processing stage.
     /// If GFIR filters are enabled, new GFIR filter coefficients will be obtained and loaded into device registers. New GFIR filter
-    /// values are automatically calculated by using the provided bandwidth setting. Bandwidth setting value is provided through the 
+    /// values are automatically calculated by using the provided bandwidth setting. Bandwidth setting value is provided through the
     /// function parameter "settings".
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction of the channel to configure.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
-    /// @param settings The settings of the GFIR filter. More about GFIR filter @ref ChannelConfig::Direction::GFIRFilter "settings". 
+    /// @param settings The settings of the GFIR filter. More about GFIR filter @ref ChannelConfig::Direction::GFIRFilter "settings".
     /// @return The @ref lime::OpStatus "status" of the operation.
     virtual OpStatus ConfigureGFIR(
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, ChannelConfig::Direction::GFIRFilter settings) = 0;
 
     /// @brief Gets the current coefficients of a single GFIR filter for channel direction.
     /// Each channel direction has 3 GFIR filters. The GFIR filters with IDs 0 and 1 store up to 40 coefficients.
-    /// The GFIR filter with ID 2 can store up to 120 coefficients.  
+    /// The GFIR filter with ID 2 can store up to 120 coefficients.
     /// @param moduleIndex The @ref Device_index "device index" to get the coefficients from.
     /// @param trx The direction of the channel to get the data from.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to get the data from.
@@ -509,7 +509,7 @@ class LIME_API SDRDevice
     /// @param now What the definition of the current time should be.
     /// @return The @ref lime::OpStatus "status" of the operation.
     virtual OpStatus SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now) = 0;
-    
+
     /// @cond DEPRECATED
     /// @brief Sets up all the streams on a device.
     /// @param config The configuration to use for setting the streams up.
@@ -628,7 +628,7 @@ class LIME_API SDRDevice
     /// GPIO indexing starts from register LSB in ascending order.
     /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
     /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
-    /// then the next register continues to index GPIOs in ascending order, 
+    /// then the next register continues to index GPIOs in ascending order,
     /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
     /// GPIO registers and register count is specific to a device and its GW.
     /// Value - 1 == HIGH state, 0 == LOW state.
@@ -643,11 +643,11 @@ class LIME_API SDRDevice
     /// GPIO indexing starts from register LSB in ascending order.
     /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
     /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
-    /// then the next register continues to index GPIOs in ascending order, 
+    /// then the next register continues to index GPIOs in ascending order,
     /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
     /// GPIO registers and register count is specific to a device and its GW.
     /// Value - 1 == HIGH state, 0 == LOW state.
-    /// @param buffer empty buffer of sufficient length. 
+    /// @param buffer empty buffer of sufficient length.
     /// @param bufLength Number of GPIO registers to read.
     /// @return The @ref lime::OpStatus "status" of operation.
     virtual OpStatus GPIORead(uint8_t* buffer, const size_t bufLength);
@@ -658,10 +658,10 @@ class LIME_API SDRDevice
     /// GPIO indexing starts from register LSB in ascending order.
     /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
     /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
-    /// then the next register continues to index GPIOs in ascending order, 
+    /// then the next register continues to index GPIOs in ascending order,
     /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
     /// GPIO registers and register count is specific to a device and its GW.
-    /// Value - 1 == OUTPUT direction, 0 == INPUT direction. 
+    /// Value - 1 == OUTPUT direction, 0 == INPUT direction.
     /// @param buffer buffer with new GPIO pin direction settings.
     /// @param bufLength Number of GPIO pin direction registers to update.
     /// @return The @ref lime::OpStatus "status" of operation.
@@ -673,10 +673,10 @@ class LIME_API SDRDevice
     /// GPIO indexing starts from register LSB in ascending order.
     /// GPIO0 = bit 0, GPIO1 = bit 1 and etc.
     /// GPIO registers are 8 bit wide. If device has more than one GPIO register,
-    /// then the next register continues to index GPIOs in ascending order, 
+    /// then the next register continues to index GPIOs in ascending order,
     /// GPIO8 = bit 0, GPIO9 = bit 1 and etc.
     /// GPIO registers and register count is specific to a device and its GW.
-    /// Value - 1 == OUTPUT direction, 0 == INPUT direction. 
+    /// Value - 1 == OUTPUT direction, 0 == INPUT direction.
     /// @param buffer empty data buffer of sufficient length.
     /// @param bufLength Number of GPIO pin direction registers to read.
     /// @return The @ref lime::OpStatus "status" of operation.

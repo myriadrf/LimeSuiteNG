@@ -101,8 +101,7 @@ html_context = {
 cpp_id_attributes = ['LIME_API']
 
 # This is where we place substitutions, such as for Unicode characters.
-rst_epilog = """
-.. include:: /substitutions.txt
+
 # -- RST epilog (used to define project/global links and substitutions) -------
 
 # Get remote global substitutions and external links

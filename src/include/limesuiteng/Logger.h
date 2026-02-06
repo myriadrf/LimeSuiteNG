@@ -51,7 +51,8 @@ LIME_API const char* GetLastErrorMessageCString(void);
 LIME_API const std::string& GetLastErrorMessage(void);
 
 // C-string versions
-LIME_API void critical [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted critical error message to log handler.
+LIME_API void critical
+    [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted critical error message to log handler.
 LIME_API void critical(const std::string& text); //!< Log a critical error message to log handler.
 
 LIME_API int error [[gnu::format(printf, 1, 2)]] (const char* format, ...); //!< Log a formatted error message to log handler.

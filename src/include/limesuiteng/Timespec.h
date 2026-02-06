@@ -19,7 +19,7 @@ namespace lime {
 class LIME_API Timespec
 {
   public:
-    Timespec();   ///< Create a timestamp from real-valued seconds.
+    Timespec(); ///< Create a timestamp from real-valued seconds.
     //Timespec(double realSeconds);
 
     /**
@@ -43,16 +43,17 @@ class LIME_API Timespec
      */
     explicit Timespec(int64_t ticks);
 
+    void AddTicks(
+        int64_t ticks); ///< Adds ticks to the timestamp if `hasTickRate` is set to true, else adds seconds to seconds counter.
+    uint64_t
+    GetTicks() const; ///< Returns number of ticks in timestamp if `hasTickRate` is set to true, else returns seconds counter value.
 
-    void AddTicks(int64_t ticks);             ///< Adds ticks to the timestamp if `hasTickRate` is set to true, else adds seconds to seconds counter.
-    uint64_t GetTicks() const;                ///< Returns number of ticks in timestamp if `hasTickRate` is set to true, else returns seconds counter value.
+    int64_t GetSeconds() const; ///< Returns only the whole part of timestamp seconds.
+    double GetFracSeconds() const; ///< Returns only the fractional part of timestamp seconds.
 
-    int64_t GetSeconds() const;               ///< Returns only the whole part of timestamp seconds.
-    double GetFracSeconds() const;            ///< Returns only the fractional part of timestamp seconds.
-
-    double GetRealSeconds() const;            ///< Returns full timestamp seconds count with a fractional part.
-    void SetTickRate(double ticksPerSecond);  ///< Sets the new number of ticks per second.
-    double GetTickRate() const;               ///< Returns the number of ticks per second.
+    double GetRealSeconds() const; ///< Returns full timestamp seconds count with a fractional part.
+    void SetTickRate(double ticksPerSecond); ///< Sets the new number of ticks per second.
+    double GetTickRate() const; ///< Returns the number of ticks per second.
 
     friend bool LIME_API operator==(const Timespec& lhs, const Timespec& rhs);
     friend bool LIME_API operator!=(const Timespec& lhs, const Timespec& rhs);
@@ -62,15 +63,14 @@ class LIME_API Timespec
     friend Timespec LIME_API operator-(Timespec lhs, const Timespec& rhs);
 
   private:
-
-    /// @brief Adjusts seconds and fractional seconds values based on fraction subtraction and addition rules. 
+    /// @brief Adjusts seconds and fractional seconds values based on fraction subtraction and addition rules.
     /// @param ts Timestamp object to adjust.
     static void normalize(Timespec& ts);
 
-    int64_t seconds;        ///< Seconds counter.
-    double fracSeconds;     ///< Fractional seconds counter.
-    double ticksPerSecond;  ///< Number of ticks that compose a second.
-    bool hasTickRate;       ///< Tick rate set up status.
+    int64_t seconds; ///< Seconds counter.
+    double fracSeconds; ///< Fractional seconds counter.
+    double ticksPerSecond; ///< Number of ticks that compose a second.
+    bool hasTickRate; ///< Tick rate set up status.
 };
 
 /// @brief Compares two timestamps to check if the seconds and fractional seconds counts are equal.
