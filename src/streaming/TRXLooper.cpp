@@ -1580,14 +1580,21 @@ uint32_t TRXLooper::StreamTxTemplate(
 
     uint32_t samplesRemaining = count;
 
-    bool timeGap = true; // expectedTS != lime::Timespec(meta->timestamp);
-
-    if (mTx.stagingPacket && timeGap)
+    if (mTx.stagingPacket && useTimestamp)
     {
-        if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
-            return 0;
+        const uint64_t stagingTimeEnd = mTx.stagingPacket->meta.timestamp.GetTicks() + mTx.stagingPacket->samples.size();
+        uint64_t timeGap = (ts.GetTicks() - stagingTimeEnd);
 
-        mTx.stagingPacket = nullptr;
+        // allow couple ticks margin due to floating point precision losses
+        // from converting rates and sample rate readback
+        constexpr uint64_t ticksMargin = 32;
+        if (timeGap > ticksMargin)
+        {
+            printf("TimeGAp, st:%li,  new:%li, gap:%li\n", stagingTimeEnd, ts.GetTicks(), timeGap);
+            if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
+                return 0;
+            mTx.stagingPacket = nullptr;
+        }
     }
 
     assert(samples);
