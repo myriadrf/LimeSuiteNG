@@ -22,6 +22,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/StreamMeta.h"
 #include "limesuiteng/complex.h"
 
 using namespace lime;
@@ -116,13 +117,12 @@ int sdrdevice_source_impl::work(int noutput_items,
     for (size_t i = 0; i < devContext->streamCfg.channels.at(direction).size(); ++i)
         samples[i] = static_cast<lime::complex32f_t*>(output_items[i]);
 
-    StreamMeta meta;
-    int samplesRead = devContext->stream->StreamRx(
-        &samples[0], noutput_items, &meta, std::chrono::microseconds(1000000));
+    StreamRxMeta meta;
+    int samplesRead = devContext->stream->Receive(&samples[0], noutput_items, &meta);
 
     if (samplesRead != noutput_items)
         GR_LOG_WARN(d_logger,
-                    fmt::format("StreamRx {:d}/{:d}", samplesRead / noutput_items));
+                    fmt::format("StreamRx {:d}/{:d}", samplesRead, noutput_items));
 
     return samplesRead;
 }
