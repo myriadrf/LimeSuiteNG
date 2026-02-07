@@ -126,7 +126,7 @@ int sdrdevice_sink_impl::work(int noutput_items,
 
     if (samplesSent != noutput_items)
         GR_LOG_WARN(d_logger,
-                    fmt::format("StreamTx {:d}/{:d}", samplesSent / noutput_items));
+                    fmt::format("StreamTx {:d}/{:d}", samplesSent, noutput_items));
 
     return samplesSent;
 }

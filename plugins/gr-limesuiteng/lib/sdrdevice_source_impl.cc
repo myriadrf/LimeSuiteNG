@@ -122,7 +122,7 @@ int sdrdevice_source_impl::work(int noutput_items,
 
     if (samplesRead != noutput_items)
         GR_LOG_WARN(d_logger,
-                    fmt::format("StreamRx {:d}/{:d}", samplesRead / noutput_items));
+                    fmt::format("StreamRx {:d}/{:d}", samplesRead, noutput_items));
 
     return samplesRead;
 }
