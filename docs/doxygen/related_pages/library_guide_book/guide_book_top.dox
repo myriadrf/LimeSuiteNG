@@ -6,13 +6,14 @@
  * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
  * code which can be used as template for further development.
  * 
- * List of topics:
+ * Topics:
  * <ul>
  *    <li> @subpage project_set_up </li>
  *    <li> @subpage dev_discovery </li>
  *    <li> @subpage dev_config </li>
- * @if DEVELOP
+ *    <li> @subpage dev_stream_config </li>
  *    <li> @subpage dev_streaming </li>
+ * @if DEVELOP
  *    <li> @subpage hello_world_example </li>
  * @endif
  * </ul>
