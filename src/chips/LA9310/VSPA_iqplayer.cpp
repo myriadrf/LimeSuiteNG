@@ -88,6 +88,10 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     , mailbox(std::make_shared<VSPA_mailbox>(port))
     , tx_dma_channel_count(1)
 {
+}
+
+OpStatus VSPA_iqplayer::Initialize()
+{
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
     auto dmem_proxy = v_iqflood_ddr; // by default DMEM_PROXY is now at start of IQFLOOD
@@ -124,6 +128,7 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     tx_vspa_proxy_wo = reinterpret_cast<volatile t_tx_ch_host_proxy*>(tx_proxy_wo);
     rx_vspa_proxy_wo = reinterpret_cast<volatile t_tx_ch_host_proxy*>(rx_proxy_wo);
     printf_dbg_log("VSPA_iqplayer: IQFLOOD size: %lu, Rx channels %u\n", v_iqflood_ddr.size, tx_vspa_proxy_ro->rx_num_chan);
+    return OpStatus::Success;
 }
 
 OpStatus VSPA_iqplayer::SelectRxChannel(uint32_t rx_channel_index)

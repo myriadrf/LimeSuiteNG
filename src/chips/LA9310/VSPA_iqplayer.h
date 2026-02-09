@@ -31,6 +31,7 @@ class LIME_API VSPA_iqplayer
 {
   public:
     VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port);
+    OpStatus Initialize();
 
     OpStatus SelectRxChannel(uint32_t rx_channel_index);
     OpStatus StartRx();

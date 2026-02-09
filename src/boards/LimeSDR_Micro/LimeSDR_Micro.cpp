@@ -634,6 +634,8 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
         if (status != OpStatus::Success)
             return nullptr;
     }
+    if (la9310->vspa.Initialize() != OpStatus::Success)
+        return nullptr;
 
     auto stream = std::make_unique<LA9310_TRX>(la9310);
     StreamConfig config_mod = config;
