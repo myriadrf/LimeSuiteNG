@@ -248,7 +248,6 @@ static int la9310_dev_set_interrupt_capability(struct la9310_dev* la9310_dev, in
         {
             dev_info(la9310_dev->dev, "%d MSI successfully created\n", ret);
         }
-        LA9310_SET_FLG(la9310_dev->flags, LA9310_FLG_PCI_MSI_EN);
         for (i = 0; i < LA9310_MSI_MAX_CNT; i++)
         {
             la9310_dev->irq[i].msi_val = i;
@@ -268,7 +267,6 @@ static int la9310_dev_set_interrupt_capability(struct la9310_dev* la9310_dev, in
     case PCI_INT_MODE_MSI:
         if (!pci_enable_msi(la9310_dev->pdev))
         {
-            LA9310_SET_FLG(la9310_dev->flags, LA9310_FLG_PCI_MSI_EN);
             la9310_dev->irq[MSI_IRQ_MUX].irq_val = pci_irq_vector(la9310_dev->pdev, MSI_IRQ_MUX);
             la9310_dev->irq[MSI_IRQ_MUX].free = LA931XA_MSI_IRQ_FREE;
             la9310_dev->irq_count = 1;
@@ -306,43 +304,6 @@ static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
 
     la9310_dev->dev = &pdev->dev;
     la9310_dev->pdev = pdev;
-
-    //
-    la9310_dev->sdr_board = 0;
-    la9310_dev->dac_mask = 0x1;
-    la9310_dev->adc_mask = 0xF;
-    la9310_dev->adc_rate_mask = 0xF;
-    la9310_dev->dac_rate_mask = 1;
-
-    la9310_dev->modem_rf_data_size = 0;
-
-    //sprintf(la9310_dev->firmware_name, "la9310.bin");
-    // char vspa_fw_name[];
-    // sprintf(la9310_dev_name, "devname");
-
-    // i = get_la9310_dev_id_pcidevname(la9310_dev->dev);
-
-    // la9310_dev->id = i;
-
-    // sprintf(la9310_dev_name, "%s%d", LA9310_DEV_NAME_PREFIX, la9310_dev->id);
-    // sprintf(&la9310_dev->name[0], "%s", la9310_dev_name);
-    sprintf(la9310_dev->name, "la9310_limesdr_name");
-
-    // /* Not allowed to create it */
-    // if (i == -1) {
-    //     dev_err(&pdev->dev,
-    //         "exceeding max permitted (%d) la9310 devices!\n",
-    //         MAX_MODEM_INSTANCES);
-    //     kfree(la9310_dev);
-    //     return NULL;
-    // }
-    // la9310_dev->id = i;
-
-    // g_la9310_global[la9310_dev->id].active = 1;
-    // sprintf(g_la9310_global[la9310_dev->id].dev_name, "%s",
-    //     dev_name(la9310_dev->dev));
-
-    // dev_info(la9310_dev->dev, "Init - %s !\n", la9310_dev->name);
 
     /* Get the BAR resources and remap them into the driver memory */
     for (int i = 0; i < LA9310_MEM_REGION_BAR_END; i++)
@@ -388,27 +349,11 @@ out:
     return la9310_dev;
 }
 
-static void la9310_dev_reset_interrupt_capability(struct la9310_dev* la9310_dev)
-{
-    if (LA9310_CHK_FLG(la9310_dev->flags, LA9310_FLG_PCI_MSI_EN))
-    {
-        pci_disable_msi(la9310_dev->pdev);
-        LA9310_CLR_FLG(la9310_dev->flags, LA9310_FLG_PCI_MSI_EN);
-    }
-}
-
 static int la9310_limesdr_pci_probe(struct pci_dev* pciContext, const struct pci_device_id* id)
 {
     int ret;
     struct device* sysDev = &pciContext->dev;
     dev_info(sysDev, "[%s] vid:%04X pid:%04X\n", __func__, id->vendor, id->device);
-
-    // struct la9310_limesdr_device *myDevice = devm_kzalloc(sysDev, sizeof(struct la9310_limesdr_device), GFP_KERNEL);
-    // if (!myDevice)
-    // {
-    //     dev_err(sysDev, "Failed to allocate memory for device");
-    //     return -ENOMEM;
-    // }
 
     if ((ret = la9310_configure_pci(pciContext)))
         return ret;
@@ -439,10 +384,6 @@ static int la9310_limesdr_pci_probe(struct pci_dev* pciContext, const struct pci
     }
 
 err5:
-    // la9310_dev_reset_interrupt_capability(la9310_dev);
-
-    // myDevice->attr.vendor = id->vendor;
-    // myDevice->attr.product = id->device;
     return ret;
 }
 

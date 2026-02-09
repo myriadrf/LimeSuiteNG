@@ -10,9 +10,6 @@
 #include "common_headers/la9310_host_if.h"
 #include <linux/firmware.h>
 
-#define FIRMWARE_RTOS "la9310.bin"
-#define FIRMWARE_NAME_SIZE 100
-
 /*Boot HandShake timeout in jiffies and retry count */
 #if defined(SEEVE)
     #define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 10
@@ -126,13 +123,6 @@ struct la9310_mem_region_info {
     size_t size;
 };
 
-struct la9310_firmware_info {
-    const struct firmware* fw;
-    char name[FIRMWARE_NAME_SIZE];
-    int busy;
-    int size;
-};
-
 struct la9310_ccsr_dcr {
     u32 porsr1; /* POR status 1 */
     u32 porsr2; /* POR status 2 */
@@ -219,24 +209,6 @@ struct irq_info {
     int free;
 };
 
-struct tti_priv {
-    int irq;
-    int tti_id;
-    int gpio;
-    uint64_t tti_count;
-    /* TBD Timestamp; */
-    struct swait_queue_head tti_wq;
-    raw_spinlock_t wq_lock;
-    int tti_irq_status;
-    struct eventfd_ctx* evt_fd_ctxt;
-};
-
-/*TTI char Dev data holder */
-struct la9310_tti_device_data {
-    struct tti_priv* tti_dev;
-    struct cdev cdev;
-};
-
 /**
  * struct la9310_dev - The LA9310 device private structure.
  *
@@ -260,9 +232,7 @@ struct la9310_dev {
     struct pci_dev* pdev;
     struct device* dev;
     struct class* class;
-    char name[IFNAMSIZ];
     int id;
-    u32 flags;
     struct la9310_sub_driver* sub_drvs;
     struct la9310_mem_region_info mem_regions[LA9310_MEM_REGION_BAR_END];
     struct la9310_msg_unit* msg_units[LA9310_MSG_UNIT_CNT];
@@ -275,31 +245,15 @@ struct la9310_dev {
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
     void* vspa_priv;
-    void* ipc_priv;
-    void* v2h_priv;
-    void* tvd_priv;
     struct la9310_host_stats host_stats;
     struct list_head list;
-    uint32_t pci_outbound_win_start_addr;
-    uint32_t pci_outbound_win_current_addr;
-    uint32_t pci_outbound_win_limit;
-    uint32_t stats_control;
 
     //
     int scratch_buf_size;
-    int sdr_board;
-    int dac_mask;
-    int adc_mask;
-    int adc_rate_mask;
-    int dac_rate_mask;
     int iq_mem_size;
     uint64_t iq_mem_addr;
-    int modem_rf_data_size;
     uint64_t scratch_buf_phys_addr;
-    char firmware_name[128];
-    char la9310_dev_name[128];
 
-    struct la9310_mem_region_info dmem_proxy;
     struct platform_device* uart;
 
     struct completion data_available;
@@ -353,11 +307,6 @@ enum la9310_reset_type {
 int vspa_probe(struct la9310_dev* la9310_dev);
 int vspa_remove(struct la9310_dev* la9310_dev);
 
-int la9310_test_probe(struct la9310_dev* la9310_dev);
-int la9310_test_remove(struct la9310_dev* la9310_dev);
-int la9310_v2h_probe(struct la9310_dev* la9310_dev);
-int la9310_v2h_remove(struct la9310_dev* la9310_dev);
-
 extern int la9310_subdrv_mod_init(void);
 extern void la9310_subdrv_mod_exit(void);
 
@@ -365,39 +314,19 @@ void la9310_subdrv_remove(struct la9310_dev* la9310_dev);
 int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index);
 int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev);
-void la9310_hexdump(const void* ptr, size_t sz);
+
 int la9310_map_mem_regions(struct la9310_dev* la9310_dev);
 void la9310_unmap_mem_regions(struct la9310_dev* la9310_dev);
 int la9310_base_probe(struct la9310_dev* la9310_dev);
 int la9310_base_remove(struct la9310_dev* la9310_dev);
-int la9310_udev_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, char* name);
 struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_dev, enum la9310_mem_region_t type);
-// int la9310_init_sysfs(struct la9310_dev *la9310_dev);
-// void la9310_remove_sysfs(struct la9310_dev *la9310_dev);
 int la9310_init_global_sysfs(void);
 void la9310_remove_global_sysfs(void);
-int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);
-// int la9310_host_add_stats(struct la9310_dev *la9310_dev,
-// 			  struct la9310_stats_ops *stats_ops);
-int la9310_create_outbound_msi(struct la9310_dev* la9310_dev);
-void la9310_create_ipc_hugepage_outbound(struct la9310_dev* la9310_dev, uint64_t phys_addr, uint32_t size);
 extern int la9310_get_msi_irq(struct la9310_dev*, enum la9310_msi_id);
-int v2h_callback_test_init(struct la9310_dev* la9310_dev);
-int v2h_callback_test_deinit(void);
-struct la9310_dev* get_la9310_dev_byname(const char* name);
-void la9310_init_ep_pcie_allocator(struct la9310_dev* la9310_dev);
-uint32_t la9310_alloc_ep_pcie_addr(struct la9310_dev* la9310_dev, uint32_t window_size);
+
 void la9310_set_host_ready(struct la9310_dev* la9310_dev, u32 set_bit);
 int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, int bit_num);
-int wdog_set_modem_status(int wdog_id, int status);
-int wdog_set_pci_domain_nr(int wdog_id, int domain_nr);
 void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index, uint32_t ibs);
 
-ssize_t la9310_show_global_status(char* buf);
-
-int la9310_modinfo_init(struct la9310_dev* dev);
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
-int la9310_is_m4_booted(struct la9310_dev* la9310_dev);
-// int la9310_modinfo_exit(struct la9310_dev *dev);
-// void la9310_modinfo_get(struct la9310_dev *la9310_dev, modinfo_t *mi);
 #endif

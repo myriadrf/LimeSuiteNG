@@ -82,12 +82,12 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         break;
     }
     case LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM:
-        if (copy_from_user(&cache_entry, (void*)arg, sizeof(struct LA9310_IOCTL_flush_cache)))
-            return -EFAULT;
+        // if (copy_from_user(&cache_entry, (void*)arg, sizeof(struct LA9310_IOCTL_flush_cache)))
+        //     return -EFAULT;
 
-        cache_entry.dir = DMA_BIDIRECTIONAL;
-        la9310_flush_cache(la9310_dev, &cache_entry, la9310_dev->dmem_proxy.phys_addr);
-        ret = 0;
+        // cache_entry.dir = DMA_BIDIRECTIONAL;
+        // la9310_flush_cache(la9310_dev, &cache_entry, la9310_dev->dmem_proxy.phys_addr);
+        // ret = 0;
         break;
     case LA9310_IOCTL_FLUSH_CACHE_IQFLOOD:
         if (copy_from_user(&cache_entry, (void*)arg, sizeof(struct LA9310_IOCTL_flush_cache)))
@@ -128,7 +128,7 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
             struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[op.window_id];
             if (op.offset < 0 || op.offset > ccsr_region->size)
             {
-                dev_err(la9310_dev->dev, "CSR offset %08X out of bounds\n", op.offset);
+                dev_err(la9310_dev->dev, "CSR offset %08lX out of bounds\n", op.offset);
                 return -EINVAL;
             }
 

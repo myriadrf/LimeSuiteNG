@@ -117,7 +117,7 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
     const int page_size = sysconf(_SC_PAGESIZE);
     for (int w = LA9310_WINDOW_BAR0; w < LA9310_WINDOW_COUNT; ++w)
     {
-        if (w == LA9310_WINDOW_MSI)
+        if (w == LA9310_WINDOW_MSI || w == LA9310_WINDOW_IPC)
             continue;
         mapped_ranges[w].size = memoryLayout.window_size[w];
         const size_t offset =

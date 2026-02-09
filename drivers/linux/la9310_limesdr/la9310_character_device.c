@@ -62,10 +62,10 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
         break;
     case LA9310_WINDOW_MSI:
         return -EINVAL;
-    case LA9310_WINDOW_IPC:
-        isDMA = true;
-        region = &la9310_dev->dmem_proxy;
-        break;
+    // case LA9310_WINDOW_IPC:
+    //     isDMA = true;
+    //     region = &la9310_dev->dmem_proxy;
+    //     break;
     case LA9310_WINDOW_IQFLOOD:
         isDMA = true;
         region = &la9310_dev->iqflood_region;

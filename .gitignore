@@ -24,6 +24,8 @@ __Previews
 
 # This project
 build/**
+debug/**
+release/**
 docs/LMS_API_Documentation/*
 .vscode/
 /.vs

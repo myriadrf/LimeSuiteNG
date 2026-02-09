@@ -83,58 +83,6 @@ static const struct _vspa_sec_info {
       { DEFAULT_OVERLAY, ".vpram_overlay" }, { OVERLAY_1, ".IQ_data_ovl_ddr" }, { OVERLAY_2, ".CAL_ovl_ddr" }
   };
 
-static ssize_t vspa_show_stats(void* vspa_stats, char* buf, struct la9310_dev* la9310_dev)
-{
-    int len = 0;
-    struct vspa_stats_info* vspa_host_stats;
-
-    if ((la9310_dev->stats_control & (1 << HOST_CONTROL_VSPA_STATS)) == 0)
-        return 0;
-
-    vspa_host_stats = (struct vspa_stats_info*)vspa_stats;
-    len = sprintf(buf,
-        "vspa_loading_count\
-		      %d\n",
-        vspa_host_stats->vspa_loading_count);
-
-    return len;
-}
-
-static void vspa_reset_stats(void* vspa_stats)
-{
-    struct vspa_stats_info* vspa_host_stats_reset;
-
-    vspa_host_stats_reset = (struct vspa_stats_info*)vspa_stats;
-    vspa_host_stats_reset->vspa_loading_count = 0;
-}
-
-static int la9310_vspa_stats_init(struct la9310_dev* la9310_dev)
-{
-    struct la9310_stats_ops vspa_stats_ops;
-    struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
-
-    vspa_stats_ops.la9310_show_stats = vspa_show_stats;
-    vspa_stats_ops.la9310_reset_stats = vspa_reset_stats;
-    vspa_stats_ops.stats_args = (void*)&vspadev->vspa_stats;
-
-    // TODO:
-    // return la9310_host_add_stats(la9310_dev, &vspa_stats_ops);
-    return 0;
-}
-
-/* Function to fetch the vspa state for sysfs */
-int full_state(struct vspa_device* vspadev)
-{
-    int state = vspadev->state;
-
-    if (state == VSPA_STATE_UNPROGRAMMED_IDLE || state == VSPA_STATE_RUNNING_IDLE)
-    {
-        if (vspa_reg_read(vspadev->regs + STATUS_REG_OFFSET) & 0x100)
-            state++;
-    }
-    return state;
-}
-
 /*This function will program the DMA in polling mode */
 static int dma_raw_transmit(struct vspa_device* vspadev, struct vspa_dma_req* dr)
 {
@@ -434,7 +382,7 @@ static int get_lma(uint8_t* file_start, uint32_t pg_hd_off, uint32_t ph_num, uin
     return -LIBVSPA_ERR_INVALID_FILE;
 }
 
-int _strncmp(const char* s1, const char* s2, size_t n)
+static int _strncmp(const char* s1, const char* s2, size_t n)
 {
     while (n && *s1 && (*s1 == *s2))
     {
@@ -846,10 +794,13 @@ static int vspa_get_fw_image(struct la9310_dev* la9310_dev, const char __user* f
         goto OUT;
     }
 
-    dev_dbg(
-        la9310_dev->dev, "Udev FW [%s]: Address:%p\tVSPA FW Size:%d\n", vspadev->eld_filename, vspa_fw_region->vaddr, vspa_fw_size);
+    dev_dbg(la9310_dev->dev,
+        "Udev FW [%s]: Address:%p\tVSPA FW Size:%lu\n",
+        vspadev->eld_filename,
+        vspa_fw_region->vaddr,
+        vspa_fw_size);
 
-    dev_dbg(la9310_dev->dev, "Target DDR Virtual address = %p and size = %d\n", vspa_fw_region->vaddr, vspa_fw_size);
+    dev_dbg(la9310_dev->dev, "Target DDR Virtual address = %p and size = %lu\n", vspa_fw_region->vaddr, vspa_fw_size);
 
     vspa_fw_region->vaddr = PTR_ALIGN(vspa_fw_region->vaddr, axi_data_width);
 
@@ -870,12 +821,6 @@ OUT:
 int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, const char __user* fw_data, size_t fw_length)
 {
     int err;
-
-    if (!la9310_is_m4_booted(la9310_dev))
-    {
-        dev_err(la9310_dev->dev, "Firmware for M4 is not loaded yet but required for VSPA DSP loading!\n");
-        return -EPERM;
-    }
 
     /* Check if VCPU is busy */
     if (vspa_reg_read(vspadev->regs + STATUS_REG_OFFSET) & STATUS_REG_BUSY)
@@ -911,13 +856,6 @@ int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, co
     {
         dev_err(la9310_dev->dev, "ERR %s: VSPA failed to start VSPA\n", __func__);
         err = -EBADRQC;
-        return err;
-    }
-
-    err = la9310_vspa_stats_init(la9310_dev);
-    if (err < 0)
-    {
-        dev_err(la9310_dev->dev, "ERR: VSPA stats error\n");
         return err;
     }
 
@@ -1035,8 +973,6 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     vspa_reg_write(vspadev->regs + STATUS_REG_OFFSET, 0xF000);
 
     dma_wmb();
-    la9310_set_host_ready(la9310_dev, LA9310_HIF_STATUS_VSPA_READY);
-
     return 0;
 
 err_out:
