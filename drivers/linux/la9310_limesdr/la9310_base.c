@@ -117,52 +117,6 @@ void la9310_unmap_mem_regions(struct la9310_dev* la9310_dev)
     }
 }
 
-int la9310_dev_reserve_firmware(struct la9310_dev* la9310_dev)
-{
-    if (la9310_dev->firmware_info.busy)
-    {
-        dev_err(la9310_dev->dev, "f/w info busy, owner %s\n", la9310_dev->firmware_info.name);
-        return -EBUSY;
-    }
-    la9310_dev->firmware_info.busy = 1;
-    return 0;
-}
-
-void la9310_dev_free_firmware(struct la9310_dev* la9310_dev)
-{
-    memset(&la9310_dev->firmware_info.name[0], 0, FIRMWARE_NAME_SIZE);
-    la9310_dev->firmware_info.busy = 0;
-}
-
-/* Caller should call use the firmware only when la9310_dev_reserve_firmware()
- * return success. After you are done with using firmware call
- * la9310_dev_free_firmware
- */
-int la9310_load_firmware(struct la9310_dev* la9310_dev, char* buf, int buff_sz, const char __user* fw_data, size_t fw_size)
-{
-    struct la9310_firmware_info* fw_info = &la9310_dev->firmware_info;
-    int rc;
-
-    /* Copy firmware from userspace to DMA region */
-    if (buff_sz < fw_size)
-    {
-        dev_err(la9310_dev->dev, "Insufficient fw buff %p: size %ld\n", fw_data, fw_size);
-        return -ENOBUFS;
-    }
-
-    dev_info(la9310_dev->dev, "Copy fw to %px, size %ld\n", fw_data, fw_size);
-    rc = copy_from_user(buf, fw_data, fw_size);
-
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
-        return -EIO;
-    }
-    la9310_dev->firmware_info.size = fw_size;
-
-    return 0;
-}
-
 static void ls_pcie_iatu_outbound_set(void __iomem* dbi, int idx, int type, u64 cpu_addr, u64 pci_addr, u32 size)
 {
     writel(PCIE_ATU_REGION_OUTBOUND | idx, dbi + PCIE_ATU_VIEWPORT);

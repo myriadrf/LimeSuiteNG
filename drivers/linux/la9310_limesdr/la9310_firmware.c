@@ -141,9 +141,10 @@ static void la9310_initiate_boot(const struct la9310_dev* la9310_dev, const stru
     dma_wmb();
 }
 
-static int la9310_load_firmware_data(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_size)
+int la9310_load_firmware_to_dma(
+    struct la9310_dev* la9310_dev, const struct la9310_mem_region_info* firmware_dma, const char __user* fw_data, size_t fw_size)
 {
-    const struct la9310_mem_region_info* firmware_dma = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW);
+    // const struct la9310_mem_region_info* firmware_dma = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW);
     if (fw_size > firmware_dma->size)
     {
         dev_err(la9310_dev->dev, "Firmware too big (%ld) available buffer size (%ld)\n", fw_size, firmware_dma->size);
@@ -188,7 +189,7 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
     dev_dbg(la9310_dev->dev, "PCIe window adjusted bl_src_offset: 0x%8X\n", fw_bootheader.bl_src_offset);
 
     // load firmware data into PCIe window
-    rc = la9310_load_firmware_data(la9310_dev, fw_data, fw_length);
+    rc = la9310_load_firmware_to_dma(la9310_dev, la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW), fw_data, fw_length);
     if (rc)
     {
         dev_err(la9310_dev->dev, "la9310_load_firmware_data failed\n");

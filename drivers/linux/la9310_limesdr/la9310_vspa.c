@@ -43,6 +43,9 @@
 #include "la9310_pci.h"
 #include "la9310_base.h"
 
+int la9310_load_firmware_to_dma(
+    struct la9310_dev* la9310_dev, struct la9310_mem_region_info* dma_region, const char __user* fw_data, size_t fw_size);
+
 /* Additional options for checking if Mailbox write to VSP completed */
 #ifdef VSPA_DEBUG
     #define MB_CHECK_ON_WRITE /* Check when queuing a new mailbox write */
@@ -821,10 +824,10 @@ int overlay_initiate(struct device* dev, struct overlay_section overlay_sec)
     return 0;
 }
 
-static int vspa_get_fw_image(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
+static int vspa_get_fw_image(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t vspa_fw_size)
 {
     int ret = 0;
-    int buf_size, vspa_fw_size;
+    int buf_size;
     uint32_t axi_align = 0, axi_data_width = 0;
     struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
     struct la9310_mem_region_info* vspa_fw_region;
@@ -836,26 +839,12 @@ static int vspa_get_fw_image(struct la9310_dev* la9310_dev, const char __user* f
 
     buf_size = LA9310_VSPA_FW_SIZE;
 
-    ret = la9310_dev_reserve_firmware(la9310_dev);
-    if (ret < 0)
-    {
-        dev_dbg(la9310_dev->dev, "%s: can't reserve device for FW load\n", __func__);
-        goto OUT;
-    }
-
-    dma_sync_single_for_cpu(
-        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
-    ret = la9310_load_firmware(la9310_dev, vspa_fw_region->vaddr, buf_size, fw_data, fw_length);
+    ret = la9310_load_firmware_to_dma(la9310_dev, vspa_fw_region, fw_data, vspa_fw_size);
     if (ret < 0)
     {
         dev_err(la9310_dev->dev, "%s: load_firmware request failed\n", __func__);
         goto OUT;
     }
-    dma_sync_single_for_device(
-        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
-
-    vspa_fw_size = la9310_dev->firmware_info.size;
-    la9310_dev_free_firmware(la9310_dev);
 
     dev_dbg(
         la9310_dev->dev, "Udev FW [%s]: Address:%p\tVSPA FW Size:%d\n", vspadev->eld_filename, vspa_fw_region->vaddr, vspa_fw_size);
@@ -951,9 +940,6 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     u32 __iomem* dma_vaddr;
     uint32_t param0, param1, param2;
     uint32_t val;
-    char name[50];
-
-    sprintf(name, "%s%s", la9310_dev->name, VSPA_DEVICE_NAME);
 
     /* Allocating space vspa device structure */
     vspadev = kzalloc(sizeof(struct vspa_device), GFP_KERNEL);
@@ -998,8 +984,6 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     /* Struct vspa_device fields initialization */
     vspadev->vspa_dma_region = vspa_dma_region;
 
-    sprintf(name, "%s%d", name, vspadev->id);
-
     vspadev->state = VSPA_STATE_UNKNOWN;
     vspadev->debug = DEBUG_MESSAGES;
     vspadev->mem_size = LA9310_VSPA_SIZE;
@@ -1038,15 +1022,10 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     /* Make sure all interrupts are disabled */
     vspa_reg_write(vspadev->regs + IRQEN_REG_OFFSET, 0);
     dev_info(la9310_dev->dev,
-        "%s: hwver 0x%08x, %d AUs, dmem %d bytes\n",
-        name,
+        "VSPA: hwver 0x%08x, %d AUs, dmem %d bytes\n",
         vspadev->regs[HWVERSION_REG_OFFSET],
         hw->arithmetic_units,
         hw->dmem_bytes);
-
-    //    err = vspa_load_dsp(la9310_dev, vspadev, "apm-iqplayer.eld");
-    //    if (err)
-    //	    goto err_out;
 
     /*Clearing the VCPU_TO_HOST MBOXs */
     vspa_reg_write(vspadev->regs + HOST_FLAGS0_REG_OFFSET, 0xFFFFFFFFUL);
