@@ -1,5 +1,58 @@
 /**
  * @page dev_stream_config SDR device stream configuration
  * 
+ * @section creating_stream Creating stream
+ * 
+ * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created by using device interface and invoking
+ * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream parameters (packet size, PPS and etc.) must be set up beforehand using
+ * @ref lime::StreamConfig "StreamConfig" structure. Example of stream creation:
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device discovery, registration and configuration
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    
+ *    // Setting up stream configuration
+ *    lime::StreamConfig miniStreamConf = {};   // Default initialization (Parameter fields are mostly empty and requires user input to set up the stream)
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    ... // Other program code   
+ *       
+ *    lime::DeviceRegistry::freeDevice(device); // End of program code
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * @subsection stream_parameters Stream parameters
+ * 
+ * The default initialized @ref lime::StreamConfig "StreamConfig" structure is not suitable for stream set up and must be updated by the user.
+ * The stream configuration allows to modify the following stream parameters:
+ * <ul>
+ *    <li>Packet size in samples</li>
+ *    <li>Batch size in packets</li>
+ *    <li>Data formats</li>
+ *    <li>Data buffer size</li>
+ *    <li>Channel set up (Logical set up)</li>
+ *    <li>Timestamp type</li>
+ *    <li>Sample rate (As a hint)</li>
+ *    <li>Custom callback function for stream status changes</li>
+ *    <li>Sample start on PPS</li>
+ *    <li>Phase alignment</li>
+ *    <li>Q element negation</li>
+ * </ul>
  * 
  */
