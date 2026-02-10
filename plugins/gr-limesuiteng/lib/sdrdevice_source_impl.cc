@@ -30,23 +30,11 @@ using namespace lime;
 namespace gr {
 namespace limesuiteng {
 
-static int GetDataFormatTypeSize(const std::string& formatname)
-{
-    if (formatname == "complex16_t")
-        return sizeof(lime::complex16_t);
-    else if (formatname == "complex12_t")
-        return sizeof(lime::complex12_t);
-    else if (formatname == "complex32f_t")
-        return sizeof(lime::complex32f_t);
-    else
-        return sizeof(lime::complex32f_t);
-}
-
 sdrdevice_source::sptr sdrdevice_source::make(const std::string& alias,
                                               const std::string& deviceHandleHint,
                                               uint32_t chipIndex,
                                               const std::vector<int>& channelIndexes,
-                                              const std::string& dataFormat,
+                                              const std::string& linkFormat,
                                               double sampleRate,
                                               int rf_oversampling)
 {
@@ -54,7 +42,7 @@ sdrdevice_source::sptr sdrdevice_source::make(const std::string& alias,
                                                             deviceHandleHint,
                                                             chipIndex,
                                                             channelIndexes,
-                                                            dataFormat,
+                                                            linkFormat,
                                                             sampleRate,
                                                             rf_oversampling);
 }
@@ -63,7 +51,7 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
                                              const std::string& deviceHandleHint,
                                              uint32_t chipIndex,
                                              const std::vector<int>& channelIndexes,
-                                             const std::string& dataFormat,
+                                             const std::string& linkFormat,
                                              double sampleRate,
                                              int rf_oversampling)
     : gr::sync_block(
@@ -72,13 +60,13 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
           gr::io_signature::make(0, 0, 0),
           gr::io_signature::make(1 /* min outputs */,
                                  channelIndexes.size() /*max outputs */,
-                                 GetDataFormatTypeSize(dataFormat))),
+                                 sizeof(lime::complex32f_t))),
       sdrdevice_block_base(TRXDir::Rx,
                            alias,
                            deviceHandleHint,
                            chipIndex,
                            channelIndexes,
-                           dataFormat,
+                           linkFormat,
                            sampleRate,
                            rf_oversampling,
                            d_logger,
