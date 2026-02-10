@@ -45,91 +45,116 @@
  *       <th> Parameter </th>
  *       <th> Units/Options </th>
  *       <th> Default initialized value </th>
- *       <th> Additional info </th>
  *    </tr>
  *    <tr>
  *       <td> Packet size </td>
  *       <td> Sample count </td>
  *       <td> 0 </td>
- *       <td> Sets the size of a single packet in a stream batch. Supports automatic configuration, when parameter value is set to 0. </td>
  *    </tr>
  *    <tr>
  *       <td> Batch size </td>
  *       <td> Packet count </td>
  *       <td> 0 </td>
- *       <td> Sets the size of a single batch for a stream. Supports automatic configuration, when the parameter value is set to 0. </td>
  *    </tr>
  *    <tr>
- *       <td> Data format </td>
+ *       <td> Format </td>
  *       <td> I12 or I16 </td>
  *       <td> I16 </td>
- *       <td> ... </td>
  *    </tr>
  *    <tr>
  *       <td> Link format </td>
  *       <td> I12 or I16 </td>
  *       <td> I16 </td>
- *       <td> ... </td>
  *    </tr>
  *    <tr>
  *       <td> Data buffer size </td>
  *       <td> Bytes </td>
  *       <td> 0 </td>
- *       <td> Size of the data buffer for each channel direction. Size is auto configured, when parameter value is set to 0. </td>
  *    </tr>
  *    <tr>
- *       <td> Channel set up </td>
+ *       <td> Channel </td>
  *       <td> Tx [0 1] and Rx [0 1] </td>
  *       <td> Tx [] and Rx [] </td>
- *       <td> This toggles the logical set up of channel mode: MIMO or SISO. ChA index 0, ChB index 1. Empty brackets `[]` - all channels disabled. </td>      
  *    </tr>
  *    <tr>
  *       <td> Timestamp type</td>
  *       <td> SAMPLE_TICKS or REAL_SECONDS or UNIX_EPOCH</td>
  *       <td> SAMPLE_TICKS </td>
- *       <td> Sets the @ref lime::TimestampType "timestamp type" and timestamp calculation behaviour.</td>
  *    </tr>
  *    <tr>
  *       <td> Sample rate (as a hint) </td>
  *       <td> Hz </td>
  *       <td> 0 </td>
- *       <td> ... </td>
  *    </tr>
  *    <tr>
- *       <td> Ptr to callback </td>
+ *       <td> Callback </td>
  *       <td> - </td>
  *       <td> nullptr </td>
- *       <td> Address of your custom callback function for stream status changes. For the function prototype, view @ref lime::StreamConfig "StreamConfig" structure members list. </td>
  *    </tr>
  *    <tr>
  *       <td> User data </td>
  *       <td> - </td>
  *       <td> nullptr </td>
- *       <td> Address to user data buffer for use with stream status callback function. </td>
  *    </tr>
  *    <tr>
  *       <td> Poll </td>
  *       <td> true or false </td>
  *       <td> true </td>
- *       <td> The use of poll strategy for PCIe devices. </td>
  *    </tr>
  *    <tr>
  *       <td> Sample start on PPS </td>
  *       <td> true or false </td>
  *       <td> false </td>
- *       <td> Data sampling sync with PPS signal. </td>
  *    </tr>
  *    <tr>
  *       <td> Phase alignment </td>
  *       <td> true or false </td>
  *       <td> false </td>
- *       <td> Attempt to auto align IQ signal phases. </td>
  *    </tr>
  *    <tr>
  *       <td> Q signal negation </td>
  *       <td> true or false </td>
  *       <td> false </td>
- *       <td> ... </td>
+ *    </tr>
+ * </table>
+ * 
+ * <b>Packet size</b> parameter sets the number of samples in a single packet. Internally, the packet size is calculated using bytes. The equation for converting packet size from bytes to samples is given 
+ * below the paragraph. Customization of packet size depends on the current device gateware. If the device gateware does not support variable packet sizes, the default packet size will always be <b>4096</b> 
+ * bytes. If device gateware supports variable packet sizes, then setting the <b>Packet size</b> parameter to value <b>0</b> will auto set the optimal packet size. Custom packet size can not be larger than 
+ * <b>4096</b> bytes. If a larger packet size is specified, the packet size will be clamped to the maximum packet size value on stream setup. Packet must also be a multiple of data bus width. Therefore, 
+ * initially specified packet size might be adjusted internally to fit the width of the data bus and can result in a lower packet size then initially anticipated. The final number of samples in a single 
+ * packet also depends on the selected size of a single sample (link format parameter) and the number of streaming channels used (channel parameter).
+ * 
+ * <b> SamplesInPacket = (BytesInPacket - HeaderSize) / (SizeOfSample * ChCount) </b>  
+ * 
+ * The header size is equal to 16 bytes.
+ * 
+ * A Table for reference of all possible maximum packet sizes in samples with different channel and sample size parameters:
+ * <table>
+ *    <tr>
+ *       <th> Packet size, samples </th>
+ *       <th> Channel count </th>
+ *       <th> Single sample size, bytes </th>
+ *    </tr>
+ *    <tr>
+ *       <td> 1020 </td>
+ *       <td> 1 </td>
+ *       <td> 4 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> 510 </td>
+ *       <td> 2 </td>
+ *       <td> 4 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> 1360 </td>
+ *       <td> 1 </td>
+ *       <td> 3 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> 680 </td>
+ *       <td> 2 </td>
+ *       <td> 3 </td>
  *    </tr>
  * </table>
  * 
