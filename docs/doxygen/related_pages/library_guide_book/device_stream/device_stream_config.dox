@@ -3,7 +3,7 @@
  * 
  * @section creating_stream Creating stream
  * 
- * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created by using device interface and invoking
+ * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
  * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream parameters (packet size, PPS and etc.) must be set up beforehand using
  * @ref lime::StreamConfig "StreamConfig" structure. Example of stream creation:
  * 
@@ -27,7 +27,7 @@
  *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
  *    
  *    // Setting up stream configuration
- *    lime::StreamConfig miniStreamConf = {};   // Default initialization (Parameter fields are mostly empty and requires user input to set up the stream)
+ *    lime::StreamConfig miniStreamConf = {};   // Stream configuration with default values
  *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
  * 
  *    ... // Other program code   
@@ -39,20 +39,99 @@
  * 
  * @subsection stream_parameters Stream parameters
  * 
- * The default initialized @ref lime::StreamConfig "StreamConfig" structure is not suitable for stream set up and must be updated by the user.
- * The stream configuration allows to modify the following stream parameters:
- * <ul>
- *    <li>Packet size in samples</li>
- *    <li>Batch size in packets</li>
- *    <li>Data formats</li>
- *    <li>Data buffer size</li>
- *    <li>Channel set up (Logical set up)</li>
- *    <li>Timestamp type</li>
- *    <li>Sample rate (As a hint)</li>
- *    <li>Custom callback function for stream status changes</li>
- *    <li>Sample start on PPS</li>
- *    <li>Phase alignment</li>
- *    <li>Q element negation</li>
- * </ul>
+ * Here is a detailed list of @ref lime::StreamConfig "StreamConfig" structure members with additional information about each parameter below the table:
+ * <table>
+ *    <tr>
+ *       <th> Parameter </th>
+ *       <th> Units/Options </th>
+ *       <th> Default initialized value </th>
+ *       <th> Additional info </th>
+ *    </tr>
+ *    <tr>
+ *       <td> Packet size </td>
+ *       <td> Sample count </td>
+ *       <td> 0 </td>
+ *       <td> Sets the size of a single packet in a stream batch. Supports automatic configuration, when parameter value is set to 0. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Batch size </td>
+ *       <td> Packet count </td>
+ *       <td> 0 </td>
+ *       <td> Sets the size of a single batch for a stream. Supports automatic configuration, when the parameter value is set to 0. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Data format </td>
+ *       <td> I12 or I16 </td>
+ *       <td> I16 </td>
+ *       <td> ... </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Link format </td>
+ *       <td> I12 or I16 </td>
+ *       <td> I16 </td>
+ *       <td> ... </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Data buffer size </td>
+ *       <td> Bytes </td>
+ *       <td> 0 </td>
+ *       <td> Size of the data buffer for each channel direction. Size is auto configured, when parameter value is set to 0. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Channel set up </td>
+ *       <td> Tx [0 1] and Rx [0 1] </td>
+ *       <td> Tx [] and Rx [] </td>
+ *       <td> This toggles the logical set up of channel mode: MIMO or SISO. ChA index 0, ChB index 1. Empty brackets `[]` - all channels disabled. </td>      
+ *    </tr>
+ *    <tr>
+ *       <td> Timestamp type</td>
+ *       <td> SAMPLE_TICKS or REAL_SECONDS or UNIX_EPOCH</td>
+ *       <td> SAMPLE_TICKS </td>
+ *       <td> Sets the @ref lime::TimestampType "timestamp type" and timestamp calculation behaviour.</td>
+ *    </tr>
+ *    <tr>
+ *       <td> Sample rate (as a hint) </td>
+ *       <td> Hz </td>
+ *       <td> 0 </td>
+ *       <td> ... </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Ptr to callback </td>
+ *       <td> - </td>
+ *       <td> nullptr </td>
+ *       <td> Address of your custom callback function for stream status changes. For the function prototype, view @ref lime::StreamConfig "StreamConfig" structure members list. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> User data </td>
+ *       <td> - </td>
+ *       <td> nullptr </td>
+ *       <td> Address to user data buffer for use with stream status callback function. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Poll </td>
+ *       <td> true or false </td>
+ *       <td> true </td>
+ *       <td> The use of poll strategy for PCIe devices. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Sample start on PPS </td>
+ *       <td> true or false </td>
+ *       <td> false </td>
+ *       <td> Data sampling sync with PPS signal. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Phase alignment </td>
+ *       <td> true or false </td>
+ *       <td> false </td>
+ *       <td> Attempt to auto align IQ signal phases. </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Q signal negation </td>
+ *       <td> true or false </td>
+ *       <td> false </td>
+ *       <td> ... </td>
+ *    </tr>
+ * </table>
+ * 
  * 
  */
