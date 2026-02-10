@@ -6,6 +6,17 @@ flags: throttle
 file_format: 1
 
 parameters:
+- id: data_format
+  label: Data Format
+  dtype: enum
+  options: [fc32, sc16]
+  option_labels: ["Complex Float32", "Complex Int16"]
+  option_attributes:
+    limeFormat: ["complex32f_t", "complex16_t"]
+  default: fc32
+  hide: all
+  category: General
+
 - id: link_format
   label: Link Format
   dtype: enum
@@ -128,7 +139,7 @@ asserts:
 templates:
   imports: from gnuradio import limesuiteng
   make: |-
-    limesuiteng.sdrdevice_sink(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ link_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
+    limesuiteng.sdrdevice_sink(${alias}, ${deviceHandleHint}, ${chip_index}, ${ channel_indexes }, "${ data_format.limeFormat }", "${ link_format.limeFormat }", ${sample_rate}, ${rf_oversampling.value})
     self.${id}.set_lo_frequency(${rf_freq})
     self.${id}.set_lpf_bandwidth(${lpf})
     self.${id}.set_gfir_bandwidth(${gfir_bandwidth})

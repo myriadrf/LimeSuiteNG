@@ -27,6 +27,7 @@ public:
                           const std::string& deviceHandleHint,
                           uint32_t chipIndex,
                           const std::vector<int>& channelIndexes,
+                          const std::string& dataFormat,
                           const std::string& linkFormat,
                           double sampleRate,
                           int rf_oversampling);
