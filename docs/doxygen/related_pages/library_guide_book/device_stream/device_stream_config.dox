@@ -128,18 +128,11 @@
  *    </tr>
  * </table>
  * 
- * <b>Packet size</b> parameter sets the number of samples in a single packet. Internally, the packet size is calculated using bytes. The equation for converting packet size from bytes to samples is given 
- * below the paragraph. Customization of packet size depends on the current device gateware. If the device gateware does not support variable packet sizes, the default packet size will always be <b>4096</b> 
- * bytes. If device gateware supports variable packet sizes, then setting the <b>Packet size</b> parameter to value <b>0</b> will auto set the optimal packet size. Custom packet size can not be larger than 
- * <b>4096</b> bytes. If a larger packet size is specified, the packet size will be clamped to the maximum packet size value on stream setup. Packet must also be a multiple of data bus width. Therefore, 
- * initially specified packet size might be adjusted internally to fit the width of the data bus and can result in a lower packet size then initially anticipated. The final number of samples in a single 
- * packet also depends on the selected size of a single sample (link format parameter) and the number of streaming channels used (channel parameter).
+ * @subsection packet_size Packet size
  * 
- * <b> SamplesInPacket = (BytesInPacket - HeaderSize) / (SizeOfSample * ChCount) </b>  
+ * The size of a single packet is defined by <b>samplesInPacket</b> parameter. The maximum number of samples for a single packet also depends on selected number of streaming channels (channels parameter)
+ * and the size of a single sample (linkFormat parameter). For reference, a table with maximum packet sizes for different channel and sample size configurations is shown below the paragraph. 
  * 
- * The header size is equal to 16 bytes.
- * 
- * A Table for reference of all possible maximum packet sizes in samples with different channel and sample size parameters:
  * <table>
  *    <tr>
  *       <th> Packet size, samples </th>
@@ -167,6 +160,15 @@
  *       <td> 3 </td>
  *    </tr>
  * </table>
+ * 
+ * Customization of packet size depends on the current device gateware. If the device gateware does not support variable packet sizes, the default packet size will always be set to one of the values shown in
+ * the table above. If device gateware supports variable packet sizes, then the specified packet size will be applied. If the custom packet size is higher than the allowed maximum value, the packet size will
+ * be clamped to the one of the maximum values (depending on your channels and linkFormat configuration). It is also important to note, that packet sizes must be aligned to packet data bus width. If the specified
+ * packet size is not a multiple of bus width, then the packet size will be rounded down to the nearest packet size that is a multiple of the packet data bus width. Therefore, the specified custom packet size might be
+ * different from the packet size that was anticipated initially.
+ * 
+ * If custom packet size is not important, you can set the <b>samplesInPacket</b> parameter to value <b>0</b>. The optimal packet size will be auto set when the streaming object is created or reconfigured by using
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function.
  * 
  * 
  */
