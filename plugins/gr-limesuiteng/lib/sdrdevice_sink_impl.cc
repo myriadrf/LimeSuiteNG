@@ -27,6 +27,16 @@
 
 using namespace lime;
 
+static int GetDataFormatTypeSize(const std::string& formatname)
+{
+    if (formatname == "complex16_t")
+        return sizeof(lime::complex16_t);
+    else if (formatname == "complex32f_t")
+        return sizeof(lime::complex32f_t);
+    else
+        return sizeof(lime::complex32f_t);
+}
+
 namespace gr {
 namespace limesuiteng {
 
@@ -62,9 +72,7 @@ sdrdevice_sink_impl::sdrdevice_sink_impl(const std::string& alias,
                           : alias),
                      gr::io_signature::make(1 /* min outputs */,
                                             channelIndexes.size() /*max outputs */,
-                                            (dataFormat == "complex16_t")
-                                                ? sizeof(lime::complex16_t)
-                                                : sizeof(lime::complex32f_t)),
+                                            GetDataFormatTypeSize(dataFormat)),
                      gr::io_signature::make(0, 0, 0)),
       sdrdevice_block_base(TRXDir::Tx,
                            alias,

@@ -12,19 +12,20 @@ parameters:
   options: [fc32, sc16]
   option_labels: ["Complex Float32", "Complex Int16"]
   option_attributes:
+    type: [fc32, sc16]
     limeFormat: ["complex32f_t", "complex16_t"]
   default: fc32
-  hide: all
+  hide: part
   category: General
 
 - id: link_format
   label: Link Format
   dtype: enum
   options: [i16, i12]
-  option_labels: ["I16 - 4 bytes/sample (default)", "I12 - 3 bytes/sample (XTRX bandwidth saving)"]
+  option_labels: ["I16 - 4 bytes/sample", "I12 - 3 bytes/sample"]
   option_attributes:
     limeFormat: ["complex16_t", "complex12_t"]
-  default: i16
+  default: i12
   hide: ${'part' if link_format == 'i16' else 'none'}
   category: General
 
@@ -124,7 +125,7 @@ parameters:
 inputs:
 - label: in
   domain: stream
-  dtype: fc32
+  dtype: ${ data_format.type }
   multiplicity: ${ len(channel_indexes) }
 # must be connected
   optional: false
