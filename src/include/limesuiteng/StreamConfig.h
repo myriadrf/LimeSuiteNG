@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_SDRSTREAMCONFIG_H
 #define LIMESUITENG_SDRSTREAMCONFIG_H
 
+/**
+@file limesuiteng/StreamConfig.h
+@author Lime Microsystems
+@brief Defines structures used for SDR device stream configuration.
+*/
+
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
 
@@ -32,7 +38,12 @@ struct StreamStats {
     uint32_t late{ 0 }; ///< The amount of packets that arrived late for transmitting and were dropped.
 };
 
-enum class TimestampType { SAMPLE_TICKS, REALTIME_SECONDS, UNIX_EPOCH };
+/// @brief Enumeration describing possible stream timestamp types.
+enum class TimestampType {
+    SAMPLE_TICKS, ///< Increments timestamp on received sample.
+    REALTIME_SECONDS, ///< Increments timestamp on received PPS.
+    UNIX_EPOCH ///< Increments timestamp on received PPS with reference to current unix epoch.
+};
 
 /// @brief Configuration settings for a stream.
 struct LIME_API StreamConfig {

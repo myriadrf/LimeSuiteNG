@@ -1,6 +1,12 @@
 #ifndef LIME_DEVICES_REGISTRY_H
 #define LIME_DEVICES_REGISTRY_H
 
+/**
+@file limesuiteng/DeviceRegistry.h
+@author Lime Microsystems
+@brief Defines SDR device registry class and its static functions used to discover and register SDR devices
+*/
+
 #include <string>
 #include <vector>
 
@@ -42,7 +48,7 @@ class LIME_API DeviceRegistry
     static SDRDevice* makeDevice(const DeviceHandle& handle);
 
     /*!
-     * Free an connection created by makeConnection().
+     * Free an connection created by makeDevice().
      * \param conn The connection to free.
      */
     static void freeDevice(SDRDevice* conn);
@@ -58,6 +64,9 @@ class LIME_API DeviceRegistry
  * This section below is the registry API for devices.
  * The registry API is intended for device developers.
  ******************************************************************/
+
+// Hiding device developer API from doxygen output
+/// @cond SPECIAL_DEV_REGISTRY
 
 /*!
  * Create an overloaded instance of a DeviceRegistryEntry
@@ -101,6 +110,8 @@ class LIME_API DeviceRegistryEntry
   private:
     std::string _name;
 };
+
+///@endcond
 
 } // namespace lime
 #endif

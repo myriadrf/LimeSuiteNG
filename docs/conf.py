@@ -44,6 +44,7 @@ def _read_local(path: Path) -> str:
 
 # Sphinx extensions
 extensions = [
+    'breathe',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
@@ -55,6 +56,11 @@ extensions = [
     'sphinxcontrib.mermaid'
 ]
 
+# Flags related to breathe extension and Sphinx C++ domain
+suppress_warnings = ["duplicate_declaration.cpp"]
+cpp_id_attributes = ['LIME_API']
+
+# Add any paths that contain templates here, relative to this directory.
 # Allow same section headings and thus labels to be used across documents.
 autosectionlabel_prefix_document = True
 
@@ -94,6 +100,8 @@ html_context = {
     'github_version': project_cfg.github_repo_path,
     'archived': project_cfg.archived
 }
+
+# This is where we place substitutions, such as for Unicode characters.
 
 # -- RST epilog (used to define project/global links and substitutions) -------
 
@@ -203,7 +211,7 @@ root_doc = 'index'
 ## Extensions updated also
 
 breathe_projects = {
-    "Lime Suite NG" : ( "../build/docs/doxygen/xml" )
+    "Lime Suite NG" : ( "../docs/doxygen/output/xml" )
 }
 
 breathe_default_project = "Lime Suite NG"

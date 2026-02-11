@@ -1,11 +1,11 @@
+#ifndef LMS7API_H
+#define LMS7API_H
+
 /**
 @file   LMS7002M.h
 @author Lime Microsystems (www.limemicro.com)
-@brief  LMS7002M transceiver configuration interface
+@brief  Defines LMS7002M transceiver configuration interface class
 */
-
-#ifndef LMS7API_H
-#define LMS7API_H
 
 #include "limesuiteng/types.h"
 #include "limesuiteng/config.h"

@@ -1,0 +1,12 @@
+/**
+ * @page common_parameters Common public API parameters
+ * 
+ * @section Device_index Module index
+ * 
+ * Some of the SDR device configuration functions from the @ref api "public API" accept a parameter called <b>moduleIndex</b>, which addresses a specific module on a SDR device.
+ * Index of a module is used to specify the target module whose configuration will be updated or retrieved. A typical example of a module is LMS7002M RF chip, which is present on all LimeSDR boards. 
+ * Parameter <b>moduleIndex</b> should always be set to value <b>0</b> for LimeSDR boards that only have a single RF chip. Otherwise, if SDR device or a integrated system has multiple 
+ * RF chips or other modules, this parameter must be set to the appropriate index to target the correct module.
+ *
+ * Module indexes always start with value <b>0</b>. The last module on a system or device is indexed as <b>total module count - 1</b>.
+ */

@@ -1,6 +1,12 @@
 #ifndef LIME_COMPLEX_H
 #define LIME_COMPLEX_H
 
+/**
+* @file limesuiteng/complex.h
+* @author Lime Microsystems
+* @brief Defines complex data types
+*/
+
 #include <cstdint>
 #include <complex>
 #include <type_traits>

@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_RFSOCDESCRIPTOR_H
 #define LIMESUITENG_RFSOCDESCRIPTOR_H
 
+/**
+@file limesuiteng/RFSOCDescriptor.h
+@author Lime Microsystems
+@brief Defines RF SoC descriptor structure
+*/
+
 #include <string>
 #include <set>
 #include <vector>
