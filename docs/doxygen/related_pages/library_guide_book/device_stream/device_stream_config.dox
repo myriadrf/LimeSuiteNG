@@ -37,9 +37,19 @@
  * }
  * @endcode
  * 
- * @subsection stream_parameters Stream parameters
+ * @section stream_parameters Stream parameters
  * 
- * Here is a detailed list of @ref lime::StreamConfig "StreamConfig" structure members with additional information about each parameter below the table:
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    The declared names of stream parameters in the table below match the parameter names used within :cpp:enum:~lime::StreamConfig structure.
+ * }
+ * @else
+ * @note The declared names of stream parameters in the table below match the parameter names used within @ref lime::StreamConfig "StreamConfig" structure.
+ * @endif
+ * 
+ * Here is a detailed table of @ref lime::StreamConfig "StreamConfig" structure members with additional information about each parameter below the table:
  * <table>
  *    <tr>
  *       <th> Parameter </th>
@@ -47,72 +57,72 @@
  *       <th> Default initialized value </th>
  *    </tr>
  *    <tr>
- *       <td> Packet size </td>
+ *       <td> samplesInPacket </td>
  *       <td> Sample count </td>
  *       <td> 0 </td>
  *    </tr>
  *    <tr>
- *       <td> Batch size </td>
+ *       <td> packetsInBatch </td>
  *       <td> Packet count </td>
  *       <td> 0 </td>
  *    </tr>
  *    <tr>
- *       <td> Format </td>
+ *       <td> format </td>
  *       <td> I12 or I16 </td>
  *       <td> I16 </td>
  *    </tr>
  *    <tr>
- *       <td> Link format </td>
+ *       <td> linkFormat </td>
  *       <td> I12 or I16 </td>
  *       <td> I16 </td>
  *    </tr>
  *    <tr>
- *       <td> Data buffer size </td>
+ *       <td> bufferSize </td>
  *       <td> Bytes </td>
  *       <td> 0 </td>
  *    </tr>
  *    <tr>
- *       <td> Channel </td>
+ *       <td> channels </td>
  *       <td> Tx [0 1] and Rx [0 1] </td>
  *       <td> Tx [] and Rx [] </td>
  *    </tr>
  *    <tr>
- *       <td> Timestamp type</td>
+ *       <td> timestampType </td>
  *       <td> SAMPLE_TICKS or REAL_SECONDS or UNIX_EPOCH</td>
  *       <td> SAMPLE_TICKS </td>
  *    </tr>
  *    <tr>
- *       <td> Sample rate (as a hint) </td>
+ *       <td> hintSampleRate </td>
  *       <td> Hz </td>
  *       <td> 0 </td>
  *    </tr>
  *    <tr>
- *       <td> Callback </td>
+ *       <td> statusCallback </td>
  *       <td> - </td>
  *       <td> nullptr </td>
  *    </tr>
  *    <tr>
- *       <td> User data </td>
+ *       <td> userData </td>
  *       <td> - </td>
  *       <td> nullptr </td>
  *    </tr>
  *    <tr>
- *       <td> Poll </td>
+ *       <td> usePoll </td>
  *       <td> true or false </td>
  *       <td> true </td>
  *    </tr>
  *    <tr>
- *       <td> Sample start on PPS </td>
+ *       <td> waitPPS </td>
  *       <td> true or false </td>
  *       <td> false </td>
  *    </tr>
  *    <tr>
- *       <td> Phase alignment </td>
+ *       <td> alignPhase </td>
  *       <td> true or false </td>
  *       <td> false </td>
  *    </tr>
  *    <tr>
- *       <td> Q signal negation </td>
+ *       <td> negateQ </td>
  *       <td> true or false </td>
  *       <td> false </td>
  *    </tr>
