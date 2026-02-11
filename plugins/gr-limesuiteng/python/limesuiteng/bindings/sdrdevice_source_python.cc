@@ -45,9 +45,10 @@ void bind_sdrdevice_source(py::module& m)
              py::arg("deviceHandleHint"),
              py::arg("chipIndex"),
              py::arg("channelIndexes"),
-             py::arg("dataFormat"),
-             py::arg("sampleRate"),
-             py::arg("rf_oversampling"),
+             py::arg("dataFormat") = "complex32f_t",
+             py::arg("linkFormat") = "complex16_t",
+             py::arg("sampleRate") = 10e6,
+             py::arg("rf_oversampling") = 0,
              D(sdrdevice_source, make))
 
 
