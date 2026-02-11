@@ -40,8 +40,8 @@ public:
      * @param   chipIndex If multiple RFSOC are available on the device, specify which one
      * to use
      * @param   channelCount Number of data channels
-     * @param   dataFormat Output sample format delivered to GNURadio (complex32f_t = fc32,
-     * complex16_t = sc16). Defaults to complex32f_t.
+     * @param   dataFormat Output sample format delivered to GNURadio (complex32f_t =
+     * fc32, complex16_t = sc16). Defaults to complex32f_t.
      * @param   linkFormat DMA link layer format (complex16_t = I16 4B/sample,
      * complex12_t = I12 3B/sample). Use complex12_t to reduce PCIe bandwidth on XTRX.
      * @param   sampleRate Data interface sampling rate
