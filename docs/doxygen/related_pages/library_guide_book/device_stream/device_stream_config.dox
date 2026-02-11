@@ -170,5 +170,10 @@
  * If custom packet size is not important, you can set the <b>samplesInPacket</b> parameter to value <b>0</b>. The optimal packet size will be auto set when the streaming object is created or reconfigured by using
  * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function.
  * 
+ * @subsection stream_batch Stream batch
  * 
+ * A size of a single stream batch is defined by <b>packetsInBatch</b> parameter. If the stream batch parameter is set to value <b>0</b>, the batch size is auto calculated to fit into 100 us
+ * Tx/Rx time slot. If the 100 us timeslot is not suffiecient, a custom stream batch value can be specified. The custom specified value will override the automatically calculated stream batch value.
+ * If specified stream batch size is too large, it is clamped to the maximum possible value, which is determined by the size of dma buffer (it is dynamically allocated for each device) and packet size
+ * ratio (MaxBatchSize = dmaBufferSize / packetSize). The smallest possible batch size is 1 packet.
  */
