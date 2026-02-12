@@ -68,13 +68,13 @@
  *    </tr>
  *    <tr>
  *       <td> format </td>
- *       <td> I12 or I16 </td>
- *       <td> I16 </td>
+ *       <td> `I12` or `I16` or `F32` </td>
+ *       <td> `I16` </td>
  *    </tr>
  *    <tr>
  *       <td> linkFormat </td>
- *       <td> I12 or I16 </td>
- *       <td> I16 </td>
+ *       <td> `I12` or `I16` </td>
+ *       <td> `I16` </td>
  *    </tr>
  *    <tr>
  *       <td> bufferSize </td>
@@ -83,13 +83,13 @@
  *    </tr>
  *    <tr>
  *       <td> channels </td>
- *       <td> Tx [0 1] and Rx [0 1] </td>
- *       <td> Tx [] and Rx [] </td>
+ *       <td> Tx `[0 1]` and Rx `[0 1]` </td>
+ *       <td> Tx `[]` and Rx `[]` </td>
  *    </tr>
  *    <tr>
  *       <td> timestampType </td>
- *       <td> SAMPLE_TICKS or REAL_SECONDS or UNIX_EPOCH</td>
- *       <td> SAMPLE_TICKS </td>
+ *       <td> `SAMPLE_TICKS` or `REAL_SECONDS` or `UNIX_EPOCH` </td>
+ *       <td> `SAMPLE_TICKS` </td>
  *    </tr>
  *    <tr>
  *       <td> hintSampleRate </td>
@@ -99,32 +99,32 @@
  *    <tr>
  *       <td> statusCallback </td>
  *       <td> - </td>
- *       <td> nullptr </td>
+ *       <td> `nullptr` </td>
  *    </tr>
  *    <tr>
  *       <td> userData </td>
  *       <td> - </td>
- *       <td> nullptr </td>
+ *       <td> `nullptr` </td>
  *    </tr>
  *    <tr>
  *       <td> usePoll </td>
- *       <td> true or false </td>
- *       <td> true </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `true` </td>
  *    </tr>
  *    <tr>
  *       <td> waitPPS </td>
- *       <td> true or false </td>
- *       <td> false </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
  *    </tr>
  *    <tr>
  *       <td> alignPhase </td>
- *       <td> true or false </td>
- *       <td> false </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
  *    </tr>
  *    <tr>
  *       <td> negateQ </td>
- *       <td> true or false </td>
- *       <td> false </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
  *    </tr>
  * </table>
  * 
