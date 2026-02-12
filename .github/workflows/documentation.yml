@@ -28,6 +28,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -qq doxygen
 
+      - name: Build doxygen
+        run: |
+          cd ${{github.workspace}}/docs/doxygen
+          doxygen DoxygenConfigLocal.in
+
       - name: Set up Python venv
         run: |
           cd ${{github.workspace}}/docs
