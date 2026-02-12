@@ -188,7 +188,13 @@
  *
  * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. If a unknown channel index is pushed in, the stream creation or setup
  * function reports a stream configuration error. Alternatively, we can choose to use only the Tx or Rx direction and push in the channel indexes only to Tx or Rx direction. Additionally, we can also push index 
- * of a single channel for selected direction to set up a single channel stream.
+ * of a single channel for selected directions to set up a single channel stream.
  * 
- * @important When setting transmit only mode, it is important not disable Rx direction hardware in the device configuration stage.
+ * @important When setting transmit only mode, it is important not to disable Rx direction hardware in the device configuration stage.
+ * 
+ * @subsection Status callback
+ * 
+ * Status callback is an optional parameter that accepts an address of a custom stream status callback function. For reference to function argument list, please refer to @ref lime::StreamConfig "StreamConfig" 
+ * structure decription. If enabled, this function reports the @ref lime::StreamStats "stream stats" for each stream direction after a batch is received/transmited. Additionally, users can pass down additional 
+ * data to the status callback function via <b>userData</b> parameter by passing the address of the data buffer.
  */
