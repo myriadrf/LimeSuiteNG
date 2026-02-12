@@ -176,4 +176,10 @@
  * Tx/Rx time slot. If the 100 us timeslot is not suffiecient, a custom stream batch value can be specified. The custom specified value will override the automatically calculated stream batch value.
  * If specified stream batch size is too large, it is clamped to the maximum possible value, which is determined by the size of dma buffer (it is dynamically allocated for each device) and packet size
  * ratio (MaxBatchSize = dmaBufferSize / packetSize). The smallest possible batch size is 1 packet.
+ * 
+ * @subsection hint_sample_rate Sample rate
+ * 
+ * Sample rate parameter is an optional parameter and can be provided as an additional hint to stream configuration. By default this parameter is initialized to value <b>0</b>. This allows the software to 
+ * automatically retrieve the configured device sample rate and use it for internal calculations. If the software is unable to retrieve the configured device sample rate, you must manually set the sample
+ * rate parameter to the exact value that was used in initial device configuration.
  */
