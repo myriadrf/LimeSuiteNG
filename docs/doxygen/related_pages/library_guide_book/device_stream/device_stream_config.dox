@@ -152,4 +152,43 @@
  * Sample rate parameter is an optional parameter and can be provided as an additional hint to stream configuration. By default this parameter is initialized to value <b>0</b>. This allows the software to 
  * automatically retrieve the configured device sample rate and use it for internal calculations. If the software is unable to retrieve the configured device sample rate, you must manually set the sample
  * rate parameter to the exact value that was used in initial device configuration.
+ * 
+ * @subsection channels_logic_struct Channels
+ * 
+ * The <b>channels</b> parameter allows to set up a logical structure of streaming channels. This effectively allows to do quick stream channel re-configuration without the need for device hardware re-configuration. 
+ * Default initialized @ref lime::StreamConfig "StreamConfig" structure disables all Rx and Tx directions on each channel. If a default initialized stream configuration is passed to stream creation or setup functions,
+ * the software will terminate any active streams and will reset internal counters, but will not proceed with further stream configuration. Therefore, it is important to set the proper channel indexes for each direction.
+ * Devices that use LMS7002M module only support two channels at a time. Other devices with different modules might have a different count of channels (refer to respective documentation). Once the stream configuration 
+ * structure is default initialized, we must push in the channel indexes for the streaming directions that we want to use. Example code snippet:
+ * 
+ * @code{.cpp}
+ * 
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    uint8_t ChA = 0;
+ *    uint8_t ChB = 1;
+ *    
+ *    // Setting up stream configuration
+ *    lime::StreamConfig miniStreamConf = {};   // Stream configuration with default values
+ * 
+ *    // Enabling stream Rx direction for channels
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChB);
+ * 
+ *    // Enabling stream Tx direction for channels
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChB);
+ * 
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    ... // Other program code
+ * 
+ * @endcode 
+ *
+ * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. If a unknown channel index is pushed in, the stream creation or setup
+ * function reports a stream configuration error. Alternatively, we can choose to use only the Tx or Rx direction and push in the channel indexes only to Tx or Rx direction. Additionally, we can also push index 
+ * of a single channel for selected direction to set up a single channel stream.
+ * 
+ * @important When setting transmit only mode, it is important not disable Rx direction hardware in the device configuration stage.
  */
