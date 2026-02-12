@@ -26,7 +26,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -qq doxygen
+          sudo apt-get install -qq doxygen graphviz
+
+      - name: Build doxygen
+        run: |
+          cd ${{github.workspace}}/docs/doxygen
+          doxygen DoxygenConfigLocal.in
 
       - name: Set up Python venv
         run: |
