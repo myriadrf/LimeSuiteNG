@@ -192,9 +192,9 @@
  * 
  * @important When setting transmit only mode, it is important not to disable Rx direction hardware in the device configuration stage.
  * 
- * @subsection Status callback
+ * @subsection stream_status_callback Status callback
  * 
  * Status callback is an optional parameter that accepts an address of a custom stream status callback function. For reference to function argument list, please refer to @ref lime::StreamConfig "StreamConfig" 
- * structure decription. If enabled, this function reports the @ref lime::StreamStats "stream stats" for each stream direction after a batch is received/transmited. Additionally, users can pass down additional 
- * data to the status callback function via <b>userData</b> parameter by passing the address of the data buffer.
+ * structure description. If enabled, this function reports the @ref lime::StreamStats "stream stats" for each stream direction after a batch is received/transmited. Additionally, users can pass down additional 
+ * data to the status callback function via the <b>userData</b> parameter by passing the address of the data buffer.
  */
