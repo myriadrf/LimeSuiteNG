@@ -197,4 +197,23 @@
  * Status callback is an optional parameter that accepts an address of a custom stream status callback function. For reference to function argument list, please refer to @ref lime::StreamConfig "StreamConfig" 
  * structure description. If enabled, this function reports the @ref lime::StreamStats "stream stats" for each stream direction after a batch is received/transmited. Additionally, users can pass down additional 
  * data to the status callback function via the <b>userData</b> parameter by passing the address of the data buffer.
+ * 
+ * @subsection stream_sample_size Sample size
+ * 
+ * Sample size is selected via the <b>format</b> and <b>linkFormat</b> parameters. These parameters are used to differentiate the sample size used at the application layer and the transport layer.  
+ * Formats:
+ * <ul>
+ *    <li>`I12` - 12 bit integer. </li>
+ *    <li>`I16` - 16 bit integer. </li>
+ *    <li>`F32` - 32 bit floating point. </li>
+ * </ul>
+ * 
+ * 
+ * @subsection stream_quick_toggles Quick toggles
+ * 
+ * Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.   
+ * Parameter <b>negateQ</b> toggles the negation of the Q component of IQ signal.   
+ * Parameter <b>usePoll</b> toggles the polling strategy of DMA buffer for PCIe devices.   
+ * Parameter <b>alignPhase</b> toggles auto phase alignment between paired channels.  
+ * 
  */
