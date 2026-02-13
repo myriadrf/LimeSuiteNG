@@ -226,6 +226,12 @@
  * Optional parameter <b>bufferSize</b> is used to set the size of channel buffers, that aggregate Tx/Rx data packets into batches. It is recommended to set or leave this parameter default initialized to value 
  * <b>0</b> to allow the software to auto configure the buffer sizes.
  * 
+ * @subsection stream_timestamp Timestamps
+ * 
+ * Parameter <b>timestampType<b> allows to set the type of timestamp to use for streaming. The default timestamp type is `SAMPLE_TICKS`. This type of timestamp increments a internal counter for each received sample 
+ * and can be used to count incomming samples. `REAL_TIME` timestamp enables to count the time using real seconds. The seconds counter is incremmented on each received PPS signal pulse (device must support PPS reception).
+ * `UNIX_EPOCH` timestamp enables to count real time in reference to UNIX epoch. The time counter is incremmented on each received PPS signal pulse.
+ * 
  * @subsection stream_quick_toggles Quick toggles
  * 
  * Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.   
