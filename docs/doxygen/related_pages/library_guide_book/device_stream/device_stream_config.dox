@@ -186,11 +186,12 @@
  * 
  * @endcode 
  *
- * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. If a unknown channel index is pushed in, the stream creation or setup
- * function reports a stream configuration error. Alternatively, we can choose to use only the Tx or Rx direction and push in the channel indexes only to Tx or Rx direction. Additionally, we can also push index 
- * of a single channel for selected directions to set up a single channel stream.
+ * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. Alternatively, we can ommit the channel index pushes to Rx direction or Tx 
+ * direction and use only the Tx direction or Rx direction for pure data transmission or pure data retrieval. It is also possible to use SISO mode by simply pushing in the index of a single channel for Tx and Rx direction.
  * 
- * @important When setting transmit only mode, it is important not to disable Rx direction hardware in the device configuration stage.
+ * @important When using transmit mode only, it is important not to disable Rx direction hardware in the device configuration stage.
+ * 
+ * Channel indexes always starts from <b>0</b>. If a unknown channel index is pushed in, the stream creation or setup function reports a stream configuration error.
  * 
  * @subsection stream_status_callback Status callback
  * 
@@ -208,7 +209,7 @@
  *    <li>`F32` - 32 bit floating point. </li>
  * </ul>
  * 
- * 
+ * s
  * @subsection stream_quick_toggles Quick toggles
  * 
  * Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.   
