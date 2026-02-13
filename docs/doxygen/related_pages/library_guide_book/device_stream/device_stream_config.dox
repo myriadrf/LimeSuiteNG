@@ -228,7 +228,7 @@
  * 
  * @subsection stream_timestamp Timestamps
  * 
- * Parameter <b>timestampType<b> allows to set the type of timestamp to use for streaming. The default timestamp type is `SAMPLE_TICKS`. This type of timestamp increments a internal counter for each received sample 
+ * Parameter <b>timestampType</b> allows to set the type of timestamp to use for streaming. The default timestamp type is `SAMPLE_TICKS`. This type of timestamp increments a internal counter for each received sample 
  * and can be used to count incomming samples. `REAL_TIME` timestamp enables to count the time using real seconds. The seconds counter is incremmented on each received PPS signal pulse (device must support PPS reception).
  * `UNIX_EPOCH` timestamp enables to count real time in reference to UNIX epoch. The time counter is incremmented on each received PPS signal pulse.
  * 
@@ -239,4 +239,82 @@
  * Parameter <b>usePoll</b> toggles the polling strategy of DMA buffer for PCIe devices.   
  * Parameter <b>alignPhase</b> toggles auto phase alignment between paired channels.  
  * 
+ * @section ret_stream_conf Retrieving stream configuration
+ * 
+ * It is also possible to retrieve the stream object parameter configuration using @ref lime::RFStream::GetConfig() "GetConfig()" function. The example code below shows a simple example for retrieving
+ * stream configuration structure:
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    uint8_t ChA = 0;
+ *    uint8_t ChB = 1;
+ *    lime::SDRConfig defaultConf = {};
+ *    lime::OpStatus configStatus = lime::OpStatus::Success;
+ *    configStatus = device->Configure(defaultConf, moduleIndex);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to configure SDR device with default parameters: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    lime::StreamConfig miniStreamConf = {};
+ * 
+ *    // Enabling stream channels for Tx/Rx directions
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChB);
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChB);
+ * 
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    // Getting the stream configuration
+ *    lime::StreamConfig OldStreamConf = miniStream->GetConfig();
+ *    std::cout << "Tx direction channel set up: ";
+ *    for(const auto& index : OldStreamConf.channels[lime::TRXDir::Tx])
+ *       std::cout << static_cast<uint16_t>(index) << " ";
+ * 
+ *    std::cout << "\nRx direction channel set up: ";
+ *    for(const auto& index : OldStreamConf.channels[lime::TRXDir::Rx])
+ *       std::cout << static_cast<uint16_t>(index) << " ";
+ * 
+ *    // Printing out important stream parameters
+ *    std::cout << "\nStream sample rate - " << OldStreamConf.hintSampleRate << " Hz\n";
+ *    
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * } 
+ * @endcode
+ * 
+ * The code example sets up the channel configuration, creates the stream object and then retrieves the configuration. Key parameters: Tx and Rx direction channel cofiguration and device sample rate values 
+ * are printed out into terminal window:
+ * 
+ * @image{inline} html dev_stream_conf_get.png
+ * 
+ * In example code output, we can see that the channel structure for directions is set exactly the way they were set in the example code (Reiceive on channel A and B [or channel 0 and 1] and transmit on channel B 
+ * [or channel 1]). It is also worth to note that even if the sample rate in the initial stream configuration was not provided as a hint, the software was still able to retrieve and return the device sample rate 
+ * value.
  */
