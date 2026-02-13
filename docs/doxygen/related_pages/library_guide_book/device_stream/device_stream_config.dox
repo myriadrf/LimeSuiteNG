@@ -209,7 +209,11 @@
  *    <li>`F32` - 32 bit floating point. </li>
  * </ul>
  * 
- * s
+ * @subsection stream_buffer_size Buffer size
+ * 
+ * Optional parameter <b>bufferSize</b> is used to set the size of channel buffers, that aggregate Tx/Rx data packets into batches. It is recommended to set or leave this parameter default initialized to value 
+ * <b>0</b> to allow the software to auto configure the buffer sizes.
+ * 
  * @subsection stream_quick_toggles Quick toggles
  * 
  * Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.   
