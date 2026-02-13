@@ -83,7 +83,7 @@
  *    </tr>
  *    <tr>
  *       <td> channels </td>
- *       <td> Tx `[0 1]` and Rx `[0 1]` </td>
+ *       <td> Tx `[0 1]` and Rx `[0 1]` (Channel indexes for each direction) </td>
  *       <td> Tx `[]` and Rx `[]` </td>
  *    </tr>
  *    <tr>
