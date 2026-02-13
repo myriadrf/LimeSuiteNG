@@ -31,11 +31,23 @@
  *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
  * 
  *    ... // Other program code   
+ *    
+ *    // Changing stream configuration
+ *    miniStream->Stop();  // If stream is active
+ *    miniStreamConf.linkFormat = lime::DataFormat::I12;
+ *    miniStream->Setup(miniStreamConf);
+ * 
+ *    ... // Other program code   
  *       
+ *    miniStream->Stop();
+ *    miniStream->Teardown();
  *    lime::DeviceRegistry::freeDevice(device); // End of program code
  *    return 0;
  * }
  * @endcode
+ * 
+ * To change the stream configuration, that was used with stream object creation, you must call the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration.
+ * Before changing stream configuration, it is recomended to stop the stream if it is active.
  * 
  * @section stream_parameters Stream parameters
  * 
