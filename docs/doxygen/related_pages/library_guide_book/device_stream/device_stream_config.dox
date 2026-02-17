@@ -217,13 +217,15 @@
  * 
  * @subsection stream_sample_size Sample size
  * 
- * Sample size is selected via the <b>format</b> and <b>linkFormat</b> parameters. These parameters are used to differentiate the sample size used at the application layer and the transport layer.  
+ * Sample size is selected via the <b>format</b> and <b>linkFormat</b> parameters. These parameters are used to differentiate the sample size format used at the application layer and the transport layer.  
  * Formats:
  * <ul>
  *    <li>`I12` - 12 bit integer. </li>
  *    <li>`I16` - 16 bit integer. </li>
  *    <li>`F32` - 32 bit floating point. </li>
  * </ul>
+ * 
+ * If application and transport layer sample size formats are different, software auto converts sample sizes to fit the correct sample size format for the respective layer.
  * 
  * @subsection stream_buffer_size Buffer size
  * 
