@@ -436,7 +436,7 @@ int16_t lms7002m_read_analog_dc(lms7002m_context* self, const uint16_t addr)
     return result;
 }
 
-static void lms7002m_write_analog_dc(lms7002m_context* self, const uint16_t addr, int16_t value)
+void lms7002m_write_analog_dc(lms7002m_context* self, const uint16_t addr, int16_t value)
 {
     const uint16_t mask = addr < 0x05C7 ? 0x03FF : 0x003F;
     int16_t regValue = 0;

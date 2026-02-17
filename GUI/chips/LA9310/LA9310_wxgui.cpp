@@ -39,6 +39,19 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     txqecpanel = std::make_unique<QECPanel>(this, wxID_ANY, "Tx QEC");
     fgSizer246->Add(txqecpanel.get());
 
+    chkTxToneGenerator = new wxCheckBox(this, wxID_ANY, "TxTone");
+    chkTxToneGenerator->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxToneGeneratorClick), nullptr, this);
+    spinTxToneBin = new wxSpinCtrl(this, wxID_ANY, "64", wxDefaultPosition, wxDefaultSize, 0, 0, 255, 125);
+
+    chkTxToneGenerator2 = new wxCheckBox(this, wxID_ANY, "TxTone2");
+    chkTxToneGenerator2->Connect(
+        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxToneGeneratorClick2), nullptr, this);
+
+    fgSizer246->Add(chkTxToneGenerator);
+    fgSizer246->Add(spinTxToneBin);
+    fgSizer246->Add(chkTxToneGenerator2);
+
     SetSizer(fgSizer246);
     Layout();
     fgSizer246->Fit(this);
@@ -70,4 +83,24 @@ bool LA9310_wxgui::Initialize(void* soc)
 
 void LA9310_wxgui::UpdateGUI()
 {
+}
+
+void LA9310_wxgui::onTxToneGeneratorClick(wxCommandEvent& event)
+{
+    if (!la9310)
+        return;
+
+    OpStatus status = la9310->vspa.GenerateTxTone(chkTxToneGenerator->GetValue(), spinTxToneBin->GetValue());
+    if (status != OpStatus::Success)
+        printf("Failed to set Tx tone\n");
+}
+
+void LA9310_wxgui::onTxToneGeneratorClick2(wxCommandEvent& event)
+{
+    if (!la9310)
+        return;
+
+    OpStatus status = la9310->vspa.StartTxTone(chkTxToneGenerator2->GetValue(), spinTxToneBin->GetValue());
+    if (status != OpStatus::Success)
+        printf("Failed to set Tx tone\n");
 }

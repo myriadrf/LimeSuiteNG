@@ -122,6 +122,7 @@ target_sources(
             dlgAbout_view.cpp
             dlgAbout.cpp
             numericSlider/numericSlider.cpp
+            numericSlider/numericSliderDouble.cpp
             fftviewer_wxgui/fftviewer_wxgui.cpp
             fftviewer_wxgui/fftviewer_frFFTviewer.cpp
             CommsToDevice.cpp

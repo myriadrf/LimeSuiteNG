@@ -43,7 +43,8 @@ class LIME_API VSPA_iqplayer
     OpStatus ResetVCPU();
     bool IsFirmwareLoaded() const;
 
-    OpStatus StartTxTone(bool enabled);
+    OpStatus StartTxTone(bool enabled, int fftBin);
+    OpStatus GenerateTxTone(bool enabled, int fftBin = 0);
 
     OpStatus Setup(uint32_t rxCount, uint32_t txCount, double expectedTxDataRate);
 

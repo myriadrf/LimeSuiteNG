@@ -165,6 +165,7 @@ lime_Result lms7002m_set_rx_lpf(struct lms7002m_context* self, uint32_t rfBandwi
 lime_Result lms7002m_set_tx_lpf(struct lms7002m_context* self, uint32_t rfBandwidth_Hz);
 
 int16_t lms7002m_read_analog_dc(struct lms7002m_context* self, const uint16_t addr);
+void lms7002m_write_analog_dc(struct lms7002m_context* self, const uint16_t addr, int16_t value);
 
 uint32_t lms7002m_get_rssi(struct lms7002m_context* self);
 

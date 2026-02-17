@@ -119,5 +119,13 @@ void NumericSlider::SetToolTip(const wxString& tipString)
 #endif
 }
 
+void NumericSlider::SetRange(int min, int max, int step)
+{
+    mSpinner->SetRange(min, max);
+    mSpinner->SetIncrement(step);
+    int scrollValue = ((max - min) / 2) / step;
+    mScroll->SetScrollbar(scrollValue, 1, (max - min) / step + 1, 1);
+}
+
 BEGIN_EVENT_TABLE(NumericSlider, wxPanel)
 END_EVENT_TABLE()

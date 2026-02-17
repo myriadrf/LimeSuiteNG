@@ -4,7 +4,7 @@
 #include "limesuiteng/embedded/result.h"
 #include "limesuiteng/embedded/types.h"
 
-#define SPI_BATCH_MAX_LEN 16
+#define SPI_BATCH_MAX_LEN 14
 
 #ifdef __cplusplus
 extern "C" {

@@ -44,6 +44,12 @@ DCCorrectorsPanel::DCCorrectorsPanel(
 void DCCorrectorsPanel::Initialize(std::shared_ptr<lime::IDCCorrector> dev)
 {
     device = dev;
+    if (!dev)
+        return;
+
+    auto range = dev->GetRange();
+    Icontrol->SetRange(range.min, range.max, range.step);
+    Qcontrol->SetRange(range.min, range.max, range.step);
 }
 
 DCCorrectorsPanel::~DCCorrectorsPanel()

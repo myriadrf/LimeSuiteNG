@@ -103,7 +103,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0105, 0x0007 },
     { 0x0106, 0x318C },
     { 0x0107, 0x318C },
-    { 0x0108, 0x958C },
+    { 0x0108, 0x410C },
     { 0x0109, 0x61C1 },
     { 0x010A, 0xD54C },
     { 0x010B, 0x0000 },
@@ -114,7 +114,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
     { 0x0110, 0x2B14 },
     { 0x0111, 0x0000 },
     { 0x0112, 0x000C },
-    { 0x0113, 0x0041 },
+    { 0x0113, 0x0042 },
     { 0x0114, 0x008D },
     { 0x0115, 0x000D },
     { 0x0116, 0x8180 },
@@ -202,6 +202,27 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
             if (status != OpStatus::Success)
                 lime::error("Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        else
+            lime::error("M4 firmware file not found: "s + m4firmware_path);
+
+        // also load VSPA just in case it would be needed, it can be reprogrammed later
+        if (!la9310->vspa.IsFirmwareLoaded())
+        {
+            std::vector<char> firmware;
+            std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+            OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
+            if (status == OpStatus::Success)
+            {
+                lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
+                status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                if (status != OpStatus::Success)
+                    lime::error("Failed to program LimeSDR-Micro LA9310 VSPA firmware");
+            }
+            else
+                lime::error("VSPA File not found: "s + vspafirmware_path);
         }
     }
     if (status == OpStatus::Success)
@@ -766,8 +787,7 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     // sampling rate is dictated by LMS7002M MCLK1, and LA9310 ADC/DAC clock divider
     auto& rfsoc = mLMSChips.at(0);
     const double cgenFrequency = rfsoc->GetFrequencyCGEN();
-    const int CLKL_divider = (1 << rfsoc->Get_SPI_Reg_bits(LMS7002MCSR::CLKH_OV_CLKL_CGEN, true));
-    const double MCLK1_frequency = cgenFrequency / CLKL_divider;
+    const double MCLK1_frequency = cgenFrequency / 4;
 
     uint8_t adcRate, dacRate;
     la9310->GetADCDACRates(&adcRate, &dacRate);

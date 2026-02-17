@@ -1,4 +1,5 @@
 set(LMS7002M_SOURCES
+    DCCorrector.cpp
     LMS7002M_RegistersMap.cpp
     LMS7002M.cpp
     LMS7002MCSR_Data.cpp

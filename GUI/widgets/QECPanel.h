@@ -8,7 +8,7 @@
 class wxSpinCtrl;
 class wxScrollBar;
 
-class NumericSlider;
+class NumericSliderDouble;
 
 namespace lime {
 class IQuadratureErrorCorrector;
@@ -26,12 +26,11 @@ class QECPanel : public wxPanel
     ~QECPanel();
     void Initialize(std::shared_ptr<lime::IQuadratureErrorCorrector> dev);
 
-    void WriteValues(wxSpinEvent& event);
-    void WriteValues(wxCommandEvent& event);
+    void WriteValues(wxSpinDoubleEvent& event);
 
   private:
-    NumericSlider* gainImbalance;
-    NumericSlider* phaseImbalance;
+    NumericSliderDouble* gainImbalance;
+    NumericSliderDouble* phaseImbalance;
     std::shared_ptr<lime::IQuadratureErrorCorrector> device;
 };
 

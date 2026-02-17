@@ -391,10 +391,7 @@ static void la9310_limesdr_pci_device_remove(struct pci_dev* pciContext)
 {
     dev_info(&pciContext->dev, "[Removing device] vid:%04X pid:%04X\n", pciContext->vendor, pciContext->device);
     struct la9310_dev* myDevice = pci_get_drvdata(pciContext);
-
-    dev_info(&pciContext->dev, "step 1\n");
     la9310_limesdr_device_destroy(myDevice);
-    dev_info(&pciContext->dev, "step 2\n");
     la9310_base_remove(myDevice);
 }
 

@@ -40,7 +40,11 @@ class LA9310_wxgui : public ISOCPanel
     wxTextCtrl* txtVSPAValue;
     wxCheckBox* chkAxiqEn;
 
-    wxTextCtrl* txtTxValue;
+    wxSpinCtrl* spinTxToneBin;
+    wxCheckBox* chkTxToneGenerator;
+    wxCheckBox* chkTxToneGenerator2;
+    void onTxToneGeneratorClick(wxCommandEvent& event);
+    void onTxToneGeneratorClick2(wxCommandEvent& event);
 
     lime::LA9310* la9310;
 };

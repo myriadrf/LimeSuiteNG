@@ -194,43 +194,60 @@ OpStatus VSPA_iqplayer::StartTx(uint32_t fifo_size, bool flow_control)
     return response == 1 ? OpStatus::Success : OpStatus::Error;
 }
 
-OpStatus VSPA_iqplayer::StartTxTone(bool enabled)
+OpStatus VSPA_iqplayer::StartTxTone(bool enabled, int fftBin)
 {
     OpStatus status;
 
     if (!enabled)
         return StopTx();
+    StopTx();
+    std::this_thread::sleep_for(std::chrono::milliseconds(4));
 
-    status = SetupTx(0, iqflood_size / 4);
+    const uint32_t mem_offset = dmem_proxy_reserved;
+    status = SetupTx(mem_offset, iqflood_size / 4, 200e6);
     if (status != OpStatus::Success)
         return status;
 
+    double amplitude = 0.9 * 32767;
     std::vector<complex16_t> samples(iqflood_size / 4 / sizeof(complex16_t));
-    constexpr uint16_t data[16] = { 0xb045,
-        0x6068,
-        0x80e7,
-        0x107b,
-        0x9097,
-        0xb045,
-        0xe084,
-        0x80e7,
-        0x40ba,
-        0x9097,
-        0x7018,
-        0xe084,
-        0x6068,
-        0x40ba,
-        0x107b,
-        0x7018 };
-    const complex16_t* pattern = reinterpret_cast<const complex16_t*>(data);
+
+    const double phaseStep = 2 * M_PI * (fftBin / 512.0);
+    double phase = 0;
+
     for (size_t i = 0; i < samples.size(); ++i)
-        samples[i] = pattern[i % 8];
+    {
+        auto f32 = lime::complex32f_t(amplitude * cos(phase), amplitude * sin(phase));
+        samples[i] = lime::complex16_t(f32.real(), f32.imag());
+        phase += phaseStep;
+    }
 
     // fill fifos
     Transmit(samples.data(), samples.size() * sizeof(complex16_t), 0);
     // start tx
     VSPA_FIFO_State& txState = mTx;
     return StartTx(txState.fifo_size, false);
+}
+
+OpStatus VSPA_iqplayer::GenerateTxTone(bool enabled, int fftBin)
+{
+    const mbox_opc_e command = MBOX_OPC_SINGLE_TONE_TX;
+    const bool start = enabled;
+
+    // stop if it was already active
+    OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, uint64_t(command) << 56);
+    if (status != OpStatus::Success)
+        return status;
+    printf_dbg_log("IQPlayer: GenerateTxTone %i\n", enabled);
+
+    uint32_t loword = fftBin & 0xFF; // generated frequency bin
+    uint32_t hiword = 0;
+    hiword |= command << 24;
+    hiword |= start ? 0x00100000 : 0;
+
+    uint64_t value = uint64_t(hiword) << 32 | loword;
+
+    printf_dbg_log("IQPlayer: GenerateTxTone %i\n", enabled);
+    return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 }
 
 OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
@@ -464,12 +481,12 @@ int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t
     // Check new transfer
     const uint32_t dev_produced = rx_vspa_proxy_ro[channel].la9310_fifo_consumed_size;
     const uint32_t produceDiff = dev_produced - rxState.last_produced;
-    printf_dbg_log("devp:%u diff:%u\n", dev_produced, produceDiff);
+    // printf_dbg_log("devp:%u diff:%u\n", dev_produced, produceDiff);
     rxState.last_produced = dev_produced;
 
     rxState.bytes_produced += produceDiff;
     uint32_t data_size = rxState.bytes_produced - rxState.bytes_consumed;
-    printf_dbg_log("Receive - p:%i c:%i, sz:%i\n", rxState.bytes_produced, rxState.bytes_consumed, data_size);
+    // printf_dbg_log("Receive - p:%i c:%i, sz:%i\n", rxState.bytes_produced, rxState.bytes_consumed, data_size);
     if (data_size >= rxState.fifo_size)
     {
         lime::error("VSPA RX overrun, (data_size=0x%08x app_RX_total_produced_size=0x%08lx app_RX_total_consumed_size=0x%08lx)\n",
@@ -666,7 +683,7 @@ class VSPA_DC_Offset : public IDCCorrector
     {
     }
 
-    virtual ~VSPA_DC_Offset() {}
+    OpStatus Enabled(bool enable) { return enable ? OpStatus::Success : OpStatus::NotSupported; }
 
     OpStatus SetDCOffset(complex16_t offset) override
     {
@@ -716,6 +733,10 @@ class VSPA_DC_Offset : public IDCCorrector
 
     complex16_t GetDCOffset() override { return complex16_t(0, 0); }
 
+    lime::Range<float> GetRange() override { return lime::Range<float>(-16384, 16383, 1.0); }
+
+    IDCCorrector::Type GetType() const { return IDCCorrector::Type::Digital; }
+
   private:
     std::shared_ptr<VSPA_mailbox> mailbox;
     const mbox_opc_e command;
@@ -741,7 +762,7 @@ class VSPA_QEC : public IQuadratureErrorCorrector
     }
 
     virtual ~VSPA_QEC() {}
-    OpStatus SetImbalance(float iq_gain_imb, float phase_imb_deg)
+    OpStatus SetImbalance(float iq_gain_imb, float phase_imb_deg) override
     {
         float f1, f2, f4;
         if (dir == TRXDir::Rx)
@@ -792,8 +813,11 @@ class VSPA_QEC : public IQuadratureErrorCorrector
         return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
     }
 
-    OpStatus SetPhaseCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
+    lime::Range<float> GetGainRange() override { return lime::Range(-3.0f, 3.0f, 1.0f / 512); }
 
+    lime::Range<float> GetPhaseRange() override { return lime::Range(-22.5f, 22.5f, 45.0f / 1024); }
+
+    OpStatus SetPhaseCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
     OpStatus SetGainCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
 
   private:

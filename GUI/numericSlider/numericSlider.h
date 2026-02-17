@@ -32,6 +32,7 @@ class NumericSlider : public wxPanel
     int GetValue();
 
     virtual void SetToolTip(const wxString& tipString);
+    void SetRange(int min, int max, int step);
 
   protected:
     void OnSpinnerChangeEnter(wxSpinEvent& event);
