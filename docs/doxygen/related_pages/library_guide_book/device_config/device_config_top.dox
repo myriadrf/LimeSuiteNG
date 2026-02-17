@@ -20,6 +20,6 @@
  * </ul>
  * 
  * @if DOX_NAV
- * @ref dev_streaming "Go to SDR device stream set up and data stream example topic"
+ * @ref dev_stream_config "Go to SDR device stream configuration topic"
  * @endif
  */

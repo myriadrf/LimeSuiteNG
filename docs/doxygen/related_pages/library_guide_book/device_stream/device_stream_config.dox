@@ -3,6 +3,10 @@
  * 
  * @section creating_stream Creating stream
  * 
+ * @if DOX_NAV
+ * @ref dev_config "Go to SDR device configuration topic"
+ * @endif
+ * 
  * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
  * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream parameters (packet size, PPS and etc.) must be set up beforehand using
  * @ref lime::StreamConfig "StreamConfig" structure. Example of stream creation:
@@ -236,7 +240,7 @@
  * 
  * Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.   
  * Parameter <b>negateQ</b> toggles the negation of the Q component of IQ signal.   
- * Parameter <b>usePoll</b> toggles the polling strategy of DMA buffer for PCIe devices.   
+ * Parameter <b>usePoll</b> toggles the polling strategy for DMA buffers of PCIe devices.   
  * Parameter <b>alignPhase</b> toggles auto phase alignment between paired channels.  
  * 
  * @section ret_stream_conf Retrieving stream configuration
@@ -317,4 +321,8 @@
  * In example code output, we can see that the channel structure for directions is set exactly the way they were set in the example code (Reiceive on channel A and B [or channel 0 and 1] and transmit on channel B 
  * [or channel 1]). It is also worth to note that even if the sample rate in the initial stream configuration was not provided as a hint, the software was still able to retrieve and return the device sample rate 
  * value.
+ * 
+ * @if DOX_NAV
+ * @ref dev_streaming "Go to SDR device streaming topic"
+ * @endif
  */
