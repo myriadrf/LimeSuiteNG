@@ -156,8 +156,8 @@
  * 
  * A size of a single stream batch is defined by <b>packetsInBatch</b> parameter. If the stream batch parameter is set to value <b>0</b>, the batch size is auto calculated to fit into 100 us
  * Tx/Rx time slot. If the 100 us time slot is not suffiecient, a custom stream batch value can be specified. The custom specified value will override the automatically calculated stream batch value.
- * If specified stream batch size is too large, it is clamped to the maximum possible value, which is determined by the size of dma buffer (it is dynamically allocated for each device) and packet size
- * ratio (MaxBatchSize = dmaBufferSize / packetSize). The smallest possible batch size is 1 packet.
+ * If specified stream batch size is too large, it is clamped to the maximum possible value, which is determined by the size of dma buffer (it is dynamically allocated for each device) and packet size. 
+ * The smallest possible batch size is 1 packet.
  * 
  * @subsection hint_sample_rate Sample rate
  * 
@@ -198,8 +198,8 @@
  * 
  * @endcode 
  *
- * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. Alternatively, we can ommit the channel index pushes to Rx direction or Tx 
- * direction and use only the Tx direction or Rx direction for pure data transmission or pure data retrieval. It is also possible to use SISO mode by simply pushing in the index of a single channel for Tx and Rx direction.
+ * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. Alternatively, we can push channel indexes to Rx direction or Tx 
+ * direction and use the device only for data reception or data transmission. It is also possible to use SISO mode by simply pushing in the index of a single channel for Tx and Rx direction.
  * 
  * @important When using transmit mode only, it is important not to disable Rx direction hardware in the device configuration stage.
  * 
