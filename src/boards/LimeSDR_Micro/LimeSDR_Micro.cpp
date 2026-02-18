@@ -202,7 +202,6 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
             if (status != OpStatus::Success)
                 lime::error("Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
         else
             lime::error("M4 firmware file not found: "s + m4firmware_path);
@@ -282,7 +281,24 @@ LimeSDR_Micro::~LimeSDR_Micro()
 
 static OpStatus InitLMS7002M(LMS7002M& lms, bool skipTune = false)
 {
-    return lms.ResetChip();
+    std::vector<uint16_t> addrs;
+    addrs.reserve(limesdrmicro::lms7002defaultsOverrides_LimeSDR_Micro.size() + 2);
+    std::vector<uint16_t> values;
+    values.reserve(limesdrmicro::lms7002defaultsOverrides_LimeSDR_Micro.size() + 2);
+
+    addrs.push_back(0x0020);
+    values.push_back(0xFFFF); // enable simultaneous A&B write
+
+    for (const auto& val : limesdrmicro::lms7002defaultsOverrides_LimeSDR_Micro)
+    {
+        addrs.push_back(val.first);
+        values.push_back(val.second);
+    }
+    addrs.push_back(0x0020);
+    values.push_back(0xFFFD); // back to A channel only
+
+    OpStatus status = lms.SPI_write_batch(addrs.data(), values.data(), addrs.size(), true);
+    return status;
 }
 
 static double CalculateCommonSampleRate(const SDRConfig& cfg)
