@@ -160,10 +160,10 @@ static controlT bisection_find_min_rssi2(lime::Range<controlT> range, Ctrl&& set
 
     setControl(left);
     auto rssiLeft = measure();
-    std::cout << "Set:" << left << " | m:" << rssiLeft << std::endl;
+    // std::cout << "Set:" << left << " | m:" << rssiLeft << std::endl;
     setControl(right);
     auto rssiRight = measure();
-    std::cout << "Set:" << right << " | m:" << rssiRight << std::endl;
+    // std::cout << "Set:" << right << " | m:" << rssiRight << std::endl;
     while (right - left > range.step)
     {
         const controlT delta = (right - left) / 2;
@@ -178,13 +178,13 @@ static controlT bisection_find_min_rssi2(lime::Range<controlT> range, Ctrl&& set
         {
             setControl(right);
             rssiRight = measure();
-            std::cout << "Set:" << right << " | m:" << rssiRight << std::endl;
+            // std::cout << "Set:" << right << " | m:" << rssiRight << std::endl;
         }
         else
         {
             setControl(left);
             rssiLeft = measure();
-            std::cout << "Set:" << left << " | m:" << rssiLeft << std::endl;
+            // std::cout << "Set:" << left << " | m:" << rssiLeft << std::endl;
         }
     }
     controlT result = rssiLeft < rssiRight ? left : right;
