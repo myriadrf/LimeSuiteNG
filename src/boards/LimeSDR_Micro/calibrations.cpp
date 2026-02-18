@@ -109,8 +109,8 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     status = ctx->vspa->StartRx();
     if (status != OpStatus::Success)
         printf("Failed start rx\n");
-    // Disable all Rx and Tx DMA triggers
-    constexpr uint8_t ids[] = { 3, 4, 11 };
+    // Enable all Rx and Tx DMA triggers
+    constexpr uint8_t ids[] = { 1, 2, 3, 4 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = ctx->phytimer->GetTimerControl(id);
@@ -693,26 +693,27 @@ static void SetupInternalLoopbackForRx(lms7002m_context* rfsoc)
 
 OpStatus LimeSDR_Micro::CalibrateRx()
 {
+
     CalibrationContext context;
     context.vspa = &la9310->vspa;
+    context.sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
     context.vspa->Initialize();
     context.vspa->StopRx();
+    context.rfsoc = mLMSChips[0]->mC_impl;
+    lms7002m_context* rfsoc = context.rfsoc;
+    const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
+    const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
+    context.vspa->SelectRxChannel(channel == 0 ? 3 : 1);
+    context.vspa->Setup(1, 0, context.sampleRate * 4);
     context.vspa->StopTx();
     context.phytimer = &la9310->phytimer;
-    context.rfsoc = mLMSChips[0]->mC_impl;
-    context.sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
     context.lo_diff = 0;
-
-    lms7002m_context* rfsoc = context.rfsoc;
 
     context.vspa->SetupRx(0, 1024 * 1024, 16384 * sizeof(complex16_t) * 64);
 
     const bool dcOnly = false;
     const uint32_t bandwidthRF = 5e6;
     const double calibrationRF = bandwidthRF / calibUserBwDivider;
-
-    const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
-    const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
 
     LMS7002M_LOG(rfsoc,
         lime_LogLevel_Verbose,
@@ -972,14 +973,17 @@ OpStatus LimeSDR_Micro::CalibrateTx()
 {
     CalibrationContext context;
     context.vspa = &la9310->vspa;
+    context.sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
     context.vspa->Initialize();
     context.vspa->StopRx();
+    context.vspa->Setup(1, 0, context.sampleRate * 4);
     context.vspa->StopTx();
     context.phytimer = &la9310->phytimer;
     context.rfsoc = mLMSChips[0]->mC_impl;
-    context.sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
-
     lms7002m_context* rfsoc = context.rfsoc;
+    const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
+    const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
+    context.vspa->SelectRxChannel(channel == 0 ? 3 : 1);
 
     context.vspa->GetTxDCCorrector()->SetDCOffset(complex16_t(0, 0));
     context.vspa->GetTxQEC()->SetImbalance(0, 0);
@@ -989,8 +993,6 @@ OpStatus LimeSDR_Micro::CalibrateTx()
     const uint32_t bandwidthRF = 5e6;
     const double calibrationRF = bandwidthRF / calibUserBwDivider;
 
-    const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020);
-    const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
     LMS7002M_LOG(rfsoc,
         lime_LogLevel_Verbose,
         "Tx ch.%s , BW: %u Hz, RF output: %s, Gain: %i",

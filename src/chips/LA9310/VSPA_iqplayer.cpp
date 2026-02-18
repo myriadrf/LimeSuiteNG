@@ -92,6 +92,11 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
 
 OpStatus VSPA_iqplayer::Initialize()
 {
+    if (!IsFirmwareLoaded())
+    {
+        lime::error("VSPA firmware not running?");
+    }
+
     auto v_iqflood_ddr = port->GetBar(LA9310_WINDOW_IQFLOOD);
     auto v_la9310_bar2 = port->GetBar(LA9310_WINDOW_BAR2);
     auto dmem_proxy = v_iqflood_ddr; // by default DMEM_PROXY is now at start of IQFLOOD
