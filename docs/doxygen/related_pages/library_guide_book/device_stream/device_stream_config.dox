@@ -8,9 +8,10 @@
  * @endif
  * 
  * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
- * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream creation function requires stream parameters (packet size, PPS and etc.) that 
- * must be set up in advance by using @ref lime::StreamConfig "StreamConfig" structure. If the initial stream configuration is not sufficient, it can be changed by invoking the 
- * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recomended to stop the stream if it is active. Example of stream creation:
+ * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream creation function requires stream parameters (packet size, PPS and etc.) which 
+ * can be set up in advance by using @ref lime::StreamConfig "StreamConfig" structure. If the initial stream configuration is not sufficient, it can be changed by invoking the 
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recomended to 
+ * stop the stream if it is active. Example of stream creation:
  * 
  * @code{.cpp}
  * #include <iostream>
@@ -53,7 +54,7 @@
  * @endcode
  * 
  * @important Function @ref lime::RFStream::Teardown() "Teardown()" can be used to (temporarily or permanently) free up dynamically allocated memory of a stream object in case host device has 
- * a limited pool of memory. If the streaming object was teared downed, you must re-allocated the necessary resources for the stream by invoking the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()"
+ * a limited pool of memory. If the streaming object was teared downed, you must re-allocate the necessary resources for the stream by invoking the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()"
  * function with the last stream configuration structure.
  *  
  * @if DEVELOP
@@ -257,7 +258,7 @@
  * 
  * @section ret_stream_conf Retrieving stream configuration
  * 
- * It is also possible to retrieve the stream object parameter configuration using @ref lime::RFStream::GetConfig() "GetConfig()" function. The example code below shows a simple example for retrieving
+ * It is also possible to retrieve the parameters of a specific stream object by using @ref lime::RFStream::GetConfig() "GetConfig()" function. The example code below shows a simple example for retrieving
  * stream configuration structure:
  * 
  * @code{.cpp}
