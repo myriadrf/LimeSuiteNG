@@ -8,8 +8,9 @@
  * @endif
  * 
  * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
- * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream parameters (packet size, PPS and etc.) must be set up beforehand using
- * @ref lime::StreamConfig "StreamConfig" structure. Example of stream creation:
+ * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream creation function requires stream parameters (packet size, PPS and etc.) that 
+ * must be set up in advance by using @ref lime::StreamConfig "StreamConfig" structure. If the initial stream configuration is not sufficient, it can be changed by invoking the 
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recomended to stop the stream if it is active. Example of stream creation:
  * 
  * @code{.cpp}
  * #include <iostream>
@@ -43,15 +44,24 @@
  * 
  *    ... // Other program code   
  *       
+ *    // End of program code
  *    miniStream->Stop();
  *    miniStream->Teardown();
- *    lime::DeviceRegistry::freeDevice(device); // End of program code
+ *    lime::DeviceRegistry::freeDevice(device);
  *    return 0;
  * }
  * @endcode
  * 
- * To change the stream configuration, that was used with stream object creation, you must call the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration.
- * Before changing stream configuration, it is recomended to stop the stream if it is active.
+ * @important Function @ref lime::RFStream::Teardown() "Teardown()" can be used to (temporarily or permanently) free up dynamically allocated memory of a stream object in case host device has 
+ * a limited pool of memory. If the streaming object was teared downed, you must re-allocated the necessary resources for the stream by invoking the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()"
+ * function with the last stream configuration structure.
+ *  
+ * @if DEVELOP
+ * @subsection multiple_streams Multiple streams
+ * 
+ * It is also possible to create multiple stream objects for a single device. However, library does not sync the access of device stream between two or more stream objects and must be managed
+ * externally by the end user of the library.
+ * @endif
  * 
  * @section stream_parameters Stream parameters
  * 
