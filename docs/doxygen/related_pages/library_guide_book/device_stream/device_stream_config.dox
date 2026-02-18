@@ -331,7 +331,7 @@
  * 
  * @image{inline} html dev_stream_conf_get.png
  * 
- * In example code output, we can see that the channel structure for directions is set exactly the way they were set in the example code (Reiceive on channel A and B [or channel 0 and 1] and transmit on channel B 
+ * In example code output, we can see that the channel structure for directions is set exactly the way they were set in the example code (Receive on channel A and B [or channel 0 and 1] and transmit on channel B 
  * [or channel 1]). It is also worth to note that even if the sample rate in the initial stream configuration was not provided as a hint, the software was still able to retrieve and return the device sample rate 
  * value.
  * 

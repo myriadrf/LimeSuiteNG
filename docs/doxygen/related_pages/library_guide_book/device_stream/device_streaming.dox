@@ -1,4 +1,24 @@
 /**
  * @page dev_streaming Streaming with SDR device
  * 
+ * @if DOX_NAV
+ * @ref dev_stream_config "Go to SDR device stream configuration topic"
+ * @endif
+ * 
+ * @section runing_stream Streaming
+ * 
+ * Once the SDR device and stream parameters are configured, stream can be started using @ref lime::RFStream::Start() "Start()" function. This enables the aggregation of samples for Tx and Rx directions 
+ * in the background. To stop the active stream and samples aggregation, call @ref lime::RFStream::Stop() "Stop()" function. Additionally, when the stream is active, you can view the current stream 
+ * stats for Tx and Rx directions using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function.
+ * 
+ * Once the stream is in an active state, user can begin reading and writing Rx and Tx buffers with samples of the required type. To receive buffered samples from Rx direction, user must call 
+ * stream object member @ref stream_control "Receive()". To send samples through Tx direction, user must queue the samples to buffer by calling stream object member @ref stream_control "Transmit()".
+ * 
+ * 
+ * 
+ * 
+ * 
+ * @code{.cpp}
+ * 
+ * @endcode
  */
