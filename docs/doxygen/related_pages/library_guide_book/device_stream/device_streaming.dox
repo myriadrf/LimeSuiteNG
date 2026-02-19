@@ -51,7 +51,9 @@
  *    lime::complex32f_t TxChABuf[bufferSize];
  *    lime::complex32f_t * const RxBuffers[2] = {RxChABuf, nullptr}; // Working only with channel A
  *    lime::complex32f_t * const TxBuffers[2] = {TxChABuf, nullptr}; // Working only with channel A
- *    lime::StreamStats RxStats;
+ *    lime::StreamStats RxStats, TxStats;
+ * 
+ *    ... // Other additional set up before starting the stream
  *    
  *    stream->Start()
  *    
@@ -74,7 +76,6 @@
  *    stream->StreamStatus(&RxStats, nullptr);
  *    std::cout << "Total quantity of received packets - " << RxStats.packets << std::endl;
  *    ... // Print out other stats
- * 
  * 
  *    ... // Other program code
  *    
@@ -102,5 +103,13 @@
  * @else
  * @warning If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.
  * @endif
+ * 
+ * Once the stream is started, aggregation of samples in an internal buffer for Rx direction starts (unless sample on PPS is enabled). In the example code above, once the stream is started, code
+ * enters a worker loop, which reads out buffered data via `Receive(...)` function into our work buffer `RxChABuf`. `Receive(...)` function call blocks and can timeout if no samples are present in internal
+ * buffer for Rx direction. If a response for received data is required, `Transmit(...)` function can be used to queue data for transmission. `Transmit(...)` function call blocks and can timeout if internall
+ * buffer is full with samples that have not been sent yet. To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
+ * using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStatus()" function. Function can retrieve statistics for both directions at a time and the current capacity of samples stored in the 
+ * internal buffers for both directions can be viewed via `RxStats.FIFO.usedCount` and `TxStats.FIFO.usedCount` parameters. In the example code above StreamStatus is only requested after the stream is stoped, to view the total 
+ * received count of samples. 
  * 
  */
