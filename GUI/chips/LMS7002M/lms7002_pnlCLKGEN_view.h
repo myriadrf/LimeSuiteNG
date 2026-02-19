@@ -16,6 +16,9 @@ class lms7002_pnlCLKGEN_view : public ILMS7002MTab
 
     wxComboBox* cmbCMPLO_CTRL;
 
+    wxStaticBoxSizer* CreatePLLCoeficientControls(wxWindow* parent);
+    void PLLCoefficientsChangeHandler(wxSpinEvent& event);
+
   public:
     void onbtnCalculateClick(wxCommandEvent& event);
     void onbtnCalculateClick(wxSpinEvent& event);
@@ -118,15 +121,9 @@ class lms7002_pnlCLKGEN_view : public ILMS7002MTab
     wxCheckBox* chkAutoPhase;
     wxButton* btnCalculate;
     wxButton* btnTune;
-    wxStaticText* ID_STATICTEXT7;
-    wxStaticText* lblINT_SDM_CGEN;
-    wxStaticText* ID_STATICTEXT23;
     wxStaticText* lblRefClk_MHz;
-    wxStaticText* ID_STATICTEXT21;
-    wxStaticText* lblFRAC_SDM_CGEN;
-    wxStaticText* ID_STATICTEXT2;
-    wxStaticText* lblDivider;
-    wxStaticText* ID_STATICTEXT25;
+    wxSpinCtrl* spinFRAC_SDM_CGEN;
+    wxSpinCtrl* spinDIV_OUTCH_CGEN;
     wxStaticText* lblRealOutFrequency;
     wxStaticText* ID_STATICTEXT161;
     wxStaticText* lblVCO_CMPHO_CGEN;
@@ -148,6 +145,8 @@ class lms7002_pnlCLKGEN_view : public ILMS7002MTab
     wxStaticText* ID_STATICTEXT17;
     NumericSlider* cmbIPULSE_CP_CGEN;
     wxFlexGridSizer* sizerR3;
+    wxSpinCtrl* spinINT_SDM_CGEN;
+    wxCheckBox* chkAutoRetune;
 };
 
 #endif // __lms7002_pnlCLKGEN_view__

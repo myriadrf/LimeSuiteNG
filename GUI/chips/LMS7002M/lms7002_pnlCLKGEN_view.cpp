@@ -15,6 +15,59 @@ using namespace lime;
 
 using namespace std::literals::string_literals;
 
+wxStaticBoxSizer* lms7002_pnlCLKGEN_view::CreatePLLCoeficientControls(wxWindow* parent)
+{
+    wxStaticBoxSizer* sbSizer71;
+    sbSizer71 = new wxStaticBoxSizer(new wxStaticBox(parent, wxID_ANY, wxT("Calculated Values for Fractional Mode")), wxVERTICAL);
+
+    wxWindow* blockParent = sbSizer71->GetStaticBox();
+
+    long layoutFlags = wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL;
+    wxFlexGridSizer* gridLayout;
+    gridLayout = new wxFlexGridSizer(5, 4, 5, 10);
+    gridLayout->SetFlexibleDirection(wxBOTH);
+    gridLayout->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
+
+    gridLayout->Add(new wxStaticText(blockParent, wxID_ANY, wxT("Ref. clock (MHz):")), 1, layoutFlags, 5);
+    lblRefClk_MHz = new wxStaticText(blockParent, wxID_ANY, wxT("???"), wxDefaultPosition, wxSize(-1, -1), 0);
+    lblRefClk_MHz->Wrap(-1);
+    lblRefClk_MHz->SetToolTip(wxT("Reference clock is received from SXR"));
+    lblRefClk_MHz->SetMinSize(wxSize(64, -1));
+    gridLayout->Add(lblRefClk_MHz, 1, layoutFlags, 5);
+
+    gridLayout->Add(new wxStaticText(blockParent, wxID_ANY, wxT("Output (MHz):")), 1, layoutFlags, 5);
+    lblRealOutFrequency = new wxStaticText(blockParent, wxID_ANY, wxT("???"), wxDefaultPosition, wxDefaultSize, 0);
+    lblRealOutFrequency->Wrap(0);
+    gridLayout->Add(lblRealOutFrequency, 1, layoutFlags, 5);
+
+    gridLayout->Add(new wxStaticText(blockParent, wxID_ANY, wxT("Integer:")), 1, layoutFlags, 5);
+    spinINT_SDM_CGEN = new wxSpinCtrl(
+        blockParent, ID_INT_SDM_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1023, 120);
+    spinINT_SDM_CGEN->Connect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::PLLCoefficientsChangeHandler), nullptr, this);
+    gridLayout->Add(spinINT_SDM_CGEN, 1, layoutFlags, 5);
+
+    gridLayout->Add(new wxStaticText(blockParent, wxID_ANY, wxT("N Fractional:")), 1, layoutFlags, 5);
+    spinFRAC_SDM_CGEN = new wxSpinCtrl(
+        blockParent, ID_FRAC_SDM_CGEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1048575, 0);
+    spinFRAC_SDM_CGEN->Connect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::PLLCoefficientsChangeHandler), nullptr, this);
+    gridLayout->Add(spinFRAC_SDM_CGEN, 1, layoutFlags, 5);
+
+    gridLayout->Add(new wxStaticText(blockParent, wxID_ANY, wxT("Divider: 2*")), 1, layoutFlags, 5);
+    spinDIV_OUTCH_CGEN =
+        new wxSpinCtrl(blockParent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 4);
+    spinDIV_OUTCH_CGEN->Connect(
+        wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(lms7002_pnlCLKGEN_view::PLLCoefficientsChangeHandler), nullptr, this);
+    gridLayout->Add(spinDIV_OUTCH_CGEN, 1, layoutFlags, 5);
+
+    chkAutoRetune = new wxCheckBox(blockParent, wxID_ANY, "Retune on change");
+    gridLayout->Add(chkAutoRetune, 1, layoutFlags, 5);
+
+    sbSizer71->Add(gridLayout, 1, wxALL | wxEXPAND, 5);
+    return sbSizer71;
+}
+
 lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : ILMS7002MTab(parent, id, pos, size, style)
     , sizerR3(new wxFlexGridSizer(0, 2, 0, 0))
@@ -396,67 +449,9 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     fgSizer88->SetFlexibleDirection(wxBOTH);
     fgSizer88->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    wxStaticBoxSizer* sbSizer71;
-    sbSizer71 = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Calculated Values for Fractional Mode")), wxVERTICAL);
+    wxStaticBoxSizer* pllCoeficientsPanel = CreatePLLCoeficientControls(this);
 
-    wxFlexGridSizer* fgSizer90;
-    fgSizer90 = new wxFlexGridSizer(5, 4, 5, 10);
-    fgSizer90->SetFlexibleDirection(wxBOTH);
-    fgSizer90->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-
-    ID_STATICTEXT7 = new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("N Integer:"), wxDefaultPosition, wxDefaultSize, 0);
-    ID_STATICTEXT7->Wrap(-1);
-    fgSizer90->Add(ID_STATICTEXT7, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    lblINT_SDM_CGEN =
-        new wxStaticText(sbSizer71->GetStaticBox(), ID_INT_SDM_CGEN, wxT("???"), wxDefaultPosition, wxSize(-1, -1), 0);
-    lblINT_SDM_CGEN->Wrap(0);
-    lblINT_SDM_CGEN->SetMinSize(wxSize(64, -1));
-
-    fgSizer90->Add(lblINT_SDM_CGEN, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    ID_STATICTEXT23 =
-        new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("Ref. clock (MHz):"), wxDefaultPosition, wxDefaultSize, 0);
-    ID_STATICTEXT23->Wrap(-1);
-    fgSizer90->Add(ID_STATICTEXT23, 1, wxALIGN_CENTER_VERTICAL, 5);
-
-    lblRefClk_MHz = new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("???"), wxDefaultPosition, wxSize(-1, -1), 0);
-    lblRefClk_MHz->Wrap(-1);
-    lblRefClk_MHz->SetToolTip(wxT("Reference clock is received from SXR"));
-    lblRefClk_MHz->SetMinSize(wxSize(64, -1));
-
-    fgSizer90->Add(lblRefClk_MHz, 1, wxALIGN_CENTER_VERTICAL, 5);
-
-    ID_STATICTEXT21 =
-        new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("N Fractional:"), wxDefaultPosition, wxDefaultSize, 0);
-    ID_STATICTEXT21->Wrap(-1);
-    fgSizer90->Add(ID_STATICTEXT21, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    lblFRAC_SDM_CGEN =
-        new wxStaticText(sbSizer71->GetStaticBox(), ID_FRAC_SDM_CGEN, wxT("???"), wxDefaultPosition, wxDefaultSize, 0);
-    lblFRAC_SDM_CGEN->Wrap(0);
-    fgSizer90->Add(lblFRAC_SDM_CGEN, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    ID_STATICTEXT2 = new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("Divider:"), wxDefaultPosition, wxDefaultSize, 0);
-    ID_STATICTEXT2->Wrap(-1);
-    fgSizer90->Add(ID_STATICTEXT2, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    lblDivider = new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("???"), wxDefaultPosition, wxDefaultSize, 0);
-    lblDivider->Wrap(0);
-    fgSizer90->Add(lblDivider, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    ID_STATICTEXT25 =
-        new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("Output Freq (MHz):"), wxDefaultPosition, wxDefaultSize, 0);
-    ID_STATICTEXT25->Wrap(-1);
-    fgSizer90->Add(ID_STATICTEXT25, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    lblRealOutFrequency = new wxStaticText(sbSizer71->GetStaticBox(), wxID_ANY, wxT("???"), wxDefaultPosition, wxDefaultSize, 0);
-    lblRealOutFrequency->Wrap(0);
-    fgSizer90->Add(lblRealOutFrequency, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 5);
-
-    sbSizer71->Add(fgSizer90, 1, wxALL | wxEXPAND, 5);
-
-    fgSizer88->Add(sbSizer71, 1, wxEXPAND, 5);
+    fgSizer88->Add(pllCoeficientsPanel, 1, wxEXPAND, 5);
 
     wxStaticBoxSizer* sbSizer76;
     sbSizer76 = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("VCO Comparators")), wxVERTICAL);
@@ -702,7 +697,9 @@ lms7002_pnlCLKGEN_view::lms7002_pnlCLKGEN_view(wxWindow* parent, wxWindowID id, 
     wndId2Enum[chkEN_INTONLY_SDM_CGEN] = LMS7002MCSR::EN_INTONLY_SDM_CGEN;
     wndId2Enum[chkEN_SDM_CLK_CGEN] = LMS7002MCSR::EN_SDM_CLK_CGEN;
     wndId2Enum[cmbICT_VCO_CGEN] = LMS7002MCSR::ICT_VCO_CGEN;
-    wndId2Enum[lblINT_SDM_CGEN] = LMS7002MCSR::INT_SDM_CGEN;
+    wndId2Enum[spinINT_SDM_CGEN] = LMS7002MCSR::INT_SDM_CGEN;
+    // wndId2Enum[spinFRAC_SDM_CGEN] = LMS7002MCSR::FRAC_SDM_CGEN;
+    wndId2Enum[spinDIV_OUTCH_CGEN] = LMS7002MCSR::DIV_OUTCH_CGEN;
     wndId2Enum[cmbIOFFSET_CP_CGEN] = LMS7002MCSR::IOFFSET_CP_CGEN;
     wndId2Enum[cmbIPULSE_CP_CGEN] = LMS7002MCSR::IPULSE_CP_CGEN;
     wndId2Enum[chkPD_CP_CGEN] = LMS7002MCSR::PD_CP_CGEN;
@@ -785,6 +782,33 @@ void lms7002_pnlCLKGEN_view::ParameterChangeHandler(wxSpinEvent& event)
     evt.SetId(event.GetId());
     evt.SetEventObject(event.GetEventObject());
     ParameterChangeHandler(evt);
+}
+
+void lms7002_pnlCLKGEN_view::PLLCoefficientsChangeHandler(wxSpinEvent& event)
+{
+    wxCommandEvent evt;
+    evt.SetInt(event.GetInt());
+    evt.SetId(event.GetId());
+    evt.SetEventObject(event.GetEventObject());
+    if (event.GetId() == ID_FRAC_SDM_CGEN)
+    {
+        uint32_t value = event.GetInt();
+        WriteParam(LMS7002MCSR::FRAC_SDM_CGEN_LSB, value & 0xFFFF);
+        WriteParam(LMS7002MCSR::FRAC_SDM_CGEN_MSB, (value >> 16) & 0xF);
+    }
+    else
+        ParameterChangeHandler(evt);
+
+    if (!lmsControl)
+        return;
+
+    double freq = lmsControl->GetFrequencyCGEN();
+    lblRealOutFrequency->SetLabel(std::to_string(freq / 1e6));
+
+    if (chkAutoRetune->IsChecked())
+        onbtnTuneClick(event);
+    else
+        OnbtnReadComparators(event);
 }
 
 void lms7002_pnlCLKGEN_view::ParameterChangeHandler(wxCommandEvent& event)
@@ -907,17 +931,15 @@ void lms7002_pnlCLKGEN_view::UpdateGUI()
     freq = lmsControl->GetFrequencyCGEN();
     lblRealOutFrequency->SetLabel(std::to_string(freq / 1e6));
     txtFrequency->SetValue(wxString::Format(_("%.3f"), freq / 1e6));
-    //LMS_GetClockFreq(lmsControl,LMS_CLOCK_REF,&freq);
+
     freq = lmsControl->GetReferenceClk_SX(TRXDir::Rx);
     lblRefClk_MHz->SetLabel(wxString::Format(_("%.3f"), freq / 1e6));
-    uint16_t value;
+    uint32_t value;
     value = ReadParam(LMS7002MCSR::FRAC_SDM_CGEN_MSB);
-    int fracValue = value << 16;
+    uint32_t fracValue = value << 16;
     value = ReadParam(LMS7002MCSR::FRAC_SDM_CGEN_LSB);
     fracValue |= value;
-    lblFRAC_SDM_CGEN->SetLabel(std::to_string(fracValue));
-    value = ReadParam(LMS7002MCSR::DIV_OUTCH_CGEN);
-    lblDivider->SetLabel("2*" + std::to_string(value + 1));
+    spinFRAC_SDM_CGEN->SetValue(fracValue);
 }
 
 void lms7002_pnlCLKGEN_view::UpdateInterfaceFrequencies()
