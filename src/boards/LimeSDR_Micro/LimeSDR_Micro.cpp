@@ -244,6 +244,8 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         soc.antennaRange[TRXDir::Tx]["Band1"s] = { 3.3e9, 3.8e9 };
         soc.antennaRange[TRXDir::Tx]["Band2"s] = { 0.03e9, 1.9e9 };
 
+        soc.samplingRateRange = { 7e6, 160e6, 1 }; // going below 7MHz without decimation introduces noise
+
         desc.rfSOC.push_back(soc);
 
         std::unique_ptr<LMS7002M> chip = std::make_unique<LMS7002M>(lmsSPI);
