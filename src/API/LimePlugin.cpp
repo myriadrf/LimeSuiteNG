@@ -832,6 +832,7 @@ static void TransferRuntimeParametersToConfig(
             trxConfig.gfir.bandwidth = params.bandwidth[i];
         trxConfig.lpf = params.bandwidth[i];
         trxConfig.lpf *= channelMap[i].parent->configInputs.lpfBandwidthScale;
+        trxConfig.gain[eGainTypes::GENERIC] = params.gain[i];
 
         const int chipIndex = channelMap[i].parent->chipIndex;
         const auto& desc = channelMap[i].parent->device->GetDescriptor().rfSOC[chipIndex];
