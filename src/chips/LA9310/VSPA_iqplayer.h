@@ -63,7 +63,7 @@ class LIME_API VSPA_iqplayer
 
     OpStatus StartRx(uint8_t channel, uint32_t fifo_size);
     OpStatus StartTx(uint32_t fifo_size, bool flow_control);
-    OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
+    OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size, double expectedDataRate = 0);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size, double expectedTxDataRate = 0);
 
   private:
@@ -85,6 +85,7 @@ class LIME_API VSPA_iqplayer
 
     uint32_t rx_fifo_start_offset_in_iqflood;
     uint8_t tx_dma_channel_count;
+    uint8_t rx_dma_channel_count;
 
     std::mutex mx;
 };

@@ -26,7 +26,7 @@
 #include <iostream>
 
 #define PLOT_GRAPHS 0
-#if 1 // print debug messages
+#if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \
         { \
@@ -132,6 +132,12 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     } while (samplesGot < samplesToRead &&
              std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) < std::chrono::milliseconds(100));
 
+    if (samplesGot == 0)
+    {
+        lime::error("Failed to get RSSI\n");
+        return NAN;
+    }
+
     status = ctx->vspa->StopRx();
     if (status != OpStatus::Success)
         printf("Failed stop rx\n");
@@ -148,6 +154,7 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     int binIndex = (freq_offset / ctx->sampleRate) * samplesToRead;
     if (binIndex < 0)
         binIndex += samplesToRead;
+
     // printf("b[%i]:%g rssi:%g dbFS\n", binIndex, freq_offset, bins[binIndex]);
     return bins[binIndex];
 }
@@ -432,6 +439,8 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
     const float rxMeasureOffset = bandwidth_Hz;
     float target_rssi = -10.0; // dbfs
 
+    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
+
     LMS7002M_LOG(
         rfsoc, lime_LogLevel_Debug, ">Gains setup: RxMeasure@%+g, TxTestSignal@%+g[%i],", rxMeasureOffset, txToneFreq, txToneBin);
 
@@ -506,6 +515,8 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
 
     ctx->vspa->GenerateTxTone(false);
 
+    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
+
     const float expectedRSSI_level = -30.0;
     const float failureRSSI_level = -50.0;
     if (rssi < expectedRSSI_level)
@@ -524,84 +535,6 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
 }
 
 static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx, double calibrationRF)
-{
-    float txToneFreq;
-    float rxMeasureOffset;
-    if (isTx)
-    {
-        txToneFreq = calibrationRF;
-        rxMeasureOffset = ctx->lo_diff - 2 * txToneFreq;
-    }
-    else
-    {
-        txToneFreq = ctx->lo_diff + calibrationRF;
-        rxMeasureOffset = -calibrationRF;
-    }
-    const int txToneBin = 256 * (2 * txToneFreq / ctx->sampleRate);
-    lms7002m_context* rfsoc = ctx->rfsoc;
-
-    const char* const dirName = isTx ? "Tx" : "Rx";
-    LMS7002M_LOG(rfsoc,
-        lime_LogLevel_Debug,
-        ">%s QEC setup: RxMeasure@%+g, TxTestSignal@%+g[%i]",
-        dirName,
-        rxMeasureOffset,
-        txToneFreq,
-        txToneBin);
-
-    std::shared_ptr<IQuadratureErrorCorrector> iqcorr = isTx ? ctx->vspa->GetTxQEC() : ctx->vspa->GetRxQEC();
-    iqcorr->SetImbalance(0, 0);
-
-    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
-
-    OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
-    if (status != OpStatus::Success)
-    {
-        printf("Failed to generate tone\n");
-        return status;
-    }
-
-    float lastPhase = 0;
-    float lastGain = 0;
-
-    lastGain = bisection_find_min_rssi2(
-        iqcorr->GetGainRange(),
-        [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)\n", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
-
-    lastPhase = bisection_find_min_rssi2(
-        iqcorr->GetPhaseRange(),
-        [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)\n", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
-
-    lastGain = bisection_find_min_rssi2(
-        iqcorr->GetGainRange(),
-        [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)\n", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
-
-    lastPhase = bisection_find_min_rssi2(
-        iqcorr->GetPhaseRange(),
-        [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)\n", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
-
-    iqcorr->SetImbalance(lastGain, lastPhase);
-
-    const float rssi = la9310_get_rssi(ctx, rxMeasureOffset);
-    LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, phase: %g deg, (RSSI: %f dBFS)\n", lastGain, lastPhase, rssi);
-
-    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
-    return ctx->vspa->GenerateTxTone(false);
-}
-
-static OpStatus la9310_calibrate_iq_imbalance_tx(CalibrationContext* ctx, bool isTx, double calibrationRF)
 {
     float txToneFreq;
     float rxMeasureOffset;
@@ -632,44 +565,76 @@ static OpStatus la9310_calibrate_iq_imbalance_tx(CalibrationContext* ctx, bool i
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
-    OpStatus status = ctx->vspa->StartTxTone(true, txToneBin);
+    OpStatus status;
+    if (isTx)
+        status = ctx->vspa->StartTxTone(true, txToneBin);
+    else
+        status = ctx->vspa->GenerateTxTone(true, txToneBin);
     if (status != OpStatus::Success)
     {
-        printf("Failed to start tx tone\n");
+        printf("Failed to generate tone\n");
         return status;
     }
 
     float lastPhase = 0;
     float lastGain = 0;
 
-    auto gain_setter = [&ctx, &iqcorr, &lastPhase, txToneBin](float value) { iqcorr->SetImbalance(value, lastPhase); };
-    auto phase_setter = [&ctx, &iqcorr, &lastGain, txToneBin](float value) { iqcorr->SetImbalance(lastGain, value); };
-    auto measure_getter = [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); };
-
+    LMS7002M_LOG(
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain range [%g:%g]", iqcorr->GetGainRange().min, iqcorr->GetGainRange().max);
     lastGain = bisection_find_min_rssi2(
-        iqcorr->GetGainRange(), gain_setter, [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+        iqcorr->GetGainRange(),
+        [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)\n", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
 
-    lastPhase = bisection_find_min_rssi2(iqcorr->GetPhaseRange(), phase_setter, measure_getter);
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)\n", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase range [%g:%g]", iqcorr->GetPhaseRange().min, iqcorr->GetPhaseRange().max);
+    lastPhase = bisection_find_min_rssi2(
+        iqcorr->GetPhaseRange(),
+        [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+    LMS7002M_LOG(
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
 
-    lastGain = bisection_find_min_rssi2(iqcorr->GetGainRange(), gain_setter, measure_getter);
+    // repeat gain search again, just around the last found value
+    auto gainLocalRange = iqcorr->GetGainRange();
+    float gainSpan = (gainLocalRange.max - gainLocalRange.min) / 16;
+    gainLocalRange.min = std::clamp(lastGain - gainSpan / 2, gainLocalRange.min, gainLocalRange.max);
+    gainLocalRange.max = std::clamp(lastGain + gainSpan / 2, gainLocalRange.min, gainLocalRange.max);
+    LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain range [%g:%g]", gainLocalRange.min, gainLocalRange.max);
+    lastGain = bisection_find_min_rssi2(
+        gainLocalRange,
+        [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)\n", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
 
-    lastPhase = bisection_find_min_rssi2(iqcorr->GetPhaseRange(), phase_setter, measure_getter);
+    // repeat phase search again, just around the last found value
+    auto phaseLocalRange = iqcorr->GetPhaseRange();
+    float phaseSpan = (phaseLocalRange.max - phaseLocalRange.min) / 16;
+    phaseLocalRange.min = std::clamp(lastPhase - phaseSpan / 2, phaseLocalRange.min, phaseLocalRange.max);
+    phaseLocalRange.max = std::clamp(lastPhase + phaseSpan / 2, phaseLocalRange.min, phaseLocalRange.max);
+    LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase range [%g:%g]", phaseLocalRange.min, phaseLocalRange.max);
+    lastPhase = bisection_find_min_rssi2(
+        phaseLocalRange,
+        [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)\n", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
 
     iqcorr->SetImbalance(lastGain, lastPhase);
 
     const float rssi = la9310_get_rssi(ctx, rxMeasureOffset);
-    LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, phase: %g deg, (RSSI: %f dBFS)\n", lastGain, lastPhase, rssi);
+    LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, phase: %g deg, (RSSI: %f dBFS)", lastGain, lastPhase, rssi);
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
-    return ctx->vspa->StartTxTone(false, txToneBin);
+
+    if (isTx)
+        status = ctx->vspa->StartTxTone(false, txToneBin);
+    else
+        status = ctx->vspa->GenerateTxTone(false);
+    return status;
 }
 
 static void SetupInternalLoopbackForRx(lms7002m_context* rfsoc)
@@ -826,6 +791,8 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
     const float saturationLevel = -12.86; // dBFS
     lms7002m_context* rfsoc = ctx->rfsoc;
 
+    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
+
     OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
     if (status != OpStatus::Success)
         return status;
@@ -879,6 +846,8 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
 
     ctx->vspa->GenerateTxTone(false);
 
+    lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
+
     const float expectedRSSI_level = -30.0;
     const float failureRSSI_level = -50;
     if (rssi < expectedRSSI_level)
@@ -904,7 +873,8 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
 
     spi_batch_t batch;
     spi_batch_init(&batch);
-    spi_batch_modify_csr(&batch, LMS7002M_EN_G_TRF, 1); // disable transmitter
+    spi_batch_modify_csr(&batch, LMS7002M_PD_LNA_RFE, 1);
+    spi_batch_modify_csr(&batch, LMS7002M_EN_G_TRF, 1); // enable transmitter
     spi_batch_modify_csr(&batch, LMS7002M_DCMODE, 1); // Rx DC correctors selection
     lms7002m_spi_batch_flush(&batch, rfsoc);
 
@@ -966,6 +936,7 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
     //         rssi_to_string(la9310_get_rssi(ctx, rxMeasureOffset)));
     // }
     status = ctx->vspa->GenerateTxTone(false);
+    spi_batch_modify_csr(&batch, LMS7002M_PD_LNA_RFE, 0);
     return OpStatus::Success;
 }
 
@@ -995,10 +966,11 @@ OpStatus LimeSDR_Micro::CalibrateTx()
 
     LMS7002M_LOG(rfsoc,
         lime_LogLevel_Verbose,
-        "Tx ch.%s , BW: %u Hz, RF output: %s, Gain: %i",
+        "Tx calibrate ch.%s , BW: %u Hz, RF output: %s, LOSS_MAIN:%i IAMP: %i",
         (x0020val & 3) == 0x1 ? "A" : "B",
         bandwidthRF,
         lms7002m_spi_read_csr(rfsoc, LMS7002M_SEL_BAND1_TRF) == 1 ? "BAND1" : "BAND2",
+        lms7002m_spi_read_csr(rfsoc, LMS7002M_LOSS_MAIN_TXPAD_TRF),
         lms7002m_spi_read_csr(rfsoc, LMS7002M_CG_IAMP_TBB));
 
     lms7002m_save_chip_state(rfsoc, false);
@@ -1014,7 +986,7 @@ OpStatus LimeSDR_Micro::CalibrateTx()
 
     limesdrmicro_calibrate_tx_dc(&context, channel, calibrationRF);
 
-    status = la9310_calibrate_iq_imbalance_tx(&context, true, calibrationRF);
+    status = la9310_calibrate_iq_imbalance(&context, true, calibrationRF);
 TxCalibrationEnd : {
     lms7002m_save_chip_state(rfsoc, true);
     lms7002m_spi_write(rfsoc, 0x0020, x0020val);

@@ -87,6 +87,7 @@ VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
     , mailbox(std::make_shared<VSPA_mailbox>(port))
     , tx_dma_channel_count(1)
+    , rx_dma_channel_count(1)
 {
 }
 
@@ -206,10 +207,9 @@ OpStatus VSPA_iqplayer::StartTxTone(bool enabled, int fftBin)
     if (!enabled)
         return StopTx();
     StopTx();
-    std::this_thread::sleep_for(std::chrono::milliseconds(4));
 
     const uint32_t mem_offset = dmem_proxy_reserved;
-    status = SetupTx(mem_offset, iqflood_size / 4, 200e6);
+    status = SetupTx(mem_offset, iqflood_size / 4);
     if (status != OpStatus::Success)
         return status;
 
@@ -250,8 +250,6 @@ OpStatus VSPA_iqplayer::GenerateTxTone(bool enabled, int fftBin)
     hiword |= start ? 0x00100000 : 0;
 
     uint64_t value = uint64_t(hiword) << 32 | loword;
-
-    printf_dbg_log("IQPlayer: GenerateTxTone %i\n", enabled);
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 }
 
@@ -270,7 +268,7 @@ OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
     const bool start = true;
     const bool test_load_start = false;
     const bool continuous = true;
-    const uint8_t ddr_wr_dma_ch_nb = 2;
+    const uint8_t ddr_wr_dma_ch_nb = rx_dma_channel_count;
     const bool host_flow_control_disable = false;
 
     assert(fifo_size / 4096 < 0x10000);
@@ -291,7 +289,7 @@ OpStatus VSPA_iqplayer::StartRx(uint8_t channel, uint32_t fifo_size)
 
     uint64_t value = uint64_t(hiword) << 32 | loword;
 
-    printf_dbg_log("IQPlayer: Start Rx, fifo_size:%u, fifo_base:%08X\n", fifo_size, loword);
+    printf_dbg_log("IQPlayer: Start Rx, fifo_size:%u, fifo_base:%08X, dma_ch_nb:%i\n", fifo_size, loword, ddr_wr_dma_ch_nb);
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 }
 
@@ -376,14 +374,14 @@ OpStatus VSPA_iqplayer::Setup(uint32_t rxCount, uint32_t txCount, double expecte
     if (rxCount)
     {
         const uint32_t mem_offset = dmem_proxy_reserved + iqflood_size / 4;
-        status = SetupRx(0, mem_offset, iqflood_size / 4);
+        status = SetupRx(0, mem_offset, iqflood_size / 4, expectedTxDataRate);
         if (status != OpStatus::Success)
             return status;
     }
     return status;
 }
 
-OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, uint32_t fifo_size)
+OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, uint32_t fifo_size, double expectedDataRate)
 {
     // const std::lock_guard<std::mutex> lock(mx);
     VSPA_FIFO_State& rxState = mRx[channel];
@@ -391,6 +389,14 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
 
     if (fifo_size == 0)
         return OpStatus::InvalidValue;
+
+    // TODO: choose 1 or 2 based on system clock frequency
+    // When 2 is used VSPA Rx DMA transfer migth get stuck in running state when system clock <30MHz
+    // Needs power cycle to recover from that.
+    if (expectedDataRate < 200e6)
+        rx_dma_channel_count = 1;
+    else
+        rx_dma_channel_count = 2;
 
     // dccivac((uint32_t*)(rx_vspa_proxy_ro));
     auto nv_rx_vspa_proxy_ro = const_cast<t_rx_ch_host_proxy*>(rx_vspa_proxy_ro);
