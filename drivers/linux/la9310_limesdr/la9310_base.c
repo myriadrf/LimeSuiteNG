@@ -457,27 +457,9 @@ free_subdrv:
     return rc;
 }
 
-static int la9310_is_m4_booted(struct la9310_dev* la9310_dev)
-{
-    struct la9310_hif* hif = la9310_dev->hif;
-    int rc = 0;
-
-    uint32_t hif_host_version = LA9310_VER_MAKE(LA9310_HIF_MAJOR_VERSION, LA9310_HIF_MINOR_VERSION);
-    uint32_t hif_ep_version = readl(&hif->hif_ver);
-
-    return hif_ep_version == hif_host_version;
-}
-
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
 {
     int rc;
-
-    if (la9310_is_m4_booted(la9310_dev))
-    {
-        dev_err(la9310_dev->dev, "Firmware for ARM M4 is already loaded!\n");
-        return -EBUSY;
-    }
-
     dev_info(la9310_dev->dev, "Loading RTOS image\n");
     rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
     if (rc)
