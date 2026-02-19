@@ -11,14 +11,96 @@
  * in the background. To stop the active stream and samples aggregation, call @ref lime::RFStream::Stop() "Stop()" function. Additionally, when the stream is active, you can view the current stream 
  * stats for Tx and Rx directions using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function.
  * 
- * Once the stream is in an active state, user can begin reading and writing Rx and Tx buffers with samples of the required type. To receive buffered samples from Rx direction, user must call 
- * stream object member @ref stream_control "Receive()". To send samples through Tx direction, user must queue the samples to buffer by calling stream object member @ref stream_control "Transmit()".
+ * Once the stream is in an active state, samples of the required type can be written to Tx or read from Rx buffers. To receive buffered samples from Rx direction, call stream object member 
+ * @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *) "Receive()". To send samples through Tx direction, queue the samples to buffer by calling
+ * stream object member @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *) "Transmit()".
  * 
+ * @important Avoid mixing sample types when transmiting and retrieving samples via <b>Receive()</b> and <b>Transmit()</b> functions. Select the functions that accept the sample type that was 
+ * specified via `format` parameter in stream configuration stage.
+ *
+ * @subsection generic_stream_example Generic stream example
  * 
- * 
- * 
+ * Here is a generic code example for running a data stream in both directions in SISO mode:
  * 
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/complex.h>
+ * #include <limesuiteng/StreamMeta.h>
  * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration, registration and device/stream configuration 
+ *    
+ *    bool stop = false;
+ *    bool send = false;
+ *    uint32_t bufferSize = samplesInPacket * packetsInTransac;
+ *    uint32_t samplesRead = 0;
+ *    uint32_t samplesSent = 0;
+ *    lime::complex32f_t RxChABuf[bufferSize];
+ *    lime::complex32f_t TxChABuf[bufferSize];
+ *    lime::complex32f_t * const RxBuffers[2] = {RxChABuf, nullptr}; // Working only with channel A
+ *    lime::complex32f_t * const TxBuffers[2] = {TxChABuf, nullptr}; // Working only with channel A
+ *    lime::StreamStats RxStats;
+ *    
+ *    stream->Start()
+ *    
+ *    // Work until a stop condition (keyboard interrupt or any other interrupt) is met
+ *    while(!stop)
+ *    {
+ *       samplesRead = stream->Receive(RxBuffers, bufferSize, nullptr);
+ *       
+ *       ... // Process received samples 
+ *    
+ *       // Send response or any other data if necessary
+ *       if(send)
+ *       {
+ *          ... // Fill TxChABuff with data 
+ * 
+ *          samplesSent = stream->Transmit(TxBuffers, bufferSize, nullptr);
+ *       }
+ *    }
+ *    stream->Stop();
+ *    stream->StreamStatus(&RxStats, nullptr);
+ *    std::cout << "Total quantity of received packets - " << RxStats.packets << std::endl;
+ *    ... // Print out other stats
+ * 
+ * 
+ *    ... // Other program code
+ *    
+ *    // End of a program
+ *    stream->Stop();
+ *    stream->Teardown();
+ *    lime::DeviceRegistry::freeDevice(device);
+ * }
  * @endcode
+ * 
+ * Before starting the stream, appropriate buffers for Rx and Tx directions must be defined. Since packets are managed internally and the user operates using only samples, buffer sizes must also
+ * be defined in sample quantity. Absolute minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
+ * maintain reasonable stream speeds, it is recommended to avoid the absolute minimum size and instead define the buffer size as a quantity of samples of multiple packets. In the example above
+ * buffer size is calculated using stream parameters. Once the buffers `RxChABuf` and `TxChABuf` of required size are defined, the starting addresses of the buffers are respectively
+ * stored in two dimensional arrays `RxBuffers` and `TxBuffers`. Two dimensional arrays are used to store the starting addresses of Rx and Tx buffers for different channels. By default the first
+ * argument must be the address of buffer for channel A and the second argument must be the address of buffer for channel B. If channel B is not required (operating in SISO mode), a `nullptr` can
+ * be passed as an argument. In the example above we are using a LimeSDR Mini V2, which operates only on channel A (channel B is not connected physically), therefore the second argument of `RxBuffers`
+ * and `TxBuffers` arrays is set to `nullptr`.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.}
+ * @else
+ * @warning If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.
+ * @endif
+ * 
  */
