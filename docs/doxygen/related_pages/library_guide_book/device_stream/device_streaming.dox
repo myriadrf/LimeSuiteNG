@@ -44,6 +44,7 @@
  *    
  *    bool stop = false;
  *    bool send = false;
+ *    bool endOfSamples = false;
  *    uint32_t bufferSize = samplesInPacket * packetsInTransac;
  *    uint32_t samplesRead = 0;
  *    uint32_t samplesSent = 0;
@@ -54,6 +55,7 @@
  *    lime::StreamStats RxStats, TxStats;
  *    lime::StreamRxMeta RxMeta;
  *    lime::StreamTxMeta TxMeta;
+ *    TxMeta.hasTimestamp = true;
  * 
  *    ... // Other additional set up before starting the stream
  *    
@@ -70,6 +72,9 @@
  *       if(send)
  *       {
  *          ... // Fill TxChABuff with data 
+ *          
+ *          if(endOfSamples)
+ *             TxMeta.flags = lime::StreamTxMeta::Flags::EndOfBurst;
  * 
  *          samplesSent = stream->Transmit(TxBuffers, bufferSize, &TxMeta);
  *       }
@@ -110,14 +115,20 @@
  * enters a worker loop, which reads out buffered data via `Receive(...)` function into work buffer `RxChABuf`. `Receive(...)` function call blocks until the work buffer (`RxChABuf`) is filled with 
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
  * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve packet meta data, which contains timestamps. To retrieve the packet meta data, address of variable of 
- * `lime::StreamRxMeta` type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function updates the variable with the meta data of the last packet, 
+ * `lime::StreamRxMeta` type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function updates the variable with the meta data of the first packet, 
  * that was read from an internal buffer. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) 
  * is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part of samples is still stored and can simply be read out by calling the 
  * `Receive(...)` function again.
  * 
- * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to an interanlly managed buffer. `Transmit(...)` function call always blocks until all
- * samples from work buffer (`TxChABuf) are transferred to internally managed transmit buffer or a timeout occurs due to insuficient space in internal buffer. 
- * timeout if internall buffer maximum sample capacity is reached. On return function reports the amount of samples that were queued for transmission.
+ * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to an internally managed buffer. `Transmit(...)` function call always blocks until all
+ * samples from work buffer (`TxChABuf`) are transferred to internally managed transmit buffer or a timeout occurs. On transmission, a timeout can occur if the internally managed transmit buffer is filled and 
+ * has no empty space for new samples. On return function reports the amount of samples that were queued for transmission. `Transmit(...)` function is also able to append meta data, which is a timestamp, to 
+ * the packets. To add meta data to sample packets, the address of variable of `lime::StreamTxMeta` type must be passed as an argument for the third parameter of `Transmit(...)` function. In the example code above,
+ * a `TxMeta` variable is defined and its member `hasTimestamp` is initialized with value `true`, the address of variable is passed in to the `Transmit(...)` function parameter list. If meta data is not important, 
+ * a `nullptr` argument can be passed to ommit the generation of packet meta data. If `Transmit(...)` function queues a quantity of samples that does not make up a single packet, the samples are buffered until sufficient
+ * amount of samples are added to the queue of already buffered samples to fill up the remaining slots of a packet. If the last batch of samples to be queued for transmission, do not make up a single packet it is recommended
+ * to use the `Transmit(...)` flushing mode, which is available with the use of Tx meta data. In the example above the `TxMeta` variable member `flag` is set to `lime::StreamTxMeta::Flags::EndOfBurst`, which indicates that
+ * this is the end of packet transmission, any remaining data will be flushed, packets missing samples will be padded with value 0 and the last packets will be sent.
  * 
  * To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
  * using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStatus()" function. Function can retrieve statistics for both directions at a time and the current capacity of samples stored in the 
