@@ -52,6 +52,8 @@
  *    lime::complex32f_t * const RxBuffers[2] = {RxChABuf, nullptr}; // Working only with channel A
  *    lime::complex32f_t * const TxBuffers[2] = {TxChABuf, nullptr}; // Working only with channel A
  *    lime::StreamStats RxStats, TxStats;
+ *    lime::StreamRxMeta RxMeta;
+ *    lime::StreamTxMeta TxMeta;
  * 
  *    ... // Other additional set up before starting the stream
  *    
@@ -60,7 +62,7 @@
  *    // Work until a stop condition (keyboard interrupt or any other interrupt) is met
  *    while(!stop)
  *    {
- *       samplesRead = stream->Receive(RxBuffers, bufferSize, nullptr);
+ *       samplesRead = stream->Receive(RxBuffers, bufferSize, &RxMeta);
  *       
  *       ... // Process received samples 
  *    
@@ -69,7 +71,7 @@
  *       {
  *          ... // Fill TxChABuff with data 
  * 
- *          samplesSent = stream->Transmit(TxBuffers, bufferSize, nullptr);
+ *          samplesSent = stream->Transmit(TxBuffers, bufferSize, &TxMeta);
  *       }
  *    }
  *    stream->Stop();
@@ -87,13 +89,13 @@
  * @endcode
  * 
  * Before starting the stream, appropriate buffers for Rx and Tx directions must be defined. Since packets are managed internally and the user operates using only samples, buffer sizes must also
- * be defined in sample quantity. Absolute minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
- * maintain reasonable stream speeds, it is recommended to avoid the absolute minimum size and instead define the buffer size as a quantity of samples of multiple packets. In the example above
- * buffer size is calculated using stream parameters. Once the buffers `RxChABuf` and `TxChABuf` of required size are defined, the starting addresses of the buffers are respectively
- * stored in two dimensional arrays `RxBuffers` and `TxBuffers`. Two dimensional arrays are used to store the starting addresses of Rx and Tx buffers for different channels. By default the first
- * argument must be the address of buffer for channel A and the second argument must be the address of buffer for channel B. If channel B is not required (operating in SISO mode), a `nullptr` can
- * be passed as an argument. In the example above we are using a LimeSDR Mini V2, which operates only on channel A (channel B is not connected physically), therefore the second argument of `RxBuffers`
- * and `TxBuffers` arrays is set to `nullptr`.
+ * be defined in sample quantity. Recommended minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
+ * maintain reasonable stream speeds, it is recommended to avoid the recommended minimum size and instead define the buffer size as a quantity of samples of multiple packets. In the example above
+ * buffer size is calculated using stream parameters, which were set up before the stream start. Once the buffers `RxChABuf` and `TxChABuf` of required size are defined, the starting addresses of 
+ * the buffers are respectively stored in two dimensional arrays `RxBuffers` and `TxBuffers`. Two dimensional arrays are used to store the starting addresses of Rx and Tx buffers for different channels. 
+ * By default the first argument must be the address of buffer for channel A and the second argument must be the address of buffer for channel B. If channel B is not required (operating in SISO mode), 
+ * a `nullptr` can be passed as an argument. In the example above we are using a LimeSDR Mini V2, which operates only on channel A (channel B is not connected physically), therefore the second argument 
+ * of `RxBuffers` and `TxBuffers` arrays is set to `nullptr`.
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -105,9 +107,19 @@
  * @endif
  * 
  * Once the stream is started, aggregation of samples in an internal buffer for Rx direction starts (unless sample on PPS is enabled). In the example code above, once the stream is started, code
- * enters a worker loop, which reads out buffered data via `Receive(...)` function into our work buffer `RxChABuf`. `Receive(...)` function call blocks and can timeout if no samples are present in internal
- * buffer for Rx direction. If a response for received data is required, `Transmit(...)` function can be used to queue data for transmission. `Transmit(...)` function call blocks and can timeout if internall
- * buffer is full with samples that have not been sent yet. To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
+ * enters a worker loop, which reads out buffered data via `Receive(...)` function into work buffer `RxChABuf`. `Receive(...)` function call blocks until the work buffer (`RxChABuf`) is filled with 
+ * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
+ * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve packet meta data, which contains timestamps. To retrieve the packet meta data, address of variable of 
+ * `lime::StreamRxMeta` type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function updates the variable with the meta data of the last packet, 
+ * that was read from an internal buffer. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) 
+ * is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part of samples is still stored and can simply be read out by calling the 
+ * `Receive(...)` function again.
+ * 
+ * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to an interanlly managed buffer. `Transmit(...)` function call always blocks until all
+ * samples from work buffer (`TxChABuf) are transferred to internally managed transmit buffer or a timeout occurs due to insuficient space in internal buffer. 
+ * timeout if internall buffer maximum sample capacity is reached. On return function reports the amount of samples that were queued for transmission.
+ * 
+ * To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
  * using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStatus()" function. Function can retrieve statistics for both directions at a time and the current capacity of samples stored in the 
  * internal buffers for both directions can be viewed via `RxStats.FIFO.usedCount` and `TxStats.FIFO.usedCount` parameters. In the example code above StreamStatus is only requested after the stream is stoped, to view the total 
  * received count of samples. 
