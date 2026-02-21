@@ -711,6 +711,9 @@ API_EXPORT int CALL_CONV LMS_SetupStream(lms_device_t* device, lms_stream_t* str
         break;
     }
 
+    if (config.hintSampleRate <= 0)
+        config.hintSampleRate = apiDevice->device->GetSampleRate(0, TRXDir::Rx, 0);
+
     // stream->throughputVsLatency can be ignored, it's automatic now
     apiDevice->stream.reset();
     apiDevice->stream = apiDevice->device->StreamCreate(config, apiDevice->moduleIndex);
