@@ -5,7 +5,7 @@
  * @ref dev_stream_config "Go to SDR device stream configuration topic"
  * @endif
  * 
- * @section runing_stream Streaming
+ * @section streaming_summary Summary
  * 
  * Once the SDR device and stream parameters are configured, stream can be started using @ref lime::RFStream::Start() "Start()" function. This enables the aggregation of samples for Tx and Rx directions 
  * in the background. To stop the active stream and samples aggregation, call @ref lime::RFStream::Stop() "Stop()" function. Additionally, when the stream is active, you can view the current stream 
@@ -18,7 +18,7 @@
  * @important Avoid mixing sample types when transmiting and retrieving samples via <b>Receive()</b> and <b>Transmit()</b> functions. Select the functions that accept the sample type that was 
  * specified via `format` parameter in stream configuration stage.
  *
- * @subsection generic_stream_example Generic stream example
+ * @section generic_stream_example Generic stream example
  * 
  * Here is a generic code example for running a data stream in both directions in SISO mode:
  * 
@@ -93,6 +93,8 @@
  * }
  * @endcode
  * 
+ * @subsection stream_buffers Work buffers
+ * 
  * Before starting the stream, appropriate buffers for Rx and Tx directions must be defined. Since packets are managed internally and the user operates using only samples, buffer sizes must also
  * be defined in sample quantity. Recommended minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
  * maintain reasonable stream speeds, it is recommended to avoid the recommended minimum size and instead define the buffer size as a quantity of samples of multiple packets. In the example above
@@ -111,6 +113,8 @@
  * @warning If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.
  * @endif
  * 
+ * @subsection stream_read Reading samples
+ * 
  * Once the stream is started, aggregation of samples in an internal buffer for Rx direction starts (unless sample on PPS is enabled). In the example code above, once the stream is started, code
  * enters a worker loop, which reads out buffered data via `Receive(...)` function into work buffer `RxChABuf`. `Receive(...)` function call blocks until the work buffer (`RxChABuf`) is filled with 
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
@@ -119,6 +123,8 @@
  * that was read from an internal buffer. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) 
  * is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part of samples is still stored and can simply be read out by calling the 
  * `Receive(...)` function again.
+ * 
+ * @subsection stream_write Writing samples
  * 
  * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to an internally managed buffer. `Transmit(...)` function call always blocks until all
  * samples from work buffer (`TxChABuf`) are transferred to internally managed transmit buffer or a timeout occurs. On transmission, a timeout can occur if the internally managed transmit buffer is filled and 
@@ -129,6 +135,8 @@
  * amount of samples are added to the queue of already buffered samples to fill up the remaining slots of a packet. If the last batch of samples to be queued for transmission, do not make up a single packet it is recommended
  * to use the `Transmit(...)` flushing mode, which is available with the use of Tx meta data. In the example above the `TxMeta` variable member `flag` is set to `lime::StreamTxMeta::Flags::EndOfBurst`, which indicates that
  * this is the end of packet transmission, any remaining data will be flushed, packets missing samples will be padded with value 0 and the last packets will be sent.
+ * 
+ * @subsection stream_stats Monitoring statistics
  * 
  * To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
  * using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStatus()" function. Function can retrieve statistics for both directions at a time and the current capacity of samples stored in the 
