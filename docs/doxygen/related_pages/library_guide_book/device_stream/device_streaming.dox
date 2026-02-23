@@ -15,7 +15,9 @@
  * @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *) "Receive()". To send samples through Tx direction, queue the samples to buffer by calling
  * stream object member @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *) "Transmit()".
  * 
- * @important Avoid mixing sample types when transmiting and retrieving samples via <b>Receive()</b> and <b>Transmit()</b> functions. Select the functions that accept the sample type that was 
+ * @important Streaming interface is <b>not thread safe</b>. Avoid calling `Receive(...)` or `Transmit(...)` functions from multiple threads. More info in @ref important_stream_notes "Important notes" section.
+ * 
+ * @important Avoid mixing sample types when transmiting and retrieving samples via `Receive(...)` and `Transmit(...)` functions. Select the functions that accept the sample type that was 
  * specified via `format` parameter in stream configuration stage.
  *
  * @section generic_stream_example Generic stream example
@@ -173,7 +175,7 @@
  * The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the sent data transmission timestamp is already behind the hardware's current timestamp.  
  * The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
  * 
- * @subsection important_stream_notes Important notes
+ * @section important_stream_notes Important notes
  * 
  * Streaming interface is <b>not thread safe</b> and multiple calls to `Receive(...)` or `Transmit(...)` from different threads can lead to poor performace or crashes. A single thread should manage a single
  * stream function (eg. Receive with thread 1 and transmit with thread 2).  
