@@ -143,9 +143,36 @@
  * 
  * @subsection stream_stats Monitoring statistics
  * 
- * To avoid unnecessary data loss for Tx and Rx directions, it is possible to monitor the current capacity of internal buffers by retrieving stream statistics
- * using @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStatus()" function. Function can retrieve statistics for both directions at a time and the current capacity of samples stored in the 
- * internal buffers for both directions can be viewed via `RxStats.FIFO.usedCount` and `TxStats.FIFO.usedCount` parameters. In the example code above StreamStatus is only requested after the stream is stoped, to view the total 
- * received count of samples. 
+ * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stoped. To view stream statistics for both Tx and Rx directions, 
+ * variables of `lime::StreamStats` type must be defined (`RxStats` and `TxStats` variables in the example code above). The addresses of defined variables must be passed as arguments to 
+ * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function parameter list. To avoid the retrieval of stream statistics for a particular direction, pass the `nullptr` argument.
+ * In the example code above, statistics of Tx direction are ignored (because a `nullptr` argument is passed) and only the statistics of Rx direction are returned after the stream is stoped. 
+ * Available statistics for a stream direction:
+ * <ul>
+ *    <li>Current timestamp</li>
+ *    <li>Total amount of bytes transfered</li>
+ *    <li>Data rate in B/s</li>
+ *    <li>Total amount of packets transferred</li>
+ *    <li>FIFO buffer status</li>
+ *    <li>Data loss</li>
+ *    <li>Data overruns</li>
+ *    <li>Data underruns</li>
+ * </ul>
+ * 
+ * To view the actual names of parameters view the definition of `lime::StreamStats` structure.
+ * 
+ * Streaming statistics are useful for observing the state of Rx and Tx sample queues. FIFO status allows to monitor the current capacity of sample queues for Rx and Tx directions. FIFO status allows to view:
+ * <ul>
+ *    <li>Total buffer capacity</li>
+ *    <li>Occupied buffer capacity</li>
+ *    <li>Ratio of occupied capacity to free capacity</li>
+ * </ul>
+ * 
+ * The `overrun` parameter indicates the amount of times the software buffer overrun event occured. Software buffer overrun occurs, when the device receiver hardware produces more samples than the host
+ * system software can process and the produced samples are dropped.  
+ * The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the sent data transmission timestamp is already behind the hardware's current timestamp.  
+ * The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
+ * 
+ * @subsection important_stream_notes Important notes
  * 
  */
