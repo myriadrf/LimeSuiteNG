@@ -131,8 +131,8 @@ static int la9310_scratch_outbound_create(struct la9310_dev* la9310_dev)
         LA9310_SCRATCH_OUTBOUND_WIN,
         PCIE_ATU_TYPE_MEM,
         LA9310_EP_DMA_BUF_PHYS_ADDR, /*cpu addr */
-        la9310_dev->scratch_buf_phys_addr, /*pci addr 1 to 1 map */
-        la9310_dev->scratch_buf_size);
+        la9310_dev->dma_info.host_buf.phys_addr, /*pci addr 1 to 1 map */
+        la9310_dev->dma_info.host_buf.size);
     la9310_dev->dma_info.ep_pcie_addr = LA9310_EP_DMA_BUF_PHYS_ADDR;
 
     dev_info(la9310_dev->dev, "Scratch buf DMA ATU done\n");
@@ -140,7 +140,7 @@ static int la9310_scratch_outbound_create(struct la9310_dev* la9310_dev)
     return 0;
 }
 
-static void la9310_create_rfnm_iqflood_outbound(struct la9310_dev* la9310_dev)
+static void la9310_create_iqflood_outbound(struct la9310_dev* la9310_dev)
 {
     struct la9310_mem_region_info* ccsr_region;
 
@@ -150,13 +150,13 @@ static void la9310_create_rfnm_iqflood_outbound(struct la9310_dev* la9310_dev)
         LA9310_V2H_OUTBOUND_WIN,
         PCIE_ATU_TYPE_MEM,
         LA9310_IQFLOOD_PHYS_ADDR,
-        la9310_dev->iq_mem_addr,
-        la9310_dev->iq_mem_size);
+        la9310_dev->iqflood_region.phys_addr,
+        la9310_dev->iqflood_region.size);
     dev_info(la9310_dev->dev,
-        "RFNM IQFLOOD Buff:0x%x[H]-0x%llx[M],size %d\n",
+        "IQFLOOD Buff:0x%x[H]-0x%llx[M],size %li\n",
         LA9310_IQFLOOD_PHYS_ADDR,
-        la9310_dev->iq_mem_addr,
-        la9310_dev->iq_mem_size);
+        la9310_dev->iqflood_region.phys_addr,
+        la9310_dev->iqflood_region.size);
 }
 
 static void la9310_init_subdrv_region(
@@ -279,23 +279,18 @@ static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
     struct la9310_mem_region_info* host_region = &dma_info->host_buf;
     int rc = 0;
 
-    la9310_dev->scratch_buf_size = 4 * (1024 * 1024);
+    uint32_t scratch_buf_size = 4 * (1024 * 1024);
 
-    rc = la9310_alloc_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, la9310_dev->scratch_buf_size, DMA_BIDIRECTIONAL);
+    rc = la9310_alloc_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, scratch_buf_size, DMA_BIDIRECTIONAL);
 
     if (rc)
         return rc;
 
-    la9310_dev->scratch_buf_phys_addr = host_region->phys_addr;
-
-    if ((!host_region->vaddr) || (la9310_dev->scratch_buf_size < LA9310_DMA_BUF_SIZE))
+    if ((!host_region->vaddr) || (host_region->size < LA9310_DMA_BUF_SIZE))
     {
         dev_err(la9310_dev->dev, "ERR: ioremap DDR Address Failed\n");
-        if (la9310_dev->scratch_buf_size < LA9310_DMA_BUF_SIZE)
-            dev_err(la9310_dev->dev,
-                "Scratch buffer to small (%i), expected >= %i\n",
-                la9310_dev->scratch_buf_size,
-                LA9310_DMA_BUF_SIZE);
+        if (host_region->size < LA9310_DMA_BUF_SIZE)
+            dev_err(la9310_dev->dev, "Scratch buffer too small (%li), expected >= %i\n", host_region->size, LA9310_DMA_BUF_SIZE);
         return -ENOMEM;
     }
     dma_info->dma_region_used = 0;
@@ -530,15 +525,13 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
         return rc;
     }
 
-    la9310_dev->iq_mem_size = 4 * 1024 * 1024;
+    uint32_t iq_mem_size = 4 * 1024 * 1024;
 
-    rc = la9310_alloc_dma_buf(
-        la9310_dev->dev, "IQ Flood Buffer", &la9310_dev->iqflood_region, la9310_dev->iq_mem_size, DMA_BIDIRECTIONAL);
+    rc = la9310_alloc_dma_buf(la9310_dev->dev, "IQ Flood Buffer", &la9310_dev->iqflood_region, iq_mem_size, DMA_BIDIRECTIONAL);
     if (rc)
         return rc;
-    la9310_dev->iq_mem_addr = la9310_dev->iqflood_region.phys_addr;
 
-    la9310_create_rfnm_iqflood_outbound(la9310_dev);
+    la9310_create_iqflood_outbound(la9310_dev);
 
     la9310_init_msg_unit_ptrs(la9310_dev);
     la9310_init_ep_logger(la9310_dev);

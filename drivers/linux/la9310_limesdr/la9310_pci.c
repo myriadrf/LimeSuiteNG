@@ -183,26 +183,6 @@ static int la9310_configure_pci(struct pci_dev* pciContext)
     pcidev_tune_caps(pciContext);
     pci_set_master(pciContext);
 
-    // for (int i = 0; i < 3; i++)
-    // {
-    //     // Read the hardware address
-    //     resource_size_t phys_addr = pci_resource_start(pciContext, i);
-    //     uint32_t size = pci_resource_len(pciContext, i);
-    //     myDevice->bar_addr[i] = pci_iomap(pciContext, i, size);
-    //     dev_dbg(sysDev, "BAR:%d va:0x%px pa:0x%p len:0x%x\n", i, myDevice->bar_addr[i], (void*)phys_addr, (uint32_t)size);
-    //     myDevice->la9310->mem_regions[i].vaddr = myDevice->bar_addr[i];
-    //     myDevice->la9310->mem_regions[i].phys_addr = virt_to_phys(myDevice->la9310->mem_regions[i].vaddr);
-    //     myDevice->la9310->mem_regions[i].size = size;
-    // }
-
-    // #ifdef LA9310_FLG_PCI_8MSI_EN
-    //     ret = la9310_dev_set_interrupt_capability(pciContext, PCI_INT_MODE_MULTIPLE_MSI);
-    // #else
-    //     ret = la9310_dev_set_interrupt_capability(pciContext, PCI_INT_MODE_MSI);
-    // #endif
-    //     if (ret < 0)
-    //         return ret;
-
     pcie_print_link_status(pciContext);
     return 0;
 }
@@ -333,8 +313,6 @@ static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
         goto out;
     }
 
-    // list_add_tail(&la9310_dev->list, &pcidev_list);
-
 out:
     if (rc)
     {
@@ -379,7 +357,6 @@ static int la9310_limesdr_pci_probe(struct pci_dev* pciContext, const struct pci
     if (ret < 0)
     {
         dev_err(sysDev, "la9310_limesdr_device_init fail (%i)\n", ret);
-        // la9310_limesdr_device_destroy(myDevice);
         return -1;
     }
 

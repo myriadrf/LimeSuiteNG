@@ -1,6 +1,6 @@
 #include "la9310_character_device.h"
 
-#define DEBUG
+// #define DEBUG
 
 #include <linux/errno.h>
 #include <linux/kernel.h>
@@ -94,7 +94,7 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
     if (isDMA)
     {
         // dynamically allocated mappings
-        dev_info(sysDev,
+        dev_dbg(sysDev,
             "MMAP %i - vm_start:%lu cpu:%p bus:%llx size:%lu\n",
             window_id,
             vma->vm_start,
@@ -107,7 +107,7 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
     {
         // BAR mappings
         size_t pfn = region->phys_addr >> PAGE_SHIFT;
-        dev_info(sysDev, "MMAP %i - vm_start:%lx pfn:%lx size:%lu\n", window_id, vma->vm_start, pfn, mapSize);
+        dev_dbg(sysDev, "MMAP %i - vm_start:%lx pfn:%lx size:%lu\n", window_id, vma->vm_start, pfn, mapSize);
         vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
         vma->vm_ops = &mmap_mem_ops;
 

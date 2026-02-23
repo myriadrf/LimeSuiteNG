@@ -70,7 +70,6 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     if (hif_size)
     {
         dev_info(la9310_dev->dev, "Reset HandShake: Done. HIF 0x%x, size 0x%x (%d)\n", hif_offset, hif_size, hif_size);
-        la9310_dev->hif_offset = hif_offset;
         la9310_dev->hif_size = hif_size;
     }
     else

@@ -149,26 +149,17 @@ struct la9310_dev {
     struct pci_dev* pdev;
     struct device* dev;
     struct class* class;
-    int id;
     struct la9310_sub_driver* sub_drvs;
     struct la9310_mem_region_info mem_regions[LA9310_MEM_REGION_BAR_END];
     struct la9310_msg_unit* msg_units[LA9310_MSG_UNIT_CNT];
     struct la9310_dma_info dma_info;
     struct la9310_mem_region_info iqflood_region;
     struct la9310_hif* hif;
-    u32 hif_offset;
     u32 hif_size;
     struct la9310_ep_log ep_log;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
     void* vspa_priv;
-    struct list_head list;
-
-    //
-    int scratch_buf_size;
-    int iq_mem_size;
-    uint64_t iq_mem_addr;
-    uint64_t scratch_buf_phys_addr;
 
     struct platform_device* uart;
 

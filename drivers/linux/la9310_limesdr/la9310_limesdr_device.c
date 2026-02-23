@@ -40,9 +40,6 @@ int la9310_limesdr_device_init(struct la9310_dev* la9310, struct pci_dev* pciCon
 
 void la9310_limesdr_device_destroy(struct la9310_dev* la9310)
 {
-    // Disable all interrupts
-    // FreeIRQs(myDevice);
-
     struct device* sysDev = &la9310->pdev->dev;
     dev_info(sysDev, "%s\n", __func__);
 

@@ -205,16 +205,6 @@ static int vspa_mem_initialization(struct vspa_device* vspadev)
         {
 
             memcpy_toio(vspa_dma_region->vaddr, (const void*)mem_addr, z_dma_req.byte_cnt);
-
-            // #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
-            // 			dma_map_page_attrs(&vspadev->pdev->dev,
-            // 				virt_to_page(vspa_dma_region->vaddr),
-            // 				offset_in_page(vspa_dma_region->vaddr), z_dma_req.byte_cnt,
-            // 				DMA_TO_DEVICE, 0);
-            // #else
-            // 			pci_map_single(vspadev->pdev, vspa_dma_region->vaddr,
-            // 				z_dma_req.byte_cnt, PCI_DMA_TODEVICE);
-            // #endif
             dma_wmb();
             z_dma_req.axi_addr = vspa_dma_region->phys_addr;
 
@@ -488,16 +478,6 @@ int vspa_fw_dma_write(struct la9310_dev* la9310_dev, struct dma_param* linfo, ui
         }
 
         memcpy(vspa_dma_region->vaddr, (const void*)dma_req.axi_addr, dma_req.byte_cnt);
-
-        // #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
-        // 		dma_map_page_attrs(&vspadev->pdev->dev,
-        // 				virt_to_page(vspa_dma_region->vaddr),
-        // 				offset_in_page(vspa_dma_region->vaddr), dma_req.byte_cnt,
-        // 				(enum dma_data_direction)DMA_TO_DEVICE, 0);
-        // #else
-        // 		pci_map_single(vspadev->dev, vspa_dma_region->vaddr,
-        // 				dma_req.byte_cnt, PCI_DMA_TODEVICE);
-        // #endif
         dma_sync_single_for_device(
             la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
         dma_wmb();
