@@ -69,19 +69,6 @@ static ssize_t target_log_show(struct device* dev, struct device_attribute* attr
     log_len = 0;
 
     dev_info(la9310_dev->dev, "LA9310 log buf dump, vaddr %px, offset %d\n", ep_log->buf, ep_log->offset);
-    // #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
-    //     dma_map_single(&((struct pci_dev *)la9310_dev->pdev)->dev,
-    //             ep_log->buf, ep_log->len,
-    //             DMA_FROM_DEVICE);
-    // #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
-    //     dma_map_page_attrs(&la9310_dev->pdev->dev,
-    //             virt_to_page(ep_log->buf),
-    //             offset_in_page(ep_log->buf), ep_log->len,
-    //             DMA_FROM_DEVICE, 0);
-    // #else
-    //     pci_map_single(la9310_dev->pdev, ep_log->buf, ep_log->len,
-    //                PCI_DMA_FROMDEVICE);
-    // #endif
     log_len = la9310_collect_ep_log(ep_log, buf);
     if (log_len == 0)
     {
@@ -197,7 +184,6 @@ int la9310_init_sysfs(struct la9310_dev* la9310_dev)
         dev_err(la9310_dev->dev, "Failed to create sysfs group\n");
         goto out;
     }
-    INIT_LIST_HEAD(&la9310_dev->host_stats.list);
     dev_info(la9310_dev->dev, "Created sysfs group %s\n", la9310_attribute_group.name);
 out:
     return rc;

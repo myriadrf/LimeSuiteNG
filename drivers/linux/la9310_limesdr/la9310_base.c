@@ -200,7 +200,6 @@ struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_d
 
 static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
 {
-
     struct la9310_mem_region_info* ep_buf;
     int idx;
 
@@ -208,10 +207,6 @@ static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
     idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_VSPA_OVERLAY);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
     la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_VSPA_FW_SIZE, LA9310_VSPA_OVERLAY);
-    /*VSPA */
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_VSPA);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_VSPA_DMA_SIZE, LA9310_MEM_REGION_VSPA);
 
     /*FW*/ idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_FW);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
@@ -220,18 +215,6 @@ static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
     idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_DBG_LOG);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
     la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
-    /*IQ Data samples*/
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_IQ_SAMPLES);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_IQ_SAMPLES_SIZE, LA9310_MEM_REGION_IQ_SAMPLES);
-    /* NLM Operations */
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_NLM_OPS);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_NLM_OPS_SIZE, LA9310_MEM_REGION_NLM_OPS);
-
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_STD_FW);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_STD_FW_SIZE, LA9310_MEM_REGION_STD_FW);
 }
 
 static int la9310_alloc_dma_buf(struct device* dev,

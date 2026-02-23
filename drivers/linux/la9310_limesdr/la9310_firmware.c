@@ -11,6 +11,10 @@
 
 #define NXP_ERRATUM_A008822 1
 
+// Boot HandShake timeout in jiffies and retry count
+#define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 100
+#define LA9310_HOST_BOOT_HSHAKE_RETRIES 60
+
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
 {
     int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
@@ -145,7 +149,6 @@ static void la9310_initiate_boot(const struct la9310_dev* la9310_dev, const stru
 int la9310_load_firmware_to_dma(
     struct la9310_dev* la9310_dev, const struct la9310_mem_region_info* firmware_dma, const char __user* fw_data, size_t fw_size)
 {
-    // const struct la9310_mem_region_info* firmware_dma = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW);
     if (fw_size > firmware_dma->size)
     {
         dev_err(la9310_dev->dev, "Firmware too big (%ld) available buffer size (%ld)\n", fw_size, firmware_dma->size);
@@ -165,7 +168,6 @@ int la9310_load_firmware_to_dma(
         dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
         return -EIO;
     }
-    // la9310_dev->firmware_info.size = fw_size;
     dma_sync_single_for_device(
         la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
     return 0;

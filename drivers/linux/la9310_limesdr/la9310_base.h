@@ -4,23 +4,7 @@
 #ifndef __LA9310_BASE_H__
 #define __LA9310_BASE_H__
 
-#include <linux/if.h>
-#include <linux/cdev.h>
-#include <linux/semaphore.h>
 #include "common_headers/la9310_host_if.h"
-#include <linux/firmware.h>
-
-/*Boot HandShake timeout in jiffies and retry count */
-#if defined(SEEVE)
-    #define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 10
-    #define LA9310_HOST_BOOT_HSHAKE_RETRIES 40
-#else
-    #define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 100
-    #define LA9310_HOST_BOOT_HSHAKE_RETRIES 60
-#endif
-#define LA9310_IPC_INIT_WAIT_TIMEOUT 100
-#define LA9310_IPC_INIT_WAIT_RETRIES 50
-#define NXP_ERRATUM_A008822 1
 
 /*Enable the multiple MSIs support */
 #define LA9310_REAL_MSI_FLAG (1 << 0)
@@ -28,47 +12,12 @@
 #define LA931XA_MSI_IRQ_FREE 0x45455246 /* 'F''R''E''E' */
 #define LA931XA_MSI_IRQ_BUSY 0x59535542 /* 'B''U''S''Y' */
 
-#define TCML_MEM_SIZE 0x20000
-#define TCMU_MEM_SIZE 0x10000
-#define MAX_MODEM_INSTANCES 1
-
-#define IN_MB(x) ((x) / (1024 * 1024))
-#define IN_KB(x) ((x) / (1024))
-
-struct la9310_global {
-    bool active;
-    char dev_name[64];
-};
-extern struct la9310_global g_la9310_global[];
-
 enum la9310_init_stage {
     LA9310_SCRATCH_DMA_INIT_STAGE = 1,
     LA9310_SYSFS_INIT_STAGE,
     LA9310_HANDSHAKE_INIT_STAGE,
     LA9310_IRQ_INIT_STAGE,
     LA9310_SUBDRV_PROBE_STAGE
-};
-
-struct la9310_dev;
-
-/**
- *  LA9310 host stats cookie to be used all module for stats sysfs interface
- *  la9310_show_stats: function pointer for show stats counter, module using
- *  this function should set the func ptr with valid stats counter show func
- *  NOTE:XXX: la9310_show_stats should exact value of return number of print
- *  string set i.e. it should be return value of sprintf
- *  la9310_reset_stats: to reset the stats counters module user will point with
- *  their own reset implementation function
- *  stats_arg: stats pointer callback func argument typecasted to void ptr
- */
-struct la9310_stats_ops {
-    ssize_t (*la9310_show_stats)(void* stats_args, char* buf, struct la9310_dev* la9310_dev);
-    void (*la9310_reset_stats)(void* stats_args);
-    void* stats_args;
-};
-struct la9310_host_stats {
-    struct la9310_stats_ops stats_ops;
-    struct list_head list;
 };
 
 /**
@@ -86,34 +35,11 @@ enum la9310_mem_region_t {
     LA9310_MEM_REGION_TCMU,
     LA9310_MEM_REGION_BAR_END,
     LA9310_VSPA_OVERLAY,
-    LA9310_MEM_REGION_VSPA,
     LA9310_MEM_REGION_FW,
     LA9310_MEM_REGION_DBG_LOG,
-    LA9310_MEM_REGION_IQ_SAMPLES,
-    LA9310_MEM_REGION_NLM_OPS,
-    LA9310_MEM_REGION_STD_FW,
-    LA9310_MEM_REGION_RF_CAL,
     LA9310_MEM_REGION_MAX,
 };
 
-typedef enum la9310_stat_control {
-    EP_CONTROL_IRQ_STATS = 0,
-    EP_CONTROL_V2H_STATS,
-    EP_CONTROL_AVI_STATS,
-    EP_CONTROL_EDMA_STATS,
-    EP_CONTROL_WDOG_STATS,
-    HOST_CONTROL_IRQ_STATS,
-    HOST_CONTROL_VSPA_STATS,
-    HOST_CONTROL_V2H_STATS
-} la9310_stat_control_t;
-
-#define LA9310_ENABLE_STATS 1
-#define LA9310_DISABLE_STATS 0
-#define LA9310_STATS_DEFAULT_ENABLE_MASK \
-    ((LA9310_ENABLE_STATS << EP_CONTROL_IRQ_STATS) | (LA9310_ENABLE_STATS << EP_CONTROL_V2H_STATS) | \
-        (LA9310_ENABLE_STATS << EP_CONTROL_AVI_STATS) | (LA9310_ENABLE_STATS << EP_CONTROL_WDOG_STATS) | \
-        (LA9310_ENABLE_STATS << HOST_CONTROL_IRQ_STATS) | (LA9310_ENABLE_STATS << HOST_CONTROL_VSPA_STATS) | \
-        (LA9310_ENABLE_STATS << HOST_CONTROL_V2H_STATS))
 /* Number of DMA regions*/
 #define LA9310_DMA_REGIONS (LA9310_MEM_REGION_MAX - LA9310_MEM_REGION_BAR_END - 1)
 
@@ -176,15 +102,8 @@ struct la9310_dma_info {
 #define LA9310_SUBDRV_DMA_REGION_IDX(i) (i - LA9310_MEM_REGION_BAR_END - 1)
 
 /* DMA buffer size definitions */
-#define LA9310_VSPA_DMA_SIZE (0)
-#define LA9310_FREERTOS_HEAP (24 * 1024)
-#define LA9310_FREERTOS_INTERRUPT_STACK 0x1000
-#define LA9310_FW_DMA_SIZE (TCML_MEM_SIZE - (LA9310_EP_HIF_SIZE + LA9310_FREERTOS_HEAP + LA9310_FREERTOS_INTERRUPT_STACK))
+#define LA9310_FW_DMA_SIZE 0x20000 // TCML memory
 #define LA9310_DBUG_LOG_SIZE (4 * 1024)
-#define LA9310_IQ_SAMPLES_SIZE (1 * 1024 * 1024)
-#define LA9310_NLM_OPS_SIZE (256 * 1024)
-#define LA9310_STD_FW_SIZE (128 * 1024)
-#define LA9310_SHARE_RF_SIZE (200 * 1024) /* 200KB */
 /* Mem region separator */
 #define LA9310_DMA_SEPARATOR_SIZE (64)
 #define LA9310_DMA_SEPARATOR_PAINT_CHAR (0xFC)
@@ -192,10 +111,8 @@ struct la9310_dma_info {
 #define LA9310_DMA_SEPARATOR_TOTAL_SIZE (LA9310_DMA_SEPARATOR_SIZE * LA9310_DMA_REGIONS)
 #define LA9310_DMA_ALIGNMENT (64)
 #define LA9310_DMA_BUF_SIZE \
-    (LA9310_VSPA_FW_SIZE + LA9310_VSPA_DMA_SIZE + LA9310_FW_DMA_SIZE + LA9310_DBUG_LOG_SIZE + LA9310_IQ_SAMPLES_SIZE + \
-        LA9310_NLM_OPS_SIZE + LA9310_DMA_SEPARATOR_TOTAL_SIZE + LA9310_DMA_ALIGNMENT)
-#define LA9310_V2H_PCI_ADDR_BASE 0xA4000000 //0xA0500000
-#define LA9310_V2H_PCI_ADDR_MAX_SIZE (4096 * V2H_MAX_BD)
+    (LA9310_VSPA_FW_SIZE + LA9310_FW_DMA_SIZE + LA9310_DBUG_LOG_SIZE + \
+        LA9310_DMA_SEPARATOR_TOTAL_SIZE + LA9310_DMA_ALIGNMENT)
 
 struct la9310_ep_log {
     u8* buf;
@@ -245,7 +162,6 @@ struct la9310_dev {
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
     void* vspa_priv;
-    struct la9310_host_stats host_stats;
     struct list_head list;
 
     //
@@ -284,24 +200,12 @@ struct la9310_sub_driver_ops {
 
 typedef enum {
     LA9310_SUBDRV_TYPE_VSPA = 1,
-    LA9310_SUBDRV_TYPE_IPC,
-    LA9310_SUBDRV_TYPE_WDOG,
-    LA9310_SUBDRV_TYPE_V2H,
-    LA9310_SUBDRV_TYPE_TVD,
-    LA9310_SUBDRV_TYPE_TTI,
-    LA9310_SUBDRV_TYPE_TEST
 } la9310_subdrv_type_t;
 
 struct la9310_sub_driver {
     char* name;
     la9310_subdrv_type_t type;
     struct la9310_sub_driver_ops ops;
-};
-
-enum la9310_reset_type {
-    LA9310_PO_RESET = 1,
-    LA9310_COLD_RESET,
-    LA9310_WARM_RESET,
 };
 
 int vspa_probe(struct la9310_dev* la9310_dev);
