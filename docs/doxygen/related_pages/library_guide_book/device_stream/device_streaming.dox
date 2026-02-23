@@ -175,4 +175,12 @@
  * 
  * @subsection important_stream_notes Important notes
  * 
+ * Streaming interface is <b>not thread safe</b> and multiple calls to `Receive(...)` or `Transmit(...)` from different threads can lead to poor performace or crashes. A single thread should manage a single
+ * stream function (eg. Receive with thread 1 and transmit with thread 2).  
+ * It is possible to have more than one stream object with different stream parameter configurations for a single device, but it is recommended <b>to avoid running multiple streams simultaneously</b>.  
+ * It is not possible to queue samples to Tx direction using `Transmit(...)` function, while the stream is inactive.  
+ * Once stream is stopped, all receiver buffered data is deleted and cannot be retrieved using `Receive(...)` function. To properly end the stream session and read out all of the remaining data, utilize the
+ * stream flag `lime::StreamTxMeta::Flags::EndOfBurst`.
+ * 
+ * 
  */
