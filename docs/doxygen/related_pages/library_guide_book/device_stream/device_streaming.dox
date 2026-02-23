@@ -66,18 +66,22 @@
  *    {
  *       samplesRead = stream->Receive(RxBuffers, bufferSize, &RxMeta);
  *       
- *       ... // Process received samples 
+ *       ... // Process the received samples 
  *    
  *       // Send response or any other data if necessary
  *       if(send)
  *       {
  *          ... // Fill TxChABuff with data 
  *          
+ *          // Indicate the end of stream burst with the next transmission
  *          if(endOfSamples)
  *             TxMeta.flags = lime::StreamTxMeta::Flags::EndOfBurst;
  * 
  *          samplesSent = stream->Transmit(TxBuffers, bufferSize, &TxMeta);
  *       }
+ * 
+ *       // Stop, if the transmitter on the other end signals that the stream burst is finished
+ *       stop = (RxMeta.flags & lime::StreamTxMeta::Flags::EndOfBurst) ? true : false;
  *    }
  *    stream->Stop();
  *    stream->StreamStatus(&RxStats, nullptr);
@@ -118,11 +122,12 @@
  * Once the stream is started, aggregation of samples in an internal buffer for Rx direction starts (unless sample on PPS is enabled). In the example code above, once the stream is started, code
  * enters a worker loop, which reads out buffered data via `Receive(...)` function into work buffer `RxChABuf`. `Receive(...)` function call blocks until the work buffer (`RxChABuf`) is filled with 
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
- * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve packet meta data, which contains timestamps. To retrieve the packet meta data, address of variable of 
- * `lime::StreamRxMeta` type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function updates the variable with the meta data of the first packet, 
- * that was read from an internal buffer. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) 
- * is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part of samples is still stored and can simply be read out by calling the 
- * `Receive(...)` function again.
+ * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve meta data about received samples. To retrieve the meta data, the address of a variable of `lime::StreamRxMeta` 
+ * type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function call updates the variable with the meta data of the first sample, that was read from 
+ * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamps` is set to `true`. Additionally, meta data member `flags` can be used to
+ * check stream specific flags. Flag `lime::StreamTxMeta::Flags::EndOfBurst` can be used to check for the end of stream burst. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval 
+ * of packet meta data. If the size of a work buffer (in this case `RxChABuff`) is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part 
+ * of samples is still stored and can simply be read out by calling the `Receive(...)` function again.
  * 
  * @subsection stream_write Writing samples
  * 
