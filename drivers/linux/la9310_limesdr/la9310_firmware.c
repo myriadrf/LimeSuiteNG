@@ -101,12 +101,13 @@ static struct la9310_boot_header prepare_bootheader(
     if (fw_preamble != PREAMBLE)
     {
         dev_dbg(la9310_dev->dev, "Using default bootheader:\n");
-        return header; // use default header
     }
-
-    dev_dbg(la9310_dev->dev, "Firmware contains bootheader:\n");
-    if (copy_from_user(&header, fw_data, sizeof(header)))
-        dev_err(la9310_dev->dev, "Failed to copy firmware header from userspace:\n");
+    else
+    {
+        dev_dbg(la9310_dev->dev, "Firmware contains bootheader:\n");
+        if (copy_from_user(&header, fw_data, sizeof(header)))
+            dev_err(la9310_dev->dev, "Failed to copy firmware header from userspace:\n");
+    }
 
 #if !defined(BOOTROM_USE_EDMA)
     // Write reserved to tell bootrom to pull Image using memcpy instead of edma
