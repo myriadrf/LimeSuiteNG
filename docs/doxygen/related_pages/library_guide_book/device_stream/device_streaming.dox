@@ -124,7 +124,7 @@
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
  * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve meta data about received samples. To retrieve the meta data, the address of a variable of `lime::StreamRxMeta` 
  * type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function call updates the variable with the meta data of the first sample, that was read from 
- * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamps` is set to `true`. Additionally, meta data member `flags` can be used to
+ * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamp` is set to `true`. Additionally, meta data member `flags` can be used to
  * check stream specific flags. Flag `lime::StreamTxMeta::Flags::EndOfBurst` can be used to check for the end of stream burst. If meta data is not important, a `nullptr` argument can be passed to ommit the retrieval 
  * of packet meta data. If the size of a work buffer (in this case `RxChABuff`) is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will be read out. The remaining part 
  * of samples is still stored and can simply be read out by calling the `Receive(...)` function again.
@@ -133,13 +133,13 @@
  * 
  * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to an internally managed buffer. `Transmit(...)` function call always blocks until all
  * samples from work buffer (`TxChABuf`) are transferred to internally managed transmit buffer or a timeout occurs. On transmission, a timeout can occur if the internally managed transmit buffer is filled and 
- * has no empty space for new samples. On return function reports the amount of samples that were queued for transmission. `Transmit(...)` function is also able to append meta data, which is a timestamp, to 
- * the packets. To add meta data to sample packets, the address of variable of `lime::StreamTxMeta` type must be passed as an argument for the third parameter of `Transmit(...)` function. In the example code above,
- * a `TxMeta` variable is defined and its member `hasTimestamp` is initialized with value `true`, the address of variable is passed in to the `Transmit(...)` function parameter list. If meta data is not important, 
- * a `nullptr` argument can be passed to ommit the generation of packet meta data. If `Transmit(...)` function queues a quantity of samples that does not make up a single packet, the samples are buffered until sufficient
- * amount of samples are added to the queue of already buffered samples to fill up the remaining slots of a packet. If the last batch of samples to be queued for transmission, do not make up a single packet it is recommended
- * to use the `Transmit(...)` flushing mode, which is available with the use of Tx meta data. In the example above the `TxMeta` variable member `flag` is set to `lime::StreamTxMeta::Flags::EndOfBurst`, which indicates that
- * this is the end of packet transmission, any remaining data will be flushed, packets missing samples will be padded with value 0 and the last packets will be sent.
+ * has no empty space for new samples. On return, function reports the amount of samples that were queued for transmission. `Transmit(...)` function is also able to append meta data to the sample packets. To add 
+ * meta data to sample packets, the address of a variable of `lime::StreamTxMeta` type must be passed as an argument for the third parameter of `Transmit(...)` function. Meta data contains timestamps and stream flags. 
+ * To toggle the generation of timestamps for queued samples, meta data flag `hasTimestamp` must be set to value `true` or `false`. Additionally, meta data member `flags` can be used to set specific stream flags. Flag
+ * `lime::StreamTxMeta::Flags::EndOfBurst` can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for transmission do not make up a single packet, then
+ * the remaining samples slots in a packet are padded with value 0 and the samples are flushed out. If meta data is not important, a `nullptr` argument can be passed to ommit the generation of packet meta data.
+ * Only fully formed packets are added to transmit batch. If `Transmit(...)` function queues a quantity of samples that is lesser than a total sample quantity in a packet, the samples remain buffered until a sufficient amount
+ * of samples is added with the next `Transmit(...)` call to form a full packet (this does not apply for sample batch queues that have the end of stream burst flag enabled). 
  * 
  * @subsection stream_stats Monitoring statistics
  * 
