@@ -58,8 +58,6 @@
 
 #define PCIE_MSI_OB_SIZE (4 * 1024) /* 4K */
 
-#define PREAMBLE 0xaa55aa55
-
 /* ---------------start--------------- */
 /* start :copy from m4-bootrom-devel code !!! */
 #define BOOT_HDR_OFFSET 0x0 /* Boot header offset */

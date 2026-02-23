@@ -7,9 +7,6 @@
 #include "la9310_v2h_if.h"
 #include "rfic_hif.h"
 
-#define LA9310_DEV_NAME_PREFIX "shiva"
-#define LA9310_SUBDEV_NAME(B) LA9310_DEV_NAME_PREFIX##B
-
 #define LA9310_MAX_SCRATCH_BUF_SIZE (256 * 1024 * 1024)
 #define PCIE_MSI_OB_SIZE (4 * 1024) /* 4K */
 
@@ -20,16 +17,7 @@
 #define LA9310_EP_TOHOST_MSI_PHY_ADDR (LA9310_EP_DMA_BUF_PHYS_ADDR + LA9310_MAX_SCRATCH_BUF_SIZE)
 
 #define LA9310_IQFLOOD_PHYS_ADDR (LA9310_EP_TOHOST_MSI_PHY_ADDR + PCIE_MSI_OB_SIZE)
-#define LA9310_USER_HUGE_PAGE_PHYS_ADDR 0xC0000000
-#define MAX_OUTBOUND_WINDOW (1024 * 1024 * 1024)
-
-#define LA9310_EP_FREERTOS_LOAD_ADDR 0x1f800000
-#define LA9310_EP_BOOT_HDR_OFFSET 0x00000000
-#define LA9310_EP_DMA_PHYS_OFFSET(addr) (addr - LA9310_EP_DMA_BUF_PHYS_ADDR)
 #define LA9310_EP_HIF_OFFSET 0x1B000
-#define LA9310_EP_IPC_OFFSET 0x1C000
-#define LA9310_EP_HIF_SIZE (4 * 1024)
-#define LA9310_EP_IPC_SIZE (16 * 1024)
 
 /*TODO - remove hardcoding*/
 #define MSI_IRQ_FLOOD_0 6
@@ -103,20 +91,6 @@ enum la9310_boot_fsm {
     LA9310_HOST_START_DRIVER_INIT,
 };
 #endif
-
-struct la9310_boot_header {
-    uint32_t preamble;
-    uint32_t plugin_size;
-    uint32_t plugin_offset;
-    uint32_t bl_size;
-    uint32_t bl_src_offset;
-    uint32_t bl_dest;
-    uint32_t bl_entry;
-    uint32_t reserved;
-} __attribute__((packed));
-
-#define LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN (1 << 16)
-#define LA9310_BOOT_HDR_BYPASS_BOOT_EDMA (1 << 0)
 
 struct irq_evt_regs {
     uint32_t irq_evt_cfg;
@@ -233,18 +207,6 @@ struct la9310_sw_cmd_desc {
     uint32_t cmd; /* command id */
     enum la9310_sw_cmd_status status; /* desc status */
     uint32_t data[LA9310_SW_CMD_DATA_SIZE]; /* command specific data */
-};
-
-#define LA9310_MAX_STD_FW_COUNT (4)
-
-struct la9310_std_fw_info {
-    uint32_t addr;
-    uint32_t size;
-};
-
-struct la9310_std_fwupgrade_data {
-    uint32_t fwcount;
-    struct la9310_std_fw_info fwinfo[LA9310_MAX_STD_FW_COUNT];
 };
 
 struct la9310_hif {

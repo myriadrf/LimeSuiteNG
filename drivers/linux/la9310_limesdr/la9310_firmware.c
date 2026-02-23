@@ -15,6 +15,28 @@
 #define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 100
 #define LA9310_HOST_BOOT_HSHAKE_RETRIES 60
 
+#define PCI_OUTBOUND_WINDOW_BASE_ADDR 0xA0000000
+#define LA9310_EP_FREERTOS_LOAD_ADDR 0x1f800000
+#define LA9310_EP_BOOT_HDR_OFFSET 0x00000000
+
+#define LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN (1 << 16)
+#define LA9310_BOOT_HDR_BYPASS_BOOT_EDMA (1 << 0)
+
+#define PREAMBLE 0xaa55aa55
+
+#define LA9310_EP_DMA_PHYS_OFFSET(addr) (addr - PCI_OUTBOUND_WINDOW_BASE_ADDR)
+
+struct la9310_boot_header {
+    uint32_t preamble;
+    uint32_t plugin_size;
+    uint32_t plugin_offset;
+    uint32_t bl_size;
+    uint32_t bl_src_offset;
+    uint32_t bl_dest;
+    uint32_t bl_entry;
+    uint32_t reserved;
+} __attribute__((packed));
+
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
 {
     int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
