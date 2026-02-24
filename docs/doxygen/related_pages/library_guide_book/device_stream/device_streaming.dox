@@ -137,11 +137,12 @@
  * samples from work buffer (`TxChABuf`) are transferred to internally managed transmit buffer or a timeout occurs. On transmission, a timeout can occur if the internally managed transmit buffer is filled and 
  * has no empty space for new samples. On return, function reports the amount of samples that were queued for transmission. `Transmit(...)` function is also able to append meta data to the sample packets. To add 
  * meta data to sample packets, the address of a variable of `lime::StreamTxMeta` type must be passed as an argument for the third parameter of `Transmit(...)` function. Meta data contains timestamps and stream flags. 
- * To toggle the generation of timestamps for queued samples, meta data flag `hasTimestamp` must be set to value `true` or `false`. Additionally, meta data member `flags` can be used to set specific stream flags. Flag
- * `lime::StreamTxMeta::Flags::EndOfBurst` can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for transmission do not make up a single packet, then
- * the remaining samples slots in a packet are padded with value 0 and the samples are flushed out. If meta data is not important, a `nullptr` argument can be passed to ommit the generation of packet meta data.
- * Only fully formed packets are added to transmit batch. If `Transmit(...)` function queues a quantity of samples that is lesser than a total sample quantity in a packet, the samples remain buffered until a sufficient amount
- * of samples is added with the next `Transmit(...)` call to form a full packet (this does not apply for sample batch queues that have the end of stream burst flag enabled). 
+ * To toggle the generation of timestamps for queued samples, meta data flag `hasTimestamp` must be set to value `true` or `false`. Generated timestamp type will match the type that was selected at stream parameter 
+ * configuration stage. Additionally, meta data member `flags` can be used to set specific stream flags. Flag `lime::StreamTxMeta::Flags::EndOfBurst` can be used to indicate the end of stream burst. If the stream burst 
+ * end flag is set and the last batch of samples queued for transmission do not make up a single packet, then the remaining samples slots in a packet are padded with value 0 and the samples are flushed out. If meta data 
+ * is not important, a `nullptr` argument can be passed to ommit the generation of packet meta data. Only fully formed packets are added to transmit batch. If `Transmit(...)` function queues a quantity of samples that is 
+ * lesser than a total sample quantity in a packet, the samples remain buffered until a sufficient amount of samples is added with the next `Transmit(...)` call to form a full packet (this does not apply for sample batch 
+ * queues that have the end of stream burst flag enabled). 
  * 
  * @subsection stream_stats Monitoring statistics
  * 
@@ -177,12 +178,21 @@
  * 
  * @section important_stream_notes Important notes
  * 
- * Streaming interface is <b>not thread safe</b> and multiple calls to `Receive(...)` or `Transmit(...)` from different threads can lead to poor performace or crashes. A single thread should manage a single
- * stream function (eg. Receive with thread 1 and transmit with thread 2).  
- * It is possible to have more than one stream object with different stream parameter configurations for a single device, but it is recommended <b>to avoid running multiple streams simultaneously</b>.  
- * It is not possible to queue samples to Tx direction using `Transmit(...)` function, while the stream is inactive.  
- * Once stream is stopped, all receiver buffered data is deleted and cannot be retrieved using `Receive(...)` function. To properly end the stream session and read out all of the remaining data, utilize the
- * stream flag `lime::StreamTxMeta::Flags::EndOfBurst`.
- * 
+ * <ul>
+ *    <li>
+ *       Streaming interface is <b>not thread safe</b> and multiple calls to `Receive(...)` or `Transmit(...)` from different threads can lead to poor performace or crashes. A single thread should manage a single
+ *       stream function (eg. Receive with thread 1 and transmit with thread 2).
+ *    </li>
+ *    <li>
+ *       It is possible to have more than one stream object with different stream parameter configurations for a single device, but it is recommended <b>to avoid running multiple streams simultaneously</b>.
+ *    </li>
+ *    <li>
+ *       It is not possible to queue samples to Tx direction using `Transmit(...)` function, while the stream is inactive.
+ *    </li>
+ *    <li>
+ *       Once stream is stopped, all receiver buffered data is deleted and cannot be retrieved using `Receive(...)` function. To properly end the stream session and read out all of the remaining data, utilize the
+ *       stream flag `lime::StreamTxMeta::Flags::EndOfBurst`.
+ *    </li>
+ * </ul>
  * 
  */
