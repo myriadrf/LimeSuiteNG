@@ -24,6 +24,8 @@
 #include "la9310_base.h"
 #include "la9310_vspa.h"
 
+#define MSG_UNIT_OFFSET 0x1fc0000
+
 int la9310_init_sysfs(struct la9310_dev* la9310_dev);
 void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
 
@@ -315,7 +317,7 @@ static int la9310_verify_hif_compatibility(struct la9310_dev* la9310_dev)
     u32 hif_ep_version, hif_host_version;
     int rc = 0;
 
-    if (sizeof(struct la9310_hif) != la9310_dev->hif_size)
+    if (sizeof(struct la9310_hif) > la9310_dev->hif_size)
     {
         dev_err(la9310_dev->dev,
             "LA931x firmware not compatible with la9310shiva  driverHIF siz mismatch %d!=%d",

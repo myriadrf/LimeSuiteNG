@@ -16,6 +16,8 @@
 #include "common_headers/la9310_host_if.h"
 #include "la9310_base.h"
 
+#define LA9310_DBG_LOG_MAX_STRLEN (100)
+
 static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf)
 {
     int log_len, max_len, str_len;

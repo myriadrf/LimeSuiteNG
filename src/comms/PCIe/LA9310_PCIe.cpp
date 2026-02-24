@@ -2,6 +2,7 @@
 
 #include "limesuiteng/Logger.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <atomic>
 #include <iostream>
@@ -36,6 +37,7 @@ using namespace std::literals::string_literals;
 
 LA9310_PCIe::LA9310_PCIe()
     : LimePCIe()
+    , hostInterface(nullptr)
 {
 }
 
@@ -48,6 +50,7 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
 {
     uint8_t temp[64];
     volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
 
     hif->sw_cmd_desc.cmd = 1;
 
@@ -134,7 +137,6 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
 
     hostInterface = reinterpret_cast<volatile struct la9310_hif*>(
         size_t(mapped_ranges[memoryLayout.host_interface.window_id].vaddr) + memoryLayout.host_interface.start_offset);
-    hostInterface->host_ready |= LA9310_HIF_STATUS_IPC_APP_READY;
     return OpStatus::Success;
 }
 
@@ -317,6 +319,7 @@ OpStatus LA9310_PCIe::SetSystemClock(uint32_t clk_hz, int timeout_ms)
 {
     lime::info("LA9310 SetSystemClock %u\n", clk_hz);
     volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
 
     hif->sw_cmd_desc.cmd = 2;
     hif->sw_cmd_desc.data[0] = clk_hz;
@@ -345,6 +348,8 @@ OpStatus LA9310_PCIe::SetSystemClock(uint32_t clk_hz, int timeout_ms)
 uint32_t LA9310_PCIe::GetReferenceClock()
 {
     volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
+
     hif->sw_cmd_desc.cmd = 3;
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
 
@@ -370,8 +375,9 @@ uint32_t LA9310_PCIe::GetReferenceClock()
 
 OpStatus LA9310_PCIe::SetReferenceClock(uint32_t clk_hz, bool external, int timeout_ms)
 {
-    volatile struct la9310_hif* hif = hostInterface;
     lime::info("LA9310 SetReferenceClock %u ext:%i\n", clk_hz, external);
+    volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
 
     hif->sw_cmd_desc.cmd = 4;
     hif->sw_cmd_desc.data[0] = clk_hz;

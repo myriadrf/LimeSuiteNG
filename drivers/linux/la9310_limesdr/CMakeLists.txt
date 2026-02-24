@@ -54,9 +54,6 @@ add_kernel_module(
     la9310_ioctl.h
     common_headers/la9310_pci_def.h
     common_headers/la9310_host_if.h
-    common_headers/rfic_hif.h
-    common_headers/rfic_sw_cmd.h
-    common_headers/la9310_v2h_if.h
     CONFIGURED_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/version.h
     ${CMAKE_CURRENT_BINARY_DIR}/${OBJECTS_DIR}/dkms.conf)

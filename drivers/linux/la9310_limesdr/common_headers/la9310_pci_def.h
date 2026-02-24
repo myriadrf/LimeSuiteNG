@@ -10,10 +10,6 @@
 #define PCI_DEVICE_ID_LS1043A 0x8080
 #define PCI_DEVICE_ID_LS1046A 0x81c0
 
-#define MAX_LENS_NUM 16
-
-#define FLAG_MSI_ENABLED 1
-
 /* Interrupt modes, as used by the IntMode parameter */
 #define PCI_INT_MODE_NONE 0
 #define PCI_INT_MODE_LEGACY 1
@@ -56,16 +52,6 @@
 
 #define MIN_MSI_ITR_LINES 1
 
-#define PCIE_MSI_OB_SIZE (4 * 1024) /* 4K */
-
-/* ---------------start--------------- */
-/* start :copy from m4-bootrom-devel code !!! */
-#define BOOT_HDR_OFFSET 0x0 /* Boot header offset */
-#define PCIE_BOOT_HDR_ADR 0x20000000 /* PCIe boot hdr address */
-#define DCR_OFFSET 0x1e00000
-#define MSG_UNIT_OFFSET 0x1fc0000
-#define LLCP_OFFSET 0x22E0000
-
 /*
  * ROM configures an iATU inbound translation for BAR1 to map the 16MB
  * BAR to a base of 0x1F80_0000, which is the base of TCM Code memory.
@@ -74,16 +60,5 @@
 /*--------------end------------------ */
 
 #define PCIE_RHOM_DBI_BASE 0x3400000
-
-/*
- * ROM code sets up an eDMA transfer to copy the Boot Loader from host
- * memory using the size and adding the offset from the base of local PCIe
- * address space, 0xA000_0000. The data is stored at the location in TCM
- * memory specified by BL_DEST.
- */
-
-#define PCIE_RHOM_DBI_SIZE (4 * 1024)
-#define PCIE_RHOM_HEADER_SIZE (4 * 1024)
-#define BL_SRC_OFFSET 0
 
 #endif /* __LA9310_PCI_DEF_H__ */

@@ -22,6 +22,7 @@
 #define LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN (1 << 16)
 #define LA9310_BOOT_HDR_BYPASS_BOOT_EDMA (1 << 0)
 
+#define DCR_OFFSET 0x1e00000
 #define PREAMBLE 0xaa55aa55
 
 #define LA9310_EP_DMA_PHYS_OFFSET(addr) (addr - PCI_OUTBOUND_WINDOW_BASE_ADDR)
@@ -235,38 +236,6 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
     uint32_t scratch_val = readl(scratch_reg);
 
     int retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
-#if LA9310_UPGRADE_TIMESYNC_FW
-    char std_fw_list[STD_MAX_FW_COUNT][STD_FW_NAME_MAX_LENGTH] = { 0 };
-    dev_info(la9310_dev->dev, "[Sync Fw upgrade] Waiting for FreeRTOS to write %d\n", LA9310_HOST_TIMESYNC_FW_LOAD);
-    while ((scratch_val != LA9310_HOST_TIMESYNC_FW_LOAD) && retries)
-    {
-        set_current_state(TASK_INTERRUPTIBLE);
-        schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-        retries--;
-        scratch_val = readl(scratch_reg);
-        dma_rmb();
-    }
-
-    if (scratch_val != LA9310_HOST_TIMESYNC_FW_LOAD)
-    {
-        dev_err(la9310_dev->dev, "LA9310 sync no load scratch 0x%x\n", scratch_val);
-        rc = -EINVAL;
-        goto out;
-    }
-    else
-    {
-        dev_info(la9310_dev->dev, "LA9310 sync fw load received, scratch 0x%x", scratch_val);
-    }
-
-    strncpy(std_fw_list[0], STD_PROD_FW_NAME, STD_FW_NAME_MAX_LENGTH);
-    strncpy(std_fw_list[1], STD_USER_CONFIG_NAME, STD_FW_NAME_MAX_LENGTH);
-
-    rc = sync_timing_device_load_fw(la9310_dev, std_fw_list, 2);
-    if (rc)
-        goto out;
-    writel(LA9310_HOST_TIMESYNC_FW_LOADED, scratch_reg);
-    dma_rmb();
-#endif
     dev_info(la9310_dev->dev, "[Sync fw upgrade] Waiting for FreeRTOS to write %d\n", LA9310_HOST_START_CLOCK_CONFIG);
     /* Wait for FreeRTOS to ask for clock configuration */
     set_current_state(TASK_INTERRUPTIBLE);
