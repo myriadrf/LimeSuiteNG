@@ -13,6 +13,7 @@
  *    <li> @subpage generic_config "Common control and configuration options"
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
+ *    <li> @subpage device_info "Additional device information"</li>
  *    @if DEVELOP
  *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
  *    <li> @subpage frequency_config "Frequency configuration"</li>

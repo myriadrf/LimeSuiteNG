@@ -1,0 +1,214 @@
+/**
+ * @page device_info Additional device information
+ * 
+ * @section device_info_summary Summary
+ * 
+ * Initial enumeration of device provides essential information about connected SDR devices required for connection. Once the SDR device is registered and connected to, additional information about the device can retrieved.
+ * Additional information allows to view device information about onboard modules, check sensors, device clock stability and GPS status. @ref device_info_example "Example code" for retrieving various information about the 
+ * SDR device is provided at the end of the page.
+ * 
+ * @section device_descriptor Descriptor
+ * 
+ * SDR device descriptor provides full description about the currently connected and active device:
+ * <ul>
+ *    <li>Firmware version</li>
+ *    <li>Gateware version and revision</li>
+ *    <li>Hardware version</li>
+ *    <li>Low speed interface ID's</li>
+ *    <li>RFSoC description</li>
+ *    <li>Custom parameter list</li>
+ *    <li>Memory devices</li>
+ *    <li>Subdevice tree</li>
+ * </ul>
+ * 
+ * For a full list of members an their names, check out the definition of `lime::SDRDescriptor` structure definition.
+ * 
+ * To get the full description about the device, @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()" function must be called (code example is located in the @ref device_info_example "Example code" section).  
+ * Example description of LimeSDR Mini V2.4 device:
+ * 
+ * @image{inline} html full_device_desc.png 
+ * 
+ * @subsection device_custom_parameters Custom parameters
+ * 
+ * WIP
+ * 
+ * @if DEVELOP
+ * @subsection device_memory Memory devices
+ * 
+ * WIP
+ * 
+ * @subsection subdev_tree Subdevice tree
+ * 
+ * WIP
+ * @endif
+ * 
+ * @section device_clock Clock status
+ * 
+ * WIP
+ * 
+ * @section device_sensors Sensors
+ * 
+ * WIP
+ * 
+ * @section device_gps GPS status
+ * 
+ * WIP
+ * 
+ * @section device_info_example Example code
+ * 
+ * This is a generic example code that can be used to view a full list of parameters that describe each unique SDR device.
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    lime::SDRDescriptor LimeSDRMiniV2_desc = device->GetDescriptor();
+ * 
+ *    std::cout << "Full information about the device:" << std::endl;
+ *    std::cout << "Expansion name - " << LimeSDRMiniV2_desc.expansionName << std::endl;
+ *    std::cout << "Firmware version - " << LimeSDRMiniV2_desc.firmwareVersion << std::endl;
+ *    std::cout << "Gateware version - " << LimeSDRMiniV2_desc.gatewareVersion << std::endl;
+ *    std::cout << "Gateware revision - " << LimeSDRMiniV2_desc.gatewareRevision << std::endl;
+ *    std::cout << "Gateware target board - " << LimeSDRMiniV2_desc.gatewareTargetBoard << std::endl;
+ *    std::cout << "Hardware version - " << LimeSDRMiniV2_desc.hardwareVersion << std::endl;
+ *    std::cout << "Protocol version - " << LimeSDRMiniV2_desc.protocolVersion << std::endl;
+ *    std::cout << "Serial number - " << LimeSDRMiniV2_desc.serialNumber << std::endl;
+ *    std::cout << "SPI slave IDs: " << std::endl;
+ *    for(const auto& iter : LimeSDRMiniV2_desc.spiSlaveIds)
+ *    {
+ *       std::cout << "\tName: " << iter.first << ";\t ID: " << iter.second << std::endl;
+ *    }
+ * 
+ *    if(LimeSDRMiniV2_desc.spiSlaveIds.size() == 0)
+ *       std::cout << "No SPI slave IDs present" << std::endl;
+ * 
+ *    std::cout << "RFSoC description:" << std::endl;
+ *    for(int i = 0; i < LimeSDRMiniV2_desc.rfSOC.size(); ++i)
+ *    {
+ *       std::cout << "\tRFSoC " << (i+1) << std::endl;
+ *       std::cout << "\tName - " << LimeSDRMiniV2_desc.rfSOC[i].name << std::endl;
+ *       std::cout << "\tChannel count - " << (int)LimeSDRMiniV2_desc.rfSOC[i].channelCount << std::endl;
+ *       std::cout << "\tAntenna path names: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].pathNames.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout <<"\t\t\t" << iter << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].pathNames.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout <<"\t\t\t" << iter << std::endl;
+ *       }
+ *       std::cout << "\tFrequency range [min; max], Hz - [" << LimeSDRMiniV2_desc.rfSOC[i].frequencyRange.min 
+ *       << "; " << LimeSDRMiniV2_desc.rfSOC[i].frequencyRange.max << "]" << std::endl;
+ *       std::cout << "\tSample rate range [min; max], Hz - [" << LimeSDRMiniV2_desc.rfSOC[i].samplingRateRange.min 
+ *       << "; " << LimeSDRMiniV2_desc.rfSOC[i].samplingRateRange.max << "]" << std::endl;
+ *       
+ *       std::cout << "\tAntenna bandwidth ranges [min; max], Hz: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].antennaRange.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\tName: " << iter.first << ";\t [" << iter.second.min << "; " << 
+ *          iter.second.max << "]" << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].antennaRange.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\tName: " << iter.first << ";\t [" << iter.second.min << "; " <<
+ *          iter.second.max << "]" << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tLow pass filter ranges [min; max], Hz: " << std::endl;
+ *       std::cout << "\t\tTx direction - ";
+ *       const auto& txLpfRange = LimeSDRMiniV2_desc.rfSOC[i].lowPassFilterRange.at(lime::TRXDir::Tx);
+ *       std::cout << "[" << txLpfRange.min << "; " << txLpfRange.max << "]"<< std::endl;
+ * 
+ *       std::cout << "\t\tRx direction - ";
+ *       const auto& rxLpfRange = LimeSDRMiniV2_desc.rfSOC[i].lowPassFilterRange.at(lime::TRXDir::Rx);
+ *       std::cout << "[" << rxLpfRange.min << "; " << rxLpfRange.max << "]" << std::endl;
+ *       
+ *       std::cout << "\tSupported gains: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gains.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter) << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gains.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter) << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tAvailable gain ranges, dB: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainRange.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << "\t[" << iter.second.min 
+ *          << "; " << iter.second.max << "]" << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainRange.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << "\t[" << iter.second.min 
+ *          << "; " << iter.second.max << "]" << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tPossible gain values, dB: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainValues.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << ": ";
+ *          for(const auto& value : iter.second)
+ *             std::cout << value.actualGainValue << " ";
+ * 
+ *          std::cout << std::endl;
+ *       }
+ * 
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainValues.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << ": ";
+ *          for(const auto& value : iter.second)
+ *             std::cout << value.actualGainValue << " ";
+ * 
+ *          std::cout << std::endl;
+ *       }
+ *    }
+ *    std::cout << "Custom parameters: " << std::endl;
+ *    for(const auto& parameter : LimeSDRMiniV2_desc.customParameters)
+ *       std::cout << "\t" << parameter.name << std::endl;
+ * 
+ *    std::cout << "Memory devices: " << std::endl;
+ *    for(const auto& device : LimeSDRMiniV2_desc.memoryDevices)
+ *       std::cout << "\t" << device.first << std::endl;
+ *    
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ */
