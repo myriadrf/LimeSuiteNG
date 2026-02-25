@@ -39,10 +39,36 @@
  * This function wiil return the lock status of comparators for core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
  * of the reference clock. Returned value `false` indicates that the module core clock generator and reference clock phase and frequency does not match.
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If SDR device is cold started or reset, the core clock generator will remain in a `not locked` state until the `sampling rate` of the SDR device is set.}
+ * @else
+ * @note If SDR device is cold started or reset, the core clock generator will remain in a `not locked` state until the `sampling rate` of the SDR device is set.
+ * @endif
+ * 
  * @subsection device_rfe_sx_clock_status Synthesizer clock
  *  
  * To view the RFE synthesizer clock lock status, use @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()" function with module index and channel direction as arguments. This function will return 
  * the lock status of comparators for RFE synthesizer VCO of a particular module channel direction.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If SDR device is cold started or reset, RFE synthesizer VCO for the selected direction will remain in a `not locked` state until the synthesizer LO frequency for the selected direction is set.}
+ * @else
+ * @note If SDR device is cold started or reset, RFE synthesizer VCO for the selected direction will remain in a `not locked` state until the synthesizer LO frequency for the selected direction is set.
+ * @endif
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ *    If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.}
+ * @else
+ * @note If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.
+ * @endif
  * 
  * @subsection device_temp_status Temperature
  * 
