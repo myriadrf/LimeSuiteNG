@@ -28,22 +28,38 @@
  * 
  * @image{inline} html full_device_desc.png 
  * 
- * @section device_clock Clock status
+ * @section device_status_checks Status checks
  * 
- * Currently it is possible to check the lock status of LMS7002M module core clock generator and RFE synthesizer clock generator. To view the core clock lock status, 
- * use @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()" function with the module index as an argument. Module index argument addresses appropriate LMS7002M module 
- * (if there is more than one module onboard) or set it to 0 if a single LMS7002M module is present. This function wiil return the lock status of comparators for core clock VCO.
+ * Device status checks can be performed for specified device modules (LMS7002M or other modules) by calling status check functions from device configuration interface.
+ * 
+ * @subsection device_cgen_status Core clock
+ * 
+ * To check the lock status of LMS7002M module core clock generator, use @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()" function with the module index as an argument. 
+ * Module index argument addresses appropriate LMS7002M module (if there is more than one module onboard). If a SDR device with a single LMS7002M module is used, then set module index argument to 0.
+ * This function wiil return the lock status of comparators for core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
+ * of the reference clock. Returned value `false` indicates that the module core clock generator and reference clock phase and frequency does not match.
+ * 
+ * @subsection device_rfe_sx_clokc_status Synthesizer clock
  *  
  * To view the RFE synthesizer clock lock status, use @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()" function with module index and channel direction as arguments. This function will return 
  * the lock status of comparators for RFE synthesizer VCO of a particular module channel direction.
  * 
- * @section device_sensors Sensors
+ * @subsection device_temp_status Temperature
  * 
- * WIP
+ * Temperature of speciefied device module can be viewed by using @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()" function with module index as an argument that addresses the appropriate LMS7002M module.  
  * 
- * @section device_gps GPS status
+ * @subsection device_gps GPS lock
  * 
- * WIP
+ * To view the status of GPS lock, use @ref lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) "GetGPSLock()" function. Pass the address of a variable of `lime::SDRDevice::GPS_Lock` type as an argument to the function
+ * parameter list. Function will update the variable with new GPS status values. SDR devices support the following GPS systems:
+ * <ul>
+ *    <li>GPS</li>
+ *    <li>Galileo</li>
+ *    <li>Glonass</li>
+ *    <li>Beidou</li>
+ * </ul>
+ * 
+ * All available GPS systems states are enumerated in `lime::SDRDevice::GPS_Lock::LockStatus` enumeration.
  * 
  * @section device_info_example Example code
  * 
