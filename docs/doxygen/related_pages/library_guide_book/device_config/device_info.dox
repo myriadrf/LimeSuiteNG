@@ -259,7 +259,6 @@
  *    auto dev_temp_c = device->GetTemperature(moduleIndex);
  *    std::cout << LimeSDRMiniV2_desc.name << " device temperature - " << dev_temp_c << " C\n";
  * 
- *    
  *    // GPS status check
  *    lime::SDRDevice::GPS_Lock gps_lock_status = {};
  *    device->GetGPSLock(&gps_lock_status);
