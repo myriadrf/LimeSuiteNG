@@ -39,7 +39,7 @@
  * This function wiil return the lock status of comparators for core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
  * of the reference clock. Returned value `false` indicates that the module core clock generator and reference clock phase and frequency does not match.
  * 
- * @subsection device_rfe_sx_clokc_status Synthesizer clock
+ * @subsection device_rfe_sx_clock_status Synthesizer clock
  *  
  * To view the RFE synthesizer clock lock status, use @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()" function with module index and channel direction as arguments. This function will return 
  * the lock status of comparators for RFE synthesizer VCO of a particular module channel direction.
@@ -63,7 +63,7 @@
  * 
  * @section device_info_example Example code
  * 
- * This is a generic example code that can be used to view a full list of parameters that describe each SDR device.
+ * This is a generic example code that retrieves the full information about the currently active SDR device, checks the status of core and synthesizer clock generators, gps systems lock status and device temperature.
  * 
  * @code{.cpp}
  * #include <iostream>
@@ -93,6 +93,7 @@
  *       return 1;
  *    }
  * 
+ *    uint8_t moduleIndex = 0;
  *    lime::SDRDescriptor LimeSDRMiniV2_desc = device->GetDescriptor();
  * 
  *    std::cout << "Full information about " << LimeSDRMiniV2_desc.name << " device:" << std::endl;
@@ -212,7 +213,35 @@
  *    std::cout << "Memory devices: " << std::endl;
  *    for(const auto& device : LimeSDRMiniV2_desc.memoryDevices)
  *       std::cout << "\t" << device.first << std::endl;
+ * 
+ *    // Status checks
+ *    auto cgen_status = device->GetCGENLocked(moduleIndex);
+ *    std::cout << "Core clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (cgen_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
  *    
+ *    // SX LO check for Tx/Rx directions 
+ *    auto sxvco_tx_status = device->GetSXLocked(moduleIndex, lime::TRXDir::Tx);
+ *    auto sxvco_rx_status = device->GetSXLocked(moduleIndex, lime::TRXDir::Rx);
+ * 
+ *    std::cout << "Tx direction SX VCO clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (sxvco_tx_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
+ *    
+ *    std::cout << "Rx direction SX VCO clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (sxvco_rx_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
+ * 
+ *    // Device temperature check
+ *    auto dev_temp_c = device->GetTemperature(moduleIndex);
+ *    std::cout << LimeSDRMiniV2_desc.name << " device temperature - " << dev_temp_c << " C\n";
+ * 
+ *    
+ *    // GPS status check
+ *    lime::SDRDevice::GPS_Lock gps_lock_status = {};
+ *    device->GetGPSLock(&gps_lock_status);
+ *    std::cout << "GPS lock status for " << LimeSDRMiniV2_desc.name << " device - " << 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::NotAvailable ? "not available\n" : 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::Has2D ? "has 2D\n" : 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::Has3D ? "has 3D\n" : "undefined\n")));
+ *
  *    lime::DeviceRegistry::freeDevice(device);
  *    return 0;
  * }
