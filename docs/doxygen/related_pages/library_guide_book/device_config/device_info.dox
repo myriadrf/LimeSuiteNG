@@ -28,20 +28,6 @@
  * 
  * @image{inline} html full_device_desc.png 
  * 
- * @subsection device_custom_parameters Custom parameters
- * 
- * WIP
- * 
- * @if DEVELOP
- * @subsection device_memory Memory devices
- * 
- * WIP
- * 
- * @subsection subdev_tree Subdevice tree
- * 
- * WIP
- * @endif
- * 
  * @section device_clock Clock status
  * 
  * WIP
