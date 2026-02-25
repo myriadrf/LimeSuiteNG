@@ -110,7 +110,7 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     if (status != OpStatus::Success)
         printf("Failed start rx\n");
     // Enable all Rx and Tx DMA triggers
-    constexpr uint8_t ids[] = { 1, 2, 3, 4 };
+    constexpr uint8_t ids[] = { 1, 2, 3, 4, 11 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = ctx->phytimer->GetTimerControl(id);

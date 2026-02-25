@@ -70,9 +70,13 @@ class SDRConfiguration_view : public ISOCPanel
 
   protected:
     SDRConfiguration_view() = delete;
+    void CalibrateRx(const wxCommandEvent& event);
+    void CalibrateTx(const wxCommandEvent& event);
     std::vector<SOCConfig_view*> socGUI;
     lime::SDRDevice* sdrDevice;
     wxFlexGridSizer* mainSizer;
+    wxButton* btnCalibrateRx;
+    wxButton* btnCalibrateTx;
 };
 
 #endif // LIME_SDR_CONFIGURATION_VIEW

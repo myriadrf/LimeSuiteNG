@@ -414,8 +414,8 @@ OpStatus VSPA_iqplayer::SetupRx(uint32_t channel, uint32_t fifo_start_offset, ui
     rxState.last_consumed = 0;
     tx_vspa_proxy_wo->host_consumed_size[0] = 0;
 
-    auto ddr_dst = vl_iqflood_ddr_addr + rxState.fifo_start_addr;
-    memset(ddr_dst, 0, rxState.fifo_size); // clear RAM, not to confuse with old data from previous runs
+    // auto ddr_dst = vl_iqflood_ddr_addr + rxState.fifo_start_addr;
+    // memset(ddr_dst, 0, rxState.fifo_size); // clear RAM, not to confuse with old data from previous runs
 
     auto nv_app_stats = const_cast<t_stats*>(app_stats);
     port->sync_dmem_proxy_after_write(reinterpret_cast<uint8_t*>(nv_app_stats), sizeof(t_stats));

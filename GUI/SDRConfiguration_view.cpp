@@ -356,6 +356,14 @@ SDRConfiguration_view::SDRConfiguration_view(wxWindow* parent, wxWindowID id, co
     mainSizer->Add(row, ctrlFlags);
     socGUI.push_back(row);
 
+    btnCalibrateRx = new wxButton(this, wxNewId(), wxT("CalibrateRx"));
+    btnCalibrateRx->Bind(wxEVT_BUTTON, &SDRConfiguration_view::CalibrateRx, this);
+    mainSizer->Add(btnCalibrateRx, ctrlFlags);
+
+    btnCalibrateTx = new wxButton(this, wxNewId(), wxT("CalibrateTx"));
+    btnCalibrateTx->Bind(wxEVT_BUTTON, &SDRConfiguration_view::CalibrateTx, this);
+    mainSizer->Add(btnCalibrateTx, ctrlFlags);
+
     SetSizerAndFit(mainSizer);
 }
 
@@ -395,4 +403,20 @@ bool SDRConfiguration_view::Initialize(void* device)
     }
     SetSizerAndFit(mainSizer);
     return true;
+}
+
+void SDRConfiguration_view::CalibrateRx(const wxCommandEvent& event)
+{
+    if (!sdrDevice)
+        return;
+
+    sdrDevice->Calibrate(0, TRXDir::Rx, 0, 5e6);
+}
+
+void SDRConfiguration_view::CalibrateTx(const wxCommandEvent& event)
+{
+    if (!sdrDevice)
+        return;
+
+    sdrDevice->Calibrate(0, TRXDir::Tx, 0, 5e6);
 }
