@@ -24,7 +24,7 @@
  * For a full list of members an their names, check out the definition of `lime::SDRDescriptor` structure definition.
  * 
  * To get the full description about the device, @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()" function must be called (code example is located in the @ref device_info_example "Example code" section).  
- * Example description of LimeSDR Mini V2.4 device:
+ * Example of generated description of LimeSDR Mini V2.4 device:
  * 
  * @image{inline} html full_device_desc.png 
  * 
@@ -56,7 +56,7 @@
  * 
  * @section device_info_example Example code
  * 
- * This is a generic example code that can be used to view a full list of parameters that describe each unique SDR device.
+ * This is a generic example code that can be used to view a full list of parameters that describe each SDR device.
  * 
  * @code{.cpp}
  * #include <iostream>
@@ -88,7 +88,7 @@
  * 
  *    lime::SDRDescriptor LimeSDRMiniV2_desc = device->GetDescriptor();
  * 
- *    std::cout << "Full information about the device:" << std::endl;
+ *    std::cout << "Full information about " << LimeSDRMiniV2_desc.name << " device:" << std::endl;
  *    std::cout << "Expansion name - " << LimeSDRMiniV2_desc.expansionName << std::endl;
  *    std::cout << "Firmware version - " << LimeSDRMiniV2_desc.firmwareVersion << std::endl;
  *    std::cout << "Gateware version - " << LimeSDRMiniV2_desc.gatewareVersion << std::endl;
