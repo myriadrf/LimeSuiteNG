@@ -30,7 +30,12 @@
  * 
  * @section device_clock Clock status
  * 
- * WIP
+ * Currently it is possible to check the lock status of LMS7002M module core clock generator and RFE synthesizer clock generator. To view the core clock lock status, 
+ * use @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()" function with the module index as an argument. Module index argument addresses appropriate LMS7002M module 
+ * (if there is more than one module onboard) or set it to 0 if a single LMS7002M module is present. This function wiil return the lock status of comparators for core clock VCO.
+ *  
+ * To view the RFE synthesizer clock lock status, use @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()" function with module index and channel direction as arguments. This function will return 
+ * the lock status of comparators for RFE synthesizer VCO of a particular module channel direction.
  * 
  * @section device_sensors Sensors
  * 
