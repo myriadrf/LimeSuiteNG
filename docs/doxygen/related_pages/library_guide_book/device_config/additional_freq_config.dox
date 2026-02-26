@@ -23,8 +23,8 @@
  * @image{inline} html dev_nco_default.png
  * 
  * By default, all NCO frequency and phase offset entries are initialized to values <b>0</b> and the default NCO entry index is <b>0</b> (marked with `[]` brackets in the example image above). Following the example
- * code in the section below, a single (hard coded) NCO entry (indexed 12) is updated with 10 MHz frequency and is immediately set as the active NCO entry. The activated NCO entry is also set to upconvert (`downconvert 
- * = false`) the IQ carrier signal in the TSP mixer. Output of a modified NCO entry table:
+ * code in the section below, a single NCO entry (indexed 12) is updated with 10 MHz frequency and is immediately set as the active NCO entry (fed into TSP complex mixer). The activated NCO entry is also set to upconvert 
+ * (`downconvert = false`) the IQ carrier signal in the TSP mixer. Output of a modified NCO entry table:
  * 
  * @image{inline} html dev_nco_updated.png
  * 
@@ -33,10 +33,10 @@
  * .. admonition:: Note
  * 
  *    If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
- * will gain a positive sign.}
+ * will gain a positive sign to indicate active upconversion.}
  * @else
  * @note If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
- * will gain a positive sign.
+ * will gain a positive sign to indicate active upconversion.
  * @endif
  * 
  * @subsection dev_nco_example Example code
