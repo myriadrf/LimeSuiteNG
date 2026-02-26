@@ -18,7 +18,7 @@
  * the number of physical traces that interconnect the module with the actual Tx/Rx ports.
  * 
  * A single LMS7002M module supports two channels at a time (Channel A and channel B). Therefore, SDR devices that use a single LMS7002M module can have a total of two channels. SDR devices with multiple LMS7002M
- * modules can have more physical channels. However, a single LMS7002M module on a multi module SDR device is able to manage only two channels at a time. Therefore, channel indexing also relies the correct 
+ * modules can have more physical channels. However, a single LMS7002M module on a multi module SDR device is able to manage only two channels at a time. Therefore, channel indexing also relies on correct 
  * @ref Device_index "module indexing". LMS7002M module channel A index is <b>0</b> and channel B index is <b>1</b>. The following channel indexes can be defined as a simple const variables: `const uint8_t ChA = 0;` 
  * and `const uint8_t ChB = 1;`.
  * 
