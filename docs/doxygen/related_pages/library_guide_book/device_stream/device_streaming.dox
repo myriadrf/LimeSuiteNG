@@ -102,8 +102,8 @@
  * @subsection stream_buffers Work buffers
  * 
  * Before starting the stream, appropriate buffers for Rx and Tx directions must be defined. Since packets are managed internally and the user space operates using only samples, buffer sizes must also
- * be defined in sample quantity. Recommended minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
- * maintain reasonable stream speeds, it is recommended to avoid the recommended minimum size and instead define the buffer sizes as a quantity of samples of multiple packets. In the example above
+ * be defined in sample quantity. Minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
+ * maintain reasonable stream speeds, it is recommended to avoid the minimum size and instead define the buffer sizes as a quantity of samples of multiple packets. In the example above
  * buffer size is calculated using stream parameters, which were set up before the stream start. Once the work buffers `RxChABuf` and `TxChABuf` of required size are defined, the starting addresses of 
  * the buffers are respectively stored in two dimensional arrays `RxBuffers` and `TxBuffers`. Two dimensional arrays are used to store the starting addresses of Rx and Tx buffers for different channels. 
  * By default the first argument must be the address of buffer for channel A and the second argument must be the address of buffer for channel B. If channel B is not required (operating in SISO mode), 
