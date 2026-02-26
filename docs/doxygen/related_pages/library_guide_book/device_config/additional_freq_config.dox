@@ -6,4 +6,67 @@
  * @endif
  * 
  * @section summary Summary
+ * 
+ * Additional frequency configuration allows to control SDR device TSP NCO generator frequency, reference and core clock generator frequencies.
+ * 
+ * @section device_tsp_nco Numerically controlled oscillator
+ * 
+ * @subsection nco_set_get Frequency and phase offset
+ * 
+ * 
+ * @subsection dev_nco_example Example code
+ * 
+ * A simple example code for SDR device with LMS7002M module, that allows to view default initialized or updated (hardcoded value) NCO table values.
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <iomanip>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <cinttypes>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration and registration
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
+ *    char answer;
+ *    double ncoFreq = 0;
+ *    double phaseOffset = 0;
+ *    int activeNCOIndex = 0;
+ *    bool downconvert = false;
+ *    std::cout << "Show updated NCO frequency table for channel A Tx? [y/n]:" << std::endl;
+ *    std::cin >> answer;
+ *    if(answer == 'y')
+ *    {
+ *       device->SetNCOFrequency(moduleIndex, lime::TRXDir::Tx, ChA, 12, 10e6);
+ *       device->SetNCOIndex(moduleIndex, lime::TRXDir::Tx, ChA, 12, downconvert);
+ *    }
+ * 
+ *    activeNCOIndex = device->GetNCOIndex(moduleIndex, lime::TRXDir::Tx, ChA);
+ *    std::cout << "NCO frequency entries for channel A Tx: " << std::endl;
+ *    std::cout << "Note: Currently active NCO index is marked with brackets []." << std::endl;
+ *    std::cout << " Index \t Frequency, Hz \t Phase off, degrees " << std::endl;
+ *    for(uint8_t index = 0; index < 16; ++index)
+ *    {
+ *       ncoFreq = device->GetNCOFrequency(moduleIndex, lime::TRXDir::Tx, ChA, index, phaseOffset);
+ *       std::cout << (index > 9 || index == activeNCOIndex ? std::setw(3) : std::setw(4)) << std::setfill(' ') 
+ *       << (activeNCOIndex == index ? "[" : "") << (int)index << (activeNCOIndex == index ? "]" : "") 
+ *       << (activeNCOIndex == index ? std::setw(14) : std::setw(15)) << std::setfill(' ') << ncoFreq 
+ *       << std::setw(19) << std::setfill(' ') << phaseOffset << std::endl;
+ *    }
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
+ * @endcode
+ * 
  */
