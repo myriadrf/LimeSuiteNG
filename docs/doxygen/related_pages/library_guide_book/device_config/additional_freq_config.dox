@@ -11,8 +11,33 @@
  * 
  * @section device_tsp_nco Numerically controlled oscillator
  * 
- * @subsection nco_set_get Frequency and phase offset
+ * Numerically controlled oscillators allow to upconvert or downconvert SDR device IQ carrier frequency for Tx and Rx directions. For SDR devices with LMS7002M modules NCO frequency configuration is not 
+ * dependent on selected channel. Therefore, configuring NCO for Rx or Tx direction, will configure the NCO for Rx or Tx directions of all channels. Depending on the SDR device, multiple NCO frequency entries 
+ * can be stored in memory, but only a single NCO frequency can be fed into SDR device TSP complex mixer. SDR devices that use the LMS7002M module can store up to 16 NCO frequency entries and a single phase offset 
+ * entry (can also store multiple, but this depends on the selected mode). To configure and enable the correct NCO frequency and phase, functions 
+ * @ref lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) "SetNCOFrequency()" and @ref lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetNCOIndex()"
+ * must be used. To read a NCO frequency and phase offset entry, function @ref lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) "GetNCOFrequency()" must be used. To view the currently 
+ * active entry (fed into TSP mixer), @ref lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) "GetNCOIndex()" must be used. Below is an example output of a full NCO Frequency and phase offset entry table for 
+ * a cold started and default initialized LimeSDR Mini V2.4 (Check out @ref dev_nco_example "example code" in a section below):
  * 
+ * @image{inline} html dev_nco_default.png
+ * 
+ * By default, all NCO frequency and phase offset entries are initialized to values <b>0</b> and the default NCO entry index is <b>0</b> (marked with `[]` brackets in the example image above). Following the example
+ * code in the section below, a single (hard coded) NCO entry (indexed 12) is updated with 10 MHz frequency and is immediately set as the active NCO entry. The activated NCO entry is also set to upconvert (`downconvert 
+ * = false`) the IQ carrier signal in the TSP mixer. Output of a modified NCO entry table:
+ * 
+ * @image{inline} html dev_nco_updated.png
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
+ * will gain a positive sign.}
+ * @else
+ * @note If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
+ * will gain a positive sign.
+ * @endif
  * 
  * @subsection dev_nco_example Example code
  * 
