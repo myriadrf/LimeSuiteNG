@@ -15,6 +15,7 @@
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
  *    <li> @subpage device_info "Additional device information"</li>
  *    <li> @subpage nco_freq_config "NCO control"
+ *    <li> @subpage dev_testing_sig "Test signal set up"</li>
  *    @if DEVELOP
  *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
  *    <li> @subpage frequency_config "Frequency configuration"</li>
