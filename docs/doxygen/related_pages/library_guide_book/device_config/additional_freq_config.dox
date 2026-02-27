@@ -1,24 +1,30 @@
 /**
- * @page other_freq_config Additional frequency configuration
+ * @page nco_freq_config NCO control
  * 
  * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * @endif
  * 
- * @section summary Summary
+ * @section nco_config Configuring NCO frequency and phase offset
  * 
- * Additional frequency configuration allows to control SDR device TSP NCO generator frequency, reference and core clock generator frequencies.
- * 
- * @section device_tsp_nco Numerically controlled oscillator
- * 
- * Numerically controlled oscillators allow to upconvert or downconvert SDR device IQ carrier frequency for Tx and Rx directions. For SDR devices with LMS7002M modules NCO frequency configuration is not 
- * dependent on selected channel. Therefore, configuring NCO for Rx or Tx direction, will configure the NCO for Rx or Tx directions of all channels. Depending on the SDR device, multiple NCO frequency entries 
+ * Numerically controlled oscillators (NCO) allow to upconvert or downconvert SDR device IQ carrier frequency for Tx and Rx directions. NCO frequency configuration is not dependent on selected channel for SDR 
+ * devices that use LMS7002M module. Therefore, configuring NCO for Rx or Tx direction, will configure the NCO for Rx or Tx directions of all channels. Depending on the SDR device, multiple NCO frequency entries 
  * can be stored in memory, but only a single NCO frequency can be fed into SDR device TSP complex mixer. SDR devices that use the LMS7002M module can store up to 16 NCO frequency entries and a single phase offset 
- * entry (can also store multiple, but this depends on the selected mode). To configure and enable the correct NCO frequency and phase, functions 
- * @ref lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) "SetNCOFrequency()" and @ref lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetNCOIndex()"
- * must be used. To read a NCO frequency and phase offset entry, function @ref lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) "GetNCOFrequency()" must be used. To view the currently 
- * active entry (fed into TSP mixer), @ref lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) "GetNCOIndex()" must be used. Below is an example output of a full NCO Frequency and phase offset entry table for 
- * a cold started and default initialized LimeSDR Mini V2.4 (Check out @ref dev_nco_example "example code" in a section below):
+ * entry (can also store multiple, but this depends on the selected mode). 
+ * 
+ * A single NCO entry can be modified using @ref lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) "SetNCOFrequency()" function. When configuring a new NCO entry, 
+ * frequency, phase offset and NCO entry index must be specified for a selected module direction. For SDR devices with LMS7002M modules, it is possible to set 16 NCO entries, which are indexed from 0 to 15. 
+ * Once all of the NCO entries are set, a single entry can be activated by using @ref lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetNCOIndex()" function with appropriate 
+ * NCO entry index. When activating a specific NCO entry, it is also important to set select whether IQ carrier signal upconversion or downconversoin is required. Function `SetNCOIndex(...)` parameter `downconv`
+ * must be set to value `false` (if upconversion is required) or value `true` (if downconversion is required).
+ *
+ * A single NCO entry can be read using @ref lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) "GetNCOFrequency()" function. When reading a NCO entries, appropriate index
+ * for a selected module direction must be passed. To read the frequency and phase offset of currently active NCO entry, first get the index of currently active NCO entry by calling, 
+ * @ref lime::SDRDevice::GetNCOIndex(uint8_t, lime::TRXDir, uint8_t) "GetNCOIndex()" function. Alternatively, you can read all entries by iterating over NCO entry index range. For SDR devices with LMS7002M module,
+ * 16 NCO entries, which are indexed from 0 to 15, can be read. If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier 
+ * upconversion is requested, all returned NCO frequency values will gain a positive sign to indicate active upconversion.
+ * 
+ *  Below is an example output of a full NCO Frequency and phase offset entry table for a cold started and default configured LimeSDR Mini V2.4 (Check out @ref dev_nco_example "example code" in a section below):
  * 
  * @image{inline} html dev_nco_default.png
  * 
@@ -27,18 +33,7 @@
  * (`downconvert = false`) the IQ carrier signal in the TSP mixer. Output of a modified NCO entry table:
  * 
  * @image{inline} html dev_nco_updated.png
- * 
- * @if RST_SUPPORT
- * @embedRstVerbatim{
- * .. admonition:: Note
- * 
- *    If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
- * will gain a positive sign to indicate active upconversion.}
- * @else
- * @note If IQ carrier downconversion is requested, all returned NCO frequency values will gain a negative sign to indicate active downconversion. If IQ carrier upconversion is requested, all returned NCO frequency values 
- * will gain a positive sign to indicate active upconversion.
- * @endif
- * 
+ *  
  * @subsection dev_nco_example Example code
  * 
  * A simple example code for SDR device with LMS7002M module, that allows to view default initialized or updated (hardcoded value) NCO table values.
@@ -59,7 +54,19 @@
  * 
  * int main()
  * {
- *    ... // SDR device enumeration and registration
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
  * 
  *    uint8_t moduleIndex = 0;
  *    uint8_t ChA = 0;

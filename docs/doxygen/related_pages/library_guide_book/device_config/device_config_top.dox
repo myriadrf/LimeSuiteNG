@@ -14,7 +14,7 @@
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
  *    <li> @subpage device_info "Additional device information"</li>
- *    <li> @subpage other_freq_config "Additional frequency configuration"
+ *    <li> @subpage nco_freq_config "NCO control"
  *    @if DEVELOP
  *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
  *    <li> @subpage frequency_config "Frequency configuration"</li>
