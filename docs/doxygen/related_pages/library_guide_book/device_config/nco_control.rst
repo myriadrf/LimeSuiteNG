@@ -1,5 +1,5 @@
 Additional frequency configuration
 ==================================
 
-.. doxygenpage:: other_freq_config
+.. doxygenpage:: nco_freq_config
    :content-only:
