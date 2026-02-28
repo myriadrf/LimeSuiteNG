@@ -315,6 +315,68 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
 }
 
+bool LA9310_PCIe::CheckFirmwareAlive(int timeout_ms)
+{
+    lime::info("LA9310 CheckFirmwareAlive\n");
+    volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
+    int32_t pattern = 0x55aa55aa;
+
+    hif->sw_cmd_desc.cmd = 6;
+    hif->sw_cmd_desc.data[0] = pattern;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = std::chrono::high_resolution_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
+        {
+            return false;
+        }
+    }
+
+    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
+    {
+        int32_t status = hif->sw_cmd_desc.data[0];
+        return status == (~pattern) ? true : false;
+    }
+    else
+        return false;
+}
+
+OpStatus LA9310_PCIe::EnterFirmwareReloadMode(int timeout_ms)
+{
+    lime::info("LA9310 EnterFirmwareReloadMode\n");
+    volatile struct la9310_hif* hif = hostInterface;
+    assert(hif);
+    int32_t pattern = 0x55aa55aa;
+
+    hif->sw_cmd_desc.cmd = 5;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = std::chrono::high_resolution_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
+        {
+            lime::error("LA9310_PCIe: EnterFirmwareReloadMode timeout\n");
+            break;
+        }
+    }
+
+    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
+    {
+        int32_t status = hif->sw_cmd_desc.data[0];
+        return status == (~pattern) ? OpStatus::Success : OpStatus::Error;
+    }
+    else
+        return OpStatus::Error;
+}
+
+
+
 OpStatus LA9310_PCIe::SetSystemClock(uint32_t clk_hz, int timeout_ms)
 {
     lime::info("LA9310 SetSystemClock %u\n", clk_hz);

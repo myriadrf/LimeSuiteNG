@@ -105,6 +105,16 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @return 0 on success, error code else
     OpStatus LoadVSPAFirmware(const char* data, size_t length);
 
+    /// @brief Checks if the firmware on the ARM M4 is alive
+    /// @param Timeout in ms for the HIF command
+    /// @return true if firmware is loaded, false else
+    bool CheckFirmwareAlive(int timeout_ms = 10);
+
+    /// @brief Function let the ARM M4 frimware enter firmware reload mode
+    /// @param Timeout in ms for the HIF command
+    /// @return 0 on success, error code else
+    OpStatus EnterFirmwareReloadMode(int timeout_ms = 100);
+
     /// @brief Block waiting for new data
     OpStatus wait_for_new_data(int timeout_ms = 1000);
 
