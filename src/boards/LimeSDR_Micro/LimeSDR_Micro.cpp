@@ -672,6 +672,15 @@ OpStatus LimeSDR_Micro::UploadMemory(
     switch (device)
     {
     case eMemoryDevice::ARM_M4: {
+        // Check if firmware is already running
+        if (mStreamingPort->CheckFirmwareAlive()) {
+            lime::info("LA9310 Firmware is already running, enter reload mode\n");
+            status = mStreamingPort->EnterFirmwareReloadMode();
+            if (status != OpStatus::Success)
+                return status;
+        } else
+            lime::info("LA9310 Firmware is not running\n");
+
         status = mStreamingPort->LoadArmM4Firmware(data, length);
         if (status != OpStatus::Success)
             return status;
