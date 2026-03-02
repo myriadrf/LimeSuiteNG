@@ -5,4 +5,20 @@
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
  * @endif
  * 
+ * @section summary Summary
+ * 
+ * Some SDR devices support the use of GPIO pins. GPIO pin count depends on the SDR device model and GW that is used. For more information, refer to the respective SDR device hardware data sheets.
+ * 
+ * @subsection gpio_pin_addressing Pin addressing and modes
+ * 
+ * 
+ * 
+ * @subsection gpio_directions Pin directions
+ * 
+ * SDR device GPIO pins can be set to `INPUT` or `OUTPUT` modes to respectively allow the pin reads and writes. Current SDR device GPIO pin directions can be retrieved using
+ * @ref lime::SDRDevice::GPIODirRead(uint8_t*, size_t) "GPIODirRead()" function. Each GPIO pin is represented by a single bit in an array. A single 
+ * 
+ * 
+ * @subsection gpio_rw Pin reads and writes
+ * 
  */
