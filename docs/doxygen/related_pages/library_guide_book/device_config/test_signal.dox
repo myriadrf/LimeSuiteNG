@@ -6,7 +6,7 @@
  * A test signal can be used to generate known sample values in order to test SDR device Tx/Rx directions. For SDR devices with LMS7002M module, test signal configuration is not 
  * dependent on selected channel. Therefore, setting test signal for a Tx or Rx direction of any channel, will enable the test signal generator for all Tx or Rx directions on all
  * channels. Test signal configuration must be set by using @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()"
- * function, where a configuration structure of `lime::ChannelConfig::Direction::TestSignal` must be passed as an argument. To retrieve test signal configuration of a particular direction, function 
+ * function, where a configuration structure of `lime::ChannelConfig::Direction::TestSignal` type must be passed as an argument. To retrieve test signal configuration of a particular direction, function 
  * @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" must be used.
  * 
  * Once the test signal generators for Tx direction are enabled, generated signal is outputed into physical Tx antenna ports which can be probed with appropriate equipment.
@@ -21,7 +21,7 @@
  *    <li>Signal type - `DC` or `Sine`</li>
  *    <li>Signal frequency division (only for sine signal) - `8 times` or `4 times`</li>
  *    <li>Signal scale (only for sine signal) - `full` or `half`</li>
- *    <li>DC value (Read only and only for DC signal) - `I` and  `Q` signal components</li>
+ *    <li>DC value (Read only and only for DC signal) - `I` and `Q` signal components</li>
  * </ul>
  * 
  * @subsection test_sig_example Example of test signal generation
