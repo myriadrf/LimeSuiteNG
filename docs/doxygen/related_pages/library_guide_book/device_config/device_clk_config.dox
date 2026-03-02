@@ -1,5 +1,5 @@
 /**
- * @page dev_freq_config Device frequency configuration
+ * @page clock_config Clock configuration
  * 
  * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
@@ -42,7 +42,7 @@
  * @section core_clk Core clock
  * 
  * Core clock is the main device clock that is used as a source to derive the clock values for internal components (ADCs, NCOs, TSPs and etc.) of SDR device module(s). <b>Modification of Core clock will alter the SDR device 
- * performance</b>.
+ * performance</b>!
  * 
  * @section clock_example Exmaple code
  * 
