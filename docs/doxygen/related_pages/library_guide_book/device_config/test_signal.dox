@@ -1,6 +1,10 @@
 /**
  * @page dev_testing_sig Test signal set up
  * 
+ * @if DOX_NAV
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
+ * @endif
+ * 
  * @section dev_signal_set_up Configuring signal
  * 
  * A test signal can be used to generate known sample values in order to test SDR device Tx/Rx directions. For SDR devices with LMS7002M module, test signal configuration is not 
