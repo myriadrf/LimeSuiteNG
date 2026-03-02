@@ -1,0 +1,8 @@
+/**
+ * @page gpio_control GPIO control
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
+ * @endif
+ * 
+ */
