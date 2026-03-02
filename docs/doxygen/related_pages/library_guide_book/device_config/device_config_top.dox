@@ -11,11 +11,11 @@
  * <ul>
  *    <li> @subpage quick_config "Quick configuration"</li>
  *    <li> @subpage generic_config "Common control and configuration options"
- *    <li> @subpage direct_config "Direct register and parameter access"
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
- *    <li> @subpage device_info "Additional device information"</li>
  *    <li> @subpage nco_freq_config "NCO control"
+ *    <li> @subpage device_info "Additional device information"</li>
  *    <li> @subpage dev_testing_sig "Test signal set up"</li>
+ *    <li> @subpage direct_config "Direct register and parameter access"
  *    @if DEVELOP
  *    <li> @subpage tsp_correctors "Signal corrector configuration" </li>
  *    <li> @subpage frequency_config "Frequency configuration"</li>
