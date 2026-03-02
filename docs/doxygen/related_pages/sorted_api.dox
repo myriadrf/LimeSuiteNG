@@ -120,7 +120,7 @@
  *          <li> @ref lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) "SetHardwareTimestamp()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Additional frequency configuration:</b>
+ *    <li><b>Clock configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
  *          <li> @ref lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) "SetClockFreq()"</li>
