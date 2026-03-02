@@ -14,6 +14,7 @@
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
  *    <li> @subpage nco_freq_config "NCO control"
  *    <li> @subpage device_info "Additional device information"</li>
+ *    <li> @subpage dev_freq_config "Device frequency configuration"</li>
  *    <li> @subpage dev_testing_sig "Test signal set up"</li>
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    @if DEVELOP
