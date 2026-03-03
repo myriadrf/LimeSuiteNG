@@ -5,20 +5,50 @@
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
  * @endif
  * 
- * @section summary Summary
+ * @section gpio_summary Summary
  * 
- * Some SDR devices support the use of GPIO pins. GPIO pin count depends on the SDR device model and GW that is used. For more information, refer to the respective SDR device hardware data sheets.
+ * Some SDR devices support the use of GPIO pins. GPIO pin count depends on the SDR device model and GW support. For more information, refer to the respective SDR device hardware data sheets.
  * 
- * @subsection gpio_pin_addressing Pin addressing and modes
+ * @subsection gpio_pin_addressing Pin addressing 
  * 
- * 
+ * The GPIO pin addressing order maters, because GPIO direction and status read/write functions operate on a batch of GPIO pins at once. A GPIO pin batch is considered to be a single byte, 
+ * where each individual bit addresses a single GPIO pin. Multiple batches of GPIO pins are passed as an array of bytes. This allows the functions to operate on 8 GPIO pins at once. GPIO pins 
+ * for SDR devices based on LMS7002M module are addressed in an ascending order starting from the LSB bit of the first GPIO array byte. Consequently, the GPIO0 pin is addressed as a bit 0 and 
+ * GPIO7 is addressed as bit 7 in the first GPIO array byte. If a SDR device, has more than 8 GPIO pins, the addressing continues in an ascending order and the bits 0-7 of the next GPIO array byte 
+ * will address GPIO pins 8-15 and etc.
  * 
  * @subsection gpio_directions Pin directions
  * 
- * SDR device GPIO pins can be set to `INPUT` or `OUTPUT` modes to respectively allow the pin reads and writes. Current SDR device GPIO pin directions can be retrieved using
- * @ref lime::SDRDevice::GPIODirRead(uint8_t*, size_t) "GPIODirRead()" function. Each GPIO pin is represented by a single bit in an array. A single 
+ * To get the current GPIO pin directions, use @ref lime::SDRDevice::GPIODirRead(uint8_t*, size_t) "GPIODirRead()" function. 
+ * To set the new GPIO pin directions, use @ref lime::SDRDevice::GPIODirWrite(const uint8_t*, size_t) "GPIODirWrite()" function. 
  * 
+ * For SDR devices based on LMS7002M modules, GPIO pins support the following direction modes:
+ * <ul>
+ *    <li>`INPUT` - 0</li>
+ *    <li>`OUTPUT` - 1</li>
+ * </ul>
+ * 
+ * For example, the following array ``uint8_t GPIODirs[2] = {0b00001010, 0b00000011};`` bytes indicate that the GPIO 1, 3 and 8, 9 are set to ``OUTPUT`` direction mode, while the rest of the GPIO pins  
+ * are set to ``INPUT`` direction mode.
  * 
  * @subsection gpio_rw Pin reads and writes
+ * 
+ * To get the current GPIO pin status, use @ref lime::SDRDevice::GPIORead(uint8_t*, size_t) "GPIORead()" function. 
+ * To set the new GPIO pin status, use @ref lime::SDRDevice::GPIOWrite(const uint8_t*, size_t) "GPIOWrite()" function. 
+ * 
+ * For SDR devices based on LMS7002M modules, GPIO pins support the following states:
+ * <ul>
+ *    <li>``HIGH`` - 1</li>
+ *    <li>``LOW`` - 0</li>
+ * </ul>
+ * 
+ * For example, the following array ``uint8_t GPIOStates[2] = {0b01010001, 0b10100010};`` bytes indicate that the GPIOS 0, 4, 6 and 9, 13, 15 pins are in a ``HIGH`` state, while the rest of the GPIO pins
+ * are in a ``LOW`` state.
+ * 
+ * @subsection gpio_example GPIO pin example
+ * 
+ * @code{.cpp}
+ * 
+ * @endcode
  * 
  */
