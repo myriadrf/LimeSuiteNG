@@ -7,7 +7,7 @@
  * 
  * @section gpio_summary Summary
  * 
- * Some SDR devices support the use of GPIO pins. GPIO pin count depends on the SDR device model and GW support. For more information, refer to the respective SDR device hardware data sheets.
+ * Some SDR devices support the use of GPIO pins. GPIO pin count depends on the SDR device model and device GW version. For more information, refer to the respective SDR device hardware data sheets.
  * 
  * @subsection gpio_pin_addressing Pin addressing 
  * 
@@ -28,7 +28,7 @@
  *    <li>`OUTPUT` - 1</li>
  * </ul>
  * 
- * For example, the following array ``uint8_t GPIODirs[2] = {0b00001010, 0b00000011};`` bytes indicate that the GPIO 1, 3 and 8, 9 are set to ``OUTPUT`` direction mode, while the rest of the GPIO pins  
+ * For example, the following array ``uint8_t GPIODirs[2] = {0b00001010, 0b00000011};`` bytes indicate that the GPIOs 1, 3 and 8, 9 are set to ``OUTPUT`` direction mode, while the rest of the GPIO pins  
  * are set to ``INPUT`` direction mode.
  * 
  * @subsection gpio_rw Pin reads and writes
@@ -42,13 +42,89 @@
  *    <li>``LOW`` - 0</li>
  * </ul>
  * 
- * For example, the following array ``uint8_t GPIOStates[2] = {0b01010001, 0b10100010};`` bytes indicate that the GPIOS 0, 4, 6 and 9, 13, 15 pins are in a ``HIGH`` state, while the rest of the GPIO pins
+ * For example, the following array ``uint8_t GPIOStates[2] = {0b01010001, 0b10100010};`` bytes indicate that the GPIOs 0, 4, 6 and 9, 13, 15 pins are in a ``HIGH`` state, while the rest of the GPIO pins
  * are in a ``LOW`` state.
  * 
- * @subsection gpio_example GPIO pin example
+ * @subsection gpio_example Example code for GPIO pin control
+ * 
+ * Below is an example code used to control GPIO pins of a SDR device. Code is designed to show the use of GPIO pins for SDR devices that support atleast 8 GPIO pins.
+ * The following example code reads the initial and updated GPIO pin directions and states, outputs the results to the command line.
  * 
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <cinttypes>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/OpStatus.h>
  * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
+ *    const size_t GPIOBatches = 1;
+ *    uint8_t GPIODirs[GPIOBatches] = {};
+ *    uint8_t GPIOStates[GPIOBatches] = {};
+ * 
+ *    std::cout << "GPIO directions and states of a reset SDR device:\n";
+ *    device->GPIODirRead(GPIODirs, GPIOBatches);
+ *    device->GPIORead(GPIOStates, GPIOBatches);
+ *    for(int i = 0; i < 8; ++i)
+ *       std::cout << "GPIO" << i << " - " << (GPIODirs[0] & (1 << i) ? "OUT\t" : "IN\t") 
+ *       << (GPIOStates[0] & (1 << i) ? "HIGH\n" : "LOW\n");
+ * 
+ *    // Reseting all of the pin states
+ *    GPIODirs[0]=0xFF;
+ *    GPIOStates[0]=0;
+ *    device->GPIODirWrite(GPIODirs, GPIOBatches);
+ *    device->GPIOWrite(GPIOStates, GPIOBatches);
+ * 
+ *    //Setting all GPIOs 4-7 to output 
+ *    GPIODirs[0]=0xF0;    // GPIOs 4-7 output mode, GPIOs 0-3 input mode
+ *    GPIOStates[0]=0x51;  // Set the GPIOs 1 and 4-7 to HIGH state 
+ *    device->GPIODirWrite(GPIODirs, GPIOBatches);
+ *    device->GPIOWrite(GPIOStates, GPIOBatches);
+ *    std::cout << "Updated GPIO directions and states:\n";
+ *    GPIODirs[0]=0x00;
+ *    GPIOStates[0]=0x00;
+ *    device->GPIODirRead(GPIODirs, GPIOBatches);
+ *    device->GPIORead(GPIOStates, GPIOBatches);
+ *    for(int i = 0; i < 8; ++i)
+ *       std::cout << "GPIO" << i << " - " << (GPIODirs[0] & (1 << i) ? "OUT\t" : "IN\t") 
+ *       << (GPIOStates[0] & (1 << i) ? "HIGH\n" : "LOW\n");
+ * 
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
  * @endcode
+ * 
+ * Below is an output of an example code above used to control LimeSDR USB device GPIO pins. A reset SDR device will always set the GPIO pins to the ``INPUT`` direction mode and the default pin 
+ * state to ``HIGH``. Although the default pin states are set to ``HIGH``, the actual GPIO pins on the SDR device are set to ``LOW`` state, which is equal to 0 V. Default GPIO pin state values on 
+ * device reset depend on the device gateware (GW) default initialized register values for the pin states. Different SDR device GW versions may set the default GPIO pin state to different states, 
+ * than observed in the image below.
+ * 
+ * For the purpose of demonstration, code resets the directions and states to demonstrate, that a pin configured in ``INPUT`` direction mode cannot be set to ``HIGH`` state from the user space. 
+ * GPIO pin reset configures all GPIO directions to ``OUTPUT`` mode and then toggles all GPIO pin states to a ``LOW`` state. Once the GPIO pins are reset, a new GPIO direction and state configuration
+ * is set. Now the GPIO pins 4-7 are left in an ``OUTPUT`` direction mode, while the GPIO pins 0-3 are set to ``INPUT`` direction mode, by updating array ``GPIODirs[0] = 0xF0;``. Next, GPIO states are 
+ * updated, where the GPIO pins 0, 4, 6 are set to ``HIGH`` state and GPIO pins 5, 7 are set to ``LOW`` state, by updating array ``GPIOStates[0] = 0x51;``. Updated GPIO pin states are read back from the
+ * device. As expected the GPIO pins 4 and 6 are set to ``HIGH`` state, however the GPIO pin 0 is left unchanged, since it is configured to an ``INPUT`` direction mode.
+ * 
+ * @image{inline} html dev_gpio_control.png
+ * 
  * 
  */
