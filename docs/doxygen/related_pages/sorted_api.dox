@@ -200,7 +200,7 @@
  *    </li>
  * </ul>
  * 
- * @subsection logging Logger
+ * @subsection logging Logging
  * <ul>
  *    <li> @ref lime::registerLogHandler(const lime::LogHandlerCString) "registerLogHandler(const LogHandlerCString)()"</li>
  *    <li> @ref lime::registerLogHandler(const lime::LogHandler) "registerLogHandler(const LogHandler)()"</li>
