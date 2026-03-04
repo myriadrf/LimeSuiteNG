@@ -1,3 +1,5 @@
+.. _direct_register_access:
+
 Direct register and parameter access
 ====================================
 
