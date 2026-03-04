@@ -28,10 +28,10 @@
  *    <li>`OUTPUT` - 1</li>
  * </ul>
  * 
- * For example, the following array ``uint8_t GPIODirs[2] = {0b00001010, 0b00000011};`` bytes indicate that the GPIOs 1, 3 and 8, 9 are set to ``OUTPUT`` direction mode, while the rest of the GPIO pins  
+ * For example, the following array ``uint8_t GPIODirs[2] = {0b00001010, 0b00000011};`` bytes indicate that the GPIO pins 1, 3 and 8, 9 are set to ``OUTPUT`` direction mode, while the rest of the GPIO pins 
  * are set to ``INPUT`` direction mode.
  * 
- * @subsection gpio_rw Pin reads and writes
+ * @subsection gpio_rw Pin states
  * 
  * To get the current GPIO pin status, use @ref lime::SDRDevice::GPIORead(uint8_t*, size_t) "GPIORead()" function. 
  * To set the new GPIO pin status, use @ref lime::SDRDevice::GPIOWrite(const uint8_t*, size_t) "GPIOWrite()" function. 
@@ -42,7 +42,7 @@
  *    <li>``LOW`` - 0</li>
  * </ul>
  * 
- * For example, the following array ``uint8_t GPIOStates[2] = {0b01010001, 0b10100010};`` bytes indicate that the GPIOs 0, 4, 6 and 9, 13, 15 pins are in a ``HIGH`` state, while the rest of the GPIO pins
+ * For example, the following array ``uint8_t GPIOStates[2] = {0b01010001, 0b10100010};`` bytes indicate that the GPIO pins 0, 4, 6 and 9, 13, 15 pins are in a ``HIGH`` state, while the rest of the GPIO pins
  * are in a ``LOW`` state.
  * 
  * @subsection gpio_example Example code for GPIO pin control
@@ -114,15 +114,15 @@
  * @endcode
  * 
  * Below is an output of an example code above used to control LimeSDR USB device GPIO pins. A reset SDR device will always set the GPIO pins to the ``INPUT`` direction mode and the default pin 
- * state to ``HIGH``. Although the default pin states are set to ``HIGH``, the actual GPIO pins on the SDR device are set to ``LOW`` state, which is equal to 0 V. Default GPIO pin state values on 
- * device reset depend on the device gateware (GW) default initialized register values for the pin states. Different SDR device GW versions may set the default GPIO pin state to different states, 
- * than observed in the image below.
+ * state to ``HIGH``. Although the default pin states are set to ``HIGH``, the actual GPIO pins on the SDR device are set to a ``LOW`` state (0 V). Default GPIO pin state values on 
+ * device reset depend on the device gateware (GW) default register intialization procedure. Different SDR device GW versions may set the default GPIO pin states to states that are different than 
+ * observed in the output image below.
  * 
  * For the purpose of demonstration, code resets the directions and states to demonstrate, that a pin configured in ``INPUT`` direction mode cannot be set to ``HIGH`` state from the user space. 
  * GPIO pin reset configures all GPIO directions to ``OUTPUT`` mode and then toggles all GPIO pin states to a ``LOW`` state. Once the GPIO pins are reset, a new GPIO direction and state configuration
  * is set. Now the GPIO pins 4-7 are left in an ``OUTPUT`` direction mode, while the GPIO pins 0-3 are set to ``INPUT`` direction mode, by updating array ``GPIODirs[0] = 0xF0;``. Next, GPIO states are 
  * updated, where the GPIO pins 0, 4, 6 are set to ``HIGH`` state and GPIO pins 5, 7 are set to ``LOW`` state, by updating array ``GPIOStates[0] = 0x51;``. Updated GPIO pin states are read back from the
- * device. As expected the GPIO pins 4 and 6 are set to ``HIGH`` state, however the GPIO pin 0 is left unchanged, since it is configured to an ``INPUT`` direction mode.
+ * device. As expected the GPIO pins 4 and 6 are set to ``HIGH`` state. However, the GPIO pin 0 is left unchanged, since it is configured to an ``INPUT`` direction mode.
  * 
  * @image{inline} html dev_gpio_control.png
  * 
