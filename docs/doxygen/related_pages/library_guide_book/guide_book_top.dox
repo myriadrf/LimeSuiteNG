@@ -3,8 +3,7 @@
  * 
  * This is the main page of LimeSuiteNG library guide book. Here you will find an organized list of topics which will help you get started with LimeSuiteNG public API.
  * Guide book topics cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
- * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc. The last example list topic provides a minimal example
- * code which can be used as template for further development.
+ * Example topics are ordereded in a consecutive way such that project set up topic follows device registration topic and etc.
  * 
  * Topics:
  * <ul>
@@ -13,9 +12,7 @@
  *    <li> @subpage dev_config </li>
  *    <li> @subpage dev_stream_config </li>
  *    <li> @subpage dev_streaming </li>
- * @if DEVELOP
- *    <li> @subpage hello_world_example </li>
- * @endif
+ *    <li> @subpage data_logging </li>
  * </ul>
  * 
  */
