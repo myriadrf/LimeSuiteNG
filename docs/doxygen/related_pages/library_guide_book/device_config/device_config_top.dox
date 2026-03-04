@@ -16,6 +16,7 @@
  *    <li> @subpage device_info "Additional device information"</li>
  *    <li> @subpage clock_config "Clock configuration"</li>
  *    <li> @subpage gpio_control "GPIO control"</li>
+ *    <li> @subpage low_speed_io "Low speed interfaces"</li>
  *    <li> @subpage dev_testing_sig "Test signal set up"</li>
  *    <li> @subpage direct_config "Direct register and parameter access"
  *    @if DEVELOP
