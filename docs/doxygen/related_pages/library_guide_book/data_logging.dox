@@ -38,12 +38,66 @@
  *    <li> @ref lime::registerLogHandler(const lime::LogHandler) "registerLogHandler(const LogHandler handler)" </li>
  * </ul>
  * 
- * <b>Register only a single log handler that operates using your prefered style of strings.</b>
+ * <b>Register only a single log handler that operates using your preferred style of strings.</b> Support for C and C++ string style message logging is maintained despite the preferred log handler 
+ * string style.
  * 
  * @subsection custom_logger_example Example code of a custom logger
  * 
+ * Example code registers a custom log handler, that logs messages to a ``deviceLogs.txt`` file instead of terminal/command line window. Custom log handler logs C++ style string messages. However,
+ * the logging of C style string messages is also supported despite the preferred log handler string style. Important to note, that the custom log handler does not take the log level into consideration.
+ * 
  * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * #include <limesuiteng/Logger.h>
+ * #include <fstream>
+ * #include <string>
+ * 
+ * using namespace std::literals::string_literals;
+ * 
+ * static std::string logFileName = "deviceLogs.txt";
+ * 
+ * void myLogHandler(const lime::LogLevel level, const std::string& message)
+ * {
+ *    std::ofstream logFile(logFileName.c_str(), std::ios_base::app);
+ *    logFile << message << std::endl;
+ *    logFile.close();
+ * }
+ * 
+ * int main()
+ * {
+ *    lime::registerLogHandler(myLogHandler);
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t CLK_REF = 0;
+ *    uint8_t ChA = 0;
+ *    lime::SDRDescriptor deviceDesc = device->GetDescriptor();
+ *    lime::info("Start of the program logs for "s + deviceDesc.name + " device:"s);      // We can still use, C style strings even if the handler only supports C++ style strings.
+ *    lime::info("Retrieved default reference clock %.2f Hz", device->GetClockFreq(CLK_REF, ChA));
+ *    lime::warning("Program end! Deallocating device resources!");
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
  * @endcode
+ * 
+ * Output of the example code shows that in addition to our log messages, library logs are also present:
  * 
  * @image{inline} html custom_logger_output.png
  * 
