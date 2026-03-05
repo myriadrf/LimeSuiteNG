@@ -7,9 +7,8 @@
  * 
  * @section lib_logger Library log handler
  * 
- * By default the library uses a simple log handler, which outputs the logged messages to the command line/terminal window. If a library function execution fails, appropriate log level message
- * is sent to the log handler for output to the command line/terminal window. If the terminal window supports colored font, warnings are diplayed in a yellow font, errors in a red font and any
- * other log messages in plain white font.
+ * By default the library uses a simple log handler, which outputs the logged messages to the command line/terminal window. If the terminal window supports colored font, warnings are 
+ * diplayed in a yellow font, errors in a red font and any other log messages in a white font.
  * 
  * @subsection lib_log_funcs Logging functions
  * 
@@ -26,7 +25,7 @@
  *    <li>Debug</li>
  * </ul>
  * 
- * Logging functions are overloaded and support both the C style formatted string (use of format specifiers. In eg. ``"%.8f"`` and etc.) messages and C++ style string messages. 
+ * Logging functions are overloaded and support formatted C style string messages (use of format specifiers. In eg. ``"%.8f"`` and etc.) and C++ style string messages. 
  * 
  * @section custom_logger Custom log handler
  * 
@@ -86,12 +85,12 @@
  *       return 1;
  *    }
  * 
- *    uint8_t CLK_REF = 0;
+ *    uint8_t CLK_CGEN = 3;
  *    uint8_t ChA = 0;
  *    lime::SDRDescriptor deviceDesc = device->GetDescriptor();
- *    lime::info("Start of the program logs for "s + deviceDesc.name + " device:"s);      // We can still use, C style strings even if the handler only supports C++ style strings.
- *    lime::info("Retrieved default reference clock %.2f Hz", device->GetClockFreq(CLK_REF, ChA));
- *    lime::warning("Program end! Deallocating device resources!");
+ *    lime::info("Logging information for "s + deviceDesc.name + " device:"s);
+ *    lime::info("Core clock frequency = %.6f Hz", device->GetClockFreq(CLK_CGEN, ChA)); // We can still use formatted C style strings even if the handler only supports C++ style strings
+ *    lime::warning("End of program! Deallocating device resources!");
  *    lime::DeviceRegistry::freeDevice(device);
  *    return 0;
  * }
