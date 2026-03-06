@@ -25,8 +25,9 @@
  *    <li>Signal type - `DC` or `Sine`</li>
  *    <li>Signal frequency division (only for sine signal) - `8 times` or `4 times`</li>
  *    <li>Signal scale (only for sine signal) - `full` or `half`</li>
- *    <li>DC value (Read only and only for DC signal) - `I` and `Q` signal components</li>
  * </ul>
+ * 
+ * @important It is not possible to read DC I and Q values with @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" function.
  * 
  * @subsection test_sig_example Example of test signal generation
  * 
