@@ -24,8 +24,7 @@
  * @subsection low_speed_io_spi Serial Peripheral Interface (SPI)
  * 
  * SPI interface is widely adopted by the SDR devices that are supported by the library. SPI interface allows to directly access all of the control and status registers of SDR device modules. 
- * Information about each module registers is provided in the respective data sheets of the modules. SPI transactions from host to device module, requires the data bytes to conform to a specific
- * packet data field structures described in LMS64C protocol. SPI transactions from device module to host, return data bytes in a predefined order that is also described in the LMS64C protocol.
+ * Information about each module registers is provided in the respective data sheets of the modules. 
  * 
  * Different SDR device models, can use a different amount and different types of modules with unique IDs. Unique module IDs are used to identify each module and must be passed as an argument to 
  * @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()" function ``spiBusAddress`` parameter, which acts as a chip select, to target the correct module. To find out 
