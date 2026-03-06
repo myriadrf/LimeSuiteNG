@@ -14,7 +14,6 @@
  *    <li> @subpage fir_filter_config "FIR filter configuration"</li>
  *    <li> @subpage nco_freq_config "NCO control"
  *    <li> @subpage device_info "Additional device information"</li>
- *    <li> @subpage clock_config "Clock configuration"</li>
  *    <li> @subpage gpio_control "GPIO control"</li>
  *    <li> @subpage low_speed_io "Low speed interfaces"</li>
  *    <li> @subpage dev_testing_sig "Test signal set up"</li>
