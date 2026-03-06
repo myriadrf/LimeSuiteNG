@@ -111,15 +111,6 @@
  *          <li> @ref lime::SDRDevice::GPIODirRead(uint8_t*, const size_t) "GPIODirRead()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Utility:</b>
- *       <ul>
- *          <li> @ref lime::SDRDevice::UploadTxWaveform(const lime::StreamConfig&, uint8_t, const void**, uint32_t) "UploadTxWaveform()"</li>
- *          <li> @ref lime::SDRDevice::EnableCache(bool) "EnableCache()"</li>
- *          <li> @ref lime::SDRDevice::Synchronize(bool) "Synchronize()"</li>
- *          <li> @ref lime::SDRDevice::GetHardwareTimestamp(uint8_t) "GetHardwareTimestamp()"</li>
- *          <li> @ref lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) "SetHardwareTimestamp()"</li>
- *       </ul>
- *    </li>
  *    <li><b>Clock configuration:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
