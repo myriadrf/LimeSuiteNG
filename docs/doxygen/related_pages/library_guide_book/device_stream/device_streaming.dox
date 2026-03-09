@@ -144,42 +144,6 @@
  * lesser than a total sample quantity in a packet, the samples remain buffered until a sufficient amount of samples is added with the next `Transmit(...)` call to form a full packet (this does not apply for sample batch 
  * queues that have the end of stream burst flag enabled). 
  * 
- * @subsection stream_timestamps Timestamps
- * 
- * Timestamping is an optional feature that can be enabled on demand to provide additional meta data about the sample packets in transmission. Enabling timestamping feature decreases the stream performance, since 
- * timestamps take up additional packet capacity and conesquently less samples can be stored in a single packet. Timestamp type is selected at @ref dev_stream_config "stream configuration stage". Default stream 
- * configuration selects the ``SAMPLE_TICKS`` timestamp type. To reconfigure an already active stream with a new timestamp type, stream must be stopped and a stream interface function ``SetUp()`` must be called 
- * with updated stream configuration.
- * 
- * To use the timestamps on the receiver side, the address of a structure (``RxMeta`` in example code above) of ``lime::StreamRxMeta`` type must be passed to the stream interface function ``Receive(...)`` parameter 
- * list. To check if the received samples support timestamps, ``hasTimestamp`` member can be checked. If timestamps are supported, depending on the timestamp type a ``GetTicks()`` function can be called to view the 
- * total amount of samples that the device received or ``GetRealSeconds()`` function can be called to check the time that has passed since the start of the stream. Following the example code above, the worker loop can 
- * use a simple if statement to check for timestamp use and extract the timestamp based on the configured timestamp type:
- * 
- * @code{.cpp}
- * 
- *    ... // Receiver work loop
- *    
- *    // The following if statment can also be used to view generated timestamps for transmitted samples
- *    if(RxMeta.hasTimestamp)
- *    {
- *       if(RadioStreamConf.timestampType > lime::TimestampType::SAMPLE_TICKS)
- *          std::cout << "Real seconds since the start of the stream: " << RxMeta.timestamp.GetRealSeconds() << std::endl;
- *       else
- *          std::cout << "Device received samples: " << RxMeta.timestamp.GetTicks() << std::endl;
- *    }
- * 
- *    ... // Reciver work loop
- * @endcode
- *
- * @important To receive the correct timestamps, receiver and transmitter on the different end of the streams must use matching timestamp types.
- * 
- * To enable the automatic generation of timestamps on the transmitter side, the address of a structure (``TxMeta`` in example code above) of ``lime::StreamTxMeta`` type must be passed to the stream interface function 
- * ``Transmit(...)`` parameter list. The member ``hasTimestamp`` of the structure must be set to ``true`` to enable automatic generation of timestamps for samples queued for transmission. Generated timestamp type 
- * depends on the timestamp type that was selected at the  @ref dev_stream_config "stream configuration stage" and can always be reconfigured by calling stream interface function ``SetUp()``  with updated stream 
- * configuration structure once the stream is stopped. Generated timestamps on the transmitter side can also be viewed using the same if statment code snippet that was provided for the receiver side.
- * 
- * 
  * @subsection stream_stats Monitoring statistics
  * 
  * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stoped. To view stream statistics for both Tx and Rx directions, 
@@ -211,6 +175,44 @@
  * system software can process and the produced samples are dropped.  
  * The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the sent data transmission timestamp is already behind the hardware's current timestamp.  
  * The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
+ * 
+ * @section stream_timestamps Timestamps
+ * 
+ * Timestamping is an optional feature that can be enabled on demand to provide additional meta data about the sample packets in transmission. Timestamp type is selected at 
+ * @ref dev_stream_config "stream configuration stage". Default stream configuration selects the ``SAMPLE_TICKS`` timestamp type. To reconfigure an already active stream with a new timestamp type, stream 
+ * must be stopped and a stream interface function ``SetUp()`` must be called with updated stream configuration.
+ * 
+ * @subsection rx_timestamps Receiver timestamps
+ * 
+ * To use the timestamps on the receiver side, the address of a structure (``RxMeta`` in example code above) of ``lime::StreamRxMeta`` type must be passed to the stream interface function ``Receive(...)`` parameter 
+ * list. To check if the received samples support timestamps, ``hasTimestamp`` member can be checked. If timestamps are supported, depending on the timestamp type a ``GetTicks()`` function can be called to view the 
+ * total amount of samples that the device received or ``GetRealSeconds()`` function can be called to check the time that has passed since the start of the stream. Following the example code above, the worker loop can 
+ * use a simple if statement to check for timestamp use and extract the timestamp based on the configured timestamp type:
+ * 
+ * @code{.cpp}
+ * 
+ *    ... // Receiver work loop
+ *    
+ *    // The following if statment can also be used to view generated timestamps for transmitted samples
+ *    if(RxMeta.hasTimestamp)
+ *    {
+ *       if(RadioStreamConf.timestampType > lime::TimestampType::SAMPLE_TICKS)
+ *          std::cout << "Real seconds since the start of the stream: " << RxMeta.timestamp.GetRealSeconds() << std::endl;
+ *       else
+ *          std::cout << "Device received samples: " << RxMeta.timestamp.GetTicks() << std::endl;
+ *    }
+ * 
+ *    ... // Reciver work loop
+ * @endcode
+ *
+ * @important To receive the correct timestamps, receiver and transmitter on the different end of the streams must use matching timestamp types.
+ * 
+ * @subsection tx_timestamps Transmit timestamps
+ * 
+ * To enable the automatic generation of timestamps on the transmitter side, the address of a structure (``TxMeta`` in example code above) of ``lime::StreamTxMeta`` type must be passed to the stream interface function 
+ * ``Transmit(...)`` parameter list. The member ``hasTimestamp`` of the structure must be set to ``true`` to enable automatic generation of timestamps for samples queued for transmission. Generated timestamp type 
+ * depends on the timestamp type that was selected at the  @ref dev_stream_config "stream configuration stage" and can always be reconfigured by calling stream interface function ``SetUp()``  with updated stream 
+ * configuration structure once the stream is stopped. Generated timestamps on the transmitter side can also be viewed using the same if statment code snippet that was provided for the receiver side.
  * 
  * @section important_stream_notes Important notes
  * 
