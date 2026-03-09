@@ -16,9 +16,9 @@
  * @embedRstVerbatim{
  * .. admonition:: Note
  * 
- *    For direct access to LMS7002M and FPGA module registers, check out the :ref:`direct_register_access` sub-topic.}
+ *    Alternatively, LMS7002M and FPGA module registers can also be accessed using dedicated register write/read functions described in SDR device configuration sub-topic - @ref direct_config.}
  * @else
- * @note For direct access to LMS7002M and FPGA module registers, check out the @ref direct_config "register access" sub-topic.
+ * @note Alternatively, LMS7002M and FPGA module registers can also be accessed using dedicated register write/read functions described in SDR device configuration sub-topic - @ref direct_config.
  * @endif
  * 
  * @subsection low_speed_io_spi Serial Peripheral Interface (SPI)
