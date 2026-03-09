@@ -1,5 +1,5 @@
 /**
- * @page dev_testing_sig Test signal set up
+ * @page dev_testing_sig Test signal generator
  * 
  * @if DOX_NAV
  * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
@@ -7,14 +7,16 @@
  * 
  * @section dev_signal_set_up Configuring signal
  * 
- * A test signal can be used to generate known sample values in order to test SDR device Tx/Rx directions. For SDR devices with LMS7002M module, test signal configuration is not 
- * dependent on selected channel. Therefore, setting test signal for a Tx or Rx direction of any channel, will enable the test signal generator for all Tx or Rx directions on all
- * channels. Test signal configuration must be set by using @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()"
- * function, where a configuration structure of `lime::ChannelConfig::Direction::TestSignal` type must be passed as an argument. To retrieve test signal configuration of a particular direction, function 
- * @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" must be used.
+ * A test signal can be used to generate known sample values in order to test SDR device Tx/Rx directions. For SDR devices with LMS7002M module, test signal configuration is 
+ * exclusive to each individual direction of a channel. Test signal configuration for each channel direction must be set by using 
+ * @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()" function, where a 
+ * configuration structure of `lime::ChannelConfig::Direction::TestSignal` type must be passed as an argument. To retrieve test signal configuration of a particular direction, 
+ * function @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" must be used.
  * 
- * Once the test signal generators for Tx direction are enabled, generated signal is outputed into physical Tx antenna ports which can be probed with appropriate equipment.
+ * Once the test signal generators for Tx direction are enabled, generated signal is outputed into physical Tx antenna ports, which can be probed with appropriate equipment.
  * Once the test signal generators for Rx direction are enabled, samples are generated in a digital domain and can be read by starting the stream and reading buffered samples.
+ * When setting the digital DC I and Q component values for a DC type test signal generator of a SDR device based on LMS7002M module, the values must be multiples of 16 and must be offset by a value 
+ * of 0xF (example code below).
  * 
  * @subsection dev_test_sig_params Test signal parameters
  * 
@@ -22,10 +24,19 @@
  * with LMS7002M modules:
  * <ul>
  *    <li>Signal generator status - `Enabled` or `Disabled`</li>
- *    <li>Signal type - `DC` or `Sine`</li>
- *    <li>Signal frequency division (only for sine signal) - `8 times` or `4 times`</li>
- *    <li>Signal scale (only for sine signal) - `full` or `half`</li>
+ *    <li>Signal generator type - `DC` or `NCO`</li>
+ *    <li>Signal frequency division (only for NCO generator type) - `8 times` or `4 times`</li>
+ *    <li>Signal scale (only for NCO generator type) - `full` or `half`</li>
  * </ul>
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.}
+ * @else
+ * @warning If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.
+ * @endif
  * 
  * @important It is not possible to read DC I and Q values with @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" function.
  * 
@@ -59,7 +70,6 @@
  * 
  * int main()
  * {
- *    // signal(SIGINT, keyboardInt);
  *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
  *    if(listOfDevices.empty())
  *    {
@@ -83,7 +93,6 @@
  * 
  *    lime::SDRConfig LimeSDRMiniConf;
  *    lime::OpStatus configStatus = lime::OpStatus::Success;
- *    std::pair<lime::eGainTypes, double> TRxGenericGain(lime::eGainTypes::GENERIC, 25); // in dB
  *    LimeSDRMiniConf.channel[0].tx.enabled = false;
  *    LimeSDRMiniConf.channel[0].rx.enabled = true;
  *    LimeSDRMiniConf.channel[1].tx.enabled = false;
@@ -95,12 +104,11 @@
  * 
  *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
  *    device->SetDCOffsetMode(moduleIndex, lime::TRXDir::Rx, ChA, false);  // DC corrector must be disabled or it will correct the DC values
- *    int16_t dc_i = 16 + 0xF;   // Offsetting 4 bits, mandatory for LMS7002M based devices
- *    int16_t dc_q = 32 + 0xF;   // Offsetting 4 bits, mandatory for LMS7002M based devices
+ *
+ *    int16_t dc_i = 0x001F;   // I = 16; First 4 bits = 0xF, mandatory for LMS7002M based devices
+ *    int16_t dc_q = 0x002F;   // Q = 32; First 4 bits = 0xF, mandatory for LMS7002M based devices
  *    std::cout << "Setting Rx ChA test signal DC I = " << (dc_i - 0xF) << " and DC Q = " << (dc_q - 0xF) << std::endl;
- *    const auto testStatus = device->SetTestSignal(moduleIndex, lime::TRXDir::Rx, ChA, testSigConf, dc_i, dc_q);
- *    if(testStatus != lime::OpStatus::Success)
- *       std::cout << "Failed to set DC IQ values\n";
+ *    device->SetTestSignal(moduleIndex, lime::TRXDir::Rx, ChA, testSigConf, dc_i, dc_q);
  * 
  *    TxChA = device->GetTestSignal(moduleIndex, lime::TRXDir::Tx, ChA);
  *    TxChB = device->GetTestSignal(moduleIndex, lime::TRXDir::Tx, ChB);
@@ -171,4 +179,8 @@
  *    return 0;
  * }
  * @endcode
+ * 
+ * Output of the example code above:
+ * 
+ * @image{inline} html dev_test_signal_config.png
  */
