@@ -183,29 +183,59 @@
  * 
  * @subsection rx_timestamps Receiver side
  * 
- * To use the timestamps on the receiver side, the address of a structure  of ``lime::StreamRxMeta`` type (structure ``RxMeta`` in @ref generic_stream_example "example code above") must be passed to the stream  
- * interface function ``Receive(...)`` parameter list. To check if the timestamps for received sample packets are enabled, ``hasTimestamp`` flag can be checked. If timestamps are supported, an appropriate function
- * can be called to view the timestamp data. For ``SAMPLE_TICKS`` timestamp ``GetTicks()`` function can be called to view the total amount of samples that the device received. For ``REAL_SECONDS`` and 
- * ``UNIX_EPOCH`` timestamp types, ``GetRealSeconds()`` function can be called to check the time that has passed since the start of the stream or realtive to the unix time. Following the 
- * @ref generic_stream_example "example code above", the worker loop can be updated with a simple if statement to check for timestamp use and extract the timestamp based on the configured timestamp type:
+ * To use timestamps on the receiver side, the address of meta data structure of ``lime::StreamRxMeta`` type (structure ``RxMeta`` in @ref generic_stream_example "example code above") must be passed to the parameter list
+ * of stream interface function ``Receive(...)``. Meta data structure is updated with new meta data on each call of ``Receive(...)`` function. To check for timestamp support, check the meta data structure
+ *  ``hasTimestamp`` flag status. If the timestamp is supported (``hasTimestamp`` is set to ``true``), meta data structure is updated with new timestamp data on each call of ``Receive(...)`` function. To get the timestamp 
+ * value for any timestamp type, call timestamp storage class function ``GetTicks()``. This returns the current timestamp value in tick count. Depending on the timestamp type configuration, a tick count can represent the
+ * timestamp in sample count, real seconds in reference to the start of the stream or unix time. For timestamps, that store the tick count of real time, it is also possible to retrieve the timestamp values in real seconds 
+ * (instead of ticks) by using any of the following timestamp storage class interface functions:
+ * <ul>
+ *    <li>``GetRealSeconds()`` - returns full seconds counter (including the fractional part of a second).</li>
+ *    <li>``GetFracSeconds()`` - returns only the fractional part of a second.</li>
+ *    <li>``GetSeconds()`` - returns only the integer part of the seconds.</li>
+ * </ul>
+ * 
+ * Below is simple worker loop example code for receiver side wich is configured with timestamp type ``SAMPLE_TICKS``:
  * 
  * @code{.cpp}
  * 
- *    ... // Receiver work loop
- *    
- *    // The following if statment can also be used to view generated timestamps for transmitted samples
- *    if(RxMeta.hasTimestamp)
- *    {
- *       if(RadioStreamConf.timestampType > lime::TimestampType::SAMPLE_TICKS)
- *          std::cout << "Real seconds since the start of the stream: " << RxMeta.timestamp.GetRealSeconds() << std::endl;
- *       else
- *          std::cout << "Device received samples: " << RxMeta.timestamp.GetTicks() << std::endl;
- *    }
+ * ... // Other program code
  * 
- *    ... // Reciver work loop
+ * while(!cleanUp)
+ * {
+ *    uint32_t samplesRead = RadioStream->Receive(RxBuffers, bufferSize, &RxMeta);
+ *    if(samplesRead > 0)
+ *    {
+ *       std::cout << "Read " << samplesRead << " samples from device.\n";
+ * 
+ *       if(RxMeta.hasTimestamp)
+ *          std::cout << "Received timestamp: " << RxMeta.timestamp.GetTicks() << std::endl;
+ * 
+ *       for(int i = 0; i < 10; ++i)
+ *          std::cout << "(" << RxRawSamples[i].real() << "; " << RxRawSamples[i].imag() << ") ";
+ *       std::cout << std::endl;
+ *    }
+ *    else
+ *       std::cout << "Timeout! No samples present!\n";
+ * 
+ *    samplesRead = 0;
+ * }
+ * 
+ * ... // Other program code
+ * 
  * @endcode
- *
- * @important To receive the correct timestamps, receiver and transmitter (on the different end of the stream) must use matching timestamp types.
+ * 
+ * Output of example code:
+ * 
+ * @image{inline} html stream_rx_timestamp.png
+ * 
+ * The example output shows a continuous read of samples. A fixed amount of samples is read for every read cycle. After each read, a timestamp and the first 10 samples are printed to the window.
+ * Each timestamp represents the start time of the most recent read operation, measured in stream ticks. Because the configured timestamp type is ``SAMPLE_TICKS``, each tick represents a single sample.
+ * Therefore, the timestamp represents the start time of the most recent read operation, measured in read sample count.
+ * 
+ * Following the example output prints, the first timestamp print indicates that the most recent sample read operation happened at the start of the stream, since the timestamp value is zero. After the next 
+ * read cycle, a returned timestamp indicates that the next most recent read happend at a offset of 1024 samples. The prior read cycle modified the timestamp by the read amount of samples, therefore the
+ * next most recent read happened at an offset.  
  * 
  * @subsection tx_timestamps Transmitter side
  * 
