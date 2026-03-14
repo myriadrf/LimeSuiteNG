@@ -48,6 +48,8 @@
 using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;
 
+using std::max;
+
 namespace lime {
 
 namespace limesdrmicro {
@@ -256,7 +258,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         uint32_t boardRefClk = mStreamingPort->GetReferenceClock();
         if (boardRefClk > 0)
         {
-            lime::info("LimeSDR Micro refclk: %i\n", boardRefClk);
+            lime::info("LimeSDR Micro refclk: %i", boardRefClk);
             refClk = boardRefClk;
         }
         chip->SetReferenceClk_SX(TRXDir::Rx, refClk);
@@ -312,13 +314,13 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
     {
         if (cfg.channel[i].rx.enabled)
         {
-            double dacRate = cfg.channel[i].rx.sampleRate * std::max(1u, uint(cfg.channel[i].rx.oversample));
+            double dacRate = cfg.channel[i].rx.sampleRate; // * std::max(1u, uint(cfg.channel[i].rx.oversample));
             if (dacRate > maxDACrequest)
                 maxDACrequest = dacRate;
         }
         if (cfg.channel[i].tx.enabled)
         {
-            double adcRate = cfg.channel[i].tx.sampleRate * std::max(1u, uint(cfg.channel[i].tx.oversample));
+            double adcRate = cfg.channel[i].tx.sampleRate; // * std::max(1u, uint(cfg.channel[i].tx.oversample));
             if (adcRate > maxADCrequest)
                 maxADCrequest = adcRate;
         }
@@ -328,12 +330,22 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
 
 static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310> la9310, double sampleRate, int oversample)
 {
+    constexpr double maxSystemClock = 160e6;
     uint8_t adc_divider_mask = 0;
     uint8_t dac_divider_mask = 0;
-    oversample = 1; // TODO: oversampling is dependent on VSPA firmware
-    double systemClock = sampleRate * oversample;
 
-    if (systemClock <= 80e6)
+    // start with max oversampling
+    if (oversample <= 0)
+        oversample = 4;
+
+    double systemClock = sampleRate * oversample;
+    if (systemClock > maxSystemClock)
+    {
+        oversample = max(1.0, log2(int(maxSystemClock / sampleRate)));
+        systemClock = sampleRate * oversample;
+    }
+
+    if (systemClock <= maxSystemClock / 2.0)
     {
         // run higher system clock rate with half sampling rate
         systemClock *= 2;
@@ -350,7 +362,29 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310> la9310, double sam
     if (status != OpStatus::Success)
         return ReportError(status, "Failed to set LA9310 system clock");
 
-    return OpStatus::Success;
+    std::string fwname;
+    switch (oversample)
+    {
+    case 4:
+        fwname = "apm-iqplayer-4DEC4INT.eld";
+        break;
+    case 2:
+        fwname = "apm-iqplayer-2DEC2INT.eld";
+        break;
+    default:
+        fwname = "apm-iqplayer.eld";
+        break;
+    }
+    std::vector<char> firmware;
+    const std::string vspafirmware_path = "/lib/firmware/" + fwname;
+    status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
+    if (status != OpStatus::Success)
+    {
+        lime::error("File not found: "s + vspafirmware_path);
+        return status;
+    }
+    lime::info("Programming VSPA:" + vspafirmware_path);
+    return la9310->LoadVSPAFirmware(firmware);
 }
 
 OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
@@ -393,7 +427,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
     double sampleRate = CalculateCommonSampleRate(cfg);
     if (sampleRate > 0)
     {
-        status = SetLA9310SamplingRate(la9310, sampleRate, 1);
+        status = SetLA9310SamplingRate(la9310, sampleRate, 0);
         if (status != OpStatus::Success)
             return status;
     }
@@ -827,9 +861,12 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     else
         rate /= (1 << ((dacRate >> channel) & 1));
 
-    // TODO: take into account firmware applied decimation/interpolation
     if (rf_samplerate)
         *rf_samplerate = rate;
+
+    int dec = la9310->vspa.GetDecimation();
+    rate /= dec;
+
     return rate;
 }
 

@@ -63,4 +63,12 @@ bool LA9310::IsM4CoreProgrammed()
     return *SCRATCHRW2 == LA9310_HOST_START_DRIVER_INIT; // firmware boot handshake complete
 }
 
+OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
+{
+    OpStatus status = vspa.ResetVCPU();
+    if (status != OpStatus::Success)
+        return status;
+    return pcie->LoadVSPAFirmware(firmware.data(), firmware.size());
+}
+
 } // namespace lime

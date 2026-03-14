@@ -66,6 +66,8 @@ class LIME_API VSPA_iqplayer
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size, double expectedDataRate = 0);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size, double expectedTxDataRate = 0);
 
+    int GetDecimation() const;
+
   private:
     std::shared_ptr<LA9310_PCIe> port;
     std::shared_ptr<VSPA_mailbox> mailbox;

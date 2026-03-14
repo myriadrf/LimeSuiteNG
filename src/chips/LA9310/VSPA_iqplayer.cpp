@@ -877,4 +877,12 @@ OpStatus VSPA_iqplayer::ResetVCPU()
     return status;
 }
 
+int VSPA_iqplayer::GetDecimation() const
+{
+    if (!tx_vspa_proxy_ro)
+        return 1;
+
+    return tx_vspa_proxy_ro->rx_decim;
+}
+
 } // namespace lime

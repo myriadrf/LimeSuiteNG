@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <span>
 
 #include "PHYTimer.h"
 #include "VSPA_iqplayer.h"
@@ -29,6 +30,8 @@ class LIME_API LA9310
     OpStatus SetSystemClock(double sysClk_Hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask);
     void GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask);
     bool IsM4CoreProgrammed();
+
+    OpStatus LoadVSPAFirmware(std::span<const char> firmware);
 
     PHYTimer phytimer;
     VSPA_iqplayer vspa;
