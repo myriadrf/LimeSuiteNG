@@ -195,9 +195,10 @@
  *    <li>``GetSeconds()`` - returns only the integer part of the seconds.</li>
  * </ul>
  * 
- * Below is simple worker loop example code for receiver side wich is configured with timestamp type ``SAMPLE_TICKS``:
+ * Below is simple worker loop example code for receiver side which is configured with timestamp type ``SAMPLE_TICKS``:
  * 
  * @code{.cpp}
+ *  const uint32_t bufferSize = 1024;
  * 
  * ... // Other program code
  * 
@@ -232,10 +233,9 @@
  * The example output shows a continuous read of samples. A fixed amount of samples is read for every read cycle. After each read, a timestamp and the first 10 samples are printed to the window.
  * Each timestamp represents the start time of the most recent read operation, measured in stream ticks. Because the configured timestamp type is ``SAMPLE_TICKS``, each tick represents a single sample.
  * Therefore, the timestamp represents the start time of the most recent read operation, measured in read sample count.
- * 
- * Following the example output prints, the first timestamp print indicates that the most recent sample read operation happened at the start of the stream, since the timestamp value is zero. After the next 
- * read cycle, a returned timestamp indicates that the next most recent read happend at a offset of 1024 samples. The prior read cycle modified the timestamp by the read amount of samples, therefore the
- * next most recent read happened at an offset.  
+ *
+ * For ``SAMPLE_TICKS`` timestamp type, each read cycle increments the timestamp by the amount of read samples. Therefore, in this particular example, timestamp increments at the rate of 1024 samples/read cycle to indicate 
+ * the increasing offset of read samples since the start of the stream.
  * 
  * @subsection tx_timestamps Transmitter side
  * 
