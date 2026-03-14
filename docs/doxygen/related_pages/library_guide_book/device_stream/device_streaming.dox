@@ -184,10 +184,10 @@
  * @subsection rx_timestamps Receiver side
  * 
  * To use timestamps on the receiver side, the address of meta data structure of ``lime::StreamRxMeta`` type (structure ``RxMeta`` in @ref generic_stream_example "example code above") must be passed to the parameter list
- * of stream interface function ``Receive(...)``. Meta data structure is updated with new meta data on each call of ``Receive(...)`` function. To check for timestamp support, check the meta data structure
+ * of stream interface function - ``Receive(...)``. Meta data structure is updated with new meta data on each call of ``Receive(...)`` function. To check for timestamp support, check the meta data structure
  *  ``hasTimestamp`` flag status. If the timestamp is supported (``hasTimestamp`` is set to ``true``), meta data structure is updated with new timestamp data on each call of ``Receive(...)`` function. To get the timestamp 
- * value for any timestamp type, call timestamp storage class function ``GetTicks()``. This returns the current timestamp value in tick count. Depending on the timestamp type configuration, a tick count can represent the
- * timestamp in sample count, real seconds in reference to the start of the stream or unix time. For timestamps, that store the tick count of real time, it is also possible to retrieve the timestamp values in real seconds 
+ * value for any timestamp type, call timestamp storage class function ``GetTicks()``. This returns the current timestamp value in tick count. Depending on the timestamp type configuration, a tick count can be interpreted
+ * as sample count, real seconds in reference to the start of the stream or unix time. For timestamps, that store the tick count of real time, it is also possible to retrieve the timestamp values in real seconds 
  * (instead of ticks) by using any of the following timestamp storage class interface functions:
  * <ul>
  *    <li>``GetRealSeconds()`` - returns full seconds counter (including the fractional part of a second).</li>
@@ -239,12 +239,57 @@
  * 
  * @subsection tx_timestamps Transmitter side
  * 
- * To use timestamps on the transmitter side, the address of a structure of ``lime::StreamTxMeta`` type (structure ``TxMeta`` in @ref generic_stream_example "example code above") must be passed to the stream interface 
- * function ``Transmit(...)`` parameter list and the flag ``hasTimestamp`` of the structure must be set to ``true`` to enable timestamps for sample packets queued for transmission. <b>Timestamps for transmitter
- * side must be managed manually</b>. Depending on the selected timestamp type, the timestamp will indicate the valid sample transmission window in sample amount, seconds relative to the start of the stream or 
- * the unix time. If the samples are queued for transmission after the expiration of a timestamp, the samples will simply be dropped and the stream statistics parameter ``underrun`` for Tx side will be 
- * updated with the amount of dropped sample packets. Use of timestamps allows to set up sample transmission windows. To extend or modify the expiration of a timestamp, timestamp storage class function ``AddTicks()``
- * must be used. 
+ * To use timestamps on the transmitter side, the address of meta data structure of ``lime::StreamTxMeta`` type (structure ``TxMeta`` in @ref generic_stream_example "example code above") must be passed to the parameter list 
+ * of stream interface function - ``Transmit(...)``. Transmit meta data structure flag ``hasTimestamp`` must be set to ``true`` to enable timestamps. A timestamp in transmit direction allows to indicate the ending point of 
+ * the next sample transmission. Time point must be set as a tick count, which can be interpreted as sample count offset from the start of the stream, offset in real seconds from the start of the stream or unix time. 
+ * To set the timestamp tick count for any timestamp type, call timestamp storage class function ``AddTicks()``. If the samples are transmitted past the set timepoint, the sample packets are dropped and the ``underrun`` parameter
+ * for the transmit streaming statistics is incremented. Below is simple worker loop example code for transmitter side, which is configured with timestamp type ``SAMPLE_TICKS``:
+ * 
+ * @code{.cpp}
+ * 
+ * ... // Other program code
+ * 
+ *  const uint32_t samplesInPacket = 1024;
+ *  const uint32_t packetCount = 256;
+ *  const uint32_t bufferSize = samplesInPacket * packetCount;
+ *  lime::complex16_t TxChABuffer[bufferSize] = {};
+ *  lime::complex16_t * const TxBuffers[2] = {TxChABuffer, nullptr};
+ * 
+ *  lime::StreamTxMeta TxMeta;         // Transmit meta data
+ *  TxMeta.hasTimestamp = true;
+ *  lime::StreamStats TxStats;
+ * 
+ * 
+ * ... // Other program code
+ * 
+ * while(!cleanUp)
+ * {
+ *    if(TxMeta.hasTimestamp)
+ *    {
+ *       std::cout << "Transmitting at " << TxMeta.timestamp.GetTicks() << " time point\n";   
+ *       TxMeta.timestamp.AddTicks(bufferSize);   // Setting the end time point of the current transmit cycle
+ *    }
+ * 
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &RxMeta);
+ *    RadioStream->StreamStatus(nullptr, &TxStats);
+ *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
+ *    samplesSent = 0;
+ * 
+ * }
+ * 
+ * ... // Other program code
+ * @endcode
+ * 
+ * Output of the example code above:
+ * 
+ * TODO: Add a image here
+ * 
+ * The example code above demonstrates a simple transmit worker loop that transmits samples continuously. To enable continuous sample transmit, at the start of each transmit cycle timestamp is offset by
+ * the amount of samples that are to be sent. Timestamp is kept in the future and the samples can be transmited. 
+ * 
+ * For periodic sample transmits, ``GetHardwareTimestamp()`` should be used to retrieve the most up to date timestamp, that can then be used to set the new ending point of sample transmit.
+ * 
+ * @important It is recommended to set the timestamp of the first transmit farther into the future to avoid sample packet drops.
  * 
  * @section important_stream_notes Important notes
  * 
