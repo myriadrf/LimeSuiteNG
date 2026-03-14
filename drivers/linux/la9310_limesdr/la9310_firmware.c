@@ -117,7 +117,7 @@ static struct la9310_boot_header prepare_bootheader(
     header.bl_src_offset = 0;
     header.bl_dest = LA9310_EP_FREERTOS_LOAD_ADDR;
     header.bl_entry = LA9310_EP_FREERTOS_LOAD_ADDR;
-    header.reserved = LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN;
+    header.reserved = LA9310_BOOT_HDR_BYPASS_BOOT_PLUGIN | LA9310_BOOT_HDR_BYPASS_BOOT_EDMA;
 
     // check if firmware file contains it's own boot header
     uint32_t fw_preamble;
@@ -225,6 +225,14 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
         return rc;
     }
 
+    uint32_t* scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
+    uint32_t scratch_val = readl(scratch_reg);
+    dev_info(la9310_dev->dev, "scratch now: %i\n", scratch_val);
+    writel(0, scratch_reg);
+    scratch_val = readl(scratch_reg);
+    dev_info(la9310_dev->dev, "scratch now: %i\n", scratch_val);
+    dma_wmb();
+
     la9310_initiate_boot(la9310_dev, &fw_bootheader);
 
     dev_info(la9310_dev->dev, "Waiting for FreeRTOS boot.\n");
@@ -232,8 +240,7 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
     schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
 
     dma_rmb();
-    uint32_t* scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
-    uint32_t scratch_val = readl(scratch_reg);
+    scratch_val = readl(scratch_reg);
 
     int retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
     dev_info(la9310_dev->dev, "[Sync fw upgrade] Waiting for FreeRTOS to write %d\n", LA9310_HOST_START_CLOCK_CONFIG);

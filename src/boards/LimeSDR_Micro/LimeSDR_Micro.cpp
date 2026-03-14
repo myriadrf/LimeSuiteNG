@@ -605,9 +605,10 @@ OpStatus LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
     auto& lms = mLMSChips.at(0);
     LMS7002M::ChannelScope scope(lms.get(), chan);
 
-    const uint8_t i2c_expander_address = 0x20;
+    constexpr uint8_t i2c_expander_address = 0x20;
+    constexpr uint8_t gpiob_addr = 0x13;
     uint8_t value = 0;
-    I2CRead(0, i2c_expander_address, 0x19, 1, &value, 1);
+    I2CRead(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
     if (dir == TRXDir::Tx)
     {
         status = lms->SetBandTRF(pathId);
@@ -622,7 +623,7 @@ OpStatus LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             value |= (1 << 1); // set TX_SW, Band1
         else
             value |= (0 << 1); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, 0x19, 1, &value, 1);
+        I2CWrite(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
     }
     else
     {
@@ -659,7 +660,7 @@ OpStatus LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             rxsw3 = 0;
         }
         value |= (rxsw2 << 0) | (rxsw3 << 2); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, 0x19, 1, &value, 1);
+        I2CWrite(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
     }
     return status;
 }
