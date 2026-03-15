@@ -27,7 +27,7 @@
  * Information about each module registers is provided in the respective data sheets of the modules. 
  * 
  * Different SDR device models, can use a different amount and different types of modules with unique IDs. Unique module IDs are used to identify each module and must be passed as an argument to 
- * @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()" function ``spiBusAddress`` parameter, which acts as a chip select, to target the correct module. To find out 
+ * @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()" function ``spiBusAddress`` parameter that acts as a chip select to target the correct module. To find out 
  * about all of the SDR device modules and their IDs, it is recommended to retrieve SDR device @ref lime::SDRDevice::GetDescriptor() "descriptor" and extract the list of available modules and 
  * the list of their SPI slave IDs. Below is a simple example code snippet, that extracts the list of available modules and their respective SPI slave IDs:
  * 

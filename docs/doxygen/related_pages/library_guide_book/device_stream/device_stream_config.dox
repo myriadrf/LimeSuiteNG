@@ -253,9 +253,10 @@
  * 
  * @subsection stream_timestamp Timestamps
  * 
- * Parameter <b>timestampType</b> allows to set the type of timestamp to use for streaming. The default timestamp type is `SAMPLE_TICKS`. This type of timestamp increments a internal counter for each received sample 
- * and can be used to count incomming samples. `REAL_TIME` timestamp enables to count the time using real seconds. The seconds counter is incremmented on each received PPS signal pulse (device must support PPS reception).
- * `UNIX_EPOCH` timestamp enables to count real time seconds with reference to UNIX epoch. The time counter is incremmented on each received PPS signal pulse.
+ * Parameter <b>timestampType</b> allows to set the type of timestamp for a stream. The default timestamp type is ``SAMPLE_TICKS``. ``SAMPLE_TICKS`` timestamp allows to track the stream time points of send/receive operations
+ * as an offset of sent/received samples since the start of the stream. ``REAL_TIME`` timestamp allows to track the stream time points of send/receive operations as an offset of real seconds since the start of the stream. 
+ * ``UNIX_EPOCH`` timestamp allows to track the stream time points of send/receive operations using unix time. Seconds counters for timestamp types ``REAL_TIME`` and ``UNIX_EPOCH`` are incremented on each received PPS signal 
+ * pulse (device must support PPS reception).
  * 
  * @subsection stream_quick_toggles Quick toggles
  * 
