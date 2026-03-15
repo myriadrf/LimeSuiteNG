@@ -289,7 +289,9 @@
  * 
  * For periodic sample transmits, ``GetHardwareTimestamp()`` should be used to retrieve the most up to date timestamp, that can then be used to set the new ending point of sample transmit.
  * 
- * @important It is recommended to set the timestamp of the first transmit farther into the future to avoid sample packet drops.
+ * @important It is recommended to set the timestamps further in to the future to avoid packet drops. Using short timestamp intervals may result in dropped samples, since the queued samples can reach the hardware
+ * with expired timestamp (timestamp is already in the past). For timestamp type ``SAMPLE_TICKS`` it is recommended to offset the timestamp tick count by multiple count of sample packets (in the example 256 packet 
+ * offset is used). Timestamp offset depends from the configuration. Increasing communication speed might require to offset the timestamp further into the
  * 
  * @section important_stream_notes Important notes
  * 
