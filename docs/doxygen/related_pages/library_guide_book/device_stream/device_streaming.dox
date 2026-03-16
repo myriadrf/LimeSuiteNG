@@ -241,18 +241,17 @@
  * 
  * To use timestamps on the transmitter side, the address of meta data structure of ``lime::StreamTxMeta`` type (structure ``TxMeta`` in @ref generic_stream_example "example code above") must be passed to the parameter list 
  * of stream interface function - ``Transmit(...)``. Transmit meta data structure flag ``hasTimestamp`` must be set to ``true`` to enable timestamps. A timestamp in transmit direction allows to indicate the ending point of 
- * the next sample transmission. Time point must be set as a tick count, which can be interpreted as sample count offset from the start of the stream, offset in real seconds from the start of the stream or unix time. 
- * To set the timestamp tick count for any timestamp type, call timestamp storage class function ``AddTicks()``. If the samples are transmitted past the set timepoint, the sample packets are dropped and the ``underrun`` parameter
- * for the transmit streaming statistics is incremented. Below is simple worker loop example code for transmitter side, which is configured with timestamp type ``SAMPLE_TICKS``:
+ * the current sample transfer. Time point must be set as a tick count, which can be interpreted as sample count offset from the start of the stream, offset in real seconds from the start of the stream or unix time. 
+ * To set the timestamp tick count for any timestamp type, call timestamp storage class function ``AddTicks()``. If the samples are queued for transfer past the set timepoint, the sample packets are dropped and 
+ * the ``underrun`` parameter for the transmitter stream statistics is incremented. Below is simple worker loop example code for transmitter side, which is configured with timestamp type ``SAMPLE_TICKS``:
  * 
  * @code{.cpp}
  * 
  * ... // Other program code
  * 
  *  const uint32_t samplesInPacket = 1024;
- *  const uint32_t packetCount = 256;
- *  const uint32_t bufferSize = samplesInPacket * packetCount;
- *  lime::complex16_t TxChABuffer[bufferSize] = {};
+ *  const uint32_t tsOffset = samplesInPacket * 64;   // Upscaled Timestamp as a total amount of samples planned for transfer
+ *  lime::complex16_t TxChABuffer[samplesInPacket] = {};
  *  lime::complex16_t * const TxBuffers[2] = {TxChABuffer, nullptr};
  * 
  *  lime::StreamTxMeta TxMeta;         // Transmit meta data
@@ -266,14 +265,15 @@
  * {
  *    if(TxMeta.hasTimestamp)
  *    {
- *       std::cout << "Transmitting at " << TxMeta.timestamp.GetTicks() << " time point\n";   
- *       TxMeta.timestamp.AddTicks(bufferSize);   // Setting the end time point of the current transmit cycle
+ *       std::cout << "Samples transfer timestamp: " << (TxMeta.timestamp.GetTicks() / 64) << std::endl;  // Printing the normalized (divided by 64) starting point of sample transfer 
+ *       TxMeta.timestamp.AddTicks(tsOffset);   // Setting upscaled (multiplied by 64) end time point of the current transmit cycle
  *    }
+ *    
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, samplesInPacket, &TxMeta);    // Sending random samples
  * 
- *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &TxMeta);
+ *    std::cout << "Sent " << samplesSent << " samples\n";
  *    RadioStream->StreamStatus(nullptr, &TxStats);
  *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
- *    samplesSent = 0;
  * 
  * }
  * 
@@ -282,10 +282,15 @@
  * 
  * Output of the example code above:
  * 
- * TODO: Add a image here
+ * @image{inline} html stream_tx_continuous_timestamp.png
  * 
- * The example code above demonstrates a simple transmit worker loop that transmits samples continuously. To enable continuous sample transmit, at the start of each transmit cycle timestamp is offset by
- * the amount of samples that are to be sent. Timestamp is kept in the future and the samples can be transmited. 
+ * The example code above demonstrates a simple transmit worker loop that continuously transmits 1024 samples. For each transfer cycle, the starting timestamp of transfer operation is printed 
+ * and the new timestamp is set in to the future for the start of new sample transfer operation. The ``tsOffset`` variable, used to offset transfer timestamp into the future, is multiplied by 64. 
+ * Multiplication of timestamp value allows to acount for the sample transfer delay that is caused by software and hardware. If the delays are not accounted for and the timestamp is offset only by 
+ * the amount of samples for each transfer cycle, unwanted packet drops can occur. Consequently, to print the real timestamp at the start of each transfer cycle, retrieved timestamp value must be 
+ * divide by 64. 
+ * 
+ * @important Timestamp offset multiplication depends on device configuration. Increasing communication speed might require to offset the timestamp further into the future.
  * 
  * A simple worker loop example code for transmitter side that performs periodic sample transfers (configured timestamp type - ``SAMPLE_TICKS``):
  * 
@@ -333,10 +338,6 @@
  * The example above demonstrates a periodic sample transfer, where the transmitter sends data every 250 ms. If the transmitter attempted to send the data after delay without udpating the 
  * timestamp first, the samples queued for transfer might get dropped due to expired timestamp. Therefore, for periodic sample transmits, ``GetHardwareTimestamp()`` must be used to retrieve 
  * the most up to date timestamp, that can then be used to set the new stream end time point of sample transfer window.
- * 
- * @important It is recommended to set the timestamps further in to the future to avoid packet drops. Using short timestamp intervals may result in dropped samples, since the queued samples can reach the hardware
- * with expired timestamp (timestamp is already in the past). For timestamp type ``SAMPLE_TICKS`` it is recommended to offset the timestamp tick count by multiple count of sample packets (in the example 256 packet 
- * offset is used). Timestamp offset depends from the configuration. Increasing communication speed might require to offset the timestamp further into the future.
  * 
  * @section important_stream_notes Important notes
  * 
