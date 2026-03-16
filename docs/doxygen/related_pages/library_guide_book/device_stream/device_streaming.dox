@@ -207,18 +207,18 @@
  *    uint32_t samplesRead = RadioStream->Receive(RxBuffers, bufferSize, &RxMeta);
  *    if(samplesRead > 0)
  *    {
- *       std::cout << "Read " << samplesRead << " samples from device.\n";
- * 
  *       if(RxMeta.hasTimestamp)
- *          std::cout << "Received timestamp: " << RxMeta.timestamp.GetTicks() << std::endl;
+ *          std::cout << "Read: " << samplesRead << " samples with timestamp " << RxMeta.timestamp.GetTicks() << std::endl;
+ *       else
+ *          std::cout << "Read " << samplesRead << " samples from device.\n";
  * 
  *       for(int i = 0; i < 10; ++i)
- *          std::cout << "(" << RxRawSamples[i].real() << "; " << RxRawSamples[i].imag() << ") ";
+ *           std::cout << "(" << RxRawSamples[i].real() << "; " << RxRawSamples[i].imag() << ") ";
  *       std::cout << std::endl;
  *    }
  *    else
  *       std::cout << "Timeout! No samples present!\n";
- * 
+ *    
  *    samplesRead = 0;
  * }
  * 
@@ -231,10 +231,10 @@
  * @image{inline} html stream_rx_timestamp.png
  * 
  * The example output shows a continuous read of samples. A fixed amount of samples is read for every read cycle. After each read, a timestamp and the first 10 samples are printed to the window.
- * Each timestamp represents the start time of the most recent read operation, measured in stream ticks. Because the configured timestamp type is ``SAMPLE_TICKS``, each tick represents a single sample.
- * Therefore, the timestamp represents the start time of the most recent read operation, measured in read sample count.
+ * Each timestamp represents the start time of the read operation for current read cycle and is measured in stream ticks. Because the configured timestamp type is ``SAMPLE_TICKS``, each tick represents 
+ * a single sample. Therefore, the timestamp represents the start time of the read operation for current read cycle and is measured as an offset of already read samples since the start of the stream.
  *
- * For ``SAMPLE_TICKS`` timestamp type, each read cycle increments the timestamp by the amount of read samples. Therefore, in this particular example, timestamp increments at the rate of 1024 samples/read cycle to indicate 
+ * For ``SAMPLE_TICKS`` timestamp type, each read cycle increments the timestamp by the amount of read samples. In this particular example, timestamp increments at the rate of 1024 samples/read cycle to indicate 
  * the increasing offset of read samples since the start of the stream.
  * 
  * @subsection tx_timestamps Transmitter side
@@ -270,7 +270,7 @@
  *       TxMeta.timestamp.AddTicks(bufferSize);   // Setting the end time point of the current transmit cycle
  *    }
  * 
- *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &RxMeta);
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &TxMeta);
  *    RadioStream->StreamStatus(nullptr, &TxStats);
  *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
  *    samplesSent = 0;
@@ -316,7 +316,7 @@
  *       TxMeta.timestamp.AddTicks(bufferSize);   // Setting the end time point of the current transmit cycle
  *    }
  * 
- *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &RxMeta);
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, bufferSize, &TxMeta);
  *    RadioStream->StreamStatus(nullptr, &TxStats);
  *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
  *    samplesSent = 0;
