@@ -126,10 +126,9 @@
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
  * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve meta data about received samples. To retrieve the meta data, the address of a variable of `lime::StreamRxMeta` 
  * type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function call updates the variable with the meta data of the first packet, that was read from 
- * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamp` is set to `true` (check out @ref stream_timestamps section). Additionally, 
- * meta data member `flags` can be used to check stream specific flags. Flag `lime::StreamTxMeta::Flags::EndOfBurst` can be used to check for the end of stream burst. If meta data is not important, a `nullptr` argument 
- * can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) is lesser than a size of a single packet in terms of sample quantity, only part of packet samples will 
- * be read out. The remaining part of samples is still stored and can simply be read out by calling the `Receive(...)` function again.
+ * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamp` is set to `true` (check out @ref stream_timestamps section). If meta data 
+ * is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) is lesser than a size of a single packet in terms of sample 
+ * quantity, only part of packet samples will be read out. The remaining part of samples is still stored and can simply be read out by calling the `Receive(...)` function again.
  * 
  * @subsection stream_write Writing samples
  * 
@@ -359,8 +358,7 @@
  *       It is not possible to queue samples to Tx direction using `Transmit(...)` function, while the stream is inactive.
  *    </li>
  *    <li>
- *       Once stream is stopped, all receiver buffered data is deleted and cannot be retrieved using `Receive(...)` function. To properly end the stream session and read out all of the remaining data, utilize the
- *       stream flag `lime::StreamTxMeta::Flags::EndOfBurst`.
+ *       Once stream is stopped, all receiver buffered data is deleted and cannot be retrieved using `Receive(...)` function.
  *    </li>
  * </ul>
  * 
