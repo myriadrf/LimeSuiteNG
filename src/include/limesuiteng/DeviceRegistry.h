@@ -107,7 +107,5 @@ class LIME_API DeviceRegistryEntry
     std::string _name;
 };
 
-///@endcond
-
 } // namespace lime
 #endif
