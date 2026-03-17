@@ -146,7 +146,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     if (!cfg.channels.at(TRXDir::Rx).empty())
     {
         // Disable all Rx DMA triggers
-        constexpr uint8_t ids[] = { 1, 3, 4, 5, 6 };
+        constexpr uint8_t ids[] = { 1, 2, 3, 4, 5, 6 };
         for (const auto id : ids)
         {
             PHYTimerControl timer = phytimer.GetTimerControl(id);
@@ -213,7 +213,7 @@ OpStatus LA9310_TRX::Start()
     PHYTimerControl timer = phytimer.GetTimerControl(10);
     uint32_t startTime = timer.CaptureCounter();
     startTime += phytimer.GetTickRate() * 0.005; // start delay 5ms
-    constexpr uint8_t ids[] = { 3, 4 };
+    constexpr uint8_t ids[] = { 1, 2, 3, 4 };
     for (const auto id : ids)
     {
         PHYTimerControl timer = phytimer.GetTimerControl(id);
