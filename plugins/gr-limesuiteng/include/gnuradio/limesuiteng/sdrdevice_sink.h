@@ -40,7 +40,10 @@ public:
      * @param   chipIndex If multiple RFSOC are available on the device, specify which one
      * to use
      * @param   channelCount Number of data channels
-     * @param   dataFormat Output samples format
+     * @param   dataFormat Input sample format accepted from GNURadio (complex32f_t =
+     * fc32, complex16_t = sc16). Defaults to complex32f_t.
+     * @param   linkFormat DMA link layer format (complex16_t = I16 4B/sample,
+     * complex12_t = I12 3B/sample). Use complex12_t to reduce PCIe bandwidth on XTRX.
      * @param   sampleRate Data interface sampling rate
      * @param   rf_oversampling RF sampling decimation ratio (0-max possible, x1, x2,
      * x4...)
@@ -50,6 +53,7 @@ public:
                      uint32_t chipIndex,
                      const std::vector<int>& channelIndexes,
                      const std::string& dataFormat,
+                     const std::string& linkFormat,
                      double sampleRate,
                      int rf_oversampling);
 

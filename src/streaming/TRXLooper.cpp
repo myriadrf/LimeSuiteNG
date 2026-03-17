@@ -219,7 +219,8 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
         return status;
 
     // XTRX has RF switches control bits where the GPS_PPS control should be.
-    bool hasGPSPPS = fpga->ReadRegister(0x0000) != LMS_DEV_LIMESDR_XTRX;
+    uint16_t devId = fpga->ReadRegister(0x0000);
+    bool hasGPSPPS = devId != LMS_DEV_LIMESDR_XTRX && devId != LMS_DEV_EXTERNAL_SSDR;
     if (hasGPSPPS)
     {
         constexpr uint16_t waitGPS_PPS = 1 << 2;

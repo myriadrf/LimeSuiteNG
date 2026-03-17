@@ -27,26 +27,25 @@
 
 using namespace lime;
 
-namespace gr {
-namespace limesuiteng {
-
 static int GetDataFormatTypeSize(const std::string& formatname)
 {
     if (formatname == "complex16_t")
         return sizeof(lime::complex16_t);
-    else if (formatname == "complex12_t")
-        return sizeof(lime::complex12_t);
     else if (formatname == "complex32f_t")
         return sizeof(lime::complex32f_t);
     else
         return sizeof(lime::complex32f_t);
 }
 
+namespace gr {
+namespace limesuiteng {
+
 sdrdevice_source::sptr sdrdevice_source::make(const std::string& alias,
                                               const std::string& deviceHandleHint,
                                               uint32_t chipIndex,
                                               const std::vector<int>& channelIndexes,
                                               const std::string& dataFormat,
+                                              const std::string& linkFormat,
                                               double sampleRate,
                                               int rf_oversampling)
 {
@@ -55,6 +54,7 @@ sdrdevice_source::sptr sdrdevice_source::make(const std::string& alias,
                                                             chipIndex,
                                                             channelIndexes,
                                                             dataFormat,
+                                                            linkFormat,
                                                             sampleRate,
                                                             rf_oversampling);
 }
@@ -64,6 +64,7 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
                                              uint32_t chipIndex,
                                              const std::vector<int>& channelIndexes,
                                              const std::string& dataFormat,
+                                             const std::string& linkFormat,
                                              double sampleRate,
                                              int rf_oversampling)
     : gr::sync_block(
@@ -79,6 +80,7 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
                            chipIndex,
                            channelIndexes,
                            dataFormat,
+                           linkFormat,
                            sampleRate,
                            rf_oversampling,
                            d_logger,
@@ -113,16 +115,25 @@ int sdrdevice_source_impl::work(int noutput_items,
         StartRFStreaming();
     }
 
-    lime::complex32f_t* samples[8];
-    for (size_t i = 0; i < devContext->streamCfg.channels.at(direction).size(); ++i)
-        samples[i] = static_cast<lime::complex32f_t*>(output_items[i]);
-
     StreamRxMeta meta;
-    int samplesRead = devContext->stream->Receive(&samples[0], noutput_items, &meta);
+    int samplesRead;
+    const size_t chCount = devContext->streamCfg.channels.at(direction).size();
+
+    if (devContext->streamCfg.format == lime::DataFormat::I16) {
+        lime::complex16_t* samples[8];
+        for (size_t i = 0; i < chCount; ++i)
+            samples[i] = static_cast<lime::complex16_t*>(output_items[i]);
+        samplesRead = devContext->stream->Receive(&samples[0], noutput_items, &meta);
+    } else {
+        lime::complex32f_t* samples[8];
+        for (size_t i = 0; i < chCount; ++i)
+            samples[i] = static_cast<lime::complex32f_t*>(output_items[i]);
+        samplesRead = devContext->stream->Receive(&samples[0], noutput_items, &meta);
+    }
 
     if (samplesRead != noutput_items)
         GR_LOG_WARN(d_logger,
-                    fmt::format("StreamRx {:d}/{:d}", samplesRead / noutput_items));
+                    fmt::format("StreamRx {:d}/{:d}", samplesRead, noutput_items));
 
     return samplesRead;
 }

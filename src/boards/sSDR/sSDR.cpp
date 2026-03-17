@@ -164,7 +164,6 @@ sSDR::sSDR(std::shared_ptr<ISPI> spiRFsoc,
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_XTRX"s, "FPGA"s);
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
-    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(rfsoc_lms8001.get(), "LMS8001"s));
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, desc.name);
     desc.socTree->children.push_back(fpgaNode);

@@ -64,10 +64,6 @@ class LIME_API DeviceRegistry
  * This section below is the registry API for devices.
  * The registry API is intended for device developers.
  ******************************************************************/
-
-// Hiding device developer API from doxygen output
-/// @cond SPECIAL_DEV_REGISTRY
-
 /*!
  * Create an overloaded instance of a DeviceRegistryEntry
  * to register discovery and factory functions into the system.

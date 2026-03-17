@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(1)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(sdrdevice_source.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(f1c2f79ff8aac41a88f02a0942e46114)                     */
+/* BINDTOOL_HEADER_FILE_HASH(246b6c8d62a04769684fd30e63e38385)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -45,9 +45,10 @@ void bind_sdrdevice_source(py::module& m)
              py::arg("deviceHandleHint"),
              py::arg("chipIndex"),
              py::arg("channelIndexes"),
-             py::arg("dataFormat"),
-             py::arg("sampleRate"),
-             py::arg("rf_oversampling"),
+             py::arg("dataFormat") = "complex32f_t",
+             py::arg("linkFormat") = "complex16_t",
+             py::arg("sampleRate") = 10e6,
+             py::arg("rf_oversampling") = 0,
              D(sdrdevice_source, make))
 
 
