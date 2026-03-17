@@ -70,6 +70,7 @@
  * @if RST_SUPPORT
  * @embedRstVerbatim{
  * .. admonition:: Note
+ * 
  *    If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.}
  * @else
  * @note If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.

@@ -182,6 +182,7 @@
  *    return 0;
  * }
  * @endcode
+ * 
  * After the modification of the register LNA amplifier gain parameter bit field, register value is updated as shown in the above output:
  * 
  * @image{inline} html dev_config_rxgain_rw.png  

@@ -15,10 +15,21 @@
  * @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *) "Receive()". To send samples through Tx direction, queue the samples to buffer by calling
  * stream object member @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *) "Transmit()".
  * 
- * @important Streaming interface is <b>not thread safe</b>. Avoid calling `Receive(...)` or `Transmit(...)` functions from multiple threads. More info in @ref important_stream_notes "Important notes" section.
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
  * 
- * @important Avoid mixing sample types when transmiting and retrieving samples via `Receive(...)` and `Transmit(...)` functions. Select the functions that accept the sample type that was 
+ *    Streaming interface is not thread safe. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in important notes section at the end of page.
+ * 
+ * .. important::
+ * 
+ *    Avoid mixing sample types when transmiting and retrieving samples via ``Receive(...)`` and ``Transmit(...)`` functions. Select the functions that accept the sample type that was specified via ``format`` parameter in stream configuration stage.}
+ * @else
+ * @important Streaming interface is <b>not thread safe</b>. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in @ref important_stream_notes "Important notes" section.
+ * 
+ * @important Avoid mixing sample types when transmiting and retrieving samples via ``Receive(...)`` and ``Transmit(...)`` functions. Select the functions that accept the sample type that was 
  * specified via `format` parameter in stream configuration stage.
+ * @endif
  *
  * @section generic_stream_example Generic stream example
  * 
@@ -114,7 +125,7 @@
  * @embedRstVerbatim{
  * .. admonition:: Warning
  * 
- *    If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.}
+ *    If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to nullptr will result in undefined behaviour.}
  * @else
  * @warning If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.
  * @endif
@@ -124,7 +135,7 @@
  * Once the stream is started, aggregation of samples in an internal device buffer for Rx direction starts (unless sample on PPS is enabled). In the example code above, once the stream is started, code
  * enters a worker loop, which reads out buffered data via `Receive(...)` function into work buffer `RxChABuf`. `Receive(...)` function call blocks until the work buffer (`RxChABuf`) is filled with 
  * samples or a timeout occurs. On reception, a timeout can occur if all of the internally buffered samples have been read and no new samples have been buffered. On return, function reports the quantity
- * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve meta data about received samples. To retrieve the meta data, the address of a variable of `lime::StreamRxMeta` 
+ * of samples that were read from an internal buffer. `Receive(...)` function is also able to retrieve meta data about received samples. To retrieve the meta data, the address of a variable of lime::StreamRxMeta 
  * type must be passed as an argument for the third parameter of `Receive(...)` function. Consequently, `Receive(...)` function call updates the variable with the meta data of the first packet, that was read from 
  * an internal buffer. Meta data contains timestamps and stream flags. To check if incomming samples use timestamps, check if `hasTimestamp` is set to `true` (check out @ref stream_timestamps section). If meta data 
  * is not important, a `nullptr` argument can be passed to ommit the retrieval of packet meta data. If the size of a work buffer (in this case `RxChABuff`) is lesser than a size of a single packet in terms of sample 
@@ -135,9 +146,9 @@
  * To send data in a worker loop, use `Transmit(...)` function. `Transmit(...)` function queues samples for transmission to internal device buffer. `Transmit(...)` function call always blocks until all
  * samples from work buffer (`TxChABuf`) are transferred to internal device transmit buffer or a timeout occurs. On transmission, a timeout can occur if the internally managed transmit buffer is filled and 
  * has no empty space for new samples. On return, function reports the amount of samples that were queued for transmission. `Transmit(...)` function is also able to append meta data to the sample packets. To add 
- * meta data to sample packets, the address of a variable of `lime::StreamTxMeta` type must be passed as an argument for the third parameter of `Transmit(...)` function. Meta data contains timestamps and stream flags. 
+ * meta data to sample packets, the address of a variable of lime::StreamTxMeta type must be passed as an argument for the third parameter of `Transmit(...)` function. Meta data contains timestamps and stream flags. 
  * To toggle the use of timestamps for queued samples, meta data flag `hasTimestamp` must be set to value `true` or `false`(check out @ref stream_timestamps section). Additionally, meta data member `flags` can be 
- * used to set specific stream flags. Flag `lime::StreamTxMeta::Flags::EndOfBurst` can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for transmission 
+ * used to set specific stream flags. Flag lime::StreamTxMeta::Flags::EndOfBurst can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for transmission 
  * do not make up a single packet, then the remaining samples slots in a packet are padded with value 0 and the samples are flushed out. If meta data is not important, a `nullptr` argument can be passed to ommit the 
  * generation of packet meta data. Only fully formed packets are added to transmit batch. If `Transmit(...)` function queues a quantity of samples that is lesser than a total sample quantity in a packet, the samples remain 
  * buffered until a sufficient amount of samples is added with the next `Transmit(...)` call to form a full packet (this does not apply for sample batch queues that have the end of stream burst flag enabled). 
@@ -145,7 +156,7 @@
  * @subsection stream_stats Monitoring statistics
  * 
  * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stoped. To view stream statistics for both Tx and Rx directions, 
- * variables of `lime::StreamStats` type must be defined (`RxStats` and `TxStats` variables in the example code above). The addresses of defined variables must be passed as arguments to 
+ * variables of lime::StreamStats type must be defined (`RxStats` and `TxStats` variables in the example code above). The addresses of defined variables must be passed as arguments to 
  * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function parameter list. To avoid the retrieval of stream statistics for a particular direction, pass the `nullptr` argument.
  * In the example code above, statistics of Tx direction are ignored (because a `nullptr` argument is passed) and only the statistics of Rx direction are returned after the stream is stoped. 
  * Available statistics for a stream direction:
@@ -160,7 +171,7 @@
  *    <li>Data underruns</li>
  * </ul>
  * 
- * To view the actual names of parameters view the definition of `lime::StreamStats` structure.
+ * To view the actual names of parameters view the definition of lime::StreamStats structure.
  * 
  * Streaming statistics are useful for observing the state of Rx and Tx sample queues. FIFO status allows to monitor the current capacity of sample queues for Rx and Tx directions. FIFO status allows to view:
  * <ul>
@@ -169,10 +180,19 @@
  *    <li>Ratio of occupied capacity to free capacity</li>
  * </ul>
  * 
- * The `overrun` parameter indicates the amount of times the software buffer overrun event occured. Software buffer overrun occurs, when the device receiver hardware produces more samples than the host
- * system software can process and the produced samples are dropped.  
- * The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the sent data transmission timestamp is already behind the hardware's current timestamp.  
- * The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
+ * Indicators:
+ * <ul>
+ *    <li>
+ *       The `overrun` parameter indicates the amount of times the software buffer overrun event occured. Software buffer overrun occurs, when the device receiver hardware produces more samples than the host
+ *       system software can process and the produced samples are dropped.
+ *    </li>
+ *    <li>  
+ *       The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the sent data transmission timestamp is already behind the hardware's current timestamp.  
+ *    </li>
+ *    <li>
+ *       The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
+ *    </li>
+ * </ul>
  * 
  * @section stream_timestamps Timestamps
  * 
@@ -182,7 +202,7 @@
  * 
  * @subsection rx_timestamps Receiver side
  * 
- * To use timestamps on the receiver side, the address of meta data structure of ``lime::StreamRxMeta`` type must be passed to the parameter list of stream interface function - ``Receive(...)``. Meta data
+ * To use timestamps on the receiver side, the address of meta data structure of lime::StreamRxMeta type must be passed to the parameter list of stream interface function - ``Receive(...)``. Meta data
  * structure is updated with new meta data on each call of ``Receive(...)`` function. To check for timestamp support, check the meta data structure ``hasTimestamp`` flag status. If the timestamp is supported 
  * (``hasTimestamp`` is set to ``true``), meta data structure is updated with new timestamp data on each call of ``Receive(...)`` function. To get the timestamp value for any timestamp type, call timestamp 
  * storage class function ``GetTicks()``. This returns the current timestamp value in tick count. Depending on the timestamp type configuration, a tick count can be interpreted as sample count, real seconds 
@@ -239,7 +259,7 @@
  * 
  * @subsection tx_timestamps Transmitter side
  * 
- * To use timestamps on the transmitter side, the address of meta data structure of ``lime::StreamTxMeta`` type must be passed to the parameter list of stream interface function - ``Transmit(...)``. Transmit meta 
+ * To use timestamps on the transmitter side, the address of meta data structure of lime::StreamTxMeta type must be passed to the parameter list of stream interface function - ``Transmit(...)``. Transmit meta 
  * data structure flag ``hasTimestamp`` must be set to ``true`` to enable timestamps. A timestamp in transmit direction allows to indicate the ending point of the current sample transfer. Time point must be set as 
  * a tick count, which can be interpreted as sample count offset from the start of the stream, offset in real seconds from the start of the stream or unix time. To set the timestamp tick count for any timestamp 
  * type, call timestamp storage class function ``AddTicks()``. If the samples are queued for transfer past the set timestamp, the sample packets are dropped and the ``underrun`` parameter for the transmitter 
@@ -290,7 +310,14 @@
  * the amount of samples for each transfer cycle, unwanted packet drops can occur. Consequently, to print the real timestamp at the start of each transfer cycle, retrieved timestamp value must be 
  * divide by 64. 
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    Timestamp offset multiplication depends on device configuration. Increasing communication speed might require to offset the timestamp further into the future.}
+ * @else
  * @important Timestamp offset multiplication depends on device configuration. Increasing communication speed might require to offset the timestamp further into the future.
+ * @endif
  * 
  * Another example code of simple worker loop that performs periodic sample transfers using timestamps:
  * 

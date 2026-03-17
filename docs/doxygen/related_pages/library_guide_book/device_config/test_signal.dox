@@ -33,12 +33,17 @@
  * @embedRstVerbatim{
  * .. admonition:: Warning
  * 
- *    If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.}
+ *    If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.
+ * 
+ * .. important::
+ * 
+ *    It is not possible to read DC I and Q values with ``GetTestSignal(...)`` function.}
  * @else
  * @warning If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.
- * @endif
  * 
  * @important It is not possible to read DC I and Q values with @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" function.
+ * @endif
+ * 
  * 
  * @subsection test_sig_example Example of test signal generation
  * 
