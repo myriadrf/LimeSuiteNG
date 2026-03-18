@@ -364,6 +364,8 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310> la9310, double sam
     if (status != OpStatus::Success)
         return ReportError(status, "Failed to set LA9310 system clock");
 
+    la9310->phytimer.SetReferenceClock(systemClock);
+
     std::string fwname;
     switch (oversample)
     {

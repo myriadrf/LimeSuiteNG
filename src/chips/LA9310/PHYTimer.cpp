@@ -48,9 +48,11 @@ PHYTimer::PHYTimer(std::shared_ptr<LA9310_PCIe> port)
 {
 }
 
-void PHYTimer::SetReferenceClock(double reference_clock_hz)
+void PHYTimer::SetReferenceClock(double DCS_CLK_frequency)
 {
-    tickRate = reference_clock_hz / 2;
+    // PHYTimer clock rate is DCS_CLK * 4 / 8;
+    // or PCIe REF_CLK / 8
+    tickRate = DCS_CLK_frequency / 2;
 }
 
 double PHYTimer::GetTickRate() const

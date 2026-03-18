@@ -140,7 +140,13 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
 
     // stop PHYTimers
     phytimer.Enable(true);
-    phytimer.SetReferenceClock(cfg.hintSampleRate * 2);
+
+    uint8_t adcRate, dacRate;
+    la9310->GetADCDACRates(&adcRate, &dacRate);
+    int dec = la9310->vspa.GetDecimation();
+    int adcdac_clock_divider = (adcRate | dacRate) ? 2 : 1;
+
+    phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
     phytimer.Divisor(1);
 
     if (!cfg.channels.at(TRXDir::Rx).empty())
