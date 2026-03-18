@@ -68,6 +68,12 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
     OpStatus status = vspa.ResetVCPU();
     if (status != OpStatus::Success)
         return status;
+    constexpr uint8_t ids[] = { 1, 2, 3, 4, 11};
+    for (const auto id : ids)
+    {
+        PHYTimerControl timer = phytimer.GetTimerControl(id);
+        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceOne);
+    }
     return pcie->LoadVSPAFirmware(firmware.data(), firmware.size());
 }
 

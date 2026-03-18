@@ -219,7 +219,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             if (status == OpStatus::Success)
             {
                 lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
-                status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+                status = la9310->LoadVSPAFirmware(firmware);
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 if (status != OpStatus::Success)
                     lime::error("Failed to program LimeSDR-Micro LA9310 VSPA firmware");
@@ -729,12 +729,15 @@ OpStatus LimeSDR_Micro::UploadMemory(
         return status;
     }
     case eMemoryDevice::VSPA:
+    {
         // Make sure the VCPU is stopped
         status = la9310->vspa.ResetVCPU();
         if (status != OpStatus::Success)
             return status;
         // (Re-)programm the firmware
-        return mStreamingPort->LoadVSPAFirmware(data, length);
+        auto fwdata = std::span<const char, std::dynamic_extent>(data, length);
+        return la9310->LoadVSPAFirmware(fwdata);
+    }
     case eMemoryDevice::EEPROM:
         if (length > 65532) // Don't overwrite stored board parameters
             return OpStatus::OutOfRange;
@@ -802,7 +805,7 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
             return nullptr;
         }
         lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);
-        status = mStreamingPort->LoadVSPAFirmware(firmware.data(), firmware.size());
+        status = la9310->LoadVSPAFirmware(firmware);
         if (status != OpStatus::Success)
             return nullptr;
     }
