@@ -497,7 +497,7 @@ double LimeSDR_Micro::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 OpStatus LimeSDR_Micro::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    return SetLA9310SamplingRate(la9310, sampleRate, oversample);
+    return SetLA9310SamplingRate(la9310, sampleRate, 0);
 }
 
 double LimeSDR_Micro::GetClockFreq(uint8_t clk_id, uint8_t channel)
