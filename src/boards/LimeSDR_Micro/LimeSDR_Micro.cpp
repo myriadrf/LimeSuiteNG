@@ -53,6 +53,8 @@ using std::max;
 namespace lime {
 
 namespace limesdrmicro {
+
+static const char* defaultFirmwareName = "apm-iqplayer-4DEC4INT.eld";
 // XTRX board specific devices ids and data
 static const uint8_t SPI_LMS7002M = 0;
 
@@ -212,7 +214,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         if (!la9310->vspa.IsFirmwareLoaded())
         {
             std::vector<char> firmware;
-            std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+            const std::string vspafirmware_path = "/lib/firmware/"s + limesdrmicro::defaultFirmwareName;
             OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
             if (status == OpStatus::Success)
             {
@@ -792,7 +794,7 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
     if (!la9310->vspa.IsFirmwareLoaded())
     {
         std::vector<char> firmware;
-        std::string vspafirmware_path = "/lib/firmware/apm-iqplayer.eld";
+        const std::string vspafirmware_path = "/lib/firmware/"s + limesdrmicro::defaultFirmwareName;
         OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
         if (status != OpStatus::Success)
         {
