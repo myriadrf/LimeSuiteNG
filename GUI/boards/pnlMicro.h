@@ -11,6 +11,10 @@ class wxCheckBox;
 class wxRadioButton;
 class wxButton;
 
+namespace lime {
+class LimeSDR_Micro;
+}
+
 class pnlMicro : public wxPanel
 {
   public:
@@ -37,6 +41,6 @@ class pnlMicro : public wxPanel
     wxRadioBox* rgrEXT_CLK_CTRL;
 
     int chipSelect;
-    lime::SDRDevice* device;
+    lime::LimeSDR_Micro* device;
     DECLARE_EVENT_TABLE()
 };

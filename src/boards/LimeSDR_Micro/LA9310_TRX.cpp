@@ -226,7 +226,8 @@ OpStatus LA9310_TRX::Start()
         timer.TriggerAtCounter(PHYTimerControl::TriggerLogic::ForceOne, startTime);
     }
 
-    tx_tdd_switcher.Start(startTime);
+    uint32_t txBandSelection = phytimer.GetTimerControl(15).GetTriggerValue();
+    tx_tdd_switcher.Start(startTime, txBandSelection);
     return status;
 }
 

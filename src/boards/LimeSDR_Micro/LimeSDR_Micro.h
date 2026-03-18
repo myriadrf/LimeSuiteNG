@@ -29,7 +29,7 @@ class LMS64C_SPI;
 class I2C_bus;
 class LA9310;
 
-class LimeSDR_Micro : public LMS7002M_SDRDevice
+class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 {
   public:
     LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
@@ -127,7 +127,7 @@ class LimeSDR_Micro : public LMS7002M_SDRDevice
         uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t length) override;
     OpStatus I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t length) override;
 
-  private:
+  public:
     OpStatus CalibrateRx();
     OpStatus CalibrateTx();
     // SDRDescriptor mDeviceDescriptor;

@@ -6,6 +6,7 @@
 #include <atomic>
 
 #include "utilities/WorkerThread.h"
+#include "chips/LA9310/PHYTimer.h"
 
 #include "limesuiteng/Timespec.h"
 
@@ -27,7 +28,7 @@ class TransmitControl : public WorkerThread
     TransmitControl(PHYTimer* phytimer, VSPA_iqplayer* vspa);
     virtual ~TransmitControl();
 
-    void Start(uint32_t counter);
+    void Start(uint32_t counter, uint32_t tx_band_selector);
     void Stop();
 
     bool Work() override;
@@ -46,6 +47,10 @@ class TransmitControl : public WorkerThread
 
     const uint8_t free_running_timer_id;
     const uint8_t tx_timer_id;
+    const uint8_t tx_rf_switch_timer_id;
+    const uint8_t pa_en_switch_timer_id;
+    PHYTimerControl::TriggerLogic rf_switch_on;
+    PHYTimerControl::TriggerLogic rf_switch_off;
     Timespec runtime;
     Timespec phytimerClock;
     Timespec streamClockOffset;

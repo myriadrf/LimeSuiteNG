@@ -12,6 +12,8 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
 
+#include "boards/LimeSDR_Micro/LimeSDR_Micro.h"
+
 #include <ciso646>
 
 using namespace std;
@@ -86,7 +88,7 @@ pnlMicro::pnlMicro(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wx
 
 void pnlMicro::Initialize(lime::SDRDevice* dev, const string& spiSlaveName)
 {
-    device = dev;
+    device = dynamic_cast<lime::LimeSDR_Micro*>(dev);
     if (!device)
         return;
 }
@@ -100,11 +102,22 @@ void pnlMicro::OnInputChange(wxCommandEvent& event)
     uint8_t value = 0;
     device->I2CRead(0, i2c_expander_address, gpio_b_offset, 1, &value, 1);
 
-    value &= ~(1 << 1); // clear TX_SW
-    if (cmbTxPath->GetSelection() == 1)
-        value |= (1 << 1); // set TX_SW, Band1
+    int ver = device->GetDescriptor().hardwareVersion == "0" ? 0 : 1;
+    if (ver == 0)
+    {
+        value &= ~(1 << 1); // clear TX_SW
+        if (cmbTxPath->GetSelection() == 1)
+            value |= (1 << 1); // set TX_SW, Band1
+        else
+            value |= (0 << 1); // set TX_SW, Band2
+    }
     else
-        value |= (0 << 1); // set TX_SW, Band2
+    {
+        auto timer = device->la9310->phytimer.GetTimerControl(15);
+        auto triggerValue =
+            cmbTxPath->GetSelection() == 1 ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
+        timer.TriggerDirectly(triggerValue);
+    }
 
     value &= ~(0x5); // clear RX_SW2, RX_SW3
     uint8_t rxsw2 = 0;
@@ -145,7 +158,16 @@ void pnlMicro::UpdatePanel()
 {
     uint8_t value = 0;
     device->I2CRead(0, i2c_expander_address, gpio_b_offset, 1, &value, 1);
-    cmbTxPath->SetSelection((value >> 1) & 1);
+
+    int ver = device->GetDescriptor().hardwareVersion == "0" ? 0 : 1;
+    if (ver == 0)
+    {
+        cmbTxPath->SetSelection((value >> 1) & 1);
+    }
+    else
+    {
+        cmbTxPath->SetSelection(device->la9310->phytimer.GetTimerControl(15).GetTriggerValue());
+    }
     int rx_sw_value = ((value >> 1) & 0x2) | (value & 1);
     int rx_sw_to_combobox[4] = { 0, 2, 1, 3 };
     cmbRxPath->SetSelection(rx_sw_to_combobox[rx_sw_value]);

@@ -23,13 +23,15 @@ TransmitControl::TransmitControl(PHYTimer* phytimer, VSPA_iqplayer* vspa)
     , phytimer(phytimer)
     , free_running_timer_id(10)
     , tx_timer_id(11)
+    , tx_rf_switch_timer_id(15)
+    , pa_en_switch_timer_id(20)
 {
 }
 TransmitControl::~TransmitControl()
 {
 }
 
-void TransmitControl::Start(uint32_t counter)
+void TransmitControl::Start(uint32_t counter, uint32_t tx_rf_on_selector)
 {
     startOffset = counter;
     runtime = Timespec(0, 0, phytimer->GetTickRate());
@@ -38,6 +40,9 @@ void TransmitControl::Start(uint32_t counter)
 
     lastCounter = 0;
     totalTimerTicks = 0;
+
+    rf_switch_on = tx_rf_on_selector == 0 ? PHYTimerControl::TriggerLogic::ForceZero : PHYTimerControl::TriggerLogic::ForceOne;
+    rf_switch_off = tx_rf_on_selector == 0 ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
 
     phytimer->GetTimerControl(free_running_timer_id).CaptureCounter();
     eventsPassed.store(0);
@@ -128,11 +133,15 @@ bool TransmitControl::Work()
                     printf("FAILED TO STARTTX\n");
             }
 
+            auto rf_switch_value = evt.action == Action::TxOn ? rf_switch_on : rf_switch_off;
+
             Timespec eventTs = (evt.timestamp + streamClockOffset);
             double seconds = eventTs.GetSeconds() + eventTs.GetFracSeconds();
             int64_t ticks = seconds * phytimer->GetTickRate();
             uint32_t counter = ticks & 0xFFFFFFFF;
             phytimer->GetTimerControl(tx_timer_id).TriggerAtCounter(trigger, counter);
+            phytimer->GetTimerControl(pa_en_switch_timer_id).TriggerAtCounter(trigger, counter);
+            phytimer->GetTimerControl(tx_rf_switch_timer_id).TriggerAtCounter(rf_switch_value, counter);
             printf_dbg_log("\tTxControl, event scheduled Tx %s @ t:%.6fs ticks:%li, phy:%08X phynow:%08X\n",
                 (evt.action == Action::TxOn ? "ON" : "OFF"),
                 evt.timestamp.GetSeconds() + evt.timestamp.GetFracSeconds(),
