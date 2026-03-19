@@ -79,17 +79,7 @@
  * 
  * @section stream_parameters Stream parameters
  * 
- * @if RST_SUPPORT
- * @embedRstVerbatim{
- * .. admonition:: Note
- * 
- *    The declared names of stream parameters in the table below do not match the member names of ``lime::StreamConfig`` structure.
- * }
- * @else
- * @note The declared names of stream parameters in the table below do not match the member names of @ref lime::StreamConfig "StreamConfig" structure.
- * @endif
- * 
- * Here is a detailed table of @ref lime::StreamConfig "StreamConfig" structure members with additional information about each parameter below the table:
+ * Here is a detailed table of stream parameters that can be configured via @ref lime::StreamConfig "StreamConfig" structure:
  * <table>
  *    <tr>
  *       <th> Parameter </th>

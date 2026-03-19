@@ -29,7 +29,7 @@
  *    </li>
  *    <li>Access to SDR device module register space for advanced configurations</li>
  *    <li>Support for minimal hardware tests</li>
- *    <li>Minimal support for stream timestamps</li>
+ *    <li>Support for stream timestamps</li>
  * </ul>
  * 
  * 
