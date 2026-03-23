@@ -7,6 +7,6 @@ This is a sub-page for browsing unsorted public API memebers.
    :maxdepth: 1
    :glob:
 
-   classes/*
-   structures/*
-   files/*
+   classlist.rst
+   structlist.rst
+   filelist.rst

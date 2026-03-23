@@ -33,4 +33,12 @@ fi
 #     python add_undoc_members.py
 # fi
 
+breathe-apidoc --generate class --members --force --output-dir doxygen/api_member_list doxygen/output/xml/
+breathe-apidoc --generate file --force --output-dir doxygen/api_member_list doxygen/output/xml/
+breathe-apidoc --generate struct --members --force --output-dir doxygen/api_member_list doxygen/output/xml/
+
+rm "doxygen/api_member_list/file/*dox.rst"  # Removing redundant doxygen manual pages that were converted to rst pages to avoid sphinx errors
+
+python dox_converter.py
+
 make -j"$(nproc)" html

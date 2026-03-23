@@ -19,16 +19,9 @@
  * @embedRstVerbatim{
  * .. important::
  * 
- *    Streaming interface is not thread safe. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in important notes section at the end of page.
- * 
- * .. important::
- * 
- *    Avoid mixing sample types when transmiting and retrieving samples via ``Receive(...)`` and ``Transmit(...)`` functions. Select the functions that accept the sample type that was specified via ``format`` parameter in stream configuration stage.}
+ *    Streaming interface is not thread safe. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in important notes section at the end of page.} 
  * @else
  * @important Streaming interface is <b>not thread safe</b>. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in @ref important_stream_notes "Important notes" section.
- * 
- * @important Avoid mixing sample types when transmiting and retrieving samples via ``Receive(...)`` and ``Transmit(...)`` functions. Select the functions that accept the sample type that was 
- * specified via `format` parameter in stream configuration stage.
  * @endif
  *
  * @section generic_stream_example Generic stream example
