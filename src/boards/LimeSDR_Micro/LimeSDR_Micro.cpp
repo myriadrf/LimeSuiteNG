@@ -333,27 +333,38 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
 static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310> la9310, double sampleRate, int oversample)
 {
     constexpr double maxSystemClock = 160e6;
-    uint8_t adc_divider_mask = 0;
-    uint8_t dac_divider_mask = 0;
+    uint8_t adc_divider_mask = 0xF;
+    uint8_t dac_divider_mask = 0x1;
 
-    // start with max oversampling
-    if (oversample <= 0)
-        oversample = 4;
-
-    double systemClock = sampleRate * oversample;
-    if (systemClock > maxSystemClock)
+    if (sampleRate > maxSystemClock / 2)
     {
-        oversample = max(1.0, log2(int(maxSystemClock / sampleRate)));
-        systemClock = sampleRate * oversample;
+        oversample = 1;
+        adc_divider_mask = 0;
+        dac_divider_mask = 0;
     }
-
-    if (systemClock <= maxSystemClock / 2.0)
+    else if (sampleRate > maxSystemClock / 4)
     {
-        // run higher system clock rate with half sampling rate
-        systemClock *= 2;
+        oversample = 1;
         adc_divider_mask = 0xF;
         dac_divider_mask = 0x1;
     }
+    else if (sampleRate > maxSystemClock / 8)
+    {
+        oversample = 2;
+        adc_divider_mask = 0xF;
+        dac_divider_mask = 0x1;
+    }
+    else
+    {
+        oversample = 4;
+        adc_divider_mask = 0xF;
+        dac_divider_mask = 0x1;
+    }
+
+    double systemClock = sampleRate * oversample;
+    if (adc_divider_mask || dac_divider_mask)
+        systemClock *= 2;
+
     if (systemClock <= 0)
         return OpStatus::InvalidValue;
 
