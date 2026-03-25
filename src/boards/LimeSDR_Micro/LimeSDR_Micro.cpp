@@ -656,12 +656,21 @@ OpStatus LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
         if (chan != 0)
             return status;
 
-        value &= ~(1 << 1); // clear TX_SW
-        if (pathId == 1)
-            value |= (1 << 1); // set TX_SW, Band1
+        int ver = GetDescriptor().hardwareVersion == "0" ? 0 : 1;
+        if (ver == 0)
+        {
+            value &= ~(1 << 1); // clear TX_SW
+            if (pathId == 1)
+                value |= (1 << 1); // set TX_SW, Band1
+            else
+                value |= (0 << 1); // set TX_SW, Band2
+        }
         else
-            value |= (0 << 1); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
+        {
+            auto timer = la9310->phytimer.GetTimerControl(15);
+            auto triggerValue = pathId == 1 ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
+            timer.TriggerDirectly(triggerValue);
+        }
     }
     else
     {
@@ -698,8 +707,8 @@ OpStatus LimeSDR_Micro::LMSSetPath(TRXDir dir, uint8_t chan, uint8_t pathId)
             rxsw3 = 0;
         }
         value |= (rxsw2 << 0) | (rxsw3 << 2); // set TX_SW, Band2
-        I2CWrite(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
     }
+    I2CWrite(0, i2c_expander_address, gpiob_addr, 1, &value, 1);
     return status;
 }
 
