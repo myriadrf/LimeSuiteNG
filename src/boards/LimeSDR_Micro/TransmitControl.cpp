@@ -52,6 +52,8 @@ void TransmitControl::Start(uint32_t counter, uint32_t tx_rf_on_selector)
 void TransmitControl::Stop()
 {
     WorkerThread::Stop();
+    phytimer->GetTimerControl(pa_en_switch_timer_id).TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
+    phytimer->GetTimerControl(tx_rf_switch_timer_id).TriggerDirectly(rf_switch_on);
 }
 
 bool TransmitControl::Work()
