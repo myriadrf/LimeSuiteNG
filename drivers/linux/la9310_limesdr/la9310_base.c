@@ -462,9 +462,12 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     if (rc)
         return rc;
 
-    rc = la9310_subdrv_init(la9310_dev);
-    if (rc)
-        return rc;
+    if (!la9310_dev->vspa_priv)
+    {
+        rc = la9310_subdrv_init(la9310_dev);
+        if (rc)
+            return rc;
+    }
 
     return 0;
 }
@@ -558,6 +561,10 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     rc = la9310_register_uart(la9310_dev);
     if (rc)
         goto free_irq;
+
+    // init VSPA, it will abort if M4 has not been programmed, so ignore return value.
+    // will reinit after M4 upload
+    rc = la9310_subdrv_init(la9310_dev);
 
     return 0;
 

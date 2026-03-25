@@ -69,6 +69,9 @@ int la9310_load_firmware_to_dma(
 #define VSPA_DMA_MAX_COUNTER 30
 #define VSPA_DMA_TIMEOUT 100
 
+#define RCW_COMPLETIONR_OFFSET 0x104 // RCW comp reg off
+#define RCW_COMPLETION_DONE 0x1 // RCW comp bit
+
 static const struct _vspa_sec_info {
     uint32_t trans_mode;
     char* sec_name;
@@ -858,6 +861,16 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     u32 __iomem* dma_vaddr;
     uint32_t param0, param1, param2;
     uint32_t val;
+
+    // Write RCW Completion bit, without it accessing VSPA registers will fail and reboot host
+    struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
+    uint32_t* rcw_completion_addr = (uint32_t*)(ccsr_region->vaddr + 0x1E60000 + RCW_COMPLETIONR_OFFSET);
+    uint32_t ulRcwCompletion = ioread32(rcw_completion_addr);
+    if (!(ulRcwCompletion & RCW_COMPLETION_DONE))
+    {
+        dev_warn(dev, "LA9310 on PCIe reference clock, VSPA not powered yet.\n");
+        return -1;
+    }
 
     /* Allocating space vspa device structure */
     vspadev = kzalloc(sizeof(struct vspa_device), GFP_KERNEL);
