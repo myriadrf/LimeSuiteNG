@@ -17,6 +17,8 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 
+# For project flags, go to ENABALED_SECTIONS tag.
+
 # This tag specifies the encoding used for all characters in the configuration
 # file that follow. The default is UTF-8 which is also the encoding used for all
 # text before the first occurrence of this tag. Doxygen uses libiconv (or the
@@ -269,7 +271,8 @@ TAB_SIZE               = 4
 # commands \{ and \} for these it is advised to use the version @{ and @} or use
 # a double escape (\\{ and \\})
 
-ALIASES                =
+ALIASES                = "rstVerbatim=@verbatim embed:rst:leading-asterisk"
+ALIASES               += "embedRstVerbatim{1}=@verbatim embed:rst:leading-asterisk \1 ^^ @endverbatim"
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C sources
 # only. Doxygen will then generate output that is more tailored for C. For
@@ -717,8 +720,16 @@ GENERATE_DEPRECATEDLIST= YES
 # The ENABLED_SECTIONS tag can be used to enable conditional documentation
 # sections, marked by \if <section_label> ... \endif and \cond <section_label>
 # ... \endcond blocks.
+# List of custom Doxygen configuration flags:
+# RST_SUPPORT - enable swaping of doxygen sections and special commands with RST markup style elements. This flag is used for compatibility with breathe plugin, which translates doxygen output 
+#               to RST markup style when runing Sphinx documentation build. Use this only when the final doxygen output is included in sphinx documentation build.
+# DEVELOP     - enables the output of incomplete doxygen sections and other development marks in the final doxygen output. Remove this flag to hide incomplete doxygen sections or other 
+#               development marks in the final doxygen output.
+# DOX_NAV     - enable page references for navigation purposes in the final doxygen output.
 
-ENABLED_SECTIONS       =
+ENABLED_SECTIONS       = RST_SUPPORT
+#ENABLED_SECTIONS       += DEVELOP
+#ENABLED_SECTIONS       += DOX_NAV
 
 # The MAX_INITIALIZER_LINES tag determines the maximum number of lines that the
 # initial value of a variable or macro / define can have for it to appear in the
@@ -868,6 +879,7 @@ WARN_LOGFILE           =
 # Specified INPUT path are relative to docs/doxygen directory.
 
 INPUT                  = @PROJECT_SOURCE_DIR@/src/include @PROJECT_SOURCE_DIR@/src/comms/SPI/ISPI.h @PROJECT_SOURCE_DIR@/src/comms/II2C.h
+INPUT                 += @PROJECT_SOURCE_DIR@/docs/doxygen
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -907,11 +919,11 @@ FILE_PATTERNS          = *.c \
                          *.hpp \
                          *.h++ \
                          *.inc \
+                         *.dox
                          #*.m \
                          #*.markdown \
                          # *.md \
                          #*.mm \
-                         #*.dox
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -1191,7 +1203,7 @@ IGNORE_PREFIX          =
 # If the GENERATE_HTML tag is set to YES, doxygen will generate HTML output
 # The default value is: YES.
 
-GENERATE_HTML          = YES
+GENERATE_HTML          = NO
 
 # The HTML_OUTPUT tag is used to specify where the HTML docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -2072,7 +2084,7 @@ MAN_LINKS              = NO
 # captures the structure of the code including all documentation.
 # The default value is: NO.
 
-GENERATE_XML           = NO
+GENERATE_XML           = YES
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
