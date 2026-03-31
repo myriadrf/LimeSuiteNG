@@ -10,6 +10,7 @@ Prerequisites
 Components needed to generate the LimeSuiteNG documentation:
 
 - `GCC`_
+- `Ninja`_ (For Windows)
 - `CMake`_
 - `Python (>=3.8)`_
 - `Doxygen`_
@@ -46,7 +47,7 @@ In the ``docs`` directory, located in the root directory of the repository, whil
 
 .. code-block:: bash
 
-    cmake -S .. -B ../build # 1. Generate the configuration files for the suite.
+    cmake -S .. -B ../build # 1. Generate the configuration files for the suite. For Windows include: -G Ninja
     cmake --build ../build -- doxygen # 2. Run only the Doxygen target to build doxygen
 
     # 3. Generate reference pages for API
@@ -71,7 +72,17 @@ In the ``docs`` directory, located in the root directory of the repository, whil
     These commands or the script must be run in the venv, otherwise it will fail.
 
 For ease of convenience, ``docs`` directory contains scripts that automate the documentation build process for each platform.
-On Linux, run ``generate_docs.sh`` script. On Windows, run ``generate_docs.bat`` script.
+On Linux, run ``generate_docs.sh`` script. On Windows, run ``generate_docs.bat`` script. Scripts support additional command line arguments:
+
+- ``clean`` - Deletes all documentation build artifacts.
+- ``rebuild`` - Runs the documentation build steps.
+
+To simultaneously clean and rebuild the documentation, pass the arguments in the following order - ``generate_docs.sh clean rebuild``. 
+Running script without any command line arguments, will trigger only the sphinx documentation build tool.
+
+.. note::
+
+    Scripts ``generate_docs.sh`` and ``generate_docs.bat`` must be run from ``docs`` directory.
 
 After a successful generation the resulting documentation pages will be located in
 ``docs/_build/html`` directory.
@@ -118,6 +129,7 @@ For more information about how to set up and write the documentation,
 check out the `MyriadRF Handbook`_.
 
 .. _`GCC`: https://gcc.gnu.org/
+.. _`Ninja`: https://ninja-build.org/
 .. _`CMake`: https://cmake.org/
 .. _`Python (>=3.8)`: https://www.python.org/downloads/release/python-3818/
 .. _`Doxygen`: https://www.doxygen.nl/
