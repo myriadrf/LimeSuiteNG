@@ -127,6 +127,8 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
         uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, const uint8_t* data, uint32_t length) override;
     OpStatus I2CRead(uint32_t bus, uint32_t soc, uint32_t offset, uint8_t offset_len, uint8_t* data, uint32_t length) override;
 
+    ICSR* getICSR() override;
+
   public:
     OpStatus CalibrateRx();
     OpStatus CalibrateTx();

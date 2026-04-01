@@ -33,6 +33,7 @@
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LA9310/LA9310.h"
 #include "chips/LA9310/VSPA_iqplayer.h"
+#include "chips/LA9310/CSR.h"
 #include "comms/I2Cbus.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
@@ -895,6 +896,11 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     rate /= dec;
 
     return rate;
+}
+
+ICSR* LimeSDR_Micro::getICSR()
+{
+    return new LA9310_CSR(mStreamingPort);
 }
 
 } //namespace lime
