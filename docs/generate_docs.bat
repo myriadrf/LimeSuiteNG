@@ -36,17 +36,25 @@ IF "%1"=="" goto :eof
 
 :rebuild
 ECHO generate_docs.bat Rebuilding documentation
+
+:: Configuring project
 cmake -S .. -B ..\build -G Ninja
+
+:: Building doxygen target
 cmake --build ..\build -- doxygen
 
+:: Generating API reference pages for the API reference list
 breathe-apidoc --generate class --members --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
 breathe-apidoc --generate file --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
 breathe-apidoc --generate struct --members --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
 
+:: removing redundant copies of doxygen manual pages
 DEL doxygen\api_member_list\file\*dox.rst
 
+:: Converting the actual doxygen manual pages to sphinx .rst format
 python dox_converter.py
 
+:: Running sphinx build tool
 :sphinx_build
 make.bat html
 
