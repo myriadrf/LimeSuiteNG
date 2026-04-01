@@ -28,7 +28,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -qq doxygen graphviz
           cd ${{github.workspace}}
-          sudo install_dependencies.sh
+          sudo ./install_dependencies.sh
 
       - name: Set up Python venv
         run: |
