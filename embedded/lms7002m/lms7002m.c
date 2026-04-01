@@ -1874,8 +1874,8 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
     const uint32_t txLpfHighRange[2] = { 56000000, 160000000 };
 
     // common setup
-    lms7002m_spi_modify(self, 0x0106, 15, 0, 0x318C);
-    lms7002m_spi_modify(self, 0x0107, 15, 0, 0x318C);
+    lms7002m_spi_modify(self, 0x0106, 15, 0, 0x310C);
+    lms7002m_spi_modify(self, 0x0107, 15, 0, 0x30C6);
     lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_FRP_TBB, 8);
     lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_GG_FRP_TBB, 12);
     lms7002m_spi_modify_csr(self, LMS7002M_CCAL_LPFLAD_TBB, 31);
