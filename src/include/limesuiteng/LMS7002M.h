@@ -288,7 +288,7 @@ class LIME_API LMS7002M
      * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
      * @return The status of the operation
      */
-    OpStatus SetTxLPF(double rfBandwidth_Hz);
+    OpStatus SetTxLPF(double rfBandwidth_Hz, bool adjust_bb_gain = true);
 
     /**
      * @brief Tunes the Low Pass Filter for the RX direction.
