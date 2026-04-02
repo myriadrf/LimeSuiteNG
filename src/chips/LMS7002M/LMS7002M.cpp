@@ -2087,7 +2087,18 @@ OpStatus LMS7002M::SetRxLPF(double rfBandwidth_Hz)
 OpStatus LMS7002M::SetTxLPF(double rfBandwidth_Hz)
 {
     lime_Result result = lms7002m_set_tx_lpf(mC_impl, rfBandwidth_Hz);
-    return ResultToStatus(result);
+    OpStatus status = ResultToStatus(result);
+    if (status != OpStatus::Success)
+        return status;
+
+    // do not calibrate tx gain if custom config file is loaded to maintain custom values
+    if (customConfigFileIsLoaded)
+    {
+        lime::warning("Custom .ini configuration file is loaded, SetTxLPF will not calibrate CG_IAMP_TBB");
+        return status;
+    }
+
+    return CalibrateTxGain();
 }
 
 int16_t LMS7002M::ReadAnalogDC(const uint16_t addr)
