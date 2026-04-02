@@ -676,7 +676,7 @@ static OpStatus TransferDeviceDirectionalSettings(
         int flag = CalibrationFlag::NONE;
         const std::map<std::string, uint32_t> options = { { "none", CalibrationFlag::NONE },
             { "dciq", CalibrationFlag::DCIQ },
-            { "filter", CalibrationFlag::FILTER },
+            { "bb_gain", CalibrationFlag::FILTER },
             { "all", CalibrationFlag::DCIQ | CalibrationFlag::FILTER },
             { "force", CalibrationFlag::DCIQ | CalibrationFlag::FILTER } };
         for (const auto& option : options)
