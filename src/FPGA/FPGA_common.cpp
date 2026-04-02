@@ -80,6 +80,7 @@ static constexpr bool HasFPGAClockPhaseSearch(uint8_t targetDevice, uint8_t vers
 
 uint32_t GetPacketSizeForBusSize(uint32_t requestSamplesCount, uint32_t sampleSize, uint32_t channelCount, uint32_t busWidth)
 {
+    assert(busWidth > 0);
     const int frameSize = sampleSize * channelCount;
     const int headerSize = sizeof(StreamHeader);
     const uint32_t maxPacketSize = 4096;
@@ -937,7 +938,7 @@ void FPGA::SetFeatures(const GatewareFeatures& flags)
 /// @return The packet size after the changes (returns @p packetSize if not supported)
 uint32_t FPGA::SetUpVariableRxSize(uint32_t requestSamplesCount, int sampleSize, int channelCount, uint8_t chipId)
 {
-    const int busSize = 32; // 256bit
+    const int busSize = mFeatures.databusWidth;
     uint32_t packetSize = GetPacketSizeForBusSize(requestSamplesCount, sampleSize, channelCount, busSize);
 
     int32_t payloadSize = packetSize - 16;

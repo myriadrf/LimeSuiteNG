@@ -15,6 +15,7 @@ FPGA_XTRX::FPGA_XTRX(std::shared_ptr<ISPI> fpgaSPI, std::shared_ptr<ISPI> lms700
 {
     GatewareFeatures f;
     f.hasConfigurableStreamPacketSize = true;
+    f.databusWidth = 16;
     SetFeatures(f);
 }
 

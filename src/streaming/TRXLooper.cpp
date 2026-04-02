@@ -383,25 +383,25 @@ void TRXLooper::Stop()
 
     if (mRx.stagingPacket != nullptr)
     {
-        mRx.packetsPool->push(mRx.stagingPacket, true);
+        mRx.packetsPool->push(mRx.stagingPacket);
         mRx.stagingPacket = nullptr;
     }
     if (mRx.fifo)
     {
         while (mRx.fifo->pop(&mRx.stagingPacket, false))
-            mRx.packetsPool->push(mRx.stagingPacket, true);
+            mRx.packetsPool->push(mRx.stagingPacket);
         mRx.fifo->clear();
         mRx.stagingPacket = nullptr;
     }
     if (mTx.stagingPacket != nullptr)
     {
-        mTx.packetsPool->push(mTx.stagingPacket, true);
+        mTx.packetsPool->push(mTx.stagingPacket);
         mTx.stagingPacket = nullptr;
     }
     if (mTx.fifo)
     {
         while (mTx.fifo->pop(&mTx.stagingPacket, false))
-            mTx.packetsPool->push(mTx.stagingPacket, true);
+            mTx.packetsPool->push(mTx.stagingPacket);
         mTx.fifo->clear();
         mTx.stagingPacket = nullptr;
     }
@@ -499,12 +499,12 @@ OpStatus TRXLooper::RxSetup()
     assert(mRxArgs.packetsToBatch > 0);
     assert(mRxArgs.samplesInPacket > 0);
 
-    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / mRx.samplesInPkt; // buffer 0.25 second of data
-    mRx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
+    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / (mRx.samplesInPkt * mRx.packetsToBatch); // buffer 0.25 second of data
+    mRx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
-    for (uint32_t i = 0; i < mRx.packetsPool->max_size(); ++i)
-        mRx.packetsPool->push(new StreamPacket(mRx.samplesInPkt, chCount, userSampleSize));
-    mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
+    for (uint32_t i = 0; i < mRx.packetsPool->capacity(); ++i)
+        mRx.packetsPool->push(new StreamPacket(mRx.samplesInPkt * mRx.packetsToBatch, chCount, userSampleSize));
+    mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(mRx.packetsPool->capacity() - 2);
 
     char msg[256];
     std::snprintf(msg,
@@ -521,7 +521,7 @@ OpStatus TRXLooper::RxSetup()
         bufferTimeDuration * 1e6,
         mConfig.hintSampleRate,
         packetsInFIFO,
-        mRx.samplesInPkt);
+        mRx.samplesInPkt * mRx.packetsToBatch);
     if (showStats)
         printf("%s", msg);
     if (mCallback_logMessage)
@@ -596,7 +596,8 @@ void TRXLooper::RxWorkLoop()
     lime::debug("Rx worker thread shutdown.");
 }
 
-static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket, int clockTicksPerSample)
+inline static Timespec ExtractPacketTimestamp(
+    const StreamConfig& config, const FPGA_RxDataPacket* fpgapacket, int clockTicksPerSample)
 {
     switch (config.timestampType)
     {
@@ -616,14 +617,11 @@ static Timespec ExtractPacketTimestamp(const StreamConfig& config, const FPGA_Rx
     return Timespec();
 }
 
-static int32_t ExtractPacketSamples(
-    const StreamConfig& config, const TRXLooper::TransferArgs& args, StreamPacket* userPkt, const FPGA_RxDataPacket* fpgapacket)
+inline static int32_t ExtractPacketSamples(const DataConversion& conversion,
+    const TRXLooper::TransferArgs& args,
+    StreamPacket* userPkt,
+    const FPGA_RxDataPacket* fpgapacket)
 {
-    DataConversion conversion{};
-    conversion.srcFormat = config.linkFormat;
-    conversion.destFormat = config.format;
-    conversion.channelCount = std::max(config.channels.at(lime::TRXDir::Tx).size(), config.channels.at(lime::TRXDir::Rx).size());
-
     assert(userPkt);
     assert(userPkt->samples.isFull() == false);
 
@@ -682,6 +680,11 @@ void TRXLooper::ReceivePacketsLoop()
     const std::vector<uint8_t*>& dmaBuffers{ mRxArgs.buffers };
     StreamStats& stats = mRx.stats;
     auto& fifo = mRx.fifo;
+
+    DataConversion conversion;
+    conversion.srcFormat = mConfig.linkFormat;
+    conversion.destFormat = mConfig.format;
+    conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
     DeltaVariable<int32_t> overrun(0);
     DeltaVariable<int32_t> loss(0);
@@ -774,6 +777,8 @@ void TRXLooper::ReceivePacketsLoop()
         mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::DeviceToHost);
         const uint8_t* buffer{ dmaBuffers.at(currentBufferIndex) };
 
+        const FPGA_RxDataPacket* firstPkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
+
         if (getStartTime)
         {
             std::lock_guard<std::mutex> lock(startTimeMutex);
@@ -784,8 +789,7 @@ void TRXLooper::ReceivePacketsLoop()
             // rewind timstamps by the amount of first packet clockCounter
             if (mConfig.extraConfig.waitPPS)
             {
-                const FPGA_RxDataPacket* hardwarePkt = reinterpret_cast<const FPGA_RxDataPacket*>(buffer);
-                fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, hardwarePkt, ticksPerSample);
+                fpgaFrontEndDelay = ExtractPacketTimestamp(mConfig, firstPkt, ticksPerSample);
                 expectedTimestamp = expectedTimestamp + fpgaFrontEndDelay;
             }
             getStartTime = false;
@@ -794,6 +798,21 @@ void TRXLooper::ReceivePacketsLoop()
         startTimeIsSet.notify_all();
 
         bool reportProblems = false;
+        if (userPkt == nullptr)
+        {
+            if (!mRx.packetsPool->pop(&userPkt))
+            {
+                ++stats.overrun;
+                overrun.add(1);
+                reportProblems = true;
+                continue;
+            }
+            userPkt->Reset();
+            userPkt->meta.timestamp = ExtractPacketTimestamp(mConfig, firstPkt, ticksPerSample);
+            userPkt->meta.useTimestamp = true;
+            userPkt->meta.flush = false;
+        }
+
         const int srcPktCount = mRxArgs.packetsToBatch;
         for (int i = 0; i < srcPktCount; ++i)
         {
@@ -839,22 +858,7 @@ void TRXLooper::ReceivePacketsLoop()
             if (omitRxPackets)
                 continue;
 
-            if (userPkt == nullptr)
-            {
-                if (!mRx.packetsPool->pop(&userPkt, false) || userPkt == nullptr)
-                {
-                    ++stats.overrun;
-                    overrun.add(1);
-                    reportProblems = true;
-                    continue;
-                }
-                userPkt->Reset();
-                userPkt->meta.timestamp = hwts;
-                userPkt->meta.useTimestamp = true;
-                userPkt->meta.flush = false;
-            }
-
-            ExtractPacketSamples(mConfig, mRxArgs, userPkt, hardwarePkt);
+            ExtractPacketSamples(conversion, mRxArgs, userPkt, hardwarePkt);
 
             if (mConfig.extraConfig.negateQ)
                 NegateQChannel(userPkt, mConfig.format);
@@ -864,16 +868,17 @@ void TRXLooper::ReceivePacketsLoop()
                 userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime);
                 userPkt->meta.timestamp = userPkt->meta.timestamp - fpgaFrontEndDelay;
             }
+        }
 
-            if (fifo->push(userPkt, false))
-                userPkt = nullptr;
-            else
-            {
-                ++stats.overrun;
-                overrun.add(1);
-                userPkt->Reset();
-                reportProblems = true;
-            }
+        assert(userPkt);
+        if (fifo->push(userPkt, false))
+            userPkt = nullptr;
+        else
+        {
+            ++stats.overrun;
+            overrun.add(1);
+            userPkt->Reset();
+            reportProblems = true;
         }
 
         stats.packets += srcPktCount;
@@ -924,7 +929,7 @@ void TRXLooper::RxTeardown()
 
     if (mRx.packetsPool)
     {
-        while (mRx.packetsPool->pop(&mRx.stagingPacket, false))
+        while (mRx.packetsPool->pop(&mRx.stagingPacket))
             delete mRx.stagingPacket;
         mRx.stagingPacket = nullptr;
     }
@@ -1128,11 +1133,11 @@ OpStatus TRXLooper::TxSetup()
     }
 
     const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / (mTx.packetsToBatch * mTx.samplesInPkt); // buffer 0.25 second of data
-    mTx.packetsPool = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
+    mTx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
-    for (uint32_t i = 0; i < mTx.packetsPool->max_size(); ++i)
+    for (uint32_t i = 0; i < mTx.packetsPool->capacity(); ++i)
         mTx.packetsPool->push(new StreamPacket(mTx.packetsToBatch * mTx.samplesInPkt, chCount, userSampleSize));
-    mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(packetsInFIFO);
+    mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(mTx.packetsPool->capacity() - 2);
 
     mTx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminateWorker.store(false, std::memory_order_relaxed);
@@ -1197,6 +1202,7 @@ static void TxPacketPadding(FPGA_TxDataPacket& packet, DataFormat linkFormat, ui
 {
     // Tx data transfers have to be multiple of the bus size
     constexpr uint16_t busWidthBytes = 32;
+    assert(busWidthBytes > 0);
     const int frameSize = (linkFormat == DataFormat::I12 ? 3 : 4) * channelCount;
     const int headerSize = sizeof(StreamHeader);
     const int maxPacketSize = 4096;
@@ -1373,7 +1379,7 @@ void TRXLooper::TransmitPacketsLoop()
                         reportProblems = true;
                         ++stats.underrun;
                         srcPkt->Reset();
-                        mTx.packetsPool->push(srcPkt, true);
+                        mTx.packetsPool->push(srcPkt);
                         srcPkt = nullptr;
                         break;
                     }
@@ -1432,7 +1438,7 @@ void TRXLooper::TransmitPacketsLoop()
 
             if (srcPkt->samples.empty())
             {
-                mTx.packetsPool->push(srcPkt, true);
+                mTx.packetsPool->push(srcPkt);
                 srcPkt = nullptr;
             }
 
@@ -1542,7 +1548,7 @@ void TRXLooper::TxTeardown()
     }
     if (mTx.packetsPool)
     {
-        while (mTx.packetsPool->pop(&mTx.stagingPacket, false))
+        while (mTx.packetsPool->pop(&mTx.stagingPacket))
             delete mTx.stagingPacket;
         mTx.stagingPacket = nullptr;
     }
@@ -1600,7 +1606,7 @@ uint32_t TRXLooper::StreamTxTemplate(
     {
         if (!mTx.stagingPacket)
         {
-            mTx.packetsPool->pop(&mTx.stagingPacket, true);
+            mTx.packetsPool->pop(&mTx.stagingPacket);
             if (!mTx.stagingPacket)
                 break;
 

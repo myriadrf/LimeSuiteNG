@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <string.h>
 
 #include "limesuiteng/complex.h"
 #include "complex12packed_t.h"
@@ -73,6 +74,11 @@ template<> constexpr void Rescale(complex12packed_t& dest, const complex16_t& sr
 template<> constexpr void Rescale(complex16_t& dest, const complex12packed_t& src)
 {
     dest = complex16_t(src.real() << 4, src.imag() << 4);
+}
+
+template<> constexpr void Rescale(complex16_t& dest, const complex16_t& src)
+{
+    dest = src;
 }
 
 // compile time known iteration/element count
