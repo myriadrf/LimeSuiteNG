@@ -1,0 +1,191 @@
+/**
+ * @page dev_testing_sig Test signal generator
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics" 
+ * @endif
+ * 
+ * @section dev_signal_set_up Configuring signal
+ * 
+ * A test signal can be used to generate known sample values in order to test SDR device Tx/Rx directions. For SDR devices with LMS7002M module, test signal configuration is 
+ * exclusive to each individual direction of a channel. Test signal configuration for each channel direction must be set by using 
+ * @ref lime::SDRDevice::SetTestSignal(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::TestSignal, int16_t, int16_t) "SetTestSignal()" function, where a 
+ * configuration structure of `lime::ChannelConfig::Direction::TestSignal` type must be passed as an argument. To retrieve test signal configuration of a particular direction, 
+ * function @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" must be used.
+ * 
+ * Once the test signal generators for Tx direction are enabled, generated signal is outputed into physical Tx antenna ports, which can be probed with appropriate equipment.
+ * Once the test signal generators for Rx direction are enabled, samples are generated in a digital domain and can be read by starting the stream and reading buffered samples.
+ * When setting the digital DC I and Q component values for a DC type test signal generator of a SDR device based on LMS7002M module, the values must be multiples of 16 and must be offset by a value 
+ * of 0xF (example code below).
+ * 
+ * @subsection dev_test_sig_params Test signal parameters
+ * 
+ * Test signal parameters can vary depending on the SDR devices. Here is a list of @ref lime::ChannelConfig::Direction::TestSignal "test signal parameters" that are supported by SDR devices
+ * with LMS7002M modules:
+ * <ul>
+ *    <li>Signal generator status - `Enabled` or `Disabled`</li>
+ *    <li>Signal generator type - `DC` or `NCO`</li>
+ *    <li>Signal frequency division (only for NCO generator type) - `8 times` or `4 times`</li>
+ *    <li>Signal scale (only for NCO generator type) - `full` or `half`</li>
+ * </ul>
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.
+ * 
+ * .. important::
+ * 
+ *    It is not possible to read DC I and Q values with ``GetTestSignal(...)`` function.}
+ * @else
+ * @warning If DC test generator is selected, DC correctors for each individual channel direction must be disabled to prevent the correction of generated DC signal.
+ * 
+ * @important It is not possible to read DC I and Q values with @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" function.
+ * @endif
+ * 
+ * 
+ * @subsection test_sig_example Example of test signal generation
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <iomanip>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <cinttypes>
+ * #include <csignal>
+ * #include <atomic>
+ * #include <array>
+ * #include <chrono>
+ * #include <thread>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * #include <limesuiteng/complex.h>
+ * #include <limesuiteng/StreamMeta.h>
+ * 
+ * static std::atomic<bool> cleanUp(false);
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    uint8_t ChA = 0;
+ *    uint8_t ChB = 1;
+ *    lime::ChannelConfig::Direction::TestSignal TxChA, TxChB, RxChA, RxChB, testSigConf;
+ *    testSigConf.dcMode = true;
+ *    testSigConf.enabled = true;
+ * 
+ *    lime::SDRConfig LimeSDRMiniConf;
+ *    lime::OpStatus configStatus = lime::OpStatus::Success;
+ *    LimeSDRMiniConf.channel[0].tx.enabled = false;
+ *    LimeSDRMiniConf.channel[0].rx.enabled = true;
+ *    LimeSDRMiniConf.channel[1].tx.enabled = false;
+ *    LimeSDRMiniConf.channel[1].rx.enabled = false;
+ *    LimeSDRMiniConf.channel[0].rx.centerFrequency = 95.9e6; // in Hz
+ *    LimeSDRMiniConf.channel[0].rx.sampleRate = 5e6; // in Hz
+ *    LimeSDRMiniConf.channel[0].rx.lpf = 10e6;   // bandwidth in Hz
+ *    LimeSDRMiniConf.channel[0].rx.path = 3;  // antenna path - LNAL
+ * 
+ *    configStatus = device->Configure(LimeSDRMiniConf, moduleIndex);
+ *    device->SetDCOffsetMode(moduleIndex, lime::TRXDir::Rx, ChA, false);  // DC corrector must be disabled or it will correct the DC values
+ *
+ *    int16_t dc_i = 0x001F;   // I = 16; First 4 bits = 0xF, mandatory for LMS7002M based devices
+ *    int16_t dc_q = 0x002F;   // Q = 32; First 4 bits = 0xF, mandatory for LMS7002M based devices
+ *    std::cout << "Setting Rx ChA test signal DC I = " << (dc_i - 0xF) << " and DC Q = " << (dc_q - 0xF) << std::endl;
+ *    device->SetTestSignal(moduleIndex, lime::TRXDir::Rx, ChA, testSigConf, dc_i, dc_q);
+ * 
+ *    TxChA = device->GetTestSignal(moduleIndex, lime::TRXDir::Tx, ChA);
+ *    TxChB = device->GetTestSignal(moduleIndex, lime::TRXDir::Tx, ChB);
+ *    RxChA = device->GetTestSignal(moduleIndex, lime::TRXDir::Rx, ChA);
+ *    RxChB = device->GetTestSignal(moduleIndex, lime::TRXDir::Rx, ChB);
+ * 
+ *    std::cout << "Test signal configurations:" << std::endl;
+ *    std::cout << "Tx ChA: " << (TxChA.enabled ? "Enabled | " : "Disabled | ") 
+ *    << (TxChA.dcMode == true ? "DC mode | " : "Sine mode | ")
+ *    << (TxChA.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full ? "Full scale |" : "Half scale |")
+ *    << (TxChA.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 ? 
+ *       " Freq. divided by 8 | " : " Freq. divided by 4 | ") << std::endl;
+ * 
+ *    std::cout << "Tx ChB: " << (TxChB.enabled ? "Enabled | " : "Disabled | ") 
+ *    << (TxChB.dcMode ? "DC mode | " : "Sine mode | ")
+ *    << (TxChB.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full ? "Full scale |" : "Half scale |")
+ *    << (TxChB.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 ? 
+ *       " Freq. divided by 8 | " : " Freq. divided by 4 | ") << std::endl;
+ * 
+ *    std::cout << "Rx ChA: " << (RxChA.enabled ? "Enabled | " : "Disabled | ") 
+ *    << (RxChA.dcMode ? "DC mode | " : "Sine mode | ")
+ *    << (RxChA.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full ? "Full scale |" : "Half scale |")
+ *    << (RxChA.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 ? 
+ *       " Freq. divided by 8 | " : " Freq. divided by 4 | ") << std::endl;
+ * 
+ *    std::cout << "Rx ChB: " << (RxChB.enabled ? "Enabled | " : "Disabled | ") 
+ *    << (RxChB.dcMode ? "DC mode | " : "Sine mode | ")
+ *    << (RxChB.scale == lime::ChannelConfig::Direction::TestSignal::Scale::Full ? "Full scale |" : "Half scale |")
+ *    << (RxChB.divide == lime::ChannelConfig::Direction::TestSignal::Divide::Div8 ? 
+ *       " Freq. divided by 8 | " : " Freq. divided by 4 | ") << std::endl;
+ * 
+ *    lime::StreamConfig RadioStreamConf;
+ *    RadioStreamConf.format = lime::DataFormat::I16;
+ *    RadioStreamConf.linkFormat = lime::DataFormat::I16;
+ *    RadioStreamConf.channels[lime::TRXDir::Rx].push_back(ChA);
+ *    RadioStreamConf.timestampType = lime::TimestampType::SAMPLE_TICKS;
+ *    std::array<lime::complex16_t, 10> RxRawSamples = {};
+ *    uint32_t requestSize = RxRawSamples.size();
+ *    lime::complex16_t * const RxBuffers[2] = {RxRawSamples.data(), nullptr};
+ *    lime::StreamRxMeta RxMeta;
+ * 
+ *    std::unique_ptr<lime::RFStream> RadioStream = device->StreamCreate(RadioStreamConf, moduleIndex);
+ * 
+ *    RadioStream->Start();
+ *    while(!cleanUp)
+ *    {
+ *       uint32_t samplesRead = RadioStream->Receive(RxBuffers, requestSize, &RxMeta);
+ *       if(samplesRead > 0)
+ *          std::cout << "Read " << samplesRead << " samples from device\n";
+ *  
+ *       if(samplesRead == requestSize)
+ *          cleanUp = true;
+ * 
+ *       samplesRead = 0;
+ *    }
+ *    RadioStream->Stop();
+ * 
+ *    for(const auto& sample : RxRawSamples)
+ *       std::cout << "(" << sample.real() << "; " << sample.imag() << ") ";
+ * 
+ *    if(cleanUp)
+ *       std::cout << "\nEnding radio stream. Cleaning up resource pools!\n";
+ *    else
+ *       std::cout << "Unexpected stream clean up triggered!\n";
+ * 
+ *    RadioStream->Teardown();   
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * Output of the example code above:
+ * 
+ * @image{inline} html dev_test_signal_config.png
+ */

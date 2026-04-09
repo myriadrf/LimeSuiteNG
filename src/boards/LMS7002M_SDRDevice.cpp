@@ -608,7 +608,11 @@ bool LMS7002M_SDRDevice::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_
     if (trx == TRXDir::Rx)
     {
         auto& lms = mLMSChips.at(moduleIndex);
-        return lms->Get_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, channel) == 0;
+        auto lastCh = lms->GetActiveChannel();
+        lms->SetActiveChannel((channel == 0 ? lime::LMS7002M::Channel::ChA : lime::LMS7002M::Channel::ChB));
+        bool status = lms->Get_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, channel) == 0;
+        lms->SetActiveChannel(lastCh);
+        return status;
     }
 
     return false;
@@ -620,7 +624,11 @@ OpStatus LMS7002M_SDRDevice::SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, ui
         return OpStatus::NotSupported;
 
     auto& lms = mLMSChips.at(moduleIndex);
-    return lms->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, isAutomatic == 0, channel);
+    auto lastCh = lms->GetActiveChannel();
+    lms->SetActiveChannel((channel == 0 ? lime::LMS7002M::Channel::ChA : lime::LMS7002M::Channel::ChB));
+    OpStatus status = lms->Modify_SPI_Reg_bits(LMS7002MCSR::DC_BYP_RXTSP, isAutomatic == 0, channel);
+    lms->SetActiveChannel(lastCh);
+    return status;
 }
 
 complex64f_t LMS7002M_SDRDevice::GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -818,6 +826,9 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     int16_t dc_q)
 {
     auto& lms = mLMSChips.at(moduleIndex);
+    lime::OpStatus status = lime::OpStatus::Success;
+    auto lastCh = lms->GetActiveChannel();
+    lms->SetActiveChannel((channel == 0 ? lime::LMS7002M::Channel::ChA : lime::LMS7002M::Channel::ChB));
 
     bool div4 = signalConfiguration.divide == ChannelConfig::Direction::TestSignal::Divide::Div4;
     bool fullscale = signalConfiguration.scale == ChannelConfig::Direction::TestSignal::Scale::Full;
@@ -826,7 +837,10 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     {
     case TRXDir::Rx:
         if (lms->Modify_SPI_Reg_bits(LMS7002MCSR::INSEL_RXTSP, signalConfiguration.enabled, true) != OpStatus::Success)
+        {
+            lms->SetActiveChannel(lastCh);
             return ReportError(OpStatus::IOFailure, "Failed to set Rx test signal."s);
+        }
 
         lms->Modify_SPI_Reg_bits(LMS7002MCSR::TSGFCW_RXTSP, div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7002MCSR::TSGFC_RXTSP, fullscale ? 1 : 0);
@@ -834,7 +848,10 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
         break;
     case TRXDir::Tx:
         if (lms->Modify_SPI_Reg_bits(LMS7002MCSR::INSEL_TXTSP, signalConfiguration.enabled, true) != OpStatus::Success)
+        {
+            lms->SetActiveChannel(lastCh);
             return ReportError(OpStatus::IOFailure, "Failed to set Tx test signal."s);
+        }
 
         lms->Modify_SPI_Reg_bits(LMS7002MCSR::TSGFCW_TXTSP, div4 ? 2 : 1);
         lms->Modify_SPI_Reg_bits(LMS7002MCSR::TSGFC_TXTSP, fullscale ? 1 : 0);
@@ -843,14 +860,17 @@ OpStatus LMS7002M_SDRDevice::SetTestSignal(uint8_t moduleIndex,
     }
 
     if (signalConfiguration.dcMode)
-        return lms->LoadDC_REG_IQ(direction, dc_i, dc_q);
+        status = lms->LoadDC_REG_IQ(direction, dc_i, dc_q);
 
-    return OpStatus::Success;
+    lms->SetActiveChannel(lastCh);
+    return status;
 }
 
 ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
     auto& lms = mLMSChips.at(moduleIndex);
+    auto lastCh = lms->GetActiveChannel();
+    lms->SetActiveChannel((channel == 0 ? lime::LMS7002M::Channel::ChA : lime::LMS7002M::Channel::ChB));
     ChannelConfig::Direction::TestSignal signalConfiguration;
 
     switch (direction)
@@ -858,6 +878,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
     case TRXDir::Tx:
         if (lms->Get_SPI_Reg_bits(LMS7002MCSR::INSEL_TXTSP) == 0)
         {
+            lms->SetActiveChannel(lastCh);
             return signalConfiguration;
         }
         signalConfiguration.enabled = true;
@@ -865,6 +886,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
         if (lms->Get_SPI_Reg_bits(LMS7002MCSR::TSGMODE_TXTSP) != 0)
         {
             signalConfiguration.dcMode = true;
+            lms->SetActiveChannel(lastCh);
             return signalConfiguration;
         }
 
@@ -873,10 +895,12 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
         signalConfiguration.scale =
             static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7002MCSR::TSGFC_TXTSP));
 
+        lms->SetActiveChannel(lastCh);
         return signalConfiguration;
     case TRXDir::Rx:
         if (lms->Get_SPI_Reg_bits(LMS7002MCSR::INSEL_RXTSP) == 0)
         {
+            lms->SetActiveChannel(lastCh);
             return signalConfiguration;
         }
         signalConfiguration.enabled = true;
@@ -884,6 +908,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
         if (lms->Get_SPI_Reg_bits(LMS7002MCSR::TSGMODE_RXTSP) != 0)
         {
             signalConfiguration.dcMode = true;
+            lms->SetActiveChannel(lastCh);
             return signalConfiguration;
         }
 
@@ -892,6 +917,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
         signalConfiguration.scale =
             static_cast<ChannelConfig::Direction::TestSignal::Scale>(lms->Get_SPI_Reg_bits(LMS7002MCSR::TSGFC_RXTSP));
 
+        lms->SetActiveChannel(lastCh);
         return signalConfiguration;
     }
 

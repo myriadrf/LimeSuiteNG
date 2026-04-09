@@ -9,4 +9,17 @@
  * RF chips or other modules, this parameter must be set to the appropriate index to target the correct module.
  *
  * Module indexes always start with value <b>0</b>. The last module on a system or device is indexed as <b>total module count - 1</b>.
+ * 
+ * @section device_ch_indexes Channel indexes
+ * 
+ * Channel indexes always start from <b>0</b> and the last channel index is <b>total channel count - 1</b>.
+ * 
+ * Channel indexes are associated with appropriate SDR device modules. SDR devices with different modules can support a different count of channels. Moreover, the actual device channel count also depends on 
+ * the number of physical traces that interconnect the module with the actual Tx/Rx ports.
+ * 
+ * A single LMS7002M module supports two channels at a time (Channel A and channel B). Therefore, SDR devices that use a single LMS7002M module can have a total of two channels. SDR devices with multiple LMS7002M
+ * modules can have more physical channels. However, a single LMS7002M module on a multi module SDR device is able to manage only two channels at a time. Therefore, channel indexing also relies on correct 
+ * @ref Device_index "module indexing". LMS7002M module channel A index is <b>0</b> and channel B index is <b>1</b>. The following channel indexes can be defined as a simple const variables: `const uint8_t ChA = 0;` 
+ * and `const uint8_t ChB = 1;`.
+ * 
  */

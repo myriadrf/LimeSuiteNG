@@ -1,0 +1,354 @@
+/**
+ * @page dev_stream_config SDR device stream configuration
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Go to SDR device configuration topic"
+ * @endif
+ * 
+ * @section creating_stream Creating stream
+ * 
+ * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
+ * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream creation function requires stream parameters (packet size, PPS and etc.) which 
+ * can be set up in advance by using @ref lime::StreamConfig "StreamConfig" structure. If the initial stream configuration is not sufficient, it can be changed by calling the 
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recomended to 
+ * stop the stream if it is active. Example of stream creation:
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device discovery, registration and configuration
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    
+ *    // Setting up stream configuration
+ *    lime::StreamConfig miniStreamConf = {};   // Stream configuration with default values
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    ... // Other program code   
+ *    
+ *    // Changing stream configuration
+ *    miniStream->Stop();  // If stream is active
+ *    miniStreamConf.linkFormat = lime::DataFormat::I12;
+ *    miniStream->Setup(miniStreamConf);
+ * 
+ *    ... // Other program code   
+ *       
+ *    // End of program code
+ *    miniStream->Stop();
+ *    miniStream->Teardown();
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    It is possible to create multiple stream objects with different stream parameter configurations for the same device, but it is recommended to avoid runnning multiple streams at the same time.
+ * 
+ * .. important::
+ * 
+ *    Function ``Teardown()`` can be used to (temporarily or permanently) free up dynamically allocated memory of a stream object in case host device has a limited pool of memory. If the streaming object was teared downed, you must reallocate the necessary resources for the stream by calling the ``Setup(...)`` function with the last stream configuration structure.}
+ * @else
+ * @note It is possible to create multiple stream objects with different stream parameter configurations for the same device, but it is recommended to <b>avoid runnning multiple streams at the same time</b>.
+ * 
+ * @important Function @ref lime::RFStream::Teardown() "Teardown()" can be used to (temporarily or permanently) free up dynamically allocated memory of a stream object in case host device has 
+ * a limited pool of memory. If the streaming object was teared downed, you must reallocate the necessary resources for the stream by calling the @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()"
+ * function with the last stream configuration structure.
+ * @endif
+ *  
+ * @if DEVELOP
+ * @subsection multiple_streams Multiple streams
+ * 
+ * It is also possible to create multiple stream objects for a single device. However, library does not sync the access of device stream between two or more stream objects and must be managed
+ * externally by the end user of the library.
+ * @endif
+ * 
+ * @section stream_parameters Stream parameters
+ * 
+ * Here is a detailed table of stream parameters that can be configured via @ref lime::StreamConfig "StreamConfig" structure:
+ * <table>
+ *    <tr>
+ *       <th> Parameter </th>
+ *       <th> Units/Options </th>
+ *       <th> Default initialized value </th>
+ *    </tr>
+ *    <tr>
+ *       <td> Packet size </td>
+ *       <td> Sample count </td>
+ *       <td> 0 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Batch size </td>
+ *       <td> Packet count </td>
+ *       <td> 0 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Sample format </td>
+ *       <td> `I12` or `I16` or `F32` </td>
+ *       <td> `I16` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Sample format (link layer) </td>
+ *       <td> `I12` or `I16` </td>
+ *       <td> `I16` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Buffer size </td>
+ *       <td> Bytes </td>
+ *       <td> 0 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Channels </td>
+ *       <td> Tx `[0 1]` and Rx `[0 1]` (Channel indexes for each direction) </td>
+ *       <td> Tx `[]` and Rx `[]` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Timestamp type </td>
+ *       <td> `SAMPLE_TICKS` or `REAL_SECONDS` or `UNIX_EPOCH` </td>
+ *       <td> `SAMPLE_TICKS` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Sample rate (as a hint) </td>
+ *       <td> Hz </td>
+ *       <td> 0 </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Status callback </td>
+ *       <td> - </td>
+ *       <td> `nullptr` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> User data </td>
+ *       <td> - </td>
+ *       <td> `nullptr` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Poll status </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `true` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> PPS status </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Phase alignment </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
+ *    </tr>
+ *    <tr>
+ *       <td> Q component negation status </td>
+ *       <td> `true` or `false` </td>
+ *       <td> `false` </td>
+ *    </tr>
+ * </table>
+ * 
+ * @subsection packet_size Packet size
+ * 
+ * The size of a single packet is defined by <b>samplesInPacket</b> parameter. The maximum number of samples for a single packet also depends on selected number of streaming channels (channels parameter)
+ * and the size of a single sample (linkFormat parameter). Customization of packet size depends on the current device gateware. If the device gateware does not support variable packet sizes, the default 
+ * packet size will always be set to the maximum possible size for the current device gateware, channel and sample size configuration. If device gateware supports variable packet sizes, then the specified packet
+ * size will be applied. If the custom packet size is higher than the allowed maximum value, the packet size will be clamped to the one of the maximum values (this depends on device gateware, channels and linkFormat 
+ * configuration). It is also important to note, that packet sizes must be aligned to packet data bus width. If the specified packet size is not a multiple of bus width, then the packet size will be rounded down to the 
+ * nearest packet size that is a multiple of the packet data bus width. Therefore, the specified custom packet size might be different from the packet size that was anticipated initially.
+ * 
+ * If custom packet size is not important, you can set the <b>samplesInPacket</b> parameter to value <b>0</b>. The optimal packet size will be auto set when the streaming object is created or reconfigured by using
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function.
+ * 
+ * @subsection stream_batch Batch size
+ * 
+ * A size of a single stream batch is defined by <b>packetsInBatch</b> parameter. If the stream batch parameter is set to value <b>0</b>, the batch size is auto calculated to fit into 100 us
+ * Tx/Rx time slot. If the 100 us time slot is not suffiecient, a custom stream batch value can be specified. The custom specified value will override the automatically calculated stream batch value.
+ * If specified stream batch size is too large, it is clamped to the maximum possible value, which is determined by the size of dma buffer (it is dynamically allocated for each device) and packet size. 
+ * The smallest possible batch size is 1 packet.
+ * 
+ * @subsection hint_sample_rate Sample rate (as a hint)
+ * 
+ * Sample rate parameter is an optional parameter and can be provided as an additional hint to stream configuration. By default this parameter is initialized to value <b>0</b>. This allows the software to 
+ * automatically retrieve the configured device sample rate and use it for internal calculations. If the software is unable to retrieve the configured device sample rate, you must manually set the sample
+ * rate parameter to the exact value that was used in initial device configuration.
+ * 
+ * @subsection channels_logic_struct Channels
+ * 
+ * The <b>channels</b> parameter allows to set up a logical structure of streaming channels. This effectively allows to do quick stream channel re-configuration without the need for device hardware re-configuration. 
+ * Default initialized @ref lime::StreamConfig "StreamConfig" structure disables all Rx and Tx directions on each channel. If a default initialized stream configuration is passed to stream creation or setup functions,
+ * the software will terminate any active streams and will reset internal counters, but will not proceed with further stream configuration. Therefore, it is important to set the proper channel indexes for each direction.
+ * Devices that use LMS7002M module only support two channels at a time. Other devices with different modules might have a different count of channels (refer to respective documentation). Once the stream configuration 
+ * structure is default initialized, we must push in the channel indexes for the streaming directions that we want to use. Example code snippet:
+ * 
+ * @code{.cpp}
+ * 
+ *    ... // Other program code
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    uint8_t ChA = 0;
+ *    uint8_t ChB = 1;
+ *    
+ *    // Setting up stream configuration
+ *    lime::StreamConfig miniStreamConf = {};   // Stream configuration with default values
+ * 
+ *    // Enabling stream Rx direction for channels
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChB);
+ * 
+ *    // Enabling stream Tx direction for channels
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChB);
+ * 
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    ... // Other program code
+ * 
+ * @endcode 
+ *
+ * In the example code above, we push in the indexes of both channels for each direction and the device is set up to work in full MIMO mode. Alternatively, we can push channel indexes to Rx direction or Tx 
+ * direction and use the device only for data reception or data transmission. It is also possible to use SISO mode by simply pushing in the index of a single channel for Tx and Rx direction.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    When using transmit mode only, it is important not to disable Rx direction hardware in the device configuration stage.}
+ * @else
+ * @important When using transmit mode only, it is important not to disable Rx direction hardware in the device configuration stage.
+ * @endif
+ * 
+ * Channel indexes always starts from <b>0</b>. If a unknown channel index is pushed in, the stream creation or setup function reports a stream configuration error.
+ * 
+ * @subsection stream_status_callback Status callback
+ * 
+ * Status callback is an optional parameter that accepts an address of a custom stream status callback function. For reference to function argument list, please refer to @ref lime::StreamConfig "StreamConfig" 
+ * structure description. If enabled, this function reports the @ref lime::StreamStats "stream stats" for each stream direction if an error is detected after a batch is received/transmited. Additionally, users 
+ * can pass down additional data to the status callback function via the <b>userData</b> parameter by passing the address of the data buffer.
+ * 
+ * @subsection stream_sample_size Sample format
+ * 
+ * Sample size is selected via the <b>format</b> and <b>linkFormat</b> parameters. These parameters are used to differentiate the sample size format used at the application layer and the transport layer.  
+ * Formats:
+ * <ul>
+ *    <li>`I12` - 12 bit integer. </li>
+ *    <li>`I16` - 16 bit integer. </li>
+ *    <li>`F32` - 32 bit floating point. </li>
+ * </ul>
+ * 
+ * If application and transport layer sample size formats are different, software auto converts sample sizes to fit the correct sample size format for the respective layer.
+ * 
+ * @subsection stream_buffer_size Buffer size
+ * 
+ * Optional parameter <b>bufferSize</b> is used to set the size of channel buffers, that aggregate Tx/Rx data packets into batches. It is recommended to set or leave this parameter default initialized to value 
+ * <b>0</b> to allow the software to auto configure the buffer sizes.
+ * 
+ * @subsection stream_timestamp Timestamp type
+ * 
+ * Parameter <b>timestampType</b> allows to set the type of timestamp for a stream. The default timestamp type is ``SAMPLE_TICKS``. ``SAMPLE_TICKS`` timestamp allows to track the stream time points of send/receive operations
+ * as an offset of sent/received samples since the start of the stream. ``REAL_TIME`` timestamp allows to track the stream time points of send/receive operations as an offset of real seconds since the start of the stream. 
+ * ``UNIX_EPOCH`` timestamp allows to track the stream time points of send/receive operations using unix time. Seconds counters for timestamp types ``REAL_TIME`` and ``UNIX_EPOCH`` are incremented on each received PPS signal 
+ * pulse (device must support PPS reception).
+ * 
+ * @subsection stream_quick_toggles Quick toggles
+ * 
+ * <ul>
+ *    <li>Parameter <b>waitPPS</b> toggles Rx sampling delay. If enabled, Rx will start sampling on the next received PPS signal.</li>
+ *    <li>Parameter <b>negateQ</b> toggles the negation of the Q component of IQ signal.</li>
+ *    <li>Parameter <b>usePoll</b> toggles the polling strategy for DMA buffers of PCIe devices.</li>
+ *    <li>Parameter <b>alignPhase</b> toggles auto phase alignment between paired channels.</li>
+ * </ul>
+ * 
+ * @section ret_stream_conf Retrieving stream configuration
+ * 
+ * It is also possible to retrieve the parameters of a specific stream object by using @ref lime::RFStream::GetConfig() "GetConfig()" function. The example code below shows a simple example for retrieving
+ * stream configuration structure:
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t moduleIndex = 0;   // For SDR device with single RF chip
+ *    uint8_t ChA = 0;
+ *    uint8_t ChB = 1;
+ *    lime::SDRConfig defaultConf = {};
+ *    lime::OpStatus configStatus = lime::OpStatus::Success;
+ *    configStatus = device->Configure(defaultConf, moduleIndex);
+ *    if(configStatus != lime::OpStatus::Success)
+ *       std::cout << "Failed to configure SDR device with default parameters: " << lime::ToString(configStatus) << std::endl;
+ * 
+ *    lime::StreamConfig miniStreamConf = {};
+ * 
+ *    // Enabling stream channels for Tx/Rx directions
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChA);
+ *    miniStreamConf.channels[lime::TRXDir::Rx].push_back(ChB);
+ *    miniStreamConf.channels[lime::TRXDir::Tx].push_back(ChB);
+ * 
+ *    std::unique_ptr<lime::RFStream> miniStream = device->StreamCreate(miniStreamConf, moduleIndex);
+ * 
+ *    // Getting the stream configuration
+ *    lime::StreamConfig OldStreamConf = miniStream->GetConfig();
+ *    std::cout << "Tx direction channel set up: ";
+ *    for(const auto& index : OldStreamConf.channels[lime::TRXDir::Tx])
+ *       std::cout << static_cast<uint16_t>(index) << " ";
+ * 
+ *    std::cout << "\nRx direction channel set up: ";
+ *    for(const auto& index : OldStreamConf.channels[lime::TRXDir::Rx])
+ *       std::cout << static_cast<uint16_t>(index) << " ";
+ * 
+ *    // Printing out important stream parameters
+ *    std::cout << "\nStream sample rate - " << OldStreamConf.hintSampleRate << " Hz\n";
+ *    
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * } 
+ * @endcode
+ * 
+ * The code example sets up the channel configuration, creates the stream object and then retrieves the configuration. Key parameters: Tx and Rx direction channel cofiguration and device sample rate values 
+ * are printed out into terminal window:
+ * 
+ * @image{inline} html dev_stream_conf_get.png
+ * 
+ * In example code output, we can see that the channel structure for directions is set exactly the way they were set in the example code (Receive on channel A and B [or channel 0 and 1] and transmit on channel B 
+ * [or channel 1]). It is also worth to note that even if the sample rate in the initial stream configuration was not provided as a hint, the software was still able to retrieve and return the device sample rate 
+ * value.
+ * 
+ * @if DOX_NAV
+ * @ref dev_streaming "Go to SDR device streaming topic"
+ * @endif
+ */

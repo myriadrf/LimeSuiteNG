@@ -211,7 +211,7 @@ root_doc = 'index'
 ## Extensions updated also
 
 breathe_projects = {
-    "Lime Suite NG" : ( "../docs/doxygen/output/xml" )
+    "Lime Suite NG" : ( "../build/docs/doxygen/xml" )
 }
 
 breathe_default_project = "Lime Suite NG"

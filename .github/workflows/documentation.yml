@@ -27,11 +27,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -qq doxygen graphviz
-
-      - name: Build doxygen
-        run: |
-          cd ${{github.workspace}}/docs/doxygen
-          doxygen DoxygenConfigLocal.in
+          cd ${{github.workspace}}
+          sudo ./install_dependencies.sh
 
       - name: Set up Python venv
         run: |
@@ -44,7 +41,7 @@ jobs:
         run: |
           cd ${{github.workspace}}/docs
           source venv/bin/activate
-          ./generate_docs.sh
+          ./generate_docs.sh rebuild
 
       # - name: Test hyperlinks
       #   run: |

@@ -63,7 +63,7 @@
  *          <li> @ref lime::SDRDevice::WriteRegister(uint8_t, unsigned int, unsigned int, bool) "WriteRegister()"</li>
  *       </ul>
  *    </li>
- *    <li> <b> FIR filter options:</b>
+ *    <li> <b> FIR filters:</b>
  *       <ul>
  *        <li> @ref lime::SDRDevice::ConfigureGFIR(uint8_t, lime::TRXDir, uint8_t, lime::ChannelConfig::Direction::GFIRFilter) "ConfigureGFIR()"</li>
  *        <li> @ref lime::SDRDevice::GetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t) "GetGFIRCoefficients()"</li>
@@ -71,10 +71,8 @@
  *        <li> @ref lime::SDRDevice::SetGFIR(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetGFIR()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Additional frequency configuration:</b>
+ *    <li><b>NCO control:</b>
  *       <ul>
- *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
- *          <li> @ref lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) "SetClockFreq()"</li>
  *          <li> @ref lime::SDRDevice::GetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double&) "GetNCOFrequency()"</li>
  *          <li> @ref lime::SDRDevice::SetNCOFrequency(uint8_t, lime::TRXDir, uint8_t, uint8_t, double, double) "SetNCOFrequency()"</li>
  *          <li> @ref lime::SDRDevice::GetNCOOffset(uint8_t, lime::TRXDir, uint8_t) "GetNCOOffset()"</li>
@@ -82,7 +80,7 @@
  *          <li> @ref lime::SDRDevice::SetNCOIndex(uint8_t, lime::TRXDir, uint8_t, uint8_t, bool) "SetNCOIndex()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Signal processor corrector configuration:</b>
+ *    <li><b>Signal processor correctors:</b>
  *       <ul>
  *          <li> @ref lime::SDRDevice::GetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t) "GetDCOffsetMode()"</li>
  *          <li> @ref lime::SDRDevice::SetDCOffsetMode(uint8_t, lime::TRXDir, uint8_t, bool) "SetDCOffsetMode()"</li>
@@ -113,13 +111,10 @@
  *          <li> @ref lime::SDRDevice::GPIODirRead(uint8_t*, const size_t) "GPIODirRead()"</li>
  *       </ul>
  *    </li>
- *    <li><b>Utility:</b>
+ *    <li><b>Clock configuration:</b>
  *       <ul>
- *          <li> @ref lime::SDRDevice::UploadTxWaveform(const lime::StreamConfig&, uint8_t, const void**, uint32_t) "UploadTxWaveform()"</li>
- *          <li> @ref lime::SDRDevice::EnableCache(bool) "EnableCache()"</li>
- *          <li> @ref lime::SDRDevice::Synchronize(bool) "Synchronize()"</li>
- *          <li> @ref lime::SDRDevice::GetHardwareTimestamp(uint8_t) "GetHardwareTimestamp()"</li>
- *          <li> @ref lime::SDRDevice::SetHardwareTimestamp(uint8_t, const uint64_t) "SetHardwareTimestamp()"</li>
+ *          <li> @ref lime::SDRDevice::GetClockFreq(uint8_t, uint8_t) "GetClockFreq()"</li>
+ *          <li> @ref lime::SDRDevice::SetClockFreq(uint8_t,double,uint8_t) "SetClockFreq()"</li>
  *       </ul>
  *    </li>
  *    <li><b>Additional device info:</b>
@@ -196,7 +191,7 @@
  *    </li>
  * </ul>
  * 
- * @subsection logging Logger
+ * @subsection logging Logging
  * <ul>
  *    <li> @ref lime::registerLogHandler(const lime::LogHandlerCString) "registerLogHandler(const LogHandlerCString)()"</li>
  *    <li> @ref lime::registerLogHandler(const lime::LogHandler) "registerLogHandler(const LogHandler)()"</li>

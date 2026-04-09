@@ -58,7 +58,7 @@
  * @warning It is recommended not to modify @ref lime::SDRConfig::referenceClockFreq "referenceClockFreq" parameter in SDRConfig structure. This parameter is intended for advanced configurations and advanced users.  
  * @endif
  * 
- * @ref lime::SDRConfig "SDRConfig" structure allows to configure up to @ref lime::SDRConfig::MAX_CHANNEL_COUNT "16" different SDR device channels. However, SDR devices based on LMS7002M RF chip only support
+ * @ref lime::SDRConfig "SDRConfig" structure allows to configure up to @ref lime::SDRConfig::MAX_CHANNEL_COUNT "16" different SDR device channels. However, SDR devices based on LMS7002M module only support
  * two channels at a time. If the SDR device uses more than one LMS7002M RF chip, you should instead define multiple configuration structures of @ref lime::SDRConfig "SDRConfig" type and set appropriate 
  * @ref Device_index "module indexes" that point to the correct LMS7002M RF chips:
  * @code{.cpp}
