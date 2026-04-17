@@ -8,7 +8,7 @@ Lime Suite NG on Linux can be installed either using package manager or built fr
 .. toctree::
    :maxdepth: 2
 
-   Radioconda environment <../../development/packaging/radioconda>
+   Radioconda environment <../../developer/packaging/radioconda>
    packages
-   Build from source <../../development/buildSource/buildLinux>
+   Build from source <../../developer/buildSource/buildLinux>
    drivers

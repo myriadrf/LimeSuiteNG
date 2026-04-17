@@ -12,4 +12,4 @@ Combine Lime Suite NG with other SDR applications for custom usage.
    CLI Tools <common/cliTools>
    common/GUI
    plugins/index
-   Writing applications <../development/migration/SDRDevice/example>
+   Writing applications <../developer/migration/SDRDevice/example>

@@ -7,11 +7,11 @@ Project repository: https://github.com/myriadrf/LimeSuiteNG
 
 Project contents:
   * limesuiteng - C++ library for control of the LimeSDR devices.
-  * :doc:`gettingStarted/common/GUI` - graphical user interface for configuring device parameters and inspecting Rx RF data using FFT.
-  * :doc:`gettingStarted/common/cliTools`.
-  * :doc:`gettingStarted/plugins/index` - LimeSDR devices integration into various software platforms.
+  * :doc:`user/common/GUI` - graphical user interface for configuring device parameters and inspecting Rx RF data using FFT.
+  * :doc:`user/common/cliTools`.
+  * :doc:`user/plugins/index` - LimeSDR devices integration into various software platforms.
 
-See :doc:`gettingStarted/index` guide how to install software and setup devices.
+See :doc:`user/index` guide how to install software and setup devices.
 
 
 .. _dev-supp-list-ref:
@@ -47,6 +47,5 @@ Supported devices
    :hidden:
 
    Introduction <self>
-   gettingStarted/index
-   development/index
-   doxygen/index
+   User Guide <user/index>
+   Developer Guide <developer/index>
