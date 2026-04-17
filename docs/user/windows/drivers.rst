@@ -1,8 +1,8 @@
 .. _driver-supp-list-ref:
 
-===========================
-LimeSDR drivers for Windows
-===========================
+==============
+Device drivers
+==============
 
 LimeSDR devices use different drivers for communication on Windows. If windows does not automatically detect and install correct drivers, install them manually. Here is a full list of device drivers for different LimeSDR devices:
 

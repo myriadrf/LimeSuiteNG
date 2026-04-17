@@ -9,7 +9,6 @@ This section contains information about development process and various tools.
    :hidden:
 
    packaging/index
-   buildSource/index
    diagrams/index
    documentation
    migration/index
