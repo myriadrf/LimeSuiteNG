@@ -1,5 +1,5 @@
-Graphical user interface
-========================
+GUI tool
+========
 
 ``limeGUI`` provides graphical user interface for interacting with the device configuration and data streaming.
 

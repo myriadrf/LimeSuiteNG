@@ -1,7 +1,7 @@
 Developer Guide
 ===============
 
-This section contains information about development process and various tools.
+This section contains information about development process and developer tools.
 
 .. toctree::
    :glob:
@@ -9,6 +9,6 @@ This section contains information about development process and various tools.
 
    examples/index
    LMS/index
-   documentation
    tools/index
+   documentation
    radioconda/index
