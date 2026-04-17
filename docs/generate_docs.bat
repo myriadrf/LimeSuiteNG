@@ -21,12 +21,12 @@ ECHO generate_docs.bat: Cleaning build artifacts
 RMDIR /S/Q _build 
 
 :: Deleting breathe-apidoc extension generated files
-RMDIR /S/Q doxygen\api_member_list\class
-RMDIR /S/Q doxygen\api_member_list\file
-RMDIR /S/Q doxygen\api_member_list\struct
-DEL doxygen\api_member_list\classlist.rst
-DEL doxygen\api_member_list\filelist.rst
-DEL doxygen\api_member_list\structlist.rst
+RMDIR /S/Q developer\doxygen\api_member_list\class
+RMDIR /S/Q developer\doxygen\api_member_list\file
+RMDIR /S/Q developer\doxygen\api_member_list\struct
+DEL developer\doxygen\api_member_list\classlist.rst
+DEL developer\doxygen\api_member_list\filelist.rst
+DEL developer\doxygen\api_member_list\structlist.rst
 
 :: Deleting sphinx manual pages converted from doxygen pages
 python dox_converter.py --del
@@ -44,12 +44,12 @@ cmake -S .. -B ..\build -G Ninja
 cmake --build ..\build -- doxygen
 
 :: Generating API reference pages for the API reference list
-breathe-apidoc --generate class --members --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
-breathe-apidoc --generate file --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
-breathe-apidoc --generate struct --members --force --output-dir doxygen\api_member_list ..\build\docs\doxygen\xml\
+breathe-apidoc --generate class --members --force --output-dir developer\doxygen\api_member_list ..\build\docs\developer\doxygen\xml\
+breathe-apidoc --generate file --force --output-dir developer\doxygen\api_member_list ..\build\docs\developer\doxygen\xml\
+breathe-apidoc --generate struct --members --force --output-dir developer\doxygen\api_member_list ..\build\docs\developer\doxygen\xml\
 
 :: removing redundant copies of doxygen manual pages
-DEL doxygen\api_member_list\file\*dox.rst
+DEL developer\doxygen\api_member_list\file\*dox.rst
 
 :: Converting the actual doxygen manual pages to sphinx .rst format
 python dox_converter.py

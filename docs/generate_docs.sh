@@ -18,12 +18,12 @@ if [[ $1 == "clean" ]]; then
     rm -rf _build
 
     echo "Deleting API reference pages"
-    rm -rf doxygen/api_member_list/class
-    rm -rf doxygen/api_member_list/file
-    rm -rf doxygen/api_member_list/struct
-    rm doxygen/api_member_list/classlist.rst
-    rm doxygen/api_member_list/filelist.rst
-    rm doxygen/api_member_list/structlist.rst    
+    rm -rf developer/doxygen/api_member_list/class
+    rm -rf developer/doxygen/api_member_list/file
+    rm -rf developer/doxygen/api_member_list/struct
+    rm developer/doxygen/api_member_list/classlist.rst
+    rm developer/doxygen/api_member_list/filelist.rst
+    rm developer/doxygen/api_member_list/structlist.rst    
 
     echo "Deleting doxygen manual pages"
     python dox_converter.py --del
@@ -37,10 +37,10 @@ fi
 if [[ $1 == "rebuild" ]]; then
     cmake -S .. -B ../build
     cmake --build ../build -- doxygen
-    breathe-apidoc --generate class --members --force --output-dir doxygen/api_member_list ../build/docs/doxygen/xml/
-    breathe-apidoc --generate file --force --output-dir doxygen/api_member_list ../build/docs/doxygen/xml/
-    breathe-apidoc --generate struct --members --force --output-dir doxygen/api_member_list ../build/docs/doxygen/xml/
-    rm doxygen/api_member_list/file/*dox.rst
+    breathe-apidoc --generate class --members --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
+    breathe-apidoc --generate file --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
+    breathe-apidoc --generate struct --members --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
+    rm developer/doxygen/api_member_list/file/*dox.rst
     python dox_converter.py
 fi
 

@@ -29,7 +29,7 @@ from pathlib import Path
 import sys
 
 reverse = False                  # Dox converter in reverse mode: deletes all of the generated manual pages in .rst format.
-root_path = Path("./doxygen/")   # Default root path
+root_path = Path("./developer/doxygen/")   # Default root path
 dox_suffix = ".dox"              # Doxygen suffix indentifier
 rst_suffix = ".rst"              # Sphinx file suffix indentifier
 dir_tree = []                    # The directory tree view from the root path 

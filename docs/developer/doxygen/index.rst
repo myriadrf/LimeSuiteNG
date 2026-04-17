@@ -1,5 +1,5 @@
-Doxygen documentation
-=====================
+Doxygen
+=======
 
 .. toctree::
    :maxdepth: 1

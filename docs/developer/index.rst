@@ -9,6 +9,7 @@ This section contains information about development process and developer tools.
 
    examples/index
    LMS/index
+   doxygen/index
    tools/index
    documentation
    radioconda/index
