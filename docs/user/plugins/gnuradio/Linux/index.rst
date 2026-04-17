@@ -1,5 +1,5 @@
-On Linux
-========
+Linux
+=====
 
 Currently gnuradio-limesuiteng plugin for GNURadio can only be built from source.
 

@@ -44,7 +44,7 @@ Open radioconda with administrative privileges and activate your conda enivronme
    conda activate -n <environment name>
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
+   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-windows-ref`.
 
 Install all necessary build components by executing the following script in repository root directory:
 

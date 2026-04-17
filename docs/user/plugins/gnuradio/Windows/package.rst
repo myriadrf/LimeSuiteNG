@@ -1,7 +1,7 @@
 .. _windows-gnuradio-plugin-install-ref:
 
-Conda package
-=============
+Radioconda package
+==================
 
 .. hint::
    Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
