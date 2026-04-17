@@ -1,5 +1,5 @@
-Minimal Lime Suite NG recipe
-============================
+Lime Suite NG recipe
+====================
 
 .. important::
 
