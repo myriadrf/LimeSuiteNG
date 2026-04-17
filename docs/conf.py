@@ -32,8 +32,8 @@ def _fetch_remote(path, base=asset_base, timeout=10, default=""):
     except requests.RequestException as exc:
         warnings.warn(f"Failed to fetch {url}: {exc}")
         return default
-    
-# Read local asset 
+
+# Read local asset
 def _read_local(path: Path) -> str:
     try:
         return path.read_text(encoding='utf-8')
@@ -70,12 +70,12 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['node_modules', 'venv', '_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['node_modules', 'venv', '_build', 'Thumbs.db', '.DS_Store', 'developer/Introduction/*']
 
 # -- Project config and MyriadRF styling --------------------------------------
 
 # Assign project config variables to local names
-project = project_cfg.project 
+project = project_cfg.project
 copyright = project_cfg.copyright
 author  = project_cfg.author
 release = project_cfg.release
@@ -90,7 +90,7 @@ else:
 extrabody_content = _fetch_remote('mr-navbar.html')
 extrafooter_content = _fetch_remote('mr-footer.html')
 
-# HTML customisation 
+# HTML customisation
 html_context = {
     'extrabody': extrabody_content,
     'extrafooter': extrafooter_content,
@@ -128,7 +128,7 @@ if local_extlinks:
 if parts:
     rst_epilog = "\n".join(parts)
 else:
-    # Fallback: if nothing was found/read, keep original include-style epilog 
+    # Fallback: if nothing was found/read, keep original include-style epilog
     # so that Sphinx can try to include files by path.
     rst_epilog = """
 .. include:: /substitutions.conf
@@ -211,7 +211,7 @@ root_doc = 'index'
 ## Extensions updated also
 
 breathe_projects = {
-    "Lime Suite NG" : ( "../build/docs/doxygen/xml" )
+    "Lime Suite NG" : ( "../build/docs/developer/doxygen/xml" )
 }
 
 breathe_default_project = "Lime Suite NG"
