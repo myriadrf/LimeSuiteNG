@@ -1,15 +1,14 @@
-For Developers
-==============
+Developer Guide
+===============
 
 This section contains information about development process and various tools.
 
 .. toctree::
    :glob:
    :maxdepth: 1
-   :hidden:
 
-   packaging/index
-   diagrams/index
+   examples/index
+   LMS/index
    documentation
-   migration/index
    tools/index
+   radioconda/index

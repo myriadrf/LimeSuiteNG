@@ -7,6 +7,6 @@ More examples written with this API can be found in the ``src/examples/legacy`` 
 Example ``dualRXTX`` written with the legacy LimeSuite API
 ----------------------------------------------------------
 
-.. literalinclude:: ../../../../src/examples/legacy/dualRXTX.cpp
+.. literalinclude:: ../../../src/examples/legacy/dualRXTX.cpp
   :language: cpp
   :linenos:

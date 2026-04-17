@@ -1,5 +1,5 @@
-Diagrams
-========
+Introduction
+============
 
 This is the section containing all the diagrams graphs.
 
