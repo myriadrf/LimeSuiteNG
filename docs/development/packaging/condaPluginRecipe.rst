@@ -55,7 +55,7 @@ Conda will start building package. The ``build_config.yaml`` file alongside the 
 Installing built package
 ------------------------
 
-To test built gnuradio-limesuiteng plugin, package must be installed using the ``conda install`` command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built gnuradio-limesuiteng package, execute the following command:
+To test built gnuradio-limesuiteng plugin, package must be installed using the ``conda install`` command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how to set up local channel). To install locally built gnuradio-limesuiteng package, execute the following command:
 
 .. code-block:: bash
 

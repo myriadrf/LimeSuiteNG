@@ -137,7 +137,7 @@ Conda will start building metapackages and sub-packages. The ``build_config.yaml
 Installing built packages
 -------------------------
 
-To access and test Lime Suite NG metapackage components, metapackage must be installed using the conda install command. Before installing the metapackage, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built Lime Suite NG metapackage, execute the following command:
+To access and test Lime Suite NG metapackage components, metapackage must be installed using the conda install command. Before installing the metapackage, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how to set up local channel). To install locally built Lime Suite NG metapackage, execute the following command:
 
 .. code-block:: bash
 

@@ -4,7 +4,7 @@
 Radioconda environment
 ======================
 
-Initial set up
+Initial setup
 ---------------
 
 Radioconda installation files can be found in radioconda github `release page`_.
@@ -35,7 +35,7 @@ Install the following packages that contain necessary build tools for the curren
 
    conda install conda-build conda-forge-pinning
 
-Custom radioconda environment set up is complete.
+Custom radioconda environment setup is complete.
 
 .. tip::
 
@@ -43,8 +43,8 @@ Custom radioconda environment set up is complete.
 
 .. _conda-local-channel-setup:
 
-Local channel set up
----------------------
+Local channel setup
+-------------------
 
 .. note::
 
