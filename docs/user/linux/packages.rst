@@ -25,11 +25,11 @@ Update apt sources and install Lime Suite NG:
 	sudo apt-get update
 	sudo apt-get install limesuiteng
 
-Conda
------
+Radioconda
+----------
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
+   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-linux-ref`.
 
 Lime Suite NG library can also be installed as a conda package. Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
 

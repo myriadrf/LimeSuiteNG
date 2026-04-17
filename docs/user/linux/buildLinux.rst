@@ -1,5 +1,5 @@
-Build from source on Linux
-==========================
+Build from source
+=================
 
 Prerequisites
 -------------
