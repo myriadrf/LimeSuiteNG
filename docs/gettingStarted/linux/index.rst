@@ -1,7 +1,7 @@
 On Linux
 ========
 
-LimeSuiteNG on Linux can be installed either using package manager or built from the source code.
+Lime Suite NG on Linux can be installed either using package manager or built from the source code.
 
 .. note:: It is advised to only use packages or only source build, to avoid potential libraries versions clashing.
 

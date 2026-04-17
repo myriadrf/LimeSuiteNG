@@ -1,20 +1,20 @@
 .. _gnuradio-blocks-ref:
 
-=========================================
-GNURadio LimeSuiteNG blocks
-=========================================
+=============================
+GNURadio Lime Suite NG blocks
+=============================
 
 Gnuradio-limesuiteng plugin provides sink and source blocks that can be used in GNURadio GUI to interact with selected LimeSDR devices. Once installed the blocks will appear in GNURadio UI on right side of application window in drop down menu as show in the image below.
 
 .. image:: gnuradio_images/limesuiteBlocks.*
 
-Drag and drop or double click on block title to add it to GNURadio flow graph. Connect the LimeSuiteNG Sink or Source block's input/output to other blocks of your choice.
+Drag and drop or double click on block title to add it to GNURadio flow graph. Connect the Lime Suite NG Sink or Source block's input/output to other blocks of your choice.
 
--------------------------
-LimeSuiteNG Source block
--------------------------
+--------------------------
+Lime Suite NG Source block
+--------------------------
 
-LimeSuiteNG Source block is used to set up selected LimeSDR device RX channel. To configure source block, double click it to open the configuration window. Once the GNURadio flow graph is executed, block outputs digitized data sample stream that must be redirected to other GNURadio blocks for further processing or display.
+Lime Suite NG Source block is used to set up selected LimeSDR device RX channel. To configure source block, double click it to open the configuration window. Once the GNURadio flow graph is executed, block outputs digitized data sample stream that must be redirected to other GNURadio blocks for further processing or display.
 
 .. image:: gnuradio_images/limesuitengSourceBlock.*
 
@@ -77,11 +77,11 @@ Configurable parameters of LMS7002M Advanced tab are provided in the table below
 
 
 
--------------------------
-LimeSuiteNG Sink block
--------------------------
+------------------------
+Lime Suite NG Sink block
+------------------------
 
-LimeSuiteNG Sink block is used to set up selected LimeSDR device TX channel. To configure sink block, double click it to open the configuration window. Once the GNURadio flow graph is executed, block collects digitized data samples from other GNURadio blocks and sends data to LimeSDR device for transmission.
+Lime Suite NG Sink block is used to set up selected LimeSDR device TX channel. To configure sink block, double click it to open the configuration window. Once the GNURadio flow graph is executed, block collects digitized data samples from other GNURadio blocks and sends data to LimeSDR device for transmission.
 
 .. image:: gnuradio_images/limesuitengSinkBlock.*
 

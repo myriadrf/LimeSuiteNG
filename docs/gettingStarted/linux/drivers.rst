@@ -17,13 +17,13 @@ If your expected device is not in the list follow the troubleshooting steps for 
 USB
 ---
 
-LimeSuiteNG uses ``libusb-1.0`` library to communicate with the USB devices. It comes preinstalled with most Linux distributions, so no extra steps should be needed to use them.
+Lime Suite NG uses ``libusb-1.0`` library to communicate with the USB devices. It comes preinstalled with most Linux distributions, so no extra steps should be needed to use them.
 
 
 PCIe
 ----
 
-LimeSuiteNG contains "limepcie" linux kernel module for communicating with PCIe based devices.
+Lime Suite NG contains "limepcie" linux kernel module for communicating with PCIe based devices.
 If the PCIe devices are not detected by ``limeDevice``, inspect the system log for "limepcie" errors.
 For successfully detected device the output should look like:
 

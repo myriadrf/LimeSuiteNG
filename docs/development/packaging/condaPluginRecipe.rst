@@ -33,7 +33,7 @@ More details about `conda recipes`_.
 Recipe build steps
 ------------------
 
-To build the plugin, LimeSuiteNG conda package must be built and installed inside the current conda environment. To start the build process, execute the following commands:
+To build the plugin, Lime Suite NG conda package must be built and installed inside the current conda environment. To start the build process, execute the following commands:
 
 .. code-block:: bash
 

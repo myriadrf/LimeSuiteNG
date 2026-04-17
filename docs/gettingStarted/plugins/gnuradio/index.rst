@@ -1,7 +1,7 @@
 GNURadio
 ========
 
-LimeSDR devices can be used with GNURadio on Windows and Linux platforms. Below are links for setting up LimeSuiteNG plugin for gnuradio on different operating systems and description of provided GNURadio blocks:
+LimeSDR devices can be used with GNURadio on Windows and Linux platforms. Below are links for setting up Lime Suite NG plugin for gnuradio on different operating systems and description of provided GNURadio blocks:
 
 .. toctree:: 
    :maxdepth: 1
@@ -48,7 +48,7 @@ If the example runs successfully, a pop up window will open as shown below. Adju
 If the audio stream from selected radio station is clear, then the plugin is working correctly. Explore more examples in ``<repo root>\plugin\gr-limesuiteng\examples`` directory.
 
 .. hint::
-   Make sure that the device is supported by LimeSuiteNG library. See :ref:`dev-supp-list-ref`.
+   Make sure that the device is supported by Lime Suite NG library. See :ref:`dev-supp-list-ref`.
 
 
 

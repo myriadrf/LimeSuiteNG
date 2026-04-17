@@ -13,7 +13,7 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. Python
 #. C++ compiler
 #. CMake
-#. LimeSuiteNG
+#. Lime Suite NG
 
 Compilation
 -----------

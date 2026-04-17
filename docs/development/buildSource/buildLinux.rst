@@ -4,7 +4,7 @@ Build from source on Linux
 Prerequisites
 -------------
 
-Required components to compile LimeSuiteNG project:
+Required components to compile Lime Suite NG project:
 
 - C++ compiler (GCC, Clang)
 - `CMake`_
@@ -15,7 +15,7 @@ Optional packages that can be installed to enable specific functionality:
 
 - `libusb-1.0-dev`_ : enables support of USB interface devices
 - `wxWidgets`_ : enables graphical user interface
-- `libsoapysdr-dev`_ : enables building of limesuiteng plugin for SoapySDR
+- `libsoapysdr-dev`_ : enables building of Lime Suite NG plugin for SoapySDR
 - `linux-kernel-headers` : enables building of PCIe driver module for Linux kernel.
 - `gnuradio-dev`_ : enables building of plugin for GNURadio.
 

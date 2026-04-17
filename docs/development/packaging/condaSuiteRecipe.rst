@@ -1,5 +1,5 @@
-Minimal LimeSuiteNG recipe
-==========================
+Minimal Lime Suite NG recipe
+============================
 
 .. important::
 
@@ -18,7 +18,7 @@ A full conda recipe is made out of three main files:
 #. bld.bat (For Windows platform)
 #. bld.sh (For Linux/MacOS platforms)
 
-Meta.yaml file is used to specify required dependencies for build. Since most of dependencies in LimeSuiteNG are resolved internally (through CMake scripts), you will only need to modify any required build tools, such as compilers and build generators. Scripts bld.bat and bld.sh are used for the actual build. Inside the scripts you can add additional CMake flags and any other commands that will be executed in command line/terminal environment.
+Meta.yaml file is used to specify required dependencies for build. Since most of dependencies in Lime Suite NG are resolved internally (through CMake scripts), you will only need to modify any required build tools, such as compilers and build generators. Scripts bld.bat and bld.sh are used for the actual build. Inside the scripts you can add additional CMake flags and any other commands that will be executed in command line/terminal environment.
 
 More details about `conda recipes`_.
 
@@ -42,7 +42,7 @@ Conda will start building package. The ``build_config.yaml`` file alongside the 
 Installing built package
 ------------------------
 
-To access and test LimeSuiteNG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built LimeSuiteNG package, execute the following command:
+To access and test Lime Suite NG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how set up local channel). To install locally built Lime Suite NG package, execute the following command:
 
 .. code-block:: bash
 

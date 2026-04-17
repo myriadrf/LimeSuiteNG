@@ -1,8 +1,8 @@
 Getting started
 ===============
 
-This section contains information about getting started as a user. This includes steps for setting up the LimeSuiteNG software either by downloading and installing it or building it from the source. You can use the provided command line tools or GUI to quickly setup your device configuration and inspect RF data.
-Combine LimeSuiteNG with other SDR applications for custom usage.
+This section contains information about getting started as a user. This includes steps for setting up the Lime Suite NG software either by downloading and installing it or building it from the source. You can use the provided command line tools or GUI to quickly setup your device configuration and inspect RF data.
+Combine Lime Suite NG with other SDR applications for custom usage.
 
 .. toctree::
    :maxdepth: 2

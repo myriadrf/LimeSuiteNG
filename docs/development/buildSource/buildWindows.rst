@@ -7,7 +7,7 @@ Build from source on Windows
 Prerequisites
 -------------
 
-Required components to compile LimeSuiteNG project:
+Required components to compile Lime Suite NG project:
 
 #. Visual Studio Build Tools 2022 components:
 
@@ -24,7 +24,7 @@ Required components to compile LimeSuiteNG project:
 
 Optional components that add specific functionality:
 
-- `SoapySDR`_ : allows building of limesuiteng plugin for SoapySDR
+- `SoapySDR`_ : allows building of Lime Suite NG plugin for SoapySDR
 
 Compilation
 -----------
@@ -45,7 +45,7 @@ Install all necessary build components by executing the following script in repo
 
    conda_deps.bat [--v] [required-gnuradio-version]
 
-Script will check the conda environment for missing packages and install all conda packages required to build LimeSuiteNG library. Additionally, GNURadio version flag can be supplied to install appropriate version of GNURadio and additional dependencies required to build `gnuradio-limesuiteng` plugin. Example:
+Script will check the conda environment for missing packages and install all conda packages required to build Lime Suite NG library. Additionally, GNURadio version flag can be supplied to install appropriate version of GNURadio and additional dependencies required to build `gnuradio-limesuiteng` plugin. Example:
 
 .. code-block:: bash
 
@@ -63,7 +63,7 @@ Enter repository directory, create and enter build directory:
    
    mkdir build && cd build
 
-Configure LimeSuiteNG library build files:
+Configure Lime Suite NG library build files:
 
 .. code-block:: bash
 

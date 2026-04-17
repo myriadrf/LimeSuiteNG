@@ -1,7 +1,7 @@
 Plugins
 =======
 
-LimeSuiteNG provides integration with other software packages
+Lime Suite NG provides integration with other software packages
 
 * `Amarisoft`_
 * `HDSDR`_

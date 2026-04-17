@@ -1,7 +1,7 @@
 Introduction
 ############
 
-LimeSuiteNG is a software suite designed for working with LimeSDR family devices, see :doc:`about/deviceSupport`.
+Lime Suite NG is a software suite designed for working with LimeSDR family devices, see :doc:`about/deviceSupport`.
 
 Project repository: https://github.com/myriadrf/LimeSuiteNG
 

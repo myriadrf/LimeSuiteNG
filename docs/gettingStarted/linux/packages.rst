@@ -18,7 +18,7 @@ Add source for your distribution:
 
 	echo "deb [signed-by=/etc/apt/keyrings/lime-microsystems-public.gpg] https://repo.myriadrf.org/apt stable main" | sudo tee /etc/apt/sources.list.d/repo.myriadrf.org.list
 
-Update apt sources and install limesuiteng:
+Update apt sources and install Lime Suite NG:
 
 .. code-block:: bash
 
@@ -31,14 +31,14 @@ Conda
 .. hint::
    Check out radioconda and conda environment set up process. See :ref:`radioconda-setup-ref`.
 
-LimeSuiteNG library can also be installed as a conda package. LimeSuiteNG provides multiple packages for installation. You can install all possible LimeSuiteNG components by installing the LimeSuiteNG metapackage. If you want to install entire LimeSuiteNG metapackage and already have a gnuradio package in your current environment, execute the following commands:
+Lime Suite NG library can also be installed as a conda package. Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
 
 .. code-block:: bash
 
    conda activate <environment>
    conda install limesuiteng=[version]
 
-If you want to install entire LimeSuiteNG metapackage, but you are missing gnuradio package in your current environment, execute the following commands:
+If you want to install entire Lime Suite NG metapackage, but you are missing gnuradio package in your current environment, execute the following commands:
 
 .. code-block:: bash
 
@@ -55,23 +55,23 @@ This ensures, that metapackage install pulls the correct  ``gnuradio-limesuiteng
 
    You can check out limesuiteng versions by executing the following command - ``conda search limesuiteng``. To search for gnuradio versions use - ``conda search gnuradio``.
 
-If you only need certain LimeSuiteNG components, for example, development files, you can install a metapackage sub-package as a standalone package:
+If you only need certain Lime Suite NG components, for example, development files, you can install a metapackage sub-package as a standalone package:
 
 .. code-block:: bash
 
    conda activate <environment>
    conda install liblimesuiteng-dev
 
-On Linux LimeSuiteNG conda metapackage links the following sub-packages together:
+On Linux Lime Suite NG conda metapackage links the following sub-packages together:
 
 #. liblimesuiteng - runtime libraries.
 #. liblimesuiteng-dev - runtime libraries, API and development files.
 #. limesuiteng-cli - command line tools for LimeSDR device control.
 #. gnuradio-limesuiteng - LimeSDR plugin for GNURadio. To install plugin as a separate package check out :ref:`linux-gnuradio-plugin-install-ref` section.
-#. limesuiteng-soapy - LimeSuiteNG bindings for SoapySDR.
+#. limesuiteng-soapy - Lime Suite NG bindings for SoapySDR.
 
 All of the above listed packages can be installed and used independently.
 
 .. note::
 
-	Currently none of the above listed LimeSuiteNG conda sub-packages contain limeGUI application for conda environment on Linux. To use limeGUI install LimeSuiteNG from apt store or build LimeSuiteNG from source.
+	Currently none of the above listed Lime Suite NG conda sub-packages contain limeGUI application for conda environment on Linux. To use limeGUI install Lime Suite NG from apt store or build Lime Suite NG from source.

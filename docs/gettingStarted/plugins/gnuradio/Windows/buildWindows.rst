@@ -21,7 +21,7 @@ Required components to compile gnuradio-limesuiteng plugin:
    #. gnuradio
    #. boost
    #. vs2022_win-64
-   #. LimeSuiteNG (Manually built and installed)
+   #. Lime Suite NG (Manually built and installed)
    #. cmake
    #. ninja
 
@@ -29,7 +29,7 @@ Required components to compile gnuradio-limesuiteng plugin:
    External Python and numpy installations that are not related to any conda environment can interfere with build process. It is advised to remove these components or temporarily disable environment variables that point to their locations in PC file system.
 
 .. warning::
-   It is advised to use a manually built and installed LimeSuiteNG library in conda environment to avoid build process problems.
+   It is advised to use a manually built and installed Lime Suite NG library in conda environment to avoid build process problems.
 
 .. note::
    MSVC version must be equal or higher than compiler version that was used to build gnuradio. To check compiler compatibility use ``gnuradio-config-print --cxx`` inside activated conda environment with installed gnuradio.
