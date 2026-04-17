@@ -1,5 +1,5 @@
-On Windows
-==========
+Windows
+=======
 
 Lime Suite NG can be built from source or installed as package in radioconda environment using radioconda prompt. 
 
