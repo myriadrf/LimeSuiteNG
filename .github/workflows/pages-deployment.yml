@@ -1,3 +1,5 @@
+name: Documentation deployment
+
 on:
   workflow_dispatch:
 
