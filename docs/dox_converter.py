@@ -79,7 +79,7 @@ def convert_page(file):
       header = dox.readline()
    header = header.strip()
    header_elements = header.split(maxsplit=3)
-   rst.write(f"{header_elements[3]}\n{"=" * len(header_elements[3])}\n\n")
+   rst.write(f"{header_elements[3]}\n{'=' * len(header_elements[3])}\n\n")
    rst.write(f".. doxygenpage:: {header_elements[2]}\n\t:content-only:")
    rst.close()
 
