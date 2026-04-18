@@ -1,0 +1,43 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Deploy to Cloudflare Pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq doxygen graphviz
+          cd ${{github.workspace}}
+          sudo ./install_dependencies.sh
+
+      - name: Set up Python venv
+        run: |
+          cd ${{github.workspace}}/docs
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Generate documentation
+        run: |
+          cd ${{github.workspace}}/docs
+          source venv/bin/activate
+          ./generate_docs.sh rebuild
+
+      - name: Add middleware
+        run: cp -r ${{github.workspace}}/functions ${{github.workspace}}/docs/_build
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT }}
+          command: pages deploy ${{github.workspace}}/docs/_build --project-name=limesuiteng
