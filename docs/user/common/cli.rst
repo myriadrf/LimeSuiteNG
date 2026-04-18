@@ -1,9 +1,8 @@
 
-.. _cli-tools-ref:
+.. _cli-ref:
 
-============================
-Command line interface tools
-============================
+CLI Tools
+=========
 
 .. _`limeDeviceUtilityRef`:
 

@@ -1,37 +1,54 @@
-Install from packages
-=====================
+.. _conda-linux-ref:
 
-apt
----
+Conda Packages
+##############
 
-The apt repository contains packages for both x86-64 and arm64.
-
-Install the GPG key:
-
-.. code-block:: bash
-
-	wget -qO - https://repo.myriadrf.org/lime-microsystems-public.gpg | gpg --dearmor | sudo tee /etc/apt/keyrings/lime-microsystems-public.gpg > /dev/null
-
-Add source for your distribution:
-
-.. code-block:: bash
-
-	echo "deb [signed-by=/etc/apt/keyrings/lime-microsystems-public.gpg] https://repo.myriadrf.org/apt stable main" | sudo tee /etc/apt/sources.list.d/repo.myriadrf.org.list
-
-Update apt sources and install Lime Suite NG:
-
-.. code-block:: bash
-
-	sudo apt-get update
-	sudo apt-get install limesuiteng
+Installation with Conda packages makes use of the radioconda environment and this needs to be set up first.
 
 Radioconda
-----------
+**********
 
-.. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-linux-ref`.
+Initial setup
+=============
 
-Lime Suite NG library can also be installed as a conda package. Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
+The radioconda installation files can be found in radioconda github `release page`_.
+
+Download ``radioconda-<release-date>-Linux-x86_64.sh``, open a terminal and install the radioconda environment:
+
+.. code-block:: bash
+
+   cd Downloads
+   bash radioconda-<release-date>-Linux-x86_64.sh
+
+The radioconda base environment should load automatically once the terminal is opened.
+
+.. tip::
+
+   If you want to exit radioconda base environment, enter the ``conda deactivate`` command.
+
+Create a new radioconda environment with a custom name and activate it using the following commands:
+
+.. code-block:: bash
+   
+   conda create -n <custom environment name>
+   conda activate <custom environment name>
+
+Install the following packages that contain necessary build tools for the current environment.
+
+.. code-block:: bash
+
+   conda install conda-build conda-forge-pinning
+
+The custom radioconda environment setup is complete.
+
+.. tip::
+
+   Make sure that your LimeSDR device is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
+
+Lime Suite NG
+*************
+
+Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
 
 .. code-block:: bash
 
@@ -74,4 +91,7 @@ All of the above listed packages can be installed and used independently.
 
 .. note::
 
-	Currently none of the above listed Lime Suite NG conda sub-packages contain limeGUI application for conda environment on Linux. To use limeGUI install Lime Suite NG from apt store or build Lime Suite NG from source.
+	Currently none of the above listed Lime Suite NG conda sub-packages contain limeGUI application for conda environment on Linux. To use limeGUI install Lime Suite NG via the APT repository or build Lime Suite NG from source.
+
+
+.. _`release page`: https://github.com/radioconda/radioconda-installer/releases

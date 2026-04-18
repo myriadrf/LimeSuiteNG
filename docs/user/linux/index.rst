@@ -1,16 +1,15 @@
 Linux
 =====
 
-Lime Suite NG on Linux can be installed either using package manager or built from the source code. 
+Lime Suite NG can be installed on Linux via packages or from source code.
 
-.. tip:: First time radioconda users are recommended to check out the :doc:`radioconda` section for environment setup steps.
-
-.. note:: It is advised to only use packages or only source build, to avoid potential libraries versions clashing.
+.. warning:: 
+   It is strongly recommended to use a single installation method and not mix them. For example, if you have installed Lime Suite NG via packages, do not build and install from source code on top of it, and vice versa. This may cause conflicts and unexpected behaviour.
 
 .. toctree::
    :maxdepth: 1
 
-   radioconda.rst
-   packages.rst
-   buildLinux.rst
+   conda.rst
+   apt.rst
+   source.rst
    drivers.rst

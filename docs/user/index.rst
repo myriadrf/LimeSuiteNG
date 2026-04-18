@@ -1,13 +1,15 @@
 User Guide
 ==========
 
-This section contains information about getting started as a user. This includes steps for setting up the Lime Suite NG software either by downloading and installing it or building it from the source. You can use the provided command line tools or GUI to quickly setup your device configuration and inspect RF data.
-Combine Lime Suite NG with other SDR applications for custom usage.
+Here you can find details of how to install and use Lime Suite NG on different platforms. Topics covered include building from source and installing Lime Suite NG via packages, as well as using the provided command line tools to configure your device, update firmware/gateware, and transmit/receive data from from and to files. Details are also provide for plugins which enable using LimeSDR devices with popular SDR ecosystem software such as GNU Radio and applications which support the SoapySDR API.
+
+.. note::
+   The CLI tools provide a simple interface which can be used for basic device configuration, as well as testing and debugging. Most of the time use will be via applications which integrate with the library APIs directly or via plugins.
 
 .. toctree::
    :maxdepth: 1
 
    linux/index
    windows/index
-   CLI Tools <common/cliTools>
+   common/cli
    plugins/index

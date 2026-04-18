@@ -1,18 +1,18 @@
 Introduction
 ############
 
-Lime Suite NG is a software suite designed for working with LimeSDR family devices.
-
-Project repository: https://github.com/myriadrf/LimeSuiteNG
+Lime Suite NG is Lime Microsystems' next generation software suite for the LimeSDR family of software-defined radio (SDR) devices. It provides a comprehensive set of tools, libraries and drivers for configuring, managing, and utilising LimeSDR devices across various platforms and applications.
 
 Project contents:
-  * limesuiteng - C++ library for control of the LimeSDR devices.
+
+  * **liblimesuiteng**. C++ library which provides device APIs.
+  * :doc:`user/common/cli`. Utilities for device management, configuration and basic use.
+  * :doc:`user/plugins/index`. Plugins for SDR ecosystem software.
   * :doc:`developer/tools/suite_tools/GUI` - graphical user interface for configuring device parameters and inspecting Rx RF data using FFT.
-  * :doc:`user/common/cliTools`.
-  * :doc:`user/plugins/index` - LimeSDR devices integration into various software platforms.
 
-See :doc:`user/index` guide how to install software and setup devices.
+See the :doc:`user/index` guide for more information on getting started with Lime Suite NG, including installation instructions and usage examples.
 
+For building custom applications using the library, please refer to the :doc:`developer/index` guide for detailed documentation and resources.
 
 .. _dev-supp-list-ref:
 
@@ -20,27 +20,18 @@ See :doc:`user/index` guide how to install software and setup devices.
 Supported devices
 =================
 
-* USB interface:
+* USB:
 
-    - `LimeSDR USB`_
-    - `LimeSDR Mini v1`_
-    - `LimeSDR Mini v2`_
+   * LimeSDR Mini v2
+   * LimeSDR Mini v1
+   * LimeSDR USB
 
-* PCIe interface (currently PCIe driver available only for Linux):
+* PCIe (PCIe driver currently only available for Linux):
 
-    - `LimeSDR XTRX`_
-    - `LimeSDR X3`_
-    - LimeMM X8
-
-* To be done:
-    - `LimeRFE`_
-
-.. _LimeSDR USB: https://wiki.myriadrf.org/LimeSDR-USB
-.. _LimeSDR Mini v1: https://wiki.myriadrf.org/LimeSDR-Mini
-.. _LimeSDR Mini v2: https://limesdr-mini.myriadrf.org/
-.. _LimeSDR XTRX: https://limesdr-xtrx.myriadrf.org/
-.. _LimeSDR X3: https://limesdr-x3.myriadrf.org/
-.. _LimeRFE: https://www.crowdsupply.com/lime-micro/limerf
+   * LimeSDR Micro
+   * LimeSDR XTRX
+   * LimeSDR X3
+   * LimeMM X8
 
 .. toctree::
    :maxdepth: 2

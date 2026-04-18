@@ -1,12 +1,41 @@
-.. _limesuiteng-install-ref:
+.. _conda-windows-ref:
 
-Install from packages
-=====================
+Conda Packages
+##############
 
-.. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-windows-ref`.
+Radioconda
+**********
 
-Lime Suite NG library can also be installed as a conda package. Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
+Initial setup
+=============
+
+Radioconda installation files can be found in radioconda github `release page`_.
+
+For Windows, install radioconda terminal using ``radioconda-<release-date>-Windows-x86_64.exe`` installer. To access radioconda environment on Windows, search for **radioconda terminal** and open it with administrator privileges.
+
+Create new radioconda environment with a custom name and activate it using the following commands:
+
+.. code-block:: bash
+   
+   conda create -n <custom environment name>
+   conda activate <custom environment name>
+
+Install the following packages that contain necessary build tools for the current environment.
+
+.. code-block:: bash
+
+   conda install conda-build conda-forge-pinning
+
+Custom radioconda environment setup is complete.
+
+.. tip::
+
+   Make sure that your LimeSDR device is compatible with the new generation library and install appropriate SDR device drivers. See :ref:`dev-supp-list-ref` and :ref:`driver-supp-list-ref`.
+
+Lime Suite NG
+*************
+
+Lime Suite NG provides multiple packages for installation. You can install all possible Lime Suite NG components by installing the Lime Suite NG metapackage. If you want to install entire Lime Suite NG metapackage and already have a gnuradio package in your current environment, execute the following commands:
 
 .. code-block:: bash
 
@@ -47,3 +76,5 @@ On Windows Lime Suite NG conda metapackage links the following sub-packages toge
 #. limesuiteng-soapy - Lime Suite NG bindings for SoapySDR.
 
 All of the above listed packages can be installed and used independently.
+
+.. _`release page`: https://github.com/radioconda/radioconda-installer/releases
