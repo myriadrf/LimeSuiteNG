@@ -37,9 +37,13 @@ jobs:
       - name: Add middleware
         run: cp -r ${{github.workspace}}/functions ${{github.workspace}}/docs/_build
 
+        # When deploying a project using Wrangler, if a functions folder exists where the command is run,
+        # that functions folder will be uploaded with the project.
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT }}
-          command: pages deploy ${{github.workspace}}/docs/_build --project-name=limesuiteng
+          workingDirectory: ${{github.workspace}}/docs/_build
+          command: pages deploy ${{github.workspace}}/docs/_build/html --project-name=limesuiteng
