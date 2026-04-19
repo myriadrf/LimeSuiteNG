@@ -1,8 +1,8 @@
 Build from source
-=================
+##################
 
 Prerequisites
--------------
+*************
 
 Required components to compile gnuradio-limesuiteng plugin:
 
@@ -16,7 +16,7 @@ Required components to compile gnuradio-limesuiteng plugin:
 #. Lime Suite NG
 
 Compilation
------------
+***********
 
 Clone repository:
 
@@ -43,10 +43,10 @@ Run cmake to configure build files and then build:
    Add ``-jx`` flag to speed up building process, where ``x`` is processor core count.
     
 
-Plugin installation
--------------------
+Installation
+************
 
-Install plugin using the following command:
+Install the plugin using the following command:
 
 .. code-block:: bash
 

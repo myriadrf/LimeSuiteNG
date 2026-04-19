@@ -1,11 +1,10 @@
 .. _windows-lib-build-ref:
 
-=================
 Build from source
-=================
+#################
 
 Prerequisites
--------------
+*************
 
 Required components to compile Lime Suite NG project:
 
@@ -27,7 +26,7 @@ Optional components that add specific functionality:
 - `SoapySDR`_ : allows building of Lime Suite NG plugin for SoapySDR
 
 Compilation
------------
+***********
 
 Open radioconda with administrative privileges and activate your conda enivronment:
 
@@ -79,7 +78,7 @@ Built suite files are located in ``build\lib`` directory and executables are loc
   
 
 Installing the built software
------------------------------
+*****************************
 
 Optionally library can be installed into system. Continuing on from the previous command block, execute:
 

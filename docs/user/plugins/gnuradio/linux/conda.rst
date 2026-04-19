@@ -1,16 +1,16 @@
-.. _windows-gnuradio-plugin-install-ref:
+.. _linux-gnuradio-plugin-install-ref:
 
 Radioconda package
-==================
+##################
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
+   Check out radioconda and conda environment setup process. See :ref:`conda-linux-ref`.
 
 Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
 
 
 Prerequisites
--------------
+*************
 
 Conda packages required to run the gnuradio plugin:
 
@@ -22,7 +22,7 @@ Conda packages required to run the gnuradio plugin:
    You can check if packages are present by using ``conda list <package name>``.
    
 Installing
-----------
+**********
 
 If gnuradio package in the current conda environment is already installed, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
 
@@ -49,3 +49,18 @@ This will ensure that the correct GNURadio plugin version is installed alongside
 
 
 Check out :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` sections for demonstration and plugin block documentation.
+
+Known issues
+************
+
+Conda package compatibility
+===========================
+
+Conda forge contains multiple same version, but different build string ``gnuradio`` packages. Some of these packages may not be compatible with available ``gnuradio-limesuiteng`` packages. 
+
+It has been observed that, particularly the ``spdlog`` conda package can cause problems when running or installing ``gnuradio`` package alongside ``gnuradio-limesuiteng`` package. 
+
+Solution
+--------
+
+When installing ``gnuradio`` and ``gnuradio-limesuiteng`` packages, also install appropriate ``spdlog`` package version - ``conda install gnuradio=... limesuiteng=... spdlog=...``. Newer ``gnuradio`` packages (3.10.11.0 and 3.10.10.0) use ``spdlog`` 1.14.1 and 1.13.0, while the older ``gnuradio`` versions (3.10.9.2 and lower) use ``spdlog`` 1.12.0. 

@@ -1,11 +1,10 @@
 .. _windows-plugin-build-ref:
 
-=================
 Build from source
-=================
+#################
 
 Prerequisites
--------------
+*************
 
 Required components to compile gnuradio-limesuiteng plugin:
 
@@ -35,7 +34,7 @@ Required components to compile gnuradio-limesuiteng plugin:
    MSVC version must be equal or higher than compiler version that was used to build gnuradio. To check compiler compatibility use ``gnuradio-config-print --cxx`` inside activated conda environment with installed gnuradio.
 
 Compilation
------------
+***********
 
 Open radioconda with administrative privileges and activate your conda enivronment:
 
@@ -87,6 +86,9 @@ Build plugin:
 .. code-block:: bash
 
    cmake --build .
+
+Installation
+************
 
 Install plugin into conda environment:
 
