@@ -25,7 +25,7 @@ Required components to compile gnuradio-limesuiteng plugin:
    #. ninja
 
 .. warning::
-   External Python and numpy installations that are not related to any conda environment can interfere with build process. It is advised to remove these components or temporarily disable environment variables that point to their locations in PC file system.
+   External Python and numpy installations that are not related to any conda environment can interfere with build process. It is advised to remove these components or temporarily disable environment variables that point to their file system location.
 
 .. warning::
    It is advised to use a manually built and installed Lime Suite NG library in conda environment to avoid build process problems.
