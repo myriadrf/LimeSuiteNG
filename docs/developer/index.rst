@@ -11,5 +11,4 @@ This section contains information about development process and developer tools.
    LMS/index
    doxygen/index
    tools/index
-   documentation
    radioconda/index

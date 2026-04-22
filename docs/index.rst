@@ -40,3 +40,4 @@ Supported devices
    Introduction <self>
    User Guide <user/index>
    Developer Guide <developer/index>
+   Updating Docs <docs/documentation.rst>

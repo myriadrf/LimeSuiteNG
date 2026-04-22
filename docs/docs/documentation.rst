@@ -1,5 +1,5 @@
-Documentation generation guide
-==============================
+Updating Docs
+=============
 
 This page describes how to generate the Lime Suite NG documentation
 (the very thing you're reading right now) on Linux or Windows platforms.
