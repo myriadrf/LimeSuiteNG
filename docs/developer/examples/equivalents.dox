@@ -1,0 +1,708 @@
+/**
+
+    @file equivalents.dox
+
+    @brief Porting guide from LMS API to SDRDevice API.
+    */
+
+/**
+
+    @page porting_guide LMS API and SDRDevice API function equivalents
+
+    This section of the documentation provides the porting guide to change from the old LMS API to the new SDRDevice API. 
+
+    <table>
+
+    <caption id="multi_row">Table 1: LMS API and SDRDevice API function equivalency table.</caption> 
+
+    <tr>
+
+    <th>LMS API (legacy)</th>
+
+    <th>SDRDevice API</th>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetDeviceList()</td>
+
+    <td>@ref lime::DeviceRegistry::enumerate "enumerate()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Open()</td>
+
+    <td>@ref lime::DeviceRegistry::makeDevice "makeDevice()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Close()</td>
+
+    <td>@ref lime::DeviceRegistry::freeDevice "freeDevice()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Init()</td>
+
+    <td>@ref lime::SDRDevice::Init "Init()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetNumChannels()</td>
+
+    <td>lime::SDRDevice::RFSOCDescriptor::channelCount obtained from rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_EnableChannel()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::EnableChannel "EnableChannel()" </li>
+
+    <li>enabled in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetSampleRate()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetSampleRate "SetSampleRate()" </li>
+
+    <li>sampleRate in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetSampleRate()</td>
+
+    <td>@ref lime::SDRDevice::GetSampleRate "GetSampleRate()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetSampleRateRange()</td>
+
+    <td>samplingRateRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetLOFrequency()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetFrequency "SetFrequency()" </li>
+
+    <li>centerFrequency in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLOFrequency()</td>
+
+    <td>@ref lime::SDRDevice::GetFrequency "GetFrequency()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLOFrequencyRange()</td>
+
+    <td>frequencyRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetAntennaList()</td>
+
+    <td>pathNames in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetAntenna()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetAntenna "SetAntenna()" </li>
+
+    <li>path in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetAntenna()</td>
+
+    <td>@ref lime::SDRDevice::GetAntenna "GetAntenna()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetAntennaBW()</td>
+
+    <td>antennaRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetNormalizedGain()</td>
+
+    <td>Equivalent does not exist, look at LMS_SetGaindB(). </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetGaindB()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetGain "SetGain()" </li>
+
+    <li>gain in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetNormalizedGain()</td>
+
+    <td>Equivalent does not exist, look at LMS_GetGaindB(). </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetGaindB()</td>
+
+    <td>@ref lime::SDRDevice::GetGain "GetGain()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetLPFBW()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetLowPassFilter "SetLowPassFilter()" </li>
+
+    <li>lpf in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLPFBW()</td>
+
+    <td>@ref lime::SDRDevice::GetLowPassFilter "GetLowPassFilter()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLPFBWRange()</td>
+
+    <td>lowPassFilterRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetLPF()</td>
+
+    <td>lpf in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetGFIRLPF()</td>
+
+    <td>gfir in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Calibrate()</td>
+
+    <td>@ref lime::SDRDevice::Calibrate "Calibrate()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_LoadConfig()</td>
+
+    <td>@ref lime::SDRDevice::LoadConfig "LoadConfig()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SaveConfig()</td>
+
+    <td>@ref lime::SDRDevice::SaveConfig "SaveConfig()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetTestSignal()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetTestSignal "SetTestSignal()" </li>
+
+    <li>testSignal in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetTestSignal()</td>
+
+    <td>@ref lime::SDRDevice::GetTestSignal "GetTestSignal()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetChipTemperature()</td>
+
+    <td>@ref lime::SDRDevice::GetTemperature "GetTemperature()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetSampleRateDir()</td>
+
+    <td>Loop for every channel and set sampleRate in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetNCOFrequency()</td>
+
+    <td>
+
+    <ul>
+
+    <li>@ref lime::SDRDevice::SetNCOFrequency "SetNCOFrequency()" </li>
+
+    <li>NCOoffset in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()". <b>Note:</b> offset from center frequency. </li>
+
+    </ul>
+
+    </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetNCOFrequency()</td>
+
+    <td>@ref lime::SDRDevice::GetNCOFrequency "GetNCOFrequency()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetNCOPhase()</td>
+
+    <td>No direct equivalent. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetNCOPhase()</td>
+
+    <td>No direct equivalent. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetNCOIndex()</td>
+
+    <td>No direct equivalent. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetNCOIndex()</td>
+
+    <td>No direct equivalent. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetGFIRCoeff()</td>
+
+    <td>@ref lime::SDRDevice::SetGFIRCoefficients "SetGFIRCoefficients()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetGFIRCoeff()</td>
+
+    <td>@ref lime::SDRDevice::GetGFIRCoefficients "GetGFIRCoefficients()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetGFIR()</td>
+
+    <td>@ref lime::SDRDevice::SetGFIR "SetGFIR()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_EnableCache()</td>
+
+    <td>@ref lime::SDRDevice::EnableCache "EnableCache()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Reset()</td>
+
+    <td>@ref lime::SDRDevice::Reset "Reset()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_ReadLMSReg()</td>
+
+    <td>@ref lime::SDRDevice::ReadRegister "ReadRegister()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_WriteLMSReg()</td>
+
+    <td>@ref lime::SDRDevice::WriteRegister "WriteRegister()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_ReadParam()</td>
+
+    <td>@ref lime::SDRDevice::GetParameter "GetParameter()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_WriteParam()</td>
+
+    <td>@ref lime::SDRDevice::SetParameter "SetParameter()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_ReadFPGAReg()</td>
+
+    <td>@ref lime::SDRDevice::ReadRegister "ReadRegister()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_WriteFPGAReg()</td>
+
+    <td>@ref lime::SDRDevice::WriteRegister "WriteRegister()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_ReadCustomBoardParam()</td>
+
+    <td>@ref lime::SDRDevice::CustomParameterRead "CustomParameterRead()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_WriteCustomBoardParam()</td>
+
+    <td>@ref lime::SDRDevice::CustomParameterWrite "CustomParameterWrite()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetClockFreq()</td>
+
+    <td>@ref lime::SDRDevice::GetClockFreq "GetClockFreq()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetClockFreq()</td>
+
+    <td>@ref lime::SDRDevice::SetClockFreq "SetClockFreq()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_VCTCXOWrite()</td>
+
+    <td>@ref lime::SDRDevice::MemoryWrite "MemoryWrite()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_VCTCXORead()</td>
+
+    <td>@ref lime::SDRDevice::MemoryRead "MemoryRead()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Synchronize()</td>
+
+    <td>@ref lime::SDRDevice::Synchronize "Synchronize()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GPIORead()</td>
+
+    <td>@ref lime::SDRDevice::GPIORead "GPIORead()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GPIOWrite()</td>
+
+    <td>@ref lime::SDRDevice::GPIOWrite "GPIOWrite()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GPIODirRead()</td>
+
+    <td>@ref lime::SDRDevice::GPIODirRead "GPIODirRead()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GPIODirWrite()</td>
+
+    <td>@ref lime::SDRDevice::GPIODirWrite "GPIODirWrite()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SetupStream()</td>
+
+    <td>@ref lime::SDRDevice::StreamSetup "StreamSetup()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_DestroyStream()</td>
+
+    <td>Not needed anymore. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_StartStream()</td>
+
+    <td>@ref lime::SDRDevice::StreamStart "StreamStart()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_StopStream()</td>
+
+    <td>@ref lime::SDRDevice::StreamStop "StreamStop()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_RecvStream()</td>
+
+    <td>@ref lime::SDRDevice::StreamRx "StreamRx()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetStreamStatus()</td>
+
+    <td>@ref lime::SDRDevice::StreamStatus "StreamStatus()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_SendStream()</td>
+
+    <td>@ref lime::SDRDevice::StreamTx "StreamTx()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_UploadWFM()</td>
+
+    <td>@ref lime::SDRDevice::UploadTxWaveform "UploadTxWaveform()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_EnableTxWFM()</td>
+
+    <td>No direct equivalent. </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetProgramModes()</td>
+
+    <td>memoryDevices in @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_Program()</td>
+
+    <td>@ref lime::SDRDevice::UploadMemory "UploadMemory()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetDeviceInfo()</td>
+
+    <td>@ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLibraryVersion()</td>
+
+    <td>@ref lime::GetLibraryVersion "GetLibraryVersion()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_GetLastErrorMessage()</td>
+
+    <td>@ref lime::GetLastErrorMessage "GetLastErrorMessage()" </td>
+
+    </tr>
+
+    <tr>
+
+    <td>LMS_RegisterLogHandler()</td>
+
+    <td>@ref lime::registerLogHandler "registerLogHandler()" </td>
+
+    </tr>
+
+    </table>
+
+*/
