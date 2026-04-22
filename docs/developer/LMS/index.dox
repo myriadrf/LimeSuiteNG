@@ -1,0 +1,9 @@
+/**
+ * @page lms_api_index LMS API (legacy)
+ * 
+ * <ul>
+ *  <li> @subpage lms_api_changes </li>
+ *  <li> @subpage lms_api_example </li>
+ * </ul>
+ * 
+ */

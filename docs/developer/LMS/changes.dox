@@ -1,0 +1,53 @@
+/**
+* @file changes.dox
+* @brief Documentation of functional differences in the LMS API.
+* */
+* /**
+* @page lms_api_changes LMS API changes
+* This is the table noting all the known differences to the functionality of the legacy LMS API included in Lime Suite NG compared to the previous iteration of LimeSuite (version 23.11.0).
+* 
+* 
+* <table>
+* <caption id="lms_changes_table">Table 1: LMS API functionality changes</caption>
+* <tr>
+* <th>LMS API function</th>
+* <th>Changes</th>
+* </tr>
+* <tr>
+* <td>LMS_GetSampleRate()</td>
+* <td>rf_Hz will always be the same as host_Hz (i.e. $2^{ratio}$ times smaller compared to the old API).</td>
+* 
+* 
+* </tr>
+* <tr>
+* <td>LMS_SetLOFrequency()</td>
+* <td>No functional difference once the bugs are fixed.</td>
+* 
+* 
+* </tr>
+* <tr>
+* <td>LMS_GetLOFrequency()</td>
+* <td>The NCO offset is currently not applied.</td>
+* 
+* 
+* </tr>
+* <tr>
+* <td>LMS_SetLPF()</td>
+* <td>Currently just sets the last saved LPF value from LMS_SetLPFBW call.</td>
+* 
+* 
+* </tr>
+* <tr>
+* <td>LMS_SetSampleRateDir()</td>
+* <td>Sets both Rx and Tx to the same sample rate.</td>
+* 
+* 
+* </tr>
+* <tr>
+* <td>LMS_GetNCOFrequency()</td>
+* <td>Negative values can be returned as well, use std::fabs() to fix that.</td>
+* 
+* 
+* </tr>
+* </table>
+*/

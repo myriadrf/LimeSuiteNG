@@ -1,0 +1,8 @@
+/**
+ * @page lms_api_example LMS API example
+ * 
+ * This page of the documentation shows the usage example using the old LMS API. 
+ * More examples written with this API can be found in the ``src/examples/legacy`` directory.
+ * 
+ * @include{lineno} /legacy/dualRXTX.cpp
+ */
