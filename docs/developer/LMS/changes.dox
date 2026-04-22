@@ -2,7 +2,8 @@
 * @file changes.dox
 * @brief Documentation of functional differences in the LMS API.
 * */
-* /**
+
+/**
 * @page lms_api_changes LMS API changes
 * This is the table noting all the known differences to the functionality of the legacy LMS API included in Lime Suite NG compared to the previous iteration of LimeSuite (version 23.11.0).
 * 
