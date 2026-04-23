@@ -1,0 +1,44 @@
+/**
+ * @page asan_page ASan
+ * 
+ * This file describes what ASan is and how to use it.
+ * 
+ * @section intro_sec Introduction
+ * 
+ * AddressSanitizer (ASan) is a fast memory error detector.
+ * 
+ * @section setup_sec Setup
+ * 
+ * To use ASan, add the `-fsanitize=address` option to both the compiling and linking steps.
+ * 
+ * This will compile the program with AddressSanitizer enabled.
+ * 
+ * @section usage_sec Usage
+ * 
+ * When running a program that is compiled with ASan enabled, whenever there are invalid memory accesses, such as out-of-bounds reads and writes, invalid frees, double frees, uses after free, and so on, there is a message printed out into the terminal the program is running in.
+ * Additionally, by default on Linux, it also enables <a href="https://clang.llvm.org/docs/LeakSanitizer.html">LeakSanitizer</a>, which checks for memory leaks at the end of the execution of the program, and prints any found leaks into the terminal.
+ * 
+ * @section limit_sec Limitations
+ * 
+ * <b></b>
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    Not a static analysis tool!}
+ * @else
+ * @warning Not a static analysis tool!
+ * @endif
+ * 
+ * Since ASan is not a static analyzer, it can only detect issues in the code that is being executed.
+ * That means any code paths that were not taken during the program execution are unchecked and may still contain problems.
+ * 
+ * @section info_sec More information
+ * 
+ * <ul>
+ *    <li> <a href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a> </li>
+ *    <li> <a href="https://github.com/google/sanitizers/wiki/AddressSanitizer">Google's AddressSanitizer wiki</a> </li>
+ *    <li> GCC's <a href="https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html">Program Instrumentation Options</a> </li>
+ * </ul>
+ */
