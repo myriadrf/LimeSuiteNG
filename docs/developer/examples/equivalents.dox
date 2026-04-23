@@ -195,11 +195,11 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_SetNCOIndex()</td>
- *            <td>No direct equivalent.</td>
+ *            <td> @ref lime::SDRDevice::SetNCOIndex "SetNCOIndex()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_GetNCOIndex()</td>
- *            <td>No direct equivalent.</td>
+ *            <td> @ref lime::SDRDevice::GetNCOIndex "GetNCOIndex()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetGFIRCoeff()</td>
@@ -295,7 +295,7 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_DestroyStream()</td>
- *            <td>Not needed anymore.</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_StartStream()</td>
