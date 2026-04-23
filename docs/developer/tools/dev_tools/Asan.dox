@@ -3,7 +3,7 @@
  * 
  * This file describes what ASan is and how to use it.
  * 
- * @section intro_sec Introduction
+ * @section asan_intro_sec Introduction
  * 
  * AddressSanitizer (ASan) is a fast memory error detector.
  * 
@@ -34,7 +34,7 @@
  * Since ASan is not a static analyzer, it can only detect issues in the code that is being executed.
  * That means any code paths that were not taken during the program execution are unchecked and may still contain problems.
  * 
- * @section info_sec More information
+ * @section asan_info_sec More information
  * 
  * <ul>
  *    <li> <a href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a> </li>

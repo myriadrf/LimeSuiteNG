@@ -4,5 +4,6 @@
  * This section contains information about third party developer tools and helpful information for development of Lime Suite NG suite.
  * 
  * @subpage asan_page
+ * @subpage debian_packaging
  * 
  */
