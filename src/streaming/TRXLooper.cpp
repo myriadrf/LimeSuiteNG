@@ -1567,7 +1567,8 @@ uint32_t TRXLooper::StreamMetaToStreamTxMeta(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+            // Preserve sample-tick timestamp semantics when converting generic StreamMeta.
+            txmeta.timestamp = Timespec(0, meta->timestamp, mConfig.hintSampleRate);
         else
             txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
