@@ -15,5 +15,6 @@
  * 
  * More about setup and conda recipes:
  * 
- * @subpage radioconda_env
+ * @subpage radioconda_env  
+ * @subpage conda_limesuiteng_recipe  
  */
