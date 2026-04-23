@@ -27,14 +27,14 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_GetNumChannels()</td>
- *            <td>lime::SDRDevice::RFSOCDescriptor::channelCount obtained from rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+ *            <td> lime::RFSOCDescriptor::channelCount obtained from rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_EnableChannel()</td>
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::EnableChannel "EnableChannel()" </li>
- *                    <li>enabled in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>enabled in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -43,7 +43,7 @@
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetSampleRate "SetSampleRate()" </li>
- *                    <li>sampleRate in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>sampleRate in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -53,14 +53,14 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_GetSampleRateRange()</td>
- *            <td>samplingRateRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+ *            <td>samplingRateRange in lime::RFSOCDescriptor via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetLOFrequency()</td>
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetFrequency "SetFrequency()" </li>
- *                    <li>centerFrequency in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>centerFrequency in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -70,18 +70,18 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_GetLOFrequencyRange()</td>
- *            <td>frequencyRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+ *            <td>frequencyRange in lime::RFSOCDescriptor via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_GetAntennaList()</td>
- *            <td>pathNames in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+ *            <td>pathNames in lime::RFSOCDescriptor via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetAntenna()</td>
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetAntenna "SetAntenna()" </li>
- *                    <li>path in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>path in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -91,7 +91,7 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_GetAntennaBW()</td>
- *            <td>antennaRange in rfSOC via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
+ *            <td>antennaRange in lime::RFSOCDescriptor via @ref lime::SDRDevice::GetDescriptor "GetDescriptor()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetNormalizedGain()</td>
@@ -102,7 +102,7 @@
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetGain "SetGain()" </li>
- *                    <li>gain in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>gain in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -119,7 +119,7 @@
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetLowPassFilter "SetLowPassFilter()" </li>
- *                    <li>lpf in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>lpf in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -133,11 +133,11 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_SetLPF()</td>
- *            <td>lpf in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
+ *            <td>lpf in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetGFIRLPF()</td>
- *            <td>gfir in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
+ *            <td>gfir in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_Calibrate()</td>
@@ -156,7 +156,7 @@
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetTestSignal "SetTestSignal()" </li>
- *                    <li>testSignal in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
+ *                    <li>testSignal in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()" </li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -170,14 +170,14 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_SetSampleRateDir()</td>
- *            <td>Loop for every channel and set sampleRate in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()"</td>
+ *            <td>Loop for every channel and set sampleRate in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()"</td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SetNCOFrequency()</td>
  *            <td>
  *                <ul>
  *                    <li>@ref lime::SDRDevice::SetNCOFrequency "SetNCOFrequency()"</li>
- *                    <li>NCOoffset in lime::SDRDevice::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()". <b>Note:</b> offset from center frequency.</li>
+ *                    <li>NCOoffset in lime::SDRConfig::channel, passed to @ref lime::SDRDevice::Configure "Configure()". <b>Note:</b> offset from center frequency.</li>
  *                </ul>
  *            </td>
  *        </tr>
@@ -247,11 +247,11 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_ReadCustomBoardParam()</td>
- *            <td>@ref lime::SDRDevice::CustomParameterRead "CustomParameterRead()"</td>
+ *            <td> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_WriteCustomBoardParam()</td>
- *            <td>@ref lime::SDRDevice::CustomParameterWrite "CustomParameterWrite()"</td>
+ *            <td> @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, const std::string&) "GetParameter()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_GetClockFreq()</td>
@@ -291,7 +291,7 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_SetupStream()</td>
- *            <td>@ref lime::SDRDevice::StreamSetup "StreamSetup()"</td>
+ *            <td> @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig& , uint8_t moduleIndex) "StreamCreate()" </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_DestroyStream()</td>
@@ -299,23 +299,23 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_StartStream()</td>
- *            <td>@ref lime::SDRDevice::StreamStart "StreamStart()"</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_StopStream()</td>
- *            <td>@ref lime::SDRDevice::StreamStop "StreamStop()"</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_RecvStream()</td>
- *            <td>@ref lime::SDRDevice::StreamRx "StreamRx()"</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_GetStreamStatus()</td>
- *            <td>@ref lime::SDRDevice::StreamStatus "StreamStatus()"</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SendStream()</td>
- *            <td>@ref lime::SDRDevice::StreamTx "StreamTx()"</td>
+ *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_UploadWFM()</td>

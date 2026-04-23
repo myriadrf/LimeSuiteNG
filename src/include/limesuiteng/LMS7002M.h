@@ -286,6 +286,7 @@ class LIME_API LMS7002M
     /**
      * @brief Set transmitter analog Low Pass Filter.
      * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
+     * @param adjust_bb_gain enable auto baseband gain adjustment. Enabled by default.
      * @return The status of the operation
      */
     OpStatus SetTxLPF(double rfBandwidth_Hz, bool adjust_bb_gain = true);
