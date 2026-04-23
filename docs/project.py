@@ -1,7 +1,7 @@
 # Copyright date and release version should be updated accordingly!
 
 project = 'Lime Suite NG'
-copyright = '2021-2025 MyriadRF Contributors'
+copyright = '2021-2026 MyriadRF Contributors'
 author = 'Lime Microsystems'
 release = 'latest'
 
@@ -30,4 +30,4 @@ intersphinx_external = [
 archived = False
 
 # When True internal intersphinx targets point at stage.myriadrf.org.
-staging = True
+staging = False
