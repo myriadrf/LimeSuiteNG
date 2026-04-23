@@ -1,0 +1,17 @@
+/**
+ * @page gui_tool GUI tool
+ * 
+ * ``limeGUI`` provides graphical user interface for interacting with the device configuration and data streaming.
+ * 
+ * When connected to the device, basic configuration options are presented, entering desired parameters and clicking "Submit" will set up device into working state.
+ * 
+ * @image{inline} html limeGUI.png
+ * 
+ * When device is in configured state, GUI FFT module can be used to inspect the receiver streaming data in real time.
+ * 
+ * @image{inline} html fftview.png
+ * 
+ * For advanced configuration all parameters can be controlled directly by selecting the desired device's module.
+ * 
+ * @image{inline} html lms7002view.png
+ */
