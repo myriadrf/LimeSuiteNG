@@ -23,14 +23,7 @@
  * 
  * @section ubsan_limits Limitations
  * 
- * @if RST_SUPPORT
- * @embedRstVerbatim{
- * .. admonition:: Warning
- * 
- *    Not a static analysis tool!}
- * @else
- * @warning Not a static analysis tool!
- * @endif
+ * @subsection ubsan_not_static Not a static analysis tool
  * 
  * Since UBSan is not a static analyzer, it can only detect issues in the code that is being executed.
  * No UBSan output only means that there have been no issues detected only

@@ -91,7 +91,7 @@
  * 
  * The file contains MD5 checksums for every file in the ``data.tar`` archive.
  * 
- * @subsubsection Scripts
+ * @subsubsection deb_scripts preinst prerm postinst preinst
  * 
  * The scripts to run during the pre-installation (``preinst``), post-installation (``postinst``),
  * pre-removal (``prerm``) and post-removal (``postrm``) stages.

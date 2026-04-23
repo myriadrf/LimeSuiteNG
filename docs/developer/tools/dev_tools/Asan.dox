@@ -20,16 +20,7 @@
  * 
  * @section limit_sec Limitations
  * 
- * <b></b>
- * 
- * @if RST_SUPPORT
- * @embedRstVerbatim{
- * .. admonition:: Warning
- * 
- *    Not a static analysis tool!}
- * @else
- * @warning Not a static analysis tool!
- * @endif
+ * @subsection asan_not_static Not a static analysis tool
  * 
  * Since ASan is not a static analyzer, it can only detect issues in the code that is being executed.
  * That means any code paths that were not taken during the program execution are unchecked and may still contain problems.
