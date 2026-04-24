@@ -18,4 +18,5 @@
  * @subpage radioconda_env  
  * @subpage conda_limesuiteng_recipe  
  * @subpage gnuradio-limesuiteng_recipe
+ * @subpage radioconda_metapkg_recipe
  */
