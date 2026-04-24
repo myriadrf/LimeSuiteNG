@@ -20,11 +20,11 @@
  * porting guidelines are provided in the ``Lime Suite NG library reference`` page.
  * 
  * <ol>
- *     <li> @subpage diagrams_intro </li>
- *     <li> @subpage limesuiteng_api_ref_top </li>
- *     <li> @subpage misc_tools </li>
- *     <li> @subpage software_distribution </li>
- *     <li> @subpage lms_api_index </li>
+ *     <li> @ref diagrams_intro </li>
+ *     <li> @ref limesuiteng_api_ref_top </li>
+ *     <li> @ref misc_tools </li>
+ *     <li> @ref software_distribution </li>
+ *     <li> @ref lms_api_index </li>
  * </ol>
  * 
  */
