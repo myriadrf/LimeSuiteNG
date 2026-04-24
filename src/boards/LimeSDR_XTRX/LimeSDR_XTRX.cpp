@@ -552,7 +552,7 @@ OpStatus LimeSDR_XTRX::GNSSTest(OEMTestReporter& reporter, TestData& results)
             return OpStatus::Error;
         }
     }
-    else if (gw.version == 2) // litex based gateware
+    else if (gw.version == 2 || gw.version == 3) // litex based gateware
     {
         std::string path = mStreamPort->GetPathName();
         int flags = O_RDWR | O_NOCTTY | O_CLOEXEC;
