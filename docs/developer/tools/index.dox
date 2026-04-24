@@ -1,9 +1,10 @@
 /**
- * @page misc_tools Tools
+ * @page dev_tools_index Developer Tools
  * 
- * This section contains information about third party tools that can be used to develop Lime Suite NG software and Lime Suite NG provided engineering tools. 
+ * This section contains information about third party developer tools and helpful information for development of Lime Suite NG suite.
  * 
+ * @subpage asan_page
+ * @subpage ubsan
+ * @subpage valgrind
  * 
- * @subpage dev_tools_index  
- * @subpage suite_tools_index  
  */

@@ -6,8 +6,8 @@
  * This developer guide is intended for users who seek to implement the Lime Suite NG library into custom applications or want to contribute to the development and
  * distribution of Lime Suite NG and its software components. 
  * 
- * Developers that seek to implement Lime Suite NG into custom applications are recommended to review the ``Introduction`` and ``Lime Suite NG library reference`` pages.
- * ``Introduction`` page provides diagrams, which provide information about the communication flow of Lime Suite NG library. ``Lime Suite NG library reference`` page provides 
+ * Developers that seek to implement Lime Suite NG into custom applications are recommended to review the ``Introduction`` and ``Library`` pages.
+ * ``Introduction`` page provides diagrams, which provide information about the communication flow of Lime Suite NG library. ``Library`` page provides 
  * reference to the library API, development guide for beginner and experienced developers as well as other important development information.
  * 
  * Developers that seek to contribute to the development and distribution of Lime Suite NG are recommended to review the ``Tools`` and ``Distribution`` pages. ``Tools`` page 
@@ -17,13 +17,15 @@
  * GUI tool page is intended for engineers who seek to use a Lime Suite NG provided advanced software tool for advanced LimeSDR device configurations.
  * 
  * ``LMS API (Legacy)`` page provides a limited support for legacy software. It is recommend to use the new Lime Suite NG library and its API. Some LMS API to Lime Suite NG API 
- * porting guidelines are provided in the ``Lime Suite NG library reference`` page.
+ * porting guidelines are provided in the ``Library`` page.
  * 
+ * Topics of interest:
  * <ol>
  *     <li> @ref diagrams_intro </li>
- *     <li> @ref limesuiteng_api_ref_top </li>
- *     <li> @ref misc_tools </li>
+ *     <li> @ref limesuiteng_api_ref_top "Library" </li>
+ *     <li> @ref dev_tools_index "Tools" </li>
  *     <li> @ref software_distribution </li>
+ *     <li> @ref gui_tool_index </li>
  *     <li> @ref lms_api_index </li>
  * </ol>
  * 
