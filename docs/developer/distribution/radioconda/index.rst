@@ -10,3 +10,4 @@ Conda packaging
    condaMetaPkgRecipe.rst
 
 .. doxygenpage:: conda_index
+   :content-only:

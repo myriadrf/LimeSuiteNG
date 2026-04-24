@@ -9,3 +9,4 @@ Developer Tools
    Valgrind
 
 .. doxygenpage:: dev_tools_index
+   :content-only:

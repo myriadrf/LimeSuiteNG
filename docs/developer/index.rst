@@ -7,8 +7,8 @@ Developer Guide
    :glob:
    :hidden:
 
-   limesuiteng_api/index
-   tools/index
+   Library <limesuiteng_api/index>
+   Tools <tools/index>
    distribution/index
    gui_tool/GUI.rst
    LMS/index

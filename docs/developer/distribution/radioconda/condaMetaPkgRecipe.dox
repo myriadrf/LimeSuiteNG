@@ -32,14 +32,10 @@
  * @section metapkg_requirements Metapackage requirements
  *  
  *  All metapackage tools and dependencies required to build the Lime Suite NG project and it's components must be specified in ``meta.yaml`` top ``requirements:`` section using 
- * ``build:``, ``host:`` and ``run:`` sub-sections. Metapackage recipe segment:
+ * ``build:``, ``host:`` and ``run:`` sub-sections. Metapackge section ``outputs:`` is used to organize built components into separate sub-packages with their own independent requirements. 
+ * Example of ``liblimesuiteng-dev`` sub-package description:
  * 
- * @dontinclude{lineno} meta.yaml
- * @skip package:
- * @until outputs:
- * 
- * Metapackge section ``outputs:`` is used to organize built components into separate sub-packages with their own independent requirements. Example of ``liblimesuiteng-dev`` sub-package description:
- *  
+ * @dontinclude{lineno} meta.yaml 
  * @skip - name: liblimesuiteng-dev
  * @until test:
  *  

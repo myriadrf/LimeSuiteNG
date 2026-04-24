@@ -1,5 +1,5 @@
 /**
- * @page valgrind Valgrind
+ * @page valgrind_page Valgrind
  * 
  * This file describes what Valgrind is, how to set it up and how to use it.
  * 
