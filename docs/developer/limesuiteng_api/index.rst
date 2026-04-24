@@ -1,5 +1,5 @@
-Lime Suite NG library API reference
-===================================
+Lime Suite NG library reference
+===============================
 
 .. toctree::
    :maxdepth: 1

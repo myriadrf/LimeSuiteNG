@@ -1,5 +1,5 @@
 /**
- * @page limesuiteng_api_ref_top LimeSuiteNG API reference v1.0.0
+ * @page limesuiteng_api_ref_top Lime Suite NG library reference
  *
  * @section intro Introduction
  *
@@ -10,7 +10,7 @@
  *
  * This documentation does not provide library installation steps. For more information about 
  * the library installation for different platforms and other components of LimeSuiteNG suite, 
- * visit the main <A HREF="https://limesuiteng.myriadrf.org/">  LimeSuiteNG suite documentation</A> page.
+ * visit the main <A href="https://limesuiteng.myriadrf.org/">  LimeSuiteNG suite documentation</A> page.
  * 
  * 
  * @section lib_feat_section Library features
@@ -38,14 +38,16 @@
  * 
  * If you are completely new to the LimeSuiteNG library and API or looking for information about SDR device control and configuration, it is recommended to visit
  * @ref guide_book_top "library API guide book page". Library Guide book page provides code examples, explanations and other information about different library API members.
- * If you only need to reference library API member list, then @ref api "check out the sorted list of public API members".
+ * If you only need to reference library API member list, then @ref api "check out the sorted list of public API members". Otherwise, pleas refer to the list of topics 
+ * provided below.
  * 
- * <ul>
- *  <li> @subpage api </li>
- *  <li> @subpage guide_book_top </li>
- *  <li> @subpage common_parameters </li>
- *  <li> @subpage porting_guide </li>
- *  <li> @subpage sdrdev_api_example </li>
- * </ul>
+ * Topics of interest:
+ * <ol>
+ *     <li> @ref api </li>
+ *     <li> @ref guide_book_top </li>
+ *     <li> @ref common_parameters </li>
+ *     <li> @ref porting_guide </li>
+ *     <li> @ref sdrdev_api_example </li>
+ * </ol>
  * 
  */

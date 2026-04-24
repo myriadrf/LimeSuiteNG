@@ -1,14 +1,16 @@
 Developer Guide
 ===============
 
-This section contains information about development process and developer tools.
+.. TODO: include the diagram topic index in to toctree
 
 .. toctree::
    :glob:
-   :maxdepth: 1
+   :hidden:
 
-   examples/index
-   LMS/index
-   doxygen/index
+   limesuiteng_api/index
    tools/index
    radioconda/index
+   LMS/index
+
+.. doxygenpage:: index
+   :content-only:

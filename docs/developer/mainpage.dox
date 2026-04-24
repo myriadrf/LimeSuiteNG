@@ -1,6 +1,30 @@
 /**
  * @mainpage Developer Guide 
  * 
- * This section contains information about development process and developer tools.
+ * @section dev_guide_summary Summary
+ *
+ * This developer guide is intended for users who seek to implement the Lime Suite NG library into custom applications or want to contribute to the development and
+ * distribution of Lime Suite NG and its software components. 
+ * 
+ * Developers that seek to implement Lime Suite NG into custom applications are recommended to review the ``Introduction`` and ``Lime Suite NG library reference`` pages.
+ * ``Introduction`` page provides diagrams, which provide information about the communication flow of Lime Suite NG library. ``Lime Suite NG library reference`` page provides 
+ * reference to the library API, development guide for beginner and experienced developers as well as other important development information.
+ * 
+ * Developers that seek to contribute to the development and distribution of Lime Suite NG are recommended to review the ``Tools`` and ``Distribution`` pages. ``Tools`` page 
+ * provides information about various development tools that can be used to increase efficiency of Lime Suite NG development process. ``Distribution`` page provides information 
+ * about packaging and distribution of Lime Suite NG and its software components.
+ * 
+ * GUI tool page is intended for engineers who seek to use a Lime Suite NG provided advanced software tool for advanced LimeSDR device configurations.
+ * 
+ * ``LMS API (Legacy)`` page provides a limited support for legacy software. It is recommend to use the new Lime Suite NG library and its API. Some LMS API to Lime Suite NG API 
+ * porting guidelines are provided in the ``Lime Suite NG library reference`` page.
+ * 
+ * <ol>
+ *     <li> @subpage diagrams_intro </li>
+ *     <li> @subpage limesuiteng_api_ref_top </li>
+ *     <li> @subpage misc_tools </li>
+ *     <li> @subpage conda_index </li>
+ *     <li> @subpage lms_api_index </li>
+ * </ol>
  * 
  */
