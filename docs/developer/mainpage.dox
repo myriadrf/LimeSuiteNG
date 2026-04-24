@@ -14,10 +14,10 @@
  * provides information about various development tools that can be used to increase efficiency of Lime Suite NG development process. ``Distribution`` page provides information 
  * about packaging and distribution of Lime Suite NG and its software components.
  * 
- * GUI tool page is intended for engineers who seek to use a Lime Suite NG provided advanced software tool for advanced LimeSDR device configurations.
+ * GUI tool page is intended for engineers who seek to use a Lime Suite NG provided software tool for advanced LimeSDR device configurations.
  * 
- * ``LMS API (Legacy)`` page provides a limited support for legacy software. It is recommend to use the new Lime Suite NG library and its API. Some LMS API to Lime Suite NG API 
- * porting guidelines are provided in the ``Library`` page.
+ * ``LMS API (Legacy)`` page provides a limited documentation support for legacy software. It is recommend to use the new Lime Suite NG library and its API. Some LMS API to 
+ * Lime Suite NG API porting guidelines are provided in the ``Library`` page.
  * 
  * Topics of interest:
  * <ol>

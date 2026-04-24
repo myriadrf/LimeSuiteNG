@@ -1,6 +1,8 @@
 /**
  * @page gui_tool_index GUI tool
  * 
+ * @section gui_summary Summary
+ * 
  * ``limeGUI`` provides graphical user interface for interacting with the device configuration and data streaming.
  * 
  * When connected to the device, basic configuration options are presented, entering desired parameters and clicking "Submit" will set up device into working state.

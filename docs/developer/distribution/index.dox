@@ -1,11 +1,13 @@
 /**
  * @page software_distribution Distribution
  * 
- * @section Summary
+ * @section sw_dist_summary Summary
  * 
  * This page provides links to references that provide information about software packaging and distribution for various software distribution platforms.
  * 
- * @subpage conda_index  
- * @subpage debian_packaging
- * 
+ * Topics of interest:
+ * <ol>
+ *     <li> @subpage conda_index </li>
+ *     <li> @subpage debian_packaging "Debian packaging" </li>
+ * </ol>
  */

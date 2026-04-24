@@ -9,7 +9,8 @@ Developer Guide
 
    limesuiteng_api/index
    tools/index
-   radioconda/index
+   distribution/index
+   gui_tool/GUI
    LMS/index
 
 .. doxygenpage:: index

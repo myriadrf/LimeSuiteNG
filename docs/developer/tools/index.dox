@@ -1,10 +1,14 @@
 /**
  * @page dev_tools_index Developer Tools
  * 
+ * @section dev_tools_summary Summary
+ * 
  * This section contains information about third party developer tools and helpful information for development of Lime Suite NG suite.
  * 
- * @subpage asan_page
- * @subpage ubsan
- * @subpage valgrind
- * 
+ * Topics of interest:
+ * <ol>
+ *     <li> @subpage asan_page </li>
+ *     <li> @subpage ubsan </li>
+ *     <li> @subpage valgrind </li>
+ * </ol>
  */
