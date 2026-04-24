@@ -4,7 +4,7 @@ Developer Tools
 .. toctree::
    :hidden:
 
-   ASan
+   Asan
    UBSan
    Valgrind
 

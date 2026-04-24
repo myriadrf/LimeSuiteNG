@@ -4,7 +4,7 @@ Radioconda package
 ##################
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
+   Check out radioconda and conda environment setup process.
 
 Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
 

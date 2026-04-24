@@ -9,7 +9,7 @@ Lime Suite NG library reference
    Library guide book <related_pages/library_guide_book/index.rst>
    Common API parameters <related_pages/common_params>
    related_pages/equivalents.rst
-   related_pages/examples.rst
+   related_pages/example.rst
    Unsorted API member list <api_member_list/index>
 
 .. doxygenpage:: limesuiteng_api_ref_top

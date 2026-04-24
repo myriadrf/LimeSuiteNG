@@ -10,7 +10,7 @@ Developer Guide
    limesuiteng_api/index
    tools/index
    distribution/index
-   gui_tool/GUI
+   gui_tool/GUI.rst
    LMS/index
 
 .. doxygenpage:: index
