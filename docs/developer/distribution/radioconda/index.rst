@@ -1,18 +1,12 @@
-Conda
-=====
-
-This section provides necessary information for maintaining conda packages and it's recipes. Before publishing packages it is recommended to test build and run them on a local machine. To set up package build and test environment, please check out :ref:`radioconda-setup-ref` setup page which guides through radioconda prompt and conda environment setup. Currently Lime Suite NG project contains 3 conda recipes: recipe to build gnuradio-limesuiteng package, recipe to build basic Lime Suite NG components (libraries, utilities and binaries) and a Lime Suite NG metapackage recipe. The gnuradio-limesuiteng and Lime Suite NG component conda recipes are made for experimental purposes to quickly build and test individual Lime Suite NG component packages with different dependency versions. Lime Suite NG metapackage conda recipe is the main recipe that should be used for public package updates and releases. Metapackage recipe builds entire Lime Suite NG project with all possible components enabled and organizes built components into separate sub-packages. Recipes are stored in the following directories relative to the project root directory:
-
-#. ``.conda\recipe`` - Minimal Lime Suite NG package recipe (libraries, utilities and binaries) .
-#. ``.conda\metapkg`` - Lime Suite NG metapackage recipe.
-#. ``plugins\gr-limesuiteng\.conda\recipe`` - gnuradio-limesuiteng package recipe.
-
-More about setup and conda recipes:
+Conda packaging
+===============
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    radioconda.rst
    condaSuiteRecipe.rst
    condaPluginRecipe.rst
    condaMetaPkgRecipe.rst
+
+.. doxygenpage:: conda_index
