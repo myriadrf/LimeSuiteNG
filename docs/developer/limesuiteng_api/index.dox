@@ -42,6 +42,8 @@
  * 
  * <ul>
  *  <li> @subpage api </li>
+ *  <li> @subpage porting_guide </li>
+ *  <li> @subpage sdrdev_api_example </li>
  *  <li> @subpage common_parameters </li>
  *  <li> @subpage guide_book_top </li>
  * </ul>

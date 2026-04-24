@@ -1,9 +1,0 @@
-/**
- * @page sdrdev_api_index SDRDevice API
- * 
- * <ul>
- *  <li> @subpage porting_guide </li>
- *  <li> @subpage sdrdev_api_example </li>
- * </ul>
- * 
- */
