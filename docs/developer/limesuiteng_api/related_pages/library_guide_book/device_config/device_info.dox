@@ -7,7 +7,7 @@
  * 
  * @section device_info_summary Summary
  * 
- * Initial enumeration of device provides essential information about connected SDR devices required for connection. Once the SDR device is registered and connected to, additional information about the device can retrieved.
+ * Initial enumeration of device provides essential information about connected SDR devices required for connection. Once the SDR device is registered and connected to, additional information about the device can be retrieved.
  * Additional information allows to view device information about onboard modules, check sensors, device clock stability and GPS status. @ref device_info_example "Example code" for retrieving various information about the 
  * SDR device is provided at the end of the page.
  * 
