@@ -8,7 +8,7 @@
  * Topics of interest:
  * <ol>
  *     <li> @subpage asan_page </li>
- *     <li> @subpage ubsan </li>
- *     <li> @subpage valgrind </li>
+ *     <li> @subpage ubsan_page </li>
+ *     <li> @subpage valgrind_page </li>
  * </ol>
  */
