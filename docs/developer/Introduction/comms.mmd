@@ -1,32 +1,4 @@
 flowchart LR
-    subgraph End devices
-        subgraph USB devices
-            subgraph SDR["LimeSDR components"]
-                LMS7002M_SDR[LMS7002M]
-                FPGA_SDR[FPGA]
-            end
-            subgraph SDRMini["LimeSDR-Mini components"]
-                LMS7002M_Mini[LMS7002M]
-                FPGA_Mini[FPGA]
-            end
-        end
-        subgraph PCIe devices
-            subgraph X3[LimeSDR X3 components]
-                FPGA_X3[FPGA]
-                LMS7002M_X3["LMS7002M"]
-            end
-            subgraph XTRX[LimeSDR XTRX components]
-                FPGA_XTRX["FPGA"]
-                LMS7002M_XTRX["LMS7002M"]
-            end
-            subgraph MMX8[LimeSDR MMX8 components]
-                ADF4002_MMX8["ADF4002"]
-                FPGA_MMX8["FPGA"]
-                LMS7002M_MMX8["LMS7002M"]
-            end
-        end
-    end
-
     subgraph Communication libraries
         subgraph USB
             subgraph UNIX
@@ -54,9 +26,6 @@ flowchart LR
     ISerialPort-.->PCIE_CSR_Pipe
     PCIE_CSR_Pipe-->LimePCIe-->limepcie
 
-    limepcie-->|XTRX|XTRX
-    limepcie-->|X3|X3
-    limepcie-->|MMX8|MMX8
 
     %% USB
     IComms-.->LMS64C_FPGA_Over_USB & LMS64C_LMS7002M_Over_USB-->USB_CSR_Pipe
@@ -66,9 +35,6 @@ flowchart LR
     USB_CSR_Pipe_SDR-->FX3
     USB_CSR_Pipe_Mini-->FT601
 
-    FX3-->|On Windows|Cypress-->SDR
-    FT601-->|On Windows|FTD3XX-->SDRMini
+    FX3-->|On Windows|Cypress
+    FT601-->|On Windows|FTD3XX
     FX3 & FT601-->|On UNIX|libusb
-
-    libusb-->|Using FT601|SDRMini 
-    libusb-->|Using FX3|SDR
