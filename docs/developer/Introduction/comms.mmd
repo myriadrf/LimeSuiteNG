@@ -14,3 +14,32 @@ flowchart LR
         end
     end
 
+    subgraph Lime Suite NG library
+        direction LR
+        subgraph Virtual interfaces
+            ISerialPort
+        end
+        subgraph Interface implemnetations
+            PCIE_CSR_Pipe
+            FTDI_SerialPort
+            FX3_SerialPort
+        end
+        subgraph Communication library ports
+            LimePCIe
+            FT601
+            FX3
+        end
+    end
+
+    %% Lime Suite NG library subgraph interconnections
+    ISerialPort-.->PCIE_CSR_Pipe & FTDI_SerialPort & FX3_SerialPort
+    PCIE_CSR_Pipe-->LimePCIe
+    FTDI_SerialPort-->FT601
+    FX3_SerialPort-->FX3
+
+    %% Global interconnections
+    LimePCIe-->limepcie
+    FT601-- Windows -->FTD3XX
+    FX3-- Windows -->Cypress
+    FT601-- Unix -->libusb
+    FX3-- Unix -->libusb
