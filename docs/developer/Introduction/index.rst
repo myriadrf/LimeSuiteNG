@@ -1,9 +1,9 @@
 Introduction
 ============
 
-This is the section containing all the diagrams graphs.
-
 .. toctree::
-   :glob:
+   :hidden:
 
-   *
+   comms.rst
+
+.. doxygenpage:: diagrams_intro
