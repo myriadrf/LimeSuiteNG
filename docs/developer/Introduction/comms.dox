@@ -13,10 +13,10 @@
  * 
  * @section ctrl_comms_summary Summary
  * 
- * Lime Suite NG library controls supported SDR devices via a set of virtual interfaces.
- * Most of the SDR device control is performed via the virtual serial interface - 
- * ``ISerialPort``. The virtual serial interface acts as a generic interface that diverts 
- * control to the appropriate implementation of a serial port.
+ * Lime Suite NG library eanbles the control of supported SDR devices via a set of virtual 
+ * interfaces. Most of the SDR device control is performed via the virtual serial 
+ * interface - ``ISerialPort``. The virtual serial interface acts as a generic interface 
+ * that diverts control to the appropriate implementation of a serial port.
  * 
  * Currently, virtual serial interface is able to divert control to three types of 
  * serial interfaces:

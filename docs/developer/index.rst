@@ -7,6 +7,7 @@ Developer Guide
    :glob:
    :hidden:
 
+   Introduction <Introduction/index>
    Library <limesuiteng_api/index>
    Tools <tools/index>
    distribution/index

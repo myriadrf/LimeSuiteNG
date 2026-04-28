@@ -7,3 +7,4 @@ Introduction
    comms.rst
 
 .. doxygenpage:: diagrams_intro
+   :content-only:
