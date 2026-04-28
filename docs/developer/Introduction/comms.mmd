@@ -14,27 +14,3 @@ flowchart LR
         end
     end
 
-    %% PCIe
-    ISPI-.->LMS64C_ADF_Over_PCIe_MMX8 & IComms & SlaveSelectShim
-    IComms-.->LMS64C_LMS7002M_Over_PCIe & LMS64C_FPGA_Over_PCIe & LMS64C_LMS7002M_Over_PCIe_MMX8 & LMS64C_FPGA_Over_PCIe_MMX8
-
-    SlaveSelectShim-->|X3 only|IComms
-
-    LMS64C_LMS7002M_Over_PCIe & LMS64C_FPGA_Over_PCIe-->|X3 & XTRX|PCIE_CSR_Pipe
-    LMS64C_LMS7002M_Over_PCIe_MMX8 & LMS64C_ADF_Over_PCIe_MMX8 & LMS64C_FPGA_Over_PCIe_MMX8-->|MMX8|PCIE_CSR_Pipe
-
-    ISerialPort-.->PCIE_CSR_Pipe
-    PCIE_CSR_Pipe-->LimePCIe-->limepcie
-
-
-    %% USB
-    IComms-.->LMS64C_FPGA_Over_USB & LMS64C_LMS7002M_Over_USB-->USB_CSR_Pipe
-    ISerialPort-.->USB_CSR_Pipe
-
-    USB_CSR_Pipe-.->USB_CSR_Pipe_Mini & USB_CSR_Pipe_SDR
-    USB_CSR_Pipe_SDR-->FX3
-    USB_CSR_Pipe_Mini-->FT601
-
-    FX3-->|On Windows|Cypress
-    FT601-->|On Windows|FTD3XX
-    FX3 & FT601-->|On UNIX|libusb
