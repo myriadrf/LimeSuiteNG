@@ -13,25 +13,29 @@
  * 
  * @section ctrl_comms_summary Summary
  * 
- * Lime Suite NG library eanbles the control of supported SDR devices via a set of virtual 
- * interfaces. Most of the SDR device control is performed via the virtual serial 
- * interface - ``ISerialPort``. The virtual serial interface acts as a generic interface 
- * that diverts control to the appropriate implementation of a serial port.
+ * All supported SDR device class implementations use the virtual serial interface - ``ISerialPort``. 
+ * The virtual serial port declares the base functions used for communication with the actual device.
  * 
- * Currently, virtual serial interface is able to divert control to three types of 
- * serial interfaces:
+ * When a supported SDR device is registered using Lime Suite NG API, the virtual serial interface of 
+ * created SDR device object is initialized with a device specific serial interface implementation, which 
+ * overrides the base functions of the virtual serial interface.
+ * 
+ * Currently supported implementations of the virtual serial interface:
  * 
  * - ``PCIE_CSR_Pipe`` - serial interface for communicating with PCIe interface based SDR devices.
  * - ``FTDI_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FT6xx USB chip.
- * - ``FX3_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FX3 USB chip.
+ * - ``FX3_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FX3 USB chip. 
  * 
- * When a supported SDR device is registered using Lime Suite NG API, the virtual serial interface of 
- * created SDR device object is initialized with a specific serial interface implementation, which 
- * overrides the base functions of the virtual serial interface.
- * 
- * Each implementation of a serial interface communicates with a device through a communication 
+ * Each implementation of the serial interface communicates with a device through a communication 
  * library port. A communication library port wraps the API interface of a specific 
  * communication library, that communicates with a device driver and thus with a registered 
  * SDR device.
+ * 
+ * @subsection  ctrl_comms_fwch_legend Flowchart legend
+ * 
+ * Link definitions:
+ * 
+ * - Dotted-line arrow - Inheritance.
+ * - Solid-line arrow - Access call.
  * 
  */
