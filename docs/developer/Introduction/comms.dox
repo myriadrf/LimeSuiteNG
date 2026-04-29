@@ -35,7 +35,7 @@
  * 
  * Link definitions:
  * 
- * - Dotted-line arrow - Inheritance.
+ * - Dotted-line arrow - Inheritance. (Arrow head points to the child)
  * - Solid-line arrow - Access call.
  * 
  */
