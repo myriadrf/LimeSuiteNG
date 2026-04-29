@@ -1,0 +1,65 @@
+---
+    config:
+        class:
+            hideEmptyMembersBox: True
+---
+
+classDiagram
+    direction LR
+
+    class SDRDevice {<<Interface>>}
+    class LMS7002M {<<Interface>>}
+
+    class LimeSDR_Mini
+    class LimeSDR
+    class LimeSDR_XTRX
+    class LimeSDR_X3
+    class sSDR
+
+    class FPGA_Mini
+    class FPGA_X3
+    class FPGA_XTRX
+
+    class ISerialPort{<<Interface>>}
+    %% class IUSB{<<Interface>>}
+    class FPGA{<<Interface>>}
+
+    %% Class Inheritance
+    SDRDevice<|--LMS7002M_SDRDevice
+    SDRDevice<|--LimeSDR_MMX8
+    LMS7002M_SDRDevice<|--LimeSDR_Mini
+    LMS7002M_SDRDevice<|--LimeSDR
+    LMS7002M_SDRDevice<|--LimeSDR_XTRX
+    LMS7002M_SDRDevice<|--LimeSDR_X3
+    LMS7002M_SDRDevice<|--sSDR
+    FPGA<|--FPGA_Mini
+    FPGA<|--FPGA_X3
+    FPGA<|--FPGA_XTRX
+
+    %% Class associations
+    FPGA-->LimeSDR
+    FPGA_Mini-->LimeSDR_Mini
+    FPGA_X3-->LimeSDR_X3
+    FPGA_XTRX-->LimeSDR_XTRX
+    FPGA_XTRX-->sSDR
+
+    LimeSDR_MMX8..>LimeSDR_XTRX
+
+    %% Specific SDR dependencies
+    LMS7002M_SDRDevice..>LMS7002M
+    LMS7002M_SDRDevice..>FPGA
+
+    %% LimeSDR Mini
+    LimeSDR_Mini..>ISerialPort
+
+    %% LimeSDR
+    LimeSDR..>ISerialPort
+
+    %%sSDR
+    sSDR..>ISerialPort
+
+    %%LimeSDR_X3
+    LimeSDR_X3..>ISerialPort
+
+    %%LimeSDR_XTRX
+    LimeSDR_XTRX..>ISerialPort
