@@ -1,0 +1,44 @@
+/**
+ * @page device_class_diag_page Device class diagram
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. mermaid:: device_class.mmd
+ * }
+ * @else
+ * @image{inline} html SDRdevice_classDiag.png
+ * @endif
+ * 
+ * @section dev_class_diag_summary Summary
+ * 
+ * Device class diagram shows class inheritance hierarchy, dependencies and associations of 
+ * each unique SDR device supported by Lime Suite NG library.
+ * 
+ * SDRDevice base class is an interface class that declares all possible SDR device control and configuration functions.
+ * Since most SDR devices are based on LMS7002M RFIC, a common SDR device class LMS7002M_SDRDevice is derived from SDRDevice
+ * base class. LMS7002M_SDRDevice defines and overrides configuration and control functions which are common to all SDR devices.
+ * Each unique SDR device class is subsequently derived from the LMS7002M_SDRDevice class and overrides only functions which
+ * are specific to each unique SDR device.
+ * 
+ * Since LMS7002M_SDRDevice defines common LMS7002M RFIC configuration and control functions it is also dependent on LMS7002M
+ * RFIC interface class. LMS7002M_SDRDevice class also defines the common FPGA control functions and is therefore dependent on the
+ * common FPGA interface class.
+ * 
+ * Some unique SDR device classes require specific FPGA functionality and are thus derived from the common FPGA interface class.
+ * Derived SDR device FPGA classes override only device specific functions and preserve the common FPGA control functionality.
+ * Each specific FPGA implementation is associated with specific SDR devices and is used on top of the common FPGA interface, when
+ * the SDR device is registered using Lime Suite NG API.
+ * 
+ * All common and unique SDR device control and configuration functions depend on the virtual serial port interface for communication
+ * with the actual SDR device. Virtual serial port interface declares the base communication functions, which are overriden with functions
+ * of specific serial port implementation for a each registered and unique SDR device.
+ * 
+ * @subsection dev_class_legend Daigram legend
+ * 
+ * Link definitions:
+ * 
+ * - Solid line with a transparet arrow head body - Inheritance
+ * - Dotted line with simple arrow head - Dependency
+ * - Solid line with simeple arrow head - Association
+ * 
+ */
