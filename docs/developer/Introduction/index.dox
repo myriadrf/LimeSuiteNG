@@ -7,5 +7,12 @@
  * 
  * Control communication flowchart provides a brief overview on how software communicates with various SDR devices.
  * 
+ * @if DOX_NAV
+ * 
+ * - @subpage library_ctrl_comms
+ * - @subpage device_class_diag_page
+ * 
+ * @endif
+ * 
  * 
  */
