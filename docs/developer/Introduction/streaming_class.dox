@@ -13,33 +13,15 @@
  * 
  * @section streaming_class_diag_summary Summary
  * 
- * Streaming class diagram shows class inheritance hierarchy, dependencies and associations of each unique streaming class.
+ * Streaming class diagram shows class inheritance hierarchy, dependencies and associations of each unique
+ * streaming class implementation.
  * 
- * Each unique streaming class object is created from the universal SDR device control interface - ``SDRDevice`` with the base
- * streaming interface class ``RFStream``.
+ * Each unique streaming class implements custom data gathering, processing and transmission procedures.
+ * Each unique straming class utilizes the virtual DMA interface for high bandwidth data transfering and 
+ * ``ISerialPort`` interface for device stream control and parameter configuration. Virtual interface
+ * implementations depend on devices, that created the streaming object.
  * 
- * The ``RFStream`` class is an interface class that declares all possible base streaming functions. Each unique
- * streaming class is derived from the base class and subsequnetly overrides the base functions with custom 
- * function implementations.
- * 
- * Each unique streaming class is dependent on multiple control and data stream interfaces:
- * 
- * - ``IDMA`` - virtual DMA (Direct Memory Access controller) interface class.
- * - ``FPGA`` - virtual FPGA interface class.
- * - ``LMS7002M`` - LMS7002M RFIC interface class. 
- * 
- * The virtual DMA interface declares the base access functions for DMA. Specific DMA interface implementation
- * depends from the device that created the streaming object.
- * 
- * LMS7002M interface class defines the LMS7002M RFIC control functions used to control and configure SDR stream related parameters.
- * 
- * Virtual FPGA interface declares common FPGA control functions used to control and configure SDR stream related parameters.
- * The final implementation of FPGA streaming interface depends on SDR device type, that created the streaming object.
- * Some devices can override the common FPGA control functions with specific implementations.
- * 
- * Both the LMS7002M and FPGA interfaces depend on the ``ISerialPort`` interface, which declares the base functions for
- * communicating with the actual device hardware. ``ISerialPort`` is virtual interface and implementation of declared base
- * functions depends on registerd device type.
+ * All implementations of streaming classes utilize a universal stream interface  ``RFStream``.
  * 
  * @subsection streaming_class_diag_legend Diagram legend
  * 

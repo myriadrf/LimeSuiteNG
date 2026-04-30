@@ -7,7 +7,6 @@
 classDiagram
     direction LR
 
-    class SDRDevice {<<Interface>>}
     class RFStream {<<Interface>>}
     class TRXLooper
 
@@ -25,7 +24,4 @@ classDiagram
     TRXLooper..>FPGA
     LMS7002M..>ISerialPort
     FPGA..>ISerialPort
-
-    %% Associations
-    SDRDevice-->RFStream
 
