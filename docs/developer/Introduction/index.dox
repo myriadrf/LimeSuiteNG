@@ -12,6 +12,7 @@
  * - @subpage library_ctrl_comms
  * - @subpage dev_reg_class_diag_page
  * - @subpage device_class_diag_page
+ * - @subpage streaming_class_diag_page
  * 
  * @endif
  * 
