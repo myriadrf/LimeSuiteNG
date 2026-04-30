@@ -7,6 +7,7 @@ Introduction
    comms.rst
    device_reg_class.rst
    device_class.rst
+   streaming_class.rst
 
 .. doxygenpage:: diagrams_intro
    :content-only:
