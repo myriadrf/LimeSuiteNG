@@ -1,8 +1,43 @@
 /**
  * @page dev_reg_class_diag_page Device registry class diagram
  * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * 
+ * .. mermaid:: device_reg_class.mmd
+ * }
+ * @else
+ * @image{inline} html SDRDevice_reg_classDiag.png
+ * @endif
+ * 
  * @section dev_reg_class_summary Summary
  * 
+ * Device registry class diagram shows class inheritance hierarchy and dependencies for the 
+ * public device registration interface, which is accessible via the Lime Suite NG library API.
+ *
+ * In Lime Suite NG each unique SDR device is classified under a unique device factory (otherwise
+ * known as a device class). Each unique device factory is derived from the base device factory
+ * class ``DeviceRegistryEntry``, which acts as an interface class. The base device factory class
+ * declares the base device enumeration and registration functions, which are overriden with 
+ * specific implementations of each unique device factory. Additionally, the base device factory
+ * interface class defines a specific implementation of registration of all unique device 
+ * factories in to a single device factory map with a common access interface.
+ * 
+ * The public device enumeration and registration interface class ``DeviceRegistry`` uses the 
+ * base device factory interface and device factory map to access all available implementations
+ * of device enumeration or registration functions to detect all supported SDR devices.
+ * 
+ * Both the public registration interface and the device factory classes depend on ``DeviceHandle`` 
+ * storage class class and ``SDRDevice`` interface class. All implementations of device enumeration 
+ * function return device connection information via the ``DeviceHandle`` type object with specific 
+ * device connection information, while the ``SDRDevice`` provides a universal SDR device control
+ * interface upon successfull registration of the SDR device.
+ * 
  * @subsection dev_reg_class_legend Diagram legend
+ * 
+ * Link definitions:
+ * 
+ * - Solid line with a transparet arrow head body - Inheritance
+ * - Dotted line with simple arrow head - Dependency
  * 
  */
