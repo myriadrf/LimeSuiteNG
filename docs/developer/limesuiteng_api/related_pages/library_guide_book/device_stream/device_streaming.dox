@@ -365,7 +365,7 @@
  * @image{inline} html stream_tx_burst_timestamp.png
  * 
  * The example above demonstrates a periodic sample transmission, where the transmitter sends data every 250 ms. If the transmitter attempted to transmit samples after the delay, without 
- * udpating the timestamp first, the samples queued for transmission might be dropped due to expired timestamp. For periodic sample transmits, ``GetHardwareTimestamp()`` must be used to retrieve 
+ * updating the timestamp first, the samples queued for transmission might be dropped due to expired timestamp. For periodic sample transmits, ``GetHardwareTimestamp()`` must be used to retrieve 
  * the most up to date timestamp that can then be updated with new tick count to indicate the new ending point of sample transmit operation. Important to notice, before starting the worker 
  * loop, ``EndOfBurst`` flag must be enabled in ``TxMeta`` to enable the padding of packet sample slots. Packet padding ensures that the queued samples are sent even if the queued amount of 
  * samples is not sufficient to form a full packet. If ``EndOfBurst`` flag is not enabled and the quantity of samples queued for transmit does not make up a single packet, the samples are not 
