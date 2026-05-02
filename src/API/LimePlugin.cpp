@@ -562,7 +562,10 @@ static void GatherDirectionalSettings(LimeSettingsProvider* settings, Directiona
     GetSetting(settings, &dir->lo_override, "%s_lo_override", varPrefix);
     GetSetting(settings, &dir->gfir_enable, "%s_gfir_enable", varPrefix);
     GetSetting(settings, &dir->gfir_bandwidth, "%s_gfir_bandwidth", varPrefix);
-    dir->powerAvailable = GetSetting(settings, &dir->power_dBm, "%s_power_dBm", varPrefix);
+    if (GetSetting(settings, &dir->power_dBm, "%s_power_dBm", varPrefix))
+    {
+        dir->powerAvailable = true;
+    }
     GetSetting(settings, &dir->calibration, "%s_calibration", varPrefix);
     GetSetting(settings, &dir->oversample, "%s_oversample", varPrefix);
 }
@@ -686,7 +689,7 @@ static OpStatus TransferDeviceDirectionalSettings(
         int flag = CalibrationFlag::NONE;
         const std::map<std::string, uint32_t> options = { { "none", CalibrationFlag::NONE },
             { "dciq", CalibrationFlag::DCIQ },
-            { "filter", CalibrationFlag::FILTER },
+            { "bb_gain", CalibrationFlag::FILTER },
             { "all", CalibrationFlag::DCIQ | CalibrationFlag::FILTER },
             { "force", CalibrationFlag::DCIQ | CalibrationFlag::FILTER } };
         for (const auto& option : options)

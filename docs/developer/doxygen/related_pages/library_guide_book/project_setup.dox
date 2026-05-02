@@ -1,0 +1,89 @@
+/**
+ * @page project_set_up Project set up
+ * 
+ * @section cmake_setup CMake set up
+ * 
+ * The following CMakeLists.txt code is the minimum required project set up code for working with LimeSuiteNG library in custom applications:
+ * @code{.cmake}
+ * cmake_minimum_required(VERSION 3.26)
+ * 
+ * project(LimeSuiteNG_example LANGUAGES C CXX)
+ * 
+ * set(PROJECT_SOURCE 
+ *    main.cpp
+ *    # ... If required, specify more source files separated by newline
+ *    )
+ * 
+ * add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})
+ * target_link_libraries(${PROJECT_NAME} PRIVATE limesuiteng)
+ * @endcode
+ * 
+ * CMake project always starts with minimum required CMake version and project command. Specify the name of project and supported languages.
+ * Set your list of source files that will be used in the project build. Update the project configuration by specifying the build type as executable.
+ * Specify executable command arguments: executable name (in this case project name) and pass the source file variable that contains the list of source files. Link 
+ * the LimeSuiteNG library to project executable using <b>target_link_libraries()</b> command. 
+ * 
+ * @section project_headers Library headers
+ * 
+ * LimeSuiteNG library does not have single header for access to all public API members. Instead, library utilizes the modular header method, where only the necessary headers are included into the project
+ * in order to reduce the overall build complexity and build time. Installed library headers are located in folder ``limesuiteng``. The primary API functions used to register, configure and control streams
+ * of SDR devices are exposed in the ``limesuiteng/DeviceRegistry.h``, ``limesuiteng/SDRDevice.h`` and ``limesuiteng/RFStream.h`` headers. Other headers define complementary structures, storage classes and enumerations
+ * used with API functions.  
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * Header file list:
+ * 
+ * - ``complex.h`` - Defines complex data types
+ * - ``CSRegister.h`` - Defines structure of generic control status register
+ * - ``Devicehandle.h`` - Defines SDR device handle class used to provide SDR device connection hints
+ * - ``DeviceRegistry.h`` - Defines SDR device registry class and its static functions used to discover and register SDR devices
+ * - ``LMS7002M.h`` - Defines LMS7002M transceiver configuration interface class
+ * - ``LMS7002MCSR.h`` - Enumerates all available LMS7002M chip CSRegisters names
+ * - ``Logger.h`` - Defines publicly accessible logger members
+ * - ``OpStatus.h`` - Enumerates a list of all possible states of operation for the members of public API
+ * - ``RFSOCDescriptor.h`` - Defines RF SoC descriptor structure
+ * - ``RFStream.h`` - Defines SDR device RF Stream set up and control interface class
+ * - ``SDRConfig.h`` - Defines SDR configuration structures
+ * - ``SDRDescriptor.h`` -	Defines SDR descriptor structures used to describe SDR devices
+ * - ``SDRDevice.h`` - Defines SDR device configuration and control interface class
+ * - ``StreamConfig.h`` - Defines structures used for SDR device stream configuration
+ * - ``StreamMeta.h`` - Defines structures for Stream TX and RX meta data collection
+ * - ``Timespec.h`` - Defines Timespec storage class for operating with SDR device stream time stamps
+ * - ``ToString.h`` - Defines string manipulation functions used to convert library enumerations into std::string format
+ * - ``types.h`` - Defines custom library types for use with public API members}
+ * 
+ * @else
+ * 
+ * To browse a full list of header files, go to automatically generated doxygen file list by navigating ``Files -> File list`` tabs in the navigation panel above.
+ * @endif
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    The following guide book topics include all the necessary headers in example code snippets as a reference for the user.}
+ * @else
+ * @note The following guide book topics include all the necessary headers in example code snippets as a reference for the user.
+ * @endif
+ * 
+ * 
+ * @section project_build Project build
+ * 
+ * To configure and build project, run commands in command line/terminal environment:
+ * @code{.bash}
+ * cmake .. [-DOPTIONAL_CMAKE_FLAGS_HERE]
+ * cmake --build .
+ * @endcode
+ * 
+ * List of usefull, but optional CMake flags for configuring projects:
+ * <ol>
+ *    <li>``-DCMAKE_BUILD_TYPE=[Release | Debug]`` - this sets the project build type</li>
+ *    <li>``-DCMAKE_PREFIX_PATH=...`` - Path to library and other files required for the project build in case working from a non standard environment (For example, Windows conda environment.)</li>
+ * </ol>
+ * 
+ * For more information about supported CMake flags, visit the official CMake documentation page.
+ * 
+ * @if DOX_NAV
+ * @ref dev_discovery "Go to SDR device discovery and registration example topic"
+ * @endif
+ */

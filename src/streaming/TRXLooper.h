@@ -13,6 +13,7 @@
 #include "limesuiteng/RFStream.h"
 #include "PacketsFIFO.h"
 #include "StreamPacket.h"
+#include "MTStack.h"
 
 namespace lime {
 
@@ -100,7 +101,7 @@ class TRXLooper : public RFStream
     struct Stream {
         enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };
 
-        std::unique_ptr<PacketsFIFO<StreamPacket*>> packetsPool;
+        std::unique_ptr<MTStack<StreamPacket*>> packetsPool;
         std::unique_ptr<PacketsFIFO<StreamPacket*>> fifo;
         StreamPacket* stagingPacket;
         StreamStats stats;
@@ -134,7 +135,7 @@ class TRXLooper : public RFStream
                 if (stagingPacket)
                     delete stagingPacket;
                 stagingPacket = nullptr;
-                if (packetsPool && !packetsPool->pop(&stagingPacket, false, std::chrono::microseconds(0)))
+                if (packetsPool && !packetsPool->pop(&stagingPacket))
                     break;
             } while (stagingPacket);
         }

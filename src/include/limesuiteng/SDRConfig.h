@@ -1,6 +1,12 @@
 #ifndef LIMESUITENG_SDRCONFIG_H
 #define LIMESUITENG_SDRCONFIG_H
 
+/**
+* @file limesuiteng/SDRConfig.h
+* @author Lime Microsystems
+* @brief Defines SDR configuration structures
+*/
+
 #include "limesuiteng/types.h"
 #include "limesuiteng/complex.h"
 
@@ -47,11 +53,18 @@ struct ChannelConfig {
 
         /// @brief The structure holding the status of the test signal the device can produce.
         struct TestSignal {
+
             /// @brief The enumeration describing the divide mode of the test signal.
-            enum class Divide : uint8_t { Div8, Div4 };
+            enum class Divide : uint8_t {
+                Div8, ///< Test signal frequency division by 8, when NCO (dcMode is disabled) is selected as source test signal.
+                Div4 ///< Test signal frequency division by 4, when NCO (dcMode is disabled) is selected as source test signal.
+            };
 
             /// @brief The enumeration describing the scale of the test signal.
-            enum class Scale : uint8_t { Full, Half };
+            enum class Scale : uint8_t {
+                Full, ///< Test signal strength set to 0 dB, when NCO (dcMode is disabled) is selected as source test signal.
+                Half ///< Test signal strength set to -6 dB, when NCO (dcMode is disabled) is selected as source test signal.
+            };
 
             complex16_t dcValue; ///< The value to use when in DC mode.
             Divide divide; ///< The current divide of the test signal.

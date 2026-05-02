@@ -1,6 +1,12 @@
 #ifndef LIME_RFSTREAM_H
 #define LIME_RFSTREAM_H
 
+/**
+@file limesuiteng/RFStream.h
+@author Lime Microsystems
+@brief Defines SDR device RF Stream set up and control interface class
+*/
+
 #include <chrono>
 
 #include "limesuiteng/config.h"
@@ -29,11 +35,11 @@ class LIME_API RFStream
     virtual uint64_t GetHardwareTimestamp() const = 0;
 
     /// @brief Configures data streaming parameters
-    /// @param config The configuration to use for setting the streams up.
+    /// @param config The @ref lime::StreamConfig "configuration" to use for setting the streams up.
     /// @return The status code of the operation.
     virtual OpStatus Setup(const StreamConfig& config) = 0;
 
-    /// @brief Returns current stream configuration.
+    /// @brief Returns current stream @ref lime::StreamConfig "configuration".
     virtual const StreamConfig& GetConfig() const = 0;
 
     /// @brief Starts RF data streaming.
@@ -59,12 +65,30 @@ class LIME_API RFStream
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
     virtual void StreamStatus(StreamStats* rx, StreamStats* tx) = 0;
 
+    /// @brief Receives RF samples data.
+    /// @param samples The buffer to put the received samples in.
+    /// @param count The number of samples to receive into the buffer.
+    /// @param meta The metadata of the packets of the stream.
+    /// @return The amount of samples received.
     virtual uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+
+    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
     virtual uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+
+    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
     virtual uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
 
+    /// @brief Transmits RF samples data.
+    /// @param samples The buffer of the samples to transmit.
+    /// @param count The number of samples to transmit.
+    /// @param meta The metadata of the packets of the stream.
+    /// @return The amount of samples transmitted.
     virtual uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+
+    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*)
     virtual uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+
+    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*)
     virtual uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
 };
 

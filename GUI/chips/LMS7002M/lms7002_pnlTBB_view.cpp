@@ -609,7 +609,7 @@ void lms7002_pnlTBB_view::OnbtnTuneFilter(wxCommandEvent& event)
 {
     double bandwidth_MHz;
     txtFilterFrequency->GetValue().ToDouble(&bandwidth_MHz);
-    OpStatus status = lmsControl->SetTxLPF(bandwidth_MHz * 1e6);
+    OpStatus status = lmsControl->SetTxLPF(bandwidth_MHz * 1e6, false);
     if (status != OpStatus::Success)
         wxMessageBox(wxString(_("Error setting Tx filter")));
     UpdateGUI();

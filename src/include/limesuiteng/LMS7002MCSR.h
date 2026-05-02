@@ -1,5 +1,11 @@
 #pragma once
 
+/**
+@file limesuiteng/LMS7002MCSR.h
+@author Lime Microsystems
+@brief Enumerates all available LMS7002M chip CSRegisters names
+*/
+
 #include "limesuiteng/config.h"
 
 #include <vector>

@@ -1,11 +1,11 @@
+#ifndef LMS7API_H
+#define LMS7API_H
+
 /**
 @file   LMS7002M.h
 @author Lime Microsystems (www.limemicro.com)
-@brief  LMS7002M transceiver configuration interface
+@brief  Defines LMS7002M transceiver configuration interface class
 */
-
-#ifndef LMS7API_H
-#define LMS7API_H
 
 #include "limesuiteng/types.h"
 #include "limesuiteng/config.h"
@@ -288,7 +288,7 @@ class LIME_API LMS7002M
      * @param rfBandwidth_Hz filter's RF bandwidth in Hz.
      * @return The status of the operation
      */
-    OpStatus SetTxLPF(double rfBandwidth_Hz);
+    OpStatus SetTxLPF(double rfBandwidth_Hz, bool adjust_bb_gain = true);
 
     /**
      * @brief Tunes the Low Pass Filter for the RX direction.

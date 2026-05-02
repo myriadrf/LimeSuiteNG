@@ -3,6 +3,7 @@
 namespace lime {
 
 struct GatewareFeatures {
+    uint32_t databusWidth{ 16 };
     bool hasConfigurableStreamPacketSize{ 0 };
 };
 

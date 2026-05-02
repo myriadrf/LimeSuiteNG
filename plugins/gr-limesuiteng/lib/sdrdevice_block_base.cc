@@ -40,6 +40,7 @@ sdrdevice_block_base::sdrdevice_block_base(lime::TRXDir dir,
                                            uint32_t chipIndex,
                                            const std::vector<int>& channelIndexes,
                                            const std::string& dataFormat,
+                                           const std::string& linkFormat,
                                            double sampleRate,
                                            int rf_oversampling,
                                            gr::logger_ptr logger,
@@ -77,7 +78,7 @@ sdrdevice_block_base::sdrdevice_block_base(lime::TRXDir dir,
         devContext->streamCfg.channels.at(direction).push_back(index);
 
     devContext->streamCfg.format = GetDataFormatEnum(dataFormat);
-    devContext->streamCfg.linkFormat = lime::DataFormat::I16;
+    devContext->streamCfg.linkFormat = GetDataFormatEnum(linkFormat);
     devContext->streamCfg.hintSampleRate = sampleRate;
 
     lime::SDRConfig& config = devContext->deviceConfig;

@@ -132,16 +132,23 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enu
     // {
     //     bool disable;
     //     if (channel == LMS7002M_CHANNEL_A)
-    //         disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
-    //     else
+    //     {
     //         disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_A : LMS7002M_RXEN_A) == 0;
-    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
+    //         lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, disable);
+    //     }
+    //     else
+    //     {
+    //         disable = lms7002m_spi_read_csr(self, isTx ? LMS7002M_TXEN_B : LMS7002M_RXEN_B) == 0;
+    //         lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, disable);
+    //     }
     // }
     // else
-    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, 0);
-
-    // if (channel == LMS7002M_CHANNEL_B)
-    //     lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, enable ? 0 : 1);
+    // {
+    //     if (channel == LMS7002M_CHANNEL_A)
+    //         lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE1 : LMS7002M_PD_RX_AFE1, 0);
+    //     else
+    //         lms7002m_spi_modify_csr(self, isTx ? LMS7002M_PD_TX_AFE2 : LMS7002M_PD_RX_AFE2, 0);
+    // }
 
     int disabledChannels = (lms7002m_spi_read_bits(self, LMS7002M_PD_AFE.address, 4, 1) & 0xF); //check if all channels are disabled
     // lms7002m_spi_modify_csr(self, LMS7002M_EN_G_AFE, disabledChannels == 0xF ? 0 : 1);
@@ -1867,8 +1874,8 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
     const uint32_t txLpfHighRange[2] = { 56000000, 160000000 };
 
     // common setup
-    lms7002m_spi_modify(self, 0x0106, 15, 0, 0x318C);
-    lms7002m_spi_modify(self, 0x0107, 15, 0, 0x318C);
+    lms7002m_spi_modify(self, 0x0106, 15, 0, 0x310C);
+    lms7002m_spi_modify(self, 0x0107, 15, 0, 0x30C6);
     lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_FRP_TBB, 8);
     lms7002m_spi_modify_csr(self, LMS7002M_ICT_IAMP_GG_FRP_TBB, 12);
     lms7002m_spi_modify_csr(self, LMS7002M_CCAL_LPFLAD_TBB, 31);

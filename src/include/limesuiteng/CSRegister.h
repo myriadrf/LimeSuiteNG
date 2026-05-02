@@ -1,6 +1,12 @@
 #ifndef LIME_CSREGISTER_H
 #define LIME_CSREGISTER_H
 
+/**
+@file limesuiteng/CSRegister.h
+@author Lime Microsystems
+@brief Defines structure of generic control status register
+*/
+
 #include "limesuiteng/Register.h"
 
 namespace lime {
