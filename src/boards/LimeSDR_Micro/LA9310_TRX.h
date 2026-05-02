@@ -14,8 +14,7 @@
 #include "streaming/PacketsFIFO.h"
 #include "streaming/StreamPacket.h"
 
-#include "TransmitControl.h"
-#include "chips/LA9310/LA9310.h"
+#include "M4.h"
 
 namespace lime {
 
@@ -23,7 +22,7 @@ namespace lime {
 class LA9310_TRX : public RFStream
 {
   public:
-    LA9310_TRX(std::shared_ptr<LA9310> la9310);
+    LA9310_TRX(std::shared_ptr<LimeSDR_Micro_M4> la9310);
     virtual ~LA9310_TRX();
 
     uint64_t GetHardwareTimestamp() const override;
@@ -62,7 +61,7 @@ class LA9310_TRX : public RFStream
     };
 
   private:
-    std::shared_ptr<LA9310> la9310;
+    std::shared_ptr<LimeSDR_Micro_M4> la9310;
 
     OpStatus RxSetup();
     void RxWorkLoop();
@@ -132,9 +131,6 @@ class LA9310_TRX : public RFStream
     Stream mRx;
     Stream mTx;
 
-    int map_physical_regions();
-    int get_modem_info(int modem_id);
-
     template<class T>
     uint32_t StreamMetaToStreamTxMeta(
         const T* const* samples, uint32_t count, const StreamMeta* meta, std::chrono::microseconds timeout);
@@ -143,7 +139,13 @@ class LA9310_TRX : public RFStream
     template<class T>
     uint32_t StreamTxTemplate(const T* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout);
 
-    TransmitControl tx_tdd_switcher;
+    uint32_t band_selection_restore;
+    uint64_t stream_time_origin;
+
+    uint64_t tx_burst_start;
+    int32_t tx_burst_length;
+    bool tx_burst_in_progress;
+    double phytimer_samples_ratio;
 };
 
 } // namespace lime

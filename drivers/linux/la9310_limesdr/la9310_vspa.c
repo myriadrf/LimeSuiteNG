@@ -862,7 +862,7 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     uint32_t param0, param1, param2;
     uint32_t val;
 
-    // Write RCW Completion bit, without it accessing VSPA registers will fail and reboot host
+    // Check RCW Completion bit, without it accessing VSPA registers will fail and reboot host
     struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
     uint32_t* rcw_completion_addr = (uint32_t*)(ccsr_region->vaddr + 0x1E60000 + RCW_COMPLETIONR_OFFSET);
     uint32_t ulRcwCompletion = ioread32(rcw_completion_addr);

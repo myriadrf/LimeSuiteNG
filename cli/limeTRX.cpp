@@ -299,11 +299,12 @@ static void TransmitLoop(TransmitLoopArgs* args)
     std::streamsize fileSize = fin->tellg();
     fin->seekg(0, fin->beg);
 
-    const int64_t txSamplesCountTotal = fileSize / sizeof(complex16_t) / args->channelCount;
+    int64_t txSamplesCountTotal = fileSize / sizeof(complex16_t) / args->channelCount;
 
     cerr << "Tx file size : "sv << fileSize << " bytes."sv << endl;
 
-    const int samplesBatchSize = 4 * 256 * 16;
+    const int samplesBatchSize = 16384;
+    // txSamplesCountTotal = samplesBatchSize;
     complex16_t* txSamples[16];
     std::vector<complex16_t> channelSamples[16];
     for (int i = 0; i < args->channelCount; ++i)
@@ -343,7 +344,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
                         txSamples[c][s] = interleavedBuffer[srcIndex++];
                 }
             }
-            if (samplesRemaining < samplesBatchSize)
+            if (samplesRemaining <= samplesBatchSize)
                 txMeta.flags = StreamTxMeta::EndOfBurst;
             int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
 
@@ -351,6 +352,13 @@ static void TransmitLoop(TransmitLoopArgs* args)
             samplesRemaining -= samplesSent;
         }
     } while (args->loop && args->terminate->load(std::memory_order_relaxed) == false);
+}
+
+static uint32_t hex2int(const std::string_view hexstr)
+{
+    uint32_t value = 0;
+    sscanf(hexstr.data(), "%X", &value);
+    return value;
 }
 
 int main(int argc, char** argv)
@@ -368,7 +376,7 @@ int main(int argc, char** argv)
     args::ValueFlag<int64_t>            timeFlag(parser, "ms", "Time duration in milliseconds to receive", {"time"}, 0, args::Options{});
     args::Flag                          fftFlag(parser, "", "Display Rx FFT plot", {"fft"});
     args::ValueFlag<std::string>        logFlag(parser, "", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error", args::Options{});
-    args::ImplicitValueFlag<int>        mimoFlag(parser, "channel count", "use multiple channels", {"mimo"}, 2, args::Options{});
+    args::ImplicitValueFlag<std::string>   channelsMaskArg(parser, "channels mask", "which channels to use", {"channelsmask"}, "1", args::Options{});
     args::ImplicitValueFlag<int64_t>    repeaterFlag(parser, "delaySamples", "retransmit received samples with a delay", {"repeater"}, 0, args::Options{});
     args::ValueFlag<std::string>        linkFormatFlag(parser, "I16, I12", "Data transfer format. Default: I12", {"linkFormat"}, "I12", args::Options{});
     args::Flag                          syncPPSFlag(parser, "", "start sampling on next PPS", {"syncPPS"});
@@ -376,6 +384,8 @@ int main(int argc, char** argv)
     args::ValueFlag<int>                txSamplesInPacketFlag(parser, "packets", "number of samples in Tx packet", {"txSamplesInPacket"}, 0, args::Options{});
     args::ValueFlag<int>                rxPacketsInBatchFlag(parser, "packets", "number of Rx packets in data transfer", {"rxPacketsInBatch"}, 0, args::Options{});
     args::ValueFlag<int>                txPacketsInBatchFlag(parser, "packets", "number of Tx packets in data transfer", {"txPacketsInBatch"}, 0, args::Options{});
+    args::ValueFlag<int>                latencyFlag(parser, "packets", "Expected latency", {"latency"}, 0, args::Options{});
+    args::ValueFlag<int>                workerCountFlag(parser, "workers", "Worker thread count", {"workers"}, 0, args::Options{});
     args::ValueFlag<int>                fftSizeFlag(parser, "samplesCount", "FFT size in samples", {"fftSize"}, 16384, args::Options{});
     args::ValueFlag<std::string>        timestampFlag(parser, "", "Timestamp type: ticks, seconds, unix", {'t', "timestamp"}, "ticks", args::Options{});
 #ifdef USE_GNU_PLOT
@@ -399,7 +409,7 @@ int main(int argc, char** argv)
     const std::string devName = args::get(deviceFlag);
     const std::string rxFilename = args::get(outputFlag);
     const std::string txFilename = args::get(inputFlag);
-    const bool rx = true; // outputFlag || repeaterFlag || (!repeaterFlag && !inputFlag);
+    const bool rx = true; // Need to always read data to get timestamps - BY DESIGN
     const bool tx = inputFlag || repeaterFlag;
     const bool showFFT = fftFlag;
 #ifdef USE_GNU_PLOT
@@ -407,14 +417,22 @@ int main(int argc, char** argv)
 #endif
     const uint64_t samplesToCollect = args::get(samplesCountFlag);
     const int64_t workTime = args::get(timeFlag);
-    const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
+    int channelCount = 0;
+    const uint32_t channelsMask = hex2int(args::get(channelsMaskArg));
+    for (int i = 0; i < 32; ++i)
+    {
+        if (channelsMask & (1 << i))
+            ++channelCount;
+    }
+    if (channelCount == 0)
+    {
+        cerr << "No channels selected" << std::endl;
+        return EXIT_FAILURE;
+    }
+
     const bool repeater = repeaterFlag;
     const int64_t repeaterDelay = args::get(repeaterFlag);
     const bool syncPPS = syncPPSFlag;
-    const int rxSamplesInPacket = args::get(rxSamplesInPacketFlag);
-    const int txSamplesInPacket = args::get(txSamplesInPacketFlag);
-    const int rxPacketsInBatch = args::get(rxPacketsInBatchFlag);
-    const int txPacketsInBatch = args::get(txPacketsInBatchFlag);
 
     std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
@@ -464,8 +482,8 @@ int main(int argc, char** argv)
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
-    int rx_require = rx ? channelCount : 0;
-    int tx_require = tx ? channelCount : 0;
+    // int rx_require = rx ? channelCount : 0;
+    // int tx_require = tx ? channelCount : 0;
 
     // Samples data streaming configuration
     StreamConfig streamCfg;
@@ -483,58 +501,63 @@ int main(int argc, char** argv)
             streamCfg.timestampType = TimestampType::UNIX_EPOCH;
     }
 
-    if (syncPPS || rxSamplesInPacket || rxPacketsInBatch || txSamplesInPacket || txPacketsInBatch)
     {
         streamCfg.extraConfig.waitPPS = syncPPS;
-        streamCfg.extraConfig.rx.samplesInPacket = rxSamplesInPacket;
-        streamCfg.extraConfig.tx.samplesInPacket = txSamplesInPacket;
-        streamCfg.extraConfig.rx.packetsInBatch = rxPacketsInBatch;
-        streamCfg.extraConfig.tx.packetsInBatch = txPacketsInBatch;
+        streamCfg.extraConfig.rx.samplesInPacket = args::get(rxSamplesInPacketFlag);
+        streamCfg.extraConfig.tx.samplesInPacket = args::get(txSamplesInPacketFlag);
+        streamCfg.extraConfig.rx.packetsInBatch = args::get(rxPacketsInBatchFlag);
+        streamCfg.extraConfig.tx.packetsInBatch = args::get(txPacketsInBatchFlag);
+        // streamCfg.extraConfig.rx.latency = std::chrono::microseconds(args::get(latencyFlag));
+        // streamCfg.extraConfig.tx.latency = streamCfg.extraConfig.rx.latency;
+        // streamCfg.extraConfig.rx.workerCount = args::get(workerCountFlag);
+        // streamCfg.extraConfig.tx.workerCount = args::get(workerCountFlag);
     }
 
-    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
-    streamCfg.hintSampleRate = sampleRate;
+    // std::unique_ptr<StreamComposite> stream = std::make_unique<StreamComposite>();
+    // for (size_t index : chipIndexes)
+    // {
+    //     if (rx_require == 0 && tx_require == 0)
+    //         break;
 
-    std::unique_ptr<StreamComposite> stream = std::make_unique<StreamComposite>();
-    for (size_t index : chipIndexes)
-    {
-        if (rx_require == 0 && tx_require == 0)
-            break;
+    //     streamCfg.channels.at(TRXDir::Rx).clear();
+    //     streamCfg.channels.at(TRXDir::Tx).clear();
 
-        streamCfg.channels.at(TRXDir::Rx).clear();
-        streamCfg.channels.at(TRXDir::Tx).clear();
+    //     const int deviceChannelCount = device->GetDescriptor().rfSOC[index].channelCount;
+    //     for (int j = 0; j < deviceChannelCount; ++j)
+    //     {
+    //         if (rx_require > 0)
+    //         {
+    //             streamCfg.channels.at(TRXDir::Rx).push_back(j);
+    //             --rx_require;
+    //         }
+    //         if (tx_require > 0)
+    //         {
+    //             streamCfg.channels.at(TRXDir::Tx).push_back(j);
+    //             --tx_require;
+    //         }
+    //         if (rx_require == 0 && tx_require == 0)
+    //             break;
+    //     }
 
-        const int deviceChannelCount = device->GetDescriptor().rfSOC[index].channelCount;
-        for (int j = 0; j < deviceChannelCount; ++j)
-        {
-            if (rx_require > 0)
-            {
-                streamCfg.channels.at(TRXDir::Rx).push_back(j);
-                --rx_require;
-            }
-            if (tx_require > 0)
-            {
-                streamCfg.channels.at(TRXDir::Tx).push_back(j);
-                --tx_require;
-            }
-            if (rx_require == 0 && tx_require == 0)
-                break;
-        }
+    //     stream->Add(device->StreamCreate(streamCfg, index));
+    // }
 
-        stream->Add(device->StreamCreate(streamCfg, index));
-    }
-
-    rx_require = rx ? channelCount : 0;
-    tx_require = tx ? channelCount : 0;
     streamCfg.channels.at(TRXDir::Rx).clear();
-    for (int i = 0; rx && i < rx_require; ++i)
-        streamCfg.channels.at(TRXDir::Rx).push_back(i);
+    for (int i = 0; rx && i < 16; ++i)
+    {
+        if (channelsMask & (1 << i))
+            streamCfg.channels.at(TRXDir::Rx).push_back(i);
+    }
 
     streamCfg.channels.at(TRXDir::Tx).clear();
-    for (int i = 0; tx && i < tx_require; ++i)
-        streamCfg.channels.at(TRXDir::Tx).push_back(i);
+    for (int i = 0; tx && i < 16; ++i)
+    {
+        if (channelsMask & (1 << i))
+            streamCfg.channels.at(TRXDir::Tx).push_back(i);
+    }
 
-    OpStatus status = stream->Setup(streamCfg);
+    std::unique_ptr<RFStream> stream = device->StreamCreate(streamCfg, chipIndexes.front());
+    OpStatus status = OpStatus::Success; //stream->Setup(streamCfg);
     if (status != OpStatus::Success)
     {
         cerr << "Failed to setup streams" << endl;
@@ -542,6 +565,8 @@ int main(int argc, char** argv)
         DeviceRegistry::freeDevice(device);
         return EXIT_FAILURE;
     }
+
+    double sampleRate = device->GetSampleRate(chipIndexes.front(), TRXDir::Rx, 0);
 
     signal(SIGINT, intHandler);
 
@@ -604,13 +629,7 @@ int main(int argc, char** argv)
     rxcaptures.reserve(1024 * 1024);
 
     stream->StageStart();
-    status = stream->Start();
-    if (status != OpStatus::Success)
-    {
-        std::cerr << "Failed to start streaming" << std::endl;
-        DeviceRegistry::freeDevice(device);
-        return EXIT_FAILURE;
-    }
+    stream->Start();
 
     auto startTime = std::chrono::high_resolution_clock::now();
     auto t1 = startTime - std::chrono::seconds(2); // rewind t1 to do update on first loop
@@ -641,12 +660,6 @@ int main(int argc, char** argv)
 
     while (stopProgram.load() == false)
     {
-        if (!rx)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
-        }
-
         if (samplesToCollect != 0 && totalSamplesReceived > samplesToCollect)
             break;
 
@@ -674,7 +687,7 @@ int main(int argc, char** argv)
             txts.AddTicks(tickRatio * repeaterDelay);
             txts.AddTicks(tickRatio * samplesRead);
             txMeta.timestamp = txts;
-            txMeta.hasTimestamp = true;
+            txMeta.hasTimestamp = false;
             txMeta.flags = 0;
             stream->Transmit(rxSamples, samplesRead, &txMeta);
         }
@@ -744,7 +757,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                // std::cerr << "Samples received: " << totalSamplesReceived << endl;
+                std::cerr << "Samples received: " << totalSamplesReceived << endl;
             }
         }
 

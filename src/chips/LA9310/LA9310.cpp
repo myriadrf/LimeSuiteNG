@@ -24,15 +24,6 @@ LA9310::~LA9310()
 {
 }
 
-OpStatus LA9310::SetSystemClock(double sysClk_Hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask)
-{
-    hif->adc_rate_mask = adc_rate_mask;
-    hif->dac_rate_mask = dac_rate_mask;
-
-    lime::debug("LA9310 set system clock:%g adc_rates:%1x dac_rate:%1x", sysClk_Hz, adc_rate_mask, dac_rate_mask);
-    return pcie->SetSystemClock(sysClk_Hz, 1000);
-}
-
 void LA9310::GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask)
 {
     constexpr uint32_t DCS_BASE_ADDR_offset = 0x1040000;
@@ -68,12 +59,6 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
     OpStatus status = vspa.ResetVCPU();
     if (status != OpStatus::Success)
         return status;
-    constexpr uint8_t ids[] = { 1, 2, 3, 4, 11};
-    for (const auto id : ids)
-    {
-        PHYTimerControl timer = phytimer.GetTimerControl(id);
-        timer.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceOne);
-    }
     return pcie->LoadVSPAFirmware(firmware.data(), firmware.size());
 }
 

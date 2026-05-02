@@ -102,11 +102,11 @@ static void PlotBins(std::vector<float> bins, float sampleRate)
 static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
 {
     OpStatus status;
-    status = ctx->vspa->StopRx();
+    status = ctx->vspa->RxEnable(2, false);
     if (status != OpStatus::Success)
         printf("Failed stop rx\n");
     ctx->vspa->ClearStats();
-    status = ctx->vspa->StartRx();
+    status = ctx->vspa->RxEnable(2, true);
     if (status != OpStatus::Success)
         printf("Failed start rx\n");
     // Enable all Rx and Tx DMA triggers
@@ -126,7 +126,7 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     {
         int readSize = (samplesToRead - samplesGot) * sizeof(complex16_t);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        uint32_t size_received = ctx->vspa->Receive(0, reinterpret_cast<uint32_t*>(&samples[samplesGot]), readSize, NULL);
+        uint32_t size_received = ctx->vspa->Receive(3, reinterpret_cast<uint32_t*>(&samples[samplesGot]), readSize, NULL);
         samplesGot += size_received / sizeof(complex16_t);
         t2 = std::chrono::high_resolution_clock::now();
     } while (samplesGot < samplesToRead &&
@@ -138,7 +138,7 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
         return NAN;
     }
 
-    status = ctx->vspa->StopRx();
+    status = ctx->vspa->RxEnable(2, false);
     if (status != OpStatus::Success)
         printf("Failed stop rx\n");
 
@@ -566,10 +566,7 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
     OpStatus status;
-    if (isTx)
-        status = ctx->vspa->StartTxTone(true, txToneBin);
-    else
-        status = ctx->vspa->GenerateTxTone(true, txToneBin);
+    status = ctx->vspa->GenerateTxTone(true, txToneBin);
     if (status != OpStatus::Success)
     {
         printf("Failed to generate tone\n");
@@ -630,10 +627,7 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
 
-    if (isTx)
-        status = ctx->vspa->StartTxTone(false, txToneBin);
-    else
-        status = ctx->vspa->GenerateTxTone(false);
+    status = ctx->vspa->GenerateTxTone(false);
     return status;
 }
 
@@ -663,14 +657,14 @@ OpStatus LimeSDR_Micro::CalibrateRx()
     context.vspa = &la9310->vspa;
     context.sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
     context.vspa->Initialize();
-    context.vspa->StopRx();
+    context.vspa->RxEnable(2, false);
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
-    context.vspa->SelectRxChannel(channel == 0 ? 3 : 1);
-    context.vspa->Setup(1, 0, context.sampleRate * 4);
-    context.vspa->StopTx();
+    context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
+    context.vspa->SetupResources(1, 0);
+    context.vspa->TxEnable(false);
     context.phytimer = &la9310->phytimer;
     context.lo_diff = 0;
 
@@ -946,15 +940,15 @@ OpStatus LimeSDR_Micro::CalibrateTx()
     context.vspa = &la9310->vspa;
     context.sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
     context.vspa->Initialize();
-    context.vspa->StopRx();
-    context.vspa->Setup(1, 0, context.sampleRate * 4);
-    context.vspa->StopTx();
+    context.vspa->RxEnable(2, false);
+    context.vspa->SetupResources(0x4, 0);
+    context.vspa->TxEnable(false);
     context.phytimer = &la9310->phytimer;
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
-    context.vspa->SelectRxChannel(channel == 0 ? 3 : 1);
+    context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
 
     context.vspa->GetTxDCCorrector()->SetDCOffset(complex16_t(0, 0));
     context.vspa->GetTxQEC()->SetImbalance(0, 0);

@@ -111,6 +111,28 @@ template<class DestT, class SrcT> static void PathSelection(DestT* dest, SrcT* s
     }
 }
 
+template<class DestT, class SrcT> static void ConvertSamples(DestT* dest, SrcT* src, uint32_t srcCount)
+{
+    switch (srcCount)
+    {
+    case 512:
+        fastPath_convert<512>(dest, src);
+        break;
+    case 256:
+        fastPath_convert<256>(dest, src);
+        break;
+    case 128:
+        fastPath_convert<128>(dest, src);
+        break;
+    case 64:
+        fastPath_convert<64>(dest, src);
+        break;
+    default:
+        slowPath_convert(dest, src, srcCount);
+        break;
+    }
+}
+
 template<uint32_t srcCount, class DestT, class SrcT> static void fastPath_convert_unzip(DestT* destA, DestT* destB, const SrcT* src)
 {
     for (uint32_t i = 0; i < srcCount / 2; i++)

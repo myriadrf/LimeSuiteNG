@@ -27,7 +27,6 @@ class LIME_API LA9310
     LA9310(std::shared_ptr<LA9310_PCIe> port);
     ~LA9310();
 
-    OpStatus SetSystemClock(double sysClk_Hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask);
     void GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask);
     bool IsM4CoreProgrammed();
 

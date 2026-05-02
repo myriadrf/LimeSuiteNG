@@ -10,6 +10,7 @@ class StreamTxMeta
   public:
     enum Flags {
         EndOfBurst = (1 << 0),
+        StartOfBurst = (1 << 1),
     };
     lime::Timespec timestamp;
     bool hasTimestamp;

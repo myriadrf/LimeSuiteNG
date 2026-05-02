@@ -57,13 +57,11 @@ set_target_properties(limeOEM PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINAR
 target_link_libraries(limeOEM PRIVATE cli-shared)
 target_precompile_headers(limeOEM REUSE_FROM cli-shared)
 
+add_subdirectory(limeVSPA)
+
 install(
     TARGETS limeDevice limeSPI limeFLASH limeTRX limeConfig limeOEM limeCSR limePPSDO limeI2C
     COMPONENT cli
     DESTINATION bin)
 
 add_subdirectory(utilities)
-
-if(UNIX AND NOT APPLE)
-    add_subdirectory(iq_monitor)
-endif()

@@ -42,15 +42,34 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     chkTxToneGenerator = new wxCheckBox(this, wxID_ANY, "TxTone");
     chkTxToneGenerator->Connect(
         wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxToneGeneratorClick), nullptr, this);
-    spinTxToneBin = new wxSpinCtrl(this, wxID_ANY, "64", wxDefaultPosition, wxDefaultSize, 0, 0, 255, 125);
-
-    chkTxToneGenerator2 = new wxCheckBox(this, wxID_ANY, "TxTone2");
-    chkTxToneGenerator2->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxToneGeneratorClick2), nullptr, this);
+    spinTxToneBin = new wxSpinCtrl(this, wxID_ANY, "64", wxDefaultPosition, wxDefaultSize, 0, 0, 32767, 8192);
 
     fgSizer246->Add(chkTxToneGenerator);
     fgSizer246->Add(spinTxToneBin);
-    fgSizer246->Add(chkTxToneGenerator2);
+
+    chkDAC_IQ = new wxCheckBox(this, wxID_ANY, "DAC_IQ");
+    chkDAC_IQ->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
+    fgSizer246->Add(chkDAC_IQ);
+
+    chkTxEn = new wxCheckBox(this, wxID_ANY, "TxEnable");
+    chkTxEn->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxEnable), nullptr, this);
+    fgSizer246->Add(chkTxEn);
+
+    chkAXIQ = new wxCheckBox(this, wxID_ANY, "chkAXIQ");
+    chkAXIQ->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onAXIQEnable), nullptr, this);
+    fgSizer246->Add(chkAXIQ);
+
+    btnTransmit = new wxButton(this, wxID_ANY, wxT("Send data"), wxDefaultPosition, wxDefaultSize, 0);
+    btnTransmit->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTransmit), nullptr, this);
+    fgSizer246->Add(btnTransmit);
+
+    btnRst = new wxButton(this, wxID_ANY, wxT("btnRst"), wxDefaultPosition, wxDefaultSize, 0);
+    btnRst->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LA9310_wxgui::onRst), nullptr, this);
+    fgSizer246->Add(btnRst);
+
+    btnClear = new wxButton(this, wxID_ANY, wxT("Clear PRod"), wxDefaultPosition, wxDefaultSize, 0);
+    btnClear->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LA9310_wxgui::onClear), nullptr, this);
+    fgSizer246->Add(btnClear);
 
     SetSizer(fgSizer246);
     Layout();
@@ -95,12 +114,57 @@ void LA9310_wxgui::onTxToneGeneratorClick(wxCommandEvent& event)
         printf("Failed to set Tx tone\n");
 }
 
-void LA9310_wxgui::onTxToneGeneratorClick2(wxCommandEvent& event)
+void LA9310_wxgui::onPhytimer(wxCommandEvent& event)
 {
-    if (!la9310)
-        return;
+    la9310->phytimer.GetTimerControl(11).TriggerDirectly(
+        event.IsChecked() ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero);
+}
 
-    OpStatus status = la9310->vspa.StartTxTone(chkTxToneGenerator2->GetValue(), spinTxToneBin->GetValue());
-    if (status != OpStatus::Success)
-        printf("Failed to set Tx tone\n");
+void LA9310_wxgui::onTxEnable(wxCommandEvent& event)
+{
+    if (event.IsChecked())
+    {
+        printf("TxON\n");
+        la9310->vspa.TxEnable(true, true);
+    }
+    else
+    {
+        printf("TxOFF\n");
+        la9310->vspa.TxEnable(false);
+    }
+}
+
+void LA9310_wxgui::onAXIQEnable(wxCommandEvent& event)
+{
+    uint64_t cmd = 0x12lu << 56;
+    if (event.IsChecked())
+    {
+        printf("AXIQ ON\n");
+        // la9310->vspa.mailbox->Message(0, 0, cmd | 1);
+    }
+    else
+    {
+        printf("AXIQ OFF\n");
+        // la9310->vspa.mailbox->Message(0, 0, cmd);
+    }
+}
+
+void LA9310_wxgui::onRst(wxCommandEvent& event)
+{
+    uint64_t cmd = 0x13lu << 56;
+    printf("PTR RST\n");
+    // la9310->vspa.mailbox->Message(0, 0, cmd | 1);
+}
+
+void LA9310_wxgui::onTransmit(wxCommandEvent& event)
+{
+    uint32_t data[512];
+    printf("Send 512B\n");
+    la9310->vspa.Transmit(data, sizeof(data), 0);
+}
+
+void LA9310_wxgui::onClear(wxCommandEvent& event)
+{
+    printf("clear\n");
+    la9310->vspa.ClearStats();
 }

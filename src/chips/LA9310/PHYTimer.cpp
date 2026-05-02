@@ -159,9 +159,10 @@ std::string PHYTimerControl::ToString() const
 {
     char ctemp[128];
     uint32_t csr = TM_PHY_TMR_CnSC->ioread32(0);
-    snprintf(ctemp, sizeof(ctemp), "CSR:%08X CNT:%08X | ", csr, TM_PHY_TMR_CnSC->ioread32(4));
+    snprintf(ctemp, sizeof(ctemp), "\t CSR:%08X CNT:%08X | ", csr, TM_PHY_TMR_CnSC->ioread32(4));
     std::stringstream ss;
-    ss << ctemp;
+    ss << std::left << std::setw(12);
+    ss << name << ctemp;
     ss << " Trig:" << (csr & TVAL ? 1 : 0);
     ss << " CIF:" << (csr & CIF ? 1 : 0);
     ss << " CMPE:" << (csr & CMPE ? 1 : 0);

@@ -5,13 +5,14 @@
 #include <mutex>
 
 #include "limesuiteng/OpStatus.h"
+#include "limesuiteng/config.h"
 
 namespace lime {
 
 class LA9310_PCIe;
 class PCIe_CSR_Access;
 
-class VSPA_mailbox
+class LIME_API VSPA_mailbox
 {
   public:
     VSPA_mailbox(std::shared_ptr<LA9310_PCIe> port);

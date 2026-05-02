@@ -10,6 +10,7 @@
 #include <cstring>
 #include <thread>
 #include "protocols/LMS64CProtocol.h"
+#include "boards/LimeSDR_Micro/m4_commands.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -52,7 +53,7 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     volatile struct la9310_hif* hif = hostInterface;
     assert(hif);
 
-    hif->sw_cmd_desc.cmd = 1;
+    hif->sw_cmd_desc.cmd = LIME_M4_LMS64C_PACKET;
 
     volatile uint32_t* arr32 = reinterpret_cast<uint32_t*>(request);
     const int words = length / sizeof(uint32_t);
@@ -188,7 +189,7 @@ OpStatus LA9310_PCIe::wait_for_new_data(int timeout_ms)
     }
 }
 
-void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
+void LA9310_PCIe::dmem_sync_to_cpu(volatile const void* addr, uint32_t data_size)
 {
     struct LA9310_IOCTL_flush_cache cache_entry;
     auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
@@ -196,7 +197,7 @@ void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
     // Fill struct with information
     cache_entry.sync_to_cpu = 1;
     cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_dmem_proxy_addr));
+    cache_entry.offset = static_cast<uint32_t>(uint64_t(addr) - uint64_t(vl_dmem_proxy_addr));
 
     printf_dbg_log("sync_dmem_proxy_before_read called for offset: 0x%08x\n", cache_entry.offset);
 
@@ -204,7 +205,7 @@ void LA9310_PCIe::sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size)
     ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
 }
 
-void LA9310_PCIe::sync_dmem_proxy_after_write(uint8_t* addr, uint32_t data_size)
+void LA9310_PCIe::dmem_sync_to_device(volatile const void* addr, uint32_t data_size)
 {
     struct LA9310_IOCTL_flush_cache cache_entry;
     auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
@@ -212,41 +213,9 @@ void LA9310_PCIe::sync_dmem_proxy_after_write(uint8_t* addr, uint32_t data_size)
     // Fill struct with information
     cache_entry.sync_to_cpu = 0;
     cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_dmem_proxy_addr));
+    cache_entry.offset = static_cast<uint32_t>(uint64_t(addr) - uint64_t(vl_dmem_proxy_addr));
 
     printf_dbg_log("sync_dmem_proxy_after_write called for offset: 0x%08x\n", cache_entry.offset);
-
-    // Fire ioctl
-    ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
-}
-
-void LA9310_PCIe::sync_iq_flood_before_read(uint8_t* addr, uint32_t data_size)
-{
-    struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_iqflood_ddr_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
-
-    // Fill struct with information
-    cache_entry.sync_to_cpu = 1;
-    cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_iqflood_ddr_addr));
-
-    printf_dbg_log("sync_iq_flood_before_read called for offset: 0x%08x\n", cache_entry.offset);
-
-    // Fire ioctl
-    ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
-}
-
-void LA9310_PCIe::sync_iq_flood_after_write(uint8_t* addr, uint32_t data_size)
-{
-    struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_iqflood_ddr_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
-
-    // Fill struct with information
-    cache_entry.sync_to_cpu = 0;
-    cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(addr - static_cast<uint8_t*>(vl_iqflood_ddr_addr));
-
-    printf_dbg_log("sync_iq_flood_after_write called for offset: 0x%08x\n", cache_entry.offset);
 
     // Fire ioctl
     ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
@@ -313,155 +282,4 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
 {
     const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
-}
-
-bool LA9310_PCIe::CheckFirmwareAlive(int timeout_ms)
-{
-    lime::info("LA9310 CheckFirmwareAlive\n");
-    volatile struct la9310_hif* hif = hostInterface;
-    assert(hif);
-    int32_t pattern = 0x55aa55aa;
-
-    hif->sw_cmd_desc.cmd = 6;
-    hif->sw_cmd_desc.data[0] = pattern;
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
-    {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
-        {
-            return false;
-        }
-    }
-
-    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
-    {
-        int32_t status = hif->sw_cmd_desc.data[0];
-        return status == (~pattern) ? true : false;
-    }
-    else
-        return false;
-}
-
-OpStatus LA9310_PCIe::EnterFirmwareReloadMode(int timeout_ms)
-{
-    lime::info("LA9310 EnterFirmwareReloadMode\n");
-    volatile struct la9310_hif* hif = hostInterface;
-    assert(hif);
-    int32_t pattern = 0x55aa55aa;
-
-    hif->sw_cmd_desc.cmd = 5;
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
-    {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
-        {
-            lime::error("LA9310_PCIe: EnterFirmwareReloadMode timeout\n");
-            break;
-        }
-    }
-
-    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
-    {
-        int32_t status = hif->sw_cmd_desc.data[0];
-        return status == (~pattern) ? OpStatus::Success : OpStatus::Error;
-    }
-    else
-        return OpStatus::Error;
-}
-
-
-
-OpStatus LA9310_PCIe::SetSystemClock(uint32_t clk_hz, int timeout_ms)
-{
-    lime::info("LA9310 SetSystemClock %u\n", clk_hz);
-    volatile struct la9310_hif* hif = hostInterface;
-    assert(hif);
-
-    hif->sw_cmd_desc.cmd = 2;
-    hif->sw_cmd_desc.data[0] = clk_hz;
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
-    {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
-        {
-            lime::error("LA9310_PCIe: SetSystemClock timeout\n");
-            break;
-        }
-    }
-
-    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
-    {
-        int32_t status = hif->sw_cmd_desc.data[0];
-        return status == int32_t(OpStatus::Success) ? OpStatus::Success : OpStatus::Error;
-    }
-    else
-        return OpStatus::Error;
-}
-
-uint32_t LA9310_PCIe::GetReferenceClock()
-{
-    volatile struct la9310_hif* hif = hostInterface;
-    assert(hif);
-
-    hif->sw_cmd_desc.cmd = 3;
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
-    {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(100))
-        {
-            lime::error("LA9310_PCIe: GetReferenceClock timeout\n");
-            break;
-        }
-    }
-
-    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
-    {
-        const uint32_t frequency = hif->sw_cmd_desc.data[0];
-        return frequency;
-    }
-    else
-        return 0;
-}
-
-OpStatus LA9310_PCIe::SetReferenceClock(uint32_t clk_hz, bool external, int timeout_ms)
-{
-    lime::info("LA9310 SetReferenceClock %u ext:%i\n", clk_hz, external);
-    volatile struct la9310_hif* hif = hostInterface;
-    assert(hif);
-
-    hif->sw_cmd_desc.cmd = 4;
-    hif->sw_cmd_desc.data[0] = clk_hz;
-    hif->sw_cmd_desc.data[1] = external ? 1 : 0;
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
-    {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(timeout_ms))
-        {
-            lime::error("LA9310_PCIe: SetReferenceClock timeout\n");
-            break;
-        }
-    }
-
-    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
-    {
-        int32_t status = hif->sw_cmd_desc.data[0];
-        return status == int32_t(OpStatus::Success) ? OpStatus::Success : OpStatus::Error;
-    }
-    else
-        return OpStatus::Error;
 }

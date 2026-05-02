@@ -74,7 +74,7 @@ static std::vector<lime::complex32f_t> GenerateChirp(double duration, double sam
     double step = 1.0 / sampleRate;
     double angularF = w1 * 2 * M_PI * sampleRate / 2;
     double angularF2 = w2 * 2 * M_PI * sampleRate / 2;
-    double amplitude = 0.5;
+    double amplitude = 0.9;
     for (double t = 0; t <= duration; t += step)
     {
         auto v = Chirp(angularF, angularF2, amplitude, duration, t);
@@ -224,61 +224,84 @@ class TransmitterThread : public WorkerThread
         //         return false;
         // }
 
+        int64_t burst_start = chirpStart;
         bool useTimestamp = true;
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            txMeta.timestamp = Timespec(int64_t(chirpStart));
-            txMeta.flags = StreamTxMeta::EndOfBurst;
+            txMeta.timestamp = Timespec(int64_t(burst_start));
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
                 modsamples[i] = chirp[i];
-            modsamples[0] = complex32f_t(1.0, 0);
-            modsamples[0] = complex32f_t(1.0 / 2, 0);
+            modsamples[0] = complex32f_t(0.8, -0.8);
             // modsamples[0] = complex32f_t(1.0/4, 0);
             // modsamples[0] = complex32f_t(1.0/2, 0);
             // modsamples[0] = complex32f_t(1.0, 0);
             // modsamples[chirp.size()-4] = complex32f_t(0, -1.0);
             // modsamples[chirp.size()-3] = complex32f_t(0, -1.0);
-            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
-            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 2] = complex32f_t(0.8, -0.8);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.8, 0.8);
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
+            burst_start += toSend;
         }
 
-        /*{
+        //this_thread::sleep_for(chrono::milliseconds(1));
+
+        {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            txMeta.timestamp = Timespec(int64_t(2 * chirpStart));
+            burst_start += 32768;
+            txMeta.timestamp = Timespec(int64_t(burst_start));
+            // printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
                 modsamples[i] = chirp[i] * 0.6f;
-            modsamples[0] = complex32f_t(1.0, 0);
-            modsamples[0] = complex32f_t(1.0 / 2, 0);
-            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
-            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            modsamples[0] = complex32f_t(0.6, -0.6);
+            modsamples[chirp.size() - 2] = complex32f_t(0.6, -0.6);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.6, 0.6);
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
+            burst_start += toSend;
         }
 
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            txMeta.timestamp = Timespec(int64_t(3 * chirpStart));
-            txMeta.flags = StreamTxMeta::EndOfBurst;
+            burst_start += 16384;
+            txMeta.timestamp = Timespec(int64_t(burst_start));
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
                 modsamples[i] = chirp[i] * 0.3f;
-            modsamples[0] = complex32f_t(1.0, 0);
-            modsamples[0] = complex32f_t(1.0 / 2, 0);
-            modsamples[chirp.size() - 2] = complex32f_t(0, -1.0);
-            modsamples[chirp.size() - 1] = complex32f_t(0, -1.0);
+            modsamples[0] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 2] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.4, 0.4);
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
-        }*/
+            burst_start += toSend;
+        }
+        {
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = useTimestamp;
+            burst_start += 8192;
+            txMeta.timestamp = Timespec(int64_t(burst_start));
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
+
+            const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i] * 0.3f;
+            modsamples[0] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 2] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.4, 0.4);
+            txSamples[0] = modsamples.data();
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
+            burst_start += toSend;
+        }
         return false;
     }
 
@@ -333,7 +356,7 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
         const int rxWindowSize = receiveSamplesCount - skipRxSamples;
         const complex32f_t* rxWindow = rx.rxBuffers[c] + skipRxSamples;
 
-        PlotSamples(rxWindow, chirp.size() * 1.2, skipRxSamples);
+        PlotSamples(rxWindow, chirp.size() * 2.2, skipRxSamples);
 
         std::vector<complex32f_t> inputs(rxWindowSize);
         memcpy(inputs.data(), rxWindow, sizeof(complex32f_t) * rxWindowSize);
@@ -413,10 +436,11 @@ int main(int argc, char** argv)
     if (sampleRate <= 0)
         sampleRate = 1e6; // sample rate read-back not available, assign default value
 
-    int chirp_len = 10 * 1024; //1360 / 2;
+    int chirp_len = 1024 * 16 + 137; //110096;//16 * 1024; //1360 / 2;
     double fs = 1e6;
     double chirpTime = chirp_len / fs;
     auto chirp = GenerateChirp(chirpTime, fs, 0.005, 0.04);
+    chirp.resize(chirp_len);
 
     double c = 0;
     for (size_t i = 0; i < chirp.size(); ++i)

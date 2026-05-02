@@ -1,6 +1,6 @@
 install(
-    FILES la9310.bin apm-iqplayer.eld
-    apm-iqplayer-2DEC2INT.eld
-    apm-iqplayer-4DEC4INT.eld
+    FILES
+    limesdr-micro-m4.bin
+    limesdr-micro-iqplayer.eld
     COMPONENT firmware
     DESTINATION /lib/firmware)

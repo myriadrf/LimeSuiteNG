@@ -76,22 +76,12 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @brief Clean & invalidate cache for DMEM Proxy before a read access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_dmem_proxy_before_read(uint8_t* addr, uint32_t data_size);
+    void dmem_sync_to_cpu(volatile const void* addr, uint32_t data_size);
 
     /// @brief Clean & invalidate cache for DMEM Proxy after a write access
     /// @param pointer to address to sync
     /// @param data size to sync
-    void sync_dmem_proxy_after_write(uint8_t* addr, uint32_t data_size);
-
-    /// @brief Clean & invalidate cache for IQ Flood before a read access
-    /// @param pointer to address to sync
-    /// @param data size to sync
-    void sync_iq_flood_before_read(uint8_t* addr, uint32_t data_size);
-
-    /// @brief Clean & invalidate cache for IQ Flood after a write access
-    /// @param pointer to address to sync
-    /// @param data size to sync
-    void sync_iq_flood_after_write(uint8_t* addr, uint32_t data_size);
+    void dmem_sync_to_device(volatile const void* addr, uint32_t data_size);
 
     /// @brief Downloads the Firmware for the ARM M4 core on the LA9310 device
     /// @param Firmware data
@@ -105,16 +95,6 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @return 0 on success, error code else
     OpStatus LoadVSPAFirmware(const char* data, size_t length);
 
-    /// @brief Checks if the firmware on the ARM M4 is alive
-    /// @param Timeout in ms for the HIF command
-    /// @return true if firmware is loaded, false else
-    bool CheckFirmwareAlive(int timeout_ms = 10);
-
-    /// @brief Function let the ARM M4 frimware enter firmware reload mode
-    /// @param Timeout in ms for the HIF command
-    /// @return 0 on success, error code else
-    OpStatus EnterFirmwareReloadMode(int timeout_ms = 100);
-
     /// @brief Block waiting for new data
     OpStatus wait_for_new_data(int timeout_ms = 1000);
 
@@ -126,10 +106,6 @@ class LIME_API LA9310_PCIe : public LimePCIe
 
     OpStatus iowrite32(uint32_t window_id, uint32_t value, uint64_t address);
     uint32_t ioread32(uint32_t window_id, uint64_t address);
-
-    OpStatus SetSystemClock(uint32_t clk_hz, int timeout_ms = 1000);
-    uint32_t GetReferenceClock();
-    OpStatus SetReferenceClock(uint32_t clk_hz, bool external, int timeout_ms = 1000);
 
   private:
     std::filesystem::path mFilePath;
