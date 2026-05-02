@@ -157,7 +157,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     // phytimer.SetReferenceClock(80e6);
     // phytimer_samples_ratio = 2;
 
-    printf("PHYTimer rate: %u, ratio:%f\n", (int)cfg.hintSampleRate * adcdac_clock_divider * dec, phytimer_samples_ratio);
+    // printf("PHYTimer rate: %u, ratio:%f\n", (int)cfg.hintSampleRate * adcdac_clock_divider * dec, phytimer_samples_ratio);
     la9310->ResetHardwareTime();
 
     if (!cfg.channels.at(TRXDir::Rx).empty())
@@ -249,7 +249,7 @@ OpStatus LA9310_TRX::Start()
     }
 
     uint32_t txBandSelection = phytimer.GetTimerControl(15).GetTriggerValue();
-    printf("Tx Swtich ON = %i\n", txBandSelection);
+    // printf("Tx Swtich ON = %i\n", txBandSelection);
     band_selection_restore = txBandSelection;
     return status;
 }
@@ -1118,11 +1118,11 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         tx_burst_start += stream_time_origin;
         tx_burst_in_progress = true;
         ++burstId;
-        printf("[%i] Burst start @ %li, phyticks %X, ratio %f\n",
-            burstId,
-            meta->timestamp.GetTicks(),
-            tx_burst_start,
-            phytimer_samples_ratio);
+        // printf("[%i] Burst start @ %li, phyticks %X, ratio %f\n",
+        //     burstId,
+        //     meta->timestamp.GetTicks(),
+        //     tx_burst_start,
+        //     phytimer_samples_ratio);
         uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;
         vspa_cmd |= (1lu << 32);
 
@@ -1132,7 +1132,7 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         {
             uint64_t rfswitch_end = tx_burst_start + count * phytimer_samples_ratio;
 
-            printf("[%i]rfswitch OFF @ %li, phytimer:%X\n", burstId, ts.GetTicks() + count, rfswitch_end);
+            // printf("[%i]rfswitch OFF @ %li, phytimer:%X\n", burstId, ts.GetTicks() + count, rfswitch_end);
             // la9310->ScheduleCommand(rfswitch_end, LIME_M4_TX_BAND_SWITCH, !band_selection_restore);
 
             // uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;
@@ -1212,12 +1212,12 @@ uint32_t LA9310_TRX::StreamTxTemplate(
 
         uint64_t rfswitch_end = tx_burst_start + tx_burst_length * phytimer_samples_ratio;
         uint64_t burst_end = tx_burst_start + (roundup_fifo(tx_burst_length) + tx_dma_allowed_extension) * phytimer_samples_ratio;
-        printf("[%i]burst end @ %li, len:%i, phytimer:x%X\n",
-            burstId,
-            ts.GetTicks() + tx_burst_length,
-            tx_burst_length,
-            burst_end,
-            burst_end);
+        // printf("[%i]burst end @ %li, len:%i, phytimer:x%X\n",
+        //     burstId,
+        //     ts.GetTicks() + tx_burst_length,
+        //     tx_burst_length,
+        //     burst_end,
+        //     burst_end);
         // la9310->ScheduleCommand(rfswitch_end, LIME_M4_TX_BAND_SWITCH, !band_selection_restore);
 
         uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;

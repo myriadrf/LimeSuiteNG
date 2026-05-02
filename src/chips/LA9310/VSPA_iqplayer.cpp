@@ -22,7 +22,7 @@
     #define M_PI 3.14159265358979323846 /* pi */
 #endif
 
-#if 1 // print debug messages
+#if 0 // print debug messages
     #define printf_dbg_log(...) \
         do \
         { \
