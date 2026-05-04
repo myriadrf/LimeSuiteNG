@@ -1150,7 +1150,8 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         // la9310->ScheduleCommand(tx_burst_start, LIME_M4_TX_DAC_ALLOWED, vspa_cmd);
 
         window.vspa_cmd = vspa_cmd;
-        window.tx_rf_switch_control = band_selection_restore;
+        window.tx_rf_switch_control =
+            band_selection_restore ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
         window.rf_switch_offset = 0;
         window.pa_switch_offset = 0;
         la9310->ScheduleCommand(tx_burst_start, LIME_M4_TX_WINDOW, &window, sizeof(window));
@@ -1230,7 +1231,8 @@ uint32_t LA9310_TRX::StreamTxTemplate(
 
         struct tx_window_payload window;
         window.vspa_cmd = vspa_cmd;
-        window.tx_rf_switch_control = !band_selection_restore;
+        window.tx_rf_switch_control =
+            !band_selection_restore ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
         window.rf_switch_offset = burst_end - rfswitch_end;
         window.pa_switch_offset = burst_end - rfswitch_end;
         la9310->ScheduleCommand(burst_end, LIME_M4_TX_WINDOW, &window, sizeof(window));
