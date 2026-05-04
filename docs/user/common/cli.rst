@@ -351,3 +351,65 @@ Table with commands and argumments:
 |                      | support space and newline delimiters.                                                 |
 +----------------------+---------------------------------------------------------------------------------------+
 
+limePPSDO
+---------
+
+Utility for controling and monitoring PPS Disciplined Oscilator. Currently supported PPS sources - GPS.
+
+.. code-block:: bash
+
+	user@computer$ limePPSDO --enable --clk-freq=10 --ppm=0.1 --check
+	user@computer$ limePPSDO --check --num=50 --banner=20 --delay=5
+	user@computer$ limePPSDO --disable --reset-delay=5
+
+Table with commands and arguments:
+
++-----------------------+---------------------------------------------------------------------------------------+
+| Configuration flags   | Description                                                                           |
++=======================+=======================================================================================+
+| -h, \-\-help          | Prints list of all posible limeTRX utility flags.                                     |
++-----------------------+---------------------------------------------------------------------------------------+
+| **Commands**                                                                                                  |
++-----------------------+---------------------------------------------------------------------------------------+
+| check                 | Run monitoring mode.                                                                  |
++-----------------------+---------------------------------------------------------------------------------------+
+| dump                  | Dump registers.   			                                                        |
++-----------------------+---------------------------------------------------------------------------------------+
+| reset                 | Reset PPSDO.				                                                            |
++-----------------------+---------------------------------------------------------------------------------------+
+| enable                | Configure and enable PPSDO.                                                           |
++-----------------------+---------------------------------------------------------------------------------------+
+| disable               | Disable PPSDO.																		|
++-----------------------+---------------------------------------------------------------------------------------+
+| **Arguments**                                                                                                 |
++-----------------------+---------------------------------------------------------------------------------------+
+| -l[name],             | Enables additional device, API and limePPSDO app log output. Log verbosity: info,     |
+|					    | warning, error, verbose, debug. Log level \'info\' prints intermediate calculations.  |
+| \-\-log=[name]	    | Log level \'debug\' prints detailed CSR register R/W operations.  					|
++-----------------------+---------------------------------------------------------------------------------------+
+| \-\-device=[name]     | Specifies which device to use. Auto selects device if only a single device is present.|
++-----------------------+---------------------------------------------------------------------------------------+
+| -n[iter],             | Number of iterations (With --check --num=0 for infinite loop; for --dump: default 1   |
+|                       | if not specified). Default: 0                                                         |
+| \-\-num=[iter]	    |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------+
+| -d[time],             | Delay between iterations (seconds, for --check and --dump). Default: 1s			    |
+|                       |                                                                                       |
+| \-\-delay=[time]      |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------+
+| -b[interval],         | Banner repeat interval (for --check). Default: every 10 iterations of status message. |
+|                       |                                                                                       |
+| \-\-banner=[interval] |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------+
+| \-r[time]  			| Delay after disable before re-enable (seconds, for --reset). Default: 2s				|
+|						|																						|
+| \-\-reset-delay[time] |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------+
+| \-c[MHz],             | Clock frequency in MHz.														        |
+|					    |																					    |
+| \-\-clk-freq=[MHz]    |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------+
+| \-p[parts],           | Tolerance in ppm.																	    |
+|                       | 																					    |
+| \-\-ppm=[parts]       | 																					    |
++-----------------------+---------------------------------------------------------------------------------------+
