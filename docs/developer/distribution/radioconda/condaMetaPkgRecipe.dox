@@ -66,7 +66,7 @@
  *  
  * @dontinclude{lineno} meta.yaml
  * @skip run:
- * @until - {{ pin_subpackage('limesuiteng-soapy', max_pin='x.x')}}
+ * @until - {{ pin_subpackage('limesuiteng-soapy', max_pin='x.x')}}  
  *  
  * Sub-package pin using ``- {{ pin_subpackage('sub_package_name', exact=True) }}`` expression will link the exact version of built sub-package and will only produce unique sub-packages of this type for every 
  * new Lime Suite NG metapackage build. Sub-package pin using ``- {{ pin_subpackage('sub_package_name', max_pin='x.x') }}`` expression will link the sub-package and indicate that the matepackage can use this 

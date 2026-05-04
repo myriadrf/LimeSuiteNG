@@ -314,7 +314,7 @@
  * directory, append an absolute or a relative path to the configuration file name.
  * @endif
  * 
- * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the LimeSuiteNG suite. The <b>limeGUI</b> application allows to perform 
+ * Alternatively, SDR device configuration file <b>.ini</b> can also be generated using <b>limeGUI</b> application, which is bundled with the Lime Suite NG software suite. The <b>limeGUI</b> application allows to perform 
  * SDR device configuration using graphical user interface and then generate the final <b>.ini</b> configuration file, which can be loaded with 
  * @ref lime::SDRDevice::LoadConfig(uint8_t, const std::string&) "LoadConfig()" function. The <b>limeGUI</b> application allows to configure the basic SDR device parameters (center frequency, sample rate and etc.)
  * and other more advanced SDR device parameters, which are not directly exposed through public API and can only be toggled by directly writing and reading SDR device registers. This sub-topic does not provide any 

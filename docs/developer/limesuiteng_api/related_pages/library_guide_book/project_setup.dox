@@ -3,7 +3,7 @@
  * 
  * @section cmake_setup CMake set up
  * 
- * The following CMakeLists.txt code is the minimum required project set up code for working with LimeSuiteNG library in custom applications:
+ * The following CMakeLists.txt code is the minimum required project set up code for working with Lime Suite NG library in custom applications:
  * @code{.cmake}
  * cmake_minimum_required(VERSION 3.26)
  * 
@@ -21,11 +21,11 @@
  * CMake project always starts with minimum required CMake version and project command. Specify the name of project and supported languages.
  * Set your list of source files that will be used in the project build. Update the project configuration by specifying the build type as executable.
  * Specify executable command arguments: executable name (in this case project name) and pass the source file variable that contains the list of source files. Link 
- * the LimeSuiteNG library to project executable using <b>target_link_libraries()</b> command. 
+ * the Lime Suite NG library to project executable using <b>target_link_libraries()</b> command. 
  * 
  * @section project_headers Library headers
  * 
- * LimeSuiteNG library does not have single header for access to all public API members. Instead, library utilizes the modular header method, where only the necessary headers are included into the project
+ * Lime Suite NG library does not have single header for access to all public API members. Instead, library utilizes the modular header method, where only the necessary headers are included into the project
  * in order to reduce the overall build complexity and build time. Installed library headers are located in folder ``limesuiteng``. The primary API functions used to register, configure and control streams
  * of SDR devices are exposed in the ``limesuiteng/DeviceRegistry.h``, ``limesuiteng/SDRDevice.h`` and ``limesuiteng/RFStream.h`` headers. Other headers define complementary structures, storage classes and enumerations
  * used with API functions.  
