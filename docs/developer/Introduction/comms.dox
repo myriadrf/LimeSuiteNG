@@ -13,23 +13,22 @@
  * 
  * @section ctrl_comms_summary Summary
  * 
- * All supported SDR device class implementations use the virtual serial interface - ``ISerialPort``. 
- * The virtual serial port declares the base functions used for communication with the actual device.
+ * All supported SDR device class implementations use the virtual serial interface ``ISerialPort`` to
+ * control and configure device registers. The virtual serial interface provides the base communication
+ * functions, which must be overriden by each device class implementation.
  * 
- * When a supported SDR device is registered using Lime Suite NG API, the virtual serial interface of 
- * created SDR device object is initialized with a device specific serial interface implementation, which 
- * overrides the base functions of the virtual serial interface.
- * 
- * Currently supported implementations of the virtual serial interface:
+ * Lime Suite NG supported SDR devices override the virtual serial interface at the device registration step.
+ * Each device class implementation will override the functions with one of the following supported serial
+ * interface implementations:
  * 
  * - ``PCIE_CSR_Pipe`` - serial interface for communicating with PCIe interface based SDR devices.
  * - ``FTDI_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FT6xx USB chip.
  * - ``FX3_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FX3 USB chip. 
  * 
  * Each implementation of the serial interface communicates with a device through a communication 
- * library port. A communication library port wraps the API interface of a specific 
- * communication library, that communicates with a device driver and thus with a registered 
- * SDR device.
+ * library port. A communication library port implements control, configuration and mass data transfer functions 
+ * for a class of devices. Communication library port implementation relies on communication library API, which 
+ * provides a set of functions that can be used to interact with device driver and thus with the device hardware.
  * 
  * @subsection  ctrl_comms_fwch_legend Flowchart legend
  * 
