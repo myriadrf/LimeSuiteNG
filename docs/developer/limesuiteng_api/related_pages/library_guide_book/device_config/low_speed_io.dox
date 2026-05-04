@@ -7,10 +7,11 @@
  * 
  * @section low_speed_io_summary Summary
  * 
- * Low speed interfaces can be used to bypass library functions and communicate directly with SDR device modules. Currently, library device interface class supports two low speed interfaces:
- * SPI and I2C. The SPI interface is the primary interface used for communications with modules on SDR device. Current I2C interface implementation exists for compatibility reasons and is not widely
- * adopted by SDR boards. To test if interface for a particular SDR device is available, call the respective interface function. If the interface is not implemented, a warning message will be 
- * logged and @ref lime::OpStatus::NotImplemented "NotImplemented" operation status number will be returned.
+ * Low speed interfaces can be used to bypass library functions and communicate directly with SDR device modules. Currently, library device interface class supports three low speed interfaces:
+ * SPI, I2C and CSR. The SPI interface is the primary interface used for communications with modules on SDR device. Current I2C interface implementation exists for compatibility reasons and is 
+ * not widely adopted by SDR boards. CSR interface grants access to the configuration space registers with dedicated register read and write functions.
+ * To test if a particular SDR device supports the interface, call the respective interface function. If the SPI or I2c interface is not implemented, a warning message will be logged and 
+ * @ref lime::OpStatus::NotImplemented "NotImplemented" operation status number will be returned. If device does not support the CSR interface, a nullptr value will be returned.
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -77,5 +78,46 @@
  * Output of the example code for a LimeSDR USB device:
  * 
  * @image{inline} html dev_spi_slave_ids.png
+ * 
+ * @subsection low_speed_io_csr Configuration Space Register (CSR) interface
+ * 
+ * To access SDR device configuration space registers, CSR interface must be created using the @ref lime::SDRDevice::getICSR() "getICSR()" function:
+ * 
+ * @dontinclude{lineno} limeCSR.cpp
+ * @skip ICSR* CSR_interface = device->getICSR();
+ * @until }  
+ * 
+ * If device supports CSR interface, address to the interface is returned. If CSR interface is not supported a ``nullptr`` value is returned.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    CSR interface allocates dynamic memory. When the interface is no longer needed, it must be deleted using ``delete`` operator to avoid memory leaks.}
+ * @else
+ * @warning CSR interface allocates dynamic memory. When the interface is no longer needed, it must be deleted using ``delete`` operator to avoid memory leaks. 
+ * @endif
+ * 
+ * CSR interface object provides register write function @ref lime::ICSR::ioWrite64 "ioWrite64()" and register read function @ref lime::ICSR::ioRead64 "ioRead64()", which
+ * can be used to modify CSR registers:
+ * 
+ * @skip try
+ * @until } catch (std::runtime_error& e)  
+ * 
+ * The ``ioWrite64()`` and ``ioRead64()`` functions can only operate on a single register at a time. Therefore, to perform continuous modification of registers,
+ * a for loop with buffered register addresses and data can be used (as shown in the example above).
+ * 
+ * Once the interface is not needed anymore, it is recommended to delete it:
+ * @skip if (read)
+ * @until return EXIT_SUCCESS;
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Tip
+ * 
+ *    A smart pointer can be used to avoid the need for manual deletion of CSR interface.}
+ * @else
+ * @note A smart pointer can be used to avoid the need for manual deletion of CSR interface.
+ * @endif
  * 
  */
