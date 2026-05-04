@@ -9,7 +9,7 @@ Radioconda package
    Instead build the newest Lime Suite NG software from source!
 
 .. hint::
-   Check out radioconda and conda environment setup process.
+   Check out radioconda and conda environment setup process. See :ref:`conda-windows-ref`
 
 Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
 
