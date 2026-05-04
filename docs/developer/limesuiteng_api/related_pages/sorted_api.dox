@@ -98,6 +98,7 @@
  *    </li>
  *    <li><b>Low speed interfaces:</b>
  *       <ul>
+ *          <li> @ref lime::SDRDevice::getICSR() "getICSR()" </li>
  *          <li> @ref lime::SDRDevice::SPI(uint32_t, const uint32_t*, uint32_t*, uint32_t) "SPI()"</li>
  *          <li> @ref lime::SDRDevice::I2CWrite(int, const uint8_t*, uint32_t) "I2CWrite()"</li>
  *          <li> @ref lime::SDRDevice::I2CRead(int, uint8_t*, uint32_t) "I2CRead()"</li>
