@@ -342,7 +342,7 @@ Table with commands and argumments:
 | **Data options**                                                                                             |
 +----------------------+---------------------------------------------------------------------------------------+
 | \-f[file path],      | Stream from File. For word format in file, checkout --stream flag description.        |
-|					   |																					   |
+|                      |                                                                                       |
 | \-\-file=[file path] |                                                                                       |
 +----------------------+---------------------------------------------------------------------------------------+
 | \-s[stream],         | Stream from CLI. For write command, provide 16 byte word (address + data) in hex      |
@@ -373,43 +373,43 @@ Table with commands and arguments:
 +-----------------------+---------------------------------------------------------------------------------------+
 | check                 | Run monitoring mode.                                                                  |
 +-----------------------+---------------------------------------------------------------------------------------+
-| dump                  | Dump registers.   			                                                        |
+| dump                  | Dump registers.                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| reset                 | Reset PPSDO.				                                                            |
+| reset                 | Reset PPSDO.                                                                          |
 +-----------------------+---------------------------------------------------------------------------------------+
 | enable                | Configure and enable PPSDO.                                                           |
 +-----------------------+---------------------------------------------------------------------------------------+
-| disable               | Disable PPSDO.																		|
+| disable               | Disable PPSDO.                                                                        |
 +-----------------------+---------------------------------------------------------------------------------------+
 | **Arguments**                                                                                                 |
 +-----------------------+---------------------------------------------------------------------------------------+
 | -l[name],             | Enables additional device, API and limePPSDO app log output. Log verbosity: info,     |
-|					    | warning, error, verbose, debug. Log level \'info\' prints intermediate calculations.  |
-| \-\-log=[name]	    | Log level \'debug\' prints detailed CSR register R/W operations.  					|
+|                       | warning, error, verbose, debug. Log level \'info\' prints intermediate calculations.  |
+| \-\-log=[name]        | Log level \'debug\' prints detailed CSR register R/W operations.                      |
 +-----------------------+---------------------------------------------------------------------------------------+
 | \-\-device=[name]     | Specifies which device to use. Auto selects device if only a single device is present.|
 +-----------------------+---------------------------------------------------------------------------------------+
-| -n[iter],             | Number of iterations (With --check --num=0 for infinite loop; for --dump: default 1   |
-|                       | if not specified). Default: 0                                                         |
-| \-\-num=[iter]	    |                                                                                       |
+| -n[iter],             | Number of iterations (With \-\-check \-\-num=0 for infinite loop; for \-\-dump:       |
+|                       | default 1 if not specified). Default: 0                                               |
+| \-\-num=[iter]        |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| -d[time],             | Delay between iterations (seconds, for --check and --dump). Default: 1s			    |
+| -d[time],             | Delay between iterations (seconds, for \-\-check and --dump). Default: 1s             |
 |                       |                                                                                       |
 | \-\-delay=[time]      |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| -b[interval],         | Banner repeat interval (for --check). Default: every 10 iterations of status message. |
-|                       |                                                                                       |
+| -b[interval],         | Banner repeat interval (for \-\-check). Default: every 10 iterations of status        |
+|                       | message.                                                                              |
 | \-\-banner=[interval] |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| \-r[time]  			| Delay after disable before re-enable (seconds, for --reset). Default: 2s				|
-|						|																						|
+| \-r[time]             | Delay after disable before re-enable (seconds, for \-\-reset). Default: 2s            |
+|                       |                                                                                       |
 | \-\-reset-delay[time] |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| \-c[MHz],             | Clock frequency in MHz.														        |
-|					    |																					    |
+| \-c[MHz],             | Clock frequency in MHz.                                                               |
+|                       |                                                                                       |
 | \-\-clk-freq=[MHz]    |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
-| \-p[parts],           | Tolerance in ppm.																	    |
-|                       | 																					    |
-| \-\-ppm=[parts]       | 																					    |
+| \-p[parts],           | Tolerance in ppm.                                                                     |
+|                       |                                                                                       |
+| \-\-ppm=[parts]       |                                                                                       |
 +-----------------------+---------------------------------------------------------------------------------------+
