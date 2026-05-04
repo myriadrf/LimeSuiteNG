@@ -308,3 +308,46 @@ Full table of limeOEM utility configuration flags:
 +-----------------------------------+-------------------------------------------------------------------------------------------+
 | \-\-interactive                   | Wait for user input after each test.                                                      |
 +-----------------------------------+-------------------------------------------------------------------------------------------+
+
+
+limeCSR
+-------
+
+Utility for reading and writing device configuration space registers.
+
+.. code-block:: bash
+
+	user@computer:~$ limeCSR write --stream=100cc000007000801a0000e00000feed,0000000000700080000000e00000feed
+	user@computer:~$ limeCSR read --stream=--stream=100cc00000700080,0000000000700080
+
+Table with commands and argumments:
+
++----------------------+---------------------------------------------------------------------------------------+
+| Configuration flags  | Description                                                                           |
++======================+=======================================================================================+
+| -h, \-\-help         | Prints list of all posible limeTRX utility flags.                                     |
++----------------------+---------------------------------------------------------------------------------------+
+| **Commands**                                                                                                 |
++----------------------+---------------------------------------------------------------------------------------+
+| read                 | Register reading operation.                                                           |
++----------------------+---------------------------------------------------------------------------------------+
+| write                | Register writing operation.                                                           |
++----------------------+---------------------------------------------------------------------------------------+
+| **Arguments**                                                                                                |
++----------------------+---------------------------------------------------------------------------------------+
+| -d[name],            | Specifies which device to use. Auto selects device if only a single device is present.|
+|                      |                                                                                       |
+| \-\-device=[name]    |                                                                                       |
++----------------------+---------------------------------------------------------------------------------------+
+| **Data options**                                                                                             |
++----------------------+---------------------------------------------------------------------------------------+
+| \-f[file path],      | Stream from File. For word format in file, checkout --stream flag description.        |
+|					   |																					   |
+| \-\-file=[file path] |                                                                                       |
++----------------------+---------------------------------------------------------------------------------------+
+| \-s[stream],         | Stream from CLI. For write command, provide 16 byte word (address + data) in hex      |
+|                      | format without prefix '0x'. For read command, provide 8 byte word (address) in hex    |
+| \-\-stream=[stream]  | format without prefix '0x'. Multiple words can be separated using comma. Files also   |
+|                      | support space and newline delimiters.                                                 |
++----------------------+---------------------------------------------------------------------------------------+
+
