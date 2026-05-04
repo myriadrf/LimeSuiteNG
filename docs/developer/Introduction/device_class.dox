@@ -19,7 +19,7 @@
  * implement device specific control and configuration functionality. Some device classes also override common FPGA interface 
  * and implement device specific FPGA functions to account for differences in FPGA control and configuration.
  * 
- * All device RFIC, FPGA and other onboard device register control and configuration is done via the ``ISerialPort`` interface.
+ * All device LMS7002M, FPGA and other onboard device register control and configuration is done via the ``ISerialPort`` interface.
  * Each unique SDR device class overrides the virtual serial interface with device specific serial port implementation.
  * 
  * All SDR device classes have a universal control and configuration interface, that is based on the ``SDRDevice`` interface class.
@@ -33,6 +33,6 @@
  * 
  * - Solid line with a transparet arrow head body - Inheritance
  * - Dotted line with simple arrow head - Dependency
- * - Solid line with simeple arrow head - Association
+ * - Solid line with simple arrow head - Association
  * 
  */
