@@ -18,8 +18,8 @@
  * 
  * All implementations of streaming classes utilize a universal stream control interface - ``RFStream``.
  * Each unique streaming class implements custom data gathering, processing and transmission procedures.
- * Streaming classes utilize the virtual DMA interface for high bandwidth data transfering and 
- * ``ISerialPort`` interface for device stream and stream parameter control and configuration.
+ * Streaming classes utilize the virtual DMA interface for high bandwidth data transfers and the
+ * ``ISerialPort`` interface for device stream control and parameter configuration.
  * The implementations of virtual interfaces depends on the devices, that created the streaming object.
  * 
  * @subsection streaming_class_diag_legend Diagram legend
