@@ -3,11 +3,11 @@
  * 
  * @section dev_tools_summary Summary
  * 
- * This section contains information about third party developer tools and helpful information for development of Lime Suite NG suite.
- * 
+ * This section contains links to third party developer tools that can be used when developing Lime Suite NG software.
+ *  
  * Topics of interest:
  * <ol>
- *     <li> @subpage asan_page </li>
+ *     <li> <a href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a> </li>
  *     <li> @subpage ubsan_page </li>
  *     <li> @subpage valgrind_page </li>
  * </ol>
