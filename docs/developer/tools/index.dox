@@ -8,7 +8,7 @@
  * Topics of interest:
  * <ol>
  *     <li> <a href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a> </li>
- *     <li> @subpage ubsan_page </li>
+ *     <li> <a href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html">UndefinedBehaviorSanitizer</a> </li>
  *     <li> @subpage valgrind_page </li>
  * </ol>
  */
