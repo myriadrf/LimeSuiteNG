@@ -21,7 +21,7 @@
  * Valgrind performs program CPU instruction analysis and can sometimes encounter unknown x86 instructions. 
  * Detection of unknown instructions immediately halts the execution of the program and a hex dump
  * of the instruction, which caused the program termination, is provided as a result.
- * A < a href="https://defuse.ca/online-x86-assembler.htm">disassembler (online version)</a> can be used to 
+ * A <a href="https://defuse.ca/online-x86-assembler.htm">disassembler (online version)</a> can be used to 
  * verify if a legitimate unknown instruction or a corrupted memory area was encountered.
  * 
  * In the case of Lime Suite NG, it is known that the AVX-512 instruction set is treated by Valgrind as an
