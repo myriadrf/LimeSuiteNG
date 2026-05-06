@@ -57,9 +57,9 @@
  * </ol>
  * 
  * If no devices are detected, function returns an empty device list which can be tested with `.empty()` or `.size()` methods. If the device list is not empty,
- * a range-for loop can be used to print items of the device list to standard output. To obtain basic device information in std::string format, a method 
- * @ref lime::DeviceHandle::Serialize() "Serialize()" or @ref lime::DeviceHandle::ToString() "ToString()" must be called for each item of @ref lime::DeviceHandle "DeviceHandle" type 
- * in device list. Both methods return string of arguments that identify the device, but the Serialize() method also appends complementary text that identifies the device argument.
+ * a range-for loop can be used to print items of the device list to standard output. To obtain device connection information, a method 
+ * @ref lime::DeviceHandle::Serialize() "Serialize()" or @ref lime::DeviceHandle::ToString() "ToString()" must be called for each item of @ref lime::DeviceHandle "DeviceHandle" type. 
+ * Both methods return string of arguments that identify each unique device, but the Serialize() method also appends parameter names next to the arguments.
  * First example code for @ref lime::DeviceRegistry::enumerate() "enumerate()" API function produces output:
  * 
  * @image{inline} html dev_registration_dev_enum.png
