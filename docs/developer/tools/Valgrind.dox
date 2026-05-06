@@ -14,7 +14,7 @@
  * 
  * @section valgrind_limits Limitations
  * 
- * This section provides known limitation regarding the use of Valgrind in development of Lime Suite NG.
+ * This section provides known limitations regarding the use of Valgrind in development of Lime Suite NG.
  * 
  * @subsection valgrind_uk_instructions Unknown instructions
  * 
@@ -28,7 +28,7 @@
  * unknown instruction set. As a result, detection of any AVX-512 CPU instructions causes Valgrind to halt 
  * CPU instruction analysis.
  *
- * To bypass the Vlagrind limitation, it is recommended to build Lime Suite NG without the use of AVX-512
+ * To bypass the Valgrind limitation, it is recommended to build Lime Suite NG without the use of AVX-512
  * instruction set. To disable the use of AVX-512 instruction set in Lime Suite NG build, pass the 
  * ``-mno-avx512f`` GCC compiler flag. Disabling the use of AVX-512 instruction set will result in a slower
  * program execution, but will enable the use of Valgrind CPU instruction analysis tool.
