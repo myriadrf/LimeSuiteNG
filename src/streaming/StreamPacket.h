@@ -163,7 +163,7 @@ class PacketData
     }
 
   private:
-    static constexpr uint8_t MAX_CHANNEL_COUNT = 2;
+    static constexpr uint8_t MAX_CHANNEL_COUNT = 4;
 
     uint8_t* head[MAX_CHANNEL_COUNT];
     uint8_t* tail[MAX_CHANNEL_COUNT];

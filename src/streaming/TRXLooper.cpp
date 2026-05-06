@@ -201,11 +201,11 @@ OpStatus TRXLooper::Setup(const StreamConfig& cfg)
 
     uint16_t channelEnables = 0;
     channelEnables |= indexListToMask(cfg.channels.at(TRXDir::Rx));
-    if (channelEnables & ~0x3)
-        return ReportError(OpStatus::InvalidValue, "Invalid Rx channel, only [0,1] channels supported"s);
+    // if (channelEnables & ~0x3)
+    //     return ReportError(OpStatus::InvalidValue, "Invalid Rx channel, only [0,1] channels supported"s);
     channelEnables |= indexListToMask(cfg.channels.at(TRXDir::Tx));
-    if (channelEnables & ~0x3)
-        return ReportError(OpStatus::InvalidValue, "Invalid Tx channel, only [0,1] channels supported"s);
+    // if (channelEnables & ~0x3)
+    //     return ReportError(OpStatus::InvalidValue, "Invalid Tx channel, only [0,1] channels supported"s);
 
     mConfig = cfg;
 
@@ -943,14 +943,12 @@ uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMet
 {
     bool timestampSet = false;
     uint32_t samplesProduced = 0;
-    const bool useChannelB = mConfig.channels.at(TRXDir::Rx).size() > 1;
+    const int chCount = mConfig.channels.at(lime::TRXDir::Rx).size();
 
     bool firstIteration = true;
 
     assert(dest);
     assert(dest[0]);
-    if (useChannelB)
-        assert(dest[1]);
 
     auto start = chrono::high_resolution_clock::now();
     while (samplesProduced < count)
@@ -973,12 +971,10 @@ uint32_t TRXLooper::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMet
 
         T* const* src = reinterpret_cast<T* const*>(mRx.stagingPacket->samples.front());
 
-        std::memcpy(&dest[0][samplesProduced], src[0], samplesToCopy * sizeof(T));
-
-        if (useChannelB)
+        for (int c = 0; c < chCount; ++c)
         {
-            assert(dest[1]);
-            std::memcpy(&dest[1][samplesProduced], src[1], samplesToCopy * sizeof(T));
+            assert(dest[c]);
+            std::memcpy(&dest[c][samplesProduced], src[c], samplesToCopy * sizeof(T));
         }
 
         mRx.stagingPacket->samples.pop(samplesToCopy);
@@ -1544,7 +1540,7 @@ template<class T>
 uint32_t TRXLooper::StreamTxTemplate(
     const T* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    const bool useChannelB = mConfig.channels.at(lime::TRXDir::Tx).size() > 1;
+    const int chCount = mConfig.channels.at(lime::TRXDir::Tx).size();
     const bool useTimestamp = meta ? (meta->hasTimestamp) : false;
     const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
 
@@ -1565,9 +1561,11 @@ uint32_t TRXLooper::StreamTxTemplate(
 
     assert(samples);
     assert(samples[0]);
-    if (useChannelB)
-        assert(samples[1]);
-    const T* src[2] = { samples[0], useChannelB ? samples[1] : nullptr };
+
+    const T* src[8] = { nullptr };
+    for (int c = 0; c < chCount; ++c)
+        src[c] = samples[c];
+
     while (samplesRemaining > 0)
     {
         if (!mTx.stagingPacket)
@@ -1582,9 +1580,8 @@ uint32_t TRXLooper::StreamTxTemplate(
         }
 
         int consumed = mTx.stagingPacket->samples.push(src, samplesRemaining);
-        src[0] += consumed;
-        if (useChannelB)
-            src[1] += consumed;
+        for (int c = 0; c < chCount; ++c)
+            src[c] += consumed;
 
         samplesRemaining -= consumed;
         ts.AddTicks(consumed * ticksPerSample);

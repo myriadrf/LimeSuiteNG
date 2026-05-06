@@ -73,14 +73,6 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
     fgSizer11->Add(m_staticText6, 0, wxALIGN_CENTER_VERTICAL, 5);
 
     txtNyquistFreqMHz = new wxTextCtrl(sbSizer1->GetStaticBox(), wxID_ANY, wxT("15.36"), wxDefaultPosition, wxDefaultSize, 0);
-#ifdef __WXGTK__
-    if (!txtNyquistFreqMHz->HasFlag(wxTE_MULTILINE))
-    {
-        txtNyquistFreqMHz->SetMaxLength(8);
-    }
-#else
-    txtNyquistFreqMHz->SetMaxLength(8);
-#endif
 
     fgSizer11->Add(txtNyquistFreqMHz, 0, wxEXPAND, 5);
 

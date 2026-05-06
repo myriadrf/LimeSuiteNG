@@ -62,7 +62,7 @@ class fftviewer_frFFTviewer : public frFFTviewer
     void OnbtnCaptureClick(wxCommandEvent& event);
 
   protected:
-    static constexpr uint8_t cMaxChCount = 2;
+    static constexpr uint8_t cMaxChCount = 4;
 
     /** @brief Structure for storing the fast Fourier transform information for the display into the GUI */
     struct DataToGUI {
@@ -110,6 +110,9 @@ class fftviewer_frFFTviewer : public frFFTviewer
     wxTimer* mGUIupdater;
     unsigned lmsIndex{};
     double sampleRate;
+    uint32_t mChannelsMask;
+    std::vector<uint8_t> channelRelativeToAbsoluteIndex;
+    std::chrono::time_point<std::chrono::steady_clock> lastPlotsUpdateTime;
 };
 
 #endif // __fftviewer_frFFTviewer__
