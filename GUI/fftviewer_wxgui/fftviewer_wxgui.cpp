@@ -118,17 +118,25 @@ frFFTviewer::frFFTviewer(wxWindow* parent, wxWindowID id, const wxString& title,
     sbStreamConfig->Add(sizerSourceFormat, 0, wxEXPAND, 0);
     fgSizer12->Add(sbStreamConfig, 0, wxEXPAND, 0);
 
-    wxBoxSizer* sizerStreamFlags = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* sizerStreamFlags = new wxBoxSizer(wxVERTICAL);
 
     chkEnTx =
         new wxCheckBox(sbStreamConfig->GetStaticBox(), wxID_ANY, wxT("Loopback RX to TX"), wxDefaultPosition, wxDefaultSize, 0);
     chkEnTx->SetToolTip(wxT("Freezes FFT plot"));
-    sizerStreamFlags->Add(chkEnTx, 0, wxALL, 2);
+    sizerStreamFlags->Add(chkEnTx, 0, wxALL, 0);
 
     chkEnSync =
         new wxCheckBox(sbStreamConfig->GetStaticBox(), wxID_ANY, wxT("Sync timestamp"), wxDefaultPosition, wxDefaultSize, 0);
     chkEnSync->SetToolTip(wxT("Freezes FFT plot"));
-    sizerStreamFlags->Add(chkEnSync, 0, wxALL, 2);
+    sizerStreamFlags->Add(chkEnSync, 0, wxALL, 0);
+
+    chkSwapIQ = new wxCheckBox(sbStreamConfig->GetStaticBox(), wxID_ANY, wxT("SwapIQ"), wxDefaultPosition, wxDefaultSize, 0);
+    chkSwapIQ->SetToolTip(wxT("Swaps IQ channels"));
+    sizerStreamFlags->Add(chkSwapIQ, 0, wxALL, 0);
+
+    chkRealFFT = new wxCheckBox(sbStreamConfig->GetStaticBox(), wxID_ANY, wxT("RealOnlyFFT"), wxDefaultPosition, wxDefaultSize, 0);
+    chkRealFFT->SetToolTip(wxT("Calculate FFT only for real channel"));
+    sizerStreamFlags->Add(chkRealFFT, 0, wxALL, 0);
 
     sbStreamConfig->Add(sizerStreamFlags, 0, 0, 0);
 

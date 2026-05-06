@@ -57,6 +57,8 @@ class frFFTviewer : public IModuleFrame
     wxChoice* cmbFmt;
     wxCheckBox* chkEnTx;
     wxCheckBox* chkEnSync;
+    wxCheckBox* chkSwapIQ;
+    wxCheckBox* chkRealFFT;
     wxButton* btnStartStop;
     wxStaticText* m_staticText8;
     wxStaticText* lblRxDataRate;

@@ -116,7 +116,7 @@ fftviewer_frFFTviewer::fftviewer_frFFTviewer(wxWindow* parent, wxWindowID id)
 
     mFFTpanel->series[0]->color = 0xFF0000FF;
     mFFTpanel->series[1]->color = 0x0000FFFF;
-    mFFTpanel->series[2]->color = 0x00FF00FF;
+    mFFTpanel->series[2]->color = 0x000000FF;
     mFFTpanel->series[3]->color = 0x00FFFFFF;
     mFFTpanel->SetDrawingMode(GLG_LINE);
     mFFTpanel->settings.gridXlines = 15;
@@ -520,6 +520,22 @@ void fftviewer_frFFTviewer::StreamingLoop(
         samplesPopped = pthis->stream->Receive(buffers, fftSize, &rxMeta);
         if (samplesPopped <= 0)
             continue;
+
+        if (pthis->chkSwapIQ->IsChecked())
+        {
+            for (uint32_t c = 0; c < channelsCount; ++c)
+                for (uint32_t i = 0; i < samplesPopped; ++i)
+                {
+                    complex32f_t temp(buffers[c][i].imag(), buffers[c][i].real());
+                    buffers[c][i] = temp;
+                }
+        }
+        if (pthis->chkRealFFT->IsChecked())
+        {
+            for (uint32_t c = 0; c < channelsCount; ++c)
+                for (uint32_t i = 0; i < samplesPopped; ++i)
+                    buffers[c][i].imag(0);
+        }
 
         int64_t rxTS = rxMeta.timestamp.GetTicks();
 
