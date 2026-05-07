@@ -49,6 +49,7 @@ typedef enum {
     MBOX_OPC_RX_CONFIGURE,
     MBOX_OPC_RX_CONTROL,
     MBOX_OPC_RX_BURST_LENGTH,
+    MBOX_OPC_RX_PREPARE,
 
 } mbox_opc_e;
 
@@ -72,6 +73,7 @@ typedef enum {
 class LIME_API VSPA_iqplayer
 {
   public:
+    static e_rx_channel api_channel_remap(uint32_t index);
     VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port);
     OpStatus Initialize();
 
@@ -106,6 +108,8 @@ class LIME_API VSPA_iqplayer
     OpStatus SetDecimation(uint32_t channel, uint32_t decimation);
     OpStatus SetInterpolation(uint32_t interpolation);
     int GetInterpolation() const;
+
+    OpStatus PrepareRx();
 
   private:
     std::shared_ptr<LA9310_PCIe> port;

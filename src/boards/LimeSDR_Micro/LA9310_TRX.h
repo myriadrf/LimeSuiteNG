@@ -127,7 +127,7 @@ class LA9310_TRX : public RFStream
         }
     };
 
-    std::vector<uint32_t> rxbuffer;
+    std::vector<complex16_t> rxbuffer[4];
     Stream mRx;
     Stream mTx;
 

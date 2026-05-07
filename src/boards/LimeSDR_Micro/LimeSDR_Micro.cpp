@@ -389,10 +389,14 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LimeSDR_Micro_M4> la9310, 
         lime::error("Failed to set interpolation.");
         return OpStatus::Error;
     }
-    if (la9310->vspa.SetDecimation(2, oversample) != OpStatus::Success)
+    for (int i = 0; i < 4; ++i)
     {
-        lime::error("Failed to set decimation.");
-        return OpStatus::Error;
+        const auto vspa_ch = la9310->vspa.api_channel_remap(i);
+        if (la9310->vspa.SetDecimation(vspa_ch, oversample) != OpStatus::Success)
+        {
+            lime::error("Failed to set decimation.");
+            return OpStatus::Error;
+        }
     }
     return OpStatus::Success;
 }
@@ -883,12 +887,13 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     if (trx == TRXDir::Tx)
         rate /= (1 << dacRate);
     else
-        rate /= (1 << ((dacRate >> channel) & 1));
+        rate /= (1 << ((adcRate >> channel) & 1));
 
     if (rf_samplerate)
         *rf_samplerate = rate;
 
-    int dec = la9310->vspa.GetDecimation(2);
+    const auto vspa_ch = la9310->vspa.api_channel_remap(channel);
+    int dec = la9310->vspa.GetDecimation(vspa_ch);
     if (dec > 0)
     {
         rate /= dec;

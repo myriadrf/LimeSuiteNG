@@ -41,8 +41,6 @@ static constexpr bool addZeroesToBurstEnds = true;
 
 static constexpr int statsPeriod_ms{ 1000 };
 
-static const std::array<uint32_t, 4> rx_api_channel_to_vspa_channel = { VSPA_RX0, VSPA_RX1, VSPA_RO0, VSPA_RO1 };
-
 static constexpr int64_t ts_to_us(int64_t fs, int64_t ts)
 {
     int64_t n = (ts / fs);
@@ -141,14 +139,15 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     uint32_t rxMask = 0;
     for (int ch : cfg.channels.at(TRXDir::Rx))
     {
-        rxMask |= (1 << rx_api_channel_to_vspa_channel.at(ch));
+        auto vspa_ch = la9310->vspa.api_channel_remap(ch);
+        rxMask |= (1 << vspa_ch);
     }
 
     status = vspa.SetupResources(rxMask, cfg.channels.at(TRXDir::Tx).size());
 
     uint8_t adcRate, dacRate;
     la9310->GetADCDACRates(&adcRate, &dacRate);
-    int dec = la9310->vspa.GetDecimation(2);
+    int dec = la9310->vspa.GetDecimation(cfg.channels.at(TRXDir::Rx).front());
     int adcdac_clock_divider = (adcRate | dacRate) ? 2 : 1;
 
     phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
@@ -158,6 +157,10 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     // phytimer_samples_ratio = 2;
 
     // printf("PHYTimer rate: %u, ratio:%f\n", (int)cfg.hintSampleRate * adcdac_clock_divider * dec, phytimer_samples_ratio);
+    status = la9310->vspa.PrepareRx();
+    if (status != OpStatus::Success)
+        return status;
+
     la9310->ResetHardwareTime();
 
     if (!cfg.channels.at(TRXDir::Rx).empty())
@@ -229,7 +232,7 @@ OpStatus LA9310_TRX::Start()
     // for (const auto id : ids)
     for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
     {
-        const uint32_t vspa_adc_channel = rx_api_channel_to_vspa_channel.at(api_channel);
+        const uint32_t vspa_adc_channel = la9310->vspa.api_channel_remap(api_channel);
         const mbox_opc_e command = MBOX_OPC_RX_CONTROL;
         const bool start = 0x1;
         uint32_t hiword = uint32_t(command) << 24;
@@ -289,7 +292,7 @@ void LA9310_TRX::Stop()
         }
 
         for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
-            vspa.RxEnable(rx_api_channel_to_vspa_channel.at(api_channel), false, false);
+            vspa.RxEnable(la9310->vspa.api_channel_remap(api_channel), false, false);
 
         constexpr uint8_t ids[] = { 1, 2, 3, 4 };
         for (const auto id : ids)
@@ -371,7 +374,7 @@ OpStatus LA9310_TRX::RxSetup()
     uint32_t vspa_channel_mask = 0;
     for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
     {
-        uint32_t vspa_ch = rx_api_channel_to_vspa_channel.at(api_channel);
+        uint32_t vspa_ch = la9310->vspa.api_channel_remap(api_channel);
         vspa_channel_mask |= (1 << vspa_ch);
         vspa.RxEnable(vspa_ch, false); // stop Rx
         vspa.RxEnable(vspa_ch, false, true); // Reset Rx pipeline
@@ -389,7 +392,8 @@ OpStatus LA9310_TRX::RxSetup()
 
     const int dmaBufferSize = 65536;
 
-    rxbuffer.resize(1024 * 1024 * 4);
+    for (int i = 0; i < 4; ++i)
+        rxbuffer[i].resize(1024 * 1024);
 
     uint32_t packetSize = 4096;
     mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
@@ -520,13 +524,18 @@ void LA9310_TRX::ReceivePacketsLoop()
 
     uint64_t timestamp = 0;
 
-    uint64_t bytesCached = 0;
+    uint64_t bytesCached[4] = { 0, 0, 0, 0 };
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
-        uint32_t vspa_ch = rx_api_channel_to_vspa_channel.at(mConfig.channels.at(TRXDir::Rx).front());
-        uint32_t size_received = vspa.Receive(vspa_ch, &rxbuffer[bytesCached / 4], readSize, &timestamp);
-        bytesCached += size_received;
-        Bps += size_received;
+        uint32_t size_received = 0;
+        for (auto c : mConfig.channels.at(TRXDir::Rx))
+        {
+            const uint32_t vspa_ch = la9310->vspa.api_channel_remap(c);
+            size_received =
+                vspa.Receive(vspa_ch, reinterpret_cast<uint32_t*>(&rxbuffer[c][bytesCached[c] / 4]), readSize, &timestamp);
+            bytesCached[c] += size_received;
+            Bps += size_received;
+        }
 
         // print stats
         t2 = std::chrono::steady_clock::now();
@@ -572,7 +581,7 @@ void LA9310_TRX::ReceivePacketsLoop()
             continue;
         }
 
-        if (bytesCached < readSize)
+        if (bytesCached[mConfig.channels.at(TRXDir::Rx).front()] < readSize)
             continue;
 
         if (outputPkt == nullptr)
@@ -587,11 +596,45 @@ void LA9310_TRX::ReceivePacketsLoop()
             outputPkt->meta.timestamp = Timespec(0, timestamp, mConfig.hintSampleRate);
         }
 
-        int samplesProduced =
-            Deinterleave(outputPkt->samples.back(), reinterpret_cast<uint8_t*>(rxbuffer.data()), bytesCached, conversion);
+        const int samplesProduced = bytesCached[mConfig.channels.at(TRXDir::Rx).front()] / sizeof(complex16_t);
+
+        int pkt_channel = 0;
+        if (conversion.destFormat == DataFormat::F32)
+        {
+            auto dest = reinterpret_cast<lime::complex32f_t* const*>(outputPkt->samples.back());
+            for (auto c : mConfig.channels.at(TRXDir::Rx))
+            {
+                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                    Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
+                ++pkt_channel;
+                // int samplesProduced =
+                // Deinterleave(outputPkt->samples.back(), reinterpret_cast<uint8_t*>(rxbuffer.data()), bytesCached, conversion);
+            }
+        }
+        else if (conversion.destFormat == DataFormat::I12)
+        {
+            auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
+            for (auto c : mConfig.channels.at(TRXDir::Rx))
+            {
+                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                    Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
+                ++pkt_channel;
+            }
+        }
+        else
+        {
+            auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
+            for (auto c : mConfig.channels.at(TRXDir::Rx))
+            {
+                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                    Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
+                ++pkt_channel;
+            }
+        }
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
 
-        bytesCached = 0;
+        memset(bytesCached, 0, sizeof(bytesCached));
+        // bytesCached = 0;
 
         stats.timestamp = timestamp + samplesProduced;
         if (fifo->push(outputPkt, false))

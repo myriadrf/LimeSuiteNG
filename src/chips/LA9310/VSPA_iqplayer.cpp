@@ -61,6 +61,12 @@ static constexpr uint32_t dmem_proxy_reserved = 4096;
 
 static const double refClk = 30.72e6;
 
+static const std::array<e_rx_channel, 4> rx_api_channel_to_vspa_channel = { VSPA_RX0, VSPA_RX1, VSPA_RO0, VSPA_RO1 };
+e_rx_channel VSPA_iqplayer::api_channel_remap(uint32_t index)
+{
+    return rx_api_channel_to_vspa_channel.at(index);
+}
+
 VSPA_iqplayer::VSPA_iqplayer(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
     , mailbox(std::make_shared<VSPA_mailbox>(port))
@@ -689,8 +695,6 @@ OpStatus VSPA_iqplayer::SetDecimation(uint32_t channel, uint32_t decimation)
     uint32_t hiword = command << 24;
     hiword |= (channel & 0x3) << 20;
     uint32_t loword = uint32_t(std::log2(decimation)) & 0x3;
-    printf("Rx dec 1 << %i\n", loword);
-
     uint64_t value = uint64_t(hiword) << 32 | loword;
     uint64_t response = 1;
     if (mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response) != OpStatus::Success)
@@ -714,6 +718,17 @@ OpStatus VSPA_iqplayer::SetInterpolation(uint32_t interpolation)
 int VSPA_iqplayer::GetInterpolation() const
 {
     return vspa_dmem_proxy_ro->info.tx_config.oversample;
+}
+
+OpStatus VSPA_iqplayer::PrepareRx()
+{
+    const mbox_opc_e command = MBOX_OPC_RX_PREPARE;
+    uint32_t hiword = command << 24;
+    uint64_t value = uint64_t(hiword) << 32;
+    uint64_t response = 1;
+    if (mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response) != OpStatus::Success)
+        return OpStatus::Error;
+    return (response & 0xFF) == 0 ? OpStatus::Success : OpStatus::Error;
 }
 
 } // namespace lime
