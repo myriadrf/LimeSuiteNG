@@ -395,8 +395,8 @@ OpStatus LA9310_TRX::RxSetup()
     for (int i = 0; i < 4; ++i)
         rxbuffer[i].resize(1024 * 1024);
 
-    uint32_t packetSize = 4096;
-    mRx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
+    uint32_t packetSize = 2048;
+    mRx.samplesInPkt = (packetSize) / (sampleSize * chCount);
 
     // aim batch size to desired data output period, ~100us should be good enough
     if (mConfig.hintSampleRate > 0)
@@ -564,12 +564,12 @@ void LA9310_TRX::ReceivePacketsLoop()
                 rfnow.GetTicks());
             if (showStats)
                 printf("%s\n", msg);
-            // if (mCallback_logMessage)
-            // {
-            //     bool showAsWarning = overrun.delta() || loss.delta();
-            //     LogLevel level = showAsWarning ? LogLevel::Warning : LogLevel::Debug;
-            //     mCallback_logMessage(level, msg);
-            // }
+            if (mCallback_logMessage)
+            {
+                bool showAsWarning = overrun.delta() || loss.delta();
+                LogLevel level = showAsWarning ? LogLevel::Warning : LogLevel::Debug;
+                mCallback_logMessage(level, msg);
+            }
             overrun.checkpoint();
             loss.checkpoint();
             Bps = 0;

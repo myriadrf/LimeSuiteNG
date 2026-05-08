@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <cstring>
+#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -328,31 +329,51 @@ OpStatus VSPA_iqplayer::SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size)
 
 int32_t VSPA_iqplayer::Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp)
 {
-    // const std::lock_guard<std::mutex> lock(mx);
+    const auto timeout = std::chrono::milliseconds(1000);
     VSPA_FIFO_State& rxState = mRx[channel];
-
-    // port->wait_for_new_data();
 
     port->dmem_sync_to_cpu(&vspa_dmem_proxy_ro->data_flow, sizeof(vspa_flow_control));
 
     // Check new transfer
-    const uint32_t dev_produced = vspa_dmem_proxy_ro->data_flow.rx[channel].produced;
-    const uint32_t produceDiff = dev_produced - rxState.last_produced;
-    // printf_dbg_log("devp:%u diff:%u\n", dev_produced, produceDiff);
-    rxState.last_produced = dev_produced;
+    uint32_t dev_produced = vspa_dmem_proxy_ro->data_flow.rx[channel].produced;
+    uint32_t produceDiff = dev_produced - rxState.last_produced;
 
-    rxState.bytes_produced += produceDiff;
-    uint32_t data_size = rxState.bytes_produced - rxState.bytes_consumed;
-    // printf_dbg_log("Receive - p:%i c:%i, sz:%i\n", rxState.bytes_produced, rxState.bytes_consumed, data_size);
-    if (data_size >= rxState.fifo_size)
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t2 = t1;
+    uint32_t data_size = 0;
+    do
     {
-        // lime::error("VSPA RX overrun, (data_size=0x%08x app_RX_total_produced_size=0x%08lx app_RX_total_consumed_size=0x%08lx)\n",
-        //     data_size,
-        //     rxState.bytes_produced,
-        //     rxState.bytes_consumed);
+        port->dmem_sync_to_cpu(&vspa_dmem_proxy_ro->data_flow, sizeof(vspa_flow_control));
+        dev_produced = vspa_dmem_proxy_ro->data_flow.rx[channel].produced;
+        produceDiff = dev_produced - rxState.last_produced;
+        port->dmem_sync_to_device(&vspa_dmem_proxy_ro->data_flow, sizeof(vspa_flow_control));
 
-        rxState.bytes_consumed = rxState.bytes_produced;
-        vspa_dmem_proxy_wo->data_flow.rx[channel].consumed = rxState.bytes_consumed;
+        rxState.last_produced = dev_produced;
+        rxState.bytes_produced += produceDiff;
+        data_size = rxState.bytes_produced - rxState.bytes_consumed;
+        if (data_size >= rxState.fifo_size)
+        {
+            // lime::error("VSPA RX overrun, (data_size=0x%08x app_RX_total_produced_size=0x%08lx app_RX_total_consumed_size=0x%08lx)\n",
+            //     data_size,
+            //     rxState.bytes_produced,
+            //     rxState.bytes_consumed);
+
+            rxState.bytes_consumed = rxState.bytes_produced;
+            vspa_dmem_proxy_wo->data_flow.rx[channel].consumed = rxState.bytes_consumed;
+            return 0;
+        }
+        if (data_size == 0)
+        {
+            auto st = port->wait_for_new_data(timeout.count());
+            if (st != OpStatus::Success)
+                return 0;
+        }
+        t2 = std::chrono::high_resolution_clock::now();
+    } while (data_size == 0 && (t2 - t1) < timeout);
+
+    if (data_size == 0)
+    {
+        // printf("No data\n");
         return 0;
     }
 

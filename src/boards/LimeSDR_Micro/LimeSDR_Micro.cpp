@@ -881,18 +881,18 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
 
     uint8_t adcRate, dacRate;
     la9310->GetADCDACRates(&adcRate, &dacRate);
+    const auto vspa_ch = la9310->vspa.api_channel_remap(channel);
 
     double rate = MCLK1_frequency;
     // ADC, DAC clock dividers by 2
     if (trx == TRXDir::Tx)
         rate /= (1 << dacRate);
     else
-        rate /= (1 << ((adcRate >> channel) & 1));
+        rate /= (1 << ((adcRate >> vspa_ch) & 1));
 
     if (rf_samplerate)
         *rf_samplerate = rate;
 
-    const auto vspa_ch = la9310->vspa.api_channel_remap(channel);
     int dec = la9310->vspa.GetDecimation(vspa_ch);
     if (dec > 0)
     {
