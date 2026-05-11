@@ -153,9 +153,6 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
     phytimer_samples_ratio = 0.5 * adcdac_clock_divider * dec;
 
-    // phytimer.SetReferenceClock(80e6);
-    // phytimer_samples_ratio = 2;
-
     // printf("PHYTimer rate: %u, ratio:%f\n", (int)cfg.hintSampleRate * adcdac_clock_divider * dec, phytimer_samples_ratio);
     status = la9310->vspa.PrepareRx();
     if (status != OpStatus::Success)
@@ -178,7 +175,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     {
         PHYTimerControl tx_dma_allowed = phytimer.GetTimerControl(11);
         tx_dma_allowed.TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
-        la9310->vspa.TxEnable(false, false, true);
+        la9310->vspa.TxEnable(false, false);
     }
     // vspa.ClearStats();
 
@@ -204,7 +201,6 @@ OpStatus LA9310_TRX::Start()
         streamActive.notify_all();
     }
 
-    VSPA_iqplayer& vspa = la9310->vspa;
     PHYTimer& phytimer = la9310->phytimer;
 
     tx_burst_length = 0;
@@ -324,7 +320,7 @@ void LA9310_TRX::Stop()
         // vspa.TxEnable(false);
     }
 
-    la9310->vspa.TxEnable(false, false, false);
+    la9310->vspa.TxEnable(false, false);
     phytimer.GetTimerControl(11).TriggerDirectly(PHYTimerControl::TriggerLogic::ForceZero);
 
     if (mRx.stagingPacket != nullptr)
@@ -388,8 +384,6 @@ OpStatus LA9310_TRX::RxSetup()
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = 4; // sizeof IQ pair
 
-    constexpr std::size_t headerSize{ 0 };
-
     const int dmaBufferSize = 65536;
 
     for (int i = 0; i < 4; ++i)
@@ -439,7 +433,7 @@ OpStatus LA9310_TRX::RxSetup()
     // Also need to set policy to default here, because if host process is running
     // with REALTIME policy, these threads would inherit it and exhibit mentioned
     // issues.
-    const auto schedulingPolicy = ThreadPolicy::REALTIME;
+    // const auto schedulingPolicy = ThreadPolicy::REALTIME;
     mRx.terminate.store(false, std::memory_order_relaxed);
     mRx.terminateWorker.store(false, std::memory_order_relaxed);
 
@@ -504,7 +498,7 @@ void LA9310_TRX::ReceivePacketsLoop()
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
-    const int32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    const uint32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
     // const int32_t packetSize = mRxArgs.packetSize;
 
     StreamStats& stats = mRx.stats;
@@ -604,7 +598,7 @@ void LA9310_TRX::ReceivePacketsLoop()
             auto dest = reinterpret_cast<lime::complex32f_t* const*>(outputPkt->samples.back());
             for (auto c : mConfig.channels.at(TRXDir::Rx))
             {
-                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                for (uint32_t i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
                     Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
                 ++pkt_channel;
                 // int samplesProduced =
@@ -616,7 +610,7 @@ void LA9310_TRX::ReceivePacketsLoop()
             auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
             for (auto c : mConfig.channels.at(TRXDir::Rx))
             {
-                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                for (uint32_t i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
                     Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
                 ++pkt_channel;
             }
@@ -626,7 +620,7 @@ void LA9310_TRX::ReceivePacketsLoop()
             auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
             for (auto c : mConfig.channels.at(TRXDir::Rx))
             {
-                for (int i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
+                for (uint32_t i = 0; i < bytesCached[c] / sizeof(complex16_t); ++i)
                     Rescale(dest[pkt_channel][i], rxbuffer[c][i]);
                 ++pkt_channel;
             }
@@ -760,7 +754,7 @@ OpStatus LA9310_TRX::TxSetup()
 {
     VSPA_iqplayer& vspa = la9310->vspa;
 
-    vspa.TxEnable(false, false, true);
+    vspa.TxEnable(false, false);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     const int chipId = 0;
     mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
@@ -825,7 +819,7 @@ OpStatus LA9310_TRX::TxSetup()
     mTx.terminateWorker.store(false, std::memory_order_relaxed);
     auto TxLoopFunction = std::bind(&LA9310_TRX::TxWorkLoop, this);
 
-    const auto schedulingPolicy = ThreadPolicy::REALTIME;
+    // const auto schedulingPolicy = ThreadPolicy::REALTIME;
     mTx.thread = std::thread(TxLoopFunction);
     // SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mTx.thread);
 #ifdef __linux__
@@ -903,9 +897,6 @@ void LA9310_TRX::TransmitPacketsLoop()
     uint32_t bytesRemaining = 0;
 
     int64_t batchTimestamp = -1;
-    bool burstInProgress = false;
-
-    bool firstPacket = true;
 
     Timespec burstEnd;
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
@@ -995,8 +986,6 @@ void LA9310_TRX::TransmitPacketsLoop()
             }
 
             bool doFlush = endOfBurst | (packetsCounter == mTxArgs.packetsToBatch);
-            Timespec packetEndTs = srcPkt->meta.timestamp;
-
             if (srcPkt->samples.empty())
             {
                 mTx.packetsPool->push(srcPkt, true);
@@ -1136,97 +1125,67 @@ static uint32_t roundup_fifo(uint32_t size)
         return size;
 }
 
-static uint32_t burstId = -1;
 template<class T>
 uint32_t LA9310_TRX::StreamTxTemplate(
     const T* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
     const bool useTimestamp = meta ? (meta->hasTimestamp) : false;
-    const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
-
     const int tx_dma_allowed_extension = 4 * phytimer_samples_ratio;
 
-    auto flags = meta->flags;
+    auto flags = meta ? meta->flags : 0;
 
+    OpStatus status = OpStatus::Success;
     if (!tx_burst_in_progress)
     {
-        flags |= StreamTxMeta::StartOfBurst;
+        if (!useTimestamp)
+        {
+            status = la9310->TxEnableImmediate(true);
+            if (status != OpStatus::Success)
+            {
+                printf("TxOn immediate failed\n");
+                return 0;
+            }
+        }
+        else
+            flags |= StreamTxMeta::StartOfBurst;
     }
 
-    Timespec ts = meta->timestamp;
+    Timespec ts;
     if (meta && (flags & StreamTxMeta::StartOfBurst))
     {
-        struct tx_window_payload window;
+        ts = meta->timestamp;
         tx_burst_start = meta->timestamp.GetTicks() * phytimer_samples_ratio;
         tx_burst_start += stream_time_origin;
         tx_burst_in_progress = true;
-        ++burstId;
-        // printf("[%i] Burst start @ %li, phyticks %X, ratio %f\n",
-        //     burstId,
+        // printf("Burst start @ %li, phyticks %X, ratio %f\n",
         //     meta->timestamp.GetTicks(),
         //     tx_burst_start,
         //     phytimer_samples_ratio);
-        uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;
-        vspa_cmd |= (1lu << 32);
 
-        // la9310->ScheduleCommand(tx_burst_start, LIME_M4_TX_BAND_SWITCH, band_selection_restore);
-
-        if (flags & StreamTxMeta::EndOfBurst) // potentially very short burst, need to specify burst length immediatelly
+        const uint32_t burst_len_bytes = 0;
+        status = la9310->TxEnableScheduled(tx_burst_start, true, burst_len_bytes, la9310->vspa.mTx.fifo_offset);
+        if (status != OpStatus::Success)
         {
-            uint64_t rfswitch_end = tx_burst_start + count * phytimer_samples_ratio;
-
-            // printf("[%i]rfswitch OFF @ %li, phytimer:%X\n", burstId, ts.GetTicks() + count, rfswitch_end);
-            // la9310->ScheduleCommand(rfswitch_end, LIME_M4_TX_BAND_SWITCH, !band_selection_restore);
-
-            // uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;
-            const uint32_t burst_length_ceil = roundup_fifo(count) + tx_dma_allowed_extension;
-            // printf("Round up burst len: %i\n", burst_length_ceil);
-            uint64_t burst_end = tx_burst_start + (burst_length_ceil)*phytimer_samples_ratio;
-            vspa_cmd |= burst_length_ceil * 4; // burst size must be multiple of TX DDR step
-            // printf("[%i]burst end @ %li, len:%i/%i, phytimer:%X\n", burstId, ts.GetTicks() + burst_length_ceil, count, burst_length_ceil, burst_end);
-
-            // la9310->ScheduleCommand(burst_end, LIME_M4_TX_DAC_ALLOWED, vspa_cmd);
-            // tx_burst_in_progress = false;
-            // tx_burst_length = 0;
-            // tx_burst_in_progress = false;
+            printf("TxOn schedule failed\n");
+            return 0;
         }
-        // la9310->ScheduleCommand(tx_burst_start, LIME_M4_TX_DAC_ALLOWED, vspa_cmd);
-
-        window.vspa_cmd = vspa_cmd;
-        window.tx_rf_switch_control =
-            band_selection_restore ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
-        window.rf_switch_offset = 0;
-        window.pa_switch_offset = 0;
-        la9310->ScheduleCommand(tx_burst_start, LIME_M4_TX_WINDOW, &window, sizeof(window));
     }
 
     if (ts.GetTickRate() == 0)
         ts.SetTickRate(mConfig.hintSampleRate);
 
-    // TODO:
-    // ts.SetTickRate(mConfig.hintSampleRate);
-
     uint32_t samplesRemaining = count;
-
-    bool timeGap = false; // expectedTS != lime::Timespec(meta->timestamp);
-
-    if (mTx.stagingPacket && timeGap)
-    {
-        if (!mTx.fifo->push(mTx.stagingPacket, true, timeout))
-            return 0;
-
-        mTx.stagingPacket = nullptr;
-    }
-
     assert(samples);
     assert(samples[0]);
 
-    while (samplesRemaining > 0)
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t2 = t1;
+    bool did_timeout = false;
+    while (samplesRemaining > 0 && !did_timeout)
     {
         const uint32_t tempSamplesCount = 512 * 4;
         lime::complex16_t tempBuffer[tempSamplesCount];
 
-        uint32_t bytesForFrame = 4;
         uint32_t samplesToConsume = std::min(samplesRemaining, tempSamplesCount);
 
         ConvertSamples(tempBuffer, &samples[0][count - samplesRemaining], samplesToConsume);
@@ -1239,11 +1198,18 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         if (tx_burst_in_progress)
             tx_burst_length += samplesSent;
 
-        if (sent != write_size)
-            return count - samplesRemaining;
+        // if (sent != write_size) // should wait for interrupt
+        //     return count - samplesRemaining;
+        t2 = std::chrono::high_resolution_clock::now();
+        did_timeout = (t2 - t1) > timeout;
+    }
+    if (did_timeout)
+    {
+        printf("Timeout\n");
+        return count - samplesRemaining;
     }
 
-    if (tx_burst_in_progress && meta && (flags & StreamTxMeta::EndOfBurst))
+    if (tx_burst_in_progress && (flags & StreamTxMeta::EndOfBurst))
     {
         // add padding to satify VSPA DDR step
         if (tx_burst_length % 512 != 0)
@@ -1254,33 +1220,26 @@ uint32_t LA9310_TRX::StreamTxTemplate(
             int32_t sent = la9310->vspa.Transmit(zeroes, padCount * sizeof(complex16_t), 0);
         }
 
-        uint64_t rfswitch_end = tx_burst_start + tx_burst_length * phytimer_samples_ratio;
-        uint64_t burst_end = tx_burst_start + (roundup_fifo(tx_burst_length) + tx_dma_allowed_extension) * phytimer_samples_ratio;
-        // printf("[%i]burst end @ %li, len:%i, phytimer:x%X\n",
-        //     burstId,
-        //     ts.GetTicks() + tx_burst_length,
-        //     tx_burst_length,
-        //     burst_end,
-        //     burst_end);
-        // la9310->ScheduleCommand(rfswitch_end, LIME_M4_TX_BAND_SWITCH, !band_selection_restore);
+        if (useTimestamp)
+        {
+            uint64_t burst_end =
+                tx_burst_start + (roundup_fifo(tx_burst_length) + tx_dma_allowed_extension) * phytimer_samples_ratio;
+            // printf("burst end @ %li, len:%i, phytimer:x%X\n",
+            //     ts.GetTicks() + tx_burst_length,
+            //     tx_burst_length,
+            //     burst_end,
+            //     burst_end);
 
-        uint64_t vspa_cmd = uint64_t(MBOX_OPC_TX_CONTROL) << 56;
-        const uint32_t burst_length_ceil = roundup_fifo(tx_burst_length);
-        vspa_cmd |= burst_length_ceil * 4; // burst size must be multiple of TX DDR step
-
-        // la9310->ScheduleCommand(burst_end, LIME_M4_TX_DAC_ALLOWED, vspa_cmd);
-        tx_burst_in_progress = false;
-        tx_burst_length = 0;
-
-        struct tx_window_payload window;
-        window.vspa_cmd = vspa_cmd;
-        window.tx_rf_switch_control =
-            !band_selection_restore ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero;
-        window.rf_switch_offset = burst_end - rfswitch_end;
-        window.pa_switch_offset = burst_end - rfswitch_end;
-        la9310->ScheduleCommand(burst_end, LIME_M4_TX_WINDOW, &window, sizeof(window));
+            const uint32_t burst_length_ceil = roundup_fifo(tx_burst_length);
+            OpStatus status = la9310->TxEnableScheduled(burst_end, false, burst_length_ceil * sizeof(complex16_t), 0);
+            if (status != OpStatus::Success)
+            {
+                printf("TxOff schedule failed\n");
+            }
+            tx_burst_in_progress = false;
+            tx_burst_length = 0;
+        }
     }
-
     return count - samplesRemaining;
 }
 
@@ -1329,12 +1288,12 @@ uint32_t LA9310_TRX::Transmit(const lime::complex32f_t* const* samples, uint32_t
 
 uint32_t LA9310_TRX::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
 {
-    return StreamTxTemplate(samples, count, meta, chrono::microseconds(100000));
+    return StreamTxTemplate(samples, count, meta, chrono::microseconds(1000000));
 }
 
 uint32_t LA9310_TRX::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
 {
-    return StreamTxTemplate(samples, count, meta, chrono::microseconds(100000));
+    return StreamTxTemplate(samples, count, meta, chrono::microseconds(1000000));
 }
 
 } // namespace lime

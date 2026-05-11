@@ -115,7 +115,7 @@ OpStatus VSPA_iqplayer::EnableRxChannels(uint32_t channel_mask)
     return mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 }
 
-OpStatus VSPA_iqplayer::TxEnable(bool enable, bool flow_control_disable, bool reset_pipeline)
+OpStatus VSPA_iqplayer::TxEnable(bool enable, bool flow_control_disable)
 {
     const mbox_opc_e command = MBOX_OPC_TX_CONTROL;
     const bool ddr_enable = enable;
@@ -127,7 +127,6 @@ OpStatus VSPA_iqplayer::TxEnable(bool enable, bool flow_control_disable, bool re
     // hiword |= host_flow_control_disable ? 0x00400000 : 0;
     // hiword |= test_load_start ? 0x00200000 : 0;
     hiword |= ddr_enable ? (1 << 0) : 0;
-    hiword |= reset_pipeline ? (1 << 1) : 0;
     // hiword |= ddr_rd_dma_mBurst ? 0x00080000 : 0;
     // hiword |= (ddr_rd_dma_ch_nb << 16) & 0x00070000;
     // hiword |= chunkCount4k & 0x0000FFFF;
@@ -463,6 +462,52 @@ int32_t VSPA_iqplayer::Transmit(const void* src, uint32_t write_size, uint64_t t
     vspa_dmem_proxy_wo->data_flow.tx.produced = txState.bytes_produced;
     // printf("ss %i %i\n", txState.bytes_produced, txState.bytes_produced / tx_ddr_step);
 
+    txState.fifo_offset += write_size;
+    if (txState.fifo_offset >= txState.fifo_size)
+        txState.fifo_offset = 0;
+
+    return write_size;
+}
+
+size_t VSPA_iqplayer::TxDataEmplace(void* src, size_t write_size)
+{
+    volatile VSPA_FIFO_State& txState = mTx;
+
+    port->dmem_sync_to_cpu(&vspa_dmem_proxy_ro->data_flow, sizeof(vspa_flow_control));
+    txState.bytes_consumed = vspa_dmem_proxy_ro->data_flow.tx.consumed;
+    const uint64_t fifo_filled_bytes = txState.bytes_produced - txState.bytes_consumed;
+    // if (fifo_filled_bytes > txState.fifo_size)
+    // {
+    //     printf("!!!IQPlayer tx fifo overflow\n");
+    // }
+
+    const uint32_t contiguousBytesSize = txState.fifo_size - txState.fifo_offset;
+    uint32_t empty_size = txState.fifo_size - fifo_filled_bytes;
+
+    if (empty_size > contiguousBytesSize)
+        empty_size = contiguousBytesSize;
+
+    if (write_size > empty_size)
+        write_size = empty_size;
+
+    if (fifo_filled_bytes > txState.fifo_size)
+    {
+        // printf("\n TX underrun , exit (busy=0x%08x txState.bytes_produced=0x%08x txState.bytes_consumed=0x%08x)\n",
+        //     fifo_filled_bytes,
+        //     txState.bytes_produced,
+        //     txState.bytes_consumed);
+    }
+
+    if (write_size <= 0)
+        return 0;
+
+    // xfer data
+    auto ddr_dst = vl_iqflood_ddr_addr + txState.fifo_start_addr + txState.fifo_offset;
+    port->dmem_sync_to_cpu(ddr_dst, write_size);
+    memcpy(ddr_dst, src, write_size);
+    port->dmem_sync_to_device(ddr_dst, write_size);
+
+    // ready to send new data
     txState.fifo_offset += write_size;
     if (txState.fifo_offset >= txState.fifo_size)
         txState.fifo_offset = 0;

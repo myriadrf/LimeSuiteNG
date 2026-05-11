@@ -32,6 +32,9 @@ class LimeSDR_Micro_M4 : public LA9310
     OpStatus ResetHardwareTime();
     uint64_t GetHardwareTime();
 
+    OpStatus TxEnableImmediate(bool enable);
+    OpStatus TxEnableScheduled(int64_t time_point, bool enable, uint32_t data_len, uint32_t data_src_offset);
+
   private:
     OpStatus WaitForResponse();
     std::shared_ptr<LA9310_PCIe> pcie;

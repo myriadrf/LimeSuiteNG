@@ -193,4 +193,57 @@ uint64_t LimeSDR_Micro_M4::GetHardwareTime()
     return 0;
 }
 
+OpStatus LimeSDR_Micro_M4::TxEnableImmediate(bool enable)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_TX_CONTROL;
+    volatile struct tx_control_payload* payload = reinterpret_cast<volatile struct tx_control_payload*>(hif->sw_cmd_desc.data);
+    payload->flags = enable ? TX_CONTROL_START : TX_CONTROL_STOP;
+    payload->timepoint = 0;
+    payload->data_src_offset = 0;
+    payload->data_length = 0;
+
+    auto t1 = chrono::high_resolution_clock::now();
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = chrono::high_resolution_clock::now();
+        if (chrono::duration_cast<chrono::milliseconds>(t2 - t1) > chrono::milliseconds(1000))
+        {
+            lime::error("M4: TxEnableImmediate timeout\n");
+            break;
+        }
+    }
+
+    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
+        return hif->sw_cmd_desc.data[0] == 0 ? OpStatus::Success : OpStatus::Error;
+    return OpStatus::Error;
+}
+
+OpStatus LimeSDR_Micro_M4::TxEnableScheduled(int64_t time_point, bool enable, uint32_t data_len, uint32_t data_src_offset)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_TX_CONTROL;
+    volatile struct tx_control_payload* payload = reinterpret_cast<volatile struct tx_control_payload*>(hif->sw_cmd_desc.data);
+    payload->flags = enable ? TX_CONTROL_START : TX_CONTROL_STOP;
+    payload->flags |= TX_CONTROL_HAS_TIME | TX_CONTROL_HAS_LENGTH;
+    payload->timepoint = time_point;
+    payload->data_src_offset = data_src_offset;
+    payload->data_length = data_len;
+
+    auto t1 = chrono::high_resolution_clock::now();
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = chrono::high_resolution_clock::now();
+        if (chrono::duration_cast<chrono::milliseconds>(t2 - t1) > chrono::milliseconds(1000))
+        {
+            lime::error("M4: TxEnableScheduled timeout\n");
+            break;
+        }
+    }
+
+    if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
+        return hif->sw_cmd_desc.data[0] == 0 ? OpStatus::Success : OpStatus::Error;
+    return OpStatus::Error;
+}
+
 } // namespace lime

@@ -99,7 +99,7 @@ class LIME_API VSPA_iqplayer
     OpStatus SetDCOffset(complex16_t offset);
 
     OpStatus RxEnable(uint8_t channel, bool enable, bool reset_pipeline = true);
-    OpStatus TxEnable(bool enable, bool flow_control_disable = false, bool reset_pipeline = true);
+    OpStatus TxEnable(bool enable, bool flow_control_disable = false);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
     OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
 
@@ -111,12 +111,14 @@ class LIME_API VSPA_iqplayer
 
     OpStatus PrepareRx();
 
+    VSPA_FIFO_State mTx;
+    size_t TxDataEmplace(void* data, size_t size);
+
   private:
     std::shared_ptr<LA9310_PCIe> port;
     std::shared_ptr<VSPA_mailbox> mailbox;
 
     VSPA_FIFO_State mRx[4];
-    VSPA_FIFO_State mTx;
 
     uint8_t* vl_iqflood_ddr_addr;
     size_t iqflood_size;
