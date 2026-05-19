@@ -17,10 +17,12 @@
 #include "CommonFunctions.h"
 #include "streaming/TRXLooper.h"
 
+#include "chips/ADF4002/ADF4002.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LMS7002M/MCU_BD.h"
 
+#include "protocols/LMS64C/LMS64C_ADF4002_SPI.h"
 #include "protocols/LMS64C/SPI.h"
 
 #include <cmath>
@@ -167,6 +169,7 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<ISerialPort> controlPort, std::vector<std
     , controlPort(controlPort)
     , mTRXStreamPorts(trxStreams)
     , mConfigInProgress(false)
+    , mADF(std::make_unique<ADF4002>())
 {
     mStreamers.resize(3);
     /// Do not perform any unnecessary configuring to device in constructor, so you
@@ -251,6 +254,10 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<ISerialPort> controlPort, std::vector<std
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(2).get(), "LMS7002M"s, "LMS_3"s));
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "X3"s);
     desc.socTree->children.push_back(fpgaNode);
+
+    auto ADFComms = std::make_shared<LMS64C_ADF4002_SPI>(controlPort, 0);
+    mADF->Initialize(ADFComms, 30.72e6);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mADF.get(), "ADF4002"s));
 
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mClockGeneratorCDCM.get(), "CDCM6208"s));
 }

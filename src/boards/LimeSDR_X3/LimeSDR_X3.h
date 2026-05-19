@@ -14,6 +14,7 @@ class LimePCIe;
 class CrestFactorReduction;
 class ISerialPort;
 class ISPI;
+class ADF4002;
 
 /** @brief Class for managing the LimeSDR X3 device. */
 class LimeSDR_X3 : public LMS7002M_SDRDevice
@@ -79,6 +80,7 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     std::array<std::shared_ptr<ISPI>, 3> mLMS7002Mcomms;
     std::shared_ptr<ISPI> mfpgaPort;
+    std::unique_ptr<ADF4002> mADF;
     bool mConfigInProgress;
 };
 
