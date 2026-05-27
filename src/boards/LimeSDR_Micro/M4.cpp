@@ -52,7 +52,8 @@ OpStatus LimeSDR_Micro_M4::ScheduleCommand(uint64_t timepoint, uint32_t cmd, con
     volatile struct scheduled_cmd* command = reinterpret_cast<volatile struct scheduled_cmd*>(&hif->sw_cmd_desc.data[0]);
     command->timepoint = timepoint;
     command->cmd = cmd;
-    memcpy((void*)&command->data, data, len);
+    for (uint32_t i = 0; i < len / sizeof(uint32_t); ++i)
+        command->data[i] = static_cast<const uint32_t*>(data)[i];
 
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
     // printf("sched T%u @ %016X v: %u\n", timerid, counter, value);
