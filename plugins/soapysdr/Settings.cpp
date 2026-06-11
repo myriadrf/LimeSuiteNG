@@ -176,7 +176,7 @@ void Soapy_limesuiteng::setAntenna(const int direction, const size_t channel, co
         }
     }
 
-    throw std::runtime_error("Soapy_limesuiteng::setAntenna(TX, " + name + ") - unknown antenna name");
+    // throw std::runtime_error("Soapy_limesuiteng::setAntenna(TX, " + name + ") - unknown antenna name");
 }
 
 std::string Soapy_limesuiteng::getAntenna(const int direction, const size_t channel) const
@@ -293,8 +293,8 @@ double Soapy_limesuiteng::getGain(const int direction, const size_t channel) con
     OpStatus returnValue = sdrDevice->GetGain(socIndex, dir, channel, eGainTypes::UNKNOWN, gain);
     if (returnValue != OpStatus::Success)
     {
-        throw std::runtime_error(
-            "Soapy_limesuiteng::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
+        // throw std::runtime_error(
+        //     "Soapy_limesuiteng::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
     }
 
     return gain;
@@ -330,8 +330,8 @@ double Soapy_limesuiteng::getGain(const int direction, const size_t channel, con
     OpStatus returnValue = sdrDevice->GetGain(socIndex, dir, channel, gainType, gain);
     if (returnValue != OpStatus::Success)
     {
-        throw std::runtime_error(
-            "Soapy_limesuiteng::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
+        // throw std::runtime_error(
+        //     "Soapy_limesuiteng::getGain(" + ToString(dir) + ", " + std::to_string(channel) + ") - failed to get gain");
     }
 
     return gain;
@@ -379,7 +379,7 @@ void Soapy_limesuiteng::setFrequency(int direction, size_t channel, double frequ
             channel,
             frequency / 1e6,
             lime::GetLastErrorMessageCString());
-        throw std::runtime_error("Soapy_limesuiteng::setFrequency() failed");
+        // throw std::runtime_error("Soapy_limesuiteng::setFrequency() failed");
     }
 }
 
@@ -404,7 +404,7 @@ void Soapy_limesuiteng::setFrequency(const int direction,
         {
             SoapySDR::logf(
                 SOAPY_SDR_ERROR, "setFrequency(%s, %ld, RF, %g MHz) Failed", ToString(dir).c_str(), channel, frequency / 1e6);
-            throw std::runtime_error("Soapy_limesuiteng::setFrequency(RF) failed");
+            // throw std::runtime_error("Soapy_limesuiteng::setFrequency(RF) failed");
         }
     }
 
@@ -414,7 +414,7 @@ void Soapy_limesuiteng::setFrequency(const int direction,
         return;
     }
 
-    throw std::runtime_error("Soapy_limesuiteng::setFrequency(" + name + ") unknown name");
+    // throw std::runtime_error("Soapy_limesuiteng::setFrequency(" + name + ") unknown name");
 }
 
 double Soapy_limesuiteng::getFrequency(const int direction, const size_t channel, const std::string& name) const
@@ -430,7 +430,7 @@ double Soapy_limesuiteng::getFrequency(const int direction, const size_t channel
         return sdrDevice->GetNCOFrequency(socIndex, dir, channel, 0, phaseOffset);
     }
 
-    throw std::runtime_error("Soapy_limesuiteng::getFrequency(" + name + ") unknown name");
+    // throw std::runtime_error("Soapy_limesuiteng::getFrequency(" + name + ") unknown name");
 }
 
 double Soapy_limesuiteng::getFrequency(const int direction, const size_t channel) const
@@ -492,8 +492,8 @@ void Soapy_limesuiteng::setSampleRate(const int direction, const size_t channel,
             ToString(dir).c_str(),
             channel,
             rate / 1e6);
-        throw std::runtime_error(
-            "Soapy_limesuiteng::setSampleRate(): setting the sample rate while the stream is running is not allowed.");
+        // throw std::runtime_error(
+        //     "Soapy_limesuiteng::setSampleRate(): setting the sample rate while the stream is running is not allowed.");
     }
 
     SoapySDR::logf(SOAPY_SDR_DEBUG, "setSampleRate(%s, %ld, %g MHz)", ToString(dir).c_str(), channel, rate / 1e6);
@@ -502,7 +502,7 @@ void Soapy_limesuiteng::setSampleRate(const int direction, const size_t channel,
     if (status != OpStatus::Success)
     {
         SoapySDR::logf(SOAPY_SDR_ERROR, "setSampleRate(%s, %ld, %g MHz) Failed", ToString(dir).c_str(), channel, rate / 1e6);
-        throw std::runtime_error("Soapy_limesuiteng::setSampleRate() failed with message " + lime::GetLastErrorMessage());
+        // throw std::runtime_error("Soapy_limesuiteng::setSampleRate() failed with message " + lime::GetLastErrorMessage());
     }
 
     sampleRate[static_cast<bool>(direction)] = rate;
@@ -556,7 +556,7 @@ void Soapy_limesuiteng::setBandwidth(const int direction, const size_t channel, 
     {
         SoapySDR::logf(
             SOAPY_SDR_ERROR, "Soapy_limesuiteng::setBandwidth(%s, %ld, %g MHz) Failed", ToString(dir).c_str(), channel, bw / 1e6);
-        throw std::runtime_error("setBandwidth() failed");
+        // throw std::runtime_error("setBandwidth() failed");
     }
 }
 
@@ -614,12 +614,12 @@ long long Soapy_limesuiteng::getHardwareTime(const std::string& what) const
 {
     if (!what.empty())
     {
-        throw std::invalid_argument("Soapy_limesuiteng::getHardwareTime(" + what + ") unknown argument");
+        // throw std::invalid_argument("Soapy_limesuiteng::getHardwareTime(" + what + ") unknown argument");
     }
 
     if (sampleRate[SOAPY_SDR_RX] == 0)
     {
-        throw std::runtime_error("Soapy_limesuiteng::getHardwareTime() sample rate unset");
+        // throw std::runtime_error("Soapy_limesuiteng::getHardwareTime() sample rate unset");
     }
     if (!rfstream)
         return 0;
@@ -632,12 +632,12 @@ void Soapy_limesuiteng::setHardwareTime(const long long timeNs, const std::strin
 {
     if (!what.empty())
     {
-        throw std::invalid_argument("Soapy_limesuiteng::setHardwareTime(" + what + ") unknown argument");
+        // throw std::invalid_argument("Soapy_limesuiteng::setHardwareTime(" + what + ") unknown argument");
     }
 
     if (sampleRate[SOAPY_SDR_RX] == 0)
     {
-        throw std::runtime_error("Soapy_limesuiteng::setHardwareTime() sample rate unset");
+        // throw std::runtime_error("Soapy_limesuiteng::setHardwareTime() sample rate unset");
     }
 
     if (rfstream)
@@ -696,7 +696,7 @@ std::string Soapy_limesuiteng::readSensor(const std::string& name) const
         return std::to_string(sdrDevice->GetTemperature(socIndex));
     }
 
-    throw std::runtime_error("Soapy_limesuiteng::readSensor(" + name + ") - unknown sensor name");
+    // throw std::runtime_error("Soapy_limesuiteng::readSensor(" + name + ") - unknown sensor name");
 }
 
 std::vector<std::string> Soapy_limesuiteng::listSensors(
@@ -732,7 +732,7 @@ std::string Soapy_limesuiteng::readSensor(const int direction, [[maybe_unused]] 
         return sdrDevice->GetSXLocked(socIndex, lmsDir) ? "true" : "false";
     }
 
-    throw std::runtime_error("Soapy_limesuiteng::readSensor(" + name + ") - unknown sensor name");
+    // throw std::runtime_error("Soapy_limesuiteng::readSensor(" + name + ") - unknown sensor name");
 }
 
 /*******************************************************************
@@ -759,7 +759,7 @@ void Soapy_limesuiteng::writeRegister(const std::string& name, const unsigned ad
 
     if ("RFIC" != name.substr(0, 4))
     {
-        throw std::runtime_error("Soapy_limesuiteng::readRegister(" + name + ") unknown interface");
+        // throw std::runtime_error("Soapy_limesuiteng::readRegister(" + name + ") unknown interface");
     }
 
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
@@ -771,7 +771,7 @@ void Soapy_limesuiteng::writeRegister(const std::string& name, const unsigned ad
         sdrDevice->WriteRegister(index, addr, value);
     } catch (...)
     {
-        throw std::runtime_error("Soapy_limesuiteng::WriteRegister(" + name + ", " + std::to_string(addr) + ") FAIL");
+        // throw std::runtime_error("Soapy_limesuiteng::WriteRegister(" + name + ", " + std::to_string(addr) + ") FAIL");
     }
 
     return;
@@ -786,7 +786,7 @@ unsigned Soapy_limesuiteng::readRegister(const std::string& name, const unsigned
 
     if ("RFIC" != name.substr(0, 4))
     {
-        throw std::runtime_error("Soapy_limesuiteng::readRegister(" + name + ") unknown interface");
+        // throw std::runtime_error("Soapy_limesuiteng::readRegister(" + name + ") unknown interface");
     }
 
     uint8_t index = std::stoi(name.substr(4));
@@ -1079,7 +1079,7 @@ void Soapy_limesuiteng::writeSetting(const int direction, const size_t channel, 
         }
         else
         {
-            throw std::runtime_error("Invalid TSG_NCO option: " + value);
+            // throw std::runtime_error("Invalid TSG_NCO option: " + value);
         }
     }
     else
@@ -1163,7 +1163,7 @@ void Soapy_limesuiteng::writeGPIO(const std::string&, const unsigned value)
     OpStatus r = sdrDevice->GPIOWrite(reinterpret_cast<const uint8_t*>(&value), sizeof(value));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("Soapy_limesuiteng::writeGPIO() " + GetLastErrorMessage());
+        // throw std::runtime_error("Soapy_limesuiteng::writeGPIO() " + GetLastErrorMessage());
     }
 }
 
@@ -1173,7 +1173,7 @@ unsigned Soapy_limesuiteng::readGPIO(const std::string&) const
     OpStatus r = sdrDevice->GPIORead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("Soapy_limesuiteng::readGPIO() " + GetLastErrorMessage());
+        // throw std::runtime_error("Soapy_limesuiteng::readGPIO() " + GetLastErrorMessage());
     }
     return buffer;
 }
@@ -1183,7 +1183,7 @@ void Soapy_limesuiteng::writeGPIODir(const std::string&, const unsigned dir)
     OpStatus r = sdrDevice->GPIODirWrite(reinterpret_cast<const uint8_t*>(&dir), sizeof(dir));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("Soapy_limesuiteng::writeGPIODir() " + GetLastErrorMessage());
+        // throw std::runtime_error("Soapy_limesuiteng::writeGPIODir() " + GetLastErrorMessage());
     }
 }
 
@@ -1193,7 +1193,7 @@ unsigned Soapy_limesuiteng::readGPIODir(const std::string&) const
     OpStatus r = sdrDevice->GPIODirRead(reinterpret_cast<uint8_t*>(&buffer), sizeof(buffer));
     if (r != OpStatus::Success)
     {
-        throw std::runtime_error("Soapy_limesuiteng::readGPIODir() " + GetLastErrorMessage());
+        // throw std::runtime_error("Soapy_limesuiteng::readGPIODir() " + GetLastErrorMessage());
     }
     return buffer;
 }
