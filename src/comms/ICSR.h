@@ -18,7 +18,7 @@ class LIME_API ICSR
     /**
       @brief Configuration Space Register write function.
       @param address Register address.
-      @param data_rd New register value.
+      @param value New register value.
       @returns The operation status.
      */
     virtual OpStatus ioWrite64(uint64_t address, uint64_t value) = 0;

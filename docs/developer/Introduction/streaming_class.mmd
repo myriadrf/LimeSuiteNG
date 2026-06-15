@@ -1,0 +1,27 @@
+---
+    config:
+        class:
+            hideEmptyMembersBox: True
+---
+
+classDiagram
+    direction LR
+
+    class RFStream {<<Interface>>}
+    class TRXLooper
+
+    class IDMA {<<Interface>>}
+    class LMS7002M {<<Interface>>}
+    class FPGA {<<Interface>>}
+    class ISerialPort {<<Interface>>}
+
+    %% Inheritance
+    RFStream<|--TRXLooper
+
+    %% Dependencies
+    TRXLooper..>IDMA
+    TRXLooper..>LMS7002M
+    TRXLooper..>FPGA
+    LMS7002M..>ISerialPort
+    FPGA..>ISerialPort
+

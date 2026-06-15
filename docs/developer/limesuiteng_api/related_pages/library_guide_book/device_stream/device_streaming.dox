@@ -1,0 +1,393 @@
+/**
+ * @page dev_streaming Streaming with SDR device
+ * 
+ * @if DOX_NAV
+ * @ref dev_stream_config "Go to SDR device stream configuration topic"
+ * @endif
+ * 
+ * @section streaming_summary Summary
+ * 
+ * Once the SDR device and stream parameters are configured, stream can be started using @ref lime::RFStream::Start() "Start()" function. This enables device transmitter and receiver directions. 
+ * To stop the active stream, call @ref lime::RFStream::Stop() "Stop()" function. Additionally, when the stream is active, you can view the current stream stats for Tx and Rx directions using 
+ * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function.
+ * 
+ * Once the stream is in an active state, samples of the configured type can be written to or read from device Tx and Rx directions. To receive samples from device Rx direction, call stream 
+ * interface function @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *) "Receive()". To send samples through device Tx direction, queue the samples for 
+ * transmission by calling stream interface function @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *) "Transmit()".
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    Streaming interface is not thread safe. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in important notes section at the end of page.} 
+ * @else
+ * @important Streaming interface is <b>not thread safe</b>. Avoid calling ``Receive(...)`` or ``Transmit(...)`` functions from multiple threads. More info in @ref important_stream_notes "Important notes" section.
+ * @endif
+ *
+ * @section generic_stream_example Generic stream example
+ * 
+ * Here is a generic code example for running a data stream in both directions in SISO mode:
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/StreamConfig.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/SDRConfig.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/complex.h>
+ * #include <limesuiteng/StreamMeta.h>
+ * 
+ * int main()
+ * {
+ *    ... // SDR device enumeration, registration and device/stream configuration 
+ *    
+ *    bool stop = false;            // Flag for overall stream control. External events and interrupts (eg. keyboard interrupt can stop the stream)
+ *    bool send = false;            // Flag for managing transmit event using external events or interrupts
+ *    bool endOfSamples = false;
+ *    uint32_t bufferSize = samplesInPacket * packetsInTransac;
+ *    uint32_t samplesRead = 0;
+ *    uint32_t samplesSent = 0;
+ *    lime::complex32f_t RxChABuf[bufferSize];
+ *    lime::complex32f_t TxChABuf[bufferSize];
+ *    lime::complex32f_t * const RxBuffers[2] = {RxChABuf, nullptr}; // Working only with channel A
+ *    lime::complex32f_t * const TxBuffers[2] = {TxChABuf, nullptr}; // Working only with channel A
+ *    lime::StreamStats RxStats, TxStats;
+ *    lime::StreamRxMeta RxMeta;
+ *    lime::StreamTxMeta TxMeta;
+ * 
+ *    ... // Other additional set up before starting the stream
+ *    
+ *    stream->Start()
+ *    
+ *    // Work until a stop condition (keyboard interrupt or any other interrupt) is met
+ *    while(!stop)
+ *    {
+ *       samplesRead = stream->Receive(RxBuffers, bufferSize, &RxMeta);
+ *       
+ *       ... // Process the received samples 
+ *    
+ *       // Send response or any other data if necessary
+ *       if(send)
+ *       {
+ *          ... // Fill TxChABuff with samples 
+ *          
+ *          // Ending transmission and enabling packet padding to successfully send 
+ *          // the last samples in case the samples queued for transmit do not make up
+ *          // a full packet. Note: packets are sent only when sufficient amount of samples
+ *          // is queued to make up a single packet.
+ *          if(endOfSamples)
+ *             TxMeta.flags |= lime::StreamTxMeta::Flags::EndOfBurst;    
+ * 
+ *          samplesSent = stream->Transmit(TxBuffers, bufferSize, &TxMeta);
+ *       }
+ *    }
+ *    stream->Stop();
+ *    stream->StreamStatus(&RxStats, nullptr);
+ *    std::cout << "Total quantity of received packets - " << RxStats.packets << std::endl;
+ *    ... // Print out other stats
+ * 
+ *    ... // Other program code
+ *    
+ *    // End of the program  
+ *    stream->Teardown();
+ *    lime::DeviceRegistry::freeDevice(device);
+ * }
+ * @endcode
+ * 
+ * @subsection stream_buffers Work buffers
+ * 
+ * Before starting the stream, appropriate buffers for Rx and Tx directions must be defined. Since packets are managed internally and the user space operates using only samples, buffer sizes must also
+ * be defined in sample quantity. Minimum size for Rx or Tx direction buffers is the quantity of samples in a single packet (this depends on stream configuration). However, in order to 
+ * maintain reasonable stream speeds, it is recommended to avoid the minimum size and instead define the buffer sizes as a quantity of samples of multiple packets. In the example above
+ * buffer size is calculated using stream parameters, which were set up before the stream start. Once the work buffers `RxChABuf` and `TxChABuf` of required size are defined, the starting addresses of 
+ * the buffers are respectively stored in two dimensional arrays ``RxBuffers`` and ``TxBuffers``. Two dimensional arrays are used to store the starting addresses of Rx and Tx buffers for different channels. 
+ * By default the first argument must be the address of buffer for channel A and the second argument must be the address of buffer for channel B. If channel B is not required (operating in SISO mode), 
+ * a ``nullptr`` can be passed as an argument. In the example above we are using a LimeSDR Mini V2, which operates only on channel A (channel B is not connected physically), therefore the second argument 
+ * of ``RxBuffers`` and ``TxBuffers`` arrays is set to ``nullptr``.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to nullptr will result in undefined behaviour.}
+ * @else
+ * @warning If operating in SISO mode, always use channel A for streaming. Setting the starting address of channel A buffer for Tx and Rx direction to `nullptr` will result in undefined behaviour.
+ * @endif
+ * 
+ * @subsection stream_read Reading samples
+ * 
+ * In the example code above, once the stream is started, code enters a worker loop, which reads out buffered data via ``Receive(...)`` function into work buffer ``RxChABuf``. ``Receive(...)`` 
+ * function call blocks until the work buffer (``RxChABuf``) is filled with samples or a timeout occurs. A timeout can occur when there are no more samples to read from the device Rx direction. 
+ * On return, function reports the quantity of samples that were read from the device. ``Receive(...)`` function is also able to retrieve meta data about received samples. To retrieve the meta data, 
+ * the address of a variable of lime::StreamRxMeta type must be passed as an argument for the third parameter of ``Receive(...)`` function. Consequently, ``Receive(...)`` function call updates 
+ * the variable with the meta data of the first packet, that was read from an internal buffer. Meta data contains timestamps and stream flags. To check if timestamps are supported, check if 
+ * ``hasTimestamp`` flag is set to ``true`` (check out @ref stream_timestamps section). If meta data is not important, a ``nullptr`` argument can be passed to ommit the retrieval of packet meta data. 
+ * 
+ * @subsection stream_write Writing samples
+ * 
+ * To send data in a worker loop, use ``Transmit(...)`` function. ``Transmit(...)`` function transfers samples to the device for transmission. ``Transmit(...)`` function call always blocks until all
+ * samples from work buffer (``TxChABuf``) are transferred to internal device transmit buffer or a timeout occurs. A transmit timeout can occur if the internally managed transmit buffer is filled and 
+ * has no empty space for new samples. On return, function reports the amount of samples that were queued for transmission. ``Transmit(...)`` function supports the use of meta data for sample transmission. To use 
+ * meta data in transmit, the address of a variable of lime::StreamTxMeta type must be passed as an argument for the third parameter of ``Transmit(...)`` function. Meta data contains timestamps and stream flags. 
+ * To toggle the use of timestamps for queued samples, meta data flag ``hasTimestamp`` must be set to value ``true`` or ``false`` (check out @ref stream_timestamps section). Additionally, meta data member ``flags`` 
+ * can be used to set specific stream flags. Flag lime::StreamTxMeta::Flags::EndOfBurst can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for 
+ * transmit do not make up a single packet, then the remaining samples slots in a packet are padded with the value 0 and the sample packets are flushed out. If meta data is not important, a ``nullptr`` argument can be 
+ * passed to ommit the generation of packet meta data. Only fully formed packets are added to transmit batch. If ``Transmit(...)`` function queues a quantity of samples that is lesser than the sample capacity of a 
+ * single packet, the samples remain buffered until a sufficient amount of samples is added with the next ``Transmit(...)`` call to form a full packet.
+ * 
+ * @subsection stream_stats Monitoring statistics
+ * 
+ * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stoped. To view stream statistics for both Tx and Rx directions, 
+ * variables of lime::StreamStats type must be defined (`RxStats` and `TxStats` variables in the example code above). The addresses of defined variables must be passed as arguments to 
+ * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function parameter list. To avoid the retrieval of stream statistics for a particular direction, pass the `nullptr` argument.
+ * In the example code above, statistics of Tx direction are ignored (because a `nullptr` argument is passed) and only the statistics of Rx direction are returned after the stream is stoped. 
+ * Available statistics for a stream direction:
+ * <ul>
+ *    <li>Current timestamp</li>
+ *    <li>Total amount of bytes transferred</li>
+ *    <li>Data rate in B/s</li>
+ *    <li>Total amount of packets transferred</li>
+ *    <li>FIFO buffer status</li>
+ *    <li>Data loss</li>
+ *    <li>Data overruns</li>
+ *    <li>Data underruns</li>
+ * </ul>
+ * 
+ * To view the actual names of parameters view the definition of lime::StreamStats structure.
+ * 
+ * Streaming statistics are useful for observing the state of Rx and Tx sample queues. FIFO status allows to monitor the current capacity of sample queues for Rx and Tx directions. FIFO status allows to view:
+ * <ul>
+ *    <li>Total buffer capacity</li>
+ *    <li>Occupied buffer capacity</li>
+ *    <li>Ratio of occupied capacity to free capacity</li>
+ * </ul>
+ * 
+ * Indicators:
+ * <ul>
+ *    <li>
+ *       The `overrun` parameter indicates the amount of times the software buffer overrun event occured. Software buffer overrun occurs, when the device receiver hardware produces more samples than the host
+ *       system software can process and the produced samples are dropped.
+ *    </li>
+ *    <li>  
+ *       The `underrun` parameter indicates the amount of times the Tx underrun event occured. Tx underrun occurs, when the samples are queued for transmission with an expired timestamp. Expired timestamp is a timestamp
+ *       that is pointing to a time point in the past and is already behind the hardware generated timestamp.  
+ *    </li>
+ *    <li>
+ *       The `loss` parameter indicates the amount of times the receiver lost data. Data loss occurs, when the device receiver hardware produces malformed data.
+ *    </li>
+ * </ul>
+ * 
+ * @section stream_timestamps Timestamps
+ * 
+ * Timestamping is an optional feature that can be enabled on demand to provide additional meta data about the sample packets in transmission. Timestamp type is selected at 
+ * @ref dev_stream_config "stream configuration stage". Stream configured with default options will set the timestamp type to ``SAMPLE_TICKS``. To reconfigure an already active 
+ * stream with a new timestamp type, stream must be stopped and a stream interface function ``SetUp()`` must be called with updated stream configuration.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Warning
+ * 
+ *    Currently, it is recommended to use ``SAMPLE_TICKS`` timestamp type since it is widely supported by many LimeSDR devices. SDR device support for other timestamp types is limited.}
+ * @else
+ * @warning Currently, it is recommended to use ``SAMPLE_TICKS`` timestamp type since it is widely supported by many LimeSDR devices. SDR device support for other timestamp types is limited.
+ * @endif
+ * 
+ * @subsection rx_timestamps Receiver side
+ * 
+ * To use timestamps on the receiver side, the address of meta data structure of lime::StreamRxMeta type must be passed to the parameter list of stream interface function - ``Receive(...)``. Meta data
+ * structure is updated with new meta data on each call of ``Receive(...)`` function. To check for timestamp support, check the ``hasTimestamp`` flag status of meta data structure. If the timestamp is supported 
+ * (``hasTimestamp`` is set to ``true``), meta data structure is updated with new timestamp data on each call of ``Receive(...)`` function. To get the timestamp value for any timestamp type, call timestamp 
+ * storage class function ``GetTicks()``. This returns the current timestamp value in tick count. Depending on the timestamp type configuration, a tick count can be interpreted as sample count, real seconds 
+ * in reference to the start of the stream or unix time. For timestamps, that store the tick count of real time, it is also possible to retrieve the timestamp values in real seconds (instead of ticks) by using 
+ * any of the following timestamp storage class interface functions:
+ * <ul>
+ *    <li>``GetRealSeconds()`` - returns full seconds counter (including the fractional part of a second).</li>
+ *    <li>``GetFracSeconds()`` - returns only the fractional part of a second.</li>
+ *    <li>``GetSeconds()`` - returns only the integer part of the seconds.</li>
+ * </ul>
+ * 
+ * Below is simple worker loop example code for receiver side which is configured with timestamp type ``SAMPLE_TICKS``:
+ * 
+ * @code{.cpp}
+ *  const uint32_t bufferSize = 1024;
+ *  lime::StreamRxMeta RxMeta;
+ * 
+ * ... // Other program code
+ * 
+ * while(!cleanUp)
+ * {
+ *    uint32_t samplesRead = RadioStream->Receive(RxBuffers, bufferSize, &RxMeta);
+ *    if(samplesRead > 0)
+ *    {
+ *       if(RxMeta.hasTimestamp)
+ *          std::cout << "Read: " << samplesRead << " samples with timestamp " << RxMeta.timestamp.GetTicks() << std::endl;
+ *       else
+ *          std::cout << "Read " << samplesRead << " samples from device.\n";
+ * 
+ *       for(int i = 0; i < 10; ++i)
+ *           std::cout << "(" << RxRawSamples[i].real() << "; " << RxRawSamples[i].imag() << ") ";
+ *       std::cout << std::endl;
+ *    }
+ *    else
+ *       std::cout << "Timeout! No samples present!\n";
+ *    
+ *    samplesRead = 0;
+ * }
+ * 
+ * ... // Other program code
+ * 
+ * @endcode
+ * 
+ * Output of example code:
+ * 
+ * @image{inline} html stream_rx_timestamp.png
+ * 
+ * The example output shows a continuous read of samples. A fixed amount of samples is read for every read cycle. After each read, a timestamp and the first 10 samples are printed to the window.
+ * Each timestamp represents the start time of the read operation for current read cycle and is measured in stream ticks. Because the configured timestamp type is ``SAMPLE_TICKS``, each tick represents 
+ * a single sample. Therefore, the timestamp represents the start time of the read operation for current read cycle and displays offset of already read samples since the start of the stream.
+ *
+ * For ``SAMPLE_TICKS`` timestamp type, each read cycle increments the timestamp by the amount of read samples. In this particular example, timestamp increments at the rate of 1024 samples/read cycle to indicate 
+ * the increasing offset of read samples since the start of the stream.
+ * 
+ * @subsection tx_timestamps Transmitter side
+ * 
+ * To use timestamps on the transmitter side, the address of meta data structure of lime::StreamTxMeta type must be passed to the parameter list of stream interface function - ``Transmit(...)``. Transmit meta 
+ * data structure flag ``hasTimestamp`` must be set to ``true`` to enable timestamps. A timestamp in transmit direction allows to indicate the ending point of the current sample transmission. Time point must be 
+ * set as a tick count, which can be interpreted as sample count offset from the start of the stream, offset in real seconds from the start of the stream or unix time. To set the timestamp tick count for any 
+ * timestamp type, call timestamp storage class function ``AddTicks()``. If the samples are queued for transmit past the set timestamp, the sample packets are dropped and the ``underrun`` parameter for the 
+ * transmitter stream statistics is incremented. Below is simple worker loop example code for transmitter side, which is configured with timestamp type ``SAMPLE_TICKS``:
+ * 
+ * @code{.cpp}
+ * 
+ * ... // Other program code
+ * 
+ *  const uint32_t samplesInPacket = 1024;
+ *  const uint32_t tsOffset = samplesInPacket * 64;   // Upscaled Timestamp as a total amount of samples planned for transfer
+ *  lime::complex16_t TxChABuffer[samplesInPacket] = {};
+ *  lime::complex16_t * const TxBuffers[2] = {TxChABuffer, nullptr};
+ * 
+ *  lime::StreamTxMeta TxMeta;         // Transmit meta data
+ *  TxMeta.hasTimestamp = true;
+ *  lime::StreamStats TxStats;
+ * 
+ * 
+ * ... // Other program code
+ * 
+ * while(!cleanUp)
+ * {
+ *    if(TxMeta.hasTimestamp)
+ *    {
+ *       std::cout << "Samples transfer timestamp: " << (TxMeta.timestamp.GetTicks() / 64) << std::endl;  // Printing the normalized (divided by 64) starting point of sample transfer 
+ *       TxMeta.timestamp.AddTicks(tsOffset);   // Setting upscaled (multiplied by 64) end time point of the current transmit cycle
+ *    }
+ *    
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, samplesInPacket, &TxMeta);    // Sending random samples
+ * 
+ *    std::cout << "Sent " << samplesSent << " samples\n";
+ *    RadioStream->StreamStatus(nullptr, &TxStats);
+ *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
+ * 
+ * }
+ * 
+ * ... // Other program code
+ * @endcode
+ * 
+ * Output of the example code above:
+ * 
+ * @image{inline} html stream_tx_continuous_timestamp.png
+ * 
+ * The example code above demonstrates a simple transmit worker loop that continuously transmits 1024 samples. For each transmit cycle, the starting timestamp of transmit operation is printed 
+ * and the new timestamp is set in to the future for the start of new sample transmit operation. The ``tsOffset`` variable, used to offset transmit timestamp into the future, is multiplied by 64. 
+ * Multiplication of timestamp value allows to account for the sample transfer delay that is caused by software and hardware. If the delays are not accounted for and the timestamp is offset only by 
+ * the amount of samples for each transmit cycle, unwanted packet drops can occur. Consequently, to print the real timestamp at the start of each transmit cycle, retrieved timestamp value must be 
+ * divided by 64. 
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. important::
+ * 
+ *    Timestamp offset multiplication depends on device configuration. Increasing communication speed might require to offset the timestamp further into the future.}
+ * @else
+ * @important Timestamp offset multiplication depends on device configuration. Increasing communication speed might require to offset the timestamp further into the future.
+ * @endif
+ * 
+ * Another example code of simple worker loop that performs periodic sample transmits using timestamps:
+ * 
+ * @code{.cpp}
+ * ... // Other program code
+ * 
+ *  const uint32_t samplesInPacket = 1024;
+ *  const uint32_t tsOffset = samplesInPacket * 256;
+ *  lime::complex16_t TxChABuffer[samplesInPacket] = {};
+ *  lime::complex16_t * const TxBuffers[2] = {TxChABuffer, nullptr};
+ * 
+ *  lime::StreamTxMeta TxMeta;         // Transmit meta data
+ *  TxMeta.hasTimestamp = true;
+ *  TxMeta.flags |= lime::StreamTxMeta::Flags::EndOfBurst;  // To indicate that sample packet bursts will be transmitted
+ *  lime::StreamStats TxStats;
+ * 
+ * ... // Other program code
+ * 
+ * while(!cleanUp)
+ * {
+ *    if(TxMeta.hasTimestamp)
+ *    {
+ *       // Getting the newest timestamp from hardware and saving it 
+ *       uint64_t newTimestampValue = RadioStream->GetHardwareTimestamp();
+ *       TxMeta.timestamp = lime::Timespec(newTimestampValue);
+ *       std::cout << "Current transfer timestamp " << (TxMeta.timestamp.GetTicks() / 256) << std::endl;
+ *       TxMeta.timestamp.AddTicks(tsOffset);   // Setting the end time point of the current transmit cycle
+ *    }
+ * 
+ *    uint32_t samplesSent = RadioStream->Transmit(TxBuffers, samplesInPacket, &TxMeta);
+ *    std::cout << "Sent " << samplesSent << std::endl;
+ *    RadioStream->StreamStatus(nullptr, &TxStats);
+ *    std::cout << "Number of sample packets dropped due to expired timestamp " << TxStats.underrun << std::endl;
+ *    
+ *    std::cout << "Waiting 250 milliseconds\n";
+ *    std::this_thread::sleep_for(std::chrono::milliseconds(250));   // Simulating a transfer window by inducing delay
+ * 
+ *    // Calling Transmit(...) after delay without timestamp update might result in packet drop
+ * }
+ * 
+ * ... // Other program code
+ * @endcode
+ * 
+ * Output of the example code above:
+ * 
+ * @image{inline} html stream_tx_burst_timestamp.png
+ * 
+ * The example above demonstrates a periodic sample transmission, where the transmitter sends data every 250 ms. If the transmitter attempted to transmit samples after the delay, without 
+ * updating the timestamp first, the samples queued for transmission might be dropped due to expired timestamp. For periodic sample transmits, ``GetHardwareTimestamp()`` must be used to retrieve 
+ * the most up to date timestamp that can then be updated with new tick count to indicate the new ending point of sample transmit operation. Important to notice, before starting the worker 
+ * loop, ``EndOfBurst`` flag must be enabled in ``TxMeta`` to enable the padding of packet sample slots. Packet padding ensures that the queued samples are sent even if the queued amount of 
+ * samples is not sufficient to form a full packet. If ``EndOfBurst`` flag is not enabled and the quantity of samples queued for transmit does not make up a single packet, the samples are not 
+ * transmitted, but instead are buffered until a sufficient amount of samples are added to the queue in the next transmit cycle. Buffered samples can contain expired timestamps which can cause 
+ * unexpected packet drops.
+ * 
+ * @section important_stream_notes Important notes
+ * 
+ * <ul>
+ *    <li>
+ *       Streaming interface is <b>not thread safe</b> and multiple calls to ``Receive(...)`` or ``Transmit(...)`` from different threads can lead to poor performace or crashes. A single thread 
+ *       should manage a single stream function (eg. Receive with thread 1 and transmit with thread 2).
+ *    </li>
+ *    <li>
+ *       It is possible to have more than one stream object with different stream parameter configurations for a single device, but it is recommended <b>to avoid running multiple streams simultaneously</b>.
+ *    </li>
+ *    <li>
+ *       It is not possible to queue samples to Tx direction using ``Transmit(...)`` function, while the stream is inactive.
+ *    </li>
+ *    <li>
+ *       Once the stream is stopped, hardware buffered samples are deleted and cannot be read using ``Receive(...)`` function.
+ *    </li>
+ * </ul>
+ * 
+ */

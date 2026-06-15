@@ -1,0 +1,37 @@
+---
+    config:
+        class:
+            hideEmptyMembersBox: True
+---
+
+classDiagram
+    direction LR
+
+    class SDRDevice
+    class DeviceHandle
+    class DeviceRegistry {<<Interface>>}
+    class DeviceRegistryEntry
+    class DeviceFactoryFTDI
+    class DeviceFactoryFX3
+    class DeviceFactoryPCIe
+
+    %% Inheritance
+    DeviceRegistryEntry<|--DeviceFactoryFTDI
+    DeviceRegistryEntry<|--DeviceFactoryFX3
+    DeviceRegistryEntry<|--DeviceFactoryPCIe
+
+    %% Associations
+
+    %% Depenendcies
+    DeviceRegistry..>DeviceRegistryEntry
+    DeviceRegistry..>SDRDevice
+    DeviceRegistry..>DeviceHandle
+    DeviceRegistryEntry..>SDRDevice
+    DeviceRegistryEntry..>DeviceHandle
+    DeviceFactoryFTDI..>SDRDevice
+    DeviceFactoryFTDI..>DeviceHandle
+    DeviceFactoryFX3..>SDRDevice
+    DeviceFactoryFX3..>DeviceHandle
+    DeviceFactoryPCIe..>SDRDevice
+    DeviceFactoryPCIe..>DeviceHandle
+

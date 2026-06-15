@@ -3,6 +3,11 @@
 Conda Packages
 ##############
 
+.. warning:: 
+   
+   Currently, Lime Suite NG and its software components are not available as standalone conda packages!
+   Instead build the newest Lime Suite NG software from source!
+
 Radioconda
 **********
 

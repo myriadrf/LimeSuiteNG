@@ -1,0 +1,9 @@
+/**
+ * @page sdrdev_api_example SDRDevice API example
+ * 
+ * This page of the documentation shows the usage example using the new SDRDevice API. 
+ * More examples written with this API can be found in the ``src/examples`` directory.
+ * 
+ * @include{lineno} dualRXTX.cpp
+ * 
+ */

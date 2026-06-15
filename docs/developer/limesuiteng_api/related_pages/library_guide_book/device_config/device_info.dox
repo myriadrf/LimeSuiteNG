@@ -1,0 +1,282 @@
+/**
+ * @page device_info Additional device information
+ * 
+ * @if DOX_NAV
+ * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
+ * @endif
+ * 
+ * @section device_info_summary Summary
+ * 
+ * Initial enumeration of device provides essential information about connected SDR devices required for connection. Once the SDR device is registered and connected to, additional information about the device can be retrieved.
+ * Additional information allows to view device information about onboard modules, check sensors, device clock stability and GPS status. @ref device_info_example "Example code" for retrieving various information about the 
+ * SDR device is provided at the end of the page.
+ * 
+ * @section device_descriptor Descriptor
+ * 
+ * SDR device descriptor provides full description about the currently connected and active device:
+ * <ul>
+ *    <li>Firmware version</li>
+ *    <li>Gateware version and revision</li>
+ *    <li>Hardware version</li>
+ *    <li>Low speed interface ID's</li>
+ *    <li>RFSoC description</li>
+ *    <li>Custom parameter list</li>
+ *    <li>Memory devices</li>
+ *    <li>Subdevice tree</li>
+ * </ul>
+ * 
+ * For a full list of members an their names, check out the definition of `lime::SDRDescriptor` structure definition.
+ * 
+ * To get the full description about the device, @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()" function must be called (code example is located in the @ref device_info_example "Example code" section).  
+ * Example of generated description of LimeSDR Mini V2.4 device:
+ * 
+ * @image{inline} html full_device_desc.png 
+ * 
+ * @section device_status_checks Status checks
+ * 
+ * Device status checks can be performed for specified device modules (LMS7002M or other modules) by calling status check functions from device configuration interface.
+ * 
+ * @subsection device_cgen_status Core clock
+ * 
+ * To check the lock status of LMS7002M module core clock generator, use @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()" function with the module index as an argument. 
+ * Module index argument addresses appropriate LMS7002M module (if there is more than one module onboard). If a SDR device with a single LMS7002M module is used, then set module index argument to 0.
+ * This function wiil return the lock status of comparators for core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
+ * of the reference clock. Returned value `false` indicates that the module core clock generator and reference clock phase and frequency does not match. A brief example is shown at the bottom of the 
+ * @ref device_info_example "example code" section.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If SDR device is cold started or reset, the core clock generator will remain in a `not locked` state until the `sampling rate` of the SDR device is set.}
+ * @else
+ * @note If SDR device is cold started or reset, the core clock generator will remain in a `not locked` state until the `sampling rate` of the SDR device is set.
+ * @endif
+ * 
+ * @subsection device_rfe_sx_clock_status Synthesizer clock
+ *  
+ * To view the RFE synthesizer clock lock status, use @ref lime::SDRDevice::GetSXLocked(uint8_t, lime::TRXDir) "GetSXLocked()" function with module index and channel direction as arguments. This function will return 
+ * the lock status of comparators for RFE synthesizer VCO of a particular module channel direction. A brief example is shown at the bottom of the @ref device_info_example "example code" section.
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If SDR device is cold started or reset, RFE synthesizer VCO for the selected direction will remain in a `not locked` state until the synthesizer LO frequency for the selected direction is set.}
+ * @else
+ * @note If SDR device is cold started or reset, RFE synthesizer VCO for the selected direction will remain in a `not locked` state until the synthesizer LO frequency for the selected direction is set.
+ * @endif
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. admonition:: Note
+ * 
+ *    If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.}
+ * @else
+ * @note If SDR device is configured for TDD mode, the RFE synthesizer VCO for Rx direction will report the status as `not locked` even if the synthesizer LO frequency for Rx direction was set.
+ * @endif
+ * 
+ * @subsection device_temp_status Temperature
+ * 
+ * Temperature of speciefied device module can be viewed by using @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()" function with module index as an argument that addresses the appropriate LMS7002M module.
+ * A brief example is shown at the bottom of the @ref device_info_example "example code" section.  
+ * 
+ * @subsection device_gps GPS lock
+ * 
+ * To view the status of GPS lock, use @ref lime::SDRDevice::GetGPSLock(lime::SDRDevice::GPS_Lock*) "GetGPSLock()" function. Pass the address of a variable of `lime::SDRDevice::GPS_Lock` type as an argument to the function
+ * parameter list. Function will update the variable with new GPS status values. SDR devices support the following GPS systems:
+ * <ul>
+ *    <li>GPS</li>
+ *    <li>Galileo</li>
+ *    <li>Glonass</li>
+ *    <li>Beidou</li>
+ * </ul>
+ * 
+ * All available GPS systems states are enumerated in `lime::SDRDevice::GPS_Lock::LockStatus` enumeration. A brief example is shown at the bottom of the @ref device_info_example "example code" section.
+ * 
+ * @section device_info_example Example code
+ * 
+ * This is a generic example code that retrieves the full information about the currently active SDR device, checks the status of core and synthesizer clock generators, gps systems lock status and device temperature.
+ * 
+ * @code{.cpp}
+ * #include <iostream>
+ * #include <vector>
+ * #include <memory>
+ * #include <utility>
+ * #include <limesuiteng/DeviceRegistry.h>
+ * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/DeviceHandle.h>
+ * #include <limesuiteng/ToString.h>
+ * #include <limesuiteng/OpStatus.h>
+ * #include <limesuiteng/SDRDescriptor.h>
+ * 
+ * int main()
+ * {
+ *    std::vector<lime::DeviceHandle> listOfDevices = lime::DeviceRegistry::enumerate();
+ *    if(listOfDevices.empty())
+ *    {
+ *       std::cout << "No devices detected!\n";
+ *       return 0;
+ *    }
+ * 
+ *    lime::SDRDevice * device = lime::DeviceRegistry::makeDevice(listOfDevices.front());
+ *    if(device == nullptr)
+ *    {
+ *       std::cout << "Failed to connect to SDR device\n";
+ *       return 1;
+ *    }
+ * 
+ *    uint8_t moduleIndex = 0;
+ *    lime::SDRDescriptor LimeSDRMiniV2_desc = device->GetDescriptor();
+ * 
+ *    std::cout << "Full information about " << LimeSDRMiniV2_desc.name << " device:" << std::endl;
+ *    std::cout << "Expansion name - " << LimeSDRMiniV2_desc.expansionName << std::endl;
+ *    std::cout << "Firmware version - " << LimeSDRMiniV2_desc.firmwareVersion << std::endl;
+ *    std::cout << "Gateware version - " << LimeSDRMiniV2_desc.gatewareVersion << std::endl;
+ *    std::cout << "Gateware revision - " << LimeSDRMiniV2_desc.gatewareRevision << std::endl;
+ *    std::cout << "Gateware target board - " << LimeSDRMiniV2_desc.gatewareTargetBoard << std::endl;
+ *    std::cout << "Hardware version - " << LimeSDRMiniV2_desc.hardwareVersion << std::endl;
+ *    std::cout << "Protocol version - " << LimeSDRMiniV2_desc.protocolVersion << std::endl;
+ *    std::cout << "Serial number - " << LimeSDRMiniV2_desc.serialNumber << std::endl;
+ *    std::cout << "SPI slave IDs: " << std::endl;
+ *    for(const auto& iter : LimeSDRMiniV2_desc.spiSlaveIds)
+ *    {
+ *       std::cout << "\tName: " << iter.first << ";\t ID: " << iter.second << std::endl;
+ *    }
+ * 
+ *    if(LimeSDRMiniV2_desc.spiSlaveIds.size() == 0)
+ *       std::cout << "No SPI slave IDs present" << std::endl;
+ * 
+ *    std::cout << "RFSoC description:" << std::endl;
+ *    for(int i = 0; i < LimeSDRMiniV2_desc.rfSOC.size(); ++i)
+ *    {
+ *       std::cout << "\tRFSoC " << (i+1) << std::endl;
+ *       std::cout << "\tName - " << LimeSDRMiniV2_desc.rfSOC[i].name << std::endl;
+ *       std::cout << "\tChannel count - " << (int)LimeSDRMiniV2_desc.rfSOC[i].channelCount << std::endl;
+ *       std::cout << "\tAntenna path names: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].pathNames.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout <<"\t\t\t" << iter << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].pathNames.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout <<"\t\t\t" << iter << std::endl;
+ *       }
+ *       std::cout << "\tFrequency range [min; max], Hz - [" << LimeSDRMiniV2_desc.rfSOC[i].frequencyRange.min 
+ *       << "; " << LimeSDRMiniV2_desc.rfSOC[i].frequencyRange.max << "]" << std::endl;
+ *       std::cout << "\tSample rate range [min; max], Hz - [" << LimeSDRMiniV2_desc.rfSOC[i].samplingRateRange.min 
+ *       << "; " << LimeSDRMiniV2_desc.rfSOC[i].samplingRateRange.max << "]" << std::endl;
+ *       
+ *       std::cout << "\tAntenna bandwidth ranges [min; max], Hz: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].antennaRange.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\tName: " << iter.first << ";\t [" << iter.second.min << "; " << 
+ *          iter.second.max << "]" << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].antennaRange.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\tName: " << iter.first << ";\t [" << iter.second.min << "; " <<
+ *          iter.second.max << "]" << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tLow pass filter ranges [min; max], Hz: " << std::endl;
+ *       std::cout << "\t\tTx direction - ";
+ *       const auto& txLpfRange = LimeSDRMiniV2_desc.rfSOC[i].lowPassFilterRange.at(lime::TRXDir::Tx);
+ *       std::cout << "[" << txLpfRange.min << "; " << txLpfRange.max << "]"<< std::endl;
+ * 
+ *       std::cout << "\t\tRx direction - ";
+ *       const auto& rxLpfRange = LimeSDRMiniV2_desc.rfSOC[i].lowPassFilterRange.at(lime::TRXDir::Rx);
+ *       std::cout << "[" << rxLpfRange.min << "; " << rxLpfRange.max << "]" << std::endl;
+ *       
+ *       std::cout << "\tSupported gains: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gains.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter) << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gains.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter) << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tAvailable gain ranges, dB: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainRange.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << "\t[" << iter.second.min 
+ *          << "; " << iter.second.max << "]" << std::endl;
+ *       }
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainRange.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << "\t[" << iter.second.min 
+ *          << "; " << iter.second.max << "]" << std::endl;
+ *       }
+ * 
+ *       std::cout << "\tPossible gain values, dB: " << std::endl;
+ *       std::cout << "\t\tTx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainValues.at(lime::TRXDir::Tx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << ": ";
+ *          for(const auto& value : iter.second)
+ *             std::cout << value.actualGainValue << " ";
+ * 
+ *          std::cout << std::endl;
+ *       }
+ * 
+ *       std::cout << "\t\tRx direction:" << std::endl;
+ *       for(const auto& iter : LimeSDRMiniV2_desc.rfSOC[i].gainValues.at(lime::TRXDir::Rx))
+ *       {
+ *          std::cout << "\t\t\t" << lime::ToString(iter.first) << ": ";
+ *          for(const auto& value : iter.second)
+ *             std::cout << value.actualGainValue << " ";
+ * 
+ *          std::cout << std::endl;
+ *       }
+ *    }
+ *    std::cout << "Custom parameters: " << std::endl;
+ *    for(const auto& parameter : LimeSDRMiniV2_desc.customParameters)
+ *       std::cout << "\t" << parameter.name << std::endl;
+ * 
+ *    std::cout << "Memory devices: " << std::endl;
+ *    for(const auto& device : LimeSDRMiniV2_desc.memoryDevices)
+ *       std::cout << "\t" << device.first << std::endl;
+ * 
+ *    // Status checks
+ *    auto cgen_status = device->GetCGENLocked(moduleIndex);
+ *    std::cout << "Core clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (cgen_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
+ *    
+ *    // SX LO check for Tx/Rx directions 
+ *    auto sxvco_tx_status = device->GetSXLocked(moduleIndex, lime::TRXDir::Tx);
+ *    auto sxvco_rx_status = device->GetSXLocked(moduleIndex, lime::TRXDir::Rx);
+ * 
+ *    std::cout << "Tx direction SX VCO clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (sxvco_tx_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
+ *    
+ *    std::cout << "Rx direction SX VCO clock for " << LimeSDRMiniV2_desc.name << " device " << 
+ *    (sxvco_rx_status ? "matches" : "does not match") << " reference clock phase and frequency." << std::endl;
+ * 
+ *    // Device temperature check
+ *    auto dev_temp_c = device->GetTemperature(moduleIndex);
+ *    std::cout << LimeSDRMiniV2_desc.name << " device temperature - " << dev_temp_c << " C\n";
+ * 
+ *    // GPS status check
+ *    lime::SDRDevice::GPS_Lock gps_lock_status = {};
+ *    device->GetGPSLock(&gps_lock_status);
+ *    std::cout << "GPS lock status for " << LimeSDRMiniV2_desc.name << " device - " << 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::NotAvailable ? "not available\n" : 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::Has2D ? "has 2D\n" : 
+ *    (gps_lock_status.gps == lime::SDRDevice::GPS_Lock::LockStatus::Has3D ? "has 3D\n" : "undefined\n")));
+ *
+ *    lime::DeviceRegistry::freeDevice(device);
+ *    return 0;
+ * }
+ * @endcode
+ * 
+ */

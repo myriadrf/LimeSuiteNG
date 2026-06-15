@@ -8,7 +8,7 @@ Project contents:
   * **liblimesuiteng**. C++ library which provides device APIs.
   * :doc:`user/common/cli`. Utilities for device management, configuration and basic use.
   * :doc:`user/plugins/index`. Plugins for SDR ecosystem software.
-  * :doc:`developer/tools/suite_tools/GUI` - graphical user interface for configuring device parameters and inspecting Rx RF data using FFT.
+  * :doc:`developer/gui_tool/GUI` - graphical user interface for configuring device parameters and inspecting Rx RF data using FFT.
 
 See the :doc:`user/index` guide for more information on getting started with Lime Suite NG, including installation instructions and usage examples.
 
@@ -40,3 +40,4 @@ Supported devices
    Introduction <self>
    User Guide <user/index>
    Developer Guide <developer/index>
+   Updating Docs <docs/documentation.rst>

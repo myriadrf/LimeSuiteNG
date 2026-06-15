@@ -1,9 +1,13 @@
 Introduction
 ============
 
-This is the section containing all the diagrams graphs.
-
 .. toctree::
-   :glob:
+   :hidden:
 
-   *
+   comms.rst
+   device_reg_class.rst
+   device_class.rst
+   streaming_class.rst
+
+.. doxygenpage:: diagrams_intro
+   :content-only:

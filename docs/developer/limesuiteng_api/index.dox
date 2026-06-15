@@ -1,0 +1,51 @@
+/**
+ * @page limesuiteng_api_ref_top Lime Suite NG library reference
+ *
+ * @section intro Introduction
+ *
+ * This documentation focuses on Lime Suite NG library public API, provides other important notes, explanations 
+ * and is intended for application developers, who wish to communicate with LimeSDR devices from user space using 
+ * custom built applications.
+ *
+ * For more information about the library installation on different platforms and other components of Lime Suite NG suite, 
+ * visit <b>User Guide</b> page.
+ * 
+ * 
+ * @section lib_feat_section Library features
+ * 
+ * @if DEVELOP
+ * TODO: Update the list of supported library features.  
+ * @endif
+ * 
+ * <ul>
+ *    <li>Modular API</li>
+ *    <li>Quick configuration of essential device and stream parameters
+ *       <ul>
+ *          <li>Device and stream parameter configuration from structure</li>
+ *          <li>Support for limeGUI generated configuration files <b>.ini</b></li>
+ *       </ul>
+ *    </li>
+ *    <li>Access to SDR device module register space for advanced configurations</li>
+ *    <li>Support for minimal hardware tests</li>
+ *    <li>Support for stream timestamps</li>
+ * </ul>
+ * 
+ * 
+ * 
+ * @section getting_started Getting started
+ * 
+ * If you are completely new to the Lime Suite NG library and API or looking for information about SDR device control and configuration, it is recommended to visit
+ * @ref guide_book_top "library API guide book page". Library Guide book page provides code examples, explanations and other information about different library API members.
+ * If you only need to reference library API list, then @ref api "check out the sorted list of public API members". Otherwise, please refer to the list of topics 
+ * provided below.
+ * 
+ * Topics of interest:
+ * <ol>
+ *     <li> @subpage api </li>
+ *     <li> @subpage guide_book_top </li>
+ *     <li> @subpage common_parameters </li>
+ *     <li> @subpage porting_guide </li>
+ *     <li> @subpage sdrdev_api_example </li>
+ * </ol>
+ * 
+ */

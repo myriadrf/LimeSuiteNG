@@ -744,7 +744,7 @@ class LIME_API SDRDevice
     virtual GPIO_Interface* GetGPIOControls();
 
     /// @brief Creates CSR interface to manage SDR specific Configuration Space Registers.
-    /// @return Address to SDR CSR interface.
+    /// @return Address to SDR CSR interface if supported by device, else nullptr.
     virtual ICSR* getICSR();
 };
 

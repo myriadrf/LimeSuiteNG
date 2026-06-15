@@ -1,0 +1,37 @@
+/**
+ * @page valgrind_page Valgrind
+ * 
+ * @section valgrind_summary Summary
+ * 
+ * <a href="https://valgrind.org/">Valgrind</a> is a collection of tools for debugging and profiling Linux programs.
+ * It includes a bunch of tools, such as cache and heap profilers, multithreading debuggers, and memory debuggers.
+ * 
+ * @subsection valgrind_info_and_suppress More information about Valgrind
+ * 
+ * - <a href="https://valgrind.org/">Valgrind</a>
+ * - <a href="https://valgrind.org/docs/manual/manual.html">Valgrind manual</a>
+ * - <a href="https://valgrind.org/docs/manual/manual-core.html#manual-core.suppress">Suppressing errors</a>
+ * 
+ * @section valgrind_limits Limitations
+ * 
+ * This section provides known limitations regarding the use of Valgrind in development of Lime Suite NG.
+ * 
+ * @subsection valgrind_uk_instructions Unknown instructions
+ * 
+ * Valgrind performs program CPU instruction analysis and can sometimes encounter unknown x86 instructions. 
+ * Detection of unknown instructions immediately halts the execution of the program and a hex dump
+ * of the instruction, which caused the program termination, is provided as a result.
+ * A <a href="https://defuse.ca/online-x86-assembler.htm">disassembler (online version)</a> can be used to 
+ * verify if a legitimate unknown instruction or a corrupted memory area was encountered.
+ * 
+ * In the case of Lime Suite NG, it is known that the AVX-512 instruction set is treated by Valgrind as an
+ * unknown instruction set. As a result, detection of any AVX-512 CPU instructions causes Valgrind to halt 
+ * CPU instruction analysis.
+ *
+ * To bypass the Valgrind limitation, it is recommended to build Lime Suite NG without the use of AVX-512
+ * instruction set. To disable the use of AVX-512 instruction set in Lime Suite NG build, pass the 
+ * ``-mno-avx512f`` GCC compiler flag. Disabling the use of AVX-512 instruction set will result in a slower
+ * program execution, but will enable the use of Valgrind CPU instruction analysis tool.
+ * 
+ * This limitation is observed for Valgrind 3.22.0 and GCC 12.3.0.
+ */ 

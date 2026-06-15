@@ -70,7 +70,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['node_modules', 'venv', '_build', 'Thumbs.db', '.DS_Store', 'developer/Introduction/*']
+exclude_patterns = ['node_modules', 'venv', '_build', 'Thumbs.db', '.DS_Store']
 
 # -- Project config and MyriadRF styling --------------------------------------
 
@@ -211,7 +211,7 @@ root_doc = 'index'
 ## Extensions updated also
 
 breathe_projects = {
-    "Lime Suite NG" : ( "../build/docs/developer/doxygen/xml" )
+    "Lime Suite NG" : ( "../build/docs/developer/xml" )
 }
 
 breathe_default_project = "Lime Suite NG"

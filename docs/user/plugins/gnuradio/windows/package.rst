@@ -3,8 +3,13 @@
 Radioconda package
 ##################
 
+.. warning:: 
+   
+   Currently, Lime Suite NG and its software components are not available as standalone conda packages!
+   Instead build the newest Lime Suite NG software from source!
+
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`radioconda-setup-ref`.
+   Check out radioconda and conda environment setup process. See :ref:`conda-windows-ref`
 
 Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
 

@@ -1,0 +1,35 @@
+/**
+ * @page dev_reg_class_diag_page Device registry class diagram
+ * 
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * 
+ * .. mermaid:: device_reg_class.mmd
+ * }
+ * @else
+ * @image{inline} html SDRDevice_reg_classDiag.png
+ * @endif
+ * 
+ * @section dev_reg_class_summary Summary
+ * 
+ * Device registry class diagram shows class inheritance hierarchy and dependencies for the 
+ * public device registration interface and device factory classes.
+ * 
+ * Device factory classes implement device enumeration and registration procedures for SDR 
+ * devices that fall under the specific device factory classification. Enumeration procedures
+ * return DeviceHandle objects, which idetify devices and provide information about connection.
+ * Device registration procedures register devices under universal device control interface - 
+ * ``SDRDevice``.
+ * 
+ * Public device enumeration and registration interface - ``DeviceRegistry`` utilizes the 
+ * public device factory interface ``DeviceRegistryEntry`` to access specific device factory 
+ * enumeration and registration functions to detect all supported SDR devices.
+ * 
+ * @subsection dev_reg_class_legend Diagram legend
+ * 
+ * Link definitions:
+ * 
+ * - Solid line with a transparent arrow head body - Inheritance
+ * - Dotted line with simple arrow head - Dependency
+ * 
+ */

@@ -1,10 +1,10 @@
-Tools
-=====
-
-This section contains information about third party tools that can be used to develop Lime Suite NG software and Lime Suite NG provided engineering tools. 
+Developer Tools
+===============
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
-   dev_tools/index.rst
-   suite_tools/index.rst
+   Valgrind
+
+.. doxygenpage:: dev_tools_index
+   :content-only:

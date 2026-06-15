@@ -1,11 +1,10 @@
 LMS API (legacy)
 ================
 
-This section of the documentation describes changes to the old LMS API.
-This API is still supported for backwards compatibility reasons.
-
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    changes
    example
+
+.. doxygenpage:: lms_api_index
