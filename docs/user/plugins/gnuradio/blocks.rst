@@ -40,7 +40,7 @@ Configurable parameters of General tab are provided in the table below:
 |                          |                                                                                                                               |
 |                          |                                                                                                                               |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
-| NCO offset               | Numerically controlled oscillator frequency offset in Hz.                                                                      |
+| NCO offset               | Numerically controlled oscillator frequency offset in Hz.                                                                     |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
 | Low Pass Filter          | Low pass filter cutoff frequency in Hz.                                                                                       |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
@@ -71,7 +71,7 @@ Configurable parameters of LMS7002M Advanced tab are provided in the table below
 | RX PGA                     | Overrides RX Programmable Gain Amplifier gain setting. |
 +----------------------------+--------------------------------------------------------+
 | RX TIA                     | Overrides RX Transimpedance Amplifier gain setting.    |
-+----------------------------+--------------------------------------------------------+ 
++----------------------------+--------------------------------------------------------+
 
 Sink block
 **********
@@ -104,7 +104,7 @@ Configurable parameters of General tab are provided in the table below:
 |                         |                                                                                                                                |
 |                         |                                                                                                                                |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| NCO offset              | Numerically controlled oscillator frequency offset in Hz.                                                                       |
+| NCO offset              | Numerically controlled oscillator frequency offset in Hz.                                                                      |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Low Pass Filter         | Low pass filter cutoff frequency in Hz.                                                                                        |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+

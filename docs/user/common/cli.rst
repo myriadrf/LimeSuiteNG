@@ -50,7 +50,7 @@ Full table of limeConfig utility configuration flags:
 +=====================================+========================================================================================+
 | **General configuration flags**                                                                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+
-| -h, \-\-help                        | Prints list of all possible LimeSDR device configuration flags.                         |
+| -h, \-\-help                        | Prints list of all possible LimeSDR device configuration flags.                        |
 +-------------------------------------+----------------------------------------------------------------------------------------+
 | -d[device],                         | Specifies which device to use. Auto selects device if only a single device is present. |
 |                                     |                                                                                        |
@@ -132,7 +132,7 @@ Full table of limeTRX utility configuration flags:
 +=================================+========================================================================================+
 | **General configuration flags**                                                                                          |
 +---------------------------------+----------------------------------------------------------------------------------------+
-| -h, \-\-help                    | Prints list of all possible limeTRX utility flags.                                      |
+| -h, \-\-help                    | Prints list of all possible limeTRX utility flags.                                     |
 +---------------------------------+----------------------------------------------------------------------------------------+
 | -d[name],                       | Specifies which device to use. Auto selects device if only a single device is present. |
 |                                 |                                                                                        |
@@ -230,7 +230,7 @@ Full table of limeSPI utility commands and configuration flags:
 |                      |                                                                                       |
 |                      | Read command format:                                                                  |
 |                      |                                                                                       |
-|                      | - Register address 2x bytes \-\-stream=[reg addr]                                     |                                                                                  
+|                      | - Register address 2x bytes \-\-stream=[reg addr]                                     |
 +----------------------+---------------------------------------------------------------------------------------+
 
 limeFLASH
@@ -250,7 +250,7 @@ Full table of limeFLASH utility configuration flags:
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | Configuration flags | Description                                                                                                  |
 +=====================+==============================================================================================================+
-| -h, \-\-help        | Prints list of all possible limeFLASH utility flags.                                                          |
+| -h, \-\-help        | Prints list of all possible limeFLASH utility flags.                                                         |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | -d[name],           | Specifies which device to use. Auto selects device if only a single device is present.                       |
 |                     |                                                                                                              |
@@ -286,7 +286,7 @@ Full table of limeOEM utility configuration flags:
 +-----------------------------------+-------------------------------------------------------------------------------------------+
 | Configuration flags               | Description                                                                               |
 +===================================+===========================================================================================+
-| -h, \-\-help                      | Prints list of all possible limeOEM utility flags.                                         |
+| -h, \-\-help                      | Prints list of all possible limeOEM utility flags.                                        |
 +-----------------------------------+-------------------------------------------------------------------------------------------+
 | -d[device],                       | Specifies which device to use. Auto selects device if only a single device is present.    |
 |                                   |                                                                                           |
