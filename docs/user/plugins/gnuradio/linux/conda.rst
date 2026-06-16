@@ -5,13 +5,13 @@ Radioconda package
 
 .. warning:: 
    
-   Currently, Lime Suite NG and its software components are not available as standalone conda packages!
-   Instead build the newest Lime Suite NG software from source!
+   Currently, Lime Suite NG and its software components are not available as standalone conda packages.
+   Instead, build the newest Lime Suite NG software from source.
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`conda-linux-ref`.
+   For radioconda and conda environment setup, see :ref:`conda-linux-ref`.
 
-Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
+The gnuradio-limesuiteng plugin for GNU Radio can also be downloaded as a conda package.
 
 
 Prerequisites
@@ -29,20 +29,20 @@ Conda packages required to run the gnuradio plugin:
 Installing
 **********
 
-If gnuradio package in the current conda environment is already installed, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+If the gnuradio package is already installed in the current conda environment, execute the following commands to install the ``gnuradio-limesuiteng`` plugin package:
 
 .. code-block:: bash
 
    conda activate <environment>
    conda install gnuradio-limesuiteng=[version]
 
-If gnuradio package is missing in the current conda environment, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+If the gnuradio package is missing from the current conda environment, execute the following commands to install the ``gnuradio-limesuiteng`` plugin package:
 
 .. code-block:: bash
 
    conda install gnuradio=[version] gnuradio-limesuiteng
 
-This will ensure that the correct GNURadio plugin version is installed alongside GNURadio package.
+This will ensure that the correct GNURadio plugin version is installed alongside the GNURadio package.
 
 .. note::
 
@@ -50,10 +50,10 @@ This will ensure that the correct GNURadio plugin version is installed alongside
 
 .. note::
 
-   You can check out plugin versions by executing the following command - ``conda search gnuradio-limesuiteng``. To search for gnuradio versions use - ``conda search gnuradio``.
+   To view available plugin versions, execute ``conda search gnuradio-limesuiteng``. To search for gnuradio versions, use ``conda search gnuradio``.
 
 
-Check out :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` sections for demonstration and plugin block documentation.
+See :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` for a demonstration and plugin block documentation.
 
 Known issues
 ************
@@ -61,11 +61,11 @@ Known issues
 Conda package compatibility
 ===========================
 
-Conda forge contains multiple same version, but different build string ``gnuradio`` packages. Some of these packages may not be compatible with available ``gnuradio-limesuiteng`` packages. 
+Conda Forge contains multiple ``gnuradio`` packages of the same version but with different build strings. Some of these packages may not be compatible with available ``gnuradio-limesuiteng`` packages.
 
-It has been observed that, particularly the ``spdlog`` conda package can cause problems when running or installing ``gnuradio`` package alongside ``gnuradio-limesuiteng`` package. 
+It has been observed that particularly the ``spdlog`` conda package can cause problems when running or installing the ``gnuradio`` package alongside the ``gnuradio-limesuiteng`` package.
 
 Solution
 --------
 
-When installing ``gnuradio`` and ``gnuradio-limesuiteng`` packages, also install appropriate ``spdlog`` package version - ``conda install gnuradio=... limesuiteng=... spdlog=...``. Newer ``gnuradio`` packages (3.10.11.0 and 3.10.10.0) use ``spdlog`` 1.14.1 and 1.13.0, while the older ``gnuradio`` versions (3.10.9.2 and lower) use ``spdlog`` 1.12.0. 
+When installing ``gnuradio`` and ``gnuradio-limesuiteng`` packages, also install the appropriate ``spdlog`` package version: ``conda install gnuradio=... limesuiteng=... spdlog=...``. Newer ``gnuradio`` packages (3.10.11.0 and 3.10.10.0) use ``spdlog`` 1.14.1 and 1.13.0, while the older ``gnuradio`` versions (3.10.9.2 and lower) use ``spdlog`` 1.12.0. 

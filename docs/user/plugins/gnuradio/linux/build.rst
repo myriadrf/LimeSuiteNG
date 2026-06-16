@@ -1,12 +1,12 @@
-Build from source
+Build from Source
 ##################
 
 Prerequisites
 *************
 
-Required components to compile gnuradio-limesuiteng plugin:
+Required components to compile the gnuradio-limesuiteng plugin:
 
-#. GNURadio
+#. GNU Radio
 #. Boost
 #. Pybind11
 #. Gmp
@@ -32,7 +32,7 @@ Enter repository, create and enter build directory:
    mkdir build
    cd build
 
-Run cmake to configure build files and then build:
+Run CMake to configure build files and build:
 
 .. code-block:: bash
 
@@ -40,7 +40,7 @@ Run cmake to configure build files and then build:
    sudo make
 
 .. tip::
-   Add ``-jx`` flag to speed up building process, where ``x`` is processor core count.
+   Add the ``-jx`` flag to speed up the build, where ``x`` is the processor core count.
     
 
 Installation
@@ -54,6 +54,6 @@ Install the plugin using the following command:
    sudo ldconfig
 
 .. tip::
-   To uninstall plugin from gnuradio folder use ``sudo make uninstall`` inside the build directory.
+   To uninstall the plugin from the gnuradio folder, use ``sudo make uninstall`` inside the build directory.
 
-Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.
+See :ref:`gnuradio-limesuiteng-example-ref` for a plugin demonstration.

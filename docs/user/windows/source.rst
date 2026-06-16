@@ -1,12 +1,12 @@
 .. _windows-lib-build-ref:
 
-Build from source
+Build from Source
 #################
 
 Prerequisites
 *************
 
-Required components to compile Lime Suite NG project:
+Required components to compile the Lime Suite NG project:
 
 #. Visual Studio Build Tools 2022 components:
 
@@ -28,14 +28,14 @@ Optional components that add specific functionality:
 Compilation
 ***********
 
-Open radioconda with administrative privileges and activate your conda enivronment:
+Open radioconda with administrative privileges and activate your conda environment:
 
 .. code-block:: bash
 
    conda activate -n <environment name>
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`conda-windows-ref`.
+   For radioconda and conda environment setup, see :ref:`conda-windows-ref`.
 .. Add reference to radioconda and conda setup
 
 Install all necessary build components by executing the following script in repository root directory:
@@ -44,13 +44,13 @@ Install all necessary build components by executing the following script in repo
 
    conda_deps.bat [--v] [required-gnuradio-version]
 
-Script will check the conda environment for missing packages and install all conda packages required to build Lime Suite NG library. Additionally, GNURadio version flag can be supplied to install appropriate version of GNURadio and additional dependencies required to build `gnuradio-limesuiteng` plugin. Example:
+The script will check the conda environment for missing packages and install all conda packages required to build the Lime Suite NG library. Additionally, the GNU Radio version flag can be supplied to install the appropriate version of GNU Radio and additional dependencies required to build the `gnuradio-limesuiteng` plugin. Example:
 
 .. code-block:: bash
 
    conda_deps.bat --v 3.10.11.0
 
-List of verified plugin builds against different GNURadio versions is provided in ``conda_requirements.txt`` file. After successful component install, restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+A list of verified plugin builds against different GNU Radio versions is provided in the ``conda_requirements.txt`` file. After successful component installation, restart the radioconda prompt and activate your conda environment. This will set up the appropriate build environment variables. Clone the repository:
 
 .. code-block:: bash
 
@@ -74,20 +74,21 @@ Build suite:
 
    cmake --build .
 
-Built suite files are located in ``build\lib`` directory and executables are located in ``build\bin`` directory.
-  
+The built suite files are located in the ``build\lib`` directory and executables are in the ``build\bin`` directory.
+
+
 
 Installing the built software
 *****************************
 
-Optionally library can be installed into system. Continuing on from the previous command block, execute:
+Optionally, the library can be installed into the system. From the previous build directory, execute:
 
 .. code-block:: bash
 
    cmake --install .
 
 .. tip::
-   To uninstall library from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
+   To uninstall the library from the conda environment, use ``cmake -P cmake_uninstall.cmake`` inside the build directory.
 
 .. _`CMake`: https://cmake.org/
 .. _`wxWidgets`: https://wxwidgets.org/

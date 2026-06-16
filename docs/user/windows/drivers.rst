@@ -4,7 +4,7 @@
 Device drivers
 ==============
 
-LimeSDR devices use different drivers for communication on Windows. If windows does not automatically detect and install correct drivers, install them manually. Here is a full list of device drivers for different LimeSDR devices:
+LimeSDR devices use different drivers for communication on Windows. If Windows does not automatically detect and install the correct drivers, install them manually. The following device drivers are available for LimeSDR devices:
 
 - `LimeSDR USB`_
 - `LimeSDR Mini`_

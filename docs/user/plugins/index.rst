@@ -8,7 +8,7 @@ Plugins
    gnuradio/index
    soapysdr
 
-Lime Suite NG provides integration with popular SDR ecosystem software via a combination of plugins which are distributed with the library and direct API integration. 
+Lime Suite NG provides integration with popular SDR ecosystem software via a combination of plugins that are distributed with the library and direct API integration.
 
 The following software is currently supported:
 

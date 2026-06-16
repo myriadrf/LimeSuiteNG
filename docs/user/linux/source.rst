@@ -13,14 +13,14 @@ They can be installed by: ``sudo apt-get install build-essential cmake``
 
 Optional packages that can be installed to enable specific functionality:
 
-- `libusb-1.0-dev`_. Enables support of USB interface devices
-- `wxWidgets`_.  Enables graphical user interface
-- `libsoapysdr-dev`_.  Enables building of Lime Suite NG plugin for SoapySDR
-- `linux-kernel-headers`. Enables building of PCIe driver module for Linux kernel.
-- `gnuradio-dev`_. Enables building of plugin for GNURadio.
+- `libusb-1.0-dev`_. Enables USB interface device support.
+- `wxWidgets`_. Enables the graphical user interface.
+- `libsoapysdr-dev`_. Enables building the Lime Suite NG plugin for SoapySDR.
+- ``linux-kernel-headers``. Enables building the PCIe driver module for the Linux kernel.
+- `gnuradio-dev`_. Enables building the plugin for GNU Radio.
 
 .. note::
-   If you are on Ubuntu 20.04 or newer or Debian 11 or newer, there also exists a script ``install_dependencies.sh`` to install all the needed dependencies.
+   If you are on Ubuntu 20.04 or newer, or Debian 11 or newer, a script ``install_dependencies.sh`` is available to install all required dependencies.
 
 Compilation
 ***********
@@ -29,20 +29,20 @@ In the root directory of the repository run these commands:
 
 .. code-block:: bash
 
-  sudo ./install_dependencies.sh # Optional, instals dependencies
+  sudo ./install_dependencies.sh # Optional, installs dependencies
   mkdir build && cd build
   cmake ..
   make
 
 .. note::
-   Append ``-j <number>`` to the ``make`` command to use more than one CPU core to greatly speed up compilation times. To automatically use all the cores available on your CPU use ``-j $(nproc)``.
+   Append ``-j <number>`` to the ``make`` command to use multiple CPU cores and reduce compilation time. To use all available CPU cores, specify ``-j $(nproc)``.
 
-After a successful compilation the resulting binaries are placed in the ``build/bin/`` directory located in the root directory of the repository.
+After successful compilation, the resulting binaries are placed in the ``build/bin/`` directory in the repository root.
 
 Installation
 ************
 
-Continuing on from the previous command block, in the ``build`` folder, execute:
+From the ``build`` folder, execute:
 
 .. code-block:: bash
 

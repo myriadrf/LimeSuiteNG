@@ -37,7 +37,7 @@ Utility to list detected devices and retrieve device information descriptors and
 limeConfig
 ----------
 
-Utility to configure generic software defined radio parameters.
+Utility to configure generic software-defined radio parameters.
 
 .. code-block:: bash
 
@@ -50,13 +50,13 @@ Full table of limeConfig utility configuration flags:
 +=====================================+========================================================================================+
 | **General configuration flags**                                                                                              |
 +-------------------------------------+----------------------------------------------------------------------------------------+
-| -h, \-\-help                        | Prints list of all posible LimeSDR device configuration flags.                         |
+| -h, \-\-help                        | Prints list of all possible LimeSDR device configuration flags.                         |
 +-------------------------------------+----------------------------------------------------------------------------------------+
 | -d[device],                         | Specifies which device to use. Auto selects device if only a single device is present. |
 |                                     |                                                                                        |
 | \-\-device=[device]                 |                                                                                        |
 +-------------------------------------+----------------------------------------------------------------------------------------+
-| -c[chip],                           | Selects destination chip to update it's configuration. Chip indexes start form 0.      |
+| -c[chip],                           | Selects destination chip to update its configuration. Chip indexes start from 0.       |
 |                                     |                                                                                        |
 | \-\-chips=[chip]                    |                                                                                        |
 +-------------------------------------+----------------------------------------------------------------------------------------+
@@ -110,16 +110,16 @@ Full table of limeConfig utility configuration flags:
 +-------------------------------------+----------------------------------------------------------------------------------------+
 | \-\-txgain=[dB]                     | Sets generic device TX gain in dB. Gain range is auto clamped.                         |
 +-------------------------------------+----------------------------------------------------------------------------------------+
-| \-\-txcalibrate                     | Calibrate TX DC and IQ imbalance.                                                      |
+| \-\-txcalibrate                     | Calibrates TX DC and IQ imbalance.                                                     |
 +-------------------------------------+----------------------------------------------------------------------------------------+
 
 limeTRX
 -------
 
-Utility for receiving and/or transmitting RF samples.
+Utility for receiving and transmitting RF samples.
 
 .. note::
-    The device has to be already in configured working state, otherwise it will not stream samples.
+    The device must be in a configured working state; otherwise, it will not stream samples.
 
 .. code-block:: bash
 
@@ -132,7 +132,7 @@ Full table of limeTRX utility configuration flags:
 +=================================+========================================================================================+
 | **General configuration flags**                                                                                          |
 +---------------------------------+----------------------------------------------------------------------------------------+
-| -h, \-\-help                    | Prints list of all posible limeTRX utility flags.                                      |
+| -h, \-\-help                    | Prints list of all possible limeTRX utility flags.                                      |
 +---------------------------------+----------------------------------------------------------------------------------------+
 | -d[name],                       | Specifies which device to use. Auto selects device if only a single device is present. |
 |                                 |                                                                                        |
@@ -184,7 +184,7 @@ Full table of limeTRX utility configuration flags:
 limeSPI
 -------
 
-Utility for reading/writing device's SPI registers
+Utility for reading and writing device SPI registers
 
 .. code-block:: bash
 
@@ -197,7 +197,7 @@ Full table of limeSPI utility commands and configuration flags:
 +----------------------+---------------------------------------------------------------------------------------+
 | Configuration flags  | Description                                                                           |
 +======================+=======================================================================================+
-| -h, \-\-help         | Prints list of all posible limeTRX utility flags.                                     |
+| -h, \-\-help         | Prints list of all possible limeSPI utility flags.                                    |
 +----------------------+---------------------------------------------------------------------------------------+
 | **Commands**                                                                                                 |
 +----------------------+---------------------------------------------------------------------------------------+
@@ -211,15 +211,15 @@ Full table of limeSPI utility commands and configuration flags:
 |                      |                                                                                       |
 | \-\-device=[name]    |                                                                                       |
 +----------------------+---------------------------------------------------------------------------------------+
-| -c[name],            | Selects destination chip by it's name.                                                |
+| -c[name],            | Selects destination chip by its name.                                                 |
 |                      |                                                                                       |
 | \-\-chip=[name]      |                                                                                       |
 +----------------------+---------------------------------------------------------------------------------------+
 | **Data options**                                                                                             |
 +----------------------+---------------------------------------------------------------------------------------+
 | \-f[file path],      | File with a sequence of register address and data bytes for write command or a file   |
-|                      | with a sequence of register adress bytes for read command. Checkout stream flag for   |
-|                      | byte structure required for write and read commands.                                  |
+|                      | with a sequence of register address bytes for read command. See the stream flag for   |
+|                      | the byte structure required for write and read commands.                              |
 | \-\-file=[file path] |                                                                                       |
 +----------------------+---------------------------------------------------------------------------------------+
 | \-s[stream],         | Direct data stream.                                                                   |
@@ -236,7 +236,7 @@ Full table of limeSPI utility commands and configuration flags:
 limeFLASH
 ---------
 
-Utility for writing firmware/gateware into device's FLASH memory. The gateware files for each device can be found in their github repositories.
+Utility for writing firmware and gateware into device FLASH memory. The gateware files for each device can be found in their GitHub repositories.
 
 .. warning::
     Be aware that the gateware file must be designed for your specific hardware, otherwise the device will stop functioning and will require JTAG tools to recover. Recovery steps are device specific and described in their documentation.
@@ -250,17 +250,17 @@ Full table of limeFLASH utility configuration flags:
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | Configuration flags | Description                                                                                                  |
 +=====================+==============================================================================================================+
-| -h, \-\-help        | Prints list of all posible limeFLASH utility flags.                                                          |
+| -h, \-\-help        | Prints list of all possible limeFLASH utility flags.                                                          |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | -d[name],           | Specifies which device to use. Auto selects device if only a single device is present.                       |
 |                     |                                                                                                              |
 | \-\-device=[name]   |                                                                                                              |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
-| -t[TARGET],         | Specifies which target to use. Checkout ``\-l, \-\-list`` flag.                                              |
+| -t[TARGET],         | Specifies which target to use. See the ``\-l, \-\-list`` flag.                                               |
 |                     |                                                                                                              |
 | \-\-target=[TARGET] |                                                                                                              |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
-| -l, \-\-list        | List available device's targets.                                                                             |
+| -l, \-\-list        | List available device targets.                                                                               |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
 | "\-\-"              | Can be used to terminate flag options and force all following arguments to be treated as positional options. |
 +---------------------+--------------------------------------------------------------------------------------------------------------+
@@ -269,13 +269,13 @@ Full table of limeFLASH utility configuration flags:
 limeOEM
 -------
 
-Utility for device testing and custom device specific operations.
+Utility for device testing and custom device-specific operations.
 
 .. warning::
-	This software utility is designed for developers. Users should only use ``--test`` and optionally (if multiple devices are pluged in to system) ``--device`` flag to run basic device tests.
+	This software utility is designed for developers. Users should only use ``--test`` and optionally (if multiple devices are plugged into the system) the ``--device`` flag to run basic device tests.
 
 .. note::
-	Currently limeOEM can only perform tests for LimeSDR XTRX device.
+	Currently, limeOEM can only perform tests for the LimeSDR XTRX device.
 
 .. code-block:: bash
 
@@ -286,7 +286,7 @@ Full table of limeOEM utility configuration flags:
 +-----------------------------------+-------------------------------------------------------------------------------------------+
 | Configuration flags               | Description                                                                               |
 +===================================+===========================================================================================+
-| -h, \-\-help                      | Prints list of all posible limeOEM utility flags.                                         |
+| -h, \-\-help                      | Prints list of all possible limeOEM utility flags.                                         |
 +-----------------------------------+-------------------------------------------------------------------------------------------+
 | -d[device],                       | Specifies which device to use. Auto selects device if only a single device is present.    |
 |                                   |                                                                                           |
@@ -320,12 +320,12 @@ Utility for reading and writing device configuration space registers.
 	user@computer:~$ limeCSR write --stream=100cc000007000801a0000e00000feed,0000000000700080000000e00000feed
 	user@computer:~$ limeCSR read --stream=--stream=100cc00000700080,0000000000700080
 
-Table with commands and argumments:
+Table of commands and arguments:
 
 +----------------------+---------------------------------------------------------------------------------------+
 | Configuration flags  | Description                                                                           |
 +======================+=======================================================================================+
-| -h, \-\-help         | Prints list of all posible limeTRX utility flags.                                     |
+| -h, \-\-help         | Prints list of all possible limeCSR utility flags.                                    |
 +----------------------+---------------------------------------------------------------------------------------+
 | **Commands**                                                                                                 |
 +----------------------+---------------------------------------------------------------------------------------+
@@ -341,7 +341,7 @@ Table with commands and argumments:
 +----------------------+---------------------------------------------------------------------------------------+
 | **Data options**                                                                                             |
 +----------------------+---------------------------------------------------------------------------------------+
-| \-f[file path],      | Stream from File. For word format in file, checkout --stream flag description.        |
+| \-f[file path],      | Stream from file. For word format in file, see --stream flag description.             |
 |                      |                                                                                       |
 | \-\-file=[file path] |                                                                                       |
 +----------------------+---------------------------------------------------------------------------------------+
@@ -354,7 +354,7 @@ Table with commands and argumments:
 limePPSDO
 ---------
 
-Utility for controling and monitoring PPS Disciplined Oscilator. Currently supported PPS sources - GPS.
+Utility for controlling and monitoring the PPS Disciplined Oscillator. Currently supported PPS sources: GPS.
 
 .. code-block:: bash
 
@@ -362,12 +362,12 @@ Utility for controling and monitoring PPS Disciplined Oscilator. Currently suppo
 	user@computer$ limePPSDO --check --num=50 --banner=20 --delay=5
 	user@computer$ limePPSDO --disable --reset-delay=5
 
-Table with commands and arguments:
+Table of commands and arguments:
 
 +-----------------------+---------------------------------------------------------------------------------------+
 | Configuration flags   | Description                                                                           |
 +=======================+=======================================================================================+
-| -h, \-\-help          | Prints list of all posible limeTRX utility flags.                                     |
+| -h, \-\-help          | Prints list of all possible limePPSDO utility flags.                                  |
 +-----------------------+---------------------------------------------------------------------------------------+
 | **Commands**                                                                                                  |
 +-----------------------+---------------------------------------------------------------------------------------+

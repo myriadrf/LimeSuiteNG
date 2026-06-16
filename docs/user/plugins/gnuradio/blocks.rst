@@ -3,16 +3,16 @@
 GNU Radio Blocks
 ################
 
-Gnuradio-limesuiteng plugin provides sink and source blocks that can be used in GNU Radio GUI to interact with supported devices. Once installed the blocks will appear in GNU Radio UI, on right side of application window in the drop down menu as show in the image below.
+The gnuradio-limesuiteng plugin provides sink and source blocks that can be used in GNU Radio to interact with supported devices. Once installed, the blocks will appear in the GNU Radio UI on the right side of the application window in the drop-down menu, as shown in the image below.
 
 .. image:: gnuradio_images/limesuiteBlocks.*
 
-Drag and drop or double click on block title to add it to GNU Radio flow graph. Connect the Lime Suite NG Sink or Source block's input/output to other blocks of your choice.
+Drag and drop, or double-click a block title to add it to the GNU Radio flow graph. Connect the Lime Suite NG Sink or Source block's input or output to other blocks of your choice.
 
 Source block
 ************
 
-Lime Suite NG Source block is used to set up selected SDR device RX channel. To configure source block, double click it to open the configuration window. Once the GNU Radio flow graph is executed, block outputs digitized data sample stream that must be redirected to other GNU Radio blocks for further processing or display.
+The Lime Suite NG Source block is used to set up the selected SDR device RX channel. To configure the source block, double-click it to open the configuration window. Once the GNU Radio flow graph is executed, the block outputs a digitised data sample stream that must be redirected to other GNU Radio blocks for further processing or display.
 
 .. image:: gnuradio_images/limesuitengSourceBlock.*
 
@@ -40,7 +40,7 @@ Configurable parameters of General tab are provided in the table below:
 |                          |                                                                                                                               |
 |                          |                                                                                                                               |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
-| NCO offset               | Numerically controled oscillator frequency offset in Hz.                                                                      |
+| NCO offset               | Numerically controlled oscillator frequency offset in Hz.                                                                      |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
 | Low Pass Filter          | Low pass filter cutoff frequency in Hz.                                                                                       |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------+
@@ -76,7 +76,7 @@ Configurable parameters of LMS7002M Advanced tab are provided in the table below
 Sink block
 **********
 
-Lime Suite NG Sink block is used to set up selected SDR device TX channel. To configure sink block, double click it to open the configuration window. Once the GNU Radio flow graph is executed, this block sends data to SDR device for transmission.
+The Lime Suite NG Sink block is used to set up the selected SDR device TX channel. To configure the sink block, double-click it to open the configuration window. Once the GNU Radio flow graph is executed, this block sends data to the SDR device for transmission.
 
 .. image:: gnuradio_images/limesuitengSinkBlock.*
 
@@ -104,7 +104,7 @@ Configurable parameters of General tab are provided in the table below:
 |                         |                                                                                                                                |
 |                         |                                                                                                                                |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| NCO offset              | Numerically controled oscillator frequency offset in Hz.                                                                       |
+| NCO offset              | Numerically controlled oscillator frequency offset in Hz.                                                                       |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Low Pass Filter         | Low pass filter cutoff frequency in Hz.                                                                                        |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------+

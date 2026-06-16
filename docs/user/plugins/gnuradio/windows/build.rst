@@ -36,14 +36,14 @@ Required components to compile gnuradio-limesuiteng plugin:
 Compilation
 ***********
 
-Open radioconda with administrative privileges and activate your conda enivronment:
+Open radioconda with administrative privileges and activate your conda environment:
 
 .. code-block:: bash
 
    conda activate -n <environment name>
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`conda-windows-ref`.
+   For radioconda and conda environment setup, see :ref:`conda-windows-ref`.
 
 Install all necessary build components by executing the following script in repository root directory:
 
@@ -51,13 +51,13 @@ Install all necessary build components by executing the following script in repo
 
    conda_deps.bat --v <required-gnuradio-version>
 
-Script will check the conda environment for missing packages and install all conda packages required to build gnuradio-limesuiteng plugin alongside requested GNURadio version. Example:
+The script will check the conda environment for missing packages and install all conda packages required to build the gnuradio-limesuiteng plugin alongside the requested GNU Radio version. Example:
 
 .. code-block:: bash
 
    conda_deps.bat --v 3.10.11.0
 
-List of verified plugin builds against different GNURadio versions is provided in ``conda_requirements.txt`` file. After successful component install restart radioconda prompt and activate your conda environment. This will setup appropriate build environment variables. Clone repository:
+A list of verified plugin builds against different GNU Radio versions is provided in the ``conda_requirements.txt`` file. After successful component installation, restart the radioconda prompt and activate your conda environment. This will set up the appropriate build environment variables. Clone the repository:
 
 .. code-block:: bash
 
@@ -97,6 +97,6 @@ Install plugin into conda environment:
    cmake --install .
 
 .. tip::
-   To uninstall plugin from conda environment use: ``cmake -P cmake_uninstall.cmake`` command inside the build directory.
+   To uninstall the plugin from the conda environment, use ``cmake -P cmake_uninstall.cmake`` inside the build directory.
 
-Check out :ref:`gnuradio-limesuiteng-example-ref` section for plugin demonstration.
+See :ref:`gnuradio-limesuiteng-example-ref` for a plugin demonstration.

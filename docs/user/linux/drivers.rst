@@ -1,7 +1,7 @@
 Device Drivers
 ##############
 
-Use ``limeDevice`` command to see detected devices information. For example:
+Use the ``limeDevice`` command to view detected device information. For example:
 
 .. code-block:: bash
 
@@ -12,18 +12,18 @@ Use ``limeDevice`` command to see detected devices information. For example:
 	2: LimeX30, media=PCIe, addr=/dev/LimeX30_control, serial=0000000000000000
 	3: LimeXTRX0, media=PCIe, addr=/dev/LimeXTRX0_control, serial=0000000000000000
 
-If your expected device is not in the list follow the troubleshooting steps for respective interfaces.
+If the expected device is not listed, follow the troubleshooting steps for the respective interface.
 
 USB
 ***
 
-Lime Suite NG uses ``libusb-1.0`` library to communicate with the USB devices. It comes preinstalled with most Linux distributions, so no extra steps should be needed to use them.
+Lime Suite NG uses the ``libusb-1.0`` library to communicate with USB devices. It is pre-installed on most Linux distributions; no additional steps are required.
 
 
 PCIe
 ****
 
-Lime Suite NG contains "limepcie" linux kernel module for communicating with PCIe based devices. If the PCIe devices are not detected by ``limeDevice``, inspect the system log for "limepcie" errors. For successfully detected device the output should look like:
+Lime Suite NG contains a ``limepcie`` Linux kernel module for communicating with PCIe-based devices. If PCIe devices are not detected by ``limeDevice``, inspect the system log for ``limepcie`` errors. For a successfully detected device, the output should be similar to:
 
 .. code-block:: bash
 
@@ -37,14 +37,14 @@ Lime Suite NG contains "limepcie" linux kernel module for communicating with PCI
 	[    3.938812] limepcie 0000:04:00.0: Creating /dev/LimeXTRX0_trx0
 	[    3.938877] limepcie 0000:04:00.0: Creating /dev/LimeXTRX0_control
 
-If the system log does not contain errors or does not show any messages from the "limepcie" module, check if the kernel module is actually loaded:
+If the system log does not show errors or any messages from the ``limepcie`` module, verify that the kernel module is loaded:
 
 .. code-block:: bash
 
 	user@computer:~$ lsmod | grep limepcie
 	limepcie               45056  0
 
-If the module is not in the loaded modules list, it can be loaded manually by:
+If the module is not listed, it can be loaded manually using:
 
 .. code-block:: bash
 

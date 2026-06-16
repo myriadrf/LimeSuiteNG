@@ -5,13 +5,13 @@ Radioconda package
 
 .. warning:: 
    
-   Currently, Lime Suite NG and its software components are not available as standalone conda packages!
-   Instead build the newest Lime Suite NG software from source!
+   Currently, Lime Suite NG and its software components are not available as standalone conda packages.
+   Instead, build the newest Lime Suite NG software from source.
 
 .. hint::
-   Check out radioconda and conda environment setup process. See :ref:`conda-windows-ref`
+   For radioconda and conda environment setup, see :ref:`conda-windows-ref`.
 
-Gnuradio-limesuiteng plugin for GNURadio can also be downloaded as a conda package.
+The gnuradio-limesuiteng plugin for GNU Radio can also be downloaded as a conda package.
 
 
 Prerequisites
@@ -29,20 +29,20 @@ Conda packages required to run the gnuradio plugin:
 Installing
 **********
 
-If gnuradio package in the current conda environment is already installed, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+If the gnuradio package is already installed in the current conda environment, execute the following commands to install the ``gnuradio-limesuiteng`` plugin package:
 
 .. code-block:: bash
 
    conda activate <environment>
    conda install gnuradio-limesuiteng=[version]
 
-If gnuradio package is missing in the current conda environment, execute the following commands in conda environment to install ``gnuradio-limesuiteng`` plugin package:
+If the gnuradio package is missing from the current conda environment, execute the following commands to install the ``gnuradio-limesuiteng`` plugin package:
 
 .. code-block:: bash
 
    conda install gnuradio=[version] gnuradio-limesuiteng
 
-This will ensure that the correct GNURadio plugin version is installed alongside GNURadio package.
+This will ensure that the correct GNURadio plugin version is installed alongside the GNURadio package.
 
 .. note::
 
@@ -50,7 +50,7 @@ This will ensure that the correct GNURadio plugin version is installed alongside
 
 .. note::
 
-   You can check out plugin versions by executing the following command - ``conda search gnuradio-limesuiteng``. To search for gnuradio versions use - ``conda search gnuradio``.
+   To view available plugin versions, execute ``conda search gnuradio-limesuiteng``. To search for gnuradio versions, use ``conda search gnuradio``.
 
 
-Check out :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` sections for demonstration and plugin block documentation.
+See :ref:`gnuradio-limesuiteng-example-ref` and :ref:`gnuradio-blocks-ref` for a demonstration and plugin block documentation.
