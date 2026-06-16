@@ -5,7 +5,7 @@
  * @ref dev_config "Back to the list of SDR device configuration sub-topics"  
  * @endif
  * 
- * General FIR (GFIR) filters allow to perform additional filtering or shaping of signal in digital domain and are part of LMS7002M RF chip transceiver signal processing (TSP) block. 
+ * General FIR (GFIR) filters allow performing additional filtering or shaping of a signal in the digital domain and are part of the LMS7002M RF chip transceiver signal processing (TSP) block. 
  * Each channel direction TSP has 3 GFIR filters whose coefficients can be auto set or individually customized. Additionally, GFIR filtering stages can be toggled individually.
  * Filtering stage control allows to enable only the required filters while preserving the auto calculated or custom loaded GFIR filter coefficients.
  * 
@@ -52,7 +52,7 @@
  * The values provided in the argument initialization stage enable the automatic calculation of GFIR filter coefficients for 2 MHz bandwidth. Coefficients for all three stages of GFIR filters (GFIR1, GFIR2 and GFIR3)
  * are calculated and loaded to a TSP of specified channel direction. Each GFIR1 and GFIR2 stage can store up to 40 coefficients, while the GFIR3 stage can contain up to 120 coefficients. 
  * @if DEVELOP GFIR filter coefficients are calculated using <b>"TODO: add the name of GFIR coef algoritm"</b>  algorithm. @endif
- * The final GFIR coefficient values are dependent on specified bandwidth and current device TSP intepolation/decimation stage ratio.
+ * The final GFIR coefficient values are dependent on the specified bandwidth and current device TSP interpolation/decimation stage ratio.
  * 
  * To bypass all three GFIR filter stages at once, change the @ref lime::ChannelConfig::Direction::GFIRFilter "GFIRFilter" structure parameter @ref lime::ChannelConfig::Direction::GFIRFilter::enabled "enabled" to 
  * value <b>false</b> and re-run the <b>ConfigureGFIR()</b> function.
@@ -99,7 +99,7 @@
  *    <li>GFIR3 - 2</li>
  * </ol>
  * 
- * On each channel direction, both GFIR filters 1 and 2 can store a up to 40 coefficients, while GFIR filter 3 can store up to 120 coefficients. GFIR coefficients must be normalized in the range [-1; 1].
+ * On each channel direction, both GFIR filters 1 and 2 can store up to 40 coefficients, while GFIR filter 3 can store up to 120 coefficients. GFIR coefficients must be normalized in the range [-1; 1].
  * To get specific GFIR filter coefficients of a channel direction, use @ref lime::SDRDevice::GetGFIRCoefficients(uint8_t, lime::TRXDir, uint8_t, uint8_t) "GetGFIRCoefficients()" function:
  * @code{.cpp}
  * #include <iostream>

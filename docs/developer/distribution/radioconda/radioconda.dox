@@ -3,7 +3,7 @@
  * 
  * @section radioconda_setup Initial setup
  * 
- * Radioconda installation files can be found in radioconda github <a href="https://github.com/radioconda/radioconda-installer/releases">release page</a>
+ * Radioconda installation files can be found on the radioconda GitHub <a href="https://github.com/radioconda/radioconda-installer/releases">release page</a>.
  * 
  * For Windows, install radioconda terminal using ``radioconda-<release-date>-Windows-x86_64.exe`` installer. For Linux, download ``radioconda-<release-date>-Linux-x86_64.sh``, open terminal and install the radioconda environment:
  * 
@@ -23,7 +23,7 @@
  * @note Linux only. If you want to exit radioconda base environment in terminal, enter ``conda deactivate`` command.
  * @endif
  * 
- * Create new radioconda environment with a custom name and activate it using the following commands:
+ * Create a new radioconda environment with a custom name and activate it using the following commands:
  * 
  * @code{.bash}
  *    conda create -n <custom environment name>
@@ -54,20 +54,20 @@
  * @embedRstVerbatim{
  * .. admonition:: Note
  * 
- *    This step is only recommend for project developers and package maintainers.}
+ *    This step is only recommended for project developers and package maintainers.}
  * @else
- * @note This step is only recommend for project developers and package maintainers.
+ * @note This step is only recommended for project developers and package maintainers.
  * @endif
  * 
- * Setting up local conda channel is usefull for testing locally built conda packages. Conda tool uses channels to pull requested packages when using ``conda install`` tool.
- * If the local channel is not added to the list, conda will most likely fail to install the built package. To set up a local channel, where all the ``conda-build`` tool localy 
- * built packages are stored, the following command must be executed:
+ * Setting up a local conda channel is useful for testing locally built conda packages. The conda tool uses channels to pull requested packages when using the ``conda install`` tool.
+ * If the local channel is not added to the list, conda will most likely fail to install the built package. To set up a local channel, where all packages built locally by the ``conda-build`` tool
+ * are stored, the following command must be executed:
  * 
  * @code{.bash}
  *    conda config --append channels <radioconda install root>\envs\<your custom env name>\conda-bld\
  * @endcode
  * 
- * To double check if the channel was added use the following command:
+ * To verify that the channel was added, use the following command:
  * 
  * @code{.bash}
  *    conda config --show channels

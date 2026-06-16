@@ -25,7 +25,7 @@
  *    <li>Subdevice tree</li>
  * </ul>
  * 
- * For a full list of members an their names, check out the definition of `lime::SDRDescriptor` structure definition.
+ * For a full list of members and their names, see the `lime::SDRDescriptor` structure definition.
  * 
  * To get the full description about the device, @ref lime::SDRDevice::GetDescriptor() "GetDescriptor()" function must be called (code example is located in the @ref device_info_example "Example code" section).  
  * Example of generated description of LimeSDR Mini V2.4 device:
@@ -40,7 +40,7 @@
  * 
  * To check the lock status of LMS7002M module core clock generator, use @ref lime::SDRDevice::GetCGENLocked(uint8_t) "GetCGENLocked()" function with the module index as an argument. 
  * Module index argument addresses appropriate LMS7002M module (if there is more than one module onboard). If a SDR device with a single LMS7002M module is used, then set module index argument to 0.
- * This function wiil return the lock status of comparators for core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
+ * This function will return the lock status of comparators for the core clock VCO. Returned value `true` indicates that the module core clock generated frequency and phase matches the frequency and phase
  * of the reference clock. Returned value `false` indicates that the module core clock generator and reference clock phase and frequency does not match. A brief example is shown at the bottom of the 
  * @ref device_info_example "example code" section.
  * 
@@ -78,7 +78,7 @@
  * 
  * @subsection device_temp_status Temperature
  * 
- * Temperature of speciefied device module can be viewed by using @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()" function with module index as an argument that addresses the appropriate LMS7002M module.
+ * The temperature of a specified device module can be viewed by using the @ref lime::SDRDevice::GetTemperature(uint8_t) "GetTemperature()" function with the module index as an argument that addresses the appropriate LMS7002M module.
  * A brief example is shown at the bottom of the @ref device_info_example "example code" section.  
  * 
  * @subsection device_gps GPS lock

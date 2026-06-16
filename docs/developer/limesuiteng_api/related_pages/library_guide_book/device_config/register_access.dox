@@ -66,7 +66,7 @@
  * 
  * @section reg_bitfield_conf Addressing parameter bit fields
  * 
- * Alternatively, parameters can be accessed by addressing bit fields in registers. This is especially usefull if parameter bit field is multiple bits long. 
+ * Alternatively, parameters can be accessed by addressing bit fields in registers. This is especially useful if a parameter bit field is multiple bits long. 
  * For example, we can set and get the bit field value of interpolation ratio in a register. To get the parameter bit field
  * value, use @ref lime::SDRDevice::GetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t) "GetParameter(uint16_t address, uint8_t msb, uint16_t lsb)" function.
  * To set the parameter bit field value, use @ref lime::SDRDevice::SetParameter(uint8_t, uint8_t, uint16_t, uint8_t, uint8_t, uint16_t) "SetParameter(uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)" function.

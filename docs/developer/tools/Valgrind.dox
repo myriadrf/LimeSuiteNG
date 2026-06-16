@@ -4,7 +4,7 @@
  * @section valgrind_summary Summary
  * 
  * <a href="https://valgrind.org/">Valgrind</a> is a collection of tools for debugging and profiling Linux programs.
- * It includes a bunch of tools, such as cache and heap profilers, multithreading debuggers, and memory debuggers.
+ * It includes a variety of tools, such as cache and heap profilers, multithreading debuggers, and memory debuggers.
  * 
  * @subsection valgrind_info_and_suppress More information about Valgrind
  * 

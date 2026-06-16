@@ -3,21 +3,21 @@
  * 
  * @section dev_guide_summary Summary
  *
- * This developer guide is intended for users who seek to implement the Lime Suite NG library into custom applications or want to contribute to the development and
- * distribution of Lime Suite NG and its software components. 
- * 
- * Developers that seek to implement Lime Suite NG into custom applications are recommended to review the ``Introduction`` and ``Library`` pages.
- * ``Introduction`` page provides flowcharts and class diagrams, which provide information about the communication control flow and class relationship of Lime Suite NG library. 
- * ``Library`` page provides reference to the Lime Suite NG library API, development guide for beginner and experienced developers as well as other important development 
+ * This developer guide is intended for users who seek to implement the Lime Suite NG library into custom applications, or who want to contribute to the development and
+ * distribution of Lime Suite NG and its software components.
+ *
+ * Developers who seek to implement Lime Suite NG into custom applications are recommended to review the ``Introduction`` and ``Library`` pages.
+ * The ``Introduction`` page provides flowcharts and class diagrams that provide information about the communication control flow and class relationships of the Lime Suite NG library.
+ * The ``Library`` page provides a reference to the Lime Suite NG library API, a development guide for beginning and experienced developers, as well as other important development
  * information and notes.
- * 
- * Developers that seek to contribute to the development and distribution of Lime Suite NG are recommended to review the ``Tools`` and ``Distribution`` pages. ``Tools`` page 
- * provides information about various development tools that can be used to increase efficiency of Lime Suite NG development process. ``Distribution`` page provides information 
+ *
+ * Developers who seek to contribute to the development and distribution of Lime Suite NG are recommended to review the ``Tools`` and ``Distribution`` pages. The ``Tools`` page
+ * provides information about various development tools that can be used to increase the efficiency of the Lime Suite NG development process. The ``Distribution`` page provides information
  * about packaging and distribution of Lime Suite NG and its software components.
  * 
  * ``GUI tool`` page is intended for engineers who seek to use a Lime Suite NG provided software tool for advanced LimeSDR device configurations.
  * 
- * ``LMS API (Legacy)`` page provides a limited documentation support for legacy software. It is recommend to use the new Lime Suite NG library and its API. Some LMS API to 
+ * The ``LMS API (Legacy)`` page provides limited documentation support for legacy software. It is recommended to use the new Lime Suite NG library and its API. Some LMS API to 
  * Lime Suite NG API porting guidelines are provided in the ``Library`` page.
  * 
  * Topics of interest:

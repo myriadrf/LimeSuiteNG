@@ -17,7 +17,7 @@
  * 
  * Device factory classes implement device enumeration and registration procedures for SDR 
  * devices that fall under the specific device factory classification. Enumeration procedures
- * return DeviceHandle objects, which idetify devices and provide information about connection.
+ * return DeviceHandle objects, which identify devices and provide information about the connection.
  * Device registration procedures register devices under universal device control interface - 
  * ``SDRDevice``.
  * 

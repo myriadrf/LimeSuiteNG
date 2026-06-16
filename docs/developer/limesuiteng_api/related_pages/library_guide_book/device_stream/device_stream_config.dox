@@ -10,7 +10,7 @@
  * Once the SDR device parameter configuration is finished, a stream object must be created to begin streaming data. Stream is created via previously created device interface by invoking
  * @ref lime::SDRDevice::StreamCreate(const lime::StreamConfig&, uint8_t) "StreamCreate()" function. The stream creation function requires stream parameters (packet size, PPS and etc.) which 
  * can be set up in advance by using @ref lime::StreamConfig "StreamConfig" structure. If the initial stream configuration is not sufficient, it can be changed by calling the 
- * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recomended to 
+ * @ref lime::RFStream::Setup(const lime::StreamConfig&) "Setup()" function with updated stream configuration parameter fields. Before updating the stream configuration, it is recommended to 
  * stop the stream if it is active. Example of stream creation:
  * 
  * @code{.cpp}
@@ -228,7 +228,7 @@
  * @important When using transmit mode only, it is important not to disable Rx direction hardware in the device configuration stage.
  * @endif
  * 
- * Channel indexes always starts from <b>0</b>. If a unknown channel index is pushed in, the stream creation or setup function reports a stream configuration error.
+ * Channel indexes always start from <b>0</b>. If an unknown channel index is pushed in, the stream creation or setup function reports a stream configuration error.
  * 
  * @subsection stream_status_callback Status callback
  * 
@@ -339,8 +339,8 @@
  * } 
  * @endcode
  * 
- * The code example sets up the channel configuration, creates the stream object and then retrieves the configuration. Key parameters: Tx and Rx direction channel cofiguration and device sample rate values 
- * are printed out into terminal window:
+ * The code example sets up the channel configuration, creates the stream object and then retrieves the configuration. Key parameters: Tx and Rx direction channel configuration and device sample rate values 
+ * are printed to the terminal window:
  * 
  * @image{inline} html dev_stream_conf_get.png
  * 

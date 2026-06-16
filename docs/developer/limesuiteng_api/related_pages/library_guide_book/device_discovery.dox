@@ -10,7 +10,7 @@
  * @section discovery Discovery
  * 
  * First example code explores the use of @ref lime::DeviceRegistry::enumerate() "enumerate()" function that produces the list of SDR devices that 
- * are currently connected to PC:
+ * are currently connected to the PC:
  * @code{.cpp}
  * #include <iostream>
  * #include <vector>
@@ -51,8 +51,8 @@
  * base information about connected SDR devices:
  * <ol>
  *    <li>Device name</li>
- *    <li>Device connection media (USB, PCIe, Ethernet and etc.)</li>
- *    <li>Device address (USB VID:PID, IP address and etc.) </li>
+ *    <li>Device connection media (USB, PCIe, Ethernet, and so on)</li>
+ *    <li>Device address (USB VID:PID, IP address, and so on)</li>
  *    <li>Device serial number</li>
  * </ol>
  * 
@@ -174,8 +174,8 @@
  * type is created. Only device name is selected as a filtering argument. Device filter object is used as an argument for 
  * @ref lime::DeviceHandle::IsEqualIgnoringEmpty(const lime::DeviceHandle&) const "IsEqualIgnoringEmpty(const DeviceHandle&)" method which compares the arguments of device handles in the list with the given device 
  * filter handle. If a device name matches the filter argument, the list item index can be saved and used to connect to the required SDR device. Connection with the device can be established using 
- * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successfull, 
- * compare device pointer to <b>nullptr</b>. If connection is successfull, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
+ * @ref lime::DeviceRegistry::makeDevice(const lime::DeviceHandle&) "makeDevice(const DeviceHandle&)" API function which requires a device handle as an argument. To test if the connection to the device is successful, 
+ * compare device pointer to <b>nullptr</b>. If connection is successful, address of the device object is returned, else the pointer will be equal to nullptr. Possible (but rare) connection problems:
  * <ol>
  *    <li>Unexpected SDR device firmware ID</li>
  *    <li>Failed connection to USB port</li>

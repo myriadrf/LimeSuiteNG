@@ -44,8 +44,8 @@
  * @endcode
  * 
  * Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, 
- * omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install root>\envs\<your custom env>\conda-bld\`` directory with the following name 
- * structure ``limesuiteng-version-build_string.conda``. Radioconda install root can be found using the following conda command:
+ * omit the flag and arguments. After a successful build, the conda package is populated in the ``<radioconda install root>\envs\<your custom env>\conda-bld\`` directory with the following name
+ * structure: ``limesuiteng-version-build_string.conda``. The radioconda install root can be found using the following conda command:
  * 
  * @code{.bash}
  *    conda config --show root_prefix
@@ -54,7 +54,7 @@
  * @section limesuiteng_recipe_install Installing built package
  * 
  * To access and test Lime Suite NG binaries or library for other builds, package must be installed using the conda install command. Before installing the package, path to local channel for 
- * conda tool must be specified (Check out :ref:`conda-local-channel-setup` section for instructions on how to set up local channel). To install locally built Lime Suite NG package, execute 
+ * conda tool must be specified (see :ref:`conda-local-channel-setup` for instructions on how to set up a local channel). To install the locally built Lime Suite NG package, execute 
  * the following command:
  * 
  * @code{.bash}

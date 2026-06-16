@@ -295,27 +295,27 @@
  *        </tr>
  *        <tr>
  *            <td>LMS_DestroyStream()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_StartStream()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_StopStream()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_RecvStream()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_GetStreamStatus()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_SendStream()</td>
- *            <td> No direct equivalent. Check out @ref lime::RFStream "RFStream" class. </td>
+ *            <td> No direct equivalent. See the @ref lime::RFStream "RFStream" class. </td>
  *        </tr>
  *        <tr>
  *            <td>LMS_UploadWFM()</td>

@@ -10,7 +10,7 @@
  * Low speed interfaces can be used to bypass library functions and communicate directly with SDR device modules. Currently, library device interface class supports three low speed interfaces:
  * SPI, I2C and CSR. The SPI interface is the primary interface used for communications with modules on SDR device. Current I2C interface implementation exists for compatibility reasons and is 
  * not widely adopted by SDR boards. CSR interface grants access to the configuration space registers with dedicated register read and write functions.
- * To test if a particular SDR device supports the interface, call the respective interface function. If the SPI or I2c interface is not implemented, a warning message will be logged and 
+ * To test if a particular SDR device supports the interface, call the respective interface function. If the SPI or I2C interface is not implemented, a warning message will be logged and 
  * @ref lime::OpStatus::NotImplemented "NotImplemented" operation status number will be returned. If device does not support the CSR interface, a nullptr value will be returned.
  * 
  * @if RST_SUPPORT

@@ -25,7 +25,7 @@
  * 
  * @section project_headers Library headers
  * 
- * Lime Suite NG library does not have single header for access to all public API members. Instead, library utilizes the modular header method, where only the necessary headers are included into the project
+ * Lime Suite NG library does not have a single header for access to all public API members. Instead, the library utilizes the modular header method, where only the necessary headers are included into the project
  * in order to reduce the overall build complexity and build time. Installed library headers are located in folder ``limesuiteng``. The primary API functions used to register, configure and control streams
  * of SDR devices are exposed in the ``limesuiteng/DeviceRegistry.h``, ``limesuiteng/SDRDevice.h`` and ``limesuiteng/RFStream.h`` headers. Other headers define complementary structures, storage classes and enumerations
  * used with API functions.  
@@ -75,7 +75,7 @@
  * cmake --build .
  * @endcode
  * 
- * List of usefull, but optional CMake flags for configuring projects:
+ * List of useful, but optional CMake flags for configuring projects:
  * <ol>
  *    <li>``-DCMAKE_BUILD_TYPE=[Release | Debug]`` - this sets the project build type</li>
  *    <li>``-DCMAKE_PREFIX_PATH=...`` - Path to library and other files required for the project build in case working from a non standard environment (For example, Windows conda environment.)</li>

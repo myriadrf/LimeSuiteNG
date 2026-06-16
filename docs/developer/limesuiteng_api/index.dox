@@ -36,7 +36,7 @@
  * 
  * If you are completely new to the Lime Suite NG library and API or looking for information about SDR device control and configuration, it is recommended to visit
  * @ref guide_book_top "library API guide book page". Library Guide book page provides code examples, explanations and other information about different library API members.
- * If you only need to reference library API list, then @ref api "check out the sorted list of public API members". Otherwise, please refer to the list of topics 
+ * If you only need to reference the library API list, then @ref api "see the sorted list of public API members". Otherwise, refer to the list of topics
  * provided below.
  * 
  * Topics of interest:

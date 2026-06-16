@@ -7,8 +7,8 @@
  * 
  * @section lib_logger Library log handler
  * 
- * By default the library uses a simple log handler, which outputs the logged messages to the command line/terminal window. If the terminal window supports colored font, warnings are 
- * diplayed in a yellow font, errors in a red font and any other log messages in a white font.
+ * By default, the library uses a simple log handler, which outputs the logged messages to the command line/terminal window. If the terminal window supports colored fonts, warnings are
+ * displayed in a yellow font, errors in a red font, and any other log messages in a white font.
  * 
  * @subsection lib_log_funcs Logging functions
  * 
@@ -25,7 +25,7 @@
  *    <li>Debug</li>
  * </ul>
  * 
- * Logging functions are overloaded and support formatted C style string messages (use of format specifiers. In eg. ``"%.8f"`` and etc.) and C++ style string messages. 
+ * Logging functions are overloaded and support formatted C-style string messages (use of format specifiers, for example ``"%.8f"``, and so on) and C++ style string messages. 
  * 
  * @section custom_logger Custom log handler
  * 

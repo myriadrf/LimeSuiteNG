@@ -3,7 +3,7 @@
  * 
  * @section lms_summary Summary
  * 
- * This section of the documentation describes changes to the old LMS API. This API is still supported for backwards compatibility reasons.
+ * This section of the documentation describes changes to the old LMS API. This API is still supported for backward compatibility reasons.
  * <ol>
  *     <li> @subpage lms_api_changes </li>
  *     <li> @subpage lms_api_example </li>

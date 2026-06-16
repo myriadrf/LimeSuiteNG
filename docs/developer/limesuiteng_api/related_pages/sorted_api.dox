@@ -24,7 +24,7 @@
  *    <li> @ref lime::DeviceRegistry::moduleNames(void) "moduleNames()"</li>
  * </ul>
  * 
- * @subsection control_adn_config SDR Device control and configuration
+ * @subsection control_and_config SDR Device control and configuration
  * <ul>
  *    <li><b>Common device control and configuration options:</b>
  *       <ul>
@@ -325,7 +325,7 @@
  *          <li> @ref lime::TRXDir "TRXDir"</li>
  *          <li> @ref lime::DataFormat "DataFormat"</li>
  *          <li> @ref lime::eGainTypes "eGainTypes"</li>
- *          <li> @ref lime::eMemoryDevice "eMemoryDevice</li>
+ *          <li> @ref lime::eMemoryDevice "eMemoryDevice"</li>
  *       </ul>
  *    </li>
  *    <li><b>SDR stream options</b>

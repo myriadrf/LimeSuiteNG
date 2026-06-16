@@ -128,7 +128,7 @@
  * On return, function reports the quantity of samples that were read from the device. ``Receive(...)`` function is also able to retrieve meta data about received samples. To retrieve the meta data, 
  * the address of a variable of lime::StreamRxMeta type must be passed as an argument for the third parameter of ``Receive(...)`` function. Consequently, ``Receive(...)`` function call updates 
  * the variable with the meta data of the first packet, that was read from an internal buffer. Meta data contains timestamps and stream flags. To check if timestamps are supported, check if 
- * ``hasTimestamp`` flag is set to ``true`` (check out @ref stream_timestamps section). If meta data is not important, a ``nullptr`` argument can be passed to ommit the retrieval of packet meta data. 
+ * ``hasTimestamp`` flag is set to ``true`` (see @ref stream_timestamps section). If meta data is not important, a ``nullptr`` argument can be passed to ommit the retrieval of packet meta data. 
  * 
  * @subsection stream_write Writing samples
  * 
@@ -136,7 +136,7 @@
  * samples from work buffer (``TxChABuf``) are transferred to internal device transmit buffer or a timeout occurs. A transmit timeout can occur if the internally managed transmit buffer is filled and 
  * has no empty space for new samples. On return, function reports the amount of samples that were queued for transmission. ``Transmit(...)`` function supports the use of meta data for sample transmission. To use 
  * meta data in transmit, the address of a variable of lime::StreamTxMeta type must be passed as an argument for the third parameter of ``Transmit(...)`` function. Meta data contains timestamps and stream flags. 
- * To toggle the use of timestamps for queued samples, meta data flag ``hasTimestamp`` must be set to value ``true`` or ``false`` (check out @ref stream_timestamps section). Additionally, meta data member ``flags`` 
+ * To toggle the use of timestamps for queued samples, meta data flag ``hasTimestamp`` must be set to value ``true`` or ``false`` (see @ref stream_timestamps section). Additionally, meta data member ``flags`` 
  * can be used to set specific stream flags. Flag lime::StreamTxMeta::Flags::EndOfBurst can be used to indicate the end of stream burst. If the stream burst end flag is set and the last batch of samples queued for 
  * transmit do not make up a single packet, then the remaining samples slots in a packet are padded with the value 0 and the sample packets are flushed out. If meta data is not important, a ``nullptr`` argument can be 
  * passed to ommit the generation of packet meta data. Only fully formed packets are added to transmit batch. If ``Transmit(...)`` function queues a quantity of samples that is lesser than the sample capacity of a 
@@ -144,10 +144,10 @@
  * 
  * @subsection stream_stats Monitoring statistics
  * 
- * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stoped. To view stream statistics for both Tx and Rx directions, 
+ * It is possible to view the statistics of each stream direction. Stream direction statistics can be viewed during the stream and after the stream is stopped. To view stream statistics for both Tx and Rx directions, 
  * variables of lime::StreamStats type must be defined (`RxStats` and `TxStats` variables in the example code above). The addresses of defined variables must be passed as arguments to 
  * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function parameter list. To avoid the retrieval of stream statistics for a particular direction, pass the `nullptr` argument.
- * In the example code above, statistics of Tx direction are ignored (because a `nullptr` argument is passed) and only the statistics of Rx direction are returned after the stream is stoped. 
+ * In the example code above, statistics of Tx direction are ignored (because a `nullptr` argument is passed) and only the statistics of Rx direction are returned after the stream is stopped. 
  * Available statistics for a stream direction:
  * <ul>
  *    <li>Current timestamp</li>
@@ -188,7 +188,7 @@
  * 
  * Timestamping is an optional feature that can be enabled on demand to provide additional meta data about the sample packets in transmission. Timestamp type is selected at 
  * @ref dev_stream_config "stream configuration stage". Stream configured with default options will set the timestamp type to ``SAMPLE_TICKS``. To reconfigure an already active 
- * stream with a new timestamp type, stream must be stopped and a stream interface function ``SetUp()`` must be called with updated stream configuration.
+ * stream with a new timestamp type, stream must be stopped and a stream interface function ``Setup()`` must be called with updated stream configuration.
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -376,7 +376,7 @@
  * 
  * <ul>
  *    <li>
- *       Streaming interface is <b>not thread safe</b> and multiple calls to ``Receive(...)`` or ``Transmit(...)`` from different threads can lead to poor performace or crashes. A single thread 
+ *       Streaming interface is <b>not thread safe</b> and multiple calls to ``Receive(...)`` or ``Transmit(...)`` from different threads can lead to poor performance or crashes. A single thread 
  *       should manage a single stream function (eg. Receive with thread 1 and transmit with thread 2).
  *    </li>
  *    <li>

@@ -52,7 +52,7 @@
  * }
  * @endcode
  * 
- * Default initialization is particulary important for new, out of the box or cold started SDR devices. Device default initialization performs device reset and loads device specific
+ * Default initialization is particularly important for new, out-of-the-box, or cold-started SDR devices. Device default initialization performs device reset and loads device specific
  * default and stable device configuration, which can then be freely customized to support project requirements.  
  * 
  * @section channel_conf Stream channels
@@ -185,7 +185,7 @@
  * @endcode
  *  
  * To bypass low pass filter in transceiver baseband for a specified SDR device channel direction, set the bandwidth value to zero. If Low pass filter is bypassed in Rx direction,
- * signal is directed directly to PGA (Programabale gain amplifier). If low pass filter is bypassed in Tx direction, signal is directed from current amplifier to RF front end through 
+ * signal is directed directly to PGA (Programmable Gain Amplifier). If the low pass filter is bypassed in the Tx direction, the signal is directed from the current amplifier to the RF front end through 
  * real pole stage. If the specified new bandwidth value is lower than minimum or higher than maximum supported low pass filter bandwith, the new value is respectively clamped to the 
  * minimum or maximum possible low pass filter bandwidth value.
  * 
@@ -231,11 +231,11 @@
  * }
  * @endcode
  * 
- * SDR device sample rate configuration is not dependant on selected SDR device channel and direction. Sample rate setting is updated for all internal ADCs and DACs of all active channel directions. The
+ * SDR device sample rate configuration is not dependent on the selected SDR device channel and direction. Sample rate setting is updated for all internal ADCs and DACs of all active channel directions. The
  * actual RF sample rate is much higher than the specified sample rate and depends on the selected oversampling ratio parameter. 
  * In example code above, function @ref lime::SDRDevice::SetSampleRate(uint8_t, lime::TRXDir, uint8_t, double, uint8_t) "SetSampleRate()" accepts argument <b>oversampleRatio</b> which specifies the sample
  * interpolation and decimation ratios. If oversampling ratio parameter is set to value 0 and specified sample rate is lower or equal to 61.44 MHz, ratios are auto calculated based on specified sample rate.
- * If specified sample rate is higher than 61.44 MHz and oversamplnig ratio is set to value 0, then interpolation and decimation stage is bypassed. Alternatively, oversampling ratio can be set manually.
+ * If the specified sample rate is higher than 61.44 MHz and the oversampling ratio is set to value 0, then the interpolation and decimation stage is bypassed. Alternatively, oversampling ratio can be set manually.
  * Supported oversampling ratios:
  * <ul>
  *    <li>x2  (oversampleRatio == 2)</li>
@@ -288,7 +288,7 @@
  * }
  * @endcode
  *
- * Depending on SDR device model, different antennas can be used both for Tx and Rx directions of each channel. If a unexpected antenna path ID is specified, the path ID is ignored and 
+ * Depending on the SDR device model, different antennas can be used for both Tx and Rx directions of each channel. If an unexpected antenna path ID is specified, the path ID is ignored and 
  * antenna is not changed. Below are lists of common antenna paths for Tx and Rx directions.
  * 
  * List of antenna path IDs for Tx direction on each channel:

@@ -13,8 +13,8 @@
  * configuration structure of `lime::ChannelConfig::Direction::TestSignal` type must be passed as an argument. To retrieve test signal configuration of a particular direction, 
  * function @ref lime::SDRDevice::GetTestSignal(uint8_t, lime::TRXDir, uint8_t) "GetTestSignal()" must be used.
  * 
- * Once the test signal generators for Tx direction are enabled, generated signal is outputed into physical Tx antenna ports, which can be probed with appropriate equipment.
- * Once the test signal generators for Rx direction are enabled, samples are generated in a digital domain and can be read by starting the stream and reading buffered samples.
+ * Once the test signal generators for the Tx direction are enabled, the generated signal is output to the physical Tx antenna ports, which can be probed with appropriate equipment.
+ * Once the test signal generators for the Rx direction are enabled, samples are generated in the digital domain and can be read by starting the stream and reading buffered samples.
  * When setting the digital DC I and Q component values for a DC type test signal generator of a SDR device based on LMS7002M module, the values must be multiples of 16 and must be offset by a value 
  * of 0xF (example code below).
  * 

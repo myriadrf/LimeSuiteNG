@@ -1,5 +1,5 @@
 /**
- * @page gnuradio-limesuiteng_recipe Gnuradio-limesuiteng recipe
+ * @page gnuradio-limesuiteng_recipe GNU Radio Lime Suite NG recipe
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -51,16 +51,18 @@
  *    conda-build .conda\recipe\ -m .conda\build_config.yaml
  * @endcode
  * 
- * Conda will start building package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from git ``develop`` branch, omit the flag and arguments. After successfull build, conda package is populated in ``<radioconda install dir>\envs\<your custom env>\conda-bld\`` directory with the following name structure ``gnuradio-limesuiteng-version-build_string.conda``.
+ * Conda will start building the package. The ``build_config.yaml`` file alongside the ``-m`` flag enables package build from locally stored source code. To build from the git ``develop`` branch, omit the flag and arguments.
+ *
+ * After a successful build, the conda package is populated in the ``<radioconda install dir>\envs\<your custom env>\conda-bld\`` directory with the following name structure: ``gnuradio-limesuiteng-version-build_string.conda``.
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{
  * .. admonition:: Warning
  * 
- *    Currently gnuradio-limsuiteng plugin package cannot be built for ``gnuradio=3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. 
+ *    Currently gnuradio-limesuiteng plugin package cannot be built for ``gnuradio=3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. 
  *    In order to pass the plugin build, user must specify gnuradio version in meta.yaml file as stated below in important note.}
  * @else
- * @warning Currently gnuradio-limsuiteng plugin package cannot be built for ``gnuradio=3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. 
+ * @warning Currently gnuradio-limesuiteng plugin package cannot be built for ``gnuradio=3.10.12.0``, because it requires ``boost=1.86`` package which is currently not available in conda environment. 
  * In order to pass the plugin build, user must specify gnuradio version in meta.yaml file as stated below in important note.
  * @endif
  * 
@@ -77,8 +79,8 @@
  *    
  * @section gnuradio-limesuiteng_pckg_install Installing built package
  * 
- * To test built gnuradio-limesuiteng plugin, package must be installed using the ``conda install`` command. Before installing the package, path to local channel for conda tool must be specified 
- * To install locally built gnuradio-limesuiteng package, execute the following command:
+ * To test the built gnuradio-limesuiteng plugin, the package must be installed using the ``conda install`` command. Before installing the package, the path to the local channel for the conda tool must be specified.
+ * To install the locally built gnuradio-limesuiteng package, execute the following command:
  * 
  * @code{.bash}
  *    conda install gnuradio-limesuiteng

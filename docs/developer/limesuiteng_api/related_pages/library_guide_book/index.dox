@@ -1,9 +1,9 @@
 /**
  * @page guide_book_top Library guide book
  * 
- * This is the main page of Lime Suite NG library guide book. Here you will find an organized list of topics which will help you get started with Lime Suite NG public API.
- * Guide book topics cover: library set up requirements for custom CMake project, device discovery and registration, device configuration, device stream set up and streaming.
- * Example topics are ordered in a consecutive way such that project set up topic follows device registration topic and etc.
+ * This is the main page of the Lime Suite NG library guide book. Here you will find an organized list of topics that will help you get started with the Lime Suite NG public API.
+ * Guide book topics cover: library set up requirements for a custom CMake project, device discovery and registration, device configuration, device stream set up, and streaming.
+ * Example topics are ordered consecutively, such that the project set up topic precedes the device registration topic, and so on.
  * 
  * Topics:
  * <ul>

@@ -17,13 +17,13 @@
  * All SDR device class implementations support the universal device control and configuration interface - ``SDRDevice``.
  * All SDR device classes based on a LMS7002M chip control interface share a common set of device control and configuration
  * functions. Additionally, each unique SDR device class implementation can override control and configuration functions to
- * implement device specific control and configuration functionality. Some device classes also override common FPGA interface 
- * and implement device specific FPGA functions to account for differences in FPGA control and configuration.
+ * implement device-specific control and configuration functionality. Some device classes also override the common FPGA interface
+ * and implement device-specific FPGA functions to account for differences in FPGA control and configuration.
  * 
  * All device LMS7002M, FPGA and other onboard device register control and configuration is done via the ``ISerialPort`` interface.
- * Each unique SDR device class overrides the virtual serial interface with device specific serial port implementation.
- * 
- * LimeSDR_MMX8 device class is an exception from all of the device class implementations. This device class implementation overrides
+ * Each unique SDR device class overrides the virtual serial interface with a device-specific serial port implementation.
+ *
+ * LimeSDR_MMX8 device class is an exception among all device class implementations. This device class implementation overrides
  * device functions to target control and configuration of onboard devices that are based on the XTRX device class implementation.
  * 
  * @subsection dev_class_legend Diagram legend

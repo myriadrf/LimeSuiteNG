@@ -15,15 +15,15 @@
  * 
  * All supported SDR device class implementations use the virtual serial interface ``ISerialPort`` to
  * control and configure device registers. The virtual serial interface provides the base communication
- * functions, which must be overriden by each device class implementation.
- * 
+ * functions, which must be overridden by each device class implementation.
+ *
  * Lime Suite NG supported SDR devices override the virtual serial interface at the device registration step.
  * Each device class implementation will override the functions with one of the following supported serial
  * interface implementations:
- * 
- * - ``PCIE_CSR_Pipe`` - serial interface for communicating with PCIe interface based SDR devices.
- * - ``FTDI_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FT6xx USB chip.
- * - ``FX3_SerialPort`` - serial interface for communicating with USB interface based SDR devices, that use FX3 USB chip. 
+ *
+ * - ``PCIE_CSR_Pipe`` - serial interface for communicating with PCIe-based SDR devices.
+ * - ``FTDI_SerialPort`` - serial interface for communicating with USB-based SDR devices that use the FT6xx USB chip.
+ * - ``FX3_SerialPort`` - serial interface for communicating with USB-based SDR devices that use the FX3 USB chip.
  * 
  * Each implementation of the serial interface communicates with a device through a communication 
  * library port. A communication library port implements control, configuration and mass data transfer functions 
