@@ -2,7 +2,7 @@ include(FeatureSummary)
 include(CMakeDependentOption)
 project(
     la9310_limesdr
-    VERSION 0.1.0
+    VERSION 0.1.1
     DESCRIPTION "Linux kernel module for LA9310 based LimeSDR devices"
     LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
