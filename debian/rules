@@ -15,7 +15,7 @@ VERSION_MINOR := $(word 2,$(subst ., ,$(DEB_VERSION)))
 RELEASE_NUM = $(VERSION_MAJOR).$(VERSION_MINOR)
 
 %:
-	dh $@ --with dkms --buildsystem=cmake --parallel --builddirectory=build
+	dh $@ --with dkms --buildsystem=cmake --builddirectory=build
 
 LIMEPCIE_DKMS_VERSION := $(shell sed -n '1s/[[:space:]]//gp' drivers/linux/limepcie/VERSION)
 

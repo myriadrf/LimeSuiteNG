@@ -544,19 +544,19 @@ class LIME_API SDRDevice
     /// @param meta The metadata of the packets of the stream.
     /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
     /// @return The amount of samples received.
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex32f_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex16_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex12_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
@@ -593,6 +593,61 @@ class LIME_API SDRDevice
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
     [[deprecated]] virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
     /// @endcond
+
+    /// @name ChannelId-addressed overloads
+    /// Canonical 1.0 forms; delegate to the (module, dir, channel) triple virtuals.
+    ///@{
+    OpStatus EnableChannel(ChannelId c, bool enable) { return EnableChannel(c.module, c.dir, c.channel, enable); }
+    double GetFrequency(ChannelId c) { return GetFrequency(c.module, c.dir, c.channel); }
+    OpStatus SetFrequency(ChannelId c, double frequencyHz) { return SetFrequency(c.module, c.dir, c.channel, frequencyHz); }
+    double GetNCOFrequency(ChannelId c, uint8_t index, double& phaseOffset)
+    {
+        return GetNCOFrequency(c.module, c.dir, c.channel, index, phaseOffset);
+    }
+    OpStatus SetNCOFrequency(ChannelId c, uint8_t index, double frequencyHz, double phaseOffset = -1.0)
+    {
+        return SetNCOFrequency(c.module, c.dir, c.channel, index, frequencyHz, phaseOffset);
+    }
+    double GetNCOOffset(ChannelId c) { return GetNCOOffset(c.module, c.dir, c.channel); }
+    int GetNCOIndex(ChannelId c) { return GetNCOIndex(c.module, c.dir, c.channel); }
+    OpStatus SetNCOIndex(ChannelId c, uint8_t index, bool downconv) { return SetNCOIndex(c.module, c.dir, c.channel, index, downconv); }
+    double GetSampleRate(ChannelId c, uint32_t* rf_samplerate = nullptr)
+    {
+        return GetSampleRate(c.module, c.dir, c.channel, rf_samplerate);
+    }
+    OpStatus SetSampleRate(ChannelId c, double sampleRateHz, uint8_t oversample)
+    {
+        return SetSampleRate(c.module, c.dir, c.channel, sampleRateHz, oversample);
+    }
+    OpStatus GetGain(ChannelId c, eGainTypes gain, double& value_dB) { return GetGain(c.module, c.dir, c.channel, gain, value_dB); }
+    OpStatus SetGain(ChannelId c, eGainTypes gain, double value_dB) { return SetGain(c.module, c.dir, c.channel, gain, value_dB); }
+    double GetLowPassFilter(ChannelId c) { return GetLowPassFilter(c.module, c.dir, c.channel); }
+    OpStatus SetLowPassFilter(ChannelId c, double bandwidthHz) { return SetLowPassFilter(c.module, c.dir, c.channel, bandwidthHz); }
+    /// @brief Selects the antenna by name (per RFSOCDescriptor::pathNames). Antenna is addressed
+    /// by name on the 1.0 surface, not by path index. Returns InvalidValue if the name is unknown.
+    /// Defined out-of-line: needs the complete SDRDescriptor, which the header only forward-declares.
+    OpStatus SetAntenna(ChannelId c, const std::string& name);
+    /// @brief Returns the currently selected antenna name, or an empty string if unavailable.
+    const std::string& GetAntennaName(ChannelId c);
+    ChannelConfig::Direction::TestSignal GetTestSignal(ChannelId c) { return GetTestSignal(c.module, c.dir, c.channel); }
+    OpStatus SetTestSignal(
+        ChannelId c, ChannelConfig::Direction::TestSignal signalConfiguration, int16_t dc_i = 0, int16_t dc_q = 0)
+    {
+        return SetTestSignal(c.module, c.dir, c.channel, signalConfiguration, dc_i, dc_q);
+    }
+    bool GetDCOffsetMode(ChannelId c) { return GetDCOffsetMode(c.module, c.dir, c.channel); }
+    OpStatus SetDCOffsetMode(ChannelId c, bool isAutomatic) { return SetDCOffsetMode(c.module, c.dir, c.channel, isAutomatic); }
+    complex64f_t GetDCOffset(ChannelId c) { return GetDCOffset(c.module, c.dir, c.channel); }
+    OpStatus SetDCOffset(ChannelId c, const complex64f_t& offset) { return SetDCOffset(c.module, c.dir, c.channel, offset); }
+    complex64f_t GetIQBalance(ChannelId c) { return GetIQBalance(c.module, c.dir, c.channel); }
+    OpStatus SetIQBalance(ChannelId c, const complex64f_t& balance) { return SetIQBalance(c.module, c.dir, c.channel, balance); }
+    OpStatus Calibrate(ChannelId c, double bandwidthHz) { return Calibrate(c.module, c.dir, c.channel, bandwidthHz); }
+    std::vector<double> GetGFIRCoefficients(ChannelId c, uint8_t gfirID)
+    {
+        return GetGFIRCoefficients(c.module, c.dir, c.channel, gfirID);
+    }
+    OpStatus SetGFIR(ChannelId c, uint8_t gfirID, bool enabled) { return SetGFIR(c.module, c.dir, c.channel, gfirID, enabled); }
+    ///@}
 
     /// @brief Creates a RF data streaming interface for selected RF module.
     /// @param config The configuration to use for setting the streams up.

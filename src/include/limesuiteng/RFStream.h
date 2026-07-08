@@ -68,19 +68,19 @@ class LIME_API RFStream
     /// @note This function will be deprecated in the future.
     /// @see RFStream::Receive(lime::complex32f_t*const*,uint32_t,lime::StreamRxMeta*) for more %info.
     /// @return The amount of samples received.
-    virtual uint32_t StreamRx(lime::complex32f_t* const* samples,
+    [[deprecated("use Receive()")]] virtual uint32_t StreamRx(lime::complex32f_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
     /// @copydoc RFStream::StreamRx(lime::complex32f_t* const*,uint32_t,lime::StreamMeta*,std::chrono::microseconds)
-    virtual uint32_t StreamRx(lime::complex16_t* const* samples,
+    [[deprecated("use Receive()")]] virtual uint32_t StreamRx(lime::complex16_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
     /// @copydoc RFStream::StreamRx(lime::complex32f_t* const*,uint32_t,lime::StreamMeta*,std::chrono::microseconds)
-    virtual uint32_t StreamRx(lime::complex12_t* const* samples,
+    [[deprecated("use Receive()")]] virtual uint32_t StreamRx(lime::complex12_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
@@ -93,19 +93,19 @@ class LIME_API RFStream
     /// @note This function will be deprecated in the future.
     /// @see RFStream::Transmit(lime::complex32f_t*const*,uint32_t,lime::StreamTxMeta*) for more %info.
     /// @return The amount of samples transmitted.
-    virtual uint32_t StreamTx(const lime::complex32f_t* const* samples,
+    [[deprecated("use Transmit()")]] virtual uint32_t StreamTx(const lime::complex32f_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
     /// @copydoc RFStream::StreamTx(const lime::complex32f_t* const*,uint32_t,const lime::StreamMeta*,std::chrono::microseconds)
-    virtual uint32_t StreamTx(const lime::complex16_t* const* samples,
+    [[deprecated("use Transmit()")]] virtual uint32_t StreamTx(const lime::complex16_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
     /// @copydoc RFStream::StreamTx(const lime::complex32f_t* const*,uint32_t,const lime::StreamMeta*,std::chrono::microseconds)
-    virtual uint32_t StreamTx(const lime::complex12_t* const* samples,
+    [[deprecated("use Transmit()")]] virtual uint32_t StreamTx(const lime::complex12_t* const* samples,
         uint32_t count,
         const StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;

@@ -11,6 +11,7 @@
 #include "limesuiteng/types.h"
 
 #include <cstdint>
+#include <functional>
 #include <unordered_map>
 
 namespace lime {
@@ -88,6 +89,10 @@ struct LIME_API StreamConfig {
 
     StatusCallbackFunc statusCallback; ///< Function to call on a status change.
     void* userData; ///<  Data that will be supplied to statusCallback
+
+    /// @brief Canonical status callback. If set, takes precedence over statusCallback.
+    /// Invoked from the streaming worker thread: must not block or allocate.
+    std::function<void(TRXDir, const StreamStats&)> onStatus;
     // TODO: callback for drops and errors
 
     Extras extraConfig; ///< Extra stream configuration settings.

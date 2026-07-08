@@ -34,7 +34,8 @@ typedef std::function<void(const LogLevel level, const std::string& message)> Lo
  * Register a new system log handler that supports C style string format.
  * Platforms should call this to replace the default stdio handler.
  */
-LIME_API void registerLogHandler(const LogHandlerCString handler);
+[[deprecated("use registerLogHandler(LogHandler) with std::function")]] LIME_API void registerLogHandler(
+    const LogHandlerCString handler);
 
 /*!
  * Register a new system log handler that supports C++ style string format.

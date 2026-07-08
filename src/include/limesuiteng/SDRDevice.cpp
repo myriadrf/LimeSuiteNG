@@ -1,10 +1,39 @@
 #include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
 
 #include "limesuiteng/Logger.h"
 
 using namespace lime;
 using namespace std::literals::string_literals;
+
+OpStatus SDRDevice::SetAntenna(ChannelId c, const std::string& name)
+{
+    const auto& soc = GetDescriptor().rfSOC;
+    if (c.module >= soc.size())
+        return OpStatus::InvalidValue;
+    const auto it = soc[c.module].pathNames.find(c.dir);
+    if (it == soc[c.module].pathNames.end())
+        return OpStatus::InvalidValue;
+    const auto& names = it->second;
+    for (uint8_t i = 0; i < names.size(); ++i)
+        if (names[i] == name)
+            return SetAntenna(c.module, c.dir, c.channel, i);
+    return OpStatus::InvalidValue;
+}
+
+const std::string& SDRDevice::GetAntennaName(ChannelId c)
+{
+    static const std::string empty;
+    const auto& soc = GetDescriptor().rfSOC;
+    if (c.module >= soc.size())
+        return empty;
+    const auto it = soc[c.module].pathNames.find(c.dir);
+    if (it == soc[c.module].pathNames.end())
+        return empty;
+    const uint8_t path = GetAntenna(c.module, c.dir, c.channel);
+    return path < it->second.size() ? it->second[path] : empty;
+}
 
 StreamConfig::Extras::Extras()
     : usePoll{ true }

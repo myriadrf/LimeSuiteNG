@@ -1,0 +1,18 @@
+# debian/source/lintian-overrides
+#
+# A "lintian override" tells the lintian QA tool: "I know about this warning,
+# it is expected, stop reporting it." Each non-comment line below is the exact
+# text of a lintian tag we are silencing, plus the reason.
+#
+# Why we need it:
+#   The debhelper "dkms" helper (dh_dkms) used to live inside the "dkms"
+#   package. From Ubuntu 24.04 (noble) / Debian 13 it was split into a separate
+#   "dh-dkms" package, and on 24.04 the old "dkms" package no longer provides
+#   that helper. But Ubuntu 22.04 (jammy) has NO "dh-dkms" package at all.
+#
+#   To build on BOTH releases from one control file we must write
+#   "dh-dkms | dkms" (try dh-dkms first, fall back to dkms). lintian cannot
+#   prove the helper is available via the "dkms" fallback, so it complains.
+#   The complaint is harmless here, so we override it.
+limesuiteng source: missing-build-dependency-for-dh-addon dkms (does not satisfy dh-dkms:any) [debian/rules]
+limesuiteng source: missing-build-dependency-for-dh_-command dh_dkms (does not satisfy dh-dkms:any | dh-sequence-dkms:any) [debian/rules]
