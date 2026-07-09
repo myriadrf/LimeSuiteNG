@@ -119,27 +119,47 @@ class LIME_API RFStream
     /// @param samples The buffer to put the received samples in.
     /// @param count The number of samples to receive into the buffer.
     /// @param meta The metadata of the packets of the stream.
+    /// @param timeout The maximum wait time for incoming samples.
     /// @return The amount of samples received.
-    virtual uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+    virtual uint32_t Receive(lime::complex32f_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
-    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
-    virtual uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*,std::chrono::microseconds)
+    virtual uint32_t Receive(lime::complex16_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
-    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*)
-    virtual uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) = 0;
+    /// @copydoc RFStream::Receive(lime::complex32f_t* const*,uint32_t,lime::StreamRxMeta*,std::chrono::microseconds)
+    virtual uint32_t Receive(lime::complex12_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
     /// @brief Transmits RF samples data.
     /// @param samples The buffer of the samples to transmit.
     /// @param count The number of samples to transmit.
     /// @param meta The metadata of the packets of the stream.
+    /// @param timeout The maximum wait time for buffer space to submit the samples.
     /// @return The amount of samples transmitted.
-    virtual uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+    virtual uint32_t Transmit(const lime::complex32f_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
-    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*)
-    virtual uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*,std::chrono::microseconds)
+    virtual uint32_t Transmit(const lime::complex16_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 
-    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*)
-    virtual uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) = 0;
+    /// @copydoc RFStream::Transmit(const lime::complex32f_t* const*,uint32_t,const lime::StreamTxMeta*,std::chrono::microseconds)
+    virtual uint32_t Transmit(const lime::complex12_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
 };
 
 } // namespace lime

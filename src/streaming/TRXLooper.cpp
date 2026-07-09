@@ -1035,19 +1035,19 @@ uint32_t TRXLooper::StreamRx(lime::complex12_t* const* samples, uint32_t count, 
     return samplesRead;
 }
 
-uint32_t TRXLooper::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t TRXLooper::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex32f_t>(samples, count, meta, chrono::microseconds(1000000));
+    return StreamRxTemplate<complex32f_t>(samples, count, meta, timeout);
 }
 
-uint32_t TRXLooper::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t TRXLooper::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex16_t>(samples, count, meta, chrono::microseconds(1000000));
+    return StreamRxTemplate<complex16_t>(samples, count, meta, timeout);
 }
 
-uint32_t TRXLooper::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t TRXLooper::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRxTemplate<complex12_t>(samples, count, meta, chrono::microseconds(1000000));
+    return StreamRxTemplate<complex12_t>(samples, count, meta, timeout);
 }
 
 OpStatus TRXLooper::TxSetup()
@@ -1669,19 +1669,22 @@ uint32_t TRXLooper::StreamTx(
     return StreamMetaToStreamTxMeta(samples, count, meta, timeout);
 }
 
-uint32_t TRXLooper::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t TRXLooper::Transmit(
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta, chrono::microseconds(100000));
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
-uint32_t TRXLooper::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t TRXLooper::Transmit(
+    const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta, chrono::microseconds(100000));
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
-uint32_t TRXLooper::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t TRXLooper::Transmit(
+    const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTxTemplate(samples, count, meta, chrono::microseconds(100000));
+    return StreamTxTemplate(samples, count, meta, timeout);
 }
 
 /// @brief Gets Rx/Tx data transfer statistics.

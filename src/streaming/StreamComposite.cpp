@@ -254,34 +254,40 @@ uint64_t StreamComposite::GetHardwareTimestamp() const
     return mAggregate.front()->GetHardwareTimestamp();
 }
 
-uint32_t StreamComposite::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t StreamComposite::Receive(
+    lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamRx_T(samples, count, meta, timeout);
 }
 
-uint32_t StreamComposite::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t StreamComposite::Receive(
+    lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamRx_T(samples, count, meta, timeout);
 }
 
-uint32_t StreamComposite::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t StreamComposite::Receive(
+    lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamRx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamRx_T(samples, count, meta, timeout);
 }
 
-uint32_t StreamComposite::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t StreamComposite::Transmit(
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamTx_T(samples, count, meta, timeout);
 }
 
-uint32_t StreamComposite::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t StreamComposite::Transmit(
+    const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamTx_T(samples, count, meta, timeout);
 }
 
-uint32_t StreamComposite::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t StreamComposite::Transmit(
+    const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta, chrono::microseconds timeout)
 {
-    return StreamTx_T(samples, count, meta, chrono::microseconds(100000));
+    return StreamTx_T(samples, count, meta, timeout);
 }
 
 } // namespace lime

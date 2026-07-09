@@ -60,7 +60,7 @@ typedef struct lime_device        lime_device;        /* generic: SDR / RFE / Ut
 typedef struct lime_SDRDevice     lime_SDRDevice;
 typedef struct lime_GPIO          lime_GPIO;
 typedef struct lime_Stream        lime_Stream;
-typedef struct lime_SDRDescriptor lime_SDRDescriptor; /* opaque; accessors added later */
+typedef struct lime_SDRDescriptor lime_SDRDescriptor; /* opaque; read via lime_descriptor_* accessors */
 
 /* ------------------------------------------------------------------ *
  * Enumeration & device tree.                                         *
@@ -93,11 +93,77 @@ LIME_C_API lime_OpStatus lime_sdrdevice_set_antenna(
 LIME_C_API const lime_SDRDescriptor* lime_sdrdevice_get_descriptor(lime_SDRDevice* dev);
 
 /* ------------------------------------------------------------------ *
+ * Descriptor accessors. The descriptor is library-owned: pointers    *
+ * and strings returned here stay valid for the device's lifetime.    *
+ * Out-of-range arguments yield NULL / 0.                             *
+ * ------------------------------------------------------------------ */
+LIME_C_API const char* lime_descriptor_name(const lime_SDRDescriptor* d);
+LIME_C_API uint64_t    lime_descriptor_serial(const lime_SDRDescriptor* d);
+LIME_C_API size_t      lime_descriptor_rfsoc_count(const lime_SDRDescriptor* d);
+LIME_C_API const char* lime_descriptor_rfsoc_name(const lime_SDRDescriptor* d, size_t soc);
+LIME_C_API uint8_t     lime_descriptor_channel_count(const lime_SDRDescriptor* d, size_t soc);
+/* Antenna names: the vocabulary for lime_sdrdevice_set_antenna(). */
+LIME_C_API size_t      lime_descriptor_antenna_count(const lime_SDRDescriptor* d, size_t soc, lime_TRXDir dir);
+LIME_C_API const char* lime_descriptor_antenna_name(
+    const lime_SDRDescriptor* d, size_t soc, lime_TRXDir dir, size_t index);
+
+/* ------------------------------------------------------------------ *
+ * Streaming (the hot path).                                          *
+ * format is the application layout; link_format is the wire layout;  *
+ * a conversion runs whenever they differ.                            *
+ * ------------------------------------------------------------------ */
+typedef enum { /* mirrors lime::DataFormat */
+    lime_DataFormat_I16 = 0, /* 16-bit integers */
+    lime_DataFormat_I12 = 1, /* 12-bit integers stored as int16_t, range [-2048;2047] */
+    lime_DataFormat_F32 = 2 /* 32-bit floating-point */
+} lime_DataFormat;
+
+/* Transparent, caller-built, append-only. struct_size = sizeof(lime_StreamConfig)
+ * lets the ABI grow: the library never reads past the size the caller declares. */
+typedef struct {
+    uint32_t struct_size; /* = sizeof(lime_StreamConfig) */
+    uint8_t module; /* RF SoC index the stream attaches to */
+    const uint8_t* rx_channels; /* channel indices to stream; may be NULL when the count is 0 */
+    size_t rx_count;
+    const uint8_t* tx_channels;
+    size_t tx_count;
+    lime_DataFormat format; /* samples layout for _recv / _send */
+    lime_DataFormat link_format; /* wire layout Host<->FPGA */
+    double hint_sample_rate_hz; /* 0 = decide internally */
+} lime_StreamConfig;
+
+/* Unified at the C boundary: flush is Tx-only and ignored on Rx. */
+typedef struct {
+    uint64_t timestamp; /* in sample ticks */
+    bool has_timestamp;
+    bool flush; /* Tx: submit a partially filled packet (end of burst) */
+} lime_StreamMeta;
+
+LIME_C_API lime_Stream*  lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cfg);
+LIME_C_API lime_OpStatus lime_stream_start(lime_Stream* s);
+LIME_C_API void          lime_stream_stop(lime_Stream* s);
+/* dst/src: one buffer pointer per configured channel, laid out per cfg->format.
+ * Return: samples transferred per channel (>=0), or a negative lime_OpStatus. */
+LIME_C_API int lime_stream_recv(
+    lime_Stream* s, void* const* dst, size_t count, lime_StreamMeta* meta, uint32_t timeout_ms);
+LIME_C_API int lime_stream_send(
+    lime_Stream* s, const void* const* src, size_t count, const lime_StreamMeta* meta, uint32_t timeout_ms);
+LIME_C_API void lime_stream_destroy(lime_Stream* s);
+
+/* ------------------------------------------------------------------ *
  * Subinterface providers. Return NULL if the capability is absent.   *
  * ------------------------------------------------------------------ */
 LIME_C_API lime_GPIO*    lime_sdrdevice_get_gpio(lime_SDRDevice* dev);
 LIME_C_API lime_OpStatus lime_gpio_set_value(lime_GPIO* gpio, uint32_t pin, bool value);
 LIME_C_API lime_OpStatus lime_gpio_get_value(lime_GPIO* gpio, uint32_t pin, bool* value);
+
+typedef struct lime_SPI lime_SPI;
+LIME_C_API lime_SPI* lime_sdrdevice_get_spi(lime_SDRDevice* dev);
+/* Full-duplex SPI transaction on the given internal bus. bus_address is the
+ * chip-select id from the device descriptor. mosi or miso may be NULL for
+ * read-only / write-only transfers. */
+LIME_C_API lime_OpStatus lime_spi_transact(
+    lime_SPI* spi, uint32_t bus_address, const uint32_t* mosi, uint32_t* miso, uint32_t count);
 
 /* ------------------------------------------------------------------ *
  * Version.                                                           *
