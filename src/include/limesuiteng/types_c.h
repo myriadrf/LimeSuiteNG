@@ -6,21 +6,11 @@
 #ifndef LIMESUITENG_TYPES_C_H
 #define LIMESUITENG_TYPES_C_H
 
+#include "limesuiteng/config_c.h"
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-
-#if defined(_WIN32)
-    #if defined(LIME_C_BUILD)
-        #define LIME_C_API __declspec(dllexport)
-    #else
-        #define LIME_C_API __declspec(dllimport)
-    #endif
-#elif defined(__GNUC__)
-    #define LIME_C_API __attribute__((visibility("default")))
-#else
-    #define LIME_C_API
-#endif
 
 #ifdef __cplusplus
 extern "C" {

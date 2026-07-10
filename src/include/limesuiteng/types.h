@@ -20,16 +20,6 @@ enum class TRXDir : bool {
 };
 
 /// @brief Enumerator describing the data formats.
-/// @brief Addresses a single RF channel: which RF SoC, which direction, which channel within the SoC.
-/// Replaces the loose (moduleIndex, TRXDir, channel) argument triple.
-/// @note @c module is transition-only. Under the Path B submodule split the RF SoC becomes an
-/// implicit scope of the submodule handle, leaving @c (dir, channel); @c module is removed then.
-struct ChannelId {
-    uint8_t module{ 0 }; ///< [transition-only] RF SoC index; removed under the Path B submodule split
-    TRXDir dir{ TRXDir::Rx }; ///< Direction of the transmission
-    uint8_t channel{ 0 }; ///< Channel index within the SoC
-};
-
 enum class DataFormat : uint8_t {
     I16, ///< 16-bit integers.
     I12, ///< 12-bit integers. Stored as int16_t, but the expected range is [-2048;2047]

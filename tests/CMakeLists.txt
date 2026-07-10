@@ -53,7 +53,7 @@ target_sources(
             streaming/Timespec_tests.cpp
             # parsers/CoefficientFileParserTest.cpp
             protocols/BufferInterleavingTest.cpp
-            api/SDRDevice_ChannelId_tests.cpp)
+            api/antenna_c_tests.cpp)
 
 add_subdirectory(embedded/lms7002m)
 

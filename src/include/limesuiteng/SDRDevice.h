@@ -12,7 +12,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "limesuiteng/config.h"
@@ -594,13 +593,6 @@ class LIME_API SDRDevice
     /// @param tx The pointer (or nullptr if not needed) to store the transmit statistics to.
     [[deprecated]] virtual void StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx) = 0;
     /// @endcond
-
-    /// @brief Selects the antenna by name (per RFSOCDescriptor::pathNames). Antenna is addressed
-    /// by name on the 1.0 surface, not by path index. Returns InvalidValue if the name is unknown.
-    /// Defined out-of-line: needs the complete SDRDescriptor, which the header only forward-declares.
-    OpStatus SetAntenna(ChannelId c, std::string_view name);
-    /// @brief Returns the currently selected antenna name, or an empty string if unavailable.
-    const std::string& GetAntennaName(ChannelId c);
 
     /// @brief Creates a RF data streaming interface for selected RF module.
     /// @param config The configuration to use for setting the streams up.

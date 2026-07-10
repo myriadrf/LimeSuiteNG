@@ -82,14 +82,11 @@ install(
 ## lime suite library
 ########################################################################
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp @ONLY)
+add_subdirectory(lib)
+
 target_sources(
     limesuiteng
     PRIVATE CommonFunctions.cpp
-            lib/device_registry_c.cpp
-            lib/rfstream_c.cpp
-            lib/sdrdescriptor_c.cpp
-            lib/sdrdevice_c.cpp
-            lib/versioninfo_c.cpp
             OEMTesting.cpp
             logger/Logger.cpp
             logger/LoggerCString.cpp

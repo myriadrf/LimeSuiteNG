@@ -1,13 +1,14 @@
-// Unit tests for the 1.0 API additions:
-//   - ChannelId value type (types.h)
-//   - antenna addressed by name: SetAntenna(ChannelId, string) / GetAntennaName(ChannelId)
-//     (SDRDevice.cpp, resolving name<->index via RFSOCDescriptor::pathNames)
+// Unit tests for the antenna-by-name C entry points
+// (lime_sdrdevice_set_antenna / lime_sdrdevice_get_antenna), which resolve
+// name<->index via RFSOCDescriptor::pathNames.
 //
 // These exercise pure library logic and require no hardware. A minimal StubSDRDevice
 // implements every pure virtual; only the handful relevant to channel addressing and
 // antenna resolution carry real behaviour, the rest are trivial stubs.
 
 #include <gtest/gtest.h>
+
+#include "limesuiteng/sdrdevice_c.h"
 
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -141,38 +142,23 @@ static SDRDescriptor MakeDescriptorWithPaths()
     return desc;
 }
 
-// --------------------------------------------------------------------------
-// ChannelId value type
-// --------------------------------------------------------------------------
-
-TEST(ChannelId, DefaultsToModule0Rx0)
+// The C API's device handle is the SDRDevice pointer; tests hand the stub to the
+// C entry points exactly the way lime_device_as_sdr() would.
+static lime_SDRDevice* AsC(StubSDRDevice& stub)
 {
-    ChannelId c{};
-    EXPECT_EQ(c.module, 0);
-    EXPECT_EQ(c.dir, TRXDir::Rx);
-    EXPECT_EQ(c.channel, 0);
-}
-
-TEST(ChannelId, AggregateInitialization)
-{
-    ChannelId c{ 3, TRXDir::Tx, 1 };
-    EXPECT_EQ(c.module, 3);
-    EXPECT_EQ(c.dir, TRXDir::Tx);
-    EXPECT_EQ(c.channel, 1);
+    return reinterpret_cast<lime_SDRDevice*>(static_cast<SDRDevice*>(&stub));
 }
 
 // --------------------------------------------------------------------------
-// Antenna addressed by name (patch 0007)
+// Antenna addressed by name through the C API
 // --------------------------------------------------------------------------
 
 TEST(AntennaByName, SetKnownNameResolvesToIndex)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 0, TRXDir::Rx, 0 };
-    EXPECT_EQ(dev.SetAntenna(c, "LNAW"), OpStatus::Success);
+    EXPECT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0, "LNAW"), lime_OpStatus_Success);
     EXPECT_EQ(stub.currentPath, 3); // "LNAW" is index 3 in the Rx path list
 }
 
@@ -180,10 +166,8 @@ TEST(AntennaByName, SetUnknownNameReturnsInvalidValue)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 0, TRXDir::Rx, 0 };
-    EXPECT_EQ(dev.SetAntenna(c, "DOES_NOT_EXIST"), OpStatus::InvalidValue);
+    EXPECT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0, "DOES_NOT_EXIST"), lime_OpStatus_InvalidValue);
     EXPECT_EQ(stub.currentPath, 0); // unchanged
 }
 
@@ -191,57 +175,46 @@ TEST(AntennaByName, SetOnOutOfRangeModuleReturnsInvalidValue)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths(); // only module 0 exists
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 5, TRXDir::Rx, 0 };
-    EXPECT_EQ(dev.SetAntenna(c, "LNAH"), OpStatus::InvalidValue);
+    EXPECT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 5, lime_TRXDir_Rx, 0, "LNAH"), lime_OpStatus_InvalidValue);
 }
 
 TEST(AntennaByName, DirectionIsHonoured)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
-    SDRDevice& dev = stub;
 
     // "Band2" exists only on the Tx path (index 2); it must not resolve on Rx.
-    ChannelId rx{ 0, TRXDir::Rx, 0 };
-    EXPECT_EQ(dev.SetAntenna(rx, "Band2"), OpStatus::InvalidValue);
+    EXPECT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0, "Band2"), lime_OpStatus_InvalidValue);
 
-    ChannelId tx{ 0, TRXDir::Tx, 0 };
-    EXPECT_EQ(dev.SetAntenna(tx, "Band2"), OpStatus::Success);
+    EXPECT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 0, lime_TRXDir_Tx, 0, "Band2"), lime_OpStatus_Success);
     EXPECT_EQ(stub.currentPath, 2);
 }
 
-TEST(AntennaByName, GetAntennaNameRoundTrips)
+TEST(AntennaByName, GetAntennaRoundTrips)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 0, TRXDir::Rx, 0 };
-    ASSERT_EQ(dev.SetAntenna(c, "LNAL"), OpStatus::Success);
-    EXPECT_EQ(dev.GetAntennaName(c), "LNAL");
+    ASSERT_EQ(lime_sdrdevice_set_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0, "LNAL"), lime_OpStatus_Success);
+    EXPECT_STREQ(lime_sdrdevice_get_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0), "LNAL");
 }
 
-TEST(AntennaByName, GetAntennaNameOnOutOfRangeModuleReturnsEmpty)
+TEST(AntennaByName, GetAntennaOnOutOfRangeModuleReturnsNull)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 9, TRXDir::Rx, 0 };
-    EXPECT_TRUE(dev.GetAntennaName(c).empty());
+    EXPECT_EQ(lime_sdrdevice_get_antenna(AsC(stub), 9, lime_TRXDir_Rx, 0), nullptr);
 }
 
-TEST(AntennaByName, GetAntennaNameWithPathOutOfRangeReturnsEmpty)
+TEST(AntennaByName, GetAntennaWithPathOutOfRangeReturnsNull)
 {
     StubSDRDevice stub;
     stub.desc = MakeDescriptorWithPaths();
     stub.currentPath = 42; // beyond the 4 Rx names; simulates an inconsistent index
-    SDRDevice& dev = stub;
 
-    ChannelId c{ 0, TRXDir::Rx, 0 };
-    EXPECT_TRUE(dev.GetAntennaName(c).empty());
+    EXPECT_EQ(lime_sdrdevice_get_antenna(AsC(stub), 0, lime_TRXDir_Rx, 0), nullptr);
 }
 
 } // namespace lime::testing

@@ -6,10 +6,13 @@
 #ifndef LIMESUITENG_LIMESUITENG_C_H
 #define LIMESUITENG_LIMESUITENG_C_H
 
+#include "limesuiteng/config_c.h"
 #include "limesuiteng/types_c.h"
 #include "limesuiteng/device_registry_c.h"
 #include "limesuiteng/sdrdevice_c.h"
 #include "limesuiteng/sdrdescriptor_c.h"
+#include "limesuiteng/gpio_c.h"
+#include "limesuiteng/spi_c.h"
 #include "limesuiteng/rfstream_c.h"
 #include "limesuiteng/versioninfo_c.h"
 
