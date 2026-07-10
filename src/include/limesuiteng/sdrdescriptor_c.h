@@ -70,8 +70,7 @@ LIME_C_API size_t lime_descriptor_antenna_count(const lime_SDRDescriptor* d, siz
  * @param index The antenna path index.
  * @return The antenna name, or NULL when out of range.
  */
-LIME_C_API const char* lime_descriptor_antenna_name(
-    const lime_SDRDescriptor* d, size_t soc, lime_TRXDir dir, size_t index);
+LIME_C_API const char* lime_descriptor_antenna_name(const lime_SDRDescriptor* d, size_t soc, lime_TRXDir dir, size_t index);
 
 #ifdef __cplusplus
 } /* extern "C" */

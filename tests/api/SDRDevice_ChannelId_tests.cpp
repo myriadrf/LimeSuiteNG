@@ -105,9 +105,18 @@ class StubSDRDevice : public SDRDevice
     uint32_t StreamRx(uint8_t, complex32f_t* const*, uint32_t, StreamMeta*, std::chrono::microseconds) override { return 0; }
     uint32_t StreamRx(uint8_t, complex16_t* const*, uint32_t, StreamMeta*, std::chrono::microseconds) override { return 0; }
     uint32_t StreamRx(uint8_t, complex12_t* const*, uint32_t, StreamMeta*, std::chrono::microseconds) override { return 0; }
-    uint32_t StreamTx(uint8_t, const complex32f_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override { return 0; }
-    uint32_t StreamTx(uint8_t, const complex16_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override { return 0; }
-    uint32_t StreamTx(uint8_t, const complex12_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override { return 0; }
+    uint32_t StreamTx(uint8_t, const complex32f_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override
+    {
+        return 0;
+    }
+    uint32_t StreamTx(uint8_t, const complex16_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override
+    {
+        return 0;
+    }
+    uint32_t StreamTx(uint8_t, const complex12_t* const*, uint32_t, const StreamMeta*, std::chrono::microseconds) override
+    {
+        return 0;
+    }
     void StreamStatus(uint8_t, StreamStats*, StreamStats*) override {}
     std::unique_ptr<RFStream> StreamCreate(const StreamConfig&, uint8_t) override { return nullptr; }
     void* GetInternalChip(uint32_t) override { return nullptr; }

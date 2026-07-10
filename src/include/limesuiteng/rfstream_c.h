@@ -75,8 +75,7 @@ LIME_C_API void lime_stream_stop(lime_Stream* s);
  * @param timeout_ms The maximum wait time for incoming samples (in milliseconds).
  * @return The number of samples received per channel (>= 0), or a negative lime_OpStatus on failure.
  */
-LIME_C_API int lime_stream_recv(
-    lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms);
+LIME_C_API int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms);
 
 /**
  * @brief Transmits samples on all configured transmit channels.

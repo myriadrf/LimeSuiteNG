@@ -8,8 +8,7 @@ using lime::SDRDevice;
 
 extern "C" {
 
-lime_OpStatus lime_sdrdevice_set_frequency(
-    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, double hz)
+lime_OpStatus lime_sdrdevice_set_frequency(lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, double hz)
 {
     if (dev == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
@@ -17,8 +16,7 @@ lime_OpStatus lime_sdrdevice_set_frequency(
         sdr(dev)->SetFrequency(static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel), hz));
 }
 
-lime_OpStatus lime_sdrdevice_enable_channel(
-    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, bool enable)
+lime_OpStatus lime_sdrdevice_enable_channel(lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, bool enable)
 {
     if (dev == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
@@ -26,8 +24,7 @@ lime_OpStatus lime_sdrdevice_enable_channel(
         sdr(dev)->EnableChannel(static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel), enable));
 }
 
-lime_OpStatus lime_sdrdevice_set_antenna(
-    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, const char* name)
+lime_OpStatus lime_sdrdevice_set_antenna(lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, const char* name)
 {
     if (dev == nullptr || name == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
