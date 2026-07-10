@@ -58,7 +58,8 @@ extensions = [
 
 # Flags related to breathe extension and Sphinx C++ domain
 suppress_warnings = ["duplicate_declaration.cpp"]
-cpp_id_attributes = ['LIME_API']
+cpp_id_attributes = ['LIME_API', 'LIME_C_API']
+c_id_attributes = ['LIME_API', 'LIME_C_API']
 
 # Add any paths that contain templates here, relative to this directory.
 # Allow same section headings and thus labels to be used across documents.
