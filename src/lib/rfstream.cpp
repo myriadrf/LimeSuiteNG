@@ -33,9 +33,9 @@ lime_Stream* lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cf
     sc.linkFormat = static_cast<lime::DataFormat>(cfg->link_format);
     sc.hintSampleRate = cfg->hint_sample_rate_hz;
 
-    if (cfg->module > std::numeric_limits<uint8_t>::max())
+    if (cfg->module_index > std::numeric_limits<uint8_t>::max())
         return nullptr;
-    std::unique_ptr<lime::RFStream> stream = sdr(dev)->StreamCreate(sc, static_cast<uint8_t>(cfg->module));
+    std::unique_ptr<lime::RFStream> stream = sdr(dev)->StreamCreate(sc, static_cast<uint8_t>(cfg->module_index));
     if (!stream)
         return nullptr;
     return new lime_Stream{ std::move(stream), sc.format };

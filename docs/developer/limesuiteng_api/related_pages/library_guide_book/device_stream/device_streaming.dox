@@ -12,8 +12,8 @@
  * @ref lime::RFStream::StreamStatus(lime::StreamStats*, lime::StreamStats*) "StreamStats()" function.
  * 
  * Once the stream is in an active state, samples of the configured type can be written to or read from device Tx and Rx directions. To receive samples from device Rx direction, call stream 
- * interface function @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *) "Receive()". To send samples through device Tx direction, queue the samples for 
- * transmission by calling stream interface function @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *) "Transmit()".
+ * interface function @ref lime::RFStream::Receive(lime::complex32f_t *const *, uint32_t, lime::StreamRxMeta *, std::chrono::microseconds) "Receive()". To send samples through device Tx direction, queue the samples for 
+ * transmission by calling stream interface function @ref lime::RFStream::Transmit(const lime::complex32f_t *const *, uint32_t, const lime::StreamTxMeta *, std::chrono::microseconds) "Transmit()".
  * 
  * @if RST_SUPPORT
  * @embedRstVerbatim{

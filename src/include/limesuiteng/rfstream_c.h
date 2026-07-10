@@ -22,7 +22,7 @@ typedef struct lime_Stream lime_Stream;
  */
 typedef struct {
     uint32_t struct_size; ///< Must be set to sizeof(lime_StreamConfig)
-    uint32_t module; ///< The RF SoC index the stream attaches to
+    uint32_t module_index; ///< The RF SoC index the stream attaches to
     const uint32_t* rx_channels; ///< Receive channel indices to stream; may be NULL when the count is 0
     size_t rx_count; ///< Number of entries in rx_channels
     const uint32_t* tx_channels; ///< Transmit channel indices to stream; may be NULL when the count is 0
