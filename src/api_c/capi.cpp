@@ -79,28 +79,38 @@ size_t lime_device_child_count(lime_device*) { return 0; }
 lime_device* lime_device_child(lime_device*, size_t) { return nullptr; }
 lime_SDRDevice* lime_device_as_sdr(lime_device* dev) { return reinterpret_cast<lime_SDRDevice*>(dev); }
 
-lime_OpStatus lime_sdrdevice_set_frequency(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir d, uint8_t channel, double hz)
+/* The public C surface takes 32-bit indices so the ABI never has to widen;
+ * the internal C++ addressing is currently 8-bit, so out-of-range values are
+ * rejected here rather than silently truncated. */
+static inline bool narrows(uint32_t module, uint32_t channel)
 {
-    if (dev == nullptr)
+    return module > std::numeric_limits<uint8_t>::max() || channel > std::numeric_limits<uint8_t>::max();
+}
+
+lime_OpStatus lime_sdrdevice_set_frequency(
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, double hz)
+{
+    if (dev == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
-    return static_cast<lime_OpStatus>(sdr(dev)->SetFrequency(module, dir(d), channel, hz));
+    return static_cast<lime_OpStatus>(
+        sdr(dev)->SetFrequency(static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel), hz));
 }
 
 lime_OpStatus lime_sdrdevice_enable_channel(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir d, uint8_t channel, bool enable)
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, bool enable)
 {
-    if (dev == nullptr)
+    if (dev == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
-    return static_cast<lime_OpStatus>(sdr(dev)->EnableChannel(module, dir(d), channel, enable));
+    return static_cast<lime_OpStatus>(
+        sdr(dev)->EnableChannel(static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel), enable));
 }
 
 lime_OpStatus lime_sdrdevice_set_antenna(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir d, uint8_t channel, const char* name)
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir d, uint32_t channel, const char* name)
 {
-    if (dev == nullptr || name == nullptr)
+    if (dev == nullptr || name == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
-    const lime::ChannelId c{ module, dir(d), channel };
+    const lime::ChannelId c{ static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel) };
     return static_cast<lime_OpStatus>(sdr(dev)->SetAntenna(c, std::string(name)));
 }
 
@@ -137,7 +147,7 @@ const char* lime_descriptor_rfsoc_name(const lime_SDRDescriptor* d, size_t soc)
     return desc(d)->rfSOC[soc].name.c_str();
 }
 
-uint8_t lime_descriptor_channel_count(const lime_SDRDescriptor* d, size_t soc)
+uint32_t lime_descriptor_channel_count(const lime_SDRDescriptor* d, size_t soc)
 {
     if (d == nullptr || soc >= desc(d)->rfSOC.size())
         return 0;
@@ -177,9 +187,17 @@ lime_Stream* lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cf
 
     lime::StreamConfig sc;
     for (size_t i = 0; i < cfg->rx_count; ++i)
-        sc.channels[lime::TRXDir::Rx].push_back(cfg->rx_channels[i]);
+    {
+        if (cfg->rx_channels[i] > std::numeric_limits<uint8_t>::max())
+            return nullptr;
+        sc.channels[lime::TRXDir::Rx].push_back(static_cast<uint8_t>(cfg->rx_channels[i]));
+    }
     for (size_t i = 0; i < cfg->tx_count; ++i)
-        sc.channels[lime::TRXDir::Tx].push_back(cfg->tx_channels[i]);
+    {
+        if (cfg->tx_channels[i] > std::numeric_limits<uint8_t>::max())
+            return nullptr;
+        sc.channels[lime::TRXDir::Tx].push_back(static_cast<uint8_t>(cfg->tx_channels[i]));
+    }
     sc.format = static_cast<lime::DataFormat>(cfg->format);
     sc.linkFormat = static_cast<lime::DataFormat>(cfg->link_format);
     sc.hintSampleRate = cfg->hint_sample_rate_hz;
@@ -203,7 +221,7 @@ void lime_stream_stop(lime_Stream* s)
         s->impl->Stop();
 }
 
-int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_StreamMeta* meta, uint32_t timeout_ms)
+int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms)
 {
     if (s == nullptr || dst == nullptr || count > std::numeric_limits<uint32_t>::max())
         return lime_OpStatus_InvalidValue;
@@ -230,12 +248,11 @@ int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_Stream
     {
         meta->timestamp = static_cast<uint64_t>(rxmeta.timestamp.GetTicks());
         meta->has_timestamp = rxmeta.hasTimestamp;
-        meta->flush = false; /* Tx-only; ignored on Rx */
     }
     return static_cast<int>(transferred);
 }
 
-int lime_stream_send(lime_Stream* s, const void* const* src, size_t count, const lime_StreamMeta* meta, uint32_t timeout_ms)
+int lime_stream_send(lime_Stream* s, const void* const* src, size_t count, const lime_StreamTxMeta* meta, uint32_t timeout_ms)
 {
     if (s == nullptr || src == nullptr || count > std::numeric_limits<uint32_t>::max())
         return lime_OpStatus_InvalidValue;

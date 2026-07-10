@@ -81,14 +81,15 @@ LIME_C_API lime_SDRDevice* lime_device_as_sdr(lime_device* dev); /* NULL if not 
 
 /* ------------------------------------------------------------------ *
  * SDRDevice. Channels are addressed by (module, dir, channel).       *
+ * Index parameters are 32-bit so a wider range never breaks the ABI. *
  * ------------------------------------------------------------------ */
 LIME_C_API lime_OpStatus lime_sdrdevice_set_frequency(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir dir, uint8_t channel, double hz);
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir dir, uint32_t channel, double hz);
 LIME_C_API lime_OpStatus lime_sdrdevice_enable_channel(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir dir, uint8_t channel, bool enable);
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir dir, uint32_t channel, bool enable);
 /* Antenna is selected by name (not index). */
 LIME_C_API lime_OpStatus lime_sdrdevice_set_antenna(
-    lime_SDRDevice* dev, uint8_t module, lime_TRXDir dir, uint8_t channel, const char* name);
+    lime_SDRDevice* dev, uint32_t module, lime_TRXDir dir, uint32_t channel, const char* name);
 
 LIME_C_API const lime_SDRDescriptor* lime_sdrdevice_get_descriptor(lime_SDRDevice* dev);
 
@@ -101,7 +102,7 @@ LIME_C_API const char* lime_descriptor_name(const lime_SDRDescriptor* d);
 LIME_C_API uint64_t    lime_descriptor_serial(const lime_SDRDescriptor* d);
 LIME_C_API size_t      lime_descriptor_rfsoc_count(const lime_SDRDescriptor* d);
 LIME_C_API const char* lime_descriptor_rfsoc_name(const lime_SDRDescriptor* d, size_t soc);
-LIME_C_API uint8_t     lime_descriptor_channel_count(const lime_SDRDescriptor* d, size_t soc);
+LIME_C_API uint32_t    lime_descriptor_channel_count(const lime_SDRDescriptor* d, size_t soc);
 /* Antenna names: the vocabulary for lime_sdrdevice_set_antenna(). */
 LIME_C_API size_t      lime_descriptor_antenna_count(const lime_SDRDescriptor* d, size_t soc, lime_TRXDir dir);
 LIME_C_API const char* lime_descriptor_antenna_name(
@@ -122,22 +123,28 @@ typedef enum { /* mirrors lime::DataFormat */
  * lets the ABI grow: the library never reads past the size the caller declares. */
 typedef struct {
     uint32_t struct_size; /* = sizeof(lime_StreamConfig) */
-    uint8_t module; /* RF SoC index the stream attaches to */
-    const uint8_t* rx_channels; /* channel indices to stream; may be NULL when the count is 0 */
+    uint32_t module; /* RF SoC index the stream attaches to */
+    const uint32_t* rx_channels; /* channel indices to stream; may be NULL when the count is 0 */
     size_t rx_count;
-    const uint8_t* tx_channels;
+    const uint32_t* tx_channels;
     size_t tx_count;
     lime_DataFormat format; /* samples layout for _recv / _send */
     lime_DataFormat link_format; /* wire layout Host<->FPGA */
     double hint_sample_rate_hz; /* 0 = decide internally */
 } lime_StreamConfig;
 
-/* Unified at the C boundary: flush is Tx-only and ignored on Rx. */
+/* Receive metadata: filled by lime_stream_recv. */
 typedef struct {
-    uint64_t timestamp; /* in sample ticks */
+    uint64_t timestamp; /* time of the first sample in the buffer, in sample ticks */
     bool has_timestamp;
-    bool flush; /* Tx: submit a partially filled packet (end of burst) */
-} lime_StreamMeta;
+} lime_StreamRxMeta;
+
+/* Transmit metadata: read by lime_stream_send. */
+typedef struct {
+    uint64_t timestamp; /* when the first submitted sample should be sent, in sample ticks */
+    bool has_timestamp; /* wait for 'timestamp' before broadcasting */
+    bool flush; /* submit a partially filled packet (end of burst) */
+} lime_StreamTxMeta;
 
 LIME_C_API lime_Stream*  lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cfg);
 LIME_C_API lime_OpStatus lime_stream_start(lime_Stream* s);
@@ -145,9 +152,9 @@ LIME_C_API void          lime_stream_stop(lime_Stream* s);
 /* dst/src: one buffer pointer per configured channel, laid out per cfg->format.
  * Return: samples transferred per channel (>=0), or a negative lime_OpStatus. */
 LIME_C_API int lime_stream_recv(
-    lime_Stream* s, void* const* dst, size_t count, lime_StreamMeta* meta, uint32_t timeout_ms);
+    lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms);
 LIME_C_API int lime_stream_send(
-    lime_Stream* s, const void* const* src, size_t count, const lime_StreamMeta* meta, uint32_t timeout_ms);
+    lime_Stream* s, const void* const* src, size_t count, const lime_StreamTxMeta* meta, uint32_t timeout_ms);
 LIME_C_API void lime_stream_destroy(lime_Stream* s);
 
 /* ------------------------------------------------------------------ *
