@@ -1,6 +1,6 @@
 /* C wrapper over lime::DeviceRegistry / lime::DeviceHandle. */
 #include "limesuiteng/device_registry_c.h"
-#include "capi_private.h"
+#include "private.h"
 
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/DeviceHandle.h"

@@ -1,6 +1,6 @@
 /* C wrapper for the SPI subinterface, over lime::SDRDevice::SPI. */
 #include "limesuiteng/spi_c.h"
-#include "capi_private.h"
+#include "private.h"
 
 using lime::SDRDevice;
 

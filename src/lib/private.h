@@ -1,6 +1,6 @@
 /* Internal helpers shared by the C API wrapper files. Not installed. */
-#ifndef LIMESUITENG_CAPI_PRIVATE_H
-#define LIMESUITENG_CAPI_PRIVATE_H
+#ifndef LIMESUITENG_CAPI_LIB_PRIVATE_H
+#define LIMESUITENG_CAPI_LIB_PRIVATE_H
 
 #include "limesuiteng/types_c.h"
 #include "limesuiteng/sdrdevice_c.h"
@@ -46,4 +46,4 @@ struct lime_Stream {
     lime::DataFormat format;
 };
 
-#endif /* LIMESUITENG_CAPI_PRIVATE_H */
+#endif /* LIMESUITENG_CAPI_LIB_PRIVATE_H */

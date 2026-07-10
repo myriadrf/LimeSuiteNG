@@ -1,6 +1,6 @@
 /* C wrapper for the GPIO subinterface, over lime::SDRDevice::GPIORead/GPIOWrite. */
 #include "limesuiteng/gpio_c.h"
-#include "capi_private.h"
+#include "private.h"
 
 using lime::SDRDevice;
 

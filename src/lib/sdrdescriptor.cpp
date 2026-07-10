@@ -1,6 +1,6 @@
 /* C wrapper over lime::SDRDescriptor: read-only capability accessors. */
 #include "limesuiteng/sdrdescriptor_c.h"
-#include "capi_private.h"
+#include "private.h"
 
 extern "C" {
 
