@@ -59,11 +59,6 @@ if(ENABLE_NEW_GAIN_BEHAVIOUR)
     target_compile_definitions(limesuiteng PRIVATE NEW_GAIN_BEHAVIOUR)
 endif()
 
-# Building the public C API into liblimesuiteng: mark lime_* entry points for
-# export. Must be unconditional (was mistakenly nested in the block above, which
-# left the C symbols marked dllimport and therefore unexported on Windows).
-target_compile_definitions(limesuiteng PRIVATE LIME_C_BUILD)
-
 ########################################################################
 # Build pkg config file
 ########################################################################
