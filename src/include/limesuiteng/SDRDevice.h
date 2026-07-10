@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "limesuiteng/config.h"
@@ -597,7 +598,7 @@ class LIME_API SDRDevice
     /// @brief Selects the antenna by name (per RFSOCDescriptor::pathNames). Antenna is addressed
     /// by name on the 1.0 surface, not by path index. Returns InvalidValue if the name is unknown.
     /// Defined out-of-line: needs the complete SDRDescriptor, which the header only forward-declares.
-    OpStatus SetAntenna(ChannelId c, const std::string& name);
+    OpStatus SetAntenna(ChannelId c, std::string_view name);
     /// @brief Returns the currently selected antenna name, or an empty string if unavailable.
     const std::string& GetAntennaName(ChannelId c);
 

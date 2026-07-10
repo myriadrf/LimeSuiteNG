@@ -7,7 +7,7 @@
 using namespace lime;
 using namespace std::literals::string_literals;
 
-OpStatus SDRDevice::SetAntenna(ChannelId c, const std::string& name)
+OpStatus SDRDevice::SetAntenna(ChannelId c, std::string_view name)
 {
     const auto& soc = GetDescriptor().rfSOC;
     if (c.module >= soc.size())

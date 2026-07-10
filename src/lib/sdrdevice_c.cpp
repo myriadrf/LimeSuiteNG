@@ -2,7 +2,7 @@
 #include "limesuiteng/sdrdevice_c.h"
 #include "capi_private.h"
 
-#include <string>
+#include <string_view>
 
 using lime::SDRDevice;
 
@@ -32,7 +32,7 @@ lime_OpStatus lime_sdrdevice_set_antenna(
     if (dev == nullptr || name == nullptr || narrows(module, channel))
         return lime_OpStatus_InvalidValue;
     const lime::ChannelId c{ static_cast<uint8_t>(module), dir(d), static_cast<uint8_t>(channel) };
-    return static_cast<lime_OpStatus>(sdr(dev)->SetAntenna(c, std::string(name)));
+    return static_cast<lime_OpStatus>(sdr(dev)->SetAntenna(c, std::string_view{ name }));
 }
 
 const lime_SDRDescriptor* lime_sdrdevice_get_descriptor(lime_SDRDevice* dev)
