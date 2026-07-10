@@ -1,6 +1,5 @@
 // Unit tests for the 1.0 API additions:
 //   - ChannelId value type (types.h)
-//   - ChannelId-addressed delegating overloads (SDRDevice.h)
 //   - antenna addressed by name: SetAntenna(ChannelId, string) / GetAntennaName(ChannelId)
 //     (SDRDevice.cpp, resolving name<->index via RFSOCDescriptor::pathNames)
 //
@@ -33,17 +32,6 @@ class StubSDRDevice : public SDRDevice
     SDRDescriptor desc;
     uint8_t currentPath{ 0 }; ///< last path set via the (module,dir,channel,path) virtual
 
-    // records of the last delegated call, to prove ChannelId decomposition is correct
-    struct Call {
-        uint8_t module{ 0xFF };
-        TRXDir dir{ TRXDir::Rx };
-        uint8_t channel{ 0xFF };
-        double doubleArg{ 0.0 };
-        bool boolArg{ false };
-    };
-    Call lastSetFrequency;
-    Call lastEnableChannel;
-
     // --- pure virtuals with real behaviour ---
     const SDRDescriptor& GetDescriptor() const override { return desc; }
 
@@ -53,16 +41,8 @@ class StubSDRDevice : public SDRDevice
         currentPath = path;
         return OpStatus::Success;
     }
-    OpStatus SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency) override
-    {
-        lastSetFrequency = { moduleIndex, trx, channel, frequency, false };
-        return OpStatus::Success;
-    }
-    OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) override
-    {
-        lastEnableChannel = { moduleIndex, trx, channel, 0.0, enable };
-        return OpStatus::Success;
-    }
+    OpStatus SetFrequency(uint8_t, TRXDir, uint8_t, double) override { return OpStatus::Success; }
+    OpStatus EnableChannel(uint8_t, TRXDir, uint8_t, bool) override { return OpStatus::Success; }
 
     // The base declares SetAntenna(ChannelId, const std::string&) and GetAntennaName(ChannelId)
     // out-of-line; declaring the index-based override above hides them for name lookup on the
@@ -170,40 +150,6 @@ TEST(ChannelId, AggregateInitialization)
     EXPECT_EQ(c.module, 3);
     EXPECT_EQ(c.dir, TRXDir::Tx);
     EXPECT_EQ(c.channel, 1);
-}
-
-// --------------------------------------------------------------------------
-// ChannelId delegating overloads decompose to the (module, dir, channel) triple
-// --------------------------------------------------------------------------
-
-TEST(ChannelIdOverloads, SetFrequencyForwardsTriple)
-{
-    StubSDRDevice stub;
-    SDRDevice& dev = stub;
-
-    ChannelId c{ 1, TRXDir::Tx, 1 };
-    const OpStatus status = dev.SetFrequency(c, 2.4e9);
-
-    EXPECT_EQ(status, OpStatus::Success);
-    EXPECT_EQ(stub.lastSetFrequency.module, 1);
-    EXPECT_EQ(stub.lastSetFrequency.dir, TRXDir::Tx);
-    EXPECT_EQ(stub.lastSetFrequency.channel, 1);
-    EXPECT_DOUBLE_EQ(stub.lastSetFrequency.doubleArg, 2.4e9);
-}
-
-TEST(ChannelIdOverloads, EnableChannelForwardsTriple)
-{
-    StubSDRDevice stub;
-    SDRDevice& dev = stub;
-
-    ChannelId c{ 0, TRXDir::Rx, 1 };
-    const OpStatus status = dev.EnableChannel(c, true);
-
-    EXPECT_EQ(status, OpStatus::Success);
-    EXPECT_EQ(stub.lastEnableChannel.module, 0);
-    EXPECT_EQ(stub.lastEnableChannel.dir, TRXDir::Rx);
-    EXPECT_EQ(stub.lastEnableChannel.channel, 1);
-    EXPECT_TRUE(stub.lastEnableChannel.boolArg);
 }
 
 // --------------------------------------------------------------------------

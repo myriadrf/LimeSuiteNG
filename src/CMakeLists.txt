@@ -85,7 +85,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemResources.in.cpp ${CMAKE_CURREN
 target_sources(
     limesuiteng
     PRIVATE CommonFunctions.cpp
-            api_c/capi.cpp
+            lib/device_registry_c.cpp
+            lib/rfstream_c.cpp
+            lib/sdrdescriptor_c.cpp
+            lib/sdrdevice_c.cpp
+            lib/versioninfo_c.cpp
             OEMTesting.cpp
             logger/Logger.cpp
             logger/LoggerCString.cpp
@@ -166,13 +170,6 @@ if(INSTALL_DEVELOPMENT)
         FILES ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng.pc
         COMPONENT dev
         DESTINATION lib${LIB_SUFFIX}/pkgconfig)
-
-    install(
-        DIRECTORY include/limesuiteng/c
-        COMPONENT dev
-        DESTINATION include/limesuiteng
-        FILES_MATCHING
-        PATTERN "*.h")
 
     install(
         FILES ${PROJECT_BINARY_DIR}/limesuitengConfigVersion.cmake
