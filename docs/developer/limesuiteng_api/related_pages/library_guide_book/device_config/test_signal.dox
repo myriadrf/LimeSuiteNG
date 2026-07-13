@@ -60,14 +60,14 @@
  * #include <chrono>
  * #include <thread>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
- * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/SDRDevice.hpp>
+ * #include <limesuiteng/RFStream.hpp>
  * #include <limesuiteng/StreamConfig.h>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/SDRConfig.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
- * #include <limesuiteng/SDRDescriptor.h>
+ * #include <limesuiteng/SDRDescriptor.hpp>
  * #include <limesuiteng/complex.h>
  * #include <limesuiteng/StreamMeta.h>
  * 

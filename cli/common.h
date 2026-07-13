@@ -17,7 +17,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 namespace lime::cli {
 

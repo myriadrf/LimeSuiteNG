@@ -13,7 +13,7 @@
 #include "protocols/LMS64CProtocol.h"
 #include "DSP/CFR/CrestFactorReduction.h"
 #include "DeviceTreeNode.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "CommonFunctions.h"
 #include "streaming/TRXLooper.h"
 

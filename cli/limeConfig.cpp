@@ -1,6 +1,6 @@
 #include "common.h"
 
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 

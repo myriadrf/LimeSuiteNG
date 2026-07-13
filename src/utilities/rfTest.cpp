@@ -1,4 +1,4 @@
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/DeviceHandle.h"

@@ -1,6 +1,6 @@
 #include "pnlGPIO.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "protocols/LMSBoards.h"
 
 #include <wx/sizer.h>
@@ -8,7 +8,7 @@
 #include <wx/checkbox.h>
 #include <wx/statbox.h>
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 using namespace lime;
 using namespace std;

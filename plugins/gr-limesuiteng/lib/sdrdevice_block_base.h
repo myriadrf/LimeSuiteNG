@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include <gnuradio/logger.h>
 
 namespace lime {

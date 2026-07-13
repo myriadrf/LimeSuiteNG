@@ -3,9 +3,8 @@ Section: comm
 Priority: optional
 Maintainer: Lime Microsystems <apps@limemicro.com>
 Build-Depends:
-    dkms | dh-dkms,
+    dh-dkms | dkms,
     dh-python,
-    build-essential,
     gnuradio-dev,
     libsoapysdr-dev,
     debhelper-compat (= 13),
@@ -22,6 +21,7 @@ Package: limesuiteng
 Section: comm
 Architecture: any
 Depends:
+    ${misc:Depends},
     liblimesuiteng,
     limesuiteng-cli,
 Recommends:
@@ -59,6 +59,7 @@ Package: limesuiteng-dev
 Section: libdevel
 Architecture: any
 Depends:
+    ${misc:Depends},
     liblimesuiteng
 Description: headers and development files.
 
@@ -81,7 +82,7 @@ Description: Graphical User Interface for LimeSDR based devices.
 Package: limesuiteng-udev
 Section: libs
 Architecture: all
-Depends: udev
+Depends: ${misc:Depends}, udev
 Description: UDEV rules for LimeSuiteNG devices.
 
 Package: limepcie-dkms

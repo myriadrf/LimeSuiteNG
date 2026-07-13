@@ -1,5 +1,5 @@
 /**
-@file VersionInfo.h
+@file VersionInfo.hpp
 @author Lime Microsystems
 @brief API for querying version and build information.
 */

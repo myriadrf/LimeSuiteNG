@@ -6,7 +6,7 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 
 namespace lime {
 
@@ -75,13 +75,31 @@ class LIME_API StreamComposite : public RFStream
     /// @copydoc RFStream::StreamStatus()
     void StreamStatus(StreamStats* rx, StreamStats* tx) override;
 
-    uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
-    uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
-    uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(lime::complex32f_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
+    uint32_t Receive(lime::complex16_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
+    uint32_t Receive(lime::complex12_t* const* samples,
+        uint32_t count,
+        StreamRxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
 
-    uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
-    uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
-    uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex32f_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
+    uint32_t Transmit(const lime::complex16_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
+    uint32_t Transmit(const lime::complex12_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout = RFStream::DEFAULT_TIMEOUT) override;
 
     uint64_t GetHardwareTimestamp() const override;
 

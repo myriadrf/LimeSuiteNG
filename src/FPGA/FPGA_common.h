@@ -15,7 +15,7 @@
 #include "GatewareFeatures.h"
 
 #include "limesuiteng/complex.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/OpStatus.h"
 
 namespace lime {

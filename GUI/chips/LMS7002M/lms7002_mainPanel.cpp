@@ -29,7 +29,7 @@
 #include "lms7002_pnlR3.h"
 #include "SOC_GUIFactory.h"
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 

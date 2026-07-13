@@ -17,7 +17,7 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "protocols/LMSBoards.h"
 

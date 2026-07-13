@@ -5,8 +5,8 @@
 #include <vector>
 #include <memory>
 
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/LMS7002M.h"
 

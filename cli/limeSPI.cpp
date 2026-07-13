@@ -1,6 +1,6 @@
 #include "common.h"
 
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 #include <cassert>
 #include <cstring>

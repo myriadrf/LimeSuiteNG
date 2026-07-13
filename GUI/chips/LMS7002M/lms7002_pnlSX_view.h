@@ -2,7 +2,7 @@
 #define __lms7002_pnlSX_view__
 
 #include "ILMS7002MTab.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 
 class wxSpinCtrl;
 class NumericSlider;

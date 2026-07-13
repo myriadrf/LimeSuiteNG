@@ -11,7 +11,7 @@
 #include <wx/choice.h>
 #include "events.h"
 #include "pnlGPIO.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 using namespace std;
 

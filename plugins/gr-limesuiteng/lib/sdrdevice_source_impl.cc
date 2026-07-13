@@ -17,10 +17,10 @@
 
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/RFSOCDescriptor.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "limesuiteng/SDRConfig.h"
-#include "limesuiteng/SDRDescriptor.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDescriptor.hpp"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/StreamMeta.h"
 #include "limesuiteng/complex.h"

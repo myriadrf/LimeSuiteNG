@@ -6,7 +6,7 @@
 * @brief Defines string manipulation functions used to convert library enumerations into std::string format
 */
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/OpStatus.h"
 
 #include <string>

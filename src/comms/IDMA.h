@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include <cstdint>
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/OpStatus.h"
 #include <vector>
 

@@ -18,8 +18,8 @@
  * #include <vector>
  * #include <memory>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
- * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/SDRDevice.hpp>
+ * #include <limesuiteng/RFStream.hpp>
  * #include <limesuiteng/StreamConfig.h>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/SDRConfig.h>
@@ -279,8 +279,8 @@
  * #include <vector>
  * #include <memory>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
- * #include <limesuiteng/RFStream.h>
+ * #include <limesuiteng/SDRDevice.hpp>
+ * #include <limesuiteng/RFStream.hpp>
  * #include <limesuiteng/StreamConfig.h>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/SDRConfig.h>

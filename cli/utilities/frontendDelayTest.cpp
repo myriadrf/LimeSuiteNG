@@ -1,6 +1,6 @@
 #include "limesuiteng/StreamConfig.h"
 #include "streaming/StreamComposite.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/OpStatus.h"
 #include <iostream>
 #include <chrono>

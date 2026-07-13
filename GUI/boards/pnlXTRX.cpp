@@ -9,8 +9,8 @@
 #include <wx/spinctrl.h>
 #include <wx/msgdlg.h>
 #include "events.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 #include <ciso646>
 

@@ -25,9 +25,13 @@ __Previews
 
 # This project
 build/**
+build*/
 docs/LMS_API_Documentation/*
 .vscode/
 /.vs
 /out/
 /CMakeSettings.json
 /deps/
+
+# JetBrains IDEs (CLion/IntelliJ)
+.idea/

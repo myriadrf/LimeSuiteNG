@@ -7,7 +7,7 @@
 @brief  Defines LMS7002M transceiver configuration interface class
 */
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/LMS7002MCSR.h"

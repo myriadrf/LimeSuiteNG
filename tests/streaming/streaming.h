@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

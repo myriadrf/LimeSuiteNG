@@ -12,8 +12,8 @@
 #include <wx/statbox.h>
 #include <wx/stattext.h>
 #include "events.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 #include <ciso646>
 

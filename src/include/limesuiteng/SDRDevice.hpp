@@ -2,7 +2,7 @@
 #define LIME_SDRDevice_H
 
 /**
-@file limesuiteng/SDRDevice.h
+@file limesuiteng/SDRDevice.hpp
 @author Lime Microsystems
 @brief Defines SDR device configuration and control interface class
 */
@@ -544,19 +544,19 @@ class LIME_API SDRDevice
     /// @param meta The metadata of the packets of the stream.
     /// @param timeout Number of microseconds for the operation to complete, function can return early if timeout is shorter than time required to gather requested amount of samples
     /// @return The amount of samples received.
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex32f_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex16_t* const* samples,
         uint32_t count,
         StreamMeta* meta,
         std::chrono::microseconds timeout = DEFAULT_TIMEOUT) = 0;
     /// @copydoc SDRDevice::StreamRx()
-    virtual uint32_t StreamRx(uint8_t moduleIndex,
+    [[deprecated("use StreamCreate() + RFStream::Receive()")]] virtual uint32_t StreamRx(uint8_t moduleIndex,
         lime::complex12_t* const* samples,
         uint32_t count,
         StreamMeta* meta,

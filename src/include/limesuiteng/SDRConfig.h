@@ -7,7 +7,7 @@
 * @brief Defines SDR configuration structures
 */
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/complex.h"
 
 #include <unordered_map>
@@ -111,6 +111,7 @@ struct ChannelConfig {
         case TRXDir::Tx:
             return tx;
         }
+        return rx; // unreachable: TRXDir is two-valued; silences -Wreturn-type
     }
 
     /// @brief Gets the const reference to the direction settings.
@@ -125,6 +126,7 @@ struct ChannelConfig {
         case TRXDir::Tx:
             return tx;
         }
+        return rx; // unreachable: TRXDir is two-valued; silences -Wreturn-type
     }
 
     Direction rx; ///< Configuration settings for the Receive channel.

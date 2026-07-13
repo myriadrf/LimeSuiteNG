@@ -1,8 +1,8 @@
 #include "CSR_wxgui.h"
 #include <vector>
 
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
 #include "comms/ICSR.h"

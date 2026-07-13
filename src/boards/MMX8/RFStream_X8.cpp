@@ -125,34 +125,40 @@ void RFStream_X8::StreamStatus(StreamStats* rx, StreamStats* tx)
     stream->StreamStatus(rx, tx);
 }
 
-uint32_t RFStream_X8::Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t RFStream_X8::Receive(
+    lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Receive(samples, count, meta);
+    return stream->Receive(samples, count, meta, timeout);
 }
 
-uint32_t RFStream_X8::Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t RFStream_X8::Receive(
+    lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Receive(samples, count, meta);
+    return stream->Receive(samples, count, meta, timeout);
 }
 
-uint32_t RFStream_X8::Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta)
+uint32_t RFStream_X8::Receive(
+    lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Receive(samples, count, meta);
+    return stream->Receive(samples, count, meta, timeout);
 }
 
-uint32_t RFStream_X8::Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t RFStream_X8::Transmit(
+    const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Transmit(samples, count, meta);
+    return stream->Transmit(samples, count, meta, timeout);
 }
 
-uint32_t RFStream_X8::Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t RFStream_X8::Transmit(
+    const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Transmit(samples, count, meta);
+    return stream->Transmit(samples, count, meta, timeout);
 }
 
-uint32_t RFStream_X8::Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta)
+uint32_t RFStream_X8::Transmit(
+    const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta, std::chrono::microseconds timeout)
 {
-    return stream->Transmit(samples, count, meta);
+    return stream->Transmit(samples, count, meta, timeout);
 }
 
 } // namespace lime

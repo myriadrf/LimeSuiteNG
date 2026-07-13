@@ -7,10 +7,10 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "PacketsFIFO.h"
 #include "StreamPacket.h"
 #include "MTStack.h"
@@ -59,13 +59,25 @@ class TRXLooper : public RFStream
         const StreamMeta* meta,
         std::chrono::microseconds timeout) override;
 
-    uint32_t Receive(lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
-    uint32_t Receive(lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
-    uint32_t Receive(lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta) override;
+    uint32_t Receive(
+        lime::complex32f_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout) override;
+    uint32_t Receive(
+        lime::complex16_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout) override;
+    uint32_t Receive(
+        lime::complex12_t* const* samples, uint32_t count, StreamRxMeta* meta, std::chrono::microseconds timeout) override;
 
-    uint32_t Transmit(const lime::complex32f_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
-    uint32_t Transmit(const lime::complex16_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
-    uint32_t Transmit(const lime::complex12_t* const* samples, uint32_t count, const StreamTxMeta* meta) override;
+    uint32_t Transmit(const lime::complex32f_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t Transmit(const lime::complex16_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout) override;
+    uint32_t Transmit(const lime::complex12_t* const* samples,
+        uint32_t count,
+        const StreamTxMeta* meta,
+        std::chrono::microseconds timeout) override;
 
     /// @brief Sets the callback to use for message logging.
     /// @param callback The new callback to use.

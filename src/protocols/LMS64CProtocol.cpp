@@ -5,7 +5,7 @@
 */
 
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "LMS64CProtocol.h"
 #include <chrono>
 #include <cassert>

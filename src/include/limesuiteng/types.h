@@ -1,83 +1,53 @@
-#ifndef LIMESUITENG_TYPES_H
-#define LIMESUITENG_TYPES_H
-
 /**
-* @file limesuiteng/types.h
-* @author Lime Microsystems
-* @brief Defines custom library types for use with public API members
-*/
+ * @file limesuiteng/types.h
+ * @author Lime Microsystems
+ * @brief Common types of the LimeSuiteNG C API: status codes, direction, sample formats.
+ */
+#ifndef LIMESUITENG_TYPES_C_H
+#define LIMESUITENG_TYPES_C_H
 
 #include "limesuiteng/config.h"
-#include <cstdint>
-#include <string>
 
-namespace lime {
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-/// @brief The direction of the transmission
-enum class TRXDir : bool {
-    Rx, ///< Receiver direction.
-    Tx ///< Transmiter direction.
-};
-
-/// @brief Enumerator describing the data formats.
-enum class DataFormat : uint8_t {
-    I16, ///< 16-bit integers.
-    I12, ///< 12-bit integers. Stored as int16_t, but the expected range is [-2048;2047]
-    F32, ///< 32-bit floating-point.
-};
-
-/// @brief Available gain types on the devices.
-enum class eGainTypes : uint8_t {
-    LNA, ///< Receiver Low Noise Amplifier.
-    LoopbackLNA, ///< Receiver with loopback buffer Low Noise Amplifier.
-    PGA, ///< Receiver Programmable Gain Amplifier.
-    TIA, ///< Receiver Trans Impedance Amplifier.
-    PAD, ///< Transmitter Programmable Amplifier Driver.
-    LoopbackPAD, ///< Transmitter loopback Programmable Amplifier Driver.
-    IAMP, ///< TBB (Transmitter baseband) frontend amplifier.
-    PA, ///< On-board Power Amplifier.
-    UNKNOWN, ///< Not supported by API.
-    GENERIC = UNKNOWN, ///< Not supported by API.
-};
-
-/// @brief Structure describing the range possible.
-template<class T> struct Range {
-    /// @brief Constructs the range structure,
-    /// @param min The minimum value of the range (default 0.0)
-    /// @param max The maximum value of the range (default 0.0)
-    /// @param step The step of the range (default 0.0 - no step)
-    constexpr Range(T min = 0, T max = 0, T step = 1)
-        : min(min)
-        , max(max)
-        , step(step){};
-    T min; ///< The minimum value of the range
-    T max; ///< The maximum value of the range
-    T step; ///< The step of the range (or 0.0 for any step)
-};
-
-/// @brief Structure for storing the information of a memory region.
-struct Region {
-    int32_t address; ///< Starting address of the memory region
-    int32_t size; ///< The size of the memory region
-};
-
-/// @brief Available memory options on device.
-enum class eMemoryDevice : uint8_t {
-    FPGA_RAM = 0, ///< FPGA RAM memory option.
-    FPGA_FLASH, ///< FPGA flash memory. Points to the start of the flash. Depending on SDR GW version, can also point to flash GW user image location.
-    EEPROM, ///< EEPROM memory option.
-    GATEWARE_GOLD_IMAGE, ///< Starting location of backup GW image in FPGA flash.
-    GATEWARE_USER_IMAGE, ///< Starting location of the custom GW image in FPGA flash.
-    COUNT
-};
-
-/// @brief The structure for writing and reading custom parameters
-struct CustomParameterIO {
-    int32_t id; ///< The ID of the parameter
-    double value; ///< The value of the parameter.
-    std::string units; ///< The units of the parameter.
-};
-
-} // namespace lime
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/** @brief The possible status codes of operations. 0 is success, negative is failure. */
+typedef enum {
+    lime_OpStatus_Success = 0, ///< Success code: 0
+    lime_OpStatus_Error = -1, ///< Error code: -1
+    lime_OpStatus_NotImplemented = -2, ///< Not implemented code: -2
+    lime_OpStatus_IOFailure = -3, ///< IO failure code: -3
+    lime_OpStatus_InvalidValue = -4, ///< Invalid value code: -4
+    lime_OpStatus_FileNotFound = -5, ///< File not found code: -5
+    lime_OpStatus_OutOfRange = -6, ///< Out of range code: -6
+    lime_OpStatus_NotSupported = -7, ///< Not supported code: -7
+    lime_OpStatus_Timeout = -8, ///< Timeout code: -8
+    lime_OpStatus_Busy = -9, ///< Busy code: -9
+    lime_OpStatus_Aborted = -10, ///< Abort code: -10
+    lime_OpStatus_PermissionDenied = -11, ///< Permission denied code: -11
+    lime_OpStatus_NotConnected = -12 ///< Not connected code: -12
+} lime_OpStatus;
+
+/** @brief Direction of the RF transmission. */
+typedef enum {
+    lime_TRXDir_Rx = 0, ///< Receive
+    lime_TRXDir_Tx = 1 ///< Transmit
+} lime_TRXDir;
+
+/** @brief Sample data layouts. */
+typedef enum {
+    lime_DataFormat_I16 = 0, ///< 16-bit integers
+    lime_DataFormat_I12 = 1, ///< 12-bit integers stored as int16_t, range [-2048; 2047]
+    lime_DataFormat_F32 = 2 ///< 32-bit floating-point
+} lime_DataFormat;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* LIMESUITENG_TYPES_C_H */

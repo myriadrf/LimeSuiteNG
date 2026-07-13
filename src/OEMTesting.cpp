@@ -1,9 +1,9 @@
 #include "OEMTesting.h"
 
 #include "limesuiteng/OpStatus.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "DSP/FFT/FFT.h"
 
 namespace lime {

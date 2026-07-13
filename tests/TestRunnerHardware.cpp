@@ -4,8 +4,8 @@
 #include "args.hxx"
 #include "gtest/gtest.h"
 
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "cli/common.h"
 
 using ::testing::InitGoogleTest;

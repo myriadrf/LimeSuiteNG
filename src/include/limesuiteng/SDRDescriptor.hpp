@@ -2,7 +2,7 @@
 #define LIMESUITENG_SDRDESCRIPTOR_H
 
 /**
-@file limesuiteng/SDRDescriptor.h
+@file limesuiteng/SDRDescriptor.hpp
 @author Lime Microsystems
 @brief Defines SDR descriptor structures used to describe SDR devices
 */

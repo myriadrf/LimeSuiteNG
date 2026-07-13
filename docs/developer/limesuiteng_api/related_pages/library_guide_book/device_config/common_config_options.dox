@@ -32,7 +32,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -62,7 +62,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -111,7 +111,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -156,7 +156,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -197,7 +197,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -260,7 +260,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
@@ -311,11 +311,11 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>
- * #include <limesuiteng/SDRDescriptor.h>
+ * #include <limesuiteng/SDRDescriptor.hpp>
  * 
  * int main()
  * {
@@ -364,7 +364,7 @@
  * #include <iostream>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/ToString.h>
  * #include <limesuiteng/OpStatus.h>

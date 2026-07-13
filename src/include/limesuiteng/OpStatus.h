@@ -14,7 +14,7 @@
 namespace lime {
 
 /// @brief The possible status codes from operations.
-enum class OpStatus {
+enum class [[nodiscard]] OpStatus{
     Success = 0, ///< Success code: 0.
     Error = -1, ///< Error code: -1
     NotImplemented = -2, ///< Not implemented code: -2

@@ -2,10 +2,10 @@
 #define LIMESUITENG_LIMEPLUGIN_H
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/RFStream.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/RFStream.hpp"
+#include "limesuiteng/types.hpp"
 
 #include <map>
 #include <vector>
