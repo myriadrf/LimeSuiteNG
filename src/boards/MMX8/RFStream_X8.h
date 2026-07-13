@@ -3,7 +3,7 @@
 #include <chrono>
 #include <memory>
 
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 
 namespace lime {
 

@@ -26,7 +26,7 @@
 #include "IModuleFrame.h"
 #include "protocols/LMSBoards.h"
 #include "limesuiteng/OpStatus.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 
 namespace lime {
 class SDRDevice;

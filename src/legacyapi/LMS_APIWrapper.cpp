@@ -2,7 +2,7 @@
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "limesuiteng/ToString.h"
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "utilities/DeltaVariable.h"

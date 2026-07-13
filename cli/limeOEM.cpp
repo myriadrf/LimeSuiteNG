@@ -1,8 +1,8 @@
 #include "common.h"
 
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/OpStatus.h"
-#include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/VersionInfo.hpp"
 
 #include <assert.h>
 #include <cstring>

@@ -2,7 +2,7 @@
 #define LIME_SDRDevice_H
 
 /**
-@file limesuiteng/SDRDevice.h
+@file limesuiteng/SDRDevice.hpp
 @author Lime Microsystems
 @brief Defines SDR device configuration and control interface class
 */

@@ -1,12 +1,12 @@
 /**
- * @file limesuiteng/versioninfo_c.h
+ * @file limesuiteng/versioninfo.h
  * @author Lime Microsystems
  * @brief Library version information.
  */
 #ifndef LIMESUITENG_VERSIONINFO_C_H
 #define LIMESUITENG_VERSIONINFO_C_H
 
-#include "limesuiteng/types_c.h"
+#include "limesuiteng/types.h"
 
 #ifdef __cplusplus
 extern "C" {

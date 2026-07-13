@@ -1,7 +1,7 @@
 /* C wrapper over lime::VersionInfo. */
-#include "limesuiteng/versioninfo_c.h"
+#include "limesuiteng/versioninfo.h"
 
-#include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/VersionInfo.hpp"
 
 #include <string>
 

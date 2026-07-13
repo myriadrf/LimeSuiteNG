@@ -26,7 +26,7 @@
 #endif
 
 #include "INI.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "comms/SPI/ISPI.h"
 #include "LMS7002M_RegistersMap.h"
 #include "LMS7002MCSR_Data.h"

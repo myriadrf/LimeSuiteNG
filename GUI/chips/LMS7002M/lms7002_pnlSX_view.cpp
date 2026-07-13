@@ -11,7 +11,7 @@
 #include "lms7002_gui_utilities.h"
 #include "events.h"
 #include <string>
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/Logger.h"
 using namespace std;

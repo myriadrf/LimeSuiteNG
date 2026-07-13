@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "protocols/LMS64CProtocol.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 using namespace lime;
 using namespace std::literals::string_literals;

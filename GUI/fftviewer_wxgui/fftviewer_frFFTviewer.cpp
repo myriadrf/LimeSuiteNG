@@ -8,10 +8,10 @@
 #include "limesuiteng/LMS7002M.h"
 #include "DSP/FFT/FFT.h"
 #include <fstream>
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "limesuiteng/complex.h"
 #include <array>
 

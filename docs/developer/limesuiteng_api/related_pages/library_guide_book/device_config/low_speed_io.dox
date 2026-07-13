@@ -37,10 +37,10 @@
  * #include <iomanip>
  * #include <vector>
  * #include <limesuiteng/DeviceRegistry.h>
- * #include <limesuiteng/SDRDevice.h>
+ * #include <limesuiteng/SDRDevice.hpp>
  * #include <limesuiteng/DeviceHandle.h>
  * #include <limesuiteng/OpStatus.h>
- * #include <limesuiteng/SDRDescriptor.h>
+ * #include <limesuiteng/SDRDescriptor.hpp>
  * 
  * int main()
  * {

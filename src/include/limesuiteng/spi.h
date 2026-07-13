@@ -1,12 +1,12 @@
 /**
- * @file limesuiteng/spi_c.h
+ * @file limesuiteng/spi.h
  * @author Lime Microsystems
  * @brief SPI bus access subinterface.
  */
 #ifndef LIMESUITENG_SPI_C_H
 #define LIMESUITENG_SPI_C_H
 
-#include "limesuiteng/types_c.h"
+#include "limesuiteng/types.h"
 
 #ifdef __cplusplus
 extern "C" {

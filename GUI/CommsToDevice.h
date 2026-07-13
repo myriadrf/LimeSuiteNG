@@ -2,7 +2,7 @@
 
 #include "comms/SPI/ISPI.h"
 #include "comms/II2C.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 namespace lime {
 

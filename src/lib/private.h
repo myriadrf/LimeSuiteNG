@@ -2,14 +2,14 @@
 #ifndef LIMESUITENG_CAPI_LIB_PRIVATE_H
 #define LIMESUITENG_CAPI_LIB_PRIVATE_H
 
-#include "limesuiteng/types_c.h"
-#include "limesuiteng/sdrdevice_c.h"
-#include "limesuiteng/rfstream_c.h"
-
-#include "limesuiteng/RFStream.h"
-#include "limesuiteng/SDRDescriptor.h"
-#include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/types.h"
+#include "limesuiteng/sdrdevice.h"
+#include "limesuiteng/rfstream.h"
+
+#include "limesuiteng/RFStream.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/types.hpp"
 
 #include <limits>
 #include <memory>

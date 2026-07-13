@@ -8,12 +8,12 @@
 
 #include <gtest/gtest.h>
 
-#include "limesuiteng/sdrdevice_c.h"
+#include "limesuiteng/sdrdevice.h"
 
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/RFSOCDescriptor.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 
 using namespace lime;
 

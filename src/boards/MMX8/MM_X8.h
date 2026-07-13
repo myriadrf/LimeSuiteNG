@@ -3,8 +3,8 @@
 
 #include "chips/ADF4002/ADF4002.h"
 #include "chips/CDCM6208/CDCM6208.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "protocols/LMS64CProtocol.h"
 
 #include <cstdint>

@@ -2,7 +2,7 @@
 #include "comms/SPI/ISPI.h"
 #include "protocols/LMSBoards.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "WriteRegistersBatch.h"
 #include "streaming/DataPacket.h"
 

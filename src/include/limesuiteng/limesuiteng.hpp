@@ -5,11 +5,11 @@
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/RFSOCDescriptor.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "limesuiteng/SDRConfig.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/VersionInfo.h"
+#include "limesuiteng/VersionInfo.hpp"
 
 #endif

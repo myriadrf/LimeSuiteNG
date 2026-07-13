@@ -6,7 +6,7 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/StreamConfig.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 
 namespace lime {
 

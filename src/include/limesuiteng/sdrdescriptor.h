@@ -1,12 +1,12 @@
 /**
- * @file limesuiteng/sdrdescriptor_c.h
+ * @file limesuiteng/sdrdescriptor.h
  * @author Lime Microsystems
  * @brief Read-only access to static device capability information.
  */
 #ifndef LIMESUITENG_SDRDESCRIPTOR_C_H
 #define LIMESUITENG_SDRDESCRIPTOR_C_H
 
-#include "limesuiteng/types_c.h"
+#include "limesuiteng/types.h"
 
 #ifdef __cplusplus
 extern "C" {

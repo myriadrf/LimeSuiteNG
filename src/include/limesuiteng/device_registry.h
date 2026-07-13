@@ -1,13 +1,13 @@
 /**
- * @file limesuiteng/device_registry_c.h
+ * @file limesuiteng/device_registry.h
  * @author Lime Microsystems
  * @brief Device enumeration, connection, and the device tree.
  */
 #ifndef LIMESUITENG_DEVICE_REGISTRY_C_H
 #define LIMESUITENG_DEVICE_REGISTRY_C_H
 
-#include "limesuiteng/types_c.h"
-#include "limesuiteng/sdrdevice_c.h"
+#include "limesuiteng/types.h"
+#include "limesuiteng/sdrdevice.h"
 
 #ifdef __cplusplus
 extern "C" {

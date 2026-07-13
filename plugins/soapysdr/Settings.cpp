@@ -18,8 +18,8 @@
 
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/ToString.h"
 
 using namespace lime;

@@ -7,8 +7,8 @@
 #include <gtest/gtest.h>
 
 #include "limesuiteng/DeviceRegistry.h"
-#include "limesuiteng/SDRDevice.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/SDRDevice.hpp"
+#include "limesuiteng/RFStream.hpp"
 
 #include <cmath>
 #include <complex>

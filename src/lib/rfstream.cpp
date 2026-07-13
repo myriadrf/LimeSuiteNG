@@ -1,5 +1,5 @@
 /* C wrapper over lime::RFStream: stream lifecycle and sample transfer. */
-#include "limesuiteng/rfstream_c.h"
+#include "limesuiteng/rfstream.h"
 #include "private.h"
 
 #include "limesuiteng/StreamConfig.h"

@@ -1,13 +1,13 @@
 /**
- * @file limesuiteng/rfstream_c.h
+ * @file limesuiteng/rfstream.h
  * @author Lime Microsystems
  * @brief RF sample streaming: configuration, metadata, and data transfer.
  */
 #ifndef LIMESUITENG_RFSTREAM_C_H
 #define LIMESUITENG_RFSTREAM_C_H
 
-#include "limesuiteng/types_c.h"
-#include "limesuiteng/sdrdevice_c.h"
+#include "limesuiteng/types.h"
+#include "limesuiteng/sdrdevice.h"
 
 #ifdef __cplusplus
 extern "C" {

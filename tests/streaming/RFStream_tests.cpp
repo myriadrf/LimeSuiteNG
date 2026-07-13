@@ -4,7 +4,7 @@
 #include <thread>
 
 #include "limesuiteng/limesuiteng.hpp"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 
 #include "tests/externalData.h"
 

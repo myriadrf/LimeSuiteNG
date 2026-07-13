@@ -14,7 +14,7 @@
 #include <ratio>
 #include <thread>
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/Logger.h"
 
 using namespace lime;

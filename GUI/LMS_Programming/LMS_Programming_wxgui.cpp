@@ -18,7 +18,7 @@
 #include <wx/wfstream.h>
 
 #include "protocols/LMSBoards.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 
 const long LMS_Programming_wxgui::ID_PROGRAMMING_FINISHED_EVENT = wxNewId();
 const long LMS_Programming_wxgui::ID_PROGRAMMING_STATUS_EVENT = wxNewId();

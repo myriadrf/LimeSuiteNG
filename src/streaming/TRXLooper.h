@@ -7,10 +7,10 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/complex.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "PacketsFIFO.h"
 #include "StreamPacket.h"
 #include "MTStack.h"

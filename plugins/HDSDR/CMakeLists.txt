@@ -63,7 +63,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     find_path(
         LIMESUITENG_INCLUDE_DIR
-        NAMES limesuiteng/SDRDevice.h
+        NAMES limesuiteng/SDRDevice.hpp
         HINTS ${LIMESUITE_SOURCE_DIR}/src/include)
 
     find_library(

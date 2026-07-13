@@ -1,15 +1,15 @@
 /**
- * @file limesuiteng/sdrdevice_c.h
+ * @file limesuiteng/sdrdevice.h
  * @author Lime Microsystems
  * @brief SDR device control: channel configuration and capability subinterfaces.
  */
 #ifndef LIMESUITENG_SDRDEVICE_C_H
 #define LIMESUITENG_SDRDEVICE_C_H
 
-#include "limesuiteng/types_c.h"
-#include "limesuiteng/sdrdescriptor_c.h"
-#include "limesuiteng/gpio_c.h"
-#include "limesuiteng/spi_c.h"
+#include "limesuiteng/types.h"
+#include "limesuiteng/sdrdescriptor.h"
+#include "limesuiteng/gpio.h"
+#include "limesuiteng/spi.h"
 
 #ifdef __cplusplus
 extern "C" {

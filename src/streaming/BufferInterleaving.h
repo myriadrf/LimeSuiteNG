@@ -1,7 +1,7 @@
 #ifndef LIME_BUFFER_INTERLEAVING_H
 #define LIME_BUFFER_INTERLEAVING_H
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 
 namespace lime {
 

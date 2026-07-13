@@ -38,14 +38,14 @@ THE SOFTWARE
 #include <process.h>
 //---------------------------------------------------------------------------
 #include <limesuiteng/complex.h>
-#include <limesuiteng/types.h>
+#include <limesuiteng/types.hpp>
 #include <limesuiteng/DeviceHandle.h>
 #include <limesuiteng/DeviceRegistry.h>
 #include <limesuiteng/Logger.h>
-#include <limesuiteng/SDRDevice.h>
-#include <limesuiteng/SDRDescriptor.h>
+#include <limesuiteng/SDRDevice.hpp>
+#include <limesuiteng/SDRDescriptor.hpp>
 #include <limesuiteng/StreamConfig.h>
-#include <limesuiteng/VersionInfo.h>
+#include <limesuiteng/VersionInfo.hpp>
 //---------------------------------------------------------------------------
 #include <array>
 #include <cstdint>

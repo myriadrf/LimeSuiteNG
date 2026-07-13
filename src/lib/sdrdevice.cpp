@@ -1,5 +1,5 @@
 /* C wrapper over lime::SDRDevice: channel control and capability subinterface getters. */
-#include "limesuiteng/sdrdevice_c.h"
+#include "limesuiteng/sdrdevice.h"
 #include "private.h"
 
 #include <string_view>

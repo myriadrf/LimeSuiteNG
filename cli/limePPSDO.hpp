@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/ToString.h"
 #include "comms/ICSR.h"
 #include "protocols/LMSBoards.h"

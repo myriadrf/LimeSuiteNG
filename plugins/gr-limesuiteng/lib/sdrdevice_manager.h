@@ -14,9 +14,9 @@
 #include <memory>
 
 #include "limesuiteng/DeviceHandle.h"
-#include "limesuiteng/RFStream.h"
+#include "limesuiteng/RFStream.hpp"
 #include "limesuiteng/SDRConfig.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/StreamConfig.h"
 
 namespace gr {

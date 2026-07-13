@@ -1,6 +1,6 @@
 #include "GPIO.h"
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 #include <assert.h>
 #include <stdint.h>

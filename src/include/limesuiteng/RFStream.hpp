@@ -2,7 +2,7 @@
 #define LIME_RFSTREAM_H
 
 /**
-@file limesuiteng/RFStream.h
+@file limesuiteng/RFStream.hpp
 @author Lime Microsystems
 @brief Defines SDR device RF Stream set up and control interface class
 */

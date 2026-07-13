@@ -12,7 +12,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 
 namespace lime {
 

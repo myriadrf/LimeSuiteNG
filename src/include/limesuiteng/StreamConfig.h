@@ -8,7 +8,7 @@
 */
 
 #include "limesuiteng/config.h"
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 
 #include <cstdint>
 #include <functional>

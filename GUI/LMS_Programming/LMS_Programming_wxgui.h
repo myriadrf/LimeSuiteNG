@@ -14,7 +14,7 @@ class wxChoice;
 #include <thread>
 #include <atomic>
 #include <vector>
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "IModuleFrame.h"
 #include <wx/dialog.h>
 

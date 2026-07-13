@@ -6,7 +6,7 @@
 
 #include "ADF4002_wxgui.h"
 #include "chips/ADF4002/ADF4002.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "SOC_GUIFactory.h"
 
 #include <vector>

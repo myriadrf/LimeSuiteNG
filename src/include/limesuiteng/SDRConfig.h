@@ -7,7 +7,7 @@
 * @brief Defines SDR configuration structures
 */
 
-#include "limesuiteng/types.h"
+#include "limesuiteng/types.hpp"
 #include "limesuiteng/complex.h"
 
 #include <unordered_map>

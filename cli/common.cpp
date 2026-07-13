@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 
 using namespace lime;
 using namespace std::literals::string_literals;

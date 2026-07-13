@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cassert>
 
-#include "limesuiteng/types.h"
-#include "limesuiteng/SDRDescriptor.h"
+#include "limesuiteng/types.hpp"
+#include "limesuiteng/SDRDescriptor.hpp"
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/StreamMeta.h"

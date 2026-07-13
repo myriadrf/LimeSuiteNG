@@ -1,6 +1,6 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/DeviceHandle.h"
-#include "limesuiteng/SDRDevice.h"
+#include "limesuiteng/SDRDevice.hpp"
 #include "limesuiteng/Logger.h"
 #include <mutex>
 #include <map>

@@ -27,7 +27,7 @@
  * 
  * Lime Suite NG library does not have single header for access to all public API members. Instead, library utilizes the modular header method, where only the necessary headers are included into the project
  * in order to reduce the overall build complexity and build time. Installed library headers are located in folder ``limesuiteng``. The primary API functions used to register, configure and control streams
- * of SDR devices are exposed in the ``limesuiteng/DeviceRegistry.h``, ``limesuiteng/SDRDevice.h`` and ``limesuiteng/RFStream.h`` headers. Other headers define complementary structures, storage classes and enumerations
+ * of SDR devices are exposed in the ``limesuiteng/DeviceRegistry.h``, ``limesuiteng/SDRDevice.hpp`` and ``limesuiteng/RFStream.hpp`` headers. Other headers define complementary structures, storage classes and enumerations
  * used with API functions.  
  * @if RST_SUPPORT
  * @embedRstVerbatim{
@@ -42,15 +42,15 @@
  * - ``Logger.h`` - Defines publicly accessible logger members
  * - ``OpStatus.h`` - Enumerates a list of all possible states of operation for the members of public API
  * - ``RFSOCDescriptor.h`` - Defines RF SoC descriptor structure
- * - ``RFStream.h`` - Defines SDR device RF Stream set up and control interface class
+ * - ``RFStream.hpp`` - Defines SDR device RF Stream set up and control interface class
  * - ``SDRConfig.h`` - Defines SDR configuration structures
- * - ``SDRDescriptor.h`` -	Defines SDR descriptor structures used to describe SDR devices
- * - ``SDRDevice.h`` - Defines SDR device configuration and control interface class
+ * - ``SDRDescriptor.hpp`` -	Defines SDR descriptor structures used to describe SDR devices
+ * - ``SDRDevice.hpp`` - Defines SDR device configuration and control interface class
  * - ``StreamConfig.h`` - Defines structures used for SDR device stream configuration
  * - ``StreamMeta.h`` - Defines structures for Stream TX and RX meta data collection
  * - ``Timespec.h`` - Defines Timespec storage class for operating with SDR device stream time stamps
  * - ``ToString.h`` - Defines string manipulation functions used to convert library enumerations into std::string format
- * - ``types.h`` - Defines custom library types for use with public API members}
+ * - ``types.hpp`` - Defines custom library types for use with public API members}
  * 
  * @else
  * 
