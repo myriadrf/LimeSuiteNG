@@ -6,7 +6,7 @@
 #ifndef LIMESUITENG_LIMESUITENG_C_H
 #define LIMESUITENG_LIMESUITENG_C_H
 
-#include "limesuiteng/config_c.h"
+#include "limesuiteng/config.h"
 #include "limesuiteng/types_c.h"
 #include "limesuiteng/device_registry_c.h"
 #include "limesuiteng/sdrdevice_c.h"

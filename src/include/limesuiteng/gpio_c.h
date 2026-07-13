@@ -22,7 +22,7 @@ typedef struct lime_GPIO lime_GPIO;
  * @param value The pin state to set.
  * @return The status of the operation.
  */
-LIME_C_API lime_OpStatus lime_gpio_set_value(lime_GPIO* gpio, uint32_t pin, bool value);
+LIME_API lime_OpStatus lime_gpio_set_value(lime_GPIO* gpio, uint32_t pin, bool value);
 
 /**
  * @brief Reads the state of a single GPIO pin.
@@ -31,7 +31,7 @@ LIME_C_API lime_OpStatus lime_gpio_set_value(lime_GPIO* gpio, uint32_t pin, bool
  * @param[out] value The pin state read.
  * @return The status of the operation.
  */
-LIME_C_API lime_OpStatus lime_gpio_get_value(lime_GPIO* gpio, uint32_t pin, bool* value);
+LIME_API lime_OpStatus lime_gpio_get_value(lime_GPIO* gpio, uint32_t pin, bool* value);
 
 #ifdef __cplusplus
 } /* extern "C" */

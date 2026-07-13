@@ -16,19 +16,19 @@ extern "C" {
  * @brief Gets the library version as a dotted string.
  * @return Static string in major.minor.patch-extra format.
  */
-LIME_C_API const char* lime_get_library_version(void);
+LIME_API const char* lime_get_library_version(void);
 
 /**
  * @brief Gets the API version as a string.
  * @return Static string in major.minor.increment format.
  */
-LIME_C_API const char* lime_get_api_version(void);
+LIME_API const char* lime_get_api_version(void);
 
 /**
  * @brief Gets the ABI/so version of the library.
  * @return Static version string.
  */
-LIME_C_API const char* lime_get_abi_version(void);
+LIME_API const char* lime_get_abi_version(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

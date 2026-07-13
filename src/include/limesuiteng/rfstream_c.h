@@ -51,20 +51,20 @@ typedef struct {
  * @param cfg The stream configuration; struct_size must be set.
  * @return The stream, or NULL on failure. Release with lime_stream_destroy().
  */
-LIME_C_API lime_Stream* lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cfg);
+LIME_API lime_Stream* lime_stream_create(lime_SDRDevice* dev, const lime_StreamConfig* cfg);
 
 /**
  * @brief Starts the stream.
  * @param s The stream to start.
  * @return The status of the operation.
  */
-LIME_C_API lime_OpStatus lime_stream_start(lime_Stream* s);
+LIME_API lime_OpStatus lime_stream_start(lime_Stream* s);
 
 /**
  * @brief Stops the stream and clears its internal buffers.
  * @param s The stream to stop; NULL is allowed and ignored.
  */
-LIME_C_API void lime_stream_stop(lime_Stream* s);
+LIME_API void lime_stream_stop(lime_Stream* s);
 
 /**
  * @brief Receives samples from all configured receive channels.
@@ -75,7 +75,7 @@ LIME_C_API void lime_stream_stop(lime_Stream* s);
  * @param timeout_ms The maximum wait time for incoming samples (in milliseconds).
  * @return The number of samples received per channel (>= 0), or a negative lime_OpStatus on failure.
  */
-LIME_C_API int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms);
+LIME_API int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, lime_StreamRxMeta* meta, uint32_t timeout_ms);
 
 /**
  * @brief Transmits samples on all configured transmit channels.
@@ -86,14 +86,14 @@ LIME_C_API int lime_stream_recv(lime_Stream* s, void* const* dst, size_t count, 
  * @param timeout_ms The maximum wait time for buffer space (in milliseconds).
  * @return The number of samples submitted per channel (>= 0), or a negative lime_OpStatus on failure.
  */
-LIME_C_API int lime_stream_send(
+LIME_API int lime_stream_send(
     lime_Stream* s, const void* const* src, size_t count, const lime_StreamTxMeta* meta, uint32_t timeout_ms);
 
 /**
  * @brief Stops the stream if needed, frees its resources, and destroys the handle.
  * @param s The stream to destroy; NULL is allowed and ignored.
  */
-LIME_C_API void lime_stream_destroy(lime_Stream* s);
+LIME_API void lime_stream_destroy(lime_Stream* s);
 
 #ifdef __cplusplus
 } /* extern "C" */

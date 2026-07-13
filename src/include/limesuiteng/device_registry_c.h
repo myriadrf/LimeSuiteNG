@@ -27,20 +27,20 @@ typedef struct {
  * @param max The capacity of @p out.
  * @return The number of devices found (may exceed @p max), or a negative lime_OpStatus on failure.
  */
-LIME_C_API int lime_enumerate(lime_DeviceHandle* out, size_t max);
+LIME_API int lime_enumerate(lime_DeviceHandle* out, size_t max);
 
 /**
  * @brief Opens a connection to a device.
  * @param handle The device to connect to, as returned by lime_enumerate().
  * @return The connected device, or NULL on failure. Release with lime_device_close().
  */
-LIME_C_API lime_device* lime_device_open(const lime_DeviceHandle* handle);
+LIME_API lime_device* lime_device_open(const lime_DeviceHandle* handle);
 
 /**
  * @brief Closes a device connection and frees the handle.
  * @param dev The device to close; NULL is allowed and ignored.
  */
-LIME_C_API void lime_device_close(lime_device* dev);
+LIME_API void lime_device_close(lime_device* dev);
 
 /** @brief The kinds of devices in the device tree. */
 typedef enum {
@@ -54,14 +54,14 @@ typedef enum {
  * @param dev The device to query.
  * @return The device kind.
  */
-LIME_C_API lime_Kind lime_device_kind(lime_device* dev);
+LIME_API lime_Kind lime_device_kind(lime_device* dev);
 
 /**
  * @brief Gets the number of subdevices of a device.
  * @param dev The device to query.
  * @return The subdevice count.
  */
-LIME_C_API size_t lime_device_child_count(lime_device* dev);
+LIME_API size_t lime_device_child_count(lime_device* dev);
 
 /**
  * @brief Gets a subdevice of a device.
@@ -69,14 +69,14 @@ LIME_C_API size_t lime_device_child_count(lime_device* dev);
  * @param index The subdevice index.
  * @return The subdevice, or NULL when out of range. Owned by the parent; do not close.
  */
-LIME_C_API lime_device* lime_device_child(lime_device* dev, size_t index);
+LIME_API lime_device* lime_device_child(lime_device* dev, size_t index);
 
 /**
  * @brief Gets the SDR interface of a device.
  * @param dev The device to query.
  * @return The SDR interface, or NULL if the device is not an SDR.
  */
-LIME_C_API lime_SDRDevice* lime_device_as_sdr(lime_device* dev);
+LIME_API lime_SDRDevice* lime_device_as_sdr(lime_device* dev);
 
 #ifdef __cplusplus
 } /* extern "C" */

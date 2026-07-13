@@ -6,7 +6,7 @@
 #ifndef LIMESUITENG_TYPES_C_H
 #define LIMESUITENG_TYPES_C_H
 
-#include "limesuiteng/config_c.h"
+#include "limesuiteng/config.h"
 
 #include <stdint.h>
 #include <stddef.h>
