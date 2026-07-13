@@ -4,7 +4,8 @@
 
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng/VersionInfo.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng/VersionInfo.hpp @ONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng/VersionInfo.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng/VersionInfo.hpp @ONLY)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/limesuiteng/VersionInfo.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/limesuiteng/VersionInfo.cpp @ONLY)
 target_include_directories(limesuiteng PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)

@@ -24,8 +24,7 @@ typedef struct lime_SPI lime_SPI;
  * @param count The number of 32-bit words to transfer.
  * @return The status of the operation.
  */
-LIME_API lime_OpStatus lime_spi_transact(
-    lime_SPI* spi, uint32_t bus_address, const uint32_t* mosi, uint32_t* miso, uint32_t count);
+LIME_API lime_OpStatus lime_spi_transact(lime_SPI* spi, uint32_t bus_address, const uint32_t* mosi, uint32_t* miso, uint32_t count);
 
 #ifdef __cplusplus
 } /* extern "C" */
