@@ -1,6 +1,6 @@
 // Unit tests for the antenna-by-name C entry points
 // (lime_sdrdevice_set_antenna / lime_sdrdevice_get_antenna), which resolve
-// name<->index via RFSOCDescriptor::pathNames.
+// antenna names to indexes via RFSOCDescriptor::pathNames.
 //
 // These exercise pure library logic and require no hardware. A minimal StubSDRDevice
 // implements every pure virtual; only the handful relevant to channel addressing and
@@ -44,10 +44,6 @@ class StubSDRDevice : public SDRDevice
     }
     OpStatus SetFrequency(uint8_t, TRXDir, uint8_t, double) override { return OpStatus::Success; }
     OpStatus EnableChannel(uint8_t, TRXDir, uint8_t, bool) override { return OpStatus::Success; }
-
-    // The base declares SetAntenna(ChannelId, const std::string&) and GetAntennaName(ChannelId)
-    // out-of-line; declaring the index-based override above hides them for name lookup on the
-    // derived type. Tests call through an SDRDevice& to reach them, so no `using` is needed.
 
     // --- remaining pure virtuals: trivial stubs ---
     OpStatus Configure(const SDRConfig&, uint8_t) override { return OpStatus::Success; }

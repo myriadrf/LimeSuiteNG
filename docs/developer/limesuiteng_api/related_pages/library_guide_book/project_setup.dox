@@ -44,7 +44,7 @@
  * - ``RFSOCDescriptor.h`` - Defines RF SoC descriptor structure
  * - ``RFStream.hpp`` - Defines SDR device RF Stream set up and control interface class
  * - ``SDRConfig.h`` - Defines SDR configuration structures
- * - ``SDRDescriptor.hpp`` -	Defines SDR descriptor structures used to describe SDR devices
+ * - ``SDRDescriptor.hpp`` - Defines SDR descriptor structures used to describe SDR devices
  * - ``SDRDevice.hpp`` - Defines SDR device configuration and control interface class
  * - ``StreamConfig.h`` - Defines structures used for SDR device stream configuration
  * - ``StreamMeta.h`` - Defines structures for Stream TX and RX meta data collection

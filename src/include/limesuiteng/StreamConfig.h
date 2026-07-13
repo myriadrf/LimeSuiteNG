@@ -76,7 +76,7 @@ struct LIME_API StreamConfig {
     std::unordered_map<TRXDir, std::vector<uint8_t>> channels; ///< The channels to set up for the stream.
 
     DataFormat format; ///< Samples format used for Read/Write functions
-    DataFormat linkFormat; ///< Samples format used in transport layer Host<->FPGA
+    DataFormat linkFormat; ///< Samples format used in transport layer between host and FPGA
 
     /// @brief Memory size to allocate for each channel buffering.
     /// Default: 0 - allow to decide internally.

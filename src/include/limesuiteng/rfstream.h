@@ -28,7 +28,7 @@ typedef struct {
     const uint32_t* tx_channels; ///< Transmit channel indices to stream; may be NULL when the count is 0
     size_t tx_count; ///< Number of entries in tx_channels
     lime_DataFormat format; ///< Sample layout used by lime_stream_recv() / lime_stream_send()
-    lime_DataFormat link_format; ///< Sample layout on the wire (host <-> FPGA)
+    lime_DataFormat link_format; ///< Sample layout on the wire between host and FPGA
     double hint_sample_rate_hz; ///< Expected sampling rate for transfer optimizations; 0 = decide internally
 } lime_StreamConfig;
 
