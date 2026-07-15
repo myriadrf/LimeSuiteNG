@@ -53,7 +53,13 @@ target_sources(
             streaming/Timespec_tests.cpp
             # parsers/CoefficientFileParserTest.cpp
             protocols/BufferInterleavingTest.cpp
-            api/antenna_c_tests.cpp)
+            api/antenna_c_tests.cpp
+            api/stream_c_tests.cpp)
+
+# plain C99 consumer proving the public C API compiles and links from C
+add_executable(c-api-consumer api/consumer_c99.c)
+set_target_properties(c-api-consumer PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)
+target_link_libraries(c-api-consumer PRIVATE limesuiteng)
 
 add_subdirectory(embedded/lms7002m)
 
