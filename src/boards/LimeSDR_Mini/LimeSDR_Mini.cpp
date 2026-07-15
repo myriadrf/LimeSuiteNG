@@ -181,6 +181,12 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
 
     mFPGA = std::make_unique<FPGA_Mini>(spiFPGA, spiLMS);
     double refClk = mFPGA->DetectRefClk();
+    if (refClk < 0)
+    {
+        constexpr double defaultRefClk = 40e6;
+        lime::warning("LimeSDR-Mini: reference clock detection failed, assuming %g MHz", defaultRefClk / 1e6);
+        refClk = defaultRefClk;
+    }
 
     FPGA::GatewareInfo gw = mFPGA->GetGatewareInfo();
     FPGA::GatewareToDescriptor(gw, descriptor);
