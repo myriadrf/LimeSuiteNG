@@ -216,3 +216,21 @@ TEST_F(lms7002m_embedded, lms7002m_set_frequency_sx_SetGet_ValueMatch)
     ASSERT_EQ(lms7002m_set_frequency_sx(chip, isTx, expectedFreq), lime_Result_Success);
     EXPECT_NEAR(lms7002m_get_frequency_sx(chip, isTx), expectedFreq, 10);
 }
+
+// TX calibration used to crash with a division by zero when the measured
+// RSSI is 0, for example with no signal present (issue #156). The stub
+// reads RSSI registers as 0, which exercises exactly that condition.
+TEST_F(lms7002m_embedded, lms7002m_calibrate_tx_ZeroRssi_FailsInsteadOfCrashing)
+{
+    ASSERT_EQ(lms7002m_set_reference_clock(chip, 30720000), lime_Result_Success);
+    ASSERT_EQ(lms7002m_set_active_channel(chip, LMS7002M_CHANNEL_A), lime_Result_Success);
+    spi_stub.Set(0, { 0x008C, 13, 12 }, 2); // force CGEN tune success
+    spi_stub.Set(0, { 0x0123, 13, 12 }, 2); // force SX RX tune success
+    spi_stub.Set(1, { 0x0123, 13, 12 }, 2); // force SX TX tune success
+    spi_stub.Set(0, { 0x0103, 11, 10 }, 1); // select Tx BAND1
+    ASSERT_EQ(lms7002m_set_frequency_sx(chip, true, 1400000000), lime_Result_Success);
+
+    const lime_Result result = lms7002m_calibrate_tx(chip, 5000000, false);
+
+    ASSERT_NE(result, lime_Result_Success);
+}

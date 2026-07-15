@@ -62,16 +62,17 @@ class LMS7002M_SPI_STUB
                 addr &= 0x7FFF; // clear write bit for now
                 uint16_t value = mosi[i] & 0xFFFF;
 
-                // prevent writing to read only bits
+                // writes cannot change read only bits, they keep their current value
+                uint16_t writableMask = 0xFFFF;
                 auto iter = self->readOnlyRegisterMasks.find(addr);
                 if (iter != self->readOnlyRegisterMasks.end())
-                    value &= iter->second;
+                    writableMask = iter->second;
 
                 uint8_t mac = self->registers[0].at(0x0020) & 0x3;
                 if (mac & 0x1 || addr < 0x0100)
-                    self->registers[0][addr] = value;
+                    self->registers[0][addr] = (self->registers[0][addr] & ~writableMask) | (value & writableMask);
                 if (mac & 0x2 && addr >= 0x0100)
-                    self->registers[1][addr] = value;
+                    self->registers[1][addr] = (self->registers[1][addr] & ~writableMask) | (value & writableMask);
                 ++self->writeCount;
             }
             else
