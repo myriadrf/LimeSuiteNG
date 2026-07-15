@@ -52,7 +52,8 @@ target_sources(
     PRIVATE comms/SPI_utilities_tests.cpp
             streaming/Timespec_tests.cpp
             # parsers/CoefficientFileParserTest.cpp
-            protocols/BufferInterleavingTest.cpp)
+            protocols/BufferInterleavingTest.cpp
+            protocols/LMS64CProtocol/ControlCommandBusyTest.cpp)
 
 add_subdirectory(embedded/lms7002m)
 
