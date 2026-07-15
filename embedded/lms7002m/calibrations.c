@@ -1056,7 +1056,7 @@ static lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, uint3
             lms7002m_spi_modify_csr(self, LMS7002M_G_PGA_RBB, g_pga);
             rssi = lms7002m_get_rssi(self);
             //if ((float)rssi / rssi_prev < 1.05) // pga should give ~1dB change
-            if ((rssi * 100) / rssi_prev < 105) // pga should give ~1dB change
+            if (rssi_prev != 0 && (rssi * 100) / rssi_prev < 105) // pga should give ~1dB change
                 break;
 
             rssi_prev = rssi;
