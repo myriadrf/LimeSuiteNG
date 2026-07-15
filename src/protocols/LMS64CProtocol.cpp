@@ -201,6 +201,9 @@ static constexpr std::array<char, 16> ADC_UNITS_PREFIX = {
 static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100)
 {
     OpStatus status;
+    // Busy means the control channel is temporarily unavailable. Retry, but
+    // only until the timeout, so an unresponsive device cannot hang the host.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
     do
     {
 #if DEBUG_SPI
@@ -211,7 +214,7 @@ static OpStatus RunControlCommand(ISerialPort& port, uint8_t* request, uint8_t* 
 
         lime::log(LogLevel::Debug, "Rd:"s + BufferToString(response, length));
 #endif
-    } while (status == OpStatus::Busy);
+    } while (status == OpStatus::Busy && std::chrono::steady_clock::now() < deadline);
 
     if (status != OpStatus::Success)
         return status;
