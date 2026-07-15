@@ -527,13 +527,12 @@ OpStatus TRXLooper::RxSetup()
     if (mCallback_logMessage)
         mCallback_logMessage(LogLevel::Verbose, msg);
 
-    // Don't just use REALTIME scheduling, or at least be cautious with it.
-    // if the thread blocks for too long, Linux can trigger RT throttling
-    // which can cause unexpected data packet losses and timing issues.
-    // Also need to set policy to default here, because if host process is running
-    // with REALTIME policy, these threads would inherit it and exhibit mentioned
-    // issues.
-    const auto schedulingPolicy = ThreadPolicy::REALTIME;
+    // REALTIME scheduling is safe only when the worker blocks on DMA interrupts
+    // (usePoll). In the busy wait mode the thread never sleeps, and a spinning
+    // realtime thread can exceed its kernel scheduling slot, triggering RT
+    // throttling, packet loss and timing issues. The policy is set explicitly
+    // in both cases so the workers do not inherit REALTIME from the host process.
+    const auto schedulingPolicy = mConfig.extraConfig.usePoll ? ThreadPolicy::REALTIME : ThreadPolicy::DEFAULT;
     mRx.terminate.store(false, std::memory_order_relaxed);
     mRx.terminateWorker.store(false, std::memory_order_relaxed);
 
@@ -1143,7 +1142,8 @@ OpStatus TRXLooper::TxSetup()
     mTx.terminateWorker.store(false, std::memory_order_relaxed);
     auto TxLoopFunction = std::bind(&TRXLooper::TxWorkLoop, this);
 
-    const auto schedulingPolicy = ThreadPolicy::REALTIME;
+    // see RxSetup for the reasoning behind the policy selection
+    const auto schedulingPolicy = mConfig.extraConfig.usePoll ? ThreadPolicy::REALTIME : ThreadPolicy::DEFAULT;
     mTx.thread = std::thread(TxLoopFunction);
     SetOSThreadPriority(ThreadPriority::HIGHEST, schedulingPolicy, &mTx.thread);
 #ifdef __linux__
