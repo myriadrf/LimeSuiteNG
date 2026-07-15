@@ -622,7 +622,7 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
     switch (cmd)
     {
     case LIMEPCIE_IOCTL_RUN_CONTROL_COMMAND: {
-        // struct semaphore *sem = &(myDevice->control_semaphore);
+        struct semaphore *sem = &(myDevice->control_semaphore);
         struct limepcie_control_packet m;
 
         if (copy_from_user(&m, (void *)arg, sizeof(m)))
@@ -633,12 +633,12 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
 
         uint64_t end_time = ktime_get_raw_ns() + m.timeout_ms * 2000000llu;
 
-        // int success = down_timeout(sem, msecs_to_jiffies(m.timeout_ms));
-        // if (success != 0) // on failure
-        // {
-        //     ret = -EBUSY;
-        //     break;
-        // }
+        // serialize control channel access, concurrent commands would corrupt each others data
+        if (down_timeout(sem, msecs_to_jiffies(m.timeout_ms)) != 0)
+        {
+            ret = -EBUSY;
+            break;
+        }
 
         uint32_t byteCount = min(m.length, (uint32_t)(CSR_CNTRL_CNTRL_SIZE * sizeof(uint32_t)));
         uint32_t value;
@@ -657,11 +657,12 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
                 success = true;
                 break;
             }
+            cpu_relax();
         }
 
         if (!success)
         {
-            // up(sem);
+            up(sem);
             ret = -ETIMEDOUT;
             break;
         }
@@ -674,12 +675,12 @@ static long limepcie_ioctl_control(struct file *file, unsigned int cmd, unsigned
 
         if (copy_to_user((void *)arg, &m, sizeof(m)))
         {
-            // up(sem);
+            up(sem);
             ret = -EFAULT;
             break;
         }
 
-        // up(sem);
+        up(sem);
     }
     break;
     default:
