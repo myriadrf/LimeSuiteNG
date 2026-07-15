@@ -91,7 +91,7 @@ template<uint32_t srcCount, class DestT, class SrcT> static void fastPath_conver
 // dynamic iteration count, will generate extra SIMD instructions for various last iteration counts
 template<class DestT, class SrcT> static void slowPath_convert(DestT* dest, const SrcT* src, uint32_t srcCount)
 {
-    for (uint16_t i = 0; i < srcCount; ++i)
+    for (uint32_t i = 0; i < srcCount; ++i)
         Rescale(dest[i], src[i]);
 }
 
