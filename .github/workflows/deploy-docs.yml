@@ -38,9 +38,10 @@ jobs:
           ./generate_docs.sh rebuild
 
       - name: Deploy to Cloudflare Worker
+        if: github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT }}
           wranglerVersion: "4"
-          command: ${{ github.event_name == 'pull_request' && 'versions upload' || 'deploy' }}
+          command: deploy
