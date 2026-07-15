@@ -218,7 +218,7 @@ OpStatus FPGA::ResetTimestamp()
 #ifndef NDEBUG
     int interface_ctrl_000A = ReadRegister(0x000A);
     if (interface_ctrl_000A < 0)
-        return OpStatus::Success;
+        return ReportError(OpStatus::IOFailure, "FPGA ResetTimestamp: failed to read registers"s);
 
     if (interface_ctrl_000A & RX_EN)
         return ReportError(OpStatus::Busy, "FPGA samples streaming must be stopped to reset timestamp"s);
@@ -226,7 +226,7 @@ OpStatus FPGA::ResetTimestamp()
     //reset hardware timestamp to 0
     int interface_ctrl_0009 = ReadRegister(0x0009);
     if (interface_ctrl_0009 < 0)
-        return OpStatus::Success;
+        return ReportError(OpStatus::IOFailure, "FPGA ResetTimestamp: failed to read registers"s);
     const uint32_t flags = (TXPCT_LOSS_CLR | SMPL_NR_CLR);
     uint32_t addrs[] = { 0x0009, 0x0009, 0x0009 };
     uint32_t values[] = { interface_ctrl_0009 & (~flags), interface_ctrl_0009 | flags, interface_ctrl_0009 & (~flags) };
@@ -245,7 +245,10 @@ OpStatus FPGA::WaitTillDone(uint16_t pollAddr, uint16_t doneMask, uint16_t error
     }
     do
     {
-        const uint16_t state = ReadRegister(pollAddr);
+        const int readValue = ReadRegister(pollAddr);
+        if (readValue < 0)
+            return ReportError(OpStatus::IOFailure, "%s failed to read status register 0x%04X", title.c_str(), pollAddr);
+        const uint16_t state = readValue;
         done = state & doneMask;
         error = state & errorMask;
         if (error != 0)
@@ -301,7 +304,7 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
     batch.Flush();
     // TODO: could possibly write this in the same batch?
     if (WriteRegister(0x0023, reg23val | PHCFG_START) != OpStatus::Success)
-        lime::error("FPGA SetPllFrequency: find phase, failed to write registers"s);
+        return ReportError(OpStatus::IOFailure, "FPGA SetPllClock: find phase, failed to write registers"s);
 
     const uint16_t doneMask = doPhaseSearch ? 0x4 : 0x1;
     const uint16_t errorMask = doPhaseSearch ? 0x8 : (0xFF << 7);
@@ -317,7 +320,7 @@ OpStatus FPGA::SetPllClock(uint8_t clockIndex, int nSteps, bool waitLock, bool d
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (WriteRegister(0x0023, reg23val & ~PHCFG_START) != OpStatus::Success) // redundant clear
-        ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers"s);
+        return ReportError(OpStatus::IOFailure, "FPGA SetPllClock: failed to write registers"s);
     return OpStatus::Success;
 }
 
@@ -335,11 +338,14 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     if (!fpgaPort)
         return ReportError(OpStatus::IOFailure, "ConfigureFPGA_PLL: connection port is NULL"s);
 
-    const bool waitForDone = HasWaitForDone(ReadRegister(0)); // read targetDevice
+    const int targetDevice = ReadRegister(0); // read targetDevice
+    if (targetDevice < 0)
+        return ReportError(OpStatus::IOFailure, "FPGA SetPllFrequency: failed to read registers"s);
+    const bool waitForDone = HasWaitForDone(targetDevice);
     bool willDoPhaseSearch = false;
 
     if (pllIndex > 15)
-        ReportError(OpStatus::OutOfRange, "FPGA SetPllFrequency: PLL index(%i) out of range [0-15]", pllIndex);
+        return ReportError(OpStatus::OutOfRange, "FPGA SetPllFrequency: PLL index(%i) out of range [0-15]", pllIndex);
 
     //check if all clocks are above 5MHz
     const double PLLlowerLimit = 5e6;
@@ -363,9 +369,12 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
                 PLLlowerLimit / 1e6);
     }
 
-    uint16_t drct_clk_ctrl_0005 = ReadRegister(0x0005);
-    uint16_t reg23val = ReadRegister(0x0023);
-    uint16_t reg25 = ReadRegister(0x0025);
+    const int drct_clk_ctrl_0005 = ReadRegister(0x0005);
+    const int reg23 = ReadRegister(0x0023);
+    const int reg25 = ReadRegister(0x0025);
+    if (drct_clk_ctrl_0005 < 0 || reg23 < 0 || reg25 < 0)
+        return ReportError(OpStatus::IOFailure, "FPGA SetPllFrequency: failed to read registers"s);
+    uint16_t reg23val = reg23;
 
     //disable direct clock source
     batch.WriteRegister(0x0005, drct_clk_ctrl_0005 & ~(1 << pllIndex));
@@ -533,7 +542,9 @@ OpStatus FPGA::SetDirectClocking(int clockIndex)
     if (!fpgaPort)
         return ReportError(OpStatus::IOFailure, "SetDirectClocking: connection port is NULL"s);
 
-    uint16_t drct_clk_ctrl_0005 = ReadRegister(0x0005);
+    const int drct_clk_ctrl_0005 = ReadRegister(0x0005);
+    if (drct_clk_ctrl_0005 < 0)
+        return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to read registers"s);
     //enable direct clocking
     if (WriteRegister(0x0005, drct_clk_ctrl_0005 | (1 << clockIndex)) != OpStatus::Success)
         return ReportError(OpStatus::IOFailure, "SetDirectClocking: failed to write registers"s);
@@ -631,7 +642,8 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     {
         uint32_t addr[3] = { 0, 1, 2 }; // TargetDevice, version, revision
         uint32_t vals[3];
-        ReadRegisters(addr, vals, 3);
+        if (ReadRegisters(addr, vals, 3) != OpStatus::Success)
+            return ReportError(OpStatus::IOFailure, "FPGA SetInterfaceFreq: failed to read registers"s);
         phaseSearch = HasFPGAClockPhaseSearch(vals[0], vals[1], vals[2]);
     }
 
@@ -727,7 +739,10 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
             return status;
     }
 
-    uint16_t reg_000A = ReadRegister(0x000A);
+    const int readValue = ReadRegister(0x000A);
+    if (readValue < 0)
+        return ReportError(OpStatus::IOFailure, "FPGA SetInterfaceFreq: failed to read registers"s);
+    const uint16_t reg_000A = readValue;
     WriteRegister(0x000A, reg_000A & ~(RX_EN | TX_EN | TX_PTRN_EN | RX_PTRN_EN)); // clear test patterns
     {
         std::vector<uint32_t> spiData = { 0x0E9F, 0x0FFF, 0x5550, 0xE4E4, 0xE4E4, 0x0484, 0x8001 };
@@ -854,19 +869,32 @@ double FPGA::DetectRefClk(double fx3Clk)
     double count = (vals2[0] | (vals2[1] << 16)); //cock counter
     count *= fx3Clk / fx3Cnt; //estimate ref clock based on FX3 Clock
     lime::debug("Estimated reference clock %1.4f MHz", count / 1e6);
-    std::size_t i = 0;
-    double delta = 100e6;
 
-    while (i < clkTbl.size())
-        if (delta < fabs(count - clkTbl[i]))
-            break;
-        else
-            delta = fabs(count - clkTbl[i++]);
+    // Pick the closest known frequency, but only if the measurement is within
+    // tolerance of it. Otherwise silently choosing the nearest entry would
+    // configure a wrong clock and skew all derived frequencies.
+    std::size_t bestIndex = 0;
+    double bestDelta = fabs(count - clkTbl[0]);
+    for (std::size_t i = 1; i < clkTbl.size(); ++i)
+    {
+        const double delta = fabs(count - clkTbl[i]);
+        if (delta < bestDelta)
+        {
+            bestDelta = delta;
+            bestIndex = i;
+        }
+    }
 
-    if (i == 0)
+    const double tolerance = clkTbl[bestIndex] * 0.01; // 1%
+    if (bestDelta > tolerance)
+    {
+        lime::error("FPGA::DetectRefClk measured %1.4f MHz does not match any known reference clock (closest %1.2f MHz)",
+            count / 1e6,
+            clkTbl[bestIndex] / 1e6);
         return -1;
-    lime::info("Reference clock %1.2f MHz", clkTbl[i - 1] / 1e6);
-    return clkTbl[i - 1];
+    }
+    lime::info("Reference clock %1.2f MHz", clkTbl[bestIndex] / 1e6);
+    return clkTbl[bestIndex];
 }
 
 /// @brief Gets the information about the gateware of the device from the FPGA.
@@ -969,7 +997,10 @@ OpStatus FPGA::OEMTestSetup(TestID testId, double timeout)
 
     while (1)
     {
-        completed = ReadRegister(0x65);
+        const int readValue = ReadRegister(0x65);
+        if (readValue < 0)
+            return ReportError(OpStatus::IOFailure, "FPGA OEMTestSetup: failed to read test status"s);
+        completed = readValue;
         if ((completed & test) == test)
             return OpStatus::Success;
 
@@ -1020,9 +1051,7 @@ OpStatus FPGA::ConfigureSamplesStream(uint32_t channelsEnableMask, lime::DataFor
 
     uint32_t addrs[] = { 0x0008, 0x0007 };
     uint32_t values[] = { reg8, channelsEnableMask };
-    WriteRegisters(addrs, values, 2);
-
-    return OpStatus::Success;
+    return WriteRegisters(addrs, values, 2);
 }
 
 OpStatus FPGA::ResetPacketCounters(uint16_t chipId)
