@@ -195,6 +195,13 @@ int main(int argc, char** argv)
     inputFile.read(data.data(), cnt);
     inputFile.close();
 
+    if (data.empty())
+    {
+        cerr << "Input file is empty: "sv << filePath << endl;
+        DeviceRegistry::freeDevice(device);
+        return EXIT_FAILURE;
+    }
+
     if (memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack) !=
         OpStatus::Success)
     {
