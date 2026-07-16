@@ -12,7 +12,7 @@ env:
   # https://github.com/actions/runner-images/issues/10004
   # BUILD_TYPE: Release
   BUILD_TYPE: Debug
-  CMAKE_BUILD_PARALLEL_LEVEL: 2
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
 
 jobs:
   build:

@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [develop, c-api]
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
 jobs:
   abidiff:
     runs-on: ubuntu-latest
@@ -23,13 +26,13 @@ jobs:
       - name: Build pull request library
         run: |
           cmake -B build-head -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          cmake --build build-head --parallel 4 --target limesuiteng
+          cmake --build build-head --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}} --target limesuiteng
 
       - name: Build base branch library
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
           cmake -B build-base -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          cmake --build build-base --parallel 4 --target limesuiteng
+          cmake --build build-base --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}} --target limesuiteng
 
       - name: Compare ABI
         run: |
