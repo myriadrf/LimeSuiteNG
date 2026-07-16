@@ -440,11 +440,11 @@ free_subdrv:
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
 {
     int rc;
-    dev_info(la9310_dev->dev, "Loading RTOS image\n");
+    dev_info(la9310_dev->dev, "Loading M4 firmware image\n");
     rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
     if (rc)
     {
-        dev_err(la9310_dev->dev, "Failed to add RTOS image, err %d", rc);
+        dev_err(la9310_dev->dev, "Failed to add M4 firmware image, err %d", rc);
         return rc;
     }
 

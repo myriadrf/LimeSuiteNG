@@ -11,9 +11,8 @@
 
 #define NXP_ERRATUM_A008822 1
 
-// Boot HandShake timeout in jiffies and retry count
-#define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 100
-#define LA9310_HOST_BOOT_HSHAKE_RETRIES 60
+#define LA9310_HOST_BOOT_HSHAKE_TIMEOUT 250 // milliseconds
+#define LA9310_BOOT_INDICATOR_POLL_PERIOD 16 // milliseconds
 
 #define PCI_OUTBOUND_WINDOW_BASE_ADDR 0xA0000000
 #define LA9310_EP_FREERTOS_LOAD_ADDR 0x1f800000
@@ -40,7 +39,7 @@ struct la9310_boot_header {
 
 int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
 {
-    int rc = 0, retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
+    int rc = 0;
 
     struct la9310_ccsr_dcr* ccsr_dcr;
     u32 scratch_val;
@@ -59,22 +58,21 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     dma_wmb();
 
     dev_info(la9310_dev->dev,
-        "[Reset HS] Waiting for FreeRTOS to write %d, current value %d\n",
+        "[Reset HS] Waiting for firmware to write 0x%x, current value 0x%x\n",
         LA9310_HOST_START_DRIVER_INIT,
         scratch_val);
 
-    set_current_state(TASK_INTERRUPTIBLE);
-    /* Wait for FreeRTOS to complete reset hand shake */
-    schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
+    // Wait for firmware to complete reset hand shake
     dma_rmb();
     scratch_val = readl(scratch_reg);
     hif_offset = readl(hif_offset_reg);
     hif_size = readl(hif_size_reg);
-    while ((scratch_val != LA9310_HOST_START_DRIVER_INIT) && hif_size && retries)
+
+    const uint64_t timeout_point_jiffies = get_jiffies_64() + msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT); // usually takes <40ms
+    while ((scratch_val != LA9310_HOST_START_DRIVER_INIT) && hif_size && time_before64(get_jiffies_64(), timeout_point_jiffies))
     {
         set_current_state(TASK_INTERRUPTIBLE);
-        schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-        retries--;
+        schedule_timeout(msecs_to_jiffies(LA9310_BOOT_INDICATOR_POLL_PERIOD));
         dma_rmb();
         scratch_val = readl(scratch_reg);
         hif_offset = readl(hif_offset_reg);
@@ -82,22 +80,22 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     }
     if (scratch_val != LA9310_HOST_START_DRIVER_INIT)
     {
-        dev_err(la9310_dev->dev, "LA9310 Reset HandShake failed, scratch 0x%x\n", scratch_val);
+        dev_err(la9310_dev->dev, "M4 Reset HandShake failed, 0x%x\n", scratch_val);
         rc = -EINVAL;
     }
     else
     {
-        dev_info(la9310_dev->dev, "LA9310 Reset HandShake done, scratch 0x%x", scratch_val);
+        dev_info(la9310_dev->dev, "M4 Reset HandShake done, 0x%x", scratch_val);
     }
 
     if (hif_size)
     {
-        dev_info(la9310_dev->dev, "Reset HandShake: Done. HIF 0x%x, size 0x%x (%d)\n", hif_offset, hif_size, hif_size);
+        dev_info(la9310_dev->dev, "M4 Reset HandShake: Done. HIF 0x%x, size 0x%x (%d)\n", hif_offset, hif_size, hif_size);
         la9310_dev->hif_size = hif_size;
     }
     else
     {
-        dev_err(la9310_dev->dev, "Reset HandShake: Failed. HIF 0x%x, size 0x%x (%d)\n", hif_offset, hif_size, hif_size);
+        dev_err(la9310_dev->dev, "M4 Reset HandShake: Failed. HIF 0x%x, size 0x%x (%d)\n", hif_offset, hif_size, hif_size);
         rc = -EBUSY;
     }
 
@@ -163,7 +161,7 @@ static void la9310_initiate_boot(const struct la9310_dev* la9310_dev, const stru
 
     // ROM code polls the contents of offset 0x0 from the TCM Data Memory base address, 0x2000_0000 for a valid Boot Header Preamble.
     dma_wmb();
-    dev_dbg(la9310_dev->dev, "Initiate boot, writing preamble: 0x%08X\n", header->preamble);
+    dev_dbg(la9310_dev->dev, "Initiate M4 boot, writing preamble: 0x%08X\n", header->preamble);
     writel(header->preamble, &dest_header->preamble); // initiates boot
     dma_wmb();
 }
@@ -183,7 +181,7 @@ int la9310_load_firmware_to_dma(
         la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
     // Copy firmware from userspace to DMA region
-    dev_dbg(la9310_dev->dev, "Copying firmware to 0x%ldx, size %ld\n", (size_t)firmware_dma->phys_addr, fw_size);
+    dev_dbg(la9310_dev->dev, "Copying firmware to 0x%lx, size %ld\n", (size_t)firmware_dma->phys_addr, fw_size);
     int rc = copy_from_user(firmware_dma->vaddr, fw_data, fw_size);
     if (rc)
     {
@@ -214,8 +212,13 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
 
     // adjust bl_src_offset into PCIe memory window
     const struct la9310_mem_region_info* dma_region = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW);
+    if (fw_bootheader.plugin_size)
+    {
+        fw_bootheader.plugin_offset += LA9310_EP_DMA_PHYS_OFFSET(dma_region->phys_addr);
+        dev_dbg(la9310_dev->dev, "PCIe window adjusted plugin_offset: 0x%X\n", fw_bootheader.plugin_offset);
+    }
     fw_bootheader.bl_src_offset += LA9310_EP_DMA_PHYS_OFFSET(dma_region->phys_addr);
-    dev_dbg(la9310_dev->dev, "PCIe window adjusted bl_src_offset: 0x%8X\n", fw_bootheader.bl_src_offset);
+    dev_dbg(la9310_dev->dev, "PCIe window adjusted bl_src_offset: 0x%X\n", fw_bootheader.bl_src_offset);
 
     // load firmware data into PCIe window
     rc = la9310_load_firmware_to_dma(la9310_dev, la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_FW), fw_data, fw_length);
@@ -227,46 +230,37 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
 
     uint32_t* scratch_reg = &ccsr_dcr->scratchrw[LA9310_BOOT_HSHAKE_SCRATCH_REG];
     uint32_t scratch_val = readl(scratch_reg);
-    dev_info(la9310_dev->dev, "scratch now: %i\n", scratch_val);
-    writel(0, scratch_reg);
+    dev_info(la9310_dev->dev, "M4 firmware boot progress now: %i\n", scratch_val);
+    writel(0, scratch_reg); // reset boot progress indicator
     scratch_val = readl(scratch_reg);
-    dev_info(la9310_dev->dev, "scratch now: %i\n", scratch_val);
+    dev_info(la9310_dev->dev, "Reset boot progress indicator: %i\n", scratch_val);
     dma_wmb();
 
     la9310_initiate_boot(la9310_dev, &fw_bootheader);
+    dev_info(la9310_dev->dev, "Waiting for M4 firmware boot progress indicator: 0x%x\n", LA9310_HOST_START_CLOCK_CONFIG);
 
-    dev_info(la9310_dev->dev, "Waiting for FreeRTOS boot.\n");
-    set_current_state(TASK_INTERRUPTIBLE);
-    schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-
+    // Wait for firmware to ask for clock configuration
     dma_rmb();
     scratch_val = readl(scratch_reg);
-
-    int retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
-    dev_info(la9310_dev->dev, "[Sync fw upgrade] Waiting for FreeRTOS to write %d\n", LA9310_HOST_START_CLOCK_CONFIG);
-    /* Wait for FreeRTOS to ask for clock configuration */
-    set_current_state(TASK_INTERRUPTIBLE);
-    schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-
-    retries = LA9310_HOST_BOOT_HSHAKE_RETRIES;
-    while ((scratch_val != LA9310_HOST_START_CLOCK_CONFIG) && retries)
+    const uint64_t t1 = get_jiffies_64();
+    const uint64_t timeout_point_jiffies = t1 + msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT); // usually M4 responds in <40ms
+    while ((scratch_val != LA9310_HOST_START_CLOCK_CONFIG) && time_before64(get_jiffies_64(), timeout_point_jiffies))
     {
         set_current_state(TASK_INTERRUPTIBLE);
-        schedule_timeout(msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT));
-        retries--;
+        schedule_timeout(msecs_to_jiffies(LA9310_BOOT_INDICATOR_POLL_PERIOD));
         scratch_val = readl(scratch_reg);
         dma_rmb();
     }
 
     if (scratch_val != LA9310_HOST_START_CLOCK_CONFIG)
     {
-        dev_err(la9310_dev->dev, "LA9310 FreeRTOS boot failed: 0x%x\n", scratch_val);
+        dev_err(la9310_dev->dev, "M4 firmware boot failed: 0x%x\n", scratch_val);
         rc = -EINVAL;
         goto out;
     }
     else
     {
-        dev_info(la9310_dev->dev, "LA9310 FreeRTOS booted succesfully: 0x%x", scratch_val);
+        dev_info(la9310_dev->dev, "M4 booted succesfully: 0x%x", scratch_val);
     }
 
 out:

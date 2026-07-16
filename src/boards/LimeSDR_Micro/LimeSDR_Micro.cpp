@@ -214,7 +214,8 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
             lime::error("M4 firmware file not found: "s + m4firmware_path);
 
         // also load VSPA just in case it would be needed, it can be reprogrammed later
-        if (!la9310->vspa.IsFirmwareLoaded())
+        // M4 must be successfully programmed to work with VSPA
+        if (status == OpStatus::Success && !la9310->vspa.IsFirmwareLoaded())
         {
             std::vector<char> firmware;
             const std::string vspafirmware_path = "/lib/firmware/"s + limesdrmicro::vspa_firmware_name_default;
