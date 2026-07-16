@@ -5,6 +5,8 @@
 #endif //__BORLANDC__
 
 #include <wx/msgdlg.h>
+#include <wx/persist/toplevel.h>
+#include <wx/splitter.h>
 
 #include "chips/LMS7002M/lms7002_mainPanel.h"
 #include "chips/LMS8001/lms8001_mainPanel.h"
@@ -193,7 +195,8 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
 
     mainSizer->Add(pnlDeviceConnection, 0, wxEXPAND, 0);
 
-    m_scrolledWindow1 = new wxScrolledWindow(this, wxNewId(), wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
+    wxSplitterWindow* splitter = new wxSplitterWindow(this, wxNewId());
+    m_scrolledWindow1 = new wxScrolledWindow(splitter, wxNewId(), wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow1->SetScrollRate(5, 5);
 
     contentSizer->AddGrowableCol(1);
@@ -206,14 +209,21 @@ limeGUIFrame::limeGUIFrame(wxWindow* parent, const AppArgs& appArgs)
     contentSizer->Add(deviceTree, 0, wxEXPAND, 0);
 
     m_scrolledWindow1->SetSizerAndFit(contentSizer);
-    mainSizer->Add(m_scrolledWindow1, 4, wxEXPAND, 5);
 
-    mainSizer->Add(mMiniLog, 1, wxEXPAND, 5);
+    // splitter between the content and the log, so the log height is adjustable
+    mMiniLog->Reparent(splitter);
+    splitter->SplitHorizontally(m_scrolledWindow1, mMiniLog, -150);
+    splitter->SetMinimumPaneSize(40);
+    splitter->SetSashGravity(1.0); // window resizing grows the content pane, the log keeps its height
+    mainSizer->Add(splitter, 1, wxEXPAND, 5);
 
     //SetSizer( mainSizer );
     SetSizerAndFit(mainSizer);
     // Layout();
     // Fit();
+
+    // restore the last used window size and position, and save them on exit
+    wxPersistentRegisterAndRestore(this, "limeGUIFrame");
 
 #ifndef __unix__
     SetIcon(wxIcon(_("aaaaAPPicon")));
