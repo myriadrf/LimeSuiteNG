@@ -77,6 +77,15 @@ jobs:
       - name: Install
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel ${{env.CMAKE_BUILD_PARALLEL_LEVEL}} --target install
 
+      - name: Stage install for artifact
+        run: cmake --install ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --prefix ${{github.workspace}}/artifact
+
+      - name: Upload Windows binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: limesuiteng-windows-${{matrix.arch}}
+          path: ${{github.workspace}}/artifact
+
   build-MacOS:
     name: MacOS build
     runs-on: macos-latest
