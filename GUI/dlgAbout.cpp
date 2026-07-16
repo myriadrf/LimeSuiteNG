@@ -11,7 +11,7 @@ void dlgAbout::OnInit(wxInitDialogEvent& event)
     wxBitmap splashBitmap = wxBITMAP_PNG_FROM_DATA(splash);
     imgLogo->SetBitmap(splashBitmap);
     wxString msg;
-    msg << "Version: " << lime::GetLibraryVersion() << "\n";
+    msg << "Version: " << lime::GetLibraryVersion(false) << "\n";
     msg << "Build date: " << lime::GetBuildTimestamp();
     txtVersion->SetLabel(msg);
     Fit();
