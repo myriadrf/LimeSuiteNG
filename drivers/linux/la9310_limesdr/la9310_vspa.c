@@ -804,6 +804,8 @@ OUT:
 int vspa_load_dsp(struct la9310_dev* la9310_dev, struct vspa_device* vspadev, const char __user* fw_data, size_t fw_length)
 {
     int err;
+    if (vspadev == NULL)
+        return -ENODEV;
 
     /* Check if VCPU is busy */
     if (vspa_reg_read(vspadev->regs + STATUS_REG_OFFSET) & STATUS_REG_BUSY)
