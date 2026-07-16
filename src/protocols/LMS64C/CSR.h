@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "comms/ICSR.h"
+#include "limesuiteng/ICSR.h"
 #include "protocols/LMS64CProtocol.h"
 
 namespace lime {
