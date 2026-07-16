@@ -22,13 +22,13 @@ jobs:
 
       - name: Build pull request library
         run: |
-          cmake -B build-head -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CLI=OFF -DBUILD_GUI=OFF -DBUILD_PLUGINS=OFF -DBUILD_DRIVERS=OFF -DBUILD_DOCS=OFF
+          cmake -B build-head -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CLI=OFF -DBUILD_GUI=OFF -DBUILD_PLUGINS=OFF -DBUILD_DRIVERS=OFF -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF
           cmake --build build-head --parallel 4
 
       - name: Build base branch library
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
-          cmake -B build-base -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CLI=OFF -DBUILD_GUI=OFF -DBUILD_PLUGINS=OFF -DBUILD_DRIVERS=OFF -DBUILD_DOCS=OFF
+          cmake -B build-base -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CLI=OFF -DBUILD_GUI=OFF -DBUILD_PLUGINS=OFF -DBUILD_DRIVERS=OFF -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF
           cmake --build build-base --parallel 4
 
       - name: Compare ABI
