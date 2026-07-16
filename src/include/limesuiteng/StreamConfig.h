@@ -77,7 +77,7 @@ struct LIME_API StreamConfig {
     DataFormat format; ///< Samples format used for Read/Write functions
     DataFormat linkFormat; ///< Samples format used in transport layer Host<->FPGA
 
-    /// @brief Memory size to allocate for each channel buffering.
+    /// @brief Requested FIFO size (in samples) for each channel buffering.
     /// Default: 0 - allow to decide internally.
     uint32_t bufferSize;
 

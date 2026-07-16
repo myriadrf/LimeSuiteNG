@@ -499,7 +499,11 @@ OpStatus TRXLooper::RxSetup()
     assert(mRxArgs.packetsToBatch > 0);
     assert(mRxArgs.samplesInPacket > 0);
 
-    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / (mRx.samplesInPkt * mRx.packetsToBatch); // buffer 0.25 second of data
+    const uint32_t rxPacketSamples = mRx.samplesInPkt * mRx.packetsToBatch;
+    int packetsInFIFO = 0.25 * mConfig.hintSampleRate / rxPacketSamples; // buffer 0.25 second of data
+    // honor the requested FIFO size (in samples), the pool needs 2 extra packets for staging
+    if (mConfig.bufferSize > 0)
+        packetsInFIFO = (mConfig.bufferSize + rxPacketSamples - 1) / rxPacketSamples + 2;
     mRx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mRx.packetsPool->capacity(); ++i)
@@ -1131,7 +1135,11 @@ OpStatus TRXLooper::TxSetup()
             mCallback_logMessage(LogLevel::Verbose, msg);
     }
 
-    const int packetsInFIFO = 0.25 * mConfig.hintSampleRate / (mTx.packetsToBatch * mTx.samplesInPkt); // buffer 0.25 second of data
+    const uint32_t txPacketSamples = mTx.packetsToBatch * mTx.samplesInPkt;
+    int packetsInFIFO = 0.25 * mConfig.hintSampleRate / txPacketSamples; // buffer 0.25 second of data
+    // honor the requested FIFO size (in samples), the pool needs 2 extra packets for staging
+    if (mConfig.bufferSize > 0)
+        packetsInFIFO = (mConfig.bufferSize + txPacketSamples - 1) / txPacketSamples + 2;
     mTx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mTx.packetsPool->capacity(); ++i)
@@ -1692,8 +1700,12 @@ void TRXLooper::StreamStatus(StreamStats* rxStats, StreamStats* txStats)
     if (txStats)
     {
         *txStats = mTx.stats;
+        // FIFO holds sample packets, report the counts in samples
         if (mTx.fifo)
-            txStats->FIFO = { mTx.fifo->max_size(), mTx.fifo->size() };
+        {
+            const std::size_t txPacketSamples = mTx.packetsToBatch * mTx.samplesInPkt;
+            txStats->FIFO = { mTx.fifo->max_size() * txPacketSamples, mTx.fifo->size() * txPacketSamples };
+        }
         else
             txStats->FIFO = { 1, 0 };
     }
@@ -1701,7 +1713,10 @@ void TRXLooper::StreamStatus(StreamStats* rxStats, StreamStats* txStats)
     {
         *rxStats = mRx.stats;
         if (mRx.fifo)
-            rxStats->FIFO = { mRx.fifo->max_size(), mRx.fifo->size() };
+        {
+            const std::size_t rxPacketSamples = mRx.packetsToBatch * mRx.samplesInPkt;
+            rxStats->FIFO = { mRx.fifo->max_size() * rxPacketSamples, mRx.fifo->size() * rxPacketSamples };
+        }
         else
             rxStats->FIFO = { 1, 0 };
     }
