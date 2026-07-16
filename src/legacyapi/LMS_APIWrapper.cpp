@@ -1146,7 +1146,7 @@ API_EXPORT const char* LMS_GetLibraryVersion()
     static constexpr std::size_t LIBRARY_VERSION_SIZE = 32;
     static char libraryVersion[LIBRARY_VERSION_SIZE];
 
-    CopyString(lime::GetLibraryVersion(false), libraryVersion, sizeof(libraryVersion));
+    CopyString(lime::GetLibraryVersion(), libraryVersion, sizeof(libraryVersion));
     return libraryVersion;
 }
 

@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
     if (showVersion)
     {
-        cerr << GetLibraryVersion(false) << endl;
+        cerr << GetLibraryVersion() << endl;
         if (argc == 2)
             return EXIT_SUCCESS;
     }

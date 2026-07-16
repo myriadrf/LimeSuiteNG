@@ -3,7 +3,7 @@
 
 using namespace std::literals::string_literals;
 
-std::string lime::GetLibraryVersion(bool brief)
+std::string lime::GetLibraryVersion(void)
 {
     return "@PROJECT_VERSION@-@LIMESUITENG_EXTVER@"s;
 }

@@ -410,7 +410,7 @@ static int InitializeDialog(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
     }
 
     /* Add library version */
-    Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_LIBVER), lime::GetLibraryVersion(false).c_str());
+    Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_LIBVER), lime::GetLibraryVersion().c_str());
     /* Add ExtIO version */
     Static_SetText(GetDlgItem(hwndDlg, IDC_TEXT_EXTVER), VERNUM);
 
