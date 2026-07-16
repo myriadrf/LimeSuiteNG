@@ -1,0 +1,52 @@
+name: ABI check
+
+on:
+  pull_request:
+    branches: [develop, c-api]
+
+jobs:
+  abidiff:
+    runs-on: ubuntu-latest
+    name: Compare library ABI against the base branch
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq abigail-tools
+          sudo ./install_dependencies.sh
+
+      - name: Build pull request library
+        run: |
+          cmake -B build-head -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build build-head --parallel 4 --target limesuiteng
+
+      - name: Build base branch library
+        run: |
+          git checkout ${{ github.event.pull_request.base.sha }}
+          cmake -B build-base -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build build-base --parallel 4 --target limesuiteng
+
+      - name: Compare ABI
+        run: |
+          base_lib=$(find build-base -name 'liblimesuiteng.so*' -type f | head -n 1)
+          head_lib=$(find build-head -name 'liblimesuiteng.so*' -type f | head -n 1)
+          echo "base: $base_lib"
+          echo "head: $head_lib"
+          if [ -z "$base_lib" ] || [ -z "$head_lib" ]; then
+            echo "library not found, cannot compare"
+            exit 1
+          fi
+          # abidiff exit code is a bit mask: 4 means compatible changes only,
+          # which is allowed since the 1.0 plan relies on append only growth.
+          # Anything else nonzero is an incompatible change or a tool error.
+          abidiff "$base_lib" "$head_lib" && rc=0 || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 4 ]; then
+            echo "Incompatible ABI change detected (abidiff exit $rc)"
+            exit 1
+          fi
+          echo "No incompatible ABI changes"
