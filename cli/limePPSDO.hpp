@@ -5,7 +5,7 @@
 
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/ToString.h"
-#include "comms/ICSR.h"
+#include "limesuiteng/ICSR.h"
 #include "protocols/LMSBoards.h"
 
 #include <cassert>

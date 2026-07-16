@@ -5,7 +5,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/Logger.h"
 #include "limesuiteng/ToString.h"
-#include "comms/ICSR.h"
+#include "limesuiteng/ICSR.h"
 
 #include "numericSlider/numericSlider.h"
 
