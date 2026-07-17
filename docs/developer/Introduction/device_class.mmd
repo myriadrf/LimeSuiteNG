@@ -11,6 +11,7 @@ classDiagram
     class LMS7002M {<<Interface>>}
 
     class LimeSDR_Mini
+    class LimeNET_Micro
     class LimeSDR
     class LimeSDR_XTRX
     class LimeSDR_X3
@@ -28,6 +29,7 @@ classDiagram
     SDRDevice<|--LMS7002M_SDRDevice
     SDRDevice<|--LimeSDR_MMX8
     LMS7002M_SDRDevice<|--LimeSDR_Mini
+    LMS7002M_SDRDevice<|--LimeNET_Micro
     LMS7002M_SDRDevice<|--LimeSDR
     LMS7002M_SDRDevice<|--LimeSDR_XTRX
     LMS7002M_SDRDevice<|--LimeSDR_X3
@@ -39,6 +41,7 @@ classDiagram
     %% Class associations
     FPGA-->LimeSDR
     FPGA_Mini-->LimeSDR_Mini
+    FPGA_Mini-->LimeNET_Micro
     FPGA_X3-->LimeSDR_X3
     FPGA_XTRX-->LimeSDR_XTRX
     FPGA_XTRX-->sSDR
@@ -51,6 +54,9 @@ classDiagram
 
     %% LimeSDR Mini
     LimeSDR_Mini..>ISerialPort
+
+    %% LimeNET Micro
+    LimeNET_Micro..>ISerialPort
 
     %% LimeSDR
     LimeSDR..>ISerialPort
