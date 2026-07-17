@@ -9,6 +9,8 @@ classDiagram
 
     class RFStream {<<Interface>>}
     class TRXLooper
+    class StreamComposite
+    class RFStream_X8
 
     class IDMA {<<Interface>>}
     class LMS7002M {<<Interface>>}
@@ -17,6 +19,11 @@ classDiagram
 
     %% Inheritance
     RFStream<|--TRXLooper
+    RFStream<|--StreamComposite
+    RFStream<|--RFStream_X8
+
+    %% Aggregation
+    StreamComposite o-- RFStream
 
     %% Dependencies
     TRXLooper..>IDMA
