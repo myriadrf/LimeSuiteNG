@@ -110,4 +110,26 @@ TEST(TRXLooperFIFO, RxFIFOSizeHonorsRequest)
     EXPECT_LE(stats.FIFO.totalCount, requestedSamples + 8192);
 }
 
+TEST(TRXLooperFIFO, TxAcceptsMoreThan65535SamplesInOneCall)
+{
+    auto spi = std::make_shared<SPIStub>();
+    FPGA fpga(spi, spi);
+    LMS7002M lms(spi);
+    TRXLooper looper(std::make_shared<DMAStub>(), std::make_shared<DMAStub>(), &fpga, &lms, 0);
+
+    // reported in issue 125: transmits above 65535 samples per call failed
+    constexpr uint32_t samplesCount = 500000;
+    StreamConfig cfg = MakeConfig(TRXDir::Tx, samplesCount + 8192);
+    cfg.linkFormat = DataFormat::I12; // the default legacy API link format
+    ASSERT_EQ(looper.Setup(cfg), OpStatus::Success);
+
+    std::vector<complex16_t> samples(samplesCount);
+    const complex16_t* buffers[1] = { samples.data() };
+    StreamMeta meta{};
+    meta.flushPartialPacket = true;
+
+    const uint32_t accepted = looper.StreamTx(buffers, samplesCount, &meta, std::chrono::microseconds(2000000));
+    EXPECT_EQ(accepted, samplesCount);
+}
+
 } // namespace lime::testing
