@@ -26,6 +26,10 @@ function(add_kernel_module)
             COMMAND uname -r
             OUTPUT_VARIABLE KMOD_KERNEL_RELEASE
             OUTPUT_STRIP_TRAILING_WHITESPACE)
+        # the value comes from the running system, not from the user, so it can go
+        # stale when the kernel gets updated after CMake configuration
+        set(KMOD_KERNEL_AUTODETECTED TRUE)
+        set(KMOD_KERNEL_AUTODETECTED TRUE PARENT_SCOPE)
     endif()
 
     # where Kbuild file will be placed
@@ -39,17 +43,24 @@ function(add_kernel_module)
 
     set(MODULE_KOBJECT ${KBUILD_FILE_DIR}/${KMOD_NAME}.ko)
     set(KERNEL_SOURCE_DIR /lib/modules/${KMOD_KERNEL_RELEASE}/build)
-    set(KBUILD_CMD
-        $(MAKE)
-        -C
-        ${KERNEL_SOURCE_DIR}
-        ARCH=${KMOD_ARCH}
-        # Informs kbuild that an external module is being built.
-        # The value given to "M" is the absolute path of the directory where the external module (kbuild file) is located.
-        M=${KBUILD_FILE_DIR}
-        modules)
+    if(KMOD_KERNEL_AUTODETECTED)
+        # build through the generated Makefile, it resolves the kernel directory at
+        # build time, so the module is always built for the currently running kernel
+        set(KBUILD_CMD $(MAKE) -C ${KBUILD_FILE_DIR})
+        set(KBUILD_CLEAN_CMD $(MAKE) -C ${KBUILD_FILE_DIR} clean)
+    else()
+        set(KBUILD_CMD
+            $(MAKE)
+            -C
+            ${KERNEL_SOURCE_DIR}
+            ARCH=${KMOD_ARCH}
+            # Informs kbuild that an external module is being built.
+            # The value given to "M" is the absolute path of the directory where the external module (kbuild file) is located.
+            M=${KBUILD_FILE_DIR}
+            modules)
 
-    set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} ARCH=${KMOD_ARCH} M=${KBUILD_FILE_DIR} clean)
+        set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} ARCH=${KMOD_ARCH} M=${KBUILD_FILE_DIR} clean)
+    endif()
 
     # set(MODULE_SOURCE_TARBALL "${CMAKE_CURRENT_BINARY_DIR}/${KMOD_NAME}.tar.gz")
     # set(MAKE_SOURCE_TARBALL ${CMAKE_COMMAND} -E tar "cfvz" "${MODULE_SOURCE_TARBALL}" "${KBUILD_FILE_DIR}")
@@ -79,12 +90,25 @@ function(add_kernel_module)
     #     COMMENT "Generate kernel module tarball ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_SOURCE_TARBALL}")
     # add_custom_target(${KMOD_NAME}-tarball ALL DEPENDS ${MODULE_SOURCE_TARBALL})
 
+    set(MODULE_BUILD_DEPS ${KMOD_SOURCES})
+    if(KMOD_KERNEL_AUTODETECTED)
+        # the stamp file is refreshed when the running kernel changes, and triggers
+        # the module rebuild for the new kernel
+        set(KERNEL_RELEASE_STAMP ${KBUILD_FILE_DIR}/kernel.release)
+        add_custom_target(
+            ${KMOD_NAME}-kernel-release
+            COMMAND sh -c "uname -r | cmp -s - '${KERNEL_RELEASE_STAMP}' || uname -r > '${KERNEL_RELEASE_STAMP}'"
+            BYPRODUCTS ${KERNEL_RELEASE_STAMP}
+            VERBATIM)
+        list(APPEND MODULE_BUILD_DEPS ${KERNEL_RELEASE_STAMP} ${KMOD_NAME}-kernel-release)
+    endif()
+
     add_custom_command(
         OUTPUT ${MODULE_KOBJECT}
         COMMAND ${KBUILD_CLEAN_CMD}
         COMMAND ${KBUILD_CMD}
         WORKING_DIRECTORY ${KBUILD_FILE_DIR}
-        DEPENDS ${KMOD_SOURCES} # rebuild if anything changes in the source dir
+        DEPENDS ${MODULE_BUILD_DEPS} # rebuild if anything changes in the source dir
         VERBATIM
         COMMENT "Building Linux kernel module (${KMOD_NAME}) in dir: ${KBUILD_FILE_DIR}")
 
@@ -181,15 +205,35 @@ function(install_kernel_module_modprobe)
     set(oneValueArgs NAME)
     cmake_parse_arguments("KMOD_INSTALL" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if(NOT KMOD_KERNEL_RELEASE)
-        execute_process(
-            COMMAND uname -r
-            OUTPUT_VARIABLE KMOD_KERNEL_RELEASE
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-    endif()
-
     get_target_property(OBJECTS_DIR ${KMOD_INSTALL_NAME} LIBRARY_OUTPUT_DIRECTORY)
-    install(FILES "${OBJECTS_DIR}/${KMOD_INSTALL_NAME}.ko" DESTINATION /lib/modules/${KMOD_KERNEL_RELEASE}/extra)
+    if(KMOD_KERNEL_AUTODETECTED)
+        # the module is built for the kernel that is running at build time, so the
+        # install destination is resolved at install time as well, and a module
+        # built for another kernel is refused instead of being installed broken
+        install(
+            CODE "
+            execute_process(COMMAND uname -r OUTPUT_VARIABLE CURRENT_KERNEL_RELEASE OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if(EXISTS \"${OBJECTS_DIR}/kernel.release\")
+                file(READ \"${OBJECTS_DIR}/kernel.release\" MODULE_KERNEL_RELEASE)
+                string(STRIP \"\${MODULE_KERNEL_RELEASE}\" MODULE_KERNEL_RELEASE)
+                if(NOT MODULE_KERNEL_RELEASE STREQUAL CURRENT_KERNEL_RELEASE)
+                    message(FATAL_ERROR \"Module was built for kernel \${MODULE_KERNEL_RELEASE},\"
+                        \" but the system now runs \${CURRENT_KERNEL_RELEASE}.\"
+                        \" Run the build step again, it rebuilds the module for the current kernel, then install.\")
+                endif()
+            endif()
+            file(INSTALL \"${OBJECTS_DIR}/${KMOD_INSTALL_NAME}.ko\" DESTINATION \"\$ENV{DESTDIR}/lib/modules/\${CURRENT_KERNEL_RELEASE}/extra\")")
+        set(EXPECTED_LOAD_PATH "/lib/modules/\${CURRENT_KERNEL_RELEASE}/extra/${KMOD_INSTALL_NAME}.ko")
+    else()
+        if(NOT KMOD_KERNEL_RELEASE)
+            execute_process(
+                COMMAND uname -r
+                OUTPUT_VARIABLE KMOD_KERNEL_RELEASE
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        endif()
+        install(FILES "${OBJECTS_DIR}/${KMOD_INSTALL_NAME}.ko" DESTINATION /lib/modules/${KMOD_KERNEL_RELEASE}/extra)
+        set(EXPECTED_LOAD_PATH "/lib/modules/${KMOD_KERNEL_RELEASE}/extra/${KMOD_INSTALL_NAME}.ko")
+    endif()
 
     # install source code
     set(MODULE_SRC_DESTINATION "/usr/src")
@@ -202,7 +246,6 @@ function(install_kernel_module_modprobe)
     # Generate module dependencies, otherwise modprobe won't see the module
     install(CODE "execute_process(COMMAND sudo depmod)")
 
-    set(EXPECTED_LOAD_PATH "/lib/modules/${KMOD_KERNEL_RELEASE}/extra/${KMOD_INSTALL_NAME}.ko")
     # verify that this module will be loaded with modprobe
     get_target_property(MODULE_VERSION ${KMOD_INSTALL_NAME} VERSION)
     install(
