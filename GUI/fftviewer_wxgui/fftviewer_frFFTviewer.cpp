@@ -481,18 +481,35 @@ void fftviewer_frFFTviewer::StreamingLoop(
 
         if (pthis->captureSamples.load())
         {
+            const uint32_t samplesToCopy = min(samplesPopped, samplesToCapture);
             for (int ch = 0; ch < channelsCount; ++ch)
             {
-                uint32_t samplesToCopy = min(samplesPopped, samplesToCapture);
-                if (samplesToCopy <= 0)
-                    break;
                 for (uint32_t i = 0; i < samplesToCopy; ++i)
                 {
                     captureBuffer[ch][samplesCaptured + i].real(buffers[ch][i].real() * 32767);
                     captureBuffer[ch][samplesCaptured + i].imag(buffers[ch][i].imag() * 32767);
                 }
-                samplesToCapture -= samplesToCopy;
-                samplesCaptured += samplesToCopy;
+            }
+            samplesToCapture -= samplesToCopy;
+            samplesCaptured += samplesToCopy;
+
+            if (samplesToCapture == 0)
+            {
+                // capture complete, write the samples to the selected file
+                std::ofstream fout(pthis->captureFilename);
+                fout << "AI\tAQ";
+                if (channelsCount > 1)
+                    fout << "\tBI\tBQ";
+                fout << "\n";
+                for (uint32_t i = 0; i < samplesCaptured; ++i)
+                {
+                    fout << static_cast<int>(captureBuffer[0][i].real()) << "\t" << static_cast<int>(captureBuffer[0][i].imag());
+                    if (channelsCount > 1)
+                        fout << "\t" << static_cast<int>(captureBuffer[1][i].real()) << "\t"
+                             << static_cast<int>(captureBuffer[1][i].imag());
+                    fout << "\n";
+                }
+                pthis->captureSamples.store(false);
             }
         }
 
