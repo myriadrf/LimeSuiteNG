@@ -335,6 +335,11 @@ API_EXPORT int CALL_CONV LMS_GetAntennaBW(lms_device_t* dev, bool dir_tx, size_t
  * @note actual gain depends on LO frequency and analog LPF configuration and
  * resulting output signal level may be different when those values are changed
  *
+ * @note this sets the combined gain, the individual amplifiers are distributed
+ * automatically. To control a single Rx amplifier instead, write its parameter
+ * with LMS_WriteParam(): LMS7param(G_LNA_RFE) for the LNA, LMS7param(G_TIA_RFE)
+ * for the TIA, LMS7param(G_PGA_RBB) for the PGA.
+ *
  * @attention Gain functionality will be changed in the future. IAMP 
  * and TIA gain elements won't configured via this function. To enable new 
  * behaviour, turn on ENABLE_NEW_GAIN_BEHAVIOUR CMake option. 
@@ -355,6 +360,11 @@ API_EXPORT int CALL_CONV LMS_SetNormalizedGain(lms_device_t* device, bool dir_tx
  *
  * @note actual gain depends on LO frequency and analog LPF configuration and
  * resulting output signal levle may be different when those values are changed
+ *
+ * @note this sets the combined gain, the individual amplifiers are distributed
+ * automatically. To control a single Rx amplifier instead, write its parameter
+ * with LMS_WriteParam(): LMS7param(G_LNA_RFE) for the LNA, LMS7param(G_TIA_RFE)
+ * for the TIA, LMS7param(G_PGA_RBB) for the PGA.
  *
  * @attention Gain functionality and range will be changed in the future. IAMP 
  * and TIA gain elements won't configured via this function. To enable new 
