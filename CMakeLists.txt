@@ -9,7 +9,7 @@ include(CMakeDependentOption)
 # are being built from the same source, as source package can have only one version.
 project(
     "limesuiteng"
-    VERSION 25.1.0
+    VERSION 1.0.0
     DESCRIPTION "Meta project encompassing all LimeSuiteNG components"
     LANGUAGES C CXX)
 message(STATUS "cmake version: ${CMAKE_VERSION}")

@@ -1,4 +1,4 @@
-Release 0.3.0 ()
+Release 1.0.0 ()
 
 - Added RFStream interface, deprecated SDRDevice::Stream* functions
 - Split legacy LMS_API wrapper into separate 'limesuiteng-legacyapi' library
