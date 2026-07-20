@@ -927,6 +927,7 @@ ChannelConfig::Direction::TestSignal LMS7002M_SDRDevice::GetTestSignal(uint8_t m
 std::vector<double> LMS7002M_SDRDevice::GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID)
 {
     auto& lms = mLMSChips.at(moduleIndex);
+    LMS7002M::ChannelScope scope(lms.get(), static_cast<uint8_t>(channel % 2));
 
     const uint8_t count = gfirID == 2 ? 120 : 40;
     std::vector<double> coefficientBuffer(count);
@@ -939,8 +940,20 @@ std::vector<double> LMS7002M_SDRDevice::GetGFIRCoefficients(uint8_t moduleIndex,
 OpStatus LMS7002M_SDRDevice::SetGFIRCoefficients(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, std::vector<double> coefficients)
 {
+    if (gfirID > 2)
+        return ReportError(OpStatus::OutOfRange, "Failed to set GFIR coefficients, invalid filter index %i.", gfirID);
+
+    // the chip interface takes the count as uint8_t, an unchecked size would wrap at 256
+    const std::size_t maxCoefCount = gfirID == 2 ? 120 : 40;
+    if (coefficients.size() > maxCoefCount)
+        return ReportError(OpStatus::OutOfRange,
+            "Failed to set GFIR coefficients, count %i exceeds the filter limit of %i.",
+            static_cast<int>(coefficients.size()),
+            static_cast<int>(maxCoefCount));
+
     auto& lms = mLMSChips.at(moduleIndex);
-    return lms->SetGFIRCoefficients(trx, gfirID, coefficients.data(), coefficients.size());
+    LMS7002M::ChannelScope scope(lms.get(), static_cast<uint8_t>(channel % 2));
+    return lms->SetGFIRCoefficients(trx, gfirID, coefficients.data(), static_cast<uint8_t>(coefficients.size()));
 }
 
 OpStatus LMS7002M_SDRDevice::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, bool enabled)
