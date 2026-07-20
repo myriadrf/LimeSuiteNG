@@ -492,9 +492,9 @@ API_EXPORT int CALL_CONV LMS_SetLPFBW(lms_device_t* device, bool dir_tx, size_t 
 
     const lime::TRXDir direction = DirFromBool(dir_tx);
     const OpStatus status = apiDevice->device->SetLowPassFilter(apiDevice->moduleIndex, direction, chan, bandwidth);
-    apiDevice->lastSavedLPFValue[chan][dir_tx] = bandwidth;
+    if (status == OpStatus::Success)
+        apiDevice->lastSavedLPFValue[chan][dir_tx] = bandwidth;
     return OpStatusToReturnCode(status);
-    return 0;
 }
 
 API_EXPORT int CALL_CONV LMS_GetLPFBWRange(lms_device_t* device, bool dir_tx, lms_range_t* range)
