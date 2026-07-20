@@ -55,7 +55,8 @@ target_sources(
             streaming/TRXLooper_tests.cpp
             # parsers/CoefficientFileParserTest.cpp
             protocols/BufferInterleavingTest.cpp
-            protocols/LMS64CProtocol/ControlCommandBusyTest.cpp)
+            protocols/LMS64CProtocol/ControlCommandBusyTest.cpp
+            boards/LMS7002M_SDRDevice_GFIR_tests.cpp)
 
 add_subdirectory(embedded/lms7002m)
 
