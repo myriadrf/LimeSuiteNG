@@ -176,13 +176,8 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     //     config.bufferLength = std::stoul(args.at("bufferLength"));
     // }
 
-    // Create the stream
-
-    rfstream = sdrDevice->StreamCreate(config, 0);
-    if (!rfstream)
-    {
-        throw std::runtime_error("Soapy_limesuiteng::setupStream() failed: " + std::string(GetLastErrorMessage()));
-    }
+    // Stream creation is deferred to activateStream(), the device may not be
+    // fully configured (e.g. sample rate) at this point
 
     auto samplesPerPacket = config.linkFormat == DataFormat::I16 ? 1020 : 1360;
     // TODO: figure out a way to actually get the correct packet per batch count
@@ -198,8 +193,11 @@ void Soapy_limesuiteng::closeStream(SoapySDR::Stream* stream)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
-    rfstream->Stop();
-    rfstream.reset();
+    if (rfstream)
+    {
+        rfstream->Stop();
+        rfstream.reset();
+    }
     delete icstream;
 }
 
@@ -239,6 +237,13 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     //     settingsCache.at(direction).at(ch).calibrationBandwidth = bw;
     //     _channelsToCal.erase(_channelsToCal.begin());
     // }
+    if (!rfstream)
+    {
+        rfstream = sdrDevice->StreamCreate(streamConfig, 0);
+        if (!rfstream)
+            throw std::runtime_error("Soapy_limesuiteng::activateStream() failed: " + std::string(GetLastErrorMessage()));
+    }
+
     // Stream requests used with rx
     icstream->flags = flags;
     icstream->rxBurstStart_timeNs = timeNs;
@@ -256,7 +261,8 @@ int Soapy_limesuiteng::deactivateStream(
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     icstream->rxBurstRequest = false;
-    rfstream->Stop();
+    if (rfstream)
+        rfstream->Stop();
     isStreamRunning = false;
     return 0;
 }
@@ -268,6 +274,8 @@ int Soapy_limesuiteng::readStream(
     SoapySDR::Stream* stream, void* const* buffs, size_t numElems, int& flags, long long& timeNs, const long timeoutUs)
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
+    if (!rfstream)
+        return SOAPY_SDR_STREAM_ERROR;
 
     // Handle the one packet flag by clipping
     if ((flags & SOAPY_SDR_ONE_PACKET) != 0)
@@ -374,6 +382,8 @@ int Soapy_limesuiteng::writeStream(SoapySDR::Stream* stream,
     }
 
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
+    if (!rfstream)
+        return SOAPY_SDR_STREAM_ERROR;
 
     // Input metadata
     StreamMeta metadata{};
@@ -408,6 +418,8 @@ int Soapy_limesuiteng::readStreamStatus(
     SoapySDR::Stream* stream, [[maybe_unused]] size_t& chanMask, int& flags, long long& timeNs, const long timeoutUs)
 {
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
+    if (!rfstream)
+        return SOAPY_SDR_STREAM_ERROR;
     int ret = 0;
     flags = 0;
     StreamStats metadata;
