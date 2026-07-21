@@ -876,8 +876,10 @@ void CDCM6208_panelgui::OnChange(wxCommandEvent& event)
             i_val = std::stoi(str);
             CDCM->SetSPIBaseAddr(i_val);
         }
-    } catch (std::invalid_argument& e)
+    } catch (const std::logic_error& e)
     {
+        // std::logic_error covers both invalid_argument and out_of_range from
+        // stoi/stod, an overflowing value no longer crashes the application
         return;
     }
 
