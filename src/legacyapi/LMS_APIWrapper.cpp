@@ -1389,6 +1389,10 @@ API_EXPORT int CALL_CONV LMS_GetGFIRCoeff(lms_device_t* device, bool dir_tx, siz
     auto coefficients = apiDevice->device->GetGFIRCoefficients(
         apiDevice->moduleIndex, dir_tx ? lime::TRXDir::Tx : lime::TRXDir::Rx, chan, static_cast<uint8_t>(filt));
 
+    // empty means the read failed, previously this still reported success
+    if (coefficients.empty())
+        return -1;
+
     for (std::size_t i = 0; i < count && i < coefficients.size(); ++i)
         coef[i] = coefficients.at(i);
 
