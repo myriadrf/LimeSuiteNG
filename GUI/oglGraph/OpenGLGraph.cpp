@@ -1205,7 +1205,7 @@ int OpenGLGraph::AddMarker(int posX)
         mark->show = true;
         mark->posX = series[0]->values[mark->dataValueIndex].x;
         mark->posY = series[0]->values[mark->dataValueIndex].y;
-        mark->color = mMarkerColors[markers.size()];
+        mark->color = mMarkerColors[mark->id];
         return mark->id;
     }
     return -1;
@@ -1232,8 +1232,8 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
             return -1;
         mark->posX = xValue;
 
-        //find closest data point index
-        for (std::size_t i = 0; i < series[0]->values.size(); ++i)
+        //find closest data point index, start at 1 so values[i - 1] stays in bounds
+        for (std::size_t i = 1; i < series[0]->values.size(); ++i)
         {
             if (series[0]->values[i].x >= mark->posX)
             {
@@ -1258,7 +1258,7 @@ int OpenGLGraph::AddMarkerAtValue(float xValue)
         mark->used = true;
         mark->posX = series[0]->values[mark->dataValueIndex].x;
         mark->posY = series[0]->values[mark->dataValueIndex].y;
-        mark->color = mMarkerColors[markers.size()];
+        mark->color = mMarkerColors[mark->id];
         mMarkersDlg->refreshMarkFreq = true;
         return mark->id;
     }
@@ -1462,7 +1462,7 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
             }
             else
             {
-                markers[markerID].dataValueIndex = i - 2;
+                markers[markerID].dataValueIndex = i - 1;
             }
             break;
         }
@@ -1484,7 +1484,7 @@ void OpenGLGraph::MoveMarker(int markerID, int posX)
             }
             else
             {
-                markers[markerID].dataValueIndex = i - 2;
+                markers[markerID].dataValueIndex = i - 1;
             }
             break;
         }
