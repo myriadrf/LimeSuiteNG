@@ -1,12 +1,19 @@
 # Setup target for local build and install of kernel module
 
 function(add_kernel_module)
-    set(oneValueArgs NAME VERSION GITHASH KERNEL_RELEASE ARCH)
+    set(oneValueArgs NAME VERSION GITHASH ARCH)
     set(multiValueArgs SOURCES INCLUDES CONFIGURED_FILES)
     cmake_parse_arguments("KMOD" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT KMOD_NAME)
         message(FATAL_ERROR "Expected kernel module name")
+    endif()
+
+    # decided once at the drivers/linux level, shared by all driver modules
+    get_property(KMOD_KERNEL_RELEASE GLOBAL PROPERTY KMOD_KERNEL_RELEASE)
+    get_property(KMOD_KERNEL_AUTODETECTED GLOBAL PROPERTY KMOD_KERNEL_AUTODETECTED)
+    if(NOT KMOD_KERNEL_RELEASE)
+        message(FATAL_ERROR "resolve_kernel_release() must be called before add_kernel_module()")
     endif()
 
     # Get architecture
@@ -19,17 +26,6 @@ function(add_kernel_module)
         if(${KMOD_ARCH} STREQUAL "aarch64" AND NOT EXISTS ${KERNEL_SOURCE_DIR}/arch/${KMOD_ARCH})
             set(KMOD_ARCH "arm64")
         endif()
-    endif()
-
-    if(NOT KMOD_KERNEL_RELEASE)
-        execute_process(
-            COMMAND uname -r
-            OUTPUT_VARIABLE KMOD_KERNEL_RELEASE
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-        # the value comes from the running system, not from the user, so it can go
-        # stale when the kernel gets updated after CMake configuration
-        set(KMOD_KERNEL_AUTODETECTED TRUE)
-        set(KMOD_KERNEL_AUTODETECTED TRUE PARENT_SCOPE)
     endif()
 
     # where Kbuild file will be placed
@@ -92,15 +88,10 @@ function(add_kernel_module)
 
     set(MODULE_BUILD_DEPS ${KMOD_SOURCES})
     if(KMOD_KERNEL_AUTODETECTED)
-        # the stamp file is refreshed when the running kernel changes, and triggers
-        # the module rebuild for the new kernel
-        set(KERNEL_RELEASE_STAMP ${KBUILD_FILE_DIR}/kernel.release)
-        add_custom_target(
-            ${KMOD_NAME}-kernel-release
-            COMMAND sh -c "uname -r | cmp -s - '${KERNEL_RELEASE_STAMP}' || uname -r > '${KERNEL_RELEASE_STAMP}'"
-            BYPRODUCTS ${KERNEL_RELEASE_STAMP}
-            VERBATIM)
-        list(APPEND MODULE_BUILD_DEPS ${KERNEL_RELEASE_STAMP} ${KMOD_NAME}-kernel-release)
+        # the shared stamp file is refreshed when the running kernel changes,
+        # and triggers the module rebuild for the new kernel
+        get_property(KERNEL_RELEASE_STAMP GLOBAL PROPERTY KMOD_KERNEL_RELEASE_STAMP)
+        list(APPEND MODULE_BUILD_DEPS ${KERNEL_RELEASE_STAMP} kernel-release-stamp)
     endif()
 
     add_custom_command(
@@ -206,6 +197,9 @@ function(install_kernel_module_modprobe)
     cmake_parse_arguments("KMOD_INSTALL" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     get_target_property(OBJECTS_DIR ${KMOD_INSTALL_NAME} LIBRARY_OUTPUT_DIRECTORY)
+    get_property(KMOD_KERNEL_RELEASE GLOBAL PROPERTY KMOD_KERNEL_RELEASE)
+    get_property(KMOD_KERNEL_AUTODETECTED GLOBAL PROPERTY KMOD_KERNEL_AUTODETECTED)
+    get_property(KERNEL_RELEASE_STAMP GLOBAL PROPERTY KMOD_KERNEL_RELEASE_STAMP)
     if(KMOD_KERNEL_AUTODETECTED)
         # the module is built for the kernel that is running at build time, so the
         # install destination is resolved at install time as well, and a module
@@ -213,8 +207,8 @@ function(install_kernel_module_modprobe)
         install(
             CODE "
             execute_process(COMMAND uname -r OUTPUT_VARIABLE CURRENT_KERNEL_RELEASE OUTPUT_STRIP_TRAILING_WHITESPACE)
-            if(EXISTS \"${OBJECTS_DIR}/kernel.release\")
-                file(READ \"${OBJECTS_DIR}/kernel.release\" MODULE_KERNEL_RELEASE)
+            if(EXISTS \"${KERNEL_RELEASE_STAMP}\")
+                file(READ \"${KERNEL_RELEASE_STAMP}\" MODULE_KERNEL_RELEASE)
                 string(STRIP \"\${MODULE_KERNEL_RELEASE}\" MODULE_KERNEL_RELEASE)
                 if(NOT MODULE_KERNEL_RELEASE STREQUAL CURRENT_KERNEL_RELEASE)
                     message(FATAL_ERROR \"Module was built for kernel \${MODULE_KERNEL_RELEASE},\"
@@ -225,12 +219,6 @@ function(install_kernel_module_modprobe)
             file(INSTALL \"${OBJECTS_DIR}/${KMOD_INSTALL_NAME}.ko\" DESTINATION \"\$ENV{DESTDIR}/lib/modules/\${CURRENT_KERNEL_RELEASE}/extra\")")
         set(EXPECTED_LOAD_PATH "/lib/modules/\${CURRENT_KERNEL_RELEASE}/extra/${KMOD_INSTALL_NAME}.ko")
     else()
-        if(NOT KMOD_KERNEL_RELEASE)
-            execute_process(
-                COMMAND uname -r
-                OUTPUT_VARIABLE KMOD_KERNEL_RELEASE
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-        endif()
         install(FILES "${OBJECTS_DIR}/${KMOD_INSTALL_NAME}.ko" DESTINATION /lib/modules/${KMOD_KERNEL_RELEASE}/extra)
         set(EXPECTED_LOAD_PATH "/lib/modules/${KMOD_KERNEL_RELEASE}/extra/${KMOD_INSTALL_NAME}.ko")
     endif()
