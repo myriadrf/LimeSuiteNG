@@ -51,12 +51,12 @@ In the ``docs`` directory, located in the root directory of the repository, whil
     cmake --build ../build -- doxygen # 2. Run only the Doxygen target to build doxygen
 
     # 3. Generate reference pages for API
-    breathe-apidoc --generate class --members --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
-    breathe-apidoc --generate file --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
-    breathe-apidoc --generate struct --members --force --output-dir developer/doxygen/api_member_list ../build/docs/developer/doxygen/xml/
+    breathe-apidoc --generate class --members --force --output-dir developer/limesuiteng_api/api_member_list ../build/docs/developer/xml/
+    breathe-apidoc --generate file --force --output-dir developer/limesuiteng_api/api_member_list ../build/docs/developer/xml/
+    breathe-apidoc --generate struct --members --force --output-dir developer/limesuiteng_api/api_member_list ../build/docs/developer/xml/
 
     # 4. Remove redundant copies of the actual manual pages
-    rm developer/doxygen/api_member_list/file/*dox.rst    # use `del` instead of `rm` on Windows 
+    rm developer/limesuiteng_api/api_member_list/file/*dox.rst    # use `del` instead of `rm` on Windows
     
     # 5. Regenerate .rst manual pages from .dox manual pages
     python dox_converter.py
