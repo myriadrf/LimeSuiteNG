@@ -95,14 +95,15 @@ static std::string ReadFile(const std::string& fileName)
         exit(EXIT_FAILURE);
     }
     inputFile.seekg(0, std::ios::end);
-    long fileSize = inputFile.tellg();
+    const std::streamoff fileSize = inputFile.tellg();
     inputFile.seekg(0, std::ios::beg);
 
+    if (fileSize <= 0)
+        return {};
+
     buffer.resize(fileSize);
-    inputFile.read(&buffer[0], fileSize);
-    inputFile.close();
-    buffer[fileSize] = 0;
-    return buffer.data();
+    inputFile.read(buffer.data(), fileSize);
+    return std::string(buffer.begin(), buffer.end());
 }
 
 int main(int argc, char** argv)
