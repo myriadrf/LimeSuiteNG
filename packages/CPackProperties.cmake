@@ -59,4 +59,7 @@ if(WIN32)
     # offer adding the install directory to PATH, so the CLI tools work from any terminal
     set(CPACK_NSIS_MODIFY_PATH ON)
     set(CPACK_PACKAGE_EXECUTABLES "limeGUI" "Lime Suite NG GUI")
+
+    # bundle the MSVC C++ runtime redistributable DLLs into bin/
+    include(InstallRequiredSystemLibraries)
 endif()
