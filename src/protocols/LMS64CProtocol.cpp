@@ -295,6 +295,11 @@ OpStatus SPI16(ISerialPort& port,
             ++srcIndex;
         }
 
+        // RunControlCommand overwrites pkt with the response, remember how many
+        // blocks we actually asked for so a bogus response count can't drive an
+        // out-of-bounds payload read
+        const int blocksSent = pkt.blockCount;
+
 #if DEBUG_SPI
         std::string msg = PacketToString(pkt);
         lime::log(LogLevel::Debug, "Wr:"s + msg);
@@ -307,7 +312,7 @@ OpStatus SPI16(ISerialPort& port,
         if (status != OpStatus::Success)
             return status;
 
-        for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
+        for (int i = 0; MISO && i < blocksSent && destIndex < count; ++i)
         {
             //MISO[destIndex] = 0;
             //MISO[destIndex] = pkt.payload[0] << 24;
@@ -617,14 +622,18 @@ OpStatus CustomParameterRead(ISerialPort& port, std::vector<CustomParameterIO>& 
             ++index;
         }
 
+        // remember how many blocks we requested, the response overwrites pkt and a
+        // bogus response blockCount would underflow parameterIndex below
+        const std::size_t blocksSent = pkt.blockCount;
+
         OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 200);
         if (status != OpStatus::Success)
             return status;
 
-        for (std::size_t i = 0; i < pkt.blockCount; ++i)
+        for (std::size_t i = 0; i < blocksSent; ++i)
         {
             int unitsIndex = pkt.payload[i * 4 + 1];
-            std::size_t parameterIndex = index - pkt.blockCount + i;
+            std::size_t parameterIndex = index - blocksSent + i;
 
             if (unitsIndex & 0x0F)
                 parameters[parameterIndex].units = ADC_UNITS_PREFIX[unitsIndex & 0x0F];
@@ -719,8 +728,9 @@ OpStatus FirmwareWrite(ISerialPort& port,
 
         if (needsData)
         {
-            memcpy(&packet.payload[24], data, chunkSize);
-            data += chunkSize;
+            const size_t chunkBytes = std::min(length - bytesSent, chunkSize);
+            memcpy(&packet.payload[24], data, chunkBytes);
+            data += chunkBytes;
         }
 
         OpStatus status = RunControlCommand(
@@ -930,8 +940,9 @@ OpStatus MemoryWrite(
         progView.SetAddress(address + bytesSent);
         progView.SetDevice(target);
 
-        progView.SetData(src, chunkSize);
-        src += chunkSize;
+        const size_t chunkBytes = std::min(dataLen - bytesSent, chunkSize);
+        progView.SetData(src, chunkBytes);
+        src += chunkBytes;
 
         OpStatus status = RunControlCommand(
             port, reinterpret_cast<uint8_t*>(&packet), reinterpret_cast<uint8_t*>(&inPacket), sizeof(packet), timeout_ms);
@@ -939,7 +950,7 @@ OpStatus MemoryWrite(
         if (status != OpStatus::Success)
             return status;
 
-        bytesSent += chunkSize;
+        bytesSent += chunkBytes;
     }
     return OpStatus::Success;
 }
