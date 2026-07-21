@@ -176,8 +176,18 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     //     config.bufferLength = std::stoul(args.at("bufferLength"));
     // }
 
-    // Stream creation is deferred to activateStream(), the device may not be
-    // fully configured (e.g. sample rate) at this point
+    // Setup is deliberately split from start so that activateStream() stays fast.
+    // The sample rate only hints buffering sizes, so when the app has not
+    // configured it yet, fall back to the device's current rate.
+    if (sampleRate[SOAPY_SDR_RX] <= 0.0)
+        sampleRate[SOAPY_SDR_RX] = sdrDevice->GetSampleRate(0, TRXDir::Rx, 0);
+    config.hintSampleRate = sampleRate[SOAPY_SDR_RX];
+
+    rfstream = sdrDevice->StreamCreate(config, 0);
+    if (!rfstream)
+    {
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() failed: " + std::string(GetLastErrorMessage()));
+    }
 
     auto samplesPerPacket = config.linkFormat == DataFormat::I16 ? 1020 : 1360;
     // TODO: figure out a way to actually get the correct packet per batch count
@@ -237,8 +247,11 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     //     settingsCache.at(direction).at(ch).calibrationBandwidth = bw;
     //     _channelsToCal.erase(_channelsToCal.begin());
     // }
-    if (!rfstream)
+    // recreate the stream only if the rate it was built with no longer matches,
+    // e.g. the app configured the sample rate after setting up the stream
+    if (!rfstream || streamConfig.hintSampleRate != sampleRate[SOAPY_SDR_RX])
     {
+        streamConfig.hintSampleRate = sampleRate[SOAPY_SDR_RX];
         rfstream = sdrDevice->StreamCreate(streamConfig, 0);
         if (!rfstream)
             throw std::runtime_error("Soapy_limesuiteng::activateStream() failed: " + std::string(GetLastErrorMessage()));
