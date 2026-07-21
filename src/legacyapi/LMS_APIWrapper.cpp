@@ -564,11 +564,13 @@ API_EXPORT int CALL_CONV LMS_GetNormalizedGain(lms_device_t* device, bool dir_tx
 
     double deviceGain = 0.0;
     const OpStatus status = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
+    if (status != OpStatus::Success)
+        return OpStatusToReturnCode(status);
 
     if (gain)
         *gain = (deviceGain - range.min) / (range.max - range.min);
 
-    return OpStatusToReturnCode(status);
+    return 0;
 }
 
 API_EXPORT int CALL_CONV LMS_GetGaindB(lms_device_t* device, bool dir_tx, size_t chan, unsigned* gain)
@@ -587,9 +589,12 @@ API_EXPORT int CALL_CONV LMS_GetGaindB(lms_device_t* device, bool dir_tx, size_t
     auto deviceGain = 0.0;
 
     const OpStatus status = apiDevice->device->GetGain(apiDevice->moduleIndex, direction, chan, gainToUse, deviceGain);
+    if (status != OpStatus::Success)
+        return OpStatusToReturnCode(status);
+
     *gain = std::lround(deviceGain) + 12;
 
-    return OpStatusToReturnCode(status);
+    return 0;
 }
 
 API_EXPORT int CALL_CONV LMS_Calibrate(lms_device_t* device, bool dir_tx, size_t chan, double bw, unsigned flags)
