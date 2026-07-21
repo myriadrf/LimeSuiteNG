@@ -482,13 +482,15 @@ static struct platform_driver limeuart_platform_driver = {
 
 static void limeuart_console_write(struct console *co, const char *s, unsigned int count)
 {
-    dev_dbg(port->dev, "%s\n", __func__);
     struct limeuart_port *uart;
     struct uart_port *port;
     unsigned long flags;
 
     uart = (struct limeuart_port *)xa_load(&limeuart_array, co->index);
+    if (!uart)
+        return;
     port = &uart->port;
+    dev_dbg(port->dev, "%s\n", __func__);
 
     spin_lock_irqsave(&port->lock, flags);
     uart_console_write(port, s, count, limeuart_putchar);
@@ -497,7 +499,6 @@ static void limeuart_console_write(struct console *co, const char *s, unsigned i
 
 static int limeuart_console_setup(struct console *co, char *options)
 {
-    dev_dbg(port->dev, "%s\n", __func__);
     struct limeuart_port *uart;
     struct uart_port *port;
     int baud = 115200;
@@ -510,6 +511,7 @@ static int limeuart_console_setup(struct console *co, char *options)
         return -ENODEV;
 
     port = &uart->port;
+    dev_dbg(port->dev, "%s\n", __func__);
     if (!port->membase)
         return -ENODEV;
 

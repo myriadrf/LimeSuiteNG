@@ -182,6 +182,8 @@ static void limepcie_dma_buffer_free(struct limepcie_dma *dma, void *va_memory, 
         kfree(va_memory);
 }
 
+static void limepcie_dma_destroy(struct limepcie_dma *dma);
+
 // Initializes a single direction data transfer controls
 static int limepcie_dma_init(
     struct limepcie_dma *dma, uint8_t moduleIndex, enum dma_data_direction direction, uint32_t bufferSize, uint16_t bufferCount)
@@ -246,6 +248,9 @@ static int limepcie_dma_init(
         if (!memoryBuffer)
         {
             dev_err(sysDev, "Failed to allocate dma buffer\n");
+            // free the buffers allocated so far, the caller does not clean up a
+            // channel whose init failed
+            limepcie_dma_destroy(dma);
             return -ENOMEM;
         }
 #ifdef DEBUG_MEM
@@ -733,6 +738,14 @@ static long limepcie_ioctl_trx(struct file *file, unsigned int cmd, unsigned lon
         if (m.control.enabled && dma->enabled)
         {
             ret = -EBUSY;
+            break;
+        }
+
+        // irqPeriod is used as a modulo divisor when scheduling interrupts,
+        // reject zero from userspace before it causes a divide-by-zero oops
+        if (m.control.enabled && m.irqPeriod == 0)
+        {
+            ret = -EINVAL;
             break;
         }
 
