@@ -82,32 +82,31 @@ OpStatus LimePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t
 
     int ret = ioctl(mFileDescriptor, LIMEPCIE_IOCTL_RUN_CONTROL_COMMAND, &pkt);
 
-    switch (ret)
+    // ioctl reports failure as -1 with errno set, switching on the return value
+    // left the errno cases below unreachable
+    if (ret < 0)
     {
-    case 0:
-        break;
-    case ENOTTY:
-    case -ENOTTY:
-    case ENOIOCTLCMD:
-    case -ENOIOCTLCMD: {
-        // driver does not support ioctl, fallback to write/read
-        ret = WriteControl(request, length, timeout_ms);
-        if (static_cast<size_t>(ret) != length)
-            return OpStatus::IOFailure;
+        switch (errno)
+        {
+        case ENOTTY:
+        case ENOIOCTLCMD: {
+            // driver does not support ioctl, fallback to write/read
+            ret = WriteControl(request, length, timeout_ms);
+            if (static_cast<size_t>(ret) != length)
+                return OpStatus::IOFailure;
 
-        ret = ReadControl(response, length, timeout_ms);
-        if (static_cast<size_t>(ret) != length)
+            ret = ReadControl(response, length, timeout_ms);
+            if (static_cast<size_t>(ret) != length)
+                return OpStatus::IOFailure;
+            return OpStatus::Success;
+        }
+        case EBUSY:
+            return OpStatus::Busy;
+        case ETIMEDOUT:
+            return OpStatus::Timeout;
+        default:
             return OpStatus::IOFailure;
-        return OpStatus::Success;
-    }
-    case EBUSY:
-    case -EBUSY:
-        return OpStatus::Busy;
-    case ETIMEDOUT:
-    case -ETIMEDOUT:
-        return OpStatus::Timeout;
-    default:
-        return OpStatus::IOFailure;
+        }
     }
 
     if (pkt.length != length)

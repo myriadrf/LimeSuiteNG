@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -40,7 +41,10 @@ class IUSB
         /// @brief The comparison operator (needed for use in std::set)
         /// @param rhs The other VID/PID pair to compare to.
         /// @return True if this element is "smaller" than the other one.
-        bool operator<(const VendorProductId& rhs) const { return vendorId < rhs.vendorId || productId < rhs.productId; }
+        bool operator<(const VendorProductId& rhs) const
+        {
+            return std::tie(vendorId, productId) < std::tie(rhs.vendorId, rhs.productId);
+        }
     };
     /**
      * @brief Returns list of detected devices descriptors used for connecting to device.
