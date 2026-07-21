@@ -178,15 +178,18 @@ void dlgMarkers::UpdateValues()
         double valueB = 0;
         int cnt = 0;
 
-        if (!parent_graph->series[0]->values.empty() && parent_graph->series[0]->visible)
+        const std::size_t valueIndex = parent_graph->markers[i].dataValueIndex;
+
+        // the marker index can outlive a series resize (e.g. smaller FFT), guard the .at()
+        if (valueIndex < parent_graph->series[0]->values.size() && parent_graph->series[0]->visible)
         {
-            valueA = parent_graph->series[0]->values.at(parent_graph->markers[i].dataValueIndex).y;
+            valueA = parent_graph->series[0]->values.at(valueIndex).y;
             cnt = std::snprintf(text, sizeof(text), "%3.1f (ChA) ; ", valueA);
         }
 
-        if (!parent_graph->series[1]->values.empty() && parent_graph->series[1]->visible)
+        if (valueIndex < parent_graph->series[1]->values.size() && parent_graph->series[1]->visible)
         {
-            valueB = parent_graph->series[1]->values.at(parent_graph->markers[i].dataValueIndex).y;
+            valueB = parent_graph->series[1]->values.at(valueIndex).y;
             std::snprintf(text + cnt, std::max<int>(sizeof(text) - cnt, 0), "%3.1f (ChB) ;", valueB);
         }
 
