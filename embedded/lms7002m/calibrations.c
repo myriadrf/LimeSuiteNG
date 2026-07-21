@@ -936,7 +936,7 @@ static lime_Result lms7002m_calibrate_tx_setup(lms7002m_context* self, uint32_t 
         status = lms7002m_set_frequency_sx(self, false, SXRfreq);
         if (status != lime_Result_Success)
         {
-            lms7002m_spi_read(self, x0020val); //restore used channel
+            lms7002m_spi_write(self, 0x0020, x0020val); //restore used channel
             return status;
         }
     }

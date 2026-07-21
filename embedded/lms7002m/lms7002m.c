@@ -1246,7 +1246,9 @@ uint32_t lms7002m_get_nco_frequency(lms7002m_context* self, bool isTx, const uin
     const uint32_t refClk_Hz = lms7002m_get_reference_clock_tsp(self, isTx);
     const uint16_t addr = isTx ? 0x0240 : 0x0440;
     uint32_t fcw = 0;
-    fcw |= lms7002m_spi_read(self, addr + 2 + index * 2) << 16; //NCO frequency control word register MSB part.
+    // cast before the shift, a uint16_t promotes to signed int and << 16 of a
+    // value >= 0x8000 would be signed overflow
+    fcw |= (uint32_t)lms7002m_spi_read(self, addr + 2 + index * 2) << 16; //NCO frequency control word register MSB part.
     fcw |= lms7002m_spi_read(self, addr + 3 + index * 2); //NCO frequency control word register LSB part.
 
     return nco_fcw_to_freq(fcw, refClk_Hz);
