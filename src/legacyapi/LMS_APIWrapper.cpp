@@ -1490,17 +1490,27 @@ API_EXPORT int CALL_CONV LMS_SetNCOPhase(lms_device_t* device, bool dir_tx, size
 
     if (phase != nullptr)
     {
+        // select the channel, the raw register writes below bypass SetParameter
+        status = apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, "MAC"s, static_cast<uint16_t>((ch % 2) + 1));
+        if (status != OpStatus::Success)
+            return OpStatusToReturnCode(status);
+
         for (unsigned i = 0; i < LMS_NCO_VAL_COUNT; i++)
         {
             uint16_t addr = dir_tx ? 0x0244 : 0x0444;
-            uint16_t pho = static_cast<uint16_t>(65536 * (phase[i] / 360));
-            apiDevice->device->WriteRegister(apiDevice->moduleIndex, addr + i, pho);
+            // negative phase wraps modulo 2^16, a direct float to uint16_t cast is UB
+            uint16_t pho = static_cast<uint16_t>(std::lround(65536.0 * (phase[i] / 360.0)));
+            status = apiDevice->device->WriteRegister(apiDevice->moduleIndex, addr + i, pho);
+            if (status != OpStatus::Success)
+                return OpStatusToReturnCode(status);
         }
 
         const uint16_t addr = dir_tx ? 0x0240 : 0x0440; // SEL_TX, SEL_RX
         const uint8_t msb = 4;
         const uint8_t lsb = 1;
-        apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, addr, msb, lsb, 0);
+        status = apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, addr, msb, lsb, 0);
+        if (status != OpStatus::Success)
+            return OpStatusToReturnCode(status);
     }
 
     return 0;
@@ -1518,7 +1528,11 @@ API_EXPORT int CALL_CONV LMS_GetNCOPhase(lms_device_t* device, bool dir_tx, size
 
     if (phase != nullptr)
     {
-        apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, "MAC"s, ch);
+        // MAC values are 1 and 2, writing the raw channel index selected the wrong channel
+        const OpStatus status =
+            apiDevice->device->SetParameter(apiDevice->moduleIndex, ch, "MAC"s, static_cast<uint16_t>((ch % 2) + 1));
+        if (status != OpStatus::Success)
+            return OpStatusToReturnCode(status);
 
         for (std::size_t i = 0; i < LMS_NCO_VAL_COUNT; ++i)
         {
