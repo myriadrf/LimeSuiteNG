@@ -932,7 +932,9 @@ std::vector<double> LMS7002M_SDRDevice::GetGFIRCoefficients(uint8_t moduleIndex,
     const uint8_t count = gfirID == 2 ? 120 : 40;
     std::vector<double> coefficientBuffer(count);
 
-    lms->GetGFIRCoefficients(trx, gfirID, coefficientBuffer.data(), count);
+    // the signature has no status channel, an empty vector signals failure
+    if (lms->GetGFIRCoefficients(trx, gfirID, coefficientBuffer.data(), count) != OpStatus::Success)
+        return {};
 
     return coefficientBuffer;
 }

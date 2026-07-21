@@ -105,4 +105,13 @@ TEST(LMS7002M_SDRDevice_GFIR, SetCoefficientsRejectsOversizedCount)
     EXPECT_EQ(device.SetGFIRCoefficients(0, TRXDir::Rx, 0, 3, std::vector<double>(10, 0.0)), OpStatus::OutOfRange);
 }
 
+TEST(LMS7002M_SDRDevice_GFIR, GetCoefficientsReportsFailure)
+{
+    auto spi = std::make_shared<RecordingSPIStub>();
+    TestDevice device(spi);
+
+    // an invalid filter index used to return a zero-filled buffer as success
+    EXPECT_TRUE(device.GetGFIRCoefficients(0, TRXDir::Rx, 0, 3).empty());
+}
+
 } // namespace lime::testing
