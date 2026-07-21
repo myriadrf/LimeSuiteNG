@@ -278,6 +278,14 @@ bool UnixUsb::Connect(uint16_t vid, uint16_t pid, const char* serial)
             continue;
         }
 
+        // on any open failure dev_handle is left null, skip this device instead
+        // of dereferencing it below
+        if (openStatus != LIBUSB_SUCCESS)
+        {
+            dev_handle = nullptr;
+            continue;
+        }
+
         std::string foundSerial;
         if (desc.iSerialNumber > 0)
         {
