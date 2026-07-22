@@ -1393,8 +1393,8 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     if (ret)
         return ret;
 
-    /* Reset LimePCIe core */
 #ifdef CSR_CTRL_RESET_ADDR
+    // Reset LimePCIe core
     limepcie_writel(myDevice, CSR_CTRL_RESET_ADDR, 1);
     msleep(10);
 #endif
