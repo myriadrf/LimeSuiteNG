@@ -14,9 +14,14 @@ project(
     VERSION ${LIMEPCIE_VERSION}
     DESCRIPTION "Linux kernel module for LimeSDR PCIe based devices"
     LANGUAGES C)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake" "${CMAKE_CURRENT_LIST_DIR}/../cmake")
 checkdebianchangelogversion(${PROJECT_NAME}-dkms)
 include(add_kernel_module)
+
+# no-op when the drivers/linux level already resolved it, does the work when
+# this directory is configured standalone
+include(ResolveKernelRelease)
+resolve_kernel_release()
 
 find_package(LinuxKernelHeaders REQUIRED)
 
