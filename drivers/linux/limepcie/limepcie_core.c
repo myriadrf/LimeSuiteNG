@@ -1390,6 +1390,8 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     myDevice->pciContext = pciContext;
     pci_set_drvdata(pciContext, myDevice);
     int ret = limepcie_configure_pci(myDevice);
+    if (ret)
+        return ret;
 
     /* Reset LimePCIe core */
 #ifdef CSR_CTRL_RESET_ADDR
