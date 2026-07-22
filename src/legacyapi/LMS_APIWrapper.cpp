@@ -472,7 +472,10 @@ API_EXPORT int CALL_CONV LMS_GetAntennaBW(lms_device_t* device, bool dir_tx, siz
     }
 
     const lime::TRXDir direction = DirFromBool(dir_tx);
-    const std::string& pathName = apiDevice->GetRFSOCDescriptor().pathNames.at(direction).at(path);
+    const auto& pathNames = apiDevice->GetRFSOCDescriptor().pathNames.at(direction);
+    if (path >= pathNames.size())
+        return -1;
+    const std::string& pathName = pathNames.at(path);
 
     if (range)
     {
