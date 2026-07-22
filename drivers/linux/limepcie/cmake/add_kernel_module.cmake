@@ -40,10 +40,9 @@ function(add_kernel_module)
     set(MODULE_KOBJECT ${KBUILD_FILE_DIR}/${KMOD_NAME}.ko)
     set(KERNEL_SOURCE_DIR /lib/modules/${KMOD_KERNEL_RELEASE}/build)
     if(KMOD_KERNEL_AUTODETECTED)
-        # build through the generated Makefile, it resolves the kernel directory at
-        # build time, so the module is always built for the currently running kernel
-        set(KBUILD_CMD $(MAKE) -C ${KBUILD_FILE_DIR})
-        set(KBUILD_CLEAN_CMD $(MAKE) -C ${KBUILD_FILE_DIR} clean)
+        # Native build for the running kernel; kbuild detects ARCH on its own.
+        set(KBUILD_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} M=${KBUILD_FILE_DIR} modules)
+        set(KBUILD_CLEAN_CMD $(MAKE) -C ${KERNEL_SOURCE_DIR} M=${KBUILD_FILE_DIR} clean)
     else()
         set(KBUILD_CMD
             $(MAKE)
