@@ -1032,7 +1032,7 @@ void LimeSDR_X3::LMS3SetPath(TRXDir dir, uint8_t chan, uint8_t path)
 {
     uint16_t sw_addr = 0x00D1;
     uint16_t sw_val = mFPGA->ReadRegister(sw_addr);
-    auto& lms = mLMSChips.at(0);
+    auto& lms = mLMSChips.at(2);
 
     if (dir == TRXDir::Tx)
         lms->SetBandTRF(path);
