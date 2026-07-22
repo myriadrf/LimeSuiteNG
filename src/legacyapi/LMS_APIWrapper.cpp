@@ -1018,7 +1018,7 @@ API_EXPORT int CALL_CONV LMS_GetStreamStatus(lms_stream_t* stream, lms_stream_st
     handle->parent->statsDeltas.overrun.checkpoint();
 
     handle->parent->statsDeltas.droppedPackets.set(stats.loss);
-    status->droppedPackets = handle->parent->statsDeltas.underrun.delta();
+    status->droppedPackets = handle->parent->statsDeltas.droppedPackets.delta();
     handle->parent->statsDeltas.droppedPackets.checkpoint();
 
     // status->sampleRate; // Is noted as unused
