@@ -14,7 +14,7 @@ Plugins for external software:
 ## Supported devices
 * [LimeSDR-USB](https://wiki.myriadrf.org/LimeSDR-USB)
 * [LimeSDR Mini](https://wiki.myriadrf.org/LimeSDR-Mini)
-* [LimeSDR Mini v2](https://limesdr-mini.myriadrf.org/index.html)
+* [LimeSDR Mini v2](http://web.archive.org/web/20260224214255/https://limesdr-mini.myriadrf.org/index.html)
 * [LimeSDR XTRX](https://limesdr-xtrx.myriadrf.org/)
 
 ## Installing
