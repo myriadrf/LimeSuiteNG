@@ -1101,7 +1101,7 @@ OpStatus TRXLooper::TxSetup()
     const auto dmaChunks{ mTxArgs.dma->GetBuffers() };
     const auto dmaBufferSize = dmaChunks.front().size;
 
-    mTx.packetsToBatch = std::clamp<uint8_t>(mTx.packetsToBatch, 1, dmaBufferSize / packetSize);
+    mTx.packetsToBatch = std::clamp<uint32_t>(mTx.packetsToBatch, 1u, dmaBufferSize / packetSize);
 
     std::vector<uint8_t*> dmaBuffers(dmaChunks.size());
     for (uint32_t i = 0; i < dmaChunks.size(); ++i)
