@@ -834,6 +834,10 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
     {
         // if staging buffers are depleted request new batch
         lime::StreamMeta metadata{ 0, false, false };
+        const std::size_t bytesNeeded = sample_count * sampleSize;
+        for (auto& buffer : stage->buffer)
+            if (buffer.size() < bytesNeeded)
+                buffer.resize(bytesNeeded);
         T* dest[2] = { reinterpret_cast<T*>(stage->buffer[0].data()), reinterpret_cast<T*>(stage->buffer[1].data()) };
         size_t samplesProduced = handle->parent->stream->StreamRx(reinterpret_cast<T**>(dest), sample_count, &metadata, timeout);
         samplesToReturn = samplesProduced;
@@ -914,9 +918,13 @@ int SendStream(
     if (!IsSetBit(stage->maskDataPresentInBuffer, handle->channelIndex))
     {
         samplesToReturn = sample_count;
-        std::memcpy(stage->buffer[handle->channelIndex].data(), samples, samplesToReturn * sampleSize);
+        auto& buffer = stage->buffer[handle->channelIndex];
+        const std::size_t bytesNeeded = samplesToReturn * sampleSize;
+        if (buffer.size() < bytesNeeded)
+            buffer.resize(bytesNeeded);
+        std::memcpy(buffer.data(), samples, bytesNeeded);
         stage->maskDataPresentInBuffer = InsertBit(stage->maskDataPresentInBuffer, handle->channelIndex);
-        stage->bufferBytesFilled = samplesToReturn * sampleSize;
+        stage->bufferBytesFilled = bytesNeeded;
         if (meta)
             stage->timestamp = meta->timestamp;
     }
