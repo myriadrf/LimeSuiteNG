@@ -167,13 +167,13 @@ sdrdevice_manager::GetDeviceContextByHandle(const std::string& deviceHandleHint)
     ctx->handle = handle;
     ctx->device = std::unique_ptr<SDRDevice>(DeviceRegistry::makeDevice(handle));
 
-    ctx->device->SetMessageLogCallback(gr_loghandler_string);
-
     if (!ctx->device) {
         m_contexts.pop_back();
         logger->error(fmt::format("Unable to use device: \"{:s}\"", handle.Serialize()));
         return nullptr;
     }
+
+    ctx->device->SetMessageLogCallback(gr_loghandler_string);
     return ctx;
 }
 
