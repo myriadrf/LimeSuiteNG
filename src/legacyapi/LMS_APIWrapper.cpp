@@ -1171,9 +1171,10 @@ API_EXPORT int CALL_CONV LMS_GetClockFreq(lms_device_t* device, size_t clk_id, f
         return -1;
     }
 
+    const double clockFreq = apiDevice->device->GetClockFreq(clk_id, apiDevice->moduleIndex * 2);
     if (freq)
-        *freq = apiDevice->device->GetClockFreq(clk_id, apiDevice->moduleIndex * 2);
-    return *freq > 0 ? 0 : -1;
+        *freq = clockFreq;
+    return clockFreq > 0 ? 0 : -1;
 }
 
 API_EXPORT int CALL_CONV LMS_SetClockFreq(lms_device_t* device, size_t clk_id, float_type freq)
