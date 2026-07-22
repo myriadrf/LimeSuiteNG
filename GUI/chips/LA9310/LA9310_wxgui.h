@@ -47,20 +47,5 @@ class LA9310_wxgui : public ISOCPanel
     wxCheckBox* chkDAC_IQ;
     void onPhytimer(wxCommandEvent& event);
 
-    wxCheckBox* chkTxEn;
-    void onTxEnable(wxCommandEvent& event);
-
-    wxCheckBox* chkAXIQ;
-    void onAXIQEnable(wxCommandEvent& event);
-
-    wxButton* btnTransmit;
-    void onTransmit(wxCommandEvent& event);
-
-    wxButton* btnClear;
-    void onClear(wxCommandEvent& event);
-
-    wxButton* btnRst;
-    void onRst(wxCommandEvent& event);
-
     lime::LA9310* la9310;
 };

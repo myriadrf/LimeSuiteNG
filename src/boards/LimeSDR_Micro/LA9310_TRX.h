@@ -141,10 +141,6 @@ class LA9310_TRX : public RFStream
 
     uint32_t band_selection_restore;
     uint64_t stream_time_origin;
-
-    uint64_t tx_burst_start;
-    int32_t tx_burst_length;
-    bool tx_burst_in_progress;
     double phytimer_samples_ratio;
 };
 

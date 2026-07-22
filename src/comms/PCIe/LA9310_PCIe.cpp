@@ -280,6 +280,16 @@ OpStatus LA9310_PCIe::LoadArmM4Firmware(const char* data, size_t length)
 
 OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
 {
+    // Check RCW Completion bit, without it accessing VSPA registers will fail and reboot host
+    constexpr uint32_t VSPA_CCSR_offset = 0x1000000;
+    constexpr uint32_t vcpu_busy = (1 << 8);
+
+    const auto VSPA_STATUS_reg_offset = VSPA_CCSR_offset + 0x10;
+    auto csr = GetCSRAccess(LA9310_WINDOW_BAR0);
+    bool busy = csr->ioread32(VSPA_STATUS_reg_offset) & vcpu_busy;
+    if (busy)
+        return OpStatus::Busy;
+
     const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
 }

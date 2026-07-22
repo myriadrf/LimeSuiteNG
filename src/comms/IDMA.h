@@ -59,7 +59,7 @@ class IDMA
     virtual OpStatus Wait() = 0;
 
     /**
-     * @brief Transfer ownership and flush CUP cache of memory buffer.
+     * @brief Transfer ownership and flush CPU cache of memory buffer.
      * @param index which DMA buffer to modify.
      * @param dir Ownership transfer direction.
      * @return The operation success state.

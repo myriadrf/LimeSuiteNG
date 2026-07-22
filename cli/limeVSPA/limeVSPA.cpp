@@ -6,14 +6,15 @@
 #include "chips/LA9310/PHYTimer.h"
 
 #include <fcntl.h>
-#include "vspa_state.h"
+#include "chips/LA9310/vspa_state.h"
 #include <stdio.h>
 
-#include "l1-trace.h"
+#include "chips/LA9310/VSPA_iqplayer.h"
+#include "chips/LA9310/vspa/VSPA_Trace.h"
 
 #include <unordered_map>
 
-extern std::string GenerateTraceFile(const l1_trace_data_t* data, uint32_t length);
+extern void ToTraceFile(std::ofstream& ofs, const std::vector<l1_trace_data_t> data);
 
 static const int max_trace_len = 400;
 
@@ -23,77 +24,6 @@ static const int max_trace_len = 400;
     { \
         prefix##value, "\"" QUOTE(value) "\"" \
     }
-
-const std::unordered_map<uint32_t, const char*> l1_messages = {
-    KeyValue(L1_TRACE_MSG_, DMA_XFR),
-    KeyValue(L1_TRACE_MSG_, DMA_CFGERR),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_RX_START),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_TX_START),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_RX_OVER),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_RX_UNDER),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_TX_OVER),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_TX_UNDER),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_RX_COMP),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_TX_COMP),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_RX_XFER_ERROR),
-    KeyValue(L1_TRACE_MSG_, DMA_AXIQ_TX_XFER_ERROR),
-    KeyValue(L1_TRACE_MSG_, DMA_XFR_SIZE),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_RD_START),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_RD_COMP),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_RD_UNDERRUN),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_WR_START),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_WR_COMP),
-    KeyValue(L1_TRACE_MSG_, DMA_DDR_WR_OVERRUN),
-    KeyValue(L1_TRACE_MSG_, DMA_PTR_RST),
-    KeyValue(L1_TRACE_MSG_, DMA_COMPLETE),
-    KeyValue(L1_TRACE_MSG_, DMA_AVAILABLE),
-    KeyValue(L1_TRACE_MSG_, DMA_PENDING),
-
-    KeyValue(L1_TRACE_L1APP_, TX_QEC_START),
-    KeyValue(L1_TRACE_L1APP_, TX_QEC_COMP),
-    KeyValue(L1_TRACE_L1APP_, RX_QEC_START),
-    KeyValue(L1_TRACE_L1APP_, RX_QEC_COMP),
-    KeyValue(L1_TRACE_L1APP_, RX_DEC_START),
-    KeyValue(L1_TRACE_L1APP_, RX_DEC_COMP),
-    KeyValue(L1_TRACE_L1APP_, RX_CMP_START),
-    KeyValue(L1_TRACE_L1APP_, RX_CMP_COMP),
-    KeyValue(L1_TRACE_L1APP_, TX_INTERP_START),
-    KeyValue(L1_TRACE_L1APP_, TX_INTERP_COMP),
-
-    KeyValue(L1_TRACE_MSG_, FIFO_PUSH),
-    KeyValue(L1_TRACE_MSG_, FIFO_POP),
-    KeyValue(L1_TRACE_MSG_, FIFO_SIZE),
-    KeyValue(L1_TRACE_MSG_, FIFO_FAULT1),
-    KeyValue(L1_TRACE_MSG_, FIFO_FAULT2),
-    KeyValue(L1_TRACE_MSG_, FIFO_FAULT3),
-
-    KeyValue(L1_TRACE_MSG_, TX_AXIQ),
-    KeyValue(L1_TRACE_MSG_, RX_AXIQ),
-    KeyValue(L1_TRACE_MSG_, TX_CONTROL),
-    KeyValue(L1_TRACE_MSG_, RX_CONTROL),
-    KeyValue(L1_TRACE_MSG_, TX_CONFIG),
-    KeyValue(L1_TRACE_MSG_, RX_CONFIG),
-    KeyValue(L1_TRACE_MSG_, RX_CHANNEL_SELECT),
-
-    KeyValue(L1_TRACE_MSG_, TX_SET_BURST_SIZE),
-    KeyValue(L1_TRACE_MSG_, RX_FIFO_SET),
-    KeyValue(L1_TRACE_MSG_, TX_FIFO_SET),
-    KeyValue(L1_TRACE_MSG_, TX_BURST_END),
-    KeyValue(L1_TRACE_MSG_, TX_DMA_ALLOWED),
-};
-
-std::string GetMsgName(uint32_t msg)
-{
-    char msg_text[64];
-    auto iter = l1_messages.find(msg);
-    if (iter != l1_messages.end())
-        return iter->second;
-    else
-    {
-        sprintf(msg_text, "0x%X", msg);
-        return msg_text;
-    }
-}
 
 using namespace std;
 using namespace lime;
@@ -117,47 +47,21 @@ static void print_trace(const l1_trace_data_t* data, uint32_t length)
         if (data[i].msg == 0)
             break;
 
-        std::string cmdname = GetMsgName(data[i].msg);
+        std::string cmdname; // = GetMsgName(data[i].msg);
         printf("%3u: [%+16li] %s %08X\n", i, data[i].cnt - base_cnt, cmdname.c_str(), data[i].param);
         base_cnt = data[i].cnt;
     }
 }
 
-static void DumpTrace(std::shared_ptr<LA9310_PCIe> pcie)
+static uint64_t event_count = 0;
+static void DumpTracer(VSPA_Trace* tracer, std::ofstream& ofs)
 {
-    auto iqflood = pcie->GetBar(LA9310_WINDOW_IQFLOOD);
-    if (iqflood.vaddr == nullptr)
-    {
-        printf("Failed trace\n");
+    if (!tracer)
         return;
-    }
+    auto events = tracer->ReadTrace();
+    event_count += events.size();
 
-    auto bar2 = pcie->GetBar(LA9310_WINDOW_BAR2);
-    if (bar2.vaddr == nullptr)
-        return;
-
-    vspa_state_t* proxy = reinterpret_cast<vspa_state_t*>(reinterpret_cast<uint64_t>(bar2.vaddr) + 0x400000);
-    size_t traceSize = proxy->info.l1_trace_size;
-    if (traceSize == 0)
-    {
-        printf("L1 trace not enabled in firmware\n");
-        return;
-    }
-
-    size_t trace_offset = (iqflood.size - traceSize) & ~0xF; // align to 128bit
-    uint32_t* trace_mem = reinterpret_cast<uint32_t*>(iqflood.vaddr);
-    trace_mem += trace_offset / sizeof(uint32_t);
-
-    memset(trace_mem, 0, traceSize); //traceSize * sizeof(l1_trace_data_t));
-    proxy->info.l1_trace_offset = trace_offset;
-    proxy->info.proxy_fetch |= PROXY_UPDATE_TRACE;
-
-    std::this_thread::sleep_for(chrono::milliseconds(500));
-    print_trace(reinterpret_cast<l1_trace_data_t*>(trace_mem), traceSize / sizeof(l1_trace_data_t));
-
-    std::ofstream fout("trace.json");
-    fout << GenerateTraceFile(reinterpret_cast<l1_trace_data_t*>(trace_mem), traceSize / sizeof(l1_trace_data_t));
-    fout.close();
+    ToTraceFile(ofs, events);
 }
 
 static vspa_state_t GetProxy(std::shared_ptr<LA9310_PCIe> pcie)
@@ -182,8 +86,6 @@ static void print_pipeline_tx(const tx_pipeline_t& pipe, const tx_pipeline_t& la
     printf("Tx pipeline:\n");
     uint32_t adc_rate = pipe.dac.output.bytes_done - last_pipe.dac.output.bytes_done;
     printf("DAC | enq:%08X done:%08X, rate:%8u\n", pipe.dac.input.bytes_done, pipe.dac.output.bytes_done, adc_rate);
-    uint32_t qec_rate = pipe.qec.output.bytes_done - last_pipe.qec.output.bytes_done;
-    printf("QEC | enq:%08X done:%08X, rate:%8u\n", pipe.qec.input.bytes_done, pipe.qec.output.bytes_done, qec_rate);
     printf("INT | enq:%08X done:%08X\n", pipe.interp.input.bytes_done, pipe.interp.output.bytes_done);
     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
@@ -194,9 +96,6 @@ static void print_pipeline_rx(const rx_pipeline_t& pipe, const rx_pipeline_t& la
     printf("Rx pipeline:\n");
     uint32_t adc_rate = pipe.adc.output.bytes_done - last_pipe.adc.output.bytes_done;
     printf("ADC | enq:%08X done:%08X, rate:%8u\n", pipe.adc.input.bytes_done, pipe.adc.output.bytes_done, adc_rate);
-    uint32_t qec_rate = pipe.qec.output.bytes_done - last_pipe.qec.output.bytes_done;
-    printf("QEC | enq:%08X done:%08X, rate:%8u\n", pipe.qec.input.bytes_done, pipe.qec.output.bytes_done, qec_rate);
-    printf("DEC | enq:%08X done:%08X\n", pipe.dec.input.bytes_done, pipe.dec.output.bytes_done);
     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
 }
@@ -260,6 +159,29 @@ static void la9310_hexdump_dma(std::shared_ptr<LA9310_PCIe> pcie)
     printf("\n");
 }
 
+static uint32_t GetValue32AtOffset(volatile void* base, uint32_t offset)
+{
+    auto ptr = reinterpret_cast<volatile uint8_t*>(base) + offset;
+    return *reinterpret_cast<volatile uint32_t*>(ptr);
+}
+
+static void la9310_hexdump_control(std::shared_ptr<LA9310_PCIe> pcie)
+{
+    auto bar0 = pcie->GetBar(LA9310_WINDOW_BAR0);
+    if (bar0.vaddr == nullptr)
+        return;
+
+    volatile uint32_t* base = reinterpret_cast<volatile uint32_t*>(uint64_t(bar0.vaddr) + VSPA_CCSR);
+
+    printf("\nEvents:");
+    printf("\nCONTROL:\t%08X", GetValue32AtOffset(base, 0x8));
+    printf("\nIRQEN:\t%08X", GetValue32AtOffset(base, 0xC));
+    printf("\nSTATUS:\t%08X", GetValue32AtOffset(base, 0x10));
+    printf("\nVCPU_HOST_FLAGS0:\t%08X", GetValue32AtOffset(base, 0x14));
+    printf("\nVCPU_HOST_FLAGS1:\t%08X", GetValue32AtOffset(base, 0x18));
+    printf("\n");
+}
+
 static void la9310_dump_vspa_gp(std::shared_ptr<LA9310_PCIe> pcie)
 {
     const uint32_t GP_IN0 = 0x500;
@@ -306,6 +228,31 @@ static void la9310_dump_vspa_gp(std::shared_ptr<LA9310_PCIe> pcie)
     printf("\n");
 }
 
+static void la9310_dump_dma(std::shared_ptr<LA9310_PCIe> pcie)
+{
+    uint8_t* BAR2_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR2).vaddr);
+    auto vspa_dmem_proxy_wo = reinterpret_cast<volatile vspa_state_t*>(BAR2_addr + 0x400000);
+
+    vspa_state_t* vspa_interface = const_cast<vspa_state_t*>(vspa_dmem_proxy_wo);
+    dma_table_t* table = &vspa_interface->internals.tx_dma_schedule;
+
+    uint32_t head = table->head;
+    uint32_t tail = table->tail;
+    printf("DMA: c:%3u p:%3u\n", head, tail);
+    auto row = table->items;
+    for (int i = 0; i < DMA_TABLE_LINE_COUNT; ++i)
+    {
+        printf(i == (head & (DMA_TABLE_LINE_COUNT - 1)) ? "c" : " ");
+        printf(i == (tail & (DMA_TABLE_LINE_COUNT - 1)) ? "p" : " ");
+        printf("|addr:%08X sz:%8u phyt:%08X_%08X f:%04X\n",
+            row[i].addr,
+            row[i].size,
+            row[i].timestamp >> 32,
+            row[i].timestamp,
+            row[i].flags);
+    }
+}
+
 static void print_flow_controls(const vspa_state_t& proxy, const vspa_state_t& last_proxy)
 {
     const char* rx_names[] = { "Ro0", "Ro1", "Rx0", "Rx1" };
@@ -344,15 +291,6 @@ static void print_flow_controls(const vspa_state_t& proxy, const vspa_state_t& l
 static void print_channel_info(const vspa_interface_info& info)
 {
     const tx_config_t* channel = &info.tx_config;
-    printf("ddr addr: ");
-    for (int i = 0; i < 5; ++i)
-        printf("\t%08X", channel[i].ddr_base_address);
-    printf("\nddr size: ");
-    for (int i = 0; i < 5; ++i)
-        printf("\t%8u", channel[i].ddr_size);
-    printf("\nddr step: ");
-    for (int i = 0; i < 5; ++i)
-        printf("\t%8u", channel[i].ddr_step);
     printf("\nDEC/INT: ");
     for (int i = 0; i < 5; ++i)
         printf("\t%8u", channel[i].oversample);
@@ -370,13 +308,6 @@ void print_proxy(const vspa_state_t& proxy, const vspa_state_t& last_proxy, int 
     printf("\n");
     print_pipeline_tx(proxy.internals.txpipe, last_proxy.internals.txpipe);
     print_pipeline_rx(proxy.internals.rxpipe[channel], last_proxy.internals.rxpipe[channel]);
-    printf("TxDDR:%i tone:%i burst:%i ",
-        proxy.internals.tx_control.ddr_enabled,
-        proxy.internals.tx_control.generate_tone,
-        proxy.internals.tx_control.burst_active);
-    printf("burst_start:%08X burst_end:%08X ",
-        proxy.internals.tx_control.burst_start_bytes,
-        proxy.internals.tx_control.burst_end_bytes);
 }
 
 static void RequestProxy(std::shared_ptr<LA9310_PCIe> pcie)
@@ -397,6 +328,8 @@ int main(int argc, char* argv[])
 
     args::Flag trace(parser, "trace", "Event trace", { 't' });
     args::Flag gpio(parser, "gpio", "print VSPA GPIN GPOUT", { 'g' });
+    args::Flag dma(parser, "dma", "print VSPA DMA", { 'x' });
+    args::Flag ctrl(parser, "ctrl", "print Control", { 'e' });
     args::ValueFlag<int> channel(parser, "chan", "Which channel internals", { 'c', "channel" }, 0);
 
     try
@@ -432,24 +365,101 @@ int main(int argc, char* argv[])
 
     PHYTimer phytimer(pcie);
 
+    VSPA_iqplayer vspa(pcie);
+
+    std::ofstream fout;
+    if (trace)
+    {
+        fout.open("trace.json");
+        fout << "{\n"
+             << "\"displayTimeUnit\":\"ns\"," << "\"traceEvents\": [\n";
+
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 100, \"args\": {"
+                "\"name\" : \"DMA_WR_priority\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 101, \"args\": {"
+                "\"name\" : \"ADC_RO0\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 102, \"args\": {"
+                "\"name\" : \"VSPA_DMA\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 103, \"args\": {"
+                "\"name\" : \"ADC_RX0\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 104, \"args\": {"
+                "\"name\" : \"ADC_RX1\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 105, \"args\": {"
+                "\"name\" : \"AUX_ADC\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 106, \"args\": {"
+                "\"name\" : \"RSSI_RD\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 107, \"args\": {"
+                "\"name\" : \"DDR_RD1\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 108, \"args\": {"
+                "\"name\" : \"DDR_RD2\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 109, \"args\": {"
+                "\"name\" : \"DDR_RD3\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 110, \"args\": {"
+                "\"name\" : \"DDR_RD4\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 111, \"args\": {"
+                "\"name\" : \"DAC\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 112, \"args\": {"
+                "\"name\" : \"DDR_WR1\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 113, \"args\": {"
+                "\"name\" : \"DDR_WR2 TRACE\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 114, \"args\": {"
+                "\"name\" : \"DDR_WR3\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 115, \"args\": {"
+                "\"name\" : \"DDR_WR4 State\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 1, \"args\": {"
+                "\"name\" : \"VCPU\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 2, \"args\": {"
+                "\"name\" : \"DMA\" }"
+                "}\n";
+        fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 3, \"args\": {"
+                "\"name\" : \"IPPU\" }"
+                "}\n";
+
+        // fout.close();
+    }
+
     while (stopProgram.load() == false)
     {
-        printf("\033[2J");
-        printf("\033[H");
         if (trace)
         {
-            DumpTrace(pcie);
-            break;
+            DumpTracer(vspa.tracer.get(), fout);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            // std::cerr << "Evt: " << event_count << std::endl;
+            // break;
         }
         else
         {
+            printf("\033[2J");
+            printf("\033[H");
             proxy = GetProxy(pcie);
             print_proxy(proxy, last_proxy, args::get(channel));
             la9310_hexdump_dma(pcie);
             if (gpio)
                 la9310_dump_vspa_gp(pcie);
 
-            const std::array<uint8_t, 8> timer_ids = { 1, 2, 3, 4, 10, 11, 15, 20 };
+            if (dma)
+                la9310_dump_dma(pcie);
+            if (ctrl)
+                la9310_hexdump_control(pcie);
+
+            const std::array<uint8_t, 9> timer_ids = { 1, 2, 3, 4, 10, 11, 15, 20, 14 };
             std::cerr << "Timers:\n";
             for (auto id : timer_ids)
                 std::cerr << phytimer.GetTimerControl(id).ToString() << std::endl;
@@ -457,9 +467,15 @@ int main(int argc, char* argv[])
             // phytimer.DumpMem();
             RequestProxy(pcie);
             last_proxy = proxy;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
         // std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    if (trace)
+    {
+        fout << "]\n}";
+        fout.close();
     }
 
     return EXIT_SUCCESS;

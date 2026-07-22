@@ -105,7 +105,6 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     status = ctx->vspa->RxEnable(2, false);
     if (status != OpStatus::Success)
         printf("Failed stop rx\n");
-    ctx->vspa->ClearStats();
     status = ctx->vspa->RxEnable(2, true);
     if (status != OpStatus::Success)
         printf("Failed start rx\n");

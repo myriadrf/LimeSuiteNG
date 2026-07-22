@@ -35,7 +35,7 @@ void LA9310::GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask)
     uint32_t dividers = *ADC_DAC_CLKCFG;
 
     const uint32_t dacDividerBy2 = (dividers >> 16) & 1;
-    const uint32_t adcDividerBy2 = ((dividers >> 6) & 0xC) | dividers & 0x3;
+    const uint32_t adcDividerBy2 = ((dividers >> 6) & 0xC) | (dividers & 0x3);
 
     const uint32_t dividersEnabled = *ADC_DAC_CLKCTRL;
     const uint32_t rxDividersEn = dividersEnabled & 0xF;

@@ -5,6 +5,7 @@
 #define VSPA_STATE_H
 
 #include "pipelines.h"
+#include "VSPA_DMA.h"
 
 enum {
     PROXY_UPDATE_FLOW = (1 << 0),
@@ -49,6 +50,8 @@ struct vspa_internals {
     rx_pipeline_t rxpipe[4];
     tx_control_t tx_control;
     rx_control_t rx_control[4];
+    dma_table_t tx_dma_schedule;
+    uint32_t go_count;
 };
 
 // proxy divided into sections for convenient partial updates using DMA

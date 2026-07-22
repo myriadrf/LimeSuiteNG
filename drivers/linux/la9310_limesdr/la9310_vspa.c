@@ -280,7 +280,7 @@ static int startup(struct la9310_dev* la9310_dev)
     ippu_sw_version = vspa_reg_read(regs + IPPU_SWVERSION_REG_OFFSET);
 
     /* Set SPM buffer */
-    msb = (0x70 << 24) | vspadev->spm_buf_bytes;
+    msb = (0x70 << 24);
     lsb = (uint32_t)(dma_addr_t)vspadev->spm_buf_paddr;
     vspa_reg_write(regs + HOST_OUT_64_MSB_REG_OFFSET, msb);
     vspa_reg_write(regs + HOST_OUT_64_LSB_REG_OFFSET, lsb);

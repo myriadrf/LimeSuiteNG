@@ -409,7 +409,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
 
     if (cfg.referenceClockFreq > 0)
     {
-        uint32_t currentRefClk = la9310->GetReferenceClock();
+        // uint32_t currentRefClk = la9310->GetReferenceClock();
         bool external = cfg.referenceClockSource != 0;
         status = la9310->SetReferenceClock(cfg.referenceClockFreq, external);
         if (status != OpStatus::Success)

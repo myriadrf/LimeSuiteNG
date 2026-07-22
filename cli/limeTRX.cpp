@@ -687,8 +687,8 @@ int main(int argc, char** argv)
             txts.AddTicks(tickRatio * repeaterDelay);
             txts.AddTicks(tickRatio * samplesRead);
             txMeta.timestamp = txts;
-            txMeta.hasTimestamp = false;
-            txMeta.flags = 0;
+            txMeta.hasTimestamp = true;
+            txMeta.flags = StreamTxMeta::StartOfBurst;
             stream->Transmit(rxSamples, samplesRead, &txMeta);
         }
 

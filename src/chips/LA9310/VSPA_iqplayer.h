@@ -9,13 +9,15 @@
 #include "limesuiteng/config.h"
 
 #include "VSPA_mailbox.h"
-#include "cli/limeVSPA/vspa_state.h"
+#include "vspa_state.h"
+#include "VSPA_DMA.h"
 
 namespace lime {
 
 class IDCCorrector;
 class IQuadratureErrorCorrector;
 class LA9310_PCIe;
+class VSPA_Trace;
 
 typedef enum {
     MBOX_OPC_EMPTY_0, // 0x0
@@ -51,6 +53,9 @@ typedef enum {
     MBOX_OPC_RX_BURST_LENGTH,
     MBOX_OPC_RX_PREPARE,
 
+    MBOX_OPC_GET_FEATURES_MAP,
+    MBOX_OPC_TX_DMA_SUBMIT,
+    MBOX_OPC_RX_DMA_SUBMIT,
 } mbox_opc_e;
 
 struct VSPA_FIFO_State {
@@ -88,9 +93,6 @@ class LIME_API VSPA_iqplayer
     OpStatus SetupResources(uint32_t rxMask, uint32_t txCount);
 
     int32_t Receive(uint32_t channel, uint32_t* destination, uint32_t read_size, uint64_t* timestamp);
-    int32_t Transmit(const void* src, uint32_t write_size, uint64_t timestamp);
-
-    OpStatus ClearStats();
 
     std::shared_ptr<IDCCorrector> GetRxDCCorrector();
     std::shared_ptr<IDCCorrector> GetTxDCCorrector();
@@ -101,7 +103,6 @@ class LIME_API VSPA_iqplayer
     OpStatus RxEnable(uint8_t channel, bool enable, bool reset_pipeline = true);
     OpStatus TxEnable(bool enable, bool flow_control_disable = false);
     OpStatus SetupRx(uint32_t chan, uint32_t fifo_start_offset, uint32_t fifo_size);
-    OpStatus SetupTx(uint32_t fifo_start_offset, uint32_t fifo_size);
 
     int GetDecimation(uint32_t channel) const;
 
@@ -111,12 +112,22 @@ class LIME_API VSPA_iqplayer
 
     OpStatus PrepareRx();
 
-    VSPA_FIFO_State mTx;
-    size_t TxDataEmplace(void* data, size_t size);
+    VSPA_DMA* GetTxDMA() { return tx_dma.get(); };
+
+    std::shared_ptr<VSPA_Trace> tracer;
+    uint32_t GetRxOverruns(uint32_t ch);
+    uint32_t GetTxUnderruns();
+
+    bool IsClockEnabled() const;
+    bool IsVCPUBusy() const;
+    void HostToVCPU_Flag(uint32_t mask);
 
   private:
+    void DisableGOtriggers();
+    void ScanFeatures();
     std::shared_ptr<LA9310_PCIe> port;
     std::shared_ptr<VSPA_mailbox> mailbox;
+    std::shared_ptr<VSPA_DMA> tx_dma;
 
     VSPA_FIFO_State mRx[4];
 
@@ -126,7 +137,6 @@ class LIME_API VSPA_iqplayer
     volatile vspa_state_t* vspa_dmem_proxy_wo = NULL;
 
     uint32_t rx_fifo_start_offset_in_iqflood;
-    uint8_t tx_dma_channel_count;
     uint8_t rx_dma_channel_count;
 
     std::mutex mx;
