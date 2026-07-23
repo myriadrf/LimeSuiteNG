@@ -165,8 +165,8 @@ void Si5351C::LoadRegValuesFromFile(string FName)
             break;
         if (line[0] == '#')
             continue;
-        sscanf(line, "%i,%x", &addr, &value);
-        m_newConfiguration[addr] = value;
+        if (sscanf(line, "%i,%x", &addr, &value) == 2 && addr >= 0 && addr < static_cast<int>(m_newConfiguration.size()))
+            m_newConfiguration[addr] = value;
     }
 
     fin.close();
