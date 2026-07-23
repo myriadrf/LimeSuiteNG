@@ -1278,6 +1278,9 @@ API_EXPORT int CALL_CONV LMS_GetTestSignal(lms_device_t* device, bool dir_tx, si
         return -1;
     }
 
+    if (sig == nullptr)
+        return -1;
+
     const lime::TRXDir direction = DirFromBool(dir_tx);
 
     auto testSignal = apiDevice->device->GetTestSignal(apiDevice->moduleIndex, direction, chan);
