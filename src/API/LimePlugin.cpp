@@ -699,7 +699,7 @@ static OpStatus TransferDeviceDirectionalSettings(
     }
 
     // copy setting to all channels
-    for (int i = 1; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
         if (dir == TRXDir::Tx)
             node.config.channel[i].tx = trx;
