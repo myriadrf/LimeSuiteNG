@@ -1145,7 +1145,7 @@ OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, 
     LMS64CPacket pkt;
 
     if (MISO)
-        memset(MISO, 0, pkt.payload[2] * count);
+        memset(MISO, 0, sizeof(*MISO) * count);
     while (srcIndex < count)
     {
         pkt.cmd = Command::PERIPHSPI_TRNSF;
