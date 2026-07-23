@@ -165,7 +165,6 @@ void FFT::ProcessLoop()
 {
     std::vector<std::vector<complex32f_t>> samples(channelCount);
     std::vector<std::vector<float>> fftBins;
-    std::vector<std::vector<float>> avgOutput;
     std::vector<std::size_t> samplesReady(channelCount, 0);
 
     FFT_WorkData fftdata(mFFTSize);
@@ -196,18 +195,10 @@ void FFT::ProcessLoop()
 
         // auto t1 = std::chrono::high_resolution_clock::now();
         FFT_Calculate(fftdata, samples, fftBins, mWindowCoeffs);
-        avgOutput.resize(fftBins.size());
         ++resultsDone;
 
         for (std::size_t ch = 0; ch < fftBins.size(); ++ch)
-        {
             samplesReady.at(ch) = 0;
-            avgOutput.at(ch).resize(fftBins.at(ch).size());
-            for (std::size_t i = 0; i < fftBins.at(ch).size(); ++i)
-            {
-                avgOutput.at(ch).at(i) += fftBins.at(ch).at(i) * fftBins.at(ch).at(i);
-            }
-        }
 
         if (resultsDone < avgCount)
         {
@@ -229,10 +220,9 @@ void FFT::ProcessLoop()
         }
         resultsDone = 0;
 
-        for (auto& vec : avgOutput)
-        {
+        // Reset the accumulator so the next averaging batch starts from zero.
+        for (auto& vec : fftBins)
             std::memset(vec.data(), 0, vec.size() * sizeof(float));
-        }
         // auto t2 = std::chrono::high_resolution_clock::now();
         // auto timePeriod = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
         //printf("FFT update %lius\n", timePeriod);
