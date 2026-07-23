@@ -464,6 +464,12 @@ int main(int argc, char** argv)
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
+    if (chipIndexes.empty())
+    {
+        cerr << "Device has multiple RF chips; specify --chip <index>."sv << endl;
+        return EXIT_FAILURE;
+    }
+
     int rx_require = rx ? channelCount : 0;
     int tx_require = tx ? channelCount : 0;
 
