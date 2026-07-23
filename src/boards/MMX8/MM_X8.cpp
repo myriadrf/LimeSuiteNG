@@ -771,7 +771,7 @@ OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-        status = LMS64CProtocol::CustomParameterWrite(*controlPort, parameters, subModuleIndex);
+        status = LMS64CProtocol::CustomParameterWrite(*controlPort, parameter, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
@@ -789,7 +789,7 @@ OpStatus LimeSDR_MMX8::CustomParameterRead(std::vector<CustomParameterIO>& param
         int id = param.id & 0xFF;
 
         std::vector<CustomParameterIO> parameter{ { id, param.value, param.units } };
-        status = LMS64CProtocol::CustomParameterRead(*controlPort, parameters, subModuleIndex);
+        status = LMS64CProtocol::CustomParameterRead(*controlPort, parameter, subModuleIndex);
 
         if (status != OpStatus::Success)
             return status;
