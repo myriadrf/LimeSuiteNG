@@ -96,7 +96,7 @@ int lime::SetOSCurrentThreadPriority(ThreadPriority priority, ThreadPolicy polic
         static_cast<int>(((prio_max - prio_min) / static_cast<float>(ThreadPriority::HIGHEST)) * static_cast<int>(priority)) +
         prio_min;
 
-    if (int ret = pthread_setschedparam(pthread_self(), sched_policy, &sch) != 0)
+    if (int ret = pthread_setschedparam(pthread_self(), sched_policy, &sch))
     {
         lime::debug("SetOSCurrentThreadPriority: Failed to set priority(%d), sched_prio(%d), policy(%d), ret(%d)",
             static_cast<int>(priority),
