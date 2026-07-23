@@ -755,9 +755,11 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
     // apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
     apiDevice->stream.reset();
     SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
-    handle->stagingArea->maskChannelsSetup = ClearBit(handle->stagingArea->maskChannelsSetup, handle->channelIndex);
     if (handle != nullptr)
+    {
+        handle->stagingArea->maskChannelsSetup = ClearBit(handle->stagingArea->maskChannelsSetup, handle->channelIndex);
         delete handle;
+    }
 
     auto& channels = apiDevice->lastSavedStreamConfig.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
     auto iter = std::find(channels.begin(), channels.end(), stream->channel);
