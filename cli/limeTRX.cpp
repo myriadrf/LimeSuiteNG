@@ -408,6 +408,11 @@ int main(int argc, char** argv)
     const uint64_t samplesToCollect = args::get(samplesCountFlag);
     const int64_t workTime = args::get(timeFlag);
     const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
+    if (channelCount < 1 || channelCount > 16) // fixed-size sample arrays below hold up to 16 channels
+    {
+        cerr << "Invalid --mimo channel count "sv << channelCount << " (must be 1..16)."sv << endl;
+        return EXIT_FAILURE;
+    }
     const bool repeater = repeaterFlag;
     const int64_t repeaterDelay = args::get(repeaterFlag);
     const bool syncPPS = syncPPSFlag;
