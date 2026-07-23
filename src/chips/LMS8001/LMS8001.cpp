@@ -249,7 +249,9 @@ OpStatus LMS8001::SPI_read_batch(const uint16_t* spiAddr, uint16_t* spiData, uin
         dataWr[i] = spiAddr[i];
     }
 
-    controlPort->Transact(dataWr.data(), dataRd.data(), cnt);
+    OpStatus status = controlPort->Transact(dataWr.data(), dataRd.data(), cnt);
+    if (status != OpStatus::Success)
+        return status;
     for (size_t i = 0; i < cnt; ++i)
     {
         spiData[i] = dataRd[i] & 0xffff;
