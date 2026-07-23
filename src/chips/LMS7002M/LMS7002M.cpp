@@ -52,7 +52,7 @@ namespace lime {
 // converts [-1:1] into [-32768:32767]
 static constexpr int16_t NormalFloatToInt16(const float value)
 {
-    return (value > 0) ? value * 32767 : value * -32768;
+    return (value < 0) ? value * 32768 : value * 32767;
 }
 
 static constexpr float Int16ToNormalFloat(int16_t value)
@@ -61,7 +61,8 @@ static constexpr float Int16ToNormalFloat(int16_t value)
 }
 
 static_assert(NormalFloatToInt16(1.0) == 32767);
-//static_assert(NormalFloatToInt16(-1.0) == -32768);
+static_assert(NormalFloatToInt16(-1.0) == -32768);
+static_assert(NormalFloatToInt16(-0.5) == -16384);
 static_assert(NormalFloatToInt16(0) == 0.0);
 
 static_assert(Int16ToNormalFloat(32767) == 1.0);
