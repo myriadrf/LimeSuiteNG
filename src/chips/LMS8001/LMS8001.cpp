@@ -98,6 +98,8 @@ OpStatus LMS8001::LoadConfig(const std::string& filename)
         tempSens_T0 = parser.getAs("T0", TEMPSENS_T0);
 
         auto section = parser.sections.find("lms8001_registers");
+        if (section == parser.sections.end())
+            return OpStatus::Error;
 
         for (auto pairs = section->second->begin(); pairs != section->second->end(); pairs++)
         {
