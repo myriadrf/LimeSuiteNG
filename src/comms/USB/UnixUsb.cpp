@@ -1,5 +1,6 @@
 #include "UnixUsb.h"
 
+#include <atomic>
 #include <thread>
 #include <cassert>
 #include <cinttypes>
@@ -23,7 +24,7 @@ using namespace std::literals::string_literals;
 namespace lime {
 
 static libusb_context* gContextLibUsb{ nullptr };
-static int activeUSBconnections = 0;
+static std::atomic<int> activeUSBconnections{ 0 };
 static std::thread gUSBProcessingThread; // single thread for processing USB callbacks
 
 static void HandleLibusbEvents(libusb_context* context)
@@ -42,8 +43,7 @@ static void HandleLibusbEvents(libusb_context* context)
 
 static int SessionRefCountIncrement()
 {
-    ++activeUSBconnections;
-    if (activeUSBconnections == 1)
+    if (++activeUSBconnections == 1)
     {
         int returnCode = libusb_init(&gContextLibUsb); // Initialize the library for the session we just declared
         if (returnCode < 0)
@@ -70,8 +70,7 @@ static int SessionRefCountIncrement()
 
 static int SessionRefCountDecrement()
 {
-    --activeUSBconnections;
-    if (activeUSBconnections == 0 && gUSBProcessingThread.joinable())
+    if (--activeUSBconnections == 0 && gUSBProcessingThread.joinable())
     {
         gUSBProcessingThread.join();
         libusb_exit(gContextLibUsb);
