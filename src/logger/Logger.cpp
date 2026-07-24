@@ -18,6 +18,7 @@ using namespace std::literals::string_literals;
 
 namespace lime {
 
+std::mutex Logger::handlerMutex;
 LogHandler Logger::logHandler{ Logger::defaultLogHandler };
 thread_local int Logger::_reportedErrorCode{ 0 };
 thread_local std::string Logger::_reportedErrorMessage{ ""s };
@@ -42,11 +43,17 @@ void Logger::defaultLogHandler(const LogLevel level, const std::string& message)
 
 void Logger::logHandlerWrapper(const LogLevel level, const std::string& message)
 {
-    logHandlerCString(level, message.c_str());
+    LogHandlerCString handler;
+    {
+        const std::lock_guard<std::mutex> lock(handlerMutex);
+        handler = logHandlerCString;
+    }
+    handler(level, message.c_str());
 }
 
 void registerLogHandler(const LogHandler handler)
 {
+    const std::lock_guard<std::mutex> lock(Logger::handlerMutex);
     Logger::logHandler = handler ? handler : Logger::defaultLogHandler;
     Logger::logHandlerCString = handler ? Logger::logHandlerCStringWrapper : Logger::defaultLogHandlerCString;
 }
@@ -84,7 +91,12 @@ void debug(const std::string& text)
 
 void log(const LogLevel level, const std::string& text)
 {
-    Logger::logHandler(level, text);
+    LogHandler handler;
+    {
+        const std::lock_guard<std::mutex> lock(Logger::handlerMutex);
+        handler = Logger::logHandler;
+    }
+    handler(level, text);
 }
 
 OpStatus ReportError(const OpStatus errnum)
