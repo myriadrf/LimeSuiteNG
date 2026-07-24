@@ -1181,15 +1181,15 @@ static bool ValidChar(char c)
 
 static void SanitizeIdentifier(const char *identifier, char *destination, const size_t dstSize)
 {
-    uint8_t size = 0;
-    while (size < dstSize && ValidChar(identifier[size]))
+    size_t size = 0;
+    while (size + 1 < dstSize && ValidChar(identifier[size]))
         size++;
 
     while (size > 0 && identifier[size - 1] == ' ')
         size--;
 
-    size = size <= dstSize ? size : dstSize;
     strncpy(destination, identifier, size);
+    destination[size] = '\0';
 
     for (size_t i = 0; i < size; i++)
         if (destination[i] == ' ')
