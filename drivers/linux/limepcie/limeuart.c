@@ -408,7 +408,7 @@ static int limeuart_probe(struct platform_device *pdev)
     int ctrl_id = 0;
     int port_id = 0;
     if ((ret = limeuart_uart_port_init(&luart->port, &pdev->dev, res, line_id, ctrl_id, port_id)))
-        return ret;
+        goto err_erase_id;
 
     if ((ret = uart_add_one_port(&limeuart_driver, &luart->port)))
         goto err_erase_id;
