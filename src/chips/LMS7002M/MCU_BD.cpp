@@ -633,7 +633,12 @@ int MCU_BD::RunProductionTest_MCU()
 
     //upload hex file
     if (Program_MCU(m_iMode1_, m_iMode0_) != 0)
+    {
+        //Baseband gets back the control over SPI switch
+        mSPI_write(0x0006, 0x0000); //REG6 write
+
         return -1; //failed to program
+    }
 
     if (m_bLoadedProd == 0)
     {
@@ -675,6 +680,9 @@ int MCU_BD::RunProductionTest_MCU()
 
     if (retval != 0x10)
     {
+        //Baseband gets back the control over SPI switch
+        mSPI_write(0x0006, 0x0000); //REG6 write
+
         return -1;
     }
 
@@ -726,6 +734,9 @@ int MCU_BD::RunProductionTest_MCU()
     retval = mSPI_read(1); //REG1 read
     if (retval != 0x55)
     {
+        //Baseband gets back the control over SPI switch
+        mSPI_write(0x0006, 0x0000); //REG6 write
+
         return -1;
     }
 
