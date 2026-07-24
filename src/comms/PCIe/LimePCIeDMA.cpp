@@ -62,6 +62,10 @@ OpStatus LimePCIeDMA::Initialize()
         if (buf == MAP_FAILED || buf == nullptr)
         {
             const std::string msg = ": failed to MMAP Rx DMA buffer"s;
+            // release the DMA writer lock acquired above, otherwise the channel stays blocked
+            memset(&lockInfo, 0, sizeof(lockInfo));
+            lockInfo.dma_writer_release = 1;
+            ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_LOCK, &lockInfo);
             return OpStatus::Error;
         }
         for (size_t i = 0; i < info.dma_rx_buf_count; ++i)
@@ -86,6 +90,10 @@ OpStatus LimePCIeDMA::Initialize()
         if (buf == MAP_FAILED || buf == nullptr)
         {
             const std::string msg = ": failed to MMAP Tx DMA buffer"s;
+            // release the DMA reader lock acquired above, otherwise the channel stays blocked
+            memset(&lockInfo, 0, sizeof(lockInfo));
+            lockInfo.dma_reader_release = 1;
+            ioctl(port->mFileDescriptor, LIMEPCIE_IOCTL_LOCK, &lockInfo);
             return OpStatus::Error;
         }
         for (size_t i = 0; i < info.dma_tx_buf_count; ++i)
