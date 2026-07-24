@@ -822,6 +822,14 @@ void TRXLooper::ReceivePacketsLoop()
             userPkt->meta.useTimestamp = true;
             userPkt->meta.flush = false;
         }
+        else if (userPkt->samples.empty())
+        {
+            // packet is being reused after a failed FIFO push; its Reset() zeroed the
+            // timestamp, so re-initialize the metadata from this buffer's first packet
+            userPkt->meta.timestamp = ExtractPacketTimestamp(mConfig, firstPkt, ticksPerSample);
+            userPkt->meta.useTimestamp = true;
+            userPkt->meta.flush = false;
+        }
 
         const int srcPktCount = mRxArgs.packetsToBatch;
         for (int i = 0; i < srcPktCount; ++i)
@@ -882,7 +890,12 @@ void TRXLooper::ReceivePacketsLoop()
 
         assert(userPkt);
         if (fifo->push(userPkt, false))
+        {
             userPkt = nullptr;
+            stats.packets += srcPktCount;
+            stats.timestamp = expectedTimestamp.GetTicks();
+            mRx.lastTimestamp.store(expectedTimestamp.GetTicks(), std::memory_order_relaxed);
+        }
         else
         {
             ++stats.overrun;
@@ -890,10 +903,6 @@ void TRXLooper::ReceivePacketsLoop()
             userPkt->Reset();
             reportProblems = true;
         }
-
-        stats.packets += srcPktCount;
-        stats.timestamp = expectedTimestamp.GetTicks();
-        mRx.lastTimestamp.store(expectedTimestamp.GetTicks(), std::memory_order_relaxed);
 
         mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::HostToDevice);
         bool requestIRQ = (counters.requests % irqPeriod) == 0;
