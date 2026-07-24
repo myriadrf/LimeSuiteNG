@@ -43,7 +43,7 @@ class LimeSDR_MMX8 : public SDRDevice
         uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset = -1.0) override;
 
     int GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
-    OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) override;
+    OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, int16_t index, bool downconv) override;
 
     double GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel) override;
 
