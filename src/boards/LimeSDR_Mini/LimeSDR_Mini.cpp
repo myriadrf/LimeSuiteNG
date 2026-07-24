@@ -281,7 +281,9 @@ OpStatus LimeSDR_Mini::Configure(const SDRConfig& cfg, uint8_t moduleIndex = 0)
         SetAntenna(0, TRXDir::Rx, c, cfg.channel[c].rx.path);
         SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
         SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
-        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        status = LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        if (status != OpStatus::Success)
+            return status;
     }
 
     if (sampleRate > 0)

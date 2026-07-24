@@ -254,7 +254,12 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
     if (!cfg.skipDefaults)
     {
         const bool skipTune = true;
-        InitLMS1(*chip, skipTune);
+        OpStatus status = InitLMS1(*chip, skipTune);
+        if (status != OpStatus::Success)
+        {
+            mConfigInProgress = false;
+            return status;
+        }
     }
 
     OpStatus status = LMS7002M_Configure(*chip, cfg);
@@ -278,7 +283,11 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         sampleRate = cfg.channel[0].tx.sampleRate;
 
     if (sampleRate > 0)
-        LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+    {
+        status = LMS1_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+        if (status != OpStatus::Success)
+            return status;
+    }
 
     for (int c = 0; c < 2; ++c)
     {
@@ -286,7 +295,9 @@ OpStatus LimeSDR_XTRX::Configure(const SDRConfig& cfg, uint8_t socIndex)
         LMSSetPath(TRXDir::Rx, c, cfg.channel[c].rx.path);
         SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
         SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
-        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        status = LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        if (status != OpStatus::Success)
+            return status;
     }
 
     if (sampleRate > 0)

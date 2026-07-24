@@ -475,7 +475,12 @@ OpStatus LimeSDR_X3::ConfigureLMS1(const SDRConfig& cfg)
     if (!cfg.skipDefaults)
     {
         const bool skipTune = true;
-        InitLMS1(skipTune);
+        OpStatus status = InitLMS1(skipTune);
+        if (status != OpStatus::Success)
+        {
+            mConfigInProgress = false;
+            return status;
+        }
     }
     chip->Modify_SPI_Reg_bits(PD_TX_AFE1, 0); // enabled DAC is required for FPGA to work
 
@@ -504,7 +509,11 @@ OpStatus LimeSDR_X3::ConfigureLMS1(const SDRConfig& cfg)
         sampleRate = cfg.channel[0].tx.sampleRate;
 
     if (sampleRate > 0)
-        LMS7002M_SDRDevice::LMS7002M_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+    {
+        status = LMS7002M_SDRDevice::LMS7002M_SetSampleRate(sampleRate, cfg.channel[0].rx.oversample, cfg.channel[0].tx.oversample);
+        if (status != OpStatus::Success)
+            return status;
+    }
 
     for (int c = 0; c < 2; ++c)
     {
@@ -512,10 +521,14 @@ OpStatus LimeSDR_X3::ConfigureLMS1(const SDRConfig& cfg)
         SetLMSPath(TRXDir::Rx, cfg.channel[c].rx, c, socIndex);
         SetNCOFrequency(0, TRXDir::Tx, c, 0, cfg.channel[c].tx.NCOoffset, 0);
         SetNCOFrequency(0, TRXDir::Rx, c, 0, cfg.channel[c].rx.NCOoffset, 0);
-        LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        status = LMS7002ChannelCalibration(*chip, cfg.channel[c], c);
+        if (status != OpStatus::Success)
+            return status;
     }
 
-    LMS1_UpdateFPGAInterface(this);
+    status = LMS1_UpdateFPGAInterface(this);
+    if (status != OpStatus::Success)
+        return status;
 
     for (int c = 0; c < 2; ++c)
     {
