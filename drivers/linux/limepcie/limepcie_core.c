@@ -68,7 +68,7 @@ struct limepcie_device_attributes {
 
 struct deviceInfo {
     uint64_t serialNumber;
-    uint16_t firmware;
+    uint32_t firmware;
     uint8_t boardId;
     uint8_t protocol;
     uint8_t hardwareVer;
