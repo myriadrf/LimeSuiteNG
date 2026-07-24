@@ -966,15 +966,27 @@ void FPGA::SetFeatures(const GatewareFeatures& flags)
 /// @return The packet size after the changes (returns @p packetSize if not supported)
 uint32_t FPGA::SetUpVariableRxSize(uint32_t requestSamplesCount, int sampleSize, int channelCount, uint8_t chipId)
 {
+    constexpr uint32_t headerSize = sizeof(StreamHeader);
+    constexpr uint32_t defaultPacketSize = 4096;
+    if (sampleSize <= 0 || channelCount <= 0)
+    {
+        lime::error("SetUpVariableRxSize: invalid sample size (%i) or channel count (%i)", sampleSize, channelCount);
+        return defaultPacketSize;
+    }
     const int busSize = mFeatures.databusWidth;
     uint32_t packetSize = GetPacketSizeForBusSize(requestSamplesCount, sampleSize, channelCount, busSize);
+    if (packetSize <= headerSize || packetSize > defaultPacketSize)
+    {
+        lime::error("SetUpVariableRxSize: computed invalid packet size (%u), using %u", packetSize, defaultPacketSize);
+        packetSize = defaultPacketSize;
+    }
 
-    int32_t payloadSize = packetSize - 16;
-    const uint32_t iqSamplesCount = (payloadSize / (sampleSize * 2));
+    const uint32_t iqSamplesCount = (packetSize - headerSize) / (sampleSize * 2);
     SelectModule(chipId);
     uint32_t requestAddr[] = { 0x0019, 0x000E };
     uint32_t requestData[] = { packetSize, iqSamplesCount };
-    WriteRegisters(requestAddr, requestData, 2);
+    if (WriteRegisters(requestAddr, requestData, 2) != OpStatus::Success)
+        lime::error("SetUpVariableRxSize: failed to write packet size registers"s);
 
     return packetSize;
 }
