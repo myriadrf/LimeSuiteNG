@@ -190,10 +190,10 @@ class LIME_API SDRDevice
     /// @param moduleIndex The @ref Device_index "device index" to configure.
     /// @param trx The direction to configure.
     /// @param channel The @ref lime::LMS7002M::Channel "channel" to configure.
-    /// @param index The index of NCO memory table entry to use for NCO [0-15].
+    /// @param index The index of NCO memory table entry to use for NCO [0-15]; a negative value disables the NCO.
     /// @param downconv The spectrum control of the CMIX (true = downconvert, false = upconvert)
     /// @return The @ref lime::OpStatus "status" of the operation.
-    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv) = 0;
+    virtual OpStatus SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, int16_t index, bool downconv) = 0;
 
     /// @brief Gets the current sample rate of the device.
     /// Returns device sample rate and optionally, the actual RF sample rate used in AFE ADCs and DACs.

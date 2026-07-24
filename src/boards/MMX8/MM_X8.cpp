@@ -222,7 +222,7 @@ int LimeSDR_MMX8::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
     return mSubDevices[moduleIndex]->GetNCOIndex(0, trx, channel);
 }
 
-OpStatus LimeSDR_MMX8::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
+OpStatus LimeSDR_MMX8::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, int16_t index, bool downconv)
 {
     if (moduleIndex >= mSubDevices.size())
         return OpStatus::OutOfRange;

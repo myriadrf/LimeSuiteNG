@@ -225,8 +225,14 @@ int LMS7002M_SDRDevice::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     return GetParameter(moduleIndex, channel, selParameter.address, selParameter.msb, selParameter.lsb);
 }
 
-OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
+OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, int16_t index, bool downconv)
 {
+    if (index >= 16)
+    {
+        lime::error("Invalid NCO index value."s);
+        return OpStatus::OutOfRange;
+    }
+
     auto& cmixBypassParameter = trx == TRXDir::Tx ? CMIX_BYP_TXTSP : CMIX_BYP_RXTSP;
     auto& cmixGainParameter = trx == TRXDir::Tx ? CMIX_GAIN_TXTSP : CMIX_GAIN_RXTSP;
     auto& selectionParameter = trx == TRXDir::Tx ? SEL_TX : SEL_RX;
@@ -241,11 +247,8 @@ OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_
         status != OpStatus::Success)
         return status;
 
-    if (index >= 16)
-    {
-        lime::error("Invalid NCO index value."s);
-        return OpStatus::OutOfRange;
-    }
+    if (index < 0) // NCO disabled, there is no table entry to select
+        return OpStatus::Success;
 
     if (OpStatus status =
             SetParameter(moduleIndex, channel, selectionParameter.address, selectionParameter.msb, selectionParameter.lsb, index);
