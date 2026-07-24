@@ -803,9 +803,18 @@ void TRXLooper::ReceivePacketsLoop()
         {
             if (!mRx.packetsPool->pop(&userPkt))
             {
+                // packet pool is exhausted: drop this buffer's data and hand it back to
+                // the hardware, otherwise the loop busy-spins on the same buffer at
+                // realtime priority, starving the consumer that would free the pool
                 ++stats.overrun;
                 overrun.add(1);
-                reportProblems = true;
+                mRxArgs.dma->BufferOwnership(currentBufferIndex, DataTransferDirection::HostToDevice);
+                const bool requestIRQ = (counters.requests % irqPeriod) == 0;
+                ++counters.requests;
+                mRxArgs.dma->SubmitRequest(currentBufferIndex, readSize, DataTransferDirection::DeviceToHost, requestIRQ);
+                if (mConfig.statusCallback)
+                    mConfig.statusCallback(false, &stats, mConfig.userData);
+                std::this_thread::yield();
                 continue;
             }
             userPkt->Reset();
