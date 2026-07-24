@@ -517,6 +517,11 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             token.remove_prefix(3);
             std::stringstream sstream{ std::string{ token } };
             sstream >> devIndex;
+            if (sstream.fail() || devIndex < 0 || devIndex >= static_cast<int>(context->rfdev.size()))
+            {
+                Log(LogLevel::Error, "Port%i assigned invalid device index (dev%s).", p, std::string{ token }.c_str());
+                return OpStatus::InvalidValue;
+            }
             DevNode* assignedDevice = &context->rfdev.at(devIndex);
             port.nodes.push_back(assignedDevice);
             assignedDevice->portIndex = p;
@@ -538,8 +543,13 @@ static OpStatus AssignDevicesToPorts(LimePluginContext* context)
             }
             token.remove_prefix(3);
             std::stringstream sstream{ std::string{ token } };
-            int devIndex;
+            int devIndex = 0;
             sstream >> devIndex;
+            if (sstream.fail() || devIndex < 0 || devIndex >= static_cast<int>(context->rfdev.size()))
+            {
+                Log(LogLevel::Error, "Port%i assigned invalid calibration device index (dev%s).", p, std::string{ token }.c_str());
+                return OpStatus::InvalidValue;
+            }
             DevNode* assignedDevice = &context->rfdev.at(devIndex);
             port.calibrationNode = assignedDevice;
             assignedDevice->portIndex = p;
