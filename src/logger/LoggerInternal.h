@@ -3,6 +3,8 @@
 
 #include "limesuiteng/Logger.h"
 
+#include <mutex>
+
 #ifdef _MSC_VER
     #define thread_local __declspec(thread)
 #endif
@@ -18,6 +20,9 @@ class Logger
     static void defaultLogHandler(const LogLevel level, const std::string& message);
     static void logHandlerWrapper(const LogLevel level, const std::string& message);
 
+    // guards the handler pair below, which is swapped as a unit by registerLogHandler
+    // while worker threads read it; copy the handler under the lock, call it outside
+    static std::mutex handlerMutex;
     static LogHandlerCString logHandlerCString;
     static LogHandler logHandler;
 

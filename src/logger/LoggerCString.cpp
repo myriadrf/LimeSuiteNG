@@ -30,11 +30,17 @@ void Logger::defaultLogHandlerCString(const LogLevel level, const char* message)
 
 void Logger::logHandlerCStringWrapper(const LogLevel level, const char* message)
 {
-    Logger::logHandler(level, message);
+    LogHandler handler;
+    {
+        const std::lock_guard<std::mutex> lock(handlerMutex);
+        handler = logHandler;
+    }
+    handler(level, message);
 }
 
 void registerLogHandler(const LogHandlerCString handler)
 {
+    const std::lock_guard<std::mutex> lock(Logger::handlerMutex);
     Logger::logHandlerCString = handler ? handler : Logger::defaultLogHandlerCString;
     Logger::logHandler = handler ? Logger::logHandlerWrapper : Logger::defaultLogHandler;
 }
@@ -48,8 +54,14 @@ void log [[gnu::format(printf, 2, 0)]] (const LogLevel level, const char* format
 {
     char buff[4096];
     int ret = std::vsnprintf(buff, sizeof(buff), format, argList);
-    if (ret > 0)
-        Logger::logHandlerCString(level, buff);
+    if (ret <= 0)
+        return;
+    LogHandlerCString handler;
+    {
+        const std::lock_guard<std::mutex> lock(Logger::handlerMutex);
+        handler = Logger::logHandlerCString;
+    }
+    handler(level, buff);
 }
 
 void critical(const char* format, ...)
