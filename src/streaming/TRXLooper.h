@@ -39,7 +39,7 @@ class TRXLooper : public RFStream
 
     /// @brief Gets whether the stream is currently running or not.
     /// @return The current status of the stream (true if running).
-    constexpr inline bool IsStreamRunning() const { return mStreamEnabled; }
+    inline bool IsStreamRunning() const { return mStreamEnabled; }
     uint32_t StreamRx(
         lime::complex32f_t* const* samples, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout) override;
     uint32_t StreamRx(
@@ -100,7 +100,7 @@ class TRXLooper : public RFStream
     void TransmitPacketsLoop();
     void TxTeardown();
 
-    uint64_t mTimestampOffset;
+    std::atomic<uint64_t> mTimestampOffset;
     lime::StreamConfig mConfig;
 
     TransferArgs mRxArgs;
@@ -113,7 +113,7 @@ class TRXLooper : public RFStream
     SDRDevice::LogCallbackType mCallback_logMessage;
     std::condition_variable streamActive;
     std::mutex streamMutex;
-    bool mStreamEnabled;
+    std::atomic<bool> mStreamEnabled;
     bool omitRxPackets;
 
     struct Stream {
