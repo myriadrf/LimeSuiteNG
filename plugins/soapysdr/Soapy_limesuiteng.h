@@ -273,9 +273,13 @@ class Soapy_limesuiteng : public SoapySDR::Device
         int DCTestAmplitude;
     };
     lime::SDRDevice* sdrDevice;
+    // Rx and Tx SoapySDR streams share one bidirectional hardware stream;
+    // per-direction flags track which SoapySDR streams are set up / activated
     std::unique_ptr<lime::RFStream> rfstream;
     lime::StreamConfig streamConfig;
-    bool isStreamRunning;
+    std::array<bool, 2> directionSetup{ { false, false } }; // indexed by SoapySDR direction
+    std::array<bool, 2> directionActive{ { false, false } }; // indexed by SoapySDR direction
+    bool isStreamRunning() const { return directionActive[SOAPY_SDR_RX] || directionActive[SOAPY_SDR_TX]; }
 
     mutable std::recursive_mutex _accessMutex;
 

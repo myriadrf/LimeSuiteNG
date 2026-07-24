@@ -107,6 +107,14 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     const int direction, const std::string& format, const std::vector<size_t>& channels, const SoapySDR::Kwargs& args)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
+    // Rx and Tx SoapySDR streams share the single bidirectional hardware stream
+    if (direction != SOAPY_SDR_TX && direction != SOAPY_SDR_RX)
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() invalid direction");
+    if (directionSetup.at(direction))
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() a stream for this direction is already setup");
+    if (isStreamRunning())
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() cannot setup a new direction while the stream is running");
+
     // Store result into opaque stream object
     auto stream = new IConnectionStream;
     stream->direction = direction;
@@ -117,6 +125,9 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
     config.bufferSize = 0; // Auto
 
     TRXDir dir = (direction == SOAPY_SDR_TX) ? TRXDir::Tx : TRXDir ::Rx;
+    const int otherDirection = (direction == SOAPY_SDR_TX) ? SOAPY_SDR_RX : SOAPY_SDR_TX;
+    const DataFormat previousFormat = config.format;
+    const DataFormat previousLinkFormat = config.linkFormat;
 
     // Default to channel 0, if none were specified
     const std::vector<size_t>& channelIDs = channels.empty() ? std::vector<size_t>{ 0 } : channels;
@@ -159,6 +170,13 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
         }
     }
 
+    // the directions share one hardware stream, so their formats have to agree
+    if (directionSetup.at(otherDirection) && (config.format != previousFormat || config.linkFormat != previousLinkFormat))
+    {
+        delete stream;
+        throw std::runtime_error("Soapy_limesuiteng::setupStream() both directions must use the same sample and link format");
+    }
+
     // TODO: reimplement if relevant
     // Optional buffer length if specified (from device args)
 
@@ -195,6 +213,7 @@ SoapySDR::Stream* Soapy_limesuiteng::setupStream(
 
     stream->ownerDevice = sdrDevice;
     stream->streamConfig = config;
+    directionSetup.at(direction) = true;
 
     return reinterpret_cast<SoapySDR::Stream*>(stream);
 }
@@ -203,7 +222,12 @@ void Soapy_limesuiteng::closeStream(SoapySDR::Stream* stream)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
-    if (rfstream)
+    const int direction = icstream->direction;
+    directionSetup.at(direction) = false;
+    directionActive.at(direction) = false;
+    streamConfig.channels[direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx].clear();
+    // tear the hardware stream down only when neither direction needs it anymore
+    if (!directionSetup.at(SOAPY_SDR_RX) && !directionSetup.at(SOAPY_SDR_TX) && rfstream)
     {
         rfstream->Stop();
         rfstream.reset();
@@ -222,7 +246,7 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
 
-    if (isStreamRunning)
+    if (directionActive.at(icstream->direction))
         return 0;
 
     if (sampleRate[SOAPY_SDR_RX] <= 0.0)
@@ -248,8 +272,9 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     //     _channelsToCal.erase(_channelsToCal.begin());
     // }
     // recreate the stream only if the rate it was built with no longer matches,
-    // e.g. the app configured the sample rate after setting up the stream
-    if (!rfstream || streamConfig.hintSampleRate != sampleRate[SOAPY_SDR_RX])
+    // e.g. the app configured the sample rate after setting up the stream;
+    // when the other direction is already running the shared stream stays as-is
+    if (!isStreamRunning() && (!rfstream || streamConfig.hintSampleRate != sampleRate[SOAPY_SDR_RX]))
     {
         streamConfig.hintSampleRate = sampleRate[SOAPY_SDR_RX];
         rfstream = sdrDevice->StreamCreate(streamConfig, 0);
@@ -263,8 +288,9 @@ int Soapy_limesuiteng::activateStream(SoapySDR::Stream* stream, const int flags,
     icstream->rxBurstRequest = (flags & SOAPY_SDR_HAS_TIME) | (flags & SOAPY_SDR_END_BURST);
     icstream->rxBurstSamples = numElems;
 
-    rfstream->Start();
-    isStreamRunning = true;
+    if (!isStreamRunning())
+        rfstream->Start();
+    directionActive.at(icstream->direction) = true;
     return 0;
 }
 
@@ -274,9 +300,10 @@ int Soapy_limesuiteng::deactivateStream(
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
     icstream->rxBurstRequest = false;
-    if (rfstream)
+    directionActive.at(icstream->direction) = false;
+    // stop the shared hardware stream only once both directions are deactivated
+    if (!isStreamRunning() && rfstream)
         rfstream->Stop();
-    isStreamRunning = false;
     return 0;
 }
 

@@ -30,8 +30,7 @@ constexpr uint8_t socIndex = 0;
  * Constructor/destructor
  ******************************************************************/
 Soapy_limesuiteng::Soapy_limesuiteng(const DeviceHandle& handle, const SoapySDR::Kwargs& args)
-    : isStreamRunning(false)
-    , sampleRate{ 0.0, 0.0 }
+    : sampleRate{ 0.0, 0.0 }
     , oversampling(0) // Auto
 {
     SoapySDR::log(SOAPY_SDR_INFO, "Make connection: '" + handle.ToString() + "'");
@@ -485,7 +484,7 @@ void Soapy_limesuiteng::setSampleRate(const int direction, const size_t channel,
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     TRXDir dir = direction == SOAPY_SDR_TX ? TRXDir::Tx : TRXDir::Rx;
 
-    if (isStreamRunning)
+    if (isStreamRunning())
     {
         SoapySDR::logf(SOAPY_SDR_ERROR,
             "setSampleRate(%s, %ld, %g MHz) setting the sample rate while the stream is running is not allowed.",
