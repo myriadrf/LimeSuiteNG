@@ -8,6 +8,7 @@ namespace lime {
 
 // Too many async requests adds overhead and makes transfers timing consistency worse
 static constexpr int maxAsyncTransfers = 16;
+static constexpr uint32_t mappingBufferSize = 65536;
 
 USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, DataTransferDirection dir)
     : port(port)
@@ -21,7 +22,7 @@ USBDMAEmulation::USBDMAEmulation(std::shared_ptr<IUSB> port, uint8_t endpoint, D
     mappings.resize(maxAsyncTransfers);
     for (auto& memoryBlock : mappings)
     {
-        memoryBlock.size = 65536;
+        memoryBlock.size = mappingBufferSize;
         memoryBlock.buffer = new uint8_t[memoryBlock.size];
     }
 
@@ -112,7 +113,7 @@ OpStatus USBDMAEmulation::EnableContinuous(bool enable, uint32_t maxTransferSize
     if (!enable)
         return status;
 
-    if (maxTransferSize == 0)
+    if (maxTransferSize == 0 || maxTransferSize > mappingBufferSize)
         return OpStatus::InvalidValue;
 
     if (dir != DataTransferDirection::DeviceToHost)
@@ -167,6 +168,8 @@ OpStatus USBDMAEmulation::SubmitRequest(uint64_t index, uint32_t bytesCount, Dat
 
     assert(bytesCount > 0);
     assert(index < mappings.size());
+    if (index >= mappings.size() || bytesCount == 0 || bytesCount > mappings[index].size)
+        return OpStatus::InvalidValue;
 
     std::unique_lock lck{ queuesMutex };
     if (!transfers.empty())
