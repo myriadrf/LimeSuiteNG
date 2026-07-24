@@ -28,8 +28,10 @@ std::vector<std::string> LimePCIe::GetEndpointsWithPattern(const std::string& de
 
     std::string cmd = "ls -1 "s + devicePath + "/"s + regex;
     lsPipe = popen(cmd.c_str(), "r");
+    if (lsPipe == nullptr)
+        return devices;
     char tempBuffer[512];
-    while (fscanf(lsPipe, "%s", tempBuffer) == 1)
+    while (fscanf(lsPipe, "%511s", tempBuffer) == 1)
         devices.push_back(tempBuffer);
     pclose(lsPipe);
     return devices;
@@ -40,8 +42,10 @@ std::vector<std::string> LimePCIe::GetPCIeDeviceList()
     std::vector<std::string> devices;
     FILE* lsPipe;
     lsPipe = popen("ls -1 -- /sys/class/limepcie 2> /dev/null", "r");
+    if (lsPipe == nullptr)
+        return devices;
     char tempBuffer[512];
-    while (fscanf(lsPipe, "%s", tempBuffer) == 1)
+    while (fscanf(lsPipe, "%511s", tempBuffer) == 1)
     {
         // Kernel code fakes directories by replacing '/' char with '!'
         // open() can't open that
