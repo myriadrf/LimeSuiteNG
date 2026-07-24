@@ -140,6 +140,8 @@ const SDRDescriptor& LimeSDR_MMX8::GetDescriptor() const
 
 OpStatus LimeSDR_MMX8::Configure(const SDRConfig& cfg, uint8_t socIndex)
 {
+    if (socIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
     return mSubDevices[socIndex]->Configure(cfg, 0);
 }
 
@@ -181,30 +183,24 @@ OpStatus LimeSDR_MMX8::GetGPSLock(GPS_Lock* status)
 // TODO: clean up all the functions to use the exact same device selection code (maybe even extract it out into a function)
 double LimeSDR_MMX8::GetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetFrequency(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double frequency)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetFrequency(0, trx, channel, frequency);
 }
 
 double LimeSDR_MMX8::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetNCOFrequency(0, trx, channel, index, phaseOffset);
 }
@@ -212,100 +208,80 @@ double LimeSDR_MMX8::GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t ch
 OpStatus LimeSDR_MMX8::SetNCOFrequency(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double frequency, double phaseOffset)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetNCOFrequency(0, trx, channel, index, frequency, phaseOffset);
 }
 
 int LimeSDR_MMX8::GetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return -1;
 
     return mSubDevices[moduleIndex]->GetNCOIndex(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, bool downconv)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetNCOIndex(0, trx, channel, index, downconv);
 }
 
 double LimeSDR_MMX8::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetNCOOffset(0, trx, channel);
 }
 
 double LimeSDR_MMX8::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint32_t* rf_samplerate)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetSampleRate(0, trx, channel, rf_samplerate);
 }
 
 OpStatus LimeSDR_MMX8::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetSampleRate(0, trx, channel, sampleRate, oversample);
 }
 
 double LimeSDR_MMX8::GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetLowPassFilter(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetLowPassFilter(0, trx, channel, lpf);
 }
 
 uint8_t LimeSDR_MMX8::GetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetAntenna(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetAntenna(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t path)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetAntenna(0, trx, channel, path);
 }
@@ -322,172 +298,144 @@ OpStatus LimeSDR_MMX8::SetClockFreq(uint8_t clk_id, double freq, uint8_t channel
 
 OpStatus LimeSDR_MMX8::SetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double value)
 {
-    auto& device = mSubDevices.at(moduleIndex);
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
+    auto& device = mSubDevices[moduleIndex];
     return device->SetGain(0, direction, channel, gain, value);
 }
 
 OpStatus LimeSDR_MMX8::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
 {
-    auto& device = mSubDevices.at(moduleIndex);
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
+    auto& device = mSubDevices[moduleIndex];
     return device->GetGain(0, direction, channel, gain, value);
 }
 
 bool LimeSDR_MMX8::GetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return false;
 
     return mSubDevices[moduleIndex]->GetDCOffsetMode(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetDCOffsetMode(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool isAutomatic)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetDCOffsetMode(0, trx, channel, isAutomatic);
 }
 
 complex64f_t LimeSDR_MMX8::GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return {};
 
     return mSubDevices[moduleIndex]->GetDCOffset(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetDCOffset(0, trx, channel, offset);
 }
 
 complex64f_t LimeSDR_MMX8::GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return {};
 
     return mSubDevices[moduleIndex]->GetIQBalance(0, trx, channel);
 }
 
 OpStatus LimeSDR_MMX8::SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetIQBalance(0, trx, channel, balance);
 }
 
 bool LimeSDR_MMX8::GetCGENLocked(uint8_t moduleIndex)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return false;
 
     return mSubDevices[moduleIndex]->GetCGENLocked(0);
 }
 
 double LimeSDR_MMX8::GetTemperature(uint8_t moduleIndex)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetTemperature(0);
 }
 
 bool LimeSDR_MMX8::GetSXLocked(uint8_t moduleIndex, TRXDir trx)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return false;
 
     return mSubDevices[moduleIndex]->GetSXLocked(0, trx);
 }
 
 unsigned int LimeSDR_MMX8::ReadRegister(uint8_t moduleIndex, unsigned int address, bool useFPGA)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->ReadRegister(0, address, useFPGA);
 }
 
 OpStatus LimeSDR_MMX8::WriteRegister(uint8_t moduleIndex, unsigned int address, unsigned int value, bool useFPGA)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->WriteRegister(0, address, value, useFPGA);
 }
 
 OpStatus LimeSDR_MMX8::LoadConfig(uint8_t moduleIndex, const std::string& filename)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->LoadConfig(0, filename);
 }
 
 OpStatus LimeSDR_MMX8::SaveConfig(uint8_t moduleIndex, const std::string& filename)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SaveConfig(0, filename);
 }
 
 uint16_t LimeSDR_MMX8::GetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetParameter(0, channel, parameterKey);
 }
 
 OpStatus LimeSDR_MMX8::SetParameter(uint8_t moduleIndex, uint8_t channel, const std::string& parameterKey, uint16_t value)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetParameter(0, channel, parameterKey, value);
 }
 
 uint16_t LimeSDR_MMX8::GetParameter(uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetParameter(0, channel, address, msb, lsb);
 }
@@ -495,10 +443,8 @@ uint16_t LimeSDR_MMX8::GetParameter(uint8_t moduleIndex, uint8_t channel, uint16
 OpStatus LimeSDR_MMX8::SetParameter(
     uint8_t moduleIndex, uint8_t channel, uint16_t address, uint8_t msb, uint8_t lsb, uint16_t value)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetParameter(0, channel, address, msb, lsb, value);
 }
@@ -523,20 +469,16 @@ void LimeSDR_MMX8::EnableCache(bool enable)
 
 OpStatus LimeSDR_MMX8::EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->EnableChannel(0, trx, channel, enable);
 }
 
 OpStatus LimeSDR_MMX8::Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double bandwidth)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->Calibrate(0, trx, channel, bandwidth);
 }
@@ -544,20 +486,16 @@ OpStatus LimeSDR_MMX8::Calibrate(uint8_t moduleIndex, TRXDir trx, uint8_t channe
 OpStatus LimeSDR_MMX8::ConfigureGFIR(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, ChannelConfig::Direction::GFIRFilter settings)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->ConfigureGFIR(0, trx, channel, settings);
 }
 
 std::vector<double> LimeSDR_MMX8::GetGFIRCoefficients(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return {};
 
     return mSubDevices[moduleIndex]->GetGFIRCoefficients(0, trx, channel, gfirID);
 }
@@ -565,40 +503,32 @@ std::vector<double> LimeSDR_MMX8::GetGFIRCoefficients(uint8_t moduleIndex, TRXDi
 OpStatus LimeSDR_MMX8::SetGFIRCoefficients(
     uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, std::vector<double> coefficients)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetGFIRCoefficients(0, trx, channel, gfirID, coefficients);
 }
 
 OpStatus LimeSDR_MMX8::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t gfirID, bool enabled)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetGFIR(0, trx, channel, gfirID, enabled);
 }
 
 uint64_t LimeSDR_MMX8::GetHardwareTimestamp(uint8_t moduleIndex)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
 
     return mSubDevices[moduleIndex]->GetHardwareTimestamp(0);
 }
 
 OpStatus LimeSDR_MMX8::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetHardwareTimestamp(0, now);
 }
@@ -610,10 +540,8 @@ OpStatus LimeSDR_MMX8::SetTestSignal(uint8_t moduleIndex,
     int16_t dc_i,
     int16_t dc_q)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return OpStatus::OutOfRange;
 
     return mSubDevices[moduleIndex]->SetTestSignal(0, direction, channel, signalConfiguration, dc_i, dc_q);
 }
@@ -669,18 +597,24 @@ void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
 }
 
@@ -690,6 +624,8 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
@@ -699,6 +635,8 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
@@ -708,20 +646,22 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return 0;
     return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
 }
 
 void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
+    if (moduleIndex >= mSubDevices.size())
+        return;
     mSubDevices[moduleIndex]->StreamStatus(0, rx, tx);
 }
 
 ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
 {
-    if (moduleIndex >= 8)
-    {
-        moduleIndex = 0;
-    }
+    if (moduleIndex >= mSubDevices.size())
+        return {};
 
     return mSubDevices[moduleIndex]->GetTestSignal(0, direction, channel);
 }
