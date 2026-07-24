@@ -70,14 +70,12 @@ static int64_t UTC_to_UnixTime(const struct tm& calendarTime)
     return unixtime;
 }
 
-static int ReadySlots(uint32_t writer, uint32_t reader, uint32_t ringSize)
+// Hardware transfer counters are either free-running (PCIe, 64-bit) or wrap at
+// 16 bits (USB). A modular 16-bit subtraction yields the correct delta for both,
+// as long as fewer than 65536 transfers complete between polls.
+static int64_t CompletedTransfersDelta(uint64_t current, uint64_t previous)
 {
-    assert(writer < ringSize);
-    assert(reader < ringSize);
-    if (writer >= reader)
-        return writer - reader;
-    else
-        return ringSize - reader + writer;
+    return static_cast<uint16_t>(current - previous);
 }
 
 static constexpr int64_t ts_to_us(int64_t fs, int64_t ts)
@@ -700,7 +698,7 @@ void TRXLooper::ReceivePacketsLoop()
     int32_t Bps = 0;
     StreamPacket* userPkt = nullptr;
 
-    uint32_t lastHwIndex{ 0 };
+    uint64_t lastHwIndex{ 0 };
     DMATransactionCounter counters;
 
     assert(mRx.stagingPacket == nullptr); // should be clean start
@@ -717,7 +715,7 @@ void TRXLooper::ReceivePacketsLoop()
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
         IDMA::State dma{ mRxArgs.dma->GetCounters() };
-        int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
+        int64_t counterDiff = CompletedTransfersDelta(dma.transfersCompleted, lastHwIndex);
         lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
 
@@ -1301,7 +1299,7 @@ void TRXLooper::TransmitPacketsLoop()
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
         IDMA::State dma{ mTxArgs.dma->GetCounters() };
-        int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
+        int64_t counterDiff = CompletedTransfersDelta(dma.transfersCompleted, lastHwIndex);
         lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
 
