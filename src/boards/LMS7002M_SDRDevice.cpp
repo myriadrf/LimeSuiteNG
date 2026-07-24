@@ -262,7 +262,8 @@ OpStatus LMS7002M_SDRDevice::SetNCOIndex(uint8_t moduleIndex, TRXDir trx, uint8_
 
 double LMS7002M_SDRDevice::GetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
 {
-    return lowPassFilterCache[trx][channel]; // Default initializes to 0
+    const auto it = lowPassFilterCache.find({ moduleIndex, trx, channel });
+    return it != lowPassFilterCache.end() ? it->second : 0; // 0 when never set
 }
 
 OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double lpf)
@@ -278,7 +279,8 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
 
     if (lpf < 0)
     {
-        lpf = lowPassFilterCache[trx][channel]; // Default initializes to 0
+        const auto it = lowPassFilterCache.find({ moduleIndex, trx, channel });
+        lpf = it != lowPassFilterCache.end() ? it->second : 0; // 0 when never set
     }
 
     double newLPF = std::clamp(lpf, bw_range.min, bw_range.max);
@@ -289,7 +291,7 @@ OpStatus LMS7002M_SDRDevice::SetLowPassFilter(uint8_t moduleIndex, TRXDir trx, u
     }
 
     lpf = newLPF;
-    lowPassFilterCache[trx][channel] = lpf;
+    lowPassFilterCache[{ moduleIndex, trx, channel }] = lpf;
 
     OpStatus status = OpStatus::Success;
     if (tx)
