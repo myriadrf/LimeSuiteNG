@@ -2,6 +2,8 @@
 #define LIME_LMS7002M_SDRDevice_H
 
 #include <cstdint>
+#include <map>
+#include <tuple>
 #include <vector>
 #include <memory>
 
@@ -172,7 +174,8 @@ class LMS7002M_SDRDevice : public SDRDevice
     OpStatus SetGenericRxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
     OpStatus SetGenericTxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
 
-    std::unordered_map<TRXDir, std::unordered_map<uint8_t, double>> lowPassFilterCache;
+    // keyed by (moduleIndex, direction, channel) so multi-chip boards don't share entries
+    std::map<std::tuple<uint8_t, TRXDir, uint8_t>, double> lowPassFilterCache;
 
     /// @copydoc FPGA::ReadRegister()
     int ReadFPGARegister(uint32_t address);
