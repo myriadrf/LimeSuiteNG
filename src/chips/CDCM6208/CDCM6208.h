@@ -144,7 +144,7 @@ class LIME_API CDCM_Dev
 
   private:
     int WriteRegister(uint16_t addr, uint16_t val);
-    uint16_t ReadRegister(uint16_t addr);
+    int32_t ReadRegister(uint16_t addr);
 
     int SolveN(int Target, int* Mult8bit, int* Mult10bit);
     void CalculateFracDiv(CDCM_Output* Output);

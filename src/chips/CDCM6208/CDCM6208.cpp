@@ -805,7 +805,7 @@ void CDCM_Dev::UpdateOutputFrequencies()
 int CDCM_Dev::PrepareToReadRegs()
 {
     const auto timeout = std::chrono::milliseconds(200);
-    uint16_t status = 0;
+    int32_t status = 0;
 
     WriteRegister(SPI_BASE_ADDR + 24, 1);
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -1048,11 +1048,11 @@ int CDCM_Dev::WriteRegister(uint16_t addr, uint16_t val)
   @param addr The address of which value to read.
   @return The value of the given address; -1 on error.
  */
-uint16_t CDCM_Dev::ReadRegister(uint16_t addr)
+int32_t CDCM_Dev::ReadRegister(uint16_t addr)
 {
     OpStatus status;
-    return ReadSPI(comms.get(), addr, &status);
-    return status == OpStatus::Success ? 0 : -1;
+    const uint16_t value = ReadSPI(comms.get(), addr, &status);
+    return status == OpStatus::Success ? value : -1;
 }
 
 } // namespace lime
