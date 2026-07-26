@@ -140,6 +140,16 @@ int main(int argc, char** argv)
     if (chipIndexes.empty() && device->GetDescriptor().rfSOC.size() == 1)
         chipIndexes.push_back(0);
 
+    for (int index : chipIndexes)
+    {
+        if (index < 0 || static_cast<size_t>(index) >= device->GetDescriptor().rfSOC.size())
+        {
+            cerr << "Invalid chip index: "sv << index << endl;
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+    }
+
     device->SetMessageLogCallback(lime::cli::LogCallback);
     lime::registerLogHandler(lime::cli::LogCallback);
 

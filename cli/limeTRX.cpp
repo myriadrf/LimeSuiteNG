@@ -478,6 +478,16 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    for (int index : chipIndexes)
+    {
+        if (index < 0 || static_cast<size_t>(index) >= device->GetDescriptor().rfSOC.size())
+        {
+            cerr << "Invalid chip index: "sv << index << endl;
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+    }
+
     int rx_require = rx ? channelCount : 0;
     int tx_require = tx ? channelCount : 0;
 
