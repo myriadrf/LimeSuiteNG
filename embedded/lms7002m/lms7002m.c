@@ -1943,7 +1943,7 @@ lime_Result lms7002m_set_tx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
         else if (x <= 240)
             rcal_lpflad = (941 * x - 47800) / 1000; // 0.941 * x - 47.8
         else
-            rcal_lpflad = (839 * x - 17700) / 1000; // 0.839 * x - 17.7
+            rcal_lpflad = clamp_int((839 * x - 17700) / 1000, 0, 255); // 0.839 * x - 17.7
 #endif
         powerDowns = 0x11;
     }
