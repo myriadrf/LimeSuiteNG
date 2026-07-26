@@ -1747,8 +1747,8 @@ API_EXPORT int CALL_CONV LMS_Program(
 
         const auto& memoryDevice = apiDevice->device->GetDescriptor().memoryDevices.at(prog_mode);
 
-        OpStatus status =
-            memoryDevice->ownerDevice->UploadMemory(memoryDevice->memoryDeviceType, 0, data, size, ProgrammingCallback);
+        OpStatus status = memoryDevice->ownerDevice->UploadMemory(
+            memoryDevice->memoryDeviceType, 0, data, size, callback != nullptr ? ProgrammingCallback : nullptr);
         return OpStatusToReturnCode(status);
     } catch (std::out_of_range& e)
     {
