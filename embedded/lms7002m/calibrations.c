@@ -456,8 +456,8 @@ static void lms7002m_adjust_auto_dc(lms7002m_context* self, const uint16_t addre
     int16_t initVal = lms7002m_read_analog_dc(self, address);
     int16_t minValue = initVal;
 
-    uint16_t rssi = lms7002m_get_rssi(self);
-    uint16_t minRSSI = rssi;
+    uint32_t rssi = lms7002m_get_rssi(self);
+    uint32_t minRSSI = rssi;
 
     const uint16_t range = tx ? 1023 : 63;
     lms7002m_write_analog_dc(self, address, clamp_int(initVal + 1, -range, range));
@@ -653,8 +653,8 @@ static void lms7002m_binary_search(lms7002m_context* self, BinSearchParam* args)
     const uint8_t lsb = args->param.lsb;
     lms7002m_spi_modify(self, addr, msb, lsb, right);
 
-    uint16_t rssiLeft = ~0;
-    uint16_t rssiRight = lms7002m_get_rssi(self);
+    uint32_t rssiLeft = ~0u;
+    uint32_t rssiRight = lms7002m_get_rssi(self);
     while (right - left >= 1)
     {
         if (rssiLeft < rssiRight)
@@ -715,10 +715,10 @@ static void lms7002m_calibrate_iq_imbalance(lms7002m_context* self, bool isTx)
     {
         lms7002m_spi_write(self, gcorriAddress, 2047 - 64);
         lms7002m_spi_write(self, gcorrqAddress, 2047);
-        const uint16_t rssiIgain = lms7002m_get_rssi(self);
+        const uint32_t rssiIgain = lms7002m_get_rssi(self);
         lms7002m_spi_write(self, gcorriAddress, 2047);
         lms7002m_spi_write(self, gcorrqAddress, 2047 - 64);
-        const uint16_t rssiQgain = lms7002m_get_rssi(self);
+        const uint32_t rssiQgain = lms7002m_get_rssi(self);
 
         if (rssiIgain < rssiQgain)
             argsGain.param.address = gcorriAddress;
@@ -1045,7 +1045,7 @@ static lime_Result lms7002m_check_saturation_tx_rx(lms7002m_context* self, uint3
     }
 
     {
-        uint16_t rssi_prev = rssi;
+        uint32_t rssi_prev = rssi;
         while (g_pga < 25 && g_rfe == 15 && rssi < saturationLevel)
         {
             if (g_pga < 25)
@@ -1096,8 +1096,8 @@ static void lms7002m_tx_dc_binary_search(lms7002m_context* self, BinSearchParam*
     int16_t right = args->maxValue;
     lms7002m_write_analog_dc(self, args->param.address, right);
 
-    uint16_t rssiLeft = ~0;
-    uint16_t rssiRight = lms7002m_get_rssi(self);
+    uint32_t rssiLeft = ~0u;
+    uint32_t rssiRight = lms7002m_get_rssi(self);
 
     while (right - left >= 1)
     {
