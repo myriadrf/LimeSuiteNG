@@ -1097,7 +1097,8 @@ API_EXPORT int CALL_CONV LMS_ReadCustomBoardParam(lms_device_t* device, uint8_t 
         return -1;
     }
 
-    std::vector<lime::CustomParameterIO> parameter{ { param_id, 0, units } };
+    // units is an optional output buffer here; seed the request with an empty string
+    std::vector<lime::CustomParameterIO> parameter{ { param_id, 0, "" } };
     OpStatus returnValue = apiDevice->device->CustomParameterRead(parameter);
 
     if (returnValue != OpStatus::Success)
@@ -1123,7 +1124,7 @@ API_EXPORT int CALL_CONV LMS_WriteCustomBoardParam(lms_device_t* device, uint8_t
         return -1;
     }
 
-    const std::vector<lime::CustomParameterIO> parameter{ { param_id, val, units } };
+    const std::vector<lime::CustomParameterIO> parameter{ { param_id, val, units != nullptr ? units : "" } };
 
     OpStatus status = apiDevice->device->CustomParameterWrite(parameter);
     return OpStatusToReturnCode(status);
