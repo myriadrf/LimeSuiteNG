@@ -1257,7 +1257,7 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
 {
-    fromChip = !useCache || (GetVolatileMask(address) != 0);
+    fromChip = fromChip || !useCache || (GetVolatileMask(address) != 0);
 
     if (!controlPort || fromChip == false)
     {
