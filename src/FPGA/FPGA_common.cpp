@@ -86,9 +86,9 @@ uint32_t GetPacketSizeForBusSize(uint32_t requestSamplesCount, uint32_t sampleSi
     const uint32_t maxPacketSize = 4096;
     uint32_t samplesCount = std::min((maxPacketSize - headerSize) / frameSize, requestSamplesCount);
 
-    uint32_t packetSize = headerSize + requestSamplesCount * frameSize;
+    uint32_t packetSize = headerSize + samplesCount * frameSize;
     // reduce samples count until the whole packet is multiple of bus width
-    while (packetSize % busWidth && packetSize > 0)
+    while (packetSize % busWidth && samplesCount > 0)
     {
         --samplesCount;
         packetSize -= frameSize;

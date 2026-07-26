@@ -1078,7 +1078,12 @@ OpStatus TRXLooper::TxSetup()
             lime::debug("Tx samples override %i", mTx.samplesInPkt);
         }
         packetSize = GetPacketSizeForBusSize(mTx.samplesInPkt, sampleSize, chCount, 32);
-        const int headerSize = sizeof(StreamHeader);
+        const uint32_t headerSize = sizeof(StreamHeader);
+        if (packetSize <= headerSize)
+        {
+            lime::error("Tx setup: requested %u samples/packet cannot be framed, using default packet size", mTx.samplesInPkt);
+            packetSize = 4096;
+        }
         mTx.samplesInPkt = (packetSize - headerSize) / (sampleSize * chCount);
     }
     else
