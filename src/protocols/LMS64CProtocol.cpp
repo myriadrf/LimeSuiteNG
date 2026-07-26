@@ -159,7 +159,9 @@ void LMS64CPacketSerialCommandView::SetSerial(const std::vector<uint8_t>& bytes)
 
 void LMS64CPacketSerialCommandView::GetSerial(std::vector<uint8_t>& bytes) const
 {
-    const uint8_t bytesCount = packet->payload[1];
+    uint8_t bytesCount = packet->payload[1];
+    if (bytesCount > GetMaxSerialLength())
+        bytesCount = GetMaxSerialLength();
     bytes.resize(bytesCount);
     memcpy(bytes.data(), &packet->payload[24], bytesCount);
 }
