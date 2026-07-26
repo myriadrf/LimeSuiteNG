@@ -323,6 +323,9 @@ static void TransmitLoop(TransmitLoopArgs* args)
 
     do
     {
+        // rewind for every pass; clear() first, the failbit from hitting EOF is sticky
+        fin->clear();
+        fin->seekg(0, fin->beg);
         std::streamsize samplesRemaining = txSamplesCountTotal;
         txMeta.flags = 0;
         while (samplesRemaining > 0 && args->terminate->load(std::memory_order_relaxed) == false)
@@ -343,7 +346,7 @@ static void TransmitLoop(TransmitLoopArgs* args)
                         txSamples[c][s] = interleavedBuffer[srcIndex++];
                 }
             }
-            if (samplesRemaining < samplesBatchSize)
+            if (samplesRemaining <= samplesBatchSize)
                 txMeta.flags = StreamTxMeta::EndOfBurst;
             int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
 
