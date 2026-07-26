@@ -1138,7 +1138,7 @@ OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, 
     const int blockSize = 8;
     const int preambleSize = 8;
     const int bytesInSPI = 4;
-    constexpr int maxBlocks = (LMS64CPacket::payloadSize - preambleSize) / blockSize; // = 14
+    constexpr int maxBlocks = (LMS64CPacket::payloadSize - preambleSize) / blockSize; // = 6
 
     LMS64CPacket pkt;
 
@@ -1179,6 +1179,8 @@ OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, 
         std::string msg = GenericSPIToString(pkt);
         lime::log(LogLevel::Debug, "Wr:"s + msg);
 #endif
+        // the response overwrites pkt; don't trust the device-reported block count
+        const uint8_t blocksSent = pkt.blockCount;
         OpStatus status = RunControlCommand(port, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt), 2000);
 #if DEBUG_SPI
         msg = GenericSPIToString(pkt);
@@ -1187,7 +1189,7 @@ OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, 
         if (status != OpStatus::Success)
             return status;
 
-        for (int i = 0; MISO && i < pkt.blockCount && destIndex < count; ++i)
+        for (int i = 0; MISO && i < blocksSent && destIndex < count; ++i)
         {
             int payloadOffset = preambleSize + i * blockSize;
             uint32_t value = 0;
