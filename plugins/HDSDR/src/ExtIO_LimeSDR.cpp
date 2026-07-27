@@ -1059,7 +1059,7 @@ int EXTIO_API ExtIoGetActualSrateIdx(void) { return sampleRateIndex; }
 //---------------------------------------------------------------------------
 int EXTIO_API ExtIoSetSrate(int srate_idx)
 {
-    if (srate_idx < 0 && srate_idx >= sampleRates.size()) {
+    if (srate_idx < 0 || static_cast<std::size_t>(srate_idx) >= sampleRates.size()) {
         return -1; // ERROR
     }
 
