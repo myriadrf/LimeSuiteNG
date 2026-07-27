@@ -6,6 +6,7 @@
 
 #include "MCU_BD.h"
 using namespace std;
+#include <cmath>
 #include <string>
 #include "MCU_File.h"
 #include <sstream>
@@ -701,7 +702,7 @@ int MCU_BD::RunProductionTest_MCU()
         //Baseband gets back the control over SPI switch
         mSPI_write(0x0006, 0x0000); //REG6 write
 
-        return 0;
+        return -1;
     }
 
     tempi = 0x00AA;
@@ -719,7 +720,7 @@ int MCU_BD::RunProductionTest_MCU()
         //Baseband gets back the control over SPI switch
         mSPI_write(0x0006, 0x0000); //REG6 write
 
-        return 0;
+        return -1;
     }
 
     tempi = 0x0055;
@@ -1001,7 +1002,8 @@ void MCU_BD::SetParameter(MCU_Parameter param, float value)
         value /= 1e6;
         inputRegs[0] = static_cast<uint8_t>(value); //frequency integer part
 
-        uint16_t fracPart = value * 1000.0 - inputRegs[0] * 1000.0;
+        // round, float can't hold e.g. 30.72 exactly and truncating loses the last kHz
+        uint16_t fracPart = std::lround((value - inputRegs[0]) * 1000.0);
         inputRegs[1] = (fracPart >> 8) & 0xFF;
         inputRegs[2] = fracPart & 0xFF;
         for (uint8_t i = 0; i < 3; ++i)
