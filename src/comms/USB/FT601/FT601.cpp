@@ -101,7 +101,10 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
     ftStatus = FT_Create(reinterpret_cast<void*>(const_cast<char*>(serial)), FT_OPEN_BY_SERIAL_NUMBER, &mFTHandle);
 
     if (FT_FAILED(ftStatus))
+    {
+        mFTHandle = nullptr; // don't leave IsConnected() reporting a handle that was never opened
         return false;
+    }
 
     FT_AbortPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS);
     FT_AbortPipe(mFTHandle, CONTROL_BULK_WRITE_ADDRESS);
@@ -130,7 +133,11 @@ void FT601::Disconnect()
 
     libusb_impl.Disconnect();
 #else
+    if (mFTHandle == nullptr)
+        return;
+
     FT_Close(mFTHandle);
+    mFTHandle = nullptr;
 #endif
 }
 
@@ -167,9 +174,9 @@ int32_t FT601::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length, 
             failed = FT_GetOverlappedResult(mFTHandle, &vOverlapped, &ulBytesTransferred, FALSE) != FT_OK;
     }
 
+    FT_ReleaseOverlapped(mFTHandle, &vOverlapped); // also has to be released on success
     if (failed)
     {
-        FT_ReleaseOverlapped(mFTHandle, &vOverlapped);
         ReinitPipe(endPointAddr);
         ulBytesTransferred = 0;
     }
