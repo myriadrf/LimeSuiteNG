@@ -477,7 +477,7 @@ static void lms7002m_adjust_auto_dc(lms7002m_context* self, const uint16_t addre
     lms7002m_write_analog_dc(self, address, minValue);
 }
 
-static void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
+static lime_Result lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
 {
     uint16_t dcRegAddr = 0x5C7;
     const uint8_t ch = lms7002m_spi_read_csr(self, LMS7002M_MAC);
@@ -501,8 +501,31 @@ static void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
     }
 
     {
+        // The calibration runs inside the chip and takes a fixed number of its own
+        // cycles, but how many times the host polls during that period depends on the
+        // SPI bus speed, which is board specific and not known here. Sleeping between
+        // the reads bounds the wait by accumulated sleep instead of by poll count, so
+        // the chip gets at least timeout_us of real time on any bus before the wait is
+        // abandoned. The period is 1 ms because the Windows sleep has millisecond
+        // granularity and would not wait at all for a smaller value. The limit is a
+        // deliberately generous safety net rather than a measured duration, and wants
+        // tightening once the algorithm time is measured on hardware.
+        const uint32_t pollPeriod_us = 1000;
+        const uint32_t timeout_us = 1000000;
+        uint32_t waited_us = 0;
         while (lms7002m_spi_read(self, 0x05C1) & 0xF000)
-            ;
+        {
+            if (waited_us >= timeout_us)
+            {
+                // leave the chip as the normal exit path would, the engine is still running
+                LMS7002M_LOG(self, lime_LogLevel_Error, "%s", "Rx DC auto calibration timed out");
+                lms7002m_spi_modify_csr(self, LMS7002M_DC_BYP_RXTSP, 0);
+                lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, 1);
+                return lime_Result_Error;
+            }
+            lms7002m_sleep(pollPeriod_us);
+            waited_us += pollPeriod_us;
+        }
     }
 
     LMS7002M_LOG(self,
@@ -528,6 +551,7 @@ static void lms7002m_calibrate_rx_dc_auto(lms7002m_context* self)
     lms7002m_spi_modify_csr(self, LMS7002M_DC_BYP_RXTSP, 0); // DC_BYP 0
     LMS7002M_LOG(self, lime_LogLevel_Debug, "RxTSP DC corrector enabled %s", rssi_to_string(lms7002m_get_rssi(self)));
     lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, 1);
+    return lime_Result_Success;
 }
 
 static lime_Result lms7002m_check_saturation_rx(lms7002m_context* self, const uint32_t bandwidth_Hz, bool extLoopback)
@@ -771,7 +795,9 @@ lime_Result lms7002m_calibrate_rx(lms7002m_context* self, uint32_t bandwidthRF, 
     lime_Result status = lms7002m_calibrate_rx_setup(self, bandwidthRF, extLoopback);
     if (status != 0)
         goto RxCalibrationEndStage;
-    lms7002m_calibrate_rx_dc_auto(self);
+    status = lms7002m_calibrate_rx_dc_auto(self);
+    if (status != lime_Result_Success)
+        goto RxCalibrationEndStage;
     if (dcOnly)
         goto RxCalibrationEndStage;
     if (!extLoopback)
@@ -1200,11 +1226,15 @@ lime_Result lms7002m_calibrate_tx(lms7002m_context* self, uint32_t bandwidthRF, 
     lime_Result status = lms7002m_calibrate_tx_setup(self, bandwidthRF, extLoopback);
     if (status != lime_Result_Success)
         goto TxCalibrationEnd; //go to ending stage to restore registers
-    lms7002m_calibrate_rx_dc_auto(self);
+    status = lms7002m_calibrate_rx_dc_auto(self);
+    if (status != lime_Result_Success)
+        goto TxCalibrationEnd;
     status = lms7002m_check_saturation_tx_rx(self, bandwidthRF, extLoopback);
     if (status != lime_Result_Success)
         goto TxCalibrationEnd;
-    lms7002m_calibrate_rx_dc_auto(self);
+    status = lms7002m_calibrate_rx_dc_auto(self);
+    if (status != lime_Result_Success)
+        goto TxCalibrationEnd;
 
     lms7002m_set_nco_frequency(self, false, 0, calibrationSXOffset_Hz - offsetNCO + (bandwidthRF / calibUserBwDivider));
     lms7002m_calibrate_tx_dc_auto(self);
@@ -1294,6 +1324,7 @@ lime_Result lms7002m_calibrate_rp_bias(lms7002m_context* self)
     lms7002m_spi_modify_csr(self, LMS7002M_RSSI_RSSIMODE, 0);
 
     const uint16_t biasMux = lms7002m_spi_read_csr(self, LMS7002M_MUX_BIAS_OUT);
+    const uint16_t rpCalibEntry = lms7002m_spi_read_csr(self, LMS7002M_RP_CALIB_BIAS);
     lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, 1);
 
     lms7002m_sleep(250);
@@ -1307,6 +1338,13 @@ lime_Result lms7002m_calibrate_rp_bias(lms7002m_context* self)
         uint16_t rpCalib = lms7002m_spi_read_csr(self, LMS7002M_RP_CALIB_BIAS);
         while (Vref > Vptat)
         {
+            if (rpCalib == 0) // RP_CALIB_BIAS is a 5 bit field, the sweep is exhausted
+            {
+                lms7002m_spi_modify_csr(self, LMS7002M_RP_CALIB_BIAS, rpCalibEntry);
+                lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, biasMux);
+                LMS7002M_LOG(self, lime_LogLevel_Error, "%s", "RP bias calibration did not converge");
+                return lime_Result_Error;
+            }
             --rpCalib;
             lms7002m_spi_modify_csr(self, LMS7002M_RP_CALIB_BIAS, rpCalib);
             reg606 = lms7002m_spi_read(self, 0x0606);
@@ -1319,6 +1357,13 @@ lime_Result lms7002m_calibrate_rp_bias(lms7002m_context* self)
         uint16_t rpCalib = lms7002m_spi_read_csr(self, LMS7002M_RP_CALIB_BIAS);
         while (Vref < Vptat)
         {
+            if (rpCalib >= 31) // RP_CALIB_BIAS is a 5 bit field, the sweep is exhausted
+            {
+                lms7002m_spi_modify_csr(self, LMS7002M_RP_CALIB_BIAS, rpCalibEntry);
+                lms7002m_spi_modify_csr(self, LMS7002M_MUX_BIAS_OUT, biasMux);
+                LMS7002M_LOG(self, lime_LogLevel_Error, "%s", "RP bias calibration did not converge");
+                return lime_Result_Error;
+            }
             ++rpCalib;
             lms7002m_spi_modify_csr(self, LMS7002M_RP_CALIB_BIAS, rpCalib);
             reg606 = lms7002m_spi_read(self, 0x0606);
