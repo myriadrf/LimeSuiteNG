@@ -45,13 +45,13 @@ bool LMS7002M_Validate(const SDRConfig& cfg, std::vector<std::string>& errors, c
         // LMS7002M MIMO A&B channels share LO, but can be offset by NCO
         // TODO: check if they are withing NCO range
         const double rxLOdiff = chA.rx.centerFrequency - chB.rx.centerFrequency;
-        if (rxMIMO && rxLOdiff > 0)
-            errors.push_back(
-                strFormat("MIMO: Rx channels center frequency do not match A(%g), B(%g)", chA.rx.sampleRate, chB.rx.sampleRate));
+        if (rxMIMO && rxLOdiff != 0)
+            errors.push_back(strFormat(
+                "MIMO: Rx channels center frequency do not match A(%g), B(%g)", chA.rx.centerFrequency, chB.rx.centerFrequency));
         const double txLOdiff = chA.tx.centerFrequency - chB.tx.centerFrequency;
-        if (txMIMO && txLOdiff > 0)
-            errors.push_back(
-                strFormat("MIMO: Tx channels center frequency do not match A(%g), B(%g)", chA.tx.sampleRate, chB.tx.sampleRate));
+        if (txMIMO && txLOdiff != 0)
+            errors.push_back(strFormat(
+                "MIMO: Tx channels center frequency do not match A(%g), B(%g)", chA.tx.centerFrequency, chB.tx.centerFrequency));
     }
 
     // individual channel validation
