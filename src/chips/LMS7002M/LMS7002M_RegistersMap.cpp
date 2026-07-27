@@ -24,7 +24,11 @@ uint16_t LMS7002M_RegistersMap::GetDefaultValue(uint16_t address) const
 void LMS7002M_RegistersMap::SetDefaultValue(uint16_t address, uint16_t value)
 {
     mChannelA[address].defaultValue = value;
-    mChannelB[address].defaultValue = value;
+    // addresses below 0x0100 are shared between channels, keeping them out of the
+    // channel B map matches InitializeDefaultValues and avoids creating entries
+    // whose value is never set but which UploadAll would still write to the chip
+    if (address >= 0x0100)
+        mChannelB[address].defaultValue = value;
 }
 
 void LMS7002M_RegistersMap::InitializeDefaultValues(const std::vector<const lime::LMS7002MCSR_Data::CSRegister*>& parameterList)
