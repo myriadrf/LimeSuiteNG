@@ -198,7 +198,7 @@ void FX3::FlushEndpoint()
     constexpr int CTR_W_INDEX = 0x0000;
 
     constexpr int length = 64;
-    uint8_t packet[length];
+    uint8_t packet[length]{}; // the whole packet is sent, don't leak uninitialized stack bytes
     // command to reset bulk endpoint fifos
     packet[0] = 0x40; // https://github.com/myriadrf/LimeSDR-USB_FX3/blob/27435fbecdf1950897311079d764090b56a8ae9d/main.c#L767
 
