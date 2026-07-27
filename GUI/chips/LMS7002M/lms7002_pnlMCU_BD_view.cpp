@@ -622,6 +622,9 @@ void lms7002_pnlMCU_BD_view::OnbtnRunTestClick(wxCommandEvent& event)
     inFile >> test_code;
     while (!inFile.eof() && !inFile.fail())
     {
+        if (m_iTestResultFileLine >= static_cast<int>(TestResultArray_code.size()))
+            break;
+
         inFile >> address;
         inFile >> value;
         TestResultArray_code[m_iTestResultFileLine] = static_cast<unsigned char>(test_code);
