@@ -1,5 +1,6 @@
 #include "CDCM6208.h"
 #include <algorithm>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <chrono>
@@ -505,6 +506,15 @@ int CDCM_Dev::UploadConfiguration()
     CDCM_Regs[4].val |= ((VCO.R_div - 1) & 0xF) << 8;
     CDCM_Regs[4].val |= ((VCO.input_mux - 1) & 1) << 12;
 
+    // the dividers are written into 8 bit fields, a larger one would silently wrap
+    // and program a completely different output frequency. Only the outputs that are
+    // in use carry a meaningful divider, an unused one is derived from a zero output
+    // frequency and is not written anywhere that matters.
+    if (Outputs.Y0Y1.used && !(Outputs.Y0Y1.divider_val >= 1 && Outputs.Y0Y1.divider_val <= 256))
+        return -1;
+    if (Outputs.Y2Y3.used && !(Outputs.Y2Y3.divider_val >= 1 && Outputs.Y2Y3.divider_val <= 256))
+        return -1;
+
     CDCM_Regs[6].val = 0 | (static_cast<uint16_t>(Outputs.Y0Y1.divider_val - 1) & 0xFF);
 
     CDCM_Regs[8].val = 0 | (static_cast<uint16_t>(Outputs.Y2Y3.divider_val - 1) & 0xFF);
@@ -839,6 +849,15 @@ double CDCM_Dev::DecToFrac(double decimal, int* num, int* den)
     uint64_t l_den = 1;
     double l_target = decimal;
 
+    // an infinite or non-positive ratio (e.g. a zero reference frequency) never
+    // becomes an integer below, report it as unusable instead of looping forever
+    if (!std::isfinite(decimal) || decimal <= 0)
+    {
+        *num = 1;
+        *den = 1;
+        return std::numeric_limits<double>::max();
+    }
+
     while (IsInteger(decimal) == false)
     {
         l_den *= 10;
@@ -909,6 +928,10 @@ std::vector<CDCM_VCO> CDCM_Dev::FindValidVCOFreqs(double lcm, int version)
         // Find low and high bounds for current prescaler
         lo_freq = placeholder_struct.min_freq / prescaler;
         hi_freq = placeholder_struct.max_freq / prescaler;
+        // lcm is the requested output frequency, a very low one would step through
+        // the VCO band in tiny increments and grow the candidate list without bound
+        if (!(lcm > 0) || (hi_freq - lo_freq) / lcm > 100000)
+            continue;
         frequency = ceil(lo_freq / lcm) * lcm;
         while (frequency < hi_freq)
         {
