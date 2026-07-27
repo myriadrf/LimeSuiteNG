@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 
 #include "limesuiteng/types.h"
 #include "limesuiteng/SDRDescriptor.h"
@@ -104,6 +105,13 @@ uint32_t StreamComposite::StreamRx_T(T* const* samples, uint32_t count, StreamRx
     uint8_t channelsCount = 0;
     for (auto& a : mAggregate)
     {
+        if (subDeviceCount >= std::size(samplesGot))
+        {
+            lime::error("StreamComposite: more than %i aggregated devices, the rest are not being read",
+                static_cast<int>(std::size(samplesGot)));
+            break;
+        }
+
         samplesGot[subDeviceCount] = a->Receive(dest, count, &subDeviceMeta[subDeviceCount]);
         const int devChannels = a->GetConfig().channels.at(TRXDir::Rx).size();
         dest += devChannels;
