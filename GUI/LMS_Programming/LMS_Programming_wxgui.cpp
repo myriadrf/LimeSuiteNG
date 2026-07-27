@@ -114,12 +114,15 @@ LMS_Programming_wxgui::~LMS_Programming_wxgui()
 bool LMS_Programming_wxgui::Initialize(lime::SDRDevice* device)
 {
     mDevice = device;
+    // the entries are indexed by the combo box selection, they have to be
+    // discarded together with it or a reconnect leaves stale owner devices behind
+    dataStorageEntries.clear();
+    cmbDevice->Clear();
     if (!mDevice)
     {
         return true;
     }
 
-    cmbDevice->Clear();
     const SDRDescriptor& desc = mDevice->GetDescriptor();
 
     for (const auto& memoryDevice : desc.memoryDevices)
