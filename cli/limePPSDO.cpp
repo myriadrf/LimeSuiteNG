@@ -538,7 +538,7 @@ int main(int argc, char** argv)
         {
             double clk = args::get(clk_freq);
             double m_ppm = args::get(ppm);
-            if (clk == 0 && m_ppm == 0)
+            if (clk <= 0 || m_ppm <= 0)
                 throw args::UsageError(
                     "ERROR: Enable command requires flags --clk-freq and --ppm to be set for each LimeSDR device!");
         }
@@ -556,13 +556,13 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     } catch (args::ValidationError& e)
     {
-        std::cout << "ERROR: Select atleast one COMMAND from the list!" << endl;
-        cout << parser << endl;
-        return EXIT_SUCCESS;
+        cerr << "ERROR: Select atleast one COMMAND from the list!" << endl;
+        cerr << parser << endl;
+        return EXIT_FAILURE;
     } catch (args::UsageError& e)
     {
-        std::cout << e.what() << endl;
-        return EXIT_SUCCESS;
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
     } catch (const std::exception& e)
     {
         cerr << parser << endl;
