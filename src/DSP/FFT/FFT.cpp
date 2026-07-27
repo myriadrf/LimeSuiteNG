@@ -98,9 +98,11 @@ std::vector<float> FFT::Calc(const std::vector<complex32f_t>& samples, WindowFun
         fftIn[i].i = samples[i].imag() * coeffs[i];
     }
     kiss_fft(plan, fftIn.data(), fftOut.data());
+    // as int, fftSize * fftSize overflows at 46341 and is exactly 0 at 65536
+    const float scale = static_cast<float>(fftSize) * static_cast<float>(fftSize);
     for (int i = 0; i < fftSize; ++i)
     {
-        bins[i] = (fftOut[i].r * fftOut[i].r + fftOut[i].i * fftOut[i].i) / (fftSize * fftSize);
+        bins[i] = (fftOut[i].r * fftOut[i].r + fftOut[i].i * fftOut[i].i) / scale;
     }
     kiss_fft_free(plan);
     return bins;
@@ -241,7 +243,7 @@ void FFT::ProcessLoop()
 
 void FFT::GenerateWindowCoefficients(WindowFunctionType func, std::size_t coefCount, std::vector<float>& windowFcoefs)
 {
-    float amplitudeCorrection = 1;
+    float amplitudeCorrection = 0; // it is a sum accumulator, Blackman-Harris did not reset it
     windowFcoefs.resize(coefCount);
     float a0 = 0.35875;
     float a1 = 0.48829;

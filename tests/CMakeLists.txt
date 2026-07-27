@@ -50,6 +50,7 @@ target_sources(${TESTS_CONTAINER_TARGET} PRIVATE TestEntry.cpp)
 target_sources(
     ${TESTS_CONTAINER_TARGET}
     PRIVATE comms/SPI_utilities_tests.cpp
+            DSP/FFT_tests.cpp
             streaming/samplesConversion_tests.cpp
             streaming/Timespec_tests.cpp
             streaming/TRXLooper_tests.cpp
