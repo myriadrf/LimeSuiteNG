@@ -325,6 +325,12 @@ int main(int argc, char** argv)
 
     const std::string devName = args::get(deviceFlag);
     const int channelCount = mimoFlag ? args::get(mimoFlag) : 1;
+    // ReceiverThread only ever fills rxBuffers[0], and the array itself holds 16 entries
+    if (channelCount != 1)
+    {
+        cerr << "Invalid --mimo channel count "sv << channelCount << " (only 1 is supported)."sv << endl;
+        return EXIT_FAILURE;
+    }
 
     std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
