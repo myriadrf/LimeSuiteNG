@@ -172,7 +172,8 @@ OpStatus LMS7002M::CalibrateTxGain()
     if (status == OpStatus::Success)
     {
         opt_gain_tbb[ind] = std::clamp(cg_iamp, 1, 63); // can't allow opt_gain_tbb to be 0, it's used in division
-        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, cg_iamp);
+        // the search can leave cg_iamp at 64, which the 6 bit CG_IAMP_TBB field would truncate to 0
+        Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, opt_gain_tbb[ind]);
     }
     //logic reset
     Modify_SPI_Reg_bits(LMS7002MCSR::LRST_TX_A, 0);
