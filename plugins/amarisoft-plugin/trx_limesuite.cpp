@@ -211,7 +211,15 @@ static int limesuiteng_trx_get_sample_rate_func(TRXState* s1, TRXFraction* psamp
     // limesuiteng_trx_get_sample_rate_func seems to be called for each Port, but the API does not provide index.
     // workaround here assume that they are being configured in order 0,1,2...
     static int whichPort = 0;
+    const int portCount = static_cast<int>(s->ports.size());
     int p = whichPort;
+    if (portCount > 0)
+        whichPort = (whichPort + 1) % portCount;
+    if (p >= portCount || s->ports[p].nodes.empty())
+    {
+        Log(LogLevel::Error, "%s: No devices are assigned to port%i", __func__, p);
+        return -1;
+    }
     DevNode* node = s->ports[p].nodes[0];
     if (!node || !node->device)
     {
@@ -219,7 +227,6 @@ static int limesuiteng_trx_get_sample_rate_func(TRXState* s1, TRXFraction* psamp
         return -1;
     }
     double& rate = node->config.channel[0].rx.sampleRate;
-    whichPort = (whichPort + 1); // mod, just in case.
 
     const float desiredSamplingRate = bandwidth * 1.536;
     //printf ("Required bandwidth:[%u], current sample_rate [%u]", bandwidth, s->sample_rate);
