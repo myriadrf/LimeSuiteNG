@@ -173,7 +173,7 @@ void dlgMarkers::UpdateValues()
             return;
         if (!parent_graph->markers[i].used)
             continue;
-        char text[128];
+        char text[128] = { 0 }; // neither series branch below is guaranteed to write it
         double valueA = 0;
         double valueB = 0;
         int cnt = 0;
