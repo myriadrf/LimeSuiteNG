@@ -963,8 +963,10 @@ void CDCM6208_panelgui::OnFreqEntry(wxCommandEvent& event)
         }
 
         UpdateGUI();
-    } catch (std::invalid_argument& e)
+    } catch (const std::logic_error& e)
     {
+        // std::logic_error also covers the out_of_range that stod throws on an
+        // overflowing entry, which would otherwise escape the event handler
         m_FrequencyPlanRes->SetLabel("Invalid Freq Request");
         m_FrequencyPlanRes->SetForegroundColour(wxColour("#ff0000"));
     }
