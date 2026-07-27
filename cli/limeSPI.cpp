@@ -122,9 +122,17 @@ static std::string ReadFile(const std::string& fileName)
     if (fileSize <= 0)
         return {};
 
+    // a directory opens successfully and reports a huge size, don't allocate on it
+    constexpr std::streamoff maxFileSize = 16 << 20;
+    if (fileSize > maxFileSize)
+    {
+        cerr << "Not a readable input file: "sv << fileName << endl;
+        exit(EXIT_FAILURE);
+    }
+
     buffer.resize(fileSize);
     inputFile.read(buffer.data(), fileSize);
-    return std::string(buffer.begin(), buffer.end());
+    return std::string(buffer.begin(), buffer.begin() + inputFile.gcount());
 }
 
 int main(int argc, char** argv)
