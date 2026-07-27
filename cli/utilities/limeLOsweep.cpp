@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     args::ValueFlag<double>         startFreqFlag(parser, "LOstart"s, "Sweep start frequency"s, {'b', "LOstart"s});
     args::ValueFlag<double>         LOendFlag(parser, "LOend"s, "Sweep end frequency"s, {'e', "LOend"s});
     args::ValueFlag<double>         LOstepFlag(parser, "LOstep"s, "Sweep frequency step"s, {'s', "LOstep"s});
-    args::ValueFlag<int>            stepDurationFlag(parser, "stepDuration"s, "time between steps in milliseconds"s, {'s', "stepDuration"s}, 0);
+    args::ValueFlag<int>            stepDurationFlag(parser, "stepDuration"s, "time between steps in milliseconds"s, {"stepDuration"s}, 0);
     args::Flag                      interactive(parser, "", "Wait for user input for each step", {"interactive"});
 
     args::ValueFlag<std::string>    deviceFlag(parser, "name", "Specifies which device to use", {'d', "device"});
@@ -132,6 +132,13 @@ int main(int argc, char** argv)
     lime::TRXDir direction = TRXDir::Tx;
     if (args::get(dirRx))
         direction = TRXDir::Rx;
+
+    // a zero or negative step never advances the sweep loop below
+    if (LOstart <= LOend && LOstep <= 0)
+    {
+        std::cerr << "--LOstep must be greater than 0"sv << std::endl;
+        return EXIT_FAILURE;
+    }
 
     for (double freq = LOstart; freq <= LOend; freq += LOstep)
     {
