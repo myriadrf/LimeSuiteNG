@@ -82,22 +82,20 @@ void MCU_File::ReadHex(unsigned long limit)
             continue;
         }
 
-        if (szLine[strlen(szLine) - 1] == 0xA || szLine[strlen(szLine) - 1] == 0xD)
+        // strip the line ending, stopping at the start of the buffer so that a
+        // blank line does not index szLine[-1]
+        size_t lineLength = strlen(szLine);
+        while (lineLength > 0 && (szLine[lineLength - 1] == 0xA || szLine[lineLength - 1] == 0xD))
         {
-            szLine[strlen(szLine) - 1] = 0;
+            szLine[--lineLength] = 0;
         }
 
-        if (szLine[strlen(szLine) - 1] == 0xA || szLine[strlen(szLine) - 1] == 0xD)
-        {
-            szLine[strlen(szLine) - 1] = 0;
-        }
-
-        if (strlen(szLine) == 1023)
+        if (lineLength == 1023)
         {
             throw std::runtime_error("Hex file lines to long!"s);
         }
         // Ignore blank lines
-        if (szLine[0] == '\n')
+        if (lineLength == 0)
         {
             continue;
         }
@@ -192,11 +190,11 @@ void MCU_File::ReadHex(unsigned long limit)
                             lime::warning("Ignoring data above address space!"s);
                             lime::warning("Data address: "s + std::to_string(addressBase + startAddress + i));
                             lime::warning("Limit: "s + std::to_string(limit));
-                            if (!m_chunks.back().m_bytes.size())
+                            if (!m_chunks.empty() && m_chunks.back().m_bytes.empty())
                             {
                                 m_chunks.pop_back();
                             }
-                            continue;
+                            break; // the remaining bytes of the record are above the limit as well
                         }
                         m_chunks.back().m_bytes.push_back(static_cast<unsigned char>(tmp));
                     }
@@ -376,11 +374,11 @@ void MCU_File::ReadHex(unsigned long limit)
                             lime::warning("Ignoring data above address space!"s);
                             lime::warning("Data address: "s + std::to_string(startAddress + i));
                             lime::warning("Limit: "s + std::to_string(limit));
-                            if (!m_chunks.back().m_bytes.size())
+                            if (!m_chunks.empty() && m_chunks.back().m_bytes.empty())
                             {
                                 m_chunks.pop_back();
                             }
-                            continue;
+                            break; // the remaining bytes of the record are above the limit as well
                         }
                         m_chunks.back().m_bytes.push_back(static_cast<unsigned char>(tmp));
                     }
