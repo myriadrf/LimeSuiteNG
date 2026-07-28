@@ -334,7 +334,7 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
     return std::max(maxADCrequest, maxDACrequest);
 }
 
-static OpStatus SetLA9310SamplingRate(std::shared_ptr<LimeSDR_Micro_M4> la9310, double sampleRate, int oversample)
+static OpStatus SetLA9310SamplingRate(std::shared_ptr<LimeSDR_Micro_M4> la9310, double sampleRate, uint32_t oversample)
 {
     constexpr double maxSystemClock = 160e6;
     uint8_t adc_divider_mask = 0;
@@ -344,13 +344,19 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LimeSDR_Micro_M4> la9310, 
     {
         adc_divider_mask = 0xF;
         dac_divider_mask = 0x1;
-        oversample = 4;
+        if (oversample > 0)
+            oversample = std::min(oversample, 4u);
+        else
+            oversample = 4;
     }
     else if (sampleRate <= 40e6)
     {
         adc_divider_mask = 0xF;
         dac_divider_mask = 0x1;
-        oversample = 2;
+        if (oversample > 0)
+            oversample = std::min(oversample, 2u);
+        else
+            oversample = 2;
     }
     else if (sampleRate <= 80e6)
     {
@@ -442,7 +448,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
     double sampleRate = CalculateCommonSampleRate(cfg);
     if (sampleRate > 0)
     {
-        status = SetLA9310SamplingRate(la9310, sampleRate, 0);
+        status = SetLA9310SamplingRate(la9310, sampleRate, cfg.channel[0].rx.oversample);
         if (status != OpStatus::Success)
             return status;
     }
@@ -508,7 +514,7 @@ double LimeSDR_Micro::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 OpStatus LimeSDR_Micro::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    return SetLA9310SamplingRate(la9310, sampleRate, 0);
+    return SetLA9310SamplingRate(la9310, sampleRate, oversample);
 }
 
 double LimeSDR_Micro::GetClockFreq(uint8_t clk_id, uint8_t channel)
