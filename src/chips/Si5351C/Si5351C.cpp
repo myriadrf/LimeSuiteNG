@@ -569,6 +569,16 @@ void Si5351C::SetClock(unsigned char id, unsigned long fOut_Hz, bool enabled, bo
         return;
     }
 
+    // switching an output off does not need a frequency, and callers pass 0 for it.
+    // The frequency is left alone, exactly as the early return below used to leave
+    // it, and every user of outputFreqHz already skips clocks that are not powered.
+    if (!enabled)
+    {
+        CLK[id].powered = false;
+        CLK[id].inverted = inverted;
+        return;
+    }
+
     if (fOut_Hz < 8000 || fOut_Hz > 160000000)
     {
         lime::error("Si5351C - CLK%d output frequency must be between 8kHz and 160MHz. fOut_MHz = %g", id, fOut_Hz / 1000000.0);
