@@ -2017,7 +2017,10 @@ uint32_t lms7002m_get_rssi(lms7002m_context* self)
 {
     EXPECT(self, lms7002m_spi_read_csr(self, LMS7002M_AGC_BYP_RXTSP) == 0); // ensure AGC is enabled, otherwise RSSI value will be 0
     uint32_t rssi;
-    int waitTime = 1000000 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
+    // the delay reaches five figures at the higher AGC averaging settings, and the
+    // product overflows a signed int long before that
+    const uint64_t waitTime =
+        (uint64_t)1000000 * (0xFFFF - lms7002m_get_rssi_delay(self)) * 12 / lms7002m_get_reference_clock(self);
     lms7002m_sleep(waitTime);
     lms7002m_trigger_rising_edge(self, &LMS7002M_CAPTURE);
     rssi = lms7002m_spi_read(self, 0x040F);
