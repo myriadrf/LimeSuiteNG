@@ -25,6 +25,11 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
     //Receive samples
     {
         std::unique_ptr<RFStream> rfstream = device.StreamCreate(stream, input.moduleIndex);
+        if (!rfstream)
+        {
+            reporter->OnFail(test, "failed to create the RF stream");
+            return OpStatus::Error;
+        }
         rfstream->Start();
         // ignore first batch of samples, just in case there would be instability from digital DC corrector
         rfstream->StreamRx(reinterpret_cast<lime::complex32f_t**>(&dest), fftSize, nullptr);
