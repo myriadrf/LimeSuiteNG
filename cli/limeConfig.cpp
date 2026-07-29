@@ -73,8 +73,8 @@ int main(int argc, char** argv)
     }
 
     bool doConfigure = refclkFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag || rxoversampleFlag ||
-                       rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag || txtestsignalFlag ||
-                       rxgfirFlag || txgfirFlag;
+                       rxtestsignalFlag || rxGainFlag || rxCalibrateFlag || rxgfirFlag || txenFlag || txloFlag || txpathFlag ||
+                       txlpfFlag || txoversampleFlag || txtestsignalFlag || txGainFlag || txCalibrateFlag || txgfirFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
