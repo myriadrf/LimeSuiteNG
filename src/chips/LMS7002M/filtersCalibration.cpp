@@ -109,7 +109,7 @@ OpStatus LMS7002M::TuneRxFilter(float_type rx_lpf_freq_RF)
         return OpStatus::Error;
     }
     //sync registers to cache
-    std::vector<uint16_t> regsToSync = { 0x0112, 0x0117, 0x011A, 0x0116, 0x0118, 0x0114, 0x0019, 0x0115 };
+    std::vector<uint16_t> regsToSync = { 0x0112, 0x0117, 0x011A, 0x0116, 0x0118, 0x0114, 0x0119, 0x0115 };
     for (const auto addr : regsToSync)
         SPI_read(addr, true);
 
