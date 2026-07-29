@@ -197,6 +197,16 @@ int main(int argc, char** argv)
     inputFile.seekg(0, std::ios_base::end);
     auto cnt = inputFile.tellg();
     inputFile.seekg(0, std::ios_base::beg);
+    // a pipe or another non seekable input reports -1, and a directory opens fine and
+    // reports the maximum value. Both would be resized into a length_error that
+    // nothing catches
+    constexpr std::streamoff maxImageSize = 256 << 20;
+    if (cnt < 0 || cnt > maxImageSize)
+    {
+        DeviceRegistry::freeDevice(device);
+        cerr << "Not a readable image file: "sv << filePath << endl;
+        return EXIT_FAILURE;
+    }
     cerr << "File size : "sv << cnt << " bytes."sv << endl;
     data.resize(cnt);
     inputFile.read(data.data(), cnt);
