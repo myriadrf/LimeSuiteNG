@@ -1785,7 +1785,9 @@ lime_Result lms7002m_set_rx_lpf(lms7002m_context* self, uint32_t rfBandwidth_Hz)
         cfb_tia_rfe = ((uint64_t)120000000 * 14 * 3 / rfBandwidth_Hz) - 10;
     cfb_tia_rfe = clamp_uint(cfb_tia_rfe, 0, 4095);
 
-    uint16_t rcomp_tia_rfe = clamp_uint(15 - cfb_tia_rfe * 2 / 100, 0, 15);
+    // the expression is signed and goes negative once cfb_tia_rfe reaches 800, an
+    // unsigned clamp turns that into a huge value and saturates at 15 instead of 0
+    uint16_t rcomp_tia_rfe = clamp_int(15 - cfb_tia_rfe * 2 / 100, 0, 15);
     uint16_t ccomp_tia_rfe = clamp_uint((cfb_tia_rfe / 100) + (tiaGain == 1 ? 1 : 0), 0, 15);
 
     uint16_t c_ctl_lpfl_rbb = clamp_uint(((uint64_t)120000000 * 18 / (rfBandwidth_Hz * 2 / 3)) - 103, 0, 2047);
