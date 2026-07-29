@@ -9,7 +9,7 @@ AvgRmsCounter::AvgRmsCounter()
     , avgAccumulator(0)
     , rmsAccumulator(0)
     , min(1e16)
-    , max(1e-16)
+    , max(-1e16)
 {
 }
 
@@ -55,6 +55,8 @@ double AvgRmsCounter::Min()
 double AvgRmsCounter::Max()
 {
     auto temp = max;
-    max = 1e-16;
+    // seed below every possible sample, the Tx timestamp advance this counts is
+    // negative during an underrun and +1e-16 would be reported as the maximum
+    max = -1e16;
     return temp;
 }
