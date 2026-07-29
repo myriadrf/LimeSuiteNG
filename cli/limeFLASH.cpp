@@ -89,7 +89,14 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
     std::string answer;
     while (1)
     {
-        std::getline(std::cin, answer);
+        if (!std::getline(std::cin, answer))
+        {
+            // nothing is left to read, retrying just spins. Aborting corrupts the
+            // firmware, so an unanswered prompt has to continue the programming.
+            terminateProgress = false;
+            cout << "\nno input to read, continuing..."sv << endl;
+            return false;
+        }
         if (answer[0] == 'y')
         {
             cout << "\naborting..."sv << endl;
