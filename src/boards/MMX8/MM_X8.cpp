@@ -85,8 +85,12 @@ LimeSDR_MMX8::LimeSDR_MMX8(std::shared_ptr<ISerialPort> controlPort, std::vector
             controlPort, LMS64CProtocol::Command::LMS7002_WR, LMS64CProtocol::Command::LMS7002_RD, subDeviceId, 0);
         auto fpga_spi = std::make_shared<LMS64C_SPI>(
             controlPort, LMS64CProtocol::Command::BRDSPI_WR, LMS64CProtocol::Command::BRDSPI_RD, subDeviceId, 0);
+        // the endpoint list is built from whatever trx* nodes the driver exposed and is
+        // not guaranteed to hold 8. A sub device without a stream port still works for
+        // control, its StreamCreate reports that no stream is available
+        std::shared_ptr<LimePCIe> streamPort = i < trxStreams.size() ? trxStreams[i] : nullptr;
         std::unique_ptr<LimeSDR_XTRX> xtrx =
-            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, trxStreams[i], controlPort, limemmx8::X8ReferenceClock);
+            std::make_unique<LimeSDR_XTRX>(lms_spi, fpga_spi, streamPort, controlPort, limemmx8::X8ReferenceClock);
         xtrx->SetSubDeviceIndex(subDeviceId);
         const SDRDescriptor& subdeviceDescriptor = xtrx->GetDescriptor();
 
