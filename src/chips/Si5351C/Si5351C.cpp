@@ -310,6 +310,12 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
     {
         for (int i = 0; i < 6; ++i)
         {
+            // an output that is off does not constrain the VCO, and a zero frequency
+            // would divide by zero below and never advance the loop. Both the score
+            // search and the divider assignment already skip those outputs
+            if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
+                continue;
+
             unsigned long freq =
                 clocks[i].outputFreqHz > Fmin
                     ? clocks[i].outputFreqHz
