@@ -169,7 +169,13 @@ int lms(float* hr,
 
     /* Solve the equations */
     float d = NAN;
-    ludcmp(A, L, index, &d);
+    if (ludcmp(A, L, index, &d) != 0)
+    {
+        free_vector(a, 1, L);
+        free_matrix(A, 1, L, 1, L);
+        free_ivector(index, 1, L);
+        return (-1);
+    }
     lubksb(A, L, index, a);
 
     /* Calculate impulse response h[] from a[] */

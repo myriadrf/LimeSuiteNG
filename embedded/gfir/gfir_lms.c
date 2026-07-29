@@ -115,7 +115,8 @@ int gfir_lms(struct dfilter* hr,
     }
 
     /* Do LMS optimization */
-    lms(hr->a, hi->a, hcsd->a, n, w, desired, weights, 2 * points, cprec, csdprec, POSITIVE, bincode, csdcode, csdcoder);
+    const int lmsStatus =
+        lms(hr->a, hi->a, hcsd->a, n, w, desired, weights, 2 * points, cprec, csdprec, POSITIVE, bincode, csdcode, csdcoder);
 
 #if 0
   /* Print the results */
@@ -172,21 +173,22 @@ int gfir_lms(struct dfilter* hr,
     }
     free(x);
 
-    return 0;
+    return lmsStatus;
 }
 
-void GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coeffs)
+int GenerateFilter(int n, float w1, float w2, float a1, float a2, float* coeffs)
 {
     struct dfilter hr, hi, hcsd; /* Filter transfer functions */
     dfilter_init(&hr);
     dfilter_init(&hi);
     dfilter_init(&hcsd);
     /* Find the filter coefficients */
-    gfir_lms(&hr, &hi, &hcsd, n, w1, w2, a1, a2, CPREC, CSDPREC, NONE);
+    const int status = gfir_lms(&hr, &hi, &hcsd, n, w1, w2, a1, a2, CPREC, CSDPREC, NONE);
     for (int i = 0; i < n; i++)
         coeffs[i] = hi.a[i];
 
     dfilter_destroy(&hr);
     dfilter_destroy(&hi);
     dfilter_destroy(&hcsd);
+    return status;
 }
