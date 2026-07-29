@@ -14,7 +14,10 @@ OpStatus LMS64C_CSR::ioWrite64(uint64_t address, uint64_t value)
 
 uint64_t LMS64C_CSR::ioRead64(uint64_t address, OpStatus* status)
 {
-    return LMS64CProtocol::CSRegIoRead(*port, address, status);
+    // ICSR declares the status output as optional and defaults it to nullptr, but
+    // CSRegIoRead writes through the pointer on every path
+    OpStatus discarded = OpStatus::Success;
+    return LMS64CProtocol::CSRegIoRead(*port, address, status ? status : &discarded);
 }
 
 } // namespace lime
