@@ -157,7 +157,12 @@ int ludcmp(float** a, int n, int* indx, float* d)
                 big = temp;
         }
         if (!big)
-            nrerror("Singular matrix in routine LUDCMP");
+        {
+            /* A singular matrix follows from the requested filter shape, it is not
+               a programming error. Report it rather than terminating the process. */
+            free_vector(vv, 1, n);
+            return (-1);
+        }
         vv[i] = 1.0 / big;
     }
 

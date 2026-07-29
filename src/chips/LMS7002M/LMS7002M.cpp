@@ -2020,8 +2020,11 @@ static lime_Result lms7002m_set_gfir_filter(
         memset(f_coef, 0, sizeof(f_coef));
         memset(f_coef2, 0, sizeof(f_coef2));
 
-        GenerateFilter(L * 15, w, w2, 1.0, 0, f_coef);
-        GenerateFilter(L * 5, w, w2, 1.0, 0, f_coef2);
+        if (GenerateFilter(L * 15, w, w2, 1.0, 0, f_coef) != 0 || GenerateFilter(L * 5, w, w2, 1.0, 0, f_coef2) != 0)
+        {
+            lms7002m_set_active_channel(self, savedChannel);
+            return lime_Result_Error;
+        }
 
         for (int i = 0; i < 120; ++i)
             coef[i] = f_coef[i] * 32767;
