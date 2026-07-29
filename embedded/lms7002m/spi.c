@@ -35,7 +35,9 @@ lime_Result lms7002m_spi_modify_csr(lms7002m_context* self, const struct lms7002
 uint16_t lms7002m_spi_read_bits(lms7002m_context* self, uint16_t address, uint8_t msb, uint8_t lsb)
 {
     uint16_t regVal = lms7002m_spi_read(self, address);
-    return (regVal & (~(~0u << (msb + 1)))) >> lsb; //shift bits to LSB
+    // build the mask in 64 bits, a few control registers are declared with msb 31
+    // and shifting a 32 bit ~0u by 32 is undefined
+    return (regVal & (~(~0ull << (msb + 1)))) >> lsb; //shift bits to LSB
 }
 
 uint16_t lms7002m_spi_read_csr(lms7002m_context* self, const struct lms7002m_csr csr)

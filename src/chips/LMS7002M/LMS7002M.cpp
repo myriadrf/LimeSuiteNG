@@ -1037,7 +1037,9 @@ uint16_t LMS7002M::Get_SPI_Reg_bits(const CSRegister& param, bool fromChip)
 
 uint16_t LMS7002M::Get_SPI_Reg_bits(uint16_t address, uint8_t msb, uint8_t lsb, bool fromChip)
 {
-    return (SPI_read(address, fromChip) & (~(~0u << (msb + 1)))) >> lsb; //shift bits to LSB
+    // build the mask in 64 bits, a few control registers are declared with msb 31
+    // and shifting a 32 bit ~0u by 32 is undefined
+    return (SPI_read(address, fromChip) & (~(~0ull << (msb + 1)))) >> lsb; //shift bits to LSB
 }
 
 uint16_t LMS7002M::Get_SPI_Reg_bits(const LMS7002MCSR param, bool fromChip)
