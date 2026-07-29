@@ -70,8 +70,11 @@ sdrdevice_sink_impl::sdrdevice_sink_impl(const std::string& alias,
     : gr::sync_block((alias.empty()
                           ? fmt::format("sdrdevice_sink[{:s}]", deviceHandleHint.c_str())
                           : alias),
-                     gr::io_signature::make(1 /* min outputs */,
-                                            channelIndexes.size() /*max outputs */,
+                     // work() reads one buffer per configured channel, so the flowgraph
+                     // has to connect exactly that many. Accepting fewer indexed
+                     // input_items past its end
+                     gr::io_signature::make(channelIndexes.size() /* min inputs */,
+                                            channelIndexes.size() /*max inputs */,
                                             GetDataFormatTypeSize(dataFormat)),
                      gr::io_signature::make(0, 0, 0)),
       sdrdevice_block_base(TRXDir::Tx,

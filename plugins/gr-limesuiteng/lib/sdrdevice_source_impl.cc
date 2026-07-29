@@ -71,7 +71,9 @@ sdrdevice_source_impl::sdrdevice_source_impl(const std::string& alias,
           (alias.empty() ? fmt::format("sdrdevice_source[{:s}]", deviceHandleHint.c_str())
                          : alias),
           gr::io_signature::make(0, 0, 0),
-          gr::io_signature::make(1 /* min outputs */,
+          // work() fills one buffer per configured channel, so the flowgraph has to
+          // connect exactly that many. Accepting fewer indexed output_items past its end
+          gr::io_signature::make(channelIndexes.size() /* min outputs */,
                                  channelIndexes.size() /*max outputs */,
                                  GetDataFormatTypeSize(dataFormat))),
       sdrdevice_block_base(TRXDir::Rx,
