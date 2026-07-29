@@ -6,6 +6,7 @@
 
 #include "ADF4002.h"
 #include "comms/SPI/ISPI.h"
+#include "limesuiteng/Logger.h"
 
 #include <cmath>
 #include <vector>
@@ -296,6 +297,15 @@ void ADF4002::MakeData()
 */
 void ADF4002::CalculateRN()
 {
+
+    // the Euclidean loop below only terminates for positive values. fmod keeps the
+    // sign of its first argument, so a negative one is never reduced and the pair
+    // repeats forever. Zero on both sides would divide by a zero Fcomp instead.
+    if (!(txtFref > 0) || !(txtFvco > 0) || !std::isfinite(txtFref) || !std::isfinite(txtFvco))
+    {
+        lime::error("ADF4002: reference (%g) and VCO (%g) frequencies must be positive", txtFref, txtFvco);
+        return;
+    }
 
     double x = txtFref * 1000000;
     double y = txtFvco * 1000000;
