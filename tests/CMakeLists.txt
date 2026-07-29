@@ -56,7 +56,8 @@ target_sources(
             # parsers/CoefficientFileParserTest.cpp
             protocols/BufferInterleavingTest.cpp
             protocols/LMS64CProtocol/ControlCommandBusyTest.cpp
-            boards/LMS7002M_SDRDevice_GFIR_tests.cpp)
+            boards/LMS7002M_SDRDevice_GFIR_tests.cpp
+            embedded/gfir_tests.cpp)
 
 add_subdirectory(embedded/lms7002m)
 
