@@ -471,6 +471,10 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
     // Set clock outputs
     for (int i = 0; i < clockCount; ++i)
     {
+        // a bypassed or zero-frequency clock keeps its bypass bit and needs no divider;
+        // computing C would divide by zero and cast infinity to int
+        if (clocks[i].bypass || clocks[i].outFrequency == 0)
+            continue;
         const int C = ceil(Fvco / clocks[i].outFrequency);
         if (i < 8)
         {
@@ -520,6 +524,8 @@ OpStatus FPGA::SetPllFrequency(const uint8_t pllIndex, const double inputFreq, s
 
     for (int i = 0; i < clockCount; ++i)
     {
+        if (clocks[i].bypass || clocks[i].outFrequency == 0)
+            continue;
         int C = ceil(Fvco / clocks[i].outFrequency);
         float fOut_MHz = inputFreq / 1e6;
         float Fstep_us = 1 / (8 * fOut_MHz * C);
