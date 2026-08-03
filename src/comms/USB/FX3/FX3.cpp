@@ -155,8 +155,10 @@ int32_t FX3::BulkTransfer(uint8_t endPoint, uint8_t* data, size_t length, int32_
     return libusb_impl.BulkTransfer(endPoint, data, length, timeout_ms);
 #else
     LONG longLength = static_cast<LONG>(length);
+    // XferData updates longLength to the actual transferred count; a bulk IN
+    // transfer can complete short, and callers check the returned length
     if (endpoints[endPoint]->XferData(data, longLength))
-        return length;
+        return longLength;
     else
         return 0;
 #endif
