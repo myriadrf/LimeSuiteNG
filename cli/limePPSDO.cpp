@@ -223,16 +223,25 @@ bool PPSDODriver::updatePPSDORegList(vector<DeviceHandle>& handles, string& devN
     bool regListUpdated = false;
     DeviceHandle& mHandle = handles.front();
 
-    // Select the correct handle from list
+    // Select the same handle the connection used, not just the first in the list;
+    // matching a different device would program the wrong CSR addresses
     if (!devName.empty())
     {
+        const DeviceHandle wanted(std::string{ devName });
+        bool matched = false;
         for (auto& iter : handles)
         {
-            if (iter.name == devName)
+            if (iter.IsEqualIgnoringEmpty(wanted) || lime::cli::FuzzyHandleMatch(iter, devName))
             {
                 mHandle = iter;
+                matched = true;
                 break;
             }
+        }
+        if (!matched)
+        {
+            lime::error("limePPSDO: no device matches '%s'", devName.c_str());
+            return false;
         }
     }
 
