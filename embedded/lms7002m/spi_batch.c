@@ -58,7 +58,9 @@ int lms7002m_spi_batch_flush(struct spi_batch_t* batch, struct lms7002m_context*
     {
         mosi[i] = (1 << 31) | (batch->addr[i] << 16);
         if (batch->mask[i] != 0xFFFF)
-            mosi[i] |= (miso[miso_i++] & (~batch->mask[i])) | batch->value[i];
+            // the transact hook is not required to zero the upper miso half; keep it
+            // out of the address/write bits (~mask promotes to int with bits 16..31 set)
+            mosi[i] |= (miso[miso_i++] & 0xFFFFu & (uint32_t)(uint16_t)(~batch->mask[i])) | batch->value[i];
         else
             mosi[i] |= batch->value[i];
     }

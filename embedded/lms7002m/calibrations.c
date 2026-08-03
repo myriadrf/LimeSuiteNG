@@ -100,8 +100,8 @@ static void lms7002m_set_defaults_sx(lms7002m_context* self)
     for (uint8_t i = 0; i < sizeof(SXAddr) / sizeof(uint16_t); ++i)
         lms7002m_spi_write(self, SXAddr[i], SXdefVals[i]);
 
-    //keep 0x0120[7:0]ICT_VCO bias value intact
-    lms7002m_spi_modify_csr(self, LMS7002M_VDIV_VCO, 0xB9FF);
+    //keep 0x0120[7:0]ICT_VCO bias value intact, restore only VDIV_VCO (0x0120[15:8] default 0xB9)
+    lms7002m_spi_modify_csr(self, LMS7002M_VDIV_VCO, 0xB9);
 }
 
 static bool lms7002m_is_pll_tuned(lms7002m_context* self, const bool isTx)
