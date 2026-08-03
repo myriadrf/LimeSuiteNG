@@ -162,17 +162,10 @@ int main(int argc, char** argv)
         if (!iniFilename.empty())
         {
             config.skipDefaults = true;
-            std::string_view cwd{ argv[0] };
-            const size_t slash0Pos = cwd.find_last_of("/\\"sv);
-            if (slash0Pos != std::string_view::npos)
-            {
-                cwd = cwd.substr(0, slash0Pos);
-            }
-
-            if (iniFilename[0] != '/') // is not global path
-                configFilepath = std::string{ cwd } + "/"s;
-
-            configFilepath += iniFilename;
+            // resolve a relative path against the working directory, the standard CLI
+            // behavior; keying it off argv[0] broke PATH invocation and pointed at the
+            // installed binary's directory
+            configFilepath = iniFilename;
         }
 
         for (int moduleId : chipIndexes)
