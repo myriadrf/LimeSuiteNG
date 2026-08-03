@@ -180,6 +180,7 @@ int main(int argc, char** argv)
             if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
             {
                 cerr << "Error loading file: "sv << configFilepath << endl;
+                DeviceRegistry::freeDevice(device);
                 return EXIT_FAILURE;
             }
 
@@ -192,14 +193,20 @@ int main(int argc, char** argv)
             {
                 int rxPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
                 if (rxPathIndex < 0)
+                {
+                    DeviceRegistry::freeDevice(device);
                     return EXIT_FAILURE;
+                }
                 config.channel[0].rx.path = rxPathIndex;
             }
             if (!txAntennaName.empty())
             {
                 int txPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
                 if (txPathIndex < 0)
+                {
+                    DeviceRegistry::freeDevice(device);
                     return EXIT_FAILURE;
+                }
                 config.channel[0].tx.path = txPathIndex;
             }
 
@@ -210,6 +217,7 @@ int main(int argc, char** argv)
             if (device->Configure(config, moduleId) != OpStatus::Success)
             {
                 cerr << "Failed to configure device (chip"sv << moduleId << ")"sv << std::endl;
+                DeviceRegistry::freeDevice(device);
                 return EXIT_FAILURE;
             }
         }
