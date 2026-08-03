@@ -3,6 +3,7 @@
 #include "comms/USB/IUSB.h"
 
 #include "CommonFunctions.h"
+#include "limesuiteng/Logger.h"
 
 namespace lime {
 
@@ -147,7 +148,9 @@ void USBDMAEmulation::UpdateProducerStates()
         OpStatus status = port->WaitForXfer(async->xfer, timeout_ms);
         if (status != OpStatus::Success)
             break;
-        port->FinishDataXfer(async->xfer);
+        const std::size_t bytesTransferred = port->FinishDataXfer(async->xfer);
+        if (bytesTransferred != async->requestedSize)
+            lime::warning("%s: transfer completed with %zu/%u bytes", name.c_str(), bytesTransferred, async->requestedSize);
         pendingXfers.pop();
         transfers.push(async);
         ++counters.transfersCompleted;
