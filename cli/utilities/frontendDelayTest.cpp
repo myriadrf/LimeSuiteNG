@@ -383,6 +383,12 @@ int main(int argc, char** argv)
     stream.hintSampleRate = device->GetSampleRate(0, TRXDir::Rx, 0);
 
     auto trx = device->StreamCreate(stream, 0);
+    if (!trx)
+    {
+        cerr << "Failed to create stream" << endl;
+        DeviceRegistry::freeDevice(device);
+        return EXIT_FAILURE;
+    }
 
     std::vector<int> sampleOffsets;
     OpStatus ret = MeasureChannelDelays(trx.get(), trx.get(), chirp, channelCount, sampleRate, 0, sampleOffsets);

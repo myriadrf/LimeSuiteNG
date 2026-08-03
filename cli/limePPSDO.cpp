@@ -650,5 +650,5 @@ int main(int argc, char** argv)
 
     driver.destroyCSR();
     DeviceRegistry::freeDevice(device);
-    return EXIT_SUCCESS;
+    return runStatus == OpStatus::Success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
