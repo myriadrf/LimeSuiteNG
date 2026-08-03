@@ -1482,6 +1482,15 @@ API_EXPORT int CALL_CONV LMS_SetNCOFrequency(lms_device_t* device, bool dir_tx, 
     }
     const lime::TRXDir direction = DirFromBool(dir_tx);
 
+    // legacy allowed a null frequency table to mean "set only the phase offset"
+    if (freq == nullptr)
+    {
+        double phaseOffset = 0.0;
+        const double current = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, phaseOffset);
+        OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, 0, current, pho);
+        return OpStatusToReturnCode(status);
+    }
+
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
     {
         OpStatus status = apiDevice->device->SetNCOFrequency(apiDevice->moduleIndex, direction, ch, i, freq[i], pho);
@@ -1503,8 +1512,13 @@ API_EXPORT int CALL_CONV LMS_GetNCOFrequency(lms_device_t* device, bool dir_tx, 
     const lime::TRXDir direction = DirFromBool(dir_tx);
     double phaseOffset = 0.0;
 
+    // freq may be null when the caller only wants the phase offset back
     for (int i = 0; i < LMS_NCO_VAL_COUNT; ++i)
-        freq[i] = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i, phaseOffset);
+    {
+        const double value = apiDevice->device->GetNCOFrequency(apiDevice->moduleIndex, direction, chan, i, phaseOffset);
+        if (freq != nullptr)
+            freq[i] = value;
+    }
 
     if (pho != nullptr)
     {
