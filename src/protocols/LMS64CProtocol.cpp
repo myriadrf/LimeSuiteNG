@@ -575,11 +575,13 @@ OpStatus CustomParameterWrite(ISerialPort& port, const std::vector<CustomParamet
             if (parameters[index].value > 65535.0 && (parameters[index].units != ""s))
                 powerOf10 = log10(parameters[index].value / 65.536) / 3;
 
-            if (parameters[index].value < 65.536 && (parameters[index].units != ""s))
+            // log10 of zero or a negative value is not convertible to int
+            if (parameters[index].value < 65.536 && parameters[index].value > 0 && (parameters[index].units != ""s))
                 powerOf10 = log10(parameters[index].value / 65535.0) / 3;
+            powerOf10 = std::clamp(powerOf10, -8, 7);
 
             int unitsId = 0; // need to convert given units to their enum
-            pkt.payload[byteIndex++] = unitsId << 4 | powerOf10;
+            pkt.payload[byteIndex++] = unitsId << 4 | (powerOf10 & 0x0F);
 
             int value = parameters[index].value / pow(10, 3 * powerOf10);
             pkt.payload[byteIndex++] = (value >> 8);
