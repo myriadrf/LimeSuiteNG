@@ -848,6 +848,7 @@ int ReceiveStream(lms_stream_t* stream, void* samples, size_t sample_count, lms_
         samplesToReturn = samplesProduced;
         stage->maskDataPresentInBuffer = stage->maskChannelsActive;
         stage->bufferBytesFilled = samplesProduced * sampleSize;
+        stage->timestamp = metadata.timestamp;
     }
 
     // take samples from staging buffer
