@@ -572,6 +572,11 @@ OpStatus LimeSDR_XTRX::GNSSTest(OEMTestReporter& reporter, TestData& results)
         path.append("/uart0");
 
         int tty_fd = open(path.c_str(), flags);
+        if (tty_fd < 0)
+        {
+            reporter.OnFail(test, "Failed to open UART");
+            return OpStatus::Error;
+        }
 
         struct termios tty;
 
@@ -628,11 +633,12 @@ OpStatus LimeSDR_XTRX::GNSSTest(OEMTestReporter& reporter, TestData& results)
         // UART is periodically sending messages, so the expected message might not be the first to be read
         for (int b = 0; b < bytesToRead;)
         {
-            int bread = read(tty_fd, inMessage + b, sizeof(16));
-            if (bread < 0)
+            int bread = read(tty_fd, inMessage + b, 16);
+            // VMIN=0/VTIME=10: zero means the 1 s timeout expired with no data
+            if (bread <= 0)
             {
                 close(tty_fd);
-                reporter.OnFail(test, "Failed to read UART");
+                reporter.OnFail(test, bread < 0 ? "Failed to read UART" : "UART read timeout");
                 return OpStatus::Error;
             }
             b += bread;
