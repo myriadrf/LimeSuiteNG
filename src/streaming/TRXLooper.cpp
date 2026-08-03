@@ -819,6 +819,8 @@ void TRXLooper::ReceivePacketsLoop()
             }
             userPkt->Reset();
             userPkt->meta.timestamp = ExtractPacketTimestamp(mConfig, firstPkt, ticksPerSample);
+            if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
+                userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime) - fpgaFrontEndDelay;
             userPkt->meta.useTimestamp = true;
             userPkt->meta.flush = false;
         }
@@ -827,6 +829,8 @@ void TRXLooper::ReceivePacketsLoop()
             // packet is being reused after a failed FIFO push; its Reset() zeroed the
             // timestamp, so re-initialize the metadata from this buffer's first packet
             userPkt->meta.timestamp = ExtractPacketTimestamp(mConfig, firstPkt, ticksPerSample);
+            if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
+                userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime) - fpgaFrontEndDelay;
             userPkt->meta.useTimestamp = true;
             userPkt->meta.flush = false;
         }
@@ -880,12 +884,6 @@ void TRXLooper::ReceivePacketsLoop()
 
             if (mConfig.extraConfig.negateQ)
                 NegateQChannel(userPkt, mConfig.format);
-
-            if (mConfig.timestampType == TimestampType::UNIX_EPOCH)
-            {
-                userPkt->meta.timestamp = userPkt->meta.timestamp + Timespec(startUnixTime);
-                userPkt->meta.timestamp = userPkt->meta.timestamp - fpgaFrontEndDelay;
-            }
         }
 
         assert(userPkt);
