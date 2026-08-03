@@ -110,7 +110,7 @@ int CDCM_Dev::Reset(double primaryFreq, double secondaryFreq)
 void CDCM_Dev::SetPrimaryFreq(double freq)
 {
     VCO.prim_freq = freq;
-    if (GetVCOInput() == 2)
+    if (GetVCOInput() == 1) // input 1 is the primary, recompute when it is selected
         UpdateOutputFrequencies();
 }
 
@@ -130,7 +130,7 @@ double CDCM_Dev::GetPrimaryFreq()
 void CDCM_Dev::SetSecondaryFreq(double freq)
 {
     VCO.sec_freq = freq;
-    if (GetVCOInput() == 1)
+    if (GetVCOInput() == 2) // input 2 is the secondary, recompute when it is selected
         UpdateOutputFrequencies();
 }
 
@@ -486,7 +486,9 @@ int CDCM_Dev::UploadConfiguration()
         { 20, { static_cast<uint16_t>(SPI_BASE_ADDR + 20), 0 } },
     };
 
-    for (int i = 3; i < 24; i += 3)
+    // the map holds registers 1..20; going further would create a phantom entry at
+    // address 0 that the write loop below would then program
+    for (int i = 3; i < 21; i += 3)
     {
         int reg = i == 6 ? 4 : i; // Read 4th register instead of 6th
         int val = ReadRegister(CDCM_Regs[reg].addr);
@@ -723,7 +725,10 @@ double CDCM_Dev::SolveFracDiv(double target, CDCM_Output* Output)
     // Find best match
     double div2_difference = std::abs(result - (div2_result * 2.0));
     double div3_difference = std::abs(result - (div3_result * 3.0));
-    if (div2_difference < div3_difference)
+    // the 8.20 fixed point integer part holds at most 256; a prescaler-2 candidate
+    // above that would wrap when packed, only prescaler 3 can reach such dividers
+    const bool div2_representable = div2_result < 257.0;
+    if (div2_representable && div2_difference < div3_difference)
     {
         Output->integer_part = (div2_fixed >> 20) & ((1 << 8) - 1);
         Output->fractional_part = div2_fixed & ((1 << 20) - 1);
