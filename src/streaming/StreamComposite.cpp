@@ -213,7 +213,7 @@ uint32_t StreamComposite::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(0, meta->timestamp, mConfig.hintSampleRate);
         else
             txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
@@ -228,7 +228,7 @@ uint32_t StreamComposite::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(0, meta->timestamp, mConfig.hintSampleRate);
         else
             txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
@@ -243,7 +243,7 @@ uint32_t StreamComposite::StreamTx(
     if (txmeta.hasTimestamp)
     {
         if (mConfig.timestampType == TimestampType::SAMPLE_TICKS)
-            txmeta.timestamp = Timespec(meta->timestamp / mConfig.hintSampleRate);
+            txmeta.timestamp = Timespec(0, meta->timestamp, mConfig.hintSampleRate);
         else
             txmeta.timestamp = Timespec(meta->timestamp >> 32, (meta->timestamp & 0xFFFFFFFF) / 1e9);
     }
