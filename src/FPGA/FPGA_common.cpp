@@ -570,8 +570,9 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, double txPha
     OpStatus status = OpStatus::Success;
 
     const uint32_t addr = 0x002A;
-    uint32_t val;
-    ReadLMS7002MSPI(&addr, &val, 1);
+    uint32_t val = 0;
+    if (ReadLMS7002MSPI(&addr, &val, 1) != OpStatus::Success)
+        return ReportError(OpStatus::IOFailure, "FPGA SetInterfaceFreq: failed to read register 0x002A"s);
     bool bypassTx = (val & 0xF0) == 0x00;
     bool bypassRx = (val & 0x0F) == 0x0D;
 
@@ -622,7 +623,7 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     const int txPLLindex = pll_ind;
     const int rxPLLindex = txPLLindex + 1;
     OpStatus status = OpStatus::Success;
-    uint32_t reg20;
+    uint32_t reg20 = 0;
     bool bypassTx = false;
     bool bypassRx = false;
     bool phaseSearch = false;
@@ -659,7 +660,8 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
     dataRdB.clear();
     //backup registers
     dataWr[0] = 0x0020;
-    ReadLMS7002MSPI(dataWr.data(), &reg20, 1);
+    if (ReadLMS7002MSPI(dataWr.data(), &reg20, 1) != OpStatus::Success)
+        return ReportError(OpStatus::IOFailure, "FPGA SetInterfaceFreq: failed to back up register 0x0020"s);
 
     dataWr[0] = (1 << 31) | (0x0020u << 16) | 0xFFFD; //msbit 1=SPI write
     WriteLMS7002MSPI(dataWr.data(), 1);
@@ -668,8 +670,9 @@ OpStatus FPGA::SetInterfaceFreq(double txRate_Hz, double rxRate_Hz, int chipInde
 
     {
         const uint32_t addr = 0x002A;
-        uint32_t val;
-        ReadLMS7002MSPI(&addr, &val, 1);
+        uint32_t val = 0;
+        if (ReadLMS7002MSPI(&addr, &val, 1) != OpStatus::Success)
+            return ReportError(OpStatus::IOFailure, "FPGA SetInterfaceFreq: failed to read register 0x002A"s);
         bypassTx = (val & 0xF0) == 0x00;
         bypassRx = (val & 0x0F) == 0x0D;
     }
