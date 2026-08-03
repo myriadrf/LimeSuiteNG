@@ -207,10 +207,8 @@ OpStatus FT601::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uin
     FTDIAsyncContext* async{ reinterpret_cast<FTDIAsyncContext*>(context) };
 
     FT_STATUS ftStatus{ FT_OK };
+    // FT_InitializeOverlapped creates the event; replacing it here would leak one handle per transfer
     FT_InitializeOverlapped(mFTHandle, &async->inOvLap);
-    bool manualReset{ true };
-    bool initialState{ false };
-    async->inOvLap.hEvent = CreateEvent(NULL, manualReset, initialState, NULL);
     if (endPointAddr == STREAM_BULK_READ_ADDRESS)
         ftStatus = FT_ReadPipe(mFTHandle, STREAM_BULK_READ_ADDRESS, buffer, length, &ulActual, &async->inOvLap);
     else
@@ -256,8 +254,9 @@ OpStatus FT601::AbortXfer(void* context)
 #else
     FTDIAsyncContext* async = reinterpret_cast<FTDIAsyncContext*>(context);
 
+    // The overlapped stays valid: callers follow up with WaitForXfer/FinishDataXfer,
+    // and FinishDataXfer performs the single FT_ReleaseOverlapped.
     FT_AbortPipe(mFTHandle, async->endPointAddr);
-    FT_ReleaseOverlapped(mFTHandle, &async->inOvLap);
 
     if (async->endPointAddr == STREAM_BULK_READ_ADDRESS)
         FT_FlushPipe(mFTHandle, STREAM_BULK_READ_ADDRESS);
