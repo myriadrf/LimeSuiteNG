@@ -502,6 +502,9 @@ OpStatus TRXLooper::RxSetup()
     // honor the requested FIFO size (in samples), the pool needs 2 extra packets for staging
     if (mConfig.bufferSize > 0)
         packetsInFIFO = (mConfig.bufferSize + rxPacketSamples - 1) / rxPacketSamples + 2;
+    // low (or absent) sample rate hints produce 0..2 packets; the pool needs the 2
+    // staging packets plus a non-empty FIFO, otherwise capacity()-2 underflows size_t
+    packetsInFIFO = std::max(packetsInFIFO, 4);
     mRx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mRx.packetsPool->capacity(); ++i)
@@ -1159,6 +1162,9 @@ OpStatus TRXLooper::TxSetup()
     // honor the requested FIFO size (in samples), the pool needs 2 extra packets for staging
     if (mConfig.bufferSize > 0)
         packetsInFIFO = (mConfig.bufferSize + txPacketSamples - 1) / txPacketSamples + 2;
+    // low (or absent) sample rate hints produce 0..2 packets; the pool needs the 2
+    // staging packets plus a non-empty FIFO, otherwise capacity()-2 underflows size_t
+    packetsInFIFO = std::max(packetsInFIFO, 4);
     mTx.packetsPool = std::make_unique<MTStack<StreamPacket*>>(packetsInFIFO);
     const uint32_t userSampleSize = mConfig.format == DataFormat::F32 ? sizeof(lime::complex32f_t) : sizeof(lime::complex16_t);
     for (uint32_t i = 0; i < mTx.packetsPool->capacity(); ++i)
