@@ -1074,6 +1074,13 @@ OpStatus WriteSerialNumber(ISerialPort& port, const std::vector<uint8_t>& serial
         if (packet.status != CommandStatus::Completed)
             return ReportError(OpStatus::Error, "Failed to send one time programming key");
 
+        // the reply overwrote the whole packet; rebuild it from scratch so the
+        // permanent write does not carry stray device-response bytes
+        packet = LMS64CPacket();
+        packet.cmd = Command::SERIAL_WR;
+        packet.blockCount = 1;
+        packet.subDevice = 0;
+
         // key has been sent, continue to send the serial number bytes
         payloadView.SetStorageType(LMS64CPacketSerialCommandView::Storage::OneTimeProgramable);
         payloadView.SetUnlockKey(0x5A);
@@ -1153,6 +1160,9 @@ OpStatus SPI_generic(ISerialPort& port, uint32_t busIndex, uint32_t chipSelect, 
         pkt.cmd = Command::PERIPHSPI_TRNSF;
         pkt.subDevice = 0;
         pkt.periphID = busIndex;
+        // the previous iteration's response filled the payload; clear the whole
+        // preamble so packets after the first don't send stray response bytes
+        memset(pkt.payload, 0, preambleSize);
         pkt.payload[0] = chipSelect;
         pkt.payload[2] = bytesInSPI;
         pkt.status = CommandStatus::Undefined;
