@@ -330,6 +330,13 @@ int LimePlugin_Stop(LimePluginContext* context)
             port.stream->Stop();
             port.stream.reset();
         }
+        // release the calibration stream too, otherwise it outlives the devices it
+        // references and LimePlugin_Destroy frees them from under it
+        if (port.calibrationStream)
+        {
+            port.calibrationStream->Stop();
+            port.calibrationStream.reset();
+        }
     }
     return 0;
 }
@@ -585,6 +592,14 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     GetSetting(settings, &param->iniFilename, "%s_ini", prefix);
     GetSetting(settings, &param->lpfBandwidthScale, "%s_lpf_bandwidth_scale", prefix);
     GetSetting(settings, &param->maxChannelsToUse, "%s_max_channels_to_use", prefix);
+    if (param->maxChannelsToUse < 0 || param->maxChannelsToUse > lime::SDRConfig::MAX_CHANNEL_COUNT)
+    {
+        Log(LogLevel::Error,
+            "max_channels_to_use (%i) out of range, clamping to %i",
+            param->maxChannelsToUse,
+            lime::SDRConfig::MAX_CHANNEL_COUNT);
+        param->maxChannelsToUse = std::clamp<int>(param->maxChannelsToUse, 0, lime::SDRConfig::MAX_CHANNEL_COUNT);
+    }
     GetSetting(settings, &param->double_freq_conversion_to_lower_side, "%s_double_freq_conversion_to_lower_side", prefix);
     std::string linkFormatStr;
     if (GetSetting(settings, &linkFormatStr, "%s_linkFormat", prefix))
@@ -781,7 +796,8 @@ int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType
         if (LoadDevicesConfigurationFile(context) != OpStatus::Success)
             return -1;
 
-        TransferSettingsToDevicesConfig(context->rfdev, configProvider);
+        if (TransferSettingsToDevicesConfig(context->rfdev, configProvider) != OpStatus::Success)
+            return -1;
     } catch (std::logic_error& e)
     {
         fprintf(stderr, "Logic error: %s", e.what());
