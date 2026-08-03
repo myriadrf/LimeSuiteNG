@@ -594,7 +594,7 @@ OpStatus LMS7002M::LoadConfigLegacyFile(const std::string& filename)
                 }
             }
         }
-        if (parser.select("NCO Tx ch.A"s) == true)
+        if (parser.select("NCO Tx ch.B"s) == true)
         {
             char varname[64];
             int mode = Get_SPI_Reg_bits(LMS7002MCSR::MODE_TX);
@@ -1255,7 +1255,8 @@ OpStatus LMS7002M::SPI_write(uint16_t address, uint16_t data, bool toChip)
     SPI_write(0x020C, data);
     mcu->RunProcedure(7);
     mcu->WaitForMCU(50);
-    return SPI_read(0x040B) == data ? OpStatus::Success : OpStatus::Error;
+    // the MCU deposits the result into chip register 0x040B; bypass the register cache
+    return SPI_read(0x040B, true) == data ? OpStatus::Success : OpStatus::Error;
 }
 
 uint16_t LMS7002M::SPI_read(uint16_t address, bool fromChip, OpStatus* status)
@@ -1675,6 +1676,8 @@ bool LMS7002M::IsSynced()
 
     addrToRead.clear(); //add only B channel addresses
     addrToRead = mRegistersMap->GetUsedAddresses(1);
+    // MAC has to point at channel B before the raw reads, like the A half above
+    SetActiveChannel(Channel::ChB);
     dataWr.resize(addrToRead.size());
     dataRd.resize(addrToRead.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
@@ -1682,7 +1685,6 @@ bool LMS7002M::IsSynced()
     controlPort->Transact(dataWr.data(), dataRd.data(), dataWr.size());
     for (size_t i = 0; i < addrToRead.size(); ++i)
         dataReceived[i] = dataRd[i] & 0xFFFF;
-    SetActiveChannel(Channel::ChB);
 
     //check if local copy matches chip
     for (uint16_t i = 0; i < addrToRead.size(); ++i)
