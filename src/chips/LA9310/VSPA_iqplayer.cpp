@@ -537,7 +537,6 @@ bool VSPA_iqplayer::IsFirmwareLoaded() const
     const volatile uint8_t* BAR0_addr = reinterpret_cast<const uint8_t*>(port->GetBar(LA9310_WINDOW_BAR0).vaddr);
     auto swversion_addr = reinterpret_cast<const volatile uint32_t*>(BAR0_addr + VSPA_CCSR_offset + 0x4);
     const uint32_t fw_version = *swversion_addr;
-    // printf("VSPA fw: 0x%08X\n", fw_version);
     return fw_version != 0x0;
 }
 
@@ -546,7 +545,6 @@ OpStatus VSPA_iqplayer::ResetVCPU()
     OpStatus status;
     if (IsFirmwareLoaded())
     {
-
         printf_dbg_log("IQPlayer: Reset VCPU\n");
         const mbox_opc_e command = MBOX_OPC_DONE_SWRESET;
         uint32_t hiword = command << 24;

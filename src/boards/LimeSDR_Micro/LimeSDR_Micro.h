@@ -130,7 +130,40 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 
     ICSR* getICSR() override;
 
+    virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
+    virtual OpStatus WriteSerialNumber(uint64_t serialNumber) override;
+
   public:
+    struct TestData {
+        TestData();
+        struct RFData {
+            float frequency;
+            float amplitude;
+            bool passed;
+        };
+        RFData lnal[2]{};
+        RFData lnaw[2]{};
+        RFData lnah[2]{};
+        RFData band[2]{};
+    };
+
+    OpStatus RunRxTestConfig(OEMTestReporter& reporter,
+        TestData::RFData* results,
+        const std::string& name,
+        int channelIndex,
+        double LOFreq,
+        int gain,
+        int rxPath,
+        double expectCh_dBFS);
+    OpStatus RunTxTestConfig(OEMTestReporter& reporter,
+        TestData::RFData* results,
+        const std::string& name,
+        int channelIndex,
+        double LOFreq,
+        int gain,
+        int txPath,
+        double expectedPeakval_dBFS);
+    OpStatus RFTest(OEMTestReporter& reporter, TestData& results);
     OpStatus CalibrateRx();
     OpStatus CalibrateTx();
     // SDRDescriptor mDeviceDescriptor;

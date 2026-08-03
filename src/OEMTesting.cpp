@@ -64,8 +64,9 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
         char ctemp[512];
         snprintf(ctemp,
             sizeof(ctemp),
-            "RF OK, expected(%.2f dbFS @ %.3fMHz), got(%.2f dbFS @%.3fMHz)",
+            "RF OK, expected(%.2f±%0.2f dbFS @ %.3fMHz), got(%.2f dbFS @%.3fMHz)",
             input.expectedPeakval_dBFS,
+            input.rfTestTolerance_dB,
             input.expectedPeakFrequency / 1e6,
             peakAmplitude,
             peakFrequency / 1e6);
@@ -78,8 +79,9 @@ OpStatus RunRFTest(SDRDevice& device, const RFTestInput& input, OEMTestReporter*
         char ctemp[512];
         snprintf(ctemp,
             sizeof(ctemp),
-            "RF FAILED, expected(%.2f dbFS @ %.3fMHz), got(%.2f dbFS @%.3fMHz)",
+            "RF FAILED, expected(%.2f±%0.2f dbFS @ %.3fMHz), got(%.2f dbFS @%.3fMHz)",
             input.expectedPeakval_dBFS,
+            input.rfTestTolerance_dB,
             input.expectedPeakFrequency / 1e6,
             peakAmplitude,
             peakFrequency / 1e6);

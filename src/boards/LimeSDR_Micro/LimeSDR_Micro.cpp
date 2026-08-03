@@ -46,6 +46,7 @@
 
 #include "LA9310_TRX.h"
 #include "comms/PCIe/LA9310_PCIe.h"
+#include "OEMTesting.h"
 
 using namespace std::literals::string_literals;
 using namespace lime::LMS7002MCSR_Data;
@@ -349,7 +350,7 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LimeSDR_Micro_M4> la9310, 
         else
             oversample = 4;
     }
-    else if (sampleRate <= 40e6)
+    else if (sampleRate <= 30e6)
     {
         adc_divider_mask = 0xF;
         dac_divider_mask = 0x1;
@@ -912,6 +913,230 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
 ICSR* LimeSDR_Micro::getICSR()
 {
     return new LA9310_CSR(mStreamingPort);
+}
+
+OpStatus LimeSDR_Micro::RunRxTestConfig(OEMTestReporter& reporter,
+    TestData::RFData* results,
+    const std::string& name,
+    int channelIndex,
+    double LOFreq,
+    int gain,
+    int rxPath,
+    double expectCh_dBFS)
+{
+    SDRConfig config;
+    config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = 40e6;
+    config.channel[0].rx.enabled = true;
+    config.channel[0].tx.enabled = false;
+    // config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
+    // config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
+    // config.channel[0].tx.gain[eGainTypes::PAD] = 52;
+    // config.channel[0].tx.gain[eGainTypes::IAMP] = -18;
+
+    const double tx_offset = 2e6;
+    config.channel[0].rx.centerFrequency = LOFreq;
+    config.channel[0].tx.centerFrequency = LOFreq + tx_offset;
+    config.channel[0].rx.path = rxPath;
+    config.channel[0].rx.gain[eGainTypes::GENERIC] = gain;
+
+    // If RX H is chosen, use TX 1; else use TX 2
+    // config.channel[0].tx.path = rxPath == 1 ? 1 : 2;
+
+    // same config for both channels
+    config.channel[1] = config.channel[0];
+
+    bool configPass = false;
+    bool chAPass = false;
+    bool chBPass = false;
+
+    OpStatus status = Configure(config, 0);
+    configPass = status == OpStatus::Success;
+
+    RFTestInput args;
+    args.rfTestTolerance_dB = 4;
+    args.rfTestTolerance_Hz = 50e3;
+    args.sampleRate = config.channel[0].rx.sampleRate;
+    args.expectedPeakval_dBFS = expectCh_dBFS;
+    args.expectedPeakFrequency = tx_offset;
+    args.moduleIndex = 0;
+
+    args.testName = name;
+    args.channelIndex = channelIndex;
+
+    RFTestOutput output{};
+    if (configPass)
+        chAPass = RunRFTest(*this, args, &reporter, &output) == OpStatus::Success;
+
+    results[channelIndex].frequency = output.frequency;
+    results[channelIndex].amplitude = output.amplitude_dBFS;
+    results[channelIndex].passed = chAPass;
+
+    bool pass = configPass && chAPass; // && chBPass;
+    return pass ? OpStatus::Success : OpStatus::Error;
+}
+
+OpStatus LimeSDR_Micro::RunTxTestConfig(OEMTestReporter& reporter,
+    TestData::RFData* results,
+    const std::string& name,
+    int channelIndex,
+    double LOFreq,
+    int gain,
+    int txPath,
+    double expectedPeakval_dBFS)
+{
+    OEMTestData test(name);
+
+    reporter.OnStepUpdate(test, name);
+    SDRConfig config;
+    double sampleRate = 40e6;
+    config.channel[0].tx.sampleRate = config.channel[0].rx.sampleRate = sampleRate;
+    config.channel[0].rx.enabled = true;
+    config.channel[0].tx.enabled = true;
+    // config.channel[0].tx.testSignal = ChannelConfig::Direction::TestSignal{ true, true }; // Test signal: DC
+    // config.channel[0].tx.testSignal.dcValue = complex16_t(0x7000, 0x7000);
+    // config.channel[0].tx.gain[eGainTypes::PAD] = 52;
+    // config.channel[0].tx.gain[eGainTypes::IAMP] = -18;
+
+    config.channel[0].rx.centerFrequency = LOFreq;
+    config.channel[0].tx.centerFrequency = LOFreq;
+
+    config.channel[0].rx.path = 3;
+    config.channel[0].rx.gain[eGainTypes::GENERIC] = 30;
+
+    config.channel[0].tx.path = txPath;
+    config.channel[0].tx.gain[eGainTypes::GENERIC] = gain;
+
+    // same config for both channels
+    config.channel[1] = config.channel[0];
+
+    config.channel[1].tx.enabled = false;
+
+    bool configPass = false;
+
+    OpStatus status = Configure(config, 0);
+    configPass = status == OpStatus::Success;
+
+    status = la9310->vspa.GenerateTxTone(false, 8192);
+    if (status != OpStatus::Success)
+        printf("Failed to stop Tx tone\n");
+
+    status = la9310->vspa.GenerateTxTone(true, 8192);
+    if (status != OpStatus::Success)
+        printf("Failed to set Tx tone\n");
+
+    char ctemp[512];
+    sprintf(
+        ctemp, "Measure Tx signal strength. Expected %0.2f dBm @ %.3f MHz", expectedPeakval_dBFS, (LOFreq + sampleRate / 8) / 1e6);
+    reporter.WaitForUserAction(test, ctemp);
+
+    results[txPath - 1].frequency = (LOFreq + sampleRate / 8);
+    std::string input = reporter.UserInputValue(test);
+
+    double amplitude = std::stod(input);
+    results[txPath - 1].amplitude = amplitude;
+    results[txPath - 1].passed = results[channelIndex].amplitude > expectedPeakval_dBFS;
+
+    status = la9310->vspa.GenerateTxTone(false, 8192);
+    if (status != OpStatus::Success)
+        printf("Failed to stop Tx tone\n");
+
+    return status;
+}
+
+OpStatus LimeSDR_Micro::RFTest(OEMTestReporter& reporter, TestData& results)
+{
+    OEMTestData test("RF");
+    reporter.OnStart(test);
+    //reporter.OnStepUpdate(test, "Note: The test should be run with loop connected between RF ports");
+    reporter.OnStepUpdate(test, "->Configure LMS");
+
+    if (Init() != OpStatus::Success)
+    {
+        test.passed = false;
+        reporter.OnFail(test, "Failed to initialize device");
+        return OpStatus::Error;
+    }
+    reporter.OnStepUpdate(test, "->Init Done");
+    std::vector<OpStatus> statuses(3);
+
+    int rxgain = 30;
+    reporter.OnStepUpdate(test, "Set signal generator to 1202 MHz, -60 dBm output");
+    reporter.WaitForUserAction(test, "Connect Signal generator to Rx A");
+    statuses.push_back(RunRxTestConfig(reporter, results.lnah, "LNA_H A", 0, 1200e6, rxgain, 1, -32.0));
+    statuses.push_back(RunRxTestConfig(reporter, results.lnal, "LNA_L A", 0, 1200e6, rxgain, 2, -38.0));
+    statuses.push_back(RunRxTestConfig(reporter, results.lnaw, "LNA_W A", 0, 1200e6, rxgain, 3, -37.0));
+
+    reporter.WaitForUserAction(test, "Connect Signal generator to Rx B");
+    statuses.push_back(RunRxTestConfig(reporter, results.lnah, "LNA_H B", 1, 1200e6, rxgain, 1, -35.0));
+    statuses.push_back(RunRxTestConfig(reporter, results.lnal, "LNA_L B", 1, 1200e6, rxgain, 2, -39.0));
+    statuses.push_back(RunRxTestConfig(reporter, results.lnaw, "LNA_W B", 1, 1200e6, rxgain, 3, -39.0));
+
+    reporter.WaitForUserAction(test, "Set spectrum analyzer to 2100 MHz");
+    int txgain = 52;
+    statuses.push_back(RunTxTestConfig(reporter, results.band, "TxA Band1", 0, 2100e6, txgain, 1, -18.0));
+    statuses.push_back(RunTxTestConfig(reporter, results.band, "TxA Band2", 0, 2100e6, txgain, 2, -18.0));
+
+    for (OpStatus s : statuses)
+    {
+        if (s != OpStatus::Success)
+        {
+            reporter.OnFail(test);
+            return OpStatus::Error;
+        }
+    }
+    test.passed = true;
+    reporter.OnSuccess(test);
+    return OpStatus::Success;
+}
+
+OpStatus LimeSDR_Micro::OEMTest(OEMTestReporter* reporter)
+{
+    TestData results;
+    OEMTestData test("LimeSDR-Micro OEM Test");
+
+    uint16_t dac_value = 0xFFFF;
+    OpStatus status = la9310->eeprom.Read(0xFFFE, &dac_value, 2);
+    if (dac_value == 0xFFFF) // has never been set
+    {
+        uint16_t default_dac = 0xA1B8;
+        status = la9310->eeprom.Write(0xFFFE, &default_dac, 2);
+    }
+
+    reporter->OnStart(test);
+    bool pass = true;
+    const bool rfPassed = RFTest(*reporter, results) == OpStatus::Success;
+    pass &= rfPassed;
+
+    reporter->ReportColumn("RF", rfPassed ? "PASS" : "FAIL");
+    reporter->ReportColumn("LNA_H A", std::to_string(results.lnah[0].amplitude));
+    reporter->ReportColumn("LNA_L A", std::to_string(results.lnal[0].amplitude));
+    reporter->ReportColumn("LNA_W A", std::to_string(results.lnaw[0].amplitude));
+    reporter->ReportColumn("LNA_H B", std::to_string(results.lnah[1].amplitude));
+    reporter->ReportColumn("LNA_L B", std::to_string(results.lnal[1].amplitude));
+    reporter->ReportColumn("LNA_W B", std::to_string(results.lnaw[1].amplitude));
+    reporter->ReportColumn("Tx Band1", std::to_string(results.band[0].amplitude));
+    reporter->ReportColumn("Tx Band2", std::to_string(results.band[1].amplitude));
+
+    if (pass)
+    {
+        reporter->OnSuccess(test);
+        return OpStatus::Success;
+    }
+    else
+    {
+        reporter->OnFail(test);
+        return OpStatus::Error;
+    }
+}
+
+LimeSDR_Micro::TestData::TestData()
+{
+    memset(this, 0, sizeof(TestData));
+}
+
+OpStatus LimeSDR_Micro::WriteSerialNumber(uint64_t serialNumber)
+{
+    return la9310->eeprom.Write(0xFFF0, &serialNumber, 8);
 }
 
 } //namespace lime

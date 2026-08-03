@@ -24,7 +24,7 @@ using namespace std::literals::string_view_literals;
 static bool interactiveMode = false;
 static void WaitForUserInput()
 {
-    std::cerr << "Press any key to continue" << std::endl;
+    std::cerr << "Press ENTER to continue" << std::endl;
     cin.ignore();
 }
 
@@ -62,6 +62,21 @@ class PrintOEMTestReporter : public OEMTestReporter
     {
         std::cerr << Indent() << text << std::endl;
     }
+
+    void WaitForUserAction(OEMTestData& test, const std::string& text = std::string())
+    {
+        std::cerr << "--- " << text << " ---" << std::endl;
+        WaitForUserInput();
+    };
+
+    std::string UserInputValue(OEMTestData& test)
+    {
+        std::string str;
+        std::cerr << "Input value: ";
+        std::cin >> str;
+        return str;
+    };
+
     void OnSuccess(OEMTestData& test) override
     {
         --indentLevel;

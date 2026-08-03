@@ -27,6 +27,8 @@ class OEMTestReporter
     virtual void OnSuccess(OEMTestData& test) = 0;
     virtual void OnFail(OEMTestData& test, const std::string& reasonText = std::string()) = 0;
     virtual void ReportColumn(const std::string& header, const std::string& value) = 0;
+    virtual void WaitForUserAction(OEMTestData& test, const std::string& text = std::string()) {};
+    virtual std::string UserInputValue(OEMTestData& test) { return std::string(); };
 };
 
 struct RFTestInput {
