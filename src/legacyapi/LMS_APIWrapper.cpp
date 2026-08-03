@@ -1448,7 +1448,12 @@ API_EXPORT int CALL_CONV LMS_ReadParam(lms_device_t* device, struct LMS7Paramete
     }
 
     if (val)
-        *val = apiDevice->device->GetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb);
+    {
+        // preserve the chip's current MAC selection instead of forcing channel A
+        const uint16_t mac = apiDevice->device->ReadRegister(apiDevice->moduleIndex, 0x0020) & 0x0003;
+        const uint8_t channel = (mac == 2) ? 1 : 0;
+        *val = apiDevice->device->GetParameter(apiDevice->moduleIndex, channel, param.address, param.msb, param.lsb);
+    }
 
     return 0;
 }
@@ -1461,7 +1466,10 @@ API_EXPORT int CALL_CONV LMS_WriteParam(lms_device_t* device, struct LMS7Paramet
         return -1;
     }
 
-    OpStatus status = apiDevice->device->SetParameter(apiDevice->moduleIndex, 0, param.address, param.msb, param.lsb, val);
+    // preserve the chip's current MAC selection instead of forcing channel A
+    const uint16_t mac = apiDevice->device->ReadRegister(apiDevice->moduleIndex, 0x0020) & 0x0003;
+    const uint8_t channel = (mac == 2) ? 1 : 0;
+    OpStatus status = apiDevice->device->SetParameter(apiDevice->moduleIndex, channel, param.address, param.msb, param.lsb, val);
     return OpStatusToReturnCode(status);
 }
 
