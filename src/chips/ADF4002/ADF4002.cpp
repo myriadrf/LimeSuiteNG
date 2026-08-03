@@ -323,8 +323,16 @@ void ADF4002::CalculateRN()
     };
 
     Fcomp = (x + y) / 1000000.0;
-    int R = std::round(txtFref / Fcomp);
-    int N = std::round(txtFvco / Fcomp);
+    // validate in the double domain: the R counter is 14 bits and the N counter 13
+    // bits, and an oversized N would not just truncate - its high bits land on the
+    // charge pump gain and test bits when the registers are packed
+    const double R = std::round(txtFref / Fcomp);
+    const double N = std::round(txtFvco / Fcomp);
+    if (!(R >= 1 && R <= 16383) || !(N >= 1 && N <= 8191))
+    {
+        lime::error("ADF4002: frequency ratio %g/%g needs R=%g N=%g, outside the 14/13-bit counters", txtFref, txtFvco, R, N);
+        return;
+    }
 
     txtRCnt = R;
     txtNCnt = N;
