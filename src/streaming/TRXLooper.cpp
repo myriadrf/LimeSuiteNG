@@ -1610,7 +1610,7 @@ uint32_t TRXLooper::StreamTxTemplate(
     const bool useTimestamp = meta ? (meta->hasTimestamp) : false;
     const bool flush = meta ? (meta->flags & StreamTxMeta::EndOfBurst) : false;
 
-    Timespec ts = meta->timestamp;
+    Timespec ts = meta ? meta->timestamp : Timespec();
     ts.SetTickRate(ticksPerSample * mConfig.hintSampleRate);
 
     uint32_t samplesRemaining = count;
@@ -1629,7 +1629,9 @@ uint32_t TRXLooper::StreamTxTemplate(
     assert(samples[0]);
     if (useChannelB)
         assert(samples[1]);
-    const T* src[2] = { samples[0], useChannelB ? samples[1] : nullptr };
+    // staging packets are sized for max(Rx, Tx) channels, so with an asymmetric
+    // config the unused channel B plane still gets copied - feed it valid data
+    const T* src[2] = { samples[0], useChannelB ? samples[1] : samples[0] };
     while (samplesRemaining > 0)
     {
         if (!mTx.stagingPacket)
@@ -1645,8 +1647,7 @@ uint32_t TRXLooper::StreamTxTemplate(
 
         int consumed = mTx.stagingPacket->samples.push(src, samplesRemaining);
         src[0] += consumed;
-        if (useChannelB)
-            src[1] += consumed;
+        src[1] += consumed;
 
         samplesRemaining -= consumed;
         ts.AddTicks(consumed * ticksPerSample);
