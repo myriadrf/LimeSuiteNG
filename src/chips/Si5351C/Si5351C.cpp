@@ -380,7 +380,7 @@ void Si5351C::FindVCO(Si5351_Channel* clocks, Si5351_PLL* plls, const unsigned l
     if (bestVCOB == 0) //just in case if pllb is not used make it the same frequency as plla
         bestVCOB = bestVCOA;
     plls[1].VCO_Hz = bestVCOB;
-    plls[1].feedbackDivider = static_cast<double>(bestVCOB) / plls[0].inputFreqHz;
+    plls[1].feedbackDivider = static_cast<double>(bestVCOB) / plls[1].inputFreqHz;
     for (int i = 0; i < clockCount; ++i)
     {
         if (clocks[i].outputFreqHz == 0 || !clocks[i].powered)
@@ -550,8 +550,10 @@ Si5351C::Status Si5351C::ConfigureClocks()
         m_newConfiguration[addr + 5] = (MSNx_P2 >> 16) & 0x0F;
 
         m_newConfiguration[addr + 5] |= (MSNx_P3 >> 16) << 4;
-        m_newConfiguration[addr + 1] |= MSNx_P3;
-        m_newConfiguration[addr] |= MSNx_P3 >> 8;
+        // assign, don't merge: OR-ing kept stale denominator bits from the register
+        // defaults (0x80 in reg 27) and from any previous configuration
+        m_newConfiguration[addr + 1] = MSNx_P3 & 0xFF;
+        m_newConfiguration[addr] = (MSNx_P3 >> 8) & 0xFF;
     }
     return Status::SUCCESS;
 }
