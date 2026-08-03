@@ -1360,6 +1360,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M& chip, const Ch
 {
     LMS7002M::ChannelScope scope(&chip, channelIndex);
     const ChannelConfig& ch = config;
+    OpStatus rxStatus = OpStatus::Success;
     chip.Modify_SPI_Reg_bits(INSEL_RXTSP, ch.rx.testSignal.enabled ? 1 : 0);
     if (ch.rx.testSignal.enabled)
     {
@@ -1371,9 +1372,10 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M& chip, const Ch
         chip.Modify_SPI_Reg_bits(TSGMODE_RXTSP, signal.dcMode ? 1 : 0);
         chip.SPI_write(0x040C, 0x01FF); // DC.. bypasss
         // TSGMODE_RXTSP change resets DC values
-        return chip.LoadDC_REG_IQ(TRXDir::Rx, signal.dcValue.real(), signal.dcValue.imag());
+        rxStatus = chip.LoadDC_REG_IQ(TRXDir::Rx, signal.dcValue.real(), signal.dcValue.imag());
     }
 
+    // the Tx test signal is independent of the Rx one, configure it regardless
     chip.Modify_SPI_Reg_bits(INSEL_TXTSP, ch.tx.testSignal.enabled ? 1 : 0);
     if (ch.tx.testSignal.enabled)
     {
@@ -1385,9 +1387,11 @@ OpStatus LMS7002M_SDRDevice::LMS7002TestSignalConfigure(LMS7002M& chip, const Ch
         chip.Modify_SPI_Reg_bits(TSGMODE_TXTSP, signal.dcMode ? 1 : 0);
         chip.SPI_write(0x040C, 0x01FF); // DC.. bypasss
         // TSGMODE_TXTSP change resets DC values
-        return chip.LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
+        const OpStatus txStatus = chip.LoadDC_REG_IQ(TRXDir::Tx, signal.dcValue.real(), signal.dcValue.imag());
+        if (txStatus != OpStatus::Success)
+            return txStatus;
     }
-    return OpStatus::Success;
+    return rxStatus;
 }
 
 FPGA* LMS7002M_SDRDevice::GetFPGA()
