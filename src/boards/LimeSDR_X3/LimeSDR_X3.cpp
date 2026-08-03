@@ -1056,10 +1056,11 @@ void LimeSDR_X3::LMS3SetPath(TRXDir dir, uint8_t chan, uint8_t path)
             lms->SetPathRFE(lime::LMS7002M::PathRFE(path));
             return;
         }
+        // callers pass the per-chip channel (0/1), matching bits 0/1 of the switch register
         else if (path == static_cast<uint8_t>(ePathLMS3_Rx::LNAH))
-            sw_val &= ~(1 << (chan - 4));
+            sw_val &= ~(1u << chan);
         else if (path == 2) // Calibration path
-            sw_val |= 1 << (chan - 4);
+            sw_val |= 1u << chan;
 
         mFPGA->WriteRegister(sw_addr, sw_val);
         lms->SetPathRFE(lime::LMS7002M::PathRFE(ePathLMS3_Rx::LNAH));
