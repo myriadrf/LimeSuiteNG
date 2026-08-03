@@ -64,7 +64,7 @@ void CrestFactorReduction::Configure(const CrestFactorReduction::Config& state)
         WriteRegister(TX_HB_DEL, useOversample);
         WriteRegister(SLEEP_CFR, cfr.sleep);
         WriteRegister(BYPASS_CFR, cfr.bypass);
-        WriteRegister(ODD_CFR, fir.coefficientsCount % 2);
+        // ODD_CFR is programmed from the CFR order by UpdateHannCoeff below
         WriteRegister(BYPASSGAIN_CFR, cfr.bypassGain);
 
         assert(fir.coefficientsCount <= 32);
@@ -274,7 +274,8 @@ void CrestFactorReduction::SetFIRCoefficients(const int16_t* coefficients, uint1
     m_Comms->Transact(mosi.data(), nullptr, mosi.size());
     mosi.clear();
 
-    WriteRegister(ODD_FIR, Filt_N % 2);
+    // parity of the actual tap count, not of the fixed hardware register width
+    WriteRegister(ODD_FIR, count % 2);
     WriteRegister(SLEEP_FIR, 0);
 }
 
