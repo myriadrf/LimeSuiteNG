@@ -752,8 +752,6 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
         return -1;
     }
 
-    // apiDevice->device->StreamDestroy(apiDevice->moduleIndex);
-    apiDevice->stream.reset();
     SubChannelHandle* handle = reinterpret_cast<SubChannelHandle*>(stream->handle);
     if (handle != nullptr)
     {
@@ -761,8 +759,13 @@ API_EXPORT int CALL_CONV LMS_DestroyStream(lms_device_t* device, lms_stream_t* s
         delete handle;
     }
 
+    // all channels of a device share one RFStream; only tear it down once none remain
+    if (apiDevice->streamBuffers[0].maskChannelsSetup == 0 && apiDevice->streamBuffers[1].maskChannelsSetup == 0)
+        apiDevice->stream.reset();
+
     auto& channels = apiDevice->lastSavedStreamConfig.channels.at(stream->isTx ? lime::TRXDir::Tx : lime::TRXDir::Rx);
-    auto iter = std::find(channels.begin(), channels.end(), stream->channel);
+    // setup stored the channel index with the align-phase flag masked off; match that
+    auto iter = std::find(channels.begin(), channels.end(), stream->channel & ~LMS_ALIGN_CH_PHASE);
     if (iter != std::end(channels))
         channels.erase(iter);
 
