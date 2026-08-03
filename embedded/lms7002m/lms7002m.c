@@ -357,9 +357,12 @@ lime_Result lms7002m_set_frequency_cgen(lms7002m_context* self, uint32_t freq_Hz
     }
 
     //VCO frequency selection according to F_CLKH
-    const uint16_t iHdiv_high = (cgen_vco_max / freq_Hz / 2) - 1;
-    const uint16_t iHdiv_low = (cgen_vco_min / freq_Hz / 2);
-    const uint16_t div_outch_cgen = ((iHdiv_low + iHdiv_high) / 2) & 0xFF;
+    const uint32_t iHdiv_high = (cgen_vco_max / freq_Hz / 2) - 1;
+    const uint32_t iHdiv_low = (cgen_vco_min / freq_Hz / 2);
+    // clamp to the divider field's maximum instead of wrapping, low frequencies
+    // otherwise get rejected even though a divider of 256 can deliver them
+    const uint32_t iHdiv_mid = (iHdiv_low + iHdiv_high) / 2;
+    const uint16_t div_outch_cgen = iHdiv_mid > 255 ? 255 : iHdiv_mid;
     uint64_t vco = 2 * (div_outch_cgen + 1) * freq_Hz;
     if (vco <= cgen_vco_min || vco >= cgen_vco_max)
     {
@@ -2010,6 +2013,9 @@ static uint16_t lms7002m_get_rssi_delay(lms7002m_context* self)
     const uint64_t ref_clk = lms7002m_get_reference_clock(self);
     const uint64_t ref_clk_tsp = lms7002m_get_reference_clock_tsp(self, false);
     uint64_t delay = (uint64_t)sampleCount * decimation * ref_clk / ref_clk_tsp / 6;
+    // saturate instead of truncating: high AGC averaging produces delays above 16 bits
+    if (delay > 0xFFFF)
+        delay = 0xFFFF;
     return (0xFFFF) - (uint16_t)(delay);
 }
 
