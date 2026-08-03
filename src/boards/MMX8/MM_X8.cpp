@@ -523,10 +523,10 @@ OpStatus LimeSDR_MMX8::SetGFIR(uint8_t moduleIndex, TRXDir trx, uint8_t channel,
 
 uint64_t LimeSDR_MMX8::GetHardwareTimestamp(uint8_t moduleIndex)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
 
-    return mSubDevices[moduleIndex]->GetHardwareTimestamp(0);
+    return mStreamers[moduleIndex]->GetHardwareTimestamp();
 }
 
 OpStatus LimeSDR_MMX8::SetHardwareTimestamp(uint8_t moduleIndex, const uint64_t now)
@@ -556,11 +556,10 @@ OpStatus LimeSDR_MMX8::StreamSetup(const StreamConfig& config, uint8_t moduleInd
         return OpStatus::InvalidValue;
 
     std::unique_ptr<RFStream> xtrxstream = mSubDevices.at(moduleIndex)->StreamCreate(config, 0);
-    mStreamers.at(moduleIndex) = std::make_unique<RFStream_X8>(this, std::move(xtrxstream), moduleIndex);
-
-    // OpStatus status = mSubDevices.at(moduleIndex)->StreamSetup(config, 0);
-    if (!mStreamers.at(moduleIndex))
+    // the wrapper itself is always non-null, the subdevice stream is what can fail
+    if (!xtrxstream)
         return OpStatus::Error;
+    mStreamers.at(moduleIndex) = std::make_unique<RFStream_X8>(this, std::move(xtrxstream), moduleIndex);
 
     return OpStatus::Success;
 }
@@ -574,10 +573,12 @@ void LimeSDR_MMX8::StreamStart(uint8_t moduleIndex)
 void LimeSDR_MMX8::StreamStart(const std::vector<uint8_t>& moduleIndexes)
 {
     for (auto index : moduleIndexes)
-        mStreamers.at(index)->StageStart();
+        if (index < mStreamers.size() && mStreamers[index])
+            mStreamers[index]->StageStart();
 
     for (auto index : moduleIndexes)
-        mStreamers.at(index)->Start();
+        if (index < mStreamers.size() && mStreamers[index])
+            mStreamers[index]->Start();
 }
 
 void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
@@ -589,37 +590,40 @@ void LimeSDR_MMX8::StreamStop(uint8_t moduleIndex)
 void LimeSDR_MMX8::StreamStop(const std::vector<uint8_t>& moduleIndexes)
 {
     for (auto index : moduleIndexes)
-        mStreamers.at(index)->Stop();
+        if (index < mStreamers.size() && mStreamers[index])
+            mStreamers[index]->Stop();
 }
 
 void LimeSDR_MMX8::StreamDestroy(uint8_t moduleIndex)
 {
-    mStreamers.at(moduleIndex)->Stop();
-    mStreamers.at(moduleIndex).reset();
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
+        return;
+    mStreamers[moduleIndex]->Stop();
+    mStreamers[moduleIndex].reset();
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex32f_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamRx(dest, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex16_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamRx(dest, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamRx(
     uint8_t moduleIndex, lime::complex12_t* const* dest, uint32_t count, StreamMeta* meta, std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamRx(0, dest, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamRx(dest, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
@@ -628,9 +632,9 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamTx(samples, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
@@ -639,9 +643,9 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamTx(samples, count, meta, timeout);
 }
 
 uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
@@ -650,16 +654,16 @@ uint32_t LimeSDR_MMX8::StreamTx(uint8_t moduleIndex,
     const StreamMeta* meta,
     std::chrono::microseconds timeout)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return 0;
-    return mSubDevices[moduleIndex]->StreamTx(0, samples, count, meta, timeout);
+    return mStreamers[moduleIndex]->StreamTx(samples, count, meta, timeout);
 }
 
 void LimeSDR_MMX8::StreamStatus(uint8_t moduleIndex, StreamStats* rx, StreamStats* tx)
 {
-    if (moduleIndex >= mSubDevices.size())
+    if (moduleIndex >= mStreamers.size() || !mStreamers[moduleIndex])
         return;
-    mSubDevices[moduleIndex]->StreamStatus(0, rx, tx);
+    mStreamers[moduleIndex]->StreamStatus(rx, tx);
 }
 
 ChannelConfig::Direction::TestSignal LimeSDR_MMX8::GetTestSignal(uint8_t moduleIndex, TRXDir direction, uint8_t channel)
