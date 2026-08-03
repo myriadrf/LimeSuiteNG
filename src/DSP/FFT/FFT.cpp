@@ -72,7 +72,10 @@ void FFT::SetWindowFunction(WindowFunctionType windowFunction)
     if (currentWindowType != windowFunction)
     {
         currentWindowType = windowFunction;
-        GenerateWindowCoefficients(windowFunction, mFFTSize, mWindowCoeffs);
+        std::vector<float> coeffs;
+        GenerateWindowCoefficients(windowFunction, mFFTSize, coeffs);
+        std::unique_lock lk{ windowMutex };
+        mWindowCoeffs.swap(coeffs);
     }
 }
 
@@ -196,7 +199,10 @@ void FFT::ProcessLoop()
         }
 
         // auto t1 = std::chrono::high_resolution_clock::now();
-        FFT_Calculate(fftdata, samples, fftBins, mWindowCoeffs);
+        {
+            std::unique_lock lk{ windowMutex };
+            FFT_Calculate(fftdata, samples, fftBins, mWindowCoeffs);
+        }
         ++resultsDone;
 
         for (std::size_t ch = 0; ch < fftBins.size(); ++ch)

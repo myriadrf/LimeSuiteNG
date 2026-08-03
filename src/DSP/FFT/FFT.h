@@ -74,6 +74,7 @@ class LIME_API FFT
 
     WindowFunctionType currentWindowType;
     std::vector<float> mWindowCoeffs;
+    std::mutex windowMutex; ///< guards mWindowCoeffs between the caller and the worker thread
 
     std::atomic<bool> doWork{};
     std::condition_variable inputAvailable;
@@ -82,7 +83,7 @@ class LIME_API FFT
     CallbackType resultsCallback{};
     void* mUserData{};
 
-    std::size_t avgCount = 100;
+    std::atomic<std::size_t> avgCount{ 100 };
     std::size_t mFFTSize;
 };
 
