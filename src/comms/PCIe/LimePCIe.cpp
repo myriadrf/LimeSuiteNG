@@ -79,6 +79,8 @@ OpStatus LimePCIe::RunControlCommand(uint8_t* request, uint8_t* response, size_t
     constexpr int ENOIOCTLCMD = 515; // not a standard Posix error code, but exists in linux kernel headers
 #endif
     limepcie_control_packet pkt;
+    if (length > sizeof(pkt.request))
+        return OpStatus::InvalidValue;
     pkt.timeout_ms = timeout_ms;
     pkt.length = length;
 
