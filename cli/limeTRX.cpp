@@ -550,7 +550,14 @@ int main(int argc, char** argv)
                 break;
         }
 
-        stream->Add(device->StreamCreate(streamCfg, index));
+        std::unique_ptr<RFStream> substream = device->StreamCreate(streamCfg, index);
+        if (!substream)
+        {
+            cerr << "Failed to create stream on chip " << index << endl;
+            DeviceRegistry::freeDevice(device);
+            return EXIT_FAILURE;
+        }
+        stream->Add(std::move(substream));
     }
 
     rx_require = rx ? channelCount : 0;
