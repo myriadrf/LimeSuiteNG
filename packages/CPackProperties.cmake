@@ -39,3 +39,27 @@ set(CPACK_PACKAGE_RELOCATABLE "true")
 set(CPACK_PACKAGE_CONTACT "Lime Microsystems <info@limemicro.com>")
 set(CPACK_PACKAGE_VENDOR "Humanity")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/COPYING)
+
+if(WIN32)
+    # Windows gets a zip and an NSIS installer (#149), Linux keeps distro packaging
+    set(CPACK_GENERATOR "ZIP;NSIS")
+
+    if(CMAKE_GENERATOR_PLATFORM)
+        set(WINDOWS_PACKAGE_ARCH ${CMAKE_GENERATOR_PLATFORM})
+    else()
+        set(WINDOWS_PACKAGE_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+    set(CPACK_PACKAGE_FILE_NAME "limesuiteng-${PROJECT_VERSION}-windows-${WINDOWS_PACKAGE_ARCH}")
+
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "LimeSuiteNG")
+    set(CPACK_NSIS_PACKAGE_NAME "Lime Suite NG")
+    set(CPACK_NSIS_DISPLAY_NAME "Lime Suite NG ${PROJECT_VERSION}")
+    set(CPACK_NSIS_URL_INFO_ABOUT "https://myriadrf.org/projects/limesdr/")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    # offer adding the install directory to PATH, so the CLI tools work from any terminal
+    set(CPACK_NSIS_MODIFY_PATH ON)
+    set(CPACK_PACKAGE_EXECUTABLES "limeGUI" "Lime Suite NG GUI")
+
+    # bundle the MSVC C++ runtime redistributable DLLs into bin/
+    include(InstallRequiredSystemLibraries)
+endif()
