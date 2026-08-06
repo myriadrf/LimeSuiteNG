@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant App as Application
+    participant Reg as DeviceRegistry
+    participant Dev as SDRDevice
+    participant Stream as RFStream
+
+    App->>Reg: enumerate()
+    Reg-->>App: DeviceHandle list
+    App->>Reg: makeDevice(handle)
+    Reg-->>App: SDRDevice
+    App->>Dev: SetMessageLogCallback(callback)
+    App->>Dev: Init()
+    App->>Dev: Configure(SDRConfig, moduleIndex)
+    Note over Dev: enables channels, tunes LO,<br/>sets sample rate, antenna path,<br/>filters and calibration
+    App->>Dev: StreamCreate(StreamConfig, moduleIndex)
+    Dev-->>App: RFStream
+    App->>Stream: Start()
+    loop Sample exchange
+        App->>Stream: StreamRx() / StreamTx()
+    end
+    App->>Stream: Stop()
+    App->>Reg: freeDevice(device)
