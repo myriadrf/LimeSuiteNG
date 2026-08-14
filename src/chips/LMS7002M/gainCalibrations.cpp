@@ -135,6 +135,8 @@ static float chip_rssi_to_dbfs(uint32_t rssi)
 
 OpStatus LMS7002M::CalibrateTxGain()
 {
+    return OpStatus::NotSupported; // TODO: LimeSDR-Micro;
+
     if (!controlPort)
     {
         lime::error("No device connected"s);
