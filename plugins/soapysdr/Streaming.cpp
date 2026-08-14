@@ -199,7 +199,8 @@ void Soapy_limesuiteng::closeStream(SoapySDR::Stream* stream)
 {
     std::unique_lock<std::recursive_mutex> lock(_accessMutex);
     auto icstream = reinterpret_cast<IConnectionStream*>(stream);
-    rfstream->Stop();
+    if (rfstream)
+        rfstream->Stop();
     rfstream.reset();
     delete icstream;
 }
