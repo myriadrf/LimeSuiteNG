@@ -54,7 +54,7 @@ GNUPlotPipe plotSamples;
 #endif
 
 struct CalibrationContext {
-    VSPA_iqplayer* vspa;
+    LA9310_IQStreamer* vspa;
     PHYTimer* phytimer;
     lms7002m_context* rfsoc;
     float sampleRate;
@@ -102,12 +102,14 @@ static void PlotBins(std::vector<float> bins, float sampleRate)
 static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
 {
     OpStatus status;
-    status = ctx->vspa->RxEnable(2, false);
-    if (status != OpStatus::Success)
-        printf("Failed stop rx\n");
-    status = ctx->vspa->RxEnable(2, true);
-    if (status != OpStatus::Success)
-        printf("Failed start rx\n");
+    assert(false);
+    // TODO: implement
+    // status = ctx->vspa->RxEnable(2, false);
+    // if (status != OpStatus::Success)
+    //     printf("Failed stop rx\n");
+    // status = ctx->vspa->RxEnable(2, true);
+    // if (status != OpStatus::Success)
+    //     printf("Failed start rx\n");
     // Enable all Rx and Tx DMA triggers
     constexpr uint8_t ids[] = { 1, 2, 3, 4, 11 };
     for (const auto id : ids)
@@ -125,7 +127,8 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     {
         int readSize = (samplesToRead - samplesGot) * sizeof(complex16_t);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        uint32_t size_received = ctx->vspa->Receive(3, reinterpret_cast<uint32_t*>(&samples[samplesGot]), readSize, NULL);
+        uint32_t size_received =
+            0; // TODO: ctx->vspa->Receive(3, reinterpret_cast<uint32_t*>(&samples[samplesGot]), readSize, NULL);
         samplesGot += size_received / sizeof(complex16_t);
         t2 = std::chrono::high_resolution_clock::now();
     } while (samplesGot < samplesToRead &&
@@ -137,9 +140,10 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
         return NAN;
     }
 
-    status = ctx->vspa->RxEnable(2, false);
-    if (status != OpStatus::Success)
-        printf("Failed stop rx\n");
+    // TODO:
+    // status = ctx->vspa->RxEnable(2, false);
+    // if (status != OpStatus::Success)
+    //     printf("Failed stop rx\n");
 
     std::vector<complex32f_t> fsamples(samplesToRead);
     for (int i = 0; i < samplesToRead; ++i)
@@ -321,7 +325,7 @@ static void limesdrmicro_calibrate_rx_dc(CalibrationContext* ctx, uint8_t channe
     spi_batch_modify_csr(&batch, LMS7002M_DCMODE, 1); // Rx DC correctors selection
     lms7002m_spi_batch_flush(&batch, rfsoc);
 
-    std::shared_ptr<IDCCorrector> digitalDC = ctx->vspa->GetRxDCCorrector();
+    std::shared_ptr<IDCCorrector> digitalDC = ctx->vspa->GetRxDCCorrector(channel);
     digitalDC->SetDCOffset(complex16_t(0, 0));
 
     std::unique_ptr<IDCCorrector> analogDC = std::make_unique<LMS7002M_DC>(rfsoc, TRXDir::Rx, channel);
@@ -447,7 +451,7 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
     int8_t g_lossmain = 15;
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_LOSS_MAIN_TXPAD_TRF, g_lossmain);
 
-    OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
+    OpStatus status = OpStatus::NotSupported; //ctx->vspa->GenerateTxTone(true, txToneBin);
     if (status != OpStatus::Success)
     {
         printf("Failed to generate tone\n");
@@ -512,7 +516,7 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
         lms7002m_spi_read_csr(rfsoc, LMS7002M_CG_IAMP_TBB),
         rssi_to_string(rssi));
 
-    ctx->vspa->GenerateTxTone(false);
+    // ctx->vspa->GenerateTxTone(false);
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
 
@@ -559,13 +563,13 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
         txToneFreq,
         txToneBin);
 
-    std::shared_ptr<IQuadratureErrorCorrector> iqcorr = isTx ? ctx->vspa->GetTxQEC() : ctx->vspa->GetRxQEC();
+    std::shared_ptr<IQuadratureErrorCorrector> iqcorr = isTx ? ctx->vspa->GetTxQEC(0) : ctx->vspa->GetRxQEC(0);
     iqcorr->SetImbalance(0, 0);
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
-    OpStatus status;
-    status = ctx->vspa->GenerateTxTone(true, txToneBin);
+    OpStatus status = OpStatus::NotSupported;
+    // status = ctx->vspa->GenerateTxTone(true, txToneBin);
     if (status != OpStatus::Success)
     {
         printf("Failed to generate tone\n");
@@ -626,7 +630,7 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
 
-    status = ctx->vspa->GenerateTxTone(false);
+    // status = ctx->vspa->GenerateTxTone(false);
     return status;
 }
 
@@ -653,21 +657,21 @@ OpStatus LimeSDR_Micro::CalibrateRx()
 {
 
     CalibrationContext context;
-    context.vspa = &la9310->vspa;
+    // context.vspa = &la9310->vspa;
     context.sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
-    context.vspa->Initialize();
-    context.vspa->RxEnable(2, false);
+    // context.vspa->Initialize();
+    // context.vspa->RxEnable(2, false);
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
-    context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
-    context.vspa->SetupResources(1, 0);
-    context.vspa->TxEnable(false);
+    // context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
+    // context.vspa->SetupResources(1, 0);
+    // context.vspa->TxEnable(false);
     context.phytimer = &la9310->phytimer;
     context.lo_diff = 0;
 
-    context.vspa->SetupRx(0, 1024 * 1024, 16384 * sizeof(complex16_t) * 64);
+    // context.vspa->SetupRx(0, 1024 * 1024, 16384 * sizeof(complex16_t) * 64);
 
     const bool dcOnly = false;
     const uint32_t bandwidthRF = 5e6;
@@ -786,9 +790,9 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
-    OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
-    if (status != OpStatus::Success)
-        return status;
+    // OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
+    // if (status != OpStatus::Success)
+    //     return status;
 
     uint8_t g_pga = lms7002m_spi_read_csr(rfsoc, LMS7002M_G_PGA_RBB);
     uint8_t g_rfe = lms7002m_spi_read_csr(rfsoc, LMS7002M_G_RXLOOPB_RFE);
@@ -837,7 +841,7 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
         g_rfe,
         rssi_to_string(rssi));
 
-    ctx->vspa->GenerateTxTone(false);
+    // ctx->vspa->GenerateTxTone(false);
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
 
@@ -871,7 +875,7 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
     spi_batch_modify_csr(&batch, LMS7002M_DCMODE, 1); // Rx DC correctors selection
     lms7002m_spi_batch_flush(&batch, rfsoc);
 
-    std::shared_ptr<IDCCorrector> digitalDC = ctx->vspa->GetTxDCCorrector();
+    std::shared_ptr<IDCCorrector> digitalDC = ctx->vspa->GetTxDCCorrector(channel);
     digitalDC->SetDCOffset(complex16_t(0, 0));
 
     std::unique_ptr<IDCCorrector> analogDC = std::make_unique<LMS7002M_DC>(rfsoc, TRXDir::Tx, channel);
@@ -881,12 +885,12 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
 
     const int txToneBin = 256 * (2 * txToneFreq / ctx->sampleRate);
     const float rxMeasureOffset = ctx->lo_diff;
-    OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
-    if (status != OpStatus::Success)
-    {
-        printf("Failed to generate tone\n");
-        return status;
-    }
+    // OpStatus status = ctx->vspa->GenerateTxTone(true, txToneBin);
+    // if (status != OpStatus::Success)
+    // {
+    //     printf("Failed to generate tone\n");
+    //     return status;
+    // }
 
     // analog
     for (int i = 0; i < 1; ++i)
@@ -928,7 +932,7 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
     //         dcq,
     //         rssi_to_string(la9310_get_rssi(ctx, rxMeasureOffset)));
     // }
-    status = ctx->vspa->GenerateTxTone(false);
+    // status = ctx->vspa->GenerateTxTone(false);
     spi_batch_modify_csr(&batch, LMS7002M_PD_LNA_RFE, 0);
     return OpStatus::Success;
 }
@@ -936,23 +940,23 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
 OpStatus LimeSDR_Micro::CalibrateTx()
 {
     CalibrationContext context;
-    context.vspa = &la9310->vspa;
+    // context.vspa = &la9310->vspa;
     context.sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
-    context.vspa->Initialize();
-    context.vspa->RxEnable(2, false);
-    context.vspa->SetupResources(0x4, 0);
-    context.vspa->TxEnable(false);
+    // context.vspa->Initialize();
+    // context.vspa->RxEnable(2, false);
+    // context.vspa->SetupResources(0x4, 0);
+    // context.vspa->TxEnable(false);
     context.phytimer = &la9310->phytimer;
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
-    context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
+    // context.vspa->EnableRxChannels(channel == 0 ? VSPA_RX0 : VSPA_RX1);
 
-    context.vspa->GetTxDCCorrector()->SetDCOffset(complex16_t(0, 0));
-    context.vspa->GetTxQEC()->SetImbalance(0, 0);
+    // context.vspa->GetTxDCCorrector()->SetDCOffset(complex16_t(0, 0));
+    // context.vspa->GetTxQEC()->SetImbalance(0, 0);
 
-    context.vspa->SetupRx(0, 1024 * 1024, 16384 * sizeof(complex16_t) * 64);
+    // context.vspa->SetupRx(0, 1024 * 1024, 16384 * sizeof(complex16_t) * 64);
 
     const uint32_t bandwidthRF = 5e6;
     const double calibrationRF = bandwidthRF / calibUserBwDivider;

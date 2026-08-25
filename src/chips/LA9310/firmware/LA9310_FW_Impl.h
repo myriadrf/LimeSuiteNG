@@ -4,6 +4,8 @@
 
 #include "chips/LA9310/LA9310.h"
 
+#include "m4_memorymap.h"
+
 #include <chrono>
 #include <span>
 #include <stdint.h>
@@ -14,12 +16,10 @@ namespace lime {
 
 class LA9310_PCIe;
 
-class LimeSDR_Micro_M4 : public LA9310
+class LA9310_FW_Impl : public LA9310
 {
   public:
-    LimeSDR_Micro_M4(std::shared_ptr<LA9310_PCIe> pcie);
-
-    OpStatus ScheduleCommand(uint64_t timepoint, uint32_t cmd, const void* data, uint32_t len);
+    LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie);
 
     bool CheckFirmwareAlive();
     OpStatus LoadFirmware(std::span<const char, std::dynamic_extent> firmware);
@@ -32,10 +32,9 @@ class LimeSDR_Micro_M4 : public LA9310
     OpStatus ResetHardwareTime();
     uint64_t GetHardwareTime();
 
-    OpStatus TxEnableImmediate(bool enable);
-    OpStatus TxEnableScheduled(int64_t time_point, bool enable, uint32_t data_len, uint32_t data_src_offset);
+    void* GetHIF(e_m4_mmap type);
 
-  private:
+    // private:
     OpStatus WaitForResponse();
     std::shared_ptr<LA9310_PCIe> pcie;
     volatile struct la9310_hif* hif;

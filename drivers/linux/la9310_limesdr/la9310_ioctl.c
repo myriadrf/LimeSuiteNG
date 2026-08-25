@@ -34,22 +34,6 @@ void la9310_flush_cache(struct la9310_dev* la9310_dev, struct LA9310_IOCTL_flush
         dma_sync_single_for_device(la9310_dev->dev, phys_addr + m->offset, m->size, m->dir);
 }
 
-static int la9310_wait_for_data(struct la9310_dev* la9310_dev, unsigned int timeout_ms)
-{
-    long ret;
-
-    ret = wait_for_completion_interruptible_timeout(&la9310_dev->data_available, msecs_to_jiffies(timeout_ms));
-
-    if (!ret)
-        return -ETIMEDOUT;
-    else if (ret < 0)
-        return -ERESTARTSYS;
-
-    // we assume userspace is greedy and consumes all available data each time it wakes up
-    reinit_completion(&la9310_dev->data_available);
-    return 0;
-}
-
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
@@ -154,14 +138,44 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 
         break;
     }
-    case LA9310_IOCTL_WAIT_FOR_DATA: {
-        if (copy_from_user(&timeout_ms, (unsigned int __user*)arg, sizeof(timeout_ms)))
+    case LA9310_IOCTL_SIRQ_WAIT: {
+        struct LA9310_IOCTL_SIRQ irq_wait;
+        if (copy_from_user(&irq_wait, (struct LA9310_IOCTL_SIRQ __user*)arg, sizeof(irq_wait)))
             return -EFAULT;
 
-        ret = la9310_wait_for_data(la9310_dev, timeout_ms);
+        ret = la9310_softirq_wait(&la9310_dev->soft_irq, irq_wait.irq_index, msecs_to_jiffies(irq_wait.timeout_ms));
         break;
     }
+    case LA9310_IOCTL_SIRQ_CONTROL: {
+        struct LA9310_IOCTL_SIRQ_CTRL irq_arg;
+        if (copy_from_user(&irq_arg, (struct LA9310_IOCTL_SIRQ_CTRL __user*)arg, sizeof(irq_arg)))
+            return -EFAULT;
+
+        // int success = down_timeout(&la9310_dev->soft_irq.clear_semaphore, msecs_to_jiffies(100));
+        // if (success != 0) // on failure
+        // {
+        //     ret = -EBUSY;
+        //     break;
+        // }
+
+        la9310_softirq_clear_local(la9310_dev, irq_arg.clear_bits, irq_arg.clear_mask);
+        // la9310_raise_msgunit_irq(la9310_dev, 0, 0);
+        // up(&la9310_dev->soft_irq.clear_semaphore);
+        ret = 0;
+        break;
+    }
+
+    case LA9310_IOCTL_USERSPACE_DMA: {
+        struct la9310_userspace_dma dma_map;
+        dma_map = la9310_dev->user_dma;
+        if (copy_to_user((void*)arg, &dma_map, sizeof(dma_map)))
+            return -EFAULT;
+        ret = 0;
+        break;
+    }
+
     default:
+        dev_err(la9310_dev->dev, "Unknown command 0x%X\n", cmd);
         return -ENOTTY;
     }
     return ret;

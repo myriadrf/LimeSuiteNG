@@ -28,7 +28,7 @@ class ISPI;
 class LMS64C_SPI;
 class I2C_bus;
 class LA9310;
-class LimeSDR_Micro_M4;
+class LA9310_FW_Impl;
 
 class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 {
@@ -182,7 +182,9 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<LA9310_PCIe> mStreamingPort;
     std::shared_ptr<I2C_bus> mI2C;
 
-    std::shared_ptr<LimeSDR_Micro_M4> la9310;
+    std::shared_ptr<LA9310> la9310;
+    std::shared_ptr<LA9310_FW_Impl> fw;
+    std::shared_ptr<LA9310_IQStreamer> iqstreamer;
 
     bool mConfigInProgress;
 };

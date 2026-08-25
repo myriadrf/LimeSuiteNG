@@ -2,7 +2,7 @@ include(FeatureSummary)
 include(CMakeDependentOption)
 project(
     la9310_limesdr
-    VERSION 0.1.2
+    VERSION 0.2.0
     DESCRIPTION "Linux kernel module for LA9310 based LimeSDR devices"
     LANGUAGES C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -36,6 +36,8 @@ add_kernel_module(
     GITHASH
     ${GITHASH}
     SOURCES
+    la9310_softirq.c
+    la9310_softirq.h
     la9310_sysfs.c
     la9310_firmware.c
     la9310_limesdr_module.c

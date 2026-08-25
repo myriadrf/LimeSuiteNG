@@ -151,6 +151,7 @@ class ReceiverThread : public WorkerThread
         constexpr auto timeout = std::chrono::microseconds(1000000);
 
         // skip all samples until the expected time
+        printf("Samples to skip: %i\n", samplesToSkip);
         while (samplesToSkip > 0)
         {
             const size_t toRead = samplesToSkip > rxSize ? rxSize : samplesToSkip;
@@ -162,6 +163,7 @@ class ReceiverThread : public WorkerThread
         }
 
         stream->Receive(rxBuffers, rxSize, &rxMeta);
+        printf("Samples to recv: %i\n", rxSize);
         return false;
     }
 
@@ -231,6 +233,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             txMeta.timestamp = Timespec(int64_t(burst_start));
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
+            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
                 modsamples[i] = chirp[i];
@@ -248,14 +251,13 @@ class TransmitterThread : public WorkerThread
         }
 
         //this_thread::sleep_for(chrono::milliseconds(1));
-
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            burst_start += 32768;
+            burst_start += 16384;
             txMeta.timestamp = Timespec(int64_t(burst_start));
-            // printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
-            txMeta.flags = StreamTxMeta::EndOfBurst;
+            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
@@ -267,7 +269,25 @@ class TransmitterThread : public WorkerThread
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
         }
-        /*
+
+        {
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = useTimestamp;
+            burst_start += 16384;
+            txMeta.timestamp = Timespec(int64_t(burst_start));
+            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
+
+            const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i] * 0.3f;
+            modsamples[0] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 2] = complex32f_t(0.4, -0.4);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.4, 0.4);
+            txSamples[0] = modsamples.data();
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
+            burst_start += toSend;
+        }
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
@@ -285,23 +305,6 @@ class TransmitterThread : public WorkerThread
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
         }
-        {
-            StreamTxMeta txMeta{};
-            txMeta.hasTimestamp = useTimestamp;
-            burst_start += 8192;
-            txMeta.timestamp = Timespec(int64_t(burst_start));
-            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
-
-            const size_t toSend = chirp.size();
-            for (size_t i = 0; i < chirp.size(); ++i)
-                modsamples[i] = chirp[i] * 0.3f;
-            modsamples[0] = complex32f_t(0.4, -0.4);
-            modsamples[chirp.size() - 2] = complex32f_t(0.4, -0.4);
-            modsamples[chirp.size() - 1] = complex32f_t(-0.4, 0.4);
-            txSamples[0] = modsamples.data();
-            stream->Transmit(txSamples.data(), toSend, &txMeta);
-            burst_start += toSend;
-        }*/
         return false;
     }
 
@@ -436,7 +439,7 @@ int main(int argc, char** argv)
     if (sampleRate <= 0)
         sampleRate = 1e6; // sample rate read-back not available, assign default value
 
-    int chirp_len = 512 * 64; //1024 * 16 + 137; //110096;//16 * 1024; //1360 / 2;
+    int chirp_len = 512 * 32 + 13; //1024 * 16 + 137; //110096;//16 * 1024; //1360 / 2;
     double fs = 1e6;
     double chirpTime = chirp_len / fs;
     auto chirp = GenerateChirp(chirpTime, fs, 0.005, 0.04);
@@ -451,6 +454,13 @@ int main(int argc, char** argv)
         else
             c -= 2.0 / chirp.size();
     }
+
+    // chirp.resize(chirp_len);
+    // int s=0;
+    // for (int i=0; i<chirp.size()/2; ++i)
+    //     chirp[s++] = complex32f_t(i*1.0 / chirp.size(), -i*1.0 / chirp.size());
+    // for (int i=chirp.size()/2; s < chirp.size(); --i)
+    //     chirp[s++] = complex32f_t(i*1.0 / chirp.size(), -i*1.0 / chirp.size());
 
     // PlotSamples(chirp.data(), chirp.size());
 

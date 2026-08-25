@@ -6,7 +6,7 @@
 #include "ISOCPanel.h"
 
 namespace lime {
-class LA9310;
+class LA9310_IQStreamer;
 } // namespace lime
 
 class DCCorrectorsPanel;
@@ -22,7 +22,7 @@ class LA9310_wxgui : public ISOCPanel
         const wxSize& size = wxDefaultSize,
         long style = 0);
     ~LA9310_wxgui();
-    bool Initialize(lime::LA9310* soc);
+    bool Initialize(lime::LA9310_IQStreamer* soc);
     bool Initialize(void* soc) override;
     void UpdateGUI() override;
 
@@ -47,5 +47,5 @@ class LA9310_wxgui : public ISOCPanel
     wxCheckBox* chkDAC_IQ;
     void onPhytimer(wxCommandEvent& event);
 
-    lime::LA9310* la9310;
+    lime::LA9310_IQStreamer* iqstreamer;
 };

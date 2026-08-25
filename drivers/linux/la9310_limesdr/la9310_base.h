@@ -5,6 +5,8 @@
 #define __LA9310_BASE_H__
 
 #include "common_headers/la9310_host_if.h"
+#include "la9310_softirq.h"
+#include "la9310_ioctl.h"
 
 /*Enable the multiple MSIs support */
 #define LA9310_REAL_MSI_FLAG (1 << 0)
@@ -162,8 +164,8 @@ struct la9310_dev {
     void* vspa_priv;
 
     struct platform_device* uart;
-
-    struct completion data_available;
+    struct la9310_softirq soft_irq;
+    struct la9310_userspace_dma user_dma;
 };
 
 /*la9310_dev->flags*/

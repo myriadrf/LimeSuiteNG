@@ -5,6 +5,8 @@
 
 #include "chips/LA9310/LA9310.h"
 #include "chips/LA9310/PHYTimer.h"
+#include "chips/LA9310/firmware/IQStreamer.h"
+#include "chips/LA9310/firmware/LA9310_FW_Impl.h"
 
 #include "widgets/DCCorrectorPanel.h"
 #include "widgets/QECPanel.h"
@@ -62,22 +64,22 @@ LA9310_wxgui::~LA9310_wxgui()
     // m_PrimaryFreq->Disconnect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(LA9310_wxgui::OnChange), nullptr, this);
 }
 
-bool LA9310_wxgui::Initialize(lime::LA9310* soc)
+bool LA9310_wxgui::Initialize(lime::LA9310_IQStreamer* soc)
 {
     if (!soc)
         return false;
 
-    la9310 = soc;
-    rxdcpanel->Initialize(soc->vspa.GetRxDCCorrector());
-    txdcpanel->Initialize(soc->vspa.GetTxDCCorrector());
-    rxqecpanel->Initialize(soc->vspa.GetRxQEC());
-    txqecpanel->Initialize(soc->vspa.GetTxQEC());
+    iqstreamer = soc;
+    // rxdcpanel->Initialize(soc->GetRxDCCorrector(0));
+    // txdcpanel->Initialize(soc->GetTxDCCorrector(0));
+    // rxqecpanel->Initialize(soc->GetRxQEC(0));
+    // txqecpanel->Initialize(soc->GetTxQEC(0));
     return true;
 }
 
 bool LA9310_wxgui::Initialize(void* soc)
 {
-    return Initialize(reinterpret_cast<lime::LA9310*>(soc));
+    return Initialize(reinterpret_cast<lime::LA9310_IQStreamer*>(soc));
 }
 
 void LA9310_wxgui::UpdateGUI()
@@ -86,16 +88,17 @@ void LA9310_wxgui::UpdateGUI()
 
 void LA9310_wxgui::onTxToneGeneratorClick(wxCommandEvent& event)
 {
-    if (!la9310)
+    if (!iqstreamer)
         return;
 
-    OpStatus status = la9310->vspa.GenerateTxTone(chkTxToneGenerator->GetValue(), spinTxToneBin->GetValue());
+    OpStatus status =
+        OpStatus::NotImplemented; //iqstreamer->GenerateTxTone(chkTxToneGenerator->GetValue(), spinTxToneBin->GetValue());
     if (status != OpStatus::Success)
         printf("Failed to set Tx tone\n");
 }
 
 void LA9310_wxgui::onPhytimer(wxCommandEvent& event)
 {
-    la9310->phytimer.GetTimerControl(11).TriggerDirectly(
+    iqstreamer->fw->phytimer.GetTimerControl(11).TriggerDirectly(
         event.IsChecked() ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero);
 }

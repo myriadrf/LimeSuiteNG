@@ -10,7 +10,8 @@
 #include <cstring>
 #include <thread>
 #include "protocols/LMS64CProtocol.h"
-#include "boards/LimeSDR_Micro/m4_commands.h"
+#include "chips/LA9310/firmware/m4_commands.h"
+#include "chips/LA9310/virq.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -53,6 +54,13 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     volatile struct la9310_hif* hif = hostInterface;
     assert(hif);
 
+    OpStatus status;
+    status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    if (status != OpStatus::Success)
+    {
+        lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+    }
+
     hif->sw_cmd_desc.cmd = LIME_M4_LMS64C_PACKET;
 
     volatile uint32_t* arr32 = reinterpret_cast<uint32_t*>(request);
@@ -61,21 +69,39 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     {
         hif->sw_cmd_desc.data[i] = arr32[i];
     }
-    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    // OpStatus status = SendSignal(LA9310_SIGNALS::HOST_COMMAND_POSTED);
+    // if (status != OpStatus::Success)
+    // {
+    //     lime::error("LA9310_PCIe: RunControlCommand failed to post\n");
+    //     return status;
+    // }
+
+    status = WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
+    if (status != OpStatus::Success)
     {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1) > std::chrono::milliseconds(1000))
-        {
-            lime::error("LA9310_PCIe: RunControlCommand timeout\n");
-            break;
-        }
+        lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
+        return status;
+    }
+    status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    if (status != OpStatus::Success)
+    {
+        lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+        return status;
     }
 
-    // auto t2 = std::chrono::high_resolution_clock::now();
-    // int duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    // printf("cmd time: %ius\n", duration);
+    while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    {
+        auto t2 = chrono::high_resolution_clock::now();
+        if (chrono::duration_cast<chrono::milliseconds>(t2 - t1) > chrono::milliseconds(timeout_ms))
+        {
+            lime::error("RunControlCommand timeout\n");
+            return OpStatus::Timeout;
+        }
+    }
 
     volatile uint32_t* rarr32 = reinterpret_cast<uint32_t*>(temp);
     for (int i = 0; i < words; ++i)
@@ -94,6 +120,36 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
 OpStatus LA9310_PCIe::RunControlCommand(uint8_t* data, size_t length, int timeout_ms)
 {
     return RunControlCommand(data, data, length, timeout_ms);
+}
+
+std::vector<DMA_Buffer> LA9310_PCIe::GetUserSpaceDMABuffers()
+{
+    std::vector<DMA_Buffer> buffers;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_USERSPACE_DMA, reinterpret_cast<la9310_userspace_dma*>(&dma_usermap));
+    if (ret < 0)
+    {
+        lime::error("IOCTL userspace DMA errno: %i (%s)\n", errno, strerror(errno));
+        return buffers;
+    }
+
+    for (int i = 0; i < dma_usermap.region_count; ++i)
+    {
+        void* vaddr = mmap(NULL,
+            dma_usermap.region[i].size,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            mFileDescriptor,
+            dma_usermap.region[i].mmap_offset);
+        if (vaddr == MAP_FAILED)
+        {
+            lime::error("Userspace DMA[%i] mmap failed errno: %i\n", i, errno);
+            return buffers;
+        }
+        buffers.push_back(
+            DMA_Buffer(vaddr, dma_usermap.region[i].host_bus, dma_usermap.region[i].ep_pa, dma_usermap.region[i].size));
+        // printf("US Mapped: %llx, sz:%lli\n", buffers.end()->va<uint8_t>(), dma_usermap.region[i].size);
+    }
+    return buffers;
 }
 
 OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
@@ -138,6 +194,9 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
 
     hostInterface = reinterpret_cast<volatile struct la9310_hif*>(
         size_t(mapped_ranges[memoryLayout.host_interface.window_id].vaddr) + memoryLayout.host_interface.start_offset);
+
+    ClearSIRQ(0xFFFFFFFF);
+
     return OpStatus::Success;
 }
 
@@ -170,23 +229,6 @@ int LA9310_PCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 mmaped_region LA9310_PCIe::GetBar(uint8_t i)
 {
     return mapped_ranges[i];
-}
-
-OpStatus LA9310_PCIe::wait_for_new_data(int timeout_ms)
-{
-    while (1)
-    {
-        if (!ioctl(mFileDescriptor, LA9310_IOCTL_WAIT_FOR_DATA, &timeout_ms))
-            return OpStatus::Success;
-
-        // EINTR may be returned if a signal occured whilst in the ioctl
-        if (errno == EINTR)
-            continue;
-        if (errno == ETIMEDOUT)
-            return OpStatus::Timeout;
-
-        return OpStatus::Error;
-    }
 }
 
 void LA9310_PCIe::dmem_sync_to_cpu(volatile const void* addr, uint32_t data_size)
@@ -223,7 +265,6 @@ void LA9310_PCIe::dmem_sync_to_device(volatile const void* addr, uint32_t data_s
 
 OpStatus LA9310_PCIe::iowrite32(uint32_t window_id, uint32_t value, uint64_t address)
 {
-    // printf("iowr: %08X v: %08X\n", address, value);
     struct LA9310_IOCTL_CSR_op op;
     op.window_id = static_cast<la9310_window_t>(window_id);
     op.offset = address;
@@ -233,7 +274,6 @@ OpStatus LA9310_PCIe::iowrite32(uint32_t window_id, uint32_t value, uint64_t add
     if (ret < 0)
     {
         lime::error("LA9310_IOCTL_CSR_OP failed. errno: %i\n", errno);
-        close(mFileDescriptor);
         return OpStatus::Error;
     }
     return OpStatus::Success;
@@ -262,9 +302,9 @@ PCIe_CSR_Access::PCIe_CSR_Access(LA9310_PCIe* port, uint32_t window_id, size_t b
 {
 }
 
-void PCIe_CSR_Access::iowrite32(uint32_t value, size_t offset)
+OpStatus PCIe_CSR_Access::iowrite32(uint32_t value, size_t offset)
 {
-    port->iowrite32(window_id, value, base_offset + offset);
+    return port->iowrite32(window_id, value, base_offset + offset);
 }
 
 uint32_t PCIe_CSR_Access::ioread32(size_t offset)
@@ -292,4 +332,41 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
 
     const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::SendSignal(uint32_t bitIndex)
+{
+    auto csr = GetCSRAccess(LA9310_WINDOW_BAR0);
+    printf("signal b:%i\n", bitIndex);
+    return csr->iowrite32(bitIndex, 0x1FC0000); // MSIIR
+}
+
+OpStatus LA9310_PCIe::WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout)
+{
+    struct LA9310_IOCTL_SIRQ sirq_wait;
+    sirq_wait.irq_index = bit;
+    sirq_wait.timeout_ms = timeout.count();
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_SIRQ_WAIT, reinterpret_cast<LA9310_IOCTL_SIRQ*>(&sirq_wait));
+    if (ret < 0)
+    {
+        lime::error("LA9310_PCIe WaitSIRQ errno: %i\n", errno);
+        return OpStatus::Timeout;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::ClearSIRQ(uint32_t bits)
+{
+    struct LA9310_IOCTL_SIRQ_CTRL sirq_control;
+    memset(&sirq_control, 0, sizeof(struct LA9310_IOCTL_SIRQ_CTRL));
+    sirq_control.clear_bits = bits;
+    sirq_control.clear_mask = bits;
+    sirq_control.enable_mask = 0;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_SIRQ_CONTROL, reinterpret_cast<LA9310_IOCTL_SIRQ_CTRL*>(&sirq_control));
+    if (ret < 0)
+    {
+        lime::error("LA9310_PCIe ClearSIRQ errno: %i\n", errno);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
 }

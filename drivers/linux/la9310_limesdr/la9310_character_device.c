@@ -7,6 +7,7 @@
 #include <linux/version.h>
 #include <linux/dma-mapping.h>
 // #include <linux/dma-attrs.h>
+#include <linux/sched.h>
 
 #include "la9310_limesdr_device.h"
 #include "la9310_base.h"
@@ -125,7 +126,8 @@ static int la9310_limesdr_open(struct inode* inode, struct file* file)
 {
     struct char_dev_data* node_data = container_of(inode->i_cdev, struct char_dev_data, cdev_node);
     file->private_data = node_data->myDevice;
-    dev_info(&node_data->myDevice->pdev->dev, "Open %s\n", file->f_path.dentry->d_iname);
+    dev_info(
+        &node_data->myDevice->pdev->dev, "Open %s by %s (PID: %d)\n", file->f_path.dentry->d_iname, current->comm, current->pid);
     return 0;
 }
 

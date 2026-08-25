@@ -11,6 +11,7 @@
 #include <array>
 
 #include "comms/PCIe/LimePCIe.h"
+#include "comms/DMA_Buffer.h"
 
 #include "drivers/linux/la9310_limesdr/la9310_ioctl.h"
 
@@ -29,7 +30,7 @@ class PCIe_CSR_Access
 {
   public:
     PCIe_CSR_Access(LA9310_PCIe* port, uint32_t window_id, size_t base_offset);
-    void iowrite32(uint32_t value, size_t offset);
+    OpStatus iowrite32(uint32_t value, size_t offset);
     uint32_t ioread32(size_t offset);
 
   private:
@@ -95,25 +96,30 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @return 0 on success, error code else
     OpStatus LoadVSPAFirmware(const char* data, size_t length);
 
-    /// @brief Block waiting for new data
-    OpStatus wait_for_new_data(int timeout_ms = 1000);
-
     mmaped_region GetBar(uint8_t i);
     std::shared_ptr<PCIe_CSR_Access> GetCSRAccess(uint32_t window_id, size_t base_offset = 0)
     {
         return std::make_shared<PCIe_CSR_Access>(this, window_id, base_offset);
     }
 
+    std::vector<DMA_Buffer> GetUserSpaceDMABuffers();
+
     OpStatus iowrite32(uint32_t window_id, uint32_t value, uint64_t address);
     uint32_t ioread32(uint32_t window_id, uint64_t address);
+
+    OpStatus SendSignal(uint32_t bit);
+    OpStatus WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout);
+    OpStatus ClearSIRQ(uint32_t bits);
 
   private:
     std::filesystem::path mFilePath;
     int mFileDescriptor;
     volatile struct la9310_hif* hostInterface;
     LA9310_IOCTL_memory_layout memoryLayout;
+    la9310_userspace_dma dma_usermap;
 
     std::array<mmaped_region, LA9310_WINDOW_COUNT> mapped_ranges;
+    std::array<DMA_Buffer, LA9310_WINDOW_COUNT> dma_map;
 };
 
 } // namespace lime

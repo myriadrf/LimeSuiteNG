@@ -54,7 +54,8 @@ int la9310_do_reset_handshake(struct la9310_dev* la9310_dev)
     dma_rmb();
 
     scratch_val = readl(scratch_reg);
-    writel(LA9310_HOST_COMPLETE_CLOCK_CONFIG, scratch_reg);
+    if (scratch_val < LA9310_HOST_COMPLETE_CLOCK_CONFIG)
+        writel(LA9310_HOST_COMPLETE_CLOCK_CONFIG, scratch_reg);
     dma_wmb();
 
     dev_info(la9310_dev->dev,
@@ -244,7 +245,7 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
     scratch_val = readl(scratch_reg);
     const uint64_t t1 = get_jiffies_64();
     const uint64_t timeout_point_jiffies = t1 + msecs_to_jiffies(LA9310_HOST_BOOT_HSHAKE_TIMEOUT); // usually M4 responds in <40ms
-    while ((scratch_val != LA9310_HOST_START_CLOCK_CONFIG) && time_before64(get_jiffies_64(), timeout_point_jiffies))
+    while ((scratch_val < LA9310_HOST_START_CLOCK_CONFIG) && time_before64(get_jiffies_64(), timeout_point_jiffies))
     {
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(msecs_to_jiffies(LA9310_BOOT_INDICATOR_POLL_PERIOD));
@@ -252,7 +253,7 @@ int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_da
         dma_rmb();
     }
 
-    if (scratch_val != LA9310_HOST_START_CLOCK_CONFIG)
+    if (scratch_val < LA9310_HOST_START_CLOCK_CONFIG)
     {
         dev_err(la9310_dev->dev, "M4 firmware boot failed: 0x%x\n", scratch_val);
         rc = -EINVAL;

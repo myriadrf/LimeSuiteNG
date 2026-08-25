@@ -14,7 +14,8 @@
 #include "streaming/PacketsFIFO.h"
 #include "streaming/StreamPacket.h"
 
-#include "M4.h"
+#include "chips/LA9310/firmware/IQStreamer.h"
+#include "comms/DMA_Buffer.h"
 
 namespace lime {
 
@@ -22,7 +23,7 @@ namespace lime {
 class LA9310_TRX : public RFStream
 {
   public:
-    LA9310_TRX(std::shared_ptr<LimeSDR_Micro_M4> la9310);
+    LA9310_TRX(std::shared_ptr<LA9310_IQStreamer> iqstreamer, std::shared_ptr<LA9310_PCIe> pcie);
     virtual ~LA9310_TRX();
 
     uint64_t GetHardwareTimestamp() const override;
@@ -53,7 +54,7 @@ class LA9310_TRX : public RFStream
 
     /** @brief The transfer arguments. */
     struct TransferArgs {
-        std::vector<uint8_t*> buffers; ///< The memory buffers to use.
+        std::vector<DMA_Buffer> buffers; ///< The memory buffers to use.
         int32_t bufferSize; ///< The size of a single buffer.
         int16_t packetSize; ///< The size of a single packet.
         uint8_t packetsToBatch; ///< The amount of packets to batch in a single data transfer operation.
@@ -61,7 +62,11 @@ class LA9310_TRX : public RFStream
     };
 
   private:
-    std::shared_ptr<LimeSDR_Micro_M4> la9310;
+    std::shared_ptr<LA9310_IQStreamer> iqstreamer;
+    std::shared_ptr<LA9310_PCIe> pcie;
+
+    DMA_Buffer rxiqflood_mem;
+    DMA_Buffer txiqflood_mem;
 
     OpStatus RxSetup();
     void RxWorkLoop();
@@ -127,7 +132,6 @@ class LA9310_TRX : public RFStream
         }
     };
 
-    std::vector<complex16_t> rxbuffer[4];
     Stream mRx;
     Stream mTx;
 

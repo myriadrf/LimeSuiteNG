@@ -6,10 +6,8 @@
 #include "chips/LA9310/PHYTimer.h"
 
 #include <fcntl.h>
-#include "chips/LA9310/vspa_state.h"
 #include <stdio.h>
 
-#include "chips/LA9310/VSPA_iqplayer.h"
 #include "chips/LA9310/vspa/VSPA_Trace.h"
 
 #include <unordered_map>
@@ -17,6 +15,23 @@
 extern void ToTraceFile(std::ofstream& ofs, const std::vector<l1_trace_data_t> data);
 
 static const int max_trace_len = 400;
+
+typedef enum {
+    VSPA_MMAP_NONE = 0,
+    VSPA_MMAP_L1_TRACE,
+    VSPA_MMAP_ADC0,
+    VSPA_MMAP_ADC1,
+    VSPA_MMAP_ADC2,
+    VSPA_MMAP_ADC3,
+    VSPA_MMAP_RXDMA_LANE0,
+    VSPA_MMAP_RXDMA_LANE1,
+    VSPA_MMAP_RXDMA_LANE2,
+    VSPA_MMAP_RXDMA_LANE3,
+    VSPA_MMAP_DAC,
+    VSPA_MMAP_TXDMA_LANE0,
+    VSPA_MMAP_STATS,
+    VSPA_MMAP_STATS2,
+} e_vspa_feature;
 
 #define QUOTE(name) #name
 
@@ -64,41 +79,41 @@ static void DumpTracer(VSPA_Trace* tracer, std::ofstream& ofs)
     ToTraceFile(ofs, events);
 }
 
-static vspa_state_t GetProxy(std::shared_ptr<LA9310_PCIe> pcie)
-{
-    vspa_state_t proxy;
-    auto iqflood = pcie->GetBar(LA9310_WINDOW_IQFLOOD);
-    if (iqflood.vaddr == nullptr)
-    {
-        printf("Failed proxy\n");
-        return proxy;
-    }
+// static vspa_state_t GetProxy(std::shared_ptr<LA9310_PCIe> pcie)
+// {
+//     vspa_state_t proxy;
+//     auto iqflood = pcie->GetBar(LA9310_WINDOW_IQFLOOD);
+//     if (iqflood.vaddr == nullptr)
+//     {
+//         printf("Failed proxy\n");
+//         return proxy;
+//     }
 
-    const uint32_t* v_vspa_dmem_proxy_ro = reinterpret_cast<const uint32_t*>(iqflood.vaddr);
-    // pcie->dmem_sync_to_cpu(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-    memcpy(&proxy, v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-    // pcie->dmem_sync_to_device(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-    return proxy;
-}
+//     const uint32_t* v_vspa_dmem_proxy_ro = reinterpret_cast<const uint32_t*>(iqflood.vaddr);
+//     // pcie->dmem_sync_to_cpu(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
+//     memcpy(&proxy, v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
+//     // pcie->dmem_sync_to_device(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
+//     return proxy;
+// }
 
-static void print_pipeline_tx(const tx_pipeline_t& pipe, const tx_pipeline_t& last_pipe)
-{
-    printf("Tx pipeline:\n");
-    uint32_t adc_rate = pipe.dac.output.bytes_done - last_pipe.dac.output.bytes_done;
-    printf("DAC | enq:%08X done:%08X, rate:%8u\n", pipe.dac.input.bytes_done, pipe.dac.output.bytes_done, adc_rate);
-    printf("INT | enq:%08X done:%08X\n", pipe.interp.input.bytes_done, pipe.interp.output.bytes_done);
-    uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
-    printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
-}
+// static void print_pipeline_tx(const tx_pipeline_t& pipe, const tx_pipeline_t& last_pipe)
+// {
+//     printf("Tx pipeline:\n");
+//     uint32_t adc_rate = pipe.dac.output.bytes_done - last_pipe.dac.output.bytes_done;
+//     printf("DAC | enq:%08X done:%08X, rate:%8u\n", pipe.dac.input.bytes_done, pipe.dac.output.bytes_done, adc_rate);
+//     printf("INT | enq:%08X done:%08X\n", pipe.interp.input.bytes_done, pipe.interp.output.bytes_done);
+//     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
+//     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
+// }
 
-static void print_pipeline_rx(const rx_pipeline_t& pipe, const rx_pipeline_t& last_pipe)
-{
-    printf("Rx pipeline:\n");
-    uint32_t adc_rate = pipe.adc.output.bytes_done - last_pipe.adc.output.bytes_done;
-    printf("ADC | enq:%08X done:%08X, rate:%8u\n", pipe.adc.input.bytes_done, pipe.adc.output.bytes_done, adc_rate);
-    uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
-    printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
-}
+// static void print_pipeline_rx(const rx_pipeline_t& pipe, const rx_pipeline_t& last_pipe)
+// {
+//     printf("Rx pipeline:\n");
+//     uint32_t adc_rate = pipe.adc.output.bytes_done - last_pipe.adc.output.bytes_done;
+//     printf("ADC | enq:%08X done:%08X, rate:%8u\n", pipe.adc.input.bytes_done, pipe.adc.output.bytes_done, adc_rate);
+//     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
+//     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
+// }
 
 static void print_dma_bits(uint32_t bits)
 {
@@ -174,11 +189,14 @@ static void la9310_hexdump_control(std::shared_ptr<LA9310_PCIe> pcie)
     volatile uint32_t* base = reinterpret_cast<volatile uint32_t*>(uint64_t(bar0.vaddr) + VSPA_CCSR);
 
     printf("\nEvents:");
-    printf("\nCONTROL:\t%08X", GetValue32AtOffset(base, 0x8));
-    printf("\nIRQEN:\t%08X", GetValue32AtOffset(base, 0xC));
-    printf("\nSTATUS:\t%08X", GetValue32AtOffset(base, 0x10));
-    printf("\nVCPU_HOST_FLAGS0:\t%08X", GetValue32AtOffset(base, 0x14));
-    printf("\nVCPU_HOST_FLAGS1:\t%08X", GetValue32AtOffset(base, 0x18));
+    printf("\nCONTROL:\t%08x ENTRY:\t%08x STACK:\t%08x",
+        GetValue32AtOffset(base, 0x8),
+        GetValue32AtOffset(base, 0x180),
+        GetValue32AtOffset(base, 0x184));
+    printf("\nSTATUS: \t%08x IRQEN:\t%08X", GetValue32AtOffset(base, 0x10), GetValue32AtOffset(base, 0xC));
+    printf("\nEXT_GO_ENA:\t%08x EXT_GO_STAT:\t%08x", GetValue32AtOffset(base, 0x28), GetValue32AtOffset(base, 0x2C));
+    printf("\nVCPU_HOST_FLAGS0_1:\t%08x \t%08x", GetValue32AtOffset(base, 0x14), GetValue32AtOffset(base, 0x18));
+    printf("\nHOST_VCPU_FLAGS0_1:\t%08x \t%08x", GetValue32AtOffset(base, 0x1C), GetValue32AtOffset(base, 0x20));
     printf("\n");
 }
 
@@ -230,94 +248,122 @@ static void la9310_dump_vspa_gp(std::shared_ptr<LA9310_PCIe> pcie)
 
 static void la9310_dump_dma(std::shared_ptr<LA9310_PCIe> pcie)
 {
-    uint8_t* BAR2_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR2).vaddr);
-    auto vspa_dmem_proxy_wo = reinterpret_cast<volatile vspa_state_t*>(BAR2_addr + 0x400000);
+    // uint8_t* BAR2_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR2).vaddr);
+    // auto vspa_dmem_proxy_wo = reinterpret_cast<volatile vspa_state_t*>(BAR2_addr + 0x400000);
 
-    vspa_state_t* vspa_interface = const_cast<vspa_state_t*>(vspa_dmem_proxy_wo);
-    dma_table_t* table = &vspa_interface->internals.tx_dma_schedule;
+    // vspa_state_t* vspa_interface = const_cast<vspa_state_t*>(vspa_dmem_proxy_wo);
+    // dma_table_t* table = &vspa_interface->internals.tx_dma_schedule;
 
-    uint32_t head = table->head;
-    uint32_t tail = table->tail;
-    printf("DMA: c:%3u p:%3u\n", head, tail);
-    auto row = table->items;
-    for (int i = 0; i < DMA_TABLE_LINE_COUNT; ++i)
+    // uint32_t head = table->head;
+    // uint32_t tail = table->tail;
+    // printf("DMA: c:%3u p:%3u\n", head, tail);
+    // auto row = table->items;
+    // for (int i = 0; i < DMA_TABLE_LINE_COUNT; ++i)
+    // {
+    //     printf(i == (head & (DMA_TABLE_LINE_COUNT - 1)) ? "c" : " ");
+    //     printf(i == (tail & (DMA_TABLE_LINE_COUNT - 1)) ? "p" : " ");
+    //     printf("|addr:%08X sz:%8u phyt:%08X_%08X f:%04X\n",
+    //         row[i].addr,
+    //         row[i].size,
+    //         row[i].timestamp >> 32,
+    //         row[i].timestamp,
+    //         row[i].flags);
+    // }
+}
+
+typedef struct {
+    uint32_t feature;
+    uint32_t address;
+} vspa_feature_t;
+
+void* vspa_memorymap_find(std::shared_ptr<LA9310_PCIe> pcie, uint32_t f)
+{
+    uint8_t* base_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000;
+    const vspa_feature_t* row = reinterpret_cast<const vspa_feature_t*>(base_addr);
+
+    for (int i = 0; i < 8; ++i)
     {
-        printf(i == (head & (DMA_TABLE_LINE_COUNT - 1)) ? "c" : " ");
-        printf(i == (tail & (DMA_TABLE_LINE_COUNT - 1)) ? "p" : " ");
-        printf("|addr:%08X sz:%8u phyt:%08X_%08X f:%04X\n",
-            row[i].addr,
-            row[i].size,
-            row[i].timestamp >> 32,
-            row[i].timestamp,
-            row[i].flags);
+        if (row[i].feature == 0)
+            return NULL; // end of table
+
+        if (row[i].feature == f)
+            return (void*)(base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
     }
+    return NULL;
 }
 
-static void print_flow_controls(const vspa_state_t& proxy, const vspa_state_t& last_proxy)
+struct ADC_lane {
+    uint32_t base_buffer;
+    uint32_t next_completion_buffer;
+    uint32_t axi_fifo_addr;
+    uint32_t completion_count;
+    uint16_t axi_fifo_index;
+    uint16_t dma_channel;
+};
+
+struct DebugStats {
+    uint32_t adc_enq;
+    uint32_t adc_compl;
+    uint32_t ddr_enq;
+    uint32_t ddr_compl;
+    uint32_t ddr_ovr;
+    uint32_t adc_err;
+    uint32_t ddr_err;
+};
+
+struct DebugStats2 {
+    uint32_t afe_enq;
+    uint32_t afe_compl;
+    uint32_t afe_err;
+    uint32_t afe_udr;
+    uint32_t dfe_enq;
+    uint32_t dfe_compl;
+    uint32_t dfe_udr;
+    uint32_t dfe_err;
+};
+
+void dump_adc(ADC_lane* adc)
 {
-    const char* rx_names[] = { "Ro0", "Ro1", "Rx0", "Rx1" };
-    printf("         \tTx");
-    for (int i = 0; i < 4; ++i)
-        printf("\t\t%s", rx_names[i]);
-
-    const struct flow_control* flow = &proxy.data_flow.tx;
-    const struct flow_control* last_flow = &last_proxy.data_flow.tx;
-    printf("\nRate:   \t");
-    for (int i = 0; i < 5; ++i)
-        printf("%8u\t", flow[i].produced - last_flow[i].produced);
-    printf("\nProduce:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%08X\t", flow[i].produced);
-    printf("\nConsume:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%08X\t", flow[i].consumed);
-
-    const struct flow_issues* issues = &proxy.data_flow.tx_issues;
-    printf("\nOverrun:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%8u\t", issues[i].overrun);
-    printf("\nUnderrun:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%8u\t", issues[i].underrun);
-    printf("\nxfer_err:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%8u\t", issues[i].xfer_errors);
-    printf("\nxfer_cfg:\t");
-    for (int i = 0; i < 5; ++i)
-        printf("%8u\t", issues[i].xfer_config_errors);
-    printf("\n");
+    printf("ADC:\n");
+    printf("buf: \t%08x\n", adc->next_completion_buffer);
+    printf("axi: \t%08x\n", adc->axi_fifo_addr);
+    printf("axii:\t%08x\n", adc->axi_fifo_index);
+    printf("dma:\t%08x\n", adc->dma_channel);
+    printf("cmpl:\t%08x\n", adc->completion_count);
 }
 
-static void print_channel_info(const vspa_interface_info& info)
-{
-    const tx_config_t* channel = &info.tx_config;
-    printf("\nDEC/INT: ");
-    for (int i = 0; i < 5; ++i)
-        printf("\t%8u", channel[i].oversample);
+static auto stats_t1 = std::chrono::high_resolution_clock::now();
+static auto stats2_t1 = std::chrono::high_resolution_clock::now();
 
-    printf("\nProxy offset:   \t%08X \tProxy fetch: %X", info.dmemProxyOffset, info.proxy_fetch);
-    printf("\nL1_trace_offset:\t%08X \ttrace_size: %u", info.l1_trace_offset, info.l1_trace_size);
-    printf("\nRx channel num: %u\n", info.rx_num_chan);
+#define RATE_OF(name, now, last, duration) (static_cast<double>(now->name - last->name) / duration)
+
+void dump_stats(DebugStats* now, DebugStats* prev)
+{
+    auto stats_t2 = std::chrono::high_resolution_clock::now();
+    double duration_s = std::chrono::duration_cast<chrono::milliseconds>(stats_t2 - stats_t1).count() / 1e3;
+    stats_t1 = stats_t2;
+    printf("adc_enq: \t%08x, %i/s\n", now->adc_enq, (int)RATE_OF(adc_enq, now, prev, duration_s));
+    printf("adc_cmp: \t%08x, %i/s\n", now->adc_compl, (int)RATE_OF(adc_compl, now, prev, duration_s));
+    printf("ddr_enq:\t%08x, %i/s\n", now->ddr_enq, (int)RATE_OF(ddr_enq, now, prev, duration_s));
+    printf("ddr_cmp:\t%08x, %i/s\n", now->ddr_compl, (int)RATE_OF(ddr_compl, now, prev, duration_s));
+    printf("ddr_ovr:\t%08x, %i/s\n", now->ddr_ovr, (int)RATE_OF(ddr_ovr, now, prev, duration_s));
+    printf("adc_err:\t%08x, %i/s\n", now->adc_err, (int)RATE_OF(adc_err, now, prev, duration_s));
+    printf("ddr_err:\t%08x, %i/s\n", now->ddr_err, (int)RATE_OF(ddr_err, now, prev, duration_s));
 }
 
-void print_proxy(const vspa_state_t& proxy, const vspa_state_t& last_proxy, int channel)
+void dump_stats2(DebugStats2* now, DebugStats2* prev)
 {
-    print_flow_controls(proxy, last_proxy);
-    printf("\n");
-    print_channel_info(proxy.info);
-    printf("\n");
-    print_pipeline_tx(proxy.internals.txpipe, last_proxy.internals.txpipe);
-    print_pipeline_rx(proxy.internals.rxpipe[channel], last_proxy.internals.rxpipe[channel]);
-}
-
-static void RequestProxy(std::shared_ptr<LA9310_PCIe> pcie)
-{
-    auto bar2 = pcie->GetBar(LA9310_WINDOW_BAR2);
-    if (bar2.vaddr == nullptr)
-        return;
-
-    vspa_state_t* proxy_wo = reinterpret_cast<vspa_state_t*>(reinterpret_cast<uint64_t>(bar2.vaddr) + 0x400000);
-    proxy_wo->info.proxy_fetch = PROXY_UPDATE_INTERNALS | PROXY_UPDATE_FLOW | PROXY_UPDATE_INFO;
+    auto stats_t2 = std::chrono::high_resolution_clock::now();
+    double duration_s = std::chrono::duration_cast<chrono::milliseconds>(stats_t2 - stats2_t1).count() / 1e3;
+    stats2_t1 = stats_t2;
+    printf("afe_enq: \t%08x, %i/s\n", now->afe_enq, (int)RATE_OF(afe_enq, now, prev, duration_s));
+    printf("afe_cmp: \t%08x, %i/s\n", now->afe_compl, (int)RATE_OF(afe_compl, now, prev, duration_s));
+    printf("afe_err:\t%08x, %i/s\n", now->afe_err, (int)RATE_OF(afe_err, now, prev, duration_s));
+    printf("afe_udr:\t%08x, %i/s\n", now->afe_udr, (int)RATE_OF(afe_udr, now, prev, duration_s));
+    printf("dfe_enq:\t%08x, %i/s\n", now->dfe_enq, (int)RATE_OF(dfe_enq, now, prev, duration_s));
+    printf("dfe_compl:\t%08x, %i/s\n", now->dfe_compl, (int)RATE_OF(dfe_compl, now, prev, duration_s));
+    printf("dfe_udr:\t%08x, %i/s\n", now->dfe_udr, (int)RATE_OF(dfe_udr, now, prev, duration_s));
+    printf("dfe_err:\t%08x, %i/s\n", now->dfe_err, (int)RATE_OF(dfe_err, now, prev, duration_s));
 }
 
 int main(int argc, char* argv[])
@@ -360,12 +406,9 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, intHandler);
 
-    vspa_state_t last_proxy;
-    vspa_state_t proxy;
-
     PHYTimer phytimer(pcie);
 
-    VSPA_iqplayer vspa(pcie);
+    // VSPA_iqplayer vspa(pcie);
 
     std::ofstream fout;
     if (trace)
@@ -435,11 +478,21 @@ int main(int argc, char* argv[])
         // fout.close();
     }
 
+    ADC_lane* adc = reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, VSPA_MMAP_ADC0));
+    ADC_lane* adc2 = nullptr;
+    reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, VSPA_MMAP_ADC1));
+    // DAC_lane* dac = reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, 12));
+    DebugStats* stats = reinterpret_cast<DebugStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS));
+    DebugStats2* stats2 = reinterpret_cast<DebugStats2*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS2));
+
+    DebugStats last_stats;
+    DebugStats2 last_stats2;
+
     while (stopProgram.load() == false)
     {
         if (trace)
         {
-            DumpTracer(vspa.tracer.get(), fout);
+            // DumpTracer(vspa.tracer.get(), fout);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             // std::cerr << "Evt: " << event_count << std::endl;
             // break;
@@ -448,8 +501,8 @@ int main(int argc, char* argv[])
         {
             printf("\033[2J");
             printf("\033[H");
-            proxy = GetProxy(pcie);
-            print_proxy(proxy, last_proxy, args::get(channel));
+            // proxy = GetProxy(pcie);
+            // print_proxy(proxy, last_proxy, args::get(channel));
             la9310_hexdump_dma(pcie);
             if (gpio)
                 la9310_dump_vspa_gp(pcie);
@@ -459,14 +512,31 @@ int main(int argc, char* argv[])
             if (ctrl)
                 la9310_hexdump_control(pcie);
 
-            const std::array<uint8_t, 9> timer_ids = { 1, 2, 3, 4, 10, 11, 15, 20, 14 };
+            const std::array<uint8_t, 11> timer_ids = { 0, 1, 2, 3, 4, 10, 11, 12, 15, 20, 14 };
             std::cerr << "Timers:\n";
             for (auto id : timer_ids)
                 std::cerr << phytimer.GetTimerControl(id).ToString() << std::endl;
 
+            if (adc)
+                dump_adc(adc);
+            if (adc2)
+                dump_adc(adc2);
+            if (stats)
+            {
+                DebugStats temp = *stats;
+                dump_stats(&temp, &last_stats);
+                last_stats = temp;
+            }
+            if (stats2)
+            {
+                DebugStats2 temp = *stats2;
+                dump_stats2(&temp, &last_stats2);
+                last_stats2 = temp;
+            }
+
             // phytimer.DumpMem();
-            RequestProxy(pcie);
-            last_proxy = proxy;
+            // RequestProxy(pcie);
+            // last_proxy = proxy;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         // std::this_thread::sleep_for(std::chrono::milliseconds(50));

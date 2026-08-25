@@ -558,7 +558,7 @@ int main(int argc, char** argv)
 
     std::unique_ptr<RFStream> stream = device->StreamCreate(streamCfg, chipIndexes.front());
     OpStatus status = OpStatus::Success; //stream->Setup(streamCfg);
-    if (status != OpStatus::Success)
+    if (status != OpStatus::Success || !stream)
     {
         cerr << "Failed to setup streams" << endl;
         stream.reset();
@@ -667,6 +667,7 @@ int main(int argc, char** argv)
         for (int i = 0; i < 16; ++i)
             rxSamples[i] = rxData[i].data();
         uint32_t samplesRead = stream->Receive(rxSamples, fftSize, &rxMeta);
+
         if (getActualStreamStartTime)
         {
             // stream start can wait varying amount of time for the PPS, set start time once the first data has been produced

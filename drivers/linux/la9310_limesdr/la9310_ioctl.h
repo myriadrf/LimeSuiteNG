@@ -43,6 +43,33 @@ struct LA9310_IOCTL_CSR_op {
     bool write;
 };
 
+// user space software interrupts
+struct LA9310_IOCTL_SIRQ {
+    uint32_t irq_index;
+    uint32_t timeout_ms;
+};
+
+// user space software interrupts
+struct LA9310_IOCTL_SIRQ_CTRL {
+    uint32_t enable_bits;
+    uint32_t enable_mask;
+    uint32_t clear_bits;
+    uint32_t clear_mask;
+};
+
+struct la9310_atu {
+    size_t host_bus;
+    size_t ep_pa;
+    size_t size;
+    size_t flags;
+    size_t mmap_offset;
+};
+
+struct la9310_userspace_dma {
+    uint32_t region_count;
+    struct la9310_atu region[32];
+};
+
 #define LA9310_IOCTL 'S'
 
 #define LA9310_IOCTL_GET_MEMORY_LAYOUT _IOR(LA9310_IOCTL, 25, struct LA9310_IOCTL_memory_layout)
@@ -51,7 +78,12 @@ struct LA9310_IOCTL_CSR_op {
 #define LA9310_IOCTL_CSR_OP _IOR(LA9310_IOCTL, 28, struct LA9310_IOCTL_CSR_op)
 #define LA9310_IOCTL_LOAD_M4_FW _IOR(LA9310_IOCTL, 29, struct LA9310_IOCTL_firmware)
 #define LA9310_IOCTL_LOAD_VSPA_FW _IOR(LA9310_IOCTL, 30, struct LA9310_IOCTL_firmware)
-#define LA9310_IOCTL_WAIT_FOR_DATA _IOW(LA9310_IOCTL, 31, unsigned int)
+// #define LA9310_IOCTL_WAIT_FOR_DATA _IOW(LA9310_IOCTL, 31, unsigned int)
+#define LA9310_IOCTL_SIRQ_WAIT _IOW(LA9310_IOCTL, 32, struct LA9310_IOCTL_SIRQ)
+#define LA9310_IOCTL_SIRQ_CONTROL _IOW(LA9310_IOCTL, 33, struct LA9310_IOCTL_SIRQ_CTRL)
+#define LA9310_IOCTL_USERSPACE_DMA _IOR(LA9310_IOCTL, 34, struct la9310_userspace_dma)
+#define LA9310_IOCTL_CACHE_SYNC_FOR_CPU _IOW(LA9310_IOCTL, 35, struct la9310_atu)
+#define LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE _IOW(LA9310_IOCTL, 36, struct la9310_atu)
 
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg);
 

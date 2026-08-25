@@ -283,7 +283,7 @@ static int limesuiteng_trx_get_tx_samples_per_packet_func(TRXState* s1)
     // This impacts host processing performance at high sampling rates.
     // The limesuiteng API can accept any number of samples, and splits them into
     // multiple packets internally. So this can be any number.
-    const int txExpectedSamples = 8192;
+    const int txExpectedSamples = 16 * 1024; //8192;
     Log(LogLevel::Debug, "Hardware expected samples count in Tx packet : %i", txExpectedSamples);
     return txExpectedSamples;
 }

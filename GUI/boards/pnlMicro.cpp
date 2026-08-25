@@ -14,6 +14,8 @@
 
 #include "boards/LimeSDR_Micro/LimeSDR_Micro.h"
 
+#include "chips/LA9310/LA9310.h"
+
 #include <ciso646>
 
 using namespace std;

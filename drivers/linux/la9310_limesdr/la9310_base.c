@@ -159,6 +159,14 @@ static void la9310_create_iqflood_outbound(struct la9310_dev* la9310_dev)
         LA9310_IQFLOOD_PHYS_ADDR,
         la9310_dev->iqflood_region.phys_addr,
         la9310_dev->iqflood_region.size);
+
+    struct la9310_atu* dma_region = &la9310_dev->user_dma.region[la9310_dev->user_dma.region_count++];
+
+    dma_region->host_bus = la9310_dev->iqflood_region.phys_addr;
+    dma_region->ep_pa = LA9310_IQFLOOD_PHYS_ADDR;
+    dma_region->size = la9310_dev->iqflood_region.size;
+    dma_region->flags = 0;
+    dma_region->mmap_offset = LA9310_WINDOW_IQFLOOD * PAGE_SIZE;
 }
 
 static void la9310_init_subdrv_region(
@@ -472,21 +480,33 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     return 0;
 }
 
+#define DCR_OFFSET 0x1e00000
 static irqreturn_t la9310_irq_handler(int irq, void* dev)
 {
     struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
-    complete(&la9310_dev->data_available);
-    return IRQ_HANDLED;
+    const struct la9310_ccsr_dcr* ccsr_dcr =
+        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    const uint32_t* sirq_count_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_COUNT_REG];
+    const uint32_t sirq_count = readl(sirq_count_reg);
+    if (la9310_dev->soft_irq.irq_counter != sirq_count)
+    {
+        la9310_dev->soft_irq.irq_counter = sirq_count;
+        const uint32_t* sirq_status_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_STATUS_REG];
+        const uint32_t sirq_status = readl(sirq_status_reg);
+        for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
+        {
+            if (sirq_status & (1 << i))
+                la9310_softirq_signal(la9310_dev, i);
+        }
+        return IRQ_HANDLED;
+    }
+    return IRQ_NONE;
 }
 
 static int la9310_init_irq(struct la9310_dev* la9310_dev)
 {
-    int rc;
-
-    init_completion(&la9310_dev->data_available);
-
     la9310_create_outbound_msi(la9310_dev);
-    rc = request_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_irq_handler, 0, "la9310_dev", (void*)la9310_dev);
+    int rc = request_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_irq_handler, 0, "la9310_dev", (void*)la9310_dev);
 
     return rc;
 }
@@ -557,6 +577,11 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     rc = la9310_init_irq(la9310_dev);
     if (rc)
         goto free_handshake;
+
+    const struct la9310_ccsr_dcr* ccsr_dcr =
+        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    // const uint32_t* sirq_count_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_COUNT_REG];
+    la9310_softirq_init(&la9310_dev->soft_irq, ccsr_dcr->scratchrw);
 
     rc = la9310_register_uart(la9310_dev);
     if (rc)
