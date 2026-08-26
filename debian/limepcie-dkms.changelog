@@ -1,4 +1,4 @@
-limesuiteng (0.1.11) UNRELEASED; urgency=low
+limesuiteng (0.1.12) UNRELEASED; urgency=low
 
   * Fix UART on Linux Kernel 6.8
 
