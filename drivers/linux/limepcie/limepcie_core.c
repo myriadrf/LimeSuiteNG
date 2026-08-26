@@ -28,7 +28,7 @@
 
 #define ADD_UART_INTERFACE 1
 #define MAX_UART_COUNT 8
-static int total_uart_counter = 0;
+static atomic_t total_uart_counter = ATOMIC_INIT(0);
 
 #define LIMEMICROSYSTEMS_VENDOR_ID 0x2058
 
@@ -126,6 +126,7 @@ struct limepcie_device {
     struct deviceInfo info;
     struct limepcie_device_attributes attr;
     struct semaphore control_semaphore;
+    int device_index;
     int minor_base;
     int irq_count;
     struct limepcie_data_cdev control_cdev; // non DMA channel for control packets
@@ -136,7 +137,7 @@ struct limepcie_device {
 #endif
 };
 
-static int gDeviceCounter = 0;
+static atomic_t gDeviceCounter = ATOMIC_INIT(0);
 
 static const char *dma_dir_str(enum dma_data_direction direction)
 {
@@ -284,7 +285,7 @@ static void limepcie_dma_destroy(struct limepcie_dma *dma)
 }
 
 static int limepcie_major;
-static int limepcie_minor_idx;
+static atomic_t limepcie_minor_idx;
 static struct class *limepcie_class;
 static dev_t limepcie_dev_t;
 
@@ -1026,7 +1027,9 @@ static int limepcie_cdev_create(
     WARN_ON(cdev->owner == NULL);
 
     struct device *sysDev = &cdev->owner->pciContext->dev;
-    int index = limepcie_minor_idx;
+    int index = atomic_fetch_inc(&limepcie_minor_idx);
+    if (index >= MINOR(limepcie_dev_t) + LIMEPCIE_MINOR_COUNT)
+        return -ENOSPC;
 
     cdev_init(&cdev->cdevNode, ops);
     int ret = cdev_add(&cdev->cdevNode, MKDEV(limepcie_major, index), 1);
@@ -1045,7 +1048,6 @@ static int limepcie_cdev_create(
         return -EINVAL;
     }
     cdev->minor = index;
-    ++limepcie_minor_idx;
     device_create_file(trxDev, &dev_attr_product);
     device_create_file(trxDev, &dev_attr_vendor);
     return 0;
@@ -1303,7 +1305,7 @@ static int limepcie_device_trx_setup(struct limepcie_device *myDevice, uint8_t t
         ++myDevice->channelsCount;
 
         char cdev_name[128];
-        snprintf(cdev_name, sizeof(cdev_name), "limepcie%i/trx%i", gDeviceCounter, i);
+        snprintf(cdev_name, sizeof(cdev_name), "limepcie%i/trx%i", myDevice->device_index, i);
         ret = limepcie_device_create_cdev_trx(myDevice, toDeviceChannel, fromDeviceChannel, cdev_name);
         if (ret)
             break;
@@ -1388,6 +1390,7 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
 {
     struct device *sysDev = &pciContext->dev;
     myDevice->pciContext = pciContext;
+    myDevice->device_index = atomic_fetch_inc(&gDeviceCounter);
     pci_set_drvdata(pciContext, myDevice);
     int ret = limepcie_configure_pci(myDevice);
     if (ret)
@@ -1454,7 +1457,7 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
     }
 
     char cdev_name[128];
-    snprintf(cdev_name, sizeof(cdev_name), "limepcie%i/control0", gDeviceCounter);
+    snprintf(cdev_name, sizeof(cdev_name), "limepcie%i/control0", myDevice->device_index);
     ret = limepcie_device_create_cdev_control(myDevice, cdev_name);
     if (ret < 0)
         return ret;
@@ -1481,21 +1484,19 @@ static int limepcie_device_init(struct limepcie_device *myDevice, struct pci_dev
         tty_res->start = (resource_size_t)myDevice->bar0_addr + CSR_PCIE_UART0_BASE + uart_csr_offset * myDevice->uart_count;
         tty_res->flags = IORESOURCE_REG;
         char *devSymlink = devm_kzalloc(sysDev, 64, GFP_KERNEL);
-        snprintf(devSymlink, 64, "limepcie%i/uart%i", gDeviceCounter, myDevice->uart_count);
+        snprintf(devSymlink, 64, "limepcie%i/uart%i", myDevice->device_index, myDevice->uart_count);
         tty_res->name = devSymlink;
-        struct platform_device *uart = platform_device_register_simple("limeuart", total_uart_counter, tty_res, 1);
+        const int uart_index = atomic_fetch_inc(&total_uart_counter);
+        struct platform_device *uart = platform_device_register_simple("limeuart", uart_index, tty_res, 1);
         if (IS_ERR(uart))
         {
             dev_err(sysDev, "Failed to register UART%i\n", myDevice->uart_count);
             break;
         }
         // dev_dbg(sysDev, "UART%i at %llx", myDevice->uart_count, tty_res->start);
-        ++total_uart_counter;
         myDevice->uart[myDevice->uart_count] = uart;
     }
 #endif
-
-    ++gDeviceCounter;
 
     sema_init(&myDevice->control_semaphore, 1);
     return 0;
@@ -1599,7 +1600,7 @@ static int __init limepcie_module_init(void)
         goto fail_alloc_chrdev_region;
     }
     limepcie_major = MAJOR(limepcie_dev_t);
-    limepcie_minor_idx = MINOR(limepcie_dev_t);
+    atomic_set(&limepcie_minor_idx, MINOR(limepcie_dev_t));
 
     ret = pci_register_driver(&limepcie_pci_driver);
     if (ret < 0)
