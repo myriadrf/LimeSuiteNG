@@ -116,10 +116,17 @@ struct la9310_dma_info {
     (LA9310_VSPA_FW_SIZE + LA9310_FW_DMA_SIZE + LA9310_DBUG_LOG_SIZE + \
         LA9310_DMA_SEPARATOR_TOTAL_SIZE + LA9310_DMA_ALIGNMENT)
 
+struct MemoryLog_hif {
+    uint32_t buffer_addr;
+    uint32_t buffer_size;
+    uint32_t produced;
+    uint32_t host_consumed;
+    uint32_t log_level;
+};
+
 struct la9310_ep_log {
-    u8* buf;
-    int len;
-    int offset;
+    struct MemoryLog_hif* hif;
+    char* buf;
 };
 
 struct irq_info {
@@ -158,7 +165,6 @@ struct la9310_dev {
     struct la9310_mem_region_info iqflood_region;
     struct la9310_hif* hif;
     u32 hif_size;
-    struct la9310_ep_log ep_log;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
     void* vspa_priv;
@@ -226,4 +232,6 @@ int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, in
 void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index, uint32_t ibs);
 
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
+
+void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa);
 #endif

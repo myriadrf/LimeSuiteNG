@@ -25,6 +25,7 @@
 #include "la9310_vspa.h"
 
 #define MSG_UNIT_OFFSET 0x1fc0000
+#define DCR_OFFSET 0x1e00000
 
 int la9310_init_sysfs(struct la9310_dev* la9310_dev);
 void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
@@ -32,6 +33,26 @@ void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
 static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
+
+void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa)
+{
+    const uint32_t valid_addr_ranges[3][3] = { { 0x1F800000, 0x1F81FFFF, LA9310_MEM_REGION_TCML },
+        { 0x20000000, 0x2000FFFF, LA9310_MEM_REGION_TCMU },
+        { 0x20400000, 0x207FFFFF, LA9310_MEM_REGION_TCMU } };
+
+    for (int i = 0; i < 3; ++i)
+    {
+        dev_err(
+            la9310_dev->dev, "b%i va 0x%llx, ep:%x", i, (size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR + i].vaddr, ep_pa);
+        if (ep_pa >= valid_addr_ranges[i][0] && ep_pa <= valid_addr_ranges[i][1])
+        {
+            void* va = (size_t)la9310_dev->mem_regions[valid_addr_ranges[i][2]].vaddr + (ep_pa - valid_addr_ranges[i][0]);
+            dev_err(la9310_dev->dev, "ret va 0x%llx", va);
+            return va;
+        }
+    }
+    return NULL;
+}
 
 int la9310_map_mem_regions(struct la9310_dev* la9310_dev)
 {
@@ -349,35 +370,6 @@ out:
     return rc;
 }
 
-static void la9310_init_ep_logger(struct la9310_dev* la9310_dev)
-{
-    struct la9310_mem_region_info* logger_region;
-    struct la9310_ep_log* ep_log = &la9310_dev->ep_log;
-    struct la9310_hif* hif = la9310_dev->hif;
-    struct debug_log_regs* dbg_log_regs;
-
-    logger_region = la9310_get_dma_region(la9310_dev, LA9310_MEM_REGION_DBG_LOG);
-
-    ep_log->buf = logger_region->vaddr;
-    ep_log->len = logger_region->size;
-    ep_log->offset = 0;
-
-    dev_info(la9310_dev->dev,
-        "LA9310 Logger init vaddr %px, phys %llx, size %d\n",
-        logger_region->vaddr,
-        logger_region->phys_addr,
-        (int)logger_region->size);
-    /* update HIF to tell LA9310 the pointer to log buffer */
-    dbg_log_regs = &hif->dbg_log_regs;
-
-    dev_info(la9310_dev->dev, "p1:%p p2:%p\n", logger_region, dbg_log_regs);
-
-    writel(logger_region->phys_addr, &dbg_log_regs->buf);
-    writel(logger_region->size, &dbg_log_regs->len);
-    /*Set Default log level to INFO */
-    writel(LA9310_LOG_LEVEL_INFO, &dbg_log_regs->log_level);
-}
-
 static void la9310_init_msg_unit_ptrs(struct la9310_dev* la9310_dev)
 {
     struct la9310_msg_unit* msg_unit;
@@ -480,7 +472,6 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     return 0;
 }
 
-#define DCR_OFFSET 0x1e00000
 static irqreturn_t la9310_irq_handler(int irq, void* dev)
 {
     struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
@@ -493,11 +484,17 @@ static irqreturn_t la9310_irq_handler(int irq, void* dev)
         la9310_dev->soft_irq.irq_counter = sirq_count;
         const uint32_t* sirq_status_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_STATUS_REG];
         const uint32_t sirq_status = readl(sirq_status_reg);
+        uint32_t bits_to_clear = 0;
         for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
         {
             if (sirq_status & (1 << i))
+            {
+                bits_to_clear |= (1 << i);
                 la9310_softirq_signal(la9310_dev, i);
+            }
         }
+        if (bits_to_clear)
+            la9310_softirq_clear_device(la9310_dev, bits_to_clear, bits_to_clear);
         return IRQ_HANDLED;
     }
     return IRQ_NONE;
@@ -559,7 +556,6 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     la9310_create_iqflood_outbound(la9310_dev);
 
     la9310_init_msg_unit_ptrs(la9310_dev);
-    la9310_init_ep_logger(la9310_dev);
 
     rc = la9310_init_sysfs(la9310_dev);
     if (rc)

@@ -64,6 +64,7 @@ struct la9310_msg_unit {
 #define LA9310_SCRATCH_SIRQ_COUNT_REG 6
 #define LA9310_SCRATCH_SIRQ_ENABLE_REG 7
 #define LA9310_SCRATCH_SIRQ_CLEAR_REG 8
+#define LA9310_SCRATCH_MLOG_ADDR 9
 
 enum la9310_boot_fsm {
     NONE = 0,

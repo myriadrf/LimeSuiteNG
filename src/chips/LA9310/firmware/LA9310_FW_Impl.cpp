@@ -34,13 +34,16 @@ OpStatus LA9310_FW_Impl::WaitForResponse()
     if (status != OpStatus::Success)
     {
         lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
-        return status;
+        // still go check the command status
     }
-    status = pcie->ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
-    if (status != OpStatus::Success)
+    else
     {
-        lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-        return status;
+        status = pcie->ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+        if (status != OpStatus::Success)
+        {
+            lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+            // return status;
+        }
     }
 
     auto t1 = chrono::high_resolution_clock::now();
@@ -270,7 +273,7 @@ void* LA9310_FW_Impl::GetHIF(e_m4_mmap type)
 
         if (row->type == type)
         {
-            printf("feature %i ep_pa: 0x%08x\n", row->type, row->address);
+            printf("feature %i ep_pa: 0x%08x host_va:0x%08x\n", row->type, row->address, feature_va);
             return feature_va;
         }
     }

@@ -18,87 +18,121 @@
 
 #define LA9310_DBG_LOG_MAX_STRLEN (100)
 
-static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf)
+static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf, size_t buf_size)
 {
-    int log_len, max_len, str_len;
-    char* ep_log_str;
+    size_t got_bytes = 0;
 
-    log_len = 0;
-    str_len = 0;
-    max_len = 0;
+    // last read position by the host.
+    size_t max_len = readl(&ep_log->hif->buffer_size);
+    if (max_len == 0)
+        return 0;
+    if (max_len > 32 * 1024) // precaution against bad data, LA9310 TCMU is 64K
+    {
+        pr_err("Bad length %i", max_len);
+        max_len = 32 * 1024;
+    }
 
-    ep_log_str = ep_log->buf + ep_log->offset;
-    max_len = ep_log->len - ep_log->offset;
-    str_len = strnlen(ep_log_str, max_len);
+    size_t offset = readl(&ep_log->hif->host_consumed);
+    if (offset >= max_len)
+    {
+        // corrupted offset?
+        // still try to read whatever is in log's memory
+        pr_err("corrupt offset\n");
+        offset = 0;
+    }
+
+    if (!ep_log->buf)
+        return 0;
+
+    char* ep_log_str = ep_log->buf + offset;
+    buf[buf_size - 1] = 0; // null terminate
+
+    size_t data_been_produced = (readl(&ep_log->hif->produced) - offset) % max_len;
+    if (data_been_produced >= max_len - offset)
+        data_been_produced = max_len - offset; // device log overflowed
+
+    size_t buf_remaining = data_been_produced > buf_size - 1 ? buf_size - 1 : data_been_produced;
+    size_t str_len = strnlen(ep_log_str, buf_remaining);
+
+    pr_err("bufsz:%i, strlen:%i, epoff:%i\n", buf_size, str_len, offset);
+
     if (str_len)
     {
         memcpy_fromio(buf, ep_log_str, str_len);
-        memset_io(ep_log_str, 0, str_len);
-        ep_log->offset += str_len;
-        if (ep_log->offset >= ep_log->len)
-            ep_log->offset = 0;
-        log_len += str_len;
+        // memset_io(ep_log_str, 0, str_len);
+        offset += str_len;
+        got_bytes += str_len;
         buf += str_len;
+        buf_remaining -= str_len;
 
-        if (max_len == str_len)
+        if (offset >= max_len)
         {
+            offset = 0;
             ep_log_str = ep_log->buf;
-            str_len = strlen(ep_log_str);
+            str_len = strnlen(ep_log_str, buf_remaining);
+            pr_err("22 bufsz:%i, strlen:%i, epoff:%i\n", buf_size, str_len, offset);
             if (str_len)
             {
                 memcpy_fromio(buf, ep_log_str, str_len);
-                memset_io(ep_log_str, 0, str_len);
-                log_len += str_len;
+                // memset_io(ep_log_str, 0, str_len);
+                got_bytes += str_len;
                 buf += str_len;
+                buf_remaining -= str_len;
             }
-            ep_log->offset = str_len;
-            if (ep_log->offset >= ep_log->len)
-                ep_log->offset = 0;
         }
     }
+    writel(offset, &ep_log->hif->host_consumed);
+    pr_info("got bytes: %i\n", got_bytes);
 
-    return log_len;
+    return got_bytes;
 }
 
+#define DCR_OFFSET 0x1e00000
 static ssize_t target_log_show(struct device* dev, struct device_attribute* attr, char* buf)
 {
-    struct la9310_dev* la9310_dev;
-    struct la9310_ep_log* ep_log;
-    int log_len, i;
+    struct la9310_dev* la9310_dev = dev_get_drvdata(dev);
 
-    la9310_dev = dev_get_drvdata(dev);
-    ep_log = &la9310_dev->ep_log;
-    log_len = 0;
+    // find log hif
+    struct la9310_hif* hif = la9310_dev->hif;
 
-    dev_info(la9310_dev->dev, "LA9310 log buf dump, vaddr %px, offset %d\n", ep_log->buf, ep_log->offset);
-    log_len = la9310_collect_ep_log(ep_log, buf);
-    if (log_len == 0)
+    const struct la9310_ccsr_dcr* ccsr_dcr =
+        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    const uint32_t mlog_addr = ccsr_dcr->scratchrw[LA9310_SCRATCH_MLOG_ADDR];
+    if (mlog_addr == 0)
+        return 0;
+
+    struct la9310_ep_log ep_log;
+    ep_log.hif = (volatile struct MemoryLog_hif*)endpoint_pa_to_va(la9310_dev, mlog_addr);
+    if (!ep_log.hif)
     {
-        for (i = 0; i < ep_log->len; i++)
-        {
-            if (ep_log->buf[i] != 0)
-            {
-                ep_log->offset = i;
-                log_len = la9310_collect_ep_log(ep_log, buf);
-            }
-        }
+        dev_err(la9310_dev->dev, "LA9310 log no hif");
+        return 0;
     }
 
-    dev_info(la9310_dev->dev, "log len: %d, offset : %d\n", log_len, ep_log->offset);
+    uint32_t data_addr = ioread32(&ep_log.hif->buffer_addr);
+    dev_info(la9310_dev->dev, "LA9310 log adr @ 0x%x", data_addr);
 
-    return log_len;
+    ep_log.buf = endpoint_pa_to_va(la9310_dev, data_addr);
+    if (!ep_log.buf)
+    {
+        dev_err(la9310_dev->dev, "LA9310 log no buffer");
+        return 0;
+    }
+
+    size_t bytes_got = la9310_collect_ep_log(&ep_log, buf, PAGE_SIZE);
+    return bytes_got;
 }
 
 static ssize_t target_log_store(struct device* dev, struct device_attribute* attr, const char* buf, size_t count)
 {
-
+    return 0;
     struct la9310_dev* la9310_dev;
     int rc = 0;
     unsigned long val;
     struct la9310_ep_log* ep_log;
 
     la9310_dev = dev_get_drvdata(dev);
-    ep_log = &la9310_dev->ep_log;
+    // ep_log = &la9310_dev->ep_log;
 
     rc = kstrtoul(buf, 0, &val);
     if (rc)
@@ -114,10 +148,9 @@ static ssize_t target_log_store(struct device* dev, struct device_attribute* att
     }
 
     /* reset LA9310 End-Point debug log buffer */
-    memset_io(ep_log->buf, 0, ep_log->len);
-    ep_log->offset = 0;
+    // memset_io(ep_log->buf, 0, ep_log->len);
 
-    dev_info(la9310_dev->dev, "LA9310 log buf reset, vaddr %p, offset %d\n", ep_log->buf, ep_log->offset);
+    // dev_info(la9310_dev->dev, "LA9310 log buf reset, vaddr %p, offset %d\n", ep_log->buf, ep_log->offset);
 out:
     return strnlen(buf, count);
 }

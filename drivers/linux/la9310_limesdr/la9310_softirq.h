@@ -13,7 +13,7 @@ struct la9310_softirq {
     wait_queue_head_t wait[LA9310_SOFTIRQ_COUNT];
     uint32_t irq_counter;
     uint32_t status;
-    struct semaphore clear_semaphore;
+    spinlock_t clearing_lock;
     uint32_t* scratch_registers;
 };
 

@@ -73,24 +73,28 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     auto t1 = std::chrono::high_resolution_clock::now();
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
 
-    // OpStatus status = SendSignal(LA9310_SIGNALS::HOST_COMMAND_POSTED);
-    // if (status != OpStatus::Success)
-    // {
-    //     lime::error("LA9310_PCIe: RunControlCommand failed to post\n");
-    //     return status;
-    // }
+    status = SendSignal(LA9310_SIGNALS::HOST_COMMAND_POSTED);
+    if (status != OpStatus::Success)
+    {
+        lime::error("LA9310_PCIe: RunControlCommand failed to post\n");
+        return status;
+    }
 
     status = WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
     if (status != OpStatus::Success)
     {
         lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
-        return status;
+        // even if IRQ did not arrive, still check the command status
+        // return status;
     }
-    status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
-    if (status != OpStatus::Success)
+    else
     {
-        lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-        return status;
+        status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+        if (status != OpStatus::Success)
+        {
+            lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+            // return status;
+        }
     }
 
     while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
@@ -337,7 +341,6 @@ OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
 OpStatus LA9310_PCIe::SendSignal(uint32_t bitIndex)
 {
     auto csr = GetCSRAccess(LA9310_WINDOW_BAR0);
-    printf("signal b:%i\n", bitIndex);
     return csr->iowrite32(bitIndex, 0x1FC0000); // MSIIR
 }
 

@@ -11,7 +11,7 @@
 
 void la9310_softirq_init(struct la9310_softirq* sirq, uint32_t* scratch_registers)
 {
-    sema_init(&sirq->clear_semaphore, 1);
+    spin_lock_init(&sirq->clearing_lock);
     sirq->irq_counter = 0;
     for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
     {
@@ -21,22 +21,20 @@ void la9310_softirq_init(struct la9310_softirq* sirq, uint32_t* scratch_register
     sirq->scratch_registers = scratch_registers;
 }
 
-void la9310_softirq_enable(struct la9310_softirq* sirq, uint32_t bits, uint32_t mask)
-{
-    sirq->status &= ~bits;
-}
-
 void la9310_softirq_clear_local(struct la9310_dev* la9310_dev, uint32_t bits, uint32_t mask)
 {
     struct la9310_softirq* sirq = &la9310_dev->soft_irq;
     bits &= mask;
+    spin_lock(&sirq->clearing_lock);
     sirq->status &= ~bits;
+    spin_unlock(&sirq->clearing_lock);
 }
 
 void la9310_softirq_clear_device(struct la9310_dev* la9310_dev, uint32_t bits, uint32_t mask)
 {
     struct la9310_softirq* sirq = &la9310_dev->soft_irq;
     bits &= mask;
+
     uint32_t clear_bits = ioread32(&sirq->scratch_registers[LA9310_SCRATCH_SIRQ_CLEAR_REG]);
     iowrite32(clear_bits | bits, &sirq->scratch_registers[LA9310_SCRATCH_SIRQ_CLEAR_REG]);
     uint32_t status = ioread32(&sirq->scratch_registers[LA9310_SCRATCH_SIRQ_STATUS_REG]);
@@ -64,5 +62,4 @@ void la9310_softirq_signal(struct la9310_dev* la9310_dev, uint32_t bit)
 
     sirq->status |= (1 << bit);
     wake_up_interruptible(&sirq->wait[bit]);
-    la9310_softirq_clear_device(la9310_dev, (1 << bit), (1 << bit));
 }
