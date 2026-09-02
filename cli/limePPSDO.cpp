@@ -262,6 +262,11 @@ bool PPSDODriver::updatePPSDORegList(vector<DeviceHandle>& handles, string& devN
             mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR_XTRX)->second;
             regListUpdated = true;
         }
+        if (mHandle.name.find("PCIe"s) != string::npos)
+        {
+            mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR_XTRX)->second;
+            regListUpdated = true;
+        }
         lime::debug("DEBUG: Selected CSR register list for LimeSDR XTRX");
         break;
 

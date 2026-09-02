@@ -20,3 +20,8 @@ if(LIMESUITENG_USB_FTDI)
     add_subdirectory(LimeSDR_Mini)
     target_sources(limesuiteng PRIVATE DeviceFactoryFTDI.cpp)
 endif()
+
+if(LIMESUITENG_XILLYBUS)
+    target_sources(limesuiteng PRIVATE DeviceFactoryXillybus.cpp)
+    add_subdirectory(LimeSDR_PCIE)
+endif()

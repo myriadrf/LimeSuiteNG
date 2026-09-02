@@ -7,6 +7,7 @@ namespace lime {
 WorkerThread::WorkerThread()
     : doWork(false)
     , terminateWorker(false)
+    , workInProgress(false)
 {
     mThread = std::thread(std::bind(&WorkerThread::WorkLoop, this));
 }
@@ -15,7 +16,8 @@ WorkerThread::~WorkerThread()
 {
     terminateWorker.store(true);
     Stop();
-    mThread.join();
+    if (mThread.joinable())
+        mThread.join();
 }
 
 void WorkerThread::Start()
@@ -32,7 +34,7 @@ void WorkerThread::Stop()
 void WorkerThread::Wait()
 {
     std::unique_lock lk{ threadControlsMutex };
-    while (doWork.load(std::memory_order_relaxed))
+    while (workInProgress.load() || doWork.load(std::memory_order_relaxed))
         work_cv.wait_for(lk, std::chrono::milliseconds(100));
 }
 
@@ -48,7 +50,10 @@ void WorkerThread::WorkLoop()
 
         while (doWork.load())
         {
-            if (!Work())
+            workInProgress.store(true);
+            bool continueWork = Work();
+            workInProgress.store(false);
+            if (!continueWork)
             {
                 doWork.store(false);
                 break;

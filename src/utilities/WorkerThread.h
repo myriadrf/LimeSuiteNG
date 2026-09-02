@@ -27,6 +27,7 @@ class LIME_API WorkerThread
     std::condition_variable work_cv;
     std::atomic<bool> doWork;
     std::atomic<bool> terminateWorker;
+    std::atomic<bool> workInProgress;
     std::mutex threadControlsMutex;
 };
 

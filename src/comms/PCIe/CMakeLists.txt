@@ -1,6 +1,8 @@
 include(FeatureSummary)
 include(CMakeDependentOption)
 
+add_subdirectory(xillybus)
+
 cmake_dependent_option(LIMESUITENG_PCIE "Enable Lite PCIe" ON "UNIX; NOT APPLE" OFF)
 
 if(UNIX)
