@@ -42,12 +42,9 @@ void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa)
 
     for (int i = 0; i < 3; ++i)
     {
-        dev_err(
-            la9310_dev->dev, "b%i va 0x%llx, ep:%x", i, (size_t)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR + i].vaddr, ep_pa);
         if (ep_pa >= valid_addr_ranges[i][0] && ep_pa <= valid_addr_ranges[i][1])
         {
             void* va = (size_t)la9310_dev->mem_regions[valid_addr_ranges[i][2]].vaddr + (ep_pa - valid_addr_ranges[i][0]);
-            dev_err(la9310_dev->dev, "ret va 0x%llx", va);
             return va;
         }
     }

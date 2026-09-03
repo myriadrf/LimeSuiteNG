@@ -54,8 +54,6 @@ static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf, si
     size_t buf_remaining = data_been_produced > buf_size - 1 ? buf_size - 1 : data_been_produced;
     size_t str_len = strnlen(ep_log_str, buf_remaining);
 
-    pr_err("bufsz:%i, strlen:%i, epoff:%i\n", buf_size, str_len, offset);
-
     if (str_len)
     {
         memcpy_fromio(buf, ep_log_str, str_len);
@@ -70,7 +68,6 @@ static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf, si
             offset = 0;
             ep_log_str = ep_log->buf;
             str_len = strnlen(ep_log_str, buf_remaining);
-            pr_err("22 bufsz:%i, strlen:%i, epoff:%i\n", buf_size, str_len, offset);
             if (str_len)
             {
                 memcpy_fromio(buf, ep_log_str, str_len);
@@ -82,7 +79,6 @@ static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf, si
         }
     }
     writel(offset, &ep_log->hif->host_consumed);
-    pr_info("got bytes: %i\n", got_bytes);
 
     return got_bytes;
 }

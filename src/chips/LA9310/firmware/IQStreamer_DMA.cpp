@@ -53,6 +53,9 @@ OpStatus IQStreamer_DMA::Enable(bool enabled, bool loop_table)
     dma_hif->loop_mode = loop_table;
     dma_hif->clear = !enabled;
     dma_hif->pending = true;
+
+    if (!enabled && dir == DMA_Dir::DMA_FROM_DEVICE)
+        dma_hif->tcd_pending = true; // TODO: fw bug, this is wrong, but without it stream timing breaks.
     return OpStatus::Success;
 }
 
@@ -69,7 +72,7 @@ OpStatus IQStreamer_DMA::Wait()
     OpStatus status = pcie->WaitSIRQ(bit, chrono::milliseconds(500));
     if (status != OpStatus::Success)
     {
-        printf("IQStreamDMA-Wait timeout f:%x? %i\n", bit, (int)status);
+        printf("IQStreamDMA-Wait %s timeout f:%x? %i\n", (dir == DMA_Dir::DMA_FROM_DEVICE ? "Rx" : "Tx"), bit, (int)status);
         return status;
     }
     status = pcie->ClearSIRQ((1 << bit));
@@ -95,7 +98,7 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     // if dma_hif->size is not 0, M4 has not yet processed previous request
     // printf("tcd %x, %i\n", buffer.endpoint_pa(), size);
     chrono::milliseconds timeout(1000);
-    while (dma_hif->pending && (t2 - t1) < timeout)
+    while (dma_hif->tcd_pending && (t2 - t1) < timeout)
     {
         t2 = std::chrono::high_resolution_clock::now();
     }
@@ -110,7 +113,7 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     dma_hif->input_tcd.timestamp = timestamp;
     dma_hif->input_tcd.flags = flags;
     dma_hif->input_tcd.size = size;
-    dma_hif->pending = true;
+    dma_hif->tcd_pending = true;
     return OpStatus::Success;
 }
 

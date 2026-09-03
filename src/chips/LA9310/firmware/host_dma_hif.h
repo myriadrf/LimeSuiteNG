@@ -29,6 +29,7 @@ typedef struct DMA_Frontend_hif {
     uint32_t loop_mode;
     uint32_t clear;
     uint32_t pending;
+    uint32_t tcd_pending;
 } host_dma_hif_t;
 
 #endif // LIME_M4_HOST_DMA_HIF_H

@@ -338,7 +338,8 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
     return std::max(maxADCrequest, maxDACrequest);
 }
 
-static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310_FW_Impl> fw, double sampleRate, uint32_t oversample)
+static OpStatus SetLA9310SamplingRate(
+    std::shared_ptr<LA9310_FW_Impl> fw, std::shared_ptr<LA9310_IQStreamer> iqstreamer, double sampleRate, uint32_t oversample)
 {
     if (!fw)
         return ReportError(OpStatus::Error, "Firmware not loaded");
@@ -398,6 +399,17 @@ static OpStatus SetLA9310SamplingRate(std::shared_ptr<LA9310_FW_Impl> fw, double
         return ReportError(status, "Failed to set LA9310 system clock");
 
     fw->phytimer.SetReferenceClock(systemClock);
+    if (iqstreamer)
+    {
+        int ovr_pow2 = std::log2(oversample);
+        // for (int i=0; i<4; ++i)
+        // {
+        //     auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, i);
+        //     ovrsample->SetOversample(ovr_pow2);
+        // }
+        // auto ovrsample = iqstreamer->GetOversampler(TRXDir::Tx, 0);
+        // ovrsample->SetOversample(ovr_pow2);
+    }
     // if (la9310->vspa.SetInterpolation(oversample) != OpStatus::Success)
     // {
     //     lime::error("Failed to set interpolation.");
@@ -457,7 +469,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
     double sampleRate = CalculateCommonSampleRate(cfg);
     if (sampleRate > 0)
     {
-        status = SetLA9310SamplingRate(fw, sampleRate, cfg.channel[0].rx.oversample);
+        status = SetLA9310SamplingRate(fw, iqstreamer, sampleRate, cfg.channel[0].rx.oversample);
         if (status != OpStatus::Success)
             return status;
     }
@@ -523,7 +535,7 @@ double LimeSDR_Micro::GetNCOOffset(uint8_t moduleIndex, TRXDir trx, uint8_t chan
 
 OpStatus LimeSDR_Micro::SetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double sampleRate, uint8_t oversample)
 {
-    return SetLA9310SamplingRate(fw, sampleRate, oversample);
+    return SetLA9310SamplingRate(fw, iqstreamer, sampleRate, oversample);
 }
 
 double LimeSDR_Micro::GetClockFreq(uint8_t clk_id, uint8_t channel)

@@ -7,11 +7,13 @@
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/complex.h"
 #include "limesuiteng/config.h"
+#include "limesuiteng/types.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
 namespace lime {
 
+class IOversampler;
 class IDCCorrector;
 class IQuadratureErrorCorrector;
 class LA9310_PCIe;
@@ -30,11 +32,14 @@ class LIME_API LA9310_IQStreamer
   public:
     LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw);
 
-    OpStatus StreamEnable(uint32_t rxmask, uint32_t txmask, bool enable);
+    OpStatus PipelineEnable(uint32_t rxmask, uint32_t txmask, bool enable);
+
+    OpStatus SetPipelineChannel(TRXDir dir, uint32_t pipe, uint32_t channel);
 
     int GetDecimation(uint32_t channel) const;
     int GetInterpolation() const;
 
+    std::shared_ptr<IOversampler> GetOversampler(TRXDir dir, uint32_t channel);
     std::shared_ptr<IDCCorrector> GetRxDCCorrector(uint32_t pipeline);
     std::shared_ptr<IDCCorrector> GetTxDCCorrector(uint32_t pipeline);
     std::shared_ptr<IQuadratureErrorCorrector> GetRxQEC(uint32_t pipeline);

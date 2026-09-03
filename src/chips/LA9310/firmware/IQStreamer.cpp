@@ -1,5 +1,6 @@
 #include "IQStreamer.h"
 
+#include "interface/IOversampler.h"
 #include "interface/IDCCorrector.h"
 #include "interface/IQuadratureErrorCorrector.h"
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
@@ -111,7 +112,7 @@ LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
     }
 }
 
-OpStatus LA9310_IQStreamer::StreamEnable(uint32_t rxmask, uint32_t txmask, bool enable)
+OpStatus LA9310_IQStreamer::PipelineEnable(uint32_t rxmask, uint32_t txmask, bool enable)
 {
     if (!cmd_hif)
         return OpStatus::NotImplemented;
@@ -130,6 +131,11 @@ OpStatus LA9310_IQStreamer::StreamEnable(uint32_t rxmask, uint32_t txmask, bool 
     return response.status == 0 ? OpStatus::Success : OpStatus::Error;
 }
 
+OpStatus LA9310_IQStreamer::SetPipelineChannel(lime::TRXDir dir, uint32_t pipe, uint32_t channel)
+{
+    return OpStatus::NotImplemented;
+}
+
 int LA9310_IQStreamer::GetDecimation(uint32_t channel) const
 {
     return 1;
@@ -143,6 +149,11 @@ int LA9310_IQStreamer::GetInterpolation() const
 uint64_t LA9310_IQStreamer::GetHardwareTimestamp()
 {
     return 0;
+}
+
+std::shared_ptr<IOversampler> LA9310_IQStreamer::GetOversampler(TRXDir dir, uint32_t channel)
+{
+    return nullptr;
 }
 
 class VSPA_DC_Offset : public IDCCorrector

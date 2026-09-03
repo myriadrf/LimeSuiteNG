@@ -209,22 +209,25 @@ OpStatus LA9310_TRX::Start()
     for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
     {
         rx_lanes_mask <<= 1;
-        rxdma->Enable(true, true);
         rx_lanes_mask |= 0x1;
     }
 
     uint32_t tx_lanes_mask = 0;
+    auto txdma = iqstreamer->tx_dma;
     if (mConfig.channels.at(TRXDir::Tx).size() > 0)
     {
-        auto txdma = iqstreamer->tx_dma;
         tx_lanes_mask <<= 1;
-        txdma->Enable(true, false);
         tx_lanes_mask |= 0x1;
     }
 
-    status = iqstreamer->StreamEnable(rx_lanes_mask, tx_lanes_mask, true);
+    status = iqstreamer->PipelineEnable(rx_lanes_mask, tx_lanes_mask, true);
     if (status != OpStatus::Success)
         return status;
+
+    if (rx_lanes_mask)
+        rxdma->Enable(true, true);
+    if (tx_lanes_mask)
+        txdma->Enable(true, false);
 
     phytimer.SoftReset(false);
 
@@ -287,7 +290,7 @@ void LA9310_TRX::Stop()
     for (uint32_t ch : mConfig.channels.at(TRXDir::Rx))
         rxStopMask |= (1 << ch);
 
-    OpStatus status = iqstreamer->StreamEnable(rxStopMask, txStopMask, false);
+    OpStatus status = iqstreamer->PipelineEnable(rxStopMask, txStopMask, false);
     if (status != OpStatus::Success)
     {
         printf("failed to disable stream\n");
@@ -351,11 +354,21 @@ std::vector<DMA_Buffer> SubdivideBuffer(DMA_Buffer buf, size_t blockSize, size_t
 OpStatus LA9310_TRX::RxSetup()
 {
     OpStatus status;
-    status = iqstreamer->StreamEnable(0xF, 0x0, false);
+    status = iqstreamer->PipelineEnable(0xF, 0x0, false);
 
     auto rxdma = iqstreamer->rx_dma[0];
     if (!rxdma)
         return OpStatus::NotSupported;
+
+    // {
+    //     int pipeIndex = 0;
+    //     for (int channelIndex : mConfig.channels.at(TRXDir::Rx))
+    //     {
+    //         status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, VSPA_RX0 + channelIndex);
+    //         if (status != OpStatus::Success)
+    //             return status;
+    //     }
+    // }
 
     status = rxdma->Enable(false);
     if (status != OpStatus::Success)
@@ -749,7 +762,7 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
 OpStatus LA9310_TRX::TxSetup()
 {
     OpStatus status;
-    status = iqstreamer->StreamEnable(0x0, 0x1, false);
+    status = iqstreamer->PipelineEnable(0x0, 0x1, false);
     auto txdma = iqstreamer->tx_dma;
     assert(txdma);
     txdma->Enable(false);
@@ -912,6 +925,7 @@ void LA9310_TRX::TransmitPacketsLoop()
     bool hasTimestamp = false;
 
     uint32_t udr = 0; // iqstreamer->vspa.GetTxUnderruns();
+    int irq_period = dmaBuffers.size() / 4;
 
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
@@ -1065,6 +1079,8 @@ void LA9310_TRX::TransmitPacketsLoop()
             flags |= PKT_END;
         if (hasTimestamp)
             flags |= PKT_HAS_TIMESTAMP;
+        // if (stagingBufferIndex % irq_period == 0)
+        flags |= PKT_IRQ;
         // printf("dma_submit %x %i f:%x\n", dmaBuffers.at(stagingBufferIndex).endpoint_pa(), wrInfo.size, flags);
         const OpStatus status = tx_dma->SubmitTransfer(dmaBuffers.at(stagingBufferIndex), wrInfo.size, txtimestamp, flags);
         if (status != OpStatus::Success)
