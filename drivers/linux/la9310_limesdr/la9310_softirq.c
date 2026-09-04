@@ -12,22 +12,25 @@
 void la9310_softirq_init(struct la9310_softirq* sirq, uint32_t* scratch_registers)
 {
     spin_lock_init(&sirq->clearing_lock);
-    sirq->irq_counter = 0;
     for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
     {
+        sirq->irq_counter[i] = 0;
         init_waitqueue_head(&sirq->wait[i]);
+        sirq->status[i] = 0;
     }
-    sirq->status = 0;
     sirq->scratch_registers = scratch_registers;
 }
 
 void la9310_softirq_clear_local(struct la9310_dev* la9310_dev, uint32_t bits, uint32_t mask)
 {
     struct la9310_softirq* sirq = &la9310_dev->soft_irq;
-    bits &= mask;
-    spin_lock(&sirq->clearing_lock);
-    sirq->status &= ~bits;
-    spin_unlock(&sirq->clearing_lock);
+    for (int i=0; bits && i < LA9310_SOFTIRQ_COUNT; ++i, bits>>=1)
+    {
+        sirq->status[i] = 0;
+    }
+    // spin_lock(&sirq->clearing_lock);
+    // sirq->status &= ~bits;
+    // spin_unlock(&sirq->clearing_lock);
 }
 
 void la9310_softirq_clear_device(struct la9310_dev* la9310_dev, uint32_t bits, uint32_t mask)
@@ -48,7 +51,7 @@ int la9310_softirq_wait(struct la9310_softirq* sirq, uint32_t bit, uint32_t time
     if (bit > LA9310_SOFTIRQ_COUNT)
         return -EINVAL;
 
-    int ret = wait_event_interruptible_timeout(sirq->wait[bit], (sirq->status & (1 << bit)), timeout_jiffies);
+    int ret = wait_event_interruptible_timeout(sirq->wait[bit], (sirq->status[bit] != 0), timeout_jiffies);
     if (!ret)
         return -ETIMEDOUT;
     else if (ret < 0)
@@ -60,6 +63,6 @@ void la9310_softirq_signal(struct la9310_dev* la9310_dev, uint32_t bit)
 {
     struct la9310_softirq* sirq = &la9310_dev->soft_irq;
 
-    sirq->status |= (1 << bit);
+    sirq->status[bit] |= 1;
     wake_up_interruptible(&sirq->wait[bit]);
 }

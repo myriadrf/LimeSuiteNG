@@ -6,13 +6,13 @@
 #include <linux/wait.h>
 #include <linux/semaphore.h>
 
-#define LA9310_SOFTIRQ_COUNT 32
+#define LA9310_SOFTIRQ_COUNT 8
 
 // Software interrupts for signaling user space
 struct la9310_softirq {
     wait_queue_head_t wait[LA9310_SOFTIRQ_COUNT];
-    uint32_t irq_counter;
-    uint32_t status;
+    uint32_t irq_counter[LA9310_SOFTIRQ_COUNT];
+    uint32_t status[LA9310_SOFTIRQ_COUNT];
     spinlock_t clearing_lock;
     uint32_t* scratch_registers;
 };

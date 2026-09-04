@@ -55,11 +55,11 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     assert(hif);
 
     OpStatus status;
-    status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
-    if (status != OpStatus::Success)
-    {
-        lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-    }
+    // status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    // if (status != OpStatus::Success)
+    // {
+    //     lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+    // }
 
     hif->sw_cmd_desc.cmd = LIME_M4_LMS64C_PACKET;
 
@@ -80,22 +80,22 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
         return status;
     }
 
-    status = WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
-    if (status != OpStatus::Success)
-    {
-        lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
-        // even if IRQ did not arrive, still check the command status
-        // return status;
-    }
-    else
-    {
-        status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
-        if (status != OpStatus::Success)
-        {
-            lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-            // return status;
-        }
-    }
+    // status = WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
+    // if (status != OpStatus::Success)
+    // {
+    //     lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
+    //     // even if IRQ did not arrive, still check the command status
+    //     // return status;
+    // }
+    // else
+    // {
+    //     status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    //     if (status != OpStatus::Success)
+    //     {
+    //         lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+    //         // return status;
+    //     }
+    // }
 
     while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
     {
@@ -199,7 +199,7 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
     hostInterface = reinterpret_cast<volatile struct la9310_hif*>(
         size_t(mapped_ranges[memoryLayout.host_interface.window_id].vaddr) + memoryLayout.host_interface.start_offset);
 
-    ClearSIRQ(0xFFFFFFFF);
+    // ClearSIRQ(0xFFFFFFFF);
 
     return OpStatus::Success;
 }
