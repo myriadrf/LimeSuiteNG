@@ -1,15 +1,10 @@
 #ifndef LIME_M4_HOST_DMA_HIF_H
 #define LIME_M4_HOST_DMA_HIF_H
 
+#include "dma_tcd_fifo.h"
+
 #include <stdint.h>
 #include <stdbool.h>
-
-typedef struct DMA_TCD {
-    uint64_t timestamp; // user facing time, samples count
-    uint32_t la9310_mem_address;
-    uint32_t size;
-    uint32_t flags;
-} dma_tcd_t;
 
 // Packet flags
 enum {
@@ -21,15 +16,14 @@ enum {
 };
 
 typedef struct DMA_Frontend_hif {
-    dma_tcd_t input_tcd;
-    uint32_t tcd_complete_counter;
+    dma_tcd_fifo_t tcd_fifo;
+
     uint32_t bytes_xferred;
     uint32_t error;
     uint32_t enable;
     uint32_t loop_mode;
     uint32_t clear;
     uint32_t pending;
-    uint32_t tcd_pending;
 } host_dma_hif_t;
 
 #endif // LIME_M4_HOST_DMA_HIF_H

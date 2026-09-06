@@ -485,7 +485,7 @@ void fftviewer_frFFTviewer::StreamingLoop(
     pthis->mStreamRunning.store(true);
     StreamTxMeta txMeta{};
     txMeta.hasTimestamp = syncTx;
-    txMeta.flags = StreamTxMeta::EndOfBurst;
+    txMeta.flags = 0; //StreamTxMeta::EndOfBurst;
     int fftCounter = 0;
 
     StreamRxMeta rxMeta{};

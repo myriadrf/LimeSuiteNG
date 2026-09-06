@@ -110,10 +110,12 @@ class LIME_API LA9310_PCIe : public LimePCIe
     OpStatus SendSignal(uint32_t bit);
     OpStatus WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout);
     OpStatus ClearSIRQ(uint32_t bits);
+    OpStatus DMA_SyncForCPU(const DMA_Buffer& buffer);
+    OpStatus DMA_SyncForDevice(const DMA_Buffer& buffer);
 
   private:
-    std::filesystem::path mFilePath;
     int mFileDescriptor;
+    std::filesystem::path mFilePath;
     volatile struct la9310_hif* hostInterface;
     LA9310_IOCTL_memory_layout memoryLayout;
     la9310_userspace_dma dma_usermap;

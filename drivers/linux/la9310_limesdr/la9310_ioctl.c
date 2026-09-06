@@ -174,6 +174,45 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         break;
     }
 
+    case LA9310_IOCTL_CACHE_SYNC_FOR_CPU: {
+        struct la9310_atu mem;
+        if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
+            return -EFAULT;
+
+        const struct la9310_userspace_dma* dma_map = &la9310_dev->user_dma;
+        for (int i = 0; i < dma_map->region_count; ++i)
+        {
+            if (mem.host_bus >= dma_map->region[i].host_bus &&
+                mem.host_bus + mem.size < dma_map->region[i].host_bus + dma_map->region[i].size)
+            {
+                dma_sync_single_for_cpu(la9310_dev->dev, mem.host_bus, mem.size, DMA_BIDIRECTIONAL);
+                return 0;
+            }
+        }
+        ret = EINVAL;
+        break;
+    }
+
+    case LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE: {
+        struct la9310_atu mem;
+        if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
+            return -EFAULT;
+        break;
+
+        const struct la9310_userspace_dma* dma_map = &la9310_dev->user_dma;
+        for (int i = 0; i < dma_map->region_count; ++i)
+        {
+            if (mem.host_bus >= dma_map->region[i].host_bus &&
+                mem.host_bus + mem.size < dma_map->region[i].host_bus + dma_map->region[i].size)
+            {
+                dma_sync_single_for_device(la9310_dev->dev, mem.host_bus, mem.size, DMA_BIDIRECTIONAL);
+                return 0;
+            }
+        }
+        ret = EINVAL;
+        break;
+    }
+
     default:
         dev_err(la9310_dev->dev, "Unknown command 0x%X\n", cmd);
         return -ENOTTY;

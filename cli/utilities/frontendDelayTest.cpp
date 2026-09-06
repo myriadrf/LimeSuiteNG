@@ -88,18 +88,37 @@ static void PlotSamples(const complex32f_t* samples, size_t count, int xoffset =
     if (!showPlots)
         return;
 
+    std::vector<float> temp;
+    temp.resize(count * 2);
+    size_t p = 0;
+    for (int i = 0; i < count; ++i)
+    {
+        temp[p] = i + xoffset;
+        ++p;
+        temp[p] = samples[i].real();
+        ++p;
+    }
+
     GNUPlotPipe plot;
     plot.writef("set terminal x11\n");
     plot.writef("set yrange[%f:%f]\n", -1.0, 1.0);
-    plot.write("plot '-' with lines, '-' with lines\n");
-    uint32_t i = 0;
-    for (; i < count; ++i)
-        plot.writef("%i %f\n", i + xoffset, samples[i].real());
-    plot.write("e\n");
-    i = 0;
-    for (; i < count; ++i)
-        plot.writef("%i %f\n", i + xoffset, samples[i].imag());
-    plot.write("e\n");
+    // plot.write("plot '-' with lines, '-' with lines\n");
+
+    // uint32_t i = 0;
+    // for (; i < count; ++i)
+    //     plot.writef("%i %f\n", i + xoffset, samples[i].real());
+    // plot.write("e\n");
+    // i = 0;
+    // for (; i < count; ++i)
+    //     plot.writef("%i %f\n", i + xoffset, samples[i].imag());
+    // plot.write("e\n");
+
+    // plot.flush();
+
+    plot.write("plot '-' binary record=");
+    plot.writef("%i", temp.size());
+    plot.write(" format='%float' with lines\n");
+    plot.writebinary(temp.data(), temp.size() * sizeof(float));
     plot.flush();
 }
 
@@ -163,7 +182,6 @@ class ReceiverThread : public WorkerThread
         }
 
         stream->Receive(rxBuffers, rxSize, &rxMeta);
-        printf("Samples to recv: %i\n", rxSize);
         return false;
     }
 
@@ -249,7 +267,6 @@ class TransmitterThread : public WorkerThread
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
         }
-
         //this_thread::sleep_for(chrono::milliseconds(1));
         {
             StreamTxMeta txMeta{};
@@ -269,7 +286,6 @@ class TransmitterThread : public WorkerThread
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
         }
-
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;

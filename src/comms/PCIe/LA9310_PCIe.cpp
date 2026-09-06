@@ -352,7 +352,7 @@ OpStatus LA9310_PCIe::WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout)
     int ret = ioctl(mFileDescriptor, LA9310_IOCTL_SIRQ_WAIT, reinterpret_cast<LA9310_IOCTL_SIRQ*>(&sirq_wait));
     if (ret < 0)
     {
-        lime::error("LA9310_PCIe WaitSIRQ errno: %i\n", errno);
+        // lime::error("LA9310_PCIe WaitSIRQ errno: %i\n", errno);
         return OpStatus::Timeout;
     }
     return OpStatus::Success;
@@ -369,6 +369,36 @@ OpStatus LA9310_PCIe::ClearSIRQ(uint32_t bits)
     if (ret < 0)
     {
         lime::error("LA9310_PCIe ClearSIRQ errno: %i\n", errno);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::DMA_SyncForCPU(const DMA_Buffer& buffer)
+{
+    struct la9310_atu mem;
+    mem.host_bus = buffer.bus();
+    mem.size = buffer.size();
+
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_CACHE_SYNC_FOR_CPU, reinterpret_cast<la9310_atu*>(&mem));
+    if (ret < 0)
+    {
+        printf("IOCTL SyncForCPU DMA errno: %i (%s)\n", errno, strerror(errno));
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::DMA_SyncForDevice(const DMA_Buffer& buffer)
+{
+    struct la9310_atu mem;
+    mem.host_bus = buffer.bus();
+    mem.size = buffer.size();
+
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE, reinterpret_cast<la9310_atu*>(&mem));
+    if (ret < 0)
+    {
+        printf("IOCTL SyncForDevice DMA errno: %i (%s)\n", errno, strerror(errno));
         return OpStatus::Error;
     }
     return OpStatus::Success;

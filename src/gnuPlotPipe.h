@@ -49,6 +49,14 @@ class GNUPlotPipe
         //fflush(pipeHandle);
     }
 
+    /// @brief Writes data into the pipe.
+    /// @param str The C-string of data to write.
+    void writebinary(const void* bytes, size_t len)
+    {
+        fwrite(bytes, len, 1, pipeHandle);
+        //fflush(pipeHandle);
+    }
+
     /// @brief Writes formatted data into the pipe.
     /// @param format The format string.
     /// @param ... The format arguments parameters.

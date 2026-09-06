@@ -24,7 +24,7 @@ class IQStreamer_DMA
     enum DMA_Dir { DMA_FROM_DEVICE, DMA_TO_DEVICE };
 
     struct State {
-        uint64_t transfersCompleted;
+        uint32_t transfersCompleted;
     };
 
     IQStreamer_DMA(DMA_Dir dir, volatile host_dma_hif_t* dma_hif, std::shared_ptr<LA9310_PCIe> pcie);

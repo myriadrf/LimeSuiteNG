@@ -9,6 +9,8 @@
 #include <stdio.h>
 
 #include "chips/LA9310/vspa/VSPA_Trace.h"
+#include "chips/LA9310/firmware/host_dma_hif.h"
+#include "chips/LA9310/firmware/dma_tcd_fifo.h"
 
 #include <unordered_map>
 
@@ -301,25 +303,17 @@ struct ADC_lane {
     uint16_t dma_channel;
 };
 
-struct DebugStats {
-    uint32_t adc_enq;
-    uint32_t adc_compl;
-    uint32_t ddr_enq;
-    uint32_t ddr_compl;
-    uint32_t ddr_ovr;
-    uint32_t adc_err;
-    uint32_t ddr_err;
-};
-
-struct DebugStats2 {
+struct PipeStats {
     uint32_t afe_enq;
     uint32_t afe_compl;
     uint32_t afe_err;
     uint32_t afe_udr;
+    uint32_t afe_ovr;
     uint32_t dfe_enq;
     uint32_t dfe_compl;
-    uint32_t dfe_udr;
     uint32_t dfe_err;
+    uint32_t dfe_udr;
+    uint32_t dfe_ovr;
 };
 
 void dump_adc(ADC_lane* adc)
@@ -335,35 +329,52 @@ void dump_adc(ADC_lane* adc)
 static auto stats_t1 = std::chrono::high_resolution_clock::now();
 static auto stats2_t1 = std::chrono::high_resolution_clock::now();
 
-#define RATE_OF(name, now, last, duration) (static_cast<double>(now->name - last->name) / duration)
+#define RATE_OF(name, now, last, duration) static_cast<int>(static_cast<double>(now->name - last->name) / duration)
 
-void dump_stats(DebugStats* now, DebugStats* prev)
+void dump_pipeline_stats(const PipeStats* now, const PipeStats* prev, std::chrono::milliseconds duration)
 {
-    auto stats_t2 = std::chrono::high_resolution_clock::now();
-    double duration_s = std::chrono::duration_cast<chrono::milliseconds>(stats_t2 - stats_t1).count() / 1e3;
-    stats_t1 = stats_t2;
-    printf("adc_enq: \t%08x, %i/s\n", now->adc_enq, (int)RATE_OF(adc_enq, now, prev, duration_s));
-    printf("adc_cmp: \t%08x, %i/s\n", now->adc_compl, (int)RATE_OF(adc_compl, now, prev, duration_s));
-    printf("ddr_enq:\t%08x, %i/s\n", now->ddr_enq, (int)RATE_OF(ddr_enq, now, prev, duration_s));
-    printf("ddr_cmp:\t%08x, %i/s\n", now->ddr_compl, (int)RATE_OF(ddr_compl, now, prev, duration_s));
-    printf("ddr_ovr:\t%08x, %i/s\n", now->ddr_ovr, (int)RATE_OF(ddr_ovr, now, prev, duration_s));
-    printf("adc_err:\t%08x, %i/s\n", now->adc_err, (int)RATE_OF(adc_err, now, prev, duration_s));
-    printf("ddr_err:\t%08x, %i/s\n", now->ddr_err, (int)RATE_OF(ddr_err, now, prev, duration_s));
+    double duration_s = duration.count() / 1e3;
+    printf("afe_enq: \t%08x, %8i/s ", now->afe_enq, RATE_OF(afe_enq, now, prev, duration_s));
+    printf("afe_udr:\t%08x, %8i/s\n", now->afe_udr, RATE_OF(afe_udr, now, prev, duration_s));
+    printf("afe_cmp: \t%08x, %8i/s ", now->afe_compl, RATE_OF(afe_compl, now, prev, duration_s));
+    printf("afe_ovr:\t%08x, %8i/s\n", now->afe_ovr, RATE_OF(afe_ovr, now, prev, duration_s));
+    printf("afe_err:\t%08x, %8i/s\n", now->afe_err, RATE_OF(afe_err, now, prev, duration_s));
+    printf("dfe_enq:\t%08x, %8i/s ", now->dfe_enq, RATE_OF(dfe_enq, now, prev, duration_s));
+    printf("dfe_udr:\t%08x, %8i/s\n", now->dfe_udr, RATE_OF(dfe_udr, now, prev, duration_s));
+    printf("dfe_compl:\t%08x, %8i/s ", now->dfe_compl, RATE_OF(dfe_compl, now, prev, duration_s));
+    printf("dfe_ovr:\t%08x, %8i/s\n", now->dfe_ovr, RATE_OF(dfe_ovr, now, prev, duration_s));
+    printf("dfe_err:\t%08x, %8i/s\n", now->dfe_err, RATE_OF(dfe_err, now, prev, duration_s));
 }
 
-void dump_stats2(DebugStats2* now, DebugStats2* prev)
+typedef struct VSPA_DMA_HIF {
+    dma_tcd_fifo_t tcd_fifo;
+    uint32_t htv_tcd_pending_flag_mask; // Host to VSPA signal that input TCD is prepared
+    uint32_t vth_tcd_done_flag_mask; // VSPA to host, signal that TCD has been completed
+} vspa_dma_hif_t;
+
+void dump_rx_pipe(const volatile vspa_dma_hif_t* rxdma)
 {
-    auto stats_t2 = std::chrono::high_resolution_clock::now();
-    double duration_s = std::chrono::duration_cast<chrono::milliseconds>(stats_t2 - stats2_t1).count() / 1e3;
-    stats2_t1 = stats_t2;
-    printf("afe_enq: \t%08x, %i/s\n", now->afe_enq, (int)RATE_OF(afe_enq, now, prev, duration_s));
-    printf("afe_cmp: \t%08x, %i/s\n", now->afe_compl, (int)RATE_OF(afe_compl, now, prev, duration_s));
-    printf("afe_err:\t%08x, %i/s\n", now->afe_err, (int)RATE_OF(afe_err, now, prev, duration_s));
-    printf("afe_udr:\t%08x, %i/s\n", now->afe_udr, (int)RATE_OF(afe_udr, now, prev, duration_s));
-    printf("dfe_enq:\t%08x, %i/s\n", now->dfe_enq, (int)RATE_OF(dfe_enq, now, prev, duration_s));
-    printf("dfe_compl:\t%08x, %i/s\n", now->dfe_compl, (int)RATE_OF(dfe_compl, now, prev, duration_s));
-    printf("dfe_udr:\t%08x, %i/s\n", now->dfe_udr, (int)RATE_OF(dfe_udr, now, prev, duration_s));
-    printf("dfe_err:\t%08x, %i/s\n", now->dfe_err, (int)RATE_OF(dfe_err, now, prev, duration_s));
+    printf("DMA- h:%5i t:%5i d:%5i\n", rxdma->tcd_fifo.head, rxdma->tcd_fifo.tail, rxdma->tcd_fifo.done);
+}
+
+template<class T> struct StatsOverTime {
+    T* data_src{ nullptr };
+    void (*print_values)(const T* now, const T* last, std::chrono::milliseconds duration);
+    T last_value;
+    std::chrono::time_point<std::chrono::high_resolution_clock> last_update_time;
+};
+
+template<class T> void PrintStatsOverTime(StatsOverTime<T>& data)
+{
+    if (!data.data_src)
+        return;
+
+    T temp = *data.data_src;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<chrono::milliseconds>(t1 - data.last_update_time);
+    data.print_values(&temp, &data.last_value, duration);
+    data.last_value = temp;
+    data.last_update_time = t1;
 }
 
 int main(int argc, char* argv[])
@@ -481,12 +492,14 @@ int main(int argc, char* argv[])
     ADC_lane* adc = reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, VSPA_MMAP_ADC0));
     ADC_lane* adc2 = nullptr;
     reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, VSPA_MMAP_ADC1));
-    // DAC_lane* dac = reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, 12));
-    DebugStats* stats = reinterpret_cast<DebugStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS));
-    DebugStats2* stats2 = reinterpret_cast<DebugStats2*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS2));
 
-    DebugStats last_stats;
-    DebugStats2 last_stats2;
+    volatile vspa_dma_hif_t* rxdma = reinterpret_cast<volatile vspa_dma_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_RXDMA_LANE0));
+    volatile vspa_dma_hif_t* txdma = reinterpret_cast<volatile vspa_dma_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_TXDMA_LANE0));
+
+    StatsOverTime<PipeStats> rx_stats = { reinterpret_cast<PipeStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS)),
+        dump_pipeline_stats };
+    StatsOverTime<PipeStats> tx_stats = { reinterpret_cast<PipeStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS2)),
+        dump_pipeline_stats };
 
     while (stopProgram.load() == false)
     {
@@ -521,18 +534,14 @@ int main(int argc, char* argv[])
                 dump_adc(adc);
             if (adc2)
                 dump_adc(adc2);
-            if (stats)
-            {
-                DebugStats temp = *stats;
-                dump_stats(&temp, &last_stats);
-                last_stats = temp;
-            }
-            if (stats2)
-            {
-                DebugStats2 temp = *stats2;
-                dump_stats2(&temp, &last_stats2);
-                last_stats2 = temp;
-            }
+
+            PrintStatsOverTime(rx_stats);
+            PrintStatsOverTime(tx_stats);
+
+            if (rxdma)
+                dump_rx_pipe(rxdma);
+            if (txdma)
+                dump_rx_pipe(txdma);
 
             // phytimer.DumpMem();
             // RequestProxy(pcie);

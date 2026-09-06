@@ -30,21 +30,21 @@ LA9310_FW_Impl::LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie)
 
 OpStatus LA9310_FW_Impl::WaitForResponse()
 {
-    OpStatus status = pcie->WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(500));
-    if (status != OpStatus::Success)
-    {
-        lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
-        // still go check the command status
-    }
-    else
-    {
-        status = pcie->ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
-        if (status != OpStatus::Success)
-        {
-            lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-            // return status;
-        }
-    }
+    // OpStatus status = pcie->WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(500));
+    // if (status != OpStatus::Success)
+    // {
+    //     lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
+    //     // still go check the command status
+    // }
+    // else
+    // {
+    //     status = pcie->ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    //     if (status != OpStatus::Success)
+    //     {
+    //         lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
+    //         // return status;
+    //     }
+    // }
 
     auto t1 = chrono::high_resolution_clock::now();
     while (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED || hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
