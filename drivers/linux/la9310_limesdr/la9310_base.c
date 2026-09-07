@@ -44,7 +44,8 @@ void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa)
     {
         if (ep_pa >= valid_addr_ranges[i][0] && ep_pa <= valid_addr_ranges[i][1])
         {
-            void* va = (size_t)la9310_dev->mem_regions[valid_addr_ranges[i][2]].vaddr + (ep_pa - valid_addr_ranges[i][0]);
+            uint8_t __iomem* va =
+                (uint8_t __iomem*)la9310_dev->mem_regions[valid_addr_ranges[i][2]].vaddr + (ep_pa - valid_addr_ranges[i][0]);
             return va;
         }
     }

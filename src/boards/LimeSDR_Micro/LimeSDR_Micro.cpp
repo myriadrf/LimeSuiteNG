@@ -39,6 +39,7 @@
 #include "streaming/TRXLooper.h"
 #include "interface/IDCCorrector.h"
 #include "interface/IQuadratureErrorCorrector.h"
+#include "interface/IOversampler.h"
 
 #include "CommonFunctions.h"
 #include "DeviceTreeNode.h"
@@ -366,6 +367,15 @@ static OpStatus SetLA9310SamplingRate(
         else
             oversample = 2;
     }
+    else if (sampleRate <= 40e6)
+    {
+        adc_divider_mask = 0xF;
+        dac_divider_mask = 0x1;
+        if (oversample > 0)
+            oversample = std::min(oversample, 2u);
+        else
+            oversample = 2;
+    }
     else if (sampleRate <= 80e6)
     {
         adc_divider_mask = 0xF;
@@ -402,28 +412,14 @@ static OpStatus SetLA9310SamplingRate(
     if (iqstreamer)
     {
         int ovr_pow2 = std::log2(oversample);
-        // for (int i=0; i<4; ++i)
-        // {
-        //     auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, i);
-        //     ovrsample->SetOversample(ovr_pow2);
-        // }
-        // auto ovrsample = iqstreamer->GetOversampler(TRXDir::Tx, 0);
-        // ovrsample->SetOversample(ovr_pow2);
+        for (int i = 0; i < 2; ++i)
+        {
+            auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, i);
+            ovrsample->SetOversample(ovr_pow2);
+        }
+        auto ovrsample = iqstreamer->GetOversampler(TRXDir::Tx, 0);
+        ovrsample->SetOversample(ovr_pow2);
     }
-    // if (la9310->vspa.SetInterpolation(oversample) != OpStatus::Success)
-    // {
-    //     lime::error("Failed to set interpolation.");
-    //     return OpStatus::Error;
-    // }
-    // for (int i = 0; i < 4; ++i)
-    // {
-    //     const auto vspa_ch = la9310->vspa.api_channel_remap(i);
-    //     if (la9310->vspa.SetDecimation(vspa_ch, oversample) != OpStatus::Success)
-    //     {
-    //         lime::error("Failed to set decimation.");
-    //         return OpStatus::Error;
-    //     }
-    // }
     return OpStatus::Success;
 }
 

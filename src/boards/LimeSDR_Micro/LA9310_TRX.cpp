@@ -170,16 +170,16 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
 
     PHYTimer& phytimer = iqstreamer->fw->phytimer;
 
-    uint8_t adcRate, dacRate;
-    iqstreamer->fw->GetADCDACRates(&adcRate, &dacRate);
-    int dec = 1;
-    if (cfg.channels.at(TRXDir::Rx).size() > 0)
-        dec = iqstreamer->GetDecimation(cfg.channels.at(TRXDir::Rx).front());
-    else
-        dec = iqstreamer->GetDecimation(0);
-    int adcdac_clock_divider = (adcRate | dacRate) ? 2 : 1;
+    // uint8_t adcRate, dacRate;
+    // iqstreamer->fw->GetADCDACRates(&adcRate, &dacRate);
+    // int dec = 1;
+    // if (cfg.channels.at(TRXDir::Rx).size() > 0)
+    //     dec = iqstreamer->GetDecimation(cfg.channels.at(TRXDir::Rx).front());
+    // else
+    //     dec = iqstreamer->GetDecimation(0);
+    // int adcdac_clock_divider = (adcRate | dacRate) ? 2 : 1;
 
-    phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
+    // phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
 
     iqstreamer->fw->ResetHardwareTime();
     return status;
@@ -365,15 +365,18 @@ OpStatus LA9310_TRX::RxSetup()
     if (!rxdma)
         return OpStatus::NotSupported;
 
-    // {
-    //     int pipeIndex = 0;
-    //     for (int channelIndex : mConfig.channels.at(TRXDir::Rx))
-    //     {
-    //         status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, VSPA_RX0 + channelIndex);
-    //         if (status != OpStatus::Success)
-    //             return status;
-    //     }
-    // }
+    {
+        int pipeIndex = 0;
+        const std::unordered_map<uint32_t, e_rx_channel> api_to_vspa_channel = {
+            { 0, VSPA_RX0 }, { 1, VSPA_RX1 }, { 2, VSPA_RO0 }, { 3, VSPA_RO1 }
+        };
+        for (int channelIndex : mConfig.channels.at(TRXDir::Rx))
+        {
+            status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, api_to_vspa_channel.at(channelIndex));
+            if (status != OpStatus::Success)
+                return status;
+        }
+    }
 
     status = rxdma->Enable(false);
     if (status != OpStatus::Success)

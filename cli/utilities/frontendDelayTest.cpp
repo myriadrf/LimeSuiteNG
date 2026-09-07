@@ -309,6 +309,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             burst_start += 16384;
             txMeta.timestamp = Timespec(int64_t(burst_start));
+            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();

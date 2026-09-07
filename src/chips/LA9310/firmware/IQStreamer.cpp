@@ -46,8 +46,8 @@ namespace lime {
 static void memcpy_w32(volatile void* dest, volatile const void* src, size_t bytes)
 {
     // check alignment
-    assert((size_t(dest) & 0x3) == 0);
-    assert((size_t(src) & 0x3) == 0);
+    // assert((size_t(dest) & 0x3) == 0);
+    // assert((size_t(src) & 0x3) == 0);
     volatile uint32_t* dest32 = reinterpret_cast<volatile uint32_t*>(dest);
     volatile const uint32_t* src32 = reinterpret_cast<volatile const uint32_t*>(src);
     size_t wordsToCopy = bytes / sizeof(uint32_t) + (bytes % sizeof(uint32_t) > 0 ? 1 : 0);
@@ -133,7 +133,27 @@ OpStatus LA9310_IQStreamer::PipelineEnable(uint32_t rxmask, uint32_t txmask, boo
 
 OpStatus LA9310_IQStreamer::SetPipelineChannel(lime::TRXDir dir, uint32_t pipe, uint32_t channel)
 {
-    return OpStatus::NotImplemented;
+    // uint32_t hiword = MBOX_OPC_RX_CHAN_SELECT << 24;
+    // uint32_t loword = pipe & 0xFF;
+    // loword |= (channel & 0xFF) << 8;
+
+    // uint64_t value = (uint64_t(hiword) << 32) | loword;
+    // return fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
+
+    if (!cmd_hif)
+        return OpStatus::NotImplemented;
+
+    iqstream_channel_select payload;
+    payload.lane = pipe;
+    payload.channel = channel;
+
+    simple_response_payload response;
+
+    OpStatus status = CallCommand(cmd_hif, LIME_M4_RX_CHANNEL_SELECT, &payload, &response);
+    if (status != OpStatus::Success)
+        return status;
+
+    return response.status == 0 ? OpStatus::Success : OpStatus::Error;
 }
 
 int LA9310_IQStreamer::GetDecimation(uint32_t channel) const
@@ -151,9 +171,46 @@ uint64_t LA9310_IQStreamer::GetHardwareTimestamp()
     return 0;
 }
 
+class LA9310_Oversampler : public IOversampler
+{
+  public:
+    LA9310_Oversampler(volatile struct la9310_sw_cmd_desc* cmd_hif, TRXDir dir, uint8_t lane)
+        : cmd_hif(cmd_hif)
+        , dir(dir)
+        , lane(lane)
+    {
+    }
+
+    virtual ~LA9310_Oversampler(){};
+    OpStatus SetOversample(uint32_t oversample_pow2) override
+    {
+        if (!cmd_hif)
+            return OpStatus::NotImplemented;
+
+        iqstream_channel_config payload;
+        payload.lane = lane;
+        payload.oversample_pow2 = oversample_pow2;
+
+        simple_response_payload response;
+
+        M4_Command cmd = dir == TRXDir::Rx ? LIME_M4_RX_CONTROL : LIME_M4_TX_CONTROL;
+        OpStatus status = CallCommand(cmd_hif, cmd, &payload, &response);
+        if (status != OpStatus::Success)
+            return status;
+
+        return response.status == 0 ? OpStatus::Success : OpStatus::Error;
+    }
+    uint32_t GetOversample() override { return 1; }
+
+  private:
+    volatile struct la9310_sw_cmd_desc* cmd_hif;
+    TRXDir dir;
+    uint8_t lane;
+};
+
 std::shared_ptr<IOversampler> LA9310_IQStreamer::GetOversampler(TRXDir dir, uint32_t channel)
 {
-    return nullptr;
+    return std::make_shared<LA9310_Oversampler>(cmd_hif, dir, channel);
 }
 
 class VSPA_DC_Offset : public IDCCorrector
