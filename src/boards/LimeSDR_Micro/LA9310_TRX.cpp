@@ -642,8 +642,7 @@ void LA9310_TRX::ReceivePacketsLoop()
         {
             auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
             auto src = dma_buffers.at(currentBufferIndex).va<lime::complex16_t>();
-            for (uint32_t i = 0; i < samplesProduced; ++i)
-                Rescale(dest[pkt_channel][i], src[i]);
+            memcpy(dest[0], src, readSize);
         }
         pcie->DMA_SyncForDevice(dma_buffers.at(currentBufferIndex));
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
@@ -1051,7 +1050,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             else
             {
                 auto src = reinterpret_cast<lime::complex16_t* const*>(srcPkt->samples.front());
-                memcpy(dest, src, samplesDataSize);
+                memcpy(dest, src[0], samplesDataSize);
             }
 
             srcPkt->samples.pop(samplesToConsume);
