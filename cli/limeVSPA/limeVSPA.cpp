@@ -49,6 +49,21 @@ using namespace std::literals::string_view_literals;
 
 #define RX_NUM_CHAN 1
 
+static void memcpy_w32(volatile void* dest, volatile const void* src, size_t bytes)
+{
+    // check alignment
+    // assert((size_t(dest) & 0x3) == 0);
+    // assert((size_t(src) & 0x3) == 0);
+    volatile uint32_t* dest32 = reinterpret_cast<volatile uint32_t*>(dest);
+    volatile const uint32_t* src32 = reinterpret_cast<volatile const uint32_t*>(src);
+    size_t wordsToCopy = bytes / sizeof(uint32_t) + (bytes % sizeof(uint32_t) > 0 ? 1 : 0);
+    for (size_t w = 0; w < wordsToCopy; ++w)
+    {
+        // must copy word by word. memcpy could attempt to access more than 32bit at a time triggering BUS error.
+        dest32[w] = src32[w];
+    };
+}
+
 static std::atomic<bool> stopProgram(false);
 static void intHandler(int dummy)
 {
@@ -369,7 +384,8 @@ template<class T> void PrintStatsOverTime(StatsOverTime<T>& data)
     if (!data.data_src)
         return;
 
-    T temp = *data.data_src;
+    T temp;
+    memcpy_w32(&temp, data.data_src, sizeof(T));
     auto t1 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<chrono::milliseconds>(t1 - data.last_update_time);
     data.print_values(&temp, &data.last_value, duration);
