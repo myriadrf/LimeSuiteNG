@@ -121,6 +121,8 @@ OpStatus LA9310_FW_Impl::EnterFirmwareReloadMode()
 
 OpStatus LA9310_FW_Impl::SetSystemClock(double clk_hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask)
 {
+    if (clk_hz < 30e6)
+        lime::error("LA9310 system clock should not be set <30MHz, that introduces a chance for DMA to get stuck.");
     hif->adc_rate_mask = adc_rate_mask;
     hif->dac_rate_mask = dac_rate_mask;
     lime::info("LA9310 M4 SetSystemClock %f\n", clk_hz);
