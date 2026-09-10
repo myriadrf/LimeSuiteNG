@@ -217,10 +217,10 @@ void* LA9310_FW_Impl::GetHIF(uint32_t type)
     {
         if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_POSTED)
         {
-            printf("Reset cmd statsu\n");
+            // printf("Reset cmd statsu\n");
             hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_FREE;
         }
-        printf("not done %i\n", hif->sw_cmd_desc.status);
+        // printf("not done %i\n", hif->sw_cmd_desc.status);
         return nullptr;
     }
 
@@ -244,7 +244,7 @@ void* LA9310_FW_Impl::GetHIF(uint32_t type)
 
     if (addr_range_index < 0)
     {
-        printf("Invalid table addr: %08X\n", table_addr);
+        // printf("Invalid table addr: %08X\n", table_addr);
         return nullptr;
     }
 
@@ -273,7 +273,7 @@ void* LA9310_FW_Impl::GetHIF(uint32_t type)
 
         if (row->type == type)
         {
-            printf("feature %i ep_pa: 0x%08x host_va:0x%08x\n", row->type, row->address, feature_va);
+            // printf("feature %i ep_pa: 0x%08x host_va:0x%08x\n", row->type, row->address, feature_va);
             return feature_va;
         }
     }
