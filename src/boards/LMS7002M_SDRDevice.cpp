@@ -1165,7 +1165,19 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
             return status;
     }
 
-    const bool tddMode = cfg.channel[0].rx.centerFrequency == cfg.channel[0].tx.centerFrequency;
+    double rx_lo = 0;
+    if (cfg.channel[0].rx.enabled && cfg.channel[0].rx.centerFrequency > 0)
+        rx_lo = cfg.channel[0].rx.centerFrequency;
+    else if (cfg.channel[1].rx.enabled && cfg.channel[1].rx.centerFrequency > 0)
+        rx_lo = cfg.channel[1].rx.centerFrequency;
+
+    double tx_lo = 0;
+    if (cfg.channel[0].tx.enabled && cfg.channel[0].tx.centerFrequency > 0)
+        tx_lo = cfg.channel[0].tx.centerFrequency;
+    else if (cfg.channel[1].tx.enabled && cfg.channel[1].tx.centerFrequency > 0)
+        tx_lo = cfg.channel[1].tx.centerFrequency;
+
+    const bool tddMode = rx_lo == tx_lo;
     {
         // TODO: verify if every FPGA gateware has this
         // configure FPGA to do TDD switching
@@ -1179,15 +1191,15 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
         }
     }
     // Rx PLL is not used in TDD mode
-    if (cfg.channel[0].rx.centerFrequency > 0)
+    if (rx_lo > 0)
     {
-        status = chip.SetFrequencySX(TRXDir::Rx, cfg.channel[0].rx.centerFrequency);
+        status = chip.SetFrequencySX(TRXDir::Rx, rx_lo);
         if (status != OpStatus::Success)
             return status;
     }
     if (cfg.channel[0].tx.centerFrequency > 0)
     {
-        status = chip.SetFrequencySX(TRXDir::Tx, cfg.channel[0].tx.centerFrequency);
+        status = chip.SetFrequencySX(TRXDir::Tx, tx_lo);
         if (status != OpStatus::Success)
             return status;
     }
