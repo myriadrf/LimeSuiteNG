@@ -198,7 +198,7 @@ uint64_t LA9310_FW_Impl::GetHardwareTime()
     return 0;
 }
 
-void* LA9310_FW_Impl::GetHIF(e_m4_mmap type)
+void* LA9310_FW_Impl::GetHIF(uint32_t type)
 {
     hif->sw_cmd_desc.cmd = LIME_M4_GET_FEATURES;
     auto t1 = chrono::high_resolution_clock::now();

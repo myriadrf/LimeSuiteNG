@@ -510,6 +510,7 @@ int main(int argc, char* argv[])
     reinterpret_cast<ADC_lane*>(vspa_memorymap_find(pcie, VSPA_MMAP_ADC1));
 
     volatile vspa_dma_hif_t* rxdma = reinterpret_cast<volatile vspa_dma_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_RXDMA_LANE0));
+    volatile vspa_dma_hif_t* rxdma2 = reinterpret_cast<volatile vspa_dma_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_RXDMA_LANE1));
     volatile vspa_dma_hif_t* txdma = reinterpret_cast<volatile vspa_dma_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_TXDMA_LANE0));
 
     StatsOverTime<PipeStats> rx_stats = { reinterpret_cast<PipeStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS)),
@@ -556,6 +557,8 @@ int main(int argc, char* argv[])
 
             if (rxdma)
                 dump_rx_pipe(rxdma);
+            if (rxdma2)
+                dump_rx_pipe(rxdma2);
             if (txdma)
                 dump_rx_pipe(txdma);
 

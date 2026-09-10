@@ -98,9 +98,9 @@ LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
 
     cmd_hif = reinterpret_cast<volatile la9310_sw_cmd_desc*>(fw->GetHIF(M4_MMAP_COMMAND_HIF));
 
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-        volatile host_dma_hif_t* ptr = reinterpret_cast<volatile host_dma_hif_t*>(fw->GetHIF(M4_MMAP_IQPLAYER_RXPIPE0));
+        volatile host_dma_hif_t* ptr = reinterpret_cast<volatile host_dma_hif_t*>(fw->GetHIF(M4_MMAP_IQPLAYER_RXPIPE0 + i));
         if (ptr)
             rx_dma[i] = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_FROM_DEVICE, ptr, fw->pcie);
     }

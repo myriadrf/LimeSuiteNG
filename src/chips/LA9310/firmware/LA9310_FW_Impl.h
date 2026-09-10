@@ -32,7 +32,7 @@ class LA9310_FW_Impl : public LA9310
     OpStatus ResetHardwareTime();
     uint64_t GetHardwareTime();
 
-    void* GetHIF(e_m4_mmap type);
+    void* GetHIF(uint32_t type);
 
     // private:
     OpStatus WaitForResponse();

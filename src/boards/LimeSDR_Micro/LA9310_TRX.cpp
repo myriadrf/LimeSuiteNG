@@ -93,9 +93,9 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_IQStreamer> iqstreamer, std::share
     if (dma_buffers.size())
     {
         auto iqflood = dma_buffers.front();
-        rxiqflood_mem = iqflood.subspan(0, iqflood.size() / 4);
+        rxiqflood_mem = iqflood.subspan(0, iqflood.size() / 2);
         memset(rxiqflood_mem.va<void*>(), 0x55, rxiqflood_mem.size());
-        txiqflood_mem = iqflood.subspan(iqflood.size() / 4, iqflood.size() / 4);
+        txiqflood_mem = iqflood.subspan(iqflood.size() / 2, iqflood.size() / 2);
         memset(txiqflood_mem.va<void*>(), 0x55, txiqflood_mem.size());
     }
 }
@@ -209,7 +209,6 @@ OpStatus LA9310_TRX::Start()
     phytimer.SoftReset(true);
 
     uint32_t rx_lanes_mask = 0;
-    auto rxdma = iqstreamer->rx_dma[0];
     for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
     {
         rx_lanes_mask <<= 1;
@@ -229,7 +228,11 @@ OpStatus LA9310_TRX::Start()
         return status;
 
     if (rx_lanes_mask)
-        rxdma->Enable(true, true);
+    {
+        for (int i = 0; i < 4; ++i)
+            if (iqstreamer->rx_dma[i] && (rx_lanes_mask & (1 << i)))
+                iqstreamer->rx_dma[i]->Enable(true, true);
+    }
     if (tx_lanes_mask)
         txdma->Enable(true, false);
 
@@ -297,9 +300,11 @@ void LA9310_TRX::Stop()
         printf("failed to disable stream\n");
     }
 
-    // for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
-    if (iqstreamer->rx_dma[0])
-        iqstreamer->rx_dma[0]->Enable(false);
+    for (int i = 0; i < 4; ++i)
+    {
+        if (iqstreamer->rx_dma[i])
+            iqstreamer->rx_dma[i]->Enable(false);
+    }
 
     if (iqstreamer->tx_dma)
         iqstreamer->tx_dma->Enable(false);
@@ -361,10 +366,6 @@ OpStatus LA9310_TRX::RxSetup()
     OpStatus status;
     status = iqstreamer->PipelineEnable(0xF, 0x0, false);
 
-    auto rxdma = iqstreamer->rx_dma[0];
-    if (!rxdma)
-        return OpStatus::NotSupported;
-
     {
         int pipeIndex = 0;
         const std::unordered_map<uint32_t, e_rx_channel> api_to_vspa_channel = {
@@ -372,15 +373,19 @@ OpStatus LA9310_TRX::RxSetup()
         };
         for (int channelIndex : mConfig.channels.at(TRXDir::Rx))
         {
+            auto rxdma = iqstreamer->rx_dma[pipeIndex];
+            if (!rxdma)
+                return OpStatus::NotSupported;
+
+            status = rxdma->Enable(false);
+            if (status != OpStatus::Success)
+                return status;
+
             status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, api_to_vspa_channel.at(channelIndex));
             if (status != OpStatus::Success)
                 return status;
         }
     }
-
-    status = rxdma->Enable(false);
-    if (status != OpStatus::Success)
-        return status;
 
     mRx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
     mRx.terminate.store(false, std::memory_order_relaxed);
@@ -399,21 +404,26 @@ OpStatus LA9310_TRX::RxSetup()
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
-    const int dmaBatchSize = 16 * 4096;
-    mRxArgs.buffers = SubdivideBuffer(rxiqflood_mem, dmaBatchSize, 16);
-
+    const int dmaBatchSize = 32 * 1024;
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBatchSize / packetSize);
 
-    // prefill DMA table, for continuous operation
-    for (size_t i = 0; i < mRxArgs.buffers.size(); ++i)
+    for (int l = 0; l < mConfig.channels.at(TRXDir::Rx).size(); ++l)
     {
-        OpStatus status = rxdma->SubmitTransfer(mRxArgs.buffers[i], dmaBatchSize, 0, 0);
-        if (status != OpStatus::Success)
+        int memstep = rxiqflood_mem.size() / mConfig.channels.at(TRXDir::Rx).size();
+        rx_lane_dma_mem[l] = rxiqflood_mem.subspan(memstep * l, memstep);
+        rx_buffers[l] = SubdivideBuffer(rx_lane_dma_mem[l], dmaBatchSize, 16);
+
+        // prefill DMA table, for continuous operation
+        for (size_t i = 0; i < rx_buffers[l].size(); ++i)
         {
-            printf("Failed rx tcd prefil\n");
-            return status;
+            OpStatus status = iqstreamer->rx_dma[l]->SubmitTransfer(rx_buffers[l][i], dmaBatchSize, 0, 0);
+            if (status != OpStatus::Success)
+            {
+                printf("Failed rx tcd prefil\n");
+                return status;
+            }
+            pcie->DMA_SyncForDevice(rx_buffers[l][i]);
         }
-        pcie->DMA_SyncForDevice(mRxArgs.buffers[i]);
     }
 
     char msg[256];
@@ -513,7 +523,7 @@ void LA9310_TRX::ReceivePacketsLoop()
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
-    const uint32_t readSize = 16 * 4096; //mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    const uint32_t readSize = 32 * 1024; //mRxArgs.packetSize * mRxArgs.packetsToBatch;
 
     StreamStats& stats = mRx.stats;
     auto& fifo = mRx.fifo;
@@ -532,23 +542,25 @@ void LA9310_TRX::ReceivePacketsLoop()
 
     uint64_t timestamp = 0;
 
-    auto rxdma = iqstreamer->rx_dma[0];
-
     uint32_t lastHwIndex = 0;
     DMATransactionCounter counters;
 
-    auto& dma_buffers = mRxArgs.buffers;
+    // auto& dma_buffers = mRxArgs.buffers;
     counters.requests = 0; //dma_buffers.size();
-    const int bufferCount = dma_buffers.size();
+    const int bufferCount = rx_buffers[0].size();
+    const int chCount = mConfig.channels.at(TRXDir::Rx).size();
+
+    // use last pipeline for pacing data, once it has it, previous pipelines are also ready
+    auto pacing_dma = iqstreamer->rx_dma[chCount - 1];
 
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
-        auto dma{ rxdma->GetCounters() };
+        auto dma{ pacing_dma->GetCounters() };
         int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
         lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
 
-        const int bytesTransferred = counterDiff * readSize;
+        const int bytesTransferred = counterDiff * readSize * chCount;
         if (counterDiff > 0)
         {
             Bps += bytesTransferred;
@@ -600,7 +612,7 @@ void LA9310_TRX::ReceivePacketsLoop()
         if (counters.completed - counters.requests == 0)
         {
             if (mConfig.extraConfig.usePoll)
-                rxdma->Wait();
+                pacing_dma->Wait();
             else
                 std::this_thread::yield();
             continue;
@@ -619,32 +631,35 @@ void LA9310_TRX::ReceivePacketsLoop()
         }
 
         const uint64_t currentBufferIndex{ counters.requests % bufferCount };
-        pcie->DMA_SyncForCPU(dma_buffers.at(currentBufferIndex));
+
         const int samplesProduced = readSize / sizeof(complex16_t);
         timestamp += samplesProduced;
 
-        int pkt_channel = 0;
-        if (conversion.destFormat == DataFormat::F32)
+        for (int c = 0; c < chCount; ++c)
         {
-            auto dest = reinterpret_cast<lime::complex32f_t* const*>(outputPkt->samples.back());
-            auto src = dma_buffers.at(currentBufferIndex).va<lime::complex16_t>();
-            for (uint32_t i = 0; i < samplesProduced; ++i)
-                Rescale(dest[pkt_channel][i], src[i]);
+            pcie->DMA_SyncForCPU(rx_buffers[c].at(currentBufferIndex));
+            if (conversion.destFormat == DataFormat::F32)
+            {
+                auto dest = reinterpret_cast<lime::complex32f_t* const*>(outputPkt->samples.back());
+                auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
+                for (uint32_t i = 0; i < samplesProduced; ++i)
+                    Rescale(dest[c][i], src[i]);
+            }
+            else if (conversion.destFormat == DataFormat::I12)
+            {
+                auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
+                auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
+                for (uint32_t i = 0; i < samplesProduced; ++i)
+                    Rescale(dest[c][i], src[i]);
+            }
+            else
+            {
+                auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
+                auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
+                memcpy(dest[c], src, readSize);
+            }
+            pcie->DMA_SyncForDevice(rx_buffers[c].at(currentBufferIndex));
         }
-        else if (conversion.destFormat == DataFormat::I12)
-        {
-            auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
-            auto src = dma_buffers.at(currentBufferIndex).va<lime::complex16_t>();
-            for (uint32_t i = 0; i < samplesProduced; ++i)
-                Rescale(dest[pkt_channel][i], src[i]);
-        }
-        else
-        {
-            auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
-            auto src = dma_buffers.at(currentBufferIndex).va<lime::complex16_t>();
-            memcpy(dest[0], src, readSize);
-        }
-        pcie->DMA_SyncForDevice(dma_buffers.at(currentBufferIndex));
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
 
         stats.timestamp = timestamp + samplesProduced;

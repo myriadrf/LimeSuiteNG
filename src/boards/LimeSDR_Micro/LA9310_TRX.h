@@ -67,6 +67,8 @@ class LA9310_TRX : public RFStream
 
     DMA_Buffer rxiqflood_mem;
     DMA_Buffer txiqflood_mem;
+    DMA_Buffer rx_lane_dma_mem[4];
+    std::vector<DMA_Buffer> rx_buffers[4];
 
     OpStatus RxSetup();
     void RxWorkLoop();
