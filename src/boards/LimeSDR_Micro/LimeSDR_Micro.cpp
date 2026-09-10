@@ -412,7 +412,7 @@ static OpStatus SetLA9310SamplingRate(
     if (iqstreamer)
     {
         int ovr_pow2 = std::log2(oversample);
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, i);
             ovrsample->SetOversample(ovr_pow2);
