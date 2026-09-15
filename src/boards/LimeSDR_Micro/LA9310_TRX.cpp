@@ -906,8 +906,6 @@ void LA9310_TRX::TxWorkLoop()
     mTx.stage.store(Stream::ReadyStage::Disabled, std::memory_order_relaxed);
 }
 
-static complex16_t tempbuf[65536];
-
 void LA9310_TRX::TransmitPacketsLoop()
 {
     StreamStats& stats = mTx.stats;
@@ -950,6 +948,7 @@ void LA9310_TRX::TransmitPacketsLoop()
     bool startOfBurst = true;
     bool hasTimestamp = false;
 
+    const uint32_t samplesInBatch = mTxArgs.samplesInPacket * mTxArgs.packetsToBatch;
     uint32_t udr = 0; // iqstreamer->vspa.GetTxUnderruns();
     int irq_period = dmaBuffers.size() / 4;
 
@@ -1032,15 +1031,18 @@ void LA9310_TRX::TransmitPacketsLoop()
                     std::this_thread::yield();
                     break;
                 }
-                if (txtimestamp < 0)
-                {
-                    txtimestamp = srcPkt->meta.timestamp.GetTicks();
-                }
                 if (srcPkt->meta.useTimestamp)
                     hasTimestamp = true;
             }
+
+            if (txtimestamp < 0)
+            {
+                txtimestamp = srcPkt->meta.timestamp.GetTicks();
+                hasTimestamp = true;
+            }
+
             uint32_t bytesForFrame = 4;
-            uint32_t samplesToConsume = std::min(uint32_t(mTxArgs.samplesInPacket - samplesFilled), srcPkt->samples.size());
+            uint32_t samplesToConsume = std::min(uint32_t(samplesInBatch - samplesFilled), srcPkt->samples.size());
 
             DataConversion conversion;
             conversion.srcFormat = mConfig.format;
@@ -1048,7 +1050,6 @@ void LA9310_TRX::TransmitPacketsLoop()
             conversion.channelCount = 1;
 
             int samplesDataSize = samplesToConsume * 4;
-            memcpy(tempbuf, srcPkt->samples.front()[0], samplesDataSize);
             auto dest = &dmaBuffers.at(stagingBufferIndex).va<complex16_t>()[dmaFilled / 4];
             if (conversion.srcFormat == DataFormat::F32)
             {
@@ -1074,25 +1075,22 @@ void LA9310_TRX::TransmitPacketsLoop()
             dmaFilled += samplesDataSize;
             samplesFilled += samplesDataSize / bytesForFrame;
 
-            bool isPacketFull = samplesFilled == mTxArgs.samplesInPacket;
+            const bool batchIsFull = samplesFilled == samplesInBatch;
             endOfBurst = srcPkt->meta.flush && srcPkt->samples.size() == 0;
-            if (isPacketFull || endOfBurst)
+            if (batchIsFull || endOfBurst)
             {
+                outputReady = true;
                 samplesFilled = 0;
                 ++packetsCounter;
             }
 
-            bool doFlush = endOfBurst | (packetsCounter == mTxArgs.packetsToBatch);
             if (srcPkt->samples.empty())
             {
                 mTx.packetsPool->push(srcPkt, true);
                 srcPkt = nullptr;
             }
-            if (doFlush)
-            {
-                outputReady = true;
+            if (outputReady)
                 break;
-            }
         }
 
         // one callback for the entire batch
@@ -1128,7 +1126,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             flags |= PKT_HAS_TIMESTAMP;
         // if (stagingBufferIndex % irq_period == 0)
         flags |= PKT_IRQ;
-        // printf("dma_submit %x %i f:%x\n", dmaBuffers.at(stagingBufferIndex).endpoint_pa(), wrInfo.size, flags);
+        // printf("dma_submit ts:%X %x %i f:%x\n", txtimestamp, dmaBuffers.at(stagingBufferIndex).endpoint_pa(), wrInfo.size, flags);
         const OpStatus status = tx_dma->SubmitTransfer(dmaBuffers.at(stagingBufferIndex), wrInfo.size, txtimestamp, flags);
         if (status != OpStatus::Success)
         {
