@@ -49,9 +49,30 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     fgSizer246->Add(chkTxToneGenerator);
     fgSizer246->Add(spinTxToneBin);
 
-    chkDAC_IQ = new wxCheckBox(this, wxID_ANY, "DAC_IQ");
+    chkDAC_IQ = new wxCheckBox(this, wxID_ANY, "DAC_IQ (tx_dma_allowed)");
     chkDAC_IQ->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
     fgSizer246->Add(chkDAC_IQ);
+    timer_map[chkDAC_IQ] = 11;
+
+    chkPA_EN = new wxCheckBox(this, wxID_ANY, "PA_EN/GPIO_12");
+    chkPA_EN->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
+    fgSizer246->Add(chkPA_EN);
+    timer_map[chkPA_EN] = 20;
+
+    chkLNA1_EN = new wxCheckBox(this, wxID_ANY, "LNA1_EN/GPIO_11");
+    chkLNA1_EN->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
+    fgSizer246->Add(chkLNA1_EN);
+    timer_map[chkLNA1_EN] = 19;
+
+    chkTXRX1 = new wxCheckBox(this, wxID_ANY, "TXRX1/GPIO_08 (Tx RF switch)");
+    chkTXRX1->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
+    fgSizer246->Add(chkTXRX1);
+    timer_map[chkTXRX1] = 15;
+
+    chkTXRX0 = new wxCheckBox(this, wxID_ANY, "TXRX0/GPIO_07");
+    chkTXRX0->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
+    fgSizer246->Add(chkTXRX0);
+    timer_map[chkTXRX0] = 16;
 
     SetSizer(fgSizer246);
     Layout();
@@ -74,6 +95,10 @@ bool LA9310_wxgui::Initialize(lime::LA9310_IQStreamer* soc)
     // txdcpanel->Initialize(soc->GetTxDCCorrector(0));
     // rxqecpanel->Initialize(soc->GetRxQEC(0));
     // txqecpanel->Initialize(soc->GetTxQEC(0));
+    for (auto ctrl : timer_map)
+    {
+        ctrl.first->SetValue(iqstreamer->fw->phytimer.GetTimerControl(ctrl.second).GetTriggerValue());
+    }
     return true;
 }
 
@@ -99,6 +124,7 @@ void LA9310_wxgui::onTxToneGeneratorClick(wxCommandEvent& event)
 
 void LA9310_wxgui::onPhytimer(wxCommandEvent& event)
 {
-    iqstreamer->fw->phytimer.GetTimerControl(11).TriggerDirectly(
+    const uint16_t timer_id = timer_map.at(reinterpret_cast<wxCheckBox*>(event.GetEventObject()));
+    iqstreamer->fw->phytimer.GetTimerControl(timer_id).TriggerDirectly(
         event.IsChecked() ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero);
 }

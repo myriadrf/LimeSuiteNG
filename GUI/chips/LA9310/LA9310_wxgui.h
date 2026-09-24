@@ -33,19 +33,18 @@ class LA9310_wxgui : public ISOCPanel
     std::unique_ptr<QECPanel> rxqecpanel;
     std::unique_ptr<QECPanel> txqecpanel;
 
-    wxCheckBox* t11Trigger;
-    wxCheckBox* txEnable;
-
-    wxTextCtrl* txtVSPAAddr;
-    wxTextCtrl* txtVSPAValue;
-    wxCheckBox* chkAxiqEn;
-
     wxSpinCtrl* spinTxToneBin;
     wxCheckBox* chkTxToneGenerator;
     void onTxToneGeneratorClick(wxCommandEvent& event);
 
     wxCheckBox* chkDAC_IQ;
+    wxCheckBox* chkPA_EN;
+    wxCheckBox* chkRF_SW_TDD;
+    wxCheckBox* chkTXRX0;
+    wxCheckBox* chkTXRX1;
+    wxCheckBox* chkLNA1_EN;
     void onPhytimer(wxCommandEvent& event);
 
     lime::LA9310_IQStreamer* iqstreamer;
+    std::unordered_map<wxCheckBox*, uint16_t> timer_map;
 };
