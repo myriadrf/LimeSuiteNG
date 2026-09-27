@@ -11,6 +11,7 @@ class LA9310_IQStreamer;
 
 class DCCorrectorsPanel;
 class QECPanel;
+class ToneGeneratorPanel;
 
 class LA9310_wxgui : public ISOCPanel
 {
@@ -35,6 +36,8 @@ class LA9310_wxgui : public ISOCPanel
 
     wxSpinCtrl* spinTxToneBin;
     wxCheckBox* chkTxToneGenerator;
+    std::unique_ptr<ToneGeneratorPanel> txtonepanel;
+
     void onTxToneGeneratorClick(wxCommandEvent& event);
 
     wxCheckBox* chkDAC_IQ;
@@ -44,6 +47,9 @@ class LA9310_wxgui : public ISOCPanel
     wxCheckBox* chkTXRX1;
     wxCheckBox* chkLNA1_EN;
     void onPhytimer(wxCommandEvent& event);
+    void onLoopback(wxCommandEvent& event);
+
+    wxCheckBox* chkAXIQLoopback;
 
     lime::LA9310_IQStreamer* iqstreamer;
     std::unordered_map<wxCheckBox*, uint16_t> timer_map;

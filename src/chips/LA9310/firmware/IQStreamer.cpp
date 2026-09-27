@@ -3,10 +3,14 @@
 #include "interface/IOversampler.h"
 #include "interface/IDCCorrector.h"
 #include "interface/IQuadratureErrorCorrector.h"
+#include "interface/IToneGenerator.h"
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
 #include "chips/LA9310/LA9310.h"
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
 #include "chips/LA9310/firmware/IQStreamer_DMA.h"
+#include "chips/LA9310/firmware/vspa_memorymap.h"
+#include "chips/LA9310/firmware/iqplayer_commands.h"
+#include "comms/PCIe/LA9310_PCIe.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -339,7 +343,7 @@ class VSPA_QEC : public IQuadratureErrorCorrector
 
         memcpy(&loword, &f1, sizeof(uint32_t));
         value = (uint64_t(hiword | (MBOX_IQ_CORR_FTAP2 & 0xFFFF)) << 32) | loword;
-        mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
+        status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
         if (status != OpStatus::Success)
             return status;
 
@@ -368,6 +372,98 @@ std::shared_ptr<IQuadratureErrorCorrector> LA9310_IQStreamer::GetRxQEC(uint32_t 
 std::shared_ptr<IQuadratureErrorCorrector> LA9310_IQStreamer::GetTxQEC(uint32_t pipeline)
 {
     return std::make_shared<VSPA_QEC>(fw->mailbox, TRXDir::Tx);
+}
+
+class VSPA_Tone : public IToneGenerator
+{
+  private:
+    typedef struct ToneState {
+        float amplitude;
+        uint32_t phase;
+        uint32_t freq_bin;
+    } tone_state_t;
+
+  public:
+    VSPA_Tone(std::shared_ptr<VSPA_mailbox> mailbox, lime::TRXDir dir, volatile void* hif)
+        : mailbox(mailbox)
+        , dir(dir)
+    {
+        state = reinterpret_cast<volatile tone_state_t*>(hif);
+    }
+
+    virtual ~VSPA_Tone() {}
+
+    virtual OpStatus Enabled(bool enabled)
+    {
+        uint64_t value = 0;
+
+        uint32_t hiword = MBOX_OPC_SINGLE_TONE_TX << 24;
+        uint32_t loword = 0;
+        loword |= enabled ? (1 << 16) : 0;
+
+        value = (uint64_t(hiword) << 32) | loword;
+        OpStatus status = mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
+        return status;
+    }
+
+    virtual OpStatus SetParameters(double amplitude, uint32_t fftbin)
+    {
+        if (!state)
+            return OpStatus::NotSupported;
+
+        state->amplitude = (float)amplitude;
+        state->freq_bin = fftbin;
+
+        return OpStatus::Success;
+    }
+
+  private:
+    std::shared_ptr<VSPA_mailbox> mailbox;
+    volatile tone_state_t* state;
+    const lime::TRXDir dir;
+};
+
+std::shared_ptr<IToneGenerator> LA9310_IQStreamer::GetTxToneGenerator(uint32_t pipeline)
+{
+    volatile void* tone_hif = fw->GetVSPAHIF(VSPA_MMAP_TX_TONE_LANE0);
+    if (!tone_hif)
+        return nullptr;
+
+    return std::make_shared<VSPA_Tone>(fw->mailbox, TRXDir::Tx, tone_hif);
+}
+
+const complex32f_t* LA9310_IQStreamer::CalcFFT(uint32_t channel)
+{
+    uint64_t value = 0;
+    uint32_t hiword = MBOX_OPC_RX_FFT << 24;
+    uint32_t loword = 2; // channel
+
+    value = (uint64_t(hiword) << 32) | loword;
+    uint64_t response = 0;
+    OpStatus status = fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response);
+    if (status != OpStatus::Success)
+        return nullptr;
+
+    const uint32_t data_addr = (response >> 32);
+    uint8_t* vspa_base_addr = reinterpret_cast<uint8_t*>(fw->pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000;
+    return reinterpret_cast<complex32f_t*>(vspa_base_addr + data_addr);
+}
+
+const void* LA9310_IQStreamer::CaptureADC(uint32_t channel)
+{
+    uint64_t value = 0;
+    uint32_t hiword = MBOX_OPC_ADC_CAPTURE << 24;
+    uint32_t loword = 2; // channel
+
+    value = (uint64_t(hiword) << 32) | loword;
+    uint64_t response = 0;
+    OpStatus status = fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response);
+    if (status != OpStatus::Success)
+        return nullptr;
+
+    const uint32_t data_addr = (response >> 32);
+    uint8_t* vspa_base_addr = reinterpret_cast<uint8_t*>(fw->pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000;
+    return reinterpret_cast<complex32f_t*>(vspa_base_addr + data_addr);
 }
 
 } // namespace lime

@@ -282,4 +282,34 @@ void* LA9310_FW_Impl::GetHIF(uint32_t type)
     return nullptr;
 }
 
+void* LA9310_FW_Impl::GetVSPAHIF(uint32_t f)
+{
+    typedef struct {
+        uint32_t feature;
+        uint32_t address;
+    } vspa_feature_t;
+
+    uint8_t* base_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000;
+    const vspa_feature_t* row = reinterpret_cast<const vspa_feature_t*>(base_addr);
+
+    for (int i = 0; i < 256; ++i)
+    {
+        if (row[i].feature == 0)
+            return NULL; // end of table
+
+        if (row[i].feature == f)
+            return (void*)(base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
+    }
+    return NULL;
+}
+
+OpStatus LA9310_FW_Impl::DigitalLoopback(bool enable)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_DIGITAL_LOOPBACK;
+    hif->sw_cmd_desc.data[0] = enable ? 1 : 0;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    return WaitForResponse();
+}
+
 } // namespace lime

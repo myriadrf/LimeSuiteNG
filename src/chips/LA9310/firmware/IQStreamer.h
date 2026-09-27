@@ -16,6 +16,7 @@ namespace lime {
 class IOversampler;
 class IDCCorrector;
 class IQuadratureErrorCorrector;
+class IToneGenerator;
 class LA9310_PCIe;
 class LA9310_FW_Impl;
 class IQStreamer_DMA;
@@ -44,9 +45,13 @@ class LIME_API LA9310_IQStreamer
     std::shared_ptr<IDCCorrector> GetTxDCCorrector(uint32_t pipeline);
     std::shared_ptr<IQuadratureErrorCorrector> GetRxQEC(uint32_t pipeline);
     std::shared_ptr<IQuadratureErrorCorrector> GetTxQEC(uint32_t pipeline);
+    std::shared_ptr<IToneGenerator> GetTxToneGenerator(uint32_t pipeline);
 
     OpStatus SetDecimation(uint32_t channel, uint32_t decimation);
     OpStatus SetInterpolation(uint32_t interpolation);
+
+    const complex32f_t* CalcFFT(uint32_t channel);
+    const void* CaptureADC(uint32_t channel);
 
     void HostToVCPU_Flag(uint32_t mask);
 

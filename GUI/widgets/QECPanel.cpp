@@ -61,5 +61,7 @@ void QECPanel::WriteValues(wxSpinDoubleEvent& event)
 {
     if (!device)
         return;
-    device->SetImbalance(gainImbalance->GetValue(), phaseImbalance->GetValue());
+    OpStatus status = device->SetImbalance(gainImbalance->GetValue(), phaseImbalance->GetValue());
+    if (status != OpStatus::Success)
+        wxMessageBox("QEC write value failed.", _("Error"));
 }

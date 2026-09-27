@@ -16,7 +16,7 @@ namespace lime {
 
 class LA9310_PCIe;
 
-class LA9310_FW_Impl : public LA9310
+class LIME_API LA9310_FW_Impl : public LA9310
 {
   public:
     LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie);
@@ -33,6 +33,9 @@ class LA9310_FW_Impl : public LA9310
     uint64_t GetHardwareTime();
 
     void* GetHIF(uint32_t type);
+    void* GetVSPAHIF(uint32_t type);
+
+    OpStatus DigitalLoopback(bool enable);
 
     // private:
     OpStatus WaitForResponse();

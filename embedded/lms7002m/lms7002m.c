@@ -206,14 +206,14 @@ lime_Result lms7002m_enable_channel(lms7002m_context* self, const bool isTx, enu
     //--- frontend ---
     if (isTx)
     {
-        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_TRF, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_TRF, 0);
         lms7002m_spi_modify_csr(self, LMS7002M_EN_G_TRF, enable ? 1 : 0);
         lms7002m_spi_modify_csr(self, LMS7002M_PD_TLOBUF_TRF, enable ? 0 : 1);
         lms7002m_spi_modify_csr(self, LMS7002M_PD_TXPAD_TRF, enable ? 0 : 1);
     }
     else
     {
-        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_RFE, 1);
+        lms7002m_spi_modify_csr(self, LMS7002M_EN_DIR_RFE, 0);
         lms7002m_spi_modify_csr(self, LMS7002M_EN_G_RFE, enable ? 1 : 0);
         lms7002m_spi_modify_csr(self, LMS7002M_PD_MXLOBUF_RFE, enable ? 0 : 1);
         lms7002m_spi_modify_csr(self, LMS7002M_PD_QGEN_RFE, enable ? 0 : 1);

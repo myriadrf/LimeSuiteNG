@@ -10,6 +10,7 @@
 
 #include "widgets/DCCorrectorPanel.h"
 #include "widgets/QECPanel.h"
+#include "widgets/ToneGeneratorPanel.h"
 
 #include <vector>
 using namespace lime;
@@ -41,13 +42,8 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     txqecpanel = std::make_unique<QECPanel>(this, wxID_ANY, "Tx QEC");
     fgSizer246->Add(txqecpanel.get());
 
-    chkTxToneGenerator = new wxCheckBox(this, wxID_ANY, "TxTone");
-    chkTxToneGenerator->Connect(
-        wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onTxToneGeneratorClick), nullptr, this);
-    spinTxToneBin = new wxSpinCtrl(this, wxID_ANY, "64", wxDefaultPosition, wxDefaultSize, 0, 0, 32767, 8192);
-
-    fgSizer246->Add(chkTxToneGenerator);
-    fgSizer246->Add(spinTxToneBin);
+    txtonepanel = std::make_unique<ToneGeneratorPanel>(this, wxID_ANY, "Tx Tone");
+    fgSizer246->Add(txtonepanel.get());
 
     chkDAC_IQ = new wxCheckBox(this, wxID_ANY, "DAC_IQ (tx_dma_allowed)");
     chkDAC_IQ->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPhytimer), nullptr, this);
@@ -74,6 +70,10 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     fgSizer246->Add(chkTXRX0);
     timer_map[chkTXRX0] = 16;
 
+    chkAXIQLoopback = new wxCheckBox(this, wxID_ANY, "AXIQ loopback");
+    chkAXIQLoopback->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onLoopback), nullptr, this);
+    fgSizer246->Add(chkAXIQLoopback);
+
     SetSizer(fgSizer246);
     Layout();
     fgSizer246->Fit(this);
@@ -99,6 +99,10 @@ bool LA9310_wxgui::Initialize(lime::LA9310_IQStreamer* soc)
     {
         ctrl.first->SetValue(iqstreamer->fw->phytimer.GetTimerControl(ctrl.second).GetTriggerValue());
     }
+
+    rxqecpanel->Initialize(soc->GetRxQEC(0));
+    txqecpanel->Initialize(soc->GetTxQEC(0));
+    txtonepanel->Initialize(soc->GetTxToneGenerator(0));
     return true;
 }
 
@@ -111,20 +115,14 @@ void LA9310_wxgui::UpdateGUI()
 {
 }
 
-void LA9310_wxgui::onTxToneGeneratorClick(wxCommandEvent& event)
-{
-    if (!iqstreamer)
-        return;
-
-    OpStatus status =
-        OpStatus::NotImplemented; //iqstreamer->GenerateTxTone(chkTxToneGenerator->GetValue(), spinTxToneBin->GetValue());
-    if (status != OpStatus::Success)
-        printf("Failed to set Tx tone\n");
-}
-
 void LA9310_wxgui::onPhytimer(wxCommandEvent& event)
 {
     const uint16_t timer_id = timer_map.at(reinterpret_cast<wxCheckBox*>(event.GetEventObject()));
     iqstreamer->fw->phytimer.GetTimerControl(timer_id).TriggerDirectly(
         event.IsChecked() ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero);
+}
+
+void LA9310_wxgui::onLoopback(wxCommandEvent& event)
+{
+    iqstreamer->fw->DigitalLoopback(event.IsChecked());
 }
