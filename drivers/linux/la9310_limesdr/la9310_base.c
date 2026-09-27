@@ -500,6 +500,10 @@ static irqreturn_t la9310_irq_handler(int irq, void* dev)
 
 static int la9310_init_irq(struct la9310_dev* la9310_dev)
 {
+    const struct la9310_ccsr_dcr* ccsr_dcr =
+        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    la9310_softirq_init(&la9310_dev->soft_irq, ccsr_dcr->scratchrw);
+
     la9310_create_outbound_msi(la9310_dev);
     int rc = request_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_irq_handler, 0, "la9310_dev", (void*)la9310_dev);
 
@@ -571,11 +575,6 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     rc = la9310_init_irq(la9310_dev);
     if (rc)
         goto free_handshake;
-
-    const struct la9310_ccsr_dcr* ccsr_dcr =
-        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
-    // const uint32_t* sirq_count_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_COUNT_REG];
-    la9310_softirq_init(&la9310_dev->soft_irq, ccsr_dcr->scratchrw);
 
     rc = la9310_register_uart(la9310_dev);
     if (rc)
