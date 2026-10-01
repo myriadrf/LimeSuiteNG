@@ -70,6 +70,7 @@ int main(int argc, char** argv)
         config.channel[c].rx.lpf = 0;
         config.channel[c].rx.path = 2; // TODO: replace with string names
         config.channel[c].rx.calibrate = CalibrationFlag::NONE;
+        config.channel[c].rx.gain[eGainTypes::GENERIC] = 20;
 
         config.channel[c].tx.enabled = true;
         config.channel[c].tx.sampleRate = sampleRate;
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
         config.channel[c].tx.path = 2; // TODO: replace with string names
         config.channel[c].tx.centerFrequency = frequencyLO;
         config.channel[c].tx.calibrate = CalibrationFlag::NONE;
+        config.channel[c].tx.gain[eGainTypes::GENERIC] = 50;
     }
 
     // Samples data streaming configuration

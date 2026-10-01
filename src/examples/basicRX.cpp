@@ -115,6 +115,7 @@ int main(int argc, char** argv)
     config.channel[0].rx.path = rxPath;
     config.channel[0].rx.calibrate = CalibrationFlag::NONE;
     config.channel[0].rx.testSignal.enabled = false;
+    config.channel[0].rx.gain[eGainTypes::GENERIC] = 20;
 
     config.channel[0].tx.enabled = false;
     config.channel[0].tx.sampleRate = sampleRate;
@@ -122,6 +123,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.path = 0;
     config.channel[0].tx.centerFrequency = frequencyLO - 1e6;
     config.channel[0].tx.testSignal.enabled = false;
+    config.channel[0].tx.gain[eGainTypes::GENERIC] = 50;
 
     std::cout << "Configuring device ...\n"sv;
 

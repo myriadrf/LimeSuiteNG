@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     // RF parameters
     SDRConfig config;
     config.channel[0].tx.enabled = true;
-    config.channel[0].rx.enabled = false;
+    config.channel[0].rx.enabled = true;
     config.channel[0].rx.centerFrequency = frequencyLO;
     config.channel[0].tx.centerFrequency = frequencyLO;
     config.channel[0].rx.sampleRate = sampleRate;
@@ -108,6 +108,7 @@ int main(int argc, char** argv)
     config.channel[0].tx.sampleRate = sampleRate;
     config.channel[0].tx.oversample = 2;
     config.channel[0].tx.lpf = 0;
+    config.channel[0].tx.gain[eGainTypes::GENERIC] = 50;
     config.channel[0].tx.path = txPath;
     config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
     config.channel[0].tx.testSignal.enabled = false;
