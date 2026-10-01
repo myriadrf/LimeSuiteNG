@@ -373,6 +373,7 @@ static void la9310_limesdr_pci_device_remove(struct pci_dev* pciContext)
     struct la9310_dev* myDevice = pci_get_drvdata(pciContext);
     la9310_limesdr_device_destroy(myDevice);
     la9310_base_remove(myDevice);
+    pci_release_regions(pciContext);
 }
 
 static struct pci_driver la9310_limesdr_pci_driver = {
