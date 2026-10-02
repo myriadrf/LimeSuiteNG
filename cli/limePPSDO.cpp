@@ -10,41 +10,41 @@ static void keyBoardInt(int param)
     cleanUp = true;
 }
 
+static constexpr uint64_t CSR_BASE = 0x00000000F0000000ULL;
+
+static constexpr uint64_t PPSDO_BASE_LIMESDR = CSR_BASE + 0xB000ULL;
+static constexpr uint64_t PPSDO_BASE_XTRX = CSR_BASE + 0xB000ULL;
+static constexpr uint64_t PPSDO_BASE_MINI_V2 = CSR_BASE + 0x2800ULL;
+
+static const std::unordered_map<PPSDORegistersID, uint64_t> PPSDO_Register_Offsets = {
+    { PPSDORegistersID::PPSDO_ENABLE, 0x00 },
+    { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x04 },
+    { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x08 },
+    { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x0C },
+    { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x10 },
+    { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x14 },
+    { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x18 },
+    { PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x1C },
+    { PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x20 },
+    { PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x24 },
+    { PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x28 },
+    { PPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x2C },
+    { PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x30 },
+    { PPSDORegistersID::PPSDO_STATUS_STATE, 0x34 },
+};
+
+static ppsdo_reg_list_t makePPSDORegList(uint64_t baseAddr)
+{
+    ppsdo_reg_list_t regList;
+    for (const auto& [id, offset] : PPSDO_Register_Offsets)
+        regList[id] = baseAddr + offset;
+    return regList;
+}
+
 static const std::unordered_map<lime::eLMS_DEV, ppsdo_reg_list_t> SDR_PPSDO_Registers = {
-    { lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX,
-        {
-            { PPSDORegistersID::PPSDO_ENABLE, 0x00000000F000B000 },
-            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F000B004 },
-            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F000B008 },
-            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000B00C },
-            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F000B010 },
-            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F000B014 },
-            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F000B018 },
-            { PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000B01C },
-            { PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F000B020 },
-            { PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F000B024 },
-            { PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F000B028 },
-            { PPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000B02C },
-            { PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F000B030 },
-            { PPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F000B034 },
-        } },
-    { lime::eLMS_DEV::LMS_DEV_LIMESDRMINI_V2,
-        {
-            { PPSDORegistersID::PPSDO_ENABLE, 0x00000000F0002800 },
-            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TARGET, 0x00000000F0002804 },
-            { PPSDORegistersID::PPSDO_CONFIG_ONE_S_TOL, 0x00000000F0002808 },
-            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TARGET, 0x00000000F000280C },
-            { PPSDORegistersID::PPSDO_CONFIG_TEN_S_TOL, 0x00000000F0002810 },
-            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TARGET, 0x00000000F0002814 },
-            { PPSDORegistersID::PPSDO_CONFIG_HUNDRED_S_TOL, 0x00000000F0002818 },
-            { PPSDORegistersID::PPSDO_STATUS_ONE_S_ERROR, 0x00000000F000281C },
-            { PPSDORegistersID::PPSDO_STATUS_TEN_S_ERROR, 0x00000000F0002820 },
-            { PPSDORegistersID::PPSDO_STATUS_HUNDRED_S_ERROR, 0x00000000F0002824 },
-            { PPSDORegistersID::PPSDO_STATUS_DAC_TUNED_VAL, 0x00000000F0002828 },
-            { PPSDORegistersID::PPSDO_STATUS_ACCURACY, 0x00000000F000282C },
-            { PPSDORegistersID::PPSDO_STATUS_PPS_ACTIVE, 0x00000000F0002830 },
-            { PPSDORegistersID::PPSDO_STATUS_STATE, 0x00000000F0002834 },
-        } }
+    { lime::eLMS_DEV::LMS_DEV_LIMESDR, makePPSDORegList(PPSDO_BASE_LIMESDR) },
+    { lime::eLMS_DEV::LMS_DEV_LIMESDR_XTRX, makePPSDORegList(PPSDO_BASE_XTRX) },
+    { lime::eLMS_DEV::LMS_DEV_LIMESDRMINI_V2, makePPSDORegList(PPSDO_BASE_MINI_V2) },
 };
 
 MonitorResults::MonitorResults()
@@ -252,8 +252,14 @@ bool PPSDODriver::updatePPSDORegList(vector<DeviceHandle>& handles, string& devN
         {
             mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDRMINI_V2)->second;
             regListUpdated = true;
+            lime::debug("DEBUG: Selected CSR register list for LimeSDR Mini V2");
         }
-        lime::debug("DEBUG: Selected CSR register list for LimeSDR Mini V2");
+        else if (mHandle.addr == "1d50:6108"s || mHandle.addr == "04b4:00f1"s || mHandle.addr == "04b4:00f3"s)
+        {
+            mpPPSDORegisterList = &SDR_PPSDO_Registers.find(eLMS_DEV::LMS_DEV_LIMESDR)->second;
+            regListUpdated = true;
+            lime::debug("DEBUG: Selected CSR register list for LimeSDR USB");
+        }
         break;
 
     case MediaType::PCIE:

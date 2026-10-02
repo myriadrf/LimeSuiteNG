@@ -21,6 +21,8 @@ static const std::set<LMS64CProtocol::Command> commandsToBulkTransfer = {
     LMS64CProtocol::Command::GPIO_DIR_RD,
     LMS64CProtocol::Command::GPIO_WR,
     LMS64CProtocol::Command::GPIO_RD,
+    LMS64CProtocol::Command::CMD_BRDCSR_WR,
+    LMS64CProtocol::Command::CMD_BRDCSR_RD,
 };
 
 FX3_SerialPort::FX3_SerialPort(FX3& port)
