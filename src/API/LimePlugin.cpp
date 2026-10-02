@@ -603,6 +603,8 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
         }
     }
     GetSetting(settings, &param->syncPPS, "%s_syncPPS", prefix);
+    GetSetting(settings, &param->rxPacketsInBatch, "%s_rx_packets_in_batch", prefix);
+    GetSetting(settings, &param->txPacketsInBatch, "%s_tx_packets_in_batch", prefix);
 
     char dirPrefix[32];
     std::snprintf(dirPrefix, sizeof(dirPrefix), "%s_rx", prefix);
@@ -878,8 +880,8 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
         streamCfg.extraConfig.negateQ = port.configInputs.double_freq_conversion_to_lower_side;
         streamCfg.extraConfig.waitPPS = port.configInputs.syncPPS;
         streamCfg.extraConfig.rx.samplesInPacket = 0;
-        streamCfg.extraConfig.rx.packetsInBatch = 0;
-        streamCfg.extraConfig.tx.packetsInBatch = 0;
+        streamCfg.extraConfig.rx.packetsInBatch = port.configInputs.rxPacketsInBatch;
+        streamCfg.extraConfig.tx.packetsInBatch = port.configInputs.txPacketsInBatch;
         streamCfg.extraConfig.tx.samplesInPacket = 0;
         streamCfg.statusCallback = OnStreamStatusChange;
         streamCfg.userData = static_cast<void*>(&portStreamStates[p]);
@@ -947,8 +949,8 @@ OpStatus ConfigureStreaming(LimePluginContext* context, const LimeRuntimeParamet
             streamCfg.extraConfig.negateQ = port.configInputs.double_freq_conversion_to_lower_side;
             streamCfg.extraConfig.waitPPS = port.configInputs.syncPPS;
             streamCfg.extraConfig.rx.samplesInPacket = 0;
-            streamCfg.extraConfig.rx.packetsInBatch = 0;
-            streamCfg.extraConfig.tx.packetsInBatch = 0;
+            streamCfg.extraConfig.rx.packetsInBatch = port.configInputs.rxPacketsInBatch;
+            streamCfg.extraConfig.tx.packetsInBatch = port.configInputs.txPacketsInBatch;
             streamCfg.extraConfig.tx.samplesInPacket = 0;
 
             streamCfg.channels[TRXDir::Rx].push_back(0);

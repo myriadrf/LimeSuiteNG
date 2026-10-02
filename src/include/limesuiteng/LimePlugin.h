@@ -53,6 +53,8 @@ struct LIME_API ConfigSettings {
         , syncPPS(false)
         , referenceClockFreq(0.0)
         , referenceClockSource(0)
+        , rxPacketsInBatch(0)
+        , txPacketsInBatch(0)
     {
     }
     DirectionalSettings rx; ///< The settings for the receive direction.
@@ -67,6 +69,8 @@ struct LIME_API ConfigSettings {
     bool syncPPS; ///< Denotes whether to wait for the next Pulse Per Second impulse before sending the data on supported devices.
     double referenceClockFreq;
     int referenceClockSource;
+    int rxPacketsInBatch; ///< Rx packets per DMA transfer (0 = device default)
+    int txPacketsInBatch; ///< Tx packets per DMA transfer (0 = device default); larger batches give more DMA lead
 };
 
 /// @brief Individual RF SoC device configuration
