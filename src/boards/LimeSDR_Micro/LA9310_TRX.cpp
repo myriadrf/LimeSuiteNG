@@ -878,7 +878,16 @@ OpStatus LA9310_TRX::TxSetup()
     uint32_t packetSize = 2048;
     mTx.samplesInPkt = packetSize / 4;
 
-    mTxArgs.buffers = SubdivideBuffer(txiqflood_mem, 8 * 2048, 32);
+    // A TCD covers at most one DMA buffer. By default a buffer holds 8 packets; if the user asks for
+    // more packets per batch (extraConfig.tx.packetsInBatch), size the buffers to fit them, keeping
+    // at least 8 buffers in the Tx region (staging: up to 32 buffers).
+    size_t packetsPerBuffer = 8;
+    if (mConfig.extraConfig.tx.packetsInBatch > packetsPerBuffer)
+    {
+        const size_t maxPacketsPerBuffer = txiqflood_mem.size() / (8 * packetSize);
+        packetsPerBuffer = std::max<size_t>(8, std::min<size_t>(mConfig.extraConfig.tx.packetsInBatch, maxPacketsPerBuffer));
+    }
+    mTxArgs.buffers = SubdivideBuffer(txiqflood_mem, packetsPerBuffer * packetSize, 32);
     assert(mTxArgs.buffers.size());
     const auto dmaBufferSize = mTxArgs.buffers.front().size();
 
