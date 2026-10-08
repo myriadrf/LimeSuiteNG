@@ -1,4 +1,6 @@
 #include "LimeSDR_Micro.h"
+#include "chips/LMS7002M/DCCorrector.h"
+#include "src/interface/IQuadratureErrorCorrector.h"
 
 #include <cmath>
 #include <sstream>
@@ -566,14 +568,15 @@ complex64f_t LimeSDR_Micro::GetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t
 
 OpStatus LimeSDR_Micro::SetDCOffset(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& offset)
 {
-    if (!fw)
-        return OpStatus::NotSupported;
-
-    // if (trx == TRXDir::Tx)
-    //     return fw->GetTxDCCorrector(channel)->SetDCOffset(offset);
-    // else
-    //     return fw->GetRxDCCorrector(channel)->SetDCOffset(offset);
-    return OpStatus::NotImplemented;
+    // Analog DC correction DACs of the LMS7002M (the same correctors CalibrateRx/CalibrateTx tune). offset.real/imag
+    // are the DAC codes for I and Q (Rx about +-63, Tx about +-1023, see LMS7002M_DC::GetRange()).
+    auto& lms = mLMSChips.at(moduleIndex);
+    LMS7002M_DC dc(lms->mC_impl, trx, channel);
+    OpStatus status = dc.SetDCOffset(complex16_t(static_cast<int16_t>(std::lround(offset.real())),
+        static_cast<int16_t>(std::lround(offset.imag()))));
+    if (status != OpStatus::Success)
+        return status;
+    return dc.Enabled(true);
 }
 
 complex64f_t LimeSDR_Micro::GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel)
@@ -583,15 +586,16 @@ complex64f_t LimeSDR_Micro::GetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_
 
 OpStatus LimeSDR_Micro::SetIQBalance(uint8_t moduleIndex, TRXDir trx, uint8_t channel, const complex64f_t& balance)
 {
-    if (!fw)
+    // IQ imbalance correction in the VSPA data path (rx_qec_correction / tx_qec_correction).
+    // On this board balance.real() = gain imbalance in dB, balance.imag() = phase imbalance in degrees, i.e. the
+    // values CalibrateRx/CalibrateTx log ("QEC gain ... db, phase ... deg"). Needs a VSPA image with the IQ_CORR
+    // mailbox command (Lime master, or the oai branch with DFKI patch 0004).
+    if (!iqstreamer)
         return OpStatus::NotSupported;
-
-    // double ratio = balance.real() / (balance.imag() == 0 ? 1 : balance.imag());
-    // if (trx == TRXDir::Tx)
-    //     return fw->GetTxQEC(channel)->SetGainCorrection(ratio);
-    // else
-    //     return fw->GetRxQEC(channel)->SetGainCorrection(ratio);
-    return OpStatus::NotImplemented;
+    auto qec = trx == TRXDir::Tx ? iqstreamer->GetTxQEC(channel) : iqstreamer->GetRxQEC(channel);
+    if (!qec)
+        return OpStatus::NotSupported;
+    return qec->SetImbalance(static_cast<float>(balance.real()), static_cast<float>(balance.imag()));
 }
 
 unsigned int LimeSDR_Micro::ReadRegister(uint8_t moduleIndex, unsigned int address, bool useFPGA)

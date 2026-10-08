@@ -1,4 +1,6 @@
 #include "limesuiteng/LimePlugin.h"
+#include <array>
+#include <map>
 #include "gainTable.h"
 
 #include <algorithm>
@@ -613,6 +615,40 @@ static void GatherConfigSettings(ConfigSettings* param, LimeSettingsProvider* se
     GatherDirectionalSettings(settings, &param->tx, dirPrefix);
 }
 
+// Fixed DC / IQ imbalance corrections per device node, from devN_{rx,tx}_dc_i/_q (analog DC DAC codes) and
+// devN_{rx,tx}_iq_gain_db/_iq_phase_deg (digital IQ correction), applied right after Configure(). Kept here instead
+// of in DirectionalSettings so that the public plugin structs (compiled into applications) do not change.
+struct FixedCorrection {
+    bool dcSet{ false };
+    double dcI{ 0 }, dcQ{ 0 };
+    bool iqSet{ false };
+    double gainDb{ 0 }, phaseDeg{ 0 };
+};
+static std::map<int, std::array<FixedCorrection, 2>> fixedCorrections; // [dev index][0 = rx, 1 = tx]
+
+static void GatherFixedCorrections(LimeSettingsProvider* settings, int devIndex)
+{
+    for (int d = 0; d < 2; ++d)
+    {
+        const char* dir = d == 0 ? "rx" : "tx";
+        FixedCorrection c;
+        const bool hasI = GetSetting(settings, &c.dcI, "dev%i_%s_dc_i", devIndex, dir);
+        const bool hasQ = GetSetting(settings, &c.dcQ, "dev%i_%s_dc_q", devIndex, dir);
+        c.dcSet = hasI || hasQ;
+        const bool hasG = GetSetting(settings, &c.gainDb, "dev%i_%s_iq_gain_db", devIndex, dir);
+        const bool hasP = GetSetting(settings, &c.phaseDeg, "dev%i_%s_iq_phase_deg", devIndex, dir);
+        c.iqSet = hasG || hasP;
+        fixedCorrections[devIndex][d] = c;
+    }
+    std::string unused;
+    if (GetSetting(settings, &unused, "dev%i_calibration", devIndex))
+        Log(LogLevel::Warning,
+        "dev%i_calibration is not a valid key and is ignored; use dev%i_rx_calibration / dev%i_tx_calibration",
+        devIndex,
+        devIndex,
+        devIndex);
+}
+
 static void GatherDeviceTreeNodeSettings(LimePluginContext* context, LimeSettingsProvider* settings)
 {
     for (uint32_t i = 0; i < context->rfdev.size(); ++i)
@@ -624,6 +660,7 @@ static void GatherDeviceTreeNodeSettings(LimePluginContext* context, LimeSetting
         GetSetting(settings, &dev.chipIndex, "%s_chip_index", devPrefix);
 
         GatherConfigSettings(&dev.configInputs, settings, devPrefix);
+        GatherFixedCorrections(settings, i);
         ParseFPGARegistersWrites(context, i);
     }
 }
@@ -1051,6 +1088,30 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                 OpStatus status = node.device->Configure(node.config, node.chipIndex);
                 if (status != OpStatus::Success)
                     return -1;
+                const auto fc = fixedCorrections.find(static_cast<int>(i));
+                if (fc != fixedCorrections.end())
+                {
+                    for (int d = 0; d < 2; ++d)
+                    {
+                        const FixedCorrection& c = fc->second[d];
+                        const TRXDir dir = d == 0 ? TRXDir::Rx : TRXDir::Tx;
+                        const char* dname = d == 0 ? "rx" : "tx";
+                        if (c.dcSet)
+                        {
+                            OpStatus st = node.device->SetDCOffset(node.chipIndex, dir, 0, complex64f_t(c.dcI, c.dcQ));
+                            Log(st == OpStatus::Success ? LogLevel::Info : LogLevel::Error,
+                                "dev%" PRIuPTR " %s DC correction I=%g Q=%g: %s", i, dname, c.dcI, c.dcQ, st == OpStatus::Success ? "ok" : "failed");
+                        }
+                        if (c.iqSet)
+                        {
+                            OpStatus st =
+                                node.device->SetIQBalance(node.chipIndex, dir, 0, complex64f_t(c.gainDb, c.phaseDeg));
+                            Log(st == OpStatus::Success ? LogLevel::Info : LogLevel::Error,
+                                "dev%" PRIuPTR " %s IQ correction gain=%g dB phase=%g deg: %s",
+                                i, dname, c.gainDb, c.phaseDeg, st == OpStatus::Success ? "ok" : "failed");
+                        }
+                    }
+                }
             } catch (...)
             {
                 return -1;
