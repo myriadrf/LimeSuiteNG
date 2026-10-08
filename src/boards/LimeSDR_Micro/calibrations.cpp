@@ -407,10 +407,22 @@ static OpStatus lms7002m_calibrate_rx_setup(CalibrationContext* ctx, uint32_t ca
     lime_Result status = lime_Result_Success;
     if (lms7002m_spi_read_csr(rfsoc, LMS7002M_PD_LOCH_T2RBUF) == 0) //isTDD
     {
-        // do nothing
-        const double sxt_lo = lms7002m_get_frequency_sx(rfsoc, true);
-        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "RxLO@%g, TxLO@%g", sxt_lo, sxt_lo);
-        ctx->lo_diff = 0;
+        // TDD: SXT drives Tx and Rx. With both on the same LO the image of the Tx test tone lands exactly on the
+        // Rx image frequency, so the Rx IQ search minimises the sum of the uncalibrated Tx and the Rx image and
+        // returns wrong values. Calibrate in FDD mode like CalibrateTx does: SXR on the Rx frequency, SXT offset
+        // by lo_diff. lms7002m_save_chip_state() at the end restores the SX registers (0x011C-0x0123), i.e. TDD.
+        const double lo = lms7002m_get_frequency_sx(rfsoc, true);
+        lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LOCH_T2RBUF, 1);
+        lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 1);
+        lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_VCO, 0);
+        status = lms7002m_set_frequency_sx(rfsoc, false, lo);
+        if (status == lime_Result_Success)
+        {
+            lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 2);
+            ctx->lo_diff = (ctx->sampleRate / 8);
+            status = lms7002m_set_frequency_sx(rfsoc, true, lo - ctx->lo_diff);
+        }
+        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "TDD -> FDD for calibration: RxLO@%g, TxLO@%g", lo, lo - ctx->lo_diff);
     }
     else
     {
