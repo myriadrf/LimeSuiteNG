@@ -244,8 +244,29 @@ class TransmitterThread : public WorkerThread
         //         return false;
         // }
 
-        int64_t burst_start = chirpStart;
         bool useTimestamp = true;
+        /* {
+            StreamTxMeta txMeta{};
+            txMeta.hasTimestamp = useTimestamp;
+            txMeta.timestamp = Timespec(int64_t(0));
+            txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
+            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            const size_t toSend = chirp.size();
+            for (size_t i = 0; i < chirp.size(); ++i)
+                modsamples[i] = chirp[i];
+            modsamples[0] = complex32f_t(0.8, -0.8);
+            // modsamples[0] = complex32f_t(1.0/4, 0);
+            // modsamples[0] = complex32f_t(1.0/2, 0);
+            // modsamples[0] = complex32f_t(1.0, 0);
+            // modsamples[chirp.size()-4] = complex32f_t(0, -1.0);
+            // modsamples[chirp.size()-3] = complex32f_t(0, -1.0);
+            modsamples[chirp.size() - 2] = complex32f_t(0.8, -0.8);
+            modsamples[chirp.size() - 1] = complex32f_t(-0.8, 0.8);
+            txSamples[0] = modsamples.data();
+            stream->Transmit(txSamples.data(), toSend, &txMeta);
+        }*/
+        // std::this_thread::sleep_for(chrono::microseconds(100));
+        int64_t burst_start = chirpStart;
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
@@ -285,7 +306,7 @@ class TransmitterThread : public WorkerThread
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
-        }
+        } /*
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
@@ -321,7 +342,7 @@ class TransmitterThread : public WorkerThread
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
-        }
+        }*/
         return false;
     }
 

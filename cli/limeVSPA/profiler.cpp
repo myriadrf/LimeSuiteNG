@@ -48,8 +48,8 @@ static std::string ToString(ePhase phase)
 static std::string ToString(Event& evt)
 {
     std::stringstream ss;
-    ss << "{ " << "\"cat\": \"" << evt.category << "\""
-       << ",\"ts\":"
+    ss << "{ "
+       << "\"ts\":"
        // << uint64_t(double(evt.timestamp * tickDuration) * 1e6)
        << uint64_t(evt.timestamp) << ",\"pid\":" << evt.pid << ",\"tid\":" << evt.tid << ",\"ph\":" << "\"" << ToString(evt.phase)
        << "\"" << ",\"name\": \"" << evt.name << "\"";
@@ -74,74 +74,42 @@ static std::string OpName(uint32_t op)
 {
     switch (op)
     {
-    case T_XFER_BUFFER:
-        return "DMA";
-    case T_QEC_TX_BUFFER:
-        return "TX_QEC";
-    case T_QEC_RX_BUFFER:
-        return "RX_QEC";
-    case T_DEC_BUFFER:
-        return "DEC";
-    case T_INT_BUFFER:
-        return "INT";
-    case T_UNDERRUN:
-        return "UDR";
-    case T_OVERRUN:
-        return "OVR";
-    case T_UNEXPECTED:
-        return "EXCEPTION";
-    case T_NO_MEMORY:
-        return "NO_MEMORY";
-    case T_AXIQ_ENQ:
-        return "AXIQ_ENQ";
-    case T_DDR_ENQ:
-        return "DDR_ENQ";
+    case T_BUSY:
+        return "BUSY";
     case T_GO:
         return "GO";
-    case T_ADC_ENQ:
-        return "ADC_ENQ";
-    case T_DAC:
-        return "DAC";
-    case T_DDR_RD:
-        return "DDR_RD";
-    case T_DDR_WR:
-        return "DDR_WR";
-    case T_HOST_PRODUCE:
-        return "HOST_PRODUCE";
-    case T_DMA_NOT_AVAILABLE:
-        return "NO_DMA";
-    case T_AXIQ_COMPLETE:
-        return "AXIQ_COMPLETE";
-    case T_DDR_COMPLETE:
-        return "DDR_COMPLETE";
-    case T_AXIQ_TX_ENABLE:
-        return "AXIQ_TX_EN";
-    case T_AXIQ_RX0_ENABLE:
-        return "AXIQ_RX0_EN";
-    case T_AXIQ_RX1_ENABLE:
-        return "AXIQ_RX1_EN";
-    case T_AXIQ_RO0_ENABLE:
-        return "AXIQ_RO0_EN";
-    case T_AXIQ_RO1_ENABLE:
-        return "AXIQ_RO0_EN";
-    case T_BUFFER_FILL:
-        return "BUFFER_FILL";
-    case T_INTER_CACHE_FILL:
-        return "INT_CACHE";
-    case T_DEC_CACHE_FILL:
-        return "DEC_CACHE";
-    case T_PHYTIMER:
-        return "TIMER";
-    case T_ERROR:
-        return "ERROR";
-    case T_TIME_NOW:
-        return "PHYTIME_NOW";
-    case T_MBOX:
-        return "MBOX";
-    case T_ADC_COMPLETE:
-        return "ADC_COMPLETE";
+    case T_XFER_BUFFER:
+        return "DMA";
+        ;
+    case T_EXTERNAL_GO:
+        return "EXT_GO";
+    case T_TRACE_PUSH:
+        return "TRACE";
+    case T_DDR_WR_ENQ:
+        return "DDR_WR_ENQ";
+    case T_DDR_RD_ENQ:
+        return "DDR_RD_ENQ";
     case T_DDR_WR_COMPLETE:
-        return "DDR_WR_COMPLETE";
+        return "DDR_WR_C";
+    case T_DDR_RD_COMPLETE:
+        return "DDR_RD_C";
+    case T_ADC_COMPLETE:
+        return "ADC";
+    case T_DAC_COMPLETE:
+        return "DAC";
+    case T_RX_WORK:
+        return "RX_WORK";
+    case T_TX_WORK:
+        return "TX_WORK";
+    case T_ADC_ENQ:
+        return "T_ADC_ENQ";
+    case T_DAC_ENQ:
+        return "T_DAC_ENQ";
+    case T_DAC_AXIQ_RST:
+        return "T_DAC_AXIQ_RST";
+    case T_ADC_AXIQ_RST:
+        return "T_ADC_AXIQ_RST";
+
     default: {
         char ctemp[32];
         sprintf(ctemp, "%X", op);
@@ -151,84 +119,37 @@ static std::string OpName(uint32_t op)
 }
 
 enum {
-    CNT_TX_UDR,
-    CNT_TX_OVR,
-    CNT_RX0_UDR,
-    CNT_RX1_UDR,
-    CNT_RX2_UDR,
-    CNT_RX3_UDR,
-    CNT_RX0_OVR,
-    CNT_RX1_OVR,
-    CNT_RX2_OVR,
-    CNT_RX3_OVR,
-    CNT_DECIM,
-    CNT_INTERP,
-    CNT_PHYTIME,
-    CNT_TX_AXIQ_EN,
-    CNT_TX_DMA_ALLOW,
-    CNT_DDR_RD_ENQ,
-    CNT_DDR_RD_READY,
-    CNT_ADC_ENQ,
-    CNT_DAC_ENQ,
-    CNT_DAC_COMPLETION_TIME,
-    CNT_DDR_RD_COMPLETION_TIME,
-    CNT_DDR_WR_ENQ,
-    CNT_ADC_READY,
-    CNT_DAC_READY,
+    CNT_GO,
+    CNT_HOST_UDR,
+    CNT_TX_DFE_UDR,
+    CNT_TX_AFE_UDR,
+    CNT_TX_AFE_OVR,
+    CNT_RX_DDR_ENQ,
+    CNT_TX_DDR_ENQ,
+    CNT_TX_TCD,
 };
 
 static std::string CounterNames(uint32_t id)
 {
     switch (id)
     {
-    case CNT_TX_UDR:
-        return "TX_UDR";
-    case CNT_TX_OVR:
-        return "TX_OVR";
-    case CNT_RX0_UDR:
-        return "RX0_UDR";
-    case CNT_RX1_UDR:
-        return "RX1_UDR";
-    case CNT_RX2_UDR:
-        return "RX2_UDR";
-    case CNT_RX3_UDR:
-        return "RX3_UDR";
-    case CNT_RX0_OVR:
-        return "RX0_OVR";
-    case CNT_RX1_OVR:
-        return "RX1_OVR";
-    case CNT_RX2_OVR:
-        return "RX2_OVR";
-    case CNT_RX3_OVR:
-        return "RX3_OVR";
-    case CNT_DECIM:
-        return "Decim_done";
-    case CNT_INTERP:
-        return "Interp done";
-    case CNT_PHYTIME:
-        return "PHYTIME";
-    case CNT_TX_AXIQ_EN:
-        return "TX_AXIQ_EN";
-    case CNT_TX_DMA_ALLOW:
-        return "TX_DMA_ALLOW";
-    case CNT_DDR_RD_ENQ:
-        return "DDR_RD_ENQ";
-    case CNT_DDR_RD_READY:
-        return "DDR_RD_READY";
-    case CNT_ADC_ENQ:
-        return "ADC_ENQ";
-    case CNT_DAC_ENQ:
-        return "DAC_ENQ";
-    case CNT_DAC_COMPLETION_TIME:
-        return "DAC_COMPLETION_TIME";
-    case CNT_DDR_RD_COMPLETION_TIME:
-        return "DDR_RD_COMPLETION_TIME";
-    case CNT_DDR_WR_ENQ:
-        return "DDR_WR_ENQ";
-    case CNT_ADC_READY:
-        return "ADC_READY";
-    case CNT_DAC_READY:
-        return "DAC_READY";
+
+    case CNT_GO:
+        return "GO";
+    case CNT_HOST_UDR:
+        return "CNT_HOST_UDR";
+    case CNT_TX_DFE_UDR:
+        return "CNT_TX_DFE_UDR";
+    case CNT_TX_AFE_UDR:
+        return "CNT_TX_AFE_UDR";
+    case CNT_TX_AFE_OVR:
+        return "CNT_TX_AFE_OVR";
+    case CNT_RX_DDR_ENQ:
+        return "CNT_RX_DDR_ENQ";
+    case CNT_TX_DDR_ENQ:
+        return "CNT_TX_DDR_ENQ";
+    case CNT_TX_TCD:
+        return "CNT_TX_TCD";
     default: {
         char ctemp[32];
         sprintf(ctemp, "%d", id);
@@ -272,10 +193,14 @@ Event Convert(const l1_trace_data_t& data)
 
 void ToTraceFile(std::ofstream& ofs, const std::vector<l1_trace_data_t> events)
 {
+    size_t cnt = 0;
     for (const auto& e : events)
     {
         if (e.msg == 0)
+        {
+            printf("Bad msg %i\n", cnt);
             break;
+        }
 
         Event evt = Convert(e);
         // if (!evt.pid || evt.name.empty())
@@ -285,7 +210,11 @@ void ToTraceFile(std::ofstream& ofs, const std::vector<l1_trace_data_t> events)
         //     baseTime = data[i].cnt;
 
         // evt.timestamp -= baseTime;
-        ofs << ToString(evt) << '\n'; //std::endl;
+        ofs << ToString(evt) << ",\n"; //std::endl;
+        ++cnt;
         // std::cout << ToString(evt) << std::endl;
     }
+
+    ofs.flush();
+    printf("Events to file: %i\n", cnt);
 }

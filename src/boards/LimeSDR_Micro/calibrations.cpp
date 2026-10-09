@@ -147,8 +147,8 @@ static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
     // delay to allow control changes to fully take effect
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-    const void* chf_samples = ctx->vspa->CaptureADC(3);
-    HalfFixedToSingle(samples.data(), chf_samples, samplesToRead * 4);
+    const auto chf_samples = ctx->vspa->CaptureADC(3);
+    HalfFixedToSingle(samples.data(), chf_samples.data(), samplesToRead * 4);
 
     auto bins = lime::FFT::Calc(samples, FFT::WindowFunctionType::HANNING);
     lime::FFT::ConvertToDBFS(bins);

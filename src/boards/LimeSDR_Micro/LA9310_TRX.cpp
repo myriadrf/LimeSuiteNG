@@ -23,6 +23,7 @@
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
 #include "chips/LA9310/firmware/IQStreamer_DMA.h"
 #include "chips/LA9310/PHYTimer.h"
+#include "chips/LA9310/vspa/VSPA_mailbox.h"
 #include "comms/PCIe/LA9310_PCIe.h"
 
 #include <algorithm>
@@ -170,17 +171,6 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
 
     PHYTimer& phytimer = iqstreamer->fw->phytimer;
 
-    // uint8_t adcRate, dacRate;
-    // iqstreamer->fw->GetADCDACRates(&adcRate, &dacRate);
-    // int dec = 1;
-    // if (cfg.channels.at(TRXDir::Rx).size() > 0)
-    //     dec = iqstreamer->GetDecimation(cfg.channels.at(TRXDir::Rx).front());
-    // else
-    //     dec = iqstreamer->GetDecimation(0);
-    // int adcdac_clock_divider = (adcRate | dacRate) ? 2 : 1;
-
-    // phytimer.SetReferenceClock(cfg.hintSampleRate * adcdac_clock_divider * dec);
-
     iqstreamer->fw->ResetHardwareTime();
     return status;
 }
@@ -208,38 +198,21 @@ OpStatus LA9310_TRX::Start()
     PHYTimer& phytimer = iqstreamer->fw->phytimer;
     phytimer.SoftReset(true);
 
-    uint32_t rx_lanes_mask = 0;
-    for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
-    {
-        rx_lanes_mask <<= 1;
-        rx_lanes_mask |= 0x1;
-    }
-
-    uint32_t tx_lanes_mask = 0;
-    auto txdma = iqstreamer->tx_dma;
-    if (mConfig.channels.at(TRXDir::Tx).size() > 0)
-    {
-        tx_lanes_mask <<= 1;
-        tx_lanes_mask |= 0x1;
-    }
-
-    status = iqstreamer->PipelineEnable(rx_lanes_mask, tx_lanes_mask, true);
-    if (status != OpStatus::Success)
-        return status;
-
-    if (rx_lanes_mask)
-    {
-        for (int i = 0; i < 4; ++i)
-            if (iqstreamer->rx_dma[i] && (rx_lanes_mask & (1 << i)))
-                iqstreamer->rx_dma[i]->Enable(true, true);
-    }
-    if (tx_lanes_mask)
-        txdma->Enable(true, false);
-
     phytimer.SoftReset(false);
 
     uint32_t txBandSelection = phytimer.GetTimerControl(15).GetTriggerValue();
     band_selection_restore = txBandSelection;
+
+    // VSPA start
+    const mbox_opc_e command = MBOX_OPC_STREAM_START;
+    uint32_t hiword = command << 24;
+    uint32_t loword = 0;
+    uint64_t value = (uint64_t(hiword) << 32) | loword;
+    uint64_t result = 0;
+    status = iqstreamer->fw->mailbox->Message(0, 0, value, &result);
+    if (status != OpStatus::Success)
+        return status;
+
     return status;
 }
 
@@ -404,9 +377,21 @@ OpStatus LA9310_TRX::RxSetup()
     if (mConfig.extraConfig.rx.packetsInBatch != 0)
         mRx.packetsToBatch = mConfig.extraConfig.rx.packetsInBatch;
 
-    const int dmaBatchSize = 32 * 1024;
+    const int dmaBatchSize = 16 * 1024;
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBatchSize / packetSize);
 
+    uint32_t rx_lanes_mask = 0;
+    for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
+    {
+        rx_lanes_mask <<= 1;
+        rx_lanes_mask |= 0x1;
+    }
+
+    status = iqstreamer->PipelineEnable(rx_lanes_mask, 0, true);
+    if (status != OpStatus::Success)
+        return status;
+
+    const uint32_t xfer_size = packetSize * mRx.packetsToBatch;
     for (int l = 0; l < mConfig.channels.at(TRXDir::Rx).size(); ++l)
     {
         int memstep = rxiqflood_mem.size() / mConfig.channels.at(TRXDir::Rx).size();
@@ -416,7 +401,7 @@ OpStatus LA9310_TRX::RxSetup()
         // prefill DMA table, for continuous operation
         for (size_t i = 0; i < rx_buffers[l].size(); ++i)
         {
-            OpStatus status = iqstreamer->rx_dma[l]->SubmitTransfer(rx_buffers[l][i], dmaBatchSize, 0, 0);
+            OpStatus status = iqstreamer->rx_dma[l]->SubmitTransfer(rx_buffers[l][i], xfer_size, 0, 0);
             if (status != OpStatus::Success)
             {
                 printf("Failed rx tcd prefil\n");
@@ -523,7 +508,7 @@ void LA9310_TRX::ReceivePacketsLoop()
     conversion.destFormat = mConfig.format;
     conversion.channelCount = std::max(mConfig.channels.at(lime::TRXDir::Tx).size(), mConfig.channels.at(lime::TRXDir::Rx).size());
 
-    const uint32_t readSize = 32 * 1024; //mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    const uint32_t readSize = mRxArgs.packetSize * mRxArgs.packetsToBatch;
 
     StreamStats& stats = mRx.stats;
     auto& fifo = mRx.fifo;
@@ -801,7 +786,7 @@ OpStatus LA9310_TRX::TxSetup()
     uint32_t packetSize = 2048;
     mTx.samplesInPkt = packetSize / 4;
 
-    mTxArgs.buffers = SubdivideBuffer(txiqflood_mem, 8 * 2048, 16);
+    mTxArgs.buffers = SubdivideBuffer(txiqflood_mem, 8 * 2048, 32);
     assert(mTxArgs.buffers.size());
     const auto dmaBufferSize = mTxArgs.buffers.front().size();
 
@@ -810,6 +795,10 @@ OpStatus LA9310_TRX::TxSetup()
     //     mTx.samplesInPkt = mConfig.extraConfig.tx.samplesInPacket;
     //     lime::debug("Tx samples override %i", mTx.samplesInPkt);
     // }
+
+    status = iqstreamer->PipelineEnable(0x0, 0x1, true);
+    if (status != OpStatus::Success)
+        return status;
 
     mTx.packetsToBatch = dmaBufferSize / packetSize; // Tx packets can be flushed early without filling whole batch
     // aim batch size to desired data output period, ~100us should be good enough
@@ -1100,17 +1089,6 @@ void LA9310_TRX::TransmitPacketsLoop()
         if (!outputReady)
         {
             continue;
-        }
-
-        // pad buffer to minimum samples block, 2048 bytes
-        const uint32_t samplesBlockSize = 2048;
-        const uint32_t partialFill = dmaFilled & (samplesBlockSize - 1);
-        if (partialFill)
-        {
-            // needs padding
-            uint32_t needPadding = samplesBlockSize - partialFill;
-            memset(&dmaBuffers.at(stagingBufferIndex).va<uint8_t>()[dmaFilled], 0, needPadding);
-            dmaFilled += needPadding;
         }
 
         // submit

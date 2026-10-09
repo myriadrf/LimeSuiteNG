@@ -33,6 +33,9 @@ typedef enum {
     VSPA_MMAP_TXDMA_LANE0,
     VSPA_MMAP_STATS,
     VSPA_MMAP_STATS2,
+    VSPA_MMAP_TX_TONE_LANE0,
+    VSPA_MMAP_VSPA_CORE_STATS,
+    VSPA_MMAP_TX_TDD_CONFIG,
 } e_vspa_feature;
 
 #define QUOTE(name) #name
@@ -86,14 +89,23 @@ static void print_trace(const l1_trace_data_t* data, uint32_t length)
 }
 
 static uint64_t event_count = 0;
-static void DumpTracer(VSPA_Trace* tracer, std::ofstream& ofs)
+static void DumpTracer(VSPA_Trace* tracer, std::vector<l1_trace_data_t>& trace_events_data)
 {
     if (!tracer)
         return;
     auto events = tracer->ReadTrace();
+    if (events.empty())
+        return;
+
     event_count += events.size();
 
-    ToTraceFile(ofs, events);
+    trace_events_data.insert(std::end(trace_events_data), std::begin(events), std::end(events));
+    printf("Evt count: %i\n", trace_events_data.size());
+
+    // size_t toCopy = trace_events_data.capacity() - trace_events_data.size();
+    // toCopy = std::min(toCopy, events.size());
+    // memcpy(&trace_events_data[trace_events_data.size()], events.data(), toCopy * sizeof(l1_trace_data_t));
+    // trace_events_data.
 }
 
 // static vspa_state_t GetProxy(std::shared_ptr<LA9310_PCIe> pcie)
@@ -329,6 +341,15 @@ struct PipeStats {
     uint32_t dfe_err;
     uint32_t dfe_udr;
     uint32_t dfe_ovr;
+    uint32_t host_udr;
+    uint32_t afe_drop;
+    uint32_t dfe_drop;
+};
+
+struct VSPA_Stats {
+    uint32_t busy_cycles;
+    uint32_t ext_go_count;
+    uint32_t go_count;
 };
 
 void dump_adc(ADC_lane* adc)
@@ -354,11 +375,26 @@ void dump_pipeline_stats(const PipeStats* now, const PipeStats* prev, std::chron
     printf("afe_cmp: \t%08x, %8i/s ", now->afe_compl, RATE_OF(afe_compl, now, prev, duration_s));
     printf("afe_ovr:\t%08x, %8i/s\n", now->afe_ovr, RATE_OF(afe_ovr, now, prev, duration_s));
     printf("afe_err:\t%08x, %8i/s\n", now->afe_err, RATE_OF(afe_err, now, prev, duration_s));
+    printf("afe_drop:\t%08x, %8i/s\n", now->afe_drop, RATE_OF(afe_drop, now, prev, duration_s));
     printf("dfe_enq:\t%08x, %8i/s ", now->dfe_enq, RATE_OF(dfe_enq, now, prev, duration_s));
     printf("dfe_udr:\t%08x, %8i/s\n", now->dfe_udr, RATE_OF(dfe_udr, now, prev, duration_s));
     printf("dfe_compl:\t%08x, %8i/s ", now->dfe_compl, RATE_OF(dfe_compl, now, prev, duration_s));
     printf("dfe_ovr:\t%08x, %8i/s\n", now->dfe_ovr, RATE_OF(dfe_ovr, now, prev, duration_s));
     printf("dfe_err:\t%08x, %8i/s\n", now->dfe_err, RATE_OF(dfe_err, now, prev, duration_s));
+    printf("dfe_drop:\t%08x, %8i/s\n", now->dfe_drop, RATE_OF(dfe_drop, now, prev, duration_s));
+    printf("host_udr:\t%08x, %8i/s\n", now->host_udr, RATE_OF(host_udr, now, prev, duration_s));
+}
+
+void dump_core_stats(const VSPA_Stats* now, const VSPA_Stats* prev, std::chrono::milliseconds duration)
+{
+    double duration_s = duration.count() / 1e3;
+    printf("CoreStats:\n");
+    printf("busy_cycles:\t%08x, %8i/s\n", now->busy_cycles, RATE_OF(busy_cycles, now, prev, duration_s));
+    printf("go:\t%08x, %8i/s \text_go:\t%08x, %8i/s\n",
+        now->go_count,
+        RATE_OF(go_count, now, prev, duration_s),
+        now->ext_go_count,
+        RATE_OF(ext_go_count, now, prev, duration_s));
 }
 
 typedef struct VSPA_DMA_HIF {
@@ -438,69 +474,71 @@ int main(int argc, char* argv[])
     // VSPA_iqplayer vspa(pcie);
 
     std::ofstream fout;
+    std::vector<l1_trace_data_t> trace_events_data;
     if (trace)
     {
+        trace_events_data.reserve(4e6);
         fout.open("trace.json");
         fout << "{\n"
              << "\"displayTimeUnit\":\"ns\"," << "\"traceEvents\": [\n";
 
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 100, \"args\": {"
                 "\"name\" : \"DMA_WR_priority\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 101, \"args\": {"
                 "\"name\" : \"ADC_RO0\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 102, \"args\": {"
                 "\"name\" : \"VSPA_DMA\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 103, \"args\": {"
                 "\"name\" : \"ADC_RX0\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 104, \"args\": {"
                 "\"name\" : \"ADC_RX1\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 105, \"args\": {"
                 "\"name\" : \"AUX_ADC\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 106, \"args\": {"
                 "\"name\" : \"RSSI_RD\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 107, \"args\": {"
                 "\"name\" : \"DDR_RD1\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 108, \"args\": {"
                 "\"name\" : \"DDR_RD2\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 109, \"args\": {"
                 "\"name\" : \"DDR_RD3\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 110, \"args\": {"
                 "\"name\" : \"DDR_RD4\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 111, \"args\": {"
                 "\"name\" : \"DAC\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 112, \"args\": {"
                 "\"name\" : \"DDR_WR1\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 113, \"args\": {"
                 "\"name\" : \"DDR_WR2 TRACE\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 114, \"args\": {"
                 "\"name\" : \"DDR_WR3\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 115, \"args\": {"
                 "\"name\" : \"DDR_WR4 State\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 1, \"args\": {"
                 "\"name\" : \"VCPU\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 2, \"args\": {"
                 "\"name\" : \"DMA\" }"
-                "}\n";
+                "}\n,";
         fout << "{\"name\": \"process_name\", \"ph\": \"M\", \"pid\": 3, \"args\": {"
                 "\"name\" : \"IPPU\" }"
-                "}\n";
+                "}\n,";
 
         // fout.close();
     }
@@ -518,12 +556,24 @@ int main(int argc, char* argv[])
     StatsOverTime<PipeStats> tx_stats = { reinterpret_cast<PipeStats*>(vspa_memorymap_find(pcie, VSPA_MMAP_STATS2)),
         dump_pipeline_stats };
 
+    StatsOverTime<VSPA_Stats> core_stats = { reinterpret_cast<VSPA_Stats*>(vspa_memorymap_find(pcie, VSPA_MMAP_VSPA_CORE_STATS)),
+        dump_core_stats };
+
+    volatile l1_trace_hif_t* l1trace_hif =
+        reinterpret_cast<volatile l1_trace_hif_t*>(vspa_memorymap_find(pcie, VSPA_MMAP_L1_TRACE));
+    std::unique_ptr<VSPA_Trace> tracer;
+    if (l1trace_hif)
+    {
+        tracer = std::make_unique<VSPA_Trace>(pcie, l1trace_hif);
+        tracer->Clear();
+    }
+
     while (stopProgram.load() == false)
     {
-        if (trace)
+        if (trace && tracer)
         {
-            // DumpTracer(vspa.tracer.get(), fout);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            DumpTracer(tracer.get(), trace_events_data);
+            // std::this_thread::sleep_for(std::chrono::microseconds(500));
             // std::cerr << "Evt: " << event_count << std::endl;
             // break;
         }
@@ -552,6 +602,7 @@ int main(int argc, char* argv[])
             if (adc2)
                 dump_adc(adc2);
 
+            PrintStatsOverTime(core_stats);
             PrintStatsOverTime(rx_stats);
             PrintStatsOverTime(tx_stats);
 
@@ -572,6 +623,7 @@ int main(int argc, char* argv[])
 
     if (trace)
     {
+        ToTraceFile(fout, trace_events_data);
         fout << "]\n}";
         fout.close();
     }

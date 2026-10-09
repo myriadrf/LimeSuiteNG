@@ -45,6 +45,9 @@ typedef enum {
     MBOX_OPC_RX_DMA_SUBMIT,
     MBOX_OPC_RX_FFT,
     MBOX_OPC_ADC_CAPTURE,
+
+    MBOX_OPC_STREAM_START,
+    MBOX_OPC_TRACE_RESET,
 } mbox_opc_e;
 
 #endif // IQPLAYER_COMMANDS_H

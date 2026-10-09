@@ -13,6 +13,18 @@ class DCCorrectorsPanel;
 class QECPanel;
 class ToneGeneratorPanel;
 
+struct LA9310_TDD_wxgui {
+    wxSpinCtrl* spinDAC;
+    wxSpinCtrl* spinRFON;
+    wxSpinCtrl* spinRFOFF;
+    wxSpinCtrl* spinPAON;
+    wxSpinCtrl* spinPAOFF;
+    wxChoice* cmbRFON;
+    wxChoice* cmbRFOFF;
+    wxChoice* cmbPAON;
+    wxChoice* cmbPAOFF;
+};
+
 class LA9310_wxgui : public ISOCPanel
 {
   public:
@@ -48,8 +60,12 @@ class LA9310_wxgui : public ISOCPanel
     wxCheckBox* chkLNA1_EN;
     void onPhytimer(wxCommandEvent& event);
     void onLoopback(wxCommandEvent& event);
+    void onTDDchange(wxSpinEvent& event);
+    void onTDDchange(wxCommandEvent& event);
 
     wxCheckBox* chkAXIQLoopback;
+
+    LA9310_TDD_wxgui tddgui;
 
     lime::LA9310_IQStreamer* iqstreamer;
     std::unordered_map<wxCheckBox*, uint16_t> timer_map;

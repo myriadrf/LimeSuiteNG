@@ -10,7 +10,9 @@
 #include "comms/IDMA.h"
 
 #include "chips/LA9310/MemoryWindow.h"
-#include "host_dma_hif.h"
+#include "chips/LA9310/vspa_ccsr.h"
+
+#include "vspa_dma_hif.h"
 
 namespace lime {
 
@@ -27,7 +29,7 @@ class IQStreamer_DMA
         uint32_t transfersCompleted;
     };
 
-    IQStreamer_DMA(DMA_Dir dir, volatile host_dma_hif_t* dma_hif, std::shared_ptr<LA9310_PCIe> pcie);
+    IQStreamer_DMA(DMA_Dir dir, volatile vspa_dma_hif_t* dma_hif, volatile vspa_regs* csr, std::shared_ptr<LA9310_PCIe> pcie);
     ~IQStreamer_DMA();
 
     OpStatus Enable(bool enabled, bool loop_table = false);
@@ -39,9 +41,12 @@ class IQStreamer_DMA
     OpStatus SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t timestamp, uint32_t flags);
 
   private:
-    volatile host_dma_hif_t* dma_hif;
+    OpStatus htv_signal(uint32_t mask);
+    volatile vspa_dma_hif_t* dma_hif;
+    volatile vspa_regs* csr;
     std::shared_ptr<LA9310_PCIe> pcie;
     DMA_Dir dir;
+    uint32_t htv_tcd_pending_flag_mask;
 };
 
 } // namespace lime

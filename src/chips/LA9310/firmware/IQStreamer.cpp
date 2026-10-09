@@ -24,6 +24,8 @@ using namespace std;
 static const uint32_t vspa_cpu_id = 0;
 static const uint32_t vspa_mbox_id = 0;
 
+#define VSPA_CCSR 0x1000000
+
 enum {
     MBOX_EMPTY = 0, // 0x0
     MBOX_IQ_CORR_FTAP0, // 0x1
@@ -63,18 +65,18 @@ static void memcpy_w32(volatile void* dest, volatile const void* src, size_t byt
 }
 
 template<class PayloadT, class ResponseT>
-OpStatus CallCommand(volatile la9310_sw_cmd_desc* cmd_hif,
+OpStatus CallCommand(volatile la9310_sw_cmd_desc* m4_cmd_hif,
     M4_Command cmd,
     const PayloadT* payload,
     ResponseT* response,
     chrono::milliseconds timeout = chrono::milliseconds(1000))
 {
-    cmd_hif->cmd = cmd;
-    memcpy_w32(cmd_hif->data, payload, sizeof(PayloadT));
+    m4_cmd_hif->cmd = cmd;
+    memcpy_w32(m4_cmd_hif->data, payload, sizeof(PayloadT));
 
     auto t1 = chrono::high_resolution_clock::now();
-    cmd_hif->status = LA9310_SW_CMD_STATUS_POSTED;
-    while (cmd_hif->status == LA9310_SW_CMD_STATUS_POSTED || cmd_hif->status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
+    m4_cmd_hif->status = LA9310_SW_CMD_STATUS_POSTED;
+    while (m4_cmd_hif->status == LA9310_SW_CMD_STATUS_POSTED || m4_cmd_hif->status == LA9310_SW_CMD_STATUS_IN_PROGRESS)
     {
         auto t2 = chrono::high_resolution_clock::now();
         if (chrono::duration_cast<chrono::milliseconds>(t2 - t1) > timeout)
@@ -84,9 +86,9 @@ OpStatus CallCommand(volatile la9310_sw_cmd_desc* cmd_hif,
         }
     }
 
-    if (cmd_hif->status == LA9310_SW_CMD_STATUS_DONE)
+    if (m4_cmd_hif->status == LA9310_SW_CMD_STATUS_DONE)
     {
-        memcpy_w32(response, cmd_hif->data, sizeof(ResponseT));
+        memcpy_w32(response, m4_cmd_hif->data, sizeof(ResponseT));
         return OpStatus::Success;
     }
 
@@ -95,30 +97,34 @@ OpStatus CallCommand(volatile la9310_sw_cmd_desc* cmd_hif,
 
 LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
     : fw(fw)
-    , cmd_hif(nullptr)
+    , m4_cmd_hif(nullptr)
+    , tdd_control(nullptr)
 {
     if (!fw->IsVSPAFirmwareLoaded())
         return;
 
-    cmd_hif = reinterpret_cast<volatile la9310_sw_cmd_desc*>(fw->GetHIF(M4_MMAP_COMMAND_HIF));
+    m4_cmd_hif = reinterpret_cast<volatile la9310_sw_cmd_desc*>(fw->GetHIF(M4_MMAP_COMMAND_HIF));
 
+    volatile vspa_regs* vspa_ccsr =
+        reinterpret_cast<volatile vspa_regs*>(uint64_t(fw->pcie->GetBar(LA9310_WINDOW_BAR0).vaddr) + VSPA_CCSR);
     for (int i = 0; i < 4; ++i)
     {
-        volatile host_dma_hif_t* ptr = reinterpret_cast<volatile host_dma_hif_t*>(fw->GetHIF(M4_MMAP_IQPLAYER_RXPIPE0 + i));
+        volatile vspa_dma_hif_t* ptr = reinterpret_cast<volatile vspa_dma_hif_t*>(fw->GetVSPAHIF(VSPA_MMAP_RXDMA_LANE0 + i));
         if (ptr)
-            rx_dma[i] = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_FROM_DEVICE, ptr, fw->pcie);
+            rx_dma[i] = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_FROM_DEVICE, ptr, vspa_ccsr, fw->pcie);
     }
     for (int i = 0; i < 1; ++i)
     {
-        volatile host_dma_hif_t* ptr = reinterpret_cast<volatile host_dma_hif_t*>(fw->GetHIF(M4_MMAP_IQPLAYER_TXPIPE0));
+        volatile vspa_dma_hif_t* ptr = reinterpret_cast<volatile vspa_dma_hif_t*>(fw->GetVSPAHIF(VSPA_MMAP_TXDMA_LANE0));
         if (ptr)
-            tx_dma = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_TO_DEVICE, ptr, fw->pcie);
+            tx_dma = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_TO_DEVICE, ptr, vspa_ccsr, fw->pcie);
     }
+    tdd_control = reinterpret_cast<volatile tx_tdd_config_t*>(fw->GetVSPAHIF(VSPA_MMAP_TX_TDD_CONFIG));
 }
 
 OpStatus LA9310_IQStreamer::PipelineEnable(uint32_t rxmask, uint32_t txmask, bool enable)
 {
-    if (!cmd_hif)
+    if (!m4_cmd_hif)
         return OpStatus::NotImplemented;
 
     iqstream_control_payload payload;
@@ -128,7 +134,7 @@ OpStatus LA9310_IQStreamer::PipelineEnable(uint32_t rxmask, uint32_t txmask, boo
 
     simple_response_payload response;
 
-    OpStatus status = CallCommand(cmd_hif, LIME_M4_IQSTREAM_CTRL, &payload, &response);
+    OpStatus status = CallCommand(m4_cmd_hif, LIME_M4_IQSTREAM_CTRL, &payload, &response);
     if (status != OpStatus::Success)
         return status;
 
@@ -144,7 +150,7 @@ OpStatus LA9310_IQStreamer::SetPipelineChannel(lime::TRXDir dir, uint32_t pipe, 
     // uint64_t value = (uint64_t(hiword) << 32) | loword;
     // return fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value);
 
-    if (!cmd_hif)
+    if (!m4_cmd_hif)
         return OpStatus::NotImplemented;
 
     iqstream_channel_select payload;
@@ -153,7 +159,7 @@ OpStatus LA9310_IQStreamer::SetPipelineChannel(lime::TRXDir dir, uint32_t pipe, 
 
     simple_response_payload response;
 
-    OpStatus status = CallCommand(cmd_hif, LIME_M4_RX_CHANNEL_SELECT, &payload, &response);
+    OpStatus status = CallCommand(m4_cmd_hif, LIME_M4_RX_CHANNEL_SELECT, &payload, &response);
     if (status != OpStatus::Success)
         return status;
 
@@ -178,8 +184,8 @@ uint64_t LA9310_IQStreamer::GetHardwareTimestamp()
 class LA9310_Oversampler : public IOversampler
 {
   public:
-    LA9310_Oversampler(volatile struct la9310_sw_cmd_desc* cmd_hif, TRXDir dir, uint8_t lane)
-        : cmd_hif(cmd_hif)
+    LA9310_Oversampler(volatile struct la9310_sw_cmd_desc* m4_cmd_hif, TRXDir dir, uint8_t lane)
+        : m4_cmd_hif(m4_cmd_hif)
         , dir(dir)
         , lane(lane)
     {
@@ -188,7 +194,7 @@ class LA9310_Oversampler : public IOversampler
     virtual ~LA9310_Oversampler(){};
     OpStatus SetOversample(uint32_t oversample_pow2) override
     {
-        if (!cmd_hif)
+        if (!m4_cmd_hif)
             return OpStatus::NotImplemented;
 
         iqstream_channel_config payload;
@@ -198,7 +204,7 @@ class LA9310_Oversampler : public IOversampler
         simple_response_payload response;
 
         M4_Command cmd = dir == TRXDir::Rx ? LIME_M4_RX_CONTROL : LIME_M4_TX_CONTROL;
-        OpStatus status = CallCommand(cmd_hif, cmd, &payload, &response);
+        OpStatus status = CallCommand(m4_cmd_hif, cmd, &payload, &response);
         if (status != OpStatus::Success)
             return status;
 
@@ -207,14 +213,14 @@ class LA9310_Oversampler : public IOversampler
     uint32_t GetOversample() override { return 1; }
 
   private:
-    volatile struct la9310_sw_cmd_desc* cmd_hif;
+    volatile struct la9310_sw_cmd_desc* m4_cmd_hif;
     TRXDir dir;
     uint8_t lane;
 };
 
 std::shared_ptr<IOversampler> LA9310_IQStreamer::GetOversampler(TRXDir dir, uint32_t channel)
 {
-    return std::make_shared<LA9310_Oversampler>(cmd_hif, dir, channel);
+    return std::make_shared<LA9310_Oversampler>(m4_cmd_hif, dir, channel);
 }
 
 class VSPA_DC_Offset : public IDCCorrector
@@ -449,21 +455,27 @@ const complex32f_t* LA9310_IQStreamer::CalcFFT(uint32_t channel)
     return reinterpret_cast<complex32f_t*>(vspa_base_addr + data_addr);
 }
 
-const void* LA9310_IQStreamer::CaptureADC(uint32_t channel)
+std::vector<uint32_t> LA9310_IQStreamer::CaptureADC(uint32_t channel)
 {
     uint64_t value = 0;
     uint32_t hiword = MBOX_OPC_ADC_CAPTURE << 24;
     uint32_t loword = 2; // channel
 
+    std::vector<uint32_t> chf_samples(512); // complex half fixed precision
+    memset(chf_samples.data(), 0, chf_samples.size() * sizeof(chf_samples[0]));
+
     value = (uint64_t(hiword) << 32) | loword;
     uint64_t response = 0;
     OpStatus status = fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response);
     if (status != OpStatus::Success)
-        return nullptr;
+        return chf_samples;
 
     const uint32_t data_addr = (response >> 32);
-    uint8_t* vspa_base_addr = reinterpret_cast<uint8_t*>(fw->pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000;
-    return reinterpret_cast<complex32f_t*>(vspa_base_addr + data_addr);
+    uint32_t* vspa_base_addr =
+        reinterpret_cast<uint32_t*>(size_t(fw->pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000 + data_addr);
+    for (int i = 0; i < chf_samples.size(); ++i)
+        chf_samples[i] = vspa_base_addr[i];
+    return chf_samples;
 }
 
 } // namespace lime

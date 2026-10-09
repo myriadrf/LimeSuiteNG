@@ -24,12 +24,16 @@ using namespace std;
 
 namespace lime {
 
-IQStreamer_DMA::IQStreamer_DMA(DMA_Dir dir, volatile host_dma_hif_t* dma_hif, std::shared_ptr<LA9310_PCIe> pcie)
+IQStreamer_DMA::IQStreamer_DMA(
+    DMA_Dir dir, volatile vspa_dma_hif_t* dma_hif, volatile vspa_regs* csr, std::shared_ptr<LA9310_PCIe> pcie)
     : dma_hif(dma_hif)
+    , csr(csr)
     , pcie(pcie)
     , dir(dir)
 {
+    assert(csr);
     assert(dma_hif);
+    htv_tcd_pending_flag_mask = dma_hif->htv_tcd_pending_flag_mask;
 }
 
 IQStreamer_DMA::~IQStreamer_DMA()
@@ -40,36 +44,36 @@ IQStreamer_DMA::~IQStreamer_DMA()
 OpStatus IQStreamer_DMA::Enable(bool enabled, bool loop_table)
 {
     assert(dma_hif);
-    chrono::milliseconds timeout(1000);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto t2 = t1;
-    while (dma_hif->pending && (t2 - t1) < timeout)
-    {
-        t2 = std::chrono::high_resolution_clock::now();
-    }
-    if (t2 - t1 > timeout)
-    {
-        printf("DMA enable timeout\n");
-        return OpStatus::Timeout;
-    }
+    // chrono::milliseconds timeout(1000);
+    // auto t1 = std::chrono::high_resolution_clock::now();
+    // auto t2 = t1;
+    // while (dma_hif->pending && (t2 - t1) < timeout)
+    // {
+    //     t2 = std::chrono::high_resolution_clock::now();
+    // }
+    // if (t2 - t1 > timeout)
+    // {
+    //     printf("DMA enable timeout\n");
+    //     return OpStatus::Timeout;
+    // }
 
-    dma_hif->enable = enabled;
-    dma_hif->loop_mode = loop_table;
-    dma_hif->clear = !enabled;
-    dma_hif->pending = true;
+    // dma_hif->enable = enabled;
+    // dma_hif->loop_mode = loop_table;
+    // dma_hif->clear = !enabled;
+    // dma_hif->pending = true;
 
-    // Wait for operation to complete
-    t1 = std::chrono::high_resolution_clock::now();
-    t2 = t1;
-    while (dma_hif->pending && (t2 - t1) < timeout)
-    {
-        t2 = std::chrono::high_resolution_clock::now();
-    }
-    if (t2 - t1 > timeout)
-    {
-        printf("DMA wait enable timeout\n");
-        return OpStatus::Timeout;
-    }
+    // // Wait for operation to complete
+    // t1 = std::chrono::high_resolution_clock::now();
+    // t2 = t1;
+    // while (dma_hif->pending && (t2 - t1) < timeout)
+    // {
+    //     t2 = std::chrono::high_resolution_clock::now();
+    // }
+    // if (t2 - t1 > timeout)
+    // {
+    //     printf("DMA wait enable timeout\n");
+    //     return OpStatus::Timeout;
+    // }
 
     return OpStatus::Success;
 }
@@ -112,8 +116,11 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     auto t2 = t1;
 
     chrono::milliseconds timeout(1000);
-    while (tcd_fifo_isfull(&dma_hif->tcd_fifo) && (t2 - t1) < timeout)
+    // printf("tcdsz:%i\n", tcd_fifo_size(&dma_hif->tcd_fifo));
+    int fifo_size = tcd_fifo_size(&dma_hif->tcd_fifo);
+    while (fifo_size == MFIFO_SIZE && (t2 - t1) < timeout)
     {
+        fifo_size = tcd_fifo_size(&dma_hif->tcd_fifo);
         t2 = std::chrono::high_resolution_clock::now();
     }
     if (t2 - t1 > timeout)
@@ -130,6 +137,22 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     tcd->flags = flags;
     tcd->size = size;
     tcd_fifo_push(&dma_hif->tcd_fifo);
+    // printf("fs: %i\n", fifo_size);
+    if (fifo_size < 1)
+    {
+        // Only need to signal TCD insertion if the FIFO is empty, i.e for the initial start.
+        // after that data transfers are self perpetuating as long as FIFO doesn't become empty.
+        // Signaling each TCD insertion is fine, but that makes VSPA go each time, such superfuluos
+        // waking up can affect data processing pacing.
+        return htv_signal(htv_tcd_pending_flag_mask);
+    }
+    else
+        return OpStatus::Success;
+}
+
+OpStatus IQStreamer_DMA::htv_signal(uint32_t mask)
+{
+    csr->host_vcpu_flags0 = mask; // bit writes to flags get OR'ed, can be cleared only by VCPU
     return OpStatus::Success;
 }
 

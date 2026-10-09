@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/complex.h"
@@ -28,6 +29,18 @@ typedef enum {
     VSPA_RX1,
 } e_rx_channel;
 
+typedef struct TxTDD_Config {
+    int16_t dac_allowed;
+    int16_t pa_on : 8;
+    int16_t pa_off : 8;
+    int16_t rf_sw_on : 8;
+    int16_t rf_sw_off : 8;
+    uint16_t rf_sw_on_comparator_out : 2;
+    uint16_t rf_sw_off_comparator_out : 2;
+    uint16_t pa_on_comparator_out : 2;
+    uint16_t pa_off_comparator_out : 2;
+} tx_tdd_config_t;
+
 class LIME_API LA9310_IQStreamer
 {
   public:
@@ -51,7 +64,7 @@ class LIME_API LA9310_IQStreamer
     OpStatus SetInterpolation(uint32_t interpolation);
 
     const complex32f_t* CalcFFT(uint32_t channel);
-    const void* CaptureADC(uint32_t channel);
+    std::vector<uint32_t> CaptureADC(uint32_t channel);
 
     void HostToVCPU_Flag(uint32_t mask);
 
@@ -61,8 +74,10 @@ class LIME_API LA9310_IQStreamer
     std::shared_ptr<IQStreamer_DMA> tx_dma;
     std::shared_ptr<LA9310_FW_Impl> fw;
 
+    volatile tx_tdd_config_t* tdd_control;
+
   private:
-    volatile struct la9310_sw_cmd_desc* cmd_hif;
+    volatile struct la9310_sw_cmd_desc* m4_cmd_hif;
 };
 
 } // namespace lime
