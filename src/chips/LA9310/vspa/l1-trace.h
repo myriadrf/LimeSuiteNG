@@ -13,7 +13,8 @@ typedef struct l1_trace_data_s {
 } l1_trace_data_t;
 
 enum {
-    T_BUSY = 0,
+    T_INVALID_VALUE = 0,
+    T_BUSY,
     T_GO,
     T_XFER_BUFFER,
     T_EXTERNAL_GO,

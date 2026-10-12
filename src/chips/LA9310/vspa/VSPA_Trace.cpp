@@ -19,7 +19,7 @@ VSPA_Trace::VSPA_Trace(std::shared_ptr<LA9310_PCIe> port, volatile l1_trace_hif_
     , mbox(port)
 {
     auto scratch_buf_window = port->GetBar(LA9310_WINDOW_SCRATCH);
-    buffer_size = 1024 * 1024 * 2;
+    buffer_size = 1024 * 1024;
     this->hif->buffer_size = buffer_size;
 
     const uint32_t offset = 1024 * 1024 * 2;
