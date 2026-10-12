@@ -24,6 +24,7 @@
 #include "chips/LA9310/firmware/IQStreamer_DMA.h"
 #include "chips/LA9310/PHYTimer.h"
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
+#include "chips/LA9310/firmware/proxy_data.h"
 #include "comms/PCIe/LA9310_PCIe.h"
 
 #include <algorithm>
@@ -94,9 +95,13 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_IQStreamer> iqstreamer, std::share
     if (dma_buffers.size())
     {
         auto iqflood = dma_buffers.front();
-        rxiqflood_mem = iqflood.subspan(0, iqflood.size() / 2);
+        uint32_t slice_size = iqflood.size() / 4;
+        proxy_mem = iqflood.subspan(0, slice_size);
+        iqstreamer->SetProxyDataBuffer(proxy_mem);
+
+        rxiqflood_mem = iqflood.subspan(slice_size, slice_size);
         memset(rxiqflood_mem.va<void*>(), 0x55, rxiqflood_mem.size());
-        txiqflood_mem = iqflood.subspan(iqflood.size() / 2, iqflood.size() / 2);
+        txiqflood_mem = iqflood.subspan(2 * slice_size, slice_size);
         memset(txiqflood_mem.va<void*>(), 0x55, txiqflood_mem.size());
     }
 }
@@ -552,6 +557,11 @@ void LA9310_TRX::ReceivePacketsLoop()
             stats.bytesTransferred += bytesTransferred;
         }
 
+        {
+            volatile proxy_data_t* proxy = proxy_mem.va<volatile proxy_data_t>();
+            stats.timestamp = proxy->rx_dma_done;
+        }
+
         // print stats
         t2 = std::chrono::steady_clock::now();
         const auto timePeriod{ std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() };
@@ -647,7 +657,7 @@ void LA9310_TRX::ReceivePacketsLoop()
         }
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
 
-        stats.timestamp = timestamp + samplesProduced;
+        //stats.timestamp = timestamp + samplesProduced;
         if (fifo->push(outputPkt, false))
         {
             outputPkt = nullptr;
@@ -938,8 +948,10 @@ void LA9310_TRX::TransmitPacketsLoop()
     bool hasTimestamp = false;
 
     const uint32_t samplesInBatch = mTxArgs.samplesInPacket * mTxArgs.packetsToBatch;
-    uint32_t udr = 0; // iqstreamer->vspa.GetTxUnderruns();
     int irq_period = dmaBuffers.size() / 4;
+
+    proxy_data_t last_proxy;
+    memset(&last_proxy, 0, sizeof(proxy_data_t));
 
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
@@ -947,10 +959,6 @@ void LA9310_TRX::TransmitPacketsLoop()
         int64_t counterDiff = ReadySlots(dma.transfersCompleted, lastHwIndex, 65536);
         lastHwIndex = dma.transfersCompleted;
         counters.completed += counterDiff;
-
-        uint32_t diff = 0; //la9310->vspa.GetTxUnderruns() - udr;
-        udr += diff;
-        underrun.add(diff);
 
         // process pending transactions
         while (!pendingWrites.empty() && counterDiff > 0)
@@ -960,6 +968,21 @@ void LA9310_TRX::TransmitPacketsLoop()
             stats.bytesTransferred += dataBlock.size;
             pendingWrites.pop();
             --counterDiff;
+        }
+
+        {
+            volatile proxy_data_t* proxy = proxy_mem.va<volatile proxy_data_t>();
+            uint32_t diff;
+            if (diff = proxy->tx_udr - last_proxy.tx_udr)
+            {
+                underrun.add(diff);
+                last_proxy.tx_udr += diff;
+            }
+            if (diff = proxy->tx_drop - last_proxy.tx_drop)
+            {
+                loss.add(diff);
+                last_proxy.tx_drop += diff;
+            }
         }
 
         t2 = std::chrono::steady_clock::now();

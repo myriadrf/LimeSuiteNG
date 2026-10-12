@@ -15,6 +15,26 @@ enum class ePhase {
     Complete,
 };
 
+enum {
+    CNT_GO,
+    CNT_HOST_UDR,
+    CNT_TX_DFE_UDR,
+    CNT_TX_AFE_UDR,
+    CNT_TX_AFE_OVR,
+    CNT_RX_DDR_ENQ,
+    CNT_TX_DDR_ENQ,
+    CNT_TX_TCD,
+    CNT_TX_DIFF,
+    CNT_TX_DMA_ALLOWED,
+    CNT_PHYTIME,
+    CNT_ADC_ENQ,
+    CNT_DAC_ENQ,
+    CNT_DAC_PHYTIME_ADVANCE,
+    CNT_TX_DDR_READY,
+    CNT_DDR_ENQ_ADVANCE,
+    CNT_DDR_CMPL_ADVANCE,
+};
+
 struct Event {
     std::string name;
     std::string category;
@@ -56,7 +76,9 @@ static std::string ToString(Event& evt)
     if (evt.id)
         ss << ",\"id\":" << evt.id;
     if (evt.phase == ePhase::Counter)
-        ss << ", \"args\": {\"counter\": " << evt.value << "}";
+    {
+        ss << ", \"args\": {\"counter\": " << int32_t(evt.value) << "}";
+    }
     else if (evt.phase == ePhase::Complete)
         ss << ", \"dur\": " << evt.value;
     ss << "}";
@@ -109,6 +131,16 @@ static std::string OpName(uint32_t op)
         return "T_DAC_AXIQ_RST";
     case T_ADC_AXIQ_RST:
         return "T_ADC_AXIQ_RST";
+    case T_TX_BURST_START:
+        return "T_TX_BURST_START";
+    case T_TX_BURST_DEFFER:
+        return "T_TX_BURST_DEFFER";
+    case T_PHYTIME:
+        return "T_PHYTIME";
+    case T_MBOX:
+        return "T_MBOX";
+    case T_PROXY:
+        return "T_PROXY";
 
     default: {
         char ctemp[32];
@@ -117,17 +149,6 @@ static std::string OpName(uint32_t op)
     }
     }
 }
-
-enum {
-    CNT_GO,
-    CNT_HOST_UDR,
-    CNT_TX_DFE_UDR,
-    CNT_TX_AFE_UDR,
-    CNT_TX_AFE_OVR,
-    CNT_RX_DDR_ENQ,
-    CNT_TX_DDR_ENQ,
-    CNT_TX_TCD,
-};
 
 static std::string CounterNames(uint32_t id)
 {
@@ -150,6 +171,24 @@ static std::string CounterNames(uint32_t id)
         return "CNT_TX_DDR_ENQ";
     case CNT_TX_TCD:
         return "CNT_TX_TCD";
+    case CNT_TX_DIFF:
+        return "CNT_TX_TCD";
+    case CNT_TX_DMA_ALLOWED:
+        return "CNT_TX_DMA_ALLOWED";
+    case CNT_PHYTIME:
+        return "CNT_PHYTIME";
+    case CNT_ADC_ENQ:
+        return "CNT_ADC_ENQ";
+    case CNT_DAC_ENQ:
+        return "CNT_DAC_ENQ";
+    case CNT_DAC_PHYTIME_ADVANCE:
+        return "CNT_DAC_PHYTIME_ADANCE";
+    case CNT_TX_DDR_READY:
+        return "CNT_TX_DDR_READY";
+    case CNT_DDR_ENQ_ADVANCE:
+        return "CNT_DDR_ENQ_ADVANCE";
+    case CNT_DDR_CMPL_ADVANCE:
+        return "CNT_DDR_CMPL_ADVANCE";
     default: {
         char ctemp[32];
         sprintf(ctemp, "%d", id);

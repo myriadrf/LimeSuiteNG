@@ -306,7 +306,7 @@ class TransmitterThread : public WorkerThread
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
-        } /*
+        }
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
@@ -342,7 +342,7 @@ class TransmitterThread : public WorkerThread
             txSamples[0] = modsamples.data();
             stream->Transmit(txSamples.data(), toSend, &txMeta);
             burst_start += toSend;
-        }*/
+        }
         return false;
     }
 
@@ -477,7 +477,7 @@ int main(int argc, char** argv)
     if (sampleRate <= 0)
         sampleRate = 1e6; // sample rate read-back not available, assign default value
 
-    int chirp_len = 512 * 32 + 13; //1024 * 16 + 137; //110096;//16 * 1024; //1360 / 2;
+    int chirp_len = 512 * 8 + 13; //1024 * 16 + 137; //110096;//16 * 1024; //1360 / 2;
     double fs = 1e6;
     double chirpTime = chirp_len / fs;
     auto chirp = GenerateChirp(chirpTime, fs, 0.005, 0.04);

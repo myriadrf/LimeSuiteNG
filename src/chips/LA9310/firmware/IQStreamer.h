@@ -10,6 +10,8 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/types.h"
 
+#include "comms/DMA_Buffer.h"
+
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
 namespace lime {
@@ -75,6 +77,8 @@ class LIME_API LA9310_IQStreamer
     std::shared_ptr<LA9310_FW_Impl> fw;
 
     volatile tx_tdd_config_t* tdd_control;
+
+    OpStatus SetProxyDataBuffer(lime::DMA_Buffer buffer);
 
   private:
     volatile struct la9310_sw_cmd_desc* m4_cmd_hif;

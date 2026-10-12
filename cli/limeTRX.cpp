@@ -344,8 +344,8 @@ static void TransmitLoop(TransmitLoopArgs* args)
                         txSamples[c][s] = interleavedBuffer[srcIndex++];
                 }
             }
-            if (samplesRemaining <= samplesBatchSize)
-                txMeta.flags = StreamTxMeta::EndOfBurst;
+            // if (samplesRemaining <= samplesBatchSize)
+            //     txMeta.flags = StreamTxMeta::EndOfBurst;
             int32_t samplesSent = args->stream->Transmit(txSamples, samplesToSend, &txMeta);
 
             txMeta.timestamp.AddTicks(samplesSent);

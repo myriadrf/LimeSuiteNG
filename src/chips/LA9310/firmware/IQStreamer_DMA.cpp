@@ -138,7 +138,7 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     tcd->size = size;
     tcd_fifo_push(&dma_hif->tcd_fifo);
     // printf("fs: %i\n", fifo_size);
-    if (fifo_size < 1)
+    if (fifo_size < 8)
     {
         // Only need to signal TCD insertion if the FIFO is empty, i.e for the initial start.
         // after that data transfers are self perpetuating as long as FIFO doesn't become empty.
