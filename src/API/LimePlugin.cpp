@@ -743,6 +743,11 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes, Lim
             {
                 node.config.channel[ch].tx.gain[lime::eGainTypes::PA] = dac;
             }
+            double gain = 0;
+            if (GetSetting(settings, &gain, "dev%i_ch%i_iamp", node.devIndex, ch))
+                node.config.channel[ch].tx.gain[lime::eGainTypes::IAMP] = gain;
+            if (GetSetting(settings, &gain, "dev%i_ch%i_tia", node.devIndex, ch))
+                node.config.channel[ch].tx.gain[lime::eGainTypes::TIA] = gain;
         }
     }
     return OpStatus::Success;

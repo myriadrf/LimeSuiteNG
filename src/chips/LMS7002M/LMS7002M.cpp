@@ -887,16 +887,17 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     ChannelScope scope(this, channel);
 
     int ind = GetActiveChannelIndex() % 2;
-    if (opt_gain_tbb[ind] <= 0)
-    {
-        status = CalibrateTxGain();
-        if (status != OpStatus::Success) //set optimal BB gain
-            return status;
-        if (std::fabs(gain) < 0.2) // optimal gain = ~0dB
-            return OpStatus::Success;
-    }
+    // if (opt_gain_tbb[ind] <= 0)
+    // {
+    //     status = CalibrateTxGain();
+    //     if (status != OpStatus::Success) //set optimal BB gain
+    //         return status;
+    //     if (std::fabs(gain) < 0.2) // optimal gain = ~0dB
+    //         return OpStatus::Success;
+    // }
 
-    int g_iamp = static_cast<float_type>(opt_gain_tbb[ind]) * pow(10.0, gain / 20.0) + 0.4;
+    // int g_iamp = static_cast<float_type>(opt_gain_tbb[ind]) * pow(10.0, gain / 20.0) + 0.4;
+    int g_iamp = gain;
     status = Modify_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, std::clamp(g_iamp, 1, 63), true);
 
     return status;
@@ -908,6 +909,8 @@ float_type LMS7002M::GetTBBIAMP_dB(const Channel channel)
     ChannelScope scope(this, channel);
 
     int g_current = Get_SPI_Reg_bits(LMS7002MCSR::CG_IAMP_TBB, true);
+    return g_current;
+
     int ind = GetActiveChannelIndex() % 2;
 
     if (opt_gain_tbb[ind] <= 0)
