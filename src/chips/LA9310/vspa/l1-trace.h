@@ -31,6 +31,11 @@ enum {
     T_DAC_ENQ,
     T_DAC_AXIQ_RST,
     T_ADC_AXIQ_RST,
+    T_TX_BURST_START,
+    T_TX_BURST_DEFFER,
+    T_PHYTIME,
+    T_MBOX,
+    T_PROXY,
 };
 
 typedef struct l1_trace_state_s {

@@ -478,4 +478,17 @@ std::vector<uint32_t> LA9310_IQStreamer::CaptureADC(uint32_t channel)
     return chf_samples;
 }
 
+OpStatus LA9310_IQStreamer::SetProxyDataBuffer(DMA_Buffer buffer)
+{
+    uint64_t value = 0;
+    uint32_t hiword = MBOX_OPC_PROXY_OFFSET << 24;
+    value = (uint64_t(hiword) << 32) | buffer.endpoint_pa();
+    uint64_t response = 0;
+    OpStatus status = fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response);
+    if (status != OpStatus::Success)
+        return status;
+
+    return response == 0 ? OpStatus::Success : OpStatus::Error;
+}
+
 } // namespace lime

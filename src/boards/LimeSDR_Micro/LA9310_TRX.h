@@ -65,6 +65,7 @@ class LA9310_TRX : public RFStream
     std::shared_ptr<LA9310_IQStreamer> iqstreamer;
     std::shared_ptr<LA9310_PCIe> pcie;
 
+    DMA_Buffer proxy_mem;
     DMA_Buffer rxiqflood_mem;
     DMA_Buffer txiqflood_mem;
     DMA_Buffer rx_lane_dma_mem[4];
