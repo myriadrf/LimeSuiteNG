@@ -29,7 +29,11 @@ class IQStreamer_DMA
         uint32_t transfersCompleted;
     };
 
-    IQStreamer_DMA(DMA_Dir dir, volatile vspa_dma_hif_t* dma_hif, volatile vspa_regs* csr, std::shared_ptr<LA9310_PCIe> pcie);
+    IQStreamer_DMA(DMA_Dir dir,
+        volatile vspa_dma_hif_t* dma_hif,
+        volatile vspa_regs* csr,
+        std::shared_ptr<LA9310_PCIe> pcie,
+        volatile dma_tcd_fifo_t* output_blocks = nullptr);
     ~IQStreamer_DMA();
 
     OpStatus Enable(bool enabled, bool loop_table = false);
@@ -40,9 +44,16 @@ class IQStreamer_DMA
 
     OpStatus SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t timestamp, uint32_t flags);
 
+    /// @brief Whether the firmware reports completed transfers output blocks.
+    bool HasOutputBlocks() const { return output_blocks != nullptr; }
+    /// @brief Reads the output block of a completed transfer.
+    /// @param index Sequence number of the completed transfer, counted from the stream start.
+    dma_tcd_t GetOutputBlock(uint32_t index) const;
+
   private:
     OpStatus htv_signal(uint32_t mask);
     volatile vspa_dma_hif_t* dma_hif;
+    volatile dma_tcd_fifo_t* output_blocks;
     volatile vspa_regs* csr;
     std::shared_ptr<LA9310_PCIe> pcie;
     DMA_Dir dir;

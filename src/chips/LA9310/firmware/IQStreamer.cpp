@@ -115,8 +115,11 @@ LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
     for (int i = 0; i < 4; ++i)
     {
         volatile vspa_dma_hif_t* ptr = reinterpret_cast<volatile vspa_dma_hif_t*>(fw->GetVSPAHIF(VSPA_MMAP_RXDMA_LANE0 + i));
+        // optional, older firmware does not provide output blocks
+        volatile dma_tcd_fifo_t* output_blocks =
+            reinterpret_cast<volatile dma_tcd_fifo_t*>(fw->GetVSPAHIF(VSPA_MMAP_RXDDR_OUTPUT_LANE0 + i));
         if (ptr)
-            rx_dma[i] = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_FROM_DEVICE, ptr, vspa_ccsr, fw->pcie);
+            rx_dma[i] = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_FROM_DEVICE, ptr, vspa_ccsr, fw->pcie, output_blocks);
     }
     for (int i = 0; i < 1; ++i)
     {

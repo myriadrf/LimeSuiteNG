@@ -10,7 +10,7 @@
 #define MFIFO_SIZE 32 // must be power of 2
 #define MFIFO_SIZE_MASK (MFIFO_SIZE - 1)
 
-typedef volatile struct DMA_TCD {
+typedef struct DMA_TCD {
     uint32_t timestamp_lsb; // user facing time, samples count
     uint32_t timestamp_msb; // user facing time, samples count
     uint32_t la9310_mem_address;
@@ -42,11 +42,11 @@ static inline void tcd_fifo_pop(dma_tcd_fifo_t* fifo)
     fifo->head = fifo->head + 1;
 }
 
-static inline dma_tcd_t* tcd_fifo_front(dma_tcd_fifo_t* fifo)
+static inline volatile dma_tcd_t* tcd_fifo_front(dma_tcd_fifo_t* fifo)
 {
     return &fifo->items[fifo->head & MFIFO_SIZE_MASK];
 }
-static inline dma_tcd_t* tcd_fifo_back(dma_tcd_fifo_t* fifo)
+static inline volatile dma_tcd_t* tcd_fifo_back(dma_tcd_fifo_t* fifo)
 {
     return &fifo->items[fifo->tail & MFIFO_SIZE_MASK];
 }

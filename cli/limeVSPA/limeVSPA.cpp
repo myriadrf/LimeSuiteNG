@@ -9,7 +9,6 @@
 #include <stdio.h>
 
 #include "chips/LA9310/vspa/VSPA_Trace.h"
-#include "chips/LA9310/firmware/host_dma_hif.h"
 #include "chips/LA9310/firmware/dma_tcd_fifo.h"
 
 #include <unordered_map>

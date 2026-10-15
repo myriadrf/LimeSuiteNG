@@ -536,6 +536,14 @@ void LA9310_TRX::ReceivePacketsLoop()
     // use last pipeline for pacing data, once it has it, previous pipelines are also ready
     auto pacing_dma = iqstreamer->rx_dma[chCount - 1];
 
+    // Firmware reports each completed buffer's samples timestamp and size,
+    // if it's not available, timestamps are derived from received samples count.
+    bool useOutputBlocks = true;
+    for (int c = 0; c < chCount; ++c)
+        useOutputBlocks &= iqstreamer->rx_dma[c]->HasOutputBlocks();
+    if (!useOutputBlocks)
+        lime::warning("Rx: VSPA firmware does not report samples timestamps, timestamps will not reflect lost samples");
+
     while (mRx.terminate.load(std::memory_order_relaxed) == false)
     {
         auto dma{ pacing_dma->GetCounters() };
@@ -608,14 +616,43 @@ void LA9310_TRX::ReceivePacketsLoop()
                 lime::warning("Rx%i: packets fifo full.", 0);
                 continue;
             }
-            outputPkt->Reset();
-            assert(mConfig.hintSampleRate > 0);
-            outputPkt->meta.timestamp = Timespec(0, timestamp, mConfig.hintSampleRate);
         }
+        outputPkt->Reset();
 
         const uint64_t currentBufferIndex{ counters.requests % bufferCount };
 
-        const uint32_t samplesProduced = readSize / sizeof(complex16_t);
+        uint32_t samplesProduced = readSize / sizeof(complex16_t);
+        if (useOutputBlocks)
+        {
+            const dma_tcd_t block = iqstreamer->rx_dma[0]->GetOutputBlock(counters.requests);
+            uint32_t blockSize = std::min(block.size, readSize);
+            // all lanes are sampled together, but use only samples that are available in all of them
+            for (int c = 1; c < chCount; ++c)
+                blockSize = std::min(blockSize, iqstreamer->rx_dma[c]->GetOutputBlock(counters.requests).size);
+            samplesProduced = blockSize / sizeof(complex16_t);
+
+            uint64_t block_ts = uint64_t(block.timestamp_msb) << 32 | block.timestamp_lsb;
+            if (timestamp != block_ts)
+            {
+                lime::debug("Rx: samples discontinuity, expected TS:%" PRIu64 ", got:%" PRIu64 " (%+" PRIi64 ")",
+                    timestamp,
+                    block_ts,
+                    int64_t(block_ts - timestamp));
+                ++stats.loss;
+                loss.add(1);
+            }
+            timestamp = block_ts;
+        }
+
+        if (samplesProduced == 0)
+        {
+            // buffer was completed without any samples, nothing to output
+            ++counters.requests;
+            continue;
+        }
+
+        assert(mConfig.hintSampleRate > 0);
+        outputPkt->meta.timestamp = Timespec(0, timestamp, mConfig.hintSampleRate);
         timestamp += samplesProduced;
 
         for (int c = 0; c < chCount; ++c)
@@ -639,13 +676,14 @@ void LA9310_TRX::ReceivePacketsLoop()
             {
                 auto dest = reinterpret_cast<lime::complex16_t* const*>(outputPkt->samples.back());
                 auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
-                memcpy(dest[c], src, readSize);
+                memcpy(dest[c], src, samplesProduced * sizeof(complex16_t));
             }
             pcie->DMA_SyncForDevice(rx_buffers[c].at(currentBufferIndex));
         }
         outputPkt->samples.SetSize(outputPkt->samples.size() + samplesProduced);
 
-        //stats.timestamp = timestamp + samplesProduced;
+        stats.timestamp = timestamp;
+        mRx.lastTimestamp.store(timestamp, std::memory_order_relaxed);
         if (fifo->push(outputPkt, false))
         {
             outputPkt = nullptr;
@@ -654,7 +692,6 @@ void LA9310_TRX::ReceivePacketsLoop()
         {
             ++stats.overrun;
             overrun.add(1);
-            outputPkt->Reset();
         }
         ++counters.requests;
 
@@ -708,6 +745,7 @@ template<class T>
 uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMeta* meta, chrono::microseconds timeout)
 {
     bool timestampSet = false;
+    uint64_t expectedTicks = 0;
     uint32_t samplesProduced = 0;
     const bool useChannelB = mConfig.channels.at(TRXDir::Rx).size() > 1;
 
@@ -726,6 +764,11 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
             lime::error("No samples or timeout"s);
             return samplesProduced;
         }
+
+        // Output only contiguous samples, if there is a gap, the following samples will be returned by next call
+        // with their own timestamp.
+        if (samplesProduced > 0 && mRx.stagingPacket->meta.timestamp.GetTicks() != expectedTicks)
+            return samplesProduced;
 
         if (!timestampSet && meta)
         {
@@ -749,6 +792,7 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
 
         mRx.stagingPacket->samples.pop(samplesToCopy);
         mRx.stagingPacket->meta.timestamp.AddTicks(samplesToCopy);
+        expectedTicks = mRx.stagingPacket->meta.timestamp.GetTicks();
 
         samplesProduced += samplesToCopy;
 
@@ -1107,13 +1151,13 @@ void LA9310_TRX::TransmitPacketsLoop()
 
         uint32_t flags = 0;
         if (startOfBurst)
-            flags |= PKT_START;
+            flags |= IQSTREAM_TRX_START;
         if (endOfBurst)
-            flags |= PKT_END;
+            flags |= IQSTREAM_TRX_END;
         if (hasTimestamp)
-            flags |= PKT_HAS_TIMESTAMP;
+            flags |= IQSTREAM_HAS_TIMESTAMP;
         // if (stagingBufferIndex % irq_period == 0)
-        flags |= PKT_IRQ;
+        flags |= IQSTREAM_IRQ;
         // printf("dma_submit ts:%X %x %i f:%x\n", txtimestamp, dmaBuffers.at(stagingBufferIndex).endpoint_pa(), wrInfo.size, flags);
         const OpStatus status = tx_dma->SubmitTransfer(dmaBuffers.at(stagingBufferIndex), wrInfo.size, txtimestamp, flags);
         if (status != OpStatus::Success)

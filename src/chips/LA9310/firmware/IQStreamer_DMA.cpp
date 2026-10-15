@@ -24,9 +24,13 @@ using namespace std;
 
 namespace lime {
 
-IQStreamer_DMA::IQStreamer_DMA(
-    DMA_Dir dir, volatile vspa_dma_hif_t* dma_hif, volatile vspa_regs* csr, std::shared_ptr<LA9310_PCIe> pcie)
+IQStreamer_DMA::IQStreamer_DMA(DMA_Dir dir,
+    volatile vspa_dma_hif_t* dma_hif,
+    volatile vspa_regs* csr,
+    std::shared_ptr<LA9310_PCIe> pcie,
+    volatile dma_tcd_fifo_t* output_blocks)
     : dma_hif(dma_hif)
+    , output_blocks(output_blocks)
     , csr(csr)
     , pcie(pcie)
     , dir(dir)
@@ -38,51 +42,34 @@ IQStreamer_DMA::IQStreamer_DMA(
 
 IQStreamer_DMA::~IQStreamer_DMA()
 {
-    // Enable(false, false);
 }
 
 OpStatus IQStreamer_DMA::Enable(bool enabled, bool loop_table)
 {
     assert(dma_hif);
-    // chrono::milliseconds timeout(1000);
-    // auto t1 = std::chrono::high_resolution_clock::now();
-    // auto t2 = t1;
-    // while (dma_hif->pending && (t2 - t1) < timeout)
-    // {
-    //     t2 = std::chrono::high_resolution_clock::now();
-    // }
-    // if (t2 - t1 > timeout)
-    // {
-    //     printf("DMA enable timeout\n");
-    //     return OpStatus::Timeout;
-    // }
-
-    // dma_hif->enable = enabled;
-    // dma_hif->loop_mode = loop_table;
-    // dma_hif->clear = !enabled;
-    // dma_hif->pending = true;
-
-    // // Wait for operation to complete
-    // t1 = std::chrono::high_resolution_clock::now();
-    // t2 = t1;
-    // while (dma_hif->pending && (t2 - t1) < timeout)
-    // {
-    //     t2 = std::chrono::high_resolution_clock::now();
-    // }
-    // if (t2 - t1 > timeout)
-    // {
-    //     printf("DMA wait enable timeout\n");
-    //     return OpStatus::Timeout;
-    // }
-
     return OpStatus::Success;
 }
 
 IQStreamer_DMA::State IQStreamer_DMA::GetCounters()
 {
     IQStreamer_DMA::State dma{};
-    dma.transfersCompleted = dma_hif->tcd_fifo.done & 0xFFFFFFFF;
+    dma.transfersCompleted = dma_hif->tcd_table.done & 0xFFFFFFFF;
     return dma;
+}
+
+dma_tcd_t IQStreamer_DMA::GetOutputBlock(uint32_t index) const
+{
+    assert(output_blocks);
+    // VSPA appends an output block for every completed transfer, and fills in the next slot
+    // while its transfer is in progress, so slots of completed transfers are stable until the fifo wraps around.
+    volatile const dma_tcd_t* item = &output_blocks->items[index & MFIFO_SIZE_MASK];
+    dma_tcd_t block;
+    block.timestamp_lsb = item->timestamp_lsb;
+    block.timestamp_msb = item->timestamp_msb;
+    block.la9310_mem_address = item->la9310_mem_address;
+    block.size = item->size;
+    block.flags = item->flags;
+    return block;
 }
 
 OpStatus IQStreamer_DMA::Wait()
@@ -116,11 +103,10 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
     auto t2 = t1;
 
     chrono::milliseconds timeout(1000);
-    // printf("tcdsz:%i\n", tcd_fifo_size(&dma_hif->tcd_fifo));
-    int fifo_size = tcd_fifo_size(&dma_hif->tcd_fifo);
+    int fifo_size = tcd_fifo_size(&dma_hif->tcd_table);
     while (fifo_size == MFIFO_SIZE && (t2 - t1) < timeout)
     {
-        fifo_size = tcd_fifo_size(&dma_hif->tcd_fifo);
+        fifo_size = tcd_fifo_size(&dma_hif->tcd_table);
         t2 = std::chrono::high_resolution_clock::now();
     }
     if (t2 - t1 > timeout)
@@ -129,15 +115,14 @@ OpStatus IQStreamer_DMA::SubmitTransfer(DMA_Buffer buffer, size_t size, uint64_t
         return OpStatus::Timeout;
     }
 
-    volatile dma_tcd_t* tcd = tcd_fifo_back(&dma_hif->tcd_fifo);
+    volatile dma_tcd_t* tcd = tcd_fifo_back(&dma_hif->tcd_table);
     tcd->la9310_mem_address = buffer.endpoint_pa();
     assert(size <= buffer.size());
     tcd->timestamp_lsb = timestamp & 0xFFFFFFFF;
     tcd->timestamp_msb = (timestamp >> 32) & 0xFFFFFFFF;
     tcd->flags = flags;
     tcd->size = size;
-    tcd_fifo_push(&dma_hif->tcd_fifo);
-    // printf("fs: %i\n", fifo_size);
+    tcd_fifo_push(&dma_hif->tcd_table);
     if (fifo_size < 8)
     {
         // Only need to signal TCD insertion if the FIFO is empty, i.e for the initial start.
