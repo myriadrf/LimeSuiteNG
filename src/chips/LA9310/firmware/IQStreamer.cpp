@@ -192,10 +192,10 @@ uint64_t LA9310_IQStreamer::GetHardwareTimestamp()
 class LA9310_Oversampler : public IOversampler
 {
   public:
-    LA9310_Oversampler(volatile struct la9310_sw_cmd_desc* m4_cmd_hif, TRXDir dir, uint8_t lane)
+    LA9310_Oversampler(volatile struct la9310_sw_cmd_desc* m4_cmd_hif, TRXDir dir, uint8_t channel)
         : m4_cmd_hif(m4_cmd_hif)
         , dir(dir)
-        , lane(lane)
+        , channel(channel)
     {
     }
 
@@ -206,24 +206,42 @@ class LA9310_Oversampler : public IOversampler
             return OpStatus::NotImplemented;
 
         iqstream_channel_config payload;
-        payload.lane = lane;
+        payload.channel = channel;
         payload.oversample_pow2 = oversample_pow2;
 
         simple_response_payload response;
 
-        M4_Command cmd = dir == TRXDir::Rx ? LIME_M4_RX_CONTROL : LIME_M4_TX_CONTROL;
+        M4_Command cmd = dir == TRXDir::Rx ? LIME_M4_RX_SET_OVERSAMPLE : LIME_M4_TX_SET_OVERSAMPLE;
         OpStatus status = CallCommand(m4_cmd_hif, cmd, &payload, &response);
         if (status != OpStatus::Success)
             return status;
 
         return response.status == 0 ? OpStatus::Success : OpStatus::Error;
     }
-    uint32_t GetOversample() override { return 1; }
+    uint32_t GetOversample() override
+    {
+        if (!m4_cmd_hif)
+            return 0;
+
+        iqstream_channel_config payload;
+        payload.channel = channel;
+        payload.oversample_pow2 = 0;
+
+        uint32_t oversample_pow2 = 0;
+
+        M4_Command cmd = dir == TRXDir::Rx ? LIME_M4_RX_GET_OVERSAMPLE : LIME_M4_TX_GET_OVERSAMPLE;
+        OpStatus status = CallCommand(m4_cmd_hif, cmd, &payload, &oversample_pow2);
+        // older firmware does not support readback, assume no oversampling
+        if (status != OpStatus::Success)
+            return 0;
+
+        return oversample_pow2;
+    }
 
   private:
     volatile struct la9310_sw_cmd_desc* m4_cmd_hif;
     TRXDir dir;
-    uint8_t lane;
+    uint8_t channel;
 };
 
 std::shared_ptr<IOversampler> LA9310_IQStreamer::GetOversampler(TRXDir dir, uint32_t channel)

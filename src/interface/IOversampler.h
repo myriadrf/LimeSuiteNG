@@ -13,6 +13,7 @@ class IOversampler
     virtual ~IOversampler(){};
 
     virtual OpStatus SetOversample(uint32_t oversample_pow2) = 0;
+    /// @return the oversampling factor as a power of 2
     virtual uint32_t GetOversample() = 0;
 };
 

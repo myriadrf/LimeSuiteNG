@@ -930,12 +930,11 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
     if (rf_samplerate)
         *rf_samplerate = rate;
 
-    auto ovrsample = iqstreamer->GetOversampler(trx, channel);
-
-    int dec = 1; //fw->GetDecimation(vspa_ch);
-    if (dec > 0)
+    if (iqstreamer)
     {
-        rate /= dec;
+        // a single Tx lane, oversampling is configured on lane 0
+        auto ovrsample = iqstreamer->GetOversampler(trx, trx == TRXDir::Tx ? 0 : channel);
+        rate /= (1 << ovrsample->GetOversample());
     }
 
     return rate;
