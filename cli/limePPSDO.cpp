@@ -63,11 +63,13 @@ static uint64_t setField(uint64_t currRegValue, uint64_t newBitValue, int bitOff
     return ((currRegValue & ~mask) | ((newBitValue << bitOffset) & mask));
 }
 
+/*
 static uint64_t getField(uint64_t currRegValue, int bitOffset, int size)
 {
     uint64_t mask = ((1ULL << size) - 1ULL) << bitOffset;
     return ((currRegValue & mask) >> bitOffset);
 }
+*/
 
 // ##################################################
 // #### PPSDODriver member functions definitions ####

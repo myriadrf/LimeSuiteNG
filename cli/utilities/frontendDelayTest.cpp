@@ -91,7 +91,7 @@ static void PlotSamples(const complex32f_t* samples, size_t count, int xoffset =
     std::vector<float> temp;
     temp.resize(count * 2);
     size_t p = 0;
-    for (int i = 0; i < count; ++i)
+    for (uint32_t i = 0; i < count; ++i)
     {
         temp[p] = i + xoffset;
         ++p;
@@ -116,7 +116,7 @@ static void PlotSamples(const complex32f_t* samples, size_t count, int xoffset =
     // plot.flush();
 
     plot.write("plot '-' binary record=");
-    plot.writef("%i", temp.size());
+    plot.writef("%lu", temp.size());
     plot.write(" format='%float' with lines\n");
     plot.writebinary(temp.data(), temp.size() * sizeof(float));
     plot.flush();
@@ -170,7 +170,7 @@ class ReceiverThread : public WorkerThread
         constexpr auto timeout = std::chrono::microseconds(1000000);
 
         // skip all samples until the expected time
-        printf("Samples to skip: %i\n", samplesToSkip);
+        printf("Samples to skip: %lu\n", samplesToSkip);
         while (samplesToSkip > 0)
         {
             const size_t toRead = samplesToSkip > rxSize ? rxSize : samplesToSkip;
@@ -272,7 +272,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             txMeta.timestamp = Timespec(int64_t(burst_start));
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
-            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             const size_t toSend = chirp.size();
             for (size_t i = 0; i < chirp.size(); ++i)
                 modsamples[i] = chirp[i];
@@ -294,7 +294,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             burst_start += 16384;
             txMeta.timestamp = Timespec(int64_t(burst_start));
-            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
@@ -312,7 +312,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             burst_start += 16384;
             txMeta.timestamp = Timespec(int64_t(burst_start));
-            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();
@@ -330,7 +330,7 @@ class TransmitterThread : public WorkerThread
             txMeta.hasTimestamp = useTimestamp;
             burst_start += 16384;
             txMeta.timestamp = Timespec(int64_t(burst_start));
-            printf("burst start @ %i\n", txMeta.timestamp.GetTicks());
+            printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
 
             const size_t toSend = chirp.size();

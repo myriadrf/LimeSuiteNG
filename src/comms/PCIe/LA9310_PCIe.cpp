@@ -136,7 +136,7 @@ std::vector<DMA_Buffer> LA9310_PCIe::GetUserSpaceDMABuffers()
         return buffers;
     }
 
-    for (int i = 0; i < dma_usermap.region_count; ++i)
+    for (uint32_t i = 0; i < dma_usermap.region_count; ++i)
     {
         void* vaddr = mmap(NULL,
             dma_usermap.region[i].size,
@@ -146,7 +146,7 @@ std::vector<DMA_Buffer> LA9310_PCIe::GetUserSpaceDMABuffers()
             dma_usermap.region[i].mmap_offset);
         if (vaddr == MAP_FAILED)
         {
-            lime::error("Userspace DMA[%i] mmap failed errno: %i\n", i, errno);
+            lime::error("Userspace DMA[%u] mmap failed errno: %i\n", i, errno);
             return buffers;
         }
         buffers.push_back(

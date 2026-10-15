@@ -34,12 +34,12 @@ static inline void tcd_fifo_reset(dma_tcd_fifo_t* fifo)
 
 static inline void tcd_fifo_push(dma_tcd_fifo_t* fifo)
 {
-    ++fifo->tail;
+    fifo->tail = fifo->tail + 1;
 }
 
 static inline void tcd_fifo_pop(dma_tcd_fifo_t* fifo)
 {
-    ++fifo->head;
+    fifo->head = fifo->head + 1;
 }
 
 static inline dma_tcd_t* tcd_fifo_front(dma_tcd_fifo_t* fifo)

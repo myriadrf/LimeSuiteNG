@@ -219,6 +219,7 @@ static float_type PhaseOffsetValueToDegrees(int16_t phoValue)
     return (phoValue / 32768.0) * 360.0;
 }
 
+/*
 static uint16_t GetWritableBits(uint16_t addr)
 {
     for (const auto& readOnlyMask : lms7002m::registersReadOnlyMasks)
@@ -228,6 +229,7 @@ static uint16_t GetWritableBits(uint16_t addr)
     }
     return 0xFFFF;
 }
+*/
 
 static uint16_t GetVolatileMask(uint16_t addr)
 {
@@ -886,7 +888,7 @@ OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
     OpStatus status;
     ChannelScope scope(this, channel);
 
-    int ind = GetActiveChannelIndex() % 2;
+    // int ind = GetActiveChannelIndex() % 2;
     // if (opt_gain_tbb[ind] <= 0)
     // {
     //     status = CalibrateTxGain();

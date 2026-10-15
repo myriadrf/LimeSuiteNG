@@ -232,12 +232,12 @@ Event Convert(const l1_trace_data_t& data)
 
 void ToTraceFile(std::ofstream& ofs, const std::vector<l1_trace_data_t> events)
 {
-    size_t cnt = 0;
+    uint32_t cnt = 0;
     for (const auto& e : events)
     {
         if (e.msg == 0)
         {
-            printf("Bad msg %i\n", cnt);
+            printf("Bad msg %u\n", cnt);
             break;
         }
 

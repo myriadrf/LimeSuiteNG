@@ -23,7 +23,7 @@ class LIME_API VSPA_Trace
   private:
     std::shared_ptr<LA9310_PCIe> port;
     volatile l1_trace_hif_t* hif;
-    volatile l1_trace_data_t* events_va;
+    l1_trace_data_t* events_va;
     uint32_t bytes_read;
     uint32_t buffer_size;
     uint32_t last_drops;

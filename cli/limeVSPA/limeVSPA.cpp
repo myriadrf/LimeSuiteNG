@@ -73,21 +73,6 @@ static void intHandler(int dummy)
     stopProgram.store(true);
 }
 
-static void print_trace(const l1_trace_data_t* data, uint32_t length)
-{
-    printf("L1 TRACE (%u):\n", length);
-    uint64_t base_cnt = data[0].cnt;
-    for (uint32_t i = 0; i < length; ++i)
-    {
-        if (data[i].msg == 0)
-            break;
-
-        std::string cmdname; // = GetMsgName(data[i].msg);
-        printf("%3u: [%+16li] %s %08X\n", i, data[i].cnt - base_cnt, cmdname.c_str(), data[i].param);
-        base_cnt = data[i].cnt;
-    }
-}
-
 static uint64_t event_count = 0;
 static void DumpTracer(VSPA_Trace* tracer, std::vector<l1_trace_data_t>& trace_events_data)
 {
@@ -98,51 +83,8 @@ static void DumpTracer(VSPA_Trace* tracer, std::vector<l1_trace_data_t>& trace_e
         return;
 
     event_count += events.size();
-
     trace_events_data.insert(std::end(trace_events_data), std::begin(events), std::end(events));
-    printf("Evt count: %i\n", trace_events_data.size());
-
-    // size_t toCopy = trace_events_data.capacity() - trace_events_data.size();
-    // toCopy = std::min(toCopy, events.size());
-    // memcpy(&trace_events_data[trace_events_data.size()], events.data(), toCopy * sizeof(l1_trace_data_t));
-    // trace_events_data.
 }
-
-// static vspa_state_t GetProxy(std::shared_ptr<LA9310_PCIe> pcie)
-// {
-//     vspa_state_t proxy;
-//     auto iqflood = pcie->GetBar(LA9310_WINDOW_IQFLOOD);
-//     if (iqflood.vaddr == nullptr)
-//     {
-//         printf("Failed proxy\n");
-//         return proxy;
-//     }
-
-//     const uint32_t* v_vspa_dmem_proxy_ro = reinterpret_cast<const uint32_t*>(iqflood.vaddr);
-//     // pcie->dmem_sync_to_cpu(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-//     memcpy(&proxy, v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-//     // pcie->dmem_sync_to_device(v_vspa_dmem_proxy_ro, sizeof(vspa_state_t));
-//     return proxy;
-// }
-
-// static void print_pipeline_tx(const tx_pipeline_t& pipe, const tx_pipeline_t& last_pipe)
-// {
-//     printf("Tx pipeline:\n");
-//     uint32_t adc_rate = pipe.dac.output.bytes_done - last_pipe.dac.output.bytes_done;
-//     printf("DAC | enq:%08X done:%08X, rate:%8u\n", pipe.dac.input.bytes_done, pipe.dac.output.bytes_done, adc_rate);
-//     printf("INT | enq:%08X done:%08X\n", pipe.interp.input.bytes_done, pipe.interp.output.bytes_done);
-//     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
-//     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
-// }
-
-// static void print_pipeline_rx(const rx_pipeline_t& pipe, const rx_pipeline_t& last_pipe)
-// {
-//     printf("Rx pipeline:\n");
-//     uint32_t adc_rate = pipe.adc.output.bytes_done - last_pipe.adc.output.bytes_done;
-//     printf("ADC | enq:%08X done:%08X, rate:%8u\n", pipe.adc.input.bytes_done, pipe.adc.output.bytes_done, adc_rate);
-//     uint32_t ddr_rate = pipe.ddr.output.bytes_done - last_pipe.ddr.output.bytes_done;
-//     printf("DDR | enq:%08X done:%08X, rate:%8u\n", pipe.ddr.input.bytes_done, pipe.ddr.output.bytes_done, ddr_rate);
-// }
 
 static void print_dma_bits(uint32_t bits)
 {
@@ -316,7 +258,7 @@ void* vspa_memorymap_find(std::shared_ptr<LA9310_PCIe> pcie, uint32_t f)
             return NULL; // end of table
 
         if (row[i].feature == f)
-            return (void*)(base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
+            return reinterpret_cast<void*>(base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
     }
     return NULL;
 }

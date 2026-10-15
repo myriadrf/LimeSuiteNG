@@ -56,12 +56,17 @@ static void memcpy_w32(volatile void* dest, volatile const void* src, size_t byt
     // assert((size_t(src) & 0x3) == 0);
     volatile uint32_t* dest32 = reinterpret_cast<volatile uint32_t*>(dest);
     volatile const uint32_t* src32 = reinterpret_cast<volatile const uint32_t*>(src);
-    size_t wordsToCopy = bytes / sizeof(uint32_t) + (bytes % sizeof(uint32_t) > 0 ? 1 : 0);
+    size_t wordsToCopy = bytes / sizeof(uint32_t);
     for (size_t w = 0; w < wordsToCopy; ++w)
     {
         // must copy word by word. memcpy could attempt to access more than 32bit at a time triggering BUS error.
-        dest32[w] = src32[w];
+        *dest32 = *src32;
+        ++dest32;
+        ++src32;
     };
+    uint32_t bytes_tail = bytes % sizeof(uint32_t);
+    for (uint32_t i = 0; i < bytes_tail; ++i)
+        reinterpret_cast<volatile uint8_t*>(dest32)[i] = reinterpret_cast<const volatile uint8_t*>(src32)[i];
 }
 
 template<class PayloadT, class ResponseT>
@@ -97,8 +102,8 @@ OpStatus CallCommand(volatile la9310_sw_cmd_desc* m4_cmd_hif,
 
 LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
     : fw(fw)
-    , m4_cmd_hif(nullptr)
     , tdd_control(nullptr)
+    , m4_cmd_hif(nullptr)
 {
     if (!fw->IsVSPAFirmwareLoaded())
         return;
@@ -417,7 +422,7 @@ class VSPA_Tone : public IToneGenerator
         if (!state)
             return OpStatus::NotSupported;
 
-        state->amplitude = (float)amplitude;
+        state->amplitude = amplitude;
         state->freq_bin = fftbin;
 
         return OpStatus::Success;
@@ -473,7 +478,7 @@ std::vector<uint32_t> LA9310_IQStreamer::CaptureADC(uint32_t channel)
     const uint32_t data_addr = (response >> 32);
     uint32_t* vspa_base_addr =
         reinterpret_cast<uint32_t*>(size_t(fw->pcie->GetBar(LA9310_WINDOW_BAR2).vaddr) + 0x400000 + data_addr);
-    for (int i = 0; i < chf_samples.size(); ++i)
+    for (uint32_t i = 0; i < chf_samples.size(); ++i)
         chf_samples[i] = vspa_base_addr[i];
     return chf_samples;
 }

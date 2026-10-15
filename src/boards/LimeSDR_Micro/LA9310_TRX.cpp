@@ -174,8 +174,6 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return status;
     }
 
-    PHYTimer& phytimer = iqstreamer->fw->phytimer;
-
     iqstreamer->fw->ResetHardwareTime();
     return status;
 }
@@ -385,19 +383,14 @@ OpStatus LA9310_TRX::RxSetup()
     const int dmaBatchSize = 16 * 1024;
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBatchSize / packetSize);
 
-    uint32_t rx_lanes_mask = 0;
-    for (auto api_channel : mConfig.channels.at(TRXDir::Rx))
-    {
-        rx_lanes_mask <<= 1;
-        rx_lanes_mask |= 0x1;
-    }
+    uint32_t rx_lanes_mask = ~((~0) << mConfig.channels.at(TRXDir::Rx).size());
 
     status = iqstreamer->PipelineEnable(rx_lanes_mask, 0, true);
     if (status != OpStatus::Success)
         return status;
 
     const uint32_t xfer_size = packetSize * mRx.packetsToBatch;
-    for (int l = 0; l < mConfig.channels.at(TRXDir::Rx).size(); ++l)
+    for (uint32_t l = 0; l < mConfig.channels.at(TRXDir::Rx).size(); ++l)
     {
         int memstep = rxiqflood_mem.size() / mConfig.channels.at(TRXDir::Rx).size();
         rx_lane_dma_mem[l] = rxiqflood_mem.subspan(memstep * l, memstep);
@@ -622,7 +615,7 @@ void LA9310_TRX::ReceivePacketsLoop()
 
         const uint64_t currentBufferIndex{ counters.requests % bufferCount };
 
-        const int samplesProduced = readSize / sizeof(complex16_t);
+        const uint32_t samplesProduced = readSize / sizeof(complex16_t);
         timestamp += samplesProduced;
 
         for (int c = 0; c < chCount; ++c)
@@ -917,7 +910,7 @@ void LA9310_TRX::TransmitPacketsLoop()
 
     bool outputReady = false;
     uint32_t dmaFilled = 0;
-    int32_t samplesFilled = 0;
+    uint32_t samplesFilled = 0;
     int64_t batchTimestamp = 0;
     uint32_t packetsCounter = 0;
 
@@ -943,7 +936,6 @@ void LA9310_TRX::TransmitPacketsLoop()
     bool hasTimestamp = false;
 
     const uint32_t samplesInBatch = mTxArgs.samplesInPacket * mTxArgs.packetsToBatch;
-    int irq_period = dmaBuffers.size() / 4;
 
     proxy_data_t last_proxy;
     memset(&last_proxy, 0, sizeof(proxy_data_t));
@@ -968,12 +960,12 @@ void LA9310_TRX::TransmitPacketsLoop()
         {
             volatile proxy_data_t* proxy = proxy_mem.va<volatile proxy_data_t>();
             uint32_t diff;
-            if (diff = proxy->tx_udr - last_proxy.tx_udr)
+            if ((diff = proxy->tx_udr - last_proxy.tx_udr))
             {
                 underrun.add(diff);
                 last_proxy.tx_udr += diff;
             }
-            if (diff = proxy->tx_drop - last_proxy.tx_drop)
+            if ((diff = proxy->tx_drop - last_proxy.tx_drop))
             {
                 loss.add(diff);
                 last_proxy.tx_drop += diff;
@@ -1129,7 +1121,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             if (status == OpStatus::Busy)
                 continue;
 
-            lime::error("Failed to submit dma write %i", (int)status);
+            lime::error("Failed to submit dma write %i", static_cast<int32_t>(status));
             ++stats.overrun;
             tx_dma->Wait();
             this_thread::sleep_for(std::chrono::milliseconds(1));

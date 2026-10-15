@@ -978,7 +978,6 @@ OpStatus LimeSDR_Micro::RunRxTestConfig(OEMTestReporter& reporter,
 
     bool configPass = false;
     bool chAPass = false;
-    bool chBPass = false;
 
     OpStatus status = Configure(config, 0);
     configPass = status == OpStatus::Success;
@@ -1042,10 +1041,7 @@ OpStatus LimeSDR_Micro::RunTxTestConfig(OEMTestReporter& reporter,
 
     config.channel[1].tx.enabled = false;
 
-    bool configPass = false;
-
     OpStatus status = Configure(config, 0);
-    configPass = status == OpStatus::Success;
 
     // status = la9310->vspa.GenerateTxTone(false, 8192);
     // if (status != OpStatus::Success)
@@ -1127,11 +1123,16 @@ OpStatus LimeSDR_Micro::OEMTest(OEMTestReporter* reporter)
 
     uint16_t dac_value = 0xFFFF;
     OpStatus status = la9310->eeprom.Read(0xFFFE, &dac_value, 2);
+    if (status != OpStatus::Success)
+        return status;
+
     if (dac_value == 0xFFFF) // has never been set
     {
         uint16_t default_dac = 0xA1B8;
         status = la9310->eeprom.Write(0xFFFE, &default_dac, 2);
     }
+    if (status != OpStatus::Success)
+        return status;
 
     reporter->OnStart(test);
     bool pass = true;

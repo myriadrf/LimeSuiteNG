@@ -298,7 +298,7 @@ void* LA9310_FW_Impl::GetVSPAHIF(uint32_t f)
             return NULL; // end of table
 
         if (row[i].feature == f)
-            return (void*)(base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
+            return (base_addr + (row[i].address << 1)); // row address is in VSPA halfwords, convert to bytes
     }
     return NULL;
 }

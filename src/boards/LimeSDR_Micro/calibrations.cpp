@@ -62,9 +62,9 @@ struct CalibrationContext {
     float lo_diff;
 };
 
+#if PLOT_GRAPHS
 static void PlotSamples(const complex16_t* samples, size_t count)
 {
-#if PLOT_GRAPHS
     if (!showPlots)
         return;
 
@@ -79,8 +79,8 @@ static void PlotSamples(const complex16_t* samples, size_t count)
         plotSamples.writef("%i %i\n", i, samples[i].imag());
     plotSamples.write("e\n");
     plotSamples.flush();
-#endif
 }
+#endif
 
 static void PlotBins(std::vector<float> bins, float sampleRate)
 {
@@ -102,10 +102,11 @@ static void PlotBins(std::vector<float> bins, float sampleRate)
 #endif
 }
 
+/*
 static uint32_t ReverseBits(uint32_t input, uint32_t bitCount)
 {
     uint32_t output = 0;
-    for (int i = 0; i < bitCount; ++i)
+    for (uint32_t i = 0; i < bitCount; ++i)
     {
         output <<= 1;
         output |= input & 1;
@@ -117,20 +118,21 @@ static uint32_t ReverseBits(uint32_t input, uint32_t bitCount)
 static std::vector<float> ReverseBins(std::vector<float>& bins)
 {
     std::vector<float> out(bins.size());
-    for (int i = 0; i < bins.size(); ++i)
+    for (uint32_t i = 0; i < bins.size(); ++i)
     {
         uint32_t rev = ReverseBits(i, 9);
         out[i] = bins[rev];
     }
     return out;
 }
+*/
 
 static void HalfFixedToSingle(void* dest, const void* input, size_t size)
 {
     const uint16_t* src = reinterpret_cast<const uint16_t*>(input);
     float* out = reinterpret_cast<float*>(dest);
 
-    for (int i = 0; i < size / sizeof(uint16_t); ++i)
+    for (uint32_t i = 0; i < size / sizeof(uint16_t); ++i)
     {
         out[i] = (src[i] & 0x7FFF) / 32767.0;
         if (src[i] & 0x8000)
@@ -140,7 +142,6 @@ static void HalfFixedToSingle(void* dest, const void* input, size_t size)
 
 static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
 {
-    OpStatus status;
     const int samplesToRead = 512;
     std::vector<complex32f_t> samples(samplesToRead);
 
@@ -248,7 +249,7 @@ typedef struct {
     const uint8_t wrOnlyAddrCnt;
     const uint8_t wrOnlyDataCnt;
 } RegisterBatch;
-
+/*
 static void lms7002m_write_masked_registers(lms7002m_context* rfsoc, const RegisterBatch* regs)
 {
     for (uint8_t i = regs->cnt; i; --i)
@@ -263,7 +264,7 @@ static void lms7002m_write_masked_registers(lms7002m_context* rfsoc, const Regis
         lms7002m_spi_write(rfsoc, regs->wrOnlyAddr[index], i > regs->wrOnlyDataCnt ? 0 : regs->wrOnlyData[index]);
     }
 }
-
+*/
 static void lms7002m_enable_mimo_buffers_if_necessary(lms7002m_context* rfsoc)
 {
     //modifications when calibrating channel B
@@ -284,7 +285,7 @@ static bool lms7002m_is_pll_tuned(lms7002m_context* rfsoc, const bool isTx)
     lime_Result result = lms7002m_tune_vco(rfsoc, isTx ? LMS7002M_VCO_SXT : LMS7002M_VCO_SXR);
     return result == lime_Result_Success;
 }
-
+/*
 static void lms7002m_set_defaults_sx(lms7002m_context* rfsoc)
 {
     const uint16_t SXAddr[] = { 0x011C, 0x011D, 0x011E, 0x011F, 0x0121, 0x0122, 0x0123 };
@@ -296,6 +297,7 @@ static void lms7002m_set_defaults_sx(lms7002m_context* rfsoc)
     //keep 0x0120[7:0]ICT_VCO bias value intact
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_VDIV_VCO, 0xB9FF);
 }
+*/
 
 static void lms7002m_enable_channel_power_controls(lms7002m_context* rfsoc)
 {

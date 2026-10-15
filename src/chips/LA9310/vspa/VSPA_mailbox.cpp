@@ -92,12 +92,8 @@ void VSPA_mailbox::Clear(uint32_t core_idx, uint32_t mbox_id)
 OpStatus VSPA_mailbox::Message(uint32_t core_id, uint32_t mbox_id, uint64_t message, uint64_t* response)
 {
     const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
     Send(core_id, mbox_id, message);
     OpStatus status = Receive(core_id, mbox_id, response);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    printf_mailbox_log("MBOX duration: %lius\n", std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count());
     return status;
 }
 

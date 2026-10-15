@@ -26,29 +26,14 @@ VSPA_Trace::VSPA_Trace(std::shared_ptr<LA9310_PCIe> port, volatile l1_trace_hif_
     this->hif->la9310_mem_address = PCI_OUTBOUND_WINDOW_BASE_ADDR + offset;
 
     events_va = reinterpret_cast<l1_trace_data_t*>(size_t(scratch_buf_window.vaddr) + offset);
-    memset((void*)events_va, 0, buffer_size);
+    memset(events_va, 0, buffer_size);
 }
 
 void VSPA_Trace::Clear()
 {
-    mbox.Message(0, 0, ((uint64_t)MBOX_OPC_TRACE_RESET << 56));
+    mbox.Message(0, 0, (uint64_t(MBOX_OPC_TRACE_RESET) << 56));
     bytes_read = hif->bytes_produced;
     last_drops = hif->event_drops;
-}
-
-static void memcpy_w32(volatile void* dest, volatile const void* src, size_t bytes)
-{
-    // check alignment
-    // assert((size_t(dest) & 0x3) == 0);
-    // assert((size_t(src) & 0x3) == 0);
-    volatile uint32_t* dest32 = reinterpret_cast<volatile uint32_t*>(dest);
-    volatile const uint32_t* src32 = reinterpret_cast<volatile const uint32_t*>(src);
-    size_t wordsToCopy = bytes / sizeof(uint32_t) + (bytes % sizeof(uint32_t) > 0 ? 1 : 0);
-    for (size_t w = 0; w < wordsToCopy; ++w)
-    {
-        // must copy word by word. memcpy could attempt to access more than 32bit at a time triggering BUS error.
-        dest32[w] = src32[w];
-    };
 }
 
 std::vector<l1_trace_data_t> VSPA_Trace::ReadTrace()
@@ -87,16 +72,16 @@ std::vector<l1_trace_data_t> VSPA_Trace::ReadTrace()
         return events;
     events.resize(events_available);
 
-    volatile l1_trace_data_t* src = events_va + (bytes_read % buffer_size) / sizeof(l1_trace_data_t);
-    memcpy(events.data(), (const void*)src, contiguous_range);
-    memset((void*)src, 0, contiguous_range);
+    l1_trace_data_t* src = events_va + (bytes_read % buffer_size) / sizeof(l1_trace_data_t);
+    memcpy(events.data(), reinterpret_cast<const void*>(src), contiguous_range);
+    memset(reinterpret_cast<void*>(src), 0, contiguous_range);
     bytes_available -= contiguous_range;
     bytes_read += contiguous_range;
 
     if (bytes_available)
     {
-        memcpy(&events[contiguous_range / sizeof(l1_trace_data_t)], (const void*)events_va, bytes_available);
-        memset((void*)events_va, 0, bytes_available);
+        memcpy(&events[contiguous_range / sizeof(l1_trace_data_t)], events_va, bytes_available);
+        memset(reinterpret_cast<void*>(events_va), 0, bytes_available);
         bytes_read += bytes_available;
     }
 

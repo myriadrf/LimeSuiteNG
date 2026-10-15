@@ -15,7 +15,7 @@ using namespace std::literals::string_literals;
         #pragma GCC diagnostic pop
     #endif
 const int FX3::CTR_WRITE_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR;
-const int FX3::CTR_READ_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
+const int FX3::CTR_READ_REQUEST_VALUE = LIBUSB_REQUEST_TYPE_VENDOR | uint32_t(LIBUSB_ENDPOINT_IN);
 #else
     #include "windows.h"
     #include "CyAPI.h"
