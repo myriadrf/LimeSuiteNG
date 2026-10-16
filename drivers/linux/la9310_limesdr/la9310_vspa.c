@@ -208,6 +208,7 @@ static int vspa_mem_initialization(struct vspa_device* vspadev)
         {
 
             memcpy_toio(vspa_dma_region->vaddr, (const void*)mem_addr, z_dma_req.byte_cnt);
+            la9310_host_buf_sync_for_device(la9310_dev, vspa_dma_region->vaddr, z_dma_req.byte_cnt);
             dma_wmb();
             z_dma_req.axi_addr = vspa_dma_region->phys_addr;
 

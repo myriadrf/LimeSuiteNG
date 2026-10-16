@@ -49,7 +49,12 @@ struct la9310_mem_region_info {
     phys_addr_t phys_addr;
     u8 __iomem* vaddr;
     size_t size;
+    struct page* page; /* set for cacheable DMA buffers (cached_dma=1): mapped with dma_mmap_pages() */
 };
+
+/* cacheable host DMA buffers (module parameter cached_dma); callers sync around CPU accesses */
+extern bool la9310_cached_dma;
+void la9310_host_buf_sync_for_device(struct la9310_dev* la9310_dev, const void* vaddr, size_t size);
 
 struct la9310_ccsr_dcr {
     u32 porsr1; /* POR status 1 */
