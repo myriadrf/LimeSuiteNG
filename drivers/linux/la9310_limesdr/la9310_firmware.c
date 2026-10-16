@@ -176,11 +176,7 @@ int la9310_load_firmware_to_dma(
         return -ENOBUFS;
     }
 
-    // Syncing the whole dma mapped buffer, even though only part of it is used for firmware loading.
-    // IMX8MP page faults if sync is attempted for subsection of the mapped buffer.
-    dma_sync_single_for_cpu(
-        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
-
+    // host_buf is coherent DMA memory (dma_alloc_coherent): no cache maintenance needed around the copy.
     // Copy firmware from userspace to DMA region
     dev_dbg(la9310_dev->dev, "Copying firmware to 0x%lx, size %ld\n", (size_t)firmware_dma->phys_addr, fw_size);
     int rc = copy_from_user(firmware_dma->vaddr, fw_data, fw_size);
@@ -189,8 +185,6 @@ int la9310_load_firmware_to_dma(
         dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
         return -EIO;
     }
-    dma_sync_single_for_device(
-        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
     return 0;
 }
 
