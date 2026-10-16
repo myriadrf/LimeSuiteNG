@@ -254,7 +254,8 @@ MODULE_PARM_DESC(cached_dma, "Allocate the host DMA buffers cacheable (sync per 
 void la9310_host_buf_sync_for_device(struct la9310_dev* la9310_dev, const void* vaddr, size_t size)
 {
     struct la9310_mem_region_info* host = &la9310_dev->dma_info.host_buf;
-    if (!host->page)
+    const u8* p = vaddr;
+    if (!host->page || p < (const u8*)host->vaddr || p + size > (const u8*)host->vaddr + host->size)
         return;
     dma_sync_single_for_device(la9310_dev->dev, host->phys_addr + ((const u8*)vaddr - (const u8*)host->vaddr), size, DMA_BIDIRECTIONAL);
 }
