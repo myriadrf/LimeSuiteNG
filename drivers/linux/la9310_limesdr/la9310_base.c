@@ -252,52 +252,29 @@ static int la9310_alloc_dma_buf(struct device* dev,
     int buf_size,
     enum dma_data_direction dma_dir)
 {
-    int status;
-
-    buf_info->vaddr = kzalloc(buf_size, GFP_KERNEL);
+    /* Coherent allocation: the buffer is also mapped to user space with dma_mmap_coherent(). A kzalloc() buffer
+     * mapped with dma_map_single() gives a cacheable kernel alias next to the non-cacheable user mapping on
+     * non-coherent hosts (arm64 i.MX95/LX2160 PCIe), which can corrupt IQ data. */
+    buf_info->vaddr = dma_alloc_coherent(dev, buf_size, &buf_info->phys_addr, GFP_KERNEL);
     if (!buf_info->vaddr)
     {
-        dev_err(dev, "Failed to allocate %s\n", buf_name);
+        dev_err(dev, "Failed to allocate %s (%i bytes coherent DMA memory)\n", buf_name, buf_size);
         return -ENOMEM;
     }
-
     buf_info->size = buf_size;
 
-    buf_info->phys_addr = dma_map_single(dev, buf_info->vaddr, buf_size, dma_dir);
-    status = dma_mapping_error(dev, buf_info->phys_addr);
-    if (status)
-    {
-        dev_err(dev, "dma_map_single error @ va:%p pa:%llX for %s\n", buf_info->vaddr, virt_to_phys(buf_info->vaddr), buf_name);
-        kfree(buf_info->vaddr);
-        return status;
-    }
-
-    dev_info(dev,
-        "%s size: %i, va:0x%px pa:0x%llx bus:0x%llx\n",
-        buf_name,
-        buf_size,
-        buf_info->vaddr,
-        virt_to_phys(buf_info->vaddr),
-        buf_info->phys_addr);
+    dev_info(dev, "%s size: %i, va:0x%px bus:0x%llx\n", buf_name, buf_size, buf_info->vaddr, buf_info->phys_addr);
     return 0;
 }
 
 static int la9310_free_dma_buf(
     struct device* dev, const char* buf_name, struct la9310_mem_region_info* buf_info, enum dma_data_direction dma_dir)
 {
-    dev_info(dev,
-        "Unmap and free %s size: %lu, va:0x%px pa:0x%llx bus:0x%llx\n",
-        buf_name,
-        buf_info->size,
-        buf_info->vaddr,
-        virt_to_phys(buf_info->vaddr),
-        buf_info->phys_addr);
-    if (buf_info->phys_addr)
-        dma_unmap_single(dev, buf_info->phys_addr, buf_info->size, dma_dir);
+    dev_info(dev, "Free %s size: %lu, va:0x%px bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
     if (buf_info->vaddr)
-        kfree(buf_info->vaddr);
-
-    dev_info(dev, "Unmapped and freed %s\n", buf_name);
+        dma_free_coherent(dev, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
+    buf_info->vaddr = NULL;
+    buf_info->phys_addr = 0;
 
     return 0;
 }
