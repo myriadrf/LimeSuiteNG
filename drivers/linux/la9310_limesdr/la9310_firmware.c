@@ -185,6 +185,7 @@ int la9310_load_firmware_to_dma(
         dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
         return -EIO;
     }
+    la9310_host_buf_sync_for_device(la9310_dev, firmware_dma->vaddr, fw_size); /* no-op for coherent buffers */
     return 0;
 }
 

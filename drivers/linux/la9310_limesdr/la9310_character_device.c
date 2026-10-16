@@ -102,7 +102,10 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
             region->vaddr,
             region->phys_addr,
             mapSize);
-        remapRet = dma_mmap_coherent(sysDev, vma, region->vaddr, region->phys_addr, mapSize);
+        if (region->page)
+            remapRet = dma_mmap_pages(sysDev, vma, mapSize, region->page); /* cacheable; synced via ioctls */
+        else
+            remapRet = dma_mmap_coherent(sysDev, vma, region->vaddr, region->phys_addr, mapSize);
     }
     else
     {

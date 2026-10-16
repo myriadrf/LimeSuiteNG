@@ -246,6 +246,19 @@ static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
     la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
 }
 
+bool la9310_cached_dma;
+module_param_named(cached_dma, la9310_cached_dma, bool, 0444);
+MODULE_PARM_DESC(cached_dma, "Allocate the host DMA buffers cacheable (sync per buffer) instead of coherent/uncached");
+
+/* After the kernel writes into the scratch buffer (firmware images, VSPA DMA staging) */
+void la9310_host_buf_sync_for_device(struct la9310_dev* la9310_dev, const void* vaddr, size_t size)
+{
+    struct la9310_mem_region_info* host = &la9310_dev->dma_info.host_buf;
+    if (!host->page)
+        return;
+    dma_sync_single_for_device(la9310_dev->dev, host->phys_addr + ((const u8*)vaddr - (const u8*)host->vaddr), size, DMA_BIDIRECTIONAL);
+}
+
 static int la9310_alloc_dma_buf(struct device* dev,
     const char* buf_name,
     struct la9310_mem_region_info* buf_info,
@@ -255,12 +268,25 @@ static int la9310_alloc_dma_buf(struct device* dev,
     /* Coherent allocation: the buffer is also mapped to user space with dma_mmap_coherent(). A kzalloc() buffer
      * mapped with dma_map_single() gives a cacheable kernel alias next to the non-cacheable user mapping on
      * non-coherent hosts (arm64 i.MX95/LX2160 PCIe), which can corrupt IQ data. */
-    buf_info->vaddr = dma_alloc_coherent(dev, buf_size, &buf_info->phys_addr, GFP_KERNEL);
+    buf_info->page = NULL;
+    if (la9310_cached_dma)
+    {
+        /* Cacheable buffer (non-coherent arm64 hosts): user space maps it cacheable with dma_mmap_pages() and keeps it
+         * coherent with the LA9310_IOCTL_CACHE_SYNC_FOR_CPU/DEVICE calls LimeSuiteNG already issues per DMA buffer;
+         * kernel-side writes call la9310_host_buf_sync_for_device(). Uncached (coherent) memory makes the sample
+         * memcpy in user space several times slower on Cortex-A55 class cores. */
+        buf_info->page = dma_alloc_pages(dev, buf_size, &buf_info->phys_addr, DMA_BIDIRECTIONAL, GFP_KERNEL);
+        buf_info->vaddr = buf_info->page ? page_address(buf_info->page) : NULL;
+    }
+    else
+        buf_info->vaddr = dma_alloc_coherent(dev, buf_size, &buf_info->phys_addr, GFP_KERNEL);
     if (!buf_info->vaddr)
     {
-        dev_err(dev, "Failed to allocate %s (%i bytes coherent DMA memory)\n", buf_name, buf_size);
+        dev_err(dev, "Failed to allocate %s (%i bytes %s DMA memory)\n", buf_name, buf_size, la9310_cached_dma ? "cacheable" : "coherent");
         return -ENOMEM;
     }
+    if (buf_info->page)
+        memset(buf_info->vaddr, 0, buf_size), dma_sync_single_for_device(dev, buf_info->phys_addr, buf_size, DMA_BIDIRECTIONAL);
     buf_info->size = buf_size;
 
     dev_info(dev, "%s size: %i, va:0x%px bus:0x%llx\n", buf_name, buf_size, buf_info->vaddr, buf_info->phys_addr);
@@ -271,9 +297,12 @@ static int la9310_free_dma_buf(
     struct device* dev, const char* buf_name, struct la9310_mem_region_info* buf_info, enum dma_data_direction dma_dir)
 {
     dev_info(dev, "Free %s size: %lu, va:0x%px bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
-    if (buf_info->vaddr)
+    if (buf_info->vaddr && buf_info->page)
+        dma_free_pages(dev, buf_info->size, buf_info->page, buf_info->phys_addr, DMA_BIDIRECTIONAL);
+    else if (buf_info->vaddr)
         dma_free_coherent(dev, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
     buf_info->vaddr = NULL;
+    buf_info->page = NULL;
     buf_info->phys_addr = 0;
 
     return 0;
