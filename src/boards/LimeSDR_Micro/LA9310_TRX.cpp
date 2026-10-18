@@ -32,6 +32,10 @@
 #include <ciso646>
 #include <complex>
 #include <queue>
+#include <cstdio>
+#include <memory>
+#include <pthread.h>
+#include <time.h>
 #include <cinttypes>
 
 using namespace std::literals::string_literals;
@@ -72,6 +76,111 @@ static int ReadySlots(uint32_t writer, uint32_t reader, uint32_t ringSize)
     else
         return ringSize - reader + writer;
 }
+
+// LIME_TX_TRACE=<file>: binary timing trace of the Tx/Rx paths for offline correlation (diagnostic, off by default).
+// Records are 32 bytes {t_ns CLOCK_MONOTONIC, a, b, c, d|type<<24}; a lock-free ring drained by a low-priority thread.
+// Types: 'W' Transmit() entry (a=ts b=rxpos c=count d=flush|fifo<<1), 'w' Transmit() return (a=ts c=pushed),
+// 'S' TCD submit (a=txts b=rxpos c=bytes|req16<<16 d=flags|pending<<8|fifo<<16), 'M' firmware counters changed (monitor
+// thread, a=done b=rxpos c=udr d=drop|0<<12; staging: proxy tx_udr/tx_drop), 'D' Rx DMA buffer (a=rx ts end b=diff), 'R' Rx read return (a=ts
+// c=count), 'I' Tx loop start (a=done raw), 'U' underrun seen by the Tx loop (a=udr b=rxpos).
+namespace {
+struct TraceRec {
+    uint64_t t;
+    int64_t a;
+    int64_t b;
+    uint32_t c;
+    uint32_t d;
+};
+struct TraceSlot {
+    std::atomic<uint64_t> seq{ 0 };
+    TraceRec r;
+};
+class TxTrace
+{
+  public:
+    static TxTrace& Get()
+    {
+        static TxTrace t;
+        return t;
+    }
+    bool on() const { return enabled; }
+    static uint64_t now()
+    {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return uint64_t(ts.tv_sec) * 1000000000ull + ts.tv_nsec;
+    }
+    void add(char type, int64_t a, int64_t b = 0, uint32_t c = 0, uint32_t d = 0)
+    {
+        if (!enabled)
+            return;
+        const uint64_t i = head.fetch_add(1, std::memory_order_relaxed);
+        TraceSlot& s = ring[i & mask];
+        s.r = TraceRec{ now(), a, b, c, (d & 0xFFFFFF) | (uint32_t(uint8_t(type)) << 24) };
+        s.seq.store(i + 1, std::memory_order_release);
+    }
+
+  private:
+    static constexpr uint64_t size = 1u << 20;
+    static constexpr uint64_t mask = size - 1;
+    bool enabled{ false };
+    std::atomic<uint64_t> head{ 0 };
+    std::unique_ptr<TraceSlot[]> ring;
+    FILE* f{ nullptr };
+    std::thread drain;
+    TxTrace()
+    {
+        const char* path = std::getenv("LIME_TX_TRACE");
+        if (!path || !*path)
+            return;
+        f = fopen(path, "wb");
+        if (!f)
+            return;
+        ring.reset(new TraceSlot[size]);
+        enabled = true;
+        drain = std::thread([this] {
+            uint64_t n = 0, dropped = 0;
+            std::vector<TraceRec> buf;
+            buf.reserve(8192);
+            for (;;)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                const uint64_t h = head.load(std::memory_order_acquire);
+                while (n < h)
+                {
+                    TraceSlot& s = ring[n & mask];
+                    const uint64_t q = s.seq.load(std::memory_order_acquire);
+                    if (q == n + 1)
+                    {
+                        buf.push_back(s.r);
+                        ++n;
+                    }
+                    else if (q > n + 1 || h - n > size)
+                    {
+                        ++dropped;
+                        ++n;
+                    }
+                    else
+                        break; // producer still writing
+                    if (buf.size() == 8192)
+                    {
+                        fwrite(buf.data(), sizeof(TraceRec), buf.size(), f);
+                        buf.clear();
+                    }
+                }
+                if (!buf.empty())
+                {
+                    fwrite(buf.data(), sizeof(TraceRec), buf.size(), f);
+                    buf.clear();
+                }
+                fflush(f);
+            }
+        });
+        pthread_setname_np(drain.native_handle(), "lime:Trc");
+        drain.detach();
+    }
+};
+} // namespace
 
 struct DMATransactionCounter {
     uint64_t requests{ 0 };
@@ -691,6 +800,7 @@ void LA9310_TRX::ReceivePacketsLoop()
 
         stats.timestamp = timestamp;
         mRx.lastTimestamp.store(timestamp, std::memory_order_relaxed);
+        TxTrace::Get().add('D', stats.timestamp, counterDiff);
         if (fifo->push(outputPkt, false))
         {
             outputPkt = nullptr;
@@ -854,9 +964,11 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
 
         auto duration = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - start);
         if (duration > timeout)
-            return samplesProduced;
+            break;
     }
 
+    if (meta)
+        TxTrace::Get().add('R', meta->timestamp.GetTicks(), mRx.stats.timestamp, samplesProduced);
     return samplesProduced;
 }
 
@@ -1043,6 +1155,39 @@ void LA9310_TRX::TransmitPacketsLoop()
     proxy_data_t last_proxy;
     memset(&last_proxy, 0, sizeof(proxy_data_t));
 
+    TxTrace& trace = TxTrace::Get();
+    std::thread monitor;
+    std::atomic<bool> monitorStop{ false };
+    if (trace.on())
+    {
+        trace.add('I', tx_dma->GetCounters().transfersCompleted, mRx.stats.timestamp);
+        // poll the firmware counters every LIME_TX_TRACE_POLL_US (default 50 us): times TCD completions and DAC underruns
+        // (staging: underruns/drops come from the VSPA proxy data block in host memory, no extra AXI traffic)
+        const char* pollEnv = std::getenv("LIME_TX_TRACE_POLL_US");
+        const int pollUs = pollEnv ? std::max(10, std::atoi(pollEnv)) : 50;
+        monitor = std::thread([this, tx_dma, &trace, &monitorStop, pollUs] {
+            uint32_t done = 0, udr = 0, drop = 0;
+            bool first = true;
+            while (!monitorStop.load(std::memory_order_relaxed))
+            {
+                const uint32_t d = tx_dma->GetCounters().transfersCompleted;
+                volatile proxy_data_t* proxy = proxy_mem.va<volatile proxy_data_t>();
+                const uint32_t u = proxy->tx_udr;
+                const uint32_t l = proxy->tx_drop;
+                if (first || d != done || u != udr || l != drop)
+                {
+                    trace.add('M', d, mRx.stats.timestamp, u, l & 0xFFF);
+                    done = d;
+                    udr = u;
+                    drop = l;
+                    first = false;
+                }
+                std::this_thread::sleep_for(std::chrono::microseconds(pollUs));
+            }
+        });
+        pthread_setname_np(monitor.native_handle(), "lime:Mon");
+    }
+
     while (mTx.terminate.load(std::memory_order_relaxed) == false)
     {
         auto dma{ tx_dma->GetCounters() };
@@ -1067,6 +1212,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             {
                 underrun.add(diff);
                 last_proxy.tx_udr += diff;
+                trace.add('U', diff, mRx.stats.timestamp, counterDiff, 0);
             }
             if ((diff = proxy->tx_drop - last_proxy.tx_drop))
             {
@@ -1239,6 +1385,11 @@ void LA9310_TRX::TransmitPacketsLoop()
         // if (stagingBufferIndex % irq_period == 0)
         flags |= IQSTREAM_IRQ;
         // printf("dma_submit ts:%X %x %i f:%x\n", txtimestamp, dmaBuffers.at(stagingBufferIndex).endpoint_pa(), wrInfo.size, flags);
+        trace.add('S',
+            txtimestamp,
+            mRx.stats.timestamp,
+            (wrInfo.size & 0xFFFF) | uint32_t((counters.requests & 0xFFFF) << 16),
+            (flags & 0xFF) | ((pendingWrites.size() & 0xFF) << 8) | ((fifo->size() & 0xFF) << 16));
         const OpStatus status = tx_dma->SubmitTransfer(dmaBuffers.at(stagingBufferIndex), wrInfo.size, txtimestamp, flags);
         if (status != OpStatus::Success)
         {
@@ -1267,6 +1418,11 @@ void LA9310_TRX::TransmitPacketsLoop()
         outputReady = false;
         dmaFilled = 0;
         packetsCounter = 0;
+    }
+    if (monitor.joinable())
+    {
+        monitorStop.store(true);
+        monitor.join();
     }
 }
 
@@ -1337,6 +1493,10 @@ uint32_t LA9310_TRX::StreamTxTemplate(
     Timespec ts = meta->timestamp;
     const int ticksPerSample = 1;
     ts.SetTickRate(ticksPerSample * mConfig.hintSampleRate);
+    TxTrace& trace = TxTrace::Get();
+    const int64_t traceTs = ts.GetTicks();
+    if (trace.on() && useTimestamp)
+        trace.add('W', traceTs, mRx.stats.timestamp, count, (flush ? 1 : 0) | ((mTx.fifo ? mTx.fifo->size() & 0xFFFF : 0) << 1));
 
     uint32_t samplesRemaining = count;
 
@@ -1394,6 +1554,7 @@ uint32_t LA9310_TRX::StreamTxTemplate(
         }
     }
 
+    trace.add('w', traceTs, mRx.stats.timestamp, count - samplesRemaining);
     return count - samplesRemaining;
 }
 
