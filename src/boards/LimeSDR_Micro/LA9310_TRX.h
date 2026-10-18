@@ -66,6 +66,10 @@ class LA9310_TRX : public RFStream
     std::shared_ptr<LA9310_PCIe> pcie;
 
     DMA_Buffer proxy_mem;
+    // Rx gap fill: next sample timestamp the reader expects (-1 = none yet), samples zero-filled so far
+    int64_t mRxNextTs{ -1 };
+    uint64_t mRxGapFilled{ 0 };
+    bool mRxGapFill{ true };
     DMA_Buffer rxiqflood_mem;
     DMA_Buffer txiqflood_mem;
     DMA_Buffer rx_lane_dma_mem[4];
