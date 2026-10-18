@@ -935,7 +935,7 @@ int vspa_probe(struct la9310_dev* la9310_dev)
     hw->gp_in_regs = param1 & 0xFF;
     param2 = vspa_reg_read(vspadev->regs + PARAM2_REG_OFFSET);
     hw->param2 = param2;
-    hw->dmem_bytes = ((param2 >> 8) & 0x3FF) * 400;
+    hw->dmem_bytes = ((param2 >> 8) & 0x3FF) * 0x400;
     hw->ippu_bytes = (param2 >> 31) * 4096;
     hw->arithmetic_units = param2 & 0xFF;
 
