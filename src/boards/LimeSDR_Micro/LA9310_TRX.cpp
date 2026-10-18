@@ -367,6 +367,12 @@ OpStatus LA9310_TRX::RxSetup()
     mRx.terminate.store(false, std::memory_order_relaxed);
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
+    mRxNextTs = -1;
+    mRxGapFilled = 0;
+    {
+        const char* gf = std::getenv("LIME_RX_GAP_FILL");
+        mRxGapFill = !(gf && gf[0] == '0');
+    }
     const int chCount = std::max(mConfig.channels.at(lime::TRXDir::Rx).size(), mConfig.channels.at(lime::TRXDir::Tx).size());
     const int sampleSize = 4; // sizeof IQ pair
 
@@ -571,7 +577,7 @@ void LA9310_TRX::ReceivePacketsLoop()
             std::snprintf(msg,
                 sizeof(msg) - 1,
                 "%s Rx%i: %3.3f MB/s | TS:%" PRIu64 " pkt:%" PRIi64 " o:%i(%+i) l:%i(%+i) dma:%" PRIu64 "/%" PRIu64 "(+%" PRIu64
-                ") swFIFO:%" PRIuPTR " now:%f (%li)",
+                ") swFIFO:%" PRIuPTR " now:%f (%li) gapfill:%" PRIu64,
                 "la9310",
                 0,
                 stats.dataRate_Bps / 1e6,
@@ -586,7 +592,8 @@ void LA9310_TRX::ReceivePacketsLoop()
                 counters.completed - counters.requests,
                 fifo->size(),
                 rfnow.GetSeconds() + rfnow.GetFracSeconds(),
-                rfnow.GetTicks());
+                rfnow.GetTicks(),
+                mRxGapFilled);
             if (showStats)
                 printf("%s\n", msg);
             if (mCallback_logMessage)
@@ -765,16 +772,57 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
             return samplesProduced;
         }
 
-        // Output only contiguous samples, if there is a gap, the following samples will be returned by next call
-        // with their own timestamp.
-        if (samplesProduced > 0 && mRx.stagingPacket->meta.timestamp.GetTicks() != expectedTicks)
-            return samplesProduced;
-
-        if (!timestampSet && meta)
+        if (mRxGapFill)
         {
-            meta->timestamp = mRx.stagingPacket->meta.timestamp;
-            meta->hasTimestamp = true;
-            timestampSet = true;
+            // Keep the returned stream contiguous: callers such as the OAI UE read fixed blocks, treat the sample
+            // count as time and assert on a short read. A gap reported by the firmware timestamps (Rx overrun,
+            // late reader) is filled with zeros, samples that overlap already returned ones are dropped.
+            if (mRxNextTs < 0)
+                mRxNextTs = mRx.stagingPacket->meta.timestamp.GetTicks();
+            if (!timestampSet && meta)
+            {
+                meta->timestamp = Timespec(0, mRxNextTs, mConfig.hintSampleRate);
+                meta->hasTimestamp = true;
+                timestampSet = true;
+            }
+            const int64_t pktTs = mRx.stagingPacket->meta.timestamp.GetTicks();
+            if (pktTs > mRxNextTs)
+            {
+                const uint32_t fill = std::min<int64_t>(pktTs - mRxNextTs, count - samplesProduced);
+                std::memset(&dest[0][samplesProduced], 0, fill * sizeof(T));
+                if (useChannelB)
+                    std::memset(&dest[1][samplesProduced], 0, fill * sizeof(T));
+                samplesProduced += fill;
+                mRxNextTs += fill;
+                mRxGapFilled += fill;
+                continue;
+            }
+            if (pktTs < mRxNextTs)
+            {
+                const uint32_t skip = std::min<int64_t>(mRxNextTs - pktTs, mRx.stagingPacket->samples.size());
+                mRx.stagingPacket->samples.pop(skip);
+                mRx.stagingPacket->meta.timestamp.AddTicks(skip);
+                if (mRx.stagingPacket->samples.empty())
+                {
+                    mRx.packetsPool->push(mRx.stagingPacket);
+                    mRx.stagingPacket = nullptr;
+                }
+                continue;
+            }
+        }
+        else
+        {
+            // Output only contiguous samples, if there is a gap, the following samples will be returned by next call
+            // with their own timestamp.
+            if (samplesProduced > 0 && mRx.stagingPacket->meta.timestamp.GetTicks() != expectedTicks)
+                return samplesProduced;
+
+            if (!timestampSet && meta)
+            {
+                meta->timestamp = mRx.stagingPacket->meta.timestamp;
+                meta->hasTimestamp = true;
+                timestampSet = true;
+            }
         }
 
         uint32_t expectedCount = count - samplesProduced;
@@ -795,6 +843,8 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
         expectedTicks = mRx.stagingPacket->meta.timestamp.GetTicks();
 
         samplesProduced += samplesToCopy;
+        if (mRxNextTs >= 0)
+            mRxNextTs += samplesToCopy;
 
         if (mRx.stagingPacket->samples.empty())
         {
