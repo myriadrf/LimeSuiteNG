@@ -1074,14 +1074,35 @@ void LA9310_TRX::TransmitPacketsLoop()
                     std::this_thread::yield();
                     break;
                 }
-                if (srcPkt->meta.useTimestamp)
-                    hasTimestamp = true;
             }
 
             if (srcPkt->meta.useTimestamp)
             {
-                txtimestamp = srcPkt->meta.timestamp.GetTicks();
-                hasTimestamp = true;
+                // The TCD timestamp is the time of the FIRST sample in the batch. A packet that continues the batch
+                // contiguously must not replace it: OAI writes the S-slot tail (e.g. 2192 samples) and then the UL
+                // slot; taking the second write's timestamp scheduled the whole burst that many samples late, so the
+                // VSPA's burst end and window-end GO lay in the past when programmed and Tx stalled.
+                const int64_t pktTs = srcPkt->meta.timestamp.GetTicks();
+                if (samplesFilled == 0)
+                {
+                    txtimestamp = pktTs;
+                    hasTimestamp = true;
+                }
+                else if (!hasTimestamp)
+                {
+                    txtimestamp = pktTs - samplesFilled;
+                    hasTimestamp = true;
+                }
+                else if (pktTs != txtimestamp + samplesFilled)
+                {
+                    // timestamp discontinuity inside a batch: submit the batch as the end of its burst,
+                    // this packet then starts a new burst with its own timestamp
+                    endOfBurst = true;
+                    outputReady = true;
+                    samplesFilled = 0;
+                    ++packetsCounter;
+                    break;
+                }
             }
 
             uint32_t bytesForFrame = 4;
