@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "LMS7002M_SDRDevice.h"
 
 #include "FPGA/FPGA_common.h"
@@ -1220,7 +1221,11 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
         if (status != OpStatus::Success)
             return status;
     }
-    chip.EnableSXTDD(tddMode);
+    // LIME_TDD_OWN_SXR=1 (set by the plugin key devN_tdd_own_sxr): in TDD keep SXR running (it was tuned to rx_lo above)
+    // and do not feed the Rx mixer from SXT through the LO buffer.
+    const char* ownSxr = std::getenv("LIME_TDD_OWN_SXR");
+    const bool useOwnSxr = tddMode && ownSxr && ownSxr[0] == '1';
+    chip.EnableSXTDD(tddMode && !useOwnSxr);
     return status;
 }
 
