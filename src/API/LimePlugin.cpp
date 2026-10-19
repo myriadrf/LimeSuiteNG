@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "limesuiteng/LimePlugin.h"
 #include <array>
 #include <map>
@@ -773,6 +774,17 @@ static OpStatus TransferSettingsToDevicesConfig(std::vector<DevNode>& nodes, Lim
             status = TransferDeviceDirectionalSettings(node, node.configInputs.tx, node.config.channel[ch].tx, TRXDir::Tx);
             if (status != OpStatus::Success)
                 return status;
+        }
+
+        // devN_tdd_own_sxr = 1: in TDD (Rx LO == Tx LO) keep the own Rx synthesizer (SXR) running instead of feeding the
+        // Rx mixer from SXT through the LO buffer (LOCH_T2RBUF). On the LimeSDR-Micro at 3.6 GHz that buffer gives a poor
+        // Rx quadrature (Q branch 14-18 dB below I, image about 0 dBc). Passed to LMS7002LOConfigure() via
+        // LIME_TDD_OWN_SXR, so the public plugin structs do not change.
+        int ownSxr = 0;
+        if (GetSetting(settings, &ownSxr, "dev%i_tdd_own_sxr", node.devIndex) && ownSxr)
+        {
+            setenv("LIME_TDD_OWN_SXR", "1", 1);
+            Log(LogLevel::Info, "dev%i: TDD with own Rx synthesizer (dev%i_tdd_own_sxr = 1)", node.devIndex, node.devIndex);
         }
 
         for (int ch = 0; ch < 2; ++ch)
