@@ -60,10 +60,12 @@ class LA9310_wxgui : public ISOCPanel
     wxCheckBox* chkLNA1_EN;
     void onPhytimer(wxCommandEvent& event);
     void onLoopback(wxCommandEvent& event);
+    void onPPSDO(wxCommandEvent& event);
     void onTDDchange(wxSpinEvent& event);
     void onTDDchange(wxCommandEvent& event);
 
     wxCheckBox* chkAXIQLoopback;
+    wxCheckBox* chkPPSDO;
 
     LA9310_TDD_wxgui tddgui;
 

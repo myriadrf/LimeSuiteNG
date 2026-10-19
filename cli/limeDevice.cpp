@@ -8,21 +8,6 @@ using namespace lime;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
-static const std::string_view GPSLockToString(const SDRDevice::GPS_Lock::LockStatus& status)
-{
-    switch (status)
-    {
-    case SDRDevice::GPS_Lock::LockStatus::NotAvailable:
-        return "Not available"sv;
-    case SDRDevice::GPS_Lock::LockStatus::Has2D:
-        return "2D"sv;
-    case SDRDevice::GPS_Lock::LockStatus::Has3D:
-        return "3D"sv;
-    default:
-        return "Undefined"sv;
-    }
-}
-
 void PrintDeviceDetails(SDRDevice* device)
 {
     auto d = device->GetDescriptor();
@@ -44,17 +29,11 @@ void PrintDeviceDetails(SDRDevice* device)
         cout << "\t\t\t\t  " << mem.first << endl;
     cout << "\t"
          << "GPS Lock:" << endl;
-    SDRDevice::GPS_Lock gpsStatus{};
+    GPS::Status gpsStatus;
     device->GetGPSLock(&gpsStatus);
-    cout << "\t\t"
-         << "GPS - " << GPSLockToString(gpsStatus.gps) << endl;
-    cout << "\t\t"
-         << "Glonass - " << GPSLockToString(gpsStatus.glonass) << endl;
-    cout << "\t\t"
-         << "Galileo - " << GPSLockToString(gpsStatus.galileo) << endl;
-    cout << "\t\t"
-         << "Beidou - " << GPSLockToString(gpsStatus.beidou) << endl;
-    cout << "\tSensors:\n";
+    cout << gpsStatus.ToString();
+
+    cout << "\n\tSensors:\n";
     for (size_t i = 0; i < d.rfSOC.size(); ++i)
         cout << "\t\tTemperature(LMS7002) : " << device->GetTemperature(i) << "°C" << endl;
 

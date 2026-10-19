@@ -13,6 +13,7 @@
 #include "boards/LimeSDR_Micro/LimeSDR_Micro.h"
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
 #include "chips/LMS7002M/validation.h"
+#include "chips/LA9310/firmware/LA9310_GPS.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "comms/IDMA.h"
@@ -237,6 +238,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         fw = std::make_shared<LA9310_FW_Impl>(streamingPort);
 
     iqstreamer = std::make_shared<LA9310_IQStreamer>(fw);
+    gps = std::make_shared<LA9310_GPS>(fw);
     if (status == OpStatus::Success)
     {
         LMS64CProtocol::FirmwareInfo fw{};
@@ -288,6 +290,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice", "LimeSDR-Micro"s);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(iqstreamer.get(), "LA9310"s));
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(gps.get(), "GPS"s));
 }
 
 LimeSDR_Micro::~LimeSDR_Micro()
@@ -827,9 +830,15 @@ OpStatus LimeSDR_Micro::UploadTxWaveform(const StreamConfig& config, uint8_t mod
     return OpStatus::NotImplemented;
 }
 
-OpStatus LimeSDR_Micro::GetGPSLock(GPS_Lock* status)
+OpStatus LimeSDR_Micro::GetGPSLock(GPS::Status* status)
 {
-    return OpStatus::NotImplemented;
+    if (!gps)
+        return OpStatus::NotSupported;
+
+    if (status == nullptr)
+        return OpStatus::InvalidValue;
+
+    return gps->GetStatus(*status);
 }
 
 OpStatus LimeSDR_Micro::GPIORead(uint8_t* buffer, const size_t bufLength)

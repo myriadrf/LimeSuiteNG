@@ -18,6 +18,7 @@
 #include "limesuiteng/complex.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/SDRConfig.h"
+#include "limesuiteng/GPS.h"
 
 namespace lime {
 
@@ -93,7 +94,7 @@ class LIME_API SDRDevice
     /// @brief Gets the current status of the GPS locks.
     /// @param status The pointer to which to output the GPS status.
     /// @return The @ref lime::OpStatus "status" of the operation.
-    virtual OpStatus GetGPSLock(GPS_Lock* status) = 0;
+    virtual OpStatus GetGPSLock(GPS::Status* status) = 0;
 
     /// @brief Enables or disables the specified channel.
     /// This powers on or off device hardware of individual

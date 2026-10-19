@@ -19,6 +19,26 @@ using namespace std;
 
 namespace lime {
 
+static_assert(sizeof(gps_status_payload) <= sizeof(la9310_sw_cmd_desc::data));
+static_assert(sizeof(gps_send_payload) <= sizeof(la9310_sw_cmd_desc::data));
+
+// The command descriptor is device memory, access it in 32-bit words.
+template<class T> static void ReadCommandData(volatile la9310_sw_cmd_desc& desc, T& out)
+{
+    uint32_t words[LA9310_SW_CMD_DATA_SIZE];
+    for (size_t i = 0; i < (sizeof(T) + 3) / 4; ++i)
+        words[i] = desc.data[i];
+    memcpy(&out, words, sizeof(T));
+}
+
+template<class T> static void WriteCommandData(volatile la9310_sw_cmd_desc& desc, const T& in)
+{
+    uint32_t words[LA9310_SW_CMD_DATA_SIZE]{};
+    memcpy(words, &in, sizeof(T));
+    for (size_t i = 0; i < (sizeof(T) + 3) / 4; ++i)
+        desc.data[i] = words[i];
+}
+
 LA9310_FW_Impl::LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie)
     : LA9310(pcie)
     , pcie(pcie)
@@ -121,8 +141,8 @@ OpStatus LA9310_FW_Impl::EnterFirmwareReloadMode()
 
 OpStatus LA9310_FW_Impl::SetSystemClock(double clk_hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask)
 {
-    if (clk_hz < 30e6)
-        lime::error("LA9310 system clock should not be set <30MHz, that introduces a chance for DMA to get stuck.");
+    if (clk_hz < 20e6)
+        lime::error("LA9310 system clock should not be set <20MHz, that introduces a chance for DMA to get stuck.");
     hif->adc_rate_mask = adc_rate_mask;
     hif->dac_rate_mask = dac_rate_mask;
     lime::info("LA9310 M4 SetSystemClock %f\n", clk_hz);
@@ -310,6 +330,62 @@ OpStatus LA9310_FW_Impl::DigitalLoopback(bool enable)
     hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
 
     return WaitForResponse();
+}
+
+OpStatus LA9310_FW_Impl::EnablePPSDO(bool enable)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_PPSDO_CTRL;
+    hif->sw_cmd_desc.data[0] = enable ? 1 : 0;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    OpStatus status = WaitForResponse();
+    if (status != OpStatus::Success)
+        return status;
+
+    const int32_t result = static_cast<int32_t>(hif->sw_cmd_desc.data[0]);
+    if (result != 0)
+    {
+        lime::error("LA9310 M4: failed to %s PPSDO (%i)", enable ? "enable" : "disable", result);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_FW_Impl::GetGPSStatus(gps_status_payload& status)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_GPS_GET_STATUS;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    OpStatus result = WaitForResponse();
+    if (result != OpStatus::Success)
+        return result;
+    ReadCommandData(hif->sw_cmd_desc, status);
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_FW_Impl::SendGPSSentence(const std::string& body)
+{
+    gps_send_payload payload{};
+    if (body.size() >= sizeof(payload.body))
+        return OpStatus::InvalidValue;
+    memcpy(payload.body, body.data(), body.size());
+
+    hif->sw_cmd_desc.cmd = LIME_M4_GPS_SEND;
+    WriteCommandData(hif->sw_cmd_desc, payload);
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    OpStatus status = WaitForResponse();
+    if (status == OpStatus::Error)
+    {
+        // lime_Result and OpStatus share values
+        const int32_t result = static_cast<int32_t>(hif->sw_cmd_desc.data[0]);
+        if (result != 0)
+        {
+            lime::error("LA9310 M4: GPS send \"%s\" failed (%i)", body.c_str(), result);
+            return static_cast<OpStatus>(result);
+        }
+    }
+    return status;
 }
 
 } // namespace lime

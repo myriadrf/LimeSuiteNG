@@ -31,7 +31,7 @@ class LimeSDR_MMX8 : public SDRDevice
 
     OpStatus Init() override;
     OpStatus Reset() override;
-    OpStatus GetGPSLock(GPS_Lock* status) override;
+    OpStatus GetGPSLock(GPS::Status* status) override;
 
     OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) override;
 

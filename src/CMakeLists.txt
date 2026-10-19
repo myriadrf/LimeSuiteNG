@@ -92,6 +92,7 @@ target_sources(
             include/limesuiteng/SDRDevice.cpp
             utilities/toString.cpp
             utilities/WorkerThread.cpp
+            interface/GPS.cpp
             ${CMAKE_CURRENT_BINARY_DIR}/SystemResources.cpp)
 
 if(NOT MSVC)

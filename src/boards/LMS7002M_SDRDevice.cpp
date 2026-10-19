@@ -133,14 +133,23 @@ OpStatus LMS7002M_SDRDevice::Reset()
     return OpStatus::Success;
 }
 
-OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS_Lock* status)
+OpStatus LMS7002M_SDRDevice::GetGPSLock(GPS::Status* status)
 {
     assert(mFPGA);
     uint16_t regValue = mFPGA->ReadRegister(0x114);
-    status->glonass = static_cast<GPS_Lock::LockStatus>((regValue >> 0) & 0x3);
-    status->gps = static_cast<GPS_Lock::LockStatus>((regValue >> 4) & 0x3);
-    status->beidou = static_cast<GPS_Lock::LockStatus>((regValue >> 8) & 0x3);
-    status->galileo = static_cast<GPS_Lock::LockStatus>((regValue >> 12) & 0x3);
+
+    GPS::Status temp;
+    temp.fixType = ((regValue >> 0) & 0x3); // glonass
+    temp.fixType = std::max(temp.fixType, uint8_t((regValue >> 4) & 0x3)); // gps
+    temp.fixType = std::max(temp.fixType, uint8_t((regValue >> 8) & 0x3)); // beidou
+    temp.fixType = std::max(temp.fixType, uint8_t((regValue >> 12) & 0x3)); // galileo
+
+    if (temp.fixType > 1)
+        temp.fixQuality = 1;
+
+    if (status)
+        *status = temp;
+
     // TODO: not all boards have GPS
     return OpStatus::Success;
 }

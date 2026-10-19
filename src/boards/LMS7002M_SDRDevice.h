@@ -9,6 +9,7 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/GPS.h"
 
 namespace lime {
 
@@ -26,7 +27,7 @@ class LMS7002M_SDRDevice : public SDRDevice
     const SDRDescriptor& GetDescriptor() const override;
 
     OpStatus Reset() override;
-    OpStatus GetGPSLock(GPS_Lock* status) override;
+    OpStatus GetGPSLock(GPS::Status* status) override;
 
     OpStatus EnableChannel(uint8_t moduleIndex, TRXDir trx, uint8_t channel, bool enable) override;
 

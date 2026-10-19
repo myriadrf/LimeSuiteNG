@@ -172,7 +172,7 @@ OpStatus LimeSDR_MMX8::Reset()
     return status;
 }
 
-OpStatus LimeSDR_MMX8::GetGPSLock(GPS_Lock* status)
+OpStatus LimeSDR_MMX8::GetGPSLock(GPS::Status* status)
 {
     // TODO: implement
     return OpStatus::NotImplemented;

@@ -29,6 +29,7 @@ class LMS64C_SPI;
 class I2C_bus;
 class LA9310;
 class LA9310_FW_Impl;
+class GPS;
 
 class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 {
@@ -45,7 +46,7 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 
     OpStatus Init() override;
     OpStatus Reset() override;
-    OpStatus GetGPSLock(GPS_Lock* status) override;
+    OpStatus GetGPSLock(GPS::Status* status) override;
 
     double GetNCOFrequency(uint8_t moduleIndex, TRXDir trx, uint8_t channel, uint8_t index, double& phaseOffset) override;
     OpStatus SetNCOFrequency(
@@ -185,6 +186,7 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<LA9310> la9310;
     std::shared_ptr<LA9310_FW_Impl> fw;
     std::shared_ptr<LA9310_IQStreamer> iqstreamer;
+    std::shared_ptr<GPS> gps;
 
     bool mConfigInProgress;
 };

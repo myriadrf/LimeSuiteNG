@@ -74,6 +74,10 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     chkAXIQLoopback->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onLoopback), nullptr, this);
     fgSizer246->Add(chkAXIQLoopback);
 
+    chkPPSDO = new wxCheckBox(this, wxID_ANY, "PPSDO (discipline XO DAC to PPS)");
+    chkPPSDO->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(LA9310_wxgui::onPPSDO), nullptr, this);
+    fgSizer246->Add(chkPPSDO);
+
     wxFlexGridSizer* tddsizer;
     tddsizer = new wxFlexGridSizer(0, 5, 0, 0);
     tddsizer->SetFlexibleDirection(wxVERTICAL);
@@ -191,6 +195,12 @@ void LA9310_wxgui::onPhytimer(wxCommandEvent& event)
 void LA9310_wxgui::onLoopback(wxCommandEvent& event)
 {
     iqstreamer->fw->DigitalLoopback(event.IsChecked());
+}
+
+void LA9310_wxgui::onPPSDO(wxCommandEvent& event)
+{
+    if (iqstreamer->fw->EnablePPSDO(event.IsChecked()) != OpStatus::Success)
+        chkPPSDO->SetValue(!event.IsChecked());
 }
 
 void LA9310_wxgui::onTDDchange(wxSpinEvent& event)

@@ -533,7 +533,7 @@ int main(int argc, char* argv[])
             if (ctrl)
                 la9310_hexdump_control(pcie);
 
-            const std::array<uint8_t, 11> timer_ids = { 0, 1, 2, 3, 4, 10, 11, 12, 15, 20, 14 };
+            const std::array<uint8_t, 12> timer_ids = { 0, 1, 2, 3, 4, 10, 11, 12, 13, 15, 20, 14 };
             std::cerr << "Timers:\n";
             for (auto id : timer_ids)
                 std::cerr << phytimer.GetTimerControl(id).ToString() << std::endl;

@@ -37,9 +37,10 @@ static struct resource* local_platform_get_mem_or_io(struct platform_device* dev
 #define UART_BASE_ADDR 0x21C0000
 #define URBR1 0x500
 #define UTHR1 0x500
-#define ULSR1 0x505
 
-#define TEMT (1 << 6)
+#define ULSR1 0x505
+#define RFE (1 << 7) // Receiver FIFO error
+#define TEMT (1 << 6) // Transmitter empty
 
 struct la9310uart_port {
     struct uart_port port;
@@ -68,12 +69,12 @@ static struct uart_driver la9310uart_driver = {
 
 static inline uint8_t la9310_read8(void __iomem* addr)
 {
-    return readb(addr);
+    return ioread8(addr);
 }
 
 static inline void la9310_write8(void __iomem* addr, uint8_t val)
 {
-    writeb(val, addr);
+    iowrite8(val, addr);
 }
 
 static void la9310uart_timer(struct timer_list* t)
@@ -125,17 +126,20 @@ static unsigned int la9310uart_tx_empty(struct uart_port* port)
 {
     bool isEmpty = (la9310_read8(port->membase + ULSR1) & TEMT);
     dev_dbg(port->dev, "%s %i\n", __func__, isEmpty);
-    // not really tx empty, just checking if tx is not full
     if (isEmpty)
         return TIOCSER_TEMT;
-
     return 0;
 }
 
+#define UMCR1 0x504
+#define LOOP (1 << 4)
 static void la9310uart_set_mctrl(struct uart_port* port, unsigned int mctrl)
 {
-    dev_dbg(port->dev, "%s\n", __func__);
-    // modem control register is not present in LiteUART
+    dev_dbg(port->dev, "%s mctrl:0x%X\n", __func__, mctrl);
+    uint8_t regval = 0;
+    if (mctrl & TIOCM_LOOP)
+        regval |= LOOP;
+    la9310_write8(port->membase + UMCR1, regval);
 }
 
 static unsigned int la9310uart_get_mctrl(struct uart_port* port)
@@ -212,10 +216,17 @@ static void la9310uart_stop_rx(struct uart_port* port)
 #endif
 }
 
+#define ULCR1 0x503
+#define SB (1 << 6)
 static void la9310uart_break_ctl(struct uart_port* port, int break_state)
 {
-    dev_dbg(port->dev, "%s\n", __func__);
-    // LiteUART doesn't support sending break signal
+    dev_dbg(port->dev, "%s %i\n", __func__, break_state);
+    uint8_t regval = la9310_read8(port->membase + UMCR1);
+    if (break_state)
+        regval |= SB;
+    else
+        regval &= ~SB;
+    la9310_write8(port->membase + UMCR1, regval);
 }
 
 static int la9310uart_startup(struct uart_port* port)
@@ -223,21 +234,8 @@ static int la9310uart_startup(struct uart_port* port)
     dev_dbg(port->dev, "%s\n", __func__);
     struct la9310uart_port* uart = to_la9310uart_port(port);
 
-    // verify if UART is functioning, otherwise Rx polling will get stuck in infinite loop
-    // uint32_t txfull = la9310_read8(port->membase + OFF_TXFULL);
-    // uint32_t txempty = la9310_read8(port->membase + OFF_TXEMPTY);
-
-    // if (!txfull && !txempty)
-    // {
-    //     dev_warn(port->dev, "UART is not present\n");
-    //     return -ENODEV;
-    // }
-
-    // disable events
-    // la9310_write8(port->membase + OFF_EV_ENABLE, 0);
-
-    // loopback
-    la9310_write8(port->membase + 0x504, 0x00);
+    // disable loopback
+    la9310_write8(port->membase + UMCR1, 0x00);
 
     // prepare timer for polling
     timer_setup(&uart->timer, la9310uart_timer, 0);

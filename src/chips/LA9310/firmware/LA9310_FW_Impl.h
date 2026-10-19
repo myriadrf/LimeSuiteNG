@@ -8,9 +8,11 @@
 
 #include <chrono>
 #include <span>
+#include <string>
 #include <stdint.h>
 
 struct la9310_hif;
+struct gps_status_payload;
 
 namespace lime {
 
@@ -36,6 +38,11 @@ class LIME_API LA9310_FW_Impl : public LA9310
     void* GetVSPAHIF(uint32_t type);
 
     OpStatus DigitalLoopback(bool enable);
+    OpStatus EnablePPSDO(bool enable);
+
+    OpStatus GetGPSStatus(gps_status_payload& status);
+    /// Sends a sentence to the GPS module, body without '$' and checksum, e.g. "PMTK161,0".
+    OpStatus SendGPSSentence(const std::string& body);
 
     // private:
     OpStatus WaitForResponse();
