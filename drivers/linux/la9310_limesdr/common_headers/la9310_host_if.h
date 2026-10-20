@@ -54,7 +54,7 @@ enum la9310_outbound_win {
 struct la9310_msg_unit {
     uint32_t msiir;
     uint32_t msir;
-} __attribute__((packed));
+};
 
 /*Scratch register for Host <> LA9310 Boot hand shake*/
 #define LA9310_BOOT_HSHAKE_SCRATCH_REG 1
@@ -77,7 +77,7 @@ struct debug_log_regs {
     uint32_t buf;
     uint32_t len;
     uint32_t log_level;
-} __attribute__((packed));
+};
 
 #define LA9310_LOG_LEVEL_ERR 1
 #define LA9310_LOG_LEVEL_INFO 2

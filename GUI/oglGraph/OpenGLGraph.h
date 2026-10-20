@@ -10,7 +10,11 @@
 #include "GL/glew.h" // must be included before wx/glcanvas.h
 #include <wx/glcanvas.h>
 #ifdef __unix__
+    // X11 defines of common words that break other source build
     #undef Success // somewhere in X11 headers is defined Success 0, it pollutes global scope
+    #undef Status
+    #undef Always
+    #undef None
 #endif
 #include <wx/menu.h>
 

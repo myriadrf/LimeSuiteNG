@@ -8,5 +8,8 @@ target_sources(
             pnluLimeSDR.cpp
             pnlLimeSDR.cpp
             pnlGPIO_Interface.cpp
-            pnlMicro.cpp
             pnlsSDR.cpp)
+
+if (UNIX)
+    target_sources(limeGUI PRIVATE pnlMicro.cpp)
+endif()

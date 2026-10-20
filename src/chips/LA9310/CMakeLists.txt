@@ -1,3 +1,7 @@
+if(NOT UNIX)
+    return()
+endif()
+
 set(LA9310_SOURCES
     LA9310.cpp
     vspa/VSPA_mailbox.cpp

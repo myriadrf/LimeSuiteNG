@@ -644,10 +644,12 @@ void pnlBoardControls::SetupControls(const std::string_view boardID)
     }
     else if (boardID == GetDeviceName(LMS_DEV_LIMESDR_MICRO))
     {
+#if defined(__unix__)
         pnlMicro* pnl = new pnlMicro(this, wxNewId());
         pnl->Initialize(mDevice);
         additionalControls = pnl;
         sizerAdditionalControls->Add(additionalControls);
+#endif
     }
     if (additionalControls)
     {

@@ -20,7 +20,7 @@ class LIME_API GPS
 
     enum class LinkState { Idle, Detecting, Fail, Running };
 
-    struct Status {
+    struct LIME_API Status {
         LinkState link{ LinkState::Idle };
         uint32_t baudrate{ 0 }; ///< Detected module UART baud rate, 0 if not detected.
 

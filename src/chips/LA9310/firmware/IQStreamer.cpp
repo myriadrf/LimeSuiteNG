@@ -19,6 +19,10 @@
 #include <chrono>
 #include <string.h>
 
+#ifndef M_PI // Windows
+    #define M_PI 3.1415926535897932384626433832
+#endif
+
 using namespace std;
 
 static const uint32_t vspa_cpu_id = 0;

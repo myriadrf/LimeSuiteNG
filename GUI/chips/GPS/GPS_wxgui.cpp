@@ -25,12 +25,18 @@ GPS_wxgui::GPS_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     wxStaticBoxSizer* ppsBox = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, "PPS"), wxHORIZONTAL);
-    const wxArrayString ppsChoices = { "Disabled", "AfterFirstFix", "3D Fix only", "2D/3D Fix only", "Always" };
+    wxArrayString ppsChoices;
+    ppsChoices.Add("Disabled");
+    ppsChoices.Add("AfterFirstFix");
+    ppsChoices.Add("3D Fix only");
+    ppsChoices.Add("2D/3D Fix only");
+    ppsChoices.Add("Always");
+
     ppsAvailability = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, ppsChoices);
     ppsAvailability->Connect(wxEVT_CHOICE, wxCommandEventHandler(GPS_wxgui::OnPPSChange), nullptr, this);
     ppsBox->Add(ppsAvailability);
 
-    ppsBox->Add(new wxStaticText(this, wxID_ANY, "Pulse width(ms):"), wxSizerFlags().CenterVertical());
+    ppsBox->Add(new wxStaticText(this, wxID_ANY, "Pulse width(ms):"));
     ppsPulseWidth = new wxSpinCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 500, 0);
     ppsPulseWidth->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler(GPS_wxgui::OnPPSChange), nullptr, this);
     ppsBox->Add(ppsPulseWidth);
