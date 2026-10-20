@@ -257,7 +257,8 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
     bool needRx = cfg.channels.at(TRXDir::Rx).size() > 0;
 
     mConfig = cfg;
-    mConfig.linkFormat = DataFormat::I16; // always force I16 link
+    // Currently link is always 16bit, user can select is the values within are 16bit or 12bit fullscale
+    mConfig.linkFormat = DataFormat::I16;
 
     if (!needTx && !needRx)
         return OpStatus::Success;
@@ -463,6 +464,10 @@ OpStatus LA9310_TRX::RxSetup()
                 return OpStatus::NotSupported;
 
             status = rxdma->Enable(false);
+            if (status != OpStatus::Success)
+                return status;
+
+            status = iqstreamer->SetPipelineSampleFormat(TRXDir::Rx, pipeIndex, mConfig.format);
             if (status != OpStatus::Success)
                 return status;
 
@@ -785,8 +790,8 @@ void LA9310_TRX::ReceivePacketsLoop()
             {
                 auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
                 auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
-                for (uint32_t i = 0; i < samplesProduced; ++i)
-                    Rescale(dest[c][i], src[i]);
+                // downscale is done by VSPA, so can do straight memcpy
+                memcpy(dest[c], src, samplesProduced * sizeof(complex16_t));
             }
             else
             {
@@ -979,6 +984,10 @@ OpStatus LA9310_TRX::TxSetup()
     auto txdma = iqstreamer->tx_dma;
     assert(txdma);
     txdma->Enable(false);
+
+    status = iqstreamer->SetPipelineSampleFormat(TRXDir::Tx, 0, mConfig.format);
+    if (status != OpStatus::Success)
+        return status;
 
     const int chipId = 0;
     mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
@@ -1329,8 +1338,8 @@ void LA9310_TRX::TransmitPacketsLoop()
             else if (conversion.srcFormat == DataFormat::I12)
             {
                 auto src = reinterpret_cast<lime::complex12_t* const*>(srcPkt->samples.front());
-                for (uint32_t i = 0; i < samplesToConsume; ++i)
-                    Rescale(dest[i], src[0][i]);
+                // upscale is done by VSPA, so can do straight memcpy
+                memcpy(dest, src[0], samplesDataSize);
             }
             else
             {

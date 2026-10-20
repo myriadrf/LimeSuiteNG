@@ -48,6 +48,13 @@ typedef enum {
 
     MBOX_OPC_STREAM_START,
     MBOX_OPC_TRACE_RESET,
+    MBOX_OPC_SET_SAMPLE_FORMAT,
 } mbox_opc_e;
+
+// Samples format of the host DMA data stream, MBOX_OPC_SET_SAMPLE_FORMAT argument
+typedef enum {
+    IQ_SAMPLE_FORMAT_I16,
+    IQ_SAMPLE_FORMAT_I12,
+} iq_sample_format_e;
 
 #endif // IQPLAYER_COMMANDS_H

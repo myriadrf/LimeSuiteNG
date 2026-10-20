@@ -178,6 +178,36 @@ OpStatus LA9310_IQStreamer::SetPipelineChannel(lime::TRXDir dir, uint32_t pipe, 
     return response.status == 0 ? OpStatus::Success : OpStatus::Error;
 }
 
+OpStatus LA9310_IQStreamer::SetPipelineSampleFormat(lime::TRXDir dir, uint32_t pipe, DataFormat format)
+{
+    iq_sample_format_e vspa_format;
+    switch (format)
+    {
+    case DataFormat::I16:
+        vspa_format = IQ_SAMPLE_FORMAT_I16;
+        break;
+    case DataFormat::I12:
+        vspa_format = IQ_SAMPLE_FORMAT_I12;
+        break;
+    default:
+        return OpStatus::NotSupported;
+    }
+
+    uint32_t hiword = MBOX_OPC_SET_SAMPLE_FORMAT << 24;
+    uint32_t loword = pipe & 0xFF;
+    loword |= (vspa_format & 0xFF) << 8;
+    if (dir == TRXDir::Tx)
+        loword |= 1 << 16;
+
+    uint64_t value = (uint64_t(hiword) << 32) | loword;
+    uint64_t response = 0;
+    OpStatus status = fw->mailbox->Message(vspa_cpu_id, vspa_mbox_id, value, &response);
+    if (status != OpStatus::Success)
+        return status;
+
+    return response == 0 ? OpStatus::Success : OpStatus::Error;
+}
+
 int LA9310_IQStreamer::GetDecimation(uint32_t channel) const
 {
     return 1;

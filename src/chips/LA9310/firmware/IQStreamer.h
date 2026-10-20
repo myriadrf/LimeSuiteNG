@@ -51,6 +51,7 @@ class LIME_API LA9310_IQStreamer
     OpStatus PipelineEnable(uint32_t rxmask, uint32_t txmask, bool enable);
 
     OpStatus SetPipelineChannel(TRXDir dir, uint32_t pipe, uint32_t channel);
+    OpStatus SetPipelineSampleFormat(TRXDir dir, uint32_t pipe, DataFormat format);
 
     int GetDecimation(uint32_t channel) const;
     int GetInterpolation() const;
