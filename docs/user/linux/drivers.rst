@@ -49,3 +49,5 @@ If the module is not in the loaded modules list, it can be loaded manually by:
 .. code-block:: bash
 
 	user@computer:~$ sudo modprobe limepcie
+
+Note: for Lime SDR Micro M.2 form factor source must build against the branch "limesrd-micro"
