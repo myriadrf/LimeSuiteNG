@@ -83,71 +83,6 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     tddsizer->SetFlexibleDirection(wxVERTICAL);
     tddsizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    wxArrayString comparator_values;
-    comparator_values.Add(wxT("NoChange"));
-    comparator_values.Add(wxT("0"));
-    comparator_values.Add(wxT("1"));
-    comparator_values.Add(wxT("Toggle"));
-
-    tddsizer->Add(new wxStaticText(this, wxID_ANY, wxT("RFSW"), wxDefaultPosition, wxDefaultSize, 0),
-        1,
-        wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL,
-        0);
-    tddgui.spinRFON = new wxSpinCtrl(
-        this, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -256, 255, 0);
-    tddgui.spinRFON->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-    tddsizer->Add(tddgui.spinRFON, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-
-    tddgui.cmbRFON = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comparator_values);
-    tddgui.cmbRFON->SetSelection(0);
-    tddgui.cmbRFON->Connect(wxEVT_CHOICE, wxCommandEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-    tddsizer->Add(tddgui.cmbRFON, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-
-    tddgui.spinRFOFF = new wxSpinCtrl(
-        this, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -256, 255, 0);
-    tddsizer->Add(tddgui.spinRFOFF, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-    tddgui.spinRFOFF->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-
-    tddgui.cmbRFOFF = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comparator_values);
-    tddgui.cmbRFOFF->SetSelection(0);
-    tddgui.cmbRFOFF->Connect(wxEVT_CHOICE, wxCommandEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-    tddsizer->Add(tddgui.cmbRFOFF, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-
-    tddsizer->Add(new wxStaticText(this, wxID_ANY, wxT("PA"), wxDefaultPosition, wxDefaultSize, 0),
-        1,
-        wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL,
-        0);
-    tddgui.spinPAON = new wxSpinCtrl(
-        this, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -256, 255, 0);
-    tddsizer->Add(tddgui.spinPAON, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-    tddgui.spinPAON->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-
-    tddgui.cmbPAON = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comparator_values);
-    tddgui.cmbPAON->SetSelection(2);
-    tddgui.cmbPAON->Connect(wxEVT_CHOICE, wxCommandEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-    tddsizer->Add(tddgui.cmbPAON, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-
-    tddgui.spinPAOFF = new wxSpinCtrl(
-        this, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -256, 255, 0);
-    tddsizer->Add(tddgui.spinPAOFF, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-    tddgui.spinPAOFF->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-
-    tddgui.cmbPAOFF = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, comparator_values);
-    tddgui.cmbPAOFF->SetSelection(1);
-    tddgui.cmbPAOFF->Connect(wxEVT_CHOICE, wxCommandEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-    tddsizer->Add(tddgui.cmbPAOFF, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-
-    tddgui.spinDAC = new wxSpinCtrl(
-        this, wxNewId(), _("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -32768, 32767, 0);
-    tddsizer->Add(new wxStaticText(this, wxID_ANY, wxT("DAC"), wxDefaultPosition, wxDefaultSize, 0),
-        1,
-        wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL,
-        0);
-    tddsizer->Add(tddgui.spinDAC, 1, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
-    tddgui.spinDAC->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler(LA9310_wxgui::onTDDchange), nullptr, this);
-
-    fgSizer246->Add(tddsizer);
-
     SetSizer(fgSizer246);
     Layout();
     fgSizer246->Fit(this);
@@ -201,27 +136,4 @@ void LA9310_wxgui::onPPSDO(wxCommandEvent& event)
 {
     if (iqstreamer->fw->EnablePPSDO(event.IsChecked()) != OpStatus::Success)
         chkPPSDO->SetValue(!event.IsChecked());
-}
-
-void LA9310_wxgui::onTDDchange(wxSpinEvent& event)
-{
-    if (!iqstreamer->tdd_control)
-        return;
-
-    iqstreamer->tdd_control->dac_allowed = tddgui.spinDAC->GetValue();
-    iqstreamer->tdd_control->rf_sw_on = tddgui.spinRFON->GetValue();
-    iqstreamer->tdd_control->rf_sw_off = tddgui.spinRFOFF->GetValue();
-    iqstreamer->tdd_control->pa_on = tddgui.spinPAON->GetValue();
-    iqstreamer->tdd_control->pa_off = tddgui.spinPAOFF->GetValue();
-}
-
-void LA9310_wxgui::onTDDchange(wxCommandEvent& event)
-{
-    if (!iqstreamer->tdd_control)
-        return;
-
-    iqstreamer->tdd_control->rf_sw_on_comparator_out = tddgui.cmbRFON->GetSelection();
-    iqstreamer->tdd_control->rf_sw_off_comparator_out = tddgui.cmbRFOFF->GetSelection();
-    iqstreamer->tdd_control->pa_on_comparator_out = tddgui.cmbPAON->GetSelection();
-    iqstreamer->tdd_control->pa_off_comparator_out = tddgui.cmbPAOFF->GetSelection();
 }

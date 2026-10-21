@@ -41,6 +41,7 @@
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
 #include "interface/IDCCorrector.h"
+#include "interface/IRFTiming.h"
 #include "interface/IQuadratureErrorCorrector.h"
 #include "interface/IOversampler.h"
 
@@ -290,7 +291,10 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     }
 
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice", "LimeSDR-Micro"s);
-    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(iqstreamer.get(), "LA9310"s));
+    auto la9310Node = std::make_shared<DeviceTreeNode>(iqstreamer.get(), "LA9310"s);
+    la9310Node->children.push_back(
+        std::make_shared<DeviceTreeNode>(iqstreamer->GetTxRFTiming().get(), IRFTiming::DeviceTreeClass, "Tx RF timing"s));
+    desc.socTree->children.push_back(la9310Node);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(gps.get(), "GPS"s));
 }

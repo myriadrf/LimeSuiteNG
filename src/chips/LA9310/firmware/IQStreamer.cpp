@@ -4,6 +4,7 @@
 #include "interface/IDCCorrector.h"
 #include "interface/IQuadratureErrorCorrector.h"
 #include "interface/IToneGenerator.h"
+#include "interface/IRFTiming.h"
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
 #include "chips/LA9310/LA9310.h"
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
@@ -496,6 +497,133 @@ std::shared_ptr<IToneGenerator> LA9310_IQStreamer::GetTxToneGenerator(uint32_t p
         return nullptr;
 
     return std::make_shared<VSPA_Tone>(fw->mailbox, TRXDir::Tx, tone_hif);
+}
+
+// Tx burst timing of the VSPA PHY timer comparators. Offsets are in PHY timer ticks relative to the burst start/end.
+// The VSPA reads the values each time it schedules a burst edge, so changes apply from the next burst on.
+class VSPA_TxRFTiming : public IRFTiming
+{
+  public:
+    VSPA_TxRFTiming(LA9310_IQStreamer* iqstreamer)
+        : iqstreamer(iqstreamer)
+    {
+    }
+
+    TRXDir GetDirection() const override { return TRXDir::Tx; }
+
+    std::vector<ControlDescriptor> GetControls() const override
+    {
+        return {
+            { "dac"s, "DAC DMA allowed (CH5_TX_ALLOWED)"s, lime::Range<int32_t>(INT16_MIN, INT16_MAX), true, false },
+            { "pa"s, "PA enable (RFCTL_5)"s, lime::Range<int32_t>(INT8_MIN, INT8_MAX), false, true },
+            { "rf_switch"s, "RF switch (RFCTL_0)"s, lime::Range<int32_t>(INT8_MIN, INT8_MAX), false, true },
+        };
+    }
+
+    OpStatus GetControl(const std::string& name, Control& control) override
+    {
+        volatile tx_tdd_config_t* tdd = iqstreamer->tdd_control;
+        if (!tdd)
+            return OpStatus::NotSupported;
+
+        if (name == "dac"s)
+        {
+            control.start = { tdd->dac_allowed, Action::High };
+            control.end = { tdd->dac_allowed, Action::Low };
+        }
+        else if (name == "pa"s)
+        {
+            control.start = { tdd->pa_on, ToAction(tdd->pa_on_comparator_out) };
+            control.end = { tdd->pa_off, ToAction(tdd->pa_off_comparator_out) };
+        }
+        else if (name == "rf_switch"s)
+        {
+            control.start = { tdd->rf_sw_on, ToAction(tdd->rf_sw_on_comparator_out) };
+            control.end = { tdd->rf_sw_off, ToAction(tdd->rf_sw_off_comparator_out) };
+        }
+        else
+            return OpStatus::InvalidValue;
+        return OpStatus::Success;
+    }
+
+    OpStatus SetControl(const std::string& name, const Control& control) override
+    {
+        volatile tx_tdd_config_t* tdd = iqstreamer->tdd_control;
+        if (!tdd)
+            return OpStatus::NotSupported;
+
+        if (name == "dac"s)
+        {
+            if (control.start.offset != control.end.offset || !InRange(control.start.offset, INT16_MIN, INT16_MAX))
+                return OpStatus::OutOfRange;
+            tdd->dac_allowed = control.start.offset;
+            return OpStatus::Success;
+        }
+
+        if (!InRange(control.start.offset, INT8_MIN, INT8_MAX) || !InRange(control.end.offset, INT8_MIN, INT8_MAX))
+            return OpStatus::OutOfRange;
+
+        if (name == "pa"s)
+        {
+            tdd->pa_on = control.start.offset;
+            tdd->pa_off = control.end.offset;
+            tdd->pa_on_comparator_out = ToComparatorOut(control.start.action);
+            tdd->pa_off_comparator_out = ToComparatorOut(control.end.action);
+        }
+        else if (name == "rf_switch"s)
+        {
+            tdd->rf_sw_on = control.start.offset;
+            tdd->rf_sw_off = control.end.offset;
+            tdd->rf_sw_on_comparator_out = ToComparatorOut(control.start.action);
+            tdd->rf_sw_off_comparator_out = ToComparatorOut(control.end.action);
+        }
+        else
+            return OpStatus::InvalidValue;
+        return OpStatus::Success;
+    }
+
+  private:
+    static bool InRange(int32_t value, int32_t min, int32_t max) { return value >= min && value <= max; }
+
+    // VSPA ePhyTimerComparatorTrigger: 0 = no change, 1 = output 0, 2 = output 1, 3 = toggle
+    static uint16_t ToComparatorOut(Action action)
+    {
+        switch (action)
+        {
+        case Action::Low:
+            return 1;
+        case Action::High:
+            return 2;
+        case Action::Toggle:
+            return 3;
+        default:
+            return 0;
+        }
+    }
+
+    static Action ToAction(uint16_t comparatorOut)
+    {
+        switch (comparatorOut)
+        {
+        case 1:
+            return Action::Low;
+        case 2:
+            return Action::High;
+        case 3:
+            return Action::Toggle;
+        default:
+            return Action::NoChange;
+        }
+    }
+
+    LA9310_IQStreamer* iqstreamer;
+};
+
+std::shared_ptr<IRFTiming> LA9310_IQStreamer::GetTxRFTiming()
+{
+    if (!txRFTiming)
+        txRFTiming = std::make_shared<VSPA_TxRFTiming>(this);
+    return txRFTiming;
 }
 
 const complex32f_t* LA9310_IQStreamer::CalcFFT(uint32_t channel)

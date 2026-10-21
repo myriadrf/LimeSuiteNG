@@ -1,1 +1,1 @@
-target_sources(limeGUI PRIVATE DCCorrectorPanel.cpp QECPanel.cpp ToneGeneratorPanel.cpp)
+target_sources(limeGUI PRIVATE DCCorrectorPanel.cpp QECPanel.cpp ToneGeneratorPanel.cpp RFTimingPanel.cpp)

@@ -20,6 +20,7 @@ class IOversampler;
 class IDCCorrector;
 class IQuadratureErrorCorrector;
 class IToneGenerator;
+class IRFTiming;
 class LA9310_PCIe;
 class LA9310_FW_Impl;
 class IQStreamer_DMA;
@@ -62,6 +63,7 @@ class LIME_API LA9310_IQStreamer
     std::shared_ptr<IQuadratureErrorCorrector> GetRxQEC(uint32_t pipeline);
     std::shared_ptr<IQuadratureErrorCorrector> GetTxQEC(uint32_t pipeline);
     std::shared_ptr<IToneGenerator> GetTxToneGenerator(uint32_t pipeline);
+    std::shared_ptr<IRFTiming> GetTxRFTiming();
 
     OpStatus SetDecimation(uint32_t channel, uint32_t decimation);
     OpStatus SetInterpolation(uint32_t interpolation);
@@ -83,6 +85,7 @@ class LIME_API LA9310_IQStreamer
 
   private:
     volatile struct la9310_sw_cmd_desc* m4_cmd_hif;
+    std::shared_ptr<IRFTiming> txRFTiming;
 };
 
 } // namespace lime
