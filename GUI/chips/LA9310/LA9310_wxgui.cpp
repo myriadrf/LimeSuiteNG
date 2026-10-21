@@ -30,12 +30,6 @@ LA9310_wxgui::LA9310_wxgui(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
     fgSizer246->SetFlexibleDirection(wxVERTICAL);
     fgSizer246->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    rxdcpanel = std::make_unique<DCCorrectorsPanel>(this, wxID_ANY, "Rx DC (digital)");
-    fgSizer246->Add(rxdcpanel.get());
-
-    txdcpanel = std::make_unique<DCCorrectorsPanel>(this, wxID_ANY, "Tx DC (digital)");
-    fgSizer246->Add(txdcpanel.get());
-
     rxqecpanel = std::make_unique<QECPanel>(this, wxID_ANY, "Rx QEC");
     fgSizer246->Add(rxqecpanel.get());
 
@@ -98,8 +92,6 @@ bool LA9310_wxgui::Initialize(lime::LA9310_IQStreamer* soc)
         return false;
 
     iqstreamer = soc;
-    rxdcpanel->Initialize(soc->GetRxDCCorrector(0));
-    txdcpanel->Initialize(soc->GetTxDCCorrector(0));
     for (auto ctrl : timer_map)
     {
         ctrl.first->SetValue(iqstreamer->fw->phytimer.GetTimerControl(ctrl.second).GetTriggerValue());

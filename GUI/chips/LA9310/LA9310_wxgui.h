@@ -28,9 +28,6 @@ class LA9310_wxgui : public ISOCPanel
     void UpdateGUI() override;
 
   private:
-    std::unique_ptr<DCCorrectorsPanel> rxdcpanel;
-    std::unique_ptr<DCCorrectorsPanel> txdcpanel;
-
     std::unique_ptr<QECPanel> rxqecpanel;
     std::unique_ptr<QECPanel> txqecpanel;
 
