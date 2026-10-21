@@ -17,7 +17,11 @@
 
 #include "m4_commands.h"
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
+#include <iterator>
+#include <string_view>
 #include <string.h>
 
 #ifndef M_PI // Windows
@@ -513,10 +517,17 @@ class VSPA_TxRFTiming : public IRFTiming
 
     std::vector<ControlDescriptor> GetControls() const override
     {
+        const std::vector<std::string> paTriggers(std::begin(paTriggerNames), std::end(paTriggerNames));
+        const std::vector<std::string> rfSwitchTriggers(std::begin(rfSwitchTriggerNames), std::end(rfSwitchTriggerNames));
         return {
-            { "dac"s, "DAC DMA allowed (CH5_TX_ALLOWED)"s, lime::Range<int32_t>(INT16_MIN, INT16_MAX), true, false },
-            { "pa"s, "PA enable (RFCTL_5)"s, lime::Range<int32_t>(INT8_MIN, INT8_MAX), false, true },
-            { "rf_switch"s, "RF switch (RFCTL_0)"s, lime::Range<int32_t>(INT8_MIN, INT8_MAX), false, true },
+            { "dac"s, "DAC DMA allowed (CH5_TX_ALLOWED)"s, lime::Range<int32_t>(INT16_MIN, INT16_MAX), true, false, {} },
+            { "pa"s, "PA enable (RFCTL_5)"s, lime::Range<int32_t>(INT8_MIN, INT8_MAX), false, true, paTriggers },
+            { "rf_switch"s,
+                "Tx band RF switch (RFCTL_0)"s,
+                lime::Range<int32_t>(INT8_MIN, INT8_MAX),
+                false,
+                true,
+                rfSwitchTriggers },
         };
     }
 
@@ -528,18 +539,18 @@ class VSPA_TxRFTiming : public IRFTiming
 
         if (name == "dac"s)
         {
-            control.start = { tdd->dac_allowed, Action::High };
-            control.end = { tdd->dac_allowed, Action::Low };
+            control.start = { tdd->dac_allowed, "high"s };
+            control.end = { tdd->dac_allowed, "low"s };
         }
         else if (name == "pa"s)
         {
-            control.start = { tdd->pa_on, ToAction(tdd->pa_on_comparator_out) };
-            control.end = { tdd->pa_off, ToAction(tdd->pa_off_comparator_out) };
+            control.start = { tdd->pa_on, ToTrigger(paTriggerNames, tdd->pa_on_comparator_out) };
+            control.end = { tdd->pa_off, ToTrigger(paTriggerNames, tdd->pa_off_comparator_out) };
         }
         else if (name == "rf_switch"s)
         {
-            control.start = { tdd->rf_sw_on, ToAction(tdd->rf_sw_on_comparator_out) };
-            control.end = { tdd->rf_sw_off, ToAction(tdd->rf_sw_off_comparator_out) };
+            control.start = { tdd->rf_sw_on, ToTrigger(rfSwitchTriggerNames, tdd->rf_sw_on_comparator_out) };
+            control.end = { tdd->rf_sw_off, ToTrigger(rfSwitchTriggerNames, tdd->rf_sw_off_comparator_out) };
         }
         else
             return OpStatus::InvalidValue;
@@ -560,60 +571,59 @@ class VSPA_TxRFTiming : public IRFTiming
             return OpStatus::Success;
         }
 
+        if (name != "pa"s && name != "rf_switch"s)
+            return OpStatus::InvalidValue;
         if (!InRange(control.start.offset, INT8_MIN, INT8_MAX) || !InRange(control.end.offset, INT8_MIN, INT8_MAX))
             return OpStatus::OutOfRange;
+        uint16_t startOut, endOut;
+        const TriggerNames& names = name == "pa"s ? paTriggerNames : rfSwitchTriggerNames;
+        if (!ParseTrigger(names, control.start.trigger, startOut) || !ParseTrigger(names, control.end.trigger, endOut))
+            return OpStatus::InvalidValue;
 
         if (name == "pa"s)
         {
             tdd->pa_on = control.start.offset;
             tdd->pa_off = control.end.offset;
-            tdd->pa_on_comparator_out = ToComparatorOut(control.start.action);
-            tdd->pa_off_comparator_out = ToComparatorOut(control.end.action);
+            tdd->pa_on_comparator_out = startOut;
+            tdd->pa_off_comparator_out = endOut;
         }
-        else if (name == "rf_switch"s)
+        else
         {
             tdd->rf_sw_on = control.start.offset;
             tdd->rf_sw_off = control.end.offset;
-            tdd->rf_sw_on_comparator_out = ToComparatorOut(control.start.action);
-            tdd->rf_sw_off_comparator_out = ToComparatorOut(control.end.action);
+            tdd->rf_sw_on_comparator_out = startOut;
+            tdd->rf_sw_off_comparator_out = endOut;
         }
-        else
-            return OpStatus::InvalidValue;
         return OpStatus::Success;
     }
 
   private:
     static bool InRange(int32_t value, int32_t min, int32_t max) { return value >= min && value <= max; }
 
-    // VSPA ePhyTimerComparatorTrigger: 0 = no change, 1 = output 0, 2 = output 1, 3 = toggle
-    static uint16_t ToComparatorOut(Action action)
+    // Indexed by VSPA ePhyTimerComparatorTrigger: 0 = no change, 1 = output 0, 2 = output 1, 3 = toggle
+    using TriggerNames = const char* const[4];
+    static constexpr TriggerNames paTriggerNames = { "nochange", "low", "high", "toggle" };
+    // RFCTL_0 drives the Tx band switch: output 1 selects Band1, output 0 selects Band2
+    static constexpr TriggerNames rfSwitchTriggerNames = { "nochange", "band2", "band1", "toggle" };
+
+    static bool ParseTrigger(const TriggerNames& triggerNames, const std::string& text, uint16_t& comparatorOut)
     {
-        switch (action)
+        for (uint16_t i = 0; i < std::size(triggerNames); ++i)
         {
-        case Action::Low:
-            return 1;
-        case Action::High:
-            return 2;
-        case Action::Toggle:
-            return 3;
-        default:
-            return 0;
+            const std::string_view name(triggerNames[i]);
+            const auto equalNoCase = [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); };
+            if (std::equal(text.begin(), text.end(), name.begin(), name.end(), equalNoCase))
+            {
+                comparatorOut = i;
+                return true;
+            }
         }
+        return false;
     }
 
-    static Action ToAction(uint16_t comparatorOut)
+    static std::string ToTrigger(const TriggerNames& triggerNames, uint16_t comparatorOut)
     {
-        switch (comparatorOut)
-        {
-        case 1:
-            return Action::Low;
-        case 2:
-            return Action::High;
-        case 3:
-            return Action::Toggle;
-        default:
-            return Action::NoChange;
-        }
+        return comparatorOut < std::size(triggerNames) ? triggerNames[comparatorOut] : triggerNames[0];
     }
 
     LA9310_IQStreamer* iqstreamer;

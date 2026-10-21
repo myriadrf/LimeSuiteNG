@@ -663,34 +663,12 @@ static void FindRFTimingNodes(const std::shared_ptr<DeviceTreeNode>& node, std::
         FindRFTimingNodes(child, timings);
 }
 
-static bool ParseRFTimingAction(const std::string& text, IRFTiming::Action& action)
+static std::string JoinRFTimingTriggers(const std::vector<std::string>& values)
 {
-    if (strcasecmp(text.c_str(), "none") == 0)
-        action = IRFTiming::Action::NoChange;
-    else if (strcasecmp(text.c_str(), "low") == 0)
-        action = IRFTiming::Action::Low;
-    else if (strcasecmp(text.c_str(), "high") == 0)
-        action = IRFTiming::Action::High;
-    else if (strcasecmp(text.c_str(), "toggle") == 0)
-        action = IRFTiming::Action::Toggle;
-    else
-        return false;
-    return true;
-}
-
-static const char* RFTimingActionString(IRFTiming::Action action)
-{
-    switch (action)
-    {
-    case IRFTiming::Action::Low:
-        return "low";
-    case IRFTiming::Action::High:
-        return "high";
-    case IRFTiming::Action::Toggle:
-        return "toggle";
-    default:
-        return "none";
-    }
+    std::string text;
+    for (const std::string& value : values)
+        text += (text.empty() ? "" : ", ") + value;
+    return text;
 }
 
 static void ApplyRFTimingSettings(LimePluginContext* context, int devIndex, SDRDevice* device)
@@ -728,42 +706,29 @@ static void ApplyRFTimingSettings(LimePluginContext* context, int devIndex, SDRD
             if (desc.sharedOffset && hasStart != hasEnd)
                 control.start.offset = control.end.offset = hasStart ? control.start.offset : control.end.offset;
 
-            if ((hasStartAction || hasEndAction) && !desc.configurableActions)
+            if ((hasStartAction || hasEndAction) && !desc.configurableTriggers)
                 Log(LogLevel::Warning, "dev%i %s timing %s: actions are fixed by the device, ignoring them", devIndex, dir, name);
-            if (hasStartAction && !ParseRFTimingAction(startAction, control.start.action))
-            {
-                Log(LogLevel::Error,
-                    "dev%i %s timing %s: invalid start action \"%s\" (none, low, high, toggle)",
-                    devIndex,
-                    dir,
-                    name,
-                    startAction.c_str());
-                continue;
-            }
-            if (hasEndAction && !ParseRFTimingAction(endAction, control.end.action))
-            {
-                Log(LogLevel::Error,
-                    "dev%i %s timing %s: invalid end action \"%s\" (none, low, high, toggle)",
-                    devIndex,
-                    dir,
-                    name,
-                    endAction.c_str());
-                continue;
-            }
+            if (hasStartAction)
+                control.start.trigger = startAction;
+            if (hasEndAction)
+                control.end.trigger = endAction;
 
             status = timing->SetControl(desc.name, control);
             if (status != OpStatus::Success)
             {
                 Log(LogLevel::Error,
-                    "dev%i %s timing %s: start %i, end %i failed (%s), offset range [%i, %i]",
+                    "dev%i %s timing %s: start %i (%s), end %i (%s) failed (%s), offset range [%i, %i], actions (%s)",
                     devIndex,
                     dir,
                     name,
                     control.start.offset,
+                    control.start.trigger.c_str(),
                     control.end.offset,
+                    control.end.trigger.c_str(),
                     ToString(status).c_str(),
                     desc.offsetRange.min,
-                    desc.offsetRange.max);
+                    desc.offsetRange.max,
+                    JoinRFTimingTriggers(desc.triggerValues).c_str());
                 continue;
             }
             timing->GetControl(desc.name, control);
@@ -773,9 +738,9 @@ static void ApplyRFTimingSettings(LimePluginContext* context, int devIndex, SDRD
                 dir,
                 name,
                 control.start.offset,
-                RFTimingActionString(control.start.action),
+                control.start.trigger.c_str(),
                 control.end.offset,
-                RFTimingActionString(control.end.action));
+                control.end.trigger.c_str());
         }
     }
 }

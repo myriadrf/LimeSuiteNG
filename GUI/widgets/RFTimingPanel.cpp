@@ -16,8 +16,14 @@ using namespace lime;
 
 static bool rftiming_gui_isRegistered = RegisterToFactory<SOC_GUIFactory, &RFTimingPanel::Create>(IRFTiming::DeviceTreeClass);
 
-// Choice index order matches IRFTiming::Action
-static const wxString actionNames[] = { "No change", "Low", "High", "Toggle" };
+// Selects the trigger value in the choice, adding it if the device reported a value that is not listed
+static void SelectTrigger(wxChoice* choice, const std::string& trigger)
+{
+    int index = choice->FindString(trigger);
+    if (index == wxNOT_FOUND)
+        index = choice->Append(trigger);
+    choice->SetSelection(index);
+}
 
 ISOCPanel* RFTimingPanel::Create(wxWindow* parent, wxWindowID id)
 {
@@ -68,7 +74,6 @@ bool RFTimingPanel::Initialize(lime::IRFTiming* soc)
     timingBox->GetStaticBox()->SetLabel(timing->GetDirection() == TRXDir::Rx ? "Rx RF timing" : "Tx RF timing");
 
     wxWindow* parent = timingBox->GetStaticBox();
-    const wxArrayString actions(std::size(actionNames), actionNames);
     for (const IRFTiming::ControlDescriptor& desc : timing->GetControls())
     {
         ControlRow row{ desc.name, desc.sharedOffset, nullptr, nullptr, nullptr, nullptr };
@@ -90,9 +95,12 @@ bool RFTimingPanel::Initialize(lime::IRFTiming* soc)
             controlsGrid->Add(spin, 0, wxEXPAND);
             return spin;
         };
+        wxArrayString triggers;
+        for (const std::string& value : desc.triggerValues)
+            triggers.Add(value);
         auto makeAction = [&]() {
-            wxChoice* choice = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, actions);
-            choice->Enable(desc.configurableActions);
+            wxChoice* choice = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, triggers);
+            choice->Enable(desc.configurableTriggers);
             controlsGrid->Add(choice, 0, wxEXPAND);
             return choice;
         };
@@ -142,9 +150,9 @@ void RFTimingPanel::UpdateGUI()
         if (timing->GetControl(row.name, control) != OpStatus::Success)
             continue;
         row.startOffset->SetValue(control.start.offset);
-        row.startAction->SetSelection(static_cast<int>(control.start.action));
+        SelectTrigger(row.startAction, control.start.trigger);
         row.endOffset->SetValue(control.end.offset);
-        row.endAction->SetSelection(static_cast<int>(control.end.action));
+        SelectTrigger(row.endAction, control.end.trigger);
     }
 }
 
@@ -158,9 +166,9 @@ void RFTimingPanel::WriteControl(ControlRow& row)
 
     IRFTiming::Control control;
     control.start.offset = row.startOffset->GetValue();
-    control.start.action = static_cast<IRFTiming::Action>(row.startAction->GetSelection());
+    control.start.trigger = row.startAction->GetStringSelection().ToStdString();
     control.end.offset = row.endOffset->GetValue();
-    control.end.action = static_cast<IRFTiming::Action>(row.endAction->GetSelection());
+    control.end.trigger = row.endAction->GetStringSelection().ToStdString();
 
     OpStatus status = timing->SetControl(row.name, control);
     if (status != OpStatus::Success)
