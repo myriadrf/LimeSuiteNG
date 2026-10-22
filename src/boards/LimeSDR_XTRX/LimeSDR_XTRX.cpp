@@ -21,6 +21,7 @@
 #include "comms/SPI/ISPI.h"
 #include "protocols/LMS64C/CSR.h"
 #include "FPGA/FPGA_common.h"
+#include "FPGA/PPSDO_FPGA.h"
 #include "FPGA_XTRX.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
@@ -122,6 +123,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
     , fpgaPort(spiFPGA)
     , mStreamPort(sampleStream)
     , mSerialPort(control)
+    , mPPSDO(std::make_unique<PPSDO_FPGA>(std::make_shared<LMS64C_CSR>(control), 0xF000B000))
     , mConfigInProgress(false)
     , mSubDeviceIndex(0)
 {
@@ -214,6 +216,7 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_XTRX"s, "FPGA"s);
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mPPSDO.get(), "PPSDO"s));
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "XTRX"s);
     desc.socTree->children.push_back(fpgaNode);
 }

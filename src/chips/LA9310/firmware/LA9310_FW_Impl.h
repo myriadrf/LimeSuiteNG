@@ -13,6 +13,7 @@
 
 struct la9310_hif;
 struct gps_status_payload;
+struct ppsdo_status_payload;
 
 namespace lime {
 
@@ -39,6 +40,9 @@ class LIME_API LA9310_FW_Impl : public LA9310
 
     OpStatus DigitalLoopback(bool enable);
     OpStatus EnablePPSDO(bool enable);
+    OpStatus GetPPSDOStatus(ppsdo_status_payload& status);
+    /// @param tolerance_ppb Frequency error tolerated by each measurement window, 0 for firmware defaults.
+    OpStatus ConfigurePPSDO(uint32_t tolerance_ppb);
 
     OpStatus GetGPSStatus(gps_status_payload& status);
     /// Sends a sentence to the GPS module, body without '$' and checksum, e.g. "PMTK161,0".

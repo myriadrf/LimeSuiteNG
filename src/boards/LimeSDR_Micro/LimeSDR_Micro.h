@@ -30,6 +30,7 @@ class I2C_bus;
 class LA9310;
 class LA9310_FW_Impl;
 class GPS;
+class PPSDO;
 
 class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 {
@@ -187,6 +188,7 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<LA9310_FW_Impl> fw;
     std::shared_ptr<LA9310_IQStreamer> iqstreamer;
     std::shared_ptr<GPS> gps;
+    std::shared_ptr<PPSDO> ppsdo;
 
     bool mConfigInProgress;
 };

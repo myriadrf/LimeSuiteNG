@@ -4,6 +4,7 @@
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/Logger.h"
+#include "limesuiteng/PPSDO.h"
 #include "limesuiteng/RFSOCDescriptor.h"
 #include "limesuiteng/RFStream.h"
 #include "limesuiteng/SDRConfig.h"

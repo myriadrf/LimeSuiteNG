@@ -38,7 +38,9 @@ enum M4_Command {
     LIME_M4_TX_GET_OVERSAMPLE,
     LIME_M4_PPSDO_CTRL,
     LIME_M4_GPS_GET_STATUS,
-    LIME_M4_GPS_SEND
+    LIME_M4_GPS_SEND,
+    LIME_M4_PPSDO_GET_STATUS,
+    LIME_M4_PPSDO_CONFIG
 };
 
 struct tx_dac_allowed_payload {
@@ -73,11 +75,35 @@ struct ppsdo_control_payload {
     uint32_t enable;
 };
 
+// LIME_M4_PPSDO_CONFIG request
+struct ppsdo_config_payload {
+    uint32_t tolerance_ppb; // frequency error tolerated by each measurement window, 0 for firmware defaults
+};
+
+// Same values as ppsdo_tune_state_t
+enum ppsdo_tune_state_payload {
+    PPSDO_TUNE_STATE_COARSE_MIN,
+    PPSDO_TUNE_STATE_COARSE_MAX,
+    PPSDO_TUNE_STATE_COARSE_DONE,
+    PPSDO_TUNE_STATE_FINE,
+    PPSDO_TUNE_STATE_IDLE,
+};
+
+// LIME_M4_PPSDO_CTRL, LIME_M4_PPSDO_GET_STATUS and LIME_M4_PPSDO_CONFIG response
 struct ppsdo_status_payload {
     uint32_t result; // lime_Result
     uint32_t enabled;
-    uint32_t tune_state; // ppsdo_tune_state_t
+    uint32_t tune_state; // ppsdo_tune_state_payload
     uint32_t xo_dac_value;
+    int32_t error_1s; // measured minus expected clock ticks of the last completed window
+    int32_t error_10s;
+    int32_t error_100s;
+    int32_t tolerance_1s; // clock ticks
+    int32_t tolerance_10s;
+    int32_t tolerance_100s;
+    uint32_t accuracy; // number of windows (1s, 10s, 100s) in tolerance while fine tuning, 0..3
+    uint32_t pps_active;
+    uint32_t clock_hz; // frequency of the clock counted between PPS pulses
 };
 
 // GPS payloads, sized to fit la9310_sw_cmd_desc.data (128 bytes)

@@ -28,6 +28,7 @@
 #include "streaming/TRXLooper.h"
 
 #include "FPGA_Mini.h"
+#include "FPGA/PPSDO_FPGA.h"
 
 using namespace lime::LMS64CProtocol;
 using namespace lime::LMS7002MCSR_Data;
@@ -193,6 +194,7 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
     {
         descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC_v2);
         descriptor.customParameters.push_back(limesdrmini::CP_TEMPERATURE);
+        mPPSDO = std::make_unique<PPSDO_FPGA>(std::make_shared<LMS64C_CSR>(mSerialPort), 0xF0002800);
     }
 
     {
@@ -221,6 +223,8 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
 
     auto fpgaNode = std::make_shared<DeviceTreeNode>(mFPGA.get(), "FPGA_Mini"s, "FPGA"s);
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
+    if (mPPSDO)
+        fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mPPSDO.get(), "PPSDO"s));
     descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeSDR-Mini"s);
     descriptor.socTree->children.push_back(fpgaNode);
 }

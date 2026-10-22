@@ -2,6 +2,7 @@
 #define LIME_LIMESDR_XTRX_H
 
 #include "boards/LMS7002M_SDRDevice.h"
+#include "limesuiteng/PPSDO.h"
 
 #include <vector>
 #include <mutex>
@@ -99,6 +100,7 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     std::shared_ptr<ISPI> fpgaPort;
     std::shared_ptr<LimePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
+    std::unique_ptr<PPSDO> mPPSDO;
 
     bool mConfigInProgress;
     uint32_t mSubDeviceIndex;

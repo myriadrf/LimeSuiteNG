@@ -16,6 +16,7 @@
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LA9310/firmware/LA9310_GPS.h"
+#include "chips/LA9310/firmware/PPSDO_LA9310.h"
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "comms/IDMA.h"
@@ -242,6 +243,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
 
     iqstreamer = std::make_shared<LA9310_IQStreamer>(fw);
     gps = std::make_shared<LA9310_GPS>(fw);
+    ppsdo = std::make_shared<PPSDO_LA9310>(fw);
     if (status == OpStatus::Success)
     {
         LMS64CProtocol::FirmwareInfo fw{};
@@ -297,6 +299,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     desc.socTree->children.push_back(la9310Node);
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(gps.get(), "GPS"s));
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(ppsdo.get(), "PPSDO"s));
 }
 
 LimeSDR_Micro::~LimeSDR_Micro()

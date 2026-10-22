@@ -2,6 +2,7 @@
 #define LIME_LIMESDR_MINI_H
 
 #include "boards/LMS7002M_SDRDevice.h"
+#include "limesuiteng/PPSDO.h"
 
 #include <vector>
 #include <memory>
@@ -65,6 +66,7 @@ class LimeSDR_Mini : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<ISPI> mlms7002mPort;
     std::shared_ptr<ISPI> mfpgaPort;
+    std::unique_ptr<PPSDO> mPPSDO;
     bool mConfigInProgress{};
 };
 

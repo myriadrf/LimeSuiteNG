@@ -2,9 +2,14 @@
 
 #include "ISOCPanel.h"
 
+#include <wx/timer.h>
+
 namespace lime {
 class GPS;
 } // namespace lime
+
+class wxCheckBox;
+class wxStaticText;
 
 class GPS_wxgui : public ISOCPanel
 {
@@ -23,10 +28,17 @@ class GPS_wxgui : public ISOCPanel
   private:
     void OnPPSChange(wxCommandEvent& event);
     void OnStandByMode(wxCommandEvent& event);
+    void OnRefresh(wxCommandEvent& event);
+    void OnAutoRefresh(wxCommandEvent& event);
+    void OnTimer(wxTimerEvent& event);
 
     lime::GPS* gps;
 
     wxChoice* ppsAvailability;
     wxSpinCtrl* ppsPulseWidth;
     wxButton* btnStandByMode;
+
+    wxStaticText* lblStatus;
+    wxCheckBox* chkAutoRefresh;
+    wxTimer refreshTimer;
 };

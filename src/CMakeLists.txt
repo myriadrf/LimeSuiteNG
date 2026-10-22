@@ -86,6 +86,7 @@ target_sources(
             protocols/LMS64CProtocol.cpp
             protocols/LMSBoards.cpp
             FPGA/FPGA_common.cpp
+            FPGA/PPSDO_FPGA.cpp
             FPGA/WriteRegistersBatch.cpp
             threadHelper/threadHelper.cpp
             API/LimePlugin.cpp

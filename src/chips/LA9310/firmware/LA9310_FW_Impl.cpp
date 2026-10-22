@@ -351,6 +351,40 @@ OpStatus LA9310_FW_Impl::EnablePPSDO(bool enable)
     return OpStatus::Success;
 }
 
+OpStatus LA9310_FW_Impl::GetPPSDOStatus(ppsdo_status_payload& status)
+{
+    hif->sw_cmd_desc.cmd = LIME_M4_PPSDO_GET_STATUS;
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    OpStatus result = WaitForResponse();
+    if (result != OpStatus::Success)
+        return result;
+    ReadCommandData(hif->sw_cmd_desc, status);
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_FW_Impl::ConfigurePPSDO(uint32_t tolerance_ppb)
+{
+    ppsdo_config_payload payload{};
+    payload.tolerance_ppb = tolerance_ppb;
+
+    hif->sw_cmd_desc.cmd = LIME_M4_PPSDO_CONFIG;
+    WriteCommandData(hif->sw_cmd_desc, payload);
+    hif->sw_cmd_desc.status = LA9310_SW_CMD_STATUS_POSTED;
+
+    OpStatus status = WaitForResponse();
+    if (status != OpStatus::Success)
+        return status;
+
+    const int32_t result = static_cast<int32_t>(hif->sw_cmd_desc.data[0]);
+    if (result != 0)
+    {
+        lime::error("LA9310 M4: failed to configure PPSDO (%i)", result);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
 OpStatus LA9310_FW_Impl::GetGPSStatus(gps_status_payload& status)
 {
     hif->sw_cmd_desc.cmd = LIME_M4_GPS_GET_STATUS;
