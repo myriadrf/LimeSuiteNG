@@ -469,7 +469,14 @@ OpStatus LA9310_TRX::RxSetup()
 
             status = iqstreamer->SetPipelineSampleFormat(TRXDir::Rx, pipeIndex, mConfig.format);
             if (status != OpStatus::Success)
-                return status;
+            {
+                if (status == OpStatus::NotSupported)
+                {
+                    // hardware does not natively provide requested format, CPU will do the conversion.
+                }
+                else
+                    return status;
+            }
 
             status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, api_to_vspa_channel.at(channelIndex));
             if (status != OpStatus::Success)
@@ -987,7 +994,14 @@ OpStatus LA9310_TRX::TxSetup()
 
     status = iqstreamer->SetPipelineSampleFormat(TRXDir::Tx, 0, mConfig.format);
     if (status != OpStatus::Success)
-        return status;
+    {
+        if (status == OpStatus::NotSupported)
+        {
+            // hardware does not natively provide requested format, CPU will do the conversion.
+        }
+        else
+            return status;
+    }
 
     const int chipId = 0;
     mTx.fifo = std::make_unique<PacketsFIFO<StreamPacket*>>(512);
