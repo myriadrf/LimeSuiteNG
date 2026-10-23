@@ -5,6 +5,7 @@
 #include "limesuiteng/Logger.h"
 
 #include <cassert>
+#include <limits>
 #include <cstring>
 #include <string_view>
 #include "args.hxx"
@@ -23,7 +24,8 @@ int main(int argc, char** argv)
     args::ValueFlag<std::string>    deviceFlag(parser, "device", "Specifies which device to use", {'d', "device"}, "");
     args::NargsValueFlag<int>       chipFlag(parser, "chip", "Selects destination chip/chips", {'c', "chips"}, {1, static_cast<size_t>(-1)});
     args::ValueFlag<std::string>    logFlag(parser, "log level", "Log verbosity: info, warning, error, verbose, debug", {'l', "log"}, "error");
-    args::Flag                      initializeFlag(parser, "", "Reset and initialize entire device", {'i', "initialize"});
+    args::Flag                      initializeFlag(parser, "", "Reset and fully configure device using default values and the provided parameters. Without this flag only the provided parameters are changed", {'i', "initialize"});
+    args::ValueFlag<std::string>    chMaskFlag(parser, "mask", "Bitmask of channels to apply the parameters to (e.g. 0x3). Default: all channels", {"chmask"});
 
     args::ValueFlag<double>         refclkFlag(parser, "reference clock", "Reference clock in Hz", {"refclk"});
     args::ValueFlag<std::string>    refclkSourceFlag(parser, "reference clock source", "Reference clock input source (internal/external)", {"refclk_source"});
@@ -73,67 +75,86 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
-    bool doConfigure = refclkFlag || refclkSourceFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag ||
-                       rxoversampleFlag || rxtestsignalFlag || txenFlag || rxloFlag || txpathFlag || txloFlag || txoversampleFlag ||
-                       txtestsignalFlag || rxgfirFlag || txgfirFlag;
+    const bool doConfigure = refclkFlag || refclkSourceFlag || samplerateFlag || rxenFlag || rxloFlag || rxpathFlag || rxlpfFlag ||
+                             rxgfirFlag || rxoversampleFlag || rxtestsignalFlag || rxGainFlag || rxCalibrateFlag || txenFlag ||
+                             txloFlag || txpathFlag || txlpfFlag || txgfirFlag || txoversampleFlag || txtestsignalFlag ||
+                             txGainFlag || txCalibrateFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
     const std::string iniFilename = args::get(iniFlag);
     const std::string rxAntennaName = args::get(rxpathFlag);
-    ;
     const std::string txAntennaName = args::get(txpathFlag);
 
     logVerbosity = strToLogLevel(args::get(logFlag));
     std::vector<int> chipIndexes = ParseIntArray(chipFlag);
 
-    SDRConfig config;
-    if (samplerateFlag)
+    uint32_t channelMask = std::numeric_limits<uint32_t>::max();
+    if (chMaskFlag)
     {
-        double sampleRate = args::get(samplerateFlag);
-        config.channel[0].rx.sampleRate = sampleRate;
-        config.channel[0].tx.sampleRate = sampleRate;
+        try
+        {
+            channelMask = std::stoul(args::get(chMaskFlag), nullptr, 0);
+        } catch (const std::exception&)
+        {
+            cerr << "Invalid channels mask: "sv << args::get(chMaskFlag) << endl;
+            return EXIT_FAILURE;
+        }
     }
-    // clang-format off
-    if (refclkFlag)         config.referenceClockFreq = args::get(refclkFlag);
+
+    int32_t referenceClockSource = 0;
     if (refclkSourceFlag)
     {
         const std::string clksrc = args::get(refclkSourceFlag);
         if (clksrc == "internal")
-            config.referenceClockSource = 0;
+            referenceClockSource = 0;
         else if (clksrc == "external")
-            config.referenceClockSource = 1;
+            referenceClockSource = 1;
         else
         {
             cerr << "Invalid reference clock source"sv << endl;
             return EXIT_FAILURE;
         }
+        if (!initializeBoard)
+        {
+            cerr << "Reference clock source can only be changed together with --initialize"sv << endl;
+            return EXIT_FAILURE;
+        }
     }
-    if (rxenFlag)           config.channel[0].rx.enabled = args::get(rxenFlag);
-    if (rxloFlag)           config.channel[0].rx.centerFrequency = args::get(rxloFlag);
-    if (rxlpfFlag)          config.channel[0].rx.lpf = args::get(rxlpfFlag);
+
+    // Channel configuration with defaults and the values provided in the arguments, used for full initialization
+    ChannelConfig chConfig;
+    // clang-format off
+    if (samplerateFlag)
+    {
+        chConfig.rx.sampleRate = args::get(samplerateFlag);
+        chConfig.tx.sampleRate = args::get(samplerateFlag);
+    }
+    if (rxenFlag)           chConfig.rx.enabled = args::get(rxenFlag);
+    if (rxloFlag)           chConfig.rx.centerFrequency = args::get(rxloFlag);
+    if (rxlpfFlag)          chConfig.rx.lpf = args::get(rxlpfFlag);
     if (rxgfirFlag)
     {
-        config.channel[0].rx.gfir.bandwidth = args::get(rxgfirFlag);
-        config.channel[0].rx.gfir.enabled = true;
+        chConfig.rx.gfir.bandwidth = args::get(rxgfirFlag);
+        chConfig.rx.gfir.enabled = true;
     }
-    if (rxoversampleFlag)   config.channel[0].rx.oversample = args::get(rxoversampleFlag);
-    if (rxtestsignalFlag)   config.channel[0].rx.testSignal.enabled = args::get(rxtestsignalFlag);
-    if (rxGainFlag)         config.channel[0].rx.gain[eGainTypes::GENERIC] = args::get(rxGainFlag);
-    if (rxCalibrateFlag)    config.channel[0].rx.calibrate = CalibrationFlag::DCIQ;
+    if (rxoversampleFlag)   chConfig.rx.oversample = args::get(rxoversampleFlag);
+    if (rxtestsignalFlag)   chConfig.rx.testSignal.enabled = args::get(rxtestsignalFlag);
+    if (rxGainFlag)         chConfig.rx.gain[eGainTypes::GENERIC] = args::get(rxGainFlag);
+    if (rxCalibrateFlag)    chConfig.rx.calibrate = CalibrationFlag::DCIQ;
 
-    if (txenFlag)           config.channel[0].tx.enabled = args::get(txenFlag);
-    if (txloFlag)           config.channel[0].tx.centerFrequency = args::get(txloFlag);
-    if (txlpfFlag)          config.channel[0].tx.lpf = args::get(txlpfFlag);
+    if (txenFlag)           chConfig.tx.enabled = args::get(txenFlag);
+    if (txloFlag)           chConfig.tx.centerFrequency = args::get(txloFlag);
+    if (txlpfFlag)          chConfig.tx.lpf = args::get(txlpfFlag);
     if (txgfirFlag)
     {
-        config.channel[0].tx.gfir.bandwidth = args::get(txgfirFlag);
-        config.channel[0].tx.gfir.enabled = true;
+        chConfig.tx.gfir.bandwidth = args::get(txgfirFlag);
+        chConfig.tx.gfir.enabled = true;
     }
-    if (txoversampleFlag)   config.channel[0].tx.oversample = args::get(txoversampleFlag);
-    if (txtestsignalFlag)   config.channel[0].tx.testSignal.enabled = args::get(txtestsignalFlag);
-    if (txGainFlag)         config.channel[0].tx.gain[eGainTypes::GENERIC] = args::get(txGainFlag);
-    if (txCalibrateFlag)    config.channel[0].tx.calibrate = CalibrationFlag::DCIQ;
+    if (txoversampleFlag)   chConfig.tx.oversample = args::get(txoversampleFlag);
+    if (txtestsignalFlag)   chConfig.tx.testSignal.enabled = args::get(txtestsignalFlag);
+    if (txGainFlag)         chConfig.tx.gain[eGainTypes::GENERIC] = args::get(txGainFlag);
+    if (txCalibrateFlag)    chConfig.tx.calibrate = CalibrationFlag::DCIQ;
     // clang-format on
 
     auto handles = DeviceRegistry::enumerate();
@@ -154,15 +175,24 @@ int main(int argc, char** argv)
     device->SetMessageLogCallback(lime::cli::LogCallback);
     lime::registerLogHandler(lime::cli::LogCallback);
 
+    // throws on failure, unsupported parameters are reported but do not stop the rest of the configuration
+    auto check = [](OpStatus status, const std::string& what, int channel = -1) {
+        if (status == OpStatus::Success)
+            return;
+        const std::string target = channel >= 0 ? " (channel "s + std::to_string(channel) + ")"s : ""s;
+        if (status == OpStatus::NotImplemented || status == OpStatus::NotSupported)
+        {
+            cerr << "Warning: "sv << what << target << " is not supported by the device"sv << endl;
+            return;
+        }
+        throw std::runtime_error("failed to "s + what + target);
+    };
+
     try
     {
-        if (initializeBoard)
-            device->Init();
-
         std::string configFilepath = ""s;
         if (!iniFilename.empty())
         {
-            config.skipDefaults = true;
             std::string_view cwd{ argv[0] };
             const size_t slash0Pos = cwd.find_last_of("/\\"sv);
             if (slash0Pos != std::string_view::npos)
@@ -174,51 +204,124 @@ int main(int argc, char** argv)
                 configFilepath = std::string{ cwd } + "/"s;
 
             configFilepath += iniFilename;
+
+            // .ini file replaces the defaults, so reset the chips before loading it
+            if (initializeBoard && device->Init() != OpStatus::Success)
+                throw std::runtime_error("failed to initialize device"s);
         }
 
         for (int moduleId : chipIndexes)
         {
             LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(moduleId));
             if (!chip)
-            {
-                DeviceRegistry::freeDevice(device);
-                cerr << "Failed to get internal chip: "sv << moduleId << endl;
-                return EXIT_FAILURE;
-            }
+                throw std::runtime_error("failed to get internal chip "s + std::to_string(moduleId));
             if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
+                throw std::runtime_error("error loading file: "s + configFilepath);
+
+            const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
+
+            int rxPathIndex = -1;
+            int txPathIndex = -1;
+            if (!rxAntennaName.empty())
             {
-                cerr << "Error loading file: "sv << configFilepath << endl;
-                return EXIT_FAILURE;
+                rxPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
+                if (rxPathIndex < 0)
+                    throw std::runtime_error("invalid Rx antenna name"s);
+            }
+            if (!txAntennaName.empty())
+            {
+                txPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
+                if (txPathIndex < 0)
+                    throw std::runtime_error("invalid Tx antenna name"s);
+            }
+
+            std::vector<uint8_t> channels;
+            for (int i = 0; i < chipDescriptor.channelCount && i < 32; ++i)
+                if (channelMask & (1u << i))
+                    channels.push_back(i);
+
+            if (channels.empty())
+                throw std::runtime_error("channels mask does not select any channel of chip "s + std::to_string(moduleId));
+
+            if (initializeBoard)
+            {
+                SDRConfig config;
+                config.skipDefaults = !configFilepath.empty();
+                config.referenceClockSource = referenceClockSource;
+                if (refclkFlag)
+                    config.referenceClockFreq = args::get(refclkFlag);
+
+                // channels not selected by the mask keep the default configuration
+                for (uint8_t ch : channels)
+                {
+                    config.channel[ch] = chConfig;
+                    if (rxPathIndex >= 0)
+                        config.channel[ch].rx.path = rxPathIndex;
+                    if (txPathIndex >= 0)
+                        config.channel[ch].tx.path = txPathIndex;
+                }
+
+                if (device->Configure(config, moduleId) != OpStatus::Success)
+                    throw std::runtime_error("failed to configure device (chip "s + std::to_string(moduleId) + ")"s);
+                continue;
             }
 
             if (!doConfigure)
                 continue;
 
-            const auto& chipDescriptor = device->GetDescriptor().rfSOC[moduleId];
+            if (refclkFlag)
+                check(device->SetClockFreq(static_cast<uint8_t>(LMS7002M::ClockID::CLK_REFERENCE), args::get(refclkFlag), moduleId * 2),
+                    "set reference clock"s);
 
-            if (!rxAntennaName.empty())
+            for (uint8_t ch : channels)
             {
-                int rxPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Rx), rxAntennaName);
-                if (rxPathIndex < 0)
-                    return EXIT_FAILURE;
-                config.channel[0].rx.path = rxPathIndex;
-            }
-            if (!txAntennaName.empty())
-            {
-                int txPathIndex = AntennaNameToIndex(chipDescriptor.pathNames.at(TRXDir::Tx), txAntennaName);
-                if (txPathIndex < 0)
-                    return EXIT_FAILURE;
-                config.channel[0].tx.path = txPathIndex;
+                if (rxenFlag)
+                    check(device->EnableChannel(moduleId, TRXDir::Rx, ch, args::get(rxenFlag)), "enable Rx channel"s, ch);
+                if (txenFlag)
+                    check(device->EnableChannel(moduleId, TRXDir::Tx, ch, args::get(txenFlag)), "enable Tx channel"s, ch);
             }
 
-            // set all channels to identical configuration
-            for (int i = 0; i < chipDescriptor.channelCount; ++i)
-                config.channel[i] = config.channel[0];
-
-            if (device->Configure(config, moduleId) != OpStatus::Success)
+            // sample rate is common to all channels of the chip
+            if (samplerateFlag || rxoversampleFlag || txoversampleFlag)
             {
-                cerr << "Failed to configure device (chip"sv << moduleId << ")"sv << std::endl;
-                return EXIT_FAILURE;
+                const uint8_t ch = channels.front();
+                const double sampleRate =
+                    samplerateFlag ? args::get(samplerateFlag) : device->GetSampleRate(moduleId, TRXDir::Rx, ch, nullptr);
+                const uint8_t oversample = rxoversampleFlag ? args::get(rxoversampleFlag)
+                                           : txoversampleFlag ? args::get(txoversampleFlag)
+                                                              : 0;
+                check(device->SetSampleRate(moduleId, TRXDir::Rx, ch, sampleRate, oversample), "set sample rate"s);
+            }
+
+            for (uint8_t ch : channels)
+            {
+                // clang-format off
+                if (rxloFlag)         check(device->SetFrequency(moduleId, TRXDir::Rx, ch, args::get(rxloFlag)), "set Rx LO"s, ch);
+                if (txloFlag)         check(device->SetFrequency(moduleId, TRXDir::Tx, ch, args::get(txloFlag)), "set Tx LO"s, ch);
+                if (rxPathIndex >= 0) check(device->SetAntenna(moduleId, TRXDir::Rx, ch, rxPathIndex), "set Rx antenna"s, ch);
+                if (txPathIndex >= 0) check(device->SetAntenna(moduleId, TRXDir::Tx, ch, txPathIndex), "set Tx antenna"s, ch);
+                if (rxlpfFlag)        check(device->SetLowPassFilter(moduleId, TRXDir::Rx, ch, args::get(rxlpfFlag)), "set Rx LPF"s, ch);
+                if (txlpfFlag)        check(device->SetLowPassFilter(moduleId, TRXDir::Tx, ch, args::get(txlpfFlag)), "set Tx LPF"s, ch);
+                if (rxGainFlag)       check(device->SetGain(moduleId, TRXDir::Rx, ch, eGainTypes::GENERIC, args::get(rxGainFlag)), "set Rx gain"s, ch);
+                if (txGainFlag)       check(device->SetGain(moduleId, TRXDir::Tx, ch, eGainTypes::GENERIC, args::get(txGainFlag)), "set Tx gain"s, ch);
+                if (rxgfirFlag)       check(device->ConfigureGFIR(moduleId, TRXDir::Rx, ch, chConfig.rx.gfir), "set Rx GFIR"s, ch);
+                if (txgfirFlag)       check(device->ConfigureGFIR(moduleId, TRXDir::Tx, ch, chConfig.tx.gfir), "set Tx GFIR"s, ch);
+                if (rxtestsignalFlag) check(device->SetTestSignal(moduleId, TRXDir::Rx, ch, chConfig.rx.testSignal), "set Rx test signal"s, ch);
+                if (txtestsignalFlag) check(device->SetTestSignal(moduleId, TRXDir::Tx, ch, chConfig.tx.testSignal), "set Tx test signal"s, ch);
+                // clang-format on
+            }
+
+            // calibrate after all the parameters have been applied
+            for (uint8_t ch : channels)
+            {
+                if (rxCalibrateFlag)
+                    check(device->Calibrate(moduleId, TRXDir::Rx, ch, device->GetSampleRate(moduleId, TRXDir::Rx, ch, nullptr)),
+                        "calibrate Rx"s,
+                        ch);
+                if (txCalibrateFlag)
+                    check(device->Calibrate(moduleId, TRXDir::Tx, ch, device->GetSampleRate(moduleId, TRXDir::Tx, ch, nullptr)),
+                        "calibrate Tx"s,
+                        ch);
             }
         }
     } catch (std::runtime_error& e)
