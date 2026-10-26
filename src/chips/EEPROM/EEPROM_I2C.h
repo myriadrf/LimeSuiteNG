@@ -14,6 +14,12 @@ class EEPROM_I2C
 {
   public:
     EEPROM_I2C() = delete;
+    /**
+      @param port I2C bus to use.
+      @param i2c_addr Memory device address.
+      @param memory_size Memory size in bytes.
+      @param page_size Maximum bytes per single I2C transaction.
+     */
     EEPROM_I2C(std::shared_ptr<II2C> port, uint16_t i2c_addr, uint32_t memory_size, uint32_t page_size);
 
     OpStatus Write(uint32_t addr, const void* data, size_t length);

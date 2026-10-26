@@ -32,6 +32,7 @@ struct DataStorage;
 struct Region;
 struct CustomParameterIO;
 class OEMTestReporter;
+struct OEMData;
 class RFStream;
 class GPIO_Interface;
 class ICSR;
@@ -690,6 +691,17 @@ class LIME_API SDRDevice
     /// @param serialNumber Device's serial number
     /// @return The @ref lime::OpStatus "status" of operation.
     virtual OpStatus WriteSerialNumber(uint64_t serialNumber);
+
+    /// @brief Reads and validates the OEM data (board identification and configuration) stored on the device.
+    /// @param data The storage for the OEM data being read.
+    /// @return The @ref lime::OpStatus "status" of operation, OpStatus::InvalidValue if the data is not programmed or corrupted.
+    virtual OpStatus ReadOEMData(OEMData& data);
+
+    /// @brief Writes the OEM data (board identification and configuration) to the device and verifies it.
+    /// @param data The OEM data to write.
+    /// @param lock Permanently write protect the OEM data after a successful write. This cannot be undone.
+    /// @return The @ref lime::OpStatus "status" of operation.
+    virtual OpStatus WriteOEMData(const OEMData& data, bool lock);
 
     /// @brief Return GPIO controls interface if available
     /// @return nullptr if not available

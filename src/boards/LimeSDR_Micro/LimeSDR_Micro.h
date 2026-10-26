@@ -6,6 +6,7 @@
 #include "protocols/LMS64CProtocol.h"
 
 #include "boards/LMS7002M_SDRDevice.h"
+#include "chips/EEPROM/EEPROM_I2C.h"
 
 #include <cstdint>
 #include <map>
@@ -13,6 +14,7 @@
 #include <vector>
 
 #include "LA9310_TRX.h"
+#include "boards/OEMData.h"
 
 #include <vector>
 #include <mutex>
@@ -28,6 +30,7 @@ class ISPI;
 class LMS64C_SPI;
 class I2C_bus;
 class LA9310;
+class LA9310_I2C;
 class LA9310_FW_Impl;
 class GPS;
 class PPSDO;
@@ -133,7 +136,11 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     ICSR* getICSR() override;
 
     virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
-    virtual OpStatus WriteSerialNumber(uint64_t serialNumber) override;
+
+    /// @brief Reads and validates the OEM data from the EEPROM identification page.
+    OpStatus ReadOEMData(OEMData& data) override;
+    /// @brief Writes the OEM data to the EEPROM identification page and verifies it.
+    OpStatus WriteOEMData(const OEMData& data, bool lock) override;
 
   public:
     struct TestData {
@@ -176,13 +183,17 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     OpStatus LMSSetPath(TRXDir dir, uint8_t chan, uint8_t path);
     OpStatus LMS1_SetSampleRate(double f_Hz, uint8_t rxDecimation, uint8_t txInterpolation);
     static OpStatus LMS1_UpdateFPGAInterface(void* userData);
+    OpStatus LockEEPROMIdentificationPage();
 
     enum class ePathLMS1_Tx : uint8_t { NONE, BAND1, BAND2 };
 
     std::shared_ptr<ISPI> lmsSPI;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<LA9310_PCIe> mStreamingPort;
-    std::shared_ptr<I2C_bus> mI2C;
+    std::shared_ptr<LA9310_I2C> mI2C;
+    EEPROM_I2C mEEPROM;
+    /// M24xxx-D EEPROM identification page, 128 bytes that can be permanently write protected
+    EEPROM_I2C mEEPROMIdPage;
 
     std::shared_ptr<LA9310> la9310;
     std::shared_ptr<LA9310_FW_Impl> fw;

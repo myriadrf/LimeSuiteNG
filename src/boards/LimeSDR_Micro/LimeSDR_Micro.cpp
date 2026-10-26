@@ -38,7 +38,7 @@
 #include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "chips/LA9310/LA9310.h"
 #include "chips/LA9310/CSR.h"
-#include "comms/I2Cbus.h"
+#include "chips/LA9310/I2C.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
 #include "interface/IDCCorrector.h"
@@ -193,6 +193,9 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     , lmsSPI(spiRFsoc)
     , mSerialPort(control)
     , mStreamingPort(streamingPort)
+    , mI2C(std::make_shared<LA9310_I2C>(streamingPort))
+    , mEEPROM(mI2C, 0x50, 65536, 32)
+    , mEEPROMIdPage(mI2C, 0x58, 128, 32)
     , la9310(std::make_shared<LA9310>(streamingPort))
     // , mI2C(i2c_bus)
     , mConfigInProgress(false)
@@ -810,7 +813,7 @@ OpStatus LimeSDR_Micro::UploadMemory(
     case eMemoryDevice::EEPROM:
         if (length > 65532) // Don't overwrite stored board parameters
             return OpStatus::OutOfRange;
-        return la9310->eeprom.Write(0x0, data, length);
+        return mEEPROM.Write(0x0, data, length);
     default:
         return OpStatus::NotImplemented;
     }
@@ -1141,14 +1144,14 @@ OpStatus LimeSDR_Micro::OEMTest(OEMTestReporter* reporter)
     OEMTestData test("LimeSDR-Micro OEM Test");
 
     uint16_t dac_value = 0xFFFF;
-    OpStatus status = la9310->eeprom.Read(0xFFFE, &dac_value, 2);
+    OpStatus status = mEEPROM.Read(0xFFFE, &dac_value, 2);
     if (status != OpStatus::Success)
         return status;
 
     if (dac_value == 0xFFFF) // has never been set
     {
         uint16_t default_dac = 0xA1B8;
-        status = la9310->eeprom.Write(0xFFFE, &default_dac, 2);
+        status = mEEPROM.Write(0xFFFE, &default_dac, 2);
     }
     if (status != OpStatus::Success)
         return status;
@@ -1185,9 +1188,49 @@ LimeSDR_Micro::TestData::TestData()
     memset(this, 0, sizeof(TestData));
 }
 
-OpStatus LimeSDR_Micro::WriteSerialNumber(uint64_t serialNumber)
+OpStatus LimeSDR_Micro::LockEEPROMIdentificationPage()
 {
-    return la9310->eeprom.Write(0xFFF0, &serialNumber, 8);
+    // M24xxx-D Lock ID instruction: identification page device address, memory address bit 10 set, data bit 1 set
+    constexpr uint32_t lockAddress = 0x0400;
+    const uint8_t lockData = 0x02;
+    return mI2C->I2CWrite(0x58, lockAddress, 2, &lockData, 1);
+}
+
+OpStatus LimeSDR_Micro::ReadOEMData(OEMData& data)
+{
+    OEMData::Image image;
+    OpStatus status = mEEPROMIdPage.Read(0, image.data(), image.size());
+    if (status != OpStatus::Success)
+        return status;
+    return OEMData::Decode(image, data);
+}
+
+OpStatus LimeSDR_Micro::WriteOEMData(const OEMData& data, bool lock)
+{
+    const OEMData::Image image = data.Encode();
+    OpStatus status = mEEPROMIdPage.Write(0, image.data(), image.size());
+    if (status != OpStatus::Success)
+        return ReportError(status, "Failed to write EEPROM identification page");
+
+    OEMData::Image readback;
+    status = mEEPROMIdPage.Read(0, readback.data(), readback.size());
+    if (status != OpStatus::Success)
+        return ReportError(status, "Failed to read back EEPROM identification page");
+    if (readback != image)
+        return ReportError(OpStatus::Error, "EEPROM identification page verification failed, it might be locked");
+
+    if (lock)
+    {
+        status = LockEEPROMIdentificationPage();
+        if (status != OpStatus::Success)
+            return ReportError(status, "Failed to lock EEPROM identification page");
+    }
+
+    // The firmware reports the serial number from the identification page
+    LMS64CProtocol::FirmwareInfo fwInfo{};
+    LMS64CProtocol::GetFirmwareInfo(*mSerialPort, fwInfo, 0);
+    LMS64CProtocol::FirmwareToDescriptor(fwInfo, mDeviceDescriptor);
+    return OpStatus::Success;
 }
 
 } //namespace lime

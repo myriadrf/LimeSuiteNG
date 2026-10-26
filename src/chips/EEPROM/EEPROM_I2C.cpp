@@ -1,5 +1,6 @@
 #include "EEPROM_I2C.h"
 
+#include <algorithm>
 #include <cassert>
 #include <stdio.h>
 
@@ -21,22 +22,11 @@ OpStatus EEPROM_I2C::Write(uint32_t mem_addr, const void* data, size_t length)
         return OpStatus::OutOfRange;
 
     const uint8_t* src = reinterpret_cast<const uint8_t*>(data);
-    // align to pages
-    size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
-    uint32_t toWrite = std::min(length, bytesToEndOfPage);
-    if (toWrite > length)
-        toWrite = length;
-    OpStatus status = port->I2CWrite(i2c_addr, mem_addr, 2, src, toWrite);
-    if (status != OpStatus::Success)
-        return status;
-
-    length -= toWrite;
-    src += toWrite;
-    mem_addr += toWrite;
-
     while (length > 0)
     {
-        const uint32_t toWrite = length > page_size ? page_size : length;
+        // align to pages
+        const size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
+        const uint32_t toWrite = std::min(length, bytesToEndOfPage);
         OpStatus status = port->I2CWrite(i2c_addr, mem_addr, 2, src, toWrite);
         if (status != OpStatus::Success)
             return status;
@@ -54,23 +44,12 @@ OpStatus EEPROM_I2C::Read(uint32_t mem_addr, void* data, size_t length)
         return OpStatus::OutOfRange;
 
     uint8_t* dest = reinterpret_cast<uint8_t*>(data);
-    // align to pages
-    size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
-    uint32_t toRead = std::min(length, bytesToEndOfPage);
-    if (toRead > length)
-        toRead = length;
-    OpStatus status = port->I2CRead(i2c_addr, mem_addr, 2, dest, toRead);
-    if (status != OpStatus::Success)
-        return status;
-
-    length -= toRead;
-    dest += toRead;
-    mem_addr += toRead;
-
     while (length > 0)
     {
-        const uint32_t toRead = length > page_size ? page_size : length;
-        OpStatus status = port->I2CWrite(i2c_addr, mem_addr, 2, dest, toRead);
+        // align to pages
+        const size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
+        const uint32_t toRead = std::min(length, bytesToEndOfPage);
+        OpStatus status = port->I2CRead(i2c_addr, mem_addr, 2, dest, toRead);
         if (status != OpStatus::Success)
             return status;
 

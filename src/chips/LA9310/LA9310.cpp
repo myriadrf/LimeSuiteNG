@@ -7,8 +7,6 @@
 
 #include "vspa/VSPA_mailbox.h"
 
-#include "I2C.h"
-
 static const uint32_t vspa_cpu_id = 0;
 static const uint32_t vspa_mbox_id = 0;
 
@@ -18,9 +16,7 @@ static constexpr uint32_t VSPA_CCSR_offset = 0x1000000;
 
 LA9310::LA9310(std::shared_ptr<LA9310_PCIe> port)
     : pcie(port)
-    , i2c(std::make_shared<LA9310_I2C>(port))
     , phytimer(port)
-    , eeprom(i2c, 0x50, 65536, 32)
     , mailbox(std::make_shared<VSPA_mailbox>(port))
 {
     volatile uint8_t* BAR1_addr = reinterpret_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR1).vaddr);

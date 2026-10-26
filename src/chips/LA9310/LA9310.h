@@ -8,7 +8,8 @@
 
 #include "PHYTimer.h"
 
-#include "chips/EEPROM/EEPROM_I2C.h"
+#include "limesuiteng/OpStatus.h"
+
 #include "comms/DMA_Buffer.h"
 
 struct la9310_hif;
@@ -16,7 +17,6 @@ struct la9310_hif;
 namespace lime {
 
 class LA9310_PCIe;
-class LA9310_I2C;
 class VSPA_mailbox;
 
 typedef enum {
@@ -69,7 +69,6 @@ class LIME_API LA9310
 {
   private:
     std::shared_ptr<LA9310_PCIe> pcie;
-    std::shared_ptr<LA9310_I2C> i2c;
 
   public:
     LA9310(std::shared_ptr<LA9310_PCIe> port);
@@ -83,7 +82,6 @@ class LIME_API LA9310
     std::vector<DMA_Buffer> GetUserSpaceDMABuffers();
 
     PHYTimer phytimer;
-    EEPROM_I2C eeprom;
 
     std::shared_ptr<VSPA_mailbox> mailbox;
 

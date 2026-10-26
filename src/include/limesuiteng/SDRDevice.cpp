@@ -129,6 +129,16 @@ OpStatus SDRDevice::WriteSerialNumber(uint64_t serialNumber)
     return OpStatus::NotImplemented;
 }
 
+OpStatus SDRDevice::ReadOEMData(OEMData& data)
+{
+    return OpStatus::NotImplemented;
+}
+
+OpStatus SDRDevice::WriteOEMData(const OEMData& data, bool lock)
+{
+    return OpStatus::NotImplemented;
+}
+
 GPIO_Interface* SDRDevice::GetGPIOControls()
 {
     return nullptr;
