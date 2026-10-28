@@ -671,8 +671,19 @@ static std::string JoinRFTimingTriggers(const std::vector<std::string>& values)
     return text;
 }
 
-static void ApplyRFTimingSettings(LimePluginContext* context, int devIndex, SDRDevice* device)
+struct RFTimingSetting {
+    IRFTiming* timing{ nullptr };
+    IRFTiming::ControlDescriptor desc;
+    bool hasStart{ false }, hasEnd{ false }, hasStartAction{ false }, hasEndAction{ false };
+    double startOffset{ 0 }, endOffset{ 0 };
+    std::string startAction, endAction;
+};
+static std::map<int, std::vector<RFTimingSetting>> rfTimingSettings; // [dev index]
+
+static void GatherRFTimingSettings(LimeSettingsProvider* settings, int devIndex, SDRDevice* device)
 {
+    std::vector<RFTimingSetting>& timingcache = rfTimingSettings[devIndex];
+    timingcache.clear();
     std::vector<IRFTiming*> timings;
     FindRFTimingNodes(device->GetDescriptor().socTree, timings);
     for (IRFTiming* timing : timings)
@@ -681,67 +692,82 @@ static void ApplyRFTimingSettings(LimePluginContext* context, int devIndex, SDRD
         for (const IRFTiming::ControlDescriptor& desc : timing->GetControls())
         {
             const char* name = desc.name.c_str();
-            double startOffset = 0, endOffset = 0;
-            std::string startAction, endAction;
-            const bool hasStart = GetSetting(context->config, &startOffset, "dev%i_%s_timing_%s_start", devIndex, dir, name);
-            const bool hasEnd = GetSetting(context->config, &endOffset, "dev%i_%s_timing_%s_end", devIndex, dir, name);
-            const bool hasStartAction =
-                GetSetting(context->config, &startAction, "dev%i_%s_timing_%s_start_action", devIndex, dir, name);
-            const bool hasEndAction = GetSetting(context->config, &endAction, "dev%i_%s_timing_%s_end_action", devIndex, dir, name);
-            if (!hasStart && !hasEnd && !hasStartAction && !hasEndAction)
+            RFTimingSetting s;
+            s.hasStart = GetSetting(settings, &s.startOffset, "dev%i_%s_timing_%s_start", devIndex, dir, name);
+            s.hasEnd = GetSetting(settings, &s.endOffset, "dev%i_%s_timing_%s_end", devIndex, dir, name);
+            s.hasStartAction = GetSetting(settings, &s.startAction, "dev%i_%s_timing_%s_start_action", devIndex, dir, name);
+            s.hasEndAction = GetSetting(settings, &s.endAction, "dev%i_%s_timing_%s_end_action", devIndex, dir, name);
+            if (!s.hasStart && !s.hasEnd && !s.hasStartAction && !s.hasEndAction)
                 continue;
+            s.timing = timing;
+            s.desc = desc;
+            timingcache.push_back(std::move(s));
+        }
+    }
+}
 
-            IRFTiming::Control control;
-            OpStatus status = timing->GetControl(desc.name, control);
-            if (status != OpStatus::Success)
-            {
-                Log(LogLevel::Error, "dev%i %s timing %s: not available (%s)", devIndex, dir, name, ToString(status).c_str());
-                continue;
-            }
+static void ApplyRFTimingSettings(int devIndex)
+{
+    const auto iter = rfTimingSettings.find(devIndex);
+    if (iter == rfTimingSettings.end())
+        return;
+    for (const RFTimingSetting& s : iter->second)
+    {
+        IRFTiming* timing = s.timing;
+        const IRFTiming::ControlDescriptor& desc = s.desc;
+        const char* dir = timing->GetDirection() == TRXDir::Rx ? "rx" : "tx";
+        const char* name = desc.name.c_str();
 
-            if (hasStart)
-                control.start.offset = static_cast<int32_t>(std::lround(startOffset));
-            if (hasEnd)
-                control.end.offset = static_cast<int32_t>(std::lround(endOffset));
-            if (desc.sharedOffset && hasStart != hasEnd)
-                control.start.offset = control.end.offset = hasStart ? control.start.offset : control.end.offset;
+        IRFTiming::Control control;
+        OpStatus status = timing->GetControl(desc.name, control);
+        if (status != OpStatus::Success)
+        {
+            Log(LogLevel::Error, "dev%i %s timing %s: not available (%s)", devIndex, dir, name, ToString(status).c_str());
+            continue;
+        }
 
-            if ((hasStartAction || hasEndAction) && !desc.configurableTriggers)
-                Log(LogLevel::Warning, "dev%i %s timing %s: actions are fixed by the device, ignoring them", devIndex, dir, name);
-            if (hasStartAction)
-                control.start.trigger = startAction;
-            if (hasEndAction)
-                control.end.trigger = endAction;
+        if (s.hasStart)
+            control.start.offset = static_cast<int32_t>(std::lround(s.startOffset));
+        if (s.hasEnd)
+            control.end.offset = static_cast<int32_t>(std::lround(s.endOffset));
+        if (desc.sharedOffset && s.hasStart != s.hasEnd)
+            control.start.offset = control.end.offset = s.hasStart ? control.start.offset : control.end.offset;
 
-            status = timing->SetControl(desc.name, control);
-            if (status != OpStatus::Success)
-            {
-                Log(LogLevel::Error,
-                    "dev%i %s timing %s: start %i (%s), end %i (%s) failed (%s), offset range [%i, %i], actions (%s)",
-                    devIndex,
-                    dir,
-                    name,
-                    control.start.offset,
-                    control.start.trigger.c_str(),
-                    control.end.offset,
-                    control.end.trigger.c_str(),
-                    ToString(status).c_str(),
-                    desc.offsetRange.min,
-                    desc.offsetRange.max,
-                    JoinRFTimingTriggers(desc.triggerValues).c_str());
-                continue;
-            }
-            timing->GetControl(desc.name, control);
-            Log(LogLevel::Info,
-                "dev%i %s timing %s: start %i (%s), end %i (%s)",
+        if ((s.hasStartAction || s.hasEndAction) && !desc.configurableTriggers)
+            Log(LogLevel::Warning, "dev%i %s timing %s: actions are fixed by the device, ignoring them", devIndex, dir, name);
+        if (s.hasStartAction)
+            control.start.trigger = s.startAction;
+        if (s.hasEndAction)
+            control.end.trigger = s.endAction;
+
+        status = timing->SetControl(desc.name, control);
+        if (status != OpStatus::Success)
+        {
+            Log(LogLevel::Error,
+                "dev%i %s timing %s: start %i (%s), end %i (%s) failed (%s), offset range [%i, %i], actions (%s)",
                 devIndex,
                 dir,
                 name,
                 control.start.offset,
                 control.start.trigger.c_str(),
                 control.end.offset,
-                control.end.trigger.c_str());
+                control.end.trigger.c_str(),
+                ToString(status).c_str(),
+                desc.offsetRange.min,
+                desc.offsetRange.max,
+                JoinRFTimingTriggers(desc.triggerValues).c_str());
+            continue;
         }
+        timing->GetControl(desc.name, control);
+        Log(LogLevel::Info,
+            "dev%i %s timing %s: start %i (%s), end %i (%s)",
+            devIndex,
+            dir,
+            name,
+            control.start.offset,
+            control.start.trigger.c_str(),
+            control.end.offset,
+            control.end.trigger.c_str());
     }
 }
 
@@ -941,6 +967,13 @@ int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType
             return -1;
 
         TransferSettingsToDevicesConfig(context->rfdev, configProvider);
+
+        for (size_t i = 0; i < context->rfdev.size(); ++i)
+        {
+            const DevNode& node = context->rfdev[i];
+            if (node.device != nullptr)
+                GatherRFTimingSettings(configProvider, static_cast<int>(i), node.device);
+        }
     } catch (std::logic_error& e)
     {
         fprintf(stderr, "Logic error: %s", e.what());
@@ -1219,7 +1252,7 @@ int LimePlugin_Setup(LimePluginContext* context, const LimeRuntimeParameters* pa
                         }
                     }
                 }
-                ApplyRFTimingSettings(context, static_cast<int>(i), node.device);
+                ApplyRFTimingSettings(static_cast<int>(i));
             } catch (...)
             {
                 return -1;
