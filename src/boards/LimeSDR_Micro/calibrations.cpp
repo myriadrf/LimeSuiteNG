@@ -13,8 +13,10 @@
 #include "src/interface/IDCCorrector.h"
 #include "src/interface/IQuadratureErrorCorrector.h"
 #include "src/interface/IToneGenerator.h"
+#include "interface/IOversampler.h"
 
 #include <chrono>
+#include <cmath>
 #include <thread>
 
 #include "gnuPlotPipe.h"
@@ -27,7 +29,7 @@
 #include <iostream>
 
 #define PLOT_GRAPHS 0
-#if 0 // print debug messages
+#if 1 // print debug messages
     #define printf_dbg_log(...) \
         do \
         { \
@@ -42,6 +44,7 @@ namespace lime {
 static const uint8_t calibUserBwDivider = 5;
 static const uint32_t offsetNCO = 100000;
 static const uint32_t calibrationSXOffset_Hz = 1000000;
+static constexpr float txToneAmplitude = 0.8;
 
 // basic math functions
 #define math_abs(x) (x >= 0 ? x : -x)
@@ -56,10 +59,11 @@ GNUPlotPipe plotSamples;
 
 struct CalibrationContext {
     LA9310_IQStreamer* vspa;
-    PHYTimer* phytimer;
     lms7002m_context* rfsoc;
-    float sampleRate;
-    float lo_diff;
+    float adc_rate;
+    float dac_rate;
+    float tx_lo;
+    float rx_lo;
 };
 
 #if PLOT_GRAPHS
@@ -102,66 +106,31 @@ static void PlotBins(std::vector<float> bins, float sampleRate)
 #endif
 }
 
-/*
-static uint32_t ReverseBits(uint32_t input, uint32_t bitCount)
-{
-    uint32_t output = 0;
-    for (uint32_t i = 0; i < bitCount; ++i)
-    {
-        output <<= 1;
-        output |= input & 1;
-        input >>= 1;
-    }
-    return output;
-}
+// static void HalfFixedToSingle(void* dest, const void* input, size_t size)
+// {
+//     const uint16_t* src = reinterpret_cast<const uint16_t*>(input);
+//     float* out = reinterpret_cast<float*>(dest);
 
-static std::vector<float> ReverseBins(std::vector<float>& bins)
-{
-    std::vector<float> out(bins.size());
-    for (uint32_t i = 0; i < bins.size(); ++i)
-    {
-        uint32_t rev = ReverseBits(i, 9);
-        out[i] = bins[rev];
-    }
-    return out;
-}
-*/
+//     for (uint32_t i = 0; i < size / sizeof(uint16_t); ++i)
+//     {
+//         out[i] = (src[i] & 0x7FFF) / 32767.0;
+//         if (src[i] & 0x8000)
+//             out[i] = -out[i];
+//     }
+// }
 
-static void HalfFixedToSingle(void* dest, const void* input, size_t size)
-{
-    const uint16_t* src = reinterpret_cast<const uint16_t*>(input);
-    float* out = reinterpret_cast<float*>(dest);
-
-    for (uint32_t i = 0; i < size / sizeof(uint16_t); ++i)
-    {
-        out[i] = (src[i] & 0x7FFF) / 32767.0;
-        if (src[i] & 0x8000)
-            out[i] = -out[i];
-    }
-}
-
-static float la9310_get_rssi(CalibrationContext* ctx, float freq_offset)
+static float la9310_get_rssi_dbfs(CalibrationContext* ctx, float freq_offset)
 {
     const int samplesToRead = 512;
-    std::vector<complex32f_t> samples(samplesToRead);
+    const double normalizedFreq = double(freq_offset) / (double(ctx->adc_rate));
 
-    // delay to allow control changes to fully take effect
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // Scale while signed: negative frequencies wrap to the upper half of the 32bit range
+    const int32_t nco_fcw = static_cast<int64_t>(normalizedFreq * 4294967296.0);
+    const complex32f_t* dft_complex_bin = ctx->vspa->CalcFFT(VSPA_RX0, nco_fcw);
 
-    const auto chf_samples = ctx->vspa->CaptureADC(3);
-    HalfFixedToSingle(samples.data(), chf_samples.data(), samplesToRead * 4);
-
-    auto bins = lime::FFT::Calc(samples, FFT::WindowFunctionType::HANNING);
-    lime::FFT::ConvertToDBFS(bins);
-
-    PlotBins(bins, ctx->sampleRate);
-
-    int binIndex = (freq_offset / ctx->sampleRate) * samplesToRead;
-    if (binIndex < 0)
-        binIndex += samplesToRead;
-
-    // int revIndex = ReverseBits(binIndex, 8);
-    return bins[binIndex];
+    float dft_bin = std::norm(*dft_complex_bin) / (double(samplesToRead) * samplesToRead);
+    float dft_bin_dbfs = dft_bin > 0 ? 10 * log10(dft_bin) : -150;
+    return dft_bin_dbfs;
 }
 
 template<typename Ctrl, typename M, typename controlT>
@@ -342,38 +311,21 @@ static void limesdrmicro_calibrate_rx_dc(CalibrationContext* ctx, uint8_t channe
         dci = bisection_find_min_rssi2(
             analogDC->GetRange(),
             [&analogDC](float value) { analogDC->SetDCI(value); },
-            [&ctx]() { return la9310_get_rssi(ctx, 0); });
+            [&ctx]() { return la9310_get_rssi_dbfs(ctx, 0); });
 
         dcq = bisection_find_min_rssi2(
             analogDC->GetRange(),
             [&analogDC](float value) { analogDC->SetDCQ(value); },
-            [&ctx]() { return la9310_get_rssi(ctx, 0); });
+            [&ctx]() { return la9310_get_rssi_dbfs(ctx, 0); });
     }
 
-    LMS7002M_LOG(
-        rfsoc, lime_LogLevel_Verbose, "RxDC offset (analog) I:%3i, Q:%3i, %s", dci, dcq, rssi_to_string(la9310_get_rssi(ctx, 0)));
+    LMS7002M_LOG(rfsoc,
+        lime_LogLevel_Verbose,
+        "RxDC offset (analog) I:%3i, Q:%3i, %s",
+        dci,
+        dcq,
+        rssi_to_string(la9310_get_rssi_dbfs(ctx, 0)));
 
-    /*
-    // digital
-    {
-        dci = bisection_find_min_rssi2(
-            digitalDC->GetRange(),
-            [&digitalDC](float value) { digitalDC->SetDCI(value); },
-            [&ctx]() { return la9310_get_rssi(ctx, 0); });
-
-        dcq = bisection_find_min_rssi2(
-            digitalDC->GetRange(),
-            [&digitalDC](float value) { digitalDC->SetDCQ(value); },
-            [&ctx]() { return la9310_get_rssi(ctx, 0); });
-
-        LMS7002M_LOG(rfsoc,
-            lime_LogLevel_Verbose,
-            "RxDC offset (digital) I:%3i, Q:%3i, %s",
-            dci,
-            dcq,
-            rssi_to_string(la9310_get_rssi(ctx, 0)));
-    }
-    */
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_EN_G_TRF, 1);
 }
 
@@ -410,19 +362,20 @@ static OpStatus lms7002m_calibrate_rx_setup(CalibrationContext* ctx, uint32_t ca
         // TDD: SXT drives Tx and Rx. With both on the same LO the image of the Tx test tone lands exactly on the
         // Rx image frequency, so the Rx IQ search minimises the sum of the uncalibrated Tx and the Rx image and
         // returns wrong values. Calibrate in FDD mode like CalibrateTx does: SXR on the Rx frequency, SXT offset
-        // by lo_diff. lms7002m_save_chip_state() at the end restores the SX registers (0x011C-0x0123), i.e. TDD.
-        const double lo = lms7002m_get_frequency_sx(rfsoc, true);
+        // by tx_lo_offset. lms7002m_save_chip_state() at the end restores the SX registers (0x011C-0x0123), i.e. TDD.
+        const double rxlo = lms7002m_get_frequency_sx(rfsoc, true);
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LOCH_T2RBUF, 1);
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 1);
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_VCO, 0);
-        status = lms7002m_set_frequency_sx(rfsoc, false, lo);
+        status = lms7002m_set_frequency_sx(rfsoc, false, rxlo);
+        ctx->rx_lo = rxlo;
         if (status == lime_Result_Success)
         {
             lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 2);
-            ctx->lo_diff = (ctx->sampleRate / 8);
-            status = lms7002m_set_frequency_sx(rfsoc, true, lo - ctx->lo_diff);
+            ctx->tx_lo = rxlo - (ctx->adc_rate / 8);
+            status = lms7002m_set_frequency_sx(rfsoc, true, ctx->tx_lo);
         }
-        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "TDD -> FDD for calibration: RxLO@%g, TxLO@%g", lo, lo - ctx->lo_diff);
+        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "TDD -> FDD for calibration: RxLO@%g, TxLO@%g", ctx->rx_lo, ctx->tx_lo);
     }
     else
     {
@@ -432,13 +385,13 @@ static OpStatus lms7002m_calibrate_rx_setup(CalibrationContext* ctx, uint32_t ca
         if (!lms7002m_is_pll_tuned(rfsoc, false))
             return OpStatus::Error;
         const double sxr_lo = lms7002m_get_frequency_sx(rfsoc, false);
+        ctx->rx_lo = sxr_lo;
 
         //SXT
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 2);
-        ctx->lo_diff = (ctx->sampleRate / 8);
-        const double sxt_lo = sxr_lo - ctx->lo_diff;
-        status = lms7002m_set_frequency_sx(rfsoc, true, sxt_lo);
-        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "RxLO@%g, TxLO@%g", sxr_lo, sxt_lo);
+        ctx->tx_lo = sxr_lo - (ctx->adc_rate / 8);
+        status = lms7002m_set_frequency_sx(rfsoc, true, ctx->tx_lo);
+        LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "RxLO@%g, TxLO@%g", sxr_lo, ctx->tx_lo);
     }
     lms7002m_spi_write(rfsoc, 0x0020, x0020val);
     if (status != lime_Result_Success)
@@ -453,16 +406,18 @@ static OpStatus lms7002m_calibrate_rx_setup(CalibrationContext* ctx, uint32_t ca
 static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t bandwidth_Hz)
 {
     lms7002m_context* rfsoc = ctx->rfsoc;
-    const float txToneFreq = ctx->lo_diff + bandwidth_Hz;
-    const int txToneBin = 32768 * (2 * txToneFreq / ctx->sampleRate);
+    const float txToneFreq = ctx->rx_lo - ctx->tx_lo + bandwidth_Hz;
 
     const float rxMeasureOffset = bandwidth_Hz;
-    float target_rssi = -10.0; // dbfs
+    float target_rssi = -12.0; // dbfs
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
-    LMS7002M_LOG(
-        rfsoc, lime_LogLevel_Debug, ">Gains setup: RxMeasure@%+g, TxTestSignal@%+g[%i],", rxMeasureOffset, txToneFreq, txToneBin);
+    LMS7002M_LOG(rfsoc,
+        lime_LogLevel_Debug,
+        ">Gains setup: RxMeasure@%g, TxTone@%g,",
+        ctx->rx_lo + rxMeasureOffset,
+        ctx->tx_lo + txToneFreq);
 
     uint8_t cg_iamp = lms7002m_spi_read_csr(rfsoc, LMS7002M_CG_IAMP_TBB);
     int8_t g_lossmain = 15;
@@ -472,7 +427,10 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
     if (!tone_generator)
         return OpStatus::Error;
 
-    OpStatus status = tone_generator->SetParameters(1.0, txToneBin);
+    OpStatus status = tone_generator->SetAmplitude(txToneAmplitude);
+    const float tone_freq_weight = txToneFreq / ctx->dac_rate;
+    status = tone_generator->SetFrequency(tone_freq_weight);
+
     status = tone_generator->Enabled(true);
     if (status != OpStatus::Success)
     {
@@ -483,7 +441,7 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
     float rssi = 0;
     uint8_t g_rxloopb_rfe = 2;
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_G_RXLOOPB_RFE, g_rxloopb_rfe);
-    rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+    rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
     LMS7002M_LOG(rfsoc,
         lime_LogLevel_Debug,
         "Initial Rx gains:\tG_RXLOOPB: %2i, CG_IAMP: %2i LOSS_MAIN: %2i| %s",
@@ -497,11 +455,11 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
         if (g_rxloopb_rfe > 15)
             break;
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_G_RXLOOPB_RFE, g_rxloopb_rfe);
-        rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+        rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
         LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "G_RXLOOPB: %2i, | %s", g_rxloopb_rfe, rssi_to_string(rssi));
     }
 
-    rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+    rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
     LMS7002M_LOG(rfsoc,
         lime_LogLevel_Debug,
         "Initial Tx gains:\tLOSS_MAIN_TXPAD: %2i, CG_IAMP: %2i | %s",
@@ -514,7 +472,7 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
         if (g_lossmain < 0)
             break;
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_LOSS_MAIN_TXPAD_TRF, g_lossmain);
-        rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+        rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
         LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "LOSS_MAIN_TXPAD: %2i, | %s", g_lossmain, rssi_to_string(rssi));
     }
 
@@ -527,7 +485,7 @@ static OpStatus RaiseGainsToOptimalLevel(CalibrationContext* ctx, const uint32_t
         if (cg_iamp > 63)
             break;
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_CG_IAMP_TBB, cg_iamp);
-        rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+        rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
         LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "CG_IAMP_TBB: %2i, | %s", cg_iamp, rssi_to_string(rssi));
     }
 
@@ -566,24 +524,18 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     if (isTx)
     {
         txToneFreq = calibrationRF;
-        rxMeasureOffset = ctx->lo_diff - txToneFreq;
+        rxMeasureOffset = ctx->tx_lo - ctx->rx_lo - txToneFreq;
     }
     else
     {
-        txToneFreq = ctx->lo_diff + calibrationRF;
+        txToneFreq = (ctx->rx_lo + calibrationRF) - ctx->tx_lo;
         rxMeasureOffset = -calibrationRF;
     }
-    const int txToneBin = 32768 * (2 * txToneFreq / ctx->sampleRate);
     lms7002m_context* rfsoc = ctx->rfsoc;
 
     const char* const dirName = isTx ? "Tx" : "Rx";
-    LMS7002M_LOG(rfsoc,
-        lime_LogLevel_Debug,
-        ">%s QEC setup: RxMeasure@%+g, TxTestSignal@%+g[%i]",
-        dirName,
-        rxMeasureOffset,
-        txToneFreq,
-        txToneBin);
+    LMS7002M_LOG(
+        rfsoc, lime_LogLevel_Debug, ">%s QEC setup: RxMeasure@%+g, TxTestSignal@%+g", dirName, rxMeasureOffset, txToneFreq);
 
     std::shared_ptr<IQuadratureErrorCorrector> iqcorr = isTx ? ctx->vspa->GetTxQEC(0) : ctx->vspa->GetRxQEC(0);
     iqcorr->SetImbalance(0, 0);
@@ -594,7 +546,9 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     if (!tone_generator)
         return OpStatus::Error;
 
-    OpStatus status = tone_generator->SetParameters(1.0, txToneBin);
+    OpStatus status = tone_generator->SetAmplitude(txToneAmplitude);
+    const float tone_freq_weight = txToneFreq / ctx->dac_rate;
+    status = tone_generator->SetFrequency(tone_freq_weight);
     status = tone_generator->Enabled(true);
     if (status != OpStatus::Success)
     {
@@ -610,18 +564,21 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     lastGain = bisection_find_min_rssi2(
         iqcorr->GetGainRange(),
         [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
+    LMS7002M_LOG(ctx->rfsoc,
+        lime_LogLevel_Verbose,
+        "QEC gain: %g db, (RSSI: %f dBFS)",
+        lastGain,
+        la9310_get_rssi_dbfs(ctx, rxMeasureOffset));
 
     LMS7002M_LOG(
         ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase range [%g:%g]", iqcorr->GetPhaseRange().min, iqcorr->GetPhaseRange().max);
     lastPhase = bisection_find_min_rssi2(
         iqcorr->GetPhaseRange(),
         [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi_dbfs(ctx, rxMeasureOffset));
 
     // repeat gain search again, just around the last found value
     auto gainLocalRange = iqcorr->GetGainRange();
@@ -632,9 +589,12 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     lastGain = bisection_find_min_rssi2(
         gainLocalRange,
         [&iqcorr, &lastPhase](float value) { iqcorr->SetImbalance(value, lastPhase); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
-    LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, (RSSI: %f dBFS)", lastGain, la9310_get_rssi(ctx, rxMeasureOffset));
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
+    LMS7002M_LOG(ctx->rfsoc,
+        lime_LogLevel_Verbose,
+        "QEC gain: %g db, (RSSI: %f dBFS)",
+        lastGain,
+        la9310_get_rssi_dbfs(ctx, rxMeasureOffset));
 
     // repeat phase search again, just around the last found value
     auto phaseLocalRange = iqcorr->GetPhaseRange();
@@ -645,13 +605,13 @@ static OpStatus la9310_calibrate_iq_imbalance(CalibrationContext* ctx, bool isTx
     lastPhase = bisection_find_min_rssi2(
         phaseLocalRange,
         [&iqcorr, &lastGain](float value) { iqcorr->SetImbalance(lastGain, value); },
-        [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+        [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
     LMS7002M_LOG(
-        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi(ctx, rxMeasureOffset));
+        ctx->rfsoc, lime_LogLevel_Verbose, "QEC phase: %g, (RSSI: %f dBFS)", lastPhase, la9310_get_rssi_dbfs(ctx, rxMeasureOffset));
 
     iqcorr->SetImbalance(lastGain, lastPhase);
 
-    const float rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+    const float rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
     LMS7002M_LOG(ctx->rfsoc, lime_LogLevel_Verbose, "QEC gain: %g db, phase: %g deg, (RSSI: %f dBFS)", lastGain, lastPhase, rssi);
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 0);
@@ -681,16 +641,20 @@ static void SetupInternalLoopbackForRx(lms7002m_context* rfsoc)
 
 OpStatus LimeSDR_Micro::CalibrateRx()
 {
-
     CalibrationContext context;
     context.vspa = iqstreamer.get();
-    context.sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
+    float sampleRate = GetSampleRate(0, TRXDir::Rx, 0, nullptr);
+    context.adc_rate = sampleRate;
+    context.dac_rate = sampleRate;
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
-    context.phytimer = &la9310->phytimer;
-    context.lo_diff = 0;
+    if (channel > 0)
+        return OpStatus::NotImplemented;
+
+    context.tx_lo = 0;
+    context.rx_lo = lms7002m_get_frequency_sx(rfsoc, false);
 
     const bool dcOnly = false;
     const uint32_t bandwidthRF = 5e6;
@@ -700,7 +664,7 @@ OpStatus LimeSDR_Micro::CalibrateRx()
         lime_LogLevel_Verbose,
         "Rx calibrate ch.%s @ %lu Hz, BW: %u Hz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         (x0020val & 0x3) == 1 ? "A" : "B",
-        lms7002m_get_frequency_sx(rfsoc, false),
+        (uint64_t)context.rx_lo,
         bandwidthRF,
         get_lna_name(lms7002m_spi_read_csr(rfsoc, LMS7002M_SEL_PATH_RFE)),
         lms7002m_spi_read_csr(rfsoc, LMS7002M_G_PGA_RBB),
@@ -708,9 +672,11 @@ OpStatus LimeSDR_Micro::CalibrateRx()
         lms7002m_spi_read_csr(rfsoc, LMS7002M_G_TIA_RFE));
     lms7002m_save_chip_state(rfsoc, false);
 
+    context.vspa->GetRxQEC(0)->SetImbalance(0, 0);
     OpStatus status = lms7002m_calibrate_rx_setup(&context, calibrationRF);
     if (status != OpStatus::Success)
         goto RxCalibrationEndStage;
+
     limesdrmicro_calibrate_rx_dc(&context, channel);
 
     if (dcOnly)
@@ -782,12 +748,13 @@ static OpStatus lms7002m_calibrate_tx_setup(CalibrationContext* ctx, uint32_t ba
 
     // SXT
     const double sxt_lo = lms7002m_get_frequency_sx(rfsoc, true);
+    ctx->tx_lo = sxt_lo;
 
     // SXR
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_MAC, 1);
-    ctx->lo_diff = (ctx->sampleRate / 8);
-    const double sxr_lo = sxt_lo - ctx->lo_diff;
+    const double sxr_lo = sxt_lo - (ctx->dac_rate / 8);
     status = lms7002m_set_frequency_sx(rfsoc, false, sxr_lo);
+    ctx->rx_lo = sxr_lo;
     LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "RxLO@%g, TxLO@%g", sxr_lo, sxt_lo);
 
     lms7002m_spi_write(rfsoc, 0x0020, x0020val);
@@ -802,15 +769,16 @@ static OpStatus lms7002m_calibrate_tx_setup(CalibrationContext* ctx, uint32_t ba
 
 static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txToneFreq)
 {
-    const int txToneBin = 32768 * (2 * txToneFreq / ctx->sampleRate);
-    const float rxMeasureOffset = ctx->lo_diff + txToneFreq;
+    const float rxMeasureOffset = txToneFreq + ctx->tx_lo - ctx->rx_lo;
     const float saturationLevel = -12.86; // dBFS
     lms7002m_context* rfsoc = ctx->rfsoc;
 
     lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_LNA_RFE, 1);
 
     auto tone_generator = ctx->vspa->GetTxToneGenerator(0);
-    OpStatus status = tone_generator->SetParameters(1.0, txToneBin);
+    OpStatus status = tone_generator->SetAmplitude(txToneAmplitude);
+    const float tone_freq_weight = txToneFreq / ctx->dac_rate;
+    status = tone_generator->SetFrequency(tone_freq_weight);
     status = tone_generator->Enabled(true);
     if (status != OpStatus::Success)
         return status;
@@ -818,7 +786,7 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
     uint8_t g_pga = lms7002m_spi_read_csr(rfsoc, LMS7002M_G_PGA_RBB);
     uint8_t g_rfe = lms7002m_spi_read_csr(rfsoc, LMS7002M_G_RXLOOPB_RFE);
 
-    float rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+    float rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
     LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "Receiver saturation search, target level: %s", rssi_to_string(saturationLevel));
     LMS7002M_LOG(rfsoc, lime_LogLevel_Debug, "initial  PGA: %2i, RXLOOPB: %2i, %s", g_pga, g_rfe, rssi_to_string(rssi));
 
@@ -831,7 +799,7 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
 
         lms7002m_spi_modify_csr(rfsoc, LMS7002M_G_RXLOOPB_RFE, g_rfe);
 
-        rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+        rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
         printf_dbg_log("g_rfe: %i, rssi: %s\n", g_rfe, rssi_to_string(rssi));
     }
 
@@ -845,7 +813,7 @@ static OpStatus RaiseRxGainToOptimalLevel(CalibrationContext* ctx, double txTone
                 break;
 
             lms7002m_spi_modify_csr(rfsoc, LMS7002M_G_PGA_RBB, g_pga);
-            rssi = la9310_get_rssi(ctx, rxMeasureOffset);
+            rssi = la9310_get_rssi_dbfs(ctx, rxMeasureOffset);
 
             printf_dbg_log("g_pga: %i, rssi: %s\n", g_pga, rssi_to_string(rssi));
 
@@ -896,19 +864,17 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
     spi_batch_modify_csr(&batch, LMS7002M_DCMODE, 1); // Rx DC correctors selection
     lms7002m_spi_batch_flush(&batch, rfsoc);
 
-    std::shared_ptr<IDCCorrector> digitalDC = ctx->vspa->GetTxDCCorrector(channel);
-    digitalDC->SetDCOffset(complex16_t(0, 0));
-
     std::unique_ptr<IDCCorrector> analogDC = std::make_unique<LMS7002M_DC>(rfsoc, TRXDir::Tx, channel);
     analogDC->Enabled(true);
     int16_t dci = 0, dcq = 0;
     analogDC->SetDCOffset(complex16_t(dci, dcq));
 
-    const int txToneBin = 32768 * (2 * txToneFreq / ctx->sampleRate);
-    const float rxMeasureOffset = ctx->lo_diff;
+    const float rxMeasureOffset = ctx->tx_lo - ctx->rx_lo;
 
     auto tone_generator = ctx->vspa->GetTxToneGenerator(0);
-    OpStatus status = tone_generator->SetParameters(1.0, txToneBin);
+    OpStatus status = tone_generator->SetAmplitude(txToneAmplitude);
+    const float tone_freq_weight = txToneFreq / ctx->dac_rate;
+    status = tone_generator->SetFrequency(tone_freq_weight);
     status = tone_generator->Enabled(true);
     if (status != OpStatus::Success)
     {
@@ -922,12 +888,12 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
         dci = bisection_find_min_rssi2(
             analogDC->GetRange(),
             [&analogDC](float value) { analogDC->SetDCI(value); },
-            [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+            [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
 
         dcq = bisection_find_min_rssi2(
             analogDC->GetRange(),
             [&analogDC](float value) { analogDC->SetDCQ(value); },
-            [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); });
+            [&ctx, rxMeasureOffset]() { return la9310_get_rssi_dbfs(ctx, rxMeasureOffset); });
     }
 
     LMS7002M_LOG(rfsoc,
@@ -935,27 +901,8 @@ static OpStatus limesdrmicro_calibrate_tx_dc(CalibrationContext* ctx, uint16_t c
         "TxDC offset (analog) I:%3i, Q:%3i, %s",
         dci,
         dcq,
-        rssi_to_string(la9310_get_rssi(ctx, rxMeasureOffset)));
+        rssi_to_string(la9310_get_rssi_dbfs(ctx, rxMeasureOffset)));
 
-    // // digital
-    // {
-    //     dci = bisection_find_min_rssi2(digitalDC->GetRange(),
-    //         [&digitalDC](float value) {digitalDC->SetDCI(value); },
-    //         [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); }
-    //     );
-
-    //     dcq = bisection_find_min_rssi2(digitalDC->GetRange(),
-    //         [&digitalDC](float value) {digitalDC->SetDCQ(value); },
-    //         [&ctx, rxMeasureOffset]() { return la9310_get_rssi(ctx, rxMeasureOffset); }
-    //     );
-
-    //     LMS7002M_LOG(rfsoc,
-    //         lime_LogLevel_Verbose,
-    //         "TxDC offset (digital) I:%3i, Q:%3i, %s",
-    //         dci,
-    //         dcq,
-    //         rssi_to_string(la9310_get_rssi(ctx, rxMeasureOffset)));
-    // }
     status = tone_generator->Enabled(false);
     spi_batch_modify_csr(&batch, LMS7002M_PD_LNA_RFE, 0);
     return OpStatus::Success;
@@ -965,15 +912,17 @@ OpStatus LimeSDR_Micro::CalibrateTx()
 {
     CalibrationContext context;
     context.vspa = iqstreamer.get();
-    context.sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
-    context.phytimer = &la9310->phytimer;
+    float sampleRate = GetSampleRate(0, TRXDir::Tx, 0, nullptr);
+    context.adc_rate = sampleRate;
+    context.dac_rate = sampleRate;
     context.rfsoc = mLMSChips[0]->mC_impl;
     lms7002m_context* rfsoc = context.rfsoc;
     const uint16_t x0020val = lms7002m_spi_read(rfsoc, 0x0020); //remember used channel
     const uint16_t channel = (x0020val & 0x3) == 1 ? 0 : 1;
 
-    // context.vspa->GetTxDCCorrector()->SetDCOffset(complex16_t(0, 0));
-    // context.vspa->GetTxQEC()->SetImbalance(0, 0);
+    if (channel > 0)
+        return OpStatus::NotSupported;
+    context.vspa->GetTxQEC(0)->SetImbalance(0, 0);
 
     const uint32_t bandwidthRF = 5e6;
     const double calibrationRF = bandwidthRF / calibUserBwDivider;

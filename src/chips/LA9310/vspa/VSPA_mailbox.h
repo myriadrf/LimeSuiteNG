@@ -25,6 +25,7 @@ class LIME_API VSPA_mailbox
     OpStatus Message(uint32_t core_id, uint32_t mbox_id, uint64_t message, uint64_t* response = nullptr);
 
   private:
+    bool ResponsePending(uint32_t core_idx, uint32_t mbox_id);
     std::shared_ptr<LA9310_PCIe> port;
     std::recursive_mutex mailbox_mutex;
     std::shared_ptr<PCIe_CSR_Access> vspa_ccsr_base;

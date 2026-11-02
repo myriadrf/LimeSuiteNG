@@ -28,14 +28,14 @@ enum M4_Command {
     LIME_M4_HARDWARE_COUNTER_RESET,
     LIME_M4_DIGITAL_LOOPBACK,
 
-    LIME_M4_TX_SET_OVERSAMPLE, //20
-    LIME_M4_RX_SET_OVERSAMPLE,
+    LIME_M4_TX_SET_OVERSAMPLE, //20, unused
+    LIME_M4_RX_SET_OVERSAMPLE, // unused
     LIME_M4_GET_FEATURES,
     LIME_M4_DMA,
-    LIME_M4_IQSTREAM_CTRL,
-    LIME_M4_RX_CHANNEL_SELECT,
-    LIME_M4_RX_GET_OVERSAMPLE,
-    LIME_M4_TX_GET_OVERSAMPLE,
+    LIME_M4_IQSTREAM_CTRL, // unused
+    LIME_M4_RX_CHANNEL_SELECT, // unused
+    LIME_M4_RX_GET_OVERSAMPLE, // unused
+    LIME_M4_TX_GET_OVERSAMPLE, // unused
     LIME_M4_PPSDO_CTRL,
     LIME_M4_GPS_GET_STATUS,
     LIME_M4_GPS_SEND,
@@ -49,26 +49,6 @@ struct tx_dac_allowed_payload {
 
 struct tx_band_switch_payload {
     uint32_t tx_rf_switch_control;
-};
-
-struct iqstream_control_payload {
-    uint32_t enable;
-    uint32_t rxmask;
-    uint32_t txmask;
-};
-
-struct simple_response_payload {
-    uint32_t status;
-};
-
-struct iqstream_channel_select {
-    uint8_t lane;
-    uint8_t channel;
-};
-
-struct iqstream_channel_config {
-    uint8_t channel;
-    uint8_t oversample_pow2;
 };
 
 struct ppsdo_control_payload {

@@ -34,11 +34,12 @@ ToneGeneratorPanel::ToneGeneratorPanel(
     amplitude->Connect(
         wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler(ToneGeneratorPanel::ValuesChanged), nullptr, this);
 
-    fgSizer45->Add(new wxStaticText(sbSizerDC->GetStaticBox(), wxID_ANY, wxT("fftbin:")), 0, textFlags, margins);
-    fftBin = new NumericSlider(
-        sbSizerDC->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 65535, 0);
-    fgSizer45->Add(fftBin, 0, wxEXPAND | wxRIGHT, margins);
-    fftBin->Connect(wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinDoubleEventHandler(ToneGeneratorPanel::ValuesChanged), nullptr, this);
+    fgSizer45->Add(new wxStaticText(sbSizerDC->GetStaticBox(), wxID_ANY, wxT("freq_weight:")), 0, textFlags, margins);
+    freq_weight = new NumericSliderDouble(
+        sbSizerDC->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 1.0, 0.125);
+    fgSizer45->Add(freq_weight, 0, wxEXPAND | wxRIGHT, margins);
+    freq_weight->Connect(
+        wxEVT_COMMAND_SPINCTRLDOUBLE_UPDATED, wxSpinDoubleEventHandler(ToneGeneratorPanel::ValuesChanged), nullptr, this);
 
     sbSizerDC->Add(fgSizer45, 0, wxEXPAND, 0);
 
@@ -55,8 +56,8 @@ void ToneGeneratorPanel::Initialize(std::shared_ptr<lime::IToneGenerator> dev)
 
     amplitude->SetRange(0.0, 1.0, 0.1);
     amplitude->SetValue(0.9);
-    fftBin->SetRange(0, 65535, 1);
-    fftBin->SetValue(8192);
+    freq_weight->SetRange(0, 1.0, 1 / 1024.0);
+    freq_weight->SetValue(0.125);
 }
 
 ToneGeneratorPanel::~ToneGeneratorPanel()
@@ -67,8 +68,13 @@ void ToneGeneratorPanel::ValuesChanged(wxSpinDoubleEvent& event)
 {
     if (!device)
         return;
-    printf("amp: %f b:%u\n", amplitude->GetValue(), fftBin->GetValue());
-    OpStatus status = device->SetParameters(amplitude->GetValue(), fftBin->GetValue());
+    OpStatus status = device->SetAmplitude(amplitude->GetValue());
+    if (status != OpStatus::Success)
+    {
+        wxMessageBox("ToneGenerator set parameters failed.", _("Error"));
+        return;
+    }
+    status = device->SetFrequency(freq_weight->GetValue());
     if (status != OpStatus::Success)
         wxMessageBox("ToneGenerator set parameters failed.", _("Error"));
 }

@@ -1,6 +1,7 @@
 #ifndef LIME_LA9310_IQPLAYER_H
 #define LIME_LA9310_IQPLAYER_H
 
+#include <array>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -14,6 +15,8 @@
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
+struct vspa_regs;
+
 namespace lime {
 
 class IOversampler;
@@ -24,6 +27,7 @@ class IRFTiming;
 class LA9310_PCIe;
 class LA9310_FW_Impl;
 class IQStreamer_DMA;
+class VSPA_mailbox;
 
 typedef enum {
     VSPA_RO0,
@@ -31,6 +35,14 @@ typedef enum {
     VSPA_RX0,
     VSPA_RX1,
 } e_rx_channel;
+
+/// @brief Maps API Rx channel index to VSPA channel
+/// @throws std::out_of_range for invalid channel index
+inline e_rx_channel ApiToVSPARxChannel(uint32_t channel)
+{
+    static constexpr std::array<e_rx_channel, 4> api_to_vspa = { VSPA_RX0, VSPA_RX1, VSPA_RO0, VSPA_RO1 };
+    return api_to_vspa.at(channel);
+}
 
 typedef struct TxTDD_Config {
     int16_t dac_allowed;
@@ -54,9 +66,8 @@ class LIME_API LA9310_IQStreamer
     OpStatus SetPipelineChannel(TRXDir dir, uint32_t pipe, uint32_t channel);
     OpStatus SetPipelineSampleFormat(TRXDir dir, uint32_t pipe, DataFormat format);
 
-    int GetDecimation(uint32_t channel) const;
-    int GetInterpolation() const;
-
+    /// @param channel VSPA channel, e_rx_channel for Rx
+    /// @return nullptr if VSPA firmware is not loaded
     std::shared_ptr<IOversampler> GetOversampler(TRXDir dir, uint32_t channel);
     std::shared_ptr<IDCCorrector> GetRxDCCorrector(uint32_t pipeline);
     std::shared_ptr<IDCCorrector> GetTxDCCorrector(uint32_t pipeline);
@@ -65,11 +76,7 @@ class LIME_API LA9310_IQStreamer
     std::shared_ptr<IToneGenerator> GetTxToneGenerator(uint32_t pipeline);
     std::shared_ptr<IRFTiming> GetTxRFTiming();
 
-    OpStatus SetDecimation(uint32_t channel, uint32_t decimation);
-    OpStatus SetInterpolation(uint32_t interpolation);
-
-    const complex32f_t* CalcFFT(uint32_t channel);
-    std::vector<uint32_t> CaptureADC(uint32_t channel);
+    const complex32f_t* CalcFFT(uint32_t channel, uint32_t fcw);
 
     void HostToVCPU_Flag(uint32_t mask);
 
@@ -84,8 +91,9 @@ class LIME_API LA9310_IQStreamer
     OpStatus SetProxyDataBuffer(lime::DMA_Buffer buffer);
 
   private:
-    volatile struct la9310_sw_cmd_desc* m4_cmd_hif;
+    volatile vspa_regs* vspa_ccsr; ///< set only if VSPA firmware is loaded
     std::shared_ptr<IRFTiming> txRFTiming;
+    std::shared_ptr<VSPA_mailbox> vspa_mailbox; ///< set only if VSPA firmware is loaded
 };
 
 } // namespace lime

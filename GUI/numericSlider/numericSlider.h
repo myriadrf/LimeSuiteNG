@@ -22,17 +22,17 @@ class NumericSlider : public wxPanel
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
         long style = wxSP_ARROW_KEYS,
-        int min = 0,
-        int max = 100,
-        int initial = 0,
+        int64_t min = 0,
+        int64_t max = 100,
+        int64_t initial = 0,
         const wxString& name = "numericSlider");
     ~NumericSlider();
 
-    void SetValue(int integer);
-    int GetValue();
+    void SetValue(int64_t integer);
+    int64_t GetValue();
 
     virtual void SetToolTip(const wxString& tipString);
-    void SetRange(int min, int max, int step);
+    void SetRange(int64_t min, int64_t max, int64_t step);
 
   protected:
     void OnSpinnerChangeEnter(wxSpinEvent& event);

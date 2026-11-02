@@ -62,6 +62,8 @@ typedef enum {
     MBOX_OPC_STREAM_START,
     MBOX_OPC_TRACE_RESET,
     MBOX_OPC_SET_SAMPLE_FORMAT,
+    MBOX_OPC_RX_GET_CONFIG,
+    MBOX_OPC_TX_GET_CONFIG,
 } mbox_opc_e;
 
 /// LA9310 hardware components representation

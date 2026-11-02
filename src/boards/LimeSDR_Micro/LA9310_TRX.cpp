@@ -454,9 +454,6 @@ OpStatus LA9310_TRX::RxSetup()
 
     {
         int pipeIndex = 0;
-        const std::unordered_map<uint32_t, e_rx_channel> api_to_vspa_channel = {
-            { 0, VSPA_RX0 }, { 1, VSPA_RX1 }, { 2, VSPA_RO0 }, { 3, VSPA_RO1 }
-        };
         for (int channelIndex : mConfig.channels.at(TRXDir::Rx))
         {
             auto rxdma = iqstreamer->rx_dma[pipeIndex];
@@ -478,7 +475,7 @@ OpStatus LA9310_TRX::RxSetup()
                     return status;
             }
 
-            status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, api_to_vspa_channel.at(channelIndex));
+            status = iqstreamer->SetPipelineChannel(TRXDir::Rx, pipeIndex++, ApiToVSPARxChannel(channelIndex));
             if (status != OpStatus::Success)
                 return status;
         }

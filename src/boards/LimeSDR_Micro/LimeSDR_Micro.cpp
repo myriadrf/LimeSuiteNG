@@ -45,6 +45,7 @@
 #include "interface/IRFTiming.h"
 #include "interface/IQuadratureErrorCorrector.h"
 #include "interface/IOversampler.h"
+#include "interface/IToneGenerator.h"
 
 #include "CommonFunctions.h"
 #include "DeviceTreeNode.h"
@@ -427,13 +428,22 @@ static OpStatus SetLA9310SamplingRate(
     if (iqstreamer)
     {
         int ovr_pow2 = std::log2(oversample);
-        for (int i = 0; i < 4; ++i)
+        for (int ch = VSPA_RO0; ch <= VSPA_RX1; ++ch)
         {
-            auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, i);
-            ovrsample->SetOversample(ovr_pow2);
+            auto ovrsample = iqstreamer->GetOversampler(TRXDir::Rx, ch);
+            if (!ovrsample)
+                break;
+            status = ovrsample->SetOversample(ovr_pow2);
+            if (status != OpStatus::Success)
+                return ReportError(status, "Failed to set Rx channel %i oversampling", ch);
         }
         auto ovrsample = iqstreamer->GetOversampler(TRXDir::Tx, 0);
-        ovrsample->SetOversample(ovr_pow2);
+        if (ovrsample)
+        {
+            status = ovrsample->SetOversample(ovr_pow2);
+            if (status != OpStatus::Success)
+                return ReportError(status, "Failed to set Tx oversampling");
+        }
     }
     return OpStatus::Success;
 }
@@ -488,7 +498,7 @@ OpStatus LimeSDR_Micro::Configure(const SDRConfig& cfg, uint8_t socIndex)
     if ((cfg.channel[0].rx.calibrate & CalibrationFlag::DCIQ) && cfg.channel[0].rx.enabled)
     {
         status = CalibrateRx();
-        if (status != OpStatus::Success)
+        if (status != OpStatus::Success && status != OpStatus::NotImplemented)
             return status;
     }
     if ((cfg.channel[0].tx.calibrate & CalibrationFlag::DCIQ) && cfg.channel[0].tx.enabled)
@@ -941,7 +951,8 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
 
     uint8_t adcRate, dacRate;
     fw->GetADCDACRates(&adcRate, &dacRate);
-    const auto vspa_ch = 2; // TODO: la9310->vspa.api_channel_remap(channel);
+    // a single Tx channel
+    const uint32_t vspa_ch = trx == TRXDir::Rx ? ApiToVSPARxChannel(channel) : 0;
 
     double rate = MCLK1_frequency;
     // ADC, DAC clock dividers by 2
@@ -955,9 +966,9 @@ double LimeSDR_Micro::GetSampleRate(uint8_t moduleIndex, TRXDir trx, uint8_t cha
 
     if (iqstreamer)
     {
-        // a single Tx lane, oversampling is configured on lane 0
-        auto ovrsample = iqstreamer->GetOversampler(trx, trx == TRXDir::Tx ? 0 : channel);
-        rate /= (1 << ovrsample->GetOversample());
+        auto ovrsample = iqstreamer->GetOversampler(trx, vspa_ch);
+        if (ovrsample)
+            rate /= (1 << ovrsample->GetOversample());
     }
 
     return rate;
@@ -1065,13 +1076,25 @@ OpStatus LimeSDR_Micro::RunTxTestConfig(OEMTestReporter& reporter,
 
     OpStatus status = Configure(config, 0);
 
-    // status = la9310->vspa.GenerateTxTone(false, 8192);
-    // if (status != OpStatus::Success)
-    //     printf("Failed to stop Tx tone\n");
+    auto tone_generator = iqstreamer->GetTxToneGenerator(0);
+    if (!tone_generator)
+        return OpStatus::Error;
+    status = tone_generator->Enabled(false);
+    if (status != OpStatus::Success)
+    {
+        printf("Failed to disable tone generator\n");
+        return status;
+    }
 
-    // status = la9310->vspa.GenerateTxTone(true, 8192);
-    // if (status != OpStatus::Success)
-    //     printf("Failed to set Tx tone\n");
+    tone_generator->SetAmplitude(0.9);
+    const float tone_freq_weight = 1.0 / 8;
+    tone_generator->SetFrequency(tone_freq_weight);
+    status = tone_generator->Enabled(true);
+    if (status != OpStatus::Success)
+    {
+        printf("Failed to enable tone generator\n");
+        return status;
+    }
 
     char ctemp[512];
     sprintf(
@@ -1085,9 +1108,12 @@ OpStatus LimeSDR_Micro::RunTxTestConfig(OEMTestReporter& reporter,
     results[txPath - 1].amplitude = amplitude;
     results[txPath - 1].passed = results[channelIndex].amplitude > expectedPeakval_dBFS;
 
-    // status = la9310->vspa.GenerateTxTone(false, 8192);
-    // if (status != OpStatus::Success)
-    //     printf("Failed to stop Tx tone\n");
+    status = tone_generator->Enabled(false);
+    if (status != OpStatus::Success)
+    {
+        printf("Failed to enable tone generator\n");
+        return status;
+    }
 
     return status;
 }

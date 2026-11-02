@@ -24,9 +24,9 @@ NumericSlider::NumericSlider(wxWindow* parent,
     const wxPoint& pos,
     const wxSize& size,
     long style,
-    int min,
-    int max,
-    int initial,
+    int64_t min,
+    int64_t max,
+    int64_t initial,
     const wxString& name)
 {
     Create(parent, id, pos, size, style);
@@ -95,7 +95,7 @@ void NumericSlider::OnScrollChange(wxScrollEvent& event)
     wxPostEvent(this, evt);
 }
 
-void NumericSlider::SetValue(int integer)
+void NumericSlider::SetValue(int64_t integer)
 {
     if (integer < mSpinner->GetMin())
         integer = mSpinner->GetMin();
@@ -105,7 +105,7 @@ void NumericSlider::SetValue(int integer)
     mScroll->SetThumbPosition(integer - mSpinner->GetMin());
 }
 
-int NumericSlider::GetValue()
+int64_t NumericSlider::GetValue()
 {
     return mSpinner->GetValue();
 }
@@ -119,7 +119,7 @@ void NumericSlider::SetToolTip(const wxString& tipString)
 #endif
 }
 
-void NumericSlider::SetRange(int min, int max, int step)
+void NumericSlider::SetRange(int64_t min, int64_t max, int64_t step)
 {
     mSpinner->SetRange(min, max);
     mSpinner->SetIncrement(step);

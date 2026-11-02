@@ -33,7 +33,7 @@ class ToneGeneratorPanel : public wxPanel
   private:
     wxCheckBox* chkEnable;
     NumericSliderDouble* amplitude;
-    NumericSlider* fftBin;
+    NumericSliderDouble* freq_weight;
     std::shared_ptr<lime::IToneGenerator> device;
 };
 

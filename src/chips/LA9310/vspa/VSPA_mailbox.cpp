@@ -53,7 +53,7 @@ OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* va
     auto t2 = t1;
     do
     {
-        if (vspa_ccsr_base->ioread32(status_addr) & (1 << (mbox_id /*+ 2*/)))
+        if (ResponsePending(core_idx, mbox_id))
         {
             const uint64_t addr = GetMailboxOffset(mbox_id, VSPA_MBox_direction::Receive, core_idx);
             const uint32_t msb = vspa_ccsr_base->ioread32(addr);
@@ -92,9 +92,20 @@ void VSPA_mailbox::Clear(uint32_t core_idx, uint32_t mbox_id)
 OpStatus VSPA_mailbox::Message(uint32_t core_id, uint32_t mbox_id, uint64_t message, uint64_t* response)
 {
     const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
+    if (ResponsePending(core_id, mbox_id))
+    {
+        printf("Unread VSPA response message. Clearing it.\n");
+        Clear(core_id, mbox_id);
+    }
     Send(core_id, mbox_id, message);
     OpStatus status = Receive(core_id, mbox_id, response);
     return status;
+}
+
+bool VSPA_mailbox::ResponsePending(uint32_t core_idx, uint32_t mbox_id)
+{
+    const uint64_t status_addr = 0x660 + 0x4000 * core_idx;
+    return vspa_ccsr_base->ioread32(status_addr) & (1 << mbox_id);
 }
 
 } // namespace lime
