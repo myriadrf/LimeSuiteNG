@@ -25,7 +25,9 @@ if(WIN32 AND NOT MINGW)
         set(FTDI_INCLUDE_DIRS ${FETCHCONTENT_BASE_DIR}/WU_FTD3XXLib/Lib)
 
         #library directory based on x64 vs x86
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        if(CMAKE_GENERATOR_PLATFORM MATCHES "^(ARM64|arm64)$" OR CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "ARM64")
+            set(ARCH ARM64)
+        elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(ARCH x64)
         else()
             set(ARCH x86)
