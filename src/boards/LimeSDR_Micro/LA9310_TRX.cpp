@@ -284,7 +284,6 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return status;
     }
 
-    iqstreamer->fw->ResetHardwareTime();
     return status;
 }
 
@@ -308,18 +307,27 @@ OpStatus LA9310_TRX::Start()
         streamActive.notify_all();
     }
 
-    PHYTimer& phytimer = iqstreamer->fw->phytimer;
-    phytimer.SoftReset(true);
-
-    phytimer.SoftReset(false);
-
-    uint32_t txBandSelection = phytimer.GetTimerControl(15).GetTriggerValue();
-    band_selection_restore = txBandSelection;
-
     // VSPA start
     const mbox_opc_e command = MBOX_OPC_STREAM_START;
     uint32_t hiword = command << 24;
     uint32_t loword = 0;
+
+    if (mConfig.extraConfig.waitPPS)
+    {
+        hiword |= 0x1;
+        PHYTimer& phytimer = iqstreamer->fw->phytimer;
+        const uint32_t last_pps_in = phytimer.GetTimerControl(13).ReadCounter();
+        uint32_t phytime_now = phytimer.GetTimerControl(10).ReadCounter();
+        if (phytime_now - last_pps_in < mConfig.hintSampleRate * 0.8)
+        {
+            loword = last_pps_in + mConfig.hintSampleRate; // expected next PPS in time
+        }
+        else
+        {
+            loword = last_pps_in + 2 * mConfig.hintSampleRate; // skip to second PPS
+        }
+    }
+
     uint64_t value = (uint64_t(hiword) << 32) | loword;
     uint64_t result = 0;
     status = iqstreamer->fw->mailbox->Message(0, 0, value, &result);
@@ -340,9 +348,6 @@ void LA9310_TRX::Stop()
     if (!mStreamEnabled)
         return;
     mStreamEnabled = false;
-
-    // VSPA_iqplayer& vspa = iqstreamer->fwvspa;
-    PHYTimer& phytimer = iqstreamer->fw->phytimer;
 
     if (mRx.stage.load(std::memory_order_relaxed) == Stream::ReadyStage::Active)
     {
@@ -421,10 +426,6 @@ void LA9310_TRX::Stop()
     }
 
     mRx.lastTimestamp.store(0, std::memory_order_relaxed);
-
-    PHYTimerControl timer = phytimer.GetTimerControl(15);
-    timer.TriggerDirectly(
-        band_selection_restore ? PHYTimerControl::TriggerLogic::ForceOne : PHYTimerControl::TriggerLogic::ForceZero);
 }
 
 /// @brief Stops all the running streams and clears up the memory.
