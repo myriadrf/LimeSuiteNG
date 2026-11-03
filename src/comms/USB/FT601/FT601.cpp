@@ -108,8 +108,28 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
 
     FT_AbortPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS);
     FT_AbortPipe(mFTHandle, CONTROL_BULK_WRITE_ADDRESS);
+#ifdef LIMESUITENG_FTDI_WINUSB
+    // WinUSB D3XX: 64-byte stream mode on the control pipes makes every read fail (FT_OTHER_ERROR)
+    FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_READ_ADDRESS);
+    FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_WRITE_ADDRESS);
+#else
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_READ_ADDRESS, 64);
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_WRITE_ADDRESS, 64);
+#endif
+    // Drain stale control replies left by a previous session. The WinUSB D3XX library has no
+    // FT_FlushPipe (returns FT_NOT_SUPPORTED); a leftover reply would be parsed as the answer to
+    // our first command and can crash device detection.
+    {
+        FT_SetPipeTimeout(mFTHandle, CONTROL_BULK_READ_ADDRESS, 20);
+        uint8_t junk[4096];
+        for (int i = 0; i < 32; ++i)
+        {
+            ULONG got = 0;
+            if (FT_ReadPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS, junk, sizeof(junk), &got, nullptr) != FT_OK || got == 0)
+                break;
+        }
+        FT_AbortPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS);
+    }
     ResetStreamBuffers();
 
     FT_SetPipeTimeout(mFTHandle, CONTROL_BULK_WRITE_ADDRESS, 500);
@@ -165,8 +185,9 @@ int32_t FT601::BulkTransfer(uint8_t endPointAddr, uint8_t* data, size_t length, 
     else
         ftStatus = FT_ReadPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS, data, length, &ulBytesTransferred, &vOverlapped);
 
-    bool failed = ftStatus != FT_IO_PENDING;
-    if (!failed)
+    // WinUSB based D3XX may complete synchronously and return FT_OK
+    bool failed = !(ftStatus == FT_IO_PENDING || ftStatus == FT_OK);
+    if (!failed && ftStatus == FT_IO_PENDING)
     {
         DWORD dwRet = WaitForSingleObject(vOverlapped.hEvent, timeout_ms);
         failed = !(dwRet == WAIT_OBJECT_0 || dwRet == WAIT_TIMEOUT);
@@ -215,7 +236,7 @@ OpStatus FT601::BeginDataXfer(void* context, uint8_t* buffer, size_t length, uin
         ftStatus = FT_WritePipe(mFTHandle, STREAM_BULK_WRITE_ADDRESS, buffer, length, &ulActual, &async->inOvLap);
 
     async->endPointAddr = endPointAddr;
-    return ftStatus != FT_IO_PENDING ? OpStatus::Error : OpStatus::Success;
+    return (ftStatus == FT_IO_PENDING || ftStatus == FT_OK) ? OpStatus::Success : OpStatus::Error;
 #endif
 }
 
@@ -226,8 +247,12 @@ OpStatus FT601::WaitForXfer(void* context, int32_t timeout_ms)
     return libusb_impl.WaitForXfer(context, timeout_ms);
 #else
     FTDIAsyncContext* async{ reinterpret_cast<FTDIAsyncContext*>(context) };
-    DWORD dwRet = WaitForSingleObject(async->inOvLap.hEvent, timeout_ms);
-    return (dwRet == WAIT_OBJECT_0) ? OpStatus::Success : OpStatus::Timeout;
+    // WinUSB D3XX creates auto-reset events: a previous wait may already have consumed the signal,
+    // so check the OVERLAPPED completion state directly instead of relying on the event alone.
+    if (HasOverlappedIoCompleted(&async->inOvLap))
+        return OpStatus::Success;
+    WaitForSingleObject(async->inOvLap.hEvent, timeout_ms);
+    return HasOverlappedIoCompleted(&async->inOvLap) ? OpStatus::Success : OpStatus::Timeout;
 #endif
 }
 
@@ -315,7 +340,12 @@ int FT601::ReinitPipe(unsigned char ep)
 {
     FT_AbortPipe(mFTHandle, ep);
     FT_FlushPipe(mFTHandle, ep);
+#ifdef LIMESUITENG_FTDI_WINUSB
+    // only used for control pipes (BulkTransfer); see Connect() about stream mode
+    FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, ep);
+#else
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, ep, 64);
+#endif
     return 0;
 }
 #endif
