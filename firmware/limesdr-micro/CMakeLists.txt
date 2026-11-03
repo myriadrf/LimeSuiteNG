@@ -3,4 +3,4 @@ install(
     limesdr-micro-m4.bin
     limesdr-micro-iqplayer.eld
     COMPONENT firmware
-    DESTINATION /lib/firmware)
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/firmware)
