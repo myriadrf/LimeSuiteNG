@@ -108,14 +108,14 @@ bool FT601::Connect(uint16_t vid, uint16_t pid, const char* serial)
 
     FT_AbortPipe(mFTHandle, CONTROL_BULK_READ_ADDRESS);
     FT_AbortPipe(mFTHandle, CONTROL_BULK_WRITE_ADDRESS);
-#ifdef LIMESUITENG_FTDI_WINUSB
+    #ifdef LIMESUITENG_FTDI_WINUSB
     // WinUSB D3XX: 64-byte stream mode on the control pipes makes every read fail (FT_OTHER_ERROR)
     FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_READ_ADDRESS);
     FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_WRITE_ADDRESS);
-#else
+    #else
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_READ_ADDRESS, 64);
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, CONTROL_BULK_WRITE_ADDRESS, 64);
-#endif
+    #endif
     // Drain stale control replies left by a previous session. The WinUSB D3XX library has no
     // FT_FlushPipe (returns FT_NOT_SUPPORTED); a leftover reply would be parsed as the answer to
     // our first command and can crash device detection.
@@ -340,12 +340,12 @@ int FT601::ReinitPipe(unsigned char ep)
 {
     FT_AbortPipe(mFTHandle, ep);
     FT_FlushPipe(mFTHandle, ep);
-#ifdef LIMESUITENG_FTDI_WINUSB
+    #ifdef LIMESUITENG_FTDI_WINUSB
     // only used for control pipes (BulkTransfer); see Connect() about stream mode
     FT_ClearStreamPipe(mFTHandle, FALSE, FALSE, ep);
-#else
+    #else
     FT_SetStreamPipe(mFTHandle, FALSE, FALSE, ep, 64);
-#endif
+    #endif
     return 0;
 }
 #endif

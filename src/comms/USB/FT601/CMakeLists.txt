@@ -1,6 +1,8 @@
 if(WIN32 AND NOT MINGW)
     #select which FTDI D3XX driver library to build against
-    set(LIMESUITENG_FTDI_DRIVER "WU_FTD3XX" CACHE STRING "FTDI D3XX driver library to use (FTD3XX or WU_FTD3XX)")
+    set(LIMESUITENG_FTDI_DRIVER
+        "WU_FTD3XX"
+        CACHE STRING "FTDI D3XX driver library to use (FTD3XX or WU_FTD3XX)")
     set_property(CACHE LIMESUITENG_FTDI_DRIVER PROPERTY STRINGS FTD3XX WU_FTD3XX)
 
     #default is to use static libs
