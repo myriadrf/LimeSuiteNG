@@ -6,4 +6,6 @@ target_sources(
             RFTimingPanel.cpp
             LPFPanel.cpp
             NCOPanel.cpp
-            OversamplerPanel.cpp)
+            OversamplerPanel.cpp
+            GainStagePanel.cpp
+            GainStagesPanel.cpp)
