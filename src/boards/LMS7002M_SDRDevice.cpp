@@ -20,82 +20,6 @@ using namespace std::literals::string_literals;
 namespace lime {
 using namespace lime::LMS7002MCSR_Data;
 
-constexpr static int MAXIMUM_GAIN_VALUE = 63; // Gain table size
-// clang-format off
-
-/// @brief The stucture for storing the data of device Rx gain values for a specific gain value.
-struct RxGainRow {
-    int lna; ///< The value of the Low Noise Amplifier.
-    int pga; ///< The value of the Programmable Gain Amplifier.
-};
-
-static std::array<RxGainRow, MAXIMUM_GAIN_VALUE> rxGainTable{ {
-    { 1, 0 },
-    { 1, 1 },
-    { 1, 2 },
-    { 1, 3 },
-    { 1, 4 },
-    { 1, 5 },
-    { 1, 6 },
-    { 1, 7 },
-    { 1, 8 },
-    { 1, 9 },
-    { 1, 10 },
-    { 1, 11 },
-    { 1, 12 },
-    { 1, 13 },
-    { 2, 12 },
-    { 2, 13 },
-    { 2, 14 },
-    { 3, 12 },
-    { 3, 13 },
-    { 3, 14 },
-    { 4, 12 },
-    { 4, 13 },
-    { 4, 14 },
-    { 5, 12 },
-    { 5, 13 },
-    { 5, 14 },
-    { 6, 12 },
-    { 6, 13 },
-    { 6, 14 },
-    { 7, 12 },
-    { 7, 13 },
-    { 7, 14 },
-    { 8, 12 },
-    { 8, 13 },
-    { 8, 14 },
-    { 9, 12 },
-    { 9, 13 },
-    { 9, 14 },
-    { 10, 12 },
-    { 11, 12 },
-    { 12, 12 },
-    { 13, 12 },
-    { 14, 12 },
-    { 15, 12 },
-    { 15, 13 },
-    { 15, 14 },
-    { 15, 15 },
-    { 15, 16 },
-    { 15, 17 },
-    { 15, 18 },
-    { 15, 19 },
-    { 15, 20 },
-    { 15, 21 },
-    { 15, 22 },
-    { 15, 23 },
-    { 15, 24 },
-    { 15, 25 },
-    { 15, 26 },
-    { 15, 27 },
-    { 15, 28 },
-    { 15, 29 },
-    { 15, 30 },
-    { 15, 31 },
-} };
-// clang-format on
-
 LMS7002M_SDRDevice::LMS7002M_SDRDevice()
     : mCallback_logMessage(nullptr)
 {
@@ -488,7 +412,7 @@ OpStatus LMS7002M_SDRDevice::SetGain(uint8_t moduleIndex, TRXDir direction, uint
         if (TRXDir::Tx == direction)
             return SetGenericTxGain(*device, enumChannel, value);
         else
-            return SetGenericRxGain(*device, enumChannel, value);
+            return device->SetGenericRxGain_dB(value, enumChannel);
     }
 }
 
@@ -496,33 +420,6 @@ OpStatus LMS7002M_SDRDevice::SetGenericTxGain(lime::LMS7002M& chip, LMS7002M::Ch
 {
     LMS7002M::ChannelScope scope(&chip, channel);
     return chip.SetTRFPAD_dB(value, channel);
-}
-
-OpStatus LMS7002M_SDRDevice::SetGenericRxGain(lime::LMS7002M& chip, LMS7002M::Channel channel, double gvalue)
-{
-    LMS7002M::ChannelScope scope(&chip, channel);
-    int value = std::clamp(static_cast<int>(gvalue + 12), 0, MAXIMUM_GAIN_VALUE - 1);
-
-    unsigned int lna = rxGainTable.at(std::lround(value)).lna;
-    unsigned int pga = rxGainTable.at(std::lround(value)).pga;
-
-    if (gvalue >= 0)
-    {
-        uint8_t tia = 1;
-        if (chip.Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, tia) != OpStatus::Success)
-            return OpStatus::IOFailure;
-    }
-    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From data sheet
-
-    // TODO: optimize into single write batch
-    if ((chip.Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, lna) != OpStatus::Success) ||
-        (chip.Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, pga) != OpStatus::Success) ||
-        (chip.Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb) != OpStatus::Success))
-    {
-        return OpStatus::IOFailure;
-    }
-
-    return OpStatus::Success;
 }
 
 OpStatus LMS7002M_SDRDevice::GetGain(uint8_t moduleIndex, TRXDir direction, uint8_t channel, eGainTypes gain, double& value)
@@ -564,7 +461,7 @@ OpStatus LMS7002M_SDRDevice::GetGain(uint8_t moduleIndex, TRXDir direction, uint
         }
         else
         {
-            value = device->GetRFELNA_dB(enumChannel) + device->GetRBBPGA_dB(enumChannel);
+            value = device->GetGenericRxGain_dB(enumChannel);
         }
         return OpStatus::Success;
     }

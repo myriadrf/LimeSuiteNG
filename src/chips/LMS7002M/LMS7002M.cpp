@@ -883,6 +883,132 @@ float_type LMS7002M::GetTRFLoopbackPAD_dB(const Channel channel)
     return static_cast<Decibel>(lms7002m_get_trf_loopback_pad_db(mC_impl, static_cast<lms7002m_channel>(channel)));
 }
 
+namespace {
+
+constexpr int MAXIMUM_GAIN_VALUE = 63; // Generic Rx gain table size
+// clang-format off
+
+/// @brief The stucture for storing the data of device Rx gain values for a specific gain value.
+struct RxGainRow {
+    int lna; ///< The value of the Low Noise Amplifier.
+    int pga; ///< The value of the Programmable Gain Amplifier.
+};
+
+std::array<RxGainRow, MAXIMUM_GAIN_VALUE> rxGainTable{ {
+    { 1, 0 },
+    { 1, 1 },
+    { 1, 2 },
+    { 1, 3 },
+    { 1, 4 },
+    { 1, 5 },
+    { 1, 6 },
+    { 1, 7 },
+    { 1, 8 },
+    { 1, 9 },
+    { 1, 10 },
+    { 1, 11 },
+    { 1, 12 },
+    { 1, 13 },
+    { 2, 12 },
+    { 2, 13 },
+    { 2, 14 },
+    { 3, 12 },
+    { 3, 13 },
+    { 3, 14 },
+    { 4, 12 },
+    { 4, 13 },
+    { 4, 14 },
+    { 5, 12 },
+    { 5, 13 },
+    { 5, 14 },
+    { 6, 12 },
+    { 6, 13 },
+    { 6, 14 },
+    { 7, 12 },
+    { 7, 13 },
+    { 7, 14 },
+    { 8, 12 },
+    { 8, 13 },
+    { 8, 14 },
+    { 9, 12 },
+    { 9, 13 },
+    { 9, 14 },
+    { 10, 12 },
+    { 11, 12 },
+    { 12, 12 },
+    { 13, 12 },
+    { 14, 12 },
+    { 15, 12 },
+    { 15, 13 },
+    { 15, 14 },
+    { 15, 15 },
+    { 15, 16 },
+    { 15, 17 },
+    { 15, 18 },
+    { 15, 19 },
+    { 15, 20 },
+    { 15, 21 },
+    { 15, 22 },
+    { 15, 23 },
+    { 15, 24 },
+    { 15, 25 },
+    { 15, 26 },
+    { 15, 27 },
+    { 15, 28 },
+    { 15, 29 },
+    { 15, 30 },
+    { 15, 31 },
+} };
+// clang-format on
+
+} // namespace
+
+OpStatus LMS7002M::SetGenericRxGain_dB(const float_type gvalue, const Channel channel)
+{
+    ChannelScope scope(this, channel);
+    int value = std::clamp(static_cast<int>(gvalue + 12), 0, MAXIMUM_GAIN_VALUE - 1);
+
+    unsigned int lna = rxGainTable.at(std::lround(value)).lna;
+    unsigned int pga = rxGainTable.at(std::lround(value)).pga;
+
+    if (gvalue >= 0)
+    {
+        uint8_t tia = 1;
+        if (Modify_SPI_Reg_bits(LMS7002MCSR::G_TIA_RFE, tia) != OpStatus::Success)
+            return OpStatus::IOFailure;
+    }
+    int rcc_ctl_pga_rbb = (430 * (pow(0.65, pga / 10.0)) - 110.35) / 20.4516 + 16; // From data sheet
+
+    // TODO: optimize into single write batch
+    if ((Modify_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE, lna) != OpStatus::Success) ||
+        (Modify_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB, pga) != OpStatus::Success) ||
+        (Modify_SPI_Reg_bits(LMS7002MCSR::RCC_CTL_PGA_RBB, rcc_ctl_pga_rbb) != OpStatus::Success))
+    {
+        return OpStatus::IOFailure;
+    }
+
+    return OpStatus::Success;
+}
+
+float_type LMS7002M::GetGenericRxGain_dB(const Channel channel)
+{
+    int lna;
+    int pga;
+    {
+        ChannelScope scope(this, channel);
+        lna = Get_SPI_Reg_bits(LMS7002MCSR::G_LNA_RFE);
+        pga = Get_SPI_Reg_bits(LMS7002MCSR::G_PGA_RBB);
+    }
+
+    // Table rows are unique, so the match is the value SetGenericRxGain_dB() was given (rounded down)
+    for (std::size_t i = 0; i < rxGainTable.size(); ++i)
+    {
+        if (rxGainTable[i].lna == lna && rxGainTable[i].pga == pga)
+            return static_cast<float_type>(i) - 12;
+    }
+    return GetRFELNA_dB(channel) + GetRBBPGA_dB(channel);
+}
+
 // opt_gain_tbb
 OpStatus LMS7002M::SetTBBIAMP_dB(const float_type gain, const Channel channel)
 {

@@ -42,7 +42,9 @@ class IRFChannel
 
     /// @return The number of gain stages in this channel.
     virtual uint8_t GetGainStageCount() const = 0;
-    /// @return The gain stage, in signal path order, or nullptr if the index is out of range.
+    /// @return The gain stage, or nullptr if the index is out of range.
+    /// Individual stages are listed in signal path order, followed by any composite stages
+    /// (e.g. "Generic") that set the overall channel gain by controlling several of them.
     virtual IGainStage* GetGainStage(uint8_t index) = 0;
 
     virtual ILOMixer* GetLOMixer() = 0;

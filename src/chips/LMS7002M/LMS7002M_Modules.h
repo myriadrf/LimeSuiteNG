@@ -210,7 +210,8 @@ class LMS7002M_Sensor : public ISensor
 class LMS7002M_GainStage : public IGainStage
 {
   public:
-    LMS7002M_GainStage(LMS7002M* chip, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range);
+    LMS7002M_GainStage(
+        LMS7002M* chip, TRXDir dir, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range);
 
     const std::string& GetName() const override { return mName; }
     Units GetUnits() const override { return mUnits; }
@@ -221,6 +222,7 @@ class LMS7002M_GainStage : public IGainStage
 
   private:
     LMS7002M* mChip;
+    TRXDir mDir;
     uint8_t mChannel;
     std::string mName;
     Units mUnits;

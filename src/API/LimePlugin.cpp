@@ -2,7 +2,6 @@
 #include "limesuiteng/LimePlugin.h"
 #include <array>
 #include <map>
-#include "gainTable.h"
 
 #include <algorithm>
 #include <cassert>
@@ -13,19 +12,20 @@
 #include <sstream>
 #include <string_view>
 #include <cinttypes>
+#include <cstdarg>
 
 #include "streaming/StreamComposite.h"
 #include "DeviceTreeNode.h"
 #include "interface/IRFTiming.h"
 
-#include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/IRFSOC.h"
+#include "limesuiteng/IRFChannel.h"
+#include "limesuiteng/IGainStage.h"
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/ToString.h"
-#include "chips/LMS7002M/LMS7002MCSR_Data.h"
 #include "protocols/LMSBoards.h"
 
 #ifdef _MSC_VER
@@ -34,7 +34,6 @@
 #endif
 
 using namespace lime;
-using namespace lime::LMS7002MCSR_Data;
 using namespace std;
 
 static constexpr int LIME_MAX_UNIQUE_DEVICES = 16;
@@ -200,46 +199,73 @@ bool OnStreamStatusChange(bool isTx, const StreamStats* s, void* userData)
     return false;
 }
 
+/// @brief Finds a gain stage of a chip channel by its name.
+/// @return The gain stage, or nullptr if the device, its chip or channel does not have it.
+static IGainStage* FindGainStage(SDRDevice* device, uint8_t chipIndex, TRXDir dir, uint8_t channel, std::string_view name)
+{
+    IRFSOC* chip = device->GetRFSOC(chipIndex);
+    if (!chip)
+        return nullptr;
+    IRFChannel* rfChannel = chip->GetChannel(dir, channel);
+    if (!rfChannel)
+        return nullptr;
+    for (uint8_t i = 0; i < rfChannel->GetGainStageCount(); ++i)
+    {
+        IGainStage* stage = rfChannel->GetGainStage(i);
+        if (stage && stage->GetName() == name)
+            return stage;
+    }
+    return nullptr;
+}
+
+/// @brief Sets the gain of the named gain stage, logging an error if it fails.
+static void SetGainStage(SDRDevice* device, uint8_t chipIndex, TRXDir dir, uint8_t channel, std::string_view name, double value_dB)
+{
+    IGainStage* stage = FindGainStage(device, chipIndex, dir, channel, name);
+    if (!stage)
+    {
+        Log(LogLevel::Error,
+            "chip%i %s ch%i has no %.*s gain stage",
+            chipIndex,
+            ToString(dir).c_str(),
+            channel,
+            static_cast<int>(name.size()),
+            name.data());
+        return;
+    }
+    if (stage->SetValue(value_dB) != OpStatus::Success)
+        Log(LogLevel::Error,
+            "chip%i %s ch%i failed to set %.*s gain",
+            chipIndex,
+            ToString(dir).c_str(),
+            channel,
+            static_cast<int>(name.size()),
+            name.data());
+}
+
+// The gains are set with the RF SoC "Generic" gain stage, which distributes the overall channel gain between its stages.
 //min gain 0
 //max gain ~70-76 (higher will probably degrade signal quality to much)
 void LimePlugin_SetTxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(txGainTable.size() - 1));
-
     std::lock_guard<std::mutex> lk(gainsMutex);
 
     SDRDevice* device = context->txChannels[channel_num].parent->device;
-    LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(context->txChannels[channel_num].parent->chipIndex));
-    chip->Modify_SPI_Reg_bits(MAC, context->txChannels[channel_num].chipChannel + 1);
-    chip->Modify_SPI_Reg_bits(LOSS_MAIN_TXPAD_TRF, txGainTable[row].main);
-    chip->Modify_SPI_Reg_bits(LOSS_LIN_TXPAD_TRF, txGainTable[row].lin);
-    chip->Modify_SPI_Reg_bits(MAC, 1);
-    Log(LogLevel::Debug,
-        "chip%i ch%i Tx gain set MAIN:%i, LIN:%i",
-        context->txChannels[channel_num].parent->chipIndex,
-        context->txChannels[channel_num].chipChannel,
-        txGainTable[row].main,
-        txGainTable[row].lin);
+    const uint8_t chipIndex = context->txChannels[channel_num].parent->chipIndex;
+    const uint8_t chipChannel = context->txChannels[channel_num].chipChannel;
+    SetGainStage(device, chipIndex, TRXDir::Tx, chipChannel, "Generic"sv, gain);
+    Log(LogLevel::Debug, "chip%i ch%i Tx gain set: %g dB", chipIndex, chipChannel, gain);
 }
 
 void LimePlugin_SetRxGain(LimePluginContext* context, double gain, int channel_num)
 {
-    int row = std::clamp(static_cast<int>(gain), 0, static_cast<int>(rxGainTable.size() - 1));
-
     std::lock_guard<std::mutex> lk(gainsMutex);
 
     SDRDevice* device = context->rxChannels[channel_num].parent->device;
-    LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(context->rxChannels[channel_num].parent->chipIndex));
-    chip->Modify_SPI_Reg_bits(MAC, context->rxChannels[channel_num].chipChannel + 1);
-    chip->Modify_SPI_Reg_bits(G_LNA_RFE, rxGainTable[row].lna);
-    chip->Modify_SPI_Reg_bits(G_PGA_RBB, rxGainTable[row].pga);
-    chip->Modify_SPI_Reg_bits(MAC, 1);
-    Log(LogLevel::Debug,
-        "chip%i ch%i Rx gain set LNA:%i, PGA:%i",
-        context->rxChannels[channel_num].parent->chipIndex,
-        context->rxChannels[channel_num].chipChannel,
-        rxGainTable[row].lna,
-        rxGainTable[row].pga);
+    const uint8_t chipIndex = context->rxChannels[channel_num].parent->chipIndex;
+    const uint8_t chipChannel = context->rxChannels[channel_num].chipChannel;
+    SetGainStage(device, chipIndex, TRXDir::Rx, chipChannel, "Generic"sv, gain);
+    Log(LogLevel::Debug, "chip%i ch%i Rx gain set: %g dB", chipIndex, chipChannel, gain);
 }
 
 static void ConfigGains(

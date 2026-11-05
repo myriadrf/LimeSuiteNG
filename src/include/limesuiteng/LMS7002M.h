@@ -446,6 +446,22 @@ class LIME_API LMS7002M : public IRFSOC
      */
     float_type GetTRFLoopbackPAD_dB(const Channel channel);
 
+    /*!
+     * @brief Sets the overall Rx gain, distributing it between the LNA and PGA (and the TIA for gain >= 0 dB).
+     * @param gain In dB range -12.0, 50.0 dB
+     * @param channel The channel to set the gain for.
+     * @return The status of the operation
+     */
+    OpStatus SetGenericRxGain_dB(const float_type gain, const Channel channel);
+
+    /*!
+     * @brief Gets the overall Rx gain, as set by SetGenericRxGain_dB().
+     * @param channel The channel to get the gain from.
+     * @return The gain (in dB) whose LNA and PGA settings match the current ones. If the LNA and PGA were set
+     * in some other way, the sum of their gains.
+     */
+    float_type GetGenericRxGain_dB(const Channel channel);
+
     /// @brief The possible antennae on the chip.
     enum class PathRFE : uint8_t {
         NONE,

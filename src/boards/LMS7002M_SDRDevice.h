@@ -141,7 +141,6 @@ class LMS7002M_SDRDevice : public SDRDevice
     SDRDescriptor mDeviceDescriptor;
 
   private:
-    OpStatus SetGenericRxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
     OpStatus SetGenericTxGain(LMS7002M& device, LMS7002M::Channel channel, double value);
 
     std::unordered_map<TRXDir, std::unordered_map<uint8_t, double>> lowPassFilterCache;

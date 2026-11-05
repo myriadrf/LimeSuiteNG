@@ -652,9 +652,10 @@ class LIME_API SDRDevice
     virtual void SetMessageLogCallback(LogCallbackType callback);
 
     /// @brief Gets the pointer to an internal chip of the device.
+    /// @deprecated Use GetRFSOC() and the generic RF SoC interfaces instead.
     /// @param index The index of the device to retrieve.
     /// @return The pointer to the internal device.
-    virtual void* GetInternalChip(uint32_t index) = 0;
+    [[deprecated("Use GetRFSOC() instead")]] virtual void* GetInternalChip(uint32_t index) = 0;
 
     /// @brief Gets the generic RF SoC (transceiver chip) interface of the given module.
     /// @param moduleIndex The index of the RF SoC, as listed in SDRDescriptor::rfSOC.

@@ -76,8 +76,9 @@ LMS7002M_Sensor::LMS7002M_Sensor(std::string name, Units units, ReadFunction rea
 // LMS7002M_GainStage
 
 LMS7002M_GainStage::LMS7002M_GainStage(
-    LMS7002M* chip, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range)
+    LMS7002M* chip, TRXDir dir, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range)
     : mChip(chip)
+    , mDir(dir)
     , mChannel(channel)
     , mName(std::move(name))
     , mUnits(units)
@@ -111,6 +112,8 @@ OpStatus LMS7002M_GainStage::SetValue(double value)
         return mChip->SetTRFPAD_dB(value, ch);
     case eGainTypes::LoopbackPAD:
         return mChip->SetTRFLoopbackPAD_dB(value, ch);
+    case eGainTypes::GENERIC:
+        return mDir == TRXDir::Rx ? mChip->SetGenericRxGain_dB(value, ch) : mChip->SetTRFPAD_dB(value, ch);
     default:
         return OpStatus::NotImplemented;
     }
@@ -141,6 +144,9 @@ OpStatus LMS7002M_GainStage::GetValue(double& value)
         break;
     case eGainTypes::LoopbackPAD:
         value = mChip->GetTRFLoopbackPAD_dB(ch);
+        break;
+    case eGainTypes::GENERIC:
+        value = mDir == TRXDir::Rx ? mChip->GetGenericRxGain_dB(ch) : mChip->GetTRFPAD_dB(ch);
         break;
     default:
         return OpStatus::NotImplemented;
@@ -539,7 +545,7 @@ LMS7002M_RFChannel::LMS7002M_RFChannel(
     // Step 0 where the hardware steps are not evenly spaced.
     using Units = IGainStage::Units;
     auto addStage = [&](eGainTypes type, const char* name, Units units, Range<double> range) {
-        mGainStages.push_back(std::make_unique<LMS7002M_GainStage>(chip, index, type, name, units, range));
+        mGainStages.push_back(std::make_unique<LMS7002M_GainStage>(chip, dir, index, type, name, units, range));
     };
     if (dir == TRXDir::Rx)
     {
@@ -547,6 +553,8 @@ LMS7002M_RFChannel::LMS7002M_RFChannel(
         addStage(eGainTypes::LoopbackLNA, "LoopbackLNA", Units::dB, Range<double>(0, 40, 0));
         addStage(eGainTypes::TIA, "TIA", Units::dB, Range<double>(0, 12, 0));
         addStage(eGainTypes::PGA, "PGA", Units::dB, Range<double>(-12, 19, 1));
+        // Overall gain, distributed between LNA, TIA and PGA by LMS7002M::SetGenericRxGain_dB()
+        addStage(eGainTypes::GENERIC, "Generic", Units::dB, Range<double>(-12, 50, 1));
     }
     else
     {
@@ -554,6 +562,8 @@ LMS7002M_RFChannel::LMS7002M_RFChannel(
         addStage(eGainTypes::IAMP, "IAMP", Units::Raw, Range<double>(1, 63, 1));
         addStage(eGainTypes::PAD, "PAD", Units::dB, Range<double>(0, 52, 0));
         addStage(eGainTypes::LoopbackPAD, "LoopbackPAD", Units::dB, Range<double>(-4.3, 0, 0));
+        // Overall gain, set with the PAD like SDRDevice::SetGain() with eGainTypes::GENERIC
+        addStage(eGainTypes::GENERIC, "Generic", Units::dB, Range<double>(0, 52, 0));
     }
 }
 

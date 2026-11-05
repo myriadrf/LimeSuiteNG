@@ -2,6 +2,8 @@
 #include "lime/LimeSuite.h"
 #include "limesuiteng/limesuiteng.hpp"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/IRFSOC.h"
+#include "limesuiteng/ISensor.h"
 #include "limesuiteng/RFStream.h"
 #include "limesuiteng/ToString.h"
 #include "limesuiteng/StreamMeta.h"
@@ -1190,12 +1192,24 @@ API_EXPORT int CALL_CONV LMS_GetChipTemperature(lms_device_t* dev, size_t ind, f
 
     if (temp)
     {
-        // TODO: replace with generic RFSOC interface
-        lime::LMS7002M* chip = reinterpret_cast<LMS7002M*>(apiDevice->device->GetInternalChip(apiDevice->moduleIndex));
+        lime::IRFSOC* chip = apiDevice->device->GetRFSOC(apiDevice->moduleIndex);
         if (!chip)
             return -1;
 
-        *temp = chip->GetTemperature();
+        // Use the first temperature sensor of the chip
+        for (uint8_t i = 0; i < chip->GetSensorCount(); ++i)
+        {
+            lime::ISensor* sensor = chip->GetSensor(i);
+            if (!sensor || sensor->GetUnits() != lime::ISensor::Units::Celsius)
+                continue;
+
+            double value = 0;
+            if (sensor->GetValue(value) != OpStatus::Success)
+                return -1;
+            *temp = value;
+            return 0;
+        }
+        return -1;
     }
     return 0;
 }
