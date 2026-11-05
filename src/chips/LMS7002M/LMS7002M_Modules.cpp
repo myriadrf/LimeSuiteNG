@@ -63,6 +63,73 @@ std::string LMS7002M_RFPath::GetPath()
     return index < paths.size() ? paths[index].name : std::string();
 }
 
+// LMS7002M_GainStage
+
+LMS7002M_GainStage::LMS7002M_GainStage(
+    LMS7002M* chip, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range)
+    : mChip(chip)
+    , mChannel(channel)
+    , mName(std::move(name))
+    , mUnits(units)
+    , mRange(range)
+    , mType(type)
+{
+    assert(chip);
+}
+
+static LMS7002M::Channel ToChipChannel(uint8_t channel)
+{
+    return channel > 0 ? LMS7002M::Channel::ChB : LMS7002M::Channel::ChA;
+}
+
+OpStatus LMS7002M_GainStage::SetValue(double value)
+{
+    const LMS7002M::Channel ch = ToChipChannel(mChannel);
+    switch (mType)
+    {
+    case eGainTypes::LNA:
+        return mChip->SetRFELNA_dB(value, ch);
+    case eGainTypes::LoopbackLNA:
+        return mChip->SetRFELoopbackLNA_dB(value, ch);
+    case eGainTypes::TIA:
+        return mChip->SetRFETIA_dB(value, ch);
+    case eGainTypes::PGA:
+        return mChip->SetRBBPGA_dB(value, ch);
+    case eGainTypes::IAMP:
+        return mChip->SetTBBIAMP_dB(value, ch);
+    case eGainTypes::PAD:
+        return mChip->SetTRFPAD_dB(value, ch);
+    case eGainTypes::LoopbackPAD:
+        return mChip->SetTRFLoopbackPAD_dB(value, ch);
+    default:
+        return OpStatus::NotImplemented;
+    }
+}
+
+double LMS7002M_GainStage::GetValue()
+{
+    const LMS7002M::Channel ch = ToChipChannel(mChannel);
+    switch (mType)
+    {
+    case eGainTypes::LNA:
+        return mChip->GetRFELNA_dB(ch);
+    case eGainTypes::LoopbackLNA:
+        return mChip->GetRFELoopbackLNA_dB(ch);
+    case eGainTypes::TIA:
+        return mChip->GetRFETIA_dB(ch);
+    case eGainTypes::PGA:
+        return mChip->GetRBBPGA_dB(ch);
+    case eGainTypes::IAMP:
+        return mChip->GetTBBIAMP_dB(ch);
+    case eGainTypes::PAD:
+        return mChip->GetTRFPAD_dB(ch);
+    case eGainTypes::LoopbackPAD:
+        return mChip->GetTRFLoopbackPAD_dB(ch);
+    default:
+        return 0;
+    }
+}
+
 // LMS7002M_LPF
 
 LMS7002M_LPF::LMS7002M_LPF(LMS7002M* chip, TRXDir dir, uint8_t channel)
@@ -450,9 +517,36 @@ LMS7002M_RFChannel::LMS7002M_RFChannel(
 {
     for (uint8_t i = 0; i < GFIR_COUNT; ++i)
         mGFIR[i] = std::make_unique<LMS7002M_GFIR>(chip, dir, index, i);
+
+    // Step 0 where the hardware steps are not evenly spaced.
+    using Units = IGainStage::Units;
+    auto addStage = [&](eGainTypes type, const char* name, Units units, Range<double> range) {
+        mGainStages.push_back(std::make_unique<LMS7002M_GainStage>(chip, index, type, name, units, range));
+    };
+    if (dir == TRXDir::Rx)
+    {
+        addStage(eGainTypes::LNA, "LNA", Units::dB, Range<double>(0, 30, 0));
+        addStage(eGainTypes::LoopbackLNA, "LoopbackLNA", Units::dB, Range<double>(0, 40, 0));
+        addStage(eGainTypes::TIA, "TIA", Units::dB, Range<double>(0, 12, 0));
+        addStage(eGainTypes::PGA, "PGA", Units::dB, Range<double>(-12, 19, 1));
+    }
+    else
+    {
+        // CG_IAMP_TBB register code
+        addStage(eGainTypes::IAMP, "IAMP", Units::Raw, Range<double>(1, 63, 1));
+        addStage(eGainTypes::PAD, "PAD", Units::dB, Range<double>(0, 52, 0));
+        addStage(eGainTypes::LoopbackPAD, "LoopbackPAD", Units::dB, Range<double>(-4.3, 0, 0));
+    }
 }
 
 LMS7002M_RFChannel::~LMS7002M_RFChannel() = default;
+
+IGainStage* LMS7002M_RFChannel::GetGainStage(uint8_t index)
+{
+    if (index >= mGainStages.size())
+        return nullptr;
+    return mGainStages[index].get();
+}
 
 IGFIR* LMS7002M_RFChannel::GetGFIR(uint8_t index)
 {

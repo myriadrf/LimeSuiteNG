@@ -11,10 +11,13 @@
 #include "limesuiteng/IQuadratureErrorCorrector.h"
 #include "limesuiteng/IToneGenerator.h"
 #include "limesuiteng/IRFPath.h"
+#include "limesuiteng/IGainStage.h"
 
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace lime {
 
@@ -182,6 +185,28 @@ class LMS7002M_ToneGenerator : public IToneGenerator
     double mFrequencyWeight;
 };
 
+/// @brief One of the LMS7002M gain stages (LNA, TIA, PGA, PAD, ...) of a single channel.
+class LMS7002M_GainStage : public IGainStage
+{
+  public:
+    LMS7002M_GainStage(LMS7002M* chip, uint8_t channel, eGainTypes type, std::string name, Units units, Range<double> range);
+
+    const std::string& GetName() const override { return mName; }
+    Units GetUnits() const override { return mUnits; }
+    Range<double> GetRange() const override { return mRange; }
+
+    OpStatus SetValue(double value) override;
+    double GetValue() override;
+
+  private:
+    LMS7002M* mChip;
+    uint8_t mChannel;
+    std::string mName;
+    Units mUnits;
+    Range<double> mRange;
+    eGainTypes mType;
+};
+
 /// @brief One Rx or Tx channel of the LMS7002M.
 class LMS7002M_RFChannel : public IRFChannel
 {
@@ -202,6 +227,9 @@ class LMS7002M_RFChannel : public IRFChannel
     uint8_t GetGFIRCount() const override { return GFIR_COUNT; }
     IGFIR* GetGFIR(uint8_t index) override;
 
+    uint8_t GetGainStageCount() const override { return static_cast<uint8_t>(mGainStages.size()); }
+    IGainStage* GetGainStage(uint8_t index) override;
+
     ILOMixer* GetLOMixer() override { return mLOMixer.get(); }
     IDCCorrector* GetDCCorrector() override;
     IOversampler* GetOversampler() override { return mOversampler.get(); }
@@ -215,6 +243,7 @@ class LMS7002M_RFChannel : public IRFChannel
     std::unique_ptr<LMS7002M_LPF> mLPF;
     std::unique_ptr<LMS7002M_NCO> mNCO;
     std::array<std::unique_ptr<LMS7002M_GFIR>, GFIR_COUNT> mGFIR;
+    std::vector<std::unique_ptr<LMS7002M_GainStage>> mGainStages;
     std::unique_ptr<IDCCorrector> mDC;
     std::unique_ptr<LMS7002M_QEC> mQEC;
     std::unique_ptr<LMS7002M_ToneGenerator> mToneGenerator;

@@ -16,6 +16,7 @@ class IOversampler;
 class IQuadratureErrorCorrector;
 class IToneGenerator;
 class IRFPath;
+class IGainStage;
 
 /// @brief A single Rx or Tx channel of an RF SoC, giving access to the building blocks of its signal path.
 ///
@@ -38,6 +39,11 @@ class IRFChannel
     /// @return The number of general purpose FIR filters in this channel.
     virtual uint8_t GetGFIRCount() const = 0;
     virtual IGFIR* GetGFIR(uint8_t index) = 0;
+
+    /// @return The number of gain stages in this channel.
+    virtual uint8_t GetGainStageCount() const = 0;
+    /// @return The gain stage, in signal path order, or nullptr if the index is out of range.
+    virtual IGainStage* GetGainStage(uint8_t index) = 0;
 
     virtual ILOMixer* GetLOMixer() = 0;
     virtual IDCCorrector* GetDCCorrector() = 0;
