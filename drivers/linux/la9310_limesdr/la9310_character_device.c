@@ -37,6 +37,49 @@ static const struct vm_operations_struct mmap_mem_ops = {
 #endif
 };
 
+// VSPA memory on BAR2 must not be touched before RCW_COMPLETION_DONE is set, the clock is gated and core won't work
+// attempts to access that memory region while core is disabled can cause reboot of the host. The host library maps
+// every window when it opens the device, which can be before the M4 firmware is loaded. In that state only the VSPA
+// DMEM part of a BAR2 mapping is left unpopulated, the rest of BAR2 (TCM) is mapped up front. VSPA pages are inserted
+// on fault, once the RCW has completed; until then a fault raises SIGBUS instead of reaching the device. The flag is
+// sticky, so mappings made after it is set are populated directly.
+static vm_fault_t la9310_bar2_fault(struct vm_fault* vmf)
+{
+    struct vm_area_struct* vma = vmf->vma;
+    struct la9310_dev* la9310_dev = vma->vm_private_data;
+
+    const unsigned long offset = vmf->pgoff << PAGE_SHIFT;
+    if (la9310_bar2_overlaps_vspa(offset, PAGE_SIZE) && !la9310_rcw_completed(la9310_dev))
+    {
+        dev_err_ratelimited(la9310_dev->dev,
+            "%s (PID: %d): BAR2 VSPA memory access at offset 0x%lx before RCW completion, sending SIGBUS\n",
+            current->comm,
+            current->pid,
+            offset);
+        return VM_FAULT_SIGBUS;
+    }
+
+    const unsigned long pfn = (la9310_dev->mem_regions[LA9310_MEM_REGION_TCMU].phys_addr >> PAGE_SHIFT) + vmf->pgoff;
+    return vmf_insert_pfn(vma, vmf->address, pfn);
+}
+
+static const struct vm_operations_struct bar2_lazy_mem_ops = {
+    .fault = la9310_bar2_fault,
+#ifdef CONFIG_HAVE_IOREMAP_PROT
+    .access = generic_access_phys /* only reaches pages that have been inserted, i.e. after RCW completion */
+#endif
+};
+
+static inline void la9310_vma_add_flags(struct vm_area_struct* vma, vm_flags_t flags)
+{
+// https://github.com/torvalds/linux/commit/bc292ab00f6c7a661a8a605c714e8a148f629ef6
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+    vma->vm_flags |= flags;
+#else
+    vm_flags_set(vma, flags);
+#endif
+}
+
 static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
 {
     struct la9310_dev* la9310_dev = file->private_data;
@@ -113,9 +156,41 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
         size_t pfn = region->phys_addr >> PAGE_SHIFT;
         dev_dbg(sysDev, "MMAP %i - vm_start:%lx pfn:%lx size:%lu\n", window_id, vma->vm_start, pfn, mapSize);
         vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-        vma->vm_ops = &mmap_mem_ops;
 
-        remapRet = remap_pfn_range(vma, vma->vm_start, pfn, mapSize, vma->vm_page_prot);
+        if (window_id == LA9310_WINDOW_BAR2 && la9310_bar2_overlaps_vspa(0, mapSize) && !la9310_rcw_completed(la9310_dev))
+        {
+            // vmf_insert_pfn() and partial remap_pfn_range() can't be used on copy-on-write mappings
+            if (!(vma->vm_flags & VM_SHARED))
+            {
+                dev_err(sysDev, "mmap window %u: must be MAP_SHARED\n", window_id);
+                return -EINVAL;
+            }
+            const unsigned long vspa_start = LA9310_BAR2_VSPA_OFFSET;
+            const unsigned long vspa_end = min_t(unsigned long, mapSize, LA9310_BAR2_VSPA_OFFSET + LA9310_BAR2_VSPA_SIZE);
+            dev_dbg(sysDev,
+                "MMAP %i: RCW not completed, VSPA pages 0x%lx-0x%lx are inserted on fault\n",
+                window_id,
+                vspa_start,
+                vspa_end);
+            la9310_vma_add_flags(vma, VM_PFNMAP);
+            vma->vm_private_data = la9310_dev;
+            vma->vm_ops = &bar2_lazy_mem_ops;
+
+            // TCM before the VSPA window
+            remapRet = remap_pfn_range(vma, vma->vm_start, pfn, vspa_start, vma->vm_page_prot);
+            // whatever follows the VSPA window
+            if (!remapRet && mapSize > vspa_end)
+                remapRet = remap_pfn_range(vma,
+                    vma->vm_start + vspa_end,
+                    pfn + (vspa_end >> PAGE_SHIFT),
+                    mapSize - vspa_end,
+                    vma->vm_page_prot);
+        }
+        else
+        {
+            vma->vm_ops = &mmap_mem_ops;
+            remapRet = remap_pfn_range(vma, vma->vm_start, pfn, mapSize, vma->vm_page_prot);
+        }
     }
     if (remapRet)
     {

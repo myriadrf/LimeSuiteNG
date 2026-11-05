@@ -34,6 +34,20 @@ static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
 
+bool la9310_rcw_completed(struct la9310_dev* la9310_dev)
+{
+    if (READ_ONCE(la9310_dev->rcw_done))
+        return true;
+
+    const u32 val = ioread32((u8 __iomem*)la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + RCW_COMPLETIONR_ADDR);
+    if (!(val & RCW_COMPLETION_DONE))
+        return false;
+
+    // Once set, it stays set for the rest of the power cycle, so the register doesn't have to be read again */
+    WRITE_ONCE(la9310_dev->rcw_done, true);
+    return true;
+}
+
 void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa)
 {
     const uint32_t valid_addr_ranges[3][3] = { { 0x1F800000, 0x1F81FFFF, LA9310_MEM_REGION_TCML },

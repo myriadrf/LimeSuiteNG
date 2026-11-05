@@ -177,6 +177,7 @@ struct la9310_dev {
     struct platform_device* uart;
     struct la9310_softirq soft_irq;
     struct la9310_userspace_dma user_dma;
+    bool rcw_done; // sticky: RCW_COMPLETION_DONE stays set until the device is power cycled
 };
 
 /*la9310_dev->flags*/
@@ -239,4 +240,19 @@ void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index,
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
 
 void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa);
+
+// RCW completion register in CCSR (BAR0). Until RCW_COMPLETION_DONE is set, accessing VSPA registers or VSPA memory reboots the host.
+#define RCW_COMPLETIONR_ADDR (0x1E60000 + 0x104)
+#define RCW_COMPLETION_DONE 0x1
+bool la9310_rcw_completed(struct la9310_dev* la9310_dev);
+
+// VSPA DMEM window inside BAR2 (endpoint 0x20400000 - 0x207FFFFF). The rest of BAR2 (TCM) is safe to access before RCW completion.
+#define LA9310_BAR2_VSPA_OFFSET 0x400000UL
+#define LA9310_BAR2_VSPA_SIZE 0x400000UL
+
+// true if BAR2 byte range [offset, offset + len) overlaps the VSPA DMEM window
+static inline bool la9310_bar2_overlaps_vspa(unsigned long offset, unsigned long len)
+{
+    return offset < LA9310_BAR2_VSPA_OFFSET + LA9310_BAR2_VSPA_SIZE && offset + len > LA9310_BAR2_VSPA_OFFSET;
+}
 #endif

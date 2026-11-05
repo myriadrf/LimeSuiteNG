@@ -110,7 +110,13 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         case LA9310_WINDOW_BAR1:
         case LA9310_WINDOW_BAR2: {
             struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[op.window_id];
-            if (op.offset < 0 || op.offset > ccsr_region->size)
+            if (op.window_id == LA9310_WINDOW_BAR2 && la9310_bar2_overlaps_vspa(op.offset, sizeof(u32)) &&
+                !la9310_rcw_completed(la9310_dev))
+            {
+                dev_err(la9310_dev->dev, "BAR2 VSPA memory access at 0x%08lX refused: RCW not completed\n", op.offset);
+                return -EAGAIN;
+            }
+            if (ccsr_region->size < sizeof(u32) || op.offset > ccsr_region->size - sizeof(u32))
             {
                 dev_err(la9310_dev->dev, "CSR offset %08lX out of bounds\n", op.offset);
                 return -EINVAL;
