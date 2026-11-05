@@ -25,6 +25,9 @@ class ToneGeneratorPanel : public wxPanel
         const wxSize& size = wxDefaultSize,
         long style = 0);
     ~ToneGeneratorPanel();
+    /// @param dev Not owned, must outlive the panel or be replaced by another Initialize() call.
+    void Initialize(lime::IToneGenerator* dev);
+    /// @param dev Kept alive by the panel.
     void Initialize(std::shared_ptr<lime::IToneGenerator> dev);
 
     void ValuesChanged(wxSpinDoubleEvent& event);
@@ -34,7 +37,8 @@ class ToneGeneratorPanel : public wxPanel
     wxCheckBox* chkEnable;
     NumericSliderDouble* amplitude;
     NumericSliderDouble* freq_weight;
-    std::shared_ptr<lime::IToneGenerator> device;
+    lime::IToneGenerator* device;
+    std::shared_ptr<lime::IToneGenerator> deviceOwner;
 };
 
 #endif

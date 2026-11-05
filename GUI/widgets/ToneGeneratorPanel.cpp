@@ -10,6 +10,7 @@ using namespace lime;
 
 ToneGeneratorPanel::ToneGeneratorPanel(
     wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
+    : device(nullptr)
 {
     constexpr int margins = 0;
     const int textFlags = wxALIGN_LEFT | wxLEFT | wxALIGN_CENTER_VERTICAL;
@@ -50,6 +51,14 @@ ToneGeneratorPanel::ToneGeneratorPanel(
 
 void ToneGeneratorPanel::Initialize(std::shared_ptr<lime::IToneGenerator> dev)
 {
+    deviceOwner = dev;
+    Initialize(dev.get());
+}
+
+void ToneGeneratorPanel::Initialize(lime::IToneGenerator* dev)
+{
+    if (!deviceOwner || deviceOwner.get() != dev)
+        deviceOwner.reset();
     device = dev;
     if (!dev)
         return;
