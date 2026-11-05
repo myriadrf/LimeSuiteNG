@@ -15,6 +15,7 @@ class IDCCorrector;
 class IOversampler;
 class IQuadratureErrorCorrector;
 class IToneGenerator;
+class IRFPath;
 
 /// @brief A single Rx or Tx channel of an RF SoC, giving access to the building blocks of its signal path.
 ///
@@ -30,6 +31,7 @@ class IRFChannel
     /// @return The index of this channel within the RF SoC.
     virtual uint8_t GetIndex() const = 0;
 
+    virtual IRFPath* GetRFPath() = 0;
     virtual ILPF* GetLPF() = 0;
     virtual INCO* GetNCO() = 0;
 

@@ -10,6 +10,7 @@
 #include "limesuiteng/IOversampler.h"
 #include "limesuiteng/IQuadratureErrorCorrector.h"
 #include "limesuiteng/IToneGenerator.h"
+#include "limesuiteng/IRFPath.h"
 
 #include <array>
 #include <cstdint>
@@ -18,6 +19,23 @@
 namespace lime {
 
 class LMS7002M;
+
+/// @brief RFE input (Rx) or TRF band (Tx) selection of one LMS7002M channel.
+class LMS7002M_RFPath : public IRFPath
+{
+  public:
+    LMS7002M_RFPath(LMS7002M* chip, TRXDir dir, uint8_t channel);
+
+    TRXDir GetDirection() const override { return mDir; }
+    std::vector<PathDescriptor> GetPaths() const override;
+    OpStatus SetPath(const std::string& name) override;
+    std::string GetPath() override;
+
+  private:
+    LMS7002M* mChip;
+    TRXDir mDir;
+    uint8_t mChannel;
+};
 
 /// @brief RBB/TBB low pass filter of one LMS7002M channel.
 class LMS7002M_LPF : public ILPF
@@ -177,6 +195,7 @@ class LMS7002M_RFChannel : public IRFChannel
     TRXDir GetDirection() const override { return mDir; }
     uint8_t GetIndex() const override { return mIndex; }
 
+    IRFPath* GetRFPath() override { return mRFPath.get(); }
     ILPF* GetLPF() override { return mLPF.get(); }
     INCO* GetNCO() override { return mNCO.get(); }
 
@@ -192,6 +211,7 @@ class LMS7002M_RFChannel : public IRFChannel
   private:
     TRXDir mDir;
     uint8_t mIndex;
+    std::unique_ptr<LMS7002M_RFPath> mRFPath;
     std::unique_ptr<LMS7002M_LPF> mLPF;
     std::unique_ptr<LMS7002M_NCO> mNCO;
     std::array<std::unique_ptr<LMS7002M_GFIR>, GFIR_COUNT> mGFIR;

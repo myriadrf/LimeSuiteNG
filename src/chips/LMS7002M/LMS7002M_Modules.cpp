@@ -10,6 +10,59 @@
 
 namespace lime {
 
+// LMS7002M_RFPath
+
+LMS7002M_RFPath::LMS7002M_RFPath(LMS7002M* chip, TRXDir dir, uint8_t channel)
+    : mChip(chip)
+    , mDir(dir)
+    , mChannel(channel)
+{
+    assert(chip);
+}
+
+std::vector<IRFPath::PathDescriptor> LMS7002M_RFPath::GetPaths() const
+{
+    // Same names and recommended ranges as the LMS7002M RFSOCDescriptor in LMS7002M_SDRDevice
+    if (mDir == TRXDir::Tx)
+        return {
+            { "None", Range<double>(0, 0, 0) },
+            { "Band1", Range<double>(2e9, 2.6e9, 0) },
+            { "Band2", Range<double>(30e6, 1.9e9, 0) },
+        };
+    return {
+        { "None", Range<double>(0, 0, 0) },
+        { "LNAH", Range<double>(2e9, 2.6e9, 0) },
+        { "LNAL", Range<double>(700e6, 900e6, 0) },
+        { "LNAW", Range<double>(700e6, 2.6e9, 0) },
+        { "LB1", Range<double>(0, 0, 0) },
+        { "LB2", Range<double>(0, 0, 0) },
+    };
+}
+
+// GetPaths() list positions are the hardware values:
+// Rx - LMS7002M::PathRFE, Tx - TRF band number (0 - none).
+OpStatus LMS7002M_RFPath::SetPath(const std::string& name)
+{
+    const std::vector<PathDescriptor> paths = GetPaths();
+    for (std::size_t i = 0; i < paths.size(); ++i)
+    {
+        if (paths[i].name == name)
+            return mChip->SetPath(mDir, mChannel, i);
+    }
+    return OpStatus::InvalidValue;
+}
+
+std::string LMS7002M_RFPath::GetPath()
+{
+    std::size_t index;
+    {
+        LMS7002M::ChannelScope scope(mChip, mChannel);
+        index = mDir == TRXDir::Tx ? mChip->GetBandTRF() : static_cast<std::size_t>(mChip->GetPathRFE());
+    }
+    const std::vector<PathDescriptor> paths = GetPaths();
+    return index < paths.size() ? paths[index].name : std::string();
+}
+
 // LMS7002M_LPF
 
 LMS7002M_LPF::LMS7002M_LPF(LMS7002M* chip, TRXDir dir, uint8_t channel)
@@ -386,6 +439,7 @@ LMS7002M_RFChannel::LMS7002M_RFChannel(
     LMS7002M* chip, TRXDir dir, uint8_t index, std::shared_ptr<ILOMixer> loMixer, std::shared_ptr<IOversampler> oversampler)
     : mDir(dir)
     , mIndex(index)
+    , mRFPath(std::make_unique<LMS7002M_RFPath>(chip, dir, index))
     , mLPF(std::make_unique<LMS7002M_LPF>(chip, dir, index))
     , mNCO(std::make_unique<LMS7002M_NCO>(chip, dir, index))
     , mDC(std::make_unique<LMS7002M_DC>(chip->mC_impl, dir, index))

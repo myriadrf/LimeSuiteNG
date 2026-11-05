@@ -21,6 +21,7 @@
 #include "limesuiteng/IOversampler.h"
 #include "limesuiteng/IQuadratureErrorCorrector.h"
 #include "limesuiteng/IToneGenerator.h"
+#include "limesuiteng/IRFPath.h"
 
 #include <array>
 #include <cstdarg>
