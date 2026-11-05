@@ -182,7 +182,7 @@ class LIME_API LMS7002M : public IRFSOC
      * @param tuneDynamicValues Whether to tune the dynamic values or not
      * @return The status of the operation
      */
-    OpStatus LoadConfig(const std::string& filename, bool tuneDynamicValues = true);
+    OpStatus LoadConfig(const std::string& filename, bool tuneDynamicValues = true) override;
 
     /*!
      * @brief Reads all registers from chip and saves to file

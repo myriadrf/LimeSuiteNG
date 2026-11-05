@@ -19,6 +19,7 @@
 #include "interface/IRFTiming.h"
 
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/IRFSOC.h"
 #include "limesuiteng/DeviceHandle.h"
 #include "limesuiteng/DeviceRegistry.h"
 #include "limesuiteng/StreamConfig.h"
@@ -482,7 +483,12 @@ static OpStatus LoadDevicesConfigurationFile(LimePluginContext* context)
         if (node.configInputs.iniFilename.empty())
             continue;
 
-        LMS7002M* chip = static_cast<LMS7002M*>(node.device->GetInternalChip(node.chipIndex));
+        IRFSOC* chip = node.device->GetRFSOC(node.chipIndex);
+        if (!chip)
+        {
+            Log(LogLevel::Error, "dev%" PRIuPTR " chip%i RF SoC not available", i, node.chipIndex);
+            return OpStatus::Error;
+        }
 
         std::string configFilepath;
         if (node.configInputs.iniFilename[0] != '/') // is not global path

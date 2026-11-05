@@ -144,6 +144,11 @@ GPIO_Interface* SDRDevice::GetGPIOControls()
     return nullptr;
 }
 
+IRFSOC* SDRDevice::GetRFSOC([[maybe_unused]] uint8_t moduleIndex)
+{
+    return nullptr;
+}
+
 ICSR* SDRDevice::getICSR()
 {
     return nullptr;

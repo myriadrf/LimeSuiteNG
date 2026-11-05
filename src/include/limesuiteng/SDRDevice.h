@@ -36,6 +36,7 @@ struct OEMData;
 class RFStream;
 class GPIO_Interface;
 class ICSR;
+class IRFSOC;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -654,6 +655,12 @@ class LIME_API SDRDevice
     /// @param index The index of the device to retrieve.
     /// @return The pointer to the internal device.
     virtual void* GetInternalChip(uint32_t index) = 0;
+
+    /// @brief Gets the generic RF SoC (transceiver chip) interface of the given module.
+    /// @param moduleIndex The index of the RF SoC, as listed in SDRDescriptor::rfSOC.
+    /// @return The RF SoC interface, owned by the device and valid for as long as it exists,
+    /// or nullptr if the index is out of range or the device does not provide one.
+    virtual IRFSOC* GetRFSOC(uint8_t moduleIndex);
 
     /// @brief The definition of a function to call whenever memory is being uploaded.
     typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> UploadMemoryCallback;

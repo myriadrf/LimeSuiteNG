@@ -716,6 +716,13 @@ void* LimeSDR_MMX8::GetInternalChip(uint32_t index)
     return mSubDevices[index % mSubDevices.size()]->GetInternalChip(0);
 }
 
+IRFSOC* LimeSDR_MMX8::GetRFSOC(uint8_t moduleIndex)
+{
+    if (moduleIndex >= mSubDevices.size())
+        return nullptr;
+    return mSubDevices[moduleIndex]->GetRFSOC(0);
+}
+
 OpStatus LimeSDR_MMX8::CustomParameterWrite(const std::vector<CustomParameterIO>& parameters)
 {
     OpStatus status = OpStatus::Success;

@@ -769,6 +769,13 @@ void* LMS7002M_SDRDevice::GetInternalChip(uint32_t index)
     return mLMSChips.at(index).get();
 }
 
+IRFSOC* LMS7002M_SDRDevice::GetRFSOC(uint8_t moduleIndex)
+{
+    if (moduleIndex >= mLMSChips.size())
+        return nullptr;
+    return mLMSChips[moduleIndex].get();
+}
+
 uint64_t LMS7002M_SDRDevice::GetHardwareTimestamp(uint8_t moduleIndex)
 {
     if (moduleIndex >= mStreamers.size())

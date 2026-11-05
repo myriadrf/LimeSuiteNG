@@ -2,6 +2,7 @@
 
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/LMS7002M.h"
+#include "limesuiteng/IRFSOC.h"
 #include "limesuiteng/Logger.h"
 
 #include <cassert>
@@ -212,9 +213,9 @@ int main(int argc, char** argv)
 
         for (int moduleId : chipIndexes)
         {
-            LMS7002M* chip = static_cast<LMS7002M*>(device->GetInternalChip(moduleId));
+            IRFSOC* chip = device->GetRFSOC(moduleId);
             if (!chip)
-                throw std::runtime_error("failed to get internal chip "s + std::to_string(moduleId));
+                throw std::runtime_error("failed to get RF SoC "s + std::to_string(moduleId));
             if (!configFilepath.empty() && chip->LoadConfig(configFilepath) != OpStatus::Success)
                 throw std::runtime_error("error loading file: "s + configFilepath);
 

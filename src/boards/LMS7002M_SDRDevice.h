@@ -114,6 +114,7 @@ class LMS7002M_SDRDevice : public SDRDevice
     void SetMessageLogCallback(LogCallbackType callback) override;
 
     void* GetInternalChip(uint32_t index) override;
+    IRFSOC* GetRFSOC(uint8_t moduleIndex) override;
 
     OpStatus UploadMemory(
         eMemoryDevice device, uint8_t moduleIndex, const char* data, size_t length, UploadMemoryCallback callback) override;
