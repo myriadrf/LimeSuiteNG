@@ -13,6 +13,7 @@
 #include "limesuiteng/LMS7002MCSR.h"
 #include "limesuiteng/IRFSOC.h"
 #include "limesuiteng/IRFChannel.h"
+#include "limesuiteng/ISensor.h"
 #include "limesuiteng/ILPF.h"
 #include "limesuiteng/INCO.h"
 #include "limesuiteng/IGFIR.h"
@@ -832,6 +833,8 @@ class LIME_API LMS7002M : public IRFSOC
     // IRFSOC
     uint8_t GetChannelCount(TRXDir dir) const override;
     IRFChannel* GetChannel(TRXDir dir, uint8_t index) override;
+    uint8_t GetSensorCount() const override;
+    ISensor* GetSensor(uint8_t index) override;
 
     /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
     class ChannelScope
@@ -945,6 +948,7 @@ class LIME_API LMS7002M : public IRFSOC
     static constexpr uint8_t CHANNEL_COUNT = 2;
     // Indexed by [direction][channel], Rx = 0, Tx = 1
     std::array<std::array<std::unique_ptr<IRFChannel>, CHANNEL_COUNT>, 2> mRFChannels;
+    std::vector<std::unique_ptr<ISensor>> mSensors;
 
   public:
     lms7002m_context* mC_impl;

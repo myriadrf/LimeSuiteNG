@@ -12,9 +12,11 @@
 #include "limesuiteng/IToneGenerator.h"
 #include "limesuiteng/IRFPath.h"
 #include "limesuiteng/IGainStage.h"
+#include "limesuiteng/ISensor.h"
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -185,6 +187,25 @@ class LMS7002M_ToneGenerator : public IToneGenerator
     double mFrequencyWeight;
 };
 
+/// @brief A sensor whose value is read by calling the given function.
+class LMS7002M_Sensor : public ISensor
+{
+  public:
+    /// @brief The function that reads the sensor value.
+    using ReadFunction = std::function<OpStatus(double& value)>;
+
+    LMS7002M_Sensor(std::string name, Units units, ReadFunction read);
+
+    const std::string& GetName() const override { return mName; }
+    Units GetUnits() const override { return mUnits; }
+    OpStatus GetValue(double& value) override { return mRead(value); }
+
+  private:
+    std::string mName;
+    Units mUnits;
+    ReadFunction mRead;
+};
+
 /// @brief One of the LMS7002M gain stages (LNA, TIA, PGA, PAD, ...) of a single channel.
 class LMS7002M_GainStage : public IGainStage
 {
@@ -196,7 +217,7 @@ class LMS7002M_GainStage : public IGainStage
     Range<double> GetRange() const override { return mRange; }
 
     OpStatus SetValue(double value) override;
-    double GetValue() override;
+    OpStatus GetValue(double& value) override;
 
   private:
     LMS7002M* mChip;

@@ -33,8 +33,10 @@ class IGainStage
     /// @brief Sets the gain.
     /// @param value The gain, in GetUnits() units.
     virtual OpStatus SetValue(double value) = 0;
-    /// @return The current gain, in GetUnits() units.
-    virtual double GetValue() = 0;
+    /// @brief Reads the current gain.
+    /// @param value Output: the gain, in GetUnits() units. Left unchanged if the read fails.
+    /// @return The status of the operation.
+    virtual OpStatus GetValue(double& value) = 0;
 };
 
 } // namespace lime

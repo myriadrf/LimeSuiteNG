@@ -63,6 +63,16 @@ std::string LMS7002M_RFPath::GetPath()
     return index < paths.size() ? paths[index].name : std::string();
 }
 
+// LMS7002M_Sensor
+
+LMS7002M_Sensor::LMS7002M_Sensor(std::string name, Units units, ReadFunction read)
+    : mName(std::move(name))
+    , mUnits(units)
+    , mRead(std::move(read))
+{
+    assert(mRead);
+}
+
 // LMS7002M_GainStage
 
 LMS7002M_GainStage::LMS7002M_GainStage(
@@ -106,28 +116,36 @@ OpStatus LMS7002M_GainStage::SetValue(double value)
     }
 }
 
-double LMS7002M_GainStage::GetValue()
+OpStatus LMS7002M_GainStage::GetValue(double& value)
 {
     const LMS7002M::Channel ch = ToChipChannel(mChannel);
     switch (mType)
     {
     case eGainTypes::LNA:
-        return mChip->GetRFELNA_dB(ch);
+        value = mChip->GetRFELNA_dB(ch);
+        break;
     case eGainTypes::LoopbackLNA:
-        return mChip->GetRFELoopbackLNA_dB(ch);
+        value = mChip->GetRFELoopbackLNA_dB(ch);
+        break;
     case eGainTypes::TIA:
-        return mChip->GetRFETIA_dB(ch);
+        value = mChip->GetRFETIA_dB(ch);
+        break;
     case eGainTypes::PGA:
-        return mChip->GetRBBPGA_dB(ch);
+        value = mChip->GetRBBPGA_dB(ch);
+        break;
     case eGainTypes::IAMP:
-        return mChip->GetTBBIAMP_dB(ch);
+        value = mChip->GetTBBIAMP_dB(ch);
+        break;
     case eGainTypes::PAD:
-        return mChip->GetTRFPAD_dB(ch);
+        value = mChip->GetTRFPAD_dB(ch);
+        break;
     case eGainTypes::LoopbackPAD:
-        return mChip->GetTRFLoopbackPAD_dB(ch);
+        value = mChip->GetTRFLoopbackPAD_dB(ch);
+        break;
     default:
-        return 0;
+        return OpStatus::NotImplemented;
     }
+    return OpStatus::Success;
 }
 
 // LMS7002M_LPF
@@ -579,6 +597,18 @@ IRFChannel* LMS7002M::GetChannel(TRXDir dir, uint8_t index)
     return mRFChannels[DirIndex(dir)][index].get();
 }
 
+uint8_t LMS7002M::GetSensorCount() const
+{
+    return static_cast<uint8_t>(mSensors.size());
+}
+
+ISensor* LMS7002M::GetSensor(uint8_t index)
+{
+    if (index >= mSensors.size())
+        return nullptr;
+    return mSensors[index].get();
+}
+
 void LMS7002M::CreateModules()
 {
     for (TRXDir dir : { TRXDir::Rx, TRXDir::Tx })
@@ -587,6 +617,25 @@ void LMS7002M::CreateModules()
         auto oversampler = std::make_shared<LMS7002M_Oversampler>(this, dir);
         for (uint8_t ch = 0; ch < CHANNEL_COUNT; ++ch)
             mRFChannels[DirIndex(dir)][ch] = std::make_unique<LMS7002M_RFChannel>(this, dir, ch, loMixer, oversampler);
+    }
+
+    // The underlying LMS7002M getters do not report errors, so these reads always succeed.
+    using Units = ISensor::Units;
+    mSensors.push_back(std::make_unique<LMS7002M_Sensor>("Temperature", Units::Celsius, [this](double& value) {
+        value = GetTemperature();
+        return OpStatus::Success;
+    }));
+    mSensors.push_back(std::make_unique<LMS7002M_Sensor>("CGEN PLL locked", Units::Boolean, [this](double& value) {
+        value = GetCGENLocked() ? 1.0 : 0.0;
+        return OpStatus::Success;
+    }));
+    for (TRXDir dir : { TRXDir::Rx, TRXDir::Tx })
+    {
+        const char* name = dir == TRXDir::Rx ? "RxPLL locked" : "TxPLL locked";
+        mSensors.push_back(std::make_unique<LMS7002M_Sensor>(name, Units::Boolean, [this, dir](double& value) {
+            value = GetSXLocked(dir) ? 1.0 : 0.0;
+            return OpStatus::Success;
+        }));
     }
 }
 
