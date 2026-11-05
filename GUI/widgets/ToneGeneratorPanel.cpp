@@ -1,6 +1,6 @@
 #include "ToneGeneratorPanel.h"
 
-#include "interface/IToneGenerator.h"
+#include "limesuiteng/IToneGenerator.h"
 
 #include "numericSliderDouble.h"
 #include "numericSlider.h"

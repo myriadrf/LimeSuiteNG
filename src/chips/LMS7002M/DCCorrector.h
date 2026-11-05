@@ -1,6 +1,6 @@
 #pragma once
 
-#include "interface/IDCCorrector.h"
+#include "limesuiteng/IDCCorrector.h"
 #include "limesuiteng/types.h"
 
 #include <memory>

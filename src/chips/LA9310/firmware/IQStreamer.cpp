@@ -1,9 +1,9 @@
 #include "IQStreamer.h"
 
-#include "interface/IOversampler.h"
-#include "interface/IDCCorrector.h"
-#include "interface/IQuadratureErrorCorrector.h"
-#include "interface/IToneGenerator.h"
+#include "limesuiteng/IOversampler.h"
+#include "limesuiteng/IDCCorrector.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IToneGenerator.h"
 #include "interface/IRFTiming.h"
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
 #include "chips/LA9310/LA9310.h"

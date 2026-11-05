@@ -1,6 +1,6 @@
 #include "DCCorrectorPanel.h"
 
-#include "interface/IDCCorrector.h"
+#include "limesuiteng/IDCCorrector.h"
 
 #include "numericSlider.h"
 #include <wx/spinctrl.h>

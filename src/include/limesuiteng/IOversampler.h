@@ -1,5 +1,5 @@
-#ifndef LIME_IOVERSAMPLER_H
-#define LIME_IOVERSAMPLER_H
+#ifndef LIMESUITENG_IOVERSAMPLER_H
+#define LIMESUITENG_IOVERSAMPLER_H
 
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/complex.h"
@@ -19,4 +19,4 @@ class IOversampler
 
 } // namespace lime
 
-#endif // LIME_IOVERSAMPLER_H
+#endif // LIMESUITENG_IOVERSAMPLER_H

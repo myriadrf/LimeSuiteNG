@@ -11,6 +11,16 @@
 #include "limesuiteng/config.h"
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/LMS7002MCSR.h"
+#include "limesuiteng/IRFSOC.h"
+#include "limesuiteng/IRFChannel.h"
+#include "limesuiteng/ILPF.h"
+#include "limesuiteng/INCO.h"
+#include "limesuiteng/IGFIR.h"
+#include "limesuiteng/ILOMixer.h"
+#include "limesuiteng/IDCCorrector.h"
+#include "limesuiteng/IOversampler.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IToneGenerator.h"
 
 #include <array>
 #include <cstdarg>
@@ -38,7 +48,7 @@ typedef double float_type; ///< The type of the floating point number used in th
  *
  * More information: https://limemicro.com/technology/lms7002m/
 */
-class LIME_API LMS7002M
+class LIME_API LMS7002M : public IRFSOC
 {
   public:
     /// @brief The maximum frequency of the onboard clock generator.
@@ -818,6 +828,10 @@ class LIME_API LMS7002M
      */
     void SetOnCGENChangeCallback(CGENChangeCallbackType callback, void* userData = nullptr);
 
+    // IRFSOC
+    uint8_t GetChannelCount(TRXDir dir) const override;
+    IRFChannel* GetChannel(TRXDir dir, uint8_t index) override;
+
     /** @brief Switches LMS7002M SPI to requested channel and restores previous channel when going out of scope */
     class ChannelScope
     {
@@ -924,6 +938,12 @@ class LIME_API LMS7002M
 
     int16_t ReadAnalogDC(const uint16_t addr);
     uint16_t GetRSSIDelayCounter();
+
+    void CreateModules();
+
+    static constexpr uint8_t CHANNEL_COUNT = 2;
+    // Indexed by [direction][channel], Rx = 0, Tx = 1
+    std::array<std::array<std::unique_ptr<IRFChannel>, CHANNEL_COUNT>, 2> mRFChannels;
 
   public:
     lms7002m_context* mC_impl;

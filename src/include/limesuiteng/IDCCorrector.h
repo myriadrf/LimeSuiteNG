@@ -1,5 +1,5 @@
-#ifndef LIME_IDCCORRECTOR_H
-#define LIME_IDCCORRECTOR_H
+#ifndef LIMESUITENG_IDCCORRECTOR_H
+#define LIMESUITENG_IDCCORRECTOR_H
 
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/complex.h"

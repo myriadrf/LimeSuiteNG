@@ -1,6 +1,6 @@
 #include "LimeSDR_Micro.h"
 #include "chips/LMS7002M/DCCorrector.h"
-#include "src/interface/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
 
 #include <cmath>
 #include <sstream>
@@ -41,11 +41,11 @@
 #include "chips/LA9310/I2C.h"
 #include "protocols/LMS64CProtocol.h"
 #include "streaming/TRXLooper.h"
-#include "interface/IDCCorrector.h"
+#include "limesuiteng/IDCCorrector.h"
 #include "interface/IRFTiming.h"
-#include "interface/IQuadratureErrorCorrector.h"
-#include "interface/IOversampler.h"
-#include "interface/IToneGenerator.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IOversampler.h"
+#include "limesuiteng/IToneGenerator.h"
 
 #include "CommonFunctions.h"
 #include "DeviceTreeNode.h"

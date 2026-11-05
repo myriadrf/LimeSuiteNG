@@ -1,6 +1,6 @@
 #include "QECPanel.h"
 
-#include "interface/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
 
 #include "numericSliderDouble.h"
 #include <wx/spinctrl.h>

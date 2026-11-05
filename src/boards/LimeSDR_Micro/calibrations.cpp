@@ -10,10 +10,10 @@
 #include "embedded/lms7002m/csr_data.h"
 #include "embedded/lms7002m/privates.h"
 
-#include "src/interface/IDCCorrector.h"
-#include "src/interface/IQuadratureErrorCorrector.h"
-#include "src/interface/IToneGenerator.h"
-#include "interface/IOversampler.h"
+#include "limesuiteng/IDCCorrector.h"
+#include "limesuiteng/IQuadratureErrorCorrector.h"
+#include "limesuiteng/IToneGenerator.h"
+#include "limesuiteng/IOversampler.h"
 
 #include <chrono>
 #include <cmath>

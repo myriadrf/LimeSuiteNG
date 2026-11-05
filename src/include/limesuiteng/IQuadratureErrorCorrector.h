@@ -1,5 +1,5 @@
-#ifndef LIME_QEC_H
-#define LIME_QEC_H
+#ifndef LIMESUITENG_IQUADRATUREERRORCORRECTOR_H
+#define LIMESUITENG_IQUADRATUREERRORCORRECTOR_H
 
 #include "limesuiteng/OpStatus.h"
 #include "limesuiteng/types.h"

@@ -1,5 +1,5 @@
-#ifndef LIME_ITONE_GENERATOR_H
-#define LIME_ITONE_GENERATOR_H
+#ifndef LIMESUITENG_ITONEGENERATOR_H
+#define LIMESUITENG_ITONEGENERATOR_H
 
 #include "limesuiteng/OpStatus.h"
 

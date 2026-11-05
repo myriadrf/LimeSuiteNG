@@ -2,6 +2,7 @@ set(LMS7002M_SOURCES
     DCCorrector.cpp
     LMS7002M_RegistersMap.cpp
     LMS7002M.cpp
+    LMS7002M_Modules.cpp
     LMS7002MCSR_Data.cpp
     LMS7002MCSR_To_LMS7002MCSR_Data.cpp
     validation.cpp
