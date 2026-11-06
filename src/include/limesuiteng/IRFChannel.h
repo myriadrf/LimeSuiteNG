@@ -31,6 +31,9 @@ class IRFChannel
     virtual TRXDir GetDirection() const = 0;
     /// @return The index of this channel within the RF SoC.
     virtual uint8_t GetIndex() const = 0;
+    /// @return Whether the channel's signal path is enabled.
+    /// Undetermined if only some of its parts are enabled, e.g. after configuring individual registers.
+    virtual TriState IsEnabled() = 0;
 
     virtual IRFPath* GetRFPath() = 0;
     virtual ILPF* GetLPF() = 0;

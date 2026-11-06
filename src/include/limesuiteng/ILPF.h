@@ -22,6 +22,9 @@ class ILPF
     virtual double GetBandwidth() = 0;
     /// @return The RF bandwidth range the filter can be configured to.
     virtual Range<double> GetBandwidthRange() const = 0;
+
+    /// @return Disabled if the filter is bypassed.
+    virtual TriState IsEnabled() = 0;
 };
 
 } // namespace lime

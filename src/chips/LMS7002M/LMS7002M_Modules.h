@@ -52,6 +52,7 @@ class LMS7002M_LPF : public ILPF
     OpStatus SetBandwidth(double bandwidth_Hz) override;
     double GetBandwidth() override;
     Range<double> GetBandwidthRange() const override;
+    TriState IsEnabled() override;
 
   private:
     LMS7002M* mChip;
@@ -68,7 +69,7 @@ class LMS7002M_NCO : public INCO
 
     TRXDir GetDirection() const override { return mDir; }
     OpStatus Enable(bool enable) override;
-    bool IsEnabled() override;
+    TriState IsEnabled() override;
 
     uint8_t GetPresetCount() const override { return 16; }
     OpStatus SelectPreset(uint8_t index) override;
@@ -95,7 +96,7 @@ class LMS7002M_GFIR : public IGFIR
 
     TRXDir GetDirection() const override { return mDir; }
     OpStatus Enable(bool enable) override;
-    bool IsEnabled() override;
+    TriState IsEnabled() override;
 
     std::size_t GetMaxCoefficientCount() override;
     OpStatus SetCoefficients(std::span<const double> coefficients) override;
@@ -150,9 +151,14 @@ class LMS7002M_QEC : public IQuadratureErrorCorrector
   public:
     LMS7002M_QEC(LMS7002M* chip, TRXDir dir, uint8_t channel);
 
+    /// @brief Controls the GC_BYP and PH_BYP bypasses.
+    OpStatus Enabled(bool enable) override;
+    TriState IsEnabled() override;
+
     OpStatus SetImbalance(float iq_gain_imb, float phase_imb_deg) override;
     OpStatus SetPhaseCorrection(float phase_imb_deg) override;
     OpStatus SetGainCorrection(float iq_gain_imb) override;
+    OpStatus GetImbalance(float& iq_gain_imb, float& phase_imb_deg) override;
 
     lime::Range<float> GetGainRange() override;
     lime::Range<float> GetPhaseRange() override;
@@ -242,6 +248,7 @@ class LMS7002M_RFChannel : public IRFChannel
 
     TRXDir GetDirection() const override { return mDir; }
     uint8_t GetIndex() const override { return mIndex; }
+    TriState IsEnabled() override;
 
     IRFPath* GetRFPath() override { return mRFPath.get(); }
     ILPF* GetLPF() override { return mLPF.get(); }
@@ -260,6 +267,7 @@ class LMS7002M_RFChannel : public IRFChannel
     IToneGenerator* GetToneGenerator() override { return mToneGenerator.get(); }
 
   private:
+    LMS7002M* mChip;
     TRXDir mDir;
     uint8_t mIndex;
     std::unique_ptr<LMS7002M_RFPath> mRFPath;

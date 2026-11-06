@@ -1613,8 +1613,10 @@ lime_Result lms7002m_get_i_q_balance(
     lms7002m_context* self, bool isTx, int16_t* const iqcorr, uint16_t* const gcorri, uint16_t* const gcorrq)
 {
     if (iqcorr != NULL)
-        *iqcorr = ((int16_t)lms7002m_spi_read_csr(self, isTx ? LMS7002M_IQCORR_TXTSP : LMS7002M_IQCORR_RXTSP) << 4) >>
-                  4; //sign extend 12-bit
+    {
+        int16_t phase_signed = lms7002m_spi_read_csr(self, isTx ? LMS7002M_IQCORR_TXTSP : LMS7002M_IQCORR_RXTSP) << 4;
+        *iqcorr = phase_signed >> 4; //sign extend 12-bit
+    }
     if (gcorri != NULL)
         *gcorri = (uint16_t)(lms7002m_spi_read_csr(self, isTx ? LMS7002M_GCORRI_TXTSP : LMS7002M_GCORRI_RXTSP)); //unsigned 11-bit
     if (gcorrq != NULL)

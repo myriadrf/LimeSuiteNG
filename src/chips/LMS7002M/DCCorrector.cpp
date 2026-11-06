@@ -14,21 +14,37 @@ LMS7002M_DC::LMS7002M_DC(lms7002m_context* rfsoc, TRXDir dir, uint32_t channel)
     base_reg += channel * 2;
 }
 
-OpStatus LMS7002M_DC::Enabled(bool enable)
+static const lms7002m_csr* PowerDownCSR(uint16_t base_reg)
 {
     switch (base_reg)
     {
     case 0x05C3:
-        return static_cast<lime::OpStatus>(lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_TXA, !enable));
+        return &LMS7002M_PD_DCDAC_TXA;
     case 0x05C5:
-        return static_cast<lime::OpStatus>(lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_TXB, !enable));
+        return &LMS7002M_PD_DCDAC_TXB;
     case 0x05C7:
-        return static_cast<lime::OpStatus>(lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_RXA, !enable));
+        return &LMS7002M_PD_DCDAC_RXA;
     case 0x05C9:
-        return static_cast<lime::OpStatus>(lms7002m_spi_modify_csr(rfsoc, LMS7002M_PD_DCDAC_RXB, !enable));
+        return &LMS7002M_PD_DCDAC_RXB;
     default:
-        return OpStatus::Error;
+        return nullptr;
     }
+}
+
+OpStatus LMS7002M_DC::Enabled(bool enable)
+{
+    const lms7002m_csr* csr = PowerDownCSR(base_reg);
+    if (!csr)
+        return OpStatus::Error;
+    return static_cast<lime::OpStatus>(lms7002m_spi_modify_csr(rfsoc, *csr, !enable));
+}
+
+TriState LMS7002M_DC::IsEnabled()
+{
+    const lms7002m_csr* csr = PowerDownCSR(base_reg);
+    if (!csr)
+        return TriState::Undetermined;
+    return lms7002m_spi_read_csr(rfsoc, *csr) == 0 ? TriState::Enabled : TriState::Disabled;
 }
 
 OpStatus LMS7002M_DC::SetDCOffset(complex16_t offset)

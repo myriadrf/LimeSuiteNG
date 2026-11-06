@@ -15,9 +15,9 @@ class IGainStage
   public:
     /// @brief The units the gain value is expressed in.
     enum class Units : uint8_t {
-        dB, ///< Decibels.
-        Linear, ///< Linear gain factor.
         Raw, ///< Hardware specific register code, without a defined relation to the actual gain.
+        Linear, ///< Linear gain factor.
+        dB, ///< Decibels.
     };
 
     virtual ~IGainStage() = default;

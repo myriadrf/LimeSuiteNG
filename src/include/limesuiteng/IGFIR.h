@@ -23,7 +23,7 @@ class IGFIR
 
     /// @brief Enables the filter, or bypasses it when disabled.
     virtual OpStatus Enable(bool enable) = 0;
-    virtual bool IsEnabled() = 0;
+    virtual TriState IsEnabled() = 0;
 
     /// @return The number of coefficients that can be currently set, depends on the current sample rate.
     virtual std::size_t GetMaxCoefficientCount() = 0;

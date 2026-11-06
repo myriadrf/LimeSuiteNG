@@ -14,6 +14,7 @@ class IDCCorrector
 
     virtual ~IDCCorrector(){};
     virtual OpStatus Enabled(bool enable) = 0;
+    virtual TriState IsEnabled() = 0;
 
     virtual OpStatus SetDCOffset(complex16_t offset) = 0;
     virtual OpStatus SetDCI(int16_t offset) = 0;

@@ -5,15 +5,15 @@
 
 #include <wx/panel.h>
 
-class wxSpinCtrl;
-class wxScrollBar;
-
-class NumericSliderDouble;
+class wxSpinCtrlDouble;
+class wxStaticText;
+class wxWindow;
 
 namespace lime {
 class IQuadratureErrorCorrector;
 }
 
+/// @brief Controls for a lime::IQuadratureErrorCorrector. The correction is written as soon as it is changed.
 class QECPanel : public wxPanel
 {
   public:
@@ -24,14 +24,23 @@ class QECPanel : public wxPanel
         const wxSize& size = wxDefaultSize,
         long style = 0);
     ~QECPanel();
+    /// @param dev Shared ownership is kept by the panel.
     void Initialize(std::shared_ptr<lime::IQuadratureErrorCorrector> dev);
-
-    void WriteValues(wxSpinDoubleEvent& event);
+    /// @param dev Not owned, must outlive the panel or be replaced by another Initialize() call.
+    void Initialize(lime::IQuadratureErrorCorrector* dev);
+    /// @brief Reads the correction back from the device. Keeps the shown values if the device can not read it.
+    void UpdateGUI();
 
   private:
-    NumericSliderDouble* gainImbalance;
-    NumericSliderDouble* phaseImbalance;
-    std::shared_ptr<lime::IQuadratureErrorCorrector> device;
+    void WriteValues();
+
+    wxWindow* box;
+    wxSpinCtrlDouble* gainImbalance;
+    wxSpinCtrlDouble* phaseImbalance;
+    wxStaticText* lblGainRange;
+    wxStaticText* lblPhaseRange;
+    std::shared_ptr<lime::IQuadratureErrorCorrector> owner;
+    lime::IQuadratureErrorCorrector* device{};
 };
 
 #endif

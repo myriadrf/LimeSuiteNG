@@ -21,7 +21,7 @@ class INCO
 
     /// @brief Enables the NCO, or bypasses it when disabled.
     virtual OpStatus Enable(bool enable) = 0;
-    virtual bool IsEnabled() = 0;
+    virtual TriState IsEnabled() = 0;
 
     /// @return The number of frequency/phase presets.
     virtual uint8_t GetPresetCount() const = 0;

@@ -12,6 +12,8 @@
 #include <wx/scrolbar.h>
 #include <wx/textctrl.h>
 
+#include <cmath>
+
 IMPLEMENT_DYNAMIC_CLASS(NumericSliderDouble, wxPanel)
 
 NumericSliderDouble::NumericSliderDouble()
@@ -104,7 +106,7 @@ void NumericSliderDouble::SetValue(double value)
     else if (value > mSpinner->GetMax())
         value = mSpinner->GetMax();
     mSpinner->SetValue(value);
-    mScroll->SetThumbPosition(value - mSpinner->GetMin());
+    mScroll->SetThumbPosition((value - mSpinner->GetMin()) / mSpinner->GetIncrement());
 }
 
 double NumericSliderDouble::GetValue()
@@ -123,8 +125,15 @@ void NumericSliderDouble::SetToolTip(const wxString& tipString)
 
 void NumericSliderDouble::SetRange(double min, double max, double step)
 {
+    // A step of 0 means the values are not evenly spaced, use a fine step for the controls
+    if (step <= 0)
+        step = max > min ? (max - min) / 1000 : 1;
     mSpinner->SetRange(min, max);
     mSpinner->SetIncrement(step);
+    unsigned digits = 0;
+    for (double increment = step; digits < 6 && std::fabs(increment - std::round(increment)) > 1e-9; increment *= 10)
+        ++digits;
+    mSpinner->SetDigits(digits);
     int scrollValue = ((max - min) / 2) / step;
     mScroll->SetScrollbar(scrollValue, 1, (max - min) / step + 1, 1);
 }

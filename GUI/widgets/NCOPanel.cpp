@@ -15,6 +15,19 @@
 
 using namespace lime;
 
+static wxCheckBoxState ToCheckBoxState(TriState state)
+{
+    switch (state)
+    {
+    case TriState::Enabled:
+        return wxCHK_CHECKED;
+    case TriState::Disabled:
+        return wxCHK_UNCHECKED;
+    default:
+        return wxCHK_UNDETERMINED;
+    }
+}
+
 NCOPanel::NCOPanel(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : device(nullptr)
 {
@@ -27,7 +40,7 @@ NCOPanel::NCOPanel(wxWindow* parent, wxWindowID id, const wxString& title, const
 
     wxFlexGridSizer* controls = new wxFlexGridSizer(0, 4, 0, 5);
 
-    chkEnable = new wxCheckBox(box, wxID_ANY, wxT("Enable"));
+    chkEnable = new wxCheckBox(box, wxID_ANY, wxT("Enable"), wxDefaultPosition, wxDefaultSize, wxCHK_3STATE);
     chkEnable->Bind(wxEVT_CHECKBOX, &NCOPanel::OnEnable, this);
     controls->Add(chkEnable, 0, wxALIGN_CENTER_VERTICAL, 0);
 
@@ -110,7 +123,7 @@ void NCOPanel::UpdateGUI()
         const Range<double> range = device->GetFrequencyRange();
         lblRange->SetLabel(wxString::Format(wxT("Frequency range: %.6f - %.6f MHz"), range.min / 1e6, range.max / 1e6));
 
-        chkEnable->SetValue(device->IsEnabled());
+        chkEnable->Set3StateValue(ToCheckBoxState(device->IsEnabled()));
         const uint8_t selected = device->GetSelectedPreset();
         if (selected < cmbPreset->GetCount())
             cmbPreset->SetSelection(selected);
@@ -138,8 +151,9 @@ void NCOPanel::OnEnable(wxCommandEvent& event)
 {
     if (!device)
         return;
-    if (device->Enable(chkEnable->IsChecked()) != OpStatus::Success)
+    if (device->Enable(chkEnable->Get3StateValue() == wxCHK_CHECKED) != OpStatus::Success)
         wxMessageBox(wxT("NCO enable failed."), _("Error"));
+    chkEnable->Set3StateValue(ToCheckBoxState(device->IsEnabled()));
 }
 
 void NCOPanel::OnSelectPreset(wxCommandEvent& event)

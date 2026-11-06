@@ -5,7 +5,9 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
 
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <cmath>
 
 namespace lime {
@@ -179,6 +181,35 @@ double LMS7002M_LPF::GetBandwidth()
     return mBandwidth_Hz;
 }
 
+TriState LMS7002M_LPF::IsEnabled()
+{
+    // The bypass states written by lms7002m_set_rx_lpf()/lms7002m_set_tx_lpf() for 0 bandwidth
+    LMS7002M::ChannelScope scope(mChip, mChannel);
+    if (mDir == TRXDir::Rx)
+    {
+        // PGA input: 0 - low band LPF, 1 - high band LPF, 2 - LPF bypass, 3/4 - loopback/power detector
+        switch (mChip->Get_SPI_Reg_bits(LMS7002MCSR::INPUT_CTL_PGA_RBB))
+        {
+        case 0:
+            return mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_LPFL_RBB) ? TriState::Undetermined : TriState::Enabled;
+        case 1:
+            return mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_LPFH_RBB) ? TriState::Undetermined : TriState::Enabled;
+        case 2:
+            return TriState::Disabled;
+        default:
+            return TriState::Undetermined;
+        }
+    }
+
+    // Tx: either the high band LPF, or the low band ladder filter is used, or both are bypassed
+    const bool highBand = !mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_LPFH_TBB);
+    const bool lowBand =
+        !mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_LPFLAD_TBB) && !mChip->Get_SPI_Reg_bits(LMS7002MCSR::BYPLADDER_TBB);
+    if (highBand && lowBand)
+        return TriState::Undetermined;
+    return (highBand || lowBand) ? TriState::Enabled : TriState::Disabled;
+}
+
 Range<double> LMS7002M_LPF::GetBandwidthRange() const
 {
     if (mDir == TRXDir::Tx)
@@ -202,10 +233,11 @@ OpStatus LMS7002M_NCO::Enable(bool enable)
     return mChip->Modify_SPI_Reg_bits(mDir == TRXDir::Tx ? LMS7002MCSR::CMIX_BYP_TXTSP : LMS7002MCSR::CMIX_BYP_RXTSP, !enable);
 }
 
-bool LMS7002M_NCO::IsEnabled()
+TriState LMS7002M_NCO::IsEnabled()
 {
     LMS7002M::ChannelScope scope(mChip, mChannel);
-    return mChip->Get_SPI_Reg_bits(mDir == TRXDir::Tx ? LMS7002MCSR::CMIX_BYP_TXTSP : LMS7002MCSR::CMIX_BYP_RXTSP) == 0;
+    const bool bypassed = mChip->Get_SPI_Reg_bits(mDir == TRXDir::Tx ? LMS7002MCSR::CMIX_BYP_TXTSP : LMS7002MCSR::CMIX_BYP_RXTSP);
+    return bypassed ? TriState::Disabled : TriState::Enabled;
 }
 
 OpStatus LMS7002M_NCO::SelectPreset(uint8_t index)
@@ -288,10 +320,10 @@ OpStatus LMS7002M_GFIR::Enable(bool enable)
     return mChip->Modify_SPI_Reg_bits(GFIRBypassRegister(mDir, mIndex), !enable);
 }
 
-bool LMS7002M_GFIR::IsEnabled()
+TriState LMS7002M_GFIR::IsEnabled()
 {
     LMS7002M::ChannelScope scope(mChip, mChannel);
-    return mChip->Get_SPI_Reg_bits(GFIRBypassRegister(mDir, mIndex)) == 0;
+    return mChip->Get_SPI_Reg_bits(GFIRBypassRegister(mDir, mIndex)) ? TriState::Disabled : TriState::Enabled;
 }
 
 std::size_t LMS7002M_GFIR::GetMaxCoefficientCount()
@@ -402,6 +434,27 @@ LMS7002M_QEC::LMS7002M_QEC(LMS7002M* chip, TRXDir dir, uint8_t channel)
     assert(chip);
 }
 
+OpStatus LMS7002M_QEC::Enabled(bool enable)
+{
+    const bool isTx = mDir == TRXDir::Tx;
+    LMS7002M::ChannelScope scope(mChip, mChannel);
+    OpStatus status = mChip->Modify_SPI_Reg_bits(isTx ? LMS7002MCSR::GC_BYP_TXTSP : LMS7002MCSR::GC_BYP_RXTSP, !enable);
+    if (status != OpStatus::Success)
+        return status;
+    return mChip->Modify_SPI_Reg_bits(isTx ? LMS7002MCSR::PH_BYP_TXTSP : LMS7002MCSR::PH_BYP_RXTSP, !enable);
+}
+
+TriState LMS7002M_QEC::IsEnabled()
+{
+    const bool isTx = mDir == TRXDir::Tx;
+    LMS7002M::ChannelScope scope(mChip, mChannel);
+    const bool gainBypassed = mChip->Get_SPI_Reg_bits(isTx ? LMS7002MCSR::GC_BYP_TXTSP : LMS7002MCSR::GC_BYP_RXTSP);
+    const bool phaseBypassed = mChip->Get_SPI_Reg_bits(isTx ? LMS7002MCSR::PH_BYP_TXTSP : LMS7002MCSR::PH_BYP_RXTSP);
+    if (gainBypassed != phaseBypassed)
+        return TriState::Undetermined;
+    return gainBypassed ? TriState::Disabled : TriState::Enabled;
+}
+
 static void GainImbalanceToGains(float iq_gain_imb, double& gainI, double& gainQ)
 {
     // GCORR can only attenuate, so attenuate the branch that has to be reduced, keep the other at unity.
@@ -437,6 +490,22 @@ OpStatus LMS7002M_QEC::SetGainCorrection(float iq_gain_imb)
         return status;
     GainImbalanceToGains(iq_gain_imb, gainI, gainQ);
     return mChip->SetIQBalance(mDir, phase, gainI, gainQ);
+}
+
+OpStatus LMS7002M_QEC::GetImbalance(float& iq_gain_imb, float& phase_imb_deg)
+{
+    LMS7002M::ChannelScope scope(mChip, mChannel);
+    double phase, gainI, gainQ;
+    OpStatus status = mChip->GetIQBalance(mDir, phase, gainI, gainQ);
+    if (status != OpStatus::Success)
+        return status;
+    if (gainI <= 0 || gainQ <= 0)
+        return OpStatus::Error; // a branch is fully attenuated, the imbalance is not representable
+
+    // Inverse of GainImbalanceToGains(): the attenuated branch defines the sign
+    iq_gain_imb = 20.0 * std::log10(gainQ / gainI);
+    phase_imb_deg = phase * 180.0 / M_PI;
+    return OpStatus::Success;
 }
 
 lime::Range<float> LMS7002M_QEC::GetGainRange()
@@ -528,7 +597,8 @@ OpStatus LMS7002M_ToneGenerator::Apply()
 
 LMS7002M_RFChannel::LMS7002M_RFChannel(
     LMS7002M* chip, TRXDir dir, uint8_t index, std::shared_ptr<ILOMixer> loMixer, std::shared_ptr<IOversampler> oversampler)
-    : mDir(dir)
+    : mChip(chip)
+    , mDir(dir)
     , mIndex(index)
     , mRFPath(std::make_unique<LMS7002M_RFPath>(chip, dir, index))
     , mLPF(std::make_unique<LMS7002M_LPF>(chip, dir, index))
@@ -581,6 +651,42 @@ IGFIR* LMS7002M_RFChannel::GetGFIR(uint8_t index)
     if (index >= GFIR_COUNT)
         return nullptr;
     return mGFIR[index].get();
+}
+
+TriState LMS7002M_RFChannel::IsEnabled()
+{
+    // The per channel enables that lms7002m_enable_channel() switches, from the interface to the RF frontend
+    const bool isTx = mDir == TRXDir::Tx;
+    const bool isB = mIndex == 1;
+    bool enables[5];
+    {
+        LMS7002M::ChannelScope scope(mChip, mIndex);
+        if (isTx)
+        {
+            enables[0] = mChip->Get_SPI_Reg_bits(isB ? LMS7002MCSR::TXEN_B : LMS7002MCSR::TXEN_A);
+            // TODO: if only analog part is used, digital would be disabled
+            enables[1] = true; // mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_TXTSP);
+            enables[2] = mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_G_TBB);
+            enables[3] = mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_G_TRF);
+            enables[4] = !mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_TXPAD_TRF);
+        }
+        else
+        {
+            enables[0] = mChip->Get_SPI_Reg_bits(isB ? LMS7002MCSR::RXEN_B : LMS7002MCSR::RXEN_A);
+            // TODO: if only analog part is used, digital would be disabled
+            enables[1] = true; // mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_RXTSP);
+            enables[2] = mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_G_RBB);
+            enables[3] = mChip->Get_SPI_Reg_bits(LMS7002MCSR::EN_G_RFE);
+            enables[4] = !mChip->Get_SPI_Reg_bits(LMS7002MCSR::PD_LNA_RFE);
+        }
+    }
+    const auto first = std::begin(enables);
+    const auto last = std::end(enables);
+    if (std::all_of(first, last, [](bool e) { return e; }))
+        return TriState::Enabled;
+    if (std::none_of(first, last, [](bool e) { return e; }))
+        return TriState::Disabled;
+    return TriState::Undetermined;
 }
 
 IDCCorrector* LMS7002M_RFChannel::GetDCCorrector()

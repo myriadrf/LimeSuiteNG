@@ -17,6 +17,7 @@ class LMS7002M_DC : public IDCCorrector
   public:
     LMS7002M_DC(lms7002m_context* rfsoc, TRXDir dir, uint32_t channel);
     OpStatus Enabled(bool enable) override;
+    TriState IsEnabled() override;
 
     OpStatus SetDCOffset(lime::complex16_t offset) override;
     OpStatus SetDCI(int16_t offset) override;

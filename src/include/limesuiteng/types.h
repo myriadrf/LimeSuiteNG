@@ -19,6 +19,13 @@ enum class TRXDir : bool {
     Tx ///< Transmiter direction.
 };
 
+/// @brief The enable state of a block, which can be only partially enabled if it is made of several separately enabled parts.
+enum class TriState : uint8_t {
+    Disabled, ///< The block, or all of its parts, are disabled (bypassed).
+    Enabled, ///< The block, or all of its parts, are enabled.
+    Undetermined, ///< Only some of the parts are enabled, or the state could not be determined.
+};
+
 /// @brief Enumerator describing the data formats.
 enum class DataFormat : uint8_t {
     I16, ///< 16-bit integers.

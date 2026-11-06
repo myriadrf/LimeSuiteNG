@@ -242,7 +242,8 @@ class VSPA_DC_Offset : public IDCCorrector
     {
     }
 
-    OpStatus Enabled(bool enable) { return enable ? OpStatus::Success : OpStatus::NotSupported; }
+    OpStatus Enabled(bool enable) override { return enable ? OpStatus::Success : OpStatus::NotSupported; }
+    TriState IsEnabled() override { return TriState::Enabled; }
 
     OpStatus SetDCOffset(complex16_t offset) override
     {
@@ -318,6 +319,10 @@ class VSPA_QEC : public IQuadratureErrorCorrector
     }
 
     virtual ~VSPA_QEC() {}
+
+    // The VSPA IQ correction can not be bypassed
+    OpStatus Enabled(bool enable) override { return enable ? OpStatus::Success : OpStatus::NotSupported; }
+    TriState IsEnabled() override { return TriState::Enabled; }
     OpStatus SetImbalance(float iq_gain_imb, float phase_imb_deg) override
     {
         float f1, f2, f4;
@@ -374,6 +379,8 @@ class VSPA_QEC : public IQuadratureErrorCorrector
 
     OpStatus SetPhaseCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
     OpStatus SetGainCorrection(float phase_imb_deg) override { return OpStatus::NotImplemented; }
+    // The VSPA mailbox has no command to read the IQ correction taps back
+    OpStatus GetImbalance(float& iq_gain_imb, float& phase_imb_deg) override { return OpStatus::NotImplemented; }
 
   private:
     std::shared_ptr<VSPA_mailbox> mailbox;
