@@ -64,6 +64,7 @@ static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides
 };
 
 static const std::vector<std::pair<uint16_t, uint16_t>> lms7002defaultsOverrides_limesdr_xtrx = {
+    { 0x0022, 0x0FFF },
     { 0x0023, 0x5550 },
     { 0x002B, 0x0038 },
     { 0x0081, 0x0001 },
