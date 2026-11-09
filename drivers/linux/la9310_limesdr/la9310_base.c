@@ -260,7 +260,7 @@ static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
     la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
 }
 
-bool la9310_cached_dma;
+bool la9310_cached_dma = true;
 module_param_named(cached_dma, la9310_cached_dma, bool, 0444);
 MODULE_PARM_DESC(cached_dma, "Allocate the host DMA buffers cacheable (sync per buffer) instead of coherent/uncached");
 
