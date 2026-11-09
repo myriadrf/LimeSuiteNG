@@ -140,7 +140,7 @@ static bool GetParam [[gnu::format(printf, 3, 4)]] (LimePluginContext* context, 
     return true;
 }
 
-static lime::LogLevel logVerbosity = lime::LogLevel::Debug;
+static lime::LogLevel logVerbosity = lime::LogLevel::Info;
 
 static void Log [[gnu::format(printf, 2, 3)]] (LogLevel lvl, const char* format, ...)
 {
@@ -426,8 +426,18 @@ static OpStatus ConnectInitializeDevices(LimePluginContext* context)
 
         if (filteredHandles.size() > 1)
         {
-            Log(LogLevel::Error, "%s : ambiguous handle, matches multiple devices.", node.handleString.c_str());
-            return OpStatus::InvalidValue;
+            if (!node.handleString.empty())
+            {
+                Log(LogLevel::Error, "%s : ambiguous handle, matches multiple devices.", node.handleString.c_str());
+                return OpStatus::InvalidValue;
+            }
+            // dev%i not specified: use the first available device that is not already used by another dev%i.
+            const auto unused = std::find_if(filteredHandles.begin(), filteredHandles.end(), [&](const DeviceHandle& h) {
+                return context->uniqueDevices.find(h.Serialize()) == context->uniqueDevices.end();
+            });
+            const DeviceHandle selected = unused != filteredHandles.end() ? *unused : filteredHandles.front();
+            filteredHandles = { selected };
+            Log(LogLevel::Info, "dev%i not specified, using first available device: %s", i, selected.Serialize().c_str());
         }
         if (filteredHandles.empty())
         {
@@ -654,8 +664,19 @@ static OpStatus GatherPortSettings(LimePluginContext* context, LimeSettingsProvi
 
     if (specifiedPortsCount == 0)
     {
-        Log(LogLevel::Error, "No ports have been specified.");
-        return OpStatus::Error;
+        // No port%i specified: assign the first specified dev%i (or dev0 if none are specified) to port0.
+        int devIndex = 0;
+        for (int i = 0; i < LIME_MAX_UNIQUE_DEVICES; ++i)
+        {
+            std::string handle;
+            if (GetSetting(settings, &handle, "dev%i", i))
+            {
+                devIndex = i;
+                break;
+            }
+        }
+        context->ports.at(0).deviceNames = "dev"s + std::to_string(devIndex);
+        Log(LogLevel::Info, "No ports have been specified, using port0=dev%i.", devIndex);
     }
     return AssignDevicesToPorts(context);
 }
@@ -810,6 +831,40 @@ int LimePlugin_Init(LimePluginContext* context, lime::SDRDevice::LogCallbackType
     return 0;
 }
 
+/// @brief Selects the path whose recommended frequency range best fits the given center frequency.
+/// Paths whose range contains the frequency are preferred, the narrowest one winning; otherwise the path with the
+/// range closest to the frequency is used.
+/// @return The index of the path in the descriptor's path names, or -1 if no path has a frequency range.
+static int SelectPathByFrequency(const RFSOCDescriptor& desc, TRXDir dir, double frequency)
+{
+    const auto rangesIter = desc.antennaRange.find(dir);
+    const auto pathsIter = desc.pathNames.find(dir);
+    if (rangesIter == desc.antennaRange.end() || pathsIter == desc.pathNames.end())
+        return -1;
+
+    const auto& ranges = rangesIter->second;
+    const auto& paths = pathsIter->second;
+    int best = -1;
+    bool bestContains = false;
+    double bestScore = 0; // span when containing, distance otherwise; lower is better
+    for (size_t j = 0; j < paths.size(); ++j)
+    {
+        const auto range = ranges.find(paths[j]);
+        if (range == ranges.end())
+            continue;
+        const Range<double>& r = range->second;
+        const bool contains = frequency >= r.min && frequency <= r.max;
+        const double score = contains ? r.max - r.min : std::min(std::fabs(frequency - r.min), std::fabs(frequency - r.max));
+        if (best < 0 || (contains && !bestContains) || (contains == bestContains && score < bestScore))
+        {
+            best = static_cast<int>(j);
+            bestContains = contains;
+            bestScore = score;
+        }
+    }
+    return best;
+}
+
 static void TransferRuntimeParametersToConfig(
     const LimeRuntimeParameters& runtimeParams, const std::vector<ChannelData>& channelMap, TRXDir dir)
 {
@@ -847,6 +902,23 @@ static void TransferRuntimeParametersToConfig(
         const int chipIndex = channelMap[i].parent->chipIndex;
         const auto& desc = channelMap[i].parent->device->GetDescriptor().rfSOC[chipIndex];
         const auto& paths = desc.pathNames.at(isTx ? TRXDir::Tx : TRXDir::Rx);
+
+        // path not specified in the configuration: select it from the center frequency
+        const auto& dirInputs = isTx ? channelMap[i].parent->configInputs.tx : channelMap[i].parent->configInputs.rx;
+        if (dirInputs.antenna.empty())
+        {
+            const int path = SelectPathByFrequency(desc, dir, trxConfig.centerFrequency);
+            if (path >= 0)
+            {
+                trxConfig.path = path;
+                Log(LogLevel::Info,
+                    "%s channel%i path not specified, auto selected '%s' for %.3f MHz",
+                    isTx ? "Tx" : "Rx",
+                    static_cast<int>(i),
+                    paths[path].c_str(),
+                    trxConfig.centerFrequency / 1e6);
+            }
+        }
 
         Log(LogLevel::Verbose,
             "%s channel%" PRIuPTR ": dev%i chip%i ch%i , LO: %.3lf MHz SR: %.3f MHz BW: %.3f MHz | path: %i('%s')",
