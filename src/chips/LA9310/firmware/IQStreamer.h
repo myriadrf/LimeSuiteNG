@@ -94,6 +94,8 @@ class LIME_API LA9310_IQStreamer
     volatile vspa_regs* vspa_ccsr; ///< set only if VSPA firmware is loaded
     std::shared_ptr<IRFTiming> txRFTiming;
     std::shared_ptr<VSPA_mailbox> vspa_mailbox; ///< set only if VSPA firmware is loaded
+    uint8_t maxDecimationPow2; ///< from the firmware's fw_info, x4 for older firmware without it
+    uint8_t maxInterpolationPow2;
 };
 
 } // namespace lime

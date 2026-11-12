@@ -292,7 +292,7 @@ class TransmitterThread : public WorkerThread
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            burst_start += 16384;
+            burst_start += burst_start;
             txMeta.timestamp = Timespec(int64_t(burst_start));
             printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
@@ -310,7 +310,7 @@ class TransmitterThread : public WorkerThread
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            burst_start += 16384;
+            burst_start += burst_start;
             txMeta.timestamp = Timespec(int64_t(burst_start));
             printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
@@ -328,7 +328,7 @@ class TransmitterThread : public WorkerThread
         {
             StreamTxMeta txMeta{};
             txMeta.hasTimestamp = useTimestamp;
-            burst_start += 16384;
+            burst_start += burst_start;
             txMeta.timestamp = Timespec(int64_t(burst_start));
             printf("burst start @ %lu\n", txMeta.timestamp.GetTicks());
             txMeta.flags = StreamTxMeta::StartOfBurst | StreamTxMeta::EndOfBurst;
@@ -367,7 +367,8 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
 
     const int64_t chirpStart = sampleRate / 1000; // 1ms
     const uint32_t transmitSamplesCount = chirp.size();
-    const int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (2.2 * sampleRate / 1000);
+    int64_t receiveSamplesCount = chirpStart + transmitSamplesCount + (2.2 * sampleRate / 1000);
+    receiveSamplesCount = std::max(receiveSamplesCount, int64_t(chirpStart + 3*(chirpStart+chirp.size())));
 
     const int RxSamplesToSkip = 0;
     ReceiverThread rx(rxComposite, receiveSamplesCount, RxSamplesToSkip);

@@ -4,6 +4,7 @@
 
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/LMS7002MCSR.h"
+#include "utilities/OversampleRatio.h"
 
 #include <algorithm>
 #include <cassert>
@@ -402,10 +403,19 @@ static uint32_t OVRToOversample(uint16_t ovr)
     return ovr == 7 ? 0 : ovr + 1;
 }
 
-OpStatus LMS7002M_Oversampler::SetOversample(uint32_t oversample_pow2)
+uint32_t LMS7002M_Oversampler::GetMaxOversample()
 {
-    if (oversample_pow2 > 5)
+    return 1u << 5; // HBI/HBD OVR 4: 32x
+}
+
+OpStatus LMS7002M_Oversampler::SetOversample(uint32_t ratio)
+{
+    if (ratio == 0)
+        return OpStatus::InvalidValue;
+    if (ratio > GetMaxOversample())
         return OpStatus::OutOfRange;
+    // HBI/HBD can only do power of 2 ratios
+    const uint32_t oversample_pow2 = OversampleRatioToPow2(ratio);
 
     // HBI/HBD are per channel registers, but the TSP clock divider configured from them is common, so set both channels.
     LMS7002M::ChannelScope scope(mChip, LMS7002M::Channel::ChAB);
@@ -421,7 +431,8 @@ OpStatus LMS7002M_Oversampler::SetOversample(uint32_t oversample_pow2)
 uint32_t LMS7002M_Oversampler::GetOversample()
 {
     LMS7002M::ChannelScope scope(mChip, LMS7002M::Channel::ChA);
-    return OVRToOversample(mChip->Get_SPI_Reg_bits(mDir == TRXDir::Tx ? LMS7002MCSR::HBI_OVR_TXTSP : LMS7002MCSR::HBD_OVR_RXTSP));
+    return 1u << OVRToOversample(
+               mChip->Get_SPI_Reg_bits(mDir == TRXDir::Tx ? LMS7002MCSR::HBI_OVR_TXTSP : LMS7002MCSR::HBD_OVR_RXTSP));
 }
 
 // LMS7002M_QEC

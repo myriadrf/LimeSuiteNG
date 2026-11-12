@@ -12,6 +12,7 @@
 #include "chips/LA9310/firmware/vspa_memorymap.h"
 #include "chips/LA9310/firmware/iqplayer_commands.h"
 #include "comms/PCIe/LA9310_PCIe.h"
+#include "utilities/OversampleRatio.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -19,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <chrono>
 #include <iterator>
 #include <string_view>
@@ -81,11 +83,16 @@ static OpStatus VSPACommand(VSPA_mailbox* mailbox, mbox_opc_e opcode, uint32_t l
     return OpStatus::Success;
 }
 
+// VSPA firmware without fw_info: its oversampling works up to x4
+static constexpr uint8_t legacyMaxOversamplePow2 = 2;
+
 LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
     : fw(fw)
     , tdd_control(nullptr)
     , vspa_ccsr(nullptr)
     , vspa_mailbox(nullptr)
+    , maxDecimationPow2(legacyMaxOversamplePow2)
+    , maxInterpolationPow2(legacyMaxOversamplePow2)
 {
     if (!fw->IsVSPAFirmwareLoaded())
         return;
@@ -109,6 +116,17 @@ LA9310_IQStreamer::LA9310_IQStreamer(std::shared_ptr<LA9310_FW_Impl> fw)
             tx_dma = std::make_shared<IQStreamer_DMA>(IQStreamer_DMA::DMA_TO_DEVICE, ptr, vspa_ccsr, fw->pcie);
     }
     tdd_control = reinterpret_cast<volatile tx_tdd_config_t*>(fw->GetVSPAHIF(VSPA_MMAP_TX_TDD_CONFIG));
+
+    // optional, older firmware does not provide its configuration
+    const volatile uint32_t* fw_info_word = reinterpret_cast<const volatile uint32_t*>(fw->GetVSPAHIF(VSPA_MMAP_FW_INFO));
+    if (fw_info_word)
+    {
+        const uint32_t word = *fw_info_word; // a single 32-bit read over PCIe, then decode the bitfields locally
+        fw_config_t info;
+        std::memcpy(&info, &word, sizeof(info));
+        maxDecimationPow2 = info.max_decimation_exponent;
+        maxInterpolationPow2 = info.max_interpolation_exponent;
+    }
 }
 
 OpStatus LA9310_IQStreamer::PipelineEnable(uint32_t rxmask, uint32_t txmask, bool enable)
@@ -193,16 +211,24 @@ uint64_t LA9310_IQStreamer::GetHardwareTimestamp()
 class LA9310_Oversampler : public IOversampler
 {
   public:
-    LA9310_Oversampler(std::shared_ptr<VSPA_mailbox> mailbox, TRXDir dir, uint8_t channel)
+    /// @param max_oversample_pow2 largest oversampling the VSPA firmware supports in this direction
+    LA9310_Oversampler(std::shared_ptr<VSPA_mailbox> mailbox, TRXDir dir, uint8_t channel, uint8_t max_oversample_pow2)
         : mailbox(mailbox)
         , dir(dir)
         , channel(channel)
+        , maxOversamplePow2(max_oversample_pow2)
     {
     }
 
     virtual ~LA9310_Oversampler(){};
-    OpStatus SetOversample(uint32_t oversample_pow2) override
+    OpStatus SetOversample(uint32_t ratio) override
     {
+        if (ratio == 0)
+            return OpStatus::InvalidValue;
+        if (ratio > GetMaxOversample())
+            return OpStatus::OutOfRange;
+        // VSPA firmware can only do power of 2 ratios
+        const uint32_t oversample_pow2 = OversampleRatioToPow2(ratio);
         const uint32_t loword = channel | ((oversample_pow2 & 0xFF) << 8);
         return VSPACommand(mailbox.get(), dir == TRXDir::Rx ? MBOX_OPC_RX_CONFIGURE : MBOX_OPC_TX_CONFIGURE, loword);
     }
@@ -214,23 +240,26 @@ class LA9310_Oversampler : public IOversampler
             VSPACommand(mailbox.get(), dir == TRXDir::Rx ? MBOX_OPC_RX_GET_CONFIG : MBOX_OPC_TX_GET_CONFIG, channel, &response);
         // older firmware does not support readback, assume no oversampling
         if (status != OpStatus::Success)
-            return 0;
+            return 1;
 
         oversample_pow2 = (response >> 32) & 0xFF;
-        return oversample_pow2;
+        return 1u << oversample_pow2;
     }
+    uint32_t GetMaxOversample() override { return 1u << maxOversamplePow2; }
 
   private:
     std::shared_ptr<VSPA_mailbox> mailbox;
     TRXDir dir;
     uint8_t channel;
+    uint8_t maxOversamplePow2;
 };
 
 std::shared_ptr<IOversampler> LA9310_IQStreamer::GetOversampler(TRXDir dir, uint32_t channel)
 {
     if (!vspa_mailbox)
         return nullptr;
-    return std::make_shared<LA9310_Oversampler>(vspa_mailbox, dir, channel);
+    return std::make_shared<LA9310_Oversampler>(
+        vspa_mailbox, dir, channel, dir == TRXDir::Rx ? maxDecimationPow2 : maxInterpolationPow2);
 }
 
 class VSPA_DC_Offset : public IDCCorrector

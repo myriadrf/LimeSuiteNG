@@ -13,7 +13,7 @@ namespace lime {
 class IOversampler;
 }
 
-/// @brief Controls for a lime::IOversampler, offering oversampling factors of 2^0 to 2^maxOversamplePow2.
+/// @brief Controls for a lime::IOversampler, offering power of 2 oversampling ratios from 1 up to its GetMaxOversample().
 class OversamplerPanel : public wxPanel
 {
   public:
@@ -26,9 +26,9 @@ class OversamplerPanel : public wxPanel
     ~OversamplerPanel();
 
     /// @param dev Not owned, must outlive the panel or be replaced by another Initialize() call.
-    void Initialize(lime::IOversampler* dev, uint32_t maxOversamplePow2 = 5);
+    void Initialize(lime::IOversampler* dev);
     /// @param dev Kept alive by the panel.
-    void Initialize(std::shared_ptr<lime::IOversampler> dev, uint32_t maxOversamplePow2 = 5);
+    void Initialize(std::shared_ptr<lime::IOversampler> dev);
     /// @brief Reads the value back from the device.
     void UpdateGUI();
 

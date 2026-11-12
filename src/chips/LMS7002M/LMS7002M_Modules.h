@@ -134,8 +134,9 @@ class LMS7002M_Oversampler : public IOversampler
     LMS7002M_Oversampler(LMS7002M* chip, TRXDir dir);
 
     /// @param oversample_pow2 0 (bypass) to 5 (32x).
-    OpStatus SetOversample(uint32_t oversample_pow2) override;
+    OpStatus SetOversample(uint32_t ratio) override;
     uint32_t GetOversample() override;
+    uint32_t GetMaxOversample() override;
 
   private:
     LMS7002M* mChip;
