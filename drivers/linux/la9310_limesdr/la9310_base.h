@@ -241,6 +241,11 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
 
 void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa);
 
+int la9310_init_sysfs(struct la9310_dev* la9310_dev);
+void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
+int la9310_load_firmware_to_dma(
+    struct la9310_dev* la9310_dev, const struct la9310_mem_region_info* firmware_dma, const char __user* fw_data, size_t fw_size);
+
 // RCW completion register in CCSR (BAR0). Until RCW_COMPLETION_DONE is set, accessing VSPA registers or VSPA memory reboots the host.
 #define RCW_COMPLETIONR_ADDR (0x1E60000 + 0x104)
 #define RCW_COMPLETION_DONE 0x1

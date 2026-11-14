@@ -42,7 +42,6 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
     struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
     struct LA9310_IOCTL_flush_cache cache_entry;
     struct LA9310_IOCTL_firmware fw;
-    unsigned int timeout_ms;
 
     WARN_ON(la9310_dev == NULL);
 
@@ -137,6 +136,9 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
             ret = 0;
             break;
         }
+        default:
+            dev_err(la9310_dev->dev, "CSR op on unsupported window %i\n", op.window_id);
+            return -EINVAL;
         }
 
         if (copy_to_user((void*)arg, &op, sizeof(op)))

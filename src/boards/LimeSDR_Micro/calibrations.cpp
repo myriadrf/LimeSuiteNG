@@ -86,7 +86,7 @@ static void PlotSamples(const complex16_t* samples, size_t count)
 }
 #endif
 
-static void PlotBins(std::vector<float> bins, float sampleRate)
+[[maybe_unused]] static void PlotBins(std::vector<float> bins, float sampleRate)
 {
 #if PLOT_GRAPHS
     if (!showPlots)
@@ -664,7 +664,7 @@ OpStatus LimeSDR_Micro::CalibrateRx()
         lime_LogLevel_Verbose,
         "Rx calibrate ch.%s @ %lu Hz, BW: %u Hz, RF input: %s, PGA: %i, LNA: %i, TIA: %i",
         (x0020val & 0x3) == 1 ? "A" : "B",
-        (uint64_t)context.rx_lo,
+        static_cast<uint64_t>(context.rx_lo),
         bandwidthRF,
         get_lna_name(lms7002m_spi_read_csr(rfsoc, LMS7002M_SEL_PATH_RFE)),
         lms7002m_spi_read_csr(rfsoc, LMS7002M_G_PGA_RBB),

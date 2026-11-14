@@ -28,7 +28,7 @@ static ssize_t la9310_collect_ep_log(struct la9310_ep_log* ep_log, char* buf, si
         return 0;
     if (max_len > 32 * 1024) // precaution against bad data, LA9310 TCMU is 64K
     {
-        pr_err("Bad length %i", max_len);
+        pr_err("Bad length %zu\n", max_len);
         max_len = 32 * 1024;
     }
 
@@ -88,9 +88,6 @@ static ssize_t target_log_show(struct device* dev, struct device_attribute* attr
 {
     struct la9310_dev* la9310_dev = dev_get_drvdata(dev);
 
-    // find log hif
-    struct la9310_hif* hif = la9310_dev->hif;
-
     const struct la9310_ccsr_dcr* ccsr_dcr =
         (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
     const uint32_t mlog_addr = ccsr_dcr->scratchrw[LA9310_SCRATCH_MLOG_ADDR];
@@ -98,7 +95,7 @@ static ssize_t target_log_show(struct device* dev, struct device_attribute* attr
         return 0;
 
     struct la9310_ep_log ep_log;
-    ep_log.hif = (volatile struct MemoryLog_hif*)endpoint_pa_to_va(la9310_dev, mlog_addr);
+    ep_log.hif = endpoint_pa_to_va(la9310_dev, mlog_addr);
     if (!ep_log.hif)
     {
         dev_err(la9310_dev->dev, "LA9310 log no hif");
@@ -125,7 +122,6 @@ static ssize_t target_log_store(struct device* dev, struct device_attribute* att
     struct la9310_dev* la9310_dev;
     int rc = 0;
     unsigned long val;
-    struct la9310_ep_log* ep_log;
 
     la9310_dev = dev_get_drvdata(dev);
     // ep_log = &la9310_dev->ep_log;

@@ -27,9 +27,6 @@
 #define MSG_UNIT_OFFSET 0x1fc0000
 #define DCR_OFFSET 0x1e00000
 
-int la9310_init_sysfs(struct la9310_dev* la9310_dev);
-void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
-
 static int la9310_uart_id_counter = 0;
 static int la9310_subdrv_cnt_g;
 static struct la9310_sub_driver* la9310_get_subdrv(int i);
@@ -494,8 +491,8 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
 static irqreturn_t la9310_irq_handler(int irq, void* dev)
 {
     struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
-    const struct la9310_ccsr_dcr* ccsr_dcr =
-        (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
+    // const struct la9310_ccsr_dcr* ccsr_dcr =
+    //     (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
     // const uint32_t* sirq_count_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_COUNT_REG];
     // const uint32_t sirq_count = readl(sirq_count_reg);
     // if (la9310_dev->soft_irq.irq_counter != sirq_count)
@@ -504,13 +501,13 @@ static irqreturn_t la9310_irq_handler(int irq, void* dev)
     //     const uint32_t* sirq_status_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_STATUS_REG];
     //     const uint32_t sirq_status = readl(sirq_status_reg);
     //     uint32_t bits_to_clear = 0;
-        for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
-        {
-            // if (sirq_status & (1 << i))
-            // {
-            //     bits_to_clear |= (1 << i);
-                la9310_softirq_signal(la9310_dev, i);
-            // }
+    for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
+    {
+        // if (sirq_status & (1 << i))
+        // {
+        //     bits_to_clear |= (1 << i);
+        la9310_softirq_signal(la9310_dev, i);
+        // }
         }
         // if (bits_to_clear)
         //     la9310_softirq_clear_device(la9310_dev, bits_to_clear, bits_to_clear);
@@ -521,7 +518,7 @@ static irqreturn_t la9310_irq_handler(int irq, void* dev)
 
 static int la9310_init_irq(struct la9310_dev* la9310_dev)
 {
-    const struct la9310_ccsr_dcr* ccsr_dcr =
+    struct la9310_ccsr_dcr* ccsr_dcr =
         (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
     la9310_softirq_init(&la9310_dev->soft_irq, ccsr_dcr->scratchrw);
 

@@ -47,7 +47,6 @@ OpStatus VSPA_mailbox::Receive(uint32_t core_idx, uint32_t mbox_id, uint64_t* va
     const std::lock_guard<std::recursive_mutex> lock(mailbox_mutex);
 
     const std::chrono::milliseconds timeout{ 10 };
-    const uint64_t status_addr = 0x660 + 0x4000 * core_idx;
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto t2 = t1;

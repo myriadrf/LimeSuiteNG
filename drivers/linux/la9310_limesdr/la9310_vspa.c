@@ -43,9 +43,6 @@
 #include "la9310_pci.h"
 #include "la9310_base.h"
 
-int la9310_load_firmware_to_dma(
-    struct la9310_dev* la9310_dev, struct la9310_mem_region_info* dma_region, const char __user* fw_data, size_t fw_size);
-
 /* Additional options for checking if Mailbox write to VSP completed */
 #ifdef VSPA_DEBUG
     #define MB_CHECK_ON_WRITE /* Check when queuing a new mailbox write */
@@ -425,7 +422,7 @@ static int8_t getsectiontype(uint8_t* string_table, int sec_name_offset)
     return -1;
 }
 
-int vspa_fw_dma_write(struct la9310_dev* la9310_dev, struct dma_param* linfo, uint32_t flags, int overlay_enable)
+static int vspa_fw_dma_write(struct la9310_dev* la9310_dev, struct dma_param* linfo, uint32_t flags, int overlay_enable)
 {
     uint32_t size_to_xfer = linfo->size;
     static uint8_t id;

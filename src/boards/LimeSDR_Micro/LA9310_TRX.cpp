@@ -796,7 +796,7 @@ void LA9310_TRX::ReceivePacketsLoop()
                 auto dest = reinterpret_cast<lime::complex12_t* const*>(outputPkt->samples.back());
                 auto src = rx_buffers[c].at(currentBufferIndex).va<lime::complex16_t>();
                 // downscale is done by VSPA, so can do straight memcpy
-                memcpy(dest[c], src, samplesProduced * sizeof(complex16_t));
+                std::memcpy(static_cast<void*>(dest[c]), src, samplesProduced * sizeof(complex16_t));
             }
             else
             {
@@ -909,9 +909,9 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
             if (pktTs > mRxNextTs)
             {
                 const uint32_t fill = std::min<int64_t>(pktTs - mRxNextTs, count - samplesProduced);
-                std::memset(&dest[0][samplesProduced], 0, fill * sizeof(T));
+                std::fill_n(&dest[0][samplesProduced], fill, T(0, 0));
                 if (useChannelB)
-                    std::memset(&dest[1][samplesProduced], 0, fill * sizeof(T));
+                    std::fill_n(&dest[1][samplesProduced], fill, T(0, 0));
                 samplesProduced += fill;
                 mRxNextTs += fill;
                 mRxGapFilled += fill;
@@ -1351,7 +1351,7 @@ void LA9310_TRX::TransmitPacketsLoop()
             {
                 auto src = reinterpret_cast<lime::complex12_t* const*>(srcPkt->samples.front());
                 // upscale is done by VSPA, so can do straight memcpy
-                memcpy(dest, src[0], samplesDataSize);
+                std::memcpy(static_cast<void*>(dest), src[0], samplesDataSize);
             }
             else
             {
