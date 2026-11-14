@@ -18,13 +18,36 @@ set(__INCLUDED_GR_PYTHON_CMAKE TRUE)
 
 if(PYTHON_EXECUTABLE)
     message(STATUS "User set python executable ${PYTHON_EXECUTABLE}")
-    find_package(PythonInterp ${GR_PYTHON_MIN_VERSION} REQUIRED)
 else(PYTHON_EXECUTABLE)
     message(STATUS "PYTHON_EXECUTABLE not set - using default python3")
-    find_package(PythonInterp ${GR_PYTHON_MIN_VERSION} REQUIRED)
 endif(PYTHON_EXECUTABLE)
 
-find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} EXACT)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.27)
+    # CMake 3.27+ deprecates FindPythonInterp and FindPythonLibs (policy CMP0148),
+    # use FindPython3 and map its results onto the legacy PYTHON_* variables used below and by GNU Radio.
+    if(PYTHON_EXECUTABLE)
+        set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
+    endif()
+    find_package(
+        Python3 ${GR_PYTHON_MIN_VERSION} REQUIRED
+        COMPONENTS Interpreter
+        OPTIONAL_COMPONENTS Development)
+
+    set(PYTHONINTERP_FOUND ${Python3_Interpreter_FOUND})
+    set(PYTHONLIBS_FOUND ${Python3_Development_FOUND})
+    set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+    set(PYTHON_VERSION_STRING ${Python3_VERSION})
+    set(PYTHON_VERSION_MAJOR ${Python3_VERSION_MAJOR})
+    set(PYTHON_VERSION_MINOR ${Python3_VERSION_MINOR})
+    set(PYTHON_VERSION_PATCH ${Python3_VERSION_PATCH})
+    set(PYTHON_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
+    set(PYTHON_LIBRARIES ${Python3_LIBRARIES})
+    set(PYTHON_LIBRARY_DEBUG ${Python3_LIBRARY_DEBUG})
+    set(PYTHON_LIBRARY_RELEASE ${Python3_LIBRARY_RELEASE})
+else()
+    find_package(PythonInterp ${GR_PYTHON_MIN_VERSION} REQUIRED)
+    find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} EXACT)
+endif()
 
 if(CMAKE_CROSSCOMPILING)
     set(QA_PYTHON_EXECUTABLE "/usr/bin/python3")
@@ -201,7 +224,8 @@ endfunction(GR_UNIQUE_TARGET)
 # Install python sources (also builds and installs byte-compiled python)
 ########################################################################
 function(GR_PYTHON_INSTALL)
-    include(CMakeParseArgumentsCopy)
+    # use the builtin cmake_parse_arguments, CMakeParseArgumentsCopy overrides it globally
+    # with a version lacking PARSE_ARGV support, which breaks pybind11's FindPython mode
     cmake_parse_arguments(GR_PYTHON_INSTALL "" "DESTINATION"
                           "FILES;PROGRAMS;DIRECTORY;DEPENDS" ${ARGN})
 

@@ -71,13 +71,27 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         OUTPUT_VARIABLE GNURADIO_CXX_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    string(FIND ${GNURADIO_CXX_VERSION} ${CMAKE_CXX_COMPILER_VERSION} CXX_VERSIONS_MATCH)
-    if(${CXX_VERSIONS_MATCH} EQUAL -1)
-        message(
-            WARNING
-                "Currently used compiler version (${CMAKE_CXX_COMPILER_VERSION}) does not match GNURadio compiler.
-        GNURadio compiled with (${GNURADIO_CXX_VERSION}).
-        This can result in gnuradio-companion Python bindings failure to import symbols, if the compiler major versions are different."
+    # gnuradio-config-info --cxx returns the full `c++ --version` text,
+    # take the first line, drop parenthesized vendor info and use the first version number, e.g.
+    # "c++ (Ubuntu 13.2.0-23ubuntu3) 13.2.0", "c++ (GCC) 12.1.1 20220507"
+    string(REGEX REPLACE "\n.*" "" GNURADIO_CXX_VERSION_LINE "${GNURADIO_CXX_VERSION}")
+    string(REGEX REPLACE "\\([^)]*\\)" "" GNURADIO_CXX_VERSION_STRIPPED "${GNURADIO_CXX_VERSION_LINE}")
+    string(REGEX MATCH "([0-9]+)\\.[0-9]+(\\.[0-9]+)?" GNURADIO_CXX_VERSION_NUMBER "${GNURADIO_CXX_VERSION_STRIPPED}")
+    set(GNURADIO_CXX_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    string(REGEX MATCH "^[0-9]+" MY_CXX_VERSION_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
+
+    if(NOT GNURADIO_CXX_VERSION_MAJOR)
+        message(STATUS "Could not determine GNURadio compiler version from: ${GNURADIO_CXX_VERSION_LINE}")
+    elseif(NOT GNURADIO_CXX_VERSION_MAJOR EQUAL MY_CXX_VERSION_MAJOR)
+        execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} --version
+            OUTPUT_VARIABLE MY_CXX_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REGEX REPLACE "\n.*" "" MY_CXX_VERSION_LINE "${MY_CXX_VERSION}")
+        message(WARNING
+            " GNURadio was built by: ${GNURADIO_CXX_VERSION_LINE}\n"
+            " You are using: ${MY_CXX_VERSION_LINE}\n"
+            " Compiler major versions differ (${GNURADIO_CXX_VERSION_MAJOR} vs ${MY_CXX_VERSION_MAJOR}), gnuradio-companion Python bindings might fail to import symbols."
         )
     endif()
 endif()
@@ -166,9 +180,9 @@ endif(DOXYGEN_FOUND)
 configure_file(${PROJECT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
 
 if(TARGET uninstall)
-    message(
-        AUTHOR_WARNING
-            "Parent project has already defined 'uninstall' target, gnuradio-limesuiteng will not have it's own uninstall.")
+    # message(
+    #     AUTHOR_WARNING
+    #         "Parent project has already defined 'uninstall' target, gnuradio-limesuiteng will not have it's own uninstall.")
 else()
     add_custom_target(uninstall ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
