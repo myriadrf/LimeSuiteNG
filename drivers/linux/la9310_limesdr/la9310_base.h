@@ -28,13 +28,7 @@ enum la9310_mem_region_t {
     LA9310_MEM_REGION_TCML,
     LA9310_MEM_REGION_TCMU,
     LA9310_MEM_REGION_BAR_END,
-    LA9310_MEM_REGION_FW,
-    LA9310_MEM_REGION_DBG_LOG,
-    LA9310_MEM_REGION_MAX,
 };
-
-/* Number of DMA regions*/
-#define LA9310_DMA_REGIONS (LA9310_MEM_REGION_MAX - LA9310_MEM_REGION_BAR_END - 1)
 
 struct la9310_mem_region_info {
     phys_addr_t phys_addr;
@@ -77,45 +71,13 @@ struct la9310_ccsr_dcr {
 /*
  * struct la9310_dma_info
  *
- * LA9310 DMA buffer contains details of the persistent (driver owned)
- * DMAable buffer shared with LA9310 over PCI. The buffer exsits
- * in Host memory, and it's always coherent (uncached).
- *
- * @host_buf : DMA buffer allocated by linux DMA API (dma_alloc_coherent).
- * host_buf.vaddr/host_buf.phys_addr point
- * to virtual and physical address in Host address space. This buffer
- * is mapped to the End-point (LA9310) PCIe address space by creating
- * a outbound window.
- *
- * @ep_phys_addr_start: Physical address of buffer (host_buf.vaddr) in
- * end point (LA9310) address space.
- *
- * @ep_bufs: DMA buffers for the driver's own use (firmware image, logs). These are initialized by cutting of
- * chunks of buffers from host_buf, thus these buffers are not allocated by
- * Linux DMA API (pci_alloc_consistent/dma_alloc_coherent) and they should
- * not be freed using Linux DMA API. ep_bufs[i].phys_addr is the physical
- * address of buffer in End-point PCIe address space. It can be programmed
- * directly as source/destination for DMAs inside DMA without any conversion.
+ * @host_buf: the persistent DMA buffer, allocated coherent (uncached) for the device's lifetime. The device reaches it
+ * through an outbound window at LA9310_EP_DMA_BUF_PHYS_ADDR. The driver doesn't use its contents, see
+ * LA9310_PERSISTENT_SIZE in la9310_ioctl.h.
  */
 struct la9310_dma_info {
     struct la9310_mem_region_info host_buf;
-    phys_addr_t ep_pcie_addr;
-    struct la9310_mem_region_info ep_bufs[LA9310_DMA_REGIONS];
-    uint32_t dma_region_used;
 };
-
-#define LA9310_PERSISTENT_REGION_IDX(i) (i - LA9310_MEM_REGION_BAR_END - 1)
-
-/* DMA buffer size definitions */
-#define LA9310_FW_DMA_SIZE 0x20000 // TCML memory
-#define LA9310_DBUG_LOG_SIZE (4 * 1024)
-/* Mem region separator */
-#define LA9310_DMA_SEPARATOR_SIZE (64)
-#define LA9310_DMA_SEPARATOR_PAINT_CHAR (0xFC)
-
-#define LA9310_DMA_SEPARATOR_TOTAL_SIZE (LA9310_DMA_SEPARATOR_SIZE * LA9310_DMA_REGIONS)
-#define LA9310_DMA_ALIGNMENT (64)
-#define LA9310_DMA_BUF_SIZE (LA9310_FW_DMA_SIZE + LA9310_DBUG_LOG_SIZE + LA9310_DMA_SEPARATOR_TOTAL_SIZE + LA9310_DMA_ALIGNMENT)
 
 struct MemoryLog_hif {
     uint32_t buffer_addr;
@@ -151,7 +113,6 @@ struct la9310_dev {
     struct la9310_dma_info dma_info; /* persistent memory */
     struct la9310_dma_pool* dma_pools[LA9310_DMA_POOL_COUNT];
     struct la9310_hif* hif;
-    u32 hif_size;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
     int irq_count;
 
@@ -170,14 +131,10 @@ struct la9310_dev {
 #define LA9310_CHK_FLG(flag_var, flg) (flag_var & flg)
 #define LA9310_CLR_FLG(flag_var, flg) (flag_var &= (~flg))
 
-int la9310_load_rtos_img(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
-int la9310_do_reset_handshake(struct la9310_dev* la9310_dev);
-
 int la9310_map_mem_regions(struct la9310_dev* la9310_dev);
 void la9310_unmap_mem_regions(struct la9310_dev* la9310_dev);
 int la9310_base_probe(struct la9310_dev* la9310_dev);
 int la9310_base_remove(struct la9310_dev* la9310_dev);
-struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_dev, enum la9310_mem_region_t type);
 int la9310_init_global_sysfs(void);
 void la9310_remove_global_sysfs(void);
 extern int la9310_get_msi_irq(struct la9310_dev*, enum la9310_msi_id);
@@ -186,14 +143,10 @@ void la9310_set_host_ready(struct la9310_dev* la9310_dev, u32 set_bit);
 int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, int bit_num);
 void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index, uint32_t ibs);
 
-int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length);
-
 void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa);
 
 int la9310_init_sysfs(struct la9310_dev* la9310_dev);
 void la9310_remove_sysfs(struct la9310_dev* la9310_dev);
-int la9310_load_firmware_to_dma(
-    struct la9310_dev* la9310_dev, const struct la9310_mem_region_info* firmware_dma, const char __user* fw_data, size_t fw_size);
 
 // RCW completion register in CCSR (BAR0). Until RCW_COMPLETION_DONE is set, accessing VSPA registers or VSPA memory reboots the host.
 #define RCW_COMPLETIONR_ADDR (0x1E60000 + 0x104)

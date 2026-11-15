@@ -5,6 +5,7 @@
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
+#include "M4_loader.h"
 #include "vspa/vspa_loader.h"
 #include "vspa/vspa_recovery.h"
 #include "vspa/VSPA_mailbox.h"
@@ -102,6 +103,11 @@ OpStatus ToOpStatus(int status)
 }
 
 } // namespace
+
+OpStatus LA9310::LoadM4Firmware(std::span<const char> firmware)
+{
+    return M4_loader(pcie).Load(firmware);
+}
 
 OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
 {

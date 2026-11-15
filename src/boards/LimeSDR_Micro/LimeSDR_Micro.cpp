@@ -14,6 +14,7 @@
 
 #include "boards/LimeSDR_Micro/LimeSDR_Micro.h"
 #include "chips/LA9310/firmware/LA9310_FW_Impl.h"
+#include "chips/LA9310/M4_loader.h"
 #include "chips/LMS7002M/validation.h"
 #include "chips/LA9310/firmware/LA9310_GPS.h"
 #include "chips/LA9310/firmware/PPSDO_LA9310.h"
@@ -216,7 +217,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
         if (status == OpStatus::Success)
         {
             lime::info("Programming LimeSDR-Micro " + m4firmware_path);
-            status = mStreamingPort->LoadArmM4Firmware(firmware.data(), firmware.size());
+            status = la9310->LoadM4Firmware(firmware);
             if (status != OpStatus::Success)
                 lime::error("Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
         }
@@ -800,6 +801,13 @@ OpStatus LimeSDR_Micro::UploadMemory(
     switch (device)
     {
     case eMemoryDevice::ARM_M4: {
+        // Stop the running firmware only when there is something to replace it with
+        const std::span<const char> image(data, length);
+        M4_BootHeader header;
+        status = ParseM4Firmware(image, header);
+        if (status != OpStatus::Success)
+            return status;
+
         // Check if firmware is already running
         if (fw->CheckFirmwareAlive())
         {
@@ -811,7 +819,7 @@ OpStatus LimeSDR_Micro::UploadMemory(
         else
             lime::info("LA9310 Firmware is not running\n");
 
-        status = fw->LoadFirmware(std::span<const char, std::dynamic_extent>(data, length));
+        status = la9310->LoadM4Firmware(image);
         if (status != OpStatus::Success)
             return status;
 

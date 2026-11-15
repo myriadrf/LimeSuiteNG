@@ -303,12 +303,6 @@ uint32_t PCIe_CSR_Access::ioread32(size_t offset)
     return port->ioread32(window_id, base_offset + offset);
 }
 
-OpStatus LA9310_PCIe::LoadArmM4Firmware(const char* data, size_t length)
-{
-    const struct LA9310_IOCTL_firmware fw = { data, length };
-    return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_M4_FW, &fw) ? OpStatus::Error : OpStatus::Success;
-}
-
 OpStatus LA9310_PCIe::SendSignal(uint32_t bitIndex)
 {
     auto csr = GetCSRAccess(LA9310_WINDOW_BAR0);

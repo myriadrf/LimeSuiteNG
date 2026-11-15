@@ -39,7 +39,6 @@ add_kernel_module(
     la9310_softirq.c
     la9310_softirq.h
     la9310_sysfs.c
-    la9310_firmware.c
     la9310_limesdr_module.c
     la9310_base.h
     la9310_base.c

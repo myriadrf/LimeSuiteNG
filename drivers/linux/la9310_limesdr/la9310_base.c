@@ -192,7 +192,6 @@ static int la9310_scratch_outbound_create(struct la9310_dev* la9310_dev)
         "Persistent buffer",
         LA9310_EP_DMA_BUF_PHYS_ADDR,
         &la9310_dev->dma_info.host_buf);
-    la9310_dev->dma_info.ep_pcie_addr = LA9310_EP_DMA_BUF_PHYS_ADDR;
     return 0;
 }
 
@@ -238,60 +237,6 @@ static void la9310_dma_free_all(struct la9310_dev* la9310_dev)
     la9310_dma_mem_free(la9310_dev->dev, "Persistent buffer", &la9310_dev->dma_info.host_buf);
 }
 
-static void la9310_init_persistent_region(
-    struct la9310_dev* la9310_dev, struct la9310_mem_region_info* ep_buf, int size, enum la9310_mem_region_t type)
-{
-    u8* host_vaddr;
-    struct la9310_dma_info* dma_info = &la9310_dev->dma_info;
-    struct la9310_mem_region_info* host_dma_region;
-
-    host_dma_region = &la9310_dev->dma_info.host_buf;
-
-    ep_buf->vaddr = host_dma_region->vaddr + dma_info->dma_region_used;
-    ep_buf->phys_addr = dma_info->ep_pcie_addr + dma_info->dma_region_used;
-    ep_buf->size = size;
-
-    dev_info(la9310_dev->dev, "persistent DMA region:[%d] offset %d\n", type, dma_info->dma_region_used);
-    dev_info(la9310_dev->dev, "Host virtual 0x%px, EP Phys 0x%llx, size %d", ep_buf->vaddr, ep_buf->phys_addr, (int)ep_buf->size);
-
-    /*Paint separator */
-    host_vaddr = host_dma_region->vaddr + size + dma_info->dma_region_used;
-    memset(host_vaddr, LA9310_DMA_SEPARATOR_PAINT_CHAR, LA9310_DMA_SEPARATOR_SIZE);
-
-    dma_info->dma_region_used += size + LA9310_DMA_SEPARATOR_SIZE;
-    dev_info(la9310_dev->dev,
-        "Paint addr 0x%px, size %d New offset - 0x%x\n",
-        host_vaddr,
-        LA9310_DMA_SEPARATOR_SIZE,
-        dma_info->dma_region_used);
-}
-
-struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_dev, enum la9310_mem_region_t type)
-{
-    struct la9310_mem_region_info* ep_buf;
-    int idx;
-
-    idx = LA9310_PERSISTENT_REGION_IDX(type);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-
-    return ep_buf;
-}
-
-static void la9310_init_persistent_regions(struct la9310_dev* la9310_dev)
-{
-    struct la9310_mem_region_info* ep_buf;
-    int idx;
-
-    /*FW*/
-    idx = LA9310_PERSISTENT_REGION_IDX(LA9310_MEM_REGION_FW);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_persistent_region(la9310_dev, ep_buf, LA9310_FW_DMA_SIZE, LA9310_MEM_REGION_FW);
-    /*LA9310 LOG buffer */
-    idx = LA9310_PERSISTENT_REGION_IDX(LA9310_MEM_REGION_DBG_LOG);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_persistent_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
-}
-
 bool la9310_cached_dma = true;
 module_param_named(cached_dma, la9310_cached_dma, bool, 0444);
 MODULE_PARM_DESC(cached_dma, "Allocate the cached DMA pool cacheable (synced per buffer) instead of coherent/uncached");
@@ -302,12 +247,10 @@ static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
     struct la9310_mem_region_info* host_region = &dma_info->host_buf;
     int rc = 0;
 
-    /* Uncached: the kernel writes firmware images into it without cache maintenance, and the device's logs are read
-     * from it while the device writes them */
-    rc = la9310_dma_mem_alloc(la9310_dev->dev, "Persistent buffer", host_region, PAGE_ALIGN(LA9310_DMA_BUF_SIZE), false);
+    /* Uncached: the device and user space access it without cache maintenance */
+    rc = la9310_dma_mem_alloc(la9310_dev->dev, "Persistent buffer", host_region, PAGE_ALIGN(LA9310_PERSISTENT_SIZE), false);
     if (rc)
         return rc;
-    dma_info->dma_region_used = 0;
 
     rc = la9310_scratch_outbound_create(la9310_dev);
     if (rc)
@@ -316,39 +259,7 @@ static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
         goto out;
     }
 
-    la9310_init_persistent_regions(la9310_dev);
-
     return 0;
-out:
-    return rc;
-}
-
-static int la9310_verify_hif_compatibility(struct la9310_dev* la9310_dev)
-{
-    struct la9310_hif* hif = la9310_dev->hif;
-    u32 hif_ep_version, hif_host_version;
-    int rc = 0;
-
-    if (sizeof(struct la9310_hif) > la9310_dev->hif_size)
-    {
-        dev_err(la9310_dev->dev,
-            "LA931x firmware not compatible with la9310shiva  driverHIF siz mismatch %d!=%d",
-            (int)sizeof(struct la9310_hif),
-            la9310_dev->hif_size);
-        rc = -EINVAL;
-        goto out;
-    }
-
-    hif_host_version = LA9310_VER_MAKE(LA9310_HIF_MAJOR_VERSION, LA9310_HIF_MINOR_VERSION);
-    hif_ep_version = readl(&hif->hif_ver);
-
-    if (hif_ep_version != hif_host_version)
-    {
-        dev_err(la9310_dev->dev, "HIF ver mismatch, Host 0x%x, LA9310 0x%x\n", hif_host_version, hif_ep_version);
-        rc = -EINVAL;
-        goto out;
-    }
-    dev_info(la9310_dev->dev, "HIF Version : %d.%d\n", LA9310_VER_MAJOR(hif_ep_version), LA9310_VER_MINOR(hif_ep_version));
 out:
     return rc;
 }
@@ -362,34 +273,6 @@ static void la9310_init_msg_unit_ptrs(struct la9310_dev* la9310_dev)
 
     for (i = 0; i < LA9310_MSG_UNIT_CNT; i++)
         la9310_dev->msg_units[i] = msg_unit + i;
-}
-
-int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
-{
-    int rc;
-    dev_info(la9310_dev->dev, "Loading M4 firmware image\n");
-    rc = la9310_load_rtos_img(la9310_dev, fw_data, fw_length);
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "Failed to add M4 firmware image, err %d", rc);
-        return rc;
-    }
-
-    dev_info(la9310_dev->dev, "Initiating Reset handshake\n");
-    rc = la9310_do_reset_handshake(la9310_dev);
-
-    if (rc)
-    {
-        dev_err(la9310_dev->dev, "Reset handshake failed, err %d", rc);
-        return rc;
-    }
-
-    /* Verify that Host and target are using same version of HIF */
-    rc = la9310_verify_hif_compatibility(la9310_dev);
-    if (rc)
-        return rc;
-
-    return 0;
 }
 
 static irqreturn_t la9310_irq_handler(int irq, void* dev)

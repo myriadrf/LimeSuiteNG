@@ -25,7 +25,6 @@ class LIME_API LA9310_FW_Impl : public LA9310
     LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie);
 
     bool CheckFirmwareAlive();
-    OpStatus LoadFirmware(std::span<const char, std::dynamic_extent> firmware);
     OpStatus EnterFirmwareReloadMode();
 
     OpStatus SetSystemClock(double clk_hz, uint8_t adc_rate_mask, uint8_t dac_rate_mask);

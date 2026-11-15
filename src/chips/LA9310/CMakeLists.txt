@@ -4,6 +4,7 @@ endif()
 
 set(LA9310_SOURCES
     LA9310.cpp
+    M4_loader.cpp
     vspa/VSPA_mailbox.cpp
     # vspa/VSPA_iqplayer.cpp
     PHYTimer.cpp

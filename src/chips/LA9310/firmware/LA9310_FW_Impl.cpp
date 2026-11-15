@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <string.h>
 
+#include <chrono>
+#include <thread>
+
 #include "m4_commands.h"
 
 #include "comms/PCIe/LA9310_PCIe.h"
@@ -110,11 +113,6 @@ bool LA9310_FW_Impl::CheckFirmwareAlive()
     return false;
 }
 
-OpStatus LA9310_FW_Impl::LoadFirmware(std::span<const char, std::dynamic_extent> firmware)
-{
-    return pcie->LoadArmM4Firmware(firmware.data(), firmware.size());
-}
-
 OpStatus LA9310_FW_Impl::EnterFirmwareReloadMode()
 {
     lime::info("LA9310 EnterFirmwareReloadMode\n");
@@ -134,6 +132,8 @@ OpStatus LA9310_FW_Impl::EnterFirmwareReloadMode()
 
     if (hif->sw_cmd_desc.status == LA9310_SW_CMD_STATUS_DONE)
     {
+        // Firmware reports this just before it jumps to the bootloader, which clears the boot header and the boot stage register
+        std::this_thread::sleep_for(chrono::milliseconds(1));
         return OpStatus::Success;
     }
     return OpStatus::Error;

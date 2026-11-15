@@ -1,16 +1,11 @@
 #ifndef _LINUX_LA9310_IOCTL_H
 #define _LINUX_LA9310_IOCTL_H
 
-struct LA9310_IOCTL_firmware {
-    void const* firmware_data;
-    size_t size;
-};
-
 typedef enum {
     LA9310_WINDOW_BAR0,
     LA9310_WINDOW_BAR1,
     LA9310_WINDOW_BAR2,
-    LA9310_WINDOW_PERSISTENT, // the driver's own uncached DMA memory: firmware images, logs
+    LA9310_WINDOW_PERSISTENT, // uncached DMA memory that lives as long as the device
     LA9310_WINDOW_MSI,
     // DMA memory pools, their window_size is the pool size. They can't be mapped as a whole, map the buffers that
     // LA9310_IOCTL_DMA_ALLOC returns instead.
@@ -18,6 +13,11 @@ typedef enum {
     LA9310_WINDOW_CACHED_POOL,
     LA9310_WINDOW_COUNT
 } la9310_window_t;
+
+// Size of LA9310_WINDOW_PERSISTENT. The device reaches it at LA9310_EP_DMA_BUF_PHYS_ADDR (la9310_host_if.h).
+// It's coherent and shared by every user of the device, for data that has to outlive the applications, such as logs
+// or firmware overlays. Nothing uses it yet.
+#define LA9310_PERSISTENT_SIZE 0x20000
 
 // offsets within mmap'ed regions
 struct la9310_vm_layout {
@@ -70,7 +70,7 @@ struct la9310_atu {
 
 #define LA9310_IOCTL_GET_MEMORY_LAYOUT _IOR(LA9310_IOCTL, 25, struct LA9310_IOCTL_memory_layout)
 #define LA9310_IOCTL_CSR_OP _IOR(LA9310_IOCTL, 28, struct LA9310_IOCTL_CSR_op)
-#define LA9310_IOCTL_LOAD_M4_FW _IOR(LA9310_IOCTL, 29, struct LA9310_IOCTL_firmware)
+// 29 was LA9310_IOCTL_LOAD_M4_FW, the Arm M4 firmware is loaded from user space
 // 30 was LA9310_IOCTL_LOAD_VSPA_FW, the VSPA firmware is loaded from user space
 // #define LA9310_IOCTL_WAIT_FOR_DATA _IOW(LA9310_IOCTL, 31, unsigned int)
 #define LA9310_IOCTL_SIRQ_WAIT _IOW(LA9310_IOCTL, 32, struct LA9310_IOCTL_SIRQ)

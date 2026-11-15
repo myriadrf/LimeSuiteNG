@@ -79,6 +79,8 @@ class LIME_API LA9310
     void GetADCDACRates(uint8_t* adc_rate_mask, uint8_t* dac_rate_mask);
     bool IsM4CoreProgrammed();
 
+    /// @brief Boots the Arm M4 core, which has to be waiting for a firmware image.
+    OpStatus LoadM4Firmware(std::span<const char> firmware);
     OpStatus LoadVSPAFirmware(std::span<const char> firmware);
     bool IsVSPAFirmwareLoaded() const;
 

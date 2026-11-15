@@ -34,7 +34,6 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 
     struct la9310_file* file_ctx = file->private_data;
     struct la9310_dev* la9310_dev = file_ctx ? file_ctx->dev : NULL;
-    struct LA9310_IOCTL_firmware fw;
 
     WARN_ON(la9310_dev == NULL);
 
@@ -57,15 +56,6 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 
         break;
     }
-    case LA9310_IOCTL_LOAD_M4_FW:
-        ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware*)arg, sizeof(fw));
-        if (ret < 0)
-        {
-            dev_err(la9310_dev->dev, "%s copy_from_user, err %ld\n", __func__, ret);
-            return ret;
-        }
-        ret = la9310_load_m4_firmware(la9310_dev, fw.firmware_data, fw.size);
-        break;
     case LA9310_IOCTL_CSR_OP: {
         struct LA9310_IOCTL_CSR_op op;
         if (copy_from_user(&op, (void*)arg, sizeof(op)))
