@@ -1,6 +1,7 @@
 #ifndef VSPA_CCSR_H
 #define VSPA_CCSR_H
 
+/// @brief VSPA configuration, control, and status registers
 struct vspa_regs {
     uint32_t hw_version;
     uint32_t sw_version;

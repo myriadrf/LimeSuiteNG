@@ -54,6 +54,10 @@ target_sources(
             # parsers/CoefficientFileParserTest.cpp
             protocols/BufferInterleavingTest.cpp)
 
+if(UNIX)
+    target_sources(${TESTS_CONTAINER_TARGET} PRIVATE chips/LA9310/vspa_loader_tests.cpp)
+endif()
+
 add_subdirectory(embedded/lms7002m)
 
 ########################################################################

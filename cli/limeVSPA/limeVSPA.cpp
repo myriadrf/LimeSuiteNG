@@ -167,6 +167,8 @@ static void la9310_hexdump_control(std::shared_ptr<LA9310_PCIe> pcie)
     printf("\nEXT_GO_ENA:\t%08x EXT_GO_STAT:\t%08x", GetValue32AtOffset(base, 0x28), GetValue32AtOffset(base, 0x2C));
     printf("\nVCPU_HOST_FLAGS0_1:\t%08x \t%08x", GetValue32AtOffset(base, 0x14), GetValue32AtOffset(base, 0x18));
     printf("\nHOST_VCPU_FLAGS0_1:\t%08x \t%08x", GetValue32AtOffset(base, 0x1C), GetValue32AtOffset(base, 0x20));
+    printf("\nTHREAD_CTRL_STAT:\t%08x \tPROT_FAULT_STAT\t%08x", GetValue32AtOffset(base, 0x50), GetValue32AtOffset(base, 0x54));
+    printf("\nEXCEPTION_CTRL:\t%08x \tEXCEPTION_STAT\t%08x", GetValue32AtOffset(base, 0x58), GetValue32AtOffset(base, 0x5C));
     printf("\n");
 }
 

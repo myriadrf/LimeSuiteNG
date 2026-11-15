@@ -232,84 +232,49 @@ static int startup(struct la9310_dev* la9310_dev)
     uint32_t vspa_sw_version, ippu_sw_version;
     int ctr;
 
-    /* Ask the VSPA to go */
+    // Legacy firmware waits for the SPM buffer message before it clears HOST_GO, so it has to be sent first.
+    // Current firmware drops the message when it initializes, before clearing HOST_GO.
+    msb = (0x70 << 24);
+    lsb = (uint32_t)(dma_addr_t)vspadev->spm_buf_paddr;
+    vspa_reg_write(regs + HOST_OUT_64_MSB_REG_OFFSET, msb);
+    vspa_reg_write(regs + HOST_OUT_64_LSB_REG_OFFSET, lsb);
+
+    // Initiate VSPA to go
     val = vspa_reg_read(regs + CONTROL_REG_OFFSET);
     val = (val & CONTROL_REG_MASK) | CONTROL_HOST_GO;
     vspa_reg_write(regs + CONTROL_REG_OFFSET, val);
     vspadev->vspa_stats.vspa_loading_count++;
-    vspa_sw_version = vspa_reg_read(regs + SWVERSION_REG_OFFSET);
-    ippu_sw_version = vspa_reg_read(regs + IPPU_SWVERSION_REG_OFFSET);
 
-    /* Wait for the 64 bit mailbox bit to be set */
-
+    // The firmware clears CONTROL_HOST_GO when it has booted
     for (ctr = VSPA_STARTUP_TIMEOUT; ctr; ctr--)
     {
+        // Read out the Boot Complete and SPM Ack messages of legacy firmware, so they don't stay pending
         if (vspa_reg_read(regs + HOST_MBOX_STATUS_REG_OFFSET) & MBOX_STATUS_IN_64_BIT)
+        {
+            msb = vspa_reg_read(regs + HOST_IN_64_MSB_REG_OFFSET);
+            lsb = vspa_reg_read(regs + HOST_IN_64_LSB_REG_OFFSET);
+            if (vspadev->debug & DEBUG_STARTUP)
+                dev_info(vspadev->dev, "Boot msg: msb = %08X, lsb = %08X\n", msb, lsb);
+        }
+        val = vspa_reg_read(regs + CONTROL_REG_OFFSET);
+        if (!(val & CONTROL_HOST_GO))
             break;
         schedule_timeout(1000);
     }
     if (!ctr)
     {
-        ERR("%d: timeout waiting for Boot Complete msg\n", vspadev->id);
+        ERR("%d: timeout waiting for firmware to clear HOST_GO\n", vspadev->id);
         goto startup_fail;
     }
-    msb = vspa_reg_read(regs + HOST_IN_64_MSB_REG_OFFSET);
-    lsb = vspa_reg_read(regs + HOST_IN_64_LSB_REG_OFFSET);
-    if (vspadev->debug & DEBUG_STARTUP)
-        dev_info(vspadev->dev, "Boot Ok Msg: msb = %08X, lsb = %08X\n", msb, lsb);
+    dma_channels = 0;
 
-    /* Check Boot Complete message */
-    if (msb != 0xF1000000)
-    {
-        dev_err(vspadev->dev, "%d: Boot Complete msg did not match\n", vspadev->id);
-        goto startup_fail;
-    }
-    else
-    {
-        dev_info(vspadev->dev, "Boot Ok Msg Verified: msb = %08X, lsb = %08X\n", msb, lsb);
-    }
-
-    dma_channels = lsb;
-
-    vspa_sw_version = vspa_reg_read(regs + SWVERSION_REG_OFFSET);
-    ippu_sw_version = vspa_reg_read(regs + IPPU_SWVERSION_REG_OFFSET);
-
-    /* Set SPM buffer */
-    msb = (0x70 << 24);
-    lsb = (uint32_t)(dma_addr_t)vspadev->spm_buf_paddr;
-    vspa_reg_write(regs + HOST_OUT_64_MSB_REG_OFFSET, msb);
-    vspa_reg_write(regs + HOST_OUT_64_LSB_REG_OFFSET, lsb);
     vspa_sw_version = vspa_reg_read(regs + SWVERSION_REG_OFFSET);
     ippu_sw_version = vspa_reg_read(regs + IPPU_SWVERSION_REG_OFFSET);
     dev_info(vspadev->dev, "SW Version: vspa = %08X, ippu = %08X\n", vspa_sw_version, ippu_sw_version);
-    /* Wait for the 64 bit mailbox bit to be set */
-    for (ctr = VSPA_STARTUP_TIMEOUT; ctr; ctr--)
-    {
-        if (vspa_reg_read(regs + HOST_MBOX_STATUS_REG_OFFSET) & MBOX_STATUS_IN_64_BIT)
-            break;
-        schedule_timeout(100);
-    }
-    if (!ctr)
-    {
-        ERR("%d: timeout waiting for SPM Ack msg\n", vspadev->id);
-        goto startup_fail;
-    }
-    msb = vspa_reg_read(regs + HOST_IN_64_MSB_REG_OFFSET);
-    lsb = vspa_reg_read(regs + HOST_IN_64_LSB_REG_OFFSET);
-    dev_info(vspadev->dev, "SPM Ack Msg: msb = %08X, lsb = %08X\n", msb, lsb);
-    if (vspadev->debug & DEBUG_STARTUP)
-        dev_info(vspadev->dev, "SPM Ack Msg: msb = %08X, lsb = %08X\n", msb, lsb);
-    if (msb != 0xF0700000)
-    {
-        ERR("%d: SPM Ack error %08X\n", vspadev->id, msb);
-        goto startup_fail;
-    }
 
     /*This piece of code is for passing the PCI base address to VSPA via
 	 * mailbox 0. Error Print will come since VSPA FW image is not having
 	 * response support for base address implemented */
-
-    val = vspa_reg_read(regs + CONTROL_REG_OFFSET);
 
     if (dma_channels)
     {

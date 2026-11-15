@@ -821,13 +821,7 @@ OpStatus LimeSDR_Micro::UploadMemory(
         LMS64CProtocol::FirmwareToDescriptor(fw, mDeviceDescriptor);
         return status;
     }
-    case eMemoryDevice::VSPA:
-    {
-        // Make sure the VCPU is stopped
-        status = la9310->ResetVCPU();
-        if (status != OpStatus::Success)
-            return status;
-        // (Re-)programm the firmware
+    case eMemoryDevice::VSPA: {
         auto fwdata = std::span<const char, std::dynamic_extent>(data, length);
         return la9310->LoadVSPAFirmware(fwdata);
     }
