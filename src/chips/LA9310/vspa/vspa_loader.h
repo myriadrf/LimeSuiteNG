@@ -11,6 +11,14 @@ extern "C" {
 struct vspa_regs;
 struct vspa_recovery;
 
+/// @brief Number of commands the DMA channel's FIFO holds, they run in order, each after the previous one completed.
+#define VSPA_LOADER_DMA_FIFO_DEPTH 2
+/// @brief Number of staging buffers. A buffer is refilled before waiting for a free FIFO slot, so it has to be older
+/// than everything the FIFO can still hold plus the transfer that is running.
+#define VSPA_LOADER_STAGING_BUFFERS (VSPA_LOADER_DMA_FIFO_DEPTH + 2)
+/// @brief Staging memory that lets every DMA transfer be of the largest size, the loader doesn't use more than this.
+#define VSPA_LOADER_STAGING_SIZE (VSPA_LOADER_STAGING_BUFFERS * 0x10000u)
+
 enum vspa_loader_status {
     VSPA_LOADER_OK = 0,
     VSPA_LOADER_INVALID_IMAGE = -1, ///< the firmware image is malformed or not for VSPA

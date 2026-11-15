@@ -65,7 +65,8 @@ class LA9310_TRX : public RFStream
     std::shared_ptr<LA9310_IQStreamer> iqstreamer;
     std::shared_ptr<LA9310_PCIe> pcie;
 
-    DMA_Buffer proxy_mem;
+    DMA_Buffer proxy_mem; ///< from the uncached DMA pool
+    DMA_Buffer iqflood_mem; ///< from the cached DMA pool, Rx and Tx buffers are carved from it
     // Rx gap fill: next sample timestamp the reader expects (-1 = none yet), samples zero-filled so far
     int64_t mRxNextTs{ -1 };
     uint64_t mRxGapFilled{ 0 };

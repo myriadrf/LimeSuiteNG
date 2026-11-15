@@ -52,9 +52,16 @@ struct la9310_mem_region_info {
     struct page* page; /* set for cacheable DMA buffers (cached_dma=1): mapped with dma_mmap_pages() */
 };
 
-/* cacheable host DMA buffers (module parameter cached_dma); callers sync around CPU accesses */
+/* cacheable cached DMA pool (module parameter cached_dma); user space syncs around CPU accesses */
 extern bool la9310_cached_dma;
-void la9310_host_buf_sync_for_device(struct la9310_dev* la9310_dev, const void* vaddr, size_t size);
+
+/* Host DMA memory pools for user space, see la9310_dma_pool.h */
+enum la9310_dma_pool_id {
+    LA9310_DMA_POOL_CACHED, /* sample data, user space syncs it around CPU accesses */
+    LA9310_DMA_POOL_UNCACHED, /* firmware staging, status that the device posts, traces */
+    LA9310_DMA_POOL_COUNT
+};
+struct la9310_dma_pool;
 
 struct la9310_ccsr_dcr {
     u32 porsr1; /* POR status 1 */
@@ -79,12 +86,12 @@ struct la9310_ccsr_dcr {
 /*
  * struct la9310_dma_info
  *
- * LA9310 DMA buffer contains details of
+ * LA9310 DMA buffer contains details of the persistent (driver owned)
  * DMAable buffer shared with LA9310 over PCI. The buffer exsits
- * in Host memory.
+ * in Host memory, and it's always coherent (uncached).
  *
- * @host_buf : DMA buffer allocated by linux DMA API (pci_alloc_consistent/
- * dma_alloc_coherent). host_buf.vaddr/host_buf.phys_addr point
+ * @host_buf : DMA buffer allocated by linux DMA API (dma_alloc_coherent).
+ * host_buf.vaddr/host_buf.phys_addr point
  * to virtual and physical address in Host address space. This buffer
  * is mapped to the End-point (LA9310) PCIe address space by creating
  * a outbound window.
@@ -166,8 +173,8 @@ struct la9310_dev {
     struct la9310_sub_driver* sub_drvs;
     struct la9310_mem_region_info mem_regions[LA9310_MEM_REGION_BAR_END];
     struct la9310_msg_unit* msg_units[LA9310_MSG_UNIT_CNT];
-    struct la9310_dma_info dma_info;
-    struct la9310_mem_region_info iqflood_region;
+    struct la9310_dma_info dma_info; /* persistent memory */
+    struct la9310_dma_pool* dma_pools[LA9310_DMA_POOL_COUNT];
     struct la9310_hif* hif;
     u32 hif_size;
     struct irq_info irq[LA9310_MSI_MAX_CNT];
@@ -176,7 +183,6 @@ struct la9310_dev {
 
     struct platform_device* uart;
     struct la9310_softirq soft_irq;
-    struct la9310_userspace_dma user_dma;
     bool rcw_done; // sticky: RCW_COMPLETION_DONE stays set until the device is power cycled
 };
 

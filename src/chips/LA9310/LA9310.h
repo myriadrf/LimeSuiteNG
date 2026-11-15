@@ -81,7 +81,6 @@ class LIME_API LA9310
 
     OpStatus LoadVSPAFirmware(std::span<const char> firmware);
     bool IsVSPAFirmwareLoaded() const;
-    std::vector<DMA_Buffer> GetUserSpaceDMABuffers();
 
     PHYTimer phytimer;
 

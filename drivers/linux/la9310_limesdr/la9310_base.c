@@ -22,6 +22,7 @@
 #include "common_headers/la9310_host_if.h"
 #include "common_headers/la9310_pci_def.h"
 #include "la9310_base.h"
+#include "la9310_dma_pool.h"
 #include "la9310_vspa.h"
 
 #define MSG_UNIT_OFFSET 0x1fc0000
@@ -126,6 +127,12 @@ static void ls_pcie_iatu_outbound_set(void __iomem* dbi, int idx, int type, u64 
     writel(PCIE_ATU_ENABLE, dbi + PCIE_ATU_CR2);
 }
 
+static void ls_pcie_iatu_outbound_disable(void __iomem* dbi, int idx)
+{
+    writel(PCIE_ATU_REGION_OUTBOUND | idx, dbi + PCIE_ATU_VIEWPORT);
+    writel(0, dbi + PCIE_ATU_CR2);
+}
+
 static int la9310_create_outbound_msi(struct la9310_dev* la9310_dev)
 {
     struct la9310_mem_region_info* ccsr_region;
@@ -155,48 +162,81 @@ static int la9310_create_outbound_msi(struct la9310_dev* la9310_dev)
     return 0;
 }
 
-static int la9310_scratch_outbound_create(struct la9310_dev* la9310_dev)
+/* Maps host memory to the LA9310 through one of its outbound windows */
+static void la9310_outbound_create(
+    struct la9310_dev* la9310_dev, int window, const char* name, u32 ep_addr, const struct la9310_mem_region_info* region)
 {
     struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
 
-    ls_pcie_iatu_outbound_set(ccsr_region->vaddr + PCIE_RHOM_DBI_BASE,
-        LA9310_SCRATCH_OUTBOUND_WIN,
-        PCIE_ATU_TYPE_MEM,
-        LA9310_EP_DMA_BUF_PHYS_ADDR, /*cpu addr */
-        la9310_dev->dma_info.host_buf.phys_addr, /*pci addr 1 to 1 map */
-        la9310_dev->dma_info.host_buf.size);
+    ls_pcie_iatu_outbound_set(
+        ccsr_region->vaddr + PCIE_RHOM_DBI_BASE, window, PCIE_ATU_TYPE_MEM, ep_addr, region->phys_addr, region->size);
+    dev_dbg(la9310_dev->dev,
+        "%s ATU[%i]: 0x%08x[LA9310] - 0x%llx[host], size %zu\n",
+        name,
+        window,
+        ep_addr,
+        region->phys_addr,
+        region->size);
+}
+
+static void la9310_outbound_disable(struct la9310_dev* la9310_dev, int window)
+{
+    struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
+
+    ls_pcie_iatu_outbound_disable(ccsr_region->vaddr + PCIE_RHOM_DBI_BASE, window);
+}
+
+static int la9310_scratch_outbound_create(struct la9310_dev* la9310_dev)
+{
+    la9310_outbound_create(la9310_dev,
+        LA9310_PERSISTENT_OUTBOUND_WIN,
+        "Persistent buffer",
+        LA9310_EP_DMA_BUF_PHYS_ADDR,
+        &la9310_dev->dma_info.host_buf);
     la9310_dev->dma_info.ep_pcie_addr = LA9310_EP_DMA_BUF_PHYS_ADDR;
-
-    dev_info(la9310_dev->dev, "Scratch buf DMA ATU done\n");
-
     return 0;
 }
 
-static void la9310_create_iqflood_outbound(struct la9310_dev* la9310_dev)
+static unsigned int la9310_cached_pool_size = 4 * 1024 * 1024;
+module_param_named(cached_pool_size, la9310_cached_pool_size, uint, 0444);
+MODULE_PARM_DESC(cached_pool_size, "Size in bytes of the cached DMA memory pool");
+
+static unsigned int la9310_uncached_pool_size = 2 * 1024 * 1024;
+module_param_named(uncached_pool_size, la9310_uncached_pool_size, uint, 0444);
+MODULE_PARM_DESC(uncached_pool_size, "Size in bytes of the uncached DMA memory pool");
+
+static int la9310_dma_pools_init(struct la9310_dev* la9310_dev)
 {
-    struct la9310_mem_region_info* ccsr_region;
+    struct la9310_dma_pool* pool;
+    int rc;
 
-    ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
+    rc = la9310_dma_pool_create(
+        la9310_dev, LA9310_DMA_POOL_CACHED, la9310_cached_pool_size, LA9310_EP_CACHED_POOL_PHYS_ADDR, la9310_cached_dma);
+    if (rc)
+        return rc;
+    rc = la9310_dma_pool_create(
+        la9310_dev, LA9310_DMA_POOL_UNCACHED, la9310_uncached_pool_size, LA9310_EP_UNCACHED_POOL_PHYS_ADDR, false);
+    if (rc)
+    {
+        la9310_dma_pools_destroy(la9310_dev);
+        return rc;
+    }
 
-    ls_pcie_iatu_outbound_set(ccsr_region->vaddr + PCIE_RHOM_DBI_BASE,
-        LA9310_V2H_OUTBOUND_WIN,
-        PCIE_ATU_TYPE_MEM,
-        LA9310_IQFLOOD_PHYS_ADDR,
-        la9310_dev->iqflood_region.phys_addr,
-        la9310_dev->iqflood_region.size);
-    dev_info(la9310_dev->dev,
-        "IQFLOOD Buff:0x%x[H]-0x%llx[M],size %li\n",
-        LA9310_IQFLOOD_PHYS_ADDR,
-        la9310_dev->iqflood_region.phys_addr,
-        la9310_dev->iqflood_region.size);
+    pool = la9310_dev->dma_pools[LA9310_DMA_POOL_CACHED];
+    la9310_outbound_create(la9310_dev, LA9310_CACHED_POOL_OUTBOUND_WIN, pool->name, pool->ep_addr, &pool->region);
+    pool = la9310_dev->dma_pools[LA9310_DMA_POOL_UNCACHED];
+    la9310_outbound_create(la9310_dev, LA9310_UNCACHED_POOL_OUTBOUND_WIN, pool->name, pool->ep_addr, &pool->region);
+    return 0;
+}
 
-    struct la9310_atu* dma_region = &la9310_dev->user_dma.region[la9310_dev->user_dma.region_count++];
-
-    dma_region->host_bus = la9310_dev->iqflood_region.phys_addr;
-    dma_region->ep_pa = LA9310_IQFLOOD_PHYS_ADDR;
-    dma_region->size = la9310_dev->iqflood_region.size;
-    dma_region->flags = 0;
-    dma_region->mmap_offset = LA9310_WINDOW_IQFLOOD * PAGE_SIZE;
+/* The device must not reach the host memory any more, it's freed (pools: once the last user is gone) */
+static void la9310_dma_free_all(struct la9310_dev* la9310_dev)
+{
+    la9310_outbound_disable(la9310_dev, LA9310_CACHED_POOL_OUTBOUND_WIN);
+    la9310_outbound_disable(la9310_dev, LA9310_UNCACHED_POOL_OUTBOUND_WIN);
+    la9310_outbound_disable(la9310_dev, LA9310_PERSISTENT_OUTBOUND_WIN);
+    la9310_dma_pools_destroy(la9310_dev);
+    la9310_dma_mem_free(la9310_dev->dev, "Persistent buffer", &la9310_dev->dma_info.host_buf);
 }
 
 static void la9310_init_subdrv_region(
@@ -259,66 +299,7 @@ static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
 
 bool la9310_cached_dma = true;
 module_param_named(cached_dma, la9310_cached_dma, bool, 0444);
-MODULE_PARM_DESC(cached_dma, "Allocate the host DMA buffers cacheable (sync per buffer) instead of coherent/uncached");
-
-/* After the kernel writes into the scratch buffer (firmware images, VSPA DMA staging) */
-void la9310_host_buf_sync_for_device(struct la9310_dev* la9310_dev, const void* vaddr, size_t size)
-{
-    struct la9310_mem_region_info* host = &la9310_dev->dma_info.host_buf;
-    const u8* p = vaddr;
-    if (!host->page || p < (const u8*)host->vaddr || p + size > (const u8*)host->vaddr + host->size)
-        return;
-    dma_sync_single_for_device(la9310_dev->dev, host->phys_addr + ((const u8*)vaddr - (const u8*)host->vaddr), size, DMA_BIDIRECTIONAL);
-}
-
-static int la9310_alloc_dma_buf(struct device* dev,
-    const char* buf_name,
-    struct la9310_mem_region_info* buf_info,
-    int buf_size,
-    enum dma_data_direction dma_dir)
-{
-    /* Coherent allocation: the buffer is also mapped to user space with dma_mmap_coherent(). A kzalloc() buffer
-     * mapped with dma_map_single() gives a cacheable kernel alias next to the non-cacheable user mapping on
-     * non-coherent hosts (arm64 i.MX95/LX2160 PCIe), which can corrupt IQ data. */
-    buf_info->page = NULL;
-    if (la9310_cached_dma)
-    {
-        /* Cacheable buffer (non-coherent arm64 hosts): user space maps it cacheable with dma_mmap_pages() and keeps it
-         * coherent with the LA9310_IOCTL_CACHE_SYNC_FOR_CPU/DEVICE calls LimeSuiteNG already issues per DMA buffer;
-         * kernel-side writes call la9310_host_buf_sync_for_device(). Uncached (coherent) memory makes the sample
-         * memcpy in user space several times slower on Cortex-A55 class cores. */
-        buf_info->page = dma_alloc_pages(dev, buf_size, &buf_info->phys_addr, DMA_BIDIRECTIONAL, GFP_KERNEL);
-        buf_info->vaddr = buf_info->page ? page_address(buf_info->page) : NULL;
-    }
-    else
-        buf_info->vaddr = dma_alloc_coherent(dev, buf_size, &buf_info->phys_addr, GFP_KERNEL);
-    if (!buf_info->vaddr)
-    {
-        dev_err(dev, "Failed to allocate %s (%i bytes %s DMA memory)\n", buf_name, buf_size, la9310_cached_dma ? "cacheable" : "coherent");
-        return -ENOMEM;
-    }
-    if (buf_info->page)
-        memset(buf_info->vaddr, 0, buf_size), dma_sync_single_for_device(dev, buf_info->phys_addr, buf_size, DMA_BIDIRECTIONAL);
-    buf_info->size = buf_size;
-
-    dev_info(dev, "%s size: %i, va:0x%px bus:0x%llx\n", buf_name, buf_size, buf_info->vaddr, buf_info->phys_addr);
-    return 0;
-}
-
-static int la9310_free_dma_buf(
-    struct device* dev, const char* buf_name, struct la9310_mem_region_info* buf_info, enum dma_data_direction dma_dir)
-{
-    dev_info(dev, "Free %s size: %lu, va:0x%px bus:0x%llx\n", buf_name, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
-    if (buf_info->vaddr && buf_info->page)
-        dma_free_pages(dev, buf_info->size, buf_info->page, buf_info->phys_addr, DMA_BIDIRECTIONAL);
-    else if (buf_info->vaddr)
-        dma_free_coherent(dev, buf_info->size, buf_info->vaddr, buf_info->phys_addr);
-    buf_info->vaddr = NULL;
-    buf_info->page = NULL;
-    buf_info->phys_addr = 0;
-
-    return 0;
-}
+MODULE_PARM_DESC(cached_dma, "Allocate the cached DMA pool cacheable (synced per buffer) instead of coherent/uncached");
 
 static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
 {
@@ -326,20 +307,11 @@ static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
     struct la9310_mem_region_info* host_region = &dma_info->host_buf;
     int rc = 0;
 
-    uint32_t scratch_buf_size = 4 * (1024 * 1024);
-
-    rc = la9310_alloc_dma_buf(la9310_dev->dev, "Scratch buffer", host_region, scratch_buf_size, DMA_BIDIRECTIONAL);
-
+    /* Uncached: the kernel writes firmware images into it without cache maintenance, and the device's logs are read
+     * from it while the device writes them */
+    rc = la9310_dma_mem_alloc(la9310_dev->dev, "Persistent buffer", host_region, PAGE_ALIGN(LA9310_DMA_BUF_SIZE), false);
     if (rc)
         return rc;
-
-    if ((!host_region->vaddr) || (host_region->size < LA9310_DMA_BUF_SIZE))
-    {
-        dev_err(la9310_dev->dev, "ERR: ioremap DDR Address Failed\n");
-        if (host_region->size < LA9310_DMA_BUF_SIZE)
-            dev_err(la9310_dev->dev, "Scratch buffer too small (%li), expected >= %i\n", host_region->size, LA9310_DMA_BUF_SIZE);
-        return -ENOMEM;
-    }
     dma_info->dma_region_used = 0;
 
     rc = la9310_scratch_outbound_create(la9310_dev);
@@ -567,19 +539,15 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
         return rc;
     }
 
-    uint32_t iq_mem_size = 4 * 1024 * 1024;
-
-    rc = la9310_alloc_dma_buf(la9310_dev->dev, "IQ Flood Buffer", &la9310_dev->iqflood_region, iq_mem_size, DMA_BIDIRECTIONAL);
+    rc = la9310_dma_pools_init(la9310_dev);
     if (rc)
-        return rc;
-
-    la9310_create_iqflood_outbound(la9310_dev);
+        goto free_dma;
 
     la9310_init_msg_unit_ptrs(la9310_dev);
 
     rc = la9310_init_sysfs(la9310_dev);
     if (rc)
-        goto free_iqflood;
+        goto free_dma;
 
     /* WDOG request_irq */
     // wdog_msi_irq = la9310_get_msi_irq(la9310_dev, MSI_IRQ_WDOG);
@@ -608,8 +576,8 @@ free_irq:
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
 free_handshake:
     la9310_remove_sysfs(la9310_dev);
-free_iqflood:
-    la9310_free_dma_buf(la9310_dev->dev, "IQ FLood Buffer", &la9310_dev->iqflood_region, DMA_BIDIRECTIONAL);
+free_dma:
+    la9310_dma_free_all(la9310_dev);
     return rc;
 }
 
@@ -644,9 +612,6 @@ int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
 
 int la9310_base_remove(struct la9310_dev* la9310_dev)
 {
-    struct la9310_dma_info* dma_info = &la9310_dev->dma_info;
-    struct la9310_mem_region_info* host_region;
-
     dev_info(la9310_dev->dev, "Removing LA9310 dev\n");
 
     free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
@@ -654,10 +619,9 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     if (la9310_dev->uart)
         platform_device_unregister(la9310_dev->uart);
 
-    host_region = &dma_info->host_buf;
-    host_region->vaddr = NULL;
-
     la9310_subdrv_remove(la9310_dev);
+
+    la9310_dma_free_all(la9310_dev);
 
     pci_free_irq_vectors(la9310_dev->pdev);
     dev_info(la9310_dev->dev, "Removing sub-drivers\n");

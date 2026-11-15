@@ -201,8 +201,7 @@ static int vspa_mem_initialization(struct vspa_device* vspadev)
         if (count == AXI_TO_IPPU_PRAM || count == AXI_TO_PRAM || count == AXI_TO_DMEM)
         {
 
-            memcpy_toio(vspa_dma_region->vaddr, (const void*)mem_addr, z_dma_req.byte_cnt);
-            la9310_host_buf_sync_for_device((struct la9310_dev*)dev_get_drvdata(vspadev->dev), vspa_dma_region->vaddr, z_dma_req.byte_cnt);
+            memcpy_toio(vspa_dma_region->vaddr, (const void*)mem_addr, z_dma_req.byte_cnt); /* coherent memory */
             dma_wmb();
             z_dma_req.axi_addr = vspa_dma_region->phys_addr;
 
@@ -440,9 +439,7 @@ static int vspa_fw_dma_write(struct la9310_dev* la9310_dev, struct dma_param* li
             return -ENOMEM;
         }
 
-        memcpy(vspa_dma_region->vaddr, (const void*)dma_req.axi_addr, dma_req.byte_cnt);
-        dma_sync_single_for_device(
-            la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
+        memcpy(vspa_dma_region->vaddr, (const void*)dma_req.axi_addr, dma_req.byte_cnt); /* coherent memory */
         dma_wmb();
         dma_req.axi_addr = vspa_dma_region->phys_addr;
         dev_dbg(la9310_dev->dev,
@@ -460,8 +457,6 @@ static int vspa_fw_dma_write(struct la9310_dev* la9310_dev, struct dma_param* li
             dev_err(vspadev->dev, "ERR: Timeout in Raw transmit\n");
             return -ECOMM;
         }
-        dma_sync_single_for_cpu(
-            la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
     } while (linfo->size != 0 && err == 0);
 
@@ -500,9 +495,6 @@ static int fw_read_and_load_sections(struct la9310_dev* la9310_dev,
         dev_err(la9310_dev->dev, "Load sections: file start is NULL");
         return -EEXIST;
     }
-
-    dma_sync_single_for_cpu(
-        la9310_dev->dev, la9310_dev->dma_info.host_buf.phys_addr, la9310_dev->dma_info.host_buf.size, DMA_BIDIRECTIONAL);
 
     /*Fetching Section header from firmware file */
     sec_header = (struct section_header*)(file_start + sec_header_off);

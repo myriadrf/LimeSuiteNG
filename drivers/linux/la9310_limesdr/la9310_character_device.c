@@ -8,13 +8,13 @@
 #include <linux/dma-mapping.h>
 // #include <linux/dma-attrs.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 
 #include "la9310_limesdr_device.h"
 #include "la9310_base.h"
 #include "la9310_pci.h"
 #include "la9310_ioctl.h"
-
-#include "la9310_base.h"
+#include "la9310_dma_pool.h"
 
 #define LA9310_LIMESDR_MINOR_COUNT 32
 
@@ -82,8 +82,15 @@ static inline void la9310_vma_add_flags(struct vm_area_struct* vma, vm_flags_t f
 
 static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
 {
-    struct la9310_dev* la9310_dev = file->private_data;
+    struct la9310_file* file_ctx = file->private_data;
+    struct la9310_dev* la9310_dev = file_ctx->dev;
     struct device* sysDev = la9310_dev->dev;
+
+    if (vma->vm_pgoff >= LA9310_DMA_BUF_PGOFF_BASE)
+    {
+        la9310_vma_add_flags(vma, VM_DONTDUMP | VM_DONTEXPAND | VM_IO);
+        return la9310_dma_buf_mmap(file_ctx, vma);
+    }
 
     la9310_window_t window_id = vma->vm_pgoff;
     bool isDMA = false;
@@ -100,32 +107,22 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
     case LA9310_WINDOW_BAR2:
         region = &la9310_dev->mem_regions[LA9310_MEM_REGION_TCMU];
         break;
-    case LA9310_WINDOW_SCRATCH:
+    case LA9310_WINDOW_PERSISTENT:
         isDMA = true;
         region = &la9310_dev->dma_info.host_buf;
         break;
     case LA9310_WINDOW_MSI:
         return -EINVAL;
-    // case LA9310_WINDOW_IPC:
-    //     isDMA = true;
-    //     region = &la9310_dev->dmem_proxy;
-    //     break;
-    case LA9310_WINDOW_IQFLOOD:
-        isDMA = true;
-        region = &la9310_dev->iqflood_region;
-        break;
+    case LA9310_WINDOW_UNCACHED_POOL:
+    case LA9310_WINDOW_CACHED_POOL:
+        dev_err(sysDev, "mmap window %u: allocate buffers from the pool with LA9310_IOCTL_DMA_ALLOC\n", window_id);
+        return -EINVAL;
     default:
         dev_err(sysDev, "%s: invalid page offset\n", __func__);
         return -EINVAL;
     }
 
-    const vm_flags_t add_flags = VM_DONTDUMP | VM_DONTEXPAND | VM_IO;
-// https://github.com/torvalds/linux/commit/bc292ab00f6c7a661a8a605c714e8a148f629ef6
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-    vma->vm_flags |= add_flags;
-#else
-    vm_flags_set(vma, add_flags);
-#endif
+    la9310_vma_add_flags(vma, VM_DONTDUMP | VM_DONTEXPAND | VM_IO);
     vma->vm_pgoff = 0;
     const size_t mapSize = vma->vm_end - vma->vm_start;
     if (mapSize > region->size)
@@ -203,7 +200,12 @@ static int la9310_mmap(struct file* file, struct vm_area_struct* vma)
 static int la9310_limesdr_open(struct inode* inode, struct file* file)
 {
     struct char_dev_data* node_data = container_of(inode->i_cdev, struct char_dev_data, cdev_node);
-    file->private_data = node_data->myDevice;
+    struct la9310_file* file_ctx = kzalloc(sizeof(*file_ctx), GFP_KERNEL);
+    if (!file_ctx)
+        return -ENOMEM;
+
+    la9310_dma_file_init(file_ctx, node_data->myDevice);
+    file->private_data = file_ctx;
     dev_info(
         &node_data->myDevice->pdev->dev, "Open %s by %s (PID: %d)\n", file->f_path.dentry->d_iname, current->comm, current->pid);
     return 0;
@@ -211,13 +213,16 @@ static int la9310_limesdr_open(struct inode* inode, struct file* file)
 
 static int la9310_limesdr_release(struct inode* inode, struct file* file)
 {
-    struct la9310_dev* myDevice = file->private_data;
-    if (myDevice == NULL)
+    struct la9310_file* file_ctx = file->private_data;
+    if (file_ctx == NULL)
     {
         return 0;
     }
 
-    dev_info(&myDevice->pdev->dev, "Release %s\n", file->f_path.dentry->d_iname);
+    dev_info(&file_ctx->dev->pdev->dev, "Release %s\n", file->f_path.dentry->d_iname);
+    la9310_dma_file_release(file_ctx);
+    kfree(file_ctx);
+    file->private_data = NULL;
     return 0;
 }
 

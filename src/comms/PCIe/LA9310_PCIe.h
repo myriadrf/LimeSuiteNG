@@ -26,6 +26,12 @@ struct mmaped_region {
 
 class LA9310_PCIe;
 
+/// @brief The la9310_limesdr driver's host DMA memory pools.
+enum class LA9310_DMAPool : uint8_t {
+    Cached, ///< Bulk data that the CPU processes, such as samples. Sync it with DMA_SyncForCPU() and DMA_SyncForDevice().
+    Uncached, ///< Data that the device posts and the CPU polls, firmware staging. Needs no syncing.
+};
+
 class PCIe_CSR_Access
 {
   public:
@@ -72,18 +78,6 @@ class LIME_API LA9310_PCIe : public LimePCIe
     virtual int ReadControl(uint8_t* buffer, int length, int timeout_ms = 100);
     virtual OpStatus RunControlCommand(uint8_t* data, size_t length, int timeout_ms = 100);
     virtual OpStatus RunControlCommand(uint8_t* request, uint8_t* response, size_t length, int timeout_ms = 100);
-    // Methods for cache coherency
-
-    /// @brief Clean & invalidate cache for DMEM Proxy before a read access
-    /// @param pointer to address to sync
-    /// @param data size to sync
-    void dmem_sync_to_cpu(volatile const void* addr, uint32_t data_size);
-
-    /// @brief Clean & invalidate cache for DMEM Proxy after a write access
-    /// @param pointer to address to sync
-    /// @param data size to sync
-    void dmem_sync_to_device(volatile const void* addr, uint32_t data_size);
-
     /// @brief Downloads the Firmware for the ARM M4 core on the LA9310 device
     /// @param Firmware data
     /// @param size of firmware data
@@ -102,7 +96,15 @@ class LIME_API LA9310_PCIe : public LimePCIe
         return std::make_shared<PCIe_CSR_Access>(this, window_id, base_offset);
     }
 
-    std::vector<DMA_Buffer> GetUserSpaceDMABuffers();
+    /// @brief Allocates and maps a buffer from one of the driver's DMA memory pools.
+    /// The buffer belongs to this port's file descriptor, the driver frees it when the descriptor is closed.
+    /// @param size The requested size, rounded up to whole pages.
+    /// @param buffer The allocated buffer.
+    /// @param pool The pool to allocate from.
+    /// @return Busy if the pool doesn't have enough free memory.
+    OpStatus AllocDMABuffer(size_t size, DMA_Buffer& buffer, LA9310_DMAPool pool = LA9310_DMAPool::Cached);
+    /// @brief Unmaps and frees a buffer returned by AllocDMABuffer().
+    OpStatus FreeDMABuffer(const DMA_Buffer& buffer);
 
     OpStatus iowrite32(uint32_t window_id, uint32_t value, uint64_t address);
     uint32_t ioread32(uint32_t window_id, uint64_t address);
@@ -110,7 +112,9 @@ class LIME_API LA9310_PCIe : public LimePCIe
     OpStatus SendSignal(uint32_t bit);
     OpStatus WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout);
     OpStatus ClearSIRQ(uint32_t bits);
+    /// @brief Makes the device's writes to the buffer visible to the CPU. Nothing to do for coherent buffers.
     OpStatus DMA_SyncForCPU(const DMA_Buffer& buffer);
+    /// @brief Makes the CPU's writes to the buffer visible to the device. Nothing to do for coherent buffers.
     OpStatus DMA_SyncForDevice(const DMA_Buffer& buffer);
 
   private:
@@ -118,10 +122,8 @@ class LIME_API LA9310_PCIe : public LimePCIe
     std::filesystem::path mFilePath;
     volatile struct la9310_hif* hostInterface;
     LA9310_IOCTL_memory_layout memoryLayout;
-    la9310_userspace_dma dma_usermap;
 
     std::array<mmaped_region, LA9310_WINDOW_COUNT> mapped_ranges;
-    std::array<DMA_Buffer, LA9310_WINDOW_COUNT> dma_map;
 };
 
 } // namespace lime

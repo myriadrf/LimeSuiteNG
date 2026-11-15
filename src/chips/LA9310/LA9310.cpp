@@ -2,8 +2,6 @@
 
 #include "limesuiteng/Logger.h"
 
-#include <sys/mman.h>
-
 #include "comms/PCIe/LA9310_PCIe.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -115,23 +113,19 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
         return OpStatus::NotConnected;
     }
 
-    // Stage in the last quarter of the first userspace DMA region: LA9310_TRX uses the other quarters (proxy data,
-    // Rx and Tx IQ flood), and the core is stopped while it loads anyway.
-    std::vector<DMA_Buffer> mappedRegions = pcie->GetUserSpaceDMABuffers();
-    struct Unmap {
-        const std::vector<DMA_Buffer>& regions;
-        ~Unmap()
-        {
-            for (const DMA_Buffer& region : regions)
-                munmap(region.va<void>(), region.size());
-        }
-    } unmap{ mappedRegions };
-
     VSPALoaderContext context{ pcie, {} };
+    // Uncached, so the image needs no cache maintenance on its way to the core
+    if (pcie->AllocDMABuffer(VSPA_LOADER_STAGING_SIZE, context.staging, LA9310_DMAPool::Uncached) != OpStatus::Success)
+        context.staging = DMA_Buffer();
+    struct FreeStaging {
+        VSPALoaderContext& context;
+        ~FreeStaging() { context.pcie->FreeDMABuffer(context.staging); }
+    } freeStaging{ context };
+
     vspa_loader loader{};
     loader.regs =
         reinterpret_cast<volatile vspa_regs*>(static_cast<uint8_t*>(pcie->GetBar(LA9310_WINDOW_BAR0).vaddr) + VSPA_CCSR_offset);
-    loader.sync_for_device = VSPALoaderSync;
+    loader.sync_for_device = context.staging.coherent() ? nullptr : VSPALoaderSync;
     loader.log = VSPALoaderLog;
     loader.user = &context;
 
@@ -147,14 +141,9 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
     if (recovery.ccsr && recovery.tcml)
         loader.recovery = &recovery;
 
-    if (!mappedRegions.empty())
-    {
-        const size_t quarter = mappedRegions.front().size() / 4;
-        context.staging = mappedRegions.front().subspan(3 * quarter, quarter);
-        loader.staging = context.staging.va<uint8_t>();
-        loader.staging_pa = static_cast<uint32_t>(context.staging.endpoint_pa());
-        loader.staging_size = context.staging.size();
-    }
+    loader.staging = context.staging.va<uint8_t>();
+    loader.staging_pa = static_cast<uint32_t>(context.staging.endpoint_pa());
+    loader.staging_size = context.staging.size();
 
     // Stop the running firmware only when there is something to replace it with
     const uint8_t* image = reinterpret_cast<const uint8_t*>(firmware.data());
@@ -194,11 +183,6 @@ bool LA9310::IsVSPAFirmwareLoaded() const
     auto swversion_addr = reinterpret_cast<const volatile uint32_t*>(BAR0_addr + VSPA_CCSR_offset + 0x4);
     const uint32_t fw_version = *swversion_addr;
     return fw_version != 0x0;
-}
-
-std::vector<DMA_Buffer> LA9310::GetUserSpaceDMABuffers()
-{
-    return pcie->GetUserSpaceDMABuffers();
 }
 
 OpStatus LA9310::ResetVCPU()

@@ -6,6 +6,7 @@
 
 #include "la9310_character_device.h"
 #include "la9310_limesdr_device.h"
+#include "la9310_dma_pool.h"
 
 static int la9310_get_memory_layout(const struct la9310_dev* la9310_dev, struct LA9310_IOCTL_memory_layout* layout)
 {
@@ -14,10 +15,12 @@ static int la9310_get_memory_layout(const struct la9310_dev* la9310_dev, struct 
     layout->window_size[LA9310_WINDOW_BAR0] = la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].size;
     layout->window_size[LA9310_WINDOW_BAR1] = la9310_dev->mem_regions[LA9310_MEM_REGION_TCML].size;
     layout->window_size[LA9310_WINDOW_BAR2] = la9310_dev->mem_regions[LA9310_MEM_REGION_TCMU].size;
-    layout->window_size[LA9310_WINDOW_SCRATCH] = la9310_dev->dma_info.host_buf.size;
+    layout->window_size[LA9310_WINDOW_PERSISTENT] = la9310_dev->dma_info.host_buf.size;
     layout->window_size[LA9310_WINDOW_MSI] = PCIE_MSI_OB_SIZE;
-    layout->window_size[LA9310_WINDOW_IPC] = PAGE_SIZE;
-    layout->window_size[LA9310_WINDOW_IQFLOOD] = la9310_dev->iqflood_region.size;
+    if (la9310_dev->dma_pools[LA9310_DMA_POOL_UNCACHED])
+        layout->window_size[LA9310_WINDOW_UNCACHED_POOL] = la9310_dev->dma_pools[LA9310_DMA_POOL_UNCACHED]->region.size;
+    if (la9310_dev->dma_pools[LA9310_DMA_POOL_CACHED])
+        layout->window_size[LA9310_WINDOW_CACHED_POOL] = la9310_dev->dma_pools[LA9310_DMA_POOL_CACHED]->region.size;
 
     layout->host_interface.window_id = LA9310_WINDOW_BAR1;
     layout->host_interface.start_offset = ((uint8_t*)la9310_dev->hif - la9310_dev->mem_regions[LA9310_MEM_REGION_TCML].vaddr);
@@ -26,21 +29,12 @@ static int la9310_get_memory_layout(const struct la9310_dev* la9310_dev, struct 
     return 0;
 }
 
-void la9310_flush_cache(struct la9310_dev* la9310_dev, struct LA9310_IOCTL_flush_cache* m, dma_addr_t phys_addr)
-{
-    if (m->sync_to_cpu)
-        dma_sync_single_for_cpu(la9310_dev->dev, phys_addr + m->offset, m->size, m->dir);
-    else
-        dma_sync_single_for_device(la9310_dev->dev, phys_addr + m->offset, m->size, m->dir);
-}
-
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 {
     long ret = 0;
 
-    struct la9310_dev* la9310_dev = file->private_data;
-    struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
-    struct LA9310_IOCTL_flush_cache cache_entry;
+    struct la9310_file* file_ctx = file->private_data;
+    struct la9310_dev* la9310_dev = file_ctx ? file_ctx->dev : NULL;
     struct LA9310_IOCTL_firmware fw;
 
     WARN_ON(la9310_dev == NULL);
@@ -49,6 +43,7 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
     {
         return -ENODEV;
     }
+    struct vspa_device* vspadev = (struct vspa_device*)la9310_dev->vspa_priv;
 
     switch (cmd)
     {
@@ -64,22 +59,6 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 
         break;
     }
-    case LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM:
-        // if (copy_from_user(&cache_entry, (void*)arg, sizeof(struct LA9310_IOCTL_flush_cache)))
-        //     return -EFAULT;
-
-        // cache_entry.dir = DMA_BIDIRECTIONAL;
-        // la9310_flush_cache(la9310_dev, &cache_entry, la9310_dev->dmem_proxy.phys_addr);
-        // ret = 0;
-        break;
-    case LA9310_IOCTL_FLUSH_CACHE_IQFLOOD:
-        if (copy_from_user(&cache_entry, (void*)arg, sizeof(struct LA9310_IOCTL_flush_cache)))
-            return -EFAULT;
-
-        cache_entry.dir = DMA_BIDIRECTIONAL;
-        la9310_flush_cache(la9310_dev, &cache_entry, la9310_dev->iqflood_region.phys_addr);
-        ret = 0;
-        break;
     case LA9310_IOCTL_LOAD_M4_FW:
         ret = copy_from_user(&fw, (struct LA9310_IOCTL_firmware*)arg, sizeof(fw));
         if (ret < 0)
@@ -173,52 +152,39 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
         break;
     }
 
-    case LA9310_IOCTL_USERSPACE_DMA: {
-        struct la9310_userspace_dma dma_map;
-        dma_map = la9310_dev->user_dma;
-        if (copy_to_user((void*)arg, &dma_map, sizeof(dma_map)))
-            return -EFAULT;
-        ret = 0;
-        break;
-    }
-
-    case LA9310_IOCTL_CACHE_SYNC_FOR_CPU: {
-        struct la9310_atu mem;
-        if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
-            return -EFAULT;
-
-        const struct la9310_userspace_dma* dma_map = &la9310_dev->user_dma;
-        for (int i = 0; i < dma_map->region_count; ++i)
-        {
-            if (mem.host_bus >= dma_map->region[i].host_bus &&
-                mem.host_bus + mem.size <= dma_map->region[i].host_bus + dma_map->region[i].size)
-            {
-                if (la9310_cached_dma) /* coherent (uncached) buffers need no maintenance */
-                    dma_sync_single_for_cpu(la9310_dev->dev, mem.host_bus, mem.size, DMA_BIDIRECTIONAL);
-                return 0;
-            }
-        }
-        ret = -EINVAL;
-        break;
-    }
-
+    case LA9310_IOCTL_CACHE_SYNC_FOR_CPU:
     case LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE: {
         struct la9310_atu mem;
         if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
             return -EFAULT;
 
-        const struct la9310_userspace_dma* dma_map = &la9310_dev->user_dma;
-        for (int i = 0; i < dma_map->region_count; ++i)
+        ret = la9310_dma_buf_sync(file_ctx, &mem, cmd == LA9310_IOCTL_CACHE_SYNC_FOR_CPU);
+        break;
+    }
+
+    case LA9310_IOCTL_DMA_ALLOC: {
+        struct la9310_atu mem;
+        if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
+            return -EFAULT;
+
+        ret = la9310_dma_buf_alloc(file_ctx, &mem);
+        if (ret)
+            break;
+
+        if (copy_to_user((struct la9310_atu __user*)arg, &mem, sizeof(mem)))
         {
-            if (mem.host_bus >= dma_map->region[i].host_bus &&
-                mem.host_bus + mem.size <= dma_map->region[i].host_bus + dma_map->region[i].size)
-            {
-                if (la9310_cached_dma) /* coherent (uncached) buffers need no maintenance */
-                    dma_sync_single_for_device(la9310_dev->dev, mem.host_bus, mem.size, DMA_BIDIRECTIONAL);
-                return 0;
-            }
+            la9310_dma_buf_free(file_ctx, mem.host_bus);
+            return -EFAULT;
         }
-        ret = -EINVAL;
+        break;
+    }
+
+    case LA9310_IOCTL_DMA_FREE: {
+        struct la9310_atu mem;
+        if (copy_from_user(&mem, (struct la9310_atu __user*)arg, sizeof(mem)))
+            return -EFAULT;
+
+        ret = la9310_dma_buf_free(file_ctx, mem.host_bus);
         break;
     }
 

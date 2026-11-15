@@ -200,18 +200,19 @@ LA9310_TRX::LA9310_TRX(std::shared_ptr<LA9310_IQStreamer> iqstreamer, std::share
     , mStreamEnabled(false)
 {
     mTimestampOffset = 0;
-    auto dma_buffers = pcie->GetUserSpaceDMABuffers();
-    if (dma_buffers.size())
-    {
-        auto iqflood = dma_buffers.front();
-        uint32_t slice_size = iqflood.size() / 4;
-        proxy_mem = iqflood.subspan(0, slice_size);
+
+    // The firmware posts its counters there, the CPU polls them without syncing
+    if (pcie->AllocDMABuffer(sizeof(proxy_data_t), proxy_mem, LA9310_DMAPool::Uncached) == OpStatus::Success)
         iqstreamer->SetProxyDataBuffer(proxy_mem);
 
-        rxiqflood_mem = iqflood.subspan(slice_size, slice_size);
+    constexpr uint32_t slice_size = 1024 * 1024;
+    if (pcie->AllocDMABuffer(2 * slice_size, iqflood_mem, LA9310_DMAPool::Cached) == OpStatus::Success)
+    {
+        rxiqflood_mem = iqflood_mem.subspan(0, slice_size);
         memset(rxiqflood_mem.va<void*>(), 0x55, rxiqflood_mem.size());
-        txiqflood_mem = iqflood.subspan(2 * slice_size, slice_size);
+        txiqflood_mem = iqflood_mem.subspan(slice_size, slice_size);
         memset(txiqflood_mem.va<void*>(), 0x55, txiqflood_mem.size());
+        pcie->DMA_SyncForDevice(iqflood_mem);
     }
 }
 
@@ -219,6 +220,9 @@ LA9310_TRX::~LA9310_TRX()
 {
     Stop();
     Teardown();
+    // The firmware has no command to forget the proxy address, but it posts there only while streaming
+    pcie->FreeDMABuffer(proxy_mem);
+    pcie->FreeDMABuffer(iqflood_mem);
 }
 
 /// @brief Gets the current timestamp of the hardware.
@@ -244,6 +248,9 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
 {
     if (mStreamEnabled)
         return ReportError(OpStatus::Busy, "Samples streaming already running"s);
+
+    if (iqflood_mem.size() == 0 || proxy_mem.size() == 0)
+        return ReportError(OpStatus::Busy, "No DMA memory, device might be in use by another stream"s);
 
     OpStatus status;
 

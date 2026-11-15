@@ -4,6 +4,7 @@
 #include "limesuiteng/config.h"
 
 #include "VSPA_mailbox.h"
+#include "comms/DMA_Buffer.h"
 
 #include <memory>
 #include <vector>
@@ -16,6 +17,7 @@ class LIME_API VSPA_Trace
 {
   public:
     VSPA_Trace(std::shared_ptr<LA9310_PCIe> port, volatile l1_trace_hif_t* hif);
+    ~VSPA_Trace();
 
     void Clear();
     std::vector<l1_trace_data_t> ReadTrace();
@@ -23,6 +25,7 @@ class LIME_API VSPA_Trace
   private:
     std::shared_ptr<LA9310_PCIe> port;
     volatile l1_trace_hif_t* hif;
+    DMA_Buffer events_mem; ///< from the uncached DMA pool, the firmware writes the events there
     l1_trace_data_t* events_va;
     uint32_t bytes_read;
     uint32_t buffer_size;

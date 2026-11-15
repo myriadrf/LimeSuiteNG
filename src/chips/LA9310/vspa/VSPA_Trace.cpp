@@ -2,8 +2,8 @@
 
 #include "comms/PCIe/LA9310_PCIe.h"
 
-#include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 #include "chips/LA9310/firmware/iqplayer_commands.h"
+#include "limesuiteng/Logger.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,15 +18,28 @@ VSPA_Trace::VSPA_Trace(std::shared_ptr<LA9310_PCIe> port, volatile l1_trace_hif_
     , last_drops(0)
     , mbox(port)
 {
-    auto scratch_buf_window = port->GetBar(LA9310_WINDOW_SCRATCH);
     buffer_size = 1024 * 1024;
-    this->hif->buffer_size = buffer_size;
+    // Uncached, the events are read while the firmware writes them
+    if (port->AllocDMABuffer(buffer_size, events_mem, LA9310_DMAPool::Uncached) != OpStatus::Success)
+    {
+        lime::error("VSPA trace: no DMA memory for the trace buffer");
+        buffer_size = 0;
+        return;
+    }
 
-    const uint32_t offset = 1024 * 1024 * 2;
-    this->hif->la9310_mem_address = PCI_OUTBOUND_WINDOW_BASE_ADDR + offset;
-
-    events_va = reinterpret_cast<l1_trace_data_t*>(size_t(scratch_buf_window.vaddr) + offset);
+    events_va = events_mem.va<l1_trace_data_t>();
     memset(events_va, 0, buffer_size);
+    this->hif->buffer_size = buffer_size;
+    this->hif->la9310_mem_address = static_cast<uint32_t>(events_mem.endpoint_pa());
+}
+
+VSPA_Trace::~VSPA_Trace()
+{
+    if (!events_va)
+        return;
+    // Stop the firmware from writing into the buffer before it goes back to the pool, it skips addresses outside of PCIe
+    hif->la9310_mem_address = 0;
+    port->FreeDMABuffer(events_mem);
 }
 
 void VSPA_Trace::Clear()

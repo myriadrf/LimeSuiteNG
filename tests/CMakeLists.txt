@@ -99,3 +99,14 @@ endif()
 #         NAME ${LIME_TEST_SUITE_NAME}_coverage EXECUTABLE ${LIME_TEST_SUITE_NAME} EXCLUDE "/usr/*" "build/*" "external/*" "tests/*")
 #     target_link_libraries(${LIME_TEST_SUITE_NAME} PUBLIC gcov)
 # endif()
+
+########################################################################
+# la9310_limesdr driver test, it only needs the device and the kernel module loaded
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_executable(gtest-la9310-dmapool comms/LA9310_DMAPool_tests.cpp)
+    target_include_directories(gtest-la9310-dmapool PRIVATE ${PROJECT_SOURCE_DIR})
+    target_link_libraries(gtest-la9310-dmapool PRIVATE $<BUILD_INTERFACE:GTest::gtest> $<BUILD_INTERFACE:GTest::gtest_main>)
+    if(CMAKE_BINARY_DIR)
+        set_target_properties(gtest-la9310-dmapool PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    endif()
+endif()

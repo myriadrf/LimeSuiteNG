@@ -126,34 +126,51 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* data, size_t length, int timeou
     return RunControlCommand(data, data, length, timeout_ms);
 }
 
-std::vector<DMA_Buffer> LA9310_PCIe::GetUserSpaceDMABuffers()
+OpStatus LA9310_PCIe::AllocDMABuffer(size_t size, DMA_Buffer& buffer, LA9310_DMAPool pool)
 {
-    std::vector<DMA_Buffer> buffers;
-    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_USERSPACE_DMA, reinterpret_cast<la9310_userspace_dma*>(&dma_usermap));
+    struct la9310_atu mem;
+    memset(&mem, 0, sizeof(mem));
+    mem.size = size;
+    mem.flags = pool == LA9310_DMAPool::Uncached ? LA9310_DMA_FLAG_UNCACHED : 0;
+
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_DMA_ALLOC, &mem);
     if (ret < 0)
     {
-        lime::error("IOCTL userspace DMA errno: %i (%s)\n", errno, strerror(errno));
-        return buffers;
+        const int err = errno;
+        lime::error("IOCTL DMA alloc of %zu bytes errno: %i (%s)", size, err, strerror(err));
+        return err == ENOMEM ? OpStatus::Busy : OpStatus::Error;
     }
 
-    for (uint32_t i = 0; i < dma_usermap.region_count; ++i)
+    void* vaddr = mmap(NULL, mem.size, PROT_READ | PROT_WRITE, MAP_SHARED, mFileDescriptor, mem.mmap_offset);
+    if (vaddr == MAP_FAILED)
     {
-        void* vaddr = mmap(NULL,
-            dma_usermap.region[i].size,
-            PROT_READ | PROT_WRITE,
-            MAP_SHARED,
-            mFileDescriptor,
-            dma_usermap.region[i].mmap_offset);
-        if (vaddr == MAP_FAILED)
-        {
-            lime::error("Userspace DMA[%u] mmap failed errno: %i\n", i, errno);
-            return buffers;
-        }
-        buffers.push_back(
-            DMA_Buffer(vaddr, dma_usermap.region[i].host_bus, dma_usermap.region[i].ep_pa, dma_usermap.region[i].size));
-        // printf("US Mapped: %llx, sz:%lli\n", buffers.end()->va<uint8_t>(), dma_usermap.region[i].size);
+        lime::error("DMA buffer mmap failed errno: %i (%s)", errno, strerror(errno));
+        ioctl(mFileDescriptor, LA9310_IOCTL_DMA_FREE, &mem);
+        return OpStatus::Error;
     }
-    return buffers;
+
+    buffer = DMA_Buffer(vaddr, mem.host_bus, mem.ep_pa, mem.size, (mem.flags & LA9310_DMA_FLAG_COHERENT) != 0);
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::FreeDMABuffer(const DMA_Buffer& buffer)
+{
+    if (buffer.size() == 0)
+        return OpStatus::Success;
+
+    munmap(buffer.va<void>(), buffer.size());
+
+    struct la9310_atu mem;
+    memset(&mem, 0, sizeof(mem));
+    mem.host_bus = buffer.bus();
+
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_DMA_FREE, &mem);
+    if (ret < 0)
+    {
+        lime::error("IOCTL DMA free errno: %i (%s)", errno, strerror(errno));
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
 }
 
 OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t flags)
@@ -181,7 +198,8 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
     const int page_size = sysconf(_SC_PAGESIZE);
     for (int w = LA9310_WINDOW_BAR0; w < LA9310_WINDOW_COUNT; ++w)
     {
-        if (w == LA9310_WINDOW_MSI || w == LA9310_WINDOW_IPC)
+        // The pools are accessed through the buffers from AllocDMABuffer()
+        if (w == LA9310_WINDOW_MSI || w == LA9310_WINDOW_UNCACHED_POOL || w == LA9310_WINDOW_CACHED_POOL)
             continue;
         mapped_ranges[w].size = memoryLayout.window_size[w];
         const size_t offset =
@@ -206,13 +224,14 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
 
 void LA9310_PCIe::Close()
 {
-    for (const mmaped_region& region : mapped_ranges)
+    for (mmaped_region& region : mapped_ranges)
     {
         if (region.vaddr && region.size)
         {
             // printf("Unmap %llx sz: %llu\n", region.vaddr, region.size);
             munmap(region.vaddr, region.size);
         }
+        region = mmaped_region();
     }
 
     if (mFileDescriptor >= 0)
@@ -233,38 +252,6 @@ int LA9310_PCIe::ReadControl(uint8_t* buffer, const int length, int timeout_ms)
 mmaped_region LA9310_PCIe::GetBar(uint8_t i)
 {
     return mapped_ranges[i];
-}
-
-void LA9310_PCIe::dmem_sync_to_cpu(volatile const void* addr, uint32_t data_size)
-{
-    struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
-
-    // Fill struct with information
-    cache_entry.sync_to_cpu = 1;
-    cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(uint64_t(addr) - uint64_t(vl_dmem_proxy_addr));
-
-    printf_dbg_log("sync_dmem_proxy_before_read called for offset: 0x%08x\n", cache_entry.offset);
-
-    // Fire ioctl
-    ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
-}
-
-void LA9310_PCIe::dmem_sync_to_device(volatile const void* addr, uint32_t data_size)
-{
-    struct LA9310_IOCTL_flush_cache cache_entry;
-    auto vl_dmem_proxy_addr = mapped_ranges[LA9310_WINDOW_IQFLOOD].vaddr;
-
-    // Fill struct with information
-    cache_entry.sync_to_cpu = 0;
-    cache_entry.size = data_size;
-    cache_entry.offset = static_cast<uint32_t>(uint64_t(addr) - uint64_t(vl_dmem_proxy_addr));
-
-    printf_dbg_log("sync_dmem_proxy_after_write called for offset: 0x%08x\n", cache_entry.offset);
-
-    // Fire ioctl
-    ioctl(mFileDescriptor, LA9310_IOCTL_FLUSH_CACHE_VSPA_DMEM, &cache_entry);
 }
 
 OpStatus LA9310_PCIe::iowrite32(uint32_t window_id, uint32_t value, uint64_t address)
@@ -376,6 +363,9 @@ OpStatus LA9310_PCIe::ClearSIRQ(uint32_t bits)
 
 OpStatus LA9310_PCIe::DMA_SyncForCPU(const DMA_Buffer& buffer)
 {
+    if (buffer.coherent())
+        return OpStatus::Success;
+
     struct la9310_atu mem;
     mem.host_bus = buffer.bus();
     mem.size = buffer.size();
@@ -391,6 +381,9 @@ OpStatus LA9310_PCIe::DMA_SyncForCPU(const DMA_Buffer& buffer)
 
 OpStatus LA9310_PCIe::DMA_SyncForDevice(const DMA_Buffer& buffer)
 {
+    if (buffer.coherent())
+        return OpStatus::Success;
+
     struct la9310_atu mem;
     mem.host_bus = buffer.bus();
     mem.size = buffer.size();

@@ -176,7 +176,7 @@ int la9310_load_firmware_to_dma(
         return -ENOBUFS;
     }
 
-    // host_buf is coherent DMA memory (dma_alloc_coherent): no cache maintenance needed around the copy.
+    // The persistent buffer is coherent DMA memory (dma_alloc_coherent): no cache maintenance needed around the copy.
     // Copy firmware from userspace to DMA region
     dev_dbg(la9310_dev->dev, "Copying firmware to 0x%lx, size %ld\n", (size_t)firmware_dma->phys_addr, fw_size);
     int rc = copy_from_user(firmware_dma->vaddr, fw_data, fw_size);
@@ -185,7 +185,6 @@ int la9310_load_firmware_to_dma(
         dev_err(la9310_dev->dev, "Could only copy %ld of %ld bytes of firmware.\n", fw_size - rc, fw_size);
         return -EIO;
     }
-    la9310_host_buf_sync_for_device(la9310_dev, firmware_dma->vaddr, fw_size); /* no-op for coherent buffers */
     return 0;
 }
 

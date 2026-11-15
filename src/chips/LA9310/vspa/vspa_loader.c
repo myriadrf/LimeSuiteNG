@@ -9,12 +9,6 @@
 #include "vspa_recovery.h"
 #include "vspa_regs.h"
 
-/// @brief Number of commands the DMA channel's FIFO holds, they run in order, each after the previous one completed.
-#define VSPA_LOADER_DMA_FIFO_DEPTH 2
-/// @brief Number of staging buffers. A buffer is refilled before waiting for a free FIFO slot, so it has to be older
-/// than everything the FIFO can still hold plus the transfer that is running.
-#define VSPA_LOADER_STAGING_BUFFERS (VSPA_LOADER_DMA_FIFO_DEPTH + 2)
-
 #define CONTROL_REG_MASK (~0x000100FFu)
 #define CONTROL_PDN_EN (1u << 31)
 #define CONTROL_HOST_GO (1u << 0)
