@@ -89,7 +89,7 @@ OpStatus ToOpStatus(int status)
     case VSPA_LOADER_INVALID_IMAGE:
         return OpStatus::InvalidValue;
     case VSPA_LOADER_NO_MEMORY:
-        return OpStatus::NotSupported;
+        return OpStatus::NoMemory;
     case VSPA_LOADER_BUSY:
         return OpStatus::Busy;
     case VSPA_LOADER_TIMEOUT:
@@ -106,7 +106,6 @@ OpStatus ToOpStatus(int status)
 OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
 {
     // Check RCW Completion bit, without it accessing VSPA registers will fail and reboot host
-    auto t1 = std::chrono::high_resolution_clock::now();
     if (!IsClockEnabled())
     {
         lime::error("VSPA has no clock, can't load firmware");
@@ -148,14 +147,10 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
     // Stop the running firmware only when there is something to replace it with
     const uint8_t* image = reinterpret_cast<const uint8_t*>(firmware.data());
     OpStatus status = ToOpStatus(vspa_loader_prepare(&loader, image, firmware.size()));
-    if (status == OpStatus::NotSupported)
+    if (status == OpStatus::NoMemory)
     {
-        // no DMA memory to stage the image in, the driver can still load it
-        lime::warning("VSPA firmware: loading through the driver");
-        status = ResetVCPU();
-        if (status != OpStatus::Success)
-            return status;
-        return pcie->LoadVSPAFirmware(firmware.data(), firmware.size());
+        lime::error("No DMA memory available for loading VSPA firmware");
+        return status;
     }
     if (status != OpStatus::Success)
         return status;
@@ -165,7 +160,6 @@ OpStatus LA9310::LoadVSPAFirmware(std::span<const char> firmware)
     if (status != OpStatus::Success)
         lime::warning("VSPA firmware didn't acknowledge the reset request");
     int loadstat = vspa_loader_load(&loader, image, firmware.size());
-    auto t2 = std::chrono::high_resolution_clock::now();
     return ToOpStatus(loadstat);
 }
 

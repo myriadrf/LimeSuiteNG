@@ -250,7 +250,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return ReportError(OpStatus::Busy, "Samples streaming already running"s);
 
     if (iqflood_mem.size() == 0 || proxy_mem.size() == 0)
-        return ReportError(OpStatus::Busy, "No DMA memory, device might be in use by another stream"s);
+        return ReportError(OpStatus::NoMemory, "No DMA memory, device might be in use by another stream"s);
 
     OpStatus status;
 

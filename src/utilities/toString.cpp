@@ -31,6 +31,7 @@ static const std::unordered_map<OpStatus, const std::string> OP_STATUS_TEXT{
     { OpStatus::Aborted, "Aborted"s },
     { OpStatus::PermissionDenied, "Permission denied"s },
     { OpStatus::NotConnected, "Not connected"s },
+    { OpStatus::NoMemory, "Out of memory"s },
 };
 
 const std::string& ToString(OpStatus value)

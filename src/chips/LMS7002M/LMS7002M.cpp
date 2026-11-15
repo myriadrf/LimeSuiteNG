@@ -146,6 +146,7 @@ static_assert(OpStatus::Busy == static_cast<lime::OpStatus>(lime_Result_Busy));
 static_assert(OpStatus::Aborted == static_cast<lime::OpStatus>(lime_Result_Aborted));
 static_assert(OpStatus::PermissionDenied == static_cast<lime::OpStatus>(lime_Result_PermissionDenied));
 static_assert(OpStatus::NotConnected == static_cast<lime::OpStatus>(lime_Result_NotConnected));
+static_assert(OpStatus::NoMemory == static_cast<lime::OpStatus>(lime_Result_NoMemory));
 
 static OpStatus ResultToStatus(lime_Result result)
 {

@@ -45,8 +45,6 @@ add_kernel_module(
     la9310_base.c
     la9310_dma_pool.h
     la9310_dma_pool.c
-    la9310_vspa.h
-    la9310_vspa.c
     la9310_pci.h
     la9310_pci.c
     la9310_ioctl.h

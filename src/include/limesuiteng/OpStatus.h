@@ -28,6 +28,7 @@ enum class OpStatus {
     Aborted = -10, ///< Abort code: -10
     PermissionDenied = -11, ///< Permission denied code: -11
     NotConnected = -12, ///< Not connected code: -12
+    NoMemory = -13, ///< Out of memory code: -13
 };
 
 } // namespace lime

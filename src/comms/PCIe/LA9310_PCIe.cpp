@@ -138,7 +138,7 @@ OpStatus LA9310_PCIe::AllocDMABuffer(size_t size, DMA_Buffer& buffer, LA9310_DMA
     {
         const int err = errno;
         lime::error("IOCTL DMA alloc of %zu bytes errno: %i (%s)", size, err, strerror(err));
-        return err == ENOMEM ? OpStatus::Busy : OpStatus::Error;
+        return err == ENOMEM ? OpStatus::NoMemory : OpStatus::Error;
     }
 
     void* vaddr = mmap(NULL, mem.size, PROT_READ | PROT_WRITE, MAP_SHARED, mFileDescriptor, mem.mmap_offset);
@@ -307,22 +307,6 @@ OpStatus LA9310_PCIe::LoadArmM4Firmware(const char* data, size_t length)
 {
     const struct LA9310_IOCTL_firmware fw = { data, length };
     return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_M4_FW, &fw) ? OpStatus::Error : OpStatus::Success;
-}
-
-OpStatus LA9310_PCIe::LoadVSPAFirmware(const char* data, size_t length)
-{
-    // Check RCW Completion bit, without it accessing VSPA registers will fail and reboot host
-    constexpr uint32_t VSPA_CCSR_offset = 0x1000000;
-    constexpr uint32_t vcpu_busy = (1 << 8);
-
-    const auto VSPA_STATUS_reg_offset = VSPA_CCSR_offset + 0x10;
-    auto csr = GetCSRAccess(LA9310_WINDOW_BAR0);
-    bool busy = csr->ioread32(VSPA_STATUS_reg_offset) & vcpu_busy;
-    if (busy)
-        return OpStatus::Busy;
-
-    const struct LA9310_IOCTL_firmware fw = { data, length };
-    return ioctl(mFileDescriptor, LA9310_IOCTL_LOAD_VSPA_FW, &fw) ? OpStatus::Error : OpStatus::Success;
 }
 
 OpStatus LA9310_PCIe::SendSignal(uint32_t bitIndex)

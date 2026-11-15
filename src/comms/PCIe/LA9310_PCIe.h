@@ -88,7 +88,6 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @param Firmware data
     /// @param size of firmware data
     /// @return 0 on success, error code else
-    OpStatus LoadVSPAFirmware(const char* data, size_t length);
 
     mmaped_region GetBar(uint8_t i);
     std::shared_ptr<PCIe_CSR_Access> GetCSRAccess(uint32_t window_id, size_t base_offset = 0)
@@ -101,7 +100,7 @@ class LIME_API LA9310_PCIe : public LimePCIe
     /// @param size The requested size, rounded up to whole pages.
     /// @param buffer The allocated buffer.
     /// @param pool The pool to allocate from.
-    /// @return Busy if the pool doesn't have enough free memory.
+    /// @return NoMemory if the pool doesn't have enough free memory.
     OpStatus AllocDMABuffer(size_t size, DMA_Buffer& buffer, LA9310_DMAPool pool = LA9310_DMAPool::Cached);
     /// @brief Unmaps and frees a buffer returned by AllocDMABuffer().
     OpStatus FreeDMABuffer(const DMA_Buffer& buffer);

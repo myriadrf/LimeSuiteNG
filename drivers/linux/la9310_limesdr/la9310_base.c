@@ -18,19 +18,18 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_address.h>
+#include <linux/platform_device.h>
 
 #include "common_headers/la9310_host_if.h"
 #include "common_headers/la9310_pci_def.h"
 #include "la9310_base.h"
 #include "la9310_dma_pool.h"
-#include "la9310_vspa.h"
+#include "la9310_pci.h"
 
 #define MSG_UNIT_OFFSET 0x1fc0000
 #define DCR_OFFSET 0x1e00000
 
 static int la9310_uart_id_counter = 0;
-static int la9310_subdrv_cnt_g;
-static struct la9310_sub_driver* la9310_get_subdrv(int i);
 
 bool la9310_rcw_completed(struct la9310_dev* la9310_dev)
 {
@@ -239,7 +238,7 @@ static void la9310_dma_free_all(struct la9310_dev* la9310_dev)
     la9310_dma_mem_free(la9310_dev->dev, "Persistent buffer", &la9310_dev->dma_info.host_buf);
 }
 
-static void la9310_init_subdrv_region(
+static void la9310_init_persistent_region(
     struct la9310_dev* la9310_dev, struct la9310_mem_region_info* ep_buf, int size, enum la9310_mem_region_t type)
 {
     u8* host_vaddr;
@@ -252,7 +251,7 @@ static void la9310_init_subdrv_region(
     ep_buf->phys_addr = dma_info->ep_pcie_addr + dma_info->dma_region_used;
     ep_buf->size = size;
 
-    dev_info(la9310_dev->dev, "subdrv DMA region:[%d] offset %d\n", type, dma_info->dma_region_used);
+    dev_info(la9310_dev->dev, "persistent DMA region:[%d] offset %d\n", type, dma_info->dma_region_used);
     dev_info(la9310_dev->dev, "Host virtual 0x%px, EP Phys 0x%llx, size %d", ep_buf->vaddr, ep_buf->phys_addr, (int)ep_buf->size);
 
     /*Paint separator */
@@ -272,29 +271,25 @@ struct la9310_mem_region_info* la9310_get_dma_region(struct la9310_dev* la9310_d
     struct la9310_mem_region_info* ep_buf;
     int idx;
 
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(type);
+    idx = LA9310_PERSISTENT_REGION_IDX(type);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
 
     return ep_buf;
 }
 
-static void la9310_init_subdrv_dma_buf(struct la9310_dev* la9310_dev)
+static void la9310_init_persistent_regions(struct la9310_dev* la9310_dev)
 {
     struct la9310_mem_region_info* ep_buf;
     int idx;
 
-    /*VSPA Overlay*/
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_VSPA_OVERLAY);
+    /*FW*/
+    idx = LA9310_PERSISTENT_REGION_IDX(LA9310_MEM_REGION_FW);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_VSPA_FW_SIZE, LA9310_VSPA_OVERLAY);
-
-    /*FW*/ idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_FW);
-    ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_FW_DMA_SIZE, LA9310_MEM_REGION_FW);
+    la9310_init_persistent_region(la9310_dev, ep_buf, LA9310_FW_DMA_SIZE, LA9310_MEM_REGION_FW);
     /*LA9310 LOG buffer */
-    idx = LA9310_SUBDRV_DMA_REGION_IDX(LA9310_MEM_REGION_DBG_LOG);
+    idx = LA9310_PERSISTENT_REGION_IDX(LA9310_MEM_REGION_DBG_LOG);
     ep_buf = &la9310_dev->dma_info.ep_bufs[idx];
-    la9310_init_subdrv_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
+    la9310_init_persistent_region(la9310_dev, ep_buf, LA9310_DBUG_LOG_SIZE, LA9310_MEM_REGION_DBG_LOG);
 }
 
 bool la9310_cached_dma = true;
@@ -321,7 +316,7 @@ static int la9310_scratch_dma_buf(struct la9310_dev* la9310_dev)
         goto out;
     }
 
-    la9310_init_subdrv_dma_buf(la9310_dev);
+    la9310_init_persistent_regions(la9310_dev);
 
     return 0;
 out:
@@ -369,62 +364,6 @@ static void la9310_init_msg_unit_ptrs(struct la9310_dev* la9310_dev)
         la9310_dev->msg_units[i] = msg_unit + i;
 }
 
-static int la9310_base_cleanup_subdrv(struct la9310_dev* la9310_dev, int drv_index)
-{
-    int i = 0, rc = 0;
-    struct la9310_sub_driver* subdrv;
-    struct la9310_sub_driver_ops* ops;
-
-    dev_info(la9310_dev->dev, "Removing sub-drivers because of error\n");
-    for (i = drv_index; i >= 0; i--)
-    {
-        subdrv = la9310_get_subdrv(i);
-        ops = &subdrv->ops;
-        if (ops->remove)
-        {
-            pr_info("%s: subdrv remove : %s\n", __func__, &subdrv->name[0]);
-
-            rc = ops->remove(la9310_dev);
-            if (rc)
-            {
-                pr_err("%s: %s: Remove failed, err %d\n", __func__, &subdrv->name[0], rc);
-                /*Other drivers to be removed so continue */
-            }
-        }
-    }
-    return rc;
-}
-
-static int la9310_subdrv_init(struct la9310_dev* la9310_dev)
-{
-    int i, rc;
-    struct la9310_sub_driver* subdrv;
-    struct la9310_sub_driver_ops* ops;
-
-    dev_info(la9310_dev->dev, "Initiating sub-drivers\n");
-    for (i = 0; i < la9310_subdrv_cnt_g; i++)
-    {
-        subdrv = la9310_get_subdrv(i);
-        ops = &subdrv->ops;
-        if (ops->probe)
-        {
-            pr_info("%s: subdrv probe : %s\n", __func__, &subdrv->name[0]);
-
-            rc = ops->probe(la9310_dev);
-            if (rc)
-            {
-                pr_err("%s: %s: probe failed, err %d\n", __func__, &subdrv->name[0], rc);
-                goto free_subdrv;
-            }
-        }
-    }
-
-    return 0;
-free_subdrv:
-    la9310_base_cleanup_subdrv(la9310_dev, i);
-    return rc;
-}
-
 int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw_data, size_t fw_length)
 {
     int rc;
@@ -449,13 +388,6 @@ int la9310_load_m4_firmware(struct la9310_dev* la9310_dev, const char __user* fw
     rc = la9310_verify_hif_compatibility(la9310_dev);
     if (rc)
         return rc;
-
-    if (!la9310_dev->vspa_priv)
-    {
-        rc = la9310_subdrv_init(la9310_dev);
-        if (rc)
-            return rc;
-    }
 
     return 0;
 }
@@ -566,10 +498,6 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     if (rc)
         goto free_irq;
 
-    // init VSPA, it will abort if M4 has not been programmed, so ignore return value.
-    // will reinit after M4 upload
-    rc = la9310_subdrv_init(la9310_dev);
-
     return 0;
 
 free_irq:
@@ -581,35 +509,6 @@ free_dma:
     return rc;
 }
 
-int la9310_base_deinit(struct la9310_dev* la9310_dev, int stage, int drv_index)
-{
-    struct la9310_dma_info* dma_info = &la9310_dev->dma_info;
-    struct la9310_mem_region_info* host_region;
-
-    // la9310_modinfo_exit(la9310_dev);
-    switch (stage)
-    {
-    case LA9310_SUBDRV_PROBE_STAGE:
-        la9310_base_cleanup_subdrv(la9310_dev, drv_index);
-        __attribute__((__fallthrough__));
-        /*Fallthrough */
-    case LA9310_IRQ_INIT_STAGE:
-        __attribute__((__fallthrough__));
-        /*Fallthrough */
-    case LA9310_HANDSHAKE_INIT_STAGE:
-        __attribute__((__fallthrough__));
-        /*Fallthrough */
-    case LA9310_SYSFS_INIT_STAGE:
-        la9310_remove_sysfs(la9310_dev);
-        __attribute__((__fallthrough__));
-        /*Fallthrough */
-    case LA9310_SCRATCH_DMA_INIT_STAGE:
-        host_region = &dma_info->host_buf;
-        // iounmap(host_region->vaddr);
-    }
-    return 0;
-}
-
 int la9310_base_remove(struct la9310_dev* la9310_dev)
 {
     dev_info(la9310_dev->dev, "Removing LA9310 dev\n");
@@ -619,12 +518,9 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     if (la9310_dev->uart)
         platform_device_unregister(la9310_dev->uart);
 
-    la9310_subdrv_remove(la9310_dev);
-
     la9310_dma_free_all(la9310_dev);
 
     pci_free_irq_vectors(la9310_dev->pdev);
-    dev_info(la9310_dev->dev, "Removing sub-drivers\n");
 
     pci_disable_msi(la9310_dev->pdev);
 
@@ -635,108 +531,10 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
     return 0;
 }
 
-void la9310_subdrv_mod_exit(void)
-{
-    int i, rc = 0;
-    struct la9310_sub_driver* subdrv;
-    struct la9310_sub_driver_ops* ops;
-
-    pr_info("%s: subdrv mod exit\n", __func__);
-
-    for (i = 0; i < la9310_subdrv_cnt_g; i++)
-    {
-        subdrv = la9310_get_subdrv(i);
-        ops = &subdrv->ops;
-        if (ops->mod_exit)
-        {
-            pr_info("%s: subdrv mod exit : %s\n", __func__, &subdrv->name[0]);
-            rc = ops->mod_exit();
-            if (rc)
-            {
-                pr_err("%s: %s: mod exit failed, err %d\n", __func__, &subdrv->name[0], rc);
-            }
-        }
-    }
-}
-
-void la9310_subdrv_remove(struct la9310_dev* la9310_dev)
-{
-    int i, rc = 0;
-    struct la9310_sub_driver* subdrv;
-    struct la9310_sub_driver_ops* ops;
-
-    for (i = 0; i < la9310_subdrv_cnt_g; i++)
-    {
-        subdrv = la9310_get_subdrv(i);
-        ops = &subdrv->ops;
-        if (ops->remove)
-        {
-            pr_info("%s: subdrv remove : %s\n", __func__, &subdrv->name[0]);
-            rc = ops->remove(la9310_dev);
-            if (rc)
-            {
-                pr_err("%s: [%s] mod exit failed, err %d\n", __func__, &subdrv->name[0], rc);
-            }
-        }
-    }
-}
-
-/*
- * Sub driver initializer table
- * Add the subdrivers in the order of desired initiazation sequence
- */
-static struct la9310_sub_driver sub_drvs_g[] = {
-#ifdef NLM_ENABLE_VSPA_LOAD
-    {
-        .name = "VSPA",
-        .type = LA9310_SUBDRV_TYPE_VSPA,
-        {
-            .probe = vspa_probe,
-            .remove = vspa_remove,
-        },
-    },
-#endif
-    {}
-};
-
-static struct la9310_sub_driver* la9310_get_subdrv(int i)
-{
-    return &sub_drvs_g[i];
-}
-
 extern int la9310_get_msi_irq(struct la9310_dev* la9310_dev, enum la9310_msi_id type)
 {
     dev_dbg(la9310_dev->dev, "return irq=%d\n", la9310_dev->irq[type].irq_val);
     return la9310_dev->irq[type].irq_val;
-}
-
-int la9310_subdrv_mod_init(void)
-{
-    int i, rc = 0;
-    struct la9310_sub_driver* subdrv;
-    struct la9310_sub_driver_ops* ops;
-
-    la9310_subdrv_cnt_g = ARRAY_SIZE(sub_drvs_g);
-    pr_info("%s: subdrv mod init:%i\n", __func__, la9310_subdrv_cnt_g);
-
-    for (i = 0; i < la9310_subdrv_cnt_g; i++)
-    {
-        subdrv = la9310_get_subdrv(i);
-        ops = &subdrv->ops;
-        if (ops->mod_init)
-        {
-            pr_info("%s: subdrv mod init : %s\n", __func__, &subdrv->name[0]);
-            rc = ops->mod_init();
-            if (rc)
-            {
-                pr_err("%s: %s: mod init failed, err %d\n", __func__, &subdrv->name[0], rc);
-                goto out;
-            }
-        }
-    }
-
-out:
-    return rc;
 }
 
 int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, int bit_num)

@@ -18,10 +18,6 @@ static int __init la9310_limesdr_module_init(void)
     int ret = 0;
     pr_info("%s : v%s-g%s\n", __func__, LA9310_LIMESDR_VERSION, LA9310_LIMESDR_GIT_HASH);
 
-    ret = la9310_subdrv_mod_init();
-    if (ret)
-        return ret;
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
     la9310_limesdr_class = class_create(THIS_MODULE, LA9310_LIMESDR_DRIVER_NAME);
 #else
@@ -58,8 +54,6 @@ static void __exit la9310_limesdr_module_exit(void)
     la9310_limesdr_pci_unregister_driver();
     la9310_limesdr_unregister_chrdev_region();
     class_destroy(la9310_limesdr_class);
-
-    la9310_subdrv_mod_exit();
 
     pr_info("%s\n", __func__);
 }

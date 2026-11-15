@@ -15,6 +15,7 @@ typedef enum lime_Result {
     lime_Result_Aborted = -10,
     lime_Result_PermissionDenied = -11,
     lime_Result_NotConnected = -12,
+    lime_Result_NoMemory = -13,
 } lime_Result;
 
 #endif // LIME_RESULT_H
