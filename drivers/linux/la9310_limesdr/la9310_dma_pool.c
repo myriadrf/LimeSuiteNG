@@ -84,7 +84,14 @@ static void la9310_dma_pool_release(struct kref* ref)
     struct la9310_dma_pool* pool = container_of(ref, struct la9310_dma_pool, ref);
 
     gen_pool_destroy(pool->gen);
-    la9310_dma_mem_free(pool->dev, pool->name, &pool->region);
+    if (pool->leak)
+        dev_warn(pool->dev,
+            "%s: intentionally leaking %zu bytes of DMA memory at bus 0x%llx (ATS is enabled)\n",
+            pool->name,
+            pool->region.size,
+            pool->region.phys_addr);
+    else
+        la9310_dma_mem_free(pool->dev, pool->name, &pool->region);
     put_device(pool->dev);
     kfree(pool);
 }
@@ -152,6 +159,7 @@ void la9310_dma_pools_destroy(struct la9310_dev* la9310_dev)
         if (!pool)
             continue;
         la9310_dev->dma_pools[i] = NULL;
+        pool->leak = la9310_dev->buggy_ats;
         if (gen_pool_avail(pool->gen) != gen_pool_size(pool->gen))
             dev_warn(la9310_dev->dev, "%s still has buffers in use, it's freed when they are gone\n", pool->name);
         kref_put(&pool->ref, la9310_dma_pool_release);

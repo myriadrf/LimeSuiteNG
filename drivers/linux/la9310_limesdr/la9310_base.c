@@ -6,6 +6,7 @@
 
 #include <linux/kernel.h>
 #include <linux/pci.h>
+#include <linux/iommu.h>
 #include <linux/of_device.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
@@ -234,7 +235,61 @@ static void la9310_dma_free_all(struct la9310_dev* la9310_dev)
     la9310_outbound_disable(la9310_dev, LA9310_UNCACHED_POOL_OUTBOUND_WIN);
     la9310_outbound_disable(la9310_dev, LA9310_PERSISTENT_OUTBOUND_WIN);
     la9310_dma_pools_destroy(la9310_dev);
-    la9310_dma_mem_free(la9310_dev->dev, "Persistent buffer", &la9310_dev->dma_info.host_buf);
+    if (la9310_dev->buggy_ats && la9310_dev->dma_info.host_buf.vaddr)
+        dev_warn(la9310_dev->dev,
+            "Persistent buffer: intentionally leaking %zu bytes of DMA memory at bus 0x%llx (ATS is enabled)\n",
+            la9310_dev->dma_info.host_buf.size,
+            la9310_dev->dma_info.host_buf.phys_addr);
+    else
+        la9310_dma_mem_free(la9310_dev->dev, "Persistent buffer", &la9310_dev->dma_info.host_buf);
+}
+
+/*
+ * The LA9310 advertises the ATS capability, but doesn't answer the IOMMU's ATS Invalidate Requests.
+ * When the device is behind a translating IOMMU domain with ATS enabled, every unmap of its DMA
+ * memory ends in IOTLB invalidation timeouts (AMD-Vi: "Completion-Wait loop timed out", IOTLB_INV_TIMEOUT)
+ * These timeouts can affect other PCIe devices work that are on the same IOMMU group, and can result in problems like
+ * the file system cache failing to flush into NVME SSD.
+ * Therefore to avoid causing such problems the DMA buffers are intentionaly not unmapped and leaked.
+ * The buffers are allocated once per probe, so the leak would only happen on driver remove (which typically should happen only once before shutdown)
+ * Without an IOMMU, or with an identity (passthrough) domain, freeing unmaps no IOVAs and no invalidations are sent.
+ */
+static bool la9310_ats_check(struct la9310_dev* la9310_dev)
+{
+    struct pci_dev* pdev = la9310_dev->pdev;
+    const int pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_ATS);
+    struct iommu_domain* domain = iommu_get_domain_for_dev(&pdev->dev);
+    u16 ctrl;
+
+    if (!domain)
+        dev_info(la9310_dev->dev, "IOMMU: not used, DMA addresses are physical\n");
+    else if (domain->type & __IOMMU_DOMAIN_PAGING)
+        dev_info(la9310_dev->dev, "IOMMU: translating domain (type 0x%x)\n", domain->type);
+    else
+        dev_info(la9310_dev->dev, "IOMMU: non translating domain (type 0x%x), e.g. identity/passthrough\n", domain->type);
+
+    if (!pos)
+        return false;
+    if (pci_read_config_word(pdev, pos + PCI_ATS_CTRL, &ctrl) || !(ctrl & PCI_ATS_CTRL_ENABLE))
+    {
+        dev_info(la9310_dev->dev, "ATS capability present, not enabled\n");
+        return false;
+    }
+    if (!domain || !(domain->type & __IOMMU_DOMAIN_PAGING))
+    {
+        dev_info(la9310_dev->dev, "ATS is enabled, but DMA addresses are not translated, no ATS invalidations expected\n");
+        return false;
+    }
+
+    dev_warn(la9310_dev->dev,
+        "ATS is enabled by the IOMMU, the LA9310 doesn't respond to ATS invalidations. Unmapping its DMA memory would "
+        "cause IOTLB invalidation timeouts. To avoid that the driver will intentionally not unmap DMA memory and it will be leaked "
+        "when the device is removed during driver unload.\n");
+    dev_warn(la9310_dev->dev,
+        "Workarounds: boot with 'pci=noats' (disables ATS for all devices) or 'iommu=pt', or with the driver unbound "
+        "set this device's IOMMU domain to identity: echo identity > /sys/bus/pci/devices/%s/iommu_group/type\n",
+        pci_name(pdev));
+    return true;
 }
 
 bool la9310_cached_dma = true;
@@ -346,6 +401,8 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     /*LA9310 Host interface (HIF) @ TCML + LA9310_EP_HIF_OFFSET */
     struct la9310_mem_region_info* tcm_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_TCML];
     la9310_dev->hif = (struct la9310_hif*)((u8*)tcm_region->vaddr + LA9310_EP_HIF_OFFSET);
+
+    la9310_dev->buggy_ats = la9310_ats_check(la9310_dev);
 
     rc = la9310_scratch_dma_buf(la9310_dev);
     if (rc)

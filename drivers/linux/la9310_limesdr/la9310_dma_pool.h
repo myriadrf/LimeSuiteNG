@@ -33,6 +33,7 @@ struct la9310_dma_pool {
     u32 ep_addr; /* address of the region on the LA9310 */
     unsigned long pgoff_base;
     bool coherent; /* uncached memory, needs no cache maintenance */
+    bool leak; /* don't free the memory on release, see la9310_dev.buggy_ats */
     struct gen_pool* gen;
 };
 

@@ -119,6 +119,7 @@ struct la9310_dev {
     struct platform_device* uart;
     struct la9310_softirq soft_irq;
     bool rcw_done; // sticky: RCW_COMPLETION_DONE stays set until the device is power cycled
+    bool buggy_ats; // ATS is enabled in a translating IOMMU domain: unmapping buffers makes IOMMU timeout
 };
 
 /*la9310_dev->flags*/
