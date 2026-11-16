@@ -93,6 +93,32 @@ OpStatus ParseM4Firmware(std::span<const char> image, M4_BootHeader& header)
     return OpStatus::Success;
 }
 
+OpStatus ParseM4BootImage(std::span<const char> image, size_t maxSize, M4_BootHeader& header)
+{
+    if (image.empty())
+        return InvalidImage("empty file");
+
+    uint32_t preamble = 0;
+    if (image.size() >= sizeof(preamble))
+        std::memcpy(&preamble, image.data(), sizeof(preamble));
+    if (preamble != BOOT_PREAMBLE)
+        return InvalidImage("missing boot header");
+
+    if (image.size() > maxSize)
+    {
+        lime::error("Arm M4 boot image is invalid: %zu bytes do not fit in %zu bytes of memory", image.size(), maxSize);
+        return OpStatus::OutOfRange;
+    }
+
+    OpStatus status = ParseM4Firmware(image, header);
+    if (status != OpStatus::Success)
+        return status;
+
+    if (header.bl_size == 0)
+        return InvalidImage("boot header has no firmware");
+    return OpStatus::Success;
+}
+
 M4_loader::M4_loader(std::shared_ptr<LA9310_PCIe> port)
     : port(port)
 {

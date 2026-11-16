@@ -16,14 +16,20 @@ EEPROM_I2C::EEPROM_I2C(std::shared_ptr<II2C> port, uint16_t i2c_addr, uint32_t m
     assert(page_size > 0);
 }
 
-OpStatus EEPROM_I2C::Write(uint32_t mem_addr, const void* data, size_t length)
+OpStatus EEPROM_I2C::Write(uint32_t mem_addr, const void* data, size_t length, const ProgressCallback& callback)
 {
     if (mem_addr + length > memory_size)
         return OpStatus::OutOfRange;
 
+    const size_t total = length;
+
     const uint8_t* src = reinterpret_cast<const uint8_t*>(data);
     while (length > 0)
     {
+        // Checked before each transaction, so the transfer can be aborted before anything is changed
+        if (callback && callback(total - length, total))
+            return OpStatus::Aborted;
+
         // align to pages
         const size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
         const uint32_t toWrite = std::min(length, bytesToEndOfPage);
@@ -35,17 +41,25 @@ OpStatus EEPROM_I2C::Write(uint32_t mem_addr, const void* data, size_t length)
         src += toWrite;
         mem_addr += toWrite;
     }
+    if (callback && total > 0)
+        callback(total, total); // report completion, nothing left to abort
     return OpStatus::Success;
 }
 
-OpStatus EEPROM_I2C::Read(uint32_t mem_addr, void* data, size_t length)
+OpStatus EEPROM_I2C::Read(uint32_t mem_addr, void* data, size_t length, const ProgressCallback& callback)
 {
     if (mem_addr + length > memory_size)
         return OpStatus::OutOfRange;
 
+    const size_t total = length;
+
     uint8_t* dest = reinterpret_cast<uint8_t*>(data);
     while (length > 0)
     {
+        // Checked before each transaction, so the transfer can be aborted before anything is changed
+        if (callback && callback(total - length, total))
+            return OpStatus::Aborted;
+
         // align to pages
         const size_t bytesToEndOfPage = page_size - (mem_addr % page_size);
         const uint32_t toRead = std::min(length, bytesToEndOfPage);
@@ -57,6 +71,8 @@ OpStatus EEPROM_I2C::Read(uint32_t mem_addr, void* data, size_t length)
         dest += toRead;
         mem_addr += toRead;
     }
+    if (callback && total > 0)
+        callback(total, total); // report completion, nothing left to abort
     return OpStatus::Success;
 }
 

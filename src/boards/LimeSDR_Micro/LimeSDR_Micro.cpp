@@ -833,10 +833,32 @@ OpStatus LimeSDR_Micro::UploadMemory(
         auto fwdata = std::span<const char, std::dynamic_extent>(data, length);
         return la9310->LoadVSPAFirmware(fwdata);
     }
-    case eMemoryDevice::EEPROM:
-        if (length > 65532) // Don't overwrite stored board parameters
-            return OpStatus::OutOfRange;
-        return mEEPROM.Write(0x0, data, length);
+    case eMemoryDevice::EEPROM: {
+        // The boot ROM reads the boot header at offset 0, an image without a valid one would leave the device unbootable
+        const std::span<const char> image(data, length);
+        M4_BootHeader header;
+        constexpr size_t maxImageSize = 65532; // Don't overwrite stored board parameters at the end of the EEPROM
+        status = ParseM4BootImage(image, maxImageSize, header);
+        if (status != OpStatus::Success)
+            return status;
+
+        size_t bytesWritten = 0;
+        EEPROM_I2C::ProgressCallback progress;
+        if (callback)
+            progress = [&callback, &bytesWritten](size_t done, size_t total) {
+                bytesWritten = done;
+                return callback(done, total, ""s);
+            };
+        status = mEEPROM.Write(0x0, data, length, progress);
+        if (status == OpStatus::Aborted)
+        {
+            if (bytesWritten == 0)
+                lime::info("EEPROM programming aborted, nothing was written");
+            else
+                lime::warning("EEPROM programming aborted, the stored boot image is incomplete");
+        }
+        return status;
+    }
     default:
         return OpStatus::NotImplemented;
     }

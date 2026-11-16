@@ -84,7 +84,7 @@ bool progressCallBack(std::size_t bsent, std::size_t btotal, const std::string& 
         return false;
     }
 
-    printf("\nAborting programming will corrupt firmware and will need external programmer to fix it. Are you sure? [y/n]: ");
+    printf("\nAborting programming might corrupt firmware and could need external programmer to fix it. Are you sure? [y/n]: ");
     fflush(stdout);
     std::string answer;
     while (1)
@@ -197,6 +197,12 @@ int main(int argc, char** argv)
 
     OpStatus status =
         memorySelect->ownerDevice->UploadMemory(memorySelect->memoryDeviceType, 0, data.data(), data.size(), progressCallBack);
+    if (status == OpStatus::Aborted)
+    {
+        DeviceRegistry::freeDevice(device);
+        cerr << "Programming aborted."sv << endl;
+        return EXIT_FAILURE;
+    }
     if (status != OpStatus::Success)
     {
         DeviceRegistry::freeDevice(device);

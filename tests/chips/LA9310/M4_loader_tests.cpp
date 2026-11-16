@@ -139,3 +139,59 @@ TEST(M4_loader, RejectsPluginOutOfBounds)
     M4_BootHeader header;
     EXPECT_EQ(ParseM4Firmware(image, header), OpStatus::InvalidValue);
 }
+
+TEST(M4_loader, BootImageWithHeaderIsAccepted)
+{
+    const std::vector<char> image = ImageWithHeader(ValidHeader(1024), 1024);
+
+    M4_BootHeader header;
+    ASSERT_EQ(ParseM4BootImage(image, 1024, header), OpStatus::Success);
+    EXPECT_EQ(header.bl_size, 1024u);
+    EXPECT_EQ(header.bl_entry, TCML + 0x201);
+}
+
+TEST(M4_loader, BootImageRejectsRawBinary)
+{
+    const std::vector<char> image(1024, 0x11);
+
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage(image, 65532, header), OpStatus::InvalidValue);
+}
+
+TEST(M4_loader, BootImageRejectsImageShorterThanPreamble)
+{
+    const std::vector<char> image(2, 0x55);
+
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage(image, 65532, header), OpStatus::InvalidValue);
+}
+
+TEST(M4_loader, BootImageRejectsEmptyImage)
+{
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage({}, 65532, header), OpStatus::InvalidValue);
+}
+
+TEST(M4_loader, BootImageRejectsImageLargerThanMemory)
+{
+    const std::vector<char> image = ImageWithHeader(ValidHeader(1024), 1025);
+
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage(image, 1024, header), OpStatus::OutOfRange);
+}
+
+TEST(M4_loader, BootImageRejectsFirmwareOutOfBounds)
+{
+    const std::vector<char> image = ImageWithHeader(ValidHeader(1025), 1024);
+
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage(image, 65532, header), OpStatus::InvalidValue);
+}
+
+TEST(M4_loader, BootImageRejectsEmptyFirmware)
+{
+    const std::vector<char> image = ImageWithHeader(ValidHeader(0), 1024);
+
+    M4_BootHeader header;
+    EXPECT_EQ(ParseM4BootImage(image, 65532, header), OpStatus::InvalidValue);
+}
