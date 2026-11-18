@@ -16,13 +16,13 @@ Plugins for external software:
 * [LimeSDR Mini](https://wiki.myriadrf.org/LimeSDR-Mini)
 * [LimeSDR Mini v2](https://limesdr-mini.myriadrf.org/index.html)
 * [LimeSDR XTRX](https://limesdr-xtrx.myriadrf.org/)
-
+* [LimeSDR Micro](https://myriadrf.org/projects/limesdr-micro/) NOTE: branch limesdr-micro checkout required for full feature compatibility 
 ## Installing
 
 ### Linux:
 * Building from source:
 ```
-git clone https://github.com/myriadrf/LimeSuiteNG
+git clone https://github.com/myriadrf/LimeSuiteNG #OPTIONAL: -b <branch_name>
 cd LimeSuiteNG
 sudo ./install_dependencies.sh
 cmake -B build && cd build
