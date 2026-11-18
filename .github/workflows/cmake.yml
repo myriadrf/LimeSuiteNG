@@ -86,6 +86,17 @@ jobs:
           name: limesuiteng-windows-${{matrix.arch}}
           path: ${{github.workspace}}/artifact
 
+      - name: Package zip and installer
+        run: cpack -C ${{env.BUILD_TYPE}} --config ${{github.workspace}}/build/packages/CPackConfig.cmake
+
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: limesuiteng-windows-packages-${{matrix.arch}}
+          path: |
+            ${{github.workspace}}/build/packages/*.zip
+            ${{github.workspace}}/build/packages/*.exe
+
   build-MacOS:
     name: MacOS build
     runs-on: macos-latest
