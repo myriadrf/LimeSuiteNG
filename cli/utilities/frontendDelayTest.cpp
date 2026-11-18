@@ -402,8 +402,9 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
 
         std::vector<complex32f_t> inputs(rxWindowSize);
         memcpy(inputs.data(), rxWindow, sizeof(complex32f_t) * rxWindowSize);
-        auto correlation = CrossCorrelation(inputs, chirp);
-        int ci = GetMaxElementIndex(correlation);
+        // Chirp sweeps 0.0025-0.02 cycles/sample, correlation main lobe is ~50 samples wide, so coarse step 16 is safe
+        const CrossCorrelationPeakResult peak = CrossCorrelationPeak(inputs, chirp, 16);
+        const int ci = peak.lag;
         const int signalExpectedAtTimestamp = chirpStart;
         std::cerr << "Chirp expected @ " << chirpStart << std::endl;
         const int signalFoundAtTimestamp = skipRxSamples + ci;
@@ -411,7 +412,7 @@ OpStatus MeasureChannelDelays(RFStream* rxComposite,
         std::cerr << "Rx Ch0 chirp found @ " << signalFoundAtTimestamp
                   << ", samples diff:" << signalFoundAtTimestamp - signalExpectedAtTimestamp
                   << ", time diff: " << int64_t(1e6 * (signalFoundAtTimestamp - signalExpectedAtTimestamp) / sampleRate) << "us "
-                  << ", signal correlation: " << correlation[ci] << std::endl;
+                  << ", signal correlation: " << peak.magnitude << std::endl;
         sampleOffset.push_back(signalFoundAtTimestamp - signalExpectedAtTimestamp);
     }
     return status;
