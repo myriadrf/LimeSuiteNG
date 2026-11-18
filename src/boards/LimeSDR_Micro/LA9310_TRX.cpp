@@ -26,6 +26,7 @@
 #include "chips/LA9310/vspa/VSPA_mailbox.h"
 #include "chips/LA9310/firmware/proxy_data.h"
 #include "comms/PCIe/LA9310_PCIe.h"
+#include "chips/LA9310/firmware/m4_events.h"
 
 #include <algorithm>
 #include <cassert>
@@ -459,6 +460,8 @@ OpStatus LA9310_TRX::RxSetup()
 {
     OpStatus status;
     status = iqstreamer->PipelineEnable(0xF, 0x0, false);
+    // IQStreamer_DMA::Wait() of the Rx lanes
+    pcie->EnableEvents(1 << M4_EVENT::VSPA_DDR_WRITE_DONE, 1 << M4_EVENT::VSPA_DDR_WRITE_DONE);
 
     {
         int pipeIndex = 0;
@@ -857,6 +860,7 @@ void LA9310_TRX::RxTeardown()
             lime::error("Failed to join LA9310_TRX Rx thread"s);
         }
     }
+    pcie->EnableEvents(0, 1 << M4_EVENT::VSPA_DDR_WRITE_DONE);
 
     if (mRx.stagingPacket)
     {
@@ -993,6 +997,8 @@ OpStatus LA9310_TRX::TxSetup()
 {
     OpStatus status;
     status = iqstreamer->PipelineEnable(0x0, 0x1, false);
+    // IQStreamer_DMA::Wait() of the Tx lane
+    pcie->EnableEvents(1 << M4_EVENT::VSPA_DDR_READ_DONE, 1 << M4_EVENT::VSPA_DDR_READ_DONE);
     auto txdma = iqstreamer->tx_dma;
     assert(txdma);
     txdma->Enable(false);
@@ -1475,6 +1481,7 @@ void LA9310_TRX::TxTeardown()
             lime::error("Failed to join LA9310_TRX Tx thread"s);
         }
     }
+    pcie->EnableEvents(0, 1 << M4_EVENT::VSPA_DDR_READ_DONE);
 
     if (mTx.stagingPacket)
     {

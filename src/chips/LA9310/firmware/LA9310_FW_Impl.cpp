@@ -9,7 +9,7 @@
 #include "m4_commands.h"
 
 #include "comms/PCIe/LA9310_PCIe.h"
-#include "chips/LA9310/virq.h"
+#include "chips/LA9310/firmware/m4_events.h"
 #include "chips/LA9310/firmware/m4_memorymap.h"
 #include "chips/LA9310/firmware/IQStreamer_DMA.h"
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
@@ -53,7 +53,7 @@ LA9310_FW_Impl::LA9310_FW_Impl(std::shared_ptr<LA9310_PCIe> pcie)
 
 OpStatus LA9310_FW_Impl::WaitForResponse()
 {
-    // OpStatus status = pcie->WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(500));
+    // OpStatus status = pcie->WaitEvent(M4_EVENT::HOST_COMMAND_DONE, chrono::milliseconds(500));
     // if (status != OpStatus::Success)
     // {
     //     lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
@@ -61,7 +61,7 @@ OpStatus LA9310_FW_Impl::WaitForResponse()
     // }
     // else
     // {
-    //     status = pcie->ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    //     status = pcie->ClearEvents((1 << M4_EVENT::HOST_COMMAND_DONE));
     //     if (status != OpStatus::Success)
     //     {
     //         lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");

@@ -104,32 +104,40 @@ long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
 
         break;
     }
-    case LA9310_IOCTL_SIRQ_WAIT: {
-        struct LA9310_IOCTL_SIRQ irq_wait;
-        if (copy_from_user(&irq_wait, (struct LA9310_IOCTL_SIRQ __user*)arg, sizeof(irq_wait)))
+    case LA9310_IOCTL_EVENT_WAIT: {
+        struct LA9310_IOCTL_EVENT wait_arg;
+        if (copy_from_user(&wait_arg, (struct LA9310_IOCTL_EVENT __user*)arg, sizeof(wait_arg)))
             return -EFAULT;
 
-        ret = la9310_softirq_wait(&la9310_dev->soft_irq, irq_wait.irq_index, msecs_to_jiffies(irq_wait.timeout_ms));
+        ret = la9310_event_wait(file_ctx, wait_arg.event, msecs_to_jiffies(wait_arg.timeout_ms));
         break;
     }
-    case LA9310_IOCTL_SIRQ_CONTROL: {
-        struct LA9310_IOCTL_SIRQ_CTRL irq_arg;
-        if (copy_from_user(&irq_arg, (struct LA9310_IOCTL_SIRQ_CTRL __user*)arg, sizeof(irq_arg)))
+    case LA9310_IOCTL_EVENT_CLEAR: {
+        struct LA9310_IOCTL_EVENT_CTRL clear_arg;
+        if (copy_from_user(&clear_arg, (struct LA9310_IOCTL_EVENT_CTRL __user*)arg, sizeof(clear_arg)))
             return -EFAULT;
 
-        // int success = down_timeout(&la9310_dev->soft_irq.clear_semaphore, msecs_to_jiffies(100));
-        // if (success != 0) // on failure
-        // {
-        //     ret = -EBUSY;
-        //     break;
-        // }
-
-        la9310_softirq_clear_local(la9310_dev, irq_arg.clear_bits, irq_arg.clear_mask);
-        // la9310_raise_msgunit_irq(la9310_dev, 0, 0);
-        // up(&la9310_dev->soft_irq.clear_semaphore);
+        // discards pending events, enable_bits/enable_mask are ignored
+        la9310_events_clear(la9310_dev, clear_arg.clear_bits, clear_arg.clear_mask);
         ret = 0;
         break;
     }
+    case LA9310_IOCTL_EVENT_ENABLE: {
+        struct LA9310_IOCTL_EVENT_MASK enable_arg;
+        if (copy_from_user(&enable_arg, (struct LA9310_IOCTL_EVENT_MASK __user*)arg, sizeof(enable_arg)))
+            return -EFAULT;
+
+        ret = la9310_events_enable(file_ctx, enable_arg.enable_bits, enable_arg.enable_mask);
+        if (ret)
+            break;
+        enable_arg.enabled = file_ctx->enabled_events;
+        if (copy_to_user((struct LA9310_IOCTL_EVENT_MASK __user*)arg, &enable_arg, sizeof(enable_arg)))
+            return -EFAULT;
+        break;
+    }
+    case LA9310_IOCTL_EVENT_REINIT:
+        ret = la9310_events_reinit(la9310_dev);
+        break;
 
     case LA9310_IOCTL_CACHE_SYNC_FOR_CPU:
     case LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE: {

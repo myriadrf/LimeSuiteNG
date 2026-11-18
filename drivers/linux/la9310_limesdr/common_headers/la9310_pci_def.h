@@ -10,13 +10,6 @@
 #define PCI_DEVICE_ID_LS1043A 0x8080
 #define PCI_DEVICE_ID_LS1046A 0x81c0
 
-/* Interrupt modes, as used by the IntMode parameter */
-#define PCI_INT_MODE_NONE 0
-#define PCI_INT_MODE_LEGACY 1
-#define PCI_INT_MODE_MSI 2
-#define PCI_INT_MODE_MSIX 3
-#define PCI_INT_MODE_MULTIPLE_MSI 4
-
 /* Synopsis specific PCIE configuration registers */
 #define PCIE_ATU_VIEWPORT 0x900
 #define PCIE_ATU_REGION_INBOUND (0x1 << 31)
@@ -49,8 +42,6 @@
 #define PCIE_MSI_CONTROL 0x52
 #define PCIE_MSI_MSG_ADDR_OFF 0x54
 #define PCIE_MSI_MSG_DATA_OFF 0x5c
-
-#define MIN_MSI_ITR_LINES 1
 
 /*
  * ROM configures an iATU inbound translation for BAR1 to map the 16MB

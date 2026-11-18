@@ -11,7 +11,7 @@
 #include <thread>
 #include "protocols/LMS64CProtocol.h"
 #include "chips/LA9310/firmware/m4_commands.h"
-#include "chips/LA9310/virq.h"
+#include "chips/LA9310/firmware/m4_events.h"
 
 #include "drivers/linux/la9310_limesdr/common_headers/la9310_host_if.h"
 
@@ -55,7 +55,7 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     assert(hif);
 
     OpStatus status;
-    // status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    // status = ClearEvents((1 << M4_EVENT::HOST_COMMAND_DONE));
     // if (status != OpStatus::Success)
     // {
     //     lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
@@ -80,7 +80,7 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
         return status;
     }
 
-    // status = WaitSIRQ(LA9310_VIRQ::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
+    // status = WaitEvent(M4_EVENT::HOST_COMMAND_DONE, chrono::milliseconds(timeout_ms));
     // if (status != OpStatus::Success)
     // {
     //     lime::error("LA9310_PCIe: RunControlCommand IRQ timeout\n");
@@ -89,7 +89,7 @@ OpStatus LA9310_PCIe::RunControlCommand(uint8_t* request, uint8_t* response, siz
     // }
     // else
     // {
-    //     status = ClearSIRQ((1 << LA9310_VIRQ::HOST_COMMAND_DONE));
+    //     status = ClearEvents((1 << M4_EVENT::HOST_COMMAND_DONE));
     //     if (status != OpStatus::Success)
     //     {
     //         lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
@@ -217,7 +217,7 @@ OpStatus LA9310_PCIe::Open(const std::filesystem::path& deviceFilename, uint32_t
     hostInterface = reinterpret_cast<volatile struct la9310_hif*>(
         size_t(mapped_ranges[memoryLayout.host_interface.window_id].vaddr) + memoryLayout.host_interface.start_offset);
 
-    // ClearSIRQ(0xFFFFFFFF);
+    // ClearEvents(0xFFFFFFFF);
 
     return OpStatus::Success;
 }
@@ -309,31 +309,63 @@ OpStatus LA9310_PCIe::SendSignal(uint32_t bitIndex)
     return csr->iowrite32(bitIndex, 0x1FC0000); // MSIIR
 }
 
-OpStatus LA9310_PCIe::WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout)
+OpStatus LA9310_PCIe::EnableEvents(uint32_t enableBits, uint32_t mask)
 {
-    struct LA9310_IOCTL_SIRQ sirq_wait;
-    sirq_wait.irq_index = bit;
-    sirq_wait.timeout_ms = timeout.count();
-    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_SIRQ_WAIT, reinterpret_cast<LA9310_IOCTL_SIRQ*>(&sirq_wait));
+    struct LA9310_IOCTL_EVENT_MASK event_enable;
+    memset(&event_enable, 0, sizeof(event_enable));
+    event_enable.enable_bits = enableBits;
+    event_enable.enable_mask = mask;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_EVENT_ENABLE, &event_enable);
     if (ret < 0)
     {
-        // lime::error("LA9310_PCIe WaitSIRQ errno: %i\n", errno);
+        // older drivers don't have the ioctl, they keep the events enabled
+        if (errno == ENOTTY)
+            return OpStatus::Success;
+        lime::error("LA9310_PCIe EnableEvents(0x%04X, 0x%04X) errno: %i", enableBits, mask, errno);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::ReinitEvents()
+{
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_EVENT_REINIT);
+    if (ret < 0)
+    {
+        // older drivers don't have the ioctl, their events don't depend on the firmware
+        if (errno == ENOTTY)
+            return OpStatus::Success;
+        lime::error("LA9310_PCIe ReinitEvents errno: %i", errno);
+        return OpStatus::Error;
+    }
+    return OpStatus::Success;
+}
+
+OpStatus LA9310_PCIe::WaitEvent(uint32_t event, std::chrono::milliseconds timeout)
+{
+    struct LA9310_IOCTL_EVENT event_wait;
+    event_wait.event = event;
+    event_wait.timeout_ms = timeout.count();
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_EVENT_WAIT, reinterpret_cast<LA9310_IOCTL_EVENT*>(&event_wait));
+    if (ret < 0)
+    {
+        // lime::error("LA9310_PCIe WaitEvent errno: %i\n", errno);
         return OpStatus::Timeout;
     }
     return OpStatus::Success;
 }
 
-OpStatus LA9310_PCIe::ClearSIRQ(uint32_t bits)
+OpStatus LA9310_PCIe::ClearEvents(uint32_t bits)
 {
-    struct LA9310_IOCTL_SIRQ_CTRL sirq_control;
-    memset(&sirq_control, 0, sizeof(struct LA9310_IOCTL_SIRQ_CTRL));
-    sirq_control.clear_bits = bits;
-    sirq_control.clear_mask = bits;
-    sirq_control.enable_mask = 0;
-    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_SIRQ_CONTROL, reinterpret_cast<LA9310_IOCTL_SIRQ_CTRL*>(&sirq_control));
+    struct LA9310_IOCTL_EVENT_CTRL event_clear;
+    memset(&event_clear, 0, sizeof(struct LA9310_IOCTL_EVENT_CTRL));
+    event_clear.clear_bits = bits;
+    event_clear.clear_mask = bits;
+    event_clear.enable_mask = 0;
+    int ret = ioctl(mFileDescriptor, LA9310_IOCTL_EVENT_CLEAR, reinterpret_cast<LA9310_IOCTL_EVENT_CTRL*>(&event_clear));
     if (ret < 0)
     {
-        lime::error("LA9310_PCIe ClearSIRQ errno: %i\n", errno);
+        lime::error("LA9310_PCIe ClearEvents errno: %i\n", errno);
         return OpStatus::Error;
     }
     return OpStatus::Success;

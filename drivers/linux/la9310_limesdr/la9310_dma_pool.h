@@ -42,6 +42,7 @@ struct la9310_file {
     struct la9310_dev* dev;
     struct mutex dma_lock; /* protects dma_bufs */
     struct list_head dma_bufs; /* buffers this file has allocated and not freed */
+    unsigned long enabled_events; /* events this file has enabled (LA9310_IOCTL_EVENT_ENABLE) */
 };
 
 /* Allocates host DMA memory: cacheable (synced by the users), or coherent */

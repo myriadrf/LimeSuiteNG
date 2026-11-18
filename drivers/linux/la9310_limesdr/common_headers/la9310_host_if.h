@@ -24,17 +24,6 @@
 
 #define LA9310_MSI_MAX_CNT 8
 
-enum la9310_msi_id {
-    MSI_IRQ_MUX = 0,
-    MSI_IRQ_V2H,
-    MSI_IRQ_WDOG,
-    MSI_IRQ_UNUSED_1,
-    MSI_IRQ_IPC_1,
-    MSI_IRQ_IPC_2,
-    MSI_IRQ_UNUSED_2,
-    MSI_IRQ_UNUSED_3,
-};
-
 enum la9310_msg_unit_id {
     LA9310_MSG_UNIT_1 = 0,
     LA9310_MSG_UNIT_2,
@@ -65,11 +54,42 @@ struct la9310_msg_unit {
 #define LA9310_BOOT_HSHAKE_SCRATCH_REG 1
 #define LA9310_BOOT_HSHAKE_HIF_REG 3
 #define LA9310_BOOT_HSHAKE_HIF_SIZ_REG 4
-#define LA9310_SCRATCH_SIRQ_STATUS_REG 5
-#define LA9310_SCRATCH_SIRQ_COUNT_REG 6
-#define LA9310_SCRATCH_SIRQ_ENABLE_REG 7
-#define LA9310_SCRATCH_SIRQ_CLEAR_REG 8
-#define LA9310_SCRATCH_MLOG_ADDR 9
+
+/* Events that the M4 signals to the host, identified only by their index. What an event means is agreed between the M4
+ * firmware and the host application, the transport below doesn't depend on it.
+ *
+ * The interface is struct la9310_msi_events, in the M4's TCMU (host BAR2). On startup the M4 firmware initializes it,
+ * with every event masked and the MSI configuration read from its PCIe controller, and then publishes its M4 address in
+ * scratch register LA9310_SCRATCH_MSI_EVENTS_ADDR. The bootloader clears that register when the M4 firmware is
+ * reloaded, so the host has to look the interface up again after a reload (the driver's LA9310_IOCTL_EVENT_REINIT).
+ *
+ * Every event has an 8-bit counter. Only the M4 writes them, it increments the counter and then sends an MSI:
+ *  - if the host enabled N > 1 MSI vectors (MSI Multiple Message Enable), events 1..N-1 are sent on the vector of the
+ *    same number,
+ *  - event 0 and events >= N are sent on vector LA9310_EVENT_MUX_VECTOR. Its handler finds which of them happened by
+ *    comparing the counters with the values it saw last time.
+ * The M4 sends MSIs with the cached MSI configuration (msi_*), it doesn't read its PCIe controller again. A host that
+ * changes the MSI configuration while the firmware is running (e.g. its driver is reloaded) updates the cache, with
+ * every event masked meanwhile.
+ * The host owns the mask: the M4 neither counts nor sends the events whose bit is set in it. */
+#define LA9310_EVENT_COUNT 16 /* events that the M4 firmware signals */
+#define LA9310_EVENT_MAX_COUNT 32 /* the width of the mask */
+#define LA9310_EVENT_MUX_VECTOR 0
+#define LA9310_SCRATCH_MSI_EVENTS_ADDR 2 /* M4 address of struct la9310_msi_events */
+#define LA9310_SCRATCH_MLOG_ADDR 9 /* M4 address of the firmware's memory log */
+
+/* The counters are last, so they can grow with the event count */
+struct la9310_msi_events {
+    uint32_t mask; /* written by the host, events that the M4 doesn't signal */
+    uint32_t event_count; /* LA9310_EVENT_COUNT of the firmware */
+    uint32_t msi_count; /* total number of MSIs that the M4 sent, for debugging */
+    /* MSI configuration cache */
+    uint32_t msi_addr; /* M4 address that MSIs are written to: LA9310_EP_TOHOST_MSI_PHY_ADDR window + offset of the
+                          host's MSI address in its 4K page, 0 if MSI is disabled */
+    uint32_t msi_data; /* message data of vector 0, vector v is sent as msi_data | v */
+    uint32_t msi_vector_count; /* vectors that the host enabled, a power of 2 */
+    uint8_t counters[LA9310_EVENT_MAX_COUNT]; /* counters[i]: number of times event i happened, modulo 256 */
+};
 
 enum la9310_boot_fsm {
     NONE = 0,

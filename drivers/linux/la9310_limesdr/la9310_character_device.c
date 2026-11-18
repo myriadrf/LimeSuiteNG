@@ -220,6 +220,7 @@ static int la9310_limesdr_release(struct inode* inode, struct file* file)
     }
 
     dev_info(&file_ctx->dev->pdev->dev, "Release %s\n", file->f_path.dentry->d_iname);
+    la9310_events_file_release(file_ctx);
     la9310_dma_file_release(file_ctx);
     kfree(file_ctx);
     file->private_data = NULL;

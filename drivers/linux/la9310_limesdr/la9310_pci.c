@@ -190,93 +190,6 @@ static int la9310_configure_pci(struct pci_dev* pciContext)
     return 0;
 }
 
-static void enable_all_msi(struct la9310_dev* la9310_dev)
-{
-    u32 __iomem *pcie_vaddr, *pcie_msi_control;
-    u32 val;
-
-    pcie_vaddr = (u32*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + PCIE_RHOM_DBI_BASE + PCIE_MSI_BASE);
-
-    val = ioread32(pcie_vaddr);
-    dev_dbg(la9310_dev->dev, "MSI Capability: Control Reg. -> value = %x\n", val);
-    pcie_msi_control = (u32*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + PCIE_RHOM_DBI_BASE + PCIE_MSI_CONTROL);
-
-    iowrite8(0xb6, pcie_msi_control);
-
-    val = ioread32(pcie_vaddr);
-    dev_dbg(la9310_dev->dev, "MSI Capability: Control Reg. -> value = %x\n", val);
-}
-
-/*
- * la9310_dev_set_interrupt_capability - set MSI or MSI-X if supported
- *
- * Attempt to configure interrupts using the best available
- * capabilities of the hardware and kernel.
- */
-static int la9310_dev_set_interrupt_capability(struct la9310_dev* la9310_dev, int mode)
-{
-    int ret = 0, i = 0;
-    /* Check whether the device has MSIx cap */
-    switch (mode)
-    {
-    case PCI_INT_MODE_MULTIPLE_MSI:
-        enable_all_msi(la9310_dev);
-        ret = pci_alloc_irq_vectors_affinity(la9310_dev->pdev, MIN_MSI_ITR_LINES, LA9310_MSI_MAX_CNT, PCI_IRQ_MSI, NULL);
-        if (ret < LA9310_MSI_MAX_CNT)
-        {
-            dev_err(la9310_dev->dev, "Cannot complete request for multiple MSI. ret=%i", ret);
-            goto msi_error;
-        }
-        else
-        {
-            dev_info(la9310_dev->dev, "%d MSI successfully created\n", ret);
-        }
-        for (i = 0; i < LA9310_MSI_MAX_CNT; i++)
-        {
-            la9310_dev->irq[i].msi_val = i;
-            la9310_dev->irq[i].irq_val = pci_irq_vector(la9310_dev->pdev, i);
-            la9310_dev->irq[i].free = LA931XA_MSI_IRQ_FREE;
-        }
-        la9310_dev->irq_count = LA9310_MSI_MAX_CNT;
-        break;
-
-    case PCI_INT_MODE_MSIX:
-        /* TBD:XXX: LA9310 will support 8 MSIs, thus MSIx. this code
-         * need to be changed
-         */
-        dev_err(la9310_dev->dev, "Unable to support MSIX for LA9310\n");
-        __attribute__((__fallthrough__));
-        /* Fall through */
-    case PCI_INT_MODE_MSI:
-        if (!pci_enable_msi(la9310_dev->pdev))
-        {
-            la9310_dev->irq[MSI_IRQ_MUX].irq_val = pci_irq_vector(la9310_dev->pdev, MSI_IRQ_MUX);
-            la9310_dev->irq[MSI_IRQ_MUX].free = LA931XA_MSI_IRQ_FREE;
-            la9310_dev->irq_count = 1;
-        }
-        else
-        {
-            dev_warn(la9310_dev->dev, "Failed to init MSI, fall bk to legacy\n");
-            goto msi_error;
-        }
-        __attribute__((__fallthrough__));
-        /* Fall through */
-    case PCI_INT_MODE_LEGACY:
-        la9310_dev->irq[MSI_IRQ_MUX].irq_val = la9310_dev->pdev->irq;
-        la9310_dev->irq[MSI_IRQ_MUX].free = LA931XA_MSI_IRQ_FREE;
-        la9310_dev->irq_count = 1;
-        break;
-
-    case PCI_INT_MODE_NONE:
-        break;
-    }
-
-    return 0;
-
-msi_error:
-    return -EINTR;
-}
-
 static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
 {
     int rc = 0;
@@ -308,21 +221,12 @@ static struct la9310_dev* la9310_pci_priv_init(struct pci_dev* pdev)
         goto out;
     }
 
-    rc = la9310_dev_set_interrupt_capability(la9310_dev, PCI_INT_MODE_MSI);
-
-    if (rc < 0)
-    {
-        dev_info(la9310_dev->dev, "Cannot set the capability of device\n");
-        goto out;
-    }
-
 out:
     if (rc)
     {
         if (la9310_dev)
         {
             la9310_unmap_mem_regions(la9310_dev);
-            kfree(la9310_dev);
         }
         la9310_dev = NULL;
     }

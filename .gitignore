@@ -24,10 +24,10 @@ __Previews
 #*.log
 
 # This project
-build/**
-debug/**
-release/**
-docs/LMS_API_Documentation/*
+/build/**
+/debug/**
+/release/**
+/docs/LMS_API_Documentation/*
 .vscode/
 /.vs
 /out/

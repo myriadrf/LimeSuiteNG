@@ -1,6 +1,8 @@
 [submodule "arm-m4"]
 	path = firmware/limesdr-micro/arm-m4
 	url = https://github.com/myriadrf/LimeSDR-Micro_FW
+	ignore = untracked
 [submodule "vspa"]
 	path = firmware/limesdr-micro/vspa
 	url = https://github.com/myriadrf/LimeSDR-Micro_VSPA
+	ignore = untracked

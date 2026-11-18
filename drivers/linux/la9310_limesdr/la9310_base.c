@@ -27,7 +27,6 @@
 #include "la9310_dma_pool.h"
 #include "la9310_pci.h"
 
-#define MSG_UNIT_OFFSET 0x1fc0000
 #define DCR_OFFSET 0x1e00000
 
 static int la9310_uart_id_counter = 0;
@@ -319,55 +318,18 @@ out:
     return rc;
 }
 
-static void la9310_init_msg_unit_ptrs(struct la9310_dev* la9310_dev)
-{
-    struct la9310_msg_unit* msg_unit;
-    int i;
-
-    msg_unit = (struct la9310_msg_unit*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + MSG_UNIT_OFFSET);
-
-    for (i = 0; i < LA9310_MSG_UNIT_CNT; i++)
-        la9310_dev->msg_units[i] = msg_unit + i;
-}
-
-static irqreturn_t la9310_irq_handler(int irq, void* dev)
-{
-    struct la9310_dev* la9310_dev = (struct la9310_dev*)dev;
-    // const struct la9310_ccsr_dcr* ccsr_dcr =
-    //     (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
-    // const uint32_t* sirq_count_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_COUNT_REG];
-    // const uint32_t sirq_count = readl(sirq_count_reg);
-    // if (la9310_dev->soft_irq.irq_counter != sirq_count)
-    // {
-    //     la9310_dev->soft_irq.irq_counter = sirq_count;
-    //     const uint32_t* sirq_status_reg = &ccsr_dcr->scratchrw[LA9310_SCRATCH_SIRQ_STATUS_REG];
-    //     const uint32_t sirq_status = readl(sirq_status_reg);
-    //     uint32_t bits_to_clear = 0;
-    for (int i = 0; i < LA9310_SOFTIRQ_COUNT; ++i)
-    {
-        // if (sirq_status & (1 << i))
-        // {
-        //     bits_to_clear |= (1 << i);
-        la9310_softirq_signal(la9310_dev, i);
-        // }
-        }
-        // if (bits_to_clear)
-        //     la9310_softirq_clear_device(la9310_dev, bits_to_clear, bits_to_clear);
-        return IRQ_HANDLED;
-    // }
-    // return IRQ_NONE;
-}
-
 static int la9310_init_irq(struct la9310_dev* la9310_dev)
 {
     struct la9310_ccsr_dcr* ccsr_dcr =
         (struct la9310_ccsr_dcr*)(la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR].vaddr + DCR_OFFSET);
-    la9310_softirq_init(&la9310_dev->soft_irq, ccsr_dcr->scratchrw);
 
-    la9310_create_outbound_msi(la9310_dev);
-    int rc = request_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_irq_handler, 0, "la9310_dev", (void*)la9310_dev);
-
-    return rc;
+    int rc = la9310_events_init(la9310_dev, ccsr_dcr->scratchrw);
+    if (rc)
+        return rc;
+    // window for the M4 to send MSIs through, the vectors are allocated now so the host's MSI address is known
+    if (la9310_dev->events.vector_count)
+        la9310_create_outbound_msi(la9310_dev);
+    return 0;
 }
 
 static int la9310_register_uart(struct la9310_dev* la9310)
@@ -415,20 +377,14 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     if (rc)
         goto free_dma;
 
-    la9310_init_msg_unit_ptrs(la9310_dev);
-
     rc = la9310_init_sysfs(la9310_dev);
     if (rc)
         goto free_dma;
 
-    /* WDOG request_irq */
-    // wdog_msi_irq = la9310_get_msi_irq(la9310_dev, MSI_IRQ_WDOG);
     /* Errata A-008822 */
     uint32_t pci_abserr = PCIE_RHOM_DBI_BASE + PCIE_ABSERR;
     struct la9310_mem_region_info* ccsr_region = &la9310_dev->mem_regions[LA9310_MEM_REGION_CCSR];
     writel(PCIE_ABSERR_SETTING, ccsr_region->vaddr + pci_abserr);
-    // wdog_set_pci_domain_nr(la9310_dev->id, pci_domain_nr(la9310_dev->pdev->bus));
-    // wdog_set_modem_status(0, WDOG_MODEM_READY);
 
     rc = la9310_init_irq(la9310_dev);
     if (rc)
@@ -441,7 +397,7 @@ int la9310_base_probe(struct la9310_dev* la9310_dev)
     return 0;
 
 free_irq:
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
+    la9310_events_destroy(la9310_dev);
 free_handshake:
     la9310_remove_sysfs(la9310_dev);
 free_dma:
@@ -453,36 +409,16 @@ int la9310_base_remove(struct la9310_dev* la9310_dev)
 {
     dev_info(la9310_dev->dev, "Removing LA9310 dev\n");
 
-    free_irq(la9310_get_msi_irq(la9310_dev, MSI_IRQ_MUX), la9310_dev);
+    la9310_events_destroy(la9310_dev);
 
     if (la9310_dev->uart)
         platform_device_unregister(la9310_dev->uart);
 
     la9310_dma_free_all(la9310_dev);
 
-    pci_free_irq_vectors(la9310_dev->pdev);
-
-    pci_disable_msi(la9310_dev->pdev);
-
     la9310_unmap_mem_regions(la9310_dev);
 
     la9310_remove_sysfs(la9310_dev);
-
-    return 0;
-}
-
-extern int la9310_get_msi_irq(struct la9310_dev* la9310_dev, enum la9310_msi_id type)
-{
-    dev_dbg(la9310_dev->dev, "return irq=%d\n", la9310_dev->irq[type].irq_val);
-    return la9310_dev->irq[type].irq_val;
-}
-
-int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, int bit_num)
-{
-    struct la9310_msg_unit* msg_unit;
-
-    msg_unit = la9310_dev->msg_units[msg_unit_idx];
-    writel(bit_num, &msg_unit->msiir);
 
     return 0;
 }

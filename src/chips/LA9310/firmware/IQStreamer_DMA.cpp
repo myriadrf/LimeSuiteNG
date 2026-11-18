@@ -2,7 +2,7 @@
 
 #include "comms/DMA_Buffer.h"
 #include "comms/PCIe/LA9310_PCIe.h"
-#include "chips/LA9310/virq.h"
+#include "chips/LA9310/firmware/m4_events.h"
 
 #include <cassert>
 #include <cstdint>
@@ -74,19 +74,10 @@ dma_tcd_t IQStreamer_DMA::GetOutputBlock(uint32_t index) const
 
 OpStatus IQStreamer_DMA::Wait()
 {
-    const uint32_t bit = dir == DMA_Dir::DMA_FROM_DEVICE ? LA9310_VIRQ::VSPA_DDR_WRITE_DONE : LA9310_VIRQ::VSPA_DDR_READ_DONE;
-    OpStatus status = pcie->WaitSIRQ(bit, chrono::milliseconds(500));
-    if (status != OpStatus::Success)
-    {
-        // printf("IQStreamDMA-Wait %s timeout f:%x? %i\n", (dir == DMA_Dir::DMA_FROM_DEVICE ? "Rx" : "Tx"), bit, (int)status);
-        return status;
-    }
-    status = pcie->ClearSIRQ((1 << bit));
-    if (status != OpStatus::Success)
-    {
-        // lime::error("LA9310_PCIe: RunControlCommand failed clear IRQ\n");
-    }
-    return status;
+    const uint32_t event = dir == DMA_Dir::DMA_FROM_DEVICE ? M4_EVENT::VSPA_DDR_WRITE_DONE : M4_EVENT::VSPA_DDR_READ_DONE;
+    // The driver consumes the event when the wait returns. Don't ClearEvents() after it, that would discard events that
+    // arrived in the meantime.
+    return pcie->WaitEvent(event, chrono::milliseconds(500));
 }
 
 std::string IQStreamer_DMA::GetName() const

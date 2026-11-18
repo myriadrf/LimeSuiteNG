@@ -99,8 +99,13 @@ class LIME_API LA9310_PCIe : public LimePCIe
     uint32_t ioread32(uint32_t window_id, uint64_t address);
 
     OpStatus SendSignal(uint32_t bit);
-    OpStatus WaitSIRQ(uint32_t bit, std::chrono::milliseconds timeout);
-    OpStatus ClearSIRQ(uint32_t bits);
+    /// @brief Enables (bit set in enableBits) or disables (bit clear) the events selected by mask, bit i is event i.
+    /// The device signals an event only while it's enabled, WaitEvent() needs it enabled.
+    OpStatus EnableEvents(uint32_t enableBits, uint32_t mask);
+    OpStatus WaitEvent(uint32_t event, std::chrono::milliseconds timeout);
+    /// @brief Makes the driver look up the events of the running M4 firmware, needed after the firmware is (re)loaded.
+    OpStatus ReinitEvents();
+    OpStatus ClearEvents(uint32_t bits);
     /// @brief Makes the device's writes to the buffer visible to the CPU. Nothing to do for coherent buffers.
     OpStatus DMA_SyncForCPU(const DMA_Buffer& buffer);
     /// @brief Makes the CPU's writes to the buffer visible to the device. Nothing to do for coherent buffers.

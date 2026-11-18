@@ -238,7 +238,12 @@ OpStatus M4_loader::Load(std::span<const char> image)
     if (status != OpStatus::Success)
         return status;
 
-    return VerifyHostInterface();
+    status = VerifyHostInterface();
+    if (status != OpStatus::Success)
+        return status;
+
+    // The firmware has set up its events interface by now, the driver has to find it
+    return port->ReinitEvents();
 }
 
 } // namespace lime

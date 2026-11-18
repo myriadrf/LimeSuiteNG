@@ -36,8 +36,8 @@ add_kernel_module(
     GITHASH
     ${GITHASH}
     SOURCES
-    la9310_softirq.c
-    la9310_softirq.h
+    la9310_events.c
+    la9310_events.h
     la9310_sysfs.c
     la9310_limesdr_module.c
     la9310_base.h

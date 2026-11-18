@@ -38,19 +38,35 @@ struct LA9310_IOCTL_CSR_op {
     bool write;
 };
 
-// user space software interrupts
-struct LA9310_IOCTL_SIRQ {
-    uint32_t irq_index;
+// LA9310_IOCTL_EVENT_WAIT: waits for an event that the M4 firmware signals, the file must have enabled it with
+// LA9310_IOCTL_EVENT_ENABLE. The meaning of the event index is agreed between the M4 firmware and user space.
+// Fails with EINVAL if the event isn't enabled, ECANCELED if the file disables it during the wait.
+struct LA9310_IOCTL_EVENT {
+    uint32_t event;
     uint32_t timeout_ms;
 };
 
-// user space software interrupts
-struct LA9310_IOCTL_SIRQ_CTRL {
+// LA9310_IOCTL_EVENT_CLEAR: discards pending events (clear_bits & clear_mask), enable_bits/enable_mask are ignored, use
+// LA9310_IOCTL_EVENT_ENABLE
+struct LA9310_IOCTL_EVENT_CTRL {
     uint32_t enable_bits;
     uint32_t enable_mask;
     uint32_t clear_bits;
     uint32_t clear_mask;
 };
+
+// LA9310_IOCTL_EVENT_ENABLE: enables (bit set in enable_bits) or disables (bit clear) the events selected by enable_mask
+// for this file, bit i is event i (< the driver's max_events). The M4 signals an event only while some file (or kernel user)
+// has it enabled. Closing the file disables its events. Returns the events that the file has enabled in enabled.
+struct LA9310_IOCTL_EVENT_MASK {
+    uint32_t enable_bits;
+    uint32_t enable_mask;
+    uint32_t enabled; // output
+};
+
+// LA9310_IOCTL_EVENT_REINIT: looks up the events interface of the running M4 firmware, call it after the firmware has been
+// (re)loaded. The events that files have enabled stay enabled, pending events stay pending. Fails with ENODEV if the
+// firmware isn't running, the device doesn't signal events until a later call succeeds.
 
 // A DMA buffer, as seen by the host (host_bus) and by the LA9310 (ep_pa)
 struct la9310_atu {
@@ -73,8 +89,9 @@ struct la9310_atu {
 // 29 was LA9310_IOCTL_LOAD_M4_FW, the Arm M4 firmware is loaded from user space
 // 30 was LA9310_IOCTL_LOAD_VSPA_FW, the VSPA firmware is loaded from user space
 // #define LA9310_IOCTL_WAIT_FOR_DATA _IOW(LA9310_IOCTL, 31, unsigned int)
-#define LA9310_IOCTL_SIRQ_WAIT _IOW(LA9310_IOCTL, 32, struct LA9310_IOCTL_SIRQ)
-#define LA9310_IOCTL_SIRQ_CONTROL _IOW(LA9310_IOCTL, 33, struct LA9310_IOCTL_SIRQ_CTRL)
+#define LA9310_IOCTL_EVENT_WAIT _IOW(LA9310_IOCTL, 32, struct LA9310_IOCTL_EVENT)
+#define LA9310_IOCTL_EVENT_CLEAR _IOW(LA9310_IOCTL, 33, struct LA9310_IOCTL_EVENT_CTRL)
+#define LA9310_IOCTL_EVENT_ENABLE _IOWR(LA9310_IOCTL, 34, struct LA9310_IOCTL_EVENT_MASK)
 // Cache maintenance of a range (host_bus, size) inside a buffer that this file has allocated
 #define LA9310_IOCTL_CACHE_SYNC_FOR_CPU _IOW(LA9310_IOCTL, 35, struct la9310_atu)
 #define LA9310_IOCTL_CACHE_SYNC_FOR_DEVICE _IOW(LA9310_IOCTL, 36, struct la9310_atu)
@@ -84,6 +101,7 @@ struct la9310_atu {
 #define LA9310_IOCTL_DMA_ALLOC _IOWR(LA9310_IOCTL, 37, struct la9310_atu)
 // Frees the buffer identified by host_bus. Its memory is reused only after all of its mappings are gone.
 #define LA9310_IOCTL_DMA_FREE _IOW(LA9310_IOCTL, 38, struct la9310_atu)
+#define LA9310_IOCTL_EVENT_REINIT _IO(LA9310_IOCTL, 39)
 
 long la9310_ioctl(struct file* file, unsigned int cmd, unsigned long arg);
 

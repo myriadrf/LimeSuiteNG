@@ -5,14 +5,8 @@
 #define __LA9310_BASE_H__
 
 #include "common_headers/la9310_host_if.h"
-#include "la9310_softirq.h"
+#include "la9310_events.h"
 #include "la9310_ioctl.h"
-
-/*Enable the multiple MSIs support */
-#define LA9310_REAL_MSI_FLAG (1 << 0)
-/* Macros to mark status of IRQ line */
-#define LA931XA_MSI_IRQ_FREE 0x45455246 /* 'F''R''E''E' */
-#define LA931XA_MSI_IRQ_BUSY 0x59535542 /* 'B''U''S''Y' */
 
 /**
  *  LA9310 mem region types
@@ -62,7 +56,20 @@ struct la9310_ccsr_dcr {
     u8 res_098[0xa4 - 0x98];
     u32 svr; /* System version */
     u8 res_0a8[0x200 - 0xa8];
-    u32 scratchrw[32]; /* Scratch Read/Write */
+    /*
+     * Scratch Read/Write, The host and the M4 firmware use them to communicate:
+     *   0      LA9310 ROM/bootloader error code
+     *   1      LA9310_BOOT_HSHAKE_SCRATCH_REG: boot handshake state (enum la9310_boot_fsm)
+     *   2      LA9310_SCRATCH_MSI_EVENTS_ADDR: M4 address of struct la9310_msi_events for events reporting
+     *   3      LA9310_BOOT_HSHAKE_HIF_REG: offset of struct la9310_hif in the M4 TCML
+     *   4      LA9310_BOOT_HSHAKE_HIF_SIZ_REG: sizeof(struct la9310_hif)
+     *   5-8    unused
+     *   9      LA9310_SCRATCH_MLOG_ADDR: M4 address of the firmware's memory log (la9310_sysfs.c)
+     *   10-30  unused
+     *   31     M4 address of the VSPA debug proxy
+     * The M4 bootloader clears 0-8 and 31 when the M4 firmware is reloaded.
+     */
+    u32 scratchrw[32];
     u8 res_280[0x300 - 0x280];
     u32 scratchw1r[4]; /* Scratch Read (Write once) */
     u8 res_858[0xbfc - 0x310];
@@ -92,12 +99,6 @@ struct la9310_ep_log {
     char* buf;
 };
 
-struct irq_info {
-    int irq_val;
-    int msi_val;
-    int free;
-};
-
 /**
  * struct la9310_dev - The LA9310 device private structure.
  *
@@ -109,28 +110,15 @@ struct la9310_dev {
     struct device* dev;
     struct class* class;
     struct la9310_mem_region_info mem_regions[LA9310_MEM_REGION_BAR_END];
-    struct la9310_msg_unit* msg_units[LA9310_MSG_UNIT_CNT];
     struct la9310_dma_info dma_info; /* persistent memory */
     struct la9310_dma_pool* dma_pools[LA9310_DMA_POOL_COUNT];
     struct la9310_hif* hif;
-    struct irq_info irq[LA9310_MSI_MAX_CNT];
-    int irq_count;
 
     struct platform_device* uart;
-    struct la9310_softirq soft_irq;
+    struct la9310_events events;
     bool rcw_done; // sticky: RCW_COMPLETION_DONE stays set until the device is power cycled
     bool buggy_ats; // ATS is enabled in a translating IOMMU domain: unmapping buffers makes IOMMU timeout
 };
-
-/*la9310_dev->flags*/
-#define LA9310_FLG_PCI_MSI_EN (1 << 0)
-#define LA9310_FLG_PCI_MSIX_EN (1 << 1)
-#define LA9310_FLG_PCI_INT_LEGACY (1 << 2)
-#define LA9310_FLG_PCI_8MSI_EN (1 << 3)
-
-#define LA9310_SET_FLG(flag_var, flg) (flag_var |= flg)
-#define LA9310_CHK_FLG(flag_var, flg) (flag_var & flg)
-#define LA9310_CLR_FLG(flag_var, flg) (flag_var &= (~flg))
 
 int la9310_map_mem_regions(struct la9310_dev* la9310_dev);
 void la9310_unmap_mem_regions(struct la9310_dev* la9310_dev);
@@ -138,11 +126,8 @@ int la9310_base_probe(struct la9310_dev* la9310_dev);
 int la9310_base_remove(struct la9310_dev* la9310_dev);
 int la9310_init_global_sysfs(void);
 void la9310_remove_global_sysfs(void);
-extern int la9310_get_msi_irq(struct la9310_dev*, enum la9310_msi_id);
 
 void la9310_set_host_ready(struct la9310_dev* la9310_dev, u32 set_bit);
-int la9310_raise_msgunit_irq(struct la9310_dev* la9310_dev, int msg_unit_idx, int bit_num);
-void raise_msg_interrupt(struct la9310_dev* la9310_dev, uint32_t msg_unit_index, uint32_t ibs);
 
 void* endpoint_pa_to_va(struct la9310_dev* la9310_dev, uint32_t ep_pa);
 
