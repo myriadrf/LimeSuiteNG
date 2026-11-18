@@ -13,6 +13,7 @@
  * - @subpage dev_reg_class_diag_page
  * - @subpage device_class_diag_page
  * - @subpage streaming_class_diag_page
+ * - @subpage device_setup_flow_page
  * 
  * 
  * 

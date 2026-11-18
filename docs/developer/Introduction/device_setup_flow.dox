@@ -1,0 +1,34 @@
+/**
+ * @page device_setup_flow_page Device setup flow
+ *
+ * @if RST_SUPPORT
+ * @embedRstVerbatim{
+ * .. mermaid:: device_setup_flow.mmd
+ * }
+ * @endif
+ *
+ * @section device_setup_flow_summary Summary
+ *
+ * Device setup flowchart shows the typical sequence an application goes through to bring a device
+ * from discovery to sample streaming and back down again.
+ *
+ * Devices are discovered with ``DeviceRegistry::enumerate()``, which returns a handle for each
+ * device found. A handle is turned into a usable ``SDRDevice`` instance with
+ * ``DeviceRegistry::makeDevice()``. After an optional ``SetMessageLogCallback()`` to receive log
+ * messages, ``Init()`` brings the chip into a known operational state.
+ *
+ * ``Configure()`` applies an ``SDRConfig`` structure in one call: it enables the requested
+ * channels, tunes the LO frequency, sets the sample rate, selects the antenna path, configures
+ * filters, and runs calibration where requested. Configuration is applied per RF chip, selected
+ * with the module index.
+ *
+ * Sample streaming is handled by an ``RFStream`` object created with ``StreamCreate()`` from a
+ * ``StreamConfig`` structure that lists the channels and the sample format. After ``Start()`` the
+ * application exchanges samples with ``StreamRx()`` / ``StreamTx()`` calls. ``Stop()`` halts the
+ * stream; the stream object must be released before the device itself is freed with
+ * ``DeviceRegistry::freeDevice()``.
+ *
+ * The ``basicRX`` and ``basicTX`` programs in the source tree ``src/examples`` directory follow
+ * exactly this sequence and can be used as a starting point.
+ *
+ */
