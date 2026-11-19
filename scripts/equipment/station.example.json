@@ -1,0 +1,20 @@
+{
+  "signal_generator": {
+    "driver": "scpi",
+    "resource": "tcp://192.168.1.20:5025",
+    "commands": {
+      "set_cw": [":SOUR:FREQ {frequency_hz:.0f}", ":SOUR:POW:LEV {power_dbm:.2f}", "*OPC?"]
+    }
+  },
+  "spectrum_analyzer": {
+    "driver": "manual"
+  },
+  "fixture": {
+    "driver": "manual"
+  },
+  "path_loss_db": {
+    "RX_A": 1.5,
+    "RX_B": 1.5,
+    "TX": 2.0
+  }
+}
