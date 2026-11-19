@@ -37,6 +37,7 @@ class RFStream;
 class GPIO_Interface;
 class ICSR;
 class IRFSOC;
+class IToneGenerator;
 
 enum class eMemoryDevice : uint8_t;
 enum class eGainTypes : uint8_t;
@@ -662,6 +663,18 @@ class LIME_API SDRDevice
     /// @return The RF SoC interface, owned by the device and valid for as long as it exists,
     /// or nullptr if the index is out of range or the device does not provide one.
     virtual IRFSOC* GetRFSOC(uint8_t moduleIndex);
+
+    /// @brief Gets the test tone generator whose signal reaches the given channel's RF port.
+    /// The default implementation returns the tone generator of the RF SoC channel (GetRFSOC()).
+    /// Boards whose data converters are not part of the RF SoC override it to return their own generator.
+    /// @param moduleIndex The index of the device module to use.
+    /// @param trx The direction of the channel.
+    /// @param channel The channel index.
+    /// @param clockRate If not null, receives the sample rate in Hz the generator runs at,
+    /// the reference of IToneGenerator::SetFrequency()'s frequency weight (0 if it is unknown).
+    /// @return The tone generator, owned by the device and valid for as long as it exists,
+    /// or nullptr if the channel does not have one.
+    virtual IToneGenerator* GetToneGenerator(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double* clockRate = nullptr);
 
     /// @brief The definition of a function to call whenever memory is being uploaded.
     typedef std::function<bool(std::size_t bsent, std::size_t btotal, const std::string&)> UploadMemoryCallback;

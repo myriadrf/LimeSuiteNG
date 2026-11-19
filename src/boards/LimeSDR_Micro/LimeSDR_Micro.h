@@ -135,6 +135,10 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
 
     ICSR* getICSR() override;
 
+    /// @brief The LA9310 does the data conversion, so the LMS7002M test signal generators do not reach the RF ports.
+    /// Returns the VSPA Tx tone generator instead, which serves the only Tx pipeline (channel 0).
+    IToneGenerator* GetToneGenerator(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double* clockRate = nullptr) override;
+
     virtual OpStatus OEMTest(OEMTestReporter* reporter) override;
 
     /// @brief Reads and validates the OEM data from the EEPROM identification page.
@@ -198,6 +202,7 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<LA9310> la9310;
     std::shared_ptr<LA9310_FW_Impl> fw;
     std::shared_ptr<LA9310_IQStreamer> iqstreamer;
+    std::shared_ptr<IToneGenerator> mTxToneGenerator;
     std::shared_ptr<GPS> gps;
     std::shared_ptr<PPSDO> ppsdo;
 

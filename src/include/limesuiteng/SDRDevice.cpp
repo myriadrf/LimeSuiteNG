@@ -1,5 +1,7 @@
 #include "limesuiteng/SDRDevice.h"
 #include "limesuiteng/StreamConfig.h"
+#include "limesuiteng/IRFSOC.h"
+#include "limesuiteng/IRFChannel.h"
 
 #include "limesuiteng/Logger.h"
 
@@ -147,6 +149,22 @@ GPIO_Interface* SDRDevice::GetGPIOControls()
 IRFSOC* SDRDevice::GetRFSOC([[maybe_unused]] uint8_t moduleIndex)
 {
     return nullptr;
+}
+
+IToneGenerator* SDRDevice::GetToneGenerator(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double* clockRate)
+{
+    if (clockRate)
+        *clockRate = 0;
+    IRFSOC* soc = GetRFSOC(moduleIndex);
+    if (!soc)
+        return nullptr;
+    IRFChannel* rfChannel = soc->GetChannel(trx, channel);
+    if (!rfChannel)
+        return nullptr;
+    // RF SoC tone generators sit in the digital signal processing path, which runs at the stream sample rate
+    if (clockRate)
+        *clockRate = GetSampleRate(moduleIndex, trx, channel);
+    return rfChannel->GetToneGenerator();
 }
 
 ICSR* SDRDevice::getICSR()

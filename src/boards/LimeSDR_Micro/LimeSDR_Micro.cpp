@@ -1023,6 +1023,24 @@ ICSR* LimeSDR_Micro::getICSR()
     return new LA9310_CSR(mStreamingPort);
 }
 
+IToneGenerator* LimeSDR_Micro::GetToneGenerator(uint8_t moduleIndex, TRXDir trx, uint8_t channel, double* clockRate)
+{
+    if (clockRate)
+        *clockRate = 0;
+    if (moduleIndex != 0 || trx != TRXDir::Tx || channel != 0 || !iqstreamer)
+        return nullptr;
+
+    if (!mTxToneGenerator)
+        mTxToneGenerator = iqstreamer->GetTxToneGenerator(0);
+    if (!mTxToneGenerator)
+        return nullptr;
+
+    // the VSPA scales the tone frequency to the host side sample rate, regardless of the Tx interpolation
+    if (clockRate)
+        *clockRate = GetSampleRate(moduleIndex, TRXDir::Tx, channel);
+    return mTxToneGenerator.get();
+}
+
 OpStatus LimeSDR_Micro::RunRxTestConfig(OEMTestReporter& reporter,
     TestData::RFData* results,
     const std::string& name,

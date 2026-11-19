@@ -3,9 +3,11 @@
 #include "limesuiteng/SDRDescriptor.h"
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/IRFSOC.h"
+#include "limesuiteng/IToneGenerator.h"
 #include "limesuiteng/Logger.h"
 
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <cstring>
 #include <string_view>
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
     args::ValueFlag<bool>           txtestsignalFlag(parser, "", "Enables transmitter test signal if available", {"txtestsignal"});
     args::ValueFlag<double>         txGainFlag(parser, "", "Tx gain", {"txgain"});
     args::Flag                      txCalibrateFlag(parser, "", "Calibrates Tx DC and IQ imbalance", {"txcalibrate"});
+    args::ValueFlag<std::string>    txToneFlag(parser, "Hz|off", "Transmits a tone from the Tx tone generator at the given frequency offset from the Tx LO in Hz (0 for DC, use --txtone=-1e6 for negative offsets), \"off\" stops it. The tone keeps running after the program exits", {"txtone"});
+    args::ValueFlag<double>         txToneAmplitudeFlag(parser, "0-1", "Tx tone generator amplitude relative to full scale. Default when starting the tone: 0.9", {"txtoneamplitude"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
     // clang-format on
@@ -80,6 +84,7 @@ int main(int argc, char** argv)
                              rxgfirFlag || rxoversampleFlag || rxtestsignalFlag || rxGainFlag || rxCalibrateFlag || txenFlag ||
                              txloFlag || txpathFlag || txlpfFlag || txgfirFlag || txoversampleFlag || txtestsignalFlag ||
                              txGainFlag || txCalibrateFlag;
+    const bool doTone = txToneFlag;
 
     const std::string devName = args::get(deviceFlag);
     const bool initializeBoard = initializeFlag;
@@ -101,6 +106,40 @@ int main(int argc, char** argv)
             cerr << "Invalid channels mask: "sv << args::get(chMaskFlag) << endl;
             return EXIT_FAILURE;
         }
+    }
+
+    // Tx tone generator: frequency offset, or disabled
+    bool txToneEnable = false;
+    double txToneFrequency = 0;
+    if (txToneFlag)
+    {
+        const std::string value = args::get(txToneFlag);
+        if (value != "off"sv)
+        {
+            try
+            {
+                size_t parsed = 0;
+                txToneFrequency = std::stod(value, &parsed);
+                if (parsed != value.size())
+                    throw std::invalid_argument(value);
+            } catch (const std::exception&)
+            {
+                cerr << "Invalid Tx tone frequency: "sv << value << endl;
+                return EXIT_FAILURE;
+            }
+            txToneEnable = true;
+        }
+    }
+    const double txToneAmplitude = txToneAmplitudeFlag ? args::get(txToneAmplitudeFlag) : 0.9;
+    if (txToneAmplitude < 0 || txToneAmplitude > 1)
+    {
+        cerr << "Tx tone amplitude must be in range [0, 1]"sv << endl;
+        return EXIT_FAILURE;
+    }
+    if (txToneAmplitudeFlag && !txToneFlag)
+    {
+        cerr << "--txtoneamplitude requires --txtone"sv << endl;
+        return EXIT_FAILURE;
     }
 
     int32_t referenceClockSource = 0;
@@ -189,6 +228,37 @@ int main(int argc, char** argv)
         throw std::runtime_error("failed to "s + what + target);
     };
 
+    // The tone generator is set last, configuring and calibrating the channels can use and stop it
+    auto applyTone = [&](int moduleId, const std::vector<uint8_t>& channels) {
+        if (!doTone)
+            return;
+        for (uint8_t ch : channels)
+        {
+            double clockRate = 0;
+            IToneGenerator* tone = device->GetToneGenerator(moduleId, TRXDir::Tx, ch, &clockRate);
+            if (!tone)
+            {
+                cerr << "Warning: Tx tone generator (channel "sv << static_cast<int>(ch) << ") is not supported by the device"sv
+                     << endl;
+                continue;
+            }
+            if (!txToneEnable)
+            {
+                check(tone->Enabled(false), "stop Tx tone"s, ch);
+                continue;
+            }
+            if (clockRate <= 0)
+                throw std::runtime_error("unknown Tx tone generator sample rate (channel "s + std::to_string(ch) + ")"s);
+            const double weight = txToneFrequency / clockRate;
+            if (std::fabs(weight) > 0.5)
+                throw std::runtime_error(
+                    "Tx tone frequency is outside of the +/-"s + std::to_string(std::lround(clockRate / 2)) + " Hz Nyquist range"s);
+            check(tone->SetAmplitude(txToneAmplitude), "set Tx tone amplitude"s, ch);
+            check(tone->SetFrequency(weight), "set Tx tone frequency"s, ch);
+            check(tone->Enabled(true), "start Tx tone"s, ch);
+        }
+    };
+
     try
     {
         std::string configFilepath = ""s;
@@ -264,11 +334,15 @@ int main(int argc, char** argv)
 
                 if (device->Configure(config, moduleId) != OpStatus::Success)
                     throw std::runtime_error("failed to configure device (chip "s + std::to_string(moduleId) + ")"s);
+                applyTone(moduleId, channels);
                 continue;
             }
 
             if (!doConfigure)
+            {
+                applyTone(moduleId, channels);
                 continue;
+            }
 
             if (refclkFlag)
                 check(device->SetClockFreq(static_cast<uint8_t>(LMS7002M::ClockID::CLK_REFERENCE), args::get(refclkFlag), moduleId * 2),
@@ -324,6 +398,8 @@ int main(int argc, char** argv)
                         "calibrate Tx"s,
                         ch);
             }
+
+            applyTone(moduleId, channels);
         }
     } catch (std::runtime_error& e)
     {

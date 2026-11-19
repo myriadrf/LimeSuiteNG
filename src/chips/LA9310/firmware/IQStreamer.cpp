@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <chrono>
 #include <iterator>
@@ -471,7 +472,11 @@ class VSPA_Tone : public IToneGenerator
         if (!state)
             return OpStatus::NotSupported;
 
-        state->freq_bin = 0xFFFFFFFFu * freq_weigth;
+        if (freq_weigth < -0.5 || freq_weigth > 0.5)
+            return OpStatus::OutOfRange;
+        // signed frequency control word, a full turn is 2^32. Negative weights wrap to two's complement
+        const int64_t fcw = std::llround(freq_weigth * 4294967296.0);
+        state->freq_bin = static_cast<uint32_t>(fcw);
         return OpStatus::Success;
     }
 
