@@ -77,11 +77,13 @@ class LA9310_TRX : public RFStream
     std::vector<DMA_Buffer> rx_buffers[4];
 
     OpStatus RxSetup();
+    OpStatus RxArm();
     void RxWorkLoop();
     void ReceivePacketsLoop();
     void RxTeardown();
 
     OpStatus TxSetup();
+    OpStatus TxArm();
     void TxWorkLoop();
     void TransmitPacketsLoop();
     void TxTeardown();
@@ -96,6 +98,7 @@ class LA9310_TRX : public RFStream
     std::condition_variable streamActive;
     std::mutex streamMutex;
     bool mStreamEnabled;
+    bool mNeedsRearm{ false }; ///< Stop() has disabled the VSPA pipelines, StageStart() must arm them again
 
     struct Stream {
         enum class ReadyStage : uint8_t { Disabled = 0, WorkerReady = 1, Active = 2 };

@@ -292,6 +292,7 @@ OpStatus LA9310_TRX::Setup(const StreamConfig& cfg)
         return status;
     }
 
+    mNeedsRearm = false; // setup has just armed the pipelines
     return status;
 }
 
@@ -306,6 +307,10 @@ OpStatus LA9310_TRX::Start()
     OpStatus status;
     if (mStreamEnabled)
         return OpStatus::Success;
+
+    status = StageStart();
+    if (status != OpStatus::Success)
+        return status;
 
     mRx.terminate.store(false, std::memory_order_relaxed);
     mTx.terminate.store(false, std::memory_order_relaxed);
@@ -345,9 +350,21 @@ OpStatus LA9310_TRX::Start()
     return status;
 }
 
+/// @brief Arms the VSPA pipelines so the stream is ready to start.
+/// Setup() leaves the pipelines armed, Stop() aborts them, so they need to be armed again before the next start.
 OpStatus LA9310_TRX::StageStart()
 {
-    return OpStatus::NotImplemented;
+    if (mStreamEnabled || !mNeedsRearm)
+        return OpStatus::Success;
+
+    OpStatus status = RxArm();
+    if (status != OpStatus::Success)
+        return ReportError(status, "Failed to arm Rx pipelines"s);
+    status = TxArm();
+    if (status != OpStatus::Success)
+        return ReportError(status, "Failed to arm Tx pipeline"s);
+    mNeedsRearm = false;
+    return OpStatus::Success;
 }
 
 /// @brief Stops the stream and cleans up all the memory.
@@ -398,6 +415,7 @@ void LA9310_TRX::Stop()
     {
         printf("failed to disable stream\n");
     }
+    mNeedsRearm = true;
 
     for (int i = 0; i < 4; ++i)
     {
@@ -454,6 +472,42 @@ std::vector<DMA_Buffer> SubdivideBuffer(DMA_Buffer buf, size_t blockSize, size_t
         buf = buf.subspan(blockSize, buf.size() - blockSize);
     }
     return blocks;
+}
+
+/// @brief Primes the VSPA Rx pipelines and fills their DMA tables, so they are ready for stream start.
+/// Called on Setup(), and by StageStart() after Stop(), because Stop() aborts the pipelines.
+OpStatus LA9310_TRX::RxArm()
+{
+    mRx.lastTimestamp.store(0, std::memory_order_relaxed);
+    mRxNextTs = -1;
+    mRxGapFilled = 0;
+
+    const uint32_t laneCount = mConfig.channels.at(TRXDir::Rx).size();
+    if (laneCount == 0)
+        return OpStatus::Success;
+
+    const uint32_t rx_lanes_mask = ~((~0u) << laneCount);
+    // priming resets the lanes' TCD FIFOs and DMA counters
+    OpStatus status = iqstreamer->PipelineEnable(rx_lanes_mask, 0, true);
+    if (status != OpStatus::Success)
+        return status;
+
+    const uint32_t xfer_size = mRxArgs.packetSize * mRxArgs.packetsToBatch;
+    for (uint32_t l = 0; l < laneCount; ++l)
+    {
+        // prefill DMA table, for continuous operation
+        for (size_t i = 0; i < rx_buffers[l].size(); ++i)
+        {
+            status = iqstreamer->rx_dma[l]->SubmitTransfer(rx_buffers[l][i], xfer_size, 0, 0);
+            if (status != OpStatus::Success)
+            {
+                printf("Failed rx tcd prefil\n");
+                return status;
+            }
+            pcie->DMA_SyncForDevice(rx_buffers[l][i]);
+        }
+    }
+    return OpStatus::Success;
 }
 
 OpStatus LA9310_TRX::RxSetup()
@@ -518,31 +572,18 @@ OpStatus LA9310_TRX::RxSetup()
     const int dmaBatchSize = 16 * 1024;
     mRx.packetsToBatch = std::clamp<uint8_t>(mRx.packetsToBatch, 1, dmaBatchSize / packetSize);
 
-    uint32_t rx_lanes_mask = ~((~0) << mConfig.channels.at(TRXDir::Rx).size());
-
-    status = iqstreamer->PipelineEnable(rx_lanes_mask, 0, true);
-    if (status != OpStatus::Success)
-        return status;
-
-    const uint32_t xfer_size = packetSize * mRx.packetsToBatch;
     for (uint32_t l = 0; l < mConfig.channels.at(TRXDir::Rx).size(); ++l)
     {
         int memstep = rxiqflood_mem.size() / mConfig.channels.at(TRXDir::Rx).size();
         rx_lane_dma_mem[l] = rxiqflood_mem.subspan(memstep * l, memstep);
         rx_buffers[l] = SubdivideBuffer(rx_lane_dma_mem[l], dmaBatchSize, 16);
-
-        // prefill DMA table, for continuous operation
-        for (size_t i = 0; i < rx_buffers[l].size(); ++i)
-        {
-            OpStatus status = iqstreamer->rx_dma[l]->SubmitTransfer(rx_buffers[l][i], xfer_size, 0, 0);
-            if (status != OpStatus::Success)
-            {
-                printf("Failed rx tcd prefil\n");
-                return status;
-            }
-            pcie->DMA_SyncForDevice(rx_buffers[l][i]);
-        }
     }
+
+    mRxArgs.packetSize = packetSize;
+    mRxArgs.packetsToBatch = mRx.packetsToBatch;
+    status = RxArm();
+    if (status != OpStatus::Success)
+        return status;
 
     char msg[256];
     std::snprintf(msg,
@@ -993,6 +1034,16 @@ uint32_t LA9310_TRX::StreamRxTemplate(T* const* dest, uint32_t count, StreamRxMe
     return samplesProduced;
 }
 
+/// @brief Primes the VSPA Tx pipeline, resetting its TCD FIFO and DMA counters.
+/// Called on Setup(), and by StageStart() after Stop(), because Stop() aborts the pipeline.
+OpStatus LA9310_TRX::TxArm()
+{
+    mTx.lastTimestamp.store(0, std::memory_order_relaxed);
+    if (mConfig.channels.at(TRXDir::Tx).empty())
+        return OpStatus::Success;
+    return iqstreamer->PipelineEnable(0x0, 0x1, true);
+}
+
 OpStatus LA9310_TRX::TxSetup()
 {
     OpStatus status;
@@ -1043,7 +1094,7 @@ OpStatus LA9310_TRX::TxSetup()
     //     lime::debug("Tx samples override %i", mTx.samplesInPkt);
     // }
 
-    status = iqstreamer->PipelineEnable(0x0, 0x1, true);
+    status = TxArm();
     if (status != OpStatus::Success)
         return status;
 
