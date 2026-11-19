@@ -3,6 +3,7 @@
 | Script | Purpose |
 |---|---|
 | `rf_test.py` | manufacturing RF test: the RF steps of `limeOEM --test` |
+| `trimdac_cal.py` | reference oscillator (VCTCXO) trim DAC calibration from the Tx frequency |
 
 It uses the shared tooling in `../../equipment/`. See its README for the instrument drivers,
 the station config and the exit code and output conventions.
@@ -45,6 +46,60 @@ To change limits or settings without editing the script, pass `--limits` with a 
 
 Not covered: limeOEM also writes the default VCTCXO DAC value to the EEPROM when it was never
 set. That is not an RF measurement and stays with `limeOEM`.
+
+## Trim DAC calibration
+
+```sh
+# spectrum analyzer over SCPI, locked to a GPS/rubidium 10 MHz reference
+scripts/boards/limesdr-micro/trimdac_cal.py --specan tcp://192.168.1.30 --fixture none --store -o cal.csv
+```
+
+All the board clocks (the LMS7002M LO and the LA9310 sample clock) come from the VCTCXO. The
+script transmits the VSPA tone at Tx LO 1800 MHz + 1 MHz from `TX` (Band2) and measures its
+frequency with the spectrum analyzer. A tone at DC cannot be used, because the baseband path does
+not pass DC to the RF output. The 1 MHz offset is small enough that the result is the LO error.
+
+1. The PPSDO is disabled (`limePPSDO --disable`), so that it does not move the DAC.
+2. The error is measured at the current DAC value (`--start-dac` to start elsewhere), then one
+   probe step (2000 LSB) away. This gives the slope in ppm/LSB. It is measured even when the
+   start value is already within the tolerance, to check that the DAC works. If the frequency does
+   not change over the probe step, it is also measured at the far end of the DAC range. No change
+   there either fails the board with "trim DAC might be defective".
+3. The script steps to the value the slope predicts, measures, and refines the slope from the
+   last two points until the error is within `--tolerance` (default 0.1 ppm).
+
+The results are the initial error, the DAC slope, the final error and the DAC value
+(`Initial error`, `DAC slope`, `Final error`, `Trim DAC` columns). The JSON has every measured
+point. On a pass the calibrated value stays set. On a failure (defective DAC, out of the DAC
+range, no convergence) the start value is restored.
+
+The value is set with `limeConfig --trimdac`, which does not store it, so it is lost at power
+off. With `--store`, a passing value is also written to the EEPROM with
+`limeConfig --storetrimdac`. The board loads it from there at power up. limeConfig reads the
+stored value back to verify it, and the script reads it once more for the report.
+
+The other settings (LO, offset, gain, search span, resolution, probe step, iteration count, an
+optional `max_initial_ppm` limit, and an optional `min_slope_ppb` limit that fails a DAC with too
+little pull range) are in `PLAN` in the script and can be overridden with
+`--limits`, e.g. `{ "lo": 1000e6, "resolution_hz": 1 }`.
+
+## Trim DAC
+
+`limeConfig --trimdac <value>` sets the reference oscillator trim DAC without storing it
+(decimal or 0x hex, 0 to 65535 on the LimeSDR-Micro). `limeConfig --trimdac get` prints the
+current value, and `limeConfig --trimdac stored` prints the value stored in the non-volatile
+memory (the EEPROM `XO_DAC` region on the LimeSDR-Micro). `--storetrimdac` stores the value
+given with `--trimdac`, or the current one, and verifies it:
+
+```sh
+limeConfig -d Micro --trimdac 46993 --storetrimdac
+limeConfig -d Micro --trimdac stored
+```
+ The value is applied after any other configuration in the same call, and
+`--initialize` does not change it. A running PPSDO loop overrides it.
+
+limeConfig finds the DAC through the `TrimDAC` node of the device tree (`lime::ITrimDAC`,
+`src/include/limesuiteng/ITrimDAC.h`), so the options work on every board that lists one.
 
 ## Tx tone generator
 

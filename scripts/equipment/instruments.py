@@ -56,6 +56,12 @@ class SpectrumAnalyzer(ABC):
     def measure_peak(self, expected_hz):
         """Measures the strongest signal in the span, expected near expected_hz. Returns PeakMeasurement."""
 
+    @abstractmethod
+    def measure_frequency(self, expected_hz, search_span_hz, resolution_hz):
+        """Measures the frequency of a CW signal precisely. The signal is the strongest one within
+        expected_hz +/- search_span_hz / 2. Returns the frequency in Hz with resolution_hz or better.
+        The instrument must be locked to a reference that is more accurate than the measurement needs."""
+
     def close(self):
         pass
 
@@ -113,6 +119,24 @@ class ManualSpectrumAnalyzer(SpectrumAnalyzer):
         power = self.operator.ask_float(
             "Place a peak marker on the signal at %s and read its level" % format_hz(expected_hz), "dBm")
         return PeakMeasurement(power_dbm=power, frequency_hz=None)
+
+    def measure_frequency(self, expected_hz, search_span_hz, resolution_hz):
+        settings = {"center": expected_hz, "span": search_span_hz}
+        if self.shown_settings != settings:
+            self.operator.instruct(
+                "Set the %s: center %s, span %s. Its frequency reference must be locked to an accurate "
+                "source (GPS/rubidium 10 MHz)" % (self.label, format_hz(expected_hz), format_hz(search_span_hz)))
+            self.shown_settings = settings
+            self.settings = {}
+        low, high = expected_hz - search_span_hz / 2, expected_hz + search_span_hz / 2
+        while True:
+            frequency = self.operator.ask_float(
+                "Find the signal near %s. Zoom in on it (or use the marker frequency counter) and read its "
+                "frequency with %s resolution or better" % (format_hz(expected_hz), format_hz(resolution_hz)), "Hz")
+            if low <= frequency <= high:
+                return frequency
+            self.operator.info("    %.0f Hz is outside of the search span %s - %s, enter the frequency in Hz"
+                               % (frequency, format_hz(low), format_hz(high)))
 
 
 # --- SCPI drivers ----------------------------------------------------------------------------------
@@ -185,7 +209,15 @@ class ScpiSpectrumAnalyzer(_ScpiDriver, SpectrumAnalyzer):
         "peak": [":CALC:MARK1:STAT ON", ":CALC:MARK1:MAX"],
         "marker_frequency": [":CALC:MARK1:X?"],
         "marker_power": [":CALC:MARK1:Y?"],
+        # precise frequency of the signal at the centre of the zoomed in span, the last query returns it.
+        # Instruments with a marker frequency counter can use it instead, e.g. Keysight X-series:
+        # [":CALC:MARK1:MAX", ":CALC:MARK1:FCO ON", ":INIT:IMM", "*OPC?", ":CALC:MARK1:FCO:X?"]
+        "frequency": [":CALC:MARK1:STAT ON", ":CALC:MARK1:MAX", ":CALC:MARK1:X?"],
     }
+
+    def __init__(self, resource, commands=None, timeout=10.0, log=None, sweep_points=1001):
+        super().__init__(resource, commands, timeout, log)
+        self.sweep_points = sweep_points  # the zoomed in span gives resolution_hz per sweep point
 
     def setup(self, center_hz, span_hz, rbw_hz=None, ref_level_dbm=None):
         self._run("setup", center_hz=center_hz, span_hz=span_hz, rbw_hz=rbw_hz, ref_level_dbm=ref_level_dbm)
@@ -196,6 +228,18 @@ class ScpiSpectrumAnalyzer(_ScpiDriver, SpectrumAnalyzer):
         frequency = float(self._run("marker_frequency").split(",")[0])
         power = float(self._run("marker_power").split(",")[0])
         return PeakMeasurement(power_dbm=power, frequency_hz=frequency)
+
+    def measure_frequency(self, expected_hz, search_span_hz, resolution_hz):
+        # find the signal in the search span, then zoom in on it
+        self.setup(expected_hz, search_span_hz, max(search_span_hz / 100, 1.0))
+        coarse = self.measure_peak(expected_hz).frequency_hz
+        low, high = expected_hz - search_span_hz / 2, expected_hz + search_span_hz / 2
+        if not low <= coarse <= high:
+            raise ValueError("no signal found within %s +/- %s" % (format_hz(expected_hz), format_hz(search_span_hz / 2)))
+        span = min(resolution_hz * (self.sweep_points - 1), search_span_hz)
+        self.setup(coarse, span, max(span / 100, 1.0))
+        self._run("sweep")
+        return float(self._run("frequency").split(",")[0])
 
 
 # --- Factory ---------------------------------------------------------------------------------------
@@ -226,5 +270,6 @@ def create_spectrum_analyzer(spec, operator, log=None):
     if driver == "manual":
         return ManualSpectrumAnalyzer(operator)
     if driver == "scpi":
-        return ScpiSpectrumAnalyzer(spec["resource"], spec.get("commands"), spec.get("timeout", 10.0), log)
+        return ScpiSpectrumAnalyzer(spec["resource"], spec.get("commands"), spec.get("timeout", 10.0), log,
+                                    spec.get("sweep_points", 1001))
     raise ValueError("unknown spectrum analyzer driver: " + driver)

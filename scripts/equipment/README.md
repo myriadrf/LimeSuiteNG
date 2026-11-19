@@ -11,7 +11,7 @@ LimeSuiteNG CLI tool wrappers, capture analysis and result reporting.
 | `fixture.py` | DUT port connections: manual, none, or a shell command |
 | `operator.py` | operator prompts: instructions, typed-in measurements, `q` to abort |
 | `station.py` | station config: instruments, fixture, cable path losses |
-| `limetools.py` | `limeDevice` / `limeConfig` / `limeTRX` wrappers |
+| `limetools.py` | `limeDevice` / `limeConfig` / `limeTRX` / `limePPSDO` wrappers, trim DAC get/set |
 | `dsp.py` | SigMF capture reading, FFT peak search (same method as limeOEM) |
 | `report.py` | results, console summary, CSV row per board, JSON details |
 
@@ -23,7 +23,8 @@ A board script puts the parent directory on `sys.path` and imports `equipment.*`
 Test scripts only use the generic interfaces:
 
 - `SignalGenerator`: `set_cw(frequency_hz, power_dbm)`, `set_output(enabled)`
-- `SpectrumAnalyzer`: `setup(center_hz, span_hz, rbw_hz, ref_level_dbm)`, `measure_peak(expected_hz)`
+- `SpectrumAnalyzer`: `setup(center_hz, span_hz, rbw_hz, ref_level_dbm)`, `measure_peak(expected_hz)`,
+  `measure_frequency(expected_hz, search_span_hz, resolution_hz)`
 - `Fixture`: `connect(dut_port, instrument)`
 
 Each one has two kinds of driver:
@@ -36,6 +37,15 @@ Each one has two kinds of driver:
   Keysight/R&S/Rigol/Siglent style. Any command can be replaced in the station config
   (`commands`, see the `DEFAULT_COMMANDS` of each driver). A command that ends with `?` is a
   query. A command whose `{parameter}` is not given is skipped.
+
+`measure_frequency` is the precise CW frequency measurement used for oscillator calibration. The
+SCPI driver finds the signal in the search span, then zooms in on it so that one sweep point is
+`resolution_hz` (set `sweep_points` in the station config if the analyzer does not use 1001) and
+reads the `frequency` command. An analyzer with a marker frequency counter can use it by
+replacing `frequency`, e.g. Keysight X-series:
+`[":CALC:MARK1:MAX", ":CALC:MARK1:FCO ON", ":INIT:IMM", "*OPC?", ":CALC:MARK1:FCO:X?"]`. The
+manual driver asks the operator to type the frequency in Hz. Either way the analyzer must be
+locked to a reference more accurate than the calibration tolerance (GPS or rubidium 10 MHz).
 
 On the command line of a board script, an instrument is given as `manual` or as a SCPI resource
 string (`--siggen tcp://192.168.1.20`).

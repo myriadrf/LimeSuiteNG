@@ -19,6 +19,10 @@ class Result:
     high: Optional[float] = None
     message: str = ""
     details: dict = field(default_factory=dict)
+    fmt: str = "%.2f"  # value format in the printed results and the CSV
+
+    def value_text(self):
+        return self.fmt % self.value if self.value is not None else None
 
     def limits_text(self):
         if self.low is not None and self.high is not None:
@@ -45,7 +49,7 @@ class Report:
 
     def add(self, result, out=sys.stderr):
         self.results.append(result)
-        value = "%.2f %s" % (result.value, result.unit) if result.value is not None else ""
+        value = ("%s %s" % (result.value_text(), result.unit)).strip() if result.value is not None else ""
         line = "  [%s] %-12s %-14s %s" % ("PASS" if result.passed else "FAIL", result.name, value, result.limits_text())
         if result.message:
             line += "  " + result.message
@@ -58,7 +62,7 @@ class Report:
     def print_summary(self, out=sys.stderr):
         print("\n=== %s: S/N %s ===" % (self.test_name, self.serial), file=out)
         for r in self.results:
-            value = "%.2f %s" % (r.value, r.unit) if r.value is not None else "-"
+            value = ("%s %s" % (r.value_text(), r.unit)).strip() if r.value is not None else "-"
             print("  %-12s %-14s %-16s %s" % (r.name, value, r.limits_text(), "PASS" if r.passed else "FAIL"), file=out)
         if self.error:
             print("  ERROR: %s" % self.error, file=out)
@@ -69,7 +73,7 @@ class Report:
         row = {"Date": self.started.isoformat(timespec="seconds"), "S/N": self.serial,
                "Result": "PASS" if self.passed else "FAIL"}
         for r in self.results:
-            row[r.name] = "%.2f" % r.value if r.value is not None else ("PASS" if r.passed else "FAIL")
+            row[r.name] = r.value_text() if r.value is not None else ("PASS" if r.passed else "FAIL")
         new_file = not os.path.exists(path) or os.path.getsize(path) == 0
         if not new_file:
             with open(path, newline="") as f:

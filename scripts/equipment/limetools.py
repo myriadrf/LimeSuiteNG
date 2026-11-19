@@ -109,6 +109,33 @@ class LimeTools:
                 args += ["--" + key, _number(value)]
         return self.run("limeConfig", args, timeout=120)
 
+    def get_trimdac(self):
+        """Returns the reference oscillator trim DAC value."""
+        return int(self.run("limeConfig", ["--trimdac", "get"]).splitlines()[-1])
+
+    def set_trimdac(self, value):
+        """Sets the reference oscillator trim DAC and checks it. The value is not stored in the non-volatile memory."""
+        self.run("limeConfig", ["--trimdac", str(int(value))])
+        readback = self.get_trimdac()
+        if readback != int(value):
+            raise ToolError("trim DAC was set to %d, but reads back %d" % (value, readback))
+
+    def get_stored_trimdac(self):
+        """Returns the trim DAC value stored in the non-volatile memory, the one loaded at power up."""
+        return int(self.run("limeConfig", ["--trimdac", "stored"]).splitlines()[-1])
+
+    def store_trimdac(self, value):
+        """Sets the trim DAC and stores the value to the non-volatile memory (limeConfig verifies it)."""
+        self.run("limeConfig", ["--trimdac", str(int(value)), "--storetrimdac"])
+
+    # --- limePPSDO ---
+
+    def ppsdo_disable(self):
+        """Stops the PPS disciplined oscillator loop, so that it does not change the trim DAC."""
+        # limePPSDO uses -d for the monitoring period, the device is selected with --device
+        args = ["--disable"] + (["--device", self.device] if self.device else [])
+        self.run("limePPSDO", args, device=False)
+
     # --- limeTRX ---
 
     def capture(self, channel, samples, output_base=None, timeout=30):
