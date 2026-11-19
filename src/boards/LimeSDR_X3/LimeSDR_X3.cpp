@@ -12,6 +12,7 @@
 #include "FPGA_X3.h"
 #include "protocols/LMS64CProtocol.h"
 #include "DSP/CFR/CrestFactorReduction.h"
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 #include "limesuiteng/SDRDescriptor.h"
 #include "CommonFunctions.h"
@@ -253,6 +254,9 @@ LimeSDR_X3::LimeSDR_X3(std::shared_ptr<ISerialPort> controlPort, std::vector<std
     desc.socTree->children.push_back(fpgaNode);
 
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mClockGeneratorCDCM.get(), "CDCM6208"s));
+    mTrimDAC = std::make_shared<CustomParameterTrimDAC>(
+        this, "VCTCXO"s, limesdrx3::cp_vctcxo_dac, desc.memoryDevices[ToString(eMemoryDevice::EEPROM)], "VCTCXO_DAC"s);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
 }
 
 LimeSDR_X3::~LimeSDR_X3()

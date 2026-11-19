@@ -10,6 +10,8 @@
 
 namespace lime {
 
+class ITrimDAC;
+
 class LimePCIe;
 class ISerialPort;
 class ISPI;
@@ -101,6 +103,7 @@ class LimeSDR_XTRX : public LMS7002M_SDRDevice
     std::shared_ptr<LimePCIe> mStreamPort;
     std::shared_ptr<ISerialPort> mSerialPort;
     std::unique_ptr<PPSDO> mPPSDO;
+    std::shared_ptr<ITrimDAC> mTrimDAC;
 
     bool mConfigInProgress;
     uint32_t mSubDeviceIndex;

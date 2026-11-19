@@ -24,6 +24,7 @@
 #include "protocols/LMSBoards.h"
 #include "protocols/LMS64CProtocol.h"
 
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 #include "streaming/TRXLooper.h"
 
@@ -189,10 +190,12 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
     if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI))
     {
         descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC_v1);
+        mTrimDAC = std::make_shared<CustomParameterTrimDAC>(this, "VCTCXO"s, limesdrmini::CP_VCTCXO_DAC_v1);
     }
     else if (descriptor.name == GetDeviceName(LMS_DEV_LIMESDRMINI_V2))
     {
         descriptor.customParameters.push_back(limesdrmini::CP_VCTCXO_DAC_v2);
+        mTrimDAC = std::make_shared<CustomParameterTrimDAC>(this, "VCTCXO"s, limesdrmini::CP_VCTCXO_DAC_v2);
         descriptor.customParameters.push_back(limesdrmini::CP_TEMPERATURE);
         mPPSDO = std::make_unique<PPSDO_FPGA>(std::make_shared<LMS64C_CSR>(mSerialPort), 0xF0002800);
     }
@@ -227,6 +230,10 @@ LimeSDR_Mini::LimeSDR_Mini(std::shared_ptr<ISPI> spiLMS,
         fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mPPSDO.get(), "PPSDO"s));
     descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeSDR-Mini"s);
     descriptor.socTree->children.push_back(fpgaNode);
+    // no memory region is defined for a non-volatile value
+    if (mTrimDAC)
+        descriptor.socTree->children.push_back(
+            std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
 }
 
 LimeSDR_Mini::~LimeSDR_Mini()

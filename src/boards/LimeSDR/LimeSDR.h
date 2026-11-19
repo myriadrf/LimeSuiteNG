@@ -10,6 +10,8 @@
 
 namespace lime {
 
+class ITrimDAC;
+
 class IUSB;
 class ICSR;
 
@@ -74,6 +76,7 @@ class LimeSDR : public LMS7002M_SDRDevice
     std::shared_ptr<ISPI> mlms7002mPort;
     std::shared_ptr<ISPI> mfpgaPort;
     std::unique_ptr<ADF4002> mADF;
+    std::shared_ptr<ITrimDAC> mTrimDAC;
     bool mConfigInProgress;
 };
 

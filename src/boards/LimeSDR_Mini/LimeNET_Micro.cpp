@@ -15,6 +15,7 @@
 #include "streaming/TRXLooper.h"
 
 #include "FPGA_Mini.h"
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 
 #include <cassert>
@@ -143,6 +144,9 @@ LimeNET_Micro::LimeNET_Micro(std::shared_ptr<ISPI> spiLMS,
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
     descriptor.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "LimeNET-Micro"s);
     descriptor.socTree->children.push_back(fpgaNode);
+    mTrimDAC = std::make_shared<CustomParameterTrimDAC>(this, "VCTCXO"s, limenetmicro::CP_VCTCXO_DAC);
+    descriptor.socTree->children.push_back(
+        std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
 }
 
 LimeNET_Micro::~LimeNET_Micro()

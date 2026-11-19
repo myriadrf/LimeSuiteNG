@@ -19,6 +19,7 @@
 #include "streaming/TRXLooper.h"
 #include "limesuiteng/ToString.h"
 
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 
 #include <array>
@@ -140,6 +141,10 @@ LimeSDR::LimeSDR(std::shared_ptr<ISPI> spiLMS,
         std::make_shared<DataStorage>(this, eMemoryDevice::EEPROM, eepromMap);
 
     descriptor.customParameters.push_back(limesdrusb::CP_VCTCXO_DAC);
+    mTrimDAC = std::make_shared<CustomParameterTrimDAC>(
+        this, "VCTCXO"s, limesdrusb::CP_VCTCXO_DAC, descriptor.memoryDevices[ToString(eMemoryDevice::EEPROM)], "VCTCXO_DAC"s);
+    descriptor.socTree->children.push_back(
+        std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
     descriptor.customParameters.push_back(limesdrusb::CP_TEMPERATURE);
     descriptor.spiSlaveIds = { { "LMS7002M"s, limesdrusb::SPI_LMS7002M }, { "FPGA"s, limesdrusb::SPI_FPGA } };
 

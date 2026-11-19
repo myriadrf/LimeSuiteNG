@@ -9,6 +9,8 @@
 
 namespace lime {
 
+class ITrimDAC;
+
 class ISPI;
 class IUSB;
 
@@ -60,6 +62,7 @@ class LimeNET_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<ISerialPort> mSerialPort;
     std::shared_ptr<ISPI> mlms7002mPort;
     std::shared_ptr<ISPI> mfpgaPort;
+    std::shared_ptr<ITrimDAC> mTrimDAC;
     bool mConfigInProgress{};
 };
 

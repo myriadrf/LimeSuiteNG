@@ -21,6 +21,7 @@
 #include "comms/PCIe/LimePCIe.h"
 #include "comms/PCIe/LimePCIeDMA.h"
 #include "comms/IDMA.h"
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 
 #include "protocols/LMS64CProtocol.h"
@@ -305,6 +306,9 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mLMSChips.at(0).get(), "LMS7002M"s));
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(gps.get(), "GPS"s));
     desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(ppsdo.get(), "PPSDO"s));
+    mTrimDAC = std::make_shared<CustomParameterTrimDAC>(
+        this, "VCTCXO"s, limesdrmicro::cp_vctcxo_dac, desc.memoryDevices[ToString(eMemoryDevice::EEPROM)], "XO_DAC"s);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
 }
 
 LimeSDR_Micro::~LimeSDR_Micro()

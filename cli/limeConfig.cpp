@@ -4,6 +4,8 @@
 #include "limesuiteng/LMS7002M.h"
 #include "limesuiteng/IRFSOC.h"
 #include "limesuiteng/IToneGenerator.h"
+#include "limesuiteng/ITrimDAC.h"
+#include "DeviceTreeNode.h"
 #include "limesuiteng/Logger.h"
 
 #include <cassert>
@@ -18,6 +20,22 @@ using namespace lime;
 using namespace lime::cli;
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
+
+/// Finds the first trim DAC in the device tree.
+static ITrimDAC* FindTrimDAC(const std::shared_ptr<DeviceTreeNode>& node)
+{
+    if (!node)
+        return nullptr;
+    if (node->moduleClass == ITrimDAC::DeviceTreeClass)
+        return static_cast<ITrimDAC*>(node->module);
+    for (const auto& child : node->children)
+    {
+        ITrimDAC* dac = FindTrimDAC(child);
+        if (dac)
+            return dac;
+    }
+    return nullptr;
+}
 
 int main(int argc, char** argv)
 {
@@ -57,6 +75,9 @@ int main(int argc, char** argv)
     args::Flag                      txCalibrateFlag(parser, "", "Calibrates Tx DC and IQ imbalance", {"txcalibrate"});
     args::ValueFlag<std::string>    txToneFlag(parser, "Hz|off", "Transmits a tone from the Tx tone generator at the given frequency offset from the Tx LO in Hz (0 for DC, use --txtone=-1e6 for negative offsets), \"off\" stops it. The tone keeps running after the program exits", {"txtone"});
     args::ValueFlag<double>         txToneAmplitudeFlag(parser, "0-1", "Tx tone generator amplitude relative to full scale. Default when starting the tone: 0.9", {"txtoneamplitude"});
+
+    args::ValueFlag<std::string>    trimDacFlag(parser, "value|get|stored", "Sets the reference oscillator (VCTCXO) trim DAC to the given value, without storing it to the non-volatile memory. \"get\" prints the current value, \"stored\" prints the value stored in the non-volatile memory", {"trimdac"});
+    args::Flag                      storeTrimDacFlag(parser, "", "Stores the trim DAC value to the non-volatile memory, where the device loads it from at power up: the value given with --trimdac, or the current one", {"storetrimdac"});
 
     args::ValueFlag<std::string>    iniFlag(parser, "", "Path to LMS7002M .ini configuration file to use as a base", {"ini"}, "");
     // clang-format on
@@ -140,6 +161,26 @@ int main(int argc, char** argv)
     {
         cerr << "--txtoneamplitude requires --txtone"sv << endl;
         return EXIT_FAILURE;
+    }
+
+    // Reference oscillator trim DAC: value to set, or read the current one
+    const bool trimDacGet = trimDacFlag && args::get(trimDacFlag) == "get"sv;
+    const bool trimDacGetStored = trimDacFlag && args::get(trimDacFlag) == "stored"sv;
+    int64_t trimDacValue = -1;
+    if (trimDacFlag && !trimDacGet && !trimDacGetStored)
+    {
+        const std::string value = args::get(trimDacFlag);
+        try
+        {
+            size_t parsed = 0;
+            trimDacValue = std::stoll(value, &parsed, 0);
+            if (parsed != value.size() || trimDacValue < 0)
+                throw std::invalid_argument(value);
+        } catch (const std::exception&)
+        {
+            cerr << "Invalid trim DAC value: "sv << value << endl;
+            return EXIT_FAILURE;
+        }
     }
 
     int32_t referenceClockSource = 0;
@@ -256,6 +297,53 @@ int main(int argc, char** argv)
             check(tone->SetAmplitude(txToneAmplitude), "set Tx tone amplitude"s, ch);
             check(tone->SetFrequency(weight), "set Tx tone frequency"s, ch);
             check(tone->Enabled(true), "start Tx tone"s, ch);
+        }
+    };
+
+    // The trim DAC is set after the chips are configured, initializing the board can reload its default value
+    auto applyTrimDac = [&]() {
+        if (!trimDacFlag && !storeTrimDacFlag)
+            return;
+        ITrimDAC* dac = FindTrimDAC(device->GetDescriptor().socTree);
+        if (!dac)
+            throw std::runtime_error("the device does not have a trim DAC"s);
+
+        auto read = [&](bool nonVolatile) {
+            uint32_t value = 0;
+            const OpStatus status = nonVolatile ? dac->GetNonVolatileValue(value) : dac->GetValue(value);
+            if (status == OpStatus::NotSupported)
+                throw std::runtime_error("the device does not store the trim DAC value"s);
+            if (status != OpStatus::Success)
+                throw std::runtime_error(
+                    nonVolatile ? "failed to read the stored trim DAC value"s : "failed to read the trim DAC"s);
+            return value;
+        };
+
+        if (trimDacGet)
+            cout << read(false) << endl;
+        if (trimDacGetStored)
+            cout << read(true) << endl;
+
+        const Range<uint32_t> range = dac->GetRange();
+        if (trimDacValue >= 0)
+        {
+            if (trimDacValue < range.min || trimDacValue > range.max)
+                throw std::runtime_error(
+                    "trim DAC value is outside of range ["s + std::to_string(range.min) + ", "s + std::to_string(range.max) + "]"s);
+            if (dac->SetValue(static_cast<uint32_t>(trimDacValue)) != OpStatus::Success)
+                throw std::runtime_error("failed to set the trim DAC"s);
+        }
+
+        if (storeTrimDacFlag)
+        {
+            const uint32_t value = trimDacValue >= 0 ? static_cast<uint32_t>(trimDacValue) : read(false);
+            const OpStatus status = dac->SetNonVolatileValue(value);
+            if (status == OpStatus::NotSupported)
+                throw std::runtime_error("the device does not store the trim DAC value"s);
+            if (status == OpStatus::OutOfRange)
+                throw std::runtime_error("trim DAC value "s + std::to_string(value) + " can not be stored"s);
+            if (status != OpStatus::Success)
+                throw std::runtime_error("failed to store the trim DAC value"s);
         }
     };
 
@@ -401,6 +489,7 @@ int main(int argc, char** argv)
 
             applyTone(moduleId, channels);
         }
+        applyTrimDac();
     } catch (std::runtime_error& e)
     {
         DeviceRegistry::freeDevice(device);

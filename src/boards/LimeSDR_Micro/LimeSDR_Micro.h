@@ -22,6 +22,8 @@
 
 namespace lime {
 
+class ITrimDAC;
+
 class IComms;
 class LimePCIe;
 class RFStream;
@@ -205,6 +207,7 @@ class LIME_API LimeSDR_Micro : public LMS7002M_SDRDevice
     std::shared_ptr<IToneGenerator> mTxToneGenerator;
     std::shared_ptr<GPS> gps;
     std::shared_ptr<PPSDO> ppsdo;
+    std::shared_ptr<ITrimDAC> mTrimDAC;
 
     bool mConfigInProgress;
 };

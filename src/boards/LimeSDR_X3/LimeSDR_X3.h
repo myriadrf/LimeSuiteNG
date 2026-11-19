@@ -10,6 +10,8 @@
 
 namespace lime {
 
+class ITrimDAC;
+
 class LimePCIe;
 class CrestFactorReduction;
 class ISerialPort;
@@ -74,6 +76,7 @@ class LimeSDR_X3 : public LMS7002M_SDRDevice
 
     std::shared_ptr<ISerialPort> controlPort;
     std::unique_ptr<CDCM_Dev> mClockGeneratorCDCM;
+    std::shared_ptr<ITrimDAC> mTrimDAC;
     std::vector<std::shared_ptr<LimePCIe>> mTRXStreamPorts;
     std::unique_ptr<CrestFactorReduction> mEqualizer;
 

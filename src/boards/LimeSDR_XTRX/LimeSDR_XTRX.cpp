@@ -27,6 +27,7 @@
 #include "streaming/TRXLooper.h"
 
 #include "CommonFunctions.h"
+#include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
 #include "OEMTesting.h"
 
@@ -219,6 +220,9 @@ LimeSDR_XTRX::LimeSDR_XTRX(std::shared_ptr<ISPI> spiRFsoc,
     fpgaNode->children.push_back(std::make_shared<DeviceTreeNode>(mPPSDO.get(), "PPSDO"s));
     desc.socTree = std::make_shared<DeviceTreeNode>(this, "SDRDevice"s, "XTRX"s);
     desc.socTree->children.push_back(fpgaNode);
+    mTrimDAC = std::make_shared<CustomParameterTrimDAC>(
+        this, "VCTCXO"s, limesdrxtrx::cp_vctcxo_dac, desc.memoryDevices[ToString(eMemoryDevice::EEPROM)], "VCTCXO_DAC"s);
+    desc.socTree->children.push_back(std::make_shared<DeviceTreeNode>(mTrimDAC.get(), ITrimDAC::DeviceTreeClass, "VCTCXO DAC"s));
 }
 
 void LimeSDR_XTRX::SetSubDeviceIndex(uint32_t index)
