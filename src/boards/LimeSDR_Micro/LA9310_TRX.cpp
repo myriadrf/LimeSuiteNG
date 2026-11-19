@@ -1296,12 +1296,15 @@ void LA9310_TRX::TransmitPacketsLoop()
             if ((diff = proxy->tx_udr - last_proxy.tx_udr))
             {
                 underrun.add(diff);
+                stats.underrun += diff; // also report it through StreamStatus()
                 last_proxy.tx_udr += diff;
                 trace.add('U', diff, mRx.stats.timestamp, counterDiff, 0);
             }
             if ((diff = proxy->tx_drop - last_proxy.tx_drop))
             {
-                loss.add(diff);
+                // counted in stats.loss: the periodic loss.set(stats.loss) below would otherwise overwrite the value
+                // accumulated here, and StreamStatus() would never show what the firmware dropped
+                stats.loss += diff;
                 last_proxy.tx_drop += diff;
             }
         }
