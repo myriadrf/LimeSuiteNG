@@ -1119,7 +1119,7 @@ OpStatus LMS7002M_SDRDevice::LMS7002LOConfigure(LMS7002M& chip, const SDRConfig&
         if (status != OpStatus::Success)
             return status;
     }
-    if (cfg.channel[0].tx.centerFrequency > 0)
+    if (tx_lo > 0)
     {
         status = chip.SetFrequencySX(TRXDir::Tx, tx_lo);
         if (status != OpStatus::Success)
