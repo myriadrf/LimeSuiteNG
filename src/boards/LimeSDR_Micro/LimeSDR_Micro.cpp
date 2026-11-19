@@ -356,6 +356,15 @@ static double CalculateCommonSampleRate(const SDRConfig& cfg)
     return std::max(maxADCrequest, maxDACrequest);
 }
 
+/// @return smallest power of 2 that is >= ratio, at least 1
+static uint32_t PowerOf2AtLeast(double ratio)
+{
+    uint32_t pow2 = 1;
+    while (pow2 < ratio && pow2 < (1u << 31))
+        pow2 <<= 1;
+    return pow2;
+}
+
 static OpStatus SetLA9310SamplingRate(
     std::shared_ptr<LA9310_FW_Impl> fw, std::shared_ptr<LA9310_IQStreamer> iqstreamer, double sampleRate, uint32_t oversample)
 {
@@ -390,11 +399,11 @@ static OpStatus SetLA9310SamplingRate(
                 max_fw_oversample = std::min(rx->GetMaxOversample(), tx->GetMaxOversample());
         }
         max_oversample = std::min(max_oversample, max_fw_oversample);
-        required_oversample = 1 << int(ceil(log2((40e6) / sampleRate))); // only need oversampling when going below 40Msps
+        required_oversample = PowerOf2AtLeast(40e6 / sampleRate); // only need oversampling when going below 40Msps
         if (required_oversample > max_oversample)
         {
             // oversampling not enough, need to reduce DCS clock frequency
-            required_oversample = 1 << int(ceil(log2((min_DCS_clock/2) / sampleRate)));
+            required_oversample = PowerOf2AtLeast((min_DCS_clock / 2) / sampleRate);
             if (required_oversample > max_oversample)
                 return ReportError(OpStatus::OutOfRange,
                     "Sample rate %g is too low: it needs x%u oversampling, at most x%u is available",
