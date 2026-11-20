@@ -172,6 +172,28 @@ std::string locateImageResource(const std::string& name)
     return ""s;
 }
 
+std::vector<std::string> listFirmwareSearchPaths(void)
+{
+    std::vector<std::string> firmwareSearchPaths;
+    firmwareSearchPaths.push_back("@LIMESUITENG_FIRMWARE_INSTALL_FULL_DIR@"s);
+#ifdef __unix__
+    if (firmwareSearchPaths.front() != "/lib/firmware"sv)
+        firmwareSearchPaths.push_back("/lib/firmware"s);
+#endif
+    return firmwareSearchPaths;
+}
+
+std::string locateFirmwareFile(const std::string& name)
+{
+    for (const auto& searchPath : lime::listFirmwareSearchPaths())
+    {
+        const std::string fullPath(searchPath + "/"s + name);
+        if (access(fullPath.c_str(), R_OK) == 0)
+            return fullPath;
+    }
+    return ""s;
+}
+
 /*!
  * Download an image resource given only the file name.
  * The resource will be downloaded in the user's application data directory.

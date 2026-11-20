@@ -55,6 +55,12 @@ set(LIME_SUITE_ROOT
     CACHE PATH "Installation root for lime::getLimeSuiteRoot()")
 file(TO_CMAKE_PATH "${LIME_SUITE_ROOT}" LIME_SUITE_ROOT)
 
+include(GNUInstallDirs)
+# Device firmware install location, relative to CMAKE_INSTALL_PREFIX.
+# The full path is compiled into the library, see lime::listFirmwareSearchPaths()
+set(LIMESUITENG_FIRMWARE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/firmware")
+set(LIMESUITENG_FIRMWARE_INSTALL_FULL_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/firmware")
+
 ########################################################################
 ## compiler flags
 ########################################################################

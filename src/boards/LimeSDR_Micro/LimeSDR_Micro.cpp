@@ -23,6 +23,7 @@
 #include "comms/IDMA.h"
 #include "boards/CustomParameterTrimDAC.h"
 #include "DeviceTreeNode.h"
+#include "SystemResources.h"
 
 #include "protocols/LMS64CProtocol.h"
 #include "protocols/LMS64C/SPI.h"
@@ -213,7 +214,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
     if (!la9310->IsM4CoreProgrammed())
     {
         std::vector<char> firmware;
-        const std::string m4firmware_path = "/lib/firmware/"s + limesdrmicro::m4_firmware_name_default;
+        const std::string m4firmware_path = lime::locateFirmwareFile(limesdrmicro::m4_firmware_name_default);
         status = limesdrmicro::ReadFileIntoVector(m4firmware_path, firmware);
         if (status == OpStatus::Success)
         {
@@ -223,14 +224,14 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
                 lime::error("Failed to program LimeSDR-Micro LA9310 Arm M4 firmware");
         }
         else
-            lime::error("M4 firmware file not found: "s + m4firmware_path);
+            lime::error("M4 firmware file not found: "s + limesdrmicro::m4_firmware_name_default);
         fw = std::make_shared<LA9310_FW_Impl>(streamingPort);
         // also load VSPA just in case it would be needed, it can be reprogrammed later
         // M4 must be successfully programmed to work with VSPA
         if (status == OpStatus::Success && !la9310->IsVSPAFirmwareLoaded())
         {
             std::vector<char> firmware;
-            const std::string vspafirmware_path = "/lib/firmware/"s + limesdrmicro::vspa_firmware_name_default;
+            const std::string vspafirmware_path = lime::locateFirmwareFile(limesdrmicro::vspa_firmware_name_default);
             OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
             if (status == OpStatus::Success)
             {
@@ -241,7 +242,7 @@ LimeSDR_Micro::LimeSDR_Micro(std::shared_ptr<ISPI> spiRFsoc,
                     lime::error("Failed to program LimeSDR-Micro LA9310 VSPA firmware");
             }
             else
-                lime::error("VSPA File not found: "s + vspafirmware_path);
+                lime::error("VSPA firmware file not found: "s + limesdrmicro::vspa_firmware_name_default);
         }
     }
     else
@@ -933,11 +934,11 @@ std::unique_ptr<lime::RFStream> LimeSDR_Micro::StreamCreate(const StreamConfig& 
     if (!la9310->IsVSPAFirmwareLoaded())
     {
         std::vector<char> firmware;
-        const std::string vspafirmware_path = "/lib/firmware/"s + limesdrmicro::vspa_firmware_name_default;
+        const std::string vspafirmware_path = lime::locateFirmwareFile(limesdrmicro::vspa_firmware_name_default);
         OpStatus status = limesdrmicro::ReadFileIntoVector(vspafirmware_path, firmware);
         if (status != OpStatus::Success)
         {
-            lime::error("File not found: "s + vspafirmware_path);
+            lime::error("VSPA firmware file not found: "s + limesdrmicro::vspa_firmware_name_default);
             return nullptr;
         }
         lime::info("Programming LimeSDR-Micro VSPA " + vspafirmware_path);

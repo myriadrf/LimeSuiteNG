@@ -54,6 +54,21 @@ LIME_API std::vector<std::string> listImageSearchPaths(void);
  */
 LIME_API std::string locateImageResource(const std::string& name);
 
+/*!
+ * Get a list of directories to search for device firmware files.
+ * Directories are returned in the order of search priority:
+ * the library's firmware installation directory first,
+ * and then the system firmware directory (/lib/firmware).
+ */
+LIME_API std::vector<std::string> listFirmwareSearchPaths(void);
+
+/*!
+ * Get the full file path to a device firmware file given only the file name.
+ * @param name the firmware file name including file extension
+ * @return the full filesystem path to the firmware file if it exists or empty
+ */
+LIME_API std::string locateFirmwareFile(const std::string& name);
+
 } // namespace lime
 
 #endif //LIMESUITE_SYSTEM_RESOURCES_H
